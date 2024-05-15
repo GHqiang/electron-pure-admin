@@ -29,7 +29,23 @@ export default ({ command, mode }: ConfigEnv): UserConfigExport => {
       port: VITE_PORT,
       host: "0.0.0.0",
       // 本地跨域代理 https://cn.vitejs.dev/config/server-options.html#server-proxy
-      proxy: {},
+      proxy: {
+          '/api': {
+              target: 'https://group.leying.com', // 后端API的真实地址
+              changeOrigin: true, // 是否允许跨域
+              rewrite: (path) => path.replace(/^\/api/, '') // 重写路径，去除/api前缀
+          },
+          '/sp': {
+              target: 'https://api.s.zjlrmovie.cn', // 后端API的真实地址
+              changeOrigin: true, // 是否允许跨域
+              rewrite: (path) => path.replace(/^\/sp/, '/sp') // 重写路径，去除/api前缀
+          },
+          '/opi': {
+              target: 'http://37nrfp.natappfree.cc', // 后端API的真实地址
+              changeOrigin: true, // 是否允许跨域
+              rewrite: (path) => path.replace(/^\/opi/, '') // 重写路径，去除/api前缀
+          }
+      },
       // 预热文件以提前转换和缓存结果，降低启动期间的初始页面加载时长并防止转换瀑布
       warmup: {
         clientFiles: ["./index.html", "./src/{views,components}/*"]
