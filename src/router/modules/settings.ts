@@ -24,5 +24,45 @@ export default {
         title: "报价规则"
       }
     },
+    {
+      path: "/set/platToken",
+      name: "platToken",
+      component: () => import("@/views/offerRule/index.vue"),
+      meta: {
+        title: "平台token"
+      }
+    },
+    {
+      path: "/set/cinemaToken",
+      name: "cinemaToken",
+      component: () => import("@/views/offerRule/index.vue"),
+      meta: {
+        title: "影院token"
+      }
+    },
+    {
+      path: "/set/offerRecord",
+      name: "offerRecord",
+      component: () => import("@/views/offerRule/index.vue"),
+      meta: {
+        title: "报价记录"
+      }
+    },
+    {
+      path: "/set/ticketRecord",
+      name: "ticketRecord",
+      component: () => import("@/views/offerRule/index.vue"),
+      meta: {
+        title: "出票记录"
+      }
+    },
+    {
+      path: "/set/offerTicket",
+      name: "offerTicket",
+      component: () => import("@/views/offerTicket/index.vue"),
+      meta: {
+        title: "出票设置"
+      }
+    },
   ]
 } satisfies RouteConfigsTable;
