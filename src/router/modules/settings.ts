@@ -19,7 +19,7 @@ export default {
     {
       path: "/set/offerRule",
       name: "offerRule",
-      component: () => import("@/views/error/404.vue"),
+      component: () => import("@/views/offerRule/index.vue"),
       meta: {
         title: "报价规则"
       }
