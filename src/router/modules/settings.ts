@@ -24,18 +24,18 @@ export default {
         title: "报价规则"
       }
     },
-    {
-      path: "/set/platToken",
-      name: "platToken",
-      component: () => import("@/views/offerRule/index.vue"),
-      meta: {
-        title: "平台token"
-      }
-    },
+    // {
+    //   path: "/set/platToken",
+    //   name: "platToken",
+    //   component: () => import("@/views/platToken/index.vue"),
+    //   meta: {
+    //     title: "平台token"
+    //   }
+    // },
     {
       path: "/set/cinemaToken",
       name: "cinemaToken",
-      component: () => import("@/views/offerRule/index.vue"),
+      component: () => import("@/views/cinemaToken/index.vue"),
       meta: {
         title: "影院token"
       }
@@ -43,9 +43,9 @@ export default {
     {
       path: "/set/offerRecord",
       name: "offerRecord",
-      component: () => import("@/views/offerRule/index.vue"),
+      component: () => import("@/views/offerRecord/index.vue"),
       meta: {
-        title: "报价记录"
+        title: "平台自动报价"
       }
     },
     {
@@ -53,7 +53,7 @@ export default {
       name: "ticketRecord",
       component: () => import("@/views/offerRule/index.vue"),
       meta: {
-        title: "出票记录"
+        title: "平台自动出票"
       }
     },
     {
