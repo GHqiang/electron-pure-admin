@@ -1,54 +1,74 @@
 import { defineStore } from "pinia";
 
-export const useTableDataStore = defineStore("platforms", {
+// 每次优先从localStorage里获取
+let platQueueRule = window.localStorage.getItem("platQueueRule");
+if (platQueueRule) {
+  platQueueRule = JSON.parse(platQueueRule);
+  platQueueRule = platQueueRule.map(item => ({
+    ...item,
+    isEnabled: false
+  }));
+}
+export const usePlatTableDataStore = defineStore("platforms", {
   state: () => ({
-    items: [
+    items: platQueueRule || [
       {
         id: 1,
-        name: "Platform A",
-        interval: 60,
-        token: "TOKEN123",
-        isEnabled: true
+        platName: "猎人",
+        getInterval: 2, // 订单获取间隔
+        handleInterval: 1, // 订单执行间隔
+        platToken:
+          "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzb20uempscm1vdmllLmNuIiwiYXVkIjoic29tLnpqbHJtb3ZpZS5jbiIsImlhdCI6MTcxNTM0NDk2MywibmJmIjoxNzE1MzQ0OTYzLCJleHAiOjE3MTc3NjQxNjMsImRhdGEiOnsiaWQiOjcxNDYzMiwidXNlcm5hbWUiOjcxNDYzMiwic3RhdHVzIjoxLCJvcGVuaWQiOiJvUXpFZjQ3a1ZLQ3F6bzRPSXl1ZHBZVllwX2g0In19.mwidYdjsGHIEnDxWlihB2LVdCtt0o1v_rrdbvSbSe50",
+        isEnabled: false
       }
-      // 更多初始数据...
     ],
-    newItem: { name: "", interval: 60, token: "", isEnabled: true } // 初始化表单状态
+    newItem: {
+      platName: "",
+      getInterval: 2,
+      handleInterval: 1,
+      platToken: "",
+      isEnabled: false
+    } // 初始化表单状态
   }),
   actions: {
+    // 切换是否启用状态
     toggleEnable(id) {
       const inx = this.items.findIndex(p => p.id === id);
-      console.log("inx", inx);
-      if (inx > 0) {
+      // console.log("inx", inx);
+      if (inx > -1) {
         this.items[inx].isEnabled = !this.items[inx].isEnabled;
       }
+      window.localStorage.setItem("platQueueRule", JSON.stringify(this.items));
     },
+    // 添加
     addNewItem() {
-      // 这里仅模拟新增，实际项目中应通过API调用
       const newPlat = {
-        id: this.items.length + 1,
+        id: this.items[this.items.length - 1].id + 1,
         ...this.newItem
       };
       this.items.push(newPlat);
-      this.newItem = { name: "", interval: 60, token: "", isEnabled: true }; // 重置表单
+      this.newItem = {
+        platName: "",
+        getInterval: 2,
+        handleInterval: 1,
+        platToken: "",
+        isEnabled: false
+      }; // 重置表单
+      window.localStorage.setItem("platQueueRule", JSON.stringify(this.items));
     },
-    startEdit(id) {
-      this.editingId = id;
-    },
+    // 保存编辑
     saveEdit(newValue) {
-      // 模拟保存逻辑，实际应用中会替换为API调用
-      const index = this.items.findIndex(item => item.id === this.editingId);
-      console.log("index", index, newValue);
+      const index = this.items.findIndex(item => item.id === newValue.id);
+      // console.log("index", index, newValue);
       if (index > -1) {
         this.items[index] = newValue;
       }
-      this.editingId = null;
-    },
-    cancelEdit() {
-      this.editingId = null;
+      window.localStorage.setItem("platQueueRule", JSON.stringify(this.items));
     },
     deleteItem(id) {
       // 模拟删除逻辑
       this.items = this.items.filter(item => item.id !== id);
+      window.localStorage.setItem("platQueueRule", JSON.stringify(this.items));
     }
   }
 });

@@ -2,8 +2,8 @@
 
 import axios from "axios";
 import { ElMessage } from "element-plus";
-import { userStore } from "@/store/counter";
-const user = userStore();
+import { platTokens } from "@/store/platTokens";
+const tokens = platTokens();
 // 创建axios实例
 const instance = axios.create({
   //   baseURL: process.env.VITE_API_BASE_URL,
@@ -19,7 +19,7 @@ instance.interceptors.request.use(
   config => {
     if (config.url.indexOf("/sp/") !== -1) {
       // 猎人平台接口添加token
-      const token = user.platToken || "";
+      const token = tokens.lierenToken || "";
       if (token) {
         config.headers.Authorization = `${token}`;
       }
