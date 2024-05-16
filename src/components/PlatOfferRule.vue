@@ -62,11 +62,13 @@
           @click="saveEdit(row.id)"
           >保存</el-button
         >
-        <el-popconfirm title="确定删除吗？" @confirm="deleteItem(row.id)">
+        <el-popconfirm
+          title="确定删除吗？"
+          v-if="displayItems.length > 1"
+          @confirm="deleteItem(row.id)"
+        >
           <template #reference>
-            <el-button v-if="displayItems.length > 1" size="small" type="danger"
-              >删除</el-button
-            >
+            <el-button size="small" type="danger">删除</el-button>
           </template>
         </el-popconfirm>
       </template>

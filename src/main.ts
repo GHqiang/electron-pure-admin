@@ -25,6 +25,8 @@ import "./assets/iconfont/iconfont.css";
 const app = createApp(App);
 
 // 自定义指令
+import throttleDirective from '@/directives/throttle.js' // 导入自定义指令
+app.directive('throttle', throttleDirective) 
 import * as directives from "@/directives";
 Object.keys(directives).forEach(key => {
   app.directive(key, (directives as { [key: string]: Directive })[key]);
