@@ -21,7 +21,7 @@ export const useDataTableStore = defineStore("dataTable", {
       this.items = [
         {
           id: 1,
-          platName: "lieren",
+          orderForm: "lieren",
           ruleName: "1线城市普厅",
           shadowLineName: "sfc",
           status: "1",
@@ -45,7 +45,7 @@ export const useDataTableStore = defineStore("dataTable", {
         },
         {
           id: 2,
-          platName: "lieren",
+          orderForm: "lieren",
           ruleName: "2线城市普厅",
           shadowLineName: "sfc",
           status: "1",
@@ -69,7 +69,7 @@ export const useDataTableStore = defineStore("dataTable", {
         },
         {
           id: 3,
-          platName: "lieren",
+          orderForm: "lieren",
           ruleName: "特殊厅报价",
           shadowLineName: "sfc",
           status: "1",
@@ -106,7 +106,7 @@ export const useDataTableStore = defineStore("dataTable", {
         },
         {
           id: 4,
-          platName: "lieren",
+          orderForm: "lieren",
           ruleName: "会员日报价-普通厅",
           shadowLineName: "sfc",
           status: "1",
@@ -129,7 +129,7 @@ export const useDataTableStore = defineStore("dataTable", {
         },
         {
           id: 5,
-          platName: "lieren",
+          orderForm: "lieren",
           ruleName: "会员日报价-特殊厅",
           shadowLineName: "sfc",
           status: "1",

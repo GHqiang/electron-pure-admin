@@ -2,6 +2,21 @@
   <div>
     <!-- 查询表单 -->
     <el-form :inline="true" class="demo-form-inline">
+      <el-form-item label="订单来源">
+        <el-select
+          v-model="formData.orderForm"
+          placeholder="订单来源"
+          style="width: 194px"
+          clearable
+        >
+          <el-option
+            v-for="(keyValue, keyName) in orderFormObj"
+            :key="keyName"
+            :label="keyValue"
+            :value="keyName"
+          />
+        </el-select>
+      </el-form-item>
       <el-form-item label="规则名称">
         <el-input
           v-model="formData.ruleName"
@@ -90,63 +105,70 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="包含城市">
-        <el-input
-          v-model="formData.includeCityNames"
-          placeholder="请输入包含城市"
-          clearable
-        />
-      </el-form-item>
-      <el-form-item label="排除城市">
-        <el-input
-          v-model="formData.excludeCityNames"
-          placeholder="请输入排除城市"
-          clearable
-        />
-      </el-form-item>
-      <el-form-item label="包含影院">
-        <el-input
-          v-model="formData.includeCinemaNames"
-          placeholder="请输入包含影院"
-          clearable
-        />
-      </el-form-item>
-      <el-form-item label="排除影院">
-        <el-input
-          v-model="formData.excludeCinemaNames"
-          placeholder="请输入排除影院"
-          clearable
-        />
-      </el-form-item>
-      <el-form-item label="包含影厅">
-        <el-input
-          v-model="formData.includeHallNames"
-          placeholder="请输入包含影厅"
-          clearable
-        />
-      </el-form-item>
-      <el-form-item label="排除影厅">
-        <el-input
-          v-model="formData.excludeHallNames"
-          placeholder="请输入排除影厅"
-          clearable
-        />
-      </el-form-item>
-      <el-form-item label="包含影片">
-        <el-input
-          v-model="formData.includeFilmNames"
-          placeholder="请输入包含影片"
-          clearable
-        />
-      </el-form-item>
-      <el-form-item label="排除影片">
-        <el-input
-          v-model="formData.excludeFilmNames"
-          placeholder="请输入排除影片"
-          clearable
-        />
-      </el-form-item>
+      <template>
+        v-if="isCollapse">
+        <el-form-item label="包含城市">
+          <el-input
+            v-model="formData.includeCityNames"
+            placeholder="请输入包含城市"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="排除城市">
+          <el-input
+            v-model="formData.excludeCityNames"
+            placeholder="请输入排除城市"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="包含影院">
+          <el-input
+            v-model="formData.includeCinemaNames"
+            placeholder="请输入包含影院"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="排除影院">
+          <el-input
+            v-model="formData.excludeCinemaNames"
+            placeholder="请输入排除影院"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="包含影厅">
+          <el-input
+            v-model="formData.includeHallNames"
+            placeholder="请输入包含影厅"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="排除影厅">
+          <el-input
+            v-model="formData.excludeHallNames"
+            placeholder="请输入排除影厅"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="包含影片">
+          <el-input
+            v-model="formData.includeFilmNames"
+            placeholder="请输入包含影片"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="排除影片">
+          <el-input
+            v-model="formData.excludeFilmNames"
+            placeholder="请输入排除影片"
+            clearable
+          />
+        </el-form-item>
+      </template>
+
       <el-form-item>
+        <el-button type="primary" @click="isCollapse = !isCollapse">{{
+          !isCollapse ? "展开" : "收起"
+        }}</el-button>
         <el-button type="primary" @click="searchData">搜索</el-button>
         <el-button @click="resetForm">重置</el-button>
         <el-button type="primary" @click="addRule" style="padding-left: 0px">
@@ -187,6 +209,11 @@
     >
       <el-table-column type="selection" fixed width="55" />
       <el-table-column prop="ruleName" fixed label="规则名称" width="110" />
+      <el-table-column prop="orderForm" fixed label="订单来源" width="90">
+        <template #default="scope">
+          <span>{{ orderFormObj[scope.row.orderForm] }}</span>
+        </template>
+      </el-table-column>
       <el-table-column
         prop="shadowLineName"
         fixed
@@ -326,6 +353,14 @@ const { addItem, updateItem, deleteItem, batchDeleteItem } = dataTableStore;
 // 使用computed确保items响应式
 const tableData = computed(() => dataTableStore.items);
 
+// 是否展开
+const isCollapse = ref(false);
+// 订单来源枚举
+const orderFormObj = ref({
+  lieren: "猎人",
+  shengapp: "省APP"
+});
+
 // 报价类型枚举
 const offerTypeObj = {
   1: "日常固定价",
@@ -334,6 +369,7 @@ const offerTypeObj = {
 };
 // 表单查询数据
 const formData = reactive({
+  orderForm: "lieren", // 订单来源
   ruleName: "", // 规则名称
   shadowLineName: "sfc", // 影线名称
   status: "", // 状态
@@ -364,6 +400,7 @@ const searchData = () => {
   console.log("tableData==>", toRaw(tableData.value));
   tableDataFilter.value = tableData.value.filter(item => {
     const {
+      orderForm,
       ruleName,
       shadowLineName,
       status,
@@ -381,6 +418,7 @@ const searchData = () => {
       includeFilmNames,
       excludeFilmNames
     } = formData;
+    let judge0 = orderForm ? item.orderForm === orderForm : true;
     let judge1 = shadowLineName ? item.shadowLineName === shadowLineName : true;
     let judge2 = ruleName ? item.ruleName.indexOf(ruleName) !== -1 : true;
     let judge3 = includeCityNames
@@ -416,6 +454,7 @@ const searchData = () => {
       ? weekDay.every(itemW => item.weekDay.includes(itemW))
       : true;
     return (
+      judge0 &&
       judge1 &&
       judge2 &&
       judge3 &&
@@ -492,6 +531,7 @@ const hasSelected = computed(() => multipleSelection.value.length > 0);
 // 重置表单
 const resetForm = () => {
   formData.id = "";
+  formData.orderForm = ""; // 规则名称
   formData.ruleName = ""; // 规则名称
   formData.shadowLineName = ""; // 影线名称
   formData.quanValue = ""; // 是否报价
