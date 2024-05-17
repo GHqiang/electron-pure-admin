@@ -1,8 +1,8 @@
 // sfc请求拦截器封装
 import axios from "axios";
-import { ElMessage } from "element-plus";
-import { userStore } from "@/store/counter";
-const user = userStore();
+import { ElMessage, ElMessageBox } from "element-plus";
+import { appUserInfo } from "@/store/appUserInfo";
+const user = appUserInfo();
 import md5 from "../md5.js";
 import router from "@/router";
 // 创建axios实例
@@ -38,8 +38,8 @@ var a = function (e) {
   e.group = "20045";
   // e.city_id = '500'
   // e.cinema_id = '19'
-  e.session_id = user?.userInfo?.session_id || "";
-  // console.log('e===>', e)
+  e.session_id = user?.sfcToken || "";
+  // console.log("e===>", e);
 };
 
 /*
@@ -120,11 +120,21 @@ instance.interceptors.response.use(
       isErrorBySFC &&
       !whitelistSfc.some(item => response.config.url.includes(item))
     ) {
-      if (data.errcode === "205") {
-        ElMessage.error(data.msg || "登录失效，请重新登录");
-        window.localStorage.removeItem("userInfo");
-        window.localStorage.removeItem("platToken");
-        router.replace({ path: "/login" });
+      if (data.errcode === "205" && data.msg === "登录失效") {
+        // ElMessage.error("sfc登录失效，请重新登录");
+        ElMessageBox.confirm("sfc登录失效，请重新登录", "提示", {
+          confirmButtonText: "我知道了",
+          type: "warning",
+          showCancelButton: false,
+          showClose: false,
+          closeOnClickModal: false,
+          closeOnPressEscape: false
+        })
+          .then(() => {
+            user.removeSfcUserInfo();
+            router.push({ path: "/set/appLogin" });
+          })
+          .catch(() => {});
         return;
       }
       ElMessage.error(data.msg || "请求失败");

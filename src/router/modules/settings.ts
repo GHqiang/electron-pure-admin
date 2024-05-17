@@ -33,11 +33,11 @@ export default {
     //   }
     // },
     {
-      path: "/set/cinemaToken",
-      name: "cinemaToken",
-      component: () => import("@/views/cinemaToken/index.vue"),
+      path: "/set/appLogin",
+      name: "appLogin",
+      component: () => import("@/views/appLogin/index.vue"),
       meta: {
-        title: "影院token"
+        title: "影院登录"
       }
     },
     {

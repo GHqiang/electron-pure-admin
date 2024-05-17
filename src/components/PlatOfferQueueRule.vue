@@ -70,7 +70,7 @@
         <el-popconfirm
           title="确定启动吗？"
           v-if="!row.isEnabled"
-          @confirm="singleStartOrStop(row.id, 1, row.platToken)"
+          @confirm="singleStartOrStop(row, 1)"
         >
           <template #reference>
             <el-button size="small" type="success">启动</el-button>
@@ -80,7 +80,7 @@
         <el-popconfirm
           title="确定停止吗？"
           v-if="row.isEnabled"
-          @confirm="singleStartOrStop(row.id, 2, row.platToken)"
+          @confirm="singleStartOrStop(row, 2)"
         >
           <template #reference>
             <el-button size="small" type="danger">停止</el-button>
@@ -136,6 +136,10 @@ import offerQueue from "@/common/useLierenOffer";
 const tableDataStore = usePlatTableDataStore();
 const displayItems = computed(() => tableDataStore.items);
 
+const platLinkApp = {
+  lieren: ["sfc"]
+};
+
 // 正在编辑id
 const editingRowId = ref(null);
 // 正在编辑内容
@@ -184,12 +188,14 @@ const changeMainSwitch = () => {
 };
 
 // 单个启动或停止
-const singleStartOrStop = (id, flag, platToken) => {
-  tableDataStore.toggleEnable(id);
+const singleStartOrStop = ({ id, platToken, platName }, flag) => {
   // 单个启动
   if (!mainSwitch.value && flag === 1) {
+    if (platName === "lieren") {
+    }
     offerQueue.start(platToken);
   }
+  tableDataStore.toggleEnable(id);
 };
 
 // 添加新增按钮的处理函数

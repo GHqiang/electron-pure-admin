@@ -10,8 +10,8 @@
           style="width: 194px"
           clearable
         >
-          <el-option label="猎人" value="1" />
-          <el-option label="省APP" value="2" />
+          <el-option label="猎人" value="lieren" />
+          <el-option label="省APP" value="shengapp" />
         </el-select>
       </el-form-item>
       <el-form-item label="影线名称">

@@ -13,7 +13,7 @@ const platTableDataStore = usePlatTableDataStore();
 // 平台自动报价规则列表
 const platOfferRuleList = computed(() =>
   platTableDataStore.items.filter(
-    item => item.platName === "猎人" && item.isEnabled
+    item => item.platName === "lieren" && item.isEnabled
   )
 );
 
@@ -24,7 +24,7 @@ dataTableStore.fetchItemsFromLocalStorage();
 
 // 使用computed确保items响应式
 const appOfferRuleList = computed(() =>
-  dataTableStore.items.filter(item => item.platName === "猎人")
+  dataTableStore.items.filter(item => item.platName === "lieren")
 );
 
 let conPrefix = "【猎人自动报价】——"; // console打印前缀
@@ -82,14 +82,14 @@ class OrderAutoOfferQueue {
         await this.stop();
         return;
       }
-      console.log(conPrefix + "队列每次执行时的规则", platQueueRule[0]);
+      // console.log(conPrefix + "队列每次执行时的规则", platQueueRule[0]);
       const { getInterval, handleInterval } = platQueueRule[0];
       let fetchDelay = getInterval;
       let processDelay = handleInterval;
-      console.warn(
-        conPrefix +
-          `队列启动, ${fetchDelay} 秒获取一次待报价订单, ${processDelay} 秒处理一次订单}`
-      );
+      // console.warn(
+      //   conPrefix +
+      //     `队列启动, ${fetchDelay} 秒获取一次待报价订单, ${processDelay} 秒处理一次订单}`
+      // );
       let orders = await this.fetchOrders(fetchDelay);
       const { handleSuccessOrderList, handleFailOrderList } = this;
       const orderOfferRecord = [

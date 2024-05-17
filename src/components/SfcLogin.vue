@@ -1,5 +1,7 @@
 <template>
-  <div class="login-container">
+  <div class="login-sfc">
+    <el-divider content-position="center">sfc登录</el-divider>
+
     <el-form label-width="100px">
       <el-form-item label="手机号">
         <el-input
@@ -33,11 +35,7 @@
       </el-form-item>
 
       <el-form-item v-if="showSmsCode" label="短信验证码">
-        <el-input
-          v-model="smsCode"
-          placeholder="请输入短信验证码"
-          @input="validateSmsCode"
-        ></el-input>
+        <el-input v-model="smsCode" placeholder="请输入短信验证码"></el-input>
       </el-form-item>
 
       <el-form-item>
@@ -73,11 +71,7 @@ import {
 } from "element-plus";
 
 import sfcApi from "@/api/sfc-api";
-import { userStore } from "@/store/counter";
-const user = userStore();
-import { useRouter, useRoute } from "vue-router";
-const router = useRouter();
-const route = useRoute();
+let $emit = defineEmits([`loginSuccess`]);
 
 const phoneNumber = ref(""); // 手机号
 const captchaCode = ref(""); // 图形验证码
@@ -132,15 +126,6 @@ async function sendSmsCode() {
   }
 }
 
-// 验证短信验证码并触发登录
-async function validateSmsCode() {
-  if (smsCode.value?.length === 4) {
-    // autoLogin()
-  }
-  // 验证短信验证码，实际项目中会有对应的验证接口
-  // ...
-}
-
 // 登录
 async function autoLogin() {
   try {
@@ -155,8 +140,7 @@ async function autoLogin() {
       console.log("验证短信并登录参数", params);
       const res = await sfcApi.verifyLogin(params);
       console.log("验证短信并登录返回", res);
-      user.setUserInfo(res.data.user_data);
-      // router.push("/about");
+      $emit("loginSuccess", res.data.user_data);
     }
   } catch (error) {
     console.warn("验证短信并登录异常", error);
@@ -173,3 +157,8 @@ function validatePhoneNumber() {
   }
 }
 </script>
+<style scoped>
+.login-sfc {
+  width: 60%;
+}
+</style>

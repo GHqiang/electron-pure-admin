@@ -14,7 +14,7 @@ export const usePlatTableDataStore = defineStore("platforms", {
     items: platQueueRule || [
       {
         id: 1,
-        platName: "猎人",
+        platName: "lieren",
         getInterval: 2, // 订单获取间隔
         handleInterval: 1, // 订单执行间隔
         platToken:
