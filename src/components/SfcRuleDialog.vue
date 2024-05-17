@@ -14,7 +14,6 @@
           <el-select
             v-model="formData.orderForm"
             placeholder="订单来源"
-            style="width: 194px"
             clearable
           >
             <el-option
@@ -345,6 +344,7 @@
 import sfcApi from "@/api/sfc-api";
 import { ref, reactive, computed, onMounted, toRaw } from "vue";
 import { ElLoading } from "element-plus";
+import { ORDER_FORM } from "@/common/constant";
 const ruleFormRef = ref(null);
 // 父传子props
 defineProps({
@@ -360,10 +360,7 @@ let $emit = defineEmits([`submit`]);
 const showSfcDialog = ref(false);
 
 // 订单来源
-const orderFormObj = ref({
-  lieren: "猎人",
-  shengapp: "省APP"
-});
+const orderFormObj = ref(ORDER_FORM);
 
 // 表单数据
 let formData = reactive({

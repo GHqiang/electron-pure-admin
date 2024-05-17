@@ -24,7 +24,11 @@
     <el-table-column prop="platName" label="平台名称">
       <template #default="{ row, $index }">
         <span v-if="row.id !== editingRowId">{{ row.platName }}</span>
-        <el-input v-else v-model="editingRow.name" @blur="saveEdit(row.id)" />
+        <el-input
+          v-else
+          v-model="editingRow.platName"
+          @blur="saveEdit(row.id)"
+        />
       </template>
     </el-table-column>
     <el-table-column prop="getInterval" label="订单获取间隔">
@@ -69,7 +73,7 @@
       <template #default="{ row, $index }">
         <el-popconfirm
           title="确定启动吗？"
-          v-if="!row.isEnabled"
+          v-if="!row.isEnabled && row.id !== editingRowId"
           @confirm="singleStartOrStop(row, 1)"
         >
           <template #reference>
@@ -89,7 +93,7 @@
 
         <el-button
           type="primary"
-          v-if="$index === 0"
+          v-if="$index === 0 && row.id !== editingRowId"
           @click="addNewItem"
           size="small"
           >新增</el-button

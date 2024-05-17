@@ -346,6 +346,7 @@
 import { ref, reactive, computed, toRaw } from "vue";
 import { ElMessageBox, ElMessage } from "element-plus";
 import SfcRuleDialog from "@/components/SfcRuleDialog.vue";
+import { ORDER_FORM } from "@/common/constant";
 import { useDataTableStore } from "@/store/offerRule";
 const dataTableStore = useDataTableStore();
 dataTableStore.fetchItemsFromLocalStorage();
@@ -356,10 +357,8 @@ const tableData = computed(() => dataTableStore.items);
 // 是否展开
 const isCollapse = ref(false);
 // 订单来源枚举
-const orderFormObj = ref({
-  lieren: "猎人",
-  shengapp: "省APP"
-});
+// 订单来源
+const orderFormObj = ref(ORDER_FORM);
 
 // 报价类型枚举
 const offerTypeObj = {

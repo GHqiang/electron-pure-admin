@@ -10,8 +10,12 @@
           style="width: 194px"
           clearable
         >
-          <el-option label="猎人" value="lieren" />
-          <el-option label="省APP" value="shengapp" />
+          <el-option
+            v-for="(keyValue, keyName) in orderFormObj"
+            :key="keyName"
+            :label="keyValue"
+            :value="keyName"
+          />
         </el-select>
       </el-form-item>
       <el-form-item label="影线名称">
@@ -117,6 +121,10 @@
 <script setup>
 import { ref, reactive, computed, toRaw } from "vue";
 import idbApi from "@/api/idbApi";
+import { ORDER_FORM } from "@/common/constant.js";
+console.log("ORDER_FORM", ORDER_FORM);
+// 订单来源
+const orderFormObj = ORDER_FORM;
 
 // 使用computed确保items响应式
 const tableData = ref([]);
