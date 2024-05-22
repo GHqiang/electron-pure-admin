@@ -1,22 +1,18 @@
 <!-- 平台自动报价规则设置 -->
 <template>
-  <span>队列执行总开关：</span>
-  <el-switch
-    v-model="mainSwitch"
-    @change="changeMainSwitch"
-    size="large"
-    active-text="启动"
-    inactive-text="停止"
-  />
   <el-button
     type="primary"
-    style="margin-left: 20px"
-    v-if="!mainSwitch"
+    v-if="isActiveOneClickStart"
     @click="oneClickAutoOffer"
     v-throttle
     >一键全部启动</el-button
   >
-  <el-button type="primary" v-if="mainSwitch" @click="stopAutoOffer" v-throttle
+  <el-button
+    type="primary"
+    :style="{ marginLeft: isActiveOneClickStart ? '20px' : 0 }"
+    v-if="isActiveOneClickStop"
+    @click="stopAutoOffer"
+    v-throttle
     >一键停止</el-button
   >
 
@@ -133,39 +129,57 @@
 
 <script setup>
 import { ref, computed } from "vue";
+import { storeToRefs } from "pinia";
 import { ElMessageBox, ElMessage } from "element-plus";
 import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
 import offerQueue from "@/common/useLierenOffer";
+import { PLAT_LINK_APP } from "@/common/constant";
+import { appUserInfo } from "@/store/appUserInfo";
+const userInfoAndTokens = appUserInfo();
+const { sfcToken, lmaToken } = storeToRefs(userInfoAndTokens);
+
 // console.log("offerQueue===>", offerQueue);
 const tableDataStore = usePlatTableDataStore();
 const displayItems = computed(() => tableDataStore.items);
 
-const platLinkApp = {
-  lieren: ["sfc"]
-};
+// 是否显示一键启动
+const isActiveOneClickStart = computed(() => {
+  return (
+    tableDataStore.items.filter(item => item.isEnabled).length <
+    tableDataStore.items.length
+  );
+});
 
+// 是否显示一键停止
+const isActiveOneClickStop = computed(() => {
+  return tableDataStore.items.filter(item => item.isEnabled).length > 0;
+});
 // 正在编辑id
 const editingRowId = ref(null);
 // 正在编辑内容
 const editingRow = ref({});
-// 队列总开关
-const mainSwitch = ref(false);
 
 // 一键启动
 const oneClickAutoOffer = () => {
   ElMessageBox.confirm("确定要一键全部启动吗?", "提示", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
-    type: "warning"
+    type: "warning",
+    showClose: false,
+    closeOnClickModal: false,
+    closeOnPressEscape: false
   })
     .then(() => {
       console.warn("一键启动全部自动报价队列");
-      tableDataStore.items = tableDataStore.items.map(item => {
+      tableDataStore.items.forEach(item => {
         item.isEnabled = true;
-        return item;
+        if (item.platName === "lieren") {
+          let platToken = displayItems.value.find(
+            item => item.platName === "lieren"
+          )?.platToken;
+          offerQueue.start(platToken);
+        }
       });
-      console.log("tableDataStore.items", tableDataStore.items);
-      offerQueue.start();
     })
     .catch(() => {});
 };
@@ -174,32 +188,60 @@ const stopAutoOffer = () => {
   ElMessageBox.confirm("确定要一键停止吗?", "提示", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
-    type: "warning"
+    type: "warning",
+    showClose: false,
+    closeOnClickModal: false,
+    closeOnPressEscape: false
   })
     .then(() => {
       console.warn("一键停止自动报价队列");
-      offerQueue.stop();
+      tableDataStore.items.forEach(item => {
+        item.isEnabled = false;
+      });
     })
     .catch(() => {});
-};
-// 队列总开关改变
-const changeMainSwitch = () => {
-  if (mainSwitch.value) {
-    oneClickAutoOffer();
-  } else {
-    stopAutoOffer();
-  }
 };
 
 // 单个启动或停止
 const singleStartOrStop = ({ id, platToken, platName }, flag) => {
   // 单个启动
-  if (!mainSwitch.value && flag === 1) {
-    if (platName === "lieren") {
+  if (flag === 1) {
+    const checkToken = PLAT_LINK_APP[platName];
+    const noTokenByApp = checkToken.filter(item => {
+      if (item === "sfc") {
+        return !!sfcToken;
+      } else if (item === "lumiai") {
+        return !!lmaToken;
+      }
+      return true;
+    });
+
+    if (noTokenByApp.length) {
+      ElMessageBox.confirm(
+        noTokenByApp.join() + " 未登录，确定仍要启动报价吗?",
+        "提示",
+        {
+          confirmButtonText: "确定",
+          cancelButtonText: "取消",
+          type: "warning",
+          showClose: false,
+          closeOnClickModal: false,
+          closeOnPressEscape: false
+        }
+      )
+        .then(() => {
+          tableDataStore.toggleEnable(id);
+          offerQueue.start(platToken);
+        })
+        .catch(() => {});
+    } else {
+      tableDataStore.toggleEnable(id);
+      offerQueue.start(platToken);
     }
-    offerQueue.start(platToken);
+  } else {
+    // 单个停止
+    tableDataStore.toggleEnable(id);
   }
-  tableDataStore.toggleEnable(id);
 };
 
 // 添加新增按钮的处理函数

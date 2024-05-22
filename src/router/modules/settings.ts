@@ -56,13 +56,5 @@ export default {
         title: "平台自动出票"
       }
     },
-    {
-      path: "/set/offerTicket",
-      name: "offerTicket",
-      component: () => import("@/views/offerTicket/index.vue"),
-      meta: {
-        title: "出票设置"
-      }
-    },
   ]
 } satisfies RouteConfigsTable;

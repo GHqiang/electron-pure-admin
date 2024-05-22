@@ -555,10 +555,13 @@ const handleSelectionChange = val => {
 
 // 删除单行规则
 const deleteRow = (index, row) => {
-  ElMessageBox.confirm("确定要删除该规则吗?", "Warning", {
+  ElMessageBox.confirm("确定要删除该规则吗?", "提示", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
-    type: "warning"
+    type: "warning",
+    showClose: false,
+    closeOnClickModal: false,
+    closeOnPressEscape: false
   })
     .then(() => {
       let inx = tableDataFilter.value.findIndex(item => item.id === row.id);
@@ -584,11 +587,14 @@ const batchDelete = () => {
   if (multipleSelection.value.length) {
     ElMessageBox.confirm(
       `批量删除 ${multipleSelection.value.length} 条规则?`,
-      "Warning",
+      "提示",
       {
         confirmButtonText: "确定",
         cancelButtonText: "取消",
-        type: "warning"
+        type: "warning",
+        showClose: false,
+        closeOnClickModal: false,
+        closeOnPressEscape: false
       }
     )
       .then(() => {

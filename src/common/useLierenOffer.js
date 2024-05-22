@@ -12,9 +12,7 @@ import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
 const platTableDataStore = usePlatTableDataStore();
 // 平台自动报价规则列表
 const platOfferRuleList = computed(() =>
-  platTableDataStore.items.filter(
-    item => item.platName === "lieren" && item.isEnabled
-  )
+  platTableDataStore.items.filter(item => item.platName === "lieren")
 );
 
 // 报价规则列表
@@ -75,8 +73,10 @@ class OrderAutoOfferQueue {
     while (this.isRunning) {
       // 获取订单列表(支持时间间隔)
       // 1、获取当前平台的队列规则状态，如果禁用直接停止
-      const platQueueRule = getOrginValue(platOfferRuleList.value);
-      // console.log("platQueueRule", platQueueRule);
+      let platQueueRule = getOrginValue(platOfferRuleList.value).filter(
+        item => item.isEnabled
+      );
+      // console.log(conPrefix + "队列启动的执行规则", platQueueRule);
       if (!platQueueRule?.length) {
         console.warn(conPrefix + "队列执行规则不存在或者未启用，直接停止");
         await this.stop();

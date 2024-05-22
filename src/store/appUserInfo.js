@@ -19,6 +19,9 @@ export const appUserInfo = defineStore("appUserInfo", {
     // sfc上影token
     sfcToken(state) {
       return state.allUserInfo?.sfc?.session_id || "";
+    },
+    lmaToken(state) {
+      return state.allUserInfo?.lumiai?.session_id || "";
     }
   },
   actions: {
