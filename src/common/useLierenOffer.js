@@ -1,6 +1,6 @@
 import { ref, onMounted, computed, toRaw } from "vue";
-import { ElMessage } from "element-plus";
-import { findBestMatchByLevenshteinWithThreshold } from "@/utils/utils";
+import { isTimeAfter } from "@/utils/utils";
+import { SFC_SPECIAL_CINEMA_LIST } from "@/common/constant";
 
 import sfcApi from "@/api/sfc-api";
 import lierenApi from "@/api/lieren-api";
@@ -22,7 +22,7 @@ dataTableStore.fetchItemsFromLocalStorage();
 
 // 使用computed确保items响应式
 const appOfferRuleList = computed(() =>
-  dataTableStore.items.filter(item => item.platName === "lieren")
+  dataTableStore.items.filter(item => item.orderForm === "lieren")
 );
 
 let conPrefix = "【猎人自动报价】——"; // console打印前缀
@@ -34,23 +34,7 @@ console.log(conPrefix + "自动报价规则", getOrginValue(appOfferRuleList.val
 const cityList = ref([]); // 城市列表
 
 // 特殊的名字匹配集合
-let specialCinemaNameMatchList = [
-  // 无锡
-  {
-    order_cinema_name: "SFC上影影城东港店原红豆影城",
-    sfc_cinema_name: "SFC上影影城无锡东港店"
-  },
-  // 湛江
-  {
-    order_cinema_name: "SFC上影影城万象金沙湾广场店",
-    sfc_cinema_name: "SFC上影影城湛江店"
-  },
-  // 北京
-  {
-    order_cinema_name: "SFC上影影城房山绿地缤纷店",
-    sfc_cinema_name: "SFC上影影城北京房山店"
-  }
-];
+let specialCinemaNameMatchList = SFC_SPECIAL_CINEMA_LIST;
 // 创建一个订单自动报价队列类
 class OrderAutoOfferQueue {
   constructor() {
@@ -248,30 +232,6 @@ class OrderAutoOfferQueue {
 // 报价队列实例
 const offerQueue = new OrderAutoOfferQueue();
 
-// 启动自动报价
-const startAutoOffer = async () => {
-  try {
-    if (!token.value || !isSetPlatToken.value) {
-      ElMessage.warning(conPrefix + "请先设置平台token");
-      console.warn(conPrefix + "请先设置token");
-      return;
-    }
-    if (offerQueue.isRunning) {
-      ElMessage.warning(conPrefix + "自动报价正在执行中");
-      console.warn(conPrefix + "——自动报价正在执行中");
-      return;
-    }
-    offerQueue.start((offerIntervalTime.value || 2) * 1000, 1000);
-  } catch (error) {
-    console.error(conPrefix + "启动自动报价异常", error);
-  }
-};
-// 停止自动报价
-const stopAutoOffer = () => {
-  console.warn(conPrefix + "停止自动报价");
-  offerQueue.stop();
-};
-
 // 获取待报价订单列表
 async function getStayOfferList() {
   try {
@@ -285,77 +245,56 @@ async function getStayOfferList() {
     console.log(conPrefix + "获取待报价订单列表参数", params);
     const res = await lierenApi.stayTicketingList(params);
     // let mockRes = {
-    //     "success": true,
-    //     "code": 1,
-    //     "message": "成功！",
-    //     "total": 1,
-    //     "data": [
-    //         {
-    //             id: 5477690,
-    //             supplier_id: 714632,
-    //             order_number: '2024030616314142092',
-    //             tpp_price: '49.00',
-    //             ticket_num: 2,
-    //             city_name: '上海',
-    //             film_img:
-    //                 'https://gw.alicdn.com/tfscom/i3/O1CN01JfQQxY1xDNJakaXHZ_!!6000000006409-0-alipicbeacon.jpg',
-    //             cinema_addr: '徐汇区漕宝路33号四层l4',
-    //             cinema_name: '八佰伴',
-    //             hall_name: '2号激光厅',
-    //             film_name: '黄雀在后！',
-    //             show_time: '2024-04-17 22:10:00',
-    //             section_at: 1709713967,
-    //             winning_at: 1709714014,
-    //             lock_if: 0,
-    //             lockseat: '3排8座 3排9座',
-    //             seat_flat: 0,
-    //             urgent: 0,
-    //             is_multi: 0,
-    //             seat_type: 0,
-    //             cinema_code: '31074801',
-    //             supplier_end_price: 39.5,
-    //             rewards: 0,
-    //             overdue: 0,
-    //             cinema_group: '上影上海',
-    //             type: 1,
-    //             group_urgent: 0,
-    //             sytime: 1709714704
-    //         },
-    //         {
-    //             id: 5477691,
-    //             supplier_id: 714632,
-    //             order_number: '2024030616314142093',
-    //             tpp_price: '49.00',
-    //             ticket_num: 2,
-    //             city_name: '上海',
-    //             film_img:
-    //                 'https://gw.alicdn.com/tfscom/i3/O1CN01JfQQxY1xDNJakaXHZ_!!6000000006409-0-alipicbeacon.jpg',
-    //             cinema_addr: '徐汇区漕宝路33号四层l4',
-    //             cinema_name: '八佰伴',
-    //             hall_name: '2号激光厅',
-    //             film_name: '黄雀在后！',
-    //             show_time: '2024-04-15 22:30:00',
-    //             section_at: 1709713967,
-    //             winning_at: 1709714014,
-    //             lock_if: 0,
-    //             lockseat: '3排2座 3排3座',
-    //             seat_flat: 0,
-    //             urgent: 0,
-    //             is_multi: 0,
-    //             seat_type: 0,
-    //             cinema_code: '31074801',
-    //             supplier_end_price: 39.5,
-    //             rewards: 0,
-    //             overdue: 0,
-    //             cinema_group: '上影上海',
-    //             type: 1,
-    //             group_urgent: 0,
-    //             sytime: 1709714704
-    //         }
-    //     ],
-    //     "time": 1710125670
-    // }
-    // let list = res?.data || mockRes?.data || []
+    //   success: true,
+    //   code: 1,
+    //   message: "成功！",
+    //   total: 1,
+    //   data: [
+    //     {
+    //       id: 6103159,
+    //       supplier_id: 714632,
+    //       order_number: "2024052211291357336",
+    //       tpp_price: "64.00",
+    //       ticket_num: 1,
+    //       city_name: "上海",
+    //       film_img:
+    //         "https://gw.alicdn.com/tfscom/i1/O1CN01PTduxS1oVqloZeODY_!!6000000005231-0-alipicbeacon.jpg",
+    //       cinema_addr: "徐汇区肇嘉浜路1111号美罗城5楼",
+    //       cinema_name: "上影BOE-α超级影城(美罗城店)",
+    //       hall_name: "4号厅",
+    //       film_name: "维和防暴队",
+    //       show_time: "2024-05-22 13:25:00",
+    //       section_at: 1716348565,
+    //       winning_at: 1716348610,
+    //       lock_if: 1,
+    //       lockseat: "7排11座",
+    //       seat_flat: 0,
+    //       urgent: 0,
+    //       is_multi: 0,
+    //       seat_type: 0,
+    //       cinema_code: "31070901",
+    //       supplier_end_price: 40,
+    //       rewards: 0,
+    //       overdue: 0,
+    //       cinema_group: "上影上海",
+    //       type: 0,
+    //       group_urgent: 0,
+    //       sytime: 1716349300,
+    //       orderNumber: "2024052211291357336",
+    //       processingTime: 1716348623654,
+    //       orderStatus: "2",
+    //       qrcode: "",
+    //       quan_code: "",
+    //       card_id: "",
+    //       offerRule: "",
+    //       offerRuleName: "",
+    //       offerType: "",
+    //       quanValue: ""
+    //     }
+    //   ],
+    //   time: 1710125670
+    // };
+    // let list = mockRes?.data || [];
     let list = res?.data || [];
     console.log(conPrefix + "获取待报价列表返回", list);
     return list;
@@ -607,9 +546,9 @@ const offerRuleMatch = async order => {
 const getMinAmountOfferRule = async (ruleList, order) => {
   try {
     // 1、有会员日报价规则命中优先使用会员日报价规则
-    let onlyMemberDayRuleList = ruleList
-      .filter(item => item.memberDay && item.offerType === "3")
-      .filter(item => itemB.offerAmount);
+    let onlyMemberDayRuleList = ruleList.filter(
+      item => item.memberDay && item.offerType === "3" && item.offerAmount
+    );
     // 报价从低到高排序
     onlyMemberDayRuleList.sort(
       (itemA, itemB) => itemA.offerAmount - itemB.offerAmount
@@ -706,7 +645,7 @@ const getMemberPrice = async order => {
 const cinemaMatchHandle = (cinema_name, list) => {
   try {
     // 1、全字匹配
-    const isHasMatch = list.some(item => item === cinema_name);
+    let isHasMatch = list.some(item => item === cinema_name);
     if (isHasMatch) {
       return true;
     }
@@ -715,29 +654,38 @@ const cinemaMatchHandle = (cinema_name, list) => {
       .replace(/[\(\)\（\）]/g, "")
       .replace(/\s*/g, "");
     // 2、特殊匹配
-    if (
-      specialCinemaNameMatchList.some(
-        item => item.order_cinema_name === cinemaName
-      )
-    ) {
+    let specialCinemaInfo = specialCinemaNameMatchList.find(
+      item => item.order_cinema_name === cinemaName
+    );
+    if (specialCinemaInfo) {
+      cinemaName = specialCinemaInfo.sfc_cinema_name;
+    } else {
+      console.warn(
+        conPrefix + "特殊匹配影院名称失败",
+        cinemaName,
+        specialCinemaNameMatchList
+      );
+    }
+    // 3、去掉空格及换行符后全字匹配
+    const noSpaceList = list.map(item =>
+      item.replace(/[\(\)\（\）]/g, "").replace(/\s*/g, "")
+    );
+    isHasMatch = noSpaceList.some(item => item === cinemaName);
+    if (isHasMatch) {
       return true;
     }
-    console.warn(
-      conPrefix + "特殊匹配影院名称失败",
-      cinemaName,
-      specialCinemaNameMatchList
+    console.error(
+      conPrefix + "去掉空格及换行符后全字匹配影院名称失败",
+      noSpaceList,
+      cinemaName
     );
     // 3、模糊匹配
-    let targetCinemaName = findBestMatchByLevenshteinWithThreshold(
-      list,
-      cinema_name,
-      8
-    );
-    console.log(conPrefix + "targetCinemaName", targetCinemaName);
-    if (targetCinemaName) {
-      return true;
-    }
-    console.error(conPrefix + "模糊匹配影院名称失败", list, cinema_name, 8);
+    // let targetCinemaName = findBestMatchByLevenshteinWithThreshold(list, cinema_name, 8)
+    // console.log('targetCinemaName', targetCinemaName)
+    // if (targetCinemaName) {
+    //     return true
+    // }
+    // console.error('【自动报价规则匹配】模糊匹配影院名称失败', list, cinema_name, 8)
   } catch (error) {
     console.error(conPrefix + "影院名称匹配异常", error);
   }
@@ -756,49 +704,48 @@ const getCinemaId = (cinema_name, list) => {
     let cinemaName = cinema_name
       .replace(/[\(\)\（\）]/g, "")
       .replace(/\s*/g, "");
-    let obj = specialCinemaNameMatchList.find(
+    let specialCinemaInfo = specialCinemaNameMatchList.find(
       item => item.order_cinema_name === cinemaName
     );
-    if (obj) {
-      cinemaName = obj.sfc_cinema_name;
-      let cinemaList = list.map(item => {
-        return {
-          ...item,
-          name: item.name.replace(/[\(\)\（\）]/g, "").replace(/\s*/g, "")
-        };
-      });
-      cinema_id = cinemaList.find(item => item.name === cinemaName)?.id;
-      if (cinema_id) {
-        return cinema_id;
-      }
-    }
-    console.warn(
-      conPrefix + "特殊匹配影院名称失败",
-      cinemaName,
-      specialCinemaNameMatchList
-    );
-    // 3、不满足条件就走模糊匹配（模糊匹配不正确的就放到特殊匹配里面）
-    let cinemaNameList = list.map(item => item.name);
-    console.warn(conPrefix + "模糊匹配影院名称", cinema_name, cinemaNameList);
-    let targetCinemaName = findBestMatchByLevenshteinWithThreshold(
-      cinemaNameList,
-      cinema_name,
-      8
-    );
-    if (!targetCinemaName) {
-      console.error(
-        conPrefix + "模糊匹配影院名称失败",
-        cinemaNameList,
-        cinema_name,
-        8
+    if (specialCinemaInfo) {
+      cinemaName = specialCinemaInfo.sfc_cinema_name;
+    } else {
+      console.warn(
+        conPrefix + "特殊匹配影院名称失败",
+        cinemaName,
+        specialCinemaNameMatchList
       );
-      return;
     }
-    cinema_id = list.find(item => item.name === targetCinemaName)?.id;
-    if (!cinema_id) {
-      console.error(conPrefix + "模糊匹配影院名称失败", cinema_name, list);
+    // 3、去掉空格及换行符后全字匹配
+    // 去除空格及括号后的影院列表
+    let noSpaceCinemaList = list.map(item => {
+      return {
+        ...item,
+        name: item.name.replace(/[\(\)\（\）]/g, "").replace(/\s*/g, "")
+      };
+    });
+    cinema_id = noSpaceCinemaList.find(item => item.name === cinemaName)?.id;
+    if (cinema_id) {
+      return cinema_id;
     }
-    return cinema_id;
+    console.error(
+      conPrefix + "去掉空格及换行符后全字匹配失败",
+      cinemaName,
+      noSpaceCinemaList
+    );
+    // // 3、不满足条件就走模糊匹配（模糊匹配不正确的就放到特殊匹配里面）
+    // let cinemaNameList = list.map(item => item.name)
+    // console.warn('【自动报价】模糊匹配影院名称', cinema_name, cinemaNameList)
+    // let targetCinemaName = findBestMatchByLevenshteinWithThreshold(cinemaNameList, cinema_name, 8)
+    // if (!targetCinemaName) {
+    //     console.error('模糊匹配影院名称失败', cinemaNameList, cinema_name, 8)
+    //     return
+    // }
+    // cinema_id = list.find((item) => item.name === targetCinemaName)?.id
+    // if (!cinema_id) {
+    //     console.error('【自动报价】模糊匹配影院名称失败', cinema_name, list)
+    // }
+    // return cinema_id
   } catch (error) {
     console.error(conPrefix + "根据订单name获取影院id失败", error);
   }
