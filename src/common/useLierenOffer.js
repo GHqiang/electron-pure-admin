@@ -177,7 +177,10 @@ class OrderAutoOfferQueue {
         offerType: offerResult?.offerRule?.offerType,
         offerAmount: offerResult?.offerRule?.offerAmount,
         memberOfferAmount: offerResult?.offerRule?.memberOfferAmount,
-        quanValue: offerResult?.offerRule?.quanValue
+        quanValue: offerResult?.offerRule?.quanValue,
+        offerRule: offerResult?.offerRule
+          ? getOrginValue(offerResult.offerRule)
+          : ""
       };
       if (offerResult?.res) {
         this.handleSuccessOrderList.push(orderInfo);
@@ -306,23 +309,24 @@ async function getStayOfferList() {
 
 // 单个订单报价
 async function singleOffer(item) {
+  let offerRule;
   try {
     console.log(conPrefix + "待报价订单", item);
     let { id, supplier_max_price } = item || {};
     if (!id) return;
     // 报价逻辑
     console.log(conPrefix + "准备匹配报价规则", item);
-    const offerRule = await offerRuleMatch(item);
+    offerRule = await offerRuleMatch(item);
     if (!offerRule) {
       console.error(conPrefix + "获取匹配报价规则失败");
       return;
     }
     const { offerAmount, memberOfferAmount } = offerRule;
     const price = offerAmount || memberOfferAmount;
-    if (!price) return;
+    if (!price) return { offerRule };
     if (Number(supplier_max_price) < price) {
       console.error(conPrefix + "当前报价超过供应商最高报价，不再进行报价");
-      return;
+      return { offerRule };
     }
 
     let params = {
@@ -335,6 +339,7 @@ async function singleOffer(item) {
     return { res, offerRule };
   } catch (error) {
     console.error(conPrefix + "订单报价异常", error);
+    return { offerRule };
   }
 }
 
@@ -379,7 +384,7 @@ const offerRuleMatch = async order => {
       )?.[0] || "";
     console.log(conPrefix + "报价订单影线", shadowLineName);
     // 1、获取启用的规则列表（只有满足规则才报价）
-    let useRuleList = toRaw(tableData.value).filter(
+    let useRuleList = toRaw(appOfferRuleList.value).filter(
       item => item.status === "1"
     );
     console.log(conPrefix + "启用的规则列表", useRuleList);
