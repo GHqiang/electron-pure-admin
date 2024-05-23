@@ -6,6 +6,7 @@ import sfcApi from "@/api/sfc-api";
 import lierenApi from "@/api/lieren-api";
 import idbApi from "@/api/idbApi";
 import { platTokens } from "@/store/platTokens";
+// 平台toke列表
 const platTokenInfo = platTokens();
 
 import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
@@ -15,7 +16,7 @@ const platOfferRuleList = computed(() =>
   platTableDataStore.items.filter(item => item.platName === "lieren")
 );
 
-// 报价规则列表
+// app报价规则列表
 import { useDataTableStore } from "@/store/offerRule";
 const dataTableStore = useDataTableStore();
 dataTableStore.fetchItemsFromLocalStorage();
@@ -180,7 +181,9 @@ class OrderAutoOfferQueue {
         quanValue: offerResult?.offerRule?.quanValue,
         offerRule: offerResult?.offerRule
           ? getOrginValue(offerResult.offerRule)
-          : ""
+          : "",
+        appName: offerResult?.offerRule?.shadowLineName || "",
+        platName: "lieren"
       };
       if (offerResult?.res) {
         this.handleSuccessOrderList.push(orderInfo);

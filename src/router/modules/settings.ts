@@ -24,14 +24,6 @@ export default {
         title: "报价规则"
       }
     },
-    // {
-    //   path: "/set/platToken",
-    //   name: "platToken",
-    //   component: () => import("@/views/platToken/index.vue"),
-    //   meta: {
-    //     title: "平台token"
-    //   }
-    // },
     {
       path: "/set/appLogin",
       name: "appLogin",
@@ -49,11 +41,19 @@ export default {
       }
     },
     {
+      path: "/set/orderIssue",
+      name: "orderIssue",
+      component: () => import("@/views/orderIssue/index.vue"),
+      meta: {
+        title: "平台订单分发"
+      }
+    },
+    {
       path: "/set/ticketRecord",
       name: "ticketRecord",
-      component: () => import("@/views/offerRule/index.vue"),
+      component: () => import("@/views/offerTicket/index.vue"),
       meta: {
-        title: "平台自动出票"
+        title: "影院自动出票"
       }
     },
   ]
