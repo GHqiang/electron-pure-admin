@@ -41,14 +41,6 @@ export default {
       }
     },
     {
-      path: "/set/orderIssue",
-      name: "orderIssue",
-      component: () => import("@/views/orderIssue/index.vue"),
-      meta: {
-        title: "平台订单分发"
-      }
-    },
-    {
       path: "/set/ticketRecord",
       name: "ticketRecord",
       component: () => import("@/views/offerTicket/index.vue"),
