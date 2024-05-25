@@ -132,7 +132,7 @@ import { ref, computed } from "vue";
 import { storeToRefs } from "pinia";
 import { ElMessageBox, ElMessage } from "element-plus";
 import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
-import offerQueue from "@/common/useLierenOffer";
+import offerQueue from "@/common/autoOffer/useLierenOffer";
 import { PLAT_LINK_APP } from "@/common/constant";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();

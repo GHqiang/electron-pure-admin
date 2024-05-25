@@ -116,7 +116,7 @@ import { ref, computed } from "vue";
 import { storeToRefs } from "pinia";
 import { ElMessageBox, ElMessage } from "element-plus";
 import { useAppRuleListStore } from "@/store/appTicketRuleTable";
-import ticketQueue from "@/common/ticket/sfcAutoTicket";
+import ticketQueue from "@/common/autoTicket/sfcAutoTicket";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
 const { sfcToken, lmaToken } = storeToRefs(userInfoAndTokens);
