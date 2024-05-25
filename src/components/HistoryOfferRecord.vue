@@ -90,23 +90,18 @@
       stripe
       show-overflow-tooltip
     >
-      <el-table-column prop="orderForm" fixed label="订单来源" width="110" />
-      <el-table-column
-        prop="shadowLineName"
-        fixed
-        label="影线名称"
-        width="110"
-      />
+      <el-table-column prop="platName" fixed label="订单来源" width="110" />
+      <el-table-column prop="appName" fixed label="影线名称" width="110" />
       <el-table-column label="状态" fixed width="60">
         <template #default="scope">
-          <span>{{ scope.row.status === "1" ? "正常" : "禁用" }}</span>
+          <span>{{ scope.row.status === "1" ? "成功" : "失败" }}</span>
         </template>
       </el-table-column>
       <el-table-column prop="orderNumber" fixed label="订单号" width="110" />
       <el-table-column prop="cinema_name" label="影院" width="110" />
       <el-table-column prop="hall_name" label="影厅" width="110" />
       <el-table-column prop="film_name" label="片名" width="110" />
-      <el-table-column prop="seatNum" label="座位数" width="110" />
+      <el-table-column prop="ticket_num" label="座位数" width="110" />
       <el-table-column prop="supplier_end_price" label="中标价" width="110" />
       <el-table-column label="报价类型" width="100">
         <template #default="scope">
@@ -164,13 +159,14 @@ const searchData = () => {
       orderForm, // 订单来源
       shadowLineName, // 影线名称
       status, // 状态
-      offerTypeObj, // 报价类型
+      offerType, // 报价类型
       supplier_end_price, // 中标价
       quanValue // 用券面额
     } = formData;
-    let judge1 = orderForm ? item.orderForm === orderForm : true;
+    console.log("orderForm", orderForm, "shadowLineName", shadowLineName);
+    let judge1 = orderForm ? item.platName === orderForm : true;
     let judge2 = shadowLineName
-      ? item.shadowLineName.indexOf(shadowLineName) !== -1
+      ? item.appName?.indexOf(shadowLineName) >= 0
       : true;
     let judge3 = status ? item.status === status : true;
     let judge4 = offerType ? item.offerType === offerType : true;
@@ -190,7 +186,8 @@ const loadData = () => {
       const offerRecords = await idbApi.getAllOrderRecords(1);
       console.log("历史报价记录===>", offerRecords);
       tableData.value = offerRecords || [];
-    }, 60 * 1000);
+      searchData();
+    }, 6 * 1000);
   } catch (error) {
     console.error("获取历史报价记录失败===>", error);
   }

@@ -180,7 +180,8 @@ class OrderAutoTicketQueue {
         offerRule: res?.offerRule || "",
         offerRuleName: res?.offerRule?.ruleName || "",
         offerType: res?.offerRule?.offerType || "",
-        quanValue: res?.offerRule?.quanValue || ""
+        quanValue: res?.offerRule?.quanValue || "",
+        appName: offerResult?.offerRule?.shadowLineName || ""
       };
       if (res) {
         this.handleSuccessOrderList.push(order);
@@ -324,6 +325,7 @@ async function unlockSeat(order_id) {
 
 // 一键买票逻辑
 const oneClickBuyTicket = async item => {
+  let offerRule;
   try {
     console.log(conPrefix + "一键买票待下单信息", item);
     const {
@@ -351,7 +353,7 @@ const oneClickBuyTicket = async item => {
       );
       return;
     }
-    const offerRule = offerRecord[0];
+    offerRule = offerRecord[0];
     await getCityList();
 
     let city_id = cityList.value.find(
@@ -403,7 +405,7 @@ const oneClickBuyTicket = async item => {
           "需要走转单逻辑"
         );
         await transferOrder(item);
-        return;
+        return { offerRule };
       }
     }
     // 5、使用优惠券或者会员卡
@@ -433,7 +435,7 @@ const oneClickBuyTicket = async item => {
         start_day,
         start_time
       });
-      return;
+      return { offerRule };
     }
     // 6计算订单价格
     const priceInfo = await priceCalculation({
@@ -458,7 +460,7 @@ const oneClickBuyTicket = async item => {
         start_day,
         start_time
       });
-      return;
+      return { offerRule };
     }
     let pay_money = Number(priceInfo.total_price) + ""; // 此处是为了将订单价格30.00转为30，将0.00转为0
     console.log(conPrefix + "订单最后价格", pay_money, priceInfo);
@@ -486,7 +488,7 @@ const oneClickBuyTicket = async item => {
         start_day,
         start_time
       });
-      return;
+      return { offerRule };
     }
     // 8、购买电影票
     const buyRes = await buyTicket({
@@ -508,14 +510,14 @@ const oneClickBuyTicket = async item => {
         start_day,
         start_time
       });
-      return;
+      return { offerRule };
     }
     // 9、支付订单
     const qrcode = await payOrder({ city_id, cinema_id, order_num });
     if (!qrcode) {
       console.error(conPrefix + "获取订单结果失败，单个订单直接出票结束");
       // 后续要记录失败列表（订单信息、失败原因、时间戳）
-      return;
+      return { offerRule };
     }
     // 10、提交取票码
     const submitRes = await submitTicketCode({
@@ -525,12 +527,13 @@ const oneClickBuyTicket = async item => {
     if (!submitRes) {
       console.error(conPrefix + "订单提交取票码失败，单个订单直接出票结束");
       // 后续要记录失败列表（订单信息、失败原因、时间戳）
-      return;
+      return { offerRule };
     }
     console.log(conPrefix + "一键买票完成", qrcode);
     return { profit, submitRes, qrcode, quan_code, card_id, offerRule };
   } catch (error) {
     console.error(conPrefix + "一键买票异常", error);
+    return { offerRule };
   }
 };
 
