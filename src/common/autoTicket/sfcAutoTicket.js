@@ -1,9 +1,11 @@
-import { ref, onMounted, computed } from "vue";
+import { ref, computed } from "vue";
 import { SFC_SPECIAL_CINEMA_LIST } from "@/common/constant";
 
 import sfcApi from "@/api/sfc-api";
 import lierenApi from "@/api/lieren-api";
 import idbApi from "@/api/idbApi";
+import { useStayTicketList } from "@/store/stayTicketList";
+const stayTicketList = useStayTicketList();
 
 import { useAppRuleListStore } from "@/store/appTicketRuleTable";
 const appRuleListStore = useAppRuleListStore();
@@ -43,7 +45,7 @@ class OrderAutoTicketQueue {
       let appQueueRule = getOrginValue(appTicketRuleList.value).filter(
         item => item.isEnabled
       );
-      // console.log(conPrefix + "队列启动的执行规则", appQueueRule);
+      console.log(conPrefix + "队列启动的执行规则", appQueueRule);
       if (!appQueueRule?.length) {
         console.warn(conPrefix + "队列执行规则不存在或者未启用，直接停止");
         await this.stop();
@@ -119,8 +121,7 @@ class OrderAutoTicketQueue {
   async fetchOrders(fetchDelay) {
     try {
       await this.delay(fetchDelay);
-      const stayList = await getStayTicketingList();
-      let sfcStayOfferlist = stayList.filter(item =>
+      let sfcStayOfferlist = getOrginValue(stayTicketList.items).filter(item =>
         ["上影上海", "上海上影", "上影二线"].includes(item.cinema_group)
       );
       return sfcStayOfferlist;
@@ -228,6 +229,14 @@ class OrderAutoTicketQueue {
 // 出票队列实例
 const ticketQueue = new OrderAutoTicketQueue();
 
+// 延时执行
+function delayHandle(time) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve();
+    }, time);
+  });
+}
 // 转单
 const transferOrder = async (order, unlockSeatInfo) => {
   try {
@@ -262,78 +271,6 @@ const transferOrder = async (order, unlockSeatInfo) => {
     console.error(conPrefix + "【转单】异常", error);
   }
 };
-
-// 获取待出票列表
-async function getStayTicketingList() {
-  try {
-    let params = {
-      page: 1,
-      limit: 100,
-      sort: "id",
-      desc: "desc",
-      type: 2
-    };
-    console.log(conPrefix + "获取待出票列表参数", params);
-    const res = await lierenApi.stayTicketingList(params);
-    let mockRes = {
-      success: true,
-      code: 1,
-      message: "成功！",
-      total: 1,
-      data: [
-        {
-          id: 6103159,
-          supplier_id: 714632,
-          order_number: "2024052211291357336",
-          tpp_price: "64.00",
-          ticket_num: 1,
-          city_name: "上海",
-          film_img:
-            "https://gw.alicdn.com/tfscom/i1/O1CN01PTduxS1oVqloZeODY_!!6000000005231-0-alipicbeacon.jpg",
-          cinema_addr: "徐汇区肇嘉浜路1111号美罗城5楼",
-          cinema_name: "上影BOE-α超级影城(美罗城店)",
-          hall_name: "4号厅",
-          film_name: "维和防暴队",
-          show_time: "2024-05-22 13:25:00",
-          section_at: 1716348565,
-          winning_at: 1716348610,
-          lock_if: 1,
-          lockseat: "7排11座",
-          seat_flat: 0,
-          urgent: 0,
-          is_multi: 0,
-          seat_type: 0,
-          cinema_code: "31070901",
-          supplier_end_price: 40,
-          rewards: 0,
-          overdue: 0,
-          cinema_group: "上影上海",
-          type: 0,
-          group_urgent: 0,
-          sytime: 1716349300,
-          orderNumber: "2024052211291357336",
-          processingTime: 1716348623654,
-          orderStatus: "2",
-          qrcode: "",
-          quan_code: "",
-          card_id: "",
-          offerRule: "",
-          offerRuleName: "",
-          offerType: "",
-          quanValue: ""
-        }
-      ],
-      time: 1710125670
-    };
-    let list = mockRes?.data || [];
-    // let list = res?.data || [];
-    console.warn(conPrefix + "待出票列表", list);
-    return list;
-  } catch (error) {
-    console.error(conPrefix + "获取待出票列表异常", error);
-    return [];
-  }
-}
 
 // 单个订单出票
 const singleTicket = async item => {
@@ -415,6 +352,7 @@ const oneClickBuyTicket = async item => {
       return;
     }
     const offerRule = offerRecord[0];
+    await getCityList();
 
     let city_id = cityList.value.find(
       item => item.name.indexOf(city_name) !== -1
@@ -1255,8 +1193,4 @@ async function getCityList() {
   }
 }
 
-onMounted(() => {
-  console.log(conPrefix + `the component is now mounted.`);
-  getCityList();
-});
 export default ticketQueue;

@@ -11,7 +11,7 @@ const platFetchOrderRuleList = computed(() =>
   platTableDataStore.items.filter(item => item.platName === "lieren")
 );
 
-import { useStayTicketList } from "@/store/orderList";
+import { useStayTicketList } from "@/store/stayTicketList";
 const stayTicketList = useStayTicketList();
 const { addNewOrder } = stayTicketList;
 let conPrefix = "【猎人平台自动获取订单队列】——"; // console打印前缀
@@ -104,15 +104,15 @@ async function lierenOrderFetch() {
     //       city_name: "上海",
     //       film_img:
     //         "https://gw.alicdn.com/tfscom/i1/O1CN01PTduxS1oVqloZeODY_!!6000000005231-0-alipicbeacon.jpg",
-    //       cinema_addr: "徐汇区肇嘉浜路1111号美罗城5楼",
-    //       cinema_name: "上影BOE-α超级影城(美罗城店)",
+    //       cinema_addr: "上海市浦东新区张杨路501号第一八佰伴10楼（近浦东南路）",
+    //       cinema_name: "SFC上影百联影城（八佰伴IMAX店）",
     //       hall_name: "4号厅",
-    //       film_name: "维和防暴队",
-    //       show_time: "2024-05-22 13:25:00",
+    //       film_name: "九龙城寨之围城",
+    //       show_time: "2024-05-227 19:25:00",
     //       section_at: 1716348565,
     //       winning_at: 1716348610,
     //       lock_if: 1,
-    //       lockseat: "7排11座",
+    //       lockseat: "7排6座",
     //       seat_flat: 0,
     //       urgent: 0,
     //       is_multi: 0,

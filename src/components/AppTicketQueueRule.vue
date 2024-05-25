@@ -116,12 +116,11 @@ import { ref, computed } from "vue";
 import { storeToRefs } from "pinia";
 import { ElMessageBox, ElMessage } from "element-plus";
 import { useAppRuleListStore } from "@/store/appTicketRuleTable";
-import ticketQueue from "@/common/autoTicket/sfcAutoTicket";
+import sfcTicketQueue from "@/common/autoTicket/sfcAutoTicket";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
 const { sfcToken, lmaToken } = storeToRefs(userInfoAndTokens);
 
-// console.log("ticketQueue===>", ticketQueue);
 const tableDataStore = useAppRuleListStore();
 const displayItems = computed(() => tableDataStore.items);
 
@@ -157,7 +156,7 @@ const oneClickAutoOffer = () => {
       tableDataStore.items.forEach(item => {
         if (item.appName === "sfc" && sfcToken.value) {
           item.isEnabled = true;
-          ticketQueue.start();
+          sfcTicketQueue.start();
         } else if (item.appName === "lumiai" && lmaToken.value) {
           console.log("lumiai==");
           item.isEnabled = true;
@@ -198,7 +197,7 @@ const singleStartOrStop = ({ id, appName }, flag) => {
     }
     tableDataStore.toggleEnable(id);
     if (appName === "sfc") {
-      ticketQueue.start();
+      sfcTicketQueue.start();
     } else if (appName === "lumiai") {
       console.log("lmaToken===>", lmaToken);
     }
