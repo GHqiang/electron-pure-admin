@@ -105,8 +105,7 @@
           />
         </el-select>
       </el-form-item>
-      <template>
-        v-if="isCollapse">
+      <template v-if="isCollapse">
         <el-form-item label="包含城市">
           <el-input
             v-model="formData.includeCityNames"

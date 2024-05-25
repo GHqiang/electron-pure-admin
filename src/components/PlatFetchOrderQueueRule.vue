@@ -1,4 +1,4 @@
-<!-- app自动出票规则设置 -->
+<!-- 平台获取订单规则设置 -->
 <template>
   <el-button
     type="primary"
@@ -15,14 +15,16 @@
     v-throttle
     >一键停止</el-button
   >
-
-  <el-table :data="displayItems" show-overflow-tooltip>
-    <el-table-column prop="appName" label="影院名称">
+  <el-button type="primary" @click="isCollapse = !isCollapse">{{
+    !isCollapse ? "展开" : "收起"
+  }}</el-button>
+  <el-table :data="displayItems" v-if="isCollapse" show-overflow-tooltip>
+    <el-table-column prop="platName" label="平台名称">
       <template #default="{ row, $index }">
-        <span v-if="row.id !== editingRowId">{{ row.appName }}</span>
+        <span v-if="row.id !== editingRowId">{{ row.platName }}</span>
         <el-input
           v-else
-          v-model="editingRow.appName"
+          v-model="editingRow.platName"
           @blur="saveEdit(row.id)"
         />
       </template>
@@ -38,24 +40,18 @@
         />
       </template>
     </el-table-column>
-    <el-table-column prop="handleInterval" label="订单执行间隔">
+    <el-table-column prop="platToken" label="平台Token">
       <template #default="{ row, $index }">
-        <span v-if="row.id !== editingRowId">{{ row.handleInterval }}</span>
-        <el-input-number
+        <span v-if="row.id !== editingRowId">{{ row.platToken }}</span>
+        <el-input
           v-else
-          v-model.number="editingRow.handleInterval"
-          controls-position="right"
+          v-model="editingRow.platToken"
+          show-password
           @blur="saveEdit(row.id)"
         />
       </template>
     </el-table-column>
-    <el-table-column label="影院Token">
-      <template #default="{ row, $index }">
-        <span v-if="row.appName === 'sfc'">{{ sfcToken }}</span>
-        <span v-if="row.appName === 'lumiai'">{{ lmaToken }}</span>
-      </template>
-    </el-table-column>
-    <el-table-column label="队列执行状态">
+    <el-table-column label="状态">
       <template #default="{ row }">
         <el-switch disabled v-model="row.isEnabled" />
       </template>
@@ -126,15 +122,16 @@
 import { ref, computed } from "vue";
 import { storeToRefs } from "pinia";
 import { ElMessageBox, ElMessage } from "element-plus";
-import { useAppRuleListStore } from "@/store/appTicketRuleTable";
-import ticketQueue from "@/common/ticket/sfcAutoTicket";
-import { appUserInfo } from "@/store/appUserInfo";
-const userInfoAndTokens = appUserInfo();
-const { sfcToken, lmaToken } = storeToRefs(userInfoAndTokens);
+import { usePlatFetchOrderStore } from "@/store/platOfferRuleTable";
+import lierenFetchOrder from "@/common/orderFetch/lierenFetchOrder";
 
-// console.log("ticketQueue===>", ticketQueue);
-const tableDataStore = useAppRuleListStore();
+const tableDataStore = usePlatFetchOrderStore();
 const displayItems = computed(() => tableDataStore.items);
+import { platTokens } from "@/store/platTokens";
+// 平台toke列表
+const platTokenInfo = platTokens();
+// const { lierenToken } = storeToRefs(platTokenInfo);
+const { lierenToken, setLierenPlatToken } = platTokenInfo;
 
 // 是否显示一键启动
 const isActiveOneClickStart = computed(() => {
@@ -148,6 +145,9 @@ const isActiveOneClickStart = computed(() => {
 const isActiveOneClickStop = computed(() => {
   return tableDataStore.items.filter(item => item.isEnabled).length > 0;
 });
+
+// 是否展开
+const isCollapse = ref(true);
 // 正在编辑id
 const editingRowId = ref(null);
 // 正在编辑内容
@@ -155,7 +155,7 @@ const editingRow = ref({});
 
 // 一键启动
 const oneClickAutoOffer = () => {
-  ElMessageBox.confirm("确定要一键全部启动吗?", "提示", {
+  ElMessageBox.confirm("确定要一键启动吗?", "提示", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
     type: "warning",
@@ -164,14 +164,14 @@ const oneClickAutoOffer = () => {
     closeOnPressEscape: false
   })
     .then(() => {
-      console.warn("一键启动全部自动出票队列");
+      console.warn("一键启动订单自动获取队列");
       tableDataStore.items.forEach(item => {
-        if (item.appName === "sfc" && sfcToken.value) {
-          item.isEnabled = true;
-          ticketQueue.start();
-        } else if (item.appName === "lumiai" && lmaToken.value) {
-          console.log("lumiai==");
-          item.isEnabled = true;
+        item.isEnabled = true;
+        if (item.platName === "lieren") {
+          if (!lierenToken) {
+            setLierenPlatToken(platToken);
+          }
+          lierenFetchOrder.start();
         }
       });
     })
@@ -188,7 +188,7 @@ const stopAutoOffer = () => {
     closeOnPressEscape: false
   })
     .then(() => {
-      console.warn("一键停止自动出票队列");
+      console.warn("一键停止订单自动获取队列");
       tableDataStore.items.forEach(item => {
         item.isEnabled = false;
       });
@@ -197,24 +197,16 @@ const stopAutoOffer = () => {
 };
 
 // 单个启动或停止
-const singleStartOrStop = ({ id, appName }, flag) => {
-  // 单个启动
+const singleStartOrStop = ({ id, platToken, platName }, flag) => {
   if (flag === 1) {
-    console.log("sfcToken", sfcToken);
-    let sfcCheckFail = appName === "sfc" && !sfcToken.value;
-    let lmaCheckFail = appName === "lumiai" && !lmaToken.value;
-    if (sfcCheckFail || lmaCheckFail) {
-      ElMessage.error(appName + "未登录，请先去影院登录页面登录后再启动");
-      return;
-    }
-    tableDataStore.toggleEnable(id);
-    if (appName === "sfc") {
-      ticketQueue.start();
-    } else if (appName === "lumiai") {
-      console.log("lmaToken===>", lmaToken);
+    if (platName === "lieren") {
+      if (!lierenToken) {
+        setLierenPlatToken(platToken);
+      }
+      tableDataStore.toggleEnable(id);
+      lierenFetchOrder.start();
     }
   } else {
-    // 单个停止
     tableDataStore.toggleEnable(id);
   }
 };
