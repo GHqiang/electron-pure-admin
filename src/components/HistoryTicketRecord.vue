@@ -5,7 +5,7 @@
     <el-form :inline="true" class="demo-form-inline">
       <el-form-item label="订单来源">
         <el-select
-          v-model="formData.orderForm"
+          v-model="formData.platName"
           placeholder="订单来源"
           style="width: 194px"
           clearable
@@ -20,7 +20,7 @@
       </el-form-item>
       <el-form-item label="影线名称">
         <el-select
-          v-model="formData.shadowLineName"
+          v-model="formData.appName"
           placeholder="影线名称"
           style="width: 194px"
           clearable
@@ -91,12 +91,7 @@
       show-overflow-tooltip
     >
       <el-table-column prop="platName" fixed label="订单来源" width="110" />
-      <el-table-column
-        prop="appName"
-        fixed
-        label="影线名称"
-        width="110"
-      />
+      <el-table-column prop="appName" fixed label="影线名称" width="110" />
       <el-table-column label="状态" fixed width="60">
         <template #default="scope">
           <span>{{ scope.row.status === "1" ? "成功" : "失败" }}</span>
@@ -145,8 +140,8 @@ const offerTypeObj = {
 
 // 表单查询数据
 const formData = reactive({
-  orderForm: "lieren", // 订单来源
-  shadowLineName: "sfc", // 影线名称
+  platName: "lieren", // 订单来源
+  appName: "", // 影线名称
   status: "", // 状态
   offerType: "", // 报价类型
   supplier_end_price: "", // 中标价
@@ -161,17 +156,15 @@ const searchData = () => {
   console.log("tableData==>", toRaw(tableData.value));
   tableDataFilter.value = tableData.value.filter(item => {
     const {
-      orderForm, // 订单来源
-      shadowLineName, // 影线名称
+      platName, // 订单来源
+      appName, // 影线名称
       status, // 状态
       offerType, // 报价类型
       supplier_end_price, // 中标价
       quanValue // 用券面额
     } = formData;
-    let judge1 = orderForm ? item.platName === orderForm : true;
-    let judge2 = shadowLineName
-      ? item.appName?.indexOf(shadowLineName) >= 0
-      : true;
+    let judge1 = platName ? item.platName === platName : true;
+    let judge2 = appName ? item.appName?.indexOf(appName) >= 0 : true;
     let judge3 = status ? item.status === status : true;
     let judge4 = offerType ? item.offerType === offerType : true;
     let judge5 = supplier_end_price
@@ -203,8 +196,8 @@ setTimeout(() => {
 
 // 重置表单
 const resetForm = () => {
-  formData.orderForm = "1";
-  formData.shadowLineName = "sfc"; // 影线名称
+  formData.platName = "lieren";
+  formData.appName = "sfc"; // 影线名称
   formData.status = ""; // 状态
   formData.offerType = ""; // 报价类型
   formData.supplier_end_price = ""; // 中标价
