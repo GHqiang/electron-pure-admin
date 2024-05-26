@@ -114,7 +114,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, toRaw } from "vue";
+import { ref, reactive, onBeforeUnmount, toRaw } from "vue";
 import idbApi from "@/api/idbApi";
 import { ORDER_FORM } from "@/common/constant.js";
 console.log("ORDER_FORM", ORDER_FORM);
@@ -150,7 +150,7 @@ const formData = reactive({
 
 // 搜索过滤后的数据
 const tableDataFilter = ref([]);
-
+let timer;
 // 搜索数据
 const searchData = () => {
   console.log("tableData==>", toRaw(tableData.value));
@@ -179,7 +179,7 @@ const searchData = () => {
 
 const loadData = () => {
   try {
-    setInterval(async () => {
+    timer = setInterval(async () => {
       const offerRecords = await idbApi.getAllOrderRecords();
       console.log("历史出票记录===>", offerRecords);
       tableData.value = offerRecords || [];
@@ -203,4 +203,8 @@ const resetForm = () => {
   formData.supplier_end_price = ""; // 中标价
   formData.quanValue = ""; // 是否报价
 };
+onBeforeUnmount(() => {
+  clearInterval(timer);
+  timer = null;
+});
 </script>
