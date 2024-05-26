@@ -8,7 +8,8 @@ import {
   Menu,
   shell,
   ipcMain,
-  BrowserWindow
+  BrowserWindow,
+  dialog
 } from "electron";
 
 // The built directory structure
@@ -61,6 +62,38 @@ function createMenu(label = "进入全屏幕") {
   Menu.setApplicationMenu(menu);
 }
 
+// 设置截止日期
+const expirationDate = new Date('2024-06-26 11:15:00')
+let expirationCheckIntervalId;
+
+function isExpired() {
+    const currentDate = new Date();
+    return currentDate >= expirationDate;
+}
+
+function startExpirationCheck() {
+    expirationCheckIntervalId = setInterval(() => {
+        if (isExpired()) {
+            clearInterval(expirationCheckIntervalId);
+            showExpirationDialogAndQuit();
+        }
+    }, 10 * 1000); // 每分钟检查一次
+}
+
+function showExpirationDialogAndQuit() {
+    let options: any = null;
+    options = {
+        type: 'warning',
+        title: 'Application Expired',
+        message: 'This application has expired and will now close.',
+        detail: 'Please contact the application provider for further assistance.',
+        buttons: ['OK'],
+    };
+
+    dialog.showMessageBox(options).then(() => {
+        app.quit();
+    });
+}
 async function createWindow() {
   win = new BrowserWindow({
     width: 1024,
@@ -113,7 +146,11 @@ async function createWindow() {
   });
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  createWindow()
+  // 开启定期过期检查
+  startExpirationCheck();
+});
 
 app.on("window-all-closed", () => {
   win = null;
@@ -146,7 +183,7 @@ const appMenu = (fullscreenLabel: string) => {
     { label: "退出", role: "quit" }
   ];
   // 生产环境删除开发者工具菜单
-  if (!isDev) menuItems.splice(1, 1);
+  // if (!isDev) menuItems.splice(1, 1);
   const template = [
     {
       label: app.name,
