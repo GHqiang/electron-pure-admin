@@ -188,7 +188,7 @@ const loadData = () => {
       console.log("历史出票记录===>", offerRecords);
       tableData.value = offerRecords || [];
       searchData();
-    }, 6 * 1000);
+    }, 60 * 1000);
   } catch (error) {
     console.error("获取历史出票记录失败===>", error);
   }

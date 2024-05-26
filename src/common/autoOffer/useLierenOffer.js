@@ -253,57 +253,57 @@ async function getStayOfferList() {
     };
     console.log(conPrefix + "获取待报价订单列表参数", params);
     const res = await lierenApi.stayTicketingList(params);
-    let mockRes = {
-      success: true,
-      code: 1,
-      message: "成功！",
-      total: 1,
-      data: [
-        {
-          id: 6103172,
-          supplier_id: 714632,
-          order_number: "2024052211291357372",
-          tpp_price: "61.00",
-          ticket_num: 1,
-          city_name: "上海",
-          film_img:
-            "https://gw.alicdn.com/tfscom/i1/O1CN01PTduxS1oVqloZeODY_!!6000000005231-0-alipicbeacon.jpg",
-          cinema_addr: "上海市浦东新区张杨路501号第一八佰伴10楼（近浦东南路）",
-          cinema_name: "上海华夏久金国际影城",
-          hall_name: "1厅",
-          film_name: "末路狂花钱",
-          show_time: "2024-05-27 20:50:00",
-          section_at: 1716348565,
-          winning_at: 1716348610,
-          lock_if: 1,
-          lockseat: "3排2座",
-          seat_flat: 0,
-          urgent: 0,
-          is_multi: 0,
-          seat_type: 0,
-          cinema_code: "31070901",
-          supplier_end_price: 40,
-          rewards: 0,
-          overdue: 0,
-          cinema_group: "久金国际",
-          type: 0,
-          group_urgent: 0,
-          sytime: 1716349300,
-          orderNumber: "2024052211291357372",
-          processingTime: 1716348629972,
-          qrcode: "",
-          quan_code: "",
-          card_id: "",
-          offerRule: "",
-          offerRuleName: "",
-          offerType: "",
-          quanValue: ""
-        }
-      ],
-      time: 1710125670
-    };
-    let list = mockRes?.data || [];
-    // let list = res?.data || [];
+    // let mockRes = {
+    //   success: true,
+    //   code: 1,
+    //   message: "成功！",
+    //   total: 1,
+    //   data: [
+    //     {
+    //       id: 6103172,
+    //       supplier_id: 714632,
+    //       order_number: "2024052211291357372",
+    //       tpp_price: "61.00",
+    //       ticket_num: 1,
+    //       city_name: "上海",
+    //       film_img:
+    //         "https://gw.alicdn.com/tfscom/i1/O1CN01PTduxS1oVqloZeODY_!!6000000005231-0-alipicbeacon.jpg",
+    //       cinema_addr: "上海市浦东新区张杨路501号第一八佰伴10楼（近浦东南路）",
+    //       cinema_name: "上海华夏久金国际影城",
+    //       hall_name: "1厅",
+    //       film_name: "末路狂花钱",
+    //       show_time: "2024-05-27 20:50:00",
+    //       section_at: 1716348565,
+    //       winning_at: 1716348610,
+    //       lock_if: 1,
+    //       lockseat: "3排2座",
+    //       seat_flat: 0,
+    //       urgent: 0,
+    //       is_multi: 0,
+    //       seat_type: 0,
+    //       cinema_code: "31070901",
+    //       supplier_end_price: 40,
+    //       rewards: 0,
+    //       overdue: 0,
+    //       cinema_group: "久金国际",
+    //       type: 0,
+    //       group_urgent: 0,
+    //       sytime: 1716349300,
+    //       orderNumber: "2024052211291357372",
+    //       processingTime: 1716348629972,
+    //       qrcode: "",
+    //       quan_code: "",
+    //       card_id: "",
+    //       offerRule: "",
+    //       offerRuleName: "",
+    //       offerType: "",
+    //       quanValue: ""
+    //     }
+    //   ],
+    //   time: 1710125670
+    // };
+    // let list = mockRes?.data || [];
+    let list = res?.data || [];
     console.log(conPrefix + "获取待报价列表返回", list);
     return list;
   } catch (error) {

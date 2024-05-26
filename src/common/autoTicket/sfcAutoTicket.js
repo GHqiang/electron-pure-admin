@@ -1,6 +1,7 @@
 import { ref, computed } from "vue";
 import { storeToRefs } from "pinia";
 import { SFC_SPECIAL_CINEMA_LIST } from "@/common/constant";
+import { getCurrentFormattedDateTime } from "@/utils/utils";
 
 import sfcApi from "@/api/sfc-api";
 import lierenApi from "@/api/lieren-api";
@@ -102,8 +103,9 @@ class OrderAutoTicketQueue {
           const res = await this.orderHandle(order, processDelay);
           // res: { profit, submitRes, qrcode, quan_code, card_id, offerRule } || undefined
           console.warn(
-            conPrefix + `单个订单自动出票${res ? "成功" : "失败"}`,
-            order
+            conPrefix + `单个订单自动出票${res?.submitRes ? "成功" : "失败"}`,
+            order,
+            res
           );
           // 添加订单处理记录
           await this.addOrderHandleRecored(order, res);
@@ -185,7 +187,7 @@ class OrderAutoTicketQueue {
         offerRuleName: res?.offerRule?.ruleName || "",
         offerType: res?.offerRule?.offerType || "",
         quanValue: res?.offerRule?.quanValue || "",
-        appName: offerResult?.offerRule?.shadowLineName || ""
+        appName: res?.offerRule?.shadowLineName || ""
       };
       if (res) {
         this.handleSuccessOrderList.push(order);

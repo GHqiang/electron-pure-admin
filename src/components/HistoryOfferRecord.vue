@@ -189,7 +189,7 @@ const loadData = () => {
       console.log("历史报价记录===>", offerRecords);
       tableData.value = offerRecords || [];
       searchData();
-    }, 6 * 1000);
+    }, 60 * 1000);
   } catch (error) {
     console.error("获取历史报价记录失败===>", error);
   }
