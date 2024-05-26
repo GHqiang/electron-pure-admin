@@ -26,10 +26,10 @@
           clearable
         >
           <el-option
-            v-for="(item, index) in shadowLineList"
-            :key="index"
-            :label="item.label"
-            :value="item.value"
+            v-for="(keyValue, keyName) in shadowLineObj"
+            :key="keyName"
+            :label="keyValue"
+            :value="keyName"
           />
         </el-select>
       </el-form-item>
@@ -90,8 +90,16 @@
       stripe
       show-overflow-tooltip
     >
-      <el-table-column prop="platName" fixed label="订单来源" width="110" />
-      <el-table-column prop="appName" fixed label="影线名称" width="110" />
+      <el-table-column prop="platName" fixed label="订单来源" width="110">
+        <template #default="scope">
+          <span>{{ orderFormObj[scope.row.platName] }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column prop="appName" fixed label="影线名称" width="110">
+        <template #default="scope">
+          <span>{{ shadowLineObj[scope.row.appName] }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="状态" fixed width="60">
         <template #default="scope">
           <span>{{ scope.row.status === "1" ? "成功" : "失败" }}</span>
@@ -116,7 +124,7 @@
 <script setup>
 import { ref, reactive, onBeforeUnmount, toRaw } from "vue";
 import idbApi from "@/api/idbApi";
-import { ORDER_FORM } from "@/common/constant.js";
+import { ORDER_FORM, APP_LIST } from "@/common/constant.js";
 console.log("ORDER_FORM", ORDER_FORM);
 // 订单来源
 const orderFormObj = ORDER_FORM;
@@ -125,11 +133,7 @@ const orderFormObj = ORDER_FORM;
 const tableData = ref([]);
 
 // 影线列表
-const shadowLineList = ref([
-  { value: "sfc", label: "sfc" },
-  { value: "选项2", label: "影线2" },
-  { value: "选项3", label: "影线3" }
-]);
+const shadowLineObj = APP_LIST;
 
 // 报价类型枚举
 const offerTypeObj = {

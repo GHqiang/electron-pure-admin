@@ -25,11 +25,19 @@
         />
       </el-form-item>
       <el-form-item label="影线名称">
-        <el-input
+        <el-select
           v-model="formData.shadowLineName"
-          placeholder="请输入影线名称"
+          placeholder="影线名称"
+          style="width: 194px"
           clearable
-        />
+        >
+          <el-option
+            v-for="(keyValue, keyName) in shadowLineObj"
+            :key="keyName"
+            :label="keyValue"
+            :value="keyName"
+          />
+        </el-select>
       </el-form-item>
       <el-form-item :label="`状&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;态`">
         <el-select
@@ -178,10 +186,10 @@
               style="width: 120px; margin-left: -1px"
             >
               <el-option
-                v-for="item in shadowLineList"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
+                v-for="(keyValue, keyName) in shadowLineObj"
+                :key="keyName"
+                :label="keyValue"
+                :value="keyName"
               />
             </el-select>
             &nbsp;&nbsp;新增
@@ -213,12 +221,11 @@
           <span>{{ orderFormObj[scope.row.orderForm] }}</span>
         </template>
       </el-table-column>
-      <el-table-column
-        prop="shadowLineName"
-        fixed
-        label="影线名称"
-        width="90"
-      />
+      <el-table-column prop="shadowLineName" fixed label="影线名称" width="90">
+        <template #default="scope">
+          <span>{{ shadowLineObj[scope.row.shadowLineName] }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="状态" fixed width="60">
         <template #default="scope">
           <span>{{ scope.row.status === "1" ? "正常" : "禁用" }}</span>
@@ -345,7 +352,7 @@
 import { ref, reactive, computed, toRaw } from "vue";
 import { ElMessageBox, ElMessage } from "element-plus";
 import SfcRuleDialog from "@/components/SfcRuleDialog.vue";
-import { ORDER_FORM } from "@/common/constant";
+import { ORDER_FORM, APP_LIST } from "@/common/constant";
 import { useDataTableStore } from "@/store/offerRule";
 const dataTableStore = useDataTableStore();
 dataTableStore.fetchItemsFromLocalStorage();
@@ -358,7 +365,7 @@ const isCollapse = ref(false);
 // 订单来源枚举
 // 订单来源
 const orderFormObj = ref(ORDER_FORM);
-
+const shadowLineObj = APP_LIST;
 // 报价类型枚举
 const offerTypeObj = {
   1: "日常固定价",
@@ -479,11 +486,6 @@ searchData();
 // sfc弹框实例
 const sfcDialogRef = ref(null);
 const dialogTitle = ref("新增");
-const shadowLineList = ref([
-  { value: "sfc", label: "sfc" },
-  { value: "选项2", label: "影线2" },
-  { value: "选项3", label: "影线3" }
-]);
 const shadowLine = ref("sfc");
 
 // 新增规则

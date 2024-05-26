@@ -3,6 +3,11 @@ const ORDER_FORM = {
   lieren: "猎人",
   shengapp: "省APP"
 };
+// 影院列表
+const APP_LIST = {
+  sfc: "上影",
+  jiujin: "久金"
+};
 // 平台关联应用
 const PLAT_LINK_APP = {
   lieren: ["sfc", "lumiai"],
@@ -73,4 +78,4 @@ const SFC_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "SFC上影影城贵阳云上方舟店"
   }
 ];
-export { ORDER_FORM, PLAT_LINK_APP, SFC_SPECIAL_CINEMA_LIST };
+export { ORDER_FORM, APP_LIST, PLAT_LINK_APP, SFC_SPECIAL_CINEMA_LIST };

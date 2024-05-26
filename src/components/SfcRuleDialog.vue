@@ -25,7 +25,18 @@
           </el-select>
         </el-form-item>
         <el-form-item label="影线名称">
-          <el-input v-model="formData.shadowLineName" disabled clearable />
+          <el-select
+            v-model="formData.shadowLineName"
+            placeholder="请选择影线名称"
+            clearable
+          >
+            <el-option
+              v-for="(keyValue, keyName) in shadowLineObj"
+              :key="keyName"
+              :label="keyValue"
+              :value="keyName"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="规则名称">
           <el-input v-model="formData.ruleName" clearable />
@@ -344,7 +355,7 @@
 import sfcApi from "@/api/sfc-api";
 import { ref, reactive, computed, onMounted, toRaw } from "vue";
 import { ElLoading } from "element-plus";
-import { ORDER_FORM } from "@/common/constant";
+import { ORDER_FORM, APP_LIST } from "@/common/constant";
 const ruleFormRef = ref(null);
 // 父传子props
 defineProps({
@@ -361,7 +372,7 @@ const showSfcDialog = ref(false);
 
 // 订单来源
 const orderFormObj = ref(ORDER_FORM);
-
+const shadowLineObj = APP_LIST;
 // 表单数据
 let formData = reactive({
   id: "",
