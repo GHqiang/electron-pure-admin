@@ -376,7 +376,7 @@ const offerTypeObj = {
 const formData = reactive({
   orderForm: "lieren", // 订单来源
   ruleName: "", // 规则名称
-  shadowLineName: "sfc", // 影线名称
+  shadowLineName: "", // 影线名称
   status: "", // 状态
   offerType: "", // 报价类型
   offerAmount: "", // 报价金额

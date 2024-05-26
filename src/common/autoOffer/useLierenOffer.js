@@ -1,8 +1,9 @@
-import { ref, onMounted, computed, toRaw } from "vue";
+import { ref, computed, toRaw } from "vue";
 import { isTimeAfter } from "@/utils/utils";
 import { SFC_SPECIAL_CINEMA_LIST } from "@/common/constant";
 
 import sfcApi from "@/api/sfc-api";
+import jiujinApi from "@/api/jiujin-api";
 import lierenApi from "@/api/lieren-api";
 import idbApi from "@/api/idbApi";
 import { platTokens } from "@/store/platTokens";
@@ -122,8 +123,10 @@ class OrderAutoOfferQueue {
     try {
       await this.delay(fetchDelay);
       const stayList = await getStayOfferList();
-      let sfcStayOfferlist = stayList.filter(item =>
-        ["上影上海", "上海上影", "上影二线"].includes(item.cinema_group)
+      let sfcStayOfferlist = stayList.filter(
+        item =>
+          ["上影上海", "上海上影", "上影二线"].includes(item.cinema_group) ||
+          ["久金国际"].includes(item.cinema_group)
       );
       return sfcStayOfferlist;
     } catch (error) {
@@ -250,58 +253,57 @@ async function getStayOfferList() {
     };
     console.log(conPrefix + "获取待报价订单列表参数", params);
     const res = await lierenApi.stayTicketingList(params);
-    // let mockRes = {
-    //   success: true,
-    //   code: 1,
-    //   message: "成功！",
-    //   total: 1,
-    //   data: [
-    //     {
-    //       id: 6103159,
-    //       supplier_id: 714632,
-    //       order_number: "2024052211291357336",
-    //       tpp_price: "64.00",
-    //       ticket_num: 1,
-    //       city_name: "上海",
-    //       film_img:
-    //         "https://gw.alicdn.com/tfscom/i1/O1CN01PTduxS1oVqloZeODY_!!6000000005231-0-alipicbeacon.jpg",
-    //       cinema_addr: "上海市浦东新区张杨路501号第一八佰伴10楼（近浦东南路）",
-    //       cinema_name: "SFC上影百联影城（八佰伴IMAX店）",
-    //       hall_name: "4号厅",
-    //       film_name: "九龙城寨之围城",
-    //       show_time: "2024-05-227 19:25:00",
-    //       section_at: 1716348565,
-    //       winning_at: 1716348610,
-    //       lock_if: 1,
-    //       lockseat: "7排6座",
-    //       seat_flat: 0,
-    //       urgent: 0,
-    //       is_multi: 0,
-    //       seat_type: 0,
-    //       cinema_code: "31070901",
-    //       supplier_end_price: 40,
-    //       rewards: 0,
-    //       overdue: 0,
-    //       cinema_group: "上影上海",
-    //       type: 0,
-    //       group_urgent: 0,
-    //       sytime: 1716349300,
-    //       orderNumber: "2024052211291357336",
-    //       processingTime: 1716348623654,
-    //       orderStatus: "2",
-    //       qrcode: "",
-    //       quan_code: "",
-    //       card_id: "",
-    //       offerRule: "",
-    //       offerRuleName: "",
-    //       offerType: "",
-    //       quanValue: ""
-    //     }
-    //   ],
-    //   time: 1710125670
-    // };
-    // let list = mockRes?.data || [];
-    let list = res?.data || [];
+    let mockRes = {
+      success: true,
+      code: 1,
+      message: "成功！",
+      total: 1,
+      data: [
+        {
+          id: 6103172,
+          supplier_id: 714632,
+          order_number: "2024052211291357372",
+          tpp_price: "61.00",
+          ticket_num: 1,
+          city_name: "上海",
+          film_img:
+            "https://gw.alicdn.com/tfscom/i1/O1CN01PTduxS1oVqloZeODY_!!6000000005231-0-alipicbeacon.jpg",
+          cinema_addr: "上海市浦东新区张杨路501号第一八佰伴10楼（近浦东南路）",
+          cinema_name: "上海华夏久金国际影城",
+          hall_name: "1厅",
+          film_name: "末路狂花钱",
+          show_time: "2024-05-27 20:50:00",
+          section_at: 1716348565,
+          winning_at: 1716348610,
+          lock_if: 1,
+          lockseat: "3排2座",
+          seat_flat: 0,
+          urgent: 0,
+          is_multi: 0,
+          seat_type: 0,
+          cinema_code: "31070901",
+          supplier_end_price: 40,
+          rewards: 0,
+          overdue: 0,
+          cinema_group: "久金国际",
+          type: 0,
+          group_urgent: 0,
+          sytime: 1716349300,
+          orderNumber: "2024052211291357372",
+          processingTime: 1716348629972,
+          qrcode: "",
+          quan_code: "",
+          card_id: "",
+          offerRule: "",
+          offerRuleName: "",
+          offerType: "",
+          quanValue: ""
+        }
+      ],
+      time: 1710125670
+    };
+    let list = mockRes?.data || [];
+    // let list = res?.data || [];
     console.log(conPrefix + "获取待报价列表返回", list);
     return list;
   } catch (error) {
@@ -349,14 +351,21 @@ async function singleOffer(item) {
 // 获取电影放映信息
 async function getMoviePlayInfo(data) {
   try {
-    let { city_id, cinema_id } = data || {};
+    let { city_id, cinema_id, cinema_group } = data || {};
     let params = {
       city_id: city_id,
       cinema_id: cinema_id,
       width: "500"
     };
     console.log(conPrefix + "获取电影放映信息参数", params);
-    const res = await sfcApi.getMoviePlayInfo(params);
+    let isJiujin = ["久金国际"].includes(cinema_group);
+    let isSfc = ["上影", "上影二线"].includes(cinema_group);
+    let res;
+    if (isSfc) {
+      res = await sfcApi.getMoviePlayInfo(params);
+    } else if (isJiujin) {
+      res = await jiujinApi.getMoviePlayInfo(params);
+    }
     console.log(conPrefix + "获取电影放映信息返回", res);
     return res.data;
   } catch (error) {
@@ -763,7 +772,8 @@ const getCinemaId = (cinema_name, list) => {
 const getMovieInfo = async item => {
   try {
     // 1、获取影院列表拿到影院id
-    const { city_name, cinema_name, film_name, show_time } = item;
+    const { city_name, cinema_name, film_name, show_time, cinema_group } = item;
+    await getCityList(cinema_group);
     let city_id = cityList.value.find(
       item => item.name.indexOf(city_name) !== -1
     )?.id;
@@ -771,7 +781,14 @@ const getMovieInfo = async item => {
       city_id: city_id
     };
     console.log(conPrefix + "获取城市影院参数", params);
-    const res = await sfcApi.getCinemaList(params);
+    let isJiujin = ["久金国际"].includes(cinema_group);
+    let isSfc = ["上影", "上影二线"].includes(cinema_group);
+    let res;
+    if (isSfc) {
+      res = await sfcApi.getCinemaList(params);
+    } else if (isJiujin) {
+      res = await jiujinApi.getCinemaList(params);
+    }
     console.log(conPrefix + "获取城市影院返回", res);
     let cinemaList = res.data?.cinema_data || [];
     let cinema_id = getCinemaId(cinema_name, cinemaList);
@@ -780,7 +797,11 @@ const getMovieInfo = async item => {
       return;
     }
     // 2、获取影院放映信息拿到会员价
-    const moviePlayInfo = await getMoviePlayInfo({ city_id, cinema_id });
+    const moviePlayInfo = await getMoviePlayInfo({
+      city_id,
+      cinema_id,
+      cinema_group
+    });
     // 3、匹配订单拿到会员价
     const { movie_data } = moviePlayInfo;
     let movieInfo = movie_data.find(
@@ -800,21 +821,23 @@ const getMovieInfo = async item => {
 };
 
 // 获取城市列表
-async function getCityList() {
+async function getCityList(cinema_group) {
   try {
     let params = {};
     console.log(conPrefix + "获取城市列表参数", params);
-    const res = await sfcApi.getCityList(params);
+    let isJiujin = ["久金国际"].includes(cinema_group);
+    let isSfc = ["上影", "上影二线"].includes(cinema_group);
+    let res;
+    if (isSfc) {
+      res = await sfcApi.getCityList(params);
+    } else if (isJiujin) {
+      res = await jiujinApi.getCityList(params);
+    }
     console.log(conPrefix + "获取城市列表返回", res);
     cityList.value = res.data.all_city || [];
   } catch (error) {
     console.error(conPrefix + "获取城市列表异常", error);
   }
 }
-
-onMounted(() => {
-  console.log(conPrefix + "onMounted===>获取城市列表");
-  getCityList();
-});
 
 export default offerQueue;

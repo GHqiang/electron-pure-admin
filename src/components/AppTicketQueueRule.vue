@@ -42,6 +42,7 @@
       <template #default="{ row, $index }">
         <span v-if="row.appName === 'sfc'">{{ sfcToken }}</span>
         <span v-if="row.appName === 'lumiai'">{{ lmaToken }}</span>
+        <span v-if="row.appName === 'jiujin'">{{ jiujinToken }}</span>
       </template>
     </el-table-column>
     <el-table-column label="队列执行状态">
@@ -117,9 +118,10 @@ import { storeToRefs } from "pinia";
 import { ElMessageBox, ElMessage } from "element-plus";
 import { useAppRuleListStore } from "@/store/appTicketRuleTable";
 import sfcTicketQueue from "@/common/autoTicket/sfcAutoTicket";
+import jiujinTicketQueue from "@/common/autoTicket/jiujinAutoTicket";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
-const { sfcToken, lmaToken } = storeToRefs(userInfoAndTokens);
+const { sfcToken, lmaToken, jiujinToken } = storeToRefs(userInfoAndTokens);
 
 const tableDataStore = useAppRuleListStore();
 const displayItems = computed(() => tableDataStore.items);
@@ -160,6 +162,9 @@ const oneClickAutoOffer = () => {
         } else if (item.appName === "lumiai" && lmaToken.value) {
           console.log("lumiai==");
           item.isEnabled = true;
+        } else if (item.appName === "jiujin" && jiujinToken.value) {
+          item.isEnabled = true;
+          jiujinTicketQueue.start();
         }
       });
     })
@@ -190,7 +195,8 @@ const singleStartOrStop = ({ id, appName }, flag) => {
   if (flag === 1) {
     let sfcCheckFail = appName === "sfc" && !sfcToken.value;
     let lmaCheckFail = appName === "lumiai" && !lmaToken.value;
-    if (sfcCheckFail || lmaCheckFail) {
+    let jiujinCheckFail = appName === "jiujin" && !jiujinToken.value;
+    if (sfcCheckFail || lmaCheckFail || jiujinCheckFail) {
       ElMessage.error(appName + "未登录，请先去影院登录页面登录后再启动");
       return;
     }
@@ -199,6 +205,8 @@ const singleStartOrStop = ({ id, appName }, flag) => {
       sfcTicketQueue.start();
     } else if (appName === "lumiai") {
       console.log("lmaToken===>", lmaToken);
+    } else if (appName === "jiujin") {
+      jiujinTicketQueue.start();
     }
   } else {
     // 单个停止
