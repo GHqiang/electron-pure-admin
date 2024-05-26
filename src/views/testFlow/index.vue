@@ -232,11 +232,15 @@
 
 <script setup>
 import { ref, onMounted, computed } from "vue";
+import { storeToRefs } from "pinia";
 import { getCurrentFormattedDateTime } from "@/utils/utils";
 import sfcApi from "@/api/sfc-api";
 import lierenApi from "@/api/lieren-api";
-import { userStore } from "@/store/counter";
-const user = userStore();
+import { appUserInfo } from "@/store/appUserInfo";
+const userInfoAndTokens = appUserInfo();
+const { sfcUserMobile, jiujinUserMobile } = storeToRefs(userInfoAndTokens);
+const { removeSfcUserInfo, removeJiujinUserInfo } = userInfoAndTokens;
+
 import { useRouter } from "vue-router";
 const router = useRouter();
 
@@ -866,7 +870,7 @@ async function createOrder(data) {
       show_id,
       seat_ids,
       seat_info, // 座位描述，如：7排11号,7排10号
-      phone: user?.userInfo?.mobile || "", // 用户手机号
+      phone: sfcUserMobile || "", // 用户手机号
       additional_goods_info: "", // 附加商品信息
       companion_info: "", // 携伴信息
       goods_info: "", // 商品信息
@@ -1272,15 +1276,11 @@ async function logout() {
     const res = await sfcApi.logout(params);
     console.log("退出登录返回", res);
     router.push("/login");
-    window.localStorage.removeItem("userInfo");
-    window.localStorage.removeItem("platToken");
   } catch (error) {
     console.warn("退出登录异常", error);
     router.push("/login");
-    window.localStorage.removeItem("userInfo");
-    window.localStorage.removeItem("platToken");
   } finally {
-    user.setUserInfo({});
+    removeSfcUserInfo({});
   }
 }
 

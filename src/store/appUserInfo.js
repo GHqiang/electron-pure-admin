@@ -14,15 +14,19 @@ export const appUserInfo = defineStore("appUserInfo", {
     }
   }),
   getters: {
-    sfcUserMobile(state) {
-      return state.allUserInfo?.sfc?.mobile || "";
-    },
     // sfc上影token
     sfcToken(state) {
       return state.allUserInfo?.sfc?.session_id || "";
     },
+    sfcUserMobile(state) {
+      return state.allUserInfo?.sfc?.mobile || "";
+    },
+    // 久金token
     jiujinToken(state) {
       return state.allUserInfo?.jiujin?.session_id || "";
+    },
+    jiujinUserMobile(state) {
+      return state.allUserInfo?.jiujin?.mobile || "";
     },
     lmaToken(state) {
       return state.allUserInfo?.lumiai?.session_id || "";

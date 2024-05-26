@@ -1,9 +1,14 @@
 import { ref, computed } from "vue";
+import { storeToRefs } from "pinia";
 import { SFC_SPECIAL_CINEMA_LIST } from "@/common/constant";
 
 import sfcApi from "@/api/sfc-api";
 import lierenApi from "@/api/lieren-api";
 import idbApi from "@/api/idbApi";
+import { appUserInfo } from "@/store/appUserInfo";
+const userInfoAndTokens = appUserInfo();
+const { sfcUserMobile } = storeToRefs(userInfoAndTokens);
+
 import { useStayTicketList } from "@/store/stayTicketList";
 const stayTicketList = useStayTicketList();
 
@@ -780,7 +785,7 @@ async function createOrder(data) {
       show_id,
       seat_ids,
       seat_info, // 座位描述，如：7排11号,7排10号
-      phone: user?.userInfo?.mobile || "", // 用户手机号
+      phone: sfcUserMobile || "", // 用户手机号
       additional_goods_info: "", // 附加商品信息
       companion_info: "", // 携伴信息
       goods_info: "", // 商品信息
