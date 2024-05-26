@@ -188,7 +188,6 @@ const stopAutoOffer = () => {
 const singleStartOrStop = ({ id, appName }, flag) => {
   // 单个启动
   if (flag === 1) {
-    console.log("sfcToken", sfcToken);
     let sfcCheckFail = appName === "sfc" && !sfcToken.value;
     let lmaCheckFail = appName === "lumiai" && !lmaToken.value;
     if (sfcCheckFail || lmaCheckFail) {

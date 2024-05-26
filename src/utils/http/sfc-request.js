@@ -1,8 +1,11 @@
 // sfc请求拦截器封装
 import axios from "axios";
+import { storeToRefs } from "pinia";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { appUserInfo } from "@/store/appUserInfo";
-const user = appUserInfo();
+const userInfoAndTokens = appUserInfo();
+const { sfcToken } = storeToRefs(userInfoAndTokens);
+
 import md5 from "../md5.js";
 import router from "@/router";
 // 创建axios实例
@@ -38,7 +41,7 @@ var a = function (e) {
   e.group = "20045";
   // e.city_id = '500'
   // e.cinema_id = '19'
-  e.session_id = user?.sfcToken || "";
+  e.session_id = sfcToken.value || "";
   // console.log("e===>", e);
 };
 

@@ -81,7 +81,7 @@
       </el-form-item>
       <el-form-item label="数量">
         <el-row style="width: 100%">
-          <el-col :span="7"> {{ seatName.split(",").length + 1 }} 张 </el-col>
+          <el-col :span="7"> {{ seatName.split(",").length }} 张 </el-col>
           <el-col :span="7" :offset="1">
             <el-button v-if="seatName" @click="getQuanList()"
               >获取优惠券</el-button
@@ -252,14 +252,14 @@ const cinemaList = ref([]); // 影院列表
 const cinemaName = ref("八佰伴"); // 影院名称
 const cinemaId = ref(""); // 影院id
 const moviePlayInfo = ref({}); // 放映信息
-const movieName = ref("黄雀在后"); // 线上电影名称
+const movieName = ref("末路狂花钱"); // 线上电影名称
 
-const startDay = ref("2024-04-19"); // 开始日期
-const startTime = ref("19:55"); // 开始时间
+const startDay = ref("2024-05-27"); // 开始日期
+const startTime = ref("22:30"); // 开始时间
 const showId = ref(""); // 观看电影场次id
 
 const seatList = ref([]); // 观看电影座位布局信息
-const seatName = ref("3排6号 3排7号"); // 座位名称
+const seatName = ref("3排6号"); // 座位名称
 const seatId = ref(""); // 座位id
 
 const cardList = ref([]); // 全部会员卡列表
@@ -870,7 +870,7 @@ async function createOrder(data) {
       show_id,
       seat_ids,
       seat_info, // 座位描述，如：7排11号,7排10号
-      phone: sfcUserMobile || "", // 用户手机号
+      phone: sfcUserMobile.value || "", // 用户手机号
       additional_goods_info: "", // 附加商品信息
       companion_info: "", // 携伴信息
       goods_info: "", // 商品信息
