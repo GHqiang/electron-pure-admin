@@ -340,18 +340,18 @@
         </template>
       </el-table-column>
     </el-table>
-    <SfcRuleDialog
+    <RuleDialog
       ref="sfcDialogRef"
       :dialogTitle="dialogTitle"
       @submit="saveRule"
-    ></SfcRuleDialog>
+    ></RuleDialog>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, computed, toRaw } from "vue";
 import { ElMessageBox, ElMessage } from "element-plus";
-import SfcRuleDialog from "@/components/SfcRuleDialog.vue";
+import RuleDialog from "@/components/RuleDialog.vue";
 import { ORDER_FORM, APP_LIST } from "@/common/constant";
 import { useDataTableStore } from "@/store/offerRule";
 const dataTableStore = useDataTableStore();

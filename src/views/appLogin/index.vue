@@ -66,7 +66,7 @@
 <script setup>
 import { ref } from "vue";
 import { storeToRefs } from "pinia";
-import SfcLogin from "@/components/SfcLogin.vue";
+import SfcLogin from "@/components/AppLogin/SfcLogin.vue";
 import JiujinLogin from "@/components/AppLogin/JiujinLogin.vue";
 import JinjiLogin from "@/components/AppLogin/JinjiLogin.vue";
 import LainaLogin from "@/components/AppLogin/LainaLogin.vue";
