@@ -353,9 +353,24 @@
 
 <script setup>
 import sfcApi from "@/api/sfc-api";
-import { ref, reactive, computed, onMounted, toRaw } from "vue";
+import jiujinApi from "@/api/jiujin-api";
+import jinjiApi from "@/api/jinji-api";
+import lainaApi from "@/api/laina-api";
+
+import { storeToRefs } from "pinia";
+import { ref, reactive, computed } from "vue";
 import { ElLoading } from "element-plus";
 import { ORDER_FORM, APP_LIST } from "@/common/constant";
+import { useAppBaseData } from "@/store/appBaseData";
+const appBaseData = useAppBaseData();
+const { sfcBaseData, jiujinBaseData, jinjiBaseData, lainaBaseData } =
+  storeToRefs(appBaseData);
+const {
+  setSfcBaseData,
+  setJiujinBaseData,
+  setJinjiBaseData,
+  setLainaBaseData
+} = appBaseData;
 const ruleFormRef = ref(null);
 // 父传子props
 defineProps({
@@ -367,6 +382,25 @@ defineProps({
 // 子传父emit
 let $emit = defineEmits([`submit`]);
 
+const apiObj = {
+  sfc: sfcApi,
+  jiujin: jiujinApi,
+  jinji: jinjiApi,
+  laina: lainaApi
+};
+const baseDataObj = {
+  sfc: sfcBaseData.value,
+  jiujin: jiujinBaseData.value,
+  jinji: jinjiBaseData.value,
+  laina: lainaBaseData.value
+};
+
+const setBaseDataObj = {
+  sfc: setSfcBaseData,
+  jiujin: setJiujinBaseData,
+  jinji: setJinjiBaseData,
+  laina: setLainaBaseData
+};
 // 是否显示对话框
 const showSfcDialog = ref(false);
 
@@ -455,25 +489,6 @@ const resetForm = el => {
   formData.memberDay = ""; // 会员日
   formData.status = "1"; // 状态
 };
-
-// 是否加载过数据
-const hasLoadedData = ref(false);
-// 是否初始化加载完成
-const isInitLoading = () => {
-  return new Promise(resolve => {
-    if (hasLoadedData.value) {
-      return resolve();
-    }
-    let timer = setInterval(() => {
-      if (hasLoadedData.value) {
-        resolve();
-        clearInterval(timer);
-        timer = null;
-      }
-    }, 100);
-  });
-};
-
 // 打开弹窗
 const open = async ruleInfo => {
   const loading = ElLoading.service({
@@ -481,36 +496,42 @@ const open = async ruleInfo => {
     text: "Loading",
     background: "rgba(0, 0, 0, 0.7)"
   });
-  await isInitLoading();
-  console.log("数据初始化加载完成", toRaw(ruleInfo));
-  loading.close();
-  showSfcDialog.value = true;
   if (ruleInfo) {
     let formInfo = JSON.parse(JSON.stringify(ruleInfo));
-    formData.id = formInfo.id;
-    formData.ruleName = formInfo.ruleName;
-    formData.orderForm = formInfo.orderForm;
-    formData.shadowLineName = formInfo.shadowLineName;
-    formData.ruleStartTime = formInfo.ruleStartTime;
-    formData.ruleEndTime = formInfo.ruleEndTime;
-    formData.timeLimit = formInfo.timeLimit;
-    formData.offerAmount = formInfo.offerAmount;
-    formData.quanValue = formInfo.quanValue;
-    formData.weekDay = formInfo.weekDay; // 启用星期
-    formData.seatNum = formInfo.seatNum; // 座位数
-    formData.memberDay = formInfo.memberDay; // 会员日
-    formData.status = formInfo.status;
-    formData.offerType = formInfo.offerType;
-    formData.addAmount = formInfo.addAmount;
-    formData.includeCityNames = formInfo.includeCityNames;
-    formData.excludeCityNames = formInfo.excludeCityNames;
-    formData.includeCinemaNames = formInfo.includeCinemaNames;
-    formData.excludeCinemaNames = formInfo.excludeCinemaNames;
-    formData.includeHallNames = formInfo.includeHallNames;
-    formData.excludeHallNames = formInfo.excludeHallNames;
-    formData.includeFilmNames = formInfo.includeFilmNames;
-    formData.excludeFilmNames = formInfo.excludeFilmNames;
+    if (formInfo.id !== undefined) {
+      formData.id = formInfo.id;
+      formData.ruleName = formInfo.ruleName;
+      formData.orderForm = formInfo.orderForm;
+      formData.shadowLineName = formInfo.shadowLineName;
+      formData.ruleStartTime = formInfo.ruleStartTime;
+      formData.ruleEndTime = formInfo.ruleEndTime;
+      formData.timeLimit = formInfo.timeLimit;
+      formData.offerAmount = formInfo.offerAmount;
+      formData.quanValue = formInfo.quanValue;
+      formData.weekDay = formInfo.weekDay; // 启用星期
+      formData.seatNum = formInfo.seatNum; // 座位数
+      formData.memberDay = formInfo.memberDay; // 会员日
+      formData.status = formInfo.status;
+      formData.offerType = formInfo.offerType;
+      formData.addAmount = formInfo.addAmount;
+      formData.includeCityNames = formInfo.includeCityNames;
+      formData.excludeCityNames = formInfo.excludeCityNames;
+      formData.includeCinemaNames = formInfo.includeCinemaNames;
+      formData.excludeCinemaNames = formInfo.excludeCinemaNames;
+      formData.includeHallNames = formInfo.includeHallNames;
+      formData.excludeHallNames = formInfo.excludeHallNames;
+      formData.includeFilmNames = formInfo.includeFilmNames;
+      formData.excludeFilmNames = formInfo.excludeFilmNames;
+    } else {
+      // 新增
+      formData.shadowLineName = formInfo.shadowLineName;
+    }
+    const cityList = await getCityList();
+    const allCinemaList = await getAllCinemaList(cityList);
+    await getFilmList(cityList[0].id, allCinemaList[0].id);
   }
+  loading.close();
+  showSfcDialog.value = true;
 };
 
 // 报价类型改变
@@ -584,10 +605,15 @@ const excludeCityChange = value => {
 const getCityList = async () => {
   try {
     let params = {};
-    console.log("获取城市列表参数", params);
-    const res = await sfcApi.getCityList(params);
-    console.log("获取城市列表返回", res);
-    let list = res.data.all_city || [];
+    const { shadowLineName } = formData;
+    let list = baseDataObj[shadowLineName]?.cityList;
+    console.log("获取城市列表参数", params, shadowLineName, list);
+    if (!list?.length) {
+      const res = await apiObj[shadowLineName].getCityList(params);
+      list = res?.data?.all_city || [];
+      setBaseDataObj[shadowLineName]({ cityList: list });
+    }
+    console.log("获取城市列表返回", list);
     cityList.value = list;
     return list;
   } catch (error) {
@@ -605,7 +631,8 @@ const getFilmList = async (city_id, cinema_id) => {
       movie_page_num: "1"
     };
     console.log("获取线上电影列表参数", params);
-    const res = await sfcApi.getMovieList(params);
+    const { shadowLineName } = formData;
+    const res = await apiObj[shadowLineName].getMovieList(params);
     console.log("获取线上电影列表返回", res);
     let list = res.data?.movie_data || [];
     filmList.value = list;
@@ -622,7 +649,8 @@ const getCinemaListByCityId = async city_id => {
       city_id: city_id
     };
     console.log("根据城市获取影院列表参数", params);
-    const res = await sfcApi.getCinemaList(params);
+    const { shadowLineName } = formData;
+    const res = await apiObj[shadowLineName].getCinemaList(params);
     console.log("根据城市获取影院列表返回", res);
     let cinemaList = res.data?.cinema_data || [];
     return cinemaList;
@@ -634,20 +662,24 @@ const getCinemaListByCityId = async city_id => {
 // 获取全部影院列表
 const getAllCinemaList = async cityList => {
   try {
-    let allCinemaList = [];
-    for (let index = 0; index < cityList.length; index++) {
-      const item = cityList[index];
-      let list = await getCinemaListByCityId(item.id);
-      list = list.map(itemA => {
-        return {
-          ...itemA,
-          city_name: item.name,
-          city_id: item.id
-        };
-      });
-      if (list.length > 0) {
-        allCinemaList = allCinemaList.concat(list);
+    const { shadowLineName } = formData;
+    let allCinemaList = baseDataObj[shadowLineName]?.allCinemaList || [];
+    if (!allCinemaList?.length) {
+      for (let index = 0; index < cityList.length; index++) {
+        const item = cityList[index];
+        let list = await getCinemaListByCityId(item.id);
+        list = list.map(itemA => {
+          return {
+            ...itemA,
+            city_name: item.name,
+            city_id: item.id
+          };
+        });
+        if (list.length > 0) {
+          allCinemaList = allCinemaList.concat(list);
+        }
       }
+      setBaseDataObj[shadowLineName]({ allCinemaList: allCinemaList });
     }
     cinemaList.value = allCinemaList;
     return allCinemaList;
@@ -659,15 +691,5 @@ const getAllCinemaList = async cityList => {
 // 子暴露给父组件的值或方法$refs
 defineExpose({
   open
-});
-
-onMounted(async () => {
-  if (!hasLoadedData.value) {
-    console.log(`the component is now mounted.`);
-    const cityList = await getCityList();
-    const allCinemaList = await getAllCinemaList(cityList);
-    await getFilmList(cityList[0].id, allCinemaList[0].id);
-    hasLoadedData.value = true;
-  }
 });
 </script>

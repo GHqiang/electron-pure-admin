@@ -491,7 +491,7 @@ const shadowLine = ref("sfc");
 // 新增规则
 const addRule = () => {
   dialogTitle.value = "新增";
-  sfcDialogRef.value.open();
+  sfcDialogRef.value.open({ shadowLineName: shadowLine.value });
 };
 
 // 编辑规则
