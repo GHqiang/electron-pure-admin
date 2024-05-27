@@ -284,7 +284,7 @@ class OrderAutoOfferQueue {
       await this.delay(fetchDelay);
       const stayList = await getStayOfferList();
       let sfcStayOfferlist = stayList.filter(item =>
-        ["上影上海", "上海上影", "上影二线"].includes(item.cinema_group)
+        ["上影上海", "上影二线"].includes(item.cinema_group)
       );
       return sfcStayOfferlist;
     } catch (error) {
@@ -478,7 +478,7 @@ class OrderAutoTicketQueue {
       await this.delay(fetchDelay);
       const stayList = await getStayTicketingList();
       let sfcStayOfferlist = stayList.filter(item =>
-        ["上影上海", "上海上影", "上影二线"].includes(item.cinema_group)
+        ["上影上海", "上影二线"].includes(item.cinema_group)
       );
       return sfcStayOfferlist;
     } catch (error) {

@@ -128,7 +128,7 @@ class OrderAutoTicketQueue {
     try {
       await this.delay(fetchDelay);
       let sfcStayOfferlist = getOrginValue(stayTicketList.items).filter(item =>
-        ["上影上海", "上海上影", "上影二线"].includes(item.cinema_group)
+        ["上影上海", "上影二线"].includes(item.cinema_group)
       );
       return sfcStayOfferlist;
     } catch (error) {

@@ -125,7 +125,7 @@ class OrderAutoOfferQueue {
       const stayList = await getStayOfferList();
       let sfcStayOfferlist = stayList.filter(
         item =>
-          ["上影上海", "上海上影", "上影二线"].includes(item.cinema_group) ||
+          ["上影上海", "上影二线"].includes(item.cinema_group) ||
           ["久金国际"].includes(item.cinema_group)
       );
       return sfcStayOfferlist;
@@ -359,7 +359,7 @@ async function getMoviePlayInfo(data) {
     };
     console.log(conPrefix + "获取电影放映信息参数", params);
     let isJiujin = ["久金国际"].includes(cinema_group);
-    let isSfc = ["上影", "上影二线"].includes(cinema_group);
+    let isSfc = ["上影上海", "上影二线"].includes(cinema_group);
     let res;
     if (isSfc) {
       res = await sfcApi.getMoviePlayInfo(params);
