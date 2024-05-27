@@ -1,3 +1,4 @@
+<!-- 报价规则弹框 -->
 <template>
   <div>
     <!-- 对话框 -->
@@ -29,6 +30,7 @@
             v-model="formData.shadowLineName"
             placeholder="请选择影线名称"
             clearable
+            @change="shadowLineChange"
           >
             <el-option
               v-for="(keyValue, keyName) in shadowLineObj"
@@ -358,7 +360,7 @@ import jinjiApi from "@/api/jinji-api";
 import lainaApi from "@/api/laina-api";
 
 import { storeToRefs } from "pinia";
-import { ref, reactive, computed } from "vue";
+import { ref, reactive, computed, toRaw } from "vue";
 import { ElLoading } from "element-plus";
 import { ORDER_FORM, APP_LIST } from "@/common/constant";
 import { useAppBaseData } from "@/store/appBaseData";
@@ -467,8 +469,12 @@ const cinemaListFilter = computed(() => {
 // 重置表单
 const resetForm = el => {
   console.log("重置表单", el);
-  formData.id = ""; // 规则名称
-  formData.ruleName = ""; // 规则名称
+  if (el !== 1) {
+    formData.id = ""; // 规则id
+    formData.ruleName = ""; // 规则名称
+    formData.orderForm = ""; // 订单来源
+    formData.shadowLineName = ""; // 影线
+  }
   formData.includeCityNames = []; // 包含城市
   formData.excludeCityNames = []; // 排除城市
   formData.includeCinemaNames = []; // 包含影院
@@ -488,6 +494,15 @@ const resetForm = el => {
   formData.seatNum = ""; // 座位数
   formData.memberDay = ""; // 会员日
   formData.status = "1"; // 状态
+};
+
+// 影线改变
+const shadowLineChange = async val => {
+  console.log("val", val);
+  resetForm(1);
+  const cityList = await getCityList();
+  const allCinemaList = await getAllCinemaList(cityList);
+  await getFilmList(cityList[0].id, allCinemaList[0].id);
 };
 // 打开弹窗
 const open = async ruleInfo => {
@@ -607,13 +622,13 @@ const getCityList = async () => {
     let params = {};
     const { shadowLineName } = formData;
     let list = baseDataObj[shadowLineName]?.cityList;
-    console.log("获取城市列表参数", params, shadowLineName, list);
+    console.log("获取城市列表参数", params, shadowLineName, toRaw(list));
     if (!list?.length) {
       const res = await apiObj[shadowLineName].getCityList(params);
       list = res?.data?.all_city || [];
       setBaseDataObj[shadowLineName]({ cityList: list });
     }
-    console.log("获取城市列表返回", list);
+    console.log("获取城市列表返回", toRaw(list));
     cityList.value = list;
     return list;
   } catch (error) {
@@ -664,6 +679,7 @@ const getAllCinemaList = async cityList => {
   try {
     const { shadowLineName } = formData;
     let allCinemaList = baseDataObj[shadowLineName]?.allCinemaList || [];
+    console.log("获取全部影院列表", shadowLineName, toRaw(allCinemaList));
     if (!allCinemaList?.length) {
       for (let index = 0; index < cityList.length; index++) {
         const item = cityList[index];

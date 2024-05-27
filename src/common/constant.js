@@ -6,11 +6,13 @@ const ORDER_FORM = {
 // 影院列表
 const APP_LIST = {
   sfc: "上影",
-  jiujin: "久金"
+  jiujin: "久金",
+  jinji: "金鸡",
+  laina: "莱纳"
 };
 // 平台关联应用
 const PLAT_LINK_APP = {
-  lieren: ["sfc", "lumiai"],
+  lieren: ["sfc", "jiujin", "jinji", "laina", "lumiai"],
   shengapp: ["sfc", "lumiai"]
 };
 

@@ -1,4 +1,4 @@
-<!-- 平台获取订单规则设置 -->
+<!-- 平台自动获取订单队列规则列表 -->
 <template>
   <el-button
     type="primary"
