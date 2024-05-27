@@ -4,7 +4,8 @@ import { storeToRefs } from "pinia";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
-const { jiujinToken } = storeToRefs(userInfoAndTokens);
+const { lainaToken } = storeToRefs(userInfoAndTokens);
+const { removeLainaUserInfo } = userInfoAndTokens;
 import md5 from "../md5.js";
 import router from "@/router";
 // 创建axios实例
@@ -37,11 +38,11 @@ var a = function (e) {
   //     e.group = _ || "";
   // }
   // e.city_id = o || "", e.cinema_id = r || "", e.session_id = i || "";
-  e.group = "20253";
+  e.group = "20463";
   // e.city_id = '500'
   // e.cinema_id = '19'
-  e.session_id = jiujinToken.value || "";
-  // console.log("e===>", e);
+  e.session_id = lainaToken.value || "";
+  // console.log("lainaRequest===>", e);
 };
 
 /*
@@ -124,7 +125,7 @@ instance.interceptors.response.use(
     ) {
       if (data.errcode === "205" && data.msg === "登录失效") {
         // ElMessage.error("sfc登录失效，请重新登录");
-        ElMessageBox.confirm("jiujin登录失效，请重新登录", "提示", {
+        ElMessageBox.confirm("莱纳登录失效，请重新登录", "提示", {
           confirmButtonText: "我知道了",
           type: "warning",
           showCancelButton: false,
@@ -133,7 +134,7 @@ instance.interceptors.response.use(
           closeOnPressEscape: false
         })
           .then(() => {
-            user.removeSfcUserInfo();
+            removeLainaUserInfo();
             router.push({ path: "/set/appLogin" });
           })
           .catch(() => {});

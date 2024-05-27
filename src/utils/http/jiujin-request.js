@@ -5,6 +5,7 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
 const { jiujinToken } = storeToRefs(userInfoAndTokens);
+const { removeJiujinUserInfo } = userInfoAndTokens;
 import md5 from "../md5.js";
 import router from "@/router";
 // 创建axios实例
@@ -41,7 +42,7 @@ var a = function (e) {
   // e.city_id = '500'
   // e.cinema_id = '19'
   e.session_id = jiujinToken.value || "";
-  // console.log("e===>", e);
+  // console.log("jiujinRequest===>", e);
 };
 
 /*
@@ -124,7 +125,7 @@ instance.interceptors.response.use(
     ) {
       if (data.errcode === "205" && data.msg === "登录失效") {
         // ElMessage.error("sfc登录失效，请重新登录");
-        ElMessageBox.confirm("jiujin登录失效，请重新登录", "提示", {
+        ElMessageBox.confirm("久金登录失效，请重新登录", "提示", {
           confirmButtonText: "我知道了",
           type: "warning",
           showCancelButton: false,
@@ -133,7 +134,7 @@ instance.interceptors.response.use(
           closeOnPressEscape: false
         })
           .then(() => {
-            user.removeSfcUserInfo();
+            removeJiujinUserInfo();
             router.push({ path: "/set/appLogin" });
           })
           .catch(() => {});

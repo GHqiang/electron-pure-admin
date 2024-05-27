@@ -5,6 +5,7 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
 const { sfcToken } = storeToRefs(userInfoAndTokens);
+const { removeSfcUserInfo } = userInfoAndTokens;
 
 import md5 from "../md5.js";
 import router from "@/router";
@@ -17,7 +18,7 @@ const instance = axios.create({
 
 // 公共请求参数对象，包含一些默认的请求头信息，如group、pver、source、ver等
 var i = {
-  group: "20008",
+  group: "20045",
   pver: "7.0",
   source: "4",
   ver: "7.7.3",
@@ -42,7 +43,7 @@ var a = function (e) {
   // e.city_id = '500'
   // e.cinema_id = '19'
   e.session_id = sfcToken.value || "";
-  // console.log("e===>", e);
+  // console.log("sfcRequest===>", e);
 };
 
 /*
@@ -134,7 +135,7 @@ instance.interceptors.response.use(
           closeOnPressEscape: false
         })
           .then(() => {
-            user.removeSfcUserInfo();
+            removeSfcUserInfo();
             router.push({ path: "/set/appLogin" });
           })
           .catch(() => {});
