@@ -4,6 +4,8 @@ import { SFC_SPECIAL_CINEMA_LIST } from "@/common/constant";
 
 import sfcApi from "@/api/sfc-api";
 import jiujinApi from "@/api/jiujin-api";
+import jinjiApi from "@/api/jinji-api";
+import lainaApi from "@/api/laina-api";
 import lierenApi from "@/api/lieren-api";
 import idbApi from "@/api/idbApi";
 import { platTokens } from "@/store/platTokens";
@@ -27,6 +29,24 @@ const appOfferRuleList = computed(() =>
   dataTableStore.items.filter(item => item.orderForm === "lieren")
 );
 
+const apiObj = {
+  sfc: sfcApi,
+  jiujin: jiujinApi,
+  jinji: jinjiApi,
+  laina: lainaApi
+};
+
+const getCinemaFlag = item => {
+  if (["上影上海", "上影二线"].includes(item.cinema_group)) {
+    return "sfc";
+  } else if (item.cinema_name.includes("华夏久金国际影城")) {
+    return "jiujin";
+  } else if (item.cinema_name.includes("北京金鸡百花影城(")) {
+    return "jinji";
+  } else if (item.cinema_name.includes("莱纳龙域影城")) {
+    return "laina";
+  }
+};
 let conPrefix = "【猎人自动报价】——"; // console打印前缀
 const getOrginValue = value => JSON.parse(JSON.stringify(value));
 
@@ -123,11 +143,17 @@ class OrderAutoOfferQueue {
     try {
       await this.delay(fetchDelay);
       const stayList = await getStayOfferList();
-      let sfcStayOfferlist = stayList.filter(
-        item =>
-          ["上影上海", "上影二线"].includes(item.cinema_group) ||
-          ["久金国际"].includes(item.cinema_group)
-      );
+      let sfcStayOfferlist = stayList.filter(item => {
+        if (["上影上海", "上影二线"].includes(item.cinema_group)) {
+          return true;
+        } else if (item.cinema_name.includes("华夏久金国际影城")) {
+          return true;
+        } else if (item.cinema_name.includes("北京金鸡百花影城")) {
+          return true;
+        } else if (item.cinema_name.includes("莱纳龙域影城")) {
+          return true;
+        }
+      });
       return sfcStayOfferlist;
     } catch (error) {
       console.error(conPrefix + "获取待报价订单列表异常", error);
@@ -351,21 +377,17 @@ async function singleOffer(item) {
 // 获取电影放映信息
 async function getMoviePlayInfo(data) {
   try {
-    let { city_id, cinema_id, cinema_group } = data || {};
+    let { city_id, cinema_id, cinema_group, cinema_name } = data || {};
     let params = {
       city_id: city_id,
       cinema_id: cinema_id,
       width: "500"
     };
     console.log(conPrefix + "获取电影放映信息参数", params);
-    let isJiujin = ["久金国际"].includes(cinema_group);
-    let isSfc = ["上影上海", "上影二线"].includes(cinema_group);
-    let res;
-    if (isSfc) {
-      res = await sfcApi.getMoviePlayInfo(params);
-    } else if (isJiujin) {
-      res = await jiujinApi.getMoviePlayInfo(params);
-    }
+    let res =
+      await apiObj[
+        getCinemaFlag({ cinema_group, cinema_name })
+      ].getMoviePlayInfo(params);
     console.log(conPrefix + "获取电影放映信息返回", res);
     return res.data;
   } catch (error) {
@@ -636,13 +658,16 @@ const getMinAmountOfferRule = async (ruleList, order) => {
 const getMemberPrice = async order => {
   try {
     console.log(conPrefix + "准备获取会员价", order);
-    const { city_name, cinema_name, hall_name } = order;
+    const { city_name, cinema_name, hall_name, cinema_group } = order;
     console.log(
       conPrefix +
         `待报价订单：城市${city_name}, 影院${cinema_name}, 影厅${hall_name}`
     );
     // 获取当前场次电影信息
-    const movieInfo = await getMovieInfo(order);
+    let movieInfo =
+      await apiObj[getCinemaFlag({ cinema_group, cinema_name })].getMovieInfo(
+        order
+      );
     console.log(conPrefix + `待报价订单当前场次电影相关信息`, movieInfo);
     if (!movieInfo) {
       console.error(conPrefix + "获取当前场次电影信息失败", "不再进行报价");
@@ -773,7 +798,7 @@ const getMovieInfo = async item => {
   try {
     // 1、获取影院列表拿到影院id
     const { city_name, cinema_name, film_name, show_time, cinema_group } = item;
-    await getCityList(cinema_group);
+    await getCityList({ cinema_group, cinema_name });
     let city_id = cityList.value.find(
       item => item.name.indexOf(city_name) !== -1
     )?.id;
@@ -781,14 +806,10 @@ const getMovieInfo = async item => {
       city_id: city_id
     };
     console.log(conPrefix + "获取城市影院参数", params);
-    let isJiujin = ["久金国际"].includes(cinema_group);
-    let isSfc = ["上影", "上影二线"].includes(cinema_group);
-    let res;
-    if (isSfc) {
-      res = await sfcApi.getCinemaList(params);
-    } else if (isJiujin) {
-      res = await jiujinApi.getCinemaList(params);
-    }
+    let res =
+      await apiObj[getCinemaFlag({ cinema_group, cinema_name })].getCinemaList(
+        params
+      );
     console.log(conPrefix + "获取城市影院返回", res);
     let cinemaList = res.data?.cinema_data || [];
     let cinema_id = getCinemaId(cinema_name, cinemaList);
@@ -800,7 +821,8 @@ const getMovieInfo = async item => {
     const moviePlayInfo = await getMoviePlayInfo({
       city_id,
       cinema_id,
-      cinema_group
+      cinema_group,
+      cinema_name
     });
     // 3、匹配订单拿到会员价
     const { movie_data } = moviePlayInfo;
@@ -821,18 +843,14 @@ const getMovieInfo = async item => {
 };
 
 // 获取城市列表
-async function getCityList(cinema_group) {
+async function getCityList({ cinema_group, cinema_name }) {
   try {
     let params = {};
     console.log(conPrefix + "获取城市列表参数", params);
-    let isJiujin = ["久金国际"].includes(cinema_group);
-    let isSfc = ["上影", "上影二线"].includes(cinema_group);
-    let res;
-    if (isSfc) {
-      res = await sfcApi.getCityList(params);
-    } else if (isJiujin) {
-      res = await jiujinApi.getCityList(params);
-    }
+    let res =
+      await apiObj[getCinemaFlag({ cinema_group, cinema_name })].getCityList(
+        params
+      );
     console.log(conPrefix + "获取城市列表返回", res);
     cityList.value = res.data.all_city || [];
   } catch (error) {

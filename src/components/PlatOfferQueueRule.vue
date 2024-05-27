@@ -132,13 +132,13 @@ import { ref, computed } from "vue";
 import { storeToRefs } from "pinia";
 import { ElMessageBox, ElMessage } from "element-plus";
 import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
-import offerQueue from "@/common/autoOffer/useLierenOffer";
+import lierenOfferQueue from "@/common/autoOffer/useLierenOffer";
 import { PLAT_LINK_APP } from "@/common/constant";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
-const { sfcToken, lmaToken } = storeToRefs(userInfoAndTokens);
+const { sfcToken, jiujinToken, jinjiToken, lainaToken, lmaToken } =
+  storeToRefs(userInfoAndTokens);
 
-// console.log("offerQueue===>", offerQueue);
 const tableDataStore = usePlatTableDataStore();
 const displayItems = computed(() => tableDataStore.items);
 
@@ -177,7 +177,7 @@ const oneClickAutoOffer = () => {
           let platToken = displayItems.value.find(
             item => item.platName === "lieren"
           )?.platToken;
-          offerQueue.start(platToken);
+          lierenOfferQueue.start(platToken);
         }
       });
     })
@@ -210,6 +210,12 @@ const singleStartOrStop = ({ id, platToken, platName }, flag) => {
     const noTokenByApp = checkToken.filter(item => {
       if (item === "sfc") {
         return !!sfcToken;
+      } else if (item === "jiujin") {
+        return !!jiujinToken;
+      } else if (item === "jinji") {
+        return !!jinjiToken;
+      } else if (item === "laina") {
+        return !!lainaToken;
       } else if (item === "lumiai") {
         return !!lmaToken;
       }
@@ -231,12 +237,12 @@ const singleStartOrStop = ({ id, platToken, platName }, flag) => {
       )
         .then(() => {
           tableDataStore.toggleEnable(id);
-          offerQueue.start(platToken);
+          lierenOfferQueue.start(platToken);
         })
         .catch(() => {});
     } else {
       tableDataStore.toggleEnable(id);
-      offerQueue.start(platToken);
+      lierenOfferQueue.start(platToken);
     }
   } else {
     // 单个停止
