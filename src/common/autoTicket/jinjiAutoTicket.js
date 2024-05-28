@@ -833,7 +833,7 @@ async function buyTicket(data) {
     let params = {
       city_id,
       cinema_id,
-      open_id: "otEMo42FC38PgJiYDvu6HrGjrwQY", // 微信openId
+      open_id: "oTJ0a48lR3TPBfblHCqLLn-kdRro", // 微信openId
       order_num, // 订单号
       pay_money, // 支付金额
       pay_type: "" // 购买方式 传空意味着用优惠券或者会员卡
