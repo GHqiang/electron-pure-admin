@@ -202,7 +202,7 @@ setTimeout(() => {
 // 重置表单
 const resetForm = () => {
   formData.platName = "lieren";
-  formData.appName = "sfc"; // 影线名称
+  formData.appName = ""; // 影线名称
   formData.status = ""; // 状态
   formData.offerType = ""; // 报价类型
   formData.supplier_end_price = ""; // 中标价

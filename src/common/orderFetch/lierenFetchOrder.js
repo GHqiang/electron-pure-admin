@@ -61,7 +61,18 @@ class OrderAutoFetchQueue {
       await this.delay(fetchDelay);
       let stayList = await lierenOrderFetch();
       stayList = stayList.map(item => ({ ...item, platName: "lieren" }));
-      console.log(conPrefix + "猎人待出票列表", stayList);
+      stayList = stayList.filter(item => {
+        if (["上影上海", "上影二线"].includes(item.cinema_group)) {
+          return true;
+        } else if (item.cinema_name.includes("华夏久金国际影城")) {
+          return true;
+        } else if (item.cinema_name.includes("北京金鸡百花影城(")) {
+          return true;
+        } else if (item.cinema_name.includes("莱纳龙域影城")) {
+          return true;
+        }
+      });
+      console.log(conPrefix + "猎人待出票列表过滤后", stayList);
       addNewOrder(stayList);
     } catch (error) {
       console.error(conPrefix + "获取订单列表异常", error);

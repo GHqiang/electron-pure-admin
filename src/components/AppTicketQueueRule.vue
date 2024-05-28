@@ -15,16 +15,26 @@
     v-throttle
     >一键停止</el-button
   >
-
-  <el-table :data="displayItems" show-overflow-tooltip>
+  <el-button type="primary" @click="isCollapse = !isCollapse">{{
+    !isCollapse ? "展开" : "收起"
+  }}</el-button>
+  <el-table :data="displayItems" v-if="isCollapse" show-overflow-tooltip>
     <el-table-column prop="appName" label="影院名称">
       <template #default="{ row, $index }">
         <span v-if="row.id !== editingRowId">{{ row.appName }}</span>
-        <el-input
+        <el-select
           v-else
           v-model="editingRow.appName"
-          @blur="saveEdit(row.id)"
-        />
+          placeholder="影院名称"
+          clearable
+        >
+          <el-option
+            v-for="(keyValue, keyName) in shadowLineObj"
+            :key="keyName"
+            :label="keyValue"
+            :value="keyName"
+          />
+        </el-select>
       </template>
     </el-table-column>
     <el-table-column prop="handleInterval" label="订单执行间隔">
@@ -40,9 +50,7 @@
     </el-table-column>
     <el-table-column label="影院Token">
       <template #default="{ row, $index }">
-        <span v-if="row.appName === 'sfc'">{{ sfcToken }}</span>
-        <span v-if="row.appName === 'lumiai'">{{ lmaToken }}</span>
-        <span v-if="row.appName === 'jiujin'">{{ jiujinToken }}</span>
+        <span> {{ appTokenObj[row.appName] }}</span>
       </template>
     </el-table-column>
     <el-table-column label="队列执行状态">
@@ -119,9 +127,14 @@ import { ElMessageBox, ElMessage } from "element-plus";
 import { useAppRuleListStore } from "@/store/appTicketRuleTable";
 import sfcTicketQueue from "@/common/autoTicket/sfcAutoTicket";
 import jiujinTicketQueue from "@/common/autoTicket/jiujinAutoTicket";
+import jinjiTicketQueue from "@/common/autoTicket/jinjiAutoTicket";
+import lainaTicketQueue from "@/common/autoTicket/lainaAutoTicket";
+import { APP_LIST } from "@/common/constant.js";
+
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
-const { sfcToken, lmaToken, jiujinToken } = storeToRefs(userInfoAndTokens);
+const { sfcToken, lmaToken, jiujinToken, jinjiToken, lainaToken } =
+  storeToRefs(userInfoAndTokens);
 
 const tableDataStore = useAppRuleListStore();
 const displayItems = computed(() => tableDataStore.items);
@@ -138,10 +151,29 @@ const isActiveOneClickStart = computed(() => {
 const isActiveOneClickStop = computed(() => {
   return tableDataStore.items.filter(item => item.isEnabled).length > 0;
 });
+
+// 影线列表
+const shadowLineObj = APP_LIST;
+
+// 是否展开
+const isCollapse = ref(true);
 // 正在编辑id
 const editingRowId = ref(null);
 // 正在编辑内容
 const editingRow = ref({});
+
+const appTicketQueueObj = {
+  sfc: sfcTicketQueue,
+  jiujin: jiujinTicketQueue,
+  jinji: jinjiTicketQueue,
+  laina: lainaTicketQueue
+};
+const appTokenObj = {
+  sfc: sfcToken,
+  jiujin: jiujinToken,
+  jinji: jinjiToken,
+  laina: lainaToken
+};
 
 // 一键启动
 const oneClickAutoOffer = () => {
@@ -156,15 +188,9 @@ const oneClickAutoOffer = () => {
     .then(() => {
       console.warn("一键启动全部自动出票队列");
       tableDataStore.items.forEach(item => {
-        if (item.appName === "sfc" && sfcToken.value) {
+        if (appTokenObj[item.appName].value) {
           item.isEnabled = true;
-          sfcTicketQueue.start();
-        } else if (item.appName === "lumiai" && lmaToken.value) {
-          console.log("lumiai==");
-          item.isEnabled = true;
-        } else if (item.appName === "jiujin" && jiujinToken.value) {
-          item.isEnabled = true;
-          jiujinTicketQueue.start();
+          appTicketQueueObj[item.appName].start();
         }
       });
     })
@@ -193,24 +219,16 @@ const stopAutoOffer = () => {
 const singleStartOrStop = ({ id, appName }, flag) => {
   // 单个启动
   if (flag === 1) {
-    let sfcCheckFail = appName === "sfc" && !sfcToken.value;
-    let lmaCheckFail = appName === "lumiai" && !lmaToken.value;
-    let jiujinCheckFail = appName === "jiujin" && !jiujinToken.value;
-    if (sfcCheckFail || lmaCheckFail || jiujinCheckFail) {
+    if (!appTokenObj[appName].value) {
       ElMessage.error(appName + "未登录，请先去影院登录页面登录后再启动");
       return;
     }
     tableDataStore.toggleEnable(id);
-    if (appName === "sfc") {
-      sfcTicketQueue.start();
-    } else if (appName === "lumiai") {
-      console.log("lmaToken===>", lmaToken);
-    } else if (appName === "jiujin") {
-      jiujinTicketQueue.start();
-    }
+    appTicketQueueObj[appName].start();
   } else {
     // 单个停止
     tableDataStore.toggleEnable(id);
+    appTicketQueueObj[appName].stop();
   }
 };
 

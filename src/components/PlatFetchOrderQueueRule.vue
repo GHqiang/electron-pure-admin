@@ -22,11 +22,19 @@
     <el-table-column prop="platName" label="平台名称">
       <template #default="{ row, $index }">
         <span v-if="row.id !== editingRowId">{{ row.platName }}</span>
-        <el-input
+        <el-select
           v-else
           v-model="editingRow.platName"
-          @blur="saveEdit(row.id)"
-        />
+          placeholder="平台名称"
+          clearable
+        >
+          <el-option
+            v-for="(keyValue, keyName) in orderFormObj"
+            :key="keyName"
+            :label="keyValue"
+            :value="keyName"
+          />
+        </el-select>
       </template>
     </el-table-column>
     <el-table-column prop="getInterval" label="订单获取间隔">
@@ -120,17 +128,15 @@
 
 <script setup>
 import { ref, computed } from "vue";
-import { storeToRefs } from "pinia";
 import { ElMessageBox, ElMessage } from "element-plus";
 import { usePlatFetchOrderStore } from "@/store/platOfferRuleTable";
 import lierenFetchOrder from "@/common/orderFetch/lierenFetchOrder";
-
+import { ORDER_FORM } from "@/common/constant.js";
 const tableDataStore = usePlatFetchOrderStore();
 const displayItems = computed(() => tableDataStore.items);
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
 const platTokenInfo = platTokens();
-// const { lierenToken } = storeToRefs(platTokenInfo);
 const { lierenToken, setLierenPlatToken } = platTokenInfo;
 
 // 是否显示一键启动
@@ -146,6 +152,8 @@ const isActiveOneClickStop = computed(() => {
   return tableDataStore.items.filter(item => item.isEnabled).length > 0;
 });
 
+// 订单来源
+const orderFormObj = ORDER_FORM;
 // 是否展开
 const isCollapse = ref(true);
 // 正在编辑id
