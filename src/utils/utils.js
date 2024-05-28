@@ -1,89 +1,91 @@
 // 导入 ExcelJS 库
-import ExcelJS from 'exceljs';
+import ExcelJS from "exceljs";
 /**
  * 获取当前日期和时间的格式化字符串
  * 无参数
  * @return {string} 返回格式为 "YYYY-MM-DD HH:MM:SS" 的字符串
  */
 function getCurrentFormattedDateTime() {
-    const now = new Date();
+  const now = new Date();
 
-    // 获取年、月、日、小时、分钟、秒
-    const year = now.getFullYear();
-    const month = ('0' + (now.getMonth() + 1)).slice(-2); // 月份数字是从0开始的，所以需要加1
-    const date = ('0' + now.getDate()).slice(-2);
-    const hours = ('0' + now.getHours()).slice(-2);
-    const minutes = ('0' + now.getMinutes()).slice(-2);
-    const seconds = ('0' + now.getSeconds()).slice(-2);
+  // 获取年、月、日、小时、分钟、秒
+  const year = now.getFullYear();
+  const month = ("0" + (now.getMonth() + 1)).slice(-2); // 月份数字是从0开始的，所以需要加1
+  const date = ("0" + now.getDate()).slice(-2);
+  const hours = ("0" + now.getHours()).slice(-2);
+  const minutes = ("0" + now.getMinutes()).slice(-2);
+  const seconds = ("0" + now.getSeconds()).slice(-2);
 
-    // 组合成所需格式
-    const formattedDateTime = `${year}-${month}-${date} ${hours}:${minutes}:${seconds}`;
+  // 组合成所需格式
+  const formattedDateTime = `${year}-${month}-${date} ${hours}:${minutes}:${seconds}`;
 
-    return formattedDateTime;
+  return formattedDateTime;
 }
 
 function getFormattedDateTime(sjc) {
-    const now = new Date(sjc);
+  const now = new Date(sjc);
 
-    // 获取年、月、日、小时、分钟、秒
-    const year = now.getFullYear();
-    const month = ('0' + (now.getMonth() + 1)).slice(-2); // 月份数字是从0开始的，所以需要加1
-    const date = ('0' + now.getDate()).slice(-2);
-    const hours = ('0' + now.getHours()).slice(-2);
-    const minutes = ('0' + now.getMinutes()).slice(-2);
-    const seconds = ('0' + now.getSeconds()).slice(-2);
+  // 获取年、月、日、小时、分钟、秒
+  const year = now.getFullYear();
+  const month = ("0" + (now.getMonth() + 1)).slice(-2); // 月份数字是从0开始的，所以需要加1
+  const date = ("0" + now.getDate()).slice(-2);
+  const hours = ("0" + now.getHours()).slice(-2);
+  const minutes = ("0" + now.getMinutes()).slice(-2);
+  const seconds = ("0" + now.getSeconds()).slice(-2);
 
-    // 组合成所需格式
-    const formattedDateTime = `${year}-${month}-${date} ${hours}:${minutes}:${seconds}`;
+  // 组合成所需格式
+  const formattedDateTime = `${year}-${month}-${date} ${hours}:${minutes}:${seconds}`;
 
-    return formattedDateTime;
+  return formattedDateTime;
 }
 
 // 导出 Excel 文件
 async function exportExcel(columns, data) {
-    // 准备要导出的数据
-    // const data = [
-    //     { name: '张三', age: 25, gender: '男' },
-    //     { name: '李四', age: 30, gender: '女' },
-    //     { name: '王五', age: 2¾, gender: '男' },
-    // ];
+  // 准备要导出的数据
+  // const data = [
+  //     { name: '张三', age: 25, gender: '男' },
+  //     { name: '李四', age: 30, gender: '女' },
+  //     { name: '王五', age: 2¾, gender: '男' },
+  // ];
 
-    // 创建一个新的 Excel 工作簿
-    const workbook = new ExcelJS.Workbook();
+  // 创建一个新的 Excel 工作簿
+  const workbook = new ExcelJS.Workbook();
 
-    // 添加一个工作表并命名
-    const worksheet = workbook.addWorksheet('Employee Data');
+  // 添加一个工作表并命名
+  const worksheet = workbook.addWorksheet("Employee Data");
 
-    // 设置列定义（表头）
-    worksheet.columns = columns
-    // [
-    //     { header: '姓名', key: 'name', width: 20 },
-    //     { header: '年龄', key: 'age', width: 10 },
-    //     { header: '性别', key: 'gender', width: 10 },
-    // ];
+  // 设置列定义（表头）
+  worksheet.columns = columns;
+  // [
+  //     { header: '姓名', key: 'name', width: 20 },
+  //     { header: '年龄', key: 'age', width: 10 },
+  //     { header: '性别', key: 'gender', width: 10 },
+  // ];
 
-    // 将数据添加到工作表
-    data.forEach(item => worksheet.addRow(item));
+  // 将数据添加到工作表
+  data.forEach(item => worksheet.addRow(item));
 
-    // 将工作簿写入内存中的 Buffer
-    const buffer = await workbook.xlsx.writeBuffer();
+  // 将工作簿写入内存中的 Buffer
+  const buffer = await workbook.xlsx.writeBuffer();
 
-    // 创建 Blob 对象
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  // 创建 Blob 对象
+  const blob = new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  });
 
-    // 创建下载链接
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = '出票记录.xlsx'; // 设置下载文件名
-    document.body.appendChild(link);
+  // 创建下载链接
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "出票记录.xlsx"; // 设置下载文件名
+  document.body.appendChild(link);
 
-    // 触发点击下载
-    link.click();
+  // 触发点击下载
+  link.click();
 
-    // 清理资源
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+  // 清理资源
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
 }
 
 /**
@@ -92,37 +94,37 @@ async function exportExcel(columns, data) {
  * @param {string} target 目标字符串
  */
 function levenshteinDistance(source, target) {
-    let sourceLength = source.length;
-    let targetLength = target.length;
-    if (sourceLength === 0) return targetLength;
-    if (targetLength === 0) return sourceLength;
+  let sourceLength = source.length;
+  let targetLength = target.length;
+  if (sourceLength === 0) return targetLength;
+  if (targetLength === 0) return sourceLength;
 
-    let matrix = [];
+  let matrix = [];
 
-    // 初始化矩阵
-    for (let i = 0; i <= sourceLength; i++) {
-        matrix[i] = [i];
+  // 初始化矩阵
+  for (let i = 0; i <= sourceLength; i++) {
+    matrix[i] = [i];
+  }
+  for (let j = 0; j <= targetLength; j++) {
+    matrix[0][j] = j;
+  }
+
+  // 动态规划填充矩阵
+  for (let i = 1; i <= sourceLength; i++) {
+    for (let j = 1; j <= targetLength; j++) {
+      if (source.charAt(i - 1) === target.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1, // 替换
+          matrix[i - 1][j] + 1, // 删除
+          matrix[i][j - 1] + 1 // 插入
+        );
+      }
     }
-    for (let j = 0; j <= targetLength; j++) {
-        matrix[0][j] = j;
-    }
+  }
 
-    // 动态规划填充矩阵
-    for (let i = 1; i <= sourceLength; i++) {
-        for (let j = 1; j <= targetLength; j++) {
-            if (source.charAt(i - 1) === target.charAt(j - 1)) {
-                matrix[i][j] = matrix[i - 1][j - 1];
-            } else {
-                matrix[i][j] = Math.min(
-                    matrix[i - 1][j - 1] + 1, // 替换
-                    matrix[i - 1][j] + 1,     // 删除
-                    matrix[i][j - 1] + 1       // 插入
-                );
-            }
-        }
-    }
-
-    return matrix[sourceLength][targetLength];
+  return matrix[sourceLength][targetLength];
 }
 
 /**
@@ -131,18 +133,18 @@ function levenshteinDistance(source, target) {
  * @param {string} target 目标字符串
  */
 function findBestMatchByLevenshtein(strings, target) {
-    let minDistance = Infinity;
-    let bestMatch = null;
+  let minDistance = Infinity;
+  let bestMatch = null;
 
-    strings.forEach(str => {
-        let distance = levenshteinDistance(str, target);
-        if (distance < minDistance) {
-            minDistance = distance;
-            bestMatch = str;
-        }
-    });
+  strings.forEach(str => {
+    let distance = levenshteinDistance(str, target);
+    if (distance < minDistance) {
+      minDistance = distance;
+      bestMatch = str;
+    }
+  });
 
-    return bestMatch;
+  return bestMatch;
 }
 
 /**
@@ -151,52 +153,97 @@ function findBestMatchByLevenshtein(strings, target) {
  * @param {string} target 目标字符串
  * @param {number} threshold 匹配度阈值，默认为0，表示只要求有匹配结果
  */
-function findBestMatchByLevenshteinWithThreshold(strings, target, threshold = 0) {
-    let minDistance = Infinity;
-    let bestMatch = null;
+function findBestMatchByLevenshteinWithThreshold(
+  strings,
+  target,
+  threshold = 0
+) {
+  let minDistance = Infinity;
+  let bestMatch = null;
 
-    strings.forEach(str => {
-        let distance = levenshteinDistance(str, target);
-        if (distance < minDistance) {
-            minDistance = distance;
-            bestMatch = str;
-        }
-    });
-
-    // 检查最小距离是否在阈值内
-    if (minDistance <= threshold) {
-        return bestMatch;
-    } else {
-        // 如果没有达到匹配度要求，返回空字符串或null
-        return null; // 或者返回 '' 表示空字符串
+  strings.forEach(str => {
+    let distance = levenshteinDistance(str, target);
+    if (distance < minDistance) {
+      minDistance = distance;
+      bestMatch = str;
     }
+  });
+
+  // 检查最小距离是否在阈值内
+  if (minDistance <= threshold) {
+    return bestMatch;
+  } else {
+    // 如果没有达到匹配度要求，返回空字符串或null
+    return null; // 或者返回 '' 表示空字符串
+  }
 }
 
 // 判断time1时间是否在time2之后
-function isTimeAfter(time1, time2) {  
-    // 将时间字符串分割为小时、分钟和秒  
-    const [hours1, minutes1, seconds1] = time1.split(':').map(Number);  
-    const [hours2, minutes2, seconds2] = time2.split(':').map(Number);  
-  
-    // 创建一个表示当天日期的Date对象（用于时间比较）  
-    const dateToday = new Date();  
-  
-    // 设置第一个时间的Date对象为当天的00:00:00  
-    dateToday.setHours(0, 0, 0, 0); // 年、月、日、毫秒  
-    dateToday.setHours(hours1, minutes1, seconds1); // 设置时间  
-  
-    // 复制Date对象以设置第二个时间  
-    const dateToday2 = new Date(dateToday);  
-    dateToday2.setHours(hours2, minutes2, seconds2); // 设置时间  
-  
-    // 比较两个时间  
-    return dateToday.getTime() > dateToday2.getTime();  
-}  
-export {
-    getCurrentFormattedDateTime,
-    exportExcel,
-    getFormattedDateTime,
-    findBestMatchByLevenshtein,
-    findBestMatchByLevenshteinWithThreshold,
-    isTimeAfter
+function isTimeAfter(time1, time2) {
+  // 将时间字符串分割为小时、分钟和秒
+  const [hours1, minutes1, seconds1] = time1.split(":").map(Number);
+  const [hours2, minutes2, seconds2] = time2.split(":").map(Number);
+
+  // 创建一个表示当天日期的Date对象（用于时间比较）
+  const dateToday = new Date();
+
+  // 设置第一个时间的Date对象为当天的00:00:00
+  dateToday.setHours(0, 0, 0, 0); // 年、月、日、毫秒
+  dateToday.setHours(hours1, minutes1, seconds1); // 设置时间
+
+  // 复制Date对象以设置第二个时间
+  const dateToday2 = new Date(dateToday);
+  dateToday2.setHours(hours2, minutes2, seconds2); // 设置时间
+
+  // 比较两个时间
+  return dateToday.getTime() > dateToday2.getTime();
 }
+
+const colorObj = {
+  sfc: "#003399",
+  jiujin: "#006633",
+  jinji: "#CC6600",
+  laina: "#CC6600",
+  lieren: "#660033",
+  lumiai: "#33CCCC"
+};
+
+// 自定义console，支持字体颜色、背景颜色、前缀
+class CustomConsole {
+  constructor(options = {}) {
+    this.defaultOptions = {
+      prefix: options.prefix || "", // 默认前缀
+      flag: options.flag || "sfc", // 默认标识
+      color: options.color || "block", // 默认字体颜色
+      bgColor: options.bgColor || "transparent" // 默认背景颜色
+    };
+  }
+
+  log(firstMessage, ...otherParams) {
+    let { prefix, flag, color, bgColor } = this.defaultOptions;
+    if (flag && colorObj[flag]) {
+      color = colorObj[flag];
+    }
+    const formattedStyle = `color: ${color}; background-color: ${bgColor};`;
+    console.log(`%c${prefix + firstMessage}`, formattedStyle, ...otherParams);
+  }
+
+  warn(firstMessage, ...otherParams) {
+    const { prefix } = this.defaultOptions;
+    console.warn(`${prefix + firstMessage}`, ...otherParams);
+  }
+
+  error(firstMessage, ...otherParams) {
+    const { prefix } = this.defaultOptions;
+    console.error(`${prefix + firstMessage}`, ...otherParams);
+  }
+}
+export {
+  getCurrentFormattedDateTime,
+  exportExcel,
+  getFormattedDateTime,
+  findBestMatchByLevenshtein,
+  findBestMatchByLevenshteinWithThreshold,
+  isTimeAfter,
+  CustomConsole
+};

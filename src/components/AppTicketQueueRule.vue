@@ -21,7 +21,9 @@
   <el-table :data="displayItems" v-if="isCollapse" show-overflow-tooltip>
     <el-table-column prop="appName" label="影院名称">
       <template #default="{ row, $index }">
-        <span v-if="row.id !== editingRowId">{{ row.appName }}</span>
+        <span v-if="row.id !== editingRowId">{{
+          shadowLineObj[row.appName]
+        }}</span>
         <el-select
           v-else
           v-model="editingRow.appName"

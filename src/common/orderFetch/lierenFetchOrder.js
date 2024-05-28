@@ -14,7 +14,7 @@ const platFetchOrderRuleList = computed(() =>
 import { useStayTicketList } from "@/store/stayTicketList";
 const stayTicketList = useStayTicketList();
 const { addNewOrder } = stayTicketList;
-let conPrefix = "【猎人平台自动获取订单队列】——"; // console打印前缀
+let conPrefix = "【猎人自动获取订单】——"; // console打印前缀
 const getOrginValue = value => JSON.parse(JSON.stringify(value));
 
 // 创建一个订单自动报价队列类
