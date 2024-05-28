@@ -80,4 +80,33 @@ const SFC_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "SFC上影影城贵阳云上方舟店"
   }
 ];
-export { ORDER_FORM, APP_LIST, PLAT_LINK_APP, SFC_SPECIAL_CINEMA_LIST };
+// 久金特殊影院集合
+const JIUJIN_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: "华夏久金国际影城",
+    sfc_cinema_name: "上海华夏久金国际影城"
+  }
+];
+// 莱纳特殊影院集合
+const LAINA_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: "莱纳龙域影城(昌发展万科广场店)",
+    sfc_cinema_name: "北京莱纳龙域影城"
+  }
+];
+// 金鸡特殊影院集合
+const JINJI_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: "北京金鸡百花影城(影协影院)",
+    sfc_cinema_name: "金鸡百花影城"
+  }
+];
+export {
+  ORDER_FORM,
+  APP_LIST,
+  PLAT_LINK_APP,
+  SFC_SPECIAL_CINEMA_LIST,
+  JIUJIN_SPECIAL_CINEMA_LIST,
+  LAINA_SPECIAL_CINEMA_LIST,
+  JINJI_SPECIAL_CINEMA_LIST
+};

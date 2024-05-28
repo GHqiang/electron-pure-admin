@@ -1,6 +1,6 @@
 import { ref, computed } from "vue";
 import { storeToRefs } from "pinia";
-// import { SFC_SPECIAL_CINEMA_LIST } from "@/common/constant";
+import { JIUJIN_SPECIAL_CINEMA_LIST } from "@/common/constant";
 import { getCurrentFormattedDateTime } from "@/utils/utils";
 import sfcApi from "@/api/jiujin-api";
 import lierenApi from "@/api/lieren-api";
@@ -20,8 +20,7 @@ const appTicketRuleList = computed(() =>
 
 const cityList = ref([]); // 城市列表
 // 特殊的名字匹配集合
-// let specialCinemaNameMatchList = SFC_SPECIAL_CINEMA_LIST;
-let specialCinemaNameMatchList = [];
+let specialCinemaNameMatchList = JIUJIN_SPECIAL_CINEMA_LIST;
 
 let conPrefix = "【久金自动出票】——"; // console打印前缀
 const getOrginValue = value => JSON.parse(JSON.stringify(value));
