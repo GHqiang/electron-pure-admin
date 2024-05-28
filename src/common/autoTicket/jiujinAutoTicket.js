@@ -1,13 +1,13 @@
 import { ref, computed } from "vue";
 import { storeToRefs } from "pinia";
-import { SFC_SPECIAL_CINEMA_LIST } from "@/common/constant";
+// import { SFC_SPECIAL_CINEMA_LIST } from "@/common/constant";
 import { getCurrentFormattedDateTime } from "@/utils/utils";
 import sfcApi from "@/api/jiujin-api";
 import lierenApi from "@/api/lieren-api";
 import idbApi from "@/api/idbApi";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
-const { sfcUserMobile } = storeToRefs(userInfoAndTokens);
+const { jiujinUserMobile } = storeToRefs(userInfoAndTokens);
 import { useStayTicketList } from "@/store/stayTicketList";
 const stayTicketList = useStayTicketList();
 
@@ -20,9 +20,10 @@ const appTicketRuleList = computed(() =>
 
 const cityList = ref([]); // 城市列表
 // 特殊的名字匹配集合
-let specialCinemaNameMatchList = SFC_SPECIAL_CINEMA_LIST;
+// let specialCinemaNameMatchList = SFC_SPECIAL_CINEMA_LIST;
+let specialCinemaNameMatchList = [];
 
-let conPrefix = "【jiujin自动出票】——"; // console打印前缀
+let conPrefix = "【久金自动出票】——"; // console打印前缀
 const getOrginValue = value => JSON.parse(JSON.stringify(value));
 
 // 创建一个订单自动出票队列类
@@ -127,7 +128,7 @@ class OrderAutoTicketQueue {
     try {
       await this.delay(fetchDelay);
       let sfcStayOfferlist = getOrginValue(stayTicketList.items).filter(item =>
-        ["久金国际"].includes(item.cinema_group)
+        item.cinema_name.includes("华夏久金国际影城")
       );
       return sfcStayOfferlist;
     } catch (error) {
@@ -785,7 +786,7 @@ async function createOrder(data) {
       show_id,
       seat_ids,
       seat_info, // 座位描述，如：7排11号,7排10号
-      phone: sfcUserMobile.value || "", // 用户手机号
+      phone: jiujinUserMobile.value || "", // 用户手机号
       additional_goods_info: "", // 附加商品信息
       companion_info: "", // 携伴信息
       goods_info: "", // 商品信息
@@ -960,17 +961,19 @@ const getCinemaId = (cinema_name, list) => {
     let cinemaName = cinema_name
       .replace(/[\(\)\（\）]/g, "")
       .replace(/\s*/g, "");
-    let specialCinemaInfo = specialCinemaNameMatchList.find(
-      item => item.order_cinema_name === cinemaName
-    );
-    if (specialCinemaInfo) {
-      cinemaName = specialCinemaInfo.sfc_cinema_name;
-    } else {
-      console.warn(
-        conPrefix + "特殊匹配影院名称失败",
-        cinemaName,
-        specialCinemaNameMatchList
+    if (specialCinemaNameMatchList.length) {
+      let specialCinemaInfo = specialCinemaNameMatchList.find(
+        item => item.order_cinema_name === cinemaName
       );
+      if (specialCinemaInfo) {
+        cinemaName = specialCinemaInfo.sfc_cinema_name;
+      } else {
+        console.warn(
+          conPrefix + "特殊匹配影院名称失败",
+          cinemaName,
+          specialCinemaNameMatchList
+        );
+      }
     }
     // 3、去掉空格及换行符后全字匹配
     // 去除空格及括号后的影院列表
