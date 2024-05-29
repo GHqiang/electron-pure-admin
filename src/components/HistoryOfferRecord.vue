@@ -110,7 +110,11 @@
       <el-table-column prop="hall_name" label="影厅" width="110" />
       <el-table-column prop="film_name" label="片名" width="110" />
       <el-table-column prop="ticket_num" label="座位数" width="110" />
-      <el-table-column prop="supplier_end_price" label="中标价" width="110" />
+      <el-table-column prop="supplier_end_price" label="中标价" width="110">
+        <template #default="scope">
+          <span>{{ supplier_end_price_filter(scope.row) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="报价类型" width="100">
         <template #default="scope">
           <span>{{ offerTypeObj[scope.row.offerType] || "" }}</span>
@@ -141,6 +145,16 @@ const offerTypeObj = {
   3: "会员日报价"
 };
 
+// 格式化中标价格
+const supplier_end_price_filter = row => {
+  if (row.supplier_end_price) {
+    return row.supplier_end_price;
+  }
+  if (row.offerType === "1" || row.offerType === "3") {
+    return row.offerAmount;
+  }
+  return row.memberOfferAmount;
+};
 // 表单查询数据
 const formData = reactive({
   platName: "lieren", // 订单来源

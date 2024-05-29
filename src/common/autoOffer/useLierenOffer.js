@@ -413,10 +413,12 @@ const offerRuleMatch = async order => {
       ticket_num
     } = order;
     // 0、获取订单影线
-    let shadowLineName =
-      Object.entries(shadowLineObj).find(
-        item => item[1].indexOf(cinema_group) !== -1
-      )?.[0] || "";
+    // let shadowLineName =
+    //   Object.entries(shadowLineObj).find(
+    //     item => item[1].indexOf(cinema_group) !== -1
+    //   )?.[0] || "";
+    let shadowLineName = getCinemaFlag({ cinema_group, cinema_name });
+
     console.log(conPrefix + "报价订单影线", shadowLineName);
     // 1、获取启用的规则列表（只有满足规则才报价）
     let useRuleList = toRaw(appOfferRuleList.value).filter(
@@ -424,8 +426,8 @@ const offerRuleMatch = async order => {
     );
     console.log(conPrefix + "启用的规则列表", useRuleList);
     // 2、获取某个影线的规则列表
-    let shadowLineRuleList = useRuleList.filter(item =>
-      item.shadowLineName.includes(shadowLineName)
+    let shadowLineRuleList = useRuleList.filter(
+      item => item.shadowLineName === shadowLineName
     );
     console.log(conPrefix + "影线的规则列表", shadowLineRuleList);
     // 3、匹配城市
