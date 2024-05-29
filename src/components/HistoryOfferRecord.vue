@@ -196,8 +196,11 @@ const searchData = () => {
   // console.log("tableDataFilter===>", list);
 };
 
-const loadData = () => {
+const loadData = async () => {
   try {
+    const offerRecords = await idbApi.getAllOrderRecords(1);
+    tableData.value = offerRecords || [];
+    searchData();
     timer = setInterval(async () => {
       const offerRecords = await idbApi.getAllOrderRecords(1);
       console.log("历史报价记录===>", offerRecords);
@@ -209,9 +212,6 @@ const loadData = () => {
   }
 };
 loadData();
-setTimeout(() => {
-  searchData();
-}, 2000);
 
 // 重置表单
 const resetForm = () => {

@@ -157,7 +157,7 @@ const tableDataFilter = ref([]);
 let timer;
 // 搜索数据
 const searchData = () => {
-  console.log("tableData==>", toRaw(tableData.value));
+  // console.log("tableData==>", toRaw(tableData.value));
   tableDataFilter.value = tableData.value.filter(item => {
     const {
       platName, // 订单来源
@@ -178,11 +178,14 @@ const searchData = () => {
     return judge1 && judge2 && judge3 && judge4 && judge5 && judge6;
   });
   let list = JSON.parse(JSON.stringify(tableDataFilter.value));
-  console.log("tableDataFilter===>", list);
+  // console.log("tableDataFilter===>", list);
 };
 
-const loadData = () => {
+const loadData = async () => {
   try {
+    const offerRecords = await idbApi.getAllOrderRecords();
+    tableData.value = offerRecords || [];
+    searchData();
     timer = setInterval(async () => {
       const offerRecords = await idbApi.getAllOrderRecords();
       console.log("历史出票记录===>", offerRecords);
@@ -194,9 +197,6 @@ const loadData = () => {
   }
 };
 loadData();
-setTimeout(() => {
-  searchData();
-}, 2000);
 
 // 重置表单
 const resetForm = () => {
