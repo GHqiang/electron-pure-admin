@@ -41,7 +41,7 @@ const getCinemaFlag = item => {
     return "sfc";
   } else if (item.cinema_name.includes("华夏久金国际影城")) {
     return "jiujin";
-  } else if (item.cinema_name.includes("北京金鸡百花影城(")) {
+  } else if (item.cinema_name.includes("金鸡百花影城")) {
     return "jinji";
   } else if (item.cinema_name.includes("莱纳龙域影城")) {
     return "laina";
@@ -118,6 +118,7 @@ class OrderAutoOfferQueue {
         if (order) {
           // 处理订单
           const offerResult = await this.orderHandle(order, processDelay);
+          // { res, offerRule } || { offerRule } || undefined
           // 添加订单处理记录
           await this.addOrderHandleRecored(order, offerResult);
           console.warn(
@@ -148,7 +149,7 @@ class OrderAutoOfferQueue {
           return true;
         } else if (item.cinema_name.includes("华夏久金国际影城")) {
           return true;
-        } else if (item.cinema_name.includes("北京金鸡百花影城")) {
+        } else if (item.cinema_name.includes("金鸡百花影城")) {
           return true;
         } else if (item.cinema_name.includes("莱纳龙域影城")) {
           return true;
@@ -183,7 +184,7 @@ class OrderAutoOfferQueue {
       console.log(conPrefix + `订单处理 ${order.id}`);
       if (this.isRunning) {
         const offerResult = await singleOffer(order);
-        // { res, offerRule }
+        // { res, offerRule } || { offerRule } || undefined
         return offerResult;
       } else {
         console.warn(conPrefix + "订单报价队列已停止");
@@ -197,6 +198,8 @@ class OrderAutoOfferQueue {
   async addOrderHandleRecored(order, offerResult) {
     try {
       // 数据库存储
+      // offerResult: { res, offerRule } || { offerRule } || undefined
+      console.warn(conPrefix + "数据库存储报价记录", order, offerResult);
       const orderInfo = {
         ...order,
         orderNumber: order.order_number,
@@ -384,10 +387,8 @@ async function getMoviePlayInfo(data) {
       width: "500"
     };
     console.log(conPrefix + "获取电影放映信息参数", params);
-    let res =
-      await apiObj[
-        getCinemaFlag({ cinema_group, cinema_name })
-      ].getMoviePlayInfo(params);
+    const appName = getCinemaFlag({ cinema_group, cinema_name });
+    let res = await apiObj[appName].getMoviePlayInfo(params);
     console.log(conPrefix + "获取电影放映信息返回", res);
     return res.data;
   } catch (error) {
@@ -658,16 +659,13 @@ const getMinAmountOfferRule = async (ruleList, order) => {
 const getMemberPrice = async order => {
   try {
     console.log(conPrefix + "准备获取会员价", order);
-    const { city_name, cinema_name, hall_name, cinema_group } = order;
+    const { city_name, cinema_name, hall_name } = order;
     console.log(
       conPrefix +
         `待报价订单：城市${city_name}, 影院${cinema_name}, 影厅${hall_name}`
     );
     // 获取当前场次电影信息
-    let movieInfo =
-      await apiObj[getCinemaFlag({ cinema_group, cinema_name })].getMovieInfo(
-        order
-      );
+    let movieInfo = await getMovieInfo(order);
     console.log(conPrefix + `待报价订单当前场次电影相关信息`, movieInfo);
     if (!movieInfo) {
       console.error(conPrefix + "获取当前场次电影信息失败", "不再进行报价");
@@ -806,10 +804,8 @@ const getMovieInfo = async item => {
       city_id: city_id
     };
     console.log(conPrefix + "获取城市影院参数", params);
-    let res =
-      await apiObj[getCinemaFlag({ cinema_group, cinema_name })].getCinemaList(
-        params
-      );
+    const appName = getCinemaFlag({ cinema_group, cinema_name });
+    let res = await apiObj[appName].getCinemaList(params);
     console.log(conPrefix + "获取城市影院返回", res);
     let cinemaList = res.data?.cinema_data || [];
     let cinema_id = getCinemaId(cinema_name, cinemaList);
@@ -847,10 +843,8 @@ async function getCityList({ cinema_group, cinema_name }) {
   try {
     let params = {};
     console.log(conPrefix + "获取城市列表参数", params);
-    let res =
-      await apiObj[getCinemaFlag({ cinema_group, cinema_name })].getCityList(
-        params
-      );
+    const appName = getCinemaFlag({ cinema_group, cinema_name });
+    let res = await apiObj[appName].getCityList(params);
     console.log(conPrefix + "获取城市列表返回", res);
     cityList.value = res.data.all_city || [];
   } catch (error) {

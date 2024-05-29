@@ -209,15 +209,15 @@ const singleStartOrStop = ({ id, platToken, platName }, flag) => {
     const checkToken = PLAT_LINK_APP[platName];
     const noTokenByApp = checkToken.filter(item => {
       if (item === "sfc") {
-        return !!sfcToken;
+        return !sfcToken;
       } else if (item === "jiujin") {
-        return !!jiujinToken;
+        return !jiujinToken;
       } else if (item === "jinji") {
-        return !!jinjiToken;
+        return !jinjiToken;
       } else if (item === "laina") {
-        return !!lainaToken;
+        return !lainaToken;
       } else if (item === "lumiai") {
-        return !!lmaToken;
+        return !lmaToken;
       }
       return true;
     });

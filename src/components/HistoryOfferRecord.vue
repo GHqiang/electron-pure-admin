@@ -100,7 +100,7 @@
           <span>{{ shadowLineObj[scope.row.appName] }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="状态" fixed width="60">
+      <el-table-column label="报价状态" fixed width="90">
         <template #default="scope">
           <span>{{ scope.row.status === "1" ? "成功" : "失败" }}</span>
         </template>
@@ -157,7 +157,7 @@ let timer;
 
 // 搜索数据
 const searchData = () => {
-  console.log("tableData==>", toRaw(tableData.value));
+  // console.log("tableData==>", toRaw(tableData.value));
   tableDataFilter.value = tableData.value.filter(item => {
     const {
       platName, // 订单来源
@@ -179,7 +179,7 @@ const searchData = () => {
     return judge1 && judge2 && judge3 && judge4 && judge5 && judge6;
   });
   let list = JSON.parse(JSON.stringify(tableDataFilter.value));
-  console.log("tableDataFilter===>", list);
+  // console.log("tableDataFilter===>", list);
 };
 
 const loadData = () => {
