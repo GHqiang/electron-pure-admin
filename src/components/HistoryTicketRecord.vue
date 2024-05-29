@@ -102,7 +102,7 @@
       </el-table-column>
       <el-table-column label="出票状态" fixed width="60">
         <template #default="scope">
-          <span>{{ scope.row.status === "1" ? "成功" : "失败" }}</span>
+          <span>{{ scope.row.orderStatus === "1" ? "成功" : "失败" }}</span>
         </template>
       </el-table-column>
       <el-table-column prop="orderNumber" fixed label="订单号" width="110" />
