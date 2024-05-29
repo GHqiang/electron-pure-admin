@@ -90,14 +90,14 @@ const JIUJIN_SPECIAL_CINEMA_LIST = [
 // 莱纳特殊影院集合
 const LAINA_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "莱纳龙域影城(昌发展万科广场店)",
+    order_cinema_name: "莱纳龙域影城昌发展万科广场店",
     sfc_cinema_name: "北京莱纳龙域影城"
   }
 ];
 // 金鸡特殊影院集合
 const JINJI_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "北京金鸡百花影城(影协影院)",
+    order_cinema_name: "北京金鸡百花影城影协影院",
     sfc_cinema_name: "金鸡百花影城"
   }
 ];

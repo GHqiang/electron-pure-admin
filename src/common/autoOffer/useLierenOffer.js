@@ -826,6 +826,7 @@ const getMovieInfo = async item => {
     let movieInfo = movie_data.find(
       item => item.movie_name.indexOf(film_name) !== -1
     );
+    console.log("movieInfo", movieInfo, film_name);
     if (movieInfo) {
       let { shows } = movieInfo;
       let showDay = show_time.split(" ")[0];
