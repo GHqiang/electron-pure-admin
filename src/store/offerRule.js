@@ -11,7 +11,7 @@ export const useDataTableStore = defineStore("dataTable", {
     // 从localStorage中获取数据
     async fetchItemsFromLocalStorage() {
       const data = localStorage.getItem("tableData");
-      console.log("localStorage-tableDataRule", data);
+      // console.log("localStorage-tableDataRule", data);
       if (data) {
         this.items = JSON.parse(data);
         if (this.items.length) {

@@ -1,6 +1,11 @@
 import { ref, computed, toRaw } from "vue";
 import { isTimeAfter } from "@/utils/utils";
-import { SFC_SPECIAL_CINEMA_LIST } from "@/common/constant";
+import {
+  SFC_SPECIAL_CINEMA_LIST,
+  JIUJIN_SPECIAL_CINEMA_LIST,
+  LAINA_SPECIAL_CINEMA_LIST,
+  JINJI_SPECIAL_CINEMA_LIST
+} from "@/common/constant";
 
 import sfcApi from "@/api/sfc-api";
 import jiujinApi from "@/api/jiujin-api";
@@ -56,7 +61,12 @@ console.log(conPrefix + "自动报价规则", getOrginValue(appOfferRuleList.val
 const cityList = ref([]); // 城市列表
 
 // 特殊的名字匹配集合
-let specialCinemaNameMatchList = SFC_SPECIAL_CINEMA_LIST;
+let specialCinemaNameMatchObj = {
+  sfc: SFC_SPECIAL_CINEMA_LIST,
+  jiujin: JIUJIN_SPECIAL_CINEMA_LIST,
+  jinji: JINJI_SPECIAL_CINEMA_LIST,
+  laina: LAINA_SPECIAL_CINEMA_LIST
+};
 // 创建一个订单自动报价队列类
 class OrderAutoOfferQueue {
   constructor() {
@@ -409,6 +419,7 @@ const offerRuleMatch = async order => {
     let shadowLineRuleList = useRuleList.filter(
       item => item.shadowLineName === shadowLineName
     );
+    useRuleList = getOrginValue(shadowLineRuleList);
     console.log(conPrefix + "影线的规则列表", shadowLineRuleList);
     // 3、匹配城市
     let cityRuleList = shadowLineRuleList.filter(item => {
@@ -435,10 +446,18 @@ const offerRuleMatch = async order => {
         return true;
       }
       if (item.includeCinemaNames.length) {
-        return cinemaMatchHandle(cinema_name, item.includeCinemaNames);
+        return cinemaMatchHandle(
+          cinema_name,
+          item.includeCinemaNames,
+          shadowLineName
+        );
       }
       if (item.excludeCinemaNames.length) {
-        return !cinemaMatchHandle(cinema_name, item.excludeCinemaNames);
+        return !cinemaMatchHandle(
+          cinema_name,
+          item.excludeCinemaNames,
+          shadowLineName
+        );
       }
     });
     console.log(conPrefix + "匹配影院后的规则列表", cinemaRuleList);
@@ -664,7 +683,7 @@ const getMemberPrice = async order => {
 };
 
 // 影院名称匹配（匹配报价规则时使用）
-const cinemaMatchHandle = (cinema_name, list) => {
+const cinemaMatchHandle = (cinema_name, list, appName) => {
   try {
     // 1、全字匹配
     let isHasMatch = list.some(item => item === cinema_name);
@@ -676,7 +695,7 @@ const cinemaMatchHandle = (cinema_name, list) => {
       .replace(/[\(\)\（\）]/g, "")
       .replace(/\s*/g, "");
     // 2、特殊匹配
-    let specialCinemaInfo = specialCinemaNameMatchList.find(
+    let specialCinemaInfo = specialCinemaNameMatchObj[appName].find(
       item => item.order_cinema_name === cinemaName
     );
     if (specialCinemaInfo) {
@@ -685,7 +704,7 @@ const cinemaMatchHandle = (cinema_name, list) => {
       console.warn(
         conPrefix + "特殊匹配影院名称失败",
         cinemaName,
-        specialCinemaNameMatchList
+        specialCinemaNameMatchObj[appName]
       );
     }
     // 3、去掉空格及换行符后全字匹配
@@ -714,7 +733,7 @@ const cinemaMatchHandle = (cinema_name, list) => {
 };
 
 // 根据订单name获取影院id
-const getCinemaId = (cinema_name, list) => {
+const getCinemaId = (cinema_name, list, appName) => {
   try {
     // 1、先全字匹配，匹配到就直接返回
     let cinema_id = list.find(item => item.name === cinema_name)?.id;
@@ -726,7 +745,7 @@ const getCinemaId = (cinema_name, list) => {
     let cinemaName = cinema_name
       .replace(/[\(\)\（\）]/g, "")
       .replace(/\s*/g, "");
-    let specialCinemaInfo = specialCinemaNameMatchList.find(
+    let specialCinemaInfo = specialCinemaNameMatchObj[appName].find(
       item => item.order_cinema_name === cinemaName
     );
     if (specialCinemaInfo) {
@@ -735,7 +754,7 @@ const getCinemaId = (cinema_name, list) => {
       console.warn(
         conPrefix + "特殊匹配影院名称失败",
         cinemaName,
-        specialCinemaNameMatchList
+        specialCinemaNameMatchObj[appName]
       );
     }
     // 3、去掉空格及换行符后全字匹配
@@ -790,7 +809,7 @@ const getMovieInfo = async item => {
     let res = await apiObj[appName].getCinemaList(params);
     console.log(conPrefix + "获取城市影院返回", res);
     let cinemaList = res.data?.cinema_data || [];
-    let cinema_id = getCinemaId(cinema_name, cinemaList);
+    let cinema_id = getCinemaId(cinema_name, cinemaList, appName);
     if (!cinema_id) {
       console.error(conPrefix + "获取目标影院失败");
       return;
