@@ -199,6 +199,7 @@ const searchData = () => {
 const loadData = async () => {
   try {
     const offerRecords = await idbApi.getAllOrderRecords(1);
+    console.log("历史报价记录", offerRecords);
     tableData.value = offerRecords || [];
     searchData();
     timer = setInterval(async () => {

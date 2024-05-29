@@ -289,44 +289,32 @@ async function getStayOfferList() {
     //   total: 1,
     //   data: [
     //     {
-    //       id: 6103172,
-    //       supplier_id: 714632,
-    //       order_number: "2024052211291357372",
-    //       tpp_price: "61.00",
-    //       ticket_num: 1,
-    //       city_name: "上海",
+    //       id: 6126849,
+    //       tpp_price: "48.00",
+    //       supplier_max_price: 44,
+    //       city_name: "北京",
+    //       cinema_addr: "大兴区生物医药基地龙湖天街商场3层SFC上影影城",
+    //       ticket_num: 2,
+    //       cinema_name: "SFC上影影城（北京大兴龙湖天街IMAX店）",
+    //       hall_name: "1号IMAX厅（如遇3D电影凭电影票领取3D眼镜）",
+    //       film_name: "猩球崛起：新世界",
     //       film_img:
-    //         "https://gw.alicdn.com/tfscom/i1/O1CN01PTduxS1oVqloZeODY_!!6000000005231-0-alipicbeacon.jpg",
-    //       cinema_addr: "上海市浦东新区张杨路501号第一八佰伴10楼（近浦东南路）",
-    //       cinema_name: "上海华夏久金国际影城",
-    //       hall_name: "1厅",
-    //       film_name: "末路狂花钱",
-    //       show_time: "2024-05-27 20:50:00",
-    //       section_at: 1716348565,
-    //       winning_at: 1716348610,
-    //       lock_if: 1,
-    //       lockseat: "3排2座",
+    //         "https://gw.alicdn.com/tfscom/i1/O1CN01JqzXXB1UWxOwZLGtl_!!6000000002526-0-alipicbeacon.jpg",
+    //       show_time: "2024-06-01 16:35:00",
+    //       section_at: 1716972536,
     //       seat_flat: 0,
     //       urgent: 0,
     //       is_multi: 0,
     //       seat_type: 0,
-    //       cinema_code: "31070901",
-    //       supplier_end_price: 40,
     //       rewards: 0,
     //       overdue: 0,
-    //       cinema_group: "久金国际",
-    //       type: 0,
+    //       cinema_group: "上影上海",
+    //       cinema_code: "11140901",
     //       group_urgent: 0,
-    //       sytime: 1716349300,
-    //       orderNumber: "2024052211291357372",
-    //       processingTime: 1716348629972,
-    //       qrcode: "",
-    //       quan_code: "",
-    //       card_id: "",
-    //       offerRule: "",
-    //       offerRuleName: "",
-    //       offerType: "",
-    //       quanValue: ""
+    //       order_number: "2024052916463272686",
+    //       sytime: 1716972581,
+    //       orderNumber: "2024052916463272686",
+    //       processingTime: 1716972572436
     //     }
     //   ],
     //   time: 1710125670
@@ -400,9 +388,6 @@ async function getMoviePlayInfo(data) {
 const offerRuleMatch = async order => {
   try {
     console.warn(conPrefix + "匹配报价规则开始");
-    let shadowLineObj = {
-      sfc: "上影上海,上影二线"
-    };
     const {
       cinema_group,
       city_name,
@@ -412,11 +397,6 @@ const offerRuleMatch = async order => {
       show_time,
       ticket_num
     } = order;
-    // 0、获取订单影线
-    // let shadowLineName =
-    //   Object.entries(shadowLineObj).find(
-    //     item => item[1].indexOf(cinema_group) !== -1
-    //   )?.[0] || "";
     let shadowLineName = getCinemaFlag({ cinema_group, cinema_name });
 
     console.log(conPrefix + "报价订单影线", shadowLineName);
