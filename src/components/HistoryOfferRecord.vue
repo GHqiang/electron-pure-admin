@@ -90,6 +90,13 @@
       stripe
       show-overflow-tooltip
     >
+      <el-table-column
+        type="index"
+        fixed
+        label="序号"
+        align="center"
+        width="60"
+      />
       <el-table-column prop="platName" fixed label="订单来源" width="110">
         <template #default="scope">
           <span>{{ orderFormObj[scope.row.platName] }}</span>
