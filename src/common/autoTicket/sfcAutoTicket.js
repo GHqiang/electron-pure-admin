@@ -11,6 +11,7 @@ const userInfoAndTokens = appUserInfo();
 const { sfcUserMobile } = storeToRefs(userInfoAndTokens);
 import { useStayTicketList } from "@/store/stayTicketList";
 const stayTicketList = useStayTicketList();
+const { deleteOrder } = stayTicketList;
 
 import { useAppRuleListStore } from "@/store/appTicketRuleTable";
 const appRuleListStore = useAppRuleListStore();
@@ -91,6 +92,16 @@ class OrderAutoTicketQueue {
         );
       });
       console.warn(conPrefix + "从历史报价记录过滤后的待出票订单", orderList);
+      let allTicketRecord = await idbApi.getAllOrderRecords();
+      allTicketRecord = allTicketRecord || [];
+      allTicketRecord = allTicketRecord.filter(item.appName === "sfc");
+      orderList = orderList.filter(item => {
+        // 过滤出来机器自己出票过的订单
+        return !allTicketRecord.some(
+          itemA => itemA.order_number === item.order_number
+        );
+      });
+      console.warn(conPrefix + "从历史出票记录过滤后的待出票订单", orderList);
       // 将订单加入队列
       this.enqueue(orderList);
 
@@ -107,6 +118,8 @@ class OrderAutoTicketQueue {
             order,
             res
           );
+          // 从缓存里面删除记录
+          deleteOrder(order.order_number, "sfc");
           // 添加订单处理记录
           await this.addOrderHandleRecored(order, res);
         }
