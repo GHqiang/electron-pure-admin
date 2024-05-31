@@ -48,5 +48,13 @@ export default {
         title: "影院自动出票"
       }
     },
+    {
+      path: "/set/balanceQuery",
+      name: "balanceQuery",
+      component: () => import("@/views/appBalanceQuery/index.vue"),
+      meta: {
+        title: "影院余额查询"
+      }
+    },
   ]
 } satisfies RouteConfigsTable;
