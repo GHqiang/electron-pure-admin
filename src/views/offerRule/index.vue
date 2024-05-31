@@ -355,7 +355,6 @@ import RuleDialog from "@/components/RuleDialog.vue";
 import { ORDER_FORM, APP_LIST } from "@/common/constant";
 import { useDataTableStore } from "@/store/offerRule";
 const dataTableStore = useDataTableStore();
-dataTableStore.fetchItemsFromLocalStorage();
 const { addItem, updateItem, deleteItem, batchDeleteItem } = dataTableStore;
 // 使用computed确保items响应式
 const tableData = computed(() => dataTableStore.items);

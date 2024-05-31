@@ -1,4 +1,4 @@
-import { ref, computed, toRaw } from "vue";
+import { ref, computed } from "vue";
 import { isTimeAfter } from "@/utils/utils";
 import {
   SFC_SPECIAL_CINEMA_LIST,
@@ -27,7 +27,6 @@ const platOfferRuleList = computed(() =>
 // app报价规则列表
 import { useDataTableStore } from "@/store/offerRule";
 const dataTableStore = useDataTableStore();
-dataTableStore.fetchItemsFromLocalStorage();
 
 // 使用computed确保items响应式
 const appOfferRuleList = computed(() =>
@@ -299,32 +298,31 @@ async function getStayOfferList() {
     //   total: 1,
     //   data: [
     //     {
-    //       id: 6126849,
-    //       tpp_price: "48.00",
-    //       supplier_max_price: 44,
-    //       city_name: "北京",
-    //       cinema_addr: "大兴区生物医药基地龙湖天街商场3层SFC上影影城",
-    //       ticket_num: 2,
-    //       cinema_name: "SFC上影影城（北京大兴龙湖天街IMAX店）",
-    //       hall_name: "1号IMAX厅（如遇3D电影凭电影票领取3D眼镜）",
-    //       film_name: "猩球崛起：新世界",
+    //       id: 6129823,
+    //       tpp_price: "73.00",
+    //       supplier_max_price: 68,
+    //       city_name: "上海",
+    //       cinema_addr: "浦东新区张杨路501号10楼",
+    //       ticket_num: 1,
+    //       cinema_name: "SFC上影百联影城（八佰伴IMAX店）",
+    //       hall_name: "1号IMAX厅（儿童需购票）",
+    //       film_name: "哈尔的移动城堡",
     //       film_img:
-    //         "https://gw.alicdn.com/tfscom/i1/O1CN01JqzXXB1UWxOwZLGtl_!!6000000002526-0-alipicbeacon.jpg",
-    //       show_time: "2024-06-01 16:35:00",
-    //       section_at: 1716972536,
+    //         "https://gw.alicdn.com/tfscom/i2/O1CN01fKrbRb1dWnpE5V54I_!!6000000003744-0-alipicbeacon.jpg",
+    //       show_time: "2024-06-01 12:00:00",
+    //       section_at: 1717075740,
     //       seat_flat: 0,
     //       urgent: 0,
     //       is_multi: 0,
     //       seat_type: 0,
-    //       rewards: 0,
+    //       offer: null,
+    //       rewards: 1,
     //       overdue: 0,
     //       cinema_group: "上影上海",
-    //       cinema_code: "11140901",
-    //       group_urgent: 0,
-    //       order_number: "2024052916463272686",
-    //       sytime: 1716972581,
-    //       orderNumber: "2024052916463272686",
-    //       processingTime: 1716972572436
+    //       cinema_code: "31124201",
+    //       group_urgent: 1,
+    //       order_number: "2024053021282879717",
+    //       sytime: 1717075785
     //     }
     //   ],
     //   time: 1710125670
@@ -411,7 +409,7 @@ const offerRuleMatch = async order => {
 
     console.log(conPrefix + "报价订单影线", shadowLineName);
     // 1、获取启用的规则列表（只有满足规则才报价）
-    let useRuleList = toRaw(appOfferRuleList.value).filter(
+    let useRuleList = getOrginValue(appOfferRuleList.value).filter(
       item => item.status === "1"
     );
     console.log(conPrefix + "启用的规则列表", useRuleList);
@@ -419,7 +417,6 @@ const offerRuleMatch = async order => {
     let shadowLineRuleList = useRuleList.filter(
       item => item.shadowLineName === shadowLineName
     );
-    useRuleList = getOrginValue(shadowLineRuleList);
     console.log(conPrefix + "影线的规则列表", shadowLineRuleList);
     // 3、匹配城市
     let cityRuleList = shadowLineRuleList.filter(item => {

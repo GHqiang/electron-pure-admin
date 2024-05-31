@@ -1,25 +1,12 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
 import { OFFER_LIST } from "@/common/constant";
 export const useDataTableStore = defineStore("dataTable", {
   state: () => {
     return {
-      items: ref([])
+      items: OFFER_LIST || []
     };
   },
   actions: {
-    // 从localStorage中获取数据
-    async fetchItemsFromLocalStorage() {
-      const data = localStorage.getItem("tableData");
-      // console.log("localStorage-tableDataRule", data);
-      if (data) {
-        this.items = JSON.parse(data);
-        if (this.items.length) {
-          return;
-        }
-      }
-      this.items = OFFER_LIST;
-    },
     addItem(item) {
       this.items.push(item);
       this.saveToLocalStorage();
