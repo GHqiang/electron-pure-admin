@@ -8,7 +8,6 @@
           v-model="formData.appName"
           placeholder="影线名称"
           style="width: 194px"
-          clearable
         >
           <el-option
             v-for="(keyValue, keyName) in shadowLineObj"
@@ -166,12 +165,14 @@ const searchData = async () => {
       }
       let appNameList = [];
       // 创建一个新数组来存储结果，避免直接修改原数组
-      Object.keys(apiObj).forEach((item, index) => {
-        // 先将当前元素插入新数组
-        appNameList.push(item);
-        // 在当前元素的下一个位置插入相同的元素
-        appNameList.splice(index + 1, 0, item);
-      });
+      Object.keys(apiObj)
+        .filter(item => item === formData.appName)
+        .forEach((item, index) => {
+          // 先将当前元素插入新数组
+          appNameList.push(item);
+          // 在当前元素的下一个位置插入相同的元素
+          appNameList.splice(index + 1, 0, item);
+        });
       obj.appName = appNameList[inx];
       let index = tableList.findIndex(item => item.appName === obj.appName);
       // console.log("obj", obj);
