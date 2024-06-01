@@ -372,7 +372,7 @@ const oneClickBuyTicket = async item => {
       );
       return;
     }
-    offerRule = offerRecord[0];
+    offerRule = offerRecord[0].offerRule;
     await getCityList();
 
     let city_id = cityList.value.find(
