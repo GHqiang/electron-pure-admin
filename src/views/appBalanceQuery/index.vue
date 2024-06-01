@@ -91,7 +91,7 @@ const shadowLineObj = APP_LIST;
 
 // 表单查询数据
 const formData = reactive({
-  appName: "" // 影线名称
+  appName: "sfc" // 影线名称
 });
 
 // 搜索过滤后的数据
@@ -102,7 +102,10 @@ const searchData = async () => {
   try {
     // 1、获取城市
     // 2、获取影院
-    let apiList = Object.entries(apiObj);
+    let apiList = Object.entries(apiObj).filter(
+      item => item[0] === formData.appName
+    );
+    // console.log("apiList===>", apiList);
     let paramsObj = {
       sfc: { city_id: "", cinema_id: "" },
       jiujin: { city_id: "", cinema_id: "" },
@@ -192,10 +195,10 @@ const searchData = async () => {
     console.error("查看影院余额失败===>", error);
   }
 };
-searchData();
+// searchData();
 
 // 重置表单
 const resetForm = () => {
-  formData.appName = ""; // 影线名称
+  formData.appName = "sfc"; // 影线名称
 };
 </script>

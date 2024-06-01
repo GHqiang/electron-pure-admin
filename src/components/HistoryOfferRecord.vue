@@ -207,12 +207,12 @@ const loadData = async () => {
   try {
     const offerRecords = await idbApi.getAllOrderRecords(1);
     console.log("历史报价记录", offerRecords);
-    tableData.value = offerRecords || [];
+    tableData.value = (offerRecords || []).reverse();
     searchData();
     timer = setInterval(async () => {
       const offerRecords = await idbApi.getAllOrderRecords(1);
       console.log("历史报价记录===>", offerRecords);
-      tableData.value = offerRecords || [];
+      tableData.value = (offerRecords || []).reverse();
       searchData();
     }, 60 * 1000);
   } catch (error) {
