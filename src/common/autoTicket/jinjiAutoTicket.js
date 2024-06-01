@@ -81,7 +81,7 @@ class OrderAutoTicketQueue {
       let allOfferRecord = await idbApi.getAllOrderRecords(1);
       allOfferRecord = allOfferRecord || [];
       allOfferRecord = allOfferRecord.filter(
-        item => item.orderStatus === "1" && item.appName === "jiujin"
+        item => item.orderStatus === "1" && item.appName === "jinji"
       );
       console.warn(conPrefix + "机器历史报价记录", allOfferRecord);
       let orderList = newOrders.filter(item => {
