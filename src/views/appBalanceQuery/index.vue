@@ -81,9 +81,9 @@ import lainaApi from "@/api/laina-api";
 // api集合
 let apiObj = {
   sfc: sfcApi,
-  jiujin: jiujinApi
-  // jinji: jinjiApi
-  // laina: lainaApi
+  jiujin: jiujinApi,
+  jinji: jinjiApi,
+  laina: lainaApi
 };
 
 // 影线列表
