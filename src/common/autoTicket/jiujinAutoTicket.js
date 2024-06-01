@@ -92,7 +92,9 @@ class OrderAutoTicketQueue {
       console.warn(conPrefix + "从历史报价记录过滤后的待出票订单", orderList);
       let allTicketRecord = await idbApi.getAllOrderRecords();
       allTicketRecord = allTicketRecord || [];
-      allTicketRecord = allTicketRecord.filter(item.appName === "jiujin");
+      allTicketRecord = allTicketRecord.filter(
+        item => item.appName === "jiujin"
+      );
       orderList = orderList.filter(item => {
         // 过滤出来机器自己出票过的订单
         return !allTicketRecord.some(
