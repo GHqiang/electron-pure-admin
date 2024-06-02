@@ -124,6 +124,7 @@
         </template>
       </el-table-column>
       <el-table-column prop="quanValue" label="用券面额" width="90" />
+      <el-table-column prop="errMsg" label="失败原因" width="110" />
     </el-table>
   </div>
 </template>
