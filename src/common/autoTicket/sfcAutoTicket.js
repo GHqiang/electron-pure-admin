@@ -28,7 +28,7 @@ let conPrefix = "【sfc自动出票】——"; // console打印前缀
 const getOrginValue = value => JSON.parse(JSON.stringify(value));
 
 let errMsg = ""; // 单次出票的错误语
-let errInfo = null; // 单次出票的错误信息
+let errInfo = ""; // 单次出票的错误信息
 
 // 设置错误信息
 const setErrInfo = (str, err) => {
@@ -41,7 +41,14 @@ const setErrInfo = (str, err) => {
     errInfo = null;
   } else {
     if (err) {
-      errInfo = err;
+      let errStr;
+      try {
+        errStr = String(err);
+      } catch (error) {
+        console.log("错误信息String转化异常", error, err);
+        errStr = JSON.stringify(err);
+      }
+      errInfo = errStr;
     }
   }
 };
