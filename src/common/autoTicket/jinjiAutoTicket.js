@@ -823,7 +823,12 @@ async function createOrder(data) {
           conPrefix + "调整会员卡密码参数再次发起创建订单请求",
           params
         );
-        params.card_password = encode("338629"); // 会员卡密码
+        let pwd = localStorage.getItem("memberPwd");
+        if (!pwd) {
+          console.error(conPrefix + "会员卡密码未设置");
+          return;
+        }
+        params.card_password = encode(pwd); // 会员卡密码
         const res = await sfcApi.createOrder(params);
         console.log(conPrefix + "创建订单返回", res);
         return res.data?.order_num || "";

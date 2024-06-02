@@ -179,6 +179,11 @@ const appTokenObj = {
 
 // 一键启动
 const oneClickAutoOffer = () => {
+  let pwd = localStorage.getItem("memberPwd");
+  if (!pwd) {
+    ElMessage.error("会员卡密码未设置，请先去设置后再启动");
+    return;
+  }
   ElMessageBox.confirm("确定要一键全部启动吗?", "提示", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
@@ -221,6 +226,11 @@ const stopAutoOffer = () => {
 const singleStartOrStop = ({ id, appName }, flag) => {
   // 单个启动
   if (flag === 1) {
+    let pwd = localStorage.getItem("memberPwd");
+    if (!pwd) {
+      ElMessage.error("会员卡密码未设置，请先去设置后再启动");
+      return;
+    }
     if (!appTokenObj[appName].value) {
       ElMessage.error(appName + "未登录，请先去影院登录页面登录后再启动");
       return;
