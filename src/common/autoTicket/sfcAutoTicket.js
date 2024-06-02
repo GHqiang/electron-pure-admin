@@ -209,7 +209,7 @@ class OrderAutoTicketQueue {
         ...order,
         orderNumber: order.order_number,
         processingTime: +new Date(),
-        orderStatus: res.submitRes ? "1" : "2",
+        orderStatus: res?.submitRes ? "1" : "2",
         profit: res?.profit || undefined,
         qrcode: res?.qrcode || "",
         quan_code: res?.quan_code || "",

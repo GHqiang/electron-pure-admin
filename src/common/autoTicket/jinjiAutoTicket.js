@@ -26,6 +26,24 @@ let specialCinemaNameMatchList = JINJI_SPECIAL_CINEMA_LIST;
 let conPrefix = "【金鸡自动出票】——"; // console打印前缀
 const getOrginValue = value => JSON.parse(JSON.stringify(value));
 
+let errMsg = ""; // 单次出票的错误语
+let errInfo = null; // 单次出票的错误信息
+
+// 设置错误信息
+const setErrInfo = (str, err) => {
+  if (str === "") {
+    errMsg = "";
+  } else {
+    errMsg = str;
+  }
+  if (err === null) {
+    errInfo = null;
+  } else {
+    if (err) {
+      errInfo = err;
+    }
+  }
+};
 // 创建一个订单自动出票队列类
 class OrderAutoTicketQueue {
   constructor() {
@@ -192,7 +210,7 @@ class OrderAutoTicketQueue {
         ...order,
         orderNumber: order.order_number,
         processingTime: +new Date(),
-        orderStatus: res ? "1" : "2",
+        orderStatus: res?.submitRes ? "1" : "2",
         profit: res?.profit || undefined,
         qrcode: res?.qrcode || "",
         quan_code: res?.quan_code || "",
@@ -201,7 +219,9 @@ class OrderAutoTicketQueue {
         offerRuleName: res?.offerRule?.ruleName || "",
         offerType: res?.offerRule?.offerType || "",
         quanValue: res?.offerRule?.quanValue || "",
-        appName: res?.offerRule?.shadowLineName || ""
+        appName: res?.offerRule?.shadowLineName || "",
+        errMsg,
+        errInfo
       };
       if (res) {
         this.handleSuccessOrderList.push(order);
@@ -305,6 +325,7 @@ const singleTicket = async item => {
     const res = await trial(() => unlockSeat(item.id), 3, 3);
     if (!res) {
       console.error(conPrefix + "单个订单试错后仍解锁失败", "需要走转单逻辑");
+      setErrInfo("订单解锁失败", error);
       // 转单逻辑待补充
       await transferOrder(item);
       return;
@@ -371,6 +392,7 @@ const oneClickBuyTicket = async item => {
           "获取该订单的报价记录失败，不进行出票，此处不转单，直接跳过",
         offerRecord
       );
+      setErrInfo("获取该订单报价记录失败");
       return;
     }
     offerRule = offerRecord[0].offerRule;
@@ -424,6 +446,7 @@ const oneClickBuyTicket = async item => {
           conPrefix + "单个订单试错后仍锁定座位失败",
           "需要走转单逻辑"
         );
+        setErrInfo("订单锁定座位失败", error);
         await transferOrder(item);
         return { offerRule };
       }
@@ -448,6 +471,7 @@ const oneClickBuyTicket = async item => {
         conPrefix + "优惠券和会员卡都无法使用，单个订单直接出票结束",
         "走转单逻辑"
       );
+      setErrInfo("订单使用优惠券或者会员卡失败");
       await transferOrder(item, {
         city_id,
         cinema_id,
@@ -472,6 +496,7 @@ const oneClickBuyTicket = async item => {
           "使用优惠券或会员卡后计算订单价格失败，单个订单直接出票结束",
         "走转单逻辑"
       );
+      setErrInfo("使用优惠券或会员卡后计算订单价格失败");
       // 后续要记录失败列表（订单信息、失败原因、时间戳）
       await transferOrder(item, {
         city_id,
@@ -553,6 +578,7 @@ const oneClickBuyTicket = async item => {
     return { profit, submitRes, qrcode, quan_code, card_id, offerRule };
   } catch (error) {
     console.error(conPrefix + "一键买票异常", error);
+    setErrInfo("一键买票异常", error);
     return { offerRule };
   }
 };
@@ -740,6 +766,7 @@ const useQuanOrCard = async ({
     }
   } catch (error) {
     console.error(conPrefix + "使用优惠券或者会员卡异常", error);
+    setErrInfo("使用优惠券或者会员卡异常", error);
     return {
       card_id: "",
       quan_code: "",
@@ -778,6 +805,7 @@ async function priceCalculation(data) {
     return res.data?.price;
   } catch (error) {
     console.error(conPrefix + "计算订单价格异常", error);
+    setErrInfo("计算订单价格异常", error);
   }
 }
 
@@ -819,6 +847,7 @@ async function createOrder(data) {
         return res.data?.order_num || "";
       } catch (error) {
         console.warn(conPrefix + "会员卡第一次创建订单失败", error);
+        setErrInfo("会员卡第一次创建订单失败", error);
         console.warn(
           conPrefix + "调整会员卡密码参数再次发起创建订单请求",
           params
@@ -826,11 +855,13 @@ async function createOrder(data) {
         let pwd = localStorage.getItem("memberPwd");
         if (!pwd) {
           console.error(conPrefix + "会员卡密码未设置");
+          setErrInfo("会员卡密码未设置");
           return;
         }
         params.card_password = encode(pwd); // 会员卡密码
         const res = await sfcApi.createOrder(params);
         console.log(conPrefix + "创建订单返回", res);
+        setErrInfo("", null);
         return res.data?.order_num || "";
       }
     } else if (coupon) {
@@ -838,10 +869,12 @@ async function createOrder(data) {
       console.log(conPrefix + "创建订单参数", params);
       const res = await sfcApi.createOrder(params);
       console.log(conPrefix + "创建订单返回", res);
+      setErrInfo("", null);
       return res.data?.order_num || "";
     }
   } catch (error) {
     console.error(conPrefix + "创建订单异常", error);
+    setErrInfo("创建订单异常", error);
   }
 }
 
@@ -863,6 +896,7 @@ async function buyTicket(data) {
     return res;
   } catch (error) {
     console.error(conPrefix + "订单购买异常", error);
+    setErrInfo("订单购买异常", error);
   }
 }
 
@@ -883,6 +917,7 @@ async function payOrder(data) {
     return res.data.qrcode || "";
   } catch (error) {
     console.error(conPrefix + "支付订单异常", error);
+    setErrInfo("获取订单结果异常", error);
   }
 }
 
@@ -906,6 +941,7 @@ async function submitTicketCode({ order_id, qrcode }) {
     return res;
   } catch (error) {
     console.error(conPrefix + "提交出票码异常", error);
+    setErrInfo("提交出票码异常", error);
   }
 }
 
