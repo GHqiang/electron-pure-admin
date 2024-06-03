@@ -5,6 +5,7 @@ import { getCurrentFormattedDateTime } from "@/utils/utils";
 import sfcApi from "@/api/laina-api";
 import lierenApi from "@/api/lieren-api";
 import idbApi from "@/api/idbApi";
+import { encode } from "@/utils/sfc-member-password";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
 const { lainaUserMobile } = storeToRefs(userInfoAndTokens);

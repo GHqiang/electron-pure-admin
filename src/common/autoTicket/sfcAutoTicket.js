@@ -6,6 +6,7 @@ import { getCurrentFormattedDateTime } from "@/utils/utils";
 import sfcApi from "@/api/sfc-api";
 import lierenApi from "@/api/lieren-api";
 import idbApi from "@/api/idbApi";
+import { encode } from "@/utils/sfc-member-password";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
 const { sfcUserMobile } = storeToRefs(userInfoAndTokens);
