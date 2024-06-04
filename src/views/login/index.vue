@@ -32,35 +32,41 @@ dataThemeChange(overallStyle.value);
 const { title } = useNav();
 
 const ruleForm = reactive({
-  username: "admin",
-  password: "admin123"
+  username: "张三",
+  password: "123456"
 });
 
 const onLogin = async formEl => {
   if (!formEl) return;
   await formEl.validate(async (valid, fields) => {
     if (valid) {
-      loading.value = true;
-      const res = await useUserStoreHook().loginByUsername({
-        username: ruleForm.username,
-        password: "admin123"
-      });
-      if (res.success) {
-        const loginRes = await svApi.login({
-          name: ruleForm.username,
-          pwd: ruleForm.password
+      try {
+        loading.value = true;
+        const res = await useUserStoreHook().loginByUsername({
+          username: ruleForm.username,
+          password: "admin123"
         });
-        console.log("loginRes", loginRes);
-        // 获取后端路由
-        await initRouter();
-        let getTopMenuPath = getTopMenu(true).path;
-        router.push(getTopMenuPath).then(() => {
-          message("登录成功", { type: "success" });
-        });
-      } else {
-        message("登录失败", { type: "error" });
+        if (res.success) {
+          const loginRes = await svApi.login({
+            name: ruleForm.username,
+            pwd: ruleForm.password
+          });
+          console.log("loginRes", loginRes);
+          // 获取后端路由
+          await initRouter();
+          let getTopMenuPath = getTopMenu(true).path;
+          console.log("getTopMenuPath", getTopMenuPath);
+          router.push(getTopMenuPath).then(() => {
+            message("登录成功", { type: "success" });
+          });
+        } else {
+          message("登录失败", { type: "error" });
+        }
+        loading.value = false;
+      } catch (error) {
+        useUserStoreHook().logOut();
+        loading.value = false;
       }
-      loading.value = false;
     }
   });
 };
