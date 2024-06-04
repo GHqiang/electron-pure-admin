@@ -17,6 +17,9 @@ import darkIcon from "@/assets/svg/dark.svg?component";
 import Lock from "@iconify-icons/ri/lock-fill";
 import User from "@iconify-icons/ri/user-3-fill";
 import svApi from "@/api/sv-api";
+import { platTokens } from "@/store/platTokens";
+const tokens = platTokens();
+
 defineOptions({
   name: "Login"
 });
@@ -52,6 +55,7 @@ const onLogin = async formEl => {
             pwd: ruleForm.password
           });
           console.log("loginRes", loginRes);
+          tokens.setSelfPlatToken(loginRes.data.token);
           // 获取后端路由
           await initRouter();
           let getTopMenuPath = getTopMenu(true).path;
