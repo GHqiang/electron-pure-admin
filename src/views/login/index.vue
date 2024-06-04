@@ -1,10 +1,9 @@
-<script setup lang="ts">
+<script setup>
 import Motion from "./utils/motion";
 import { useRouter } from "vue-router";
 import { message } from "@/utils/message";
 import { loginRules } from "./utils/rule";
 import { useNav } from "@/layout/hooks/useNav";
-import type { FormInstance } from "element-plus";
 import { useLayout } from "@/layout/hooks/useLayout";
 import { useUserStoreHook } from "@/store/modules/user";
 import { initRouter, getTopMenu } from "@/router/utils";
@@ -17,13 +16,13 @@ import dayIcon from "@/assets/svg/day.svg?component";
 import darkIcon from "@/assets/svg/dark.svg?component";
 import Lock from "@iconify-icons/ri/lock-fill";
 import User from "@iconify-icons/ri/user-3-fill";
-
+import svApi from "@/api/sv-api";
 defineOptions({
   name: "Login"
 });
 const router = useRouter();
 const loading = ref(false);
-const ruleFormRef = ref<FormInstance>();
+const ruleFormRef = ref();
 
 const { initStorage } = useLayout();
 initStorage();
@@ -37,32 +36,37 @@ const ruleForm = reactive({
   password: "admin123"
 });
 
-const onLogin = async (formEl: FormInstance | undefined) => {
+const onLogin = async formEl => {
   if (!formEl) return;
-  await formEl.validate((valid, fields) => {
+  await formEl.validate(async (valid, fields) => {
     if (valid) {
       loading.value = true;
-      useUserStoreHook()
-        .loginByUsername({ username: ruleForm.username, password: "admin123" })
-        .then(res => {
-          if (res.success) {
-            // 获取后端路由
-            return initRouter().then(() => {
-              router.push(getTopMenu(true).path).then(() => {
-                message("登录成功", { type: "success" });
-              });
-            });
-          } else {
-            message("登录失败", { type: "error" });
-          }
-        })
-        .finally(() => (loading.value = false));
+      const res = await useUserStoreHook().loginByUsername({
+        username: ruleForm.username,
+        password: "admin123"
+      });
+      if (res.success) {
+        const loginRes = await svApi.login({
+          name: ruleForm.username,
+          pwd: ruleForm.password
+        });
+        console.log("loginRes", loginRes);
+        // 获取后端路由
+        await initRouter();
+        let getTopMenuPath = getTopMenu(true).path;
+        router.push(getTopMenuPath).then(() => {
+          message("登录成功", { type: "success" });
+        });
+      } else {
+        message("登录失败", { type: "error" });
+      }
+      loading.value = false;
     }
   });
 };
 
 /** 使用公共函数，避免`removeEventListener`失效 */
-function onkeypress({ code }: KeyboardEvent) {
+function onkeypress({ code }) {
   if (code === "Enter") {
     onLogin(ruleFormRef.value);
   }

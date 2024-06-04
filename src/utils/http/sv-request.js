@@ -68,7 +68,7 @@ instance.interceptors.response.use(
           .catch(() => {});
         return;
       }
-      ElMessage.error(data.message || "请求失败");
+      ElMessage.error(data.msg || "请求失败");
       return Promise.reject(data);
     }
     return data;

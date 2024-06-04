@@ -6,13 +6,12 @@ export default defineFakeRoute([
     url: "/login",
     method: "post",
     response: ({ body }) => {
-      if (body.username === "admin") {
-        return {
+      return {
           success: true,
           data: {
             avatar: "https://avatars.githubusercontent.com/u/44761321",
-            username: "admin",
-            nickname: "小铭",
+            username: body.username,
+            nickname: body.username,
             // 一个用户可能有多个角色
             roles: ["admin"],
             accessToken: "eyJhbGciOiJIUzUxMiJ9.admin",
@@ -20,20 +19,34 @@ export default defineFakeRoute([
             expires: "2030/10/30 00:00:00"
           }
         };
-      } else {
-        return {
-          success: true,
-          data: {
-            avatar: "https://avatars.githubusercontent.com/u/52823142",
-            username: "common",
-            nickname: "小林",
-            roles: ["common"],
-            accessToken: "eyJhbGciOiJIUzUxMiJ9.common",
-            refreshToken: "eyJhbGciOiJIUzUxMiJ9.commonRefresh",
-            expires: "2030/10/30 00:00:00"
-          }
-        };
-      }
+      // if (body.username === "admin") {
+      //   return {
+      //     success: true,
+      //     data: {
+      //       avatar: "https://avatars.githubusercontent.com/u/44761321",
+      //       username: "admin",
+      //       nickname: "小铭",
+      //       // 一个用户可能有多个角色
+      //       roles: ["admin"],
+      //       accessToken: "eyJhbGciOiJIUzUxMiJ9.admin",
+      //       refreshToken: "eyJhbGciOiJIUzUxMiJ9.adminRefresh",
+      //       expires: "2030/10/30 00:00:00"
+      //     }
+      //   };
+      // } else {
+      //   return {
+      //     success: true,
+      //     data: {
+      //       avatar: "https://avatars.githubusercontent.com/u/52823142",
+      //       username: "common",
+      //       nickname: "小林",
+      //       roles: ["common"],
+      //       accessToken: "eyJhbGciOiJIUzUxMiJ9.common",
+      //       refreshToken: "eyJhbGciOiJIUzUxMiJ9.commonRefresh",
+      //       expires: "2030/10/30 00:00:00"
+      //     }
+      //   };
+      // }
     }
   }
 ]);
