@@ -132,6 +132,7 @@
 <script setup>
 import { ref, reactive, onBeforeUnmount, toRaw } from "vue";
 import idbApi from "@/api/idbApi";
+import svApi from "@/api/sv-api";
 import { ORDER_FORM, APP_LIST } from "@/common/constant.js";
 console.log("ORDER_FORM", ORDER_FORM);
 // 订单来源
@@ -191,11 +192,11 @@ const searchData = () => {
 
 const loadData = async () => {
   try {
-    const offerRecords = await idbApi.getAllOrderRecords();
+    const offerRecords = await svApi.getOfferList();
     tableData.value = (offerRecords || []).reverse();
     searchData();
     timer = setInterval(async () => {
-      const offerRecords = await idbApi.getAllOrderRecords();
+      const offerRecords = await svApi.getOfferList();
       console.log("历史出票记录===>", offerRecords);
       tableData.value = (offerRecords || []).reverse();
       searchData();

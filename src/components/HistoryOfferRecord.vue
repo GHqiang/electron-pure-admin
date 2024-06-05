@@ -5,7 +5,7 @@
     <el-form :inline="true" class="demo-form-inline">
       <el-form-item label="订单来源">
         <el-select
-          v-model="formData.platName"
+          v-model="formData.plat_name"
           placeholder="订单来源"
           style="width: 194px"
           clearable
@@ -20,7 +20,7 @@
       </el-form-item>
       <el-form-item label="影线名称">
         <el-select
-          v-model="formData.appName"
+          v-model="formData.app_name"
           placeholder="影线名称"
           style="width: 194px"
           clearable
@@ -47,7 +47,7 @@
       </el-form-item>
       <el-form-item label="报价类型">
         <el-select
-          v-model="formData.offerType"
+          v-model="formData.offer_type"
           placeholder="报价类型"
           style="width: 194px"
           clearable
@@ -59,7 +59,7 @@
       </el-form-item>
       <el-form-item label="用券面额">
         <el-select
-          v-model="formData.quanValue"
+          v-model="formData.quan_value"
           placeholder="用券面额"
           style="width: 194px"
           clearable
@@ -69,10 +69,10 @@
           <el-option label="30" value="30" />
         </el-select>
       </el-form-item>
-      <el-form-item label="中标价格">
+      <el-form-item label="报价价格">
         <el-input
-          v-model="formData.supplier_end_price"
-          placeholder="请输入中标价格"
+          v-model="formData.offer_end_amount"
+          placeholder="请输入报价价格"
           clearable
         />
       </el-form-item>
@@ -97,37 +97,37 @@
         align="center"
         width="60"
       />
-      <el-table-column prop="platName" fixed label="订单来源" width="110">
+      <el-table-column prop="plat_name" fixed label="订单来源" width="110">
         <template #default="scope">
-          <span>{{ orderFormObj[scope.row.platName] }}</span>
+          <span>{{ orderFormObj[scope.row.plat_name] }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="appName" fixed label="影线名称" width="110">
+      <el-table-column prop="app_name" fixed label="影线名称" width="110">
         <template #default="scope">
-          <span>{{ shadowLineObj[scope.row.appName] }}</span>
+          <span>{{ shadowLineObj[scope.row.app_name] }}</span>
         </template>
       </el-table-column>
       <el-table-column label="报价状态" fixed width="90">
         <template #default="scope">
-          <span>{{ scope.row.orderStatus === "1" ? "成功" : "失败" }}</span>
+          <span>{{ scope.row.order_status === "1" ? "成功" : "失败" }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="orderNumber" fixed label="订单号" width="110" />
+      <el-table-column prop="order_number" fixed label="订单号" width="110" />
       <el-table-column prop="cinema_name" label="影院" width="110" />
       <el-table-column prop="hall_name" label="影厅" width="110" />
       <el-table-column prop="film_name" label="片名" width="110" />
       <el-table-column prop="ticket_num" label="座位数" width="110" />
-      <el-table-column prop="supplier_end_price" label="中标价" width="110">
+      <el-table-column prop="offer_end_amount" label="最终报价" width="110">
         <template #default="scope">
           <span>{{ supplier_end_price_filter(scope.row) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="报价类型" width="100">
         <template #default="scope">
-          <span>{{ offerTypeObj[scope.row.offerType] || "" }}</span>
+          <span>{{ offerTypeObj[scope.row.offer_type] || "" }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="quanValue" label="用券面额" width="90" />
+      <el-table-column prop="quan_value" label="用券面额" width="90" />
     </el-table>
   </div>
 </template>
@@ -135,6 +135,8 @@
 <script setup>
 import { ref, reactive, onBeforeUnmount, toRaw } from "vue";
 import idbApi from "@/api/idbApi";
+import svApi from "@/api/sv-api";
+
 import { ORDER_FORM, APP_LIST } from "@/common/constant.js";
 // 订单来源
 const orderFormObj = ORDER_FORM;
@@ -154,22 +156,25 @@ const offerTypeObj = {
 
 // 格式化中标价格
 const supplier_end_price_filter = row => {
-  if (row.supplier_end_price) {
-    return row.supplier_end_price;
+  let obj = JSON.parse(JSON.stringify(row));
+  console.log("obj", obj);
+
+  if (obj.offer_end_amount) {
+    return obj.offer_end_amount;
   }
-  if (row.offerType === "1" || row.offerType === "3") {
-    return row.offerAmount;
+  if (obj.offer_type === "1" || obj.offer_type === "3") {
+    return obj.offer_amount;
   }
-  return row.memberOfferAmount;
+  return obj.member_offer_amount;
 };
 // 表单查询数据
 const formData = reactive({
-  platName: "lieren", // 订单来源
-  appName: "", // 影线名称
+  plat_name: "lieren", // 订单来源
+  app_name: "", // 影线名称
   status: "", // 状态
-  offerType: "", // 报价类型
-  supplier_end_price: "", // 中标价
-  quanValue: "" // 用券面额
+  offer_type: "", // 报价类型
+  offer_end_amount: "", // 中标价
+  quan_value: "" // 用券面额
 });
 
 // 搜索过滤后的数据
@@ -181,38 +186,41 @@ const searchData = () => {
   // console.log("tableData==>", toRaw(tableData.value));
   tableDataFilter.value = tableData.value.filter(item => {
     const {
-      platName, // 订单来源
-      appName, // 影线名称
+      plat_name, // 订单来源
+      app_name, // 影线名称
       status, // 状态
-      offerType, // 报价类型
-      supplier_end_price, // 中标价
-      quanValue // 用券面额
+      offer_type, // 报价类型
+      offer_end_amount, // 最终报价
+      quan_value // 用券面额
     } = formData;
-    // console.log("platName", platName, "appName", appName);
-    let judge1 = platName ? item.platName === platName : true;
-    let judge2 = appName ? item.appName?.indexOf(appName) >= 0 : true;
-    let judge3 = status ? item.status === status : true;
-    let judge4 = offerType ? item.offerType === offerType : true;
-    let judge5 = supplier_end_price
-      ? item.supplier_end_price === supplier_end_price
+    // console.log("plat_name", plat_name, "app_name", app_name);
+    let judge1 = plat_name ? item.plat_name === plat_name : true;
+    let judge2 = app_name ? item.app_name?.indexOf(app_name) >= 0 : true;
+    let judge3 = status ? item.order_status === status : true;
+    let judge4 = offer_type ? item.offer_type === offer_type : true;
+    let judge5 = offer_end_amount
+      ? supplier_end_price_filter(item) === offer_end_amount
       : true;
-    let judge6 = quanValue ? item.quanValue === quanValue : true;
+    console.log("judge5", supplier_end_price_filter(item), offer_end_amount);
+    let judge6 = quan_value ? item.quan_value === quan_value : true;
     return judge1 && judge2 && judge3 && judge4 && judge5 && judge6;
   });
   let list = JSON.parse(JSON.stringify(tableDataFilter.value));
-  // console.log("tableDataFilter===>", list);
+  console.log("tableDataFilter===>", list);
 };
 
 const loadData = async () => {
   try {
-    const offerRecords = await idbApi.getAllOrderRecords(1);
+    const res = await svApi.getOfferList();
+    let offerRecords = res.data.offerList || [];
     console.log("历史报价记录", offerRecords);
-    tableData.value = (offerRecords || []).reverse();
+    tableData.value = offerRecords.reverse();
     searchData();
     timer = setInterval(async () => {
-      const offerRecords = await idbApi.getAllOrderRecords(1);
+      const res = await svApi.getOfferList();
+      let offerRecords = res.data.offerList || [];
       console.log("历史报价记录===>", offerRecords);
-      tableData.value = (offerRecords || []).reverse();
+      tableData.value = offerRecords.reverse();
       searchData();
     }, 60 * 1000);
   } catch (error) {
@@ -223,12 +231,12 @@ loadData();
 
 // 重置表单
 const resetForm = () => {
-  formData.platName = "lieren";
-  formData.appName = ""; // 影线名称
+  formData.plat_name = "lieren";
+  formData.app_name = ""; // 影线名称
   formData.status = ""; // 状态
-  formData.offerType = ""; // 报价类型
-  formData.supplier_end_price = ""; // 中标价
-  formData.quanValue = ""; // 是否报价
+  formData.offer_type = ""; // 报价类型
+  formData.offer_end_amount = ""; // 最终报价
+  formData.quan_value = ""; // 是否报价
 };
 onBeforeUnmount(() => {
   clearInterval(timer);

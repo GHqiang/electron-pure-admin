@@ -10,7 +10,7 @@ const login = params => axios.get("/svpi/users/login", { params });
 const logout = params => axios.get("/svpi/users/logout", { params });
 
 // 获取报价列表
-const getOfferList = params => axios.get("/svpi/offerReocrd", { params });
+const getOfferList = params => axios.get("/svpi/offerRecord", { params });
 // 查询报价记录
 const queryOfferList = params =>
   axios.get("/svpi/offerReocrd/query", { params });
