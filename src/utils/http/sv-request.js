@@ -19,7 +19,8 @@ instance.interceptors.request.use(
   config => {
     if (config.url.indexOf("/svpi/") !== -1) {
       // 自身平台接口添加token
-      const token = tokens.selfToken || "";
+      const token = tokens.selfToken || localStorage.getItem("selfToken") || "";
+      // console.log("token", token);
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }

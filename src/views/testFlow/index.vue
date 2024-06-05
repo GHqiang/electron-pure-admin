@@ -234,7 +234,7 @@
 import { ref, onMounted, computed } from "vue";
 import { storeToRefs } from "pinia";
 import { getCurrentFormattedDateTime } from "@/utils/utils";
-import sfcApi from "@/api/jiujin-api";
+import sfcApi from "@/api/sfc-api";
 import lierenApi from "@/api/lieren-api";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();

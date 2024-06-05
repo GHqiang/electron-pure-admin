@@ -157,7 +157,7 @@ const offerTypeObj = {
 // 格式化中标价格
 const supplier_end_price_filter = row => {
   let obj = JSON.parse(JSON.stringify(row));
-  console.log("obj", obj);
+  // console.log("obj", obj);
 
   if (obj.offer_end_amount) {
     return obj.offer_end_amount;
@@ -201,7 +201,7 @@ const searchData = () => {
     let judge5 = offer_end_amount
       ? supplier_end_price_filter(item) === offer_end_amount
       : true;
-    console.log("judge5", supplier_end_price_filter(item), offer_end_amount);
+    // console.log("judge5", supplier_end_price_filter(item), offer_end_amount);
     let judge6 = quan_value ? item.quan_value === quan_value : true;
     return judge1 && judge2 && judge3 && judge4 && judge5 && judge6;
   });

@@ -6,6 +6,7 @@ import {
   LAINA_SPECIAL_CINEMA_LIST,
   JINJI_SPECIAL_CINEMA_LIST
 } from "@/common/constant";
+import svApi from "@/api/sv-api";
 
 import sfcApi from "@/api/sfc-api";
 import jiujinApi from "@/api/jiujin-api";
@@ -226,10 +227,35 @@ class OrderAutoOfferQueue {
         appName: offerResult?.offerRule?.shadowLineName || "",
         platName: "lieren"
       };
+      const serOrderInfo = {
+        // user_id: order.user_id,
+        plat_name: "lieren",
+        app_name: offerResult?.offerRule?.shadowLineName || "",
+        order_id: order.id,
+        order_number: order.order_number,
+        tpp_price: order.tpp_price,
+        supplier_max_price: order.supplier_max_price,
+        city_name: order.city_name,
+        cinema_addr: order.cinema_addr,
+        ticket_num: order.ticket_num,
+        cinema_name: order.cinema_name,
+        hall_name: order.hall_name,
+        film_name: order.film_name,
+        show_time: order.show_time,
+        cinema_group: order.cinema_group,
+        offer_type: offerResult?.offerRule?.offerType,
+        offer_amount: offerResult?.offerRule?.offerAmount,
+        member_offer_amount: offerResult?.offerRule?.memberOfferAmount,
+        quan_value: offerResult?.offerRule?.quanValue,
+        order_status: offerResult?.res ? "1" : "2",
+        // remark: '',
+        processing_time: +new Date() + ""
+      };
       if (offerResult?.res) {
         this.handleSuccessOrderList.push(orderInfo);
-        idbApi
-          .insertOrUpdateData(orderInfo, 1)
+        // 成功存数据库
+        svApi
+          .addOfferRecord(serOrderInfo)
           .then(res => {
             console.log(conPrefix + "【报价成功】保存订单处理记录成功", res);
           })
@@ -241,6 +267,7 @@ class OrderAutoOfferQueue {
           });
       } else {
         this.handleFailOrderList.push(orderInfo);
+        // 失败存indexDB
         idbApi
           .insertOrUpdateData(orderInfo, 1)
           .then(res => {
@@ -298,18 +325,18 @@ async function getStayOfferList() {
     //   total: 1,
     //   data: [
     //     {
-    //       id: 6129823,
+    //       id: 6129818,
     //       tpp_price: "73.00",
     //       supplier_max_price: 68,
     //       city_name: "上海",
     //       cinema_addr: "浦东新区张杨路501号10楼",
     //       ticket_num: 1,
     //       cinema_name: "SFC上影百联影城（八佰伴IMAX店）",
-    //       hall_name: "1号IMAX厅（儿童需购票）",
+    //       hall_name: "3号厅",
     //       film_name: "哈尔的移动城堡",
     //       film_img:
     //         "https://gw.alicdn.com/tfscom/i2/O1CN01fKrbRb1dWnpE5V54I_!!6000000003744-0-alipicbeacon.jpg",
-    //       show_time: "2024-06-01 12:00:00",
+    //       show_time: "2024-06-06 21:50:00",
     //       section_at: 1717075740,
     //       seat_flat: 0,
     //       urgent: 0,
@@ -321,11 +348,11 @@ async function getStayOfferList() {
     //       cinema_group: "上影上海",
     //       cinema_code: "31124201",
     //       group_urgent: 1,
-    //       order_number: "2024053021282879717",
-    //       sytime: 1717075785
+    //       order_number: "2024053021282879718",
+    //       sytime: 1717075788
     //     }
     //   ],
-    //   time: 1710125670
+    //   time: 1710125678
     // };
     // let list = mockRes?.data || [];
     let list = res?.data || [];

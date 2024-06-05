@@ -13,9 +13,9 @@ const logout = params => axios.get("/svpi/users/logout", { params });
 const getOfferList = params => axios.get("/svpi/offerRecord", { params });
 // 查询报价记录
 const queryOfferList = params =>
-  axios.get("/svpi/offerReocrd/query", { params });
+  axios.get("/svpi/offerRecord/query", { params });
 // 添加报价记录
-const addOfferRecord = params => axios.post("/svpi/offerReocrd/add", params);
+const addOfferRecord = params => axios.post("/svpi/offerRecord/add", params);
 
 // 获取出票列表
 const getTicketList = params => axios.get("/svpi/ticketRecord", { params });
