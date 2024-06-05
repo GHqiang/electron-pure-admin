@@ -5,7 +5,7 @@
     <el-form :inline="true" class="demo-form-inline">
       <el-form-item label="订单来源">
         <el-select
-          v-model="formData.platName"
+          v-model="formData.plat_name"
           placeholder="订单来源"
           style="width: 194px"
           clearable
@@ -20,7 +20,7 @@
       </el-form-item>
       <el-form-item label="影线名称">
         <el-select
-          v-model="formData.appName"
+          v-model="formData.app_name"
           placeholder="影线名称"
           style="width: 194px"
           clearable
@@ -47,7 +47,7 @@
       </el-form-item>
       <el-form-item label="报价类型">
         <el-select
-          v-model="formData.offerType"
+          v-model="formData.offer_type"
           placeholder="报价类型"
           style="width: 194px"
           clearable
@@ -59,7 +59,7 @@
       </el-form-item>
       <el-form-item label="用券面额">
         <el-select
-          v-model="formData.quanValue"
+          v-model="formData.quan_value"
           placeholder="用券面额"
           style="width: 194px"
           clearable
@@ -97,22 +97,22 @@
         align="center"
         width="60"
       />
-      <el-table-column prop="platName" fixed label="订单来源" width="110">
+      <el-table-column prop="plat_name" fixed label="订单来源" width="110">
         <template #default="scope">
-          <span>{{ orderFormObj[scope.row.platName] }}</span>
+          <span>{{ orderFormObj[scope.row.plat_name] }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="appName" fixed label="影线名称" width="110">
+      <el-table-column prop="app_name" fixed label="影线名称" width="110">
         <template #default="scope">
-          <span>{{ shadowLineObj[scope.row.appName] }}</span>
+          <span>{{ shadowLineObj[scope.row.app_name] }}</span>
         </template>
       </el-table-column>
       <el-table-column label="出票状态" fixed width="60">
         <template #default="scope">
-          <span>{{ scope.row.orderStatus === "1" ? "成功" : "失败" }}</span>
+          <span>{{ scope.row.order_status === "1" ? "成功" : "失败" }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="orderNumber" fixed label="订单号" width="110" />
+      <el-table-column prop="order_number" fixed label="订单号" width="110" />
       <el-table-column prop="cinema_name" label="影院" width="110" />
       <el-table-column prop="hall_name" label="影厅" width="110" />
       <el-table-column prop="film_name" label="片名" width="110" />
@@ -120,11 +120,11 @@
       <el-table-column prop="supplier_end_price" label="中标价" width="110" />
       <el-table-column label="报价类型" width="100">
         <template #default="scope">
-          <span>{{ offerTypeObj[scope.row.offerType] || "" }}</span>
+          <span>{{ offerTypeObj[scope.row.offer_type] || "" }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="quanValue" label="用券面额" width="90" />
-      <el-table-column prop="errMsg" label="失败原因" width="110" />
+      <el-table-column prop="quan_value" label="用券面额" width="90" />
+      <!-- <el-table-column prop="errMsg" label="失败原因" width="110" /> -->
     </el-table>
   </div>
 </template>
@@ -153,12 +153,12 @@ const offerTypeObj = {
 
 // 表单查询数据
 const formData = reactive({
-  platName: "lieren", // 订单来源
-  appName: "", // 影线名称
+  plat_name: "lieren", // 订单来源
+  app_name: "", // 影线名称
   status: "", // 状态
-  offerType: "", // 报价类型
+  offer_type: "", // 报价类型
   supplier_end_price: "", // 中标价
-  quanValue: "" // 用券面额
+  quan_value: "" // 用券面额
 });
 
 // 搜索过滤后的数据
@@ -169,36 +169,39 @@ const searchData = () => {
   // console.log("tableData==>", toRaw(tableData.value));
   tableDataFilter.value = tableData.value.filter(item => {
     const {
-      platName, // 订单来源
-      appName, // 影线名称
+      plat_name, // 订单来源
+      app_name, // 影线名称
       status, // 状态
-      offerType, // 报价类型
+      offer_type, // 报价类型
       supplier_end_price, // 中标价
-      quanValue // 用券面额
+      quan_value // 用券面额
     } = formData;
-    let judge1 = platName ? item.platName === platName : true;
-    let judge2 = appName ? item.appName?.indexOf(appName) >= 0 : true;
-    let judge3 = status ? item.status === status : true;
-    let judge4 = offerType ? item.offerType === offerType : true;
+    let judge1 = plat_name ? item.plat_name === plat_name : true;
+    let judge2 = app_name ? item.app_name?.indexOf(app_name) >= 0 : true;
+    let judge3 = status ? item.order_status === status : true;
+    let judge4 = offer_type ? item.offer_type === offer_type : true;
     let judge5 = supplier_end_price
-      ? item.supplier_end_price === supplier_end_price
+      ? item.supplier_end_price == supplier_end_price
       : true;
-    let judge6 = quanValue ? item.quanValue === quanValue : true;
+    let judge6 = quan_value ? item.quan_value === quan_value : true;
     return judge1 && judge2 && judge3 && judge4 && judge5 && judge6;
   });
   let list = JSON.parse(JSON.stringify(tableDataFilter.value));
-  // console.log("tableDataFilter===>", list);
+  console.log("tableDataFilter===>", list);
 };
 
 const loadData = async () => {
   try {
-    const offerRecords = await svApi.getOfferList();
-    tableData.value = (offerRecords || []).reverse();
+    const res = await svApi.getTicketList();
+    let offerRecords = res.data.ticketList || [];
+    console.log("历史出票记录", offerRecords);
+    tableData.value = offerRecords.reverse();
     searchData();
     timer = setInterval(async () => {
-      const offerRecords = await svApi.getOfferList();
+      const res = await svApi.getTicketList();
+      let offerRecords = res.data.ticketList || [];
       console.log("历史出票记录===>", offerRecords);
-      tableData.value = (offerRecords || []).reverse();
+      tableData.value = offerRecords.reverse();
       searchData();
     }, 60 * 1000);
   } catch (error) {
@@ -209,12 +212,12 @@ loadData();
 
 // 重置表单
 const resetForm = () => {
-  formData.platName = "lieren";
-  formData.appName = ""; // 影线名称
+  formData.plat_name = "lieren";
+  formData.app_name = ""; // 影线名称
   formData.status = ""; // 状态
-  formData.offerType = ""; // 报价类型
+  formData.offer_type = ""; // 报价类型
   formData.supplier_end_price = ""; // 中标价
-  formData.quanValue = ""; // 是否报价
+  formData.quan_value = ""; // 是否报价
 };
 onBeforeUnmount(() => {
   clearInterval(timer);
