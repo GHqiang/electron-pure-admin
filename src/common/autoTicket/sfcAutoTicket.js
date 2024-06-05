@@ -213,24 +213,6 @@ class OrderAutoTicketQueue {
   async addOrderHandleRecored(order, res) {
     try {
       // res：{ profit, submitRes, qrcode, quan_code, card_id, offerRule }
-      // 数据库存储
-      const orderInfo = {
-        ...order,
-        orderNumber: order.order_number,
-        processingTime: +new Date(),
-        orderStatus: res?.submitRes ? "1" : "2",
-        profit: res?.profit || undefined,
-        qrcode: res?.qrcode || "",
-        quan_code: res?.quan_code || "",
-        card_id: res?.card_id || "",
-        offerRule: res?.offerRule || "",
-        offerRuleName: res?.offerRule?.ruleName || "",
-        offerType: res?.offerRule?.offerType || "",
-        quanValue: res?.offerRule?.quanValue || "",
-        appName: res?.offerRule?.shadowLineName || "sfc",
-        errMsg,
-        errInfo
-      };
       const serOrderInfo = {
         plat_name: order.platName,
         app_name: res?.offerRule?.shadowLineName || "sfc",
@@ -257,29 +239,23 @@ class OrderAutoTicketQueue {
         profit: res?.profit || "",
         qrcode: res?.qrcode || "",
         quan_code: res?.quan_code || "",
-        card_id: res?.card_id || ""
+        card_id: res?.card_id || "",
+        err_msg: errMsg || "",
+        err_info: errInfo || ""
       };
       if (res?.submitRes) {
         this.handleSuccessOrderList.push(order);
-        svApi
-          .addTicketRecord(serOrderInfo)
-          .then(res => {
-            console.log(conPrefix + "保存订单处理记录成功", res);
-          })
-          .catch(error => {
-            console.error(conPrefix + "保存订单处理记录失败", error);
-          });
       } else {
         this.handleFailOrderList.push(order);
-        idbApi
-          .insertOrUpdateData(orderInfo)
-          .then(res => {
-            console.log(conPrefix + "保存订单处理记录成功", res);
-          })
-          .catch(error => {
-            console.error(conPrefix + "保存订单处理记录失败", error);
-          });
       }
+      svApi
+        .addTicketRecord(serOrderInfo)
+        .then(res => {
+          console.log(conPrefix + "保存订单处理记录成功", res);
+        })
+        .catch(error => {
+          console.error(conPrefix + "保存订单处理记录失败", error);
+        });
     } catch (error) {
       console.error(conPrefix + "添加订单处理记录异常", error);
     }
