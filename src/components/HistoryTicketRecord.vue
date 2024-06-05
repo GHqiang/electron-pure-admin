@@ -131,7 +131,6 @@
 
 <script setup>
 import { ref, reactive, onBeforeUnmount, toRaw } from "vue";
-import idbApi from "@/api/idbApi";
 import svApi from "@/api/sv-api";
 import { ORDER_FORM, APP_LIST } from "@/common/constant.js";
 console.log("ORDER_FORM", ORDER_FORM);
