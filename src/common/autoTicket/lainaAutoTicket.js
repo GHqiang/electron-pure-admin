@@ -4,7 +4,7 @@ import { LAINA_SPECIAL_CINEMA_LIST } from "@/common/constant";
 import { getCurrentFormattedDateTime } from "@/utils/utils";
 import sfcApi from "@/api/laina-api";
 import lierenApi from "@/api/lieren-api";
-import idbApi from "@/api/idbApi";
+import svApi from "@/api/sv-api";
 import { encode } from "@/utils/sfc-member-password";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
@@ -95,7 +95,14 @@ class OrderAutoTicketQueue {
         ...handleSuccessOrderList,
         ...handleFailOrderList
       ];
-      // console.warn('本次出票记录', orderOfferRecord)
+      const ticketRes = await svApi.queryTicketList({
+        user_id: tokens.userInfo?.user_id,
+        app_name: "laina"
+      });
+      let ticketRecords = ticketRes.data.ticketList || [];
+      console.warn(conPrefix + "历史出票记录", ticketRecords);
+      orderOfferRecord.push(...ticketRecords);
+
       let newOrders = orders.filter(item => {
         // 过滤出来新订单（未进行过出票的）
         return !orderOfferRecord.some(
@@ -103,31 +110,25 @@ class OrderAutoTicketQueue {
         );
       });
       console.warn(conPrefix + "新的待出票订单列表", newOrders);
-      let allOfferRecord = await idbApi.getAllOrderRecords(1);
-      allOfferRecord = allOfferRecord || [];
-      allOfferRecord = allOfferRecord.filter(
-        item => item.orderStatus === "1" && item.appName === "laina"
-      );
-      console.warn(conPrefix + "机器历史报价记录", allOfferRecord);
+
+      const offerRes = await svApi.queryOfferList({
+        user_id: tokens.userInfo.user_id,
+        order_status: "1",
+        app_name: "laina"
+      });
+      let offerRecords = offerRes.data.offerList || [];
+      console.warn(conPrefix + "历史报价记录", offerRecords);
+
       let orderList = newOrders.filter(item => {
         // 过滤出来机器自己报价过的订单
-        return allOfferRecord.some(
+        return offerRecords.some(
           itemA => itemA.order_number === item.order_number
         );
       });
-      console.warn(conPrefix + "从历史报价记录过滤后的待出票订单", orderList);
-      let allTicketRecord = await idbApi.getAllOrderRecords();
-      allTicketRecord = allTicketRecord || [];
-      allTicketRecord = allTicketRecord.filter(
-        item => item.appName === "laina"
+      console.warn(
+        conPrefix + "从历史报价记录过滤后的最终待出票订单",
+        orderList
       );
-      orderList = orderList.filter(item => {
-        // 过滤出来机器自己出票过的订单
-        return !allTicketRecord.some(
-          itemA => itemA.order_number === item.order_number
-        );
-      });
-      console.warn(conPrefix + "从历史出票记录过滤后的待出票订单", orderList);
       // 将订单加入队列
       this.enqueue(orderList);
 
@@ -212,45 +213,49 @@ class OrderAutoTicketQueue {
   async addOrderHandleRecored(order, res) {
     try {
       // res：{ profit, submitRes, qrcode, quan_code, card_id, offerRule }
-      // 数据库存储
-      const orderInfo = {
-        ...order,
-        orderNumber: order.order_number,
-        processingTime: +new Date(),
-        orderStatus: res?.submitRes ? "1" : "2",
-        profit: res?.profit || undefined,
+      const serOrderInfo = {
+        plat_name: order.platName,
+        app_name: res?.offerRule?.shadowLineName || "laina",
+        order_id: order.id,
+        order_number: order.order_number,
+        tpp_price: order.tpp_price,
+        supplier_end_price: order.supplier_end_price,
+        city_name: order.city_name,
+        cinema_addr: order.cinema_addr,
+        ticket_num: order.ticket_num,
+        cinema_name: order.cinema_name,
+        hall_name: order.hall_name,
+        film_name: order.film_name,
+        lockseat: order.lockseat,
+        show_time: order.show_time,
+        cinema_group: order.cinema_group,
+        offer_type: res?.offerRule?.offerType || "",
+        offer_amount: res?.offerRule?.offerAmount || "",
+        member_offer_amount: res?.offerRule?.memberOfferAmount || "",
+        quan_value: res?.offerRule?.quanValue || "",
+        order_status: res?.submitRes ? "1" : "2",
+        // remark: '',
+        processing_time: +new Date() + "",
+        profit: res?.profit || "",
         qrcode: res?.qrcode || "",
         quan_code: res?.quan_code || "",
         card_id: res?.card_id || "",
-        offerRule: res?.offerRule || "",
-        offerRuleName: res?.offerRule?.ruleName || "",
-        offerType: res?.offerRule?.offerType || "",
-        quanValue: res?.offerRule?.quanValue || "",
-        appName: res?.offerRule?.shadowLineName || "",
-        errMsg,
-        errInfo
+        err_msg: errMsg || "",
+        err_info: errInfo || ""
       };
-      if (res) {
+      if (res?.submitRes) {
         this.handleSuccessOrderList.push(order);
-        idbApi
-          .insertOrUpdateData(orderInfo)
-          .then(res => {
-            console.log(conPrefix + "保存订单处理记录成功", res);
-          })
-          .catch(error => {
-            console.error(conPrefix + "保存订单处理记录失败", error);
-          });
       } else {
         this.handleFailOrderList.push(order);
-        idbApi
-          .insertOrUpdateData(orderInfo)
-          .then(res => {
-            console.log(conPrefix + "保存订单处理记录成功", res);
-          })
-          .catch(error => {
-            console.error(conPrefix + "保存订单处理记录失败", error);
-          });
       }
+      svApi
+        .addTicketRecord(serOrderInfo)
+        .then(res => {
+          console.log(conPrefix + "保存订单处理记录成功", res);
+        })
+        .catch(error => {
+          console.error(conPrefix + "保存订单处理记录失败", error);
+        });
     } catch (error) {
       console.error(conPrefix + "添加订单处理记录异常", error);
     }
@@ -389,10 +394,13 @@ const oneClickBuyTicket = async item => {
       supplier_end_price
     } = item;
     // 获取该订单的报价记录，按对应报价规则出票
-    const offerRecord = await idbApi.queryOrderRecords(
-      { orderNumber: order_number },
-      1
-    );
+    const offerRes = await svApi.queryOfferList({
+      user_id: tokens.userInfo.user_id,
+      order_status: "1",
+      app_name: "laina",
+      order_number
+    });
+    let offerRecord = offerRes.data.offerList || [];
     if (!offerRecord?.length) {
       console.error(
         conPrefix +

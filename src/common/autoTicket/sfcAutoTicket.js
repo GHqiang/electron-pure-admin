@@ -5,7 +5,6 @@ import { getCurrentFormattedDateTime } from "@/utils/utils";
 
 import sfcApi from "@/api/sfc-api";
 import lierenApi from "@/api/lieren-api";
-import idbApi from "@/api/idbApi";
 import svApi from "@/api/sv-api";
 import { encode } from "@/utils/sfc-member-password";
 import { appUserInfo } from "@/store/appUserInfo";
@@ -399,10 +398,13 @@ const oneClickBuyTicket = async item => {
       supplier_end_price
     } = item;
     // 获取该订单的报价记录，按对应报价规则出票
-    const offerRecord = await idbApi.queryOrderRecords(
-      { orderNumber: order_number },
-      1
-    );
+    const offerRes = await svApi.queryOfferList({
+      user_id: tokens.userInfo.user_id,
+      order_status: "1",
+      app_name: "sfc",
+      order_number
+    });
+    let offerRecord = offerRes.data.offerList || [];
     if (!offerRecord?.length) {
       console.error(
         conPrefix +
