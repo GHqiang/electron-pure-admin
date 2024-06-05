@@ -6,6 +6,7 @@ import { getCurrentFormattedDateTime } from "@/utils/utils";
 import sfcApi from "@/api/sfc-api";
 import lierenApi from "@/api/lieren-api";
 import idbApi from "@/api/idbApi";
+import svApi from "@/api/sv-api";
 import { encode } from "@/utils/sfc-member-password";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
@@ -226,14 +227,42 @@ class OrderAutoTicketQueue {
         offerRuleName: res?.offerRule?.ruleName || "",
         offerType: res?.offerRule?.offerType || "",
         quanValue: res?.offerRule?.quanValue || "",
-        appName: res?.offerRule?.shadowLineName || "",
+        appName: res?.offerRule?.shadowLineName || "sfc",
         errMsg,
         errInfo
       };
-      if (res) {
+      const serOrderInfo = {
+        plat_name: order.platName,
+        app_name: res?.offerRule?.shadowLineName || "sfc",
+        order_id: order.id,
+        order_number: order.order_number,
+        tpp_price: order.tpp_price,
+        supplier_end_price: order.supplier_end_price,
+        city_name: order.city_name,
+        cinema_addr: order.cinema_addr,
+        ticket_num: order.ticket_num,
+        cinema_name: order.cinema_name,
+        hall_name: order.hall_name,
+        film_name: order.film_name,
+        lockseat: order.lockseat,
+        show_time: order.show_time,
+        cinema_group: order.cinema_group,
+        offer_type: res?.offerRule?.offerType || "",
+        offer_amount: res?.offerRule?.offerAmount || "",
+        member_offer_amount: res?.offerRule?.memberOfferAmount || "",
+        quan_value: res?.offerRule?.quanValue || "",
+        order_status: res?.submitRes ? "1" : "2",
+        // remark: '',
+        processing_time: +new Date() + "",
+        profit: res?.profit || "",
+        qrcode: res?.qrcode || "",
+        quan_code: res?.quan_code || "",
+        card_id: res?.card_id || ""
+      };
+      if (res?.submitRes) {
         this.handleSuccessOrderList.push(order);
-        idbApi
-          .insertOrUpdateData(orderInfo)
+        svApi
+          .addTicketRecord(serOrderInfo)
           .then(res => {
             console.log(conPrefix + "保存订单处理记录成功", res);
           })
