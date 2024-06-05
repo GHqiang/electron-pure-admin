@@ -18,10 +18,10 @@ const IS_DEV = NODE_ENV === "development";
 instance.interceptors.request.use(
   config => {
     if (config.url.indexOf("/svpi/") !== -1) {
-      // 猎人平台接口添加token
+      // 自身平台接口添加token
       const token = tokens.selfToken || "";
       if (token) {
-        config.headers.Authorization = `${token}`;
+        config.headers.Authorization = `Bearer ${token}`;
       }
       // 生产环境不会跨域
       config.url = IS_DEV
