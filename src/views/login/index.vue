@@ -55,7 +55,7 @@ const onLogin = async formEl => {
             pwd: ruleForm.password
           });
           console.log("loginRes", loginRes);
-          tokens.setSelfPlatToken(loginRes.data.token);
+          tokens.setSelfPlatToken(loginRes.data);
           // 获取后端路由
           await initRouter();
           let getTopMenuPath = getTopMenu(true).path;

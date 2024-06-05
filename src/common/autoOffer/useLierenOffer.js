@@ -13,10 +13,9 @@ import jiujinApi from "@/api/jiujin-api";
 import jinjiApi from "@/api/jinji-api";
 import lainaApi from "@/api/laina-api";
 import lierenApi from "@/api/lieren-api";
-import idbApi from "@/api/idbApi";
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
-const platTokenInfo = platTokens();
+const tokens = platTokens();
 
 import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
 const platTableDataStore = usePlatTableDataStore();
@@ -78,7 +77,7 @@ class OrderAutoOfferQueue {
 
   // 启动队列（fetchDelay获取订单列表间隔，processDelay处理订单间隔）
   async start(platToken) {
-    platTokenInfo.setLierenPlatToken(platToken);
+    tokens.setLierenPlatToken(platToken);
     // 设置队列为运行状态
     this.isRunning = true;
     this.handleSuccessOrderList = [];
@@ -108,10 +107,16 @@ class OrderAutoOfferQueue {
       // );
       let orders = await this.fetchOrders(fetchDelay);
       const { handleSuccessOrderList, handleFailOrderList } = this;
-      const orderOfferRecord = [
+      let orderOfferRecord = [
         ...handleSuccessOrderList,
         ...handleFailOrderList
       ];
+      const res = await svApi.queryOfferList({
+        user_id: tokens.userInfo.user_id,
+        plat_name: "lieren"
+      });
+      let offerRecords = res.data.offerList || [];
+      orderOfferRecord.push(...offerRecords);
       let newOrders = orders.filter(item => {
         // 过滤出来新订单（未进行过报价的）
         return !orderOfferRecord.some(
