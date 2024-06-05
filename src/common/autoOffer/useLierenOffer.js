@@ -210,24 +210,7 @@ class OrderAutoOfferQueue {
       // 数据库存储
       // offerResult: { res, offerRule } || { offerRule } || undefined
       console.warn(conPrefix + "数据库存储报价记录", order, offerResult);
-      const orderInfo = {
-        ...order,
-        orderNumber: order.order_number,
-        processingTime: +new Date(),
-        orderStatus: offerResult?.res ? "1" : "2",
-        offerRuleId: offerResult?.offerRule?.id,
-        offerRuleName: offerResult?.offerRule?.ruleName,
-        offerType: offerResult?.offerRule?.offerType,
-        offerAmount: offerResult?.offerRule?.offerAmount,
-        memberOfferAmount: offerResult?.offerRule?.memberOfferAmount,
-        quanValue: offerResult?.offerRule?.quanValue,
-        offerRule: offerResult?.offerRule
-          ? getOrginValue(offerResult.offerRule)
-          : "",
-        appName: offerResult?.offerRule?.shadowLineName || "",
-        platName: "lieren"
-      };
-      const serOrderInfo = {
+      let serOrderInfo = {
         // user_id: order.user_id,
         plat_name: "lieren",
         app_name: offerResult?.offerRule?.shadowLineName || "",
@@ -252,34 +235,22 @@ class OrderAutoOfferQueue {
         processing_time: +new Date() + ""
       };
       if (offerResult?.res) {
-        this.handleSuccessOrderList.push(orderInfo);
-        // 成功存数据库
-        svApi
-          .addOfferRecord(serOrderInfo)
-          .then(res => {
-            console.log(conPrefix + "【报价成功】保存订单处理记录成功", res);
-          })
-          .catch(error => {
-            console.error(
-              "conPrefix + 【报价成功】保存订单处理记录失败",
-              error
-            );
-          });
+        this.handleSuccessOrderList.push(order);
       } else {
-        this.handleFailOrderList.push(orderInfo);
-        // 失败存indexDB
-        idbApi
-          .insertOrUpdateData(orderInfo, 1)
-          .then(res => {
-            console.log("conPrefix + 【报价失败】保存订单处理记录成功", res);
-          })
-          .catch(error => {
-            console.error(
-              "conPrefix + 【报价失败】保存订单处理记录失败",
-              error
-            );
-          });
+        // 失败场景添加offer_rule用以排查问题
+        serOrderInfo.offer_rule = offerResult?.offerRule
+          ? JSON.stringify(getOrginValue(offerResult.offerRule))
+          : "";
+        this.handleFailOrderList.push(order);
       }
+      svApi
+        .addOfferRecord(serOrderInfo)
+        .then(res => {
+          console.log(conPrefix + "【报价成功】保存订单处理记录成功", res);
+        })
+        .catch(error => {
+          console.error("conPrefix + 【报价成功】保存订单处理记录失败", error);
+        });
     } catch (error) {
       console.error(conPrefix + "添加订单处理记录异常", error);
     }
