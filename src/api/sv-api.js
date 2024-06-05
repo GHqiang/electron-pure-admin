@@ -8,6 +8,9 @@ import axios from "@/utils/http/sv-request";
 const login = params => axios.get("/svpi/users/login", { params });
 // 退出登录
 const logout = params => axios.get("/svpi/users/logout", { params });
+// 设置会员卡密码
+const setMemBerPwd = params =>
+  axios.get("/svpi/users/setMemBerPwd", { params });
 
 // 获取报价列表
 const getOfferList = params => axios.get("/svpi/offerRecord", { params });
@@ -28,6 +31,7 @@ const addTicketRecord = params => axios.post("/svpi/ticketRecord/add", params);
 export default {
   login,
   logout,
+  setMemBerPwd,
   getOfferList,
   queryOfferList,
   addOfferRecord,

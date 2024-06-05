@@ -14,6 +14,10 @@ const stayTicketList = useStayTicketList();
 const { deleteOrder } = stayTicketList;
 import { useAppRuleListStore } from "@/store/appTicketRuleTable";
 const appRuleListStore = useAppRuleListStore();
+import { platTokens } from "@/store/platTokens";
+// 平台toke列表
+const tokens = platTokens();
+
 // 影院自动出票规则列表
 const appTicketRuleList = computed(() =>
   appRuleListStore.items.filter(item => item.appName === "laina")
@@ -867,7 +871,7 @@ async function createOrder(data) {
           conPrefix + "调整会员卡密码参数再次发起创建订单请求",
           params
         );
-        let pwd = localStorage.getItem("memberPwd");
+        let pwd = tokens.userInfo.member_pwd;
         if (!pwd) {
           console.error(conPrefix + "会员卡密码未设置");
           setErrInfo("会员卡密码未设置");

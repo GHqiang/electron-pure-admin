@@ -43,19 +43,22 @@
   </div>
 </template>
 
-<script lang="ts" setup>
+<script setup>
 import { reactive, ref } from "vue";
-import type { FormInstance, FormRules } from "element-plus";
+import svApi from "@/api/sv-api";
+import { platTokens } from "@/store/platTokens";
+// 平台toke列表
+const tokens = platTokens();
 
-const ruleFormRef = ref<FormInstance>();
-const pwd = ref<String>("");
-const isActive = ref<Boolean>(false);
+const ruleFormRef = ref();
+const pwd = ref("");
+const isActive = ref(false);
 
-let memberPwd = localStorage.getItem("memberPwd");
-if (memberPwd) {
-  pwd.value = memberPwd;
+let member_pwd = tokens.userInfo.member_pwd;
+if (member_pwd) {
+  pwd.value = member_pwd;
 }
-const validatePass = (rule: any, value: any, callback: any) => {
+const validatePass = (rule, value, callback) => {
   if (value === "") {
     callback(new Error("Please input the password"));
   } else {
@@ -66,7 +69,7 @@ const validatePass = (rule: any, value: any, callback: any) => {
     callback();
   }
 };
-const validatePass2 = (rule: any, value: any, callback: any) => {
+const validatePass2 = (rule, value, callback) => {
   if (value === "") {
     callback(new Error("Please input the password again"));
   } else if (value !== ruleForm.pass) {
@@ -81,17 +84,20 @@ const ruleForm = reactive({
   checkPass: ""
 });
 
-const rules = reactive<FormRules<typeof ruleForm>>({
+const rules = reactive({
   pass: [{ validator: validatePass, trigger: "blur" }],
   checkPass: [{ validator: validatePass2, trigger: "blur" }]
 });
 
-const submitForm = (formEl: FormInstance | undefined) => {
+const submitForm = formEl => {
   if (!formEl) return;
-  formEl.validate(valid => {
+  formEl.validate(async valid => {
     if (valid) {
       console.log("submit!");
-      localStorage.setItem("memberPwd", ruleForm.pass);
+      await svApi.setMemBerPwd({
+        user_id: tokens.userInfo.user_id,
+        member_pwd: ruleForm.pass
+      });
       isActive.value = false;
       pwd.value = ruleForm.pass;
     } else {
@@ -100,7 +106,7 @@ const submitForm = (formEl: FormInstance | undefined) => {
   });
 };
 
-const resetForm = (formEl: FormInstance | undefined) => {
+const resetForm = formEl => {
   if (!formEl) return;
   formEl.resetFields();
 };

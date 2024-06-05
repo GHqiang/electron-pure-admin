@@ -139,6 +139,11 @@ const { sfcToken, lmaToken, jiujinToken, jinjiToken, lainaToken } =
   storeToRefs(userInfoAndTokens);
 
 const tableDataStore = useAppRuleListStore();
+
+import { platTokens } from "@/store/platTokens";
+// 平台toke列表
+const tokens = platTokens();
+
 const displayItems = computed(() => tableDataStore.items);
 
 // 是否显示一键启动
@@ -179,7 +184,9 @@ const appTokenObj = {
 
 // 一键启动
 const oneClickAutoOffer = () => {
-  let pwd = localStorage.getItem("memberPwd");
+  let pwd = tokens.userInfo.member_pwd;
+  // console.log("pwd", pwd);
+
   if (!pwd) {
     ElMessage.error("会员卡密码未设置，请先去设置后再启动");
     return;
@@ -226,7 +233,8 @@ const stopAutoOffer = () => {
 const singleStartOrStop = ({ id, appName }, flag) => {
   // 单个启动
   if (flag === 1) {
-    let pwd = localStorage.getItem("memberPwd");
+    let pwd = tokens.userInfo.member_pwd;
+    // console.log("pwd", pwd);
     if (!pwd) {
       ElMessage.error("会员卡密码未设置，请先去设置后再启动");
       return;
