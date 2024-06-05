@@ -98,7 +98,14 @@ class OrderAutoTicketQueue {
         ...handleSuccessOrderList,
         ...handleFailOrderList
       ];
-      // console.warn('本次出票记录', orderOfferRecord)
+      const ticketRes = await svApi.queryTicketList({
+        user_id: tokens.userInfo?.user_id,
+        app_name: "sfc"
+      });
+      let ticketRecords = ticketRes.data.ticketList || [];
+      console.warn(conPrefix + "历史出票记录", ticketRecords);
+      orderOfferRecord.push(...ticketRecords);
+
       let newOrders = orders.filter(item => {
         // 过滤出来新订单（未进行过出票的）
         return !orderOfferRecord.some(
@@ -106,29 +113,25 @@ class OrderAutoTicketQueue {
         );
       });
       console.warn(conPrefix + "新的待出票订单列表", newOrders);
-      let allOfferRecord = await idbApi.getAllOrderRecords(1);
-      allOfferRecord = allOfferRecord || [];
-      allOfferRecord = allOfferRecord.filter(
-        item => item.orderStatus === "1" && item.appName === "sfc"
-      );
-      console.warn(conPrefix + "机器历史报价记录", allOfferRecord);
+
+      const offerRes = await svApi.queryOfferList({
+        user_id: tokens.userInfo.user_id,
+        order_status: "1",
+        app_name: "sfc"
+      });
+      let offerRecords = offerRes.data.offerList || [];
+      console.warn(conPrefix + "历史报价记录", offerRecords);
+
       let orderList = newOrders.filter(item => {
         // 过滤出来机器自己报价过的订单
-        return allOfferRecord.some(
+        return offerRecords.some(
           itemA => itemA.order_number === item.order_number
         );
       });
-      console.warn(conPrefix + "从历史报价记录过滤后的待出票订单", orderList);
-      let allTicketRecord = await idbApi.getAllOrderRecords();
-      allTicketRecord = allTicketRecord || [];
-      allTicketRecord = allTicketRecord.filter(item => item.appName === "sfc");
-      orderList = orderList.filter(item => {
-        // 过滤出来机器自己出票过的订单
-        return !allTicketRecord.some(
-          itemA => itemA.order_number === item.order_number
-        );
-      });
-      console.warn(conPrefix + "从历史出票记录过滤后的待出票订单", orderList);
+      console.warn(
+        conPrefix + "从历史报价记录过滤后的最终待出票订单",
+        orderList
+      );
       // 将订单加入队列
       this.enqueue(orderList);
 
