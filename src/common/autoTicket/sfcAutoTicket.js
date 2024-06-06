@@ -221,7 +221,7 @@ class OrderAutoTicketQueue {
       // res：{ profit, submitRes, qrcode, quan_code, card_id, offerRule }
       const serOrderInfo = {
         plat_name: order.platName,
-        app_name: res?.offerRule?.shadowLineName || "sfc",
+        app_name: res?.offerRule?.app_name || "sfc",
         order_id: order.id,
         order_number: order.order_number,
         tpp_price: order.tpp_price,
@@ -235,10 +235,10 @@ class OrderAutoTicketQueue {
         lockseat: order.lockseat,
         show_time: order.show_time,
         cinema_group: order.cinema_group,
-        offer_type: res?.offerRule?.offerType || "",
-        offer_amount: res?.offerRule?.offerAmount || "",
-        member_offer_amount: res?.offerRule?.memberOfferAmount || "",
-        quan_value: res?.offerRule?.quanValue || "",
+        offer_type: res?.offerRule?.offer_type || "",
+        offer_amount: res?.offerRule?.offer_amount || "",
+        member_offer_amount: res?.offerRule?.member_offer_amount || "",
+        quan_value: res?.offerRule?.quan_value || "",
         order_status: res?.submitRes ? "1" : "2",
         // remark: '',
         processing_time: +new Date() + "",
@@ -710,7 +710,7 @@ const useQuanOrCard = async ({
       conPrefix +
         `待出票订单：城市${city_name}, 影院${cinema_name}, 影厅${hall_name}`
     );
-    const { offerType, quanValue } = offerRule;
+    const { offer_type: offerType, quan_value: quanValue } = offerRule;
     // 拿订单号去匹配报价记录
     if (offerType !== "1") {
       console.log(conPrefix + "使用会员卡出票");
