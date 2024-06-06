@@ -9,14 +9,6 @@ export default {
   },
   children: [
     {
-      path: "/set/test",
-      name: "test",
-      component: () => import("@/views/testFlow/index.vue"),
-      meta: {
-        title: "测试流程"
-      }
-    },
-    {
       path: "/set/offerRule",
       name: "offerRule",
       component: () => import("@/views/offerRule/index.vue"),
@@ -37,15 +29,23 @@ export default {
       name: "offerRecord",
       component: () => import("@/views/offerRecord/index.vue"),
       meta: {
-        title: "平台自动报价"
+        title: "报价记录"
       }
     },
     {
       path: "/set/ticketRecord",
       name: "ticketRecord",
-      component: () => import("@/views/offerTicket/index.vue"),
+      component: () => import("@/views/ticketRecord/index.vue"),
       meta: {
-        title: "影院自动出票"
+        title: "出票记录"
+      }
+    },
+    {
+      path: "/set/queueManage",
+      name: "queueManage",
+      component: () => import("@/views/queueManage/index.vue"),
+      meta: {
+        title: "队列管理"
       }
     },
     {
@@ -62,6 +62,14 @@ export default {
       component: () => import("@/views/memberPwdSet/index.vue"),
       meta: {
         title: "会员卡密码设置"
+      }
+    },
+    {
+      path: "/set/test",
+      name: "test",
+      component: () => import("@/views/testFlow/index.vue"),
+      meta: {
+        title: "测试流程"
       }
     },
   ]
