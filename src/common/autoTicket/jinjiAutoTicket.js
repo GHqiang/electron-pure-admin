@@ -407,6 +407,7 @@ const oneClickBuyTicket = async item => {
     });
     let offerRecord = offerRes.data.offerList || [];
     offerRule = offerRecord?.[0];
+    console.warn(conPrefix + "从该订单的报价记录获取到的报价规则", offerRule);
     if (!offerRecord?.length || !offerRule) {
       console.error(
         conPrefix +
