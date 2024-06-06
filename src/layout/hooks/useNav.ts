@@ -83,6 +83,7 @@ export function useNav() {
   function logout() {
     useUserStoreHook().logOut();
     window.localStorage.removeItem('selfToken')
+    window.localStorage.removeItem('userInfo')
   }
 
   function backTopMenu() {

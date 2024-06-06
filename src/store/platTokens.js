@@ -35,6 +35,10 @@ export const platTokens = defineStore("platTokens", {
     removeSelfPlatToken() {
       window.localStorage.removeItem("selfToken");
       this.selfToken = "";
+    },
+    setMemberPwd(data) {
+      console.log("设置会员卡密码", data);
+      this.userInfo.member_pwd = data;
     }
   }
 });

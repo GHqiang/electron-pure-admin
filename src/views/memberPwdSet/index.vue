@@ -100,6 +100,7 @@ const submitForm = formEl => {
       });
       isActive.value = false;
       pwd.value = ruleForm.pass;
+      tokens.setMemberPwd(ruleForm.pass);
     } else {
       console.log("error submit!");
     }
