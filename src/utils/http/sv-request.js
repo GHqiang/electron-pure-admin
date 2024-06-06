@@ -27,7 +27,7 @@ instance.interceptors.request.use(
       // 生产环境不会跨域
       config.url = IS_DEV
         ? config.url
-        : "https://api.s.zjlrmovie.cn" + config.url;
+        : "http://47.113.191.173:3000" + config.url;
     }
     // console.log('请求config', config)
     return config;
