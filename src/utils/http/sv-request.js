@@ -63,7 +63,9 @@ instance.interceptors.response.use(
         })
           .then(() => {
             tokens.removeSelfPlatToken();
-            window.localStorage.clear();
+            window.localStorage.removeItem("selfToken");
+            window.localStorage.removeItem("userInfo");
+            window.localStorage.removeItem("user-info");
             router.push("/login");
           })
           .catch(() => {});

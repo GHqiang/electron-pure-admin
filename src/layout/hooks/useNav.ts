@@ -84,6 +84,7 @@ export function useNav() {
     useUserStoreHook().logOut();
     window.localStorage.removeItem('selfToken')
     window.localStorage.removeItem('userInfo')
+    window.localStorage.removeItem("user-info");
   }
 
   function backTopMenu() {
