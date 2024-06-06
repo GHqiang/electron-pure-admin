@@ -139,6 +139,7 @@
         </template>
       </el-table-column>
       <el-table-column prop="quan_value" label="用券面额" width="90" />
+      <el-table-column prop="profit" label="利润" width="90" />
       <el-table-column label="转单手续费" width="110">
         <template #default="scope">
           <span>{{ transferFeeFilter(scope.row) }}</span>
