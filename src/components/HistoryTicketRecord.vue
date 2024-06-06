@@ -33,11 +33,25 @@
           />
         </el-select>
       </el-form-item>
-
-      <el-form-item :label="`状&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;态`">
+      <el-form-item label="出票用户">
+        <el-select
+          v-model="formData.user_id"
+          placeholder="出票用户"
+          style="width: 194px"
+          clearable
+        >
+          <el-option
+            v-for="(item, inx) in userList"
+            :label="item.name"
+            :value="item.id"
+            :key="inx"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="出票状态">
         <el-select
           v-model="formData.status"
-          placeholder="状态"
+          placeholder="出票状态"
           style="width: 194px"
           clearable
         >
@@ -85,7 +99,7 @@
     <!-- 表格 -->
     <el-table
       style="width: 100%"
-      :data="tableDataFilter"
+      :data="tableData"
       border
       stripe
       show-overflow-tooltip
@@ -112,6 +126,7 @@
           <span>{{ scope.row.order_status === "1" ? "成功" : "失败" }}</span>
         </template>
       </el-table-column>
+      <el-table-column prop="user_name" fixed label="出票人" width="110" />
       <el-table-column prop="order_number" fixed label="订单号" width="110" />
       <el-table-column prop="cinema_name" label="影院" width="110" />
       <el-table-column prop="hall_name" label="影厅" width="110" />
@@ -124,25 +139,25 @@
         </template>
       </el-table-column>
       <el-table-column prop="quan_value" label="用券面额" width="90" />
-      <!-- <el-table-column prop="errMsg" label="失败原因" width="110" /> -->
+      <el-table-column label="转单手续费" width="110">
+        <template #default="scope">
+          <span>{{ transferFeeFilter(scope.row) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column prop="errMsg" label="失败原因" width="110" />
     </el-table>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onBeforeUnmount, toRaw } from "vue";
+import { ref, reactive, onBeforeUnmount, onBeforeMount } from "vue";
 import svApi from "@/api/sv-api";
 import { ORDER_FORM, APP_LIST } from "@/common/constant.js";
 console.log("ORDER_FORM", ORDER_FORM);
 // 订单来源
 const orderFormObj = ORDER_FORM;
-
-// 使用computed确保items响应式
-const tableData = ref([]);
-
 // 影线列表
 const shadowLineObj = APP_LIST;
-
 // 报价类型枚举
 const offerTypeObj = {
   1: "日常固定价",
@@ -150,57 +165,60 @@ const offerTypeObj = {
   3: "会员日报价"
 };
 
+// 列表数据
+const tableData = ref([]);
+
+// 用户列表
+const userList = ref([]);
+
 // 表单查询数据
 const formData = reactive({
   plat_name: "lieren", // 订单来源
   app_name: "", // 影线名称
   status: "", // 状态
+  user_id: "", // 出票用户
   offer_type: "", // 报价类型
   supplier_end_price: "", // 中标价
   quan_value: "" // 用券面额
 });
 
-// 搜索过滤后的数据
-const tableDataFilter = ref([]);
+// 转单手续费
+const transferFeeFilter = ({ ticket_num, supplier_end_price }) => {
+  return (
+    (Number(ticket_num) * Number(supplier_end_price) * 100 * 3) /
+    10000
+  ).toFixed();
+};
+
 let timer;
 // 搜索数据
-const searchData = () => {
-  // console.log("tableData==>", toRaw(tableData.value));
-  tableDataFilter.value = tableData.value.filter(item => {
-    const {
-      plat_name, // 订单来源
-      app_name, // 影线名称
-      status, // 状态
-      offer_type, // 报价类型
-      supplier_end_price, // 中标价
-      quan_value // 用券面额
-    } = formData;
-    let judge1 = plat_name ? item.plat_name === plat_name : true;
-    let judge2 = app_name ? item.app_name?.indexOf(app_name) >= 0 : true;
-    let judge3 = status ? item.order_status === status : true;
-    let judge4 = offer_type ? item.offer_type === offer_type : true;
-    let judge5 = supplier_end_price
-      ? item.supplier_end_price == supplier_end_price
-      : true;
-    let judge6 = quan_value ? item.quan_value === quan_value : true;
-    return judge1 && judge2 && judge3 && judge4 && judge5 && judge6;
-  });
-  let list = JSON.parse(JSON.stringify(tableDataFilter.value));
-  console.log("tableDataFilter===>", list);
+const searchData = async () => {
+  try {
+    let formInfo = JSON.parse(JSON.stringify(formData));
+    const filteredEntries = Object.entries(formInfo).filter(([key, value]) => {
+      return value !== null && value !== undefined && value !== "";
+    });
+    // 使用Object.fromEntries将过滤后的键值对数组转换回对象
+    let queryParams = Object.fromEntries(filteredEntries);
+    // console.log("queryParams", queryParams);
+    let res;
+    if (JSON.stringify(queryParams) === "{}") {
+      res = await svApi.getTicketList();
+    } else {
+      res = await svApi.queryTicketList(queryParams);
+    }
+    let offerRecords = res.data.ticketList || [];
+    // console.log("历史出票记录===>", offerRecords);
+    tableData.value = offerRecords.reverse();
+  } catch (error) {
+    console.warn("获取出票记录失败", error);
+  }
 };
 
 const loadData = async () => {
   try {
-    const res = await svApi.getTicketList();
-    let offerRecords = res.data.ticketList || [];
-    console.log("历史出票记录", offerRecords);
-    tableData.value = offerRecords.reverse();
     searchData();
     timer = setInterval(async () => {
-      const res = await svApi.getTicketList();
-      let offerRecords = res.data.ticketList || [];
-      console.log("历史出票记录===>", offerRecords);
-      tableData.value = offerRecords.reverse();
       searchData();
     }, 60 * 1000);
   } catch (error) {
@@ -214,10 +232,19 @@ const resetForm = () => {
   formData.plat_name = "lieren";
   formData.app_name = ""; // 影线名称
   formData.status = ""; // 状态
+  formData.user_id = ""; // 出票用户
   formData.offer_type = ""; // 报价类型
   formData.supplier_end_price = ""; // 中标价
   formData.quan_value = ""; // 是否报价
 };
+
+onBeforeMount(async () => {
+  const res = await svApi.getUserList();
+  // console.log("res", res);
+  let list = res.data.userList || [];
+  // console.log("list", list);
+  userList.value = list;
+});
 onBeforeUnmount(() => {
   clearInterval(timer);
   timer = null;
