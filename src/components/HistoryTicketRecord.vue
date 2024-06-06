@@ -184,11 +184,17 @@ const formData = reactive({
 });
 
 // 转单手续费
-const transferFeeFilter = ({ ticket_num, supplier_end_price }) => {
-  return (
-    (Number(ticket_num) * Number(supplier_end_price) * 100 * 3) /
-    10000
-  ).toFixed();
+const transferFeeFilter = ({
+  order_status,
+  ticket_num,
+  supplier_end_price
+}) => {
+  if (order_status === "2") {
+    return (
+      (Number(ticket_num) * Number(supplier_end_price) * 100 * 3) /
+      10000
+    ).toFixed();
+  }
 };
 
 let timer;
