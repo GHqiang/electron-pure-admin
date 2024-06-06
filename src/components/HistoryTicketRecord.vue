@@ -121,7 +121,7 @@
           <span>{{ shadowLineObj[scope.row.app_name] }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="出票状态" fixed width="60">
+      <el-table-column label="出票状态" fixed width="90">
         <template #default="scope">
           <span>{{ scope.row.order_status === "1" ? "成功" : "失败" }}</span>
         </template>
@@ -139,8 +139,8 @@
         </template>
       </el-table-column>
       <el-table-column prop="quan_value" label="用券面额" width="90" />
-      <el-table-column prop="profit" label="利润" width="90" />
-      <el-table-column label="转单手续费" width="110">
+      <el-table-column prop="profit" label="利润" width="80" />
+      <el-table-column label="转单手续费" width="100">
         <template #default="scope">
           <span>{{ transferFeeFilter(scope.row) }}</span>
         </template>
