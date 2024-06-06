@@ -174,16 +174,19 @@ const oneClickAutoOffer = () => {
     .then(() => {
       console.warn("一键启动订单自动获取队列");
       tableDataStore.items.forEach(item => {
+        // console.log("item", item, item.platName);
         item.isEnabled = true;
         if (item.platName === "lieren") {
           if (!lierenToken) {
-            setLierenPlatToken(platToken);
+            setLierenPlatToken(item.platToken);
           }
           lierenFetchOrder.start();
         }
       });
     })
-    .catch(() => {});
+    .catch(err => {
+      console.error("一键启动订单获取队列报错", err);
+    });
 };
 // 一键停止
 const stopAutoOffer = () => {

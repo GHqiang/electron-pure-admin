@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { OFFER_LIST } from "@/common/constant";
-let tableData = window.localStorage.getItem("offerRuletList");
+let tableData = window.localStorage.getItem("tableData");
 if (tableData) {
   tableData = JSON.parse(tableData);
 }
@@ -30,7 +30,7 @@ export const useDataTableStore = defineStore("dataTable", {
       this.saveToLocalStorage();
     },
     saveToLocalStorage() {
-      localStorage.setItem("offerRuletList", JSON.stringify(this.items));
+      localStorage.setItem("tableData", JSON.stringify(this.items));
     }
   },
   getters: {

@@ -25,6 +25,7 @@ class OrderAutoFetchQueue {
 
   // 启动队列（fetchDelay获取订单列表间隔，processDelay处理订单间隔）
   async start() {
+    console.log(conPrefix + "队列启动");
     // 设置队列为运行状态
     this.isRunning = true;
     // 循环直到队列停止
