@@ -144,7 +144,7 @@
           <span>{{ transferFeeFilter(scope.row) }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="errMsg" label="失败原因" width="110" />
+      <el-table-column prop="err_msg" label="失败原因" width="110" />
     </el-table>
   </div>
 </template>
@@ -153,7 +153,7 @@
 import { ref, reactive, onBeforeUnmount, onBeforeMount } from "vue";
 import svApi from "@/api/sv-api";
 import { ORDER_FORM, APP_LIST } from "@/common/constant.js";
-console.log("ORDER_FORM", ORDER_FORM);
+// console.log("ORDER_FORM", ORDER_FORM);
 // 订单来源
 const orderFormObj = ORDER_FORM;
 // 影线列表
