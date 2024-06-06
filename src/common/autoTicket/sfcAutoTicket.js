@@ -409,7 +409,8 @@ const oneClickBuyTicket = async item => {
       order_number
     });
     let offerRecord = offerRes.data.offerList || [];
-    if (!offerRecord?.length) {
+    offerRule = offerRecord?.[0];
+    if (!offerRecord?.length || !offerRule) {
       console.error(
         conPrefix +
           "获取该订单的报价记录失败，不进行出票，此处不转单，直接跳过",
@@ -418,7 +419,6 @@ const oneClickBuyTicket = async item => {
       setErrInfo("获取该订单报价记录失败");
       return;
     }
-    offerRule = offerRecord[0].offerRule;
     await getCityList();
 
     let city_id = cityList.value.find(
