@@ -425,6 +425,12 @@ const oneClickBuyTicket = async item => {
     // 1、获取城市影城列表
     const cinemaList = await getCityCinemaList(city_id);
     let cinema_id = getCinemaId(cinema_name, cinemaList);
+    if (!cinema_id) {
+      console.error(conPrefix + "根据订单中的影院名称获取影院id失败");
+      setErrInfo("根据订单中的影院名称获取影院id失败");
+      await transferOrder(item);
+      return;
+    }
     // 2、获取影院放映信息
     const moviePlayInfo = await getMoviePlayInfo({ city_id, cinema_id });
     let movieObj = moviePlayInfo.movie_data?.find(
