@@ -50,6 +50,11 @@ const SFC_SPECIAL_CINEMA_LIST = [
     order_cinema_name: "SFC上影影城丁香路LUXE店",
     sfc_cinema_name: "SFC上影影城丁香路店"
   },
+  {
+    order_cinema_name: "SFC上影影城港汇永华IMAX店",
+    sfc_cinema_name: "SFC上影影城港汇永华IMAX激光店"
+  },
+
   // 嘉兴
   {
     order_cinema_name: "SFC上影影城嘉兴八佰伴LUXE店",

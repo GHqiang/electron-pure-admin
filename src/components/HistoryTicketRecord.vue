@@ -193,7 +193,7 @@ const transferFeeFilter = ({
     return (
       (Number(ticket_num) * Number(supplier_end_price) * 100 * 3) /
       10000
-    ).toFixed();
+    ).toFixed(2);
   }
 };
 
