@@ -18,7 +18,7 @@ const instance = axios.create({
 
 // 公共请求参数对象，包含一些默认的请求头信息，如group、pver、source、ver等
 var i = {
-  group: "20047",
+  group: "20023",
   pver: "7.0",
   source: "4",
   ver: "7.7.3",
@@ -39,7 +39,7 @@ var a = function (e) {
   //     e.group = _ || "";
   // }
   // e.city_id = o || "", e.cinema_id = r || "", e.session_id = i || "";
-  e.group = "20047";
+  // e.group = "20023";
   // e.city_id = '500'
   // e.cinema_id = '19'
   e.session_id = ningboToken.value || "";
