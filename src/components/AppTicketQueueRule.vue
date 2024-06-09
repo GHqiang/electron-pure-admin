@@ -130,12 +130,13 @@ import { useAppRuleListStore } from "@/store/appTicketRuleTable";
 import sfcTicketQueue from "@/common/autoTicket/sfcAutoTicket";
 import jiujinTicketQueue from "@/common/autoTicket/jiujinAutoTicket";
 import jinjiTicketQueue from "@/common/autoTicket/jinjiAutoTicket";
+import ningboTicketQueue from "@/common/autoTicket/ningboAutoTicket";
 import lainaTicketQueue from "@/common/autoTicket/lainaAutoTicket";
 import { APP_LIST } from "@/common/constant.js";
 
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
-const { sfcToken, lmaToken, jiujinToken, jinjiToken, lainaToken } =
+const { sfcToken, lmaToken, jiujinToken, jinjiToken, ningboToken, lainaToken } =
   storeToRefs(userInfoAndTokens);
 
 const tableDataStore = useAppRuleListStore();
@@ -173,12 +174,14 @@ const appTicketQueueObj = {
   sfc: sfcTicketQueue,
   jiujin: jiujinTicketQueue,
   jinji: jinjiTicketQueue,
+  ningbo: ningboTicketQueue,
   laina: lainaTicketQueue
 };
 const appTokenObj = {
   sfc: sfcToken,
   jiujin: jiujinToken,
   jinji: jinjiToken,
+  ningbo: ningboToken,
   laina: lainaToken
 };
 

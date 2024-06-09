@@ -8,11 +8,12 @@ const APP_LIST = {
   sfc: "上影",
   jiujin: "久金",
   jinji: "金鸡",
+  ningbo: "宁波",
   laina: "莱纳"
 };
 // 平台关联应用
 const PLAT_LINK_APP = {
-  lieren: ["sfc", "jiujin", "jinji", "laina", "lumiai"],
+  lieren: ["sfc", "jiujin", "jinji", "laina", "ningbo", "lumiai"],
   shengapp: ["sfc", "lumiai"]
 };
 
@@ -106,7 +107,21 @@ const JINJI_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "金鸡百花影城"
   }
 ];
-
+// 宁都影波特殊影院集合
+const NINGBO_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: "宁波影都大榭影城",
+    sfc_cinema_name: "宁波影都大榭店"
+  },
+  {
+    order_cinema_name: "民光影城",
+    sfc_cinema_name: "宁波民光影城"
+  },
+  {
+    order_cinema_name: "蝴蝶影院天一广场店",
+    sfc_cinema_name: "天一蝴蝶影院"
+  }
+];
 // 报价规则
 const OFFER_LIST = [
   {
@@ -537,5 +552,6 @@ export {
   JIUJIN_SPECIAL_CINEMA_LIST,
   LAINA_SPECIAL_CINEMA_LIST,
   JINJI_SPECIAL_CINEMA_LIST,
+  NINGBO_SPECIAL_CINEMA_LIST,
   OFFER_LIST
 };

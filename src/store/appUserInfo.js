@@ -51,7 +51,8 @@ export const appUserInfo = defineStore("appUserInfo", {
         modified_info: "0",
         member_center_h5_url: "http://group.leying.com/point/member-center"
       },
-      laina: null
+      laina: null,
+      ningbo: null
     }
   }),
   getters: {
@@ -82,6 +83,13 @@ export const appUserInfo = defineStore("appUserInfo", {
     },
     jinjiUserMobile(state) {
       return state.allUserInfo?.jinji?.mobile || "";
+    },
+    // 宁波影都token
+    ningboToken(state) {
+      return state.allUserInfo?.ningbo?.session_id || "";
+    },
+    ningboUserMobile(state) {
+      return state.allUserInfo?.ningbo?.mobile || "";
     },
     lmaToken(state) {
       return state.allUserInfo?.lumiai?.session_id || "";
@@ -155,6 +163,24 @@ export const appUserInfo = defineStore("appUserInfo", {
     removeLainaUserInfo() {
       console.warn("删除莱纳-用户信息及token");
       this.allUserInfo.laina = null;
+      window.localStorage.setItem(
+        "allUserInfo",
+        JSON.stringify(this.allUserInfo)
+      );
+    },
+    // 设置宁波影都用户信息
+    setNingboUserInfo(userInfo) {
+      console.warn("设置宁波-用户信息及token", userInfo);
+      this.allUserInfo.ningbo = userInfo;
+      window.localStorage.setItem(
+        "allUserInfo",
+        JSON.stringify(this.allUserInfo)
+      );
+    },
+    // 删除宁波用户信息
+    removeNingboUserInfo() {
+      console.warn("删除宁波-用户信息及token");
+      this.allUserInfo.ningbo = null;
       window.localStorage.setItem(
         "allUserInfo",
         JSON.stringify(this.allUserInfo)

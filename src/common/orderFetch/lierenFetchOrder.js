@@ -71,6 +71,12 @@ class OrderAutoFetchQueue {
           return true;
         } else if (item.cinema_name.includes("莱纳龙域影城")) {
           return true;
+        } else if (
+          ["宁波影都", "宁波民光影城", "天一蝴蝶影院"].some(itemA =>
+            item.cinema_name.includes(itemA)
+          )
+        ) {
+          return true;
         }
       });
       console.log(conPrefix + "猎人待出票列表过滤后", stayList);

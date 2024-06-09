@@ -136,7 +136,7 @@ import lierenOfferQueue from "@/common/autoOffer/useLierenOffer";
 import { PLAT_LINK_APP } from "@/common/constant";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
-const { sfcToken, jiujinToken, jinjiToken, lainaToken, lmaToken } =
+const { sfcToken, jiujinToken, jinjiToken, ningboToken, lainaToken, lmaToken } =
   storeToRefs(userInfoAndTokens);
 
 const tableDataStore = usePlatTableDataStore();
@@ -218,6 +218,8 @@ const singleStartOrStop = ({ id, platToken, platName }, flag) => {
         return !lainaToken;
       } else if (item === "lumiai") {
         return !lmaToken;
+      } else if (item === "ningbo") {
+        return !ningboToken;
       }
       return true;
     });

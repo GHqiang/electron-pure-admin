@@ -4,7 +4,8 @@ import {
   SFC_SPECIAL_CINEMA_LIST,
   JIUJIN_SPECIAL_CINEMA_LIST,
   LAINA_SPECIAL_CINEMA_LIST,
-  JINJI_SPECIAL_CINEMA_LIST
+  JINJI_SPECIAL_CINEMA_LIST,
+  NINGBO_SPECIAL_CINEMA_LIST
 } from "@/common/constant";
 import svApi from "@/api/sv-api";
 
@@ -12,6 +13,7 @@ import sfcApi from "@/api/sfc-api";
 import jiujinApi from "@/api/jiujin-api";
 import jinjiApi from "@/api/jinji-api";
 import lainaApi from "@/api/laina-api";
+import ningboApi from "@/api/ningbo-api";
 import lierenApi from "@/api/lieren-api";
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
@@ -37,7 +39,8 @@ const apiObj = {
   sfc: sfcApi,
   jiujin: jiujinApi,
   jinji: jinjiApi,
-  laina: lainaApi
+  laina: lainaApi,
+  ningbo: ningboApi
 };
 
 const getCinemaFlag = item => {
@@ -49,6 +52,12 @@ const getCinemaFlag = item => {
     return "jinji";
   } else if (item.cinema_name.includes("莱纳龙域影城")) {
     return "laina";
+  } else if (
+    ["宁波影都", "宁波民光影城", "天一蝴蝶影院"].some(itemA =>
+      item.cinema_name.includes(itemA)
+    )
+  ) {
+    return "ningbo";
   }
 };
 let conPrefix = "【猎人自动报价】——"; // console打印前缀
@@ -64,7 +73,8 @@ let specialCinemaNameMatchObj = {
   sfc: SFC_SPECIAL_CINEMA_LIST,
   jiujin: JIUJIN_SPECIAL_CINEMA_LIST,
   jinji: JINJI_SPECIAL_CINEMA_LIST,
-  laina: LAINA_SPECIAL_CINEMA_LIST
+  laina: LAINA_SPECIAL_CINEMA_LIST,
+  ningbo: NINGBO_SPECIAL_CINEMA_LIST
 };
 // 创建一个订单自动报价队列类
 class OrderAutoOfferQueue {
@@ -167,6 +177,12 @@ class OrderAutoOfferQueue {
         } else if (item.cinema_name.includes("金鸡百花影城")) {
           return true;
         } else if (item.cinema_name.includes("莱纳龙域影城")) {
+          return true;
+        } else if (
+          ["宁波影都", "宁波民光影城", "天一蝴蝶影院"].some(itemA =>
+            item.cinema_name.includes(itemA)
+          )
+        ) {
           return true;
         }
       });
