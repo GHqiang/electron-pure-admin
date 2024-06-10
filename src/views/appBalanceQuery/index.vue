@@ -75,6 +75,7 @@ import { APP_LIST } from "@/common/constant.js";
 import sfcApi from "@/api/sfc-api";
 import jiujinApi from "@/api/jiujin-api";
 import jinjiApi from "@/api/jinji-api";
+import ningboApi from "@/api/ningbo-api";
 import lainaApi from "@/api/laina-api";
 
 // api集合
@@ -82,6 +83,7 @@ let apiObj = {
   sfc: sfcApi,
   jiujin: jiujinApi,
   jinji: jinjiApi,
+  ningbo: ningboApi,
   laina: lainaApi
 };
 
