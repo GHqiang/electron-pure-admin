@@ -40,6 +40,10 @@ const SFC_SPECIAL_CINEMA_LIST = [
   },
   // 上海
   {
+    order_cinema_name: "SFC上影影城南桥百联店",
+    sfc_cinema_name: "SFC上影影城南桥百联CINITY店"
+  },
+  {
     order_cinema_name: "SFC上影影城天山缤谷广场IMAX店",
     sfc_cinema_name: "SFC上影影城天山缤谷IMAX店"
   },

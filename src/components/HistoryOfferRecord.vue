@@ -50,7 +50,7 @@
       </el-form-item>
       <el-form-item label="报价状态">
         <el-select
-          v-model="formData.status"
+          v-model="formData.order_status"
           placeholder="报价状态"
           style="width: 194px"
           clearable
@@ -146,6 +146,17 @@
       <el-table-column prop="quan_value" label="用券面额" width="90" />
       <el-table-column prop="err_msg" label="失败原因" width="110" />
     </el-table>
+    <el-pagination
+      style="margin-top: 10px; display: flex; justify-content: flex-end"
+      v-model:current-page="currentPage"
+      v-model:page-size="pageSize"
+      :page-sizes="[10, 20, 30, 50]"
+      :background="true"
+      layout="total, sizes, prev, pager, next, jumper"
+      :total="totalNum"
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+    />
   </div>
 </template>
 
@@ -167,6 +178,9 @@ const offerTypeObj = {
 
 // 列表数据
 const tableData = ref([]);
+const currentPage = ref(1);
+const pageSize = ref(10);
+const totalNum = ref(0);
 // 用户列表
 const userList = ref([]);
 
@@ -188,7 +202,7 @@ const formData = reactive({
   plat_name: "lieren", // 订单来源
   app_name: "", // 影线名称
   user_id: "", // 报价用户
-  status: "", // 状态
+  order_status: "", // 状态
   offer_type: "", // 报价类型
   offer_end_amount: "", // 中标价
   quan_value: "" // 用券面额
@@ -209,25 +223,39 @@ const searchData = async () => {
     let queryParams = Object.fromEntries(filteredEntries);
     // console.log("queryParams", queryParams);
     let res;
+    let page_num = currentPage.value;
+    let page_size = pageSize.value;
     if (JSON.stringify(queryParams) === "{}") {
-      res = await svApi.getOfferList();
+      res = await svApi.getOfferList({ page_num, page_size });
     } else {
-      res = await svApi.queryOfferList(queryParams);
+      res = await svApi.queryOfferList({
+        ...queryParams,
+        page_num,
+        page_size
+      });
     }
     let offerRecords = res.data.offerList || [];
     // console.log("历史报价记录===>", offerRecords);
-    tableData.value = offerRecords.reverse();
+    tableData.value = offerRecords;
+    totalNum.value = res.data.totalNum || 0;
   } catch (error) {
     console.warn("获取报价记录失败", error);
   }
 };
-
+const handleSizeChange = val => {
+  console.log(`${val} items per page`);
+  searchData();
+};
+const handleCurrentChange = val => {
+  console.log(`current page: ${val}`);
+  searchData();
+};
 const loadData = async () => {
   try {
     searchData();
-    timer = setInterval(async () => {
-      searchData();
-    }, 60 * 1000);
+    // timer = setInterval(async () => {
+    //   searchData();
+    // }, 60 * 1000);
   } catch (error) {
     console.error("获取历史报价记录失败===>", error);
   }
@@ -238,11 +266,13 @@ loadData();
 const resetForm = () => {
   formData.plat_name = "lieren";
   formData.app_name = ""; // 影线名称
-  formData.status = ""; // 状态
+  formData.order_status = ""; // 状态
   formData.user_id = ""; // 报价用户
   formData.offer_type = ""; // 报价类型
   formData.offer_end_amount = ""; // 最终报价
   formData.quan_value = ""; // 是否报价
+  currentPage.value = 1;
+  pageSize.value = 10;
 };
 onBeforeMount(async () => {
   const res = await svApi.getUserList();

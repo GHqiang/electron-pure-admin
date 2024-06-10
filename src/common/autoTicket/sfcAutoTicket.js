@@ -663,6 +663,7 @@ async function getSeatLayout(data) {
     return res.data?.play_data?.seat_data || [];
   } catch (error) {
     console.error(conPrefix + "获取座位布局异常", error);
+    setErrInfo("获取座位布局异常", error);
   }
 }
 
