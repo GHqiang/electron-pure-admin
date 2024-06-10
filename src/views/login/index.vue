@@ -56,6 +56,7 @@ const onLogin = async formEl => {
           });
           console.log("loginRes", loginRes);
           tokens.setSelfPlatToken(loginRes.data);
+          window.localStorage.removeItem("stayticket");
           // 获取后端路由
           await initRouter();
           let getTopMenuPath = getTopMenu(true).path;

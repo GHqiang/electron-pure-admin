@@ -101,42 +101,45 @@ class OrderAutoTicketQueue {
         ...handleSuccessOrderList,
         ...handleFailOrderList
       ];
-      const ticketRes = await svApi.queryTicketList({
-        user_id: tokens.userInfo?.user_id,
-        app_name: "sfc"
-      });
-      let ticketRecords = ticketRes.data.ticketList || [];
-      console.warn(conPrefix + "历史出票记录", ticketRecords);
-      orderOfferRecord.push(...ticketRecords);
+      if (orders.length) {
+        const ticketRes = await svApi.queryTicketList({
+          user_id: tokens.userInfo?.user_id,
+          app_name: "sfc"
+        });
+        let ticketRecords = ticketRes.data.ticketList || [];
+        console.warn(conPrefix + "历史出票记录", ticketRecords);
+        orderOfferRecord.push(...ticketRecords);
 
-      let newOrders = orders.filter(item => {
-        // 过滤出来新订单（未进行过出票的）
-        return !orderOfferRecord.some(
-          itemA => itemA.order_number === item.order_number
-        );
-      });
-      console.warn(conPrefix + "新的待出票订单列表", newOrders);
+        let newOrders = orders.filter(item => {
+          // 过滤出来新订单（未进行过出票的）
+          return !orderOfferRecord.some(
+            itemA => itemA.order_number === item.order_number
+          );
+        });
+        console.warn(conPrefix + "新的待出票订单列表", newOrders);
+        if (newOrders.lengh) {
+          const offerRes = await svApi.queryOfferList({
+            user_id: tokens.userInfo.user_id,
+            order_status: "1",
+            app_name: "sfc"
+          });
+          let offerRecords = offerRes.data.offerList || [];
+          console.warn(conPrefix + "历史报价记录", offerRecords);
 
-      const offerRes = await svApi.queryOfferList({
-        user_id: tokens.userInfo.user_id,
-        order_status: "1",
-        app_name: "sfc"
-      });
-      let offerRecords = offerRes.data.offerList || [];
-      console.warn(conPrefix + "历史报价记录", offerRecords);
-
-      let orderList = newOrders.filter(item => {
-        // 过滤出来机器自己报价过的订单
-        return offerRecords.some(
-          itemA => itemA.order_number === item.order_number
-        );
-      });
-      console.warn(
-        conPrefix + "从历史报价记录过滤后的最终待出票订单",
-        orderList
-      );
-      // 将订单加入队列
-      this.enqueue(orderList);
+          let orderList = newOrders.filter(item => {
+            // 过滤出来机器自己报价过的订单
+            return offerRecords.some(
+              itemA => itemA.order_number === item.order_number
+            );
+          });
+          console.warn(
+            conPrefix + "从历史报价记录过滤后的最终待出票订单",
+            orderList
+          );
+          // 将订单加入队列
+          this.enqueue(orderList);
+        }
+      }
 
       // 处理队列中的订单，直到队列为空或停止
       while (this.queue.length > 0 && this.isRunning) {
