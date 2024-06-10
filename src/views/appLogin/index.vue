@@ -16,10 +16,10 @@
       v-if="!jiujinToken"
       @click="jiujinLoginActive = true"
       v-throttle
-      >久金登录</el-button
+      >华夏久金登录</el-button
     >
     <el-button type="primary" v-else @click="removeJiujinUserInfo()" v-throttle
-      >久金退出</el-button
+      >华夏久金退出</el-button
     >
 
     <el-button
@@ -27,10 +27,10 @@
       v-if="!jinjiToken"
       @click="jinjiLoginActive = true"
       v-throttle
-      >金鸡登录</el-button
+      >北京金鸡登录</el-button
     >
     <el-button type="primary" v-else @click="removeJinjiUserInfo()" v-throttle
-      >金鸡退出</el-button
+      >北京金鸡退出</el-button
     >
 
     <el-button
@@ -38,10 +38,10 @@
       v-if="!lainaToken"
       @click="lainaLoginActive = true"
       v-throttle
-      >莱纳登录</el-button
+      >莱纳龙域登录</el-button
     >
     <el-button type="primary" v-else @click="removeLainaUserInfo()" v-throttle
-      >莱纳退出</el-button
+      >莱纳龙域退出</el-button
     >
 
     <el-button

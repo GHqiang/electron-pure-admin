@@ -50,7 +50,7 @@ export const useAppBaseData = defineStore("appBaseData", {
       );
     },
     setJiujinBaseData(baseData) {
-      console.warn("设置久金-基础数据", baseData);
+      console.warn("设置华夏久金-基础数据", baseData);
       this.appBaseData.jiujin = this.jiujinBaseData
         ? { ...this.jiujinBaseData, ...baseData }
         : baseData;
@@ -60,7 +60,7 @@ export const useAppBaseData = defineStore("appBaseData", {
       );
     },
     setJinjiBaseData(baseData) {
-      console.warn("设置金鸡-基础数据", baseData);
+      console.warn("设置北京金鸡-基础数据", baseData);
       this.appBaseData.jinji = this.jinjiBaseData
         ? { ...this.jinjiBaseData, ...baseData }
         : baseData;

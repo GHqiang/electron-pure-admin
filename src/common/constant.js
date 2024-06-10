@@ -6,8 +6,8 @@ const ORDER_FORM = {
 // 影院列表
 const APP_LIST = {
   sfc: "上影",
-  jiujin: "久金",
-  jinji: "金鸡",
+  jiujin: "华夏久金",
+  jinji: "北京金鸡",
   ningbo: "宁波影都",
   laina: "莱纳龙域"
 };
@@ -90,21 +90,21 @@ const SFC_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "SFC上影影城贵阳云上方舟店"
   }
 ];
-// 久金特殊影院集合
+// 华夏久金特殊影院集合
 const JIUJIN_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: "华夏久金国际影城",
     sfc_cinema_name: "上海华夏久金国际影城"
   }
 ];
-// 莱纳特殊影院集合
+// 莱纳龙域特殊影院集合
 const LAINA_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: "莱纳龙域影城昌发展万科广场店",
     sfc_cinema_name: "北京莱纳龙域影城"
   }
 ];
-// 金鸡特殊影院集合
+// 北京金鸡特殊影院集合
 const JINJI_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: "北京金鸡百花影城影协影院",

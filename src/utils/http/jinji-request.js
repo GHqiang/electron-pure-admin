@@ -126,7 +126,7 @@ instance.interceptors.response.use(
     ) {
       if (data.errcode === "205" && data.msg === "登录失效") {
         // ElMessage.error("sfc登录失效，请重新登录");
-        ElMessageBox.confirm("金鸡登录失效，请重新登录", "提示", {
+        ElMessageBox.confirm("北京金鸡登录失效，请重新登录", "提示", {
           confirmButtonText: "我知道了",
           type: "warning",
           showCancelButton: false,

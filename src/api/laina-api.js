@@ -1,5 +1,5 @@
 /**
- * @description: 久金影城api列表
+ * @description: 莱纳龙域影城api列表
  */
 
 import axios from "@/utils/http/laina-request";

@@ -1,5 +1,5 @@
 /**
- * @description: 久金影城api列表
+ * @description: 华夏久金影城api列表
  */
 
 import axios from "@/utils/http/jiujin-request";

@@ -28,7 +28,7 @@ const cityList = ref([]); // 城市列表
 // 特殊的名字匹配集合
 let specialCinemaNameMatchList = JINJI_SPECIAL_CINEMA_LIST;
 
-let conPrefix = "【金鸡自动出票】——"; // console打印前缀
+let conPrefix = "【北京金鸡自动出票】——"; // console打印前缀
 const getOrginValue = value => JSON.parse(JSON.stringify(value));
 
 let errMsg = ""; // 单次出票的错误语

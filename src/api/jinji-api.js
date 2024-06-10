@@ -1,5 +1,5 @@
 /**
- * @description: 金鸡影城api列表
+ * @description: 北京金鸡影城api列表
  */
 
 import axios from "@/utils/http/jinji-request";

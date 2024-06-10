@@ -80,7 +80,7 @@ const captchaUrl = ref(""); // 图形验证码url
 const sentSms = ref(false); // 是否发送短信
 const showCaptcha = ref(false); // 是否展示图形验证码
 const showSmsCode = ref(false); // 是否展示短信验证码输入框
-let conPrefix = "【金鸡登录】——"; // console打印前缀
+let conPrefix = "【宁波影都登录】——"; // console打印前缀
 
 // 获取图形验证码
 async function getCaptcha() {
