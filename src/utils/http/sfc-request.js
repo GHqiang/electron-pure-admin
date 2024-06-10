@@ -39,7 +39,7 @@ var a = function (e) {
   //     e.group = _ || "";
   // }
   // e.city_id = o || "", e.cinema_id = r || "", e.session_id = i || "";
-  e.group = "20045";
+  // e.group = "20045";
   // e.city_id = '500'
   // e.cinema_id = '19'
   e.session_id = sfcToken.value || "";
