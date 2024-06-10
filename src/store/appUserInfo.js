@@ -177,7 +177,7 @@ export const appUserInfo = defineStore("appUserInfo", {
         JSON.stringify(this.allUserInfo)
       );
     },
-    // 删除宁波用户信息
+    // 删除宁波影都用户信息
     removeNingboUserInfo() {
       console.warn("删除宁波-用户信息及token");
       this.allUserInfo.ningbo = null;

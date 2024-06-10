@@ -8,8 +8,8 @@ const APP_LIST = {
   sfc: "上影",
   jiujin: "久金",
   jinji: "金鸡",
-  ningbo: "宁波",
-  laina: "莱纳"
+  ningbo: "宁波影都",
+  laina: "莱纳龙域"
 };
 // 平台关联应用
 const PLAT_LINK_APP = {

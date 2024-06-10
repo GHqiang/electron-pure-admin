@@ -1,6 +1,6 @@
 <template>
   <div class="login-laina">
-    <el-divider content-position="center">莱纳登录</el-divider>
+    <el-divider content-position="center">莱纳龙域登录</el-divider>
 
     <el-form label-width="100px">
       <el-form-item label="手机号">

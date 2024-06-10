@@ -27,7 +27,7 @@ const cityList = ref([]); // 城市列表
 // 特殊的名字匹配集合
 let specialCinemaNameMatchList = LAINA_SPECIAL_CINEMA_LIST;
 
-let conPrefix = "【莱纳自动出票】——"; // console打印前缀
+let conPrefix = "【莱纳龙域自动出票】——"; // console打印前缀
 const getOrginValue = value => JSON.parse(JSON.stringify(value));
 
 let errMsg = ""; // 单次出票的错误语

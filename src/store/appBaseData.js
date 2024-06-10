@@ -70,7 +70,7 @@ export const useAppBaseData = defineStore("appBaseData", {
       );
     },
     setLainaBaseData(baseData) {
-      console.warn("设置莱纳基础数据", baseData);
+      console.warn("设置莱纳龙域基础数据", baseData);
       this.appBaseData.laina = this.lainaBaseData
         ? { ...this.lainaBaseData, ...baseData }
         : baseData;
@@ -80,7 +80,7 @@ export const useAppBaseData = defineStore("appBaseData", {
       );
     },
     setNingboBaseData(baseData) {
-      console.warn("设置宁波-基础数据", baseData);
+      console.warn("设置宁波影都-基础数据", baseData);
       this.appBaseData.ningbo = this.ningboBaseData
         ? { ...this.ningboBaseData, ...baseData }
         : baseData;
