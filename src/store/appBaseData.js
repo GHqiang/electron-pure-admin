@@ -16,7 +16,8 @@ export const useAppBaseData = defineStore("appBaseData", {
       // },
       jiujin: null,
       jinji: null,
-      laina: null
+      laina: null,
+      ningbo: null
     }
   }),
   getters: {
@@ -31,6 +32,9 @@ export const useAppBaseData = defineStore("appBaseData", {
     },
     lainaBaseData(state) {
       return state.appBaseData?.laina;
+    },
+    ningboBaseData(state) {
+      return state.appBaseData?.ningbo;
     }
   },
   actions: {
@@ -69,6 +73,16 @@ export const useAppBaseData = defineStore("appBaseData", {
       console.warn("设置莱纳基础数据", baseData);
       this.appBaseData.laina = this.lainaBaseData
         ? { ...this.lainaBaseData, ...baseData }
+        : baseData;
+      window.localStorage.setItem(
+        "appBaseData",
+        JSON.stringify(this.appBaseData)
+      );
+    },
+    setNingboBaseData(baseData) {
+      console.warn("设置宁波-基础数据", baseData);
+      this.appBaseData.ningbo = this.ningboBaseData
+        ? { ...this.ningboBaseData, ...baseData }
         : baseData;
       window.localStorage.setItem(
         "appBaseData",

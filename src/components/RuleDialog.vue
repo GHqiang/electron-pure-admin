@@ -357,6 +357,7 @@
 import sfcApi from "@/api/sfc-api";
 import jiujinApi from "@/api/jiujin-api";
 import jinjiApi from "@/api/jinji-api";
+import ningboApi from "@/api/ningbo-api";
 import lainaApi from "@/api/laina-api";
 
 import { storeToRefs } from "pinia";
@@ -365,12 +366,18 @@ import { ElLoading } from "element-plus";
 import { ORDER_FORM, APP_LIST } from "@/common/constant";
 import { useAppBaseData } from "@/store/appBaseData";
 const appBaseData = useAppBaseData();
-const { sfcBaseData, jiujinBaseData, jinjiBaseData, lainaBaseData } =
-  storeToRefs(appBaseData);
+const {
+  sfcBaseData,
+  jiujinBaseData,
+  jinjiBaseData,
+  ningboBaseData,
+  lainaBaseData
+} = storeToRefs(appBaseData);
 const {
   setSfcBaseData,
   setJiujinBaseData,
   setJinjiBaseData,
+  setNingboBaseData,
   setLainaBaseData
 } = appBaseData;
 const ruleFormRef = ref(null);
@@ -388,19 +395,22 @@ const apiObj = {
   sfc: sfcApi,
   jiujin: jiujinApi,
   jinji: jinjiApi,
-  laina: lainaApi
+  laina: lainaApi,
+  ningbo: ningboApi
 };
 const baseDataObj = {
   sfc: sfcBaseData.value,
   jiujin: jiujinBaseData.value,
   jinji: jinjiBaseData.value,
-  laina: lainaBaseData.value
+  laina: lainaBaseData.value,
+  ningbo: ningboBaseData.value
 };
 
 const setBaseDataObj = {
   sfc: setSfcBaseData,
   jiujin: setJiujinBaseData,
   jinji: setJinjiBaseData,
+  ningbo: setNingboBaseData,
   laina: setLainaBaseData
 };
 // 是否显示对话框
