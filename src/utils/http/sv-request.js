@@ -8,7 +8,7 @@ const tokens = platTokens();
 const instance = axios.create({
   //   baseURL: process.env.VITE_API_BASE_URL,
   baseURL: "",
-  timeout: 5000
+  timeout: 15 * 1000
 });
 
 const NODE_ENV = process.env.NODE_ENV;

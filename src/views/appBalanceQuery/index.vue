@@ -111,6 +111,7 @@ const searchData = async () => {
       sfc: { city_id: "", cinema_id: "" },
       jiujin: { city_id: "", cinema_id: "" },
       jinji: { city_id: "", cinema_id: "" },
+      ningbo: { city_id: "", cinema_id: "" },
       laina: { city_id: "", cinema_id: "" }
     };
     let requestList = [];
