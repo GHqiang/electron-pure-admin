@@ -101,40 +101,14 @@ class OrderAutoTicketQueue {
         ...handleFailOrderList
       ];
       if (orders.length) {
-        const ticketRes = await svApi.queryTicketList({
-          user_id: tokens.userInfo?.user_id,
-          app_name: "ningbo"
-        });
-        let ticketRecords = ticketRes.data.ticketList || [];
-        console.warn(conPrefix + "历史出票记录", ticketRecords);
-        orderOfferRecord.push(...ticketRecords);
-        if (newOrders.length) {
-          let newOrders = orders.filter(item => {
-            // 过滤出来新订单（未进行过出票的）
-            return !orderOfferRecord.some(
-              itemA => itemA.order_number === item.order_number
-            );
-          });
-          console.warn(conPrefix + "新的待出票订单列表", newOrders);
-
-          const offerRes = await svApi.queryOfferList({
-            user_id: tokens.userInfo.user_id,
-            order_status: "1",
-            app_name: "ningbo"
-          });
-          let offerRecords = offerRes.data.offerList || [];
-          console.warn(conPrefix + "历史报价记录", offerRecords);
-
-          let orderList = newOrders.filter(item => {
-            // 过滤出来机器自己报价过的订单
-            return offerRecords.some(
-              itemA => itemA.order_number === item.order_number
-            );
-          });
-          console.warn(
-            conPrefix + "从历史报价记录过滤后的最终待出票订单",
-            orderList
+        let newOrders = orders.filter(item => {
+          // 过滤出来新订单（未进行过出票的）
+          return !orderOfferRecord.some(
+            itemA => itemA.order_number === item.order_number
           );
+        });
+        console.warn(conPrefix + "新的待出票订单列表", newOrders);
+        if (newOrders.length) {
           // 将订单加入队列
           this.enqueue(orderList);
         }

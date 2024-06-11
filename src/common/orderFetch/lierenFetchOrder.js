@@ -2,7 +2,7 @@
 import { onMounted, computed } from "vue";
 
 import lierenApi from "@/api/lieren-api";
-
+import svApi from "@/api/sv-api";
 // 平台自动获取订单规则列表
 import { usePlatFetchOrderStore } from "@/store/platOfferRuleTable";
 const platTableDataStore = usePlatFetchOrderStore();
@@ -14,6 +14,11 @@ const platFetchOrderRuleList = computed(() =>
 import { useStayTicketList } from "@/store/stayTicketList";
 const stayTicketList = useStayTicketList();
 const { addNewOrder } = stayTicketList;
+
+import { platTokens } from "@/store/platTokens";
+// 平台toke列表
+const tokens = platTokens();
+
 let conPrefix = "【猎人自动获取订单】——"; // console打印前缀
 const getOrginValue = value => JSON.parse(JSON.stringify(value));
 
@@ -62,21 +67,23 @@ class OrderAutoFetchQueue {
       await this.delay(fetchDelay);
       let stayList = await lierenOrderFetch();
       stayList = stayList.map(item => ({ ...item, platName: "lieren" }));
+      const offerList = await getOfferList();
+      const ticketList = await getTicketList();
       stayList = stayList.filter(item => {
         if (["上影上海", "上影二线"].includes(item.cinema_group)) {
-          return true;
+          return judgeHandle(item, "sfc", offerList, ticketList);
         } else if (item.cinema_name.includes("华夏久金国际影城")) {
-          return true;
+          return judgeHandle(item, "jiujin", offerList, ticketList);
         } else if (item.cinema_name.includes("北京金鸡百花影城(")) {
-          return true;
+          return judgeHandle(item, "jinji", offerList, ticketList);
         } else if (item.cinema_name.includes("莱纳龙域影城")) {
-          return true;
+          return judgeHandle(item, "laina", offerList, ticketList);
         } else if (
           ["宁波影都", "宁波民光影城", "天一蝴蝶影院"].some(itemA =>
             item.cinema_name.includes(itemA)
           )
         ) {
-          return true;
+          return judgeHandle(item, "ningbo", offerList, ticketList);
         }
       });
       console.log(conPrefix + "猎人待出票列表过滤后", stayList);
@@ -94,6 +101,28 @@ class OrderAutoFetchQueue {
 }
 // 报价队列实例
 const orderFetchQueue = new OrderAutoFetchQueue();
+
+// 判断该订单是否是新订单
+const judgeHandle = (item, app_name, offerList, ticketList) => {
+  try {
+    let targetOfferList = offerList.filter(
+      itemA => itemA.app_name === app_name && itemA.order_status === "1"
+    );
+    let targetTicketList = ticketList.filter(
+      itemA => itemA.app_name === app_name
+    );
+    let isOffer = targetOfferList.some(
+      itemA => itemA.order_number === item.order_number
+    );
+    let isTicket = targetTicketList.some(
+      itemA => itemA.order_number === item.order_number
+    );
+    // 报过价没出过票就是新订单
+    return isOffer && !isTicket;
+  } catch (error) {
+    console.error(conPrefix + "判断该订单是否是新订单异常", error);
+  }
+};
 
 // 获取猎人待出票订单列表
 async function lierenOrderFetch() {
@@ -165,6 +194,34 @@ async function lierenOrderFetch() {
     return [];
   }
 }
+
+// 获取报价记录
+const getOfferList = async () => {
+  try {
+    const res = await svApi.queryOfferList({
+      user_id: tokens.userInfo.user_id,
+      plat_name: "lieren"
+    });
+    return res.data.offerList || [];
+  } catch (error) {
+    console.error(conPrefix + "获取猎人历史报价记录异常", error);
+    return [];
+  }
+};
+
+// 获取出票记录
+const getTicketList = async () => {
+  try {
+    const ticketRes = await svApi.queryTicketList({
+      user_id: tokens.userInfo?.user_id,
+      plat_name: "lieren"
+    });
+    return ticketRes.data.ticketList || [];
+  } catch (error) {
+    console.error(conPrefix + "获取猎人历史出票记录异常", error);
+    return [];
+  }
+};
 
 onMounted(() => {
   console.log(conPrefix + "onMounted");

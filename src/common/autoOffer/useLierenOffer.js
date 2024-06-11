@@ -121,11 +121,17 @@ class OrderAutoOfferQueue {
         ...handleSuccessOrderList,
         ...handleFailOrderList
       ];
-      const res = await svApi.queryOfferList({
-        user_id: tokens.userInfo.user_id,
-        plat_name: "lieren"
-      });
-      let offerRecords = res.data.offerList || [];
+      let offerRecords = [];
+      try {
+        const res = await svApi.queryOfferList({
+          user_id: tokens.userInfo.user_id,
+          plat_name: "lieren"
+        });
+        offerRecords = res.data.offerList || [];
+      } catch (error) {
+        console.error(conPrefix + "获取猎人历史报价记录异常", error);
+      }
+
       orderOfferRecord.push(...offerRecords);
       let newOrders = orders.filter(item => {
         // 过滤出来新订单（未进行过报价的）
