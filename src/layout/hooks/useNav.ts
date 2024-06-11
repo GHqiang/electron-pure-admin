@@ -83,7 +83,7 @@ export function useNav() {
   function logout() {
     useUserStoreHook().logOut();
     window.localStorage.removeItem('selfToken')
-    window.localStorage.removeItem('stayticket')
+    window.localStorage.removeItem('stayTicketList')
     window.localStorage.removeItem('userInfo')
     window.localStorage.removeItem("user-info");
   }
