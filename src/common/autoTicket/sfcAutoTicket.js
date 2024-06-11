@@ -96,24 +96,9 @@ class OrderAutoTicketQueue {
       //     `队列启动, ${fetchDelay} 秒获取一次待报价订单, ${processDelay} 秒处理一次订单}`
       // );
       let orders = await this.fetchOrders(fetchDelay);
-      const { handleSuccessOrderList, handleFailOrderList } = this;
-      const orderOfferRecord = [
-        ...handleSuccessOrderList,
-        ...handleFailOrderList
-      ];
-      if (orders.length) {
-        let newOrders = orders.filter(item => {
-          // 过滤出来新订单（未进行过出票的）
-          return !orderOfferRecord.some(
-            itemA => itemA.order_number === item.order_number
-          );
-        });
-        console.warn(conPrefix + "新的待出票订单列表", newOrders);
-        if (newOrders.lengh) {
-          // 将订单加入队列
-          this.enqueue(orderList);
-        }
-      }
+      console.warn(conPrefix + "新的待出票订单列表", orders);
+      // 将订单加入队列
+      this.enqueue(orders);
 
       // 处理队列中的订单，直到队列为空或停止
       while (this.queue.length > 0 && this.isRunning) {
@@ -153,7 +138,27 @@ class OrderAutoTicketQueue {
       let sfcStayOfferlist = getOrginValue(stayTicketList.items).filter(item =>
         ["上影上海", "上影二线"].includes(item.cinema_group)
       );
-      return sfcStayOfferlist;
+      console.warn(
+        conPrefix + "匹配已上架影院后的的待出票订单",
+        sfcStayOfferlist
+      );
+      if (!sfcStayOfferlist?.length) return [];
+      const { handleSuccessOrderList, handleFailOrderList } = this;
+      const orderOfferRecord = [
+        ...handleSuccessOrderList,
+        ...handleFailOrderList
+      ];
+      let newOrders = sfcStayOfferlist.filter(item => {
+        // 过滤出来新订单（未进行过出票的）
+        return !orderOfferRecord.some(
+          itemA => itemA.order_number === item.order_number
+        );
+      });
+      console.warn(
+        conPrefix + "从当前队列出票记录过滤后的的待报价订单",
+        newOrders
+      );
+      return newOrders;
     } catch (error) {
       console.error(conPrefix + "获取待出票订单列表异常", error);
       return [];

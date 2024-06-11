@@ -116,32 +116,9 @@ class OrderAutoOfferQueue {
       //     `队列启动, ${fetchDelay} 秒获取一次待报价订单, ${processDelay} 秒处理一次订单}`
       // );
       let orders = await this.fetchOrders(fetchDelay);
-      const { handleSuccessOrderList, handleFailOrderList } = this;
-      let orderOfferRecord = [
-        ...handleSuccessOrderList,
-        ...handleFailOrderList
-      ];
-      let offerRecords = [];
-      try {
-        const res = await svApi.queryOfferList({
-          user_id: tokens.userInfo.user_id,
-          plat_name: "lieren"
-        });
-        offerRecords = res.data.offerList || [];
-      } catch (error) {
-        console.error(conPrefix + "获取猎人历史报价记录异常", error);
-      }
-
-      orderOfferRecord.push(...offerRecords);
-      let newOrders = orders.filter(item => {
-        // 过滤出来新订单（未进行过报价的）
-        return !orderOfferRecord.some(
-          itemA => itemA.order_number === item.order_number
-        );
-      });
-      console.warn(conPrefix + "新的待报价订单列表", newOrders);
+      console.warn(conPrefix + "新的待报价订单列表", orders);
       // 将订单加入队列
-      this.enqueue(newOrders);
+      this.enqueue(orders);
 
       // 处理队列中的订单，直到队列为空或停止
       while (this.queue.length > 0 && this.isRunning) {
@@ -175,6 +152,7 @@ class OrderAutoOfferQueue {
     try {
       await this.delay(fetchDelay);
       const stayList = await getStayOfferList();
+      if (!stayList?.length) return [];
       let sfcStayOfferlist = stayList.filter(item => {
         if (["上影上海", "上影二线"].includes(item.cinema_group)) {
           return true;
@@ -192,7 +170,51 @@ class OrderAutoOfferQueue {
           return true;
         }
       });
-      return sfcStayOfferlist;
+      console.warn(
+        conPrefix + "匹配已上架影院后的的待报价订单",
+        sfcStayOfferlist
+      );
+      if (!sfcStayOfferlist?.length) return [];
+      const { handleSuccessOrderList, handleFailOrderList } = this;
+      let orderOfferRecord = [
+        ...handleSuccessOrderList,
+        ...handleFailOrderList
+      ];
+      let newOrders = sfcStayOfferlist.filter(item => {
+        // 过滤出来新订单（未进行过报价的）
+        return !orderOfferRecord.some(
+          itemA => itemA.order_number === item.order_number
+        );
+      });
+      console.warn(
+        conPrefix + "从当前队列报价记录过滤后的的待报价订单",
+        newOrders
+      );
+      if (!newOrders?.length) return [];
+      // 如果过滤到这时候还有单子再调接口进行历史报价记录过滤
+      const offerList = await getOfferList();
+      newOrders = newOrders.filter(item => {
+        if (["上影上海", "上影二线"].includes(item.cinema_group)) {
+          return judgeHandle(item, "sfc", offerList);
+        } else if (item.cinema_name.includes("华夏久金国际影城")) {
+          return judgeHandle(item, "jiujin", offerList);
+        } else if (item.cinema_name.includes("金鸡百花影城")) {
+          return judgeHandle(item, "jinji", offerList);
+        } else if (item.cinema_name.includes("莱纳龙域影城")) {
+          return judgeHandle(item, "laina", offerList);
+        } else if (
+          ["宁波影都", "宁波民光影城", "天一蝴蝶影院"].some(itemA =>
+            item.cinema_name.includes(itemA)
+          )
+        ) {
+          return judgeHandle(item, "ningbo", offerList);
+        }
+      });
+      console.warn(
+        conPrefix + "从服务端历史报价记录过滤后的的待报价订单",
+        newOrders
+      );
+      return newOrders;
     } catch (error) {
       console.error(conPrefix + "获取待报价订单列表异常", error);
       return [];
@@ -304,6 +326,34 @@ class OrderAutoOfferQueue {
 // 报价队列实例
 const offerQueue = new OrderAutoOfferQueue();
 
+// 获取报价记录
+const getOfferList = async () => {
+  try {
+    const res = await svApi.queryOfferList({
+      user_id: tokens.userInfo.user_id,
+      plat_name: "lieren"
+    });
+    return res.data.offerList || [];
+  } catch (error) {
+    console.error(conPrefix + "获取猎人历史报价记录异常", error);
+    return [];
+  }
+};
+// 判断该订单是否是新订单
+const judgeHandle = (item, app_name, offerList) => {
+  try {
+    let targetOfferList = offerList.filter(
+      itemA => itemA.app_name === app_name
+    );
+    let isOffer = targetOfferList.some(
+      itemA => itemA.order_number === item.order_number
+    );
+    // 报过价新订单
+    return !isOffer;
+  } catch (error) {
+    console.error(conPrefix + "判断该订单是否是新订单异常", error);
+  }
+};
 // 获取待报价订单列表
 async function getStayOfferList() {
   try {

@@ -66,6 +66,7 @@ class OrderAutoFetchQueue {
     try {
       await this.delay(fetchDelay);
       let stayList = await lierenOrderFetch();
+      if (!stayList?.length) return;
       stayList = stayList.map(item => ({ ...item, platName: "lieren" }));
       const offerList = await getOfferList();
       const ticketList = await getTicketList();
@@ -86,7 +87,8 @@ class OrderAutoFetchQueue {
           return judgeHandle(item, "ningbo", offerList, ticketList);
         }
       });
-      console.log(conPrefix + "猎人待出票列表过滤后", stayList);
+      console.warn(conPrefix + "猎人待出票列表过滤后", stayList);
+      if (!stayList?.length) return;
       addNewOrder(stayList);
     } catch (error) {
       console.error(conPrefix + "获取订单列表异常", error);
