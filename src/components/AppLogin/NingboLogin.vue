@@ -70,7 +70,7 @@ import {
   ElCol
 } from "element-plus";
 
-import sfcApi from "@/api/jinji-api";
+import sfcApi from "@/api/ningbo-api";
 let $emit = defineEmits([`loginSuccess`]);
 
 const phoneNumber = ref(""); // 手机号

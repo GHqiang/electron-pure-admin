@@ -18,7 +18,7 @@
   <el-button type="primary" @click="isCollapse = !isCollapse">{{
     !isCollapse ? "展开" : "收起"
   }}</el-button>
-  <el-table :data="displayItems" v-if="isCollapse" show-overflow-tooltip>
+  <el-table :data="displayItems" border v-if="isCollapse" show-overflow-tooltip>
     <el-table-column prop="appName" label="影院名称">
       <template #default="{ row, $index }">
         <span v-if="row.id !== editingRowId">{{
@@ -60,7 +60,7 @@
         <el-switch disabled v-model="row.isEnabled" />
       </template>
     </el-table-column>
-    <el-table-column label="操作" width="210">
+    <el-table-column label="操作" width="270">
       <template #default="{ row, $index }">
         <el-popconfirm
           title="确定启动吗？"

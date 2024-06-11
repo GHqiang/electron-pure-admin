@@ -16,7 +16,7 @@
     >一键停止</el-button
   >
 
-  <el-table :data="displayItems" show-overflow-tooltip>
+  <el-table :data="displayItems" border show-overflow-tooltip>
     <el-table-column prop="platName" label="平台名称">
       <template #default="{ row, $index }">
         <span v-if="row.id !== editingRowId">{{ row.platName }}</span>
@@ -65,7 +65,7 @@
         <el-switch disabled v-model="row.isEnabled" />
       </template>
     </el-table-column>
-    <el-table-column label="操作" width="210">
+    <el-table-column label="操作" width="270">
       <template #default="{ row, $index }">
         <el-popconfirm
           title="确定启动吗？"
