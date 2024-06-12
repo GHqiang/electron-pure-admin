@@ -664,7 +664,8 @@ const getMinAmountOfferRule = async (ruleList, order) => {
       }
       // 会员最终报价
       memberPrice = Number(memberPrice) + Number(mixAddAmountRule.addAmount);
-      mixAddAmountRule.memberOfferAmount = memberPrice;
+      // 会员报价要求四舍五入取整
+      mixAddAmountRule.memberOfferAmount = Math.round(memberPrice);
     } else {
       console.warn(
         conPrefix + "最小加价规则不存在,返回最小固定报价规则",
