@@ -14,7 +14,7 @@ const platFetchOrderRuleList = computed(() =>
 import { useStayTicketList } from "@/store/stayTicketList";
 const stayTicketList = useStayTicketList();
 const { addNewOrder } = stayTicketList;
-
+import { getCinemaFlag } from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
 const tokens = platTokens();
@@ -70,23 +70,16 @@ class OrderAutoFetchQueue {
       stayList = stayList.map(item => ({ ...item, platName: "lieren" }));
       const offerList = await getOfferList();
       const ticketList = await getTicketList();
-      stayList = stayList.filter(item => {
-        if (["上影上海", "上影二线"].includes(item.cinema_group)) {
-          return judgeHandle(item, "sfc", offerList, ticketList);
-        } else if (item.cinema_name.includes("华夏久金国际影城")) {
-          return judgeHandle(item, "jiujin", offerList, ticketList);
-        } else if (item.cinema_name.includes("北京金鸡百花影城(")) {
-          return judgeHandle(item, "jinji", offerList, ticketList);
-        } else if (item.cinema_name.includes("莱纳龙域影城")) {
-          return judgeHandle(item, "laina", offerList, ticketList);
-        } else if (
-          ["宁波影都", "宁波民光影城", "天一蝴蝶影院"].some(itemA =>
-            item.cinema_name.includes(itemA)
-          )
-        ) {
-          return judgeHandle(item, "ningbo", offerList, ticketList);
-        }
-      });
+      // 先过滤出来目前已上架影院的，然后添加影院标识，最后从历史记录过滤
+      stayList = stayList
+        .filter(item => getCinemaFlag(item))
+        .map(item => {
+          return {
+            ...item,
+            appName: getCinemaFlag(item)
+          };
+        })
+        .filter(item => judgeHandle(item, item.appName, offerList, ticketList));
       console.warn(conPrefix + "猎人待出票列表过滤后", stayList);
       if (!stayList?.length) return;
       addNewOrder(stayList);

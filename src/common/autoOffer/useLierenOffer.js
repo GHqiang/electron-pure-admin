@@ -1,5 +1,5 @@
 import { ref, computed } from "vue";
-import { isTimeAfter } from "@/utils/utils";
+import { isTimeAfter, getCinemaFlag } from "@/utils/utils";
 import {
   SFC_SPECIAL_CINEMA_LIST,
   JIUJIN_SPECIAL_CINEMA_LIST,
@@ -43,23 +43,6 @@ const apiObj = {
   ningbo: ningboApi
 };
 
-const getCinemaFlag = item => {
-  if (["上影上海", "上影二线"].includes(item.cinema_group)) {
-    return "sfc";
-  } else if (item.cinema_name.includes("华夏久金国际影城")) {
-    return "jiujin";
-  } else if (item.cinema_name.includes("金鸡百花影城")) {
-    return "jinji";
-  } else if (item.cinema_name.includes("莱纳龙域影城")) {
-    return "laina";
-  } else if (
-    ["宁波影都", "宁波民光影城", "天一蝴蝶影院"].some(itemA =>
-      item.cinema_name.includes(itemA)
-    )
-  ) {
-    return "ningbo";
-  }
-};
 let conPrefix = "【猎人自动报价】——"; // console打印前缀
 const getOrginValue = value => JSON.parse(JSON.stringify(value));
 
@@ -153,23 +136,14 @@ class OrderAutoOfferQueue {
       await this.delay(fetchDelay);
       const stayList = await getStayOfferList();
       if (!stayList?.length) return [];
-      let sfcStayOfferlist = stayList.filter(item => {
-        if (["上影上海", "上影二线"].includes(item.cinema_group)) {
-          return true;
-        } else if (item.cinema_name.includes("华夏久金国际影城")) {
-          return true;
-        } else if (item.cinema_name.includes("金鸡百花影城")) {
-          return true;
-        } else if (item.cinema_name.includes("莱纳龙域影城")) {
-          return true;
-        } else if (
-          ["宁波影都", "宁波民光影城", "天一蝴蝶影院"].some(itemA =>
-            item.cinema_name.includes(itemA)
-          )
-        ) {
-          return true;
-        }
-      });
+      let sfcStayOfferlist = stayList
+        .filter(item => getCinemaFlag(item))
+        .map(item => {
+          return {
+            ...item,
+            appName: getCinemaFlag(item)
+          };
+        });
       console.warn(
         conPrefix + "匹配已上架影院后的的待报价订单",
         sfcStayOfferlist
@@ -193,23 +167,9 @@ class OrderAutoOfferQueue {
       if (!newOrders?.length) return [];
       // 如果过滤到这时候还有单子再调接口进行历史报价记录过滤
       const offerList = await getOfferList();
-      newOrders = newOrders.filter(item => {
-        if (["上影上海", "上影二线"].includes(item.cinema_group)) {
-          return judgeHandle(item, "sfc", offerList);
-        } else if (item.cinema_name.includes("华夏久金国际影城")) {
-          return judgeHandle(item, "jiujin", offerList);
-        } else if (item.cinema_name.includes("金鸡百花影城")) {
-          return judgeHandle(item, "jinji", offerList);
-        } else if (item.cinema_name.includes("莱纳龙域影城")) {
-          return judgeHandle(item, "laina", offerList);
-        } else if (
-          ["宁波影都", "宁波民光影城", "天一蝴蝶影院"].some(itemA =>
-            item.cinema_name.includes(itemA)
-          )
-        ) {
-          return judgeHandle(item, "ningbo", offerList);
-        }
-      });
+      newOrders = newOrders.filter(item =>
+        judgeHandle(item, item.appName, offerList)
+      );
       console.warn(
         conPrefix + "从服务端历史报价记录过滤后的的待报价订单",
         newOrders

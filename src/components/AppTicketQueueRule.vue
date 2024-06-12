@@ -204,6 +204,7 @@ const oneClickAutoOffer = () => {
   })
     .then(() => {
       console.warn("一键启动全部自动出票队列");
+      window.localStorage.removeItem("stayTicketList");
       tableDataStore.items.forEach(item => {
         if (appTokenObj[item.appName].value) {
           item.isEnabled = true;
@@ -247,6 +248,16 @@ const singleStartOrStop = ({ id, appName }, flag) => {
       return;
     }
     tableDataStore.toggleEnable(id);
+    // 过滤清空当前影院本地缓存的待出票数据
+    let stayTicketList = window.localStorage.getItem("stayTicketList");
+    if (stayTicketList) {
+      stayTicketList = JSON.parse(stayTicketList);
+      stayTicketList = stayTicketList.filter(item => item.appName !== appName);
+    }
+    window.localStorage.setItem(
+      "stayTicketList",
+      JSON.stringify(stayTicketList)
+    );
     appTicketQueueObj[appName].start();
   } else {
     // 单个停止

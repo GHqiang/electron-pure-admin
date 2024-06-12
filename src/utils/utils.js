@@ -207,7 +207,24 @@ const colorObj = {
   lieren: "#660033",
   lumiai: "#33CCCC"
 };
-
+// 获取影院标识
+const getCinemaFlag = item => {
+  if (["上影上海", "上影二线"].includes(item.cinema_group)) {
+    return "sfc";
+  } else if (item.cinema_name.includes("华夏久金国际影城")) {
+    return "jiujin";
+  } else if (item.cinema_name.includes("金鸡百花影城")) {
+    return "jinji";
+  } else if (item.cinema_name.includes("莱纳龙域影城")) {
+    return "laina";
+  } else if (
+    ["宁波影都", "宁波民光影城", "天一蝴蝶影院"].some(itemA =>
+      item.cinema_name.includes(itemA)
+    )
+  ) {
+    return "ningbo";
+  }
+};
 // 自定义console，支持字体颜色、背景颜色、前缀
 class CustomConsole {
   constructor(options = {}) {
@@ -245,5 +262,6 @@ export {
   findBestMatchByLevenshtein,
   findBestMatchByLevenshteinWithThreshold,
   isTimeAfter,
+  getCinemaFlag,
   CustomConsole
 };
