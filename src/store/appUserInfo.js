@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-
+import { APP_LIST } from "@/common/constant";
 // 优先从本地缓存里面取
 let allUserInfo = window.localStorage.getItem("allUserInfo");
 if (allUserInfo) {
@@ -23,36 +23,11 @@ export const appUserInfo = defineStore("appUserInfo", {
         modified_info: "0",
         member_center_h5_url: "http://group.leying.com/point/member-center"
       },
-      jiujin: {
-        card_count: "1",
-        card_num: "1",
-        have_new_coupon: "0",
-        head_img: "",
-        mobile: "13073792313",
-        nickname: "13073792313",
-        no_pay_order: "0",
-        session_id: "66557ba8dd06c6d03ca807ff9fb6bff797c0b325138e8",
-        user_id: "2482",
-        modified_birthday: "0",
-        modified_info: "0",
-        member_center_h5_url: "http://group.leying.com/point/member-center"
-      },
-      jinji: {
-        card_count: "2",
-        card_num: "2",
-        have_new_coupon: "0",
-        head_img: "",
-        mobile: "13937705167",
-        nickname: "13937705167",
-        no_pay_order: "0",
-        session_id: "6655d8957f109fb75979e960f0d63e618653254b15cc9",
-        user_id: "10298",
-        modified_birthday: "0",
-        modified_info: "0",
-        member_center_h5_url: "http://group.leying.com/point/member-center"
-      },
+      jiujin: null,
+      jinji: null,
       laina: null,
-      ningbo: null
+      ningbo: null,
+      hema: null
     }
   }),
   getters: {
@@ -91,96 +66,31 @@ export const appUserInfo = defineStore("appUserInfo", {
     ningboUserMobile(state) {
       return state.allUserInfo?.ningbo?.mobile || "";
     },
+    // 河马国际token
+    hemaToken(state) {
+      return state.allUserInfo?.hema?.session_id || "";
+    },
+    hemaUserMobile(state) {
+      return state.allUserInfo?.hema?.mobile || "";
+    },
     lmaToken(state) {
       return state.allUserInfo?.lumiai?.session_id || "";
     }
   },
   actions: {
     // 设置sfc用户信息
-    setSfcUserInfo(userInfo) {
-      console.warn("设置sfc-用户信息及token", userInfo);
-      this.allUserInfo.sfc = userInfo;
+    setSfcUserInfo({ appName, userInfo }) {
+      console.warn(`设置${APP_LIST[appName]}-用户信息及token`, userInfo);
+      this.allUserInfo[appName] = userInfo;
       window.localStorage.setItem(
         "allUserInfo",
         JSON.stringify(this.allUserInfo)
       );
     },
     // 删除sfc用户信息
-    removeSfcUserInfo() {
-      console.warn("删除sfc-用户信息及token");
-      this.allUserInfo.sfc = null;
-      window.localStorage.setItem(
-        "allUserInfo",
-        JSON.stringify(this.allUserInfo)
-      );
-    },
-    // 设置华夏久金用户信息
-    setJiujinUserInfo(userInfo) {
-      console.warn("设置华夏久金-用户信息及token", userInfo);
-      this.allUserInfo.jiujin = userInfo;
-      window.localStorage.setItem(
-        "allUserInfo",
-        JSON.stringify(this.allUserInfo)
-      );
-    },
-    // 删除华夏久金用户信息
-    removeJiujinUserInfo() {
-      console.warn("删除华夏久金-用户信息及token");
-      this.allUserInfo.jiujin = null;
-      window.localStorage.setItem(
-        "allUserInfo",
-        JSON.stringify(this.allUserInfo)
-      );
-    },
-    // 设置北京金鸡用户信息
-    setJinjiUserInfo(userInfo) {
-      console.warn("设置北京金鸡-用户信息及token", userInfo);
-      this.allUserInfo.jinji = userInfo;
-      window.localStorage.setItem(
-        "allUserInfo",
-        JSON.stringify(this.allUserInfo)
-      );
-    },
-    // 删除北京金鸡用户信息
-    removeJinjiUserInfo() {
-      console.warn("删除北京金鸡-用户信息及token");
-      this.allUserInfo.jinji = null;
-      window.localStorage.setItem(
-        "allUserInfo",
-        JSON.stringify(this.allUserInfo)
-      );
-    },
-    // 设置莱纳龙域用户信息
-    setLainaUserInfo(userInfo) {
-      console.warn("设置莱纳龙域-用户信息及token", userInfo);
-      this.allUserInfo.laina = userInfo;
-      window.localStorage.setItem(
-        "allUserInfo",
-        JSON.stringify(this.allUserInfo)
-      );
-    },
-    // 删除莱纳龙域用户信息
-    removeLainaUserInfo() {
-      console.warn("删除莱纳龙域-用户信息及token");
-      this.allUserInfo.laina = null;
-      window.localStorage.setItem(
-        "allUserInfo",
-        JSON.stringify(this.allUserInfo)
-      );
-    },
-    // 设置宁波影都用户信息
-    setNingboUserInfo(userInfo) {
-      console.warn("设置宁波影都-用户信息及token", userInfo);
-      this.allUserInfo.ningbo = userInfo;
-      window.localStorage.setItem(
-        "allUserInfo",
-        JSON.stringify(this.allUserInfo)
-      );
-    },
-    // 删除宁波影都用户信息
-    removeNingboUserInfo() {
-      console.warn("删除宁波影都-用户信息及token");
-      this.allUserInfo.ningbo = null;
+    removeSfcUserInfo(appName) {
+      console.warn(`删除${APP_LIST[appName]}-用户信息及token`);
+      this.allUserInfo[appName] = null;
       window.localStorage.setItem(
         "allUserInfo",
         JSON.stringify(this.allUserInfo)

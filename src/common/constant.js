@@ -9,7 +9,8 @@ const APP_LIST = {
   jiujin: "华夏久金",
   jinji: "北京金鸡",
   ningbo: "宁波影都",
-  laina: "莱纳龙域"
+  laina: "莱纳龙域",
+  hema: "河马国际"
 };
 // 平台关联应用
 const PLAT_LINK_APP = {
