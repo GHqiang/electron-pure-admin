@@ -26,11 +26,11 @@ export const useStayTicketList = defineStore("stayTicketList", {
       });
       window.localStorage.setItem("stayTicketList", JSON.stringify(this.items));
     },
-    deleteOrder(order_number, platName) {
+    deleteOrder(order_number, appName) {
       // 模拟删除逻辑
       this.items = this.items.filter(
         item =>
-          !(item.order_number === order_number && item.platName === platName)
+          !(item.order_number === order_number && item.appName === appName)
       );
       window.localStorage.setItem("stayTicketList", JSON.stringify(this.items));
     }
