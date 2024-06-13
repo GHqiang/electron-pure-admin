@@ -233,7 +233,10 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import { storeToRefs } from "pinia";
-import { getCurrentFormattedDateTime } from "@/utils/utils";
+import {
+  getCurrentFormattedDateTime,
+  convertFullwidthToHalfwidth
+} from "@/utils/utils";
 import sfcApi from "@/api/sfc-api";
 import lierenApi from "@/api/lieren-api";
 import { appUserInfo } from "@/store/appUserInfo";
@@ -453,9 +456,15 @@ const oneClickBuyTicket = async item => {
     let cinema_id = getCinemaId(cinema_name, cinemaList);
     // 2、获取影院放映信息
     const moviePlayInfo = await getMoviePlayInfo({ city_id, cinema_id });
-    let movieObj = moviePlayInfo.movie_data?.find(
-      item => item.movie_name === film_name
-    );
+    let movie_data = moviePlayInfo?.movie_data || [];
+    let movieObj = movie_data.find(item => item.movie_name === film_name);
+    if (!movieObj) {
+      movieObj = movie_data.find(
+        item =>
+          convertFullwidthToHalfwidth(item.movie_name) ===
+          convertFullwidthToHalfwidth(film_name)
+      );
+    }
     // let movie_id = movieObj?.movie_id || ''
     let start_day = show_time.split(" ")[0];
     let start_time = show_time.split(" ")[1].slice(0, 5);
