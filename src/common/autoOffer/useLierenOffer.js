@@ -1,5 +1,9 @@
 import { ref, computed } from "vue";
-import { isTimeAfter, getCinemaFlag } from "@/utils/utils";
+import {
+  isTimeAfter,
+  getCinemaFlag,
+  convertFullwidthToHalfwidth
+} from "@/utils/utils";
 import {
   SFC_SPECIAL_CINEMA_LIST,
   JIUJIN_SPECIAL_CINEMA_LIST,
@@ -539,14 +543,20 @@ const offerRuleMatch = async order => {
       }
       if (item.includeFilmNames.length) {
         let isMatch = item.includeFilmNames.some(filmName => {
-          return film_name.toUpperCase().indexOf(filmName.toUpperCase()) > -1;
+          return (
+            convertFullwidthToHalfwidth(film_name) ===
+            convertFullwidthToHalfwidth(filmName)
+          );
         });
         console.log(conPrefix + "isMatch2-1", isMatch);
         return isMatch;
       }
       if (item.excludeFilmNames.length) {
         let isMatch = item.excludeFilmNames.every(filmName => {
-          return film_name.toUpperCase().indexOf(filmName.toUpperCase()) === -1;
+          return (
+            convertFullwidthToHalfwidth(film_name) !==
+            convertFullwidthToHalfwidth(filmName)
+          );
         });
         console.log("isMatch2-2", isMatch);
         return isMatch;
@@ -864,7 +874,9 @@ const getMovieInfo = async item => {
     // 3、匹配订单拿到会员价
     const { movie_data } = moviePlayInfo;
     let movieInfo = movie_data.find(
-      item => item.movie_name.indexOf(film_name) !== -1
+      item =>
+        convertFullwidthToHalfwidth(item.movie_name) ===
+        convertFullwidthToHalfwidth(film_name)
     );
     console.log("movieInfo", movieInfo, film_name);
     if (movieInfo) {

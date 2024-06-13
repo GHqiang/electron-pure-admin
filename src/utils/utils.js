@@ -258,8 +258,10 @@ function convertFullwidthToHalfwidth(str) {
     return fullwidthToHalfwidthMap[match];
   }
 
-  // 实施替换
-  return str.replace(fullWidthPattern, replaceFullwidthWithHalfwidth);
+  // 实施替换（加个转大写，怕大小写不匹配）
+  return str
+    .replace(fullWidthPattern, replaceFullwidthWithHalfwidth)
+    .toUpperCase();
 }
 
 // 自定义console，支持字体颜色、背景颜色、前缀
