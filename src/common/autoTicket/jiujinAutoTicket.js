@@ -1,7 +1,10 @@
 import { ref, computed } from "vue";
 import { storeToRefs } from "pinia";
 import { JIUJIN_SPECIAL_CINEMA_LIST } from "@/common/constant";
-import { getCurrentFormattedDateTime } from "@/utils/utils";
+import {
+  getCurrentFormattedDateTime,
+  convertFullwidthToHalfwidth
+} from "@/utils/utils";
 import sfcApi from "@/api/jiujin-api";
 import lierenApi from "@/api/lieren-api";
 import svApi from "@/api/sv-api";
@@ -414,9 +417,26 @@ const oneClickBuyTicket = async item => {
     }
     // 2、获取影院放映信息
     const moviePlayInfo = await getMoviePlayInfo({ city_id, cinema_id });
-    let movieObj = moviePlayInfo.movie_data?.find(
-      item => item.movie_name === film_name
-    );
+    let movie_data = moviePlayInfo?.movie_data || [];
+    if (!movie_data?.length) {
+      await transferOrder(item);
+      return;
+    }
+    let movieObj = movie_data.find(item => item.movie_name === film_name);
+    if (!movieObj) {
+      console.warn("影院放映信息匹配订单影片名称失败", movie_data, film_name);
+      setErrInfo("影院放映信息匹配订单影片名称失败");
+      movieObj = movie_data.find(
+        item =>
+          convertFullwidthToHalfwidth(item.movie_name) ===
+          convertFullwidthToHalfwidth(film_name)
+      );
+      if (!movieObj) {
+        setErrInfo("影院放映信息匹配订单影片名称失败-全角字符转换成半角后");
+        await transferOrder(item);
+        return;
+      }
+    }
     // let movie_id = movieObj?.movie_id || ''
     let start_day = show_time.split(" ")[0];
     let start_time = show_time.split(" ")[1].slice(0, 5);
@@ -425,6 +445,11 @@ const oneClickBuyTicket = async item => {
     console.log(conPrefix + "showList===>", showList);
     let show_id =
       showList.find(item => item.start_time === start_time)?.show_id || "";
+    if (!show_id) {
+      setErrInfo("影院放映信息匹配订单放映时间失败");
+      await transferOrder(item);
+      return;
+    }
     // 3、获取座位布局
     const seatList = await getSeatLayout({ city_id, cinema_id, show_id });
     let seatName = lockseat.replaceAll(" ", ",").replaceAll("座", "号");
@@ -622,6 +647,7 @@ async function getMoviePlayInfo(data) {
     return res.data;
   } catch (error) {
     console.error(conPrefix + "获取电影放映信息异常", error);
+    setErrInfo("获取电影放映信息异常", error);
   }
 }
 

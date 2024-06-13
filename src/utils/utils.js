@@ -225,6 +225,32 @@ const getCinemaFlag = item => {
     return "ningbo";
   }
 };
+
+// 全角字符转换成半角
+function convertFullwidthToHalfwidth(str) {
+  // 全角到半角的映射表
+  const fullwidthToHalfwidthMap = {
+    "！": "!", // 全角感叹号
+    "，": ",", // 全角逗号
+    "。": "." // 全角句号
+    // 可以根据需要添加更多全角字符到半角字符的映射
+  };
+
+  // 正则表达式匹配全角字符
+  const fullWidthPattern = new RegExp(
+    Object.keys(fullwidthToHalfwidthMap).join("|"),
+    "g"
+  );
+
+  // 替换函数
+  function replaceFullwidthWithHalfwidth(match) {
+    return fullwidthToHalfwidthMap[match];
+  }
+
+  // 实施替换
+  return str.replace(fullWidthPattern, replaceFullwidthWithHalfwidth);
+}
+
 // 自定义console，支持字体颜色、背景颜色、前缀
 class CustomConsole {
   constructor(options = {}) {
@@ -263,5 +289,6 @@ export {
   findBestMatchByLevenshteinWithThreshold,
   isTimeAfter,
   getCinemaFlag,
+  convertFullwidthToHalfwidth,
   CustomConsole
 };
