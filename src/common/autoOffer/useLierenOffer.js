@@ -420,6 +420,7 @@ async function getMoviePlayInfo(data) {
     };
     console.log(conPrefix + "获取电影放映信息参数", params);
     const appName = getCinemaFlag({ cinema_group, cinema_name, city_name });
+    console.log(conPrefix + "影线名称", res);
     let res = await apiObj[appName].getMoviePlayInfo(params);
     console.log(conPrefix + "获取电影放映信息返回", res);
     return res.data;
@@ -857,7 +858,8 @@ const getMovieInfo = async item => {
       city_id,
       cinema_id,
       cinema_group,
-      cinema_name
+      cinema_name,
+      city_name
     });
     // 3、匹配订单拿到会员价
     const { movie_data } = moviePlayInfo;
