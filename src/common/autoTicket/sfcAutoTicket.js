@@ -1059,17 +1059,19 @@ const getCinemaId = (cinema_name, list) => {
     let cinemaName = cinema_name
       .replace(/[\(\)\（\）]/g, "")
       .replace(/\s*/g, "");
-    let specialCinemaInfo = specialCinemaNameMatchList.find(
-      item => item.order_cinema_name === cinemaName
-    );
-    if (specialCinemaInfo) {
-      cinemaName = specialCinemaInfo.sfc_cinema_name;
-    } else {
-      console.warn(
-        conPrefix + "特殊匹配影院名称失败",
-        cinemaName,
-        specialCinemaNameMatchList
+    if (specialCinemaNameMatchList.length) {
+      let specialCinemaInfo = specialCinemaNameMatchList.find(
+        item => item.order_cinema_name === cinemaName
       );
+      if (specialCinemaInfo) {
+        cinemaName = specialCinemaInfo.sfc_cinema_name;
+      } else {
+        console.warn(
+          conPrefix + "特殊匹配影院名称失败",
+          cinemaName,
+          specialCinemaNameMatchList
+        );
+      }
     }
     // 3、去掉空格及换行符后全字匹配
     // 去除空格及括号后的影院列表

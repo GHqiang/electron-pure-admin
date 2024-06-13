@@ -5,6 +5,7 @@ import {
   getCurrentFormattedDateTime,
   convertFullwidthToHalfwidth
 } from "@/utils/utils";
+
 import sfcApi from "@/api/jinji-api";
 import lierenApi from "@/api/lieren-api";
 import svApi from "@/api/sv-api";
@@ -318,6 +319,8 @@ const transferOrder = async (order, unlockSeatInfo) => {
 // 单个订单出票
 const singleTicket = async item => {
   try {
+    errMsg = "";
+    errInfo = null;
     console.warn(conPrefix + "单个待出票订单信息", item);
     // 1、解锁座位
     await unlockSeat(item.id);
