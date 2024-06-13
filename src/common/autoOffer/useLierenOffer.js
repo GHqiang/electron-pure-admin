@@ -424,7 +424,7 @@ async function getMoviePlayInfo(data) {
     };
     console.log(conPrefix + "获取电影放映信息参数", params);
     const appName = getCinemaFlag({ cinema_group, cinema_name, city_name });
-    console.log(conPrefix + "影线名称", res);
+    console.log(conPrefix + "影线名称", appName);
     let res = await apiObj[appName].getMoviePlayInfo(params);
     console.log(conPrefix + "获取电影放映信息返回", res);
     return res.data;
