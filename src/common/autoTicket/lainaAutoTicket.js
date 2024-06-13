@@ -452,6 +452,10 @@ const oneClickBuyTicket = async item => {
     }
     // 3、获取座位布局
     const seatList = await getSeatLayout({ city_id, cinema_id, show_id });
+    if (!seatList?.length) {
+      await transferOrder(item);
+      return;
+    }
     let seatName = lockseat.replaceAll(" ", ",").replaceAll("座", "号");
     console.log(conPrefix + "seatName", seatName);
     let selectSeatList = seatName.split(",");
@@ -667,6 +671,7 @@ async function getSeatLayout(data) {
     return res.data?.play_data?.seat_data || [];
   } catch (error) {
     console.error(conPrefix + "获取座位布局异常", error);
+    setErrInfo("获取座位布局异常", error);
   }
 }
 

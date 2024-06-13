@@ -456,7 +456,7 @@ const oneClickBuyTicket = async item => {
     }
     // 3、获取座位布局
     const seatList = await getSeatLayout({ city_id, cinema_id, show_id });
-    if (seatList?.length) {
+    if (!seatList?.length) {
       await transferOrder(item);
       return;
     }
