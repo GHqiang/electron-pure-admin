@@ -209,17 +209,28 @@ const colorObj = {
 };
 // 获取影院标识
 const getCinemaFlag = item => {
-  if (["上影上海", "上影二线"].includes(item.cinema_group)) {
+  const { cinema_group, cinema_name, city_name } = item;
+  if (["上影上海", "上影二线"].includes(cinema_group)) {
     return "sfc";
-  } else if (item.cinema_name.includes("华夏久金国际影城")) {
+  } else if (
+    cinema_name.includes("华夏久金国际影城") &&
+    ["上海"].includes(city_name)
+  ) {
     return "jiujin";
-  } else if (item.cinema_name.includes("金鸡百花影城")) {
+  } else if (
+    cinema_name.includes("金鸡百花影城") &&
+    ["北京"].includes(city_name)
+  ) {
     return "jinji";
-  } else if (item.cinema_name.includes("莱纳龙域影城")) {
+  } else if (
+    cinema_name.includes("莱纳龙域影城") &&
+    ["北京"].includes(city_name)
+  ) {
     return "laina";
   } else if (
-    ["宁波影都", "宁波民光影城", "天一蝴蝶影院"].some(itemA =>
-      item.cinema_name.includes(itemA)
+    ["宁波影都", "民光影城", "蝴蝶影院"].some(
+      itemA =>
+        cinema_name.includes(itemA) && ["宁波", "台州"].includes(city_name)
     )
   ) {
     return "ningbo";

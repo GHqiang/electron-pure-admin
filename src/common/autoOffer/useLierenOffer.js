@@ -411,14 +411,15 @@ async function singleOffer(item) {
 // 获取电影放映信息
 async function getMoviePlayInfo(data) {
   try {
-    let { city_id, cinema_id, cinema_group, cinema_name } = data || {};
+    let { city_id, cinema_id, cinema_group, cinema_name, city_name } =
+      data || {};
     let params = {
       city_id: city_id,
       cinema_id: cinema_id,
       width: "500"
     };
     console.log(conPrefix + "获取电影放映信息参数", params);
-    const appName = getCinemaFlag({ cinema_group, cinema_name });
+    const appName = getCinemaFlag({ cinema_group, cinema_name, city_name });
     let res = await apiObj[appName].getMoviePlayInfo(params);
     console.log(conPrefix + "获取电影放映信息返回", res);
     return res.data;
@@ -440,7 +441,11 @@ const offerRuleMatch = async order => {
       show_time,
       ticket_num
     } = order;
-    let shadowLineName = getCinemaFlag({ cinema_group, cinema_name });
+    let shadowLineName = getCinemaFlag({
+      cinema_group,
+      cinema_name,
+      city_name
+    });
 
     console.log(conPrefix + "报价订单影线", shadowLineName);
     // 1、获取启用的规则列表（只有满足规则才报价）
@@ -830,7 +835,7 @@ const getMovieInfo = async item => {
   try {
     // 1、获取影院列表拿到影院id
     const { city_name, cinema_name, film_name, show_time, cinema_group } = item;
-    await getCityList({ cinema_group, cinema_name });
+    await getCityList({ cinema_group, cinema_name, city_name });
     let city_id = cityList.value.find(
       item => item.name.indexOf(city_name) !== -1
     )?.id;
@@ -838,7 +843,7 @@ const getMovieInfo = async item => {
       city_id: city_id
     };
     console.log(conPrefix + "获取城市影院参数", params);
-    const appName = getCinemaFlag({ cinema_group, cinema_name });
+    const appName = getCinemaFlag({ cinema_group, cinema_name, city_name });
     let res = await apiObj[appName].getCinemaList(params);
     console.log(conPrefix + "获取城市影院返回", res);
     let cinemaList = res.data?.cinema_data || [];
@@ -874,11 +879,11 @@ const getMovieInfo = async item => {
 };
 
 // 获取城市列表
-async function getCityList({ cinema_group, cinema_name }) {
+async function getCityList({ cinema_group, cinema_name, city_name }) {
   try {
     let params = {};
     console.log(conPrefix + "获取城市列表参数", params);
-    const appName = getCinemaFlag({ cinema_group, cinema_name });
+    const appName = getCinemaFlag({ cinema_group, cinema_name, city_name });
     let res = await apiObj[appName].getCityList(params);
     console.log(conPrefix + "获取城市列表返回", res);
     cityList.value = res.data.all_city || [];

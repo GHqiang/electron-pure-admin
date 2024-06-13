@@ -137,10 +137,8 @@ class OrderAutoTicketQueue {
   async fetchOrders(fetchDelay) {
     try {
       await this.delay(fetchDelay);
-      let sfcStayOfferlist = getOrginValue(stayTicketList.items).filter(item =>
-        [("宁波影都", "宁波民光影城", "天一蝴蝶影院")].some(itemA =>
-          item.cinema_name.includes(itemA)
-        )
+      let sfcStayOfferlist = getOrginValue(stayTicketList.items).filter(
+        item => item.appName === "ningbo"
       );
       console.warn(
         conPrefix + "匹配已上架影院后的的待出票订单",
