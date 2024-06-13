@@ -33,6 +33,13 @@ export const useStayTicketList = defineStore("stayTicketList", {
           !(item.order_number === order_number && item.appName === appName)
       );
       window.localStorage.setItem("stayTicketList", JSON.stringify(this.items));
+    },
+    // 删除某些或者全部影院的待出票数据，不传删全部
+    removeStayTicketListByApp(appName) {
+      this.items = this.items.filter(item =>
+        appName ? item.appName !== appName : false
+      );
+      window.localStorage.setItem("stayTicketList", JSON.stringify(this.items));
     }
   }
 });

@@ -133,7 +133,8 @@ import jinjiTicketQueue from "@/common/autoTicket/jinjiAutoTicket";
 import ningboTicketQueue from "@/common/autoTicket/ningboAutoTicket";
 import lainaTicketQueue from "@/common/autoTicket/lainaAutoTicket";
 import { APP_LIST } from "@/common/constant.js";
-
+import { useStayTicketList } from "@/store/stayTicketList";
+const stayTicketList = useStayTicketList();
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
 const { sfcToken, lmaToken, jiujinToken, jinjiToken, ningboToken, lainaToken } =
@@ -204,7 +205,7 @@ const oneClickAutoOffer = () => {
   })
     .then(() => {
       console.warn("一键启动全部自动出票队列");
-      window.localStorage.removeItem("stayTicketList");
+      stayTicketList.removeStayTicketListByApp();
       tableDataStore.items.forEach(item => {
         if (appTokenObj[item.appName].value) {
           item.isEnabled = true;
@@ -249,15 +250,7 @@ const singleStartOrStop = ({ id, appName }, flag) => {
     }
     tableDataStore.toggleEnable(id);
     // 过滤清空当前影院本地缓存的待出票数据
-    let stayTicketList = window.localStorage.getItem("stayTicketList");
-    if (stayTicketList) {
-      stayTicketList = JSON.parse(stayTicketList);
-      stayTicketList = stayTicketList.filter(item => item.appName !== appName);
-    }
-    window.localStorage.setItem(
-      "stayTicketList",
-      JSON.stringify(stayTicketList)
-    );
+    stayTicketList.removeStayTicketListByApp(appName);
     appTicketQueueObj[appName].start();
   } else {
     // 单个停止

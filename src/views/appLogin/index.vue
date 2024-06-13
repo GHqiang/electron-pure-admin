@@ -63,11 +63,10 @@ const appLogin = name => {
   appName.value = name;
   sfcLoginActive.value = true;
 };
-
 const sfcLoginSuccess = userInfo => {
   sfcLoginActive.value = false;
   let inx = appList.value.findIndex(item => item.appName === appName.value);
-  if (inx) {
+  if (inx !== -1) {
     appList.value[inx].appToken = userInfo.session_id;
   }
   setSfcUserInfo({ appName: appName.value, userInfo });
