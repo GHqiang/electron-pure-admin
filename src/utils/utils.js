@@ -259,9 +259,12 @@ function convertFullwidthToHalfwidth(str) {
   }
 
   // 实施替换（加个转大写，怕大小写不匹配）
-  return str
+  let result = str
     .replace(fullWidthPattern, replaceFullwidthWithHalfwidth)
     .toUpperCase();
+  // 移除所有空格（包括全角和半角）
+  result = result.replace(/\s/g, "");
+  return result;
 }
 
 // 自定义console，支持字体颜色、背景颜色、前缀
