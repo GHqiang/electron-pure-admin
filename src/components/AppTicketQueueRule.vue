@@ -124,7 +124,6 @@
 
 <script setup>
 import { ref, computed } from "vue";
-import { storeToRefs } from "pinia";
 import { ElMessageBox, ElMessage } from "element-plus";
 import { useAppRuleListStore } from "@/store/appTicketRuleTable";
 import createTicketQueue from "@/common/autoTicket/sfcAutoTicket";
@@ -133,8 +132,7 @@ import { useStayTicketList } from "@/store/stayTicketList";
 const stayTicketList = useStayTicketList();
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
-const { sfcToken, lmaToken, jiujinToken, jinjiToken, ningboToken, lainaToken } =
-  storeToRefs(userInfoAndTokens);
+const { allUserInfo } = userInfoAndTokens;
 
 const tableDataStore = useAppRuleListStore();
 
@@ -167,21 +165,17 @@ const editingRowId = ref(null);
 // 正在编辑内容
 const editingRow = ref({});
 
-const appTicketQueueObj = {
-  sfc: createTicketQueue("sfc"),
-  jiujin: createTicketQueue("jiujin"),
-  jinji: createTicketQueue("jinji"),
-  ningbo: createTicketQueue("ningbo"),
-  laina: createTicketQueue("laina")
-};
-const appTokenObj = {
-  sfc: sfcToken,
-  jiujin: jiujinToken,
-  jinji: jinjiToken,
-  ningbo: ningboToken,
-  laina: lainaToken
-};
-
+// 队列集合
+const appTicketQueueObj = {};
+// token集合
+const appTokenObj = {};
+// 填充token及队列集合
+Object.keys(APP_LIST).forEach(item => {
+  appTokenObj[item] = allUserInfo[item]?.session_id || "";
+  appTicketQueueObj[item] = createTicketQueue(item);
+});
+console.log("appTokenObj", appTokenObj);
+console.log("appTicketQueueObj", appTicketQueueObj);
 // 一键启动
 const oneClickAutoOffer = () => {
   let pwd = tokens.userInfo.member_pwd;
@@ -203,7 +197,7 @@ const oneClickAutoOffer = () => {
       console.warn("一键启动全部自动出票队列");
       stayTicketList.removeStayTicketListByApp();
       tableDataStore.items.forEach(item => {
-        if (appTokenObj[item.appName].value) {
+        if (appTokenObj[item.appName]) {
           item.isEnabled = true;
           appTicketQueueObj[item.appName].start();
         }
@@ -240,7 +234,7 @@ const singleStartOrStop = ({ id, appName }, flag) => {
       ElMessage.error("会员卡密码未设置，请先去设置后再启动");
       return;
     }
-    if (!appTokenObj[appName].value) {
+    if (!appTokenObj[appName]) {
       ElMessage.error(appName + "未登录，请先去影院登录页面登录后再启动");
       return;
     }
