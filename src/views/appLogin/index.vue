@@ -31,30 +31,22 @@
 
 <script setup>
 import { ref } from "vue";
-import { storeToRefs } from "pinia";
 import SfcLogin from "@/components/AppLogin/SfcLogin.vue";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
-const {
-  sfcToken,
-  jiujinToken,
-  jinjiToken,
-  ningboToken,
-  lainaToken,
-  hemaToken
-} = storeToRefs(userInfoAndTokens);
+const { allUserInfo } = userInfoAndTokens;
 
 const { setSfcUserInfo, removeSfcUserInfo } = userInfoAndTokens;
 import { APP_LIST } from "@/common/constant";
 
-const appList = ref([
-  { appName: "sfc", appToken: sfcToken.value },
-  { appName: "jiujin", appToken: jiujinToken.value },
-  { appName: "jinji", appToken: jinjiToken.value },
-  { appName: "ningbo", appToken: ningboToken.value },
-  { appName: "laina", appToken: lainaToken.value },
-  { appName: "hema", appToken: hemaToken.value }
-]);
+const appList = ref([]);
+Object.keys(APP_LIST).forEach(item => {
+  appList.value.push({
+    appName: item,
+    appToken: allUserInfo[item]?.session_id || ""
+  });
+});
+
 console.log("appList", appList);
 const appName = ref("sfc");
 const sfcLoginActive = ref(false);

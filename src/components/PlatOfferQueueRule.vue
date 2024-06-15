@@ -129,15 +129,13 @@
 
 <script setup>
 import { ref, computed } from "vue";
-import { storeToRefs } from "pinia";
 import { ElMessageBox, ElMessage } from "element-plus";
 import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
 import lierenOfferQueue from "@/common/autoOffer/useLierenOffer";
-import { PLAT_LINK_APP } from "@/common/constant";
+import { PLAT_LINK_APP, APP_LIST } from "@/common/constant";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
-const { sfcToken, jiujinToken, jinjiToken, ningboToken, lainaToken, lmaToken } =
-  storeToRefs(userInfoAndTokens);
+const { allUserInfo } = userInfoAndTokens;
 
 const tableDataStore = usePlatTableDataStore();
 const displayItems = computed(() => tableDataStore.items);
@@ -159,6 +157,12 @@ const editingRowId = ref(null);
 // 正在编辑内容
 const editingRow = ref({});
 
+// token集合
+const appTokenObj = {};
+// 填充token及队列集合
+Object.keys(APP_LIST).forEach(item => {
+  appTokenObj[item] = allUserInfo[item]?.session_id || "";
+});
 // 一键启动
 const oneClickAutoOffer = () => {
   ElMessageBox.confirm("确定要一键全部启动吗?", "提示", {
@@ -207,26 +211,11 @@ const singleStartOrStop = ({ id, platToken, platName }, flag) => {
   // 单个启动
   if (flag === 1) {
     const checkToken = PLAT_LINK_APP[platName];
-    const noTokenByApp = checkToken.filter(item => {
-      if (item === "sfc") {
-        return !sfcToken;
-      } else if (item === "jiujin") {
-        return !jiujinToken;
-      } else if (item === "jinji") {
-        return !jinjiToken;
-      } else if (item === "laina") {
-        return !lainaToken;
-      } else if (item === "lumiai") {
-        return !lmaToken;
-      } else if (item === "ningbo") {
-        return !ningboToken;
-      }
-      return true;
-    });
-
-    if (noTokenByApp.length) {
+    const noTokenByApp = checkToken.filter(item => !appTokenObj[item]);
+    let noTokenByAppName = noTokenByApp.map(item => APP_LIST[item]);
+    if (noTokenByAppName.length) {
       ElMessageBox.confirm(
-        noTokenByApp.join() + " 未登录，确定仍要启动报价吗?",
+        noTokenByAppName.join("，") + " 未登录，确定仍要启动报价吗?",
         "提示",
         {
           confirmButtonText: "确定",
