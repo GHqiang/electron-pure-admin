@@ -127,7 +127,7 @@ import { ref, computed } from "vue";
 import { storeToRefs } from "pinia";
 import { ElMessageBox, ElMessage } from "element-plus";
 import { useAppRuleListStore } from "@/store/appTicketRuleTable";
-import sfcTicketQueue from "@/common/autoTicket/sfcAutoTicket";
+import createTicketQueue from "@/common/autoTicket/sfcAutoTicket";
 import jiujinTicketQueue from "@/common/autoTicket/jiujinAutoTicket";
 import jinjiTicketQueue from "@/common/autoTicket/jinjiAutoTicket";
 import ningboTicketQueue from "@/common/autoTicket/ningboAutoTicket";
@@ -172,7 +172,7 @@ const editingRowId = ref(null);
 const editingRow = ref({});
 
 const appTicketQueueObj = {
-  sfc: sfcTicketQueue,
+  sfc: createTicketQueue("sfc"),
   jiujin: jiujinTicketQueue,
   jinji: jinjiTicketQueue,
   ningbo: ningboTicketQueue,

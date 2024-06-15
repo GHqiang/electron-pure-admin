@@ -13,6 +13,7 @@ export const useStayTicketList = defineStore("stayTicketList", {
   actions: {
     // 添加
     addNewOrder(list) {
+      // console.warn("添加待出票订单", list);
       list.forEach(item => {
         if (
           !this.items.some(
@@ -27,6 +28,7 @@ export const useStayTicketList = defineStore("stayTicketList", {
       window.localStorage.setItem("stayTicketList", JSON.stringify(this.items));
     },
     deleteOrder(order_number, appName) {
+      // console.warn("删除已出票订单", order_number, appName);
       // 模拟删除逻辑
       this.items = this.items.filter(
         item =>
