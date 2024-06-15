@@ -128,10 +128,6 @@ import { storeToRefs } from "pinia";
 import { ElMessageBox, ElMessage } from "element-plus";
 import { useAppRuleListStore } from "@/store/appTicketRuleTable";
 import createTicketQueue from "@/common/autoTicket/sfcAutoTicket";
-import jiujinTicketQueue from "@/common/autoTicket/jiujinAutoTicket";
-import jinjiTicketQueue from "@/common/autoTicket/jinjiAutoTicket";
-import ningboTicketQueue from "@/common/autoTicket/ningboAutoTicket";
-import lainaTicketQueue from "@/common/autoTicket/lainaAutoTicket";
 import { APP_LIST } from "@/common/constant.js";
 import { useStayTicketList } from "@/store/stayTicketList";
 const stayTicketList = useStayTicketList();
@@ -173,10 +169,10 @@ const editingRow = ref({});
 
 const appTicketQueueObj = {
   sfc: createTicketQueue("sfc"),
-  jiujin: jiujinTicketQueue,
-  jinji: jinjiTicketQueue,
-  ningbo: ningboTicketQueue,
-  laina: lainaTicketQueue
+  jiujin: createTicketQueue("jiujin"),
+  jinji: createTicketQueue("jinji"),
+  ningbo: createTicketQueue("ningbo"),
+  laina: createTicketQueue("laina")
 };
 const appTokenObj = {
   sfc: sfcToken,

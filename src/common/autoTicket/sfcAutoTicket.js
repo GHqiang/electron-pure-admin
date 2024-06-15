@@ -33,21 +33,13 @@ const { allUserInfo } = userInfoAndTokens;
 // console.log("allUserInfo.sfc.mobile", allUserInfo["sfc"].mobile);
 
 // 影院特殊匹配列表及api
-import { SFC_SPECIAL_CINEMA_LIST } from "@/common/constant";
-import sfcApi from "@/api/sfc-api";
-
+import {
+  SPECIAL_CINEMA_OBJ,
+  TICKET_CONPREFIX_OBJ,
+  APP_OPENID_OBJ
+} from "@/common/constant";
+import { SFC_API_OBJ } from "@/common/index";
 const getOrginValue = value => JSON.parse(JSON.stringify(value));
-
-let conPrefixObj = {
-  sfc: "【上影自动出票】——"
-};
-let sfcApiObj = {
-  sfc: sfcApi
-};
-// 特殊的名字匹配集合
-let specialCinemaNameObj = {
-  sfc: SFC_SPECIAL_CINEMA_LIST
-};
 
 // 创建一个订单自动出票队列类
 class OrderAutoTicketQueue {
@@ -60,8 +52,8 @@ class OrderAutoTicketQueue {
     this.errMsg = ""; // 单次出票的错误语
     this.errInfo = ""; // 单次出票的错误信息
     this.appFlag = appFlag; // 影线标识
-    this.conPrefix = conPrefixObj[appFlag]; // 打印前缀
-    this.sfcApi = sfcApiObj[appFlag];
+    this.conPrefix = TICKET_CONPREFIX_OBJ[appFlag]; // 打印前缀
+    this.sfcApi = SFC_API_OBJ[appFlag];
   }
 
   // 启动队列（fetchDelay获取订单列表间隔，processDelay处理订单间隔）
@@ -272,40 +264,44 @@ class OrderAutoTicketQueue {
   }
   // 设置错误信息
   setErrInfo(errMsg, errInfo) {
-    if (errMsg === "") {
-      // 清空重置
-      this.errMsg = "";
-    } else {
-      this.errMsg = errMsg;
-    }
-    if (errInfo === "") {
-      // 清空重置
-      this.errInfo = "";
-    } else {
-      if (errInfo) {
-        if (errInfo instanceof Error) {
-          const cleanedError = {
-            message: errInfo.message,
-            stack: errInfo.stack,
-            name: errInfo.name
-          };
-          this.errInfo = JSON.stringify(
-            cleanedError,
-            (key, value) =>
-              typeof value === "function" || value instanceof Error
-                ? undefined
-                : value,
-            2
-          );
-        } else {
-          try {
-            this.errInfo = JSON.stringify(errInfo);
-          } catch (error) {
-            console.warn("错误信息转换异常", error);
-            this.errInfo = errInfo.toString();
+    try {
+      if (errMsg === "") {
+        // 清空重置
+        this.errMsg = "";
+      } else {
+        this.errMsg = errMsg;
+      }
+      if (errInfo === "") {
+        // 清空重置
+        this.errInfo = "";
+      } else {
+        if (errInfo) {
+          if (errInfo instanceof Error) {
+            const cleanedError = {
+              message: errInfo.message,
+              stack: errInfo.stack,
+              name: errInfo.name
+            };
+            this.errInfo = JSON.stringify(
+              cleanedError,
+              (key, value) =>
+                typeof value === "function" || value instanceof Error
+                  ? undefined
+                  : value,
+              2
+            );
+          } else {
+            try {
+              this.errInfo = JSON.stringify(errInfo);
+            } catch (error) {
+              console.warn("错误信息转换异常", error);
+              this.errInfo = errInfo.toString();
+            }
           }
         }
       }
+    } catch (error) {
+      console.warn("错误信息转换异常1", error);
     }
   }
 
@@ -980,13 +976,13 @@ class OrderAutoTicketQueue {
 
   // 订单购买
   async buyTicket(data) {
-    const { conPrefix } = this;
+    const { conPrefix, appFlag } = this;
     try {
       let { city_id, cinema_id, order_num, pay_money } = data || {};
       let params = {
         city_id,
         cinema_id,
-        open_id: "otEMo42FC38PgJiYDvu6HrGjrwQY", // 微信openId
+        open_id: APP_OPENID_OBJ[appFlag], // 微信openId
         order_num, // 订单号
         pay_money, // 支付金额
         pay_type: "" // 购买方式 传空意味着用优惠券或者会员卡
@@ -1122,8 +1118,8 @@ class OrderAutoTicketQueue {
       let cinemaName = cinema_name
         .replace(/[\(\)\（\）]/g, "")
         .replace(/\s*/g, "");
-      if (specialCinemaNameObj[appFlag].length) {
-        let specialCinemaInfo = specialCinemaNameObj[appFlag].find(
+      if (SPECIAL_CINEMA_OBJ[appFlag].length) {
+        let specialCinemaInfo = SPECIAL_CINEMA_OBJ[appFlag].find(
           item => item.order_cinema_name === cinemaName
         );
         if (specialCinemaInfo) {
@@ -1132,7 +1128,7 @@ class OrderAutoTicketQueue {
           console.warn(
             conPrefix + "特殊匹配影院名称失败",
             cinemaName,
-            specialCinemaNameObj[appFlag]
+            SPECIAL_CINEMA_OBJ[appFlag]
           );
         }
       }

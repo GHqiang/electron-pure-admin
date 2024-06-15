@@ -127,6 +127,24 @@ const NINGBO_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "天一蝴蝶影院"
   }
 ];
+// 特殊的名字匹配集合
+const SPECIAL_CINEMA_OBJ = {
+  sfc: SFC_SPECIAL_CINEMA_LIST,
+  jiujin: JIUJIN_SPECIAL_CINEMA_LIST,
+  jinji: JINJI_SPECIAL_CINEMA_LIST,
+  ningbo: NINGBO_SPECIAL_CINEMA_LIST,
+  laina: LAINA_SPECIAL_CINEMA_LIST
+};
+
+// 出票队列打印前缀
+const TICKET_CONPREFIX_OBJ = {
+  sfc: "【上影自动出票】——",
+  jiujin: "【华夏久金自动出票】——",
+  jinji: "【北京金鸡自动出票】——",
+  ningbo: "【宁波影都自动出票】——",
+  laina: "【莱纳龙域自动出票】——"
+};
+
 // 报价规则
 const OFFER_LIST = [
   {
@@ -549,6 +567,15 @@ const OFFER_LIST = [
     status: "1"
   }
 ];
+
+// 微信小程序openid
+const APP_OPENID_OBJ = {
+  sfc: "otEMo42FC38PgJiYDvu6HrGjrwQY",
+  jiujin: "o9z475KmUY5DGBCmA8iHonVW4zco",
+  jinji: "oTJ0a48lR3TPBfblHCqLLn-kdRro",
+  ningbo: "o1TM95HQabEWcsC6u2S0XPd4ge5w",
+  laina: "oPKih4oNM3oGJGcEItWiN5lJ93oA"
+};
 export {
   ORDER_FORM,
   APP_LIST,
@@ -558,5 +585,8 @@ export {
   LAINA_SPECIAL_CINEMA_LIST,
   JINJI_SPECIAL_CINEMA_LIST,
   NINGBO_SPECIAL_CINEMA_LIST,
-  OFFER_LIST
+  SPECIAL_CINEMA_OBJ,
+  TICKET_CONPREFIX_OBJ,
+  OFFER_LIST,
+  APP_OPENID_OBJ
 };

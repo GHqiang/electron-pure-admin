@@ -72,20 +72,7 @@
 <script setup>
 import { ref, reactive } from "vue";
 import { APP_LIST } from "@/common/constant.js";
-import sfcApi from "@/api/sfc-api";
-import jiujinApi from "@/api/jiujin-api";
-import jinjiApi from "@/api/jinji-api";
-import ningboApi from "@/api/ningbo-api";
-import lainaApi from "@/api/laina-api";
-
-// api集合
-let apiObj = {
-  sfc: sfcApi,
-  jiujin: jiujinApi,
-  jinji: jinjiApi,
-  ningbo: ningboApi,
-  laina: lainaApi
-};
+import { SFC_API_OBJ } from "@/common/index.js";
 
 // 影线列表
 const shadowLineObj = APP_LIST;
@@ -103,17 +90,15 @@ const searchData = async () => {
   try {
     // 1、获取城市
     // 2、获取影院
-    let apiList = Object.entries(apiObj).filter(
+    let apiList = Object.entries(SFC_API_OBJ).filter(
       item => item[0] === formData.appName
     );
     // console.log("apiList===>", apiList);
-    let paramsObj = {
-      sfc: { city_id: "", cinema_id: "" },
-      jiujin: { city_id: "", cinema_id: "" },
-      jinji: { city_id: "", cinema_id: "" },
-      ningbo: { city_id: "", cinema_id: "" },
-      laina: { city_id: "", cinema_id: "" }
-    };
+    let appList = Object.keys(APP_LIST);
+    let paramsObj = {};
+    appList.forEach(item => {
+      paramsObj[item] = { city_id: "", cinema_id: "" };
+    });
     let requestList = [];
     for (let index = 0; index < apiList.length; index++) {
       const [appName, api] = apiList[index];
@@ -168,7 +153,7 @@ const searchData = async () => {
       }
       let appNameList = [];
       // 创建一个新数组来存储结果，避免直接修改原数组
-      Object.keys(apiObj)
+      Object.keys(SFC_API_OBJ)
         .filter(item => item === formData.appName)
         .forEach((item, index) => {
           // 先将当前元素插入新数组
