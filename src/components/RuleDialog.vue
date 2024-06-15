@@ -354,32 +354,14 @@
 </template>
 
 <script setup>
-import sfcApi from "@/api/sfc-api";
-import jiujinApi from "@/api/jiujin-api";
-import jinjiApi from "@/api/jinji-api";
-import ningboApi from "@/api/ningbo-api";
-import lainaApi from "@/api/laina-api";
+import { SFC_API_OBJ } from "@/common/index.js";
 
-import { storeToRefs } from "pinia";
 import { ref, reactive, computed, toRaw } from "vue";
 import { ElLoading } from "element-plus";
 import { ORDER_FORM, APP_LIST } from "@/common/constant";
 import { useAppBaseData } from "@/store/appBaseData";
-const appBaseData = useAppBaseData();
-const {
-  sfcBaseData,
-  jiujinBaseData,
-  jinjiBaseData,
-  ningboBaseData,
-  lainaBaseData
-} = storeToRefs(appBaseData);
-const {
-  setSfcBaseData,
-  setJiujinBaseData,
-  setJinjiBaseData,
-  setNingboBaseData,
-  setLainaBaseData
-} = appBaseData;
+const appBaseDataInfo = useAppBaseData();
+const { appBaseData, setSfcBaseData } = appBaseDataInfo;
 const ruleFormRef = ref(null);
 // 父传子props
 defineProps({
@@ -391,28 +373,6 @@ defineProps({
 // 子传父emit
 let $emit = defineEmits([`submit`]);
 
-const apiObj = {
-  sfc: sfcApi,
-  jiujin: jiujinApi,
-  jinji: jinjiApi,
-  laina: lainaApi,
-  ningbo: ningboApi
-};
-const baseDataObj = {
-  sfc: sfcBaseData.value,
-  jiujin: jiujinBaseData.value,
-  jinji: jinjiBaseData.value,
-  laina: lainaBaseData.value,
-  ningbo: ningboBaseData.value
-};
-
-const setBaseDataObj = {
-  sfc: setSfcBaseData,
-  jiujin: setJiujinBaseData,
-  jinji: setJinjiBaseData,
-  ningbo: setNingboBaseData,
-  laina: setLainaBaseData
-};
 // 是否显示对话框
 const showSfcDialog = ref(false);
 
@@ -631,12 +591,12 @@ const getCityList = async () => {
   try {
     let params = {};
     const { shadowLineName } = formData;
-    let list = baseDataObj[shadowLineName]?.cityList;
+    let list = appBaseData[shadowLineName]?.cityList;
     console.log("获取城市列表参数", params, shadowLineName, toRaw(list));
     if (!list?.length) {
-      const res = await apiObj[shadowLineName].getCityList(params);
+      const res = await SFC_API_OBJ[shadowLineName].getCityList(params);
       list = res?.data?.all_city || [];
-      setBaseDataObj[shadowLineName]({ cityList: list });
+      setSfcBaseData({ cityList: list }, shadowLineName);
     }
     console.log("获取城市列表返回", toRaw(list));
     cityList.value = list;
@@ -657,7 +617,7 @@ const getFilmList = async (city_id, cinema_id) => {
     };
     console.log("获取线上电影列表参数", params);
     const { shadowLineName } = formData;
-    const res = await apiObj[shadowLineName].getMovieList(params);
+    const res = await SFC_API_OBJ[shadowLineName].getMovieList(params);
     console.log("获取线上电影列表返回", res);
     let list = res.data?.movie_data || [];
     filmList.value = list;
@@ -675,7 +635,7 @@ const getCinemaListByCityId = async city_id => {
     };
     console.log("根据城市获取影院列表参数", params);
     const { shadowLineName } = formData;
-    const res = await apiObj[shadowLineName].getCinemaList(params);
+    const res = await SFC_API_OBJ[shadowLineName].getCinemaList(params);
     console.log("根据城市获取影院列表返回", res);
     let cinemaList = res.data?.cinema_data || [];
     return cinemaList;
@@ -688,7 +648,7 @@ const getCinemaListByCityId = async city_id => {
 const getAllCinemaList = async cityList => {
   try {
     const { shadowLineName } = formData;
-    let allCinemaList = baseDataObj[shadowLineName]?.allCinemaList || [];
+    let allCinemaList = appBaseData[shadowLineName]?.allCinemaList || [];
     console.log("获取全部影院列表", shadowLineName, toRaw(allCinemaList));
     if (!allCinemaList?.length) {
       for (let index = 0; index < cityList.length; index++) {
@@ -705,7 +665,7 @@ const getAllCinemaList = async cityList => {
           allCinemaList = allCinemaList.concat(list);
         }
       }
-      setBaseDataObj[shadowLineName]({ allCinemaList: allCinemaList });
+      setSfcBaseData({ allCinemaList: allCinemaList }, shadowLineName);
     }
     cinemaList.value = allCinemaList;
     return allCinemaList;
