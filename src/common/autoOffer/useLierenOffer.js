@@ -4,20 +4,10 @@ import {
   getCinemaFlag,
   convertFullwidthToHalfwidth
 } from "@/utils/utils";
-import {
-  SFC_SPECIAL_CINEMA_LIST,
-  JIUJIN_SPECIAL_CINEMA_LIST,
-  LAINA_SPECIAL_CINEMA_LIST,
-  JINJI_SPECIAL_CINEMA_LIST,
-  NINGBO_SPECIAL_CINEMA_LIST
-} from "@/common/constant";
+import { SPECIAL_CINEMA_OBJ } from "@/common/constant";
 import svApi from "@/api/sv-api";
+import { SFC_API_OBJ } from "@/common/index.js";
 
-import sfcApi from "@/api/sfc-api";
-import jiujinApi from "@/api/jiujin-api";
-import jinjiApi from "@/api/jinji-api";
-import lainaApi from "@/api/laina-api";
-import ningboApi from "@/api/ningbo-api";
 import lierenApi from "@/api/lieren-api";
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
@@ -39,14 +29,6 @@ const appOfferRuleList = computed(() =>
   dataTableStore.items.filter(item => item.orderForm === "lieren")
 );
 
-const apiObj = {
-  sfc: sfcApi,
-  jiujin: jiujinApi,
-  jinji: jinjiApi,
-  laina: lainaApi,
-  ningbo: ningboApi
-};
-
 let conPrefix = "【猎人自动报价】——"; // console打印前缀
 const getOrginValue = value => JSON.parse(JSON.stringify(value));
 
@@ -55,14 +37,6 @@ console.log(conPrefix + "自动报价规则", getOrginValue(appOfferRuleList.val
 
 const cityList = ref([]); // 城市列表
 
-// 特殊的名字匹配集合
-let specialCinemaNameMatchObj = {
-  sfc: SFC_SPECIAL_CINEMA_LIST,
-  jiujin: JIUJIN_SPECIAL_CINEMA_LIST,
-  jinji: JINJI_SPECIAL_CINEMA_LIST,
-  laina: LAINA_SPECIAL_CINEMA_LIST,
-  ningbo: NINGBO_SPECIAL_CINEMA_LIST
-};
 // 创建一个订单自动报价队列类
 class OrderAutoOfferQueue {
   constructor() {
@@ -425,7 +399,7 @@ async function getMoviePlayInfo(data) {
     console.log(conPrefix + "获取电影放映信息参数", params);
     const appName = getCinemaFlag({ cinema_group, cinema_name, city_name });
     console.log(conPrefix + "影线名称", appName);
-    let res = await apiObj[appName].getMoviePlayInfo(params);
+    let res = await SFC_API_OBJ[appName].getMoviePlayInfo(params);
     console.log(conPrefix + "获取电影放映信息返回", res);
     return res.data;
   } catch (error) {
@@ -744,7 +718,7 @@ const cinemaMatchHandle = (cinema_name, list, appName) => {
       .replace(/[\(\)\（\）]/g, "")
       .replace(/\s*/g, "");
     // 2、特殊匹配
-    let specialCinemaInfo = specialCinemaNameMatchObj[appName].find(
+    let specialCinemaInfo = SPECIAL_CINEMA_OBJ[appName].find(
       item => item.order_cinema_name === cinemaName
     );
     if (specialCinemaInfo) {
@@ -753,7 +727,7 @@ const cinemaMatchHandle = (cinema_name, list, appName) => {
       console.warn(
         conPrefix + "特殊匹配影院名称失败",
         cinemaName,
-        specialCinemaNameMatchObj[appName]
+        SPECIAL_CINEMA_OBJ[appName]
       );
     }
     // 3、去掉空格及换行符后全字匹配
@@ -794,7 +768,7 @@ const getCinemaId = (cinema_name, list, appName) => {
     let cinemaName = cinema_name
       .replace(/[\(\)\（\）]/g, "")
       .replace(/\s*/g, "");
-    let specialCinemaInfo = specialCinemaNameMatchObj[appName].find(
+    let specialCinemaInfo = SPECIAL_CINEMA_OBJ[appName].find(
       item => item.order_cinema_name === cinemaName
     );
     if (specialCinemaInfo) {
@@ -803,7 +777,7 @@ const getCinemaId = (cinema_name, list, appName) => {
       console.warn(
         conPrefix + "特殊匹配影院名称失败",
         cinemaName,
-        specialCinemaNameMatchObj[appName]
+        SPECIAL_CINEMA_OBJ[appName]
       );
     }
     // 3、去掉空格及换行符后全字匹配
@@ -855,7 +829,7 @@ const getMovieInfo = async item => {
     };
     console.log(conPrefix + "获取城市影院参数", params);
     const appName = getCinemaFlag({ cinema_group, cinema_name, city_name });
-    let res = await apiObj[appName].getCinemaList(params);
+    let res = await SFC_API_OBJ[appName].getCinemaList(params);
     console.log(conPrefix + "获取城市影院返回", res);
     let cinemaList = res.data?.cinema_data || [];
     let cinema_id = getCinemaId(cinema_name, cinemaList, appName);
@@ -898,7 +872,7 @@ async function getCityList({ cinema_group, cinema_name, city_name }) {
     let params = {};
     console.log(conPrefix + "获取城市列表参数", params);
     const appName = getCinemaFlag({ cinema_group, cinema_name, city_name });
-    let res = await apiObj[appName].getCityList(params);
+    let res = await SFC_API_OBJ[appName].getCityList(params);
     console.log(conPrefix + "获取城市列表返回", res);
     cityList.value = res.data.all_city || [];
   } catch (error) {
