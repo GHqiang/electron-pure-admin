@@ -17,7 +17,8 @@ export const useAppBaseData = defineStore("appBaseData", {
       jiujin: null,
       jinji: null,
       laina: null,
-      ningbo: null
+      ningbo: null,
+      hema: null
     }
   }),
   getters: {},

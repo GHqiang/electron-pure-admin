@@ -133,7 +133,8 @@ const SPECIAL_CINEMA_OBJ = {
   jiujin: JIUJIN_SPECIAL_CINEMA_LIST,
   jinji: JINJI_SPECIAL_CINEMA_LIST,
   ningbo: NINGBO_SPECIAL_CINEMA_LIST,
-  laina: LAINA_SPECIAL_CINEMA_LIST
+  laina: LAINA_SPECIAL_CINEMA_LIST,
+  hema: []
 };
 
 // 出票队列打印前缀
@@ -142,7 +143,8 @@ const TICKET_CONPREFIX_OBJ = {
   jiujin: "【华夏久金自动出票】——",
   jinji: "【北京金鸡自动出票】——",
   ningbo: "【宁波影都自动出票】——",
-  laina: "【莱纳龙域自动出票】——"
+  laina: "【莱纳龙域自动出票】——",
+  hema: "【河马国际自动出票】——"
 };
 
 // 报价规则
@@ -574,7 +576,8 @@ const APP_OPENID_OBJ = {
   jiujin: "o9z475KmUY5DGBCmA8iHonVW4zco",
   jinji: "oTJ0a48lR3TPBfblHCqLLn-kdRro",
   ningbo: "o1TM95HQabEWcsC6u2S0XPd4ge5w",
-  laina: "oPKih4oNM3oGJGcEItWiN5lJ93oA"
+  laina: "oPKih4oNM3oGJGcEItWiN5lJ93oA",
+  hema: ""
 };
 export {
   ORDER_FORM,
