@@ -147,6 +147,16 @@ const TICKET_CONPREFIX_OBJ = {
   hema: "【河马国际自动出票】——"
 };
 
+// 微信小程序openid
+const APP_OPENID_OBJ = {
+  sfc: "otEMo42FC38PgJiYDvu6HrGjrwQY",
+  jiujin: "o9z475KmUY5DGBCmA8iHonVW4zco",
+  jinji: "oTJ0a48lR3TPBfblHCqLLn-kdRro",
+  ningbo: "o1TM95HQabEWcsC6u2S0XPd4ge5w",
+  laina: "oPKih4oNM3oGJGcEItWiN5lJ93oA",
+  hema: "oD3rN4ge-6H9Q4mYVBBJcsMFoRkc"
+};
+
 // 报价规则
 const OFFER_LIST = [
   {
@@ -569,16 +579,6 @@ const OFFER_LIST = [
     status: "1"
   }
 ];
-
-// 微信小程序openid
-const APP_OPENID_OBJ = {
-  sfc: "otEMo42FC38PgJiYDvu6HrGjrwQY",
-  jiujin: "o9z475KmUY5DGBCmA8iHonVW4zco",
-  jinji: "oTJ0a48lR3TPBfblHCqLLn-kdRro",
-  ningbo: "o1TM95HQabEWcsC6u2S0XPd4ge5w",
-  laina: "oPKih4oNM3oGJGcEItWiN5lJ93oA",
-  hema: ""
-};
 export {
   ORDER_FORM,
   APP_LIST,
