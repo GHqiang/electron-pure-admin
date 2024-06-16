@@ -2,7 +2,11 @@
  * @description: 莱纳龙域影城api列表
  */
 
-import axios from "@/utils/http/laina-request";
+import createAxios from "@/utils/http/sfc-request";
+let axios = createAxios({
+  group: "20463",
+  appName: "laina"
+});
 // 获取图形/短信验证码
 const getSmsCode = params =>
   axios.get("/api/v2/user/send-login-or-reg-validate-code", { params });

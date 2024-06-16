@@ -2,7 +2,11 @@
  * @description: 宁波影都api列表
  */
 
-import axios from "@/utils/http/ningbo-request";
+import createAxios from "@/utils/http/sfc-request";
+let axios = createAxios({
+  group: "20023",
+  appName: "ningbo"
+});
 // 获取图形/短信验证码
 const getSmsCode = params =>
   axios.get("/api/v2/user/send-login-or-reg-validate-code", { params });

@@ -30,53 +30,7 @@ export const appUserInfo = defineStore("appUserInfo", {
       hema: null
     }
   }),
-  getters: {
-    // sfc上影token
-    sfcToken(state) {
-      return state.allUserInfo?.sfc?.session_id || "";
-    },
-    sfcUserMobile(state) {
-      return state.allUserInfo?.sfc?.mobile || "";
-    },
-    // 华夏久金token
-    jiujinToken(state) {
-      return state.allUserInfo?.jiujin?.session_id || "";
-    },
-    jiujinUserMobile(state) {
-      return state.allUserInfo?.jiujin?.mobile || "";
-    },
-    // 莱纳龙域token
-    lainaToken(state) {
-      return state.allUserInfo?.laina?.session_id || "";
-    },
-    lainaUserMobile(state) {
-      return state.allUserInfo?.laina?.mobile || "";
-    },
-    // 北京金鸡token
-    jinjiToken(state) {
-      return state.allUserInfo?.jinji?.session_id || "";
-    },
-    jinjiUserMobile(state) {
-      return state.allUserInfo?.jinji?.mobile || "";
-    },
-    // 宁波影都token
-    ningboToken(state) {
-      return state.allUserInfo?.ningbo?.session_id || "";
-    },
-    ningboUserMobile(state) {
-      return state.allUserInfo?.ningbo?.mobile || "";
-    },
-    // 河马国际token
-    hemaToken(state) {
-      return state.allUserInfo?.hema?.session_id || "";
-    },
-    hemaUserMobile(state) {
-      return state.allUserInfo?.hema?.mobile || "";
-    },
-    lmaToken(state) {
-      return state.allUserInfo?.lumiai?.session_id || "";
-    }
-  },
+  getters: {},
   actions: {
     // 设置sfc用户信息
     setSfcUserInfo({ appName, userInfo }) {

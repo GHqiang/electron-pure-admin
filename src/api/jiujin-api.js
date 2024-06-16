@@ -2,7 +2,11 @@
  * @description: 华夏久金影城api列表
  */
 
-import axios from "@/utils/http/jiujin-request";
+import createAxios from "@/utils/http/sfc-request";
+let axios = createAxios({
+  group: "20253",
+  appName: "jiujin"
+});
 // 获取图形/短信验证码
 const getSmsCode = params =>
   axios.get("/api/v2/user/send-login-or-reg-validate-code", { params });
