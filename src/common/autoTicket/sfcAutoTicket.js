@@ -343,6 +343,7 @@ class OrderAutoTicketQueue {
       console.warn(conPrefix + "【转单】结果", res);
     } catch (error) {
       console.error(conPrefix + "【转单】异常", error);
+      this.setErrInfo("订单转单异常", error);
     }
   }
 
@@ -361,7 +362,6 @@ class OrderAutoTicketQueue {
       const res = await this.trial(() => this.unlockSeat(item.id), 3, 3);
       if (!res) {
         console.error(conPrefix + "单个订单试错后仍解锁失败", "需要走转单逻辑");
-        this.setErrInfo("订单解锁失败", error);
         // 转单逻辑待补充
         await this.transferOrder(item);
         return;
@@ -397,6 +397,7 @@ class OrderAutoTicketQueue {
       return res;
     } catch (error) {
       console.error(conPrefix + "解锁异常", error);
+      this.setErrInfo("订单解锁失败", error);
       return Promise.reject(error);
     }
   }
@@ -437,7 +438,7 @@ class OrderAutoTicketQueue {
             "获取该订单的报价记录失败，不进行出票，此处不转单，直接跳过",
           offerRecord
         );
-        this.setErrInfo("获取该订单报价记录失败");
+        this.setErrInfo("获取该订单报价记录失败，不转单跳过");
         return;
       }
       await this.getCityList();
@@ -530,7 +531,6 @@ class OrderAutoTicketQueue {
             conPrefix + "单个订单试错后仍锁定座位失败",
             "需要走转单逻辑"
           );
-          this.setErrInfo("订单锁定座位失败", error);
           await this.transferOrder(item);
           return { offerRule };
         }
@@ -555,7 +555,6 @@ class OrderAutoTicketQueue {
           conPrefix + "优惠券和会员卡都无法使用，单个订单直接出票结束",
           "走转单逻辑"
         );
-        this.setErrInfo("订单使用优惠券或者会员卡失败");
         await this.transferOrder(item, {
           city_id,
           cinema_id,
@@ -681,6 +680,7 @@ class OrderAutoTicketQueue {
       return list;
     } catch (error) {
       console.error(conPrefix + "获取城市影院异常", error);
+      this.setErrInfo("获取城市影院异常", error);
     }
   }
 
@@ -746,6 +746,7 @@ class OrderAutoTicketQueue {
       return res;
     } catch (error) {
       console.error(conPrefix + "锁定座位异常", error);
+      this.setErrInfo("锁定座位异常", error);
       return Promise.reject(error);
     }
   }
@@ -1060,7 +1061,8 @@ class OrderAutoTicketQueue {
       const movieInfo = await this.getMovieInfo(order);
       console.log(conPrefix + `待报价订单当前场次电影相关信息`, movieInfo);
       if (!movieInfo) {
-        console.error(conPrefix + "获取当前场次电影信息失败", "不再进行报价");
+        console.error(conPrefix + "获取当前场次电影信息失败", "不再进行出票");
+        this.setErrInfo("获取当前场次电影信息失败");
         return;
       }
       let { member_price } = movieInfo;
@@ -1070,6 +1072,7 @@ class OrderAutoTicketQueue {
       }
     } catch (error) {
       console.error(conPrefix + "获取会员价异常", error);
+      this.setErrInfo("获取会员价异常", error);
     }
   }
 
@@ -1118,8 +1121,10 @@ class OrderAutoTicketQueue {
         cinemaName,
         noSpaceCinemaList
       );
+      this.setErrInfo("根据订单name获取影院id-去掉空格及换行符后全字匹配失败");
     } catch (error) {
       console.error(conPrefix + "根据订单name获取影院id失败", error);
+      this.setErrInfo("根据订单name获取影院id失败", error);
     }
   }
 
@@ -1161,6 +1166,7 @@ class OrderAutoTicketQueue {
       }
     } catch (error) {
       console.error(conPrefix + "获取当前场次电影信息异常", error);
+      this.setErrInfo("获取当前场次电影信息异常", error);
     }
   }
 
@@ -1184,6 +1190,7 @@ class OrderAutoTicketQueue {
       return list;
     } catch (error) {
       console.error(conPrefix + "获取优惠券列表异常", error);
+      this.setErrInfo("获取优惠券列表异常", error);
     }
   }
 
@@ -1252,6 +1259,7 @@ class OrderAutoTicketQueue {
           conPrefix + `${quanValue} 面额券不足，无法使用券`,
           quanList
         );
+        this.setErrInfo(`${quanValue} 面额券不足`);
         return {
           profit: 0,
           useQuans: []
@@ -1285,6 +1293,7 @@ class OrderAutoTicketQueue {
       };
     } catch (error) {
       console.error(conPrefix + "使用优惠券异常", error);
+      this.setErrInfo("使用优惠券异常", error);
       return {
         profit: 0,
         useQuans: []
@@ -1308,6 +1317,7 @@ class OrderAutoTicketQueue {
       return list;
     } catch (error) {
       console.error(conPrefix + "获取会员卡列表异常", error);
+      this.setErrInfo("获取会员卡列表异常", error);
     }
   }
 
@@ -1428,6 +1438,7 @@ class OrderAutoTicketQueue {
       this.cityList = res.data.all_city || [];
     } catch (error) {
       console.error(conPrefix + "获取城市列表异常", error);
+      this.setErrInfo("获取城市列表异常", error);
     }
   }
 }
