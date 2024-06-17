@@ -21,6 +21,7 @@ export const useAppBaseData = defineStore("appBaseData", {
       hema: null,
       hongshi: null,
       limeihua: null,
+      hengye: null,
       qina: null
     }
   }),

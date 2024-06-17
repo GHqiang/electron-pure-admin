@@ -2,7 +2,8 @@ import { ref, computed } from "vue";
 import {
   isTimeAfter,
   getCinemaFlag,
-  convertFullwidthToHalfwidth
+  convertFullwidthToHalfwidth,
+  cinemNameSpecial
 } from "@/utils/utils";
 import { SPECIAL_CINEMA_OBJ } from "@/common/constant";
 import svApi from "@/api/sv-api";
@@ -775,9 +776,7 @@ const cinemaMatchHandle = (cinema_name, list, appName) => {
       return true;
     }
     console.warn(conPrefix + "全字匹配影院名称失败", cinema_name, list);
-    let cinemaName = cinema_name
-      .replace(/[\(\)\（\）]/g, "")
-      .replace(/\s*/g, "");
+    let cinemaName = cinemNameSpecial(cinema_name);
     // 2、特殊匹配
     let specialCinemaInfo = SPECIAL_CINEMA_OBJ[appName].find(
       item => item.order_cinema_name === cinemaName
@@ -792,9 +791,7 @@ const cinemaMatchHandle = (cinema_name, list, appName) => {
       );
     }
     // 3、去掉空格及换行符后全字匹配
-    const noSpaceList = list.map(item =>
-      item.replace(/[\(\)\（\）]/g, "").replace(/\s*/g, "")
-    );
+    const noSpaceList = list.map(item => cinemNameSpecial(item));
     isHasMatch = noSpaceList.some(item => item === cinemaName);
     if (isHasMatch) {
       return true;
@@ -828,9 +825,7 @@ const getCinemaId = (cinema_name, list, appName) => {
     }
     // 2、匹配不到的如果满足条件就走特殊匹配
     console.warn(conPrefix + "全字匹配影院名称失败", cinema_name, list);
-    let cinemaName = cinema_name
-      .replace(/[\(\)\（\）]/g, "")
-      .replace(/\s*/g, "");
+    let cinemaName = cinemNameSpecial(cinema_name);
     let specialCinemaInfo = SPECIAL_CINEMA_OBJ[appName].find(
       item => item.order_cinema_name === cinemaName
     );
@@ -848,7 +843,7 @@ const getCinemaId = (cinema_name, list, appName) => {
     let noSpaceCinemaList = list.map(item => {
       return {
         ...item,
-        name: item.name.replace(/[\(\)\（\）]/g, "").replace(/\s*/g, "")
+        name: cinemNameSpecial(item.name)
       };
     });
     cinema_id = noSpaceCinemaList.find(item => item.name === cinemaName)?.id;

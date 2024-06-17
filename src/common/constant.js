@@ -13,6 +13,7 @@ const APP_LIST = {
   hema: "河马国际",
   hongshi: "红石影城惠南店",
   limeihua: "利美华胤",
+  hengye: "恒业电影城",
   qina: "齐纳国际"
 };
 // 平台关联应用
@@ -26,6 +27,7 @@ const PLAT_LINK_APP = {
     "qina",
     "hongshi",
     "limeihua",
+    "hengye",
     "lumiai"
   ],
   shengapp: ["sfc", "lumiai"]
@@ -168,7 +170,7 @@ const QINA_SPECIAL_CINEMA_LIST = [
   },
   {
     order_cinema_name: "齐纳国际影城宏程店",
-    sfc_cinema_name: "齐纳国际影城宏程Onyx LED&LUXE店"
+    sfc_cinema_name: "齐纳国际影城宏程OnyxLED&LUXE店"
   },
   {
     order_cinema_name: "桓台齐纳影城马桥店",
@@ -222,7 +224,22 @@ const HONGSHI_SPECIAL_CINEMA_LIST = [
 const LIMEIHUA_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: "上海利美华胤影城",
-    sfc_cinema_name: "上海利美华胤影城曹路恒越荣欣广场店）"
+    sfc_cinema_name: "上海利美华胤影城曹路恒越荣欣广场店"
+  }
+];
+// 恒业电影城特殊影院集合
+const HENGYE_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: "恒业影城武汉店",
+    sfc_cinema_name: "恒业影城武汉店"
+  },
+  {
+    order_cinema_name: "恒业影城芜湖店",
+    sfc_cinema_name: "恒业国际影城"
+  },
+  {
+    order_cinema_name: "恒业影城新兴店",
+    sfc_cinema_name: "恒业国际影城新兴店"
   }
 ];
 // 特殊的名字匹配集合
@@ -235,6 +252,7 @@ const SPECIAL_CINEMA_OBJ = {
   hema: [],
   hongshi: HONGSHI_SPECIAL_CINEMA_LIST,
   limiehua: LIMEIHUA_SPECIAL_CINEMA_LIST,
+  hengye: HENGYE_SPECIAL_CINEMA_LIST,
   qina: QINA_SPECIAL_CINEMA_LIST
 };
 
@@ -248,6 +266,7 @@ const TICKET_CONPREFIX_OBJ = {
   hema: "【河马国际自动出票】——",
   hongshi: "【红石影城惠南店自动出票】——",
   limeihua: "【利美华胤自动出票】——",
+  hengye: "【恒业电影城自动出票】——",
   qina: "【齐纳国际自动出票】——"
 };
 
@@ -261,6 +280,7 @@ const APP_OPENID_OBJ = {
   hema: "oD3rN4ge-6H9Q4mYVBBJcsMFoRkc",
   hongshi: "owgjs4gKzy5Q5dz6eTqR-hMFHy0M",
   limeihua: "ok7FI49HybuSq5RNx49q6eNnzof4",
+  hengye: "okxaO68YGIDHtSOfKw4UOCv-_4Co",
   qina: "ouKdc5bCNh_0ygvtmniED-u9kIbA"
 };
 
@@ -274,6 +294,7 @@ const APP_GROUP_OBJ = {
   hema: "20064",
   hongshi: "20120",
   limeihua: "20496",
+  hengye: "20669",
   qina: "20004"
 };
 

@@ -267,6 +267,11 @@ function convertFullwidthToHalfwidth(str) {
   return result;
 }
 
+// 影院名称特殊处理（为了特殊匹配）
+const cinemNameSpecial = cinema_name => {
+  return cinema_name.replace(/[\(\)\（\）-]/g, "").replace(/\s*/g, "");
+};
+
 // 自定义console，支持字体颜色、背景颜色、前缀
 class CustomConsole {
   constructor(options = {}) {
@@ -306,5 +311,6 @@ export {
   isTimeAfter,
   getCinemaFlag,
   convertFullwidthToHalfwidth,
+  cinemNameSpecial,
   CustomConsole
 };

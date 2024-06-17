@@ -1,7 +1,8 @@
 import { computed } from "vue";
 import {
   getCurrentFormattedDateTime,
-  convertFullwidthToHalfwidth
+  convertFullwidthToHalfwidth,
+  cinemNameSpecial
 } from "@/utils/utils";
 
 import lierenApi from "@/api/lieren-api";
@@ -1087,9 +1088,7 @@ class OrderAutoTicketQueue {
       }
       // 2、匹配不到的如果满足条件就走特殊匹配
       console.warn(conPrefix + "全字匹配影院名称失败", cinema_name, list);
-      let cinemaName = cinema_name
-        .replace(/[\(\)\（\）]/g, "")
-        .replace(/\s*/g, "");
+      let cinemaName = cinemNameSpecial(cinema_name);
       if (SPECIAL_CINEMA_OBJ[appFlag].length) {
         let specialCinemaInfo = SPECIAL_CINEMA_OBJ[appFlag].find(
           item => item.order_cinema_name === cinemaName
@@ -1109,7 +1108,7 @@ class OrderAutoTicketQueue {
       let noSpaceCinemaList = list.map(item => {
         return {
           ...item,
-          name: item.name.replace(/[\(\)\（\）]/g, "").replace(/\s*/g, "")
+          name: cinemNameSpecial(item.name)
         };
       });
       cinema_id = noSpaceCinemaList.find(item => item.name === cinemaName)?.id;

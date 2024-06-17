@@ -235,7 +235,8 @@ import { ref, onMounted, computed } from "vue";
 import { storeToRefs } from "pinia";
 import {
   getCurrentFormattedDateTime,
-  convertFullwidthToHalfwidth
+  convertFullwidthToHalfwidth,
+  cinemNameSpecial
 } from "@/utils/utils";
 import { SFC_API_OBJ } from "@/common/index.js";
 import lierenApi from "@/api/lieren-api";
@@ -1021,13 +1022,11 @@ const trial = (callback, number = 1, delayTime = 0) => {
 // 根据订单name获取影院id
 const getCinemaId = (cinema_name, list) => {
   try {
-    let cinemaName = cinema_name.replace
-      .replace(/[\(\)\（\）]/g, "")
-      .replace(/\s*/g, "");
+    let cinemaName = cinemNameSpecial(cinema_name);
     let cinemaList = list.map(item => {
       return {
         ...item,
-        name: item.name.replace.replace(/[\(\)\（\）]/g, "").replace(/\s*/g, "")
+        name: cinemNameSpecial(item.name)
       };
     });
     let nameMatchingList = [
