@@ -28,6 +28,8 @@ export const appUserInfo = defineStore("appUserInfo", {
       laina: null,
       ningbo: null,
       hema: null,
+      hongshi: null,
+      limeihua: null,
       qina: null
     }
   }),
