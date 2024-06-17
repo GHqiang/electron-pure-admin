@@ -8,5 +8,5 @@ Object.keys(APP_LIST).forEach(item => {
     appName: item
   });
 });
-console.log("SFC_API_OBJ"), SFC_API_OBJ;
+// console.log("SFC_API_OBJ"), SFC_API_OBJ;
 export { SFC_API_OBJ };

@@ -78,6 +78,7 @@ let $emit = defineEmits([`loginSuccess`]);
 const props = defineProps({
   appName: String
 });
+let sfcApi = SFC_API_OBJ[props.appName];
 const phoneNumber = ref(""); // 手机号
 const captchaCode = ref(""); // 图形验证码
 const smsCode = ref(""); // 短信验证码
@@ -95,7 +96,7 @@ async function getCaptcha() {
         graph_validate_code: ""
       };
       console.log("获取图形验证码参数", params, props.appName);
-      const res = await SFC_API_OBJ[props.appName].getSmsCode(params);
+      const res = await sfcApi.getSmsCode(params);
       console.log("获取图形验证码返回", res);
       captchaUrl.value = res.codeurl;
       showCaptcha.value = true;
@@ -121,7 +122,7 @@ async function sendSmsCode() {
         graph_validate_code: captchaCode.value
       };
       console.log("获取短信验证码参数", params);
-      const res = await SFC_API_OBJ[props.appName].getSmsCode(params);
+      const res = await sfcApi.getSmsCode(params);
       console.log("获取短信验证码返回", res);
       showSmsCode.value = true;
       sentSms.value = true;
@@ -143,7 +144,7 @@ async function autoLogin() {
         wx_code: "" // wx.login获取的临时登录凭证（每次都会变）app传空也能调用成功
       };
       console.log("验证短信并登录参数", params);
-      const res = await SFC_API_OBJ[props.appName].verifyLogin(params);
+      const res = await sfcApi.verifyLogin(params);
       console.log("验证短信并登录返回", res);
       $emit("loginSuccess", res.data.user_data);
     }
