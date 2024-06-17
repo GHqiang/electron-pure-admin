@@ -284,8 +284,8 @@ const LIANGCHEN_SPECIAL_CINEMA_LIST = [
 // 永恒时代特殊影院集合
 const YONGHENG_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "永恒·中华大戏院三街两巷电影院",
-    sfc_cinema_name: "永恒·中华大戏院"
+    order_cinema_name: "永恒中华大戏院三街两巷电影院",
+    sfc_cinema_name: "永恒中华大戏院"
   }
 ];
 

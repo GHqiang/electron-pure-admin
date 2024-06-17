@@ -282,6 +282,27 @@ const getCinemaFlag = item => {
     ["苏州"].includes(city_name)
   ) {
     return "suzhou";
+  } else if (cinema_name.includes("永恒") && ["南宁"].includes(city_name)) {
+    return "yongheng";
+  } else if (
+    ["齐纳影城", "齐纳国际影城", "齐纳全激光影城", "齐纳激光IMAX影城"].some(
+      itemA =>
+        cinema_name.includes(itemA) &&
+        [
+          "济南",
+          "滨州",
+          "德州",
+          "东营",
+          "临沂",
+          "潍坊",
+          "烟台",
+          "淄博",
+          "枣庄"
+        ].includes(city_name) &&
+        !["东营齐纳国际影城"].includes(cinema_name)
+    )
+  ) {
+    return "qina";
   }
 };
 
@@ -317,7 +338,10 @@ function convertFullwidthToHalfwidth(str) {
 
 // 影院名称特殊处理（为了特殊匹配）
 const cinemNameSpecial = cinema_name => {
-  return cinema_name.replace(/[\(\)\（\）-]/g, "").replace(/\s*/g, "");
+  return cinema_name
+    .replace(/[\(\)\（\）-]/g, "")
+    .replace(/\s*/g, "")
+    .replace(/·/g, "");
 };
 
 // 自定义console，支持字体颜色、背景颜色、前缀
