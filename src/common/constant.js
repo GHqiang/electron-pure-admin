@@ -14,6 +14,7 @@ const APP_LIST = {
   hongshi: "红石影城惠南店",
   limeihua: "利美华胤",
   hengye: "恒业电影城",
+  minzu: "民族影城",
   qina: "齐纳国际"
 };
 // 平台关联应用
@@ -28,6 +29,7 @@ const PLAT_LINK_APP = {
     "hongshi",
     "limeihua",
     "hengye",
+    "minzu",
     "lumiai"
   ],
   shengapp: ["sfc", "lumiai"]
@@ -242,6 +244,7 @@ const HENGYE_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "恒业国际影城新兴店"
   }
 ];
+
 // 特殊的名字匹配集合
 const SPECIAL_CINEMA_OBJ = {
   sfc: SFC_SPECIAL_CINEMA_LIST,
@@ -253,6 +256,7 @@ const SPECIAL_CINEMA_OBJ = {
   hongshi: HONGSHI_SPECIAL_CINEMA_LIST,
   limiehua: LIMEIHUA_SPECIAL_CINEMA_LIST,
   hengye: HENGYE_SPECIAL_CINEMA_LIST,
+  minzu: [],
   qina: QINA_SPECIAL_CINEMA_LIST
 };
 
@@ -267,6 +271,7 @@ const TICKET_CONPREFIX_OBJ = {
   hongshi: "【红石影城惠南店自动出票】——",
   limeihua: "【利美华胤自动出票】——",
   hengye: "【恒业电影城自动出票】——",
+  minzu: "【民族影城自动出票】——",
   qina: "【齐纳国际自动出票】——"
 };
 
@@ -281,6 +286,7 @@ const APP_OPENID_OBJ = {
   hongshi: "owgjs4gKzy5Q5dz6eTqR-hMFHy0M",
   limeihua: "ok7FI49HybuSq5RNx49q6eNnzof4",
   hengye: "okxaO68YGIDHtSOfKw4UOCv-_4Co",
+  minzu: "o6jsm440WovuVPr1tSNm21xqj_nQ",
   qina: "ouKdc5bCNh_0ygvtmniED-u9kIbA"
 };
 
@@ -295,6 +301,7 @@ const APP_GROUP_OBJ = {
   hongshi: "20120",
   limeihua: "20496",
   hengye: "20669",
+  minzu: "20039",
   qina: "20004"
 };
 
