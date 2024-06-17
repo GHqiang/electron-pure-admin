@@ -234,6 +234,13 @@ const getCinemaFlag = item => {
     )
   ) {
     return "ningbo";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("红石影城惠南店") &&
+    ["上海"].includes(city_name)
+  ) {
+    return "hongshi";
+  } else if (cinema_name.includes("利美华胤") && ["上海"].includes(city_name)) {
+    return "limeihua";
   }
 };
 

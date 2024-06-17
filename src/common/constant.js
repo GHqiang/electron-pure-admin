@@ -148,176 +148,172 @@ const JINJI_SPECIAL_CINEMA_LIST = [
 // 宁都影波特殊影院集合
 const NINGBO_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "宁波影都大榭影城",
-    sfc_cinema_name: "宁波影都大榭店"
+    order_cinema_name: "宁波影都大榭店",
+    sfc_cinema_name: "宁波影都大榭影城"
   },
   {
-    order_cinema_name: "民光影城",
-    sfc_cinema_name: "宁波民光影城"
+    order_cinema_name: "宁波民光影城",
+    sfc_cinema_name: "民光影城"
   },
   {
-    order_cinema_name: "蝴蝶影院天一广场店",
-    sfc_cinema_name: "天一蝴蝶影院"
+    order_cinema_name: "天一蝴蝶影院",
+    sfc_cinema_name: "蝴蝶影院天一广场店"
   }
 ];
 // 齐纳国际特殊影院集合
 const QINA_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "博山齐纳国际影城",
-    sfc_cinema_name: "博山齐纳国际影城全激光影城"
+    order_cinema_name: "博山齐纳国际影城全激光影城",
+    sfc_cinema_name: "博山齐纳国际影城"
   },
   {
-    order_cinema_name: "周村齐纳国际影城桃园店",
-    sfc_cinema_name: "周村齐纳国际影城桃园店全激光影城"
+    order_cinema_name: "周村齐纳国际影城桃园店全激光影城",
+    sfc_cinema_name: "周村齐纳国际影城桃园店"
   },
   {
-    order_cinema_name: "淄川齐纳国际影城原淄川全球通电影城",
-    sfc_cinema_name: "淄川齐纳国际影城全激光影城"
+    order_cinema_name: "淄川齐纳国际影城全激光影城",
+    sfc_cinema_name: "淄川齐纳国际影城原淄川全球通电影城"
   },
   {
-    order_cinema_name: "临淄齐纳国际影城",
-    sfc_cinema_name: "临淄齐纳国际影城全激光巨幕影城"
+    order_cinema_name: "临淄齐纳国际影城全激光巨幕影城",
+    sfc_cinema_name: "临淄齐纳国际影城"
   },
   {
-    order_cinema_name: "沂源齐纳国际影城",
-    sfc_cinema_name: "沂源齐纳国际影城全激光影城"
+    order_cinema_name: "沂源齐纳国际影城全激光影城",
+    sfc_cinema_name: "沂源齐纳国际影城"
   },
   {
-    order_cinema_name: "齐纳国际影城淄博银座店激光IMAX",
-    sfc_cinema_name: "齐纳激光IMAX影城张店银座店"
+    order_cinema_name: "齐纳激光IMAX影城张店银座店",
+    sfc_cinema_name: "齐纳国际影城淄博银座店激光IMAX"
   },
   {
-    order_cinema_name: "齐纳国际影城宏程店",
-    sfc_cinema_name: "齐纳国际影城宏程OnyxLED&LUXE店"
+    order_cinema_name: "齐纳国际影城宏程OnyxLED&LUXE店",
+    sfc_cinema_name: "齐纳国际影城宏程店"
   },
   {
-    order_cinema_name: "桓台齐纳影城马桥店",
-    sfc_cinema_name: "齐纳国际影城马桥店"
+    order_cinema_name: "齐纳国际影城马桥店",
+    sfc_cinema_name: "桓台齐纳影城马桥店"
   },
   {
-    order_cinema_name: "齐纳影城吾悦店",
-    sfc_cinema_name: "齐纳影城吾悦广场店"
+    order_cinema_name: "齐纳影城吾悦广场店",
+    sfc_cinema_name: "齐纳影城吾悦店"
   },
   {
-    order_cinema_name: "齐纳影城荣盛店",
-    sfc_cinema_name: "齐纳影城荣盛店可躺式座椅影城"
+    order_cinema_name: "齐纳影城荣盛店可躺式座椅影城",
+    sfc_cinema_name: "齐纳影城荣盛店"
   },
   {
-    order_cinema_name: "枣庄齐纳国际影城",
-    sfc_cinema_name: "齐纳全激光国际影城薛城银座店"
+    order_cinema_name: "齐纳全激光国际影城薛城银座店",
+    sfc_cinema_name: "枣庄齐纳国际影城"
   },
   {
-    order_cinema_name: "诸城齐纳国际影城",
-    sfc_cinema_name: "诸城齐纳国际影城4D 中百繁荣路店"
+    order_cinema_name: "诸城齐纳国际影城4D中百繁荣路店",
+    sfc_cinema_name: "诸城齐纳国际影城"
   },
   {
-    order_cinema_name: "蒙阴齐纳国际影城银座店",
-    sfc_cinema_name: "蒙阴齐纳国际影城全激光影城"
+    order_cinema_name: "蒙阴齐纳国际影城全激光影城",
+    sfc_cinema_name: "蒙阴齐纳国际影城银座店"
   },
   {
-    order_cinema_name: "临沂齐纳国际影城南坊店",
-    sfc_cinema_name: "齐纳全激光影城临沂银座奥特莱斯店"
+    order_cinema_name: "齐纳全激光影城临沂银座奥特莱斯店",
+    sfc_cinema_name: "临沂齐纳国际影城南坊店"
   },
   {
-    order_cinema_name: "德州齐纳国际影城",
-    sfc_cinema_name: "齐纳影城银座大学路店"
+    order_cinema_name: "齐纳影城银座大学路店",
+    sfc_cinema_name: "德州齐纳国际影城"
   },
   {
-    order_cinema_name: "利津齐纳国际影城",
-    sfc_cinema_name: "东营利津齐纳国际影城全激光影城"
+    order_cinema_name: "东营利津齐纳国际影城全激光影城",
+    sfc_cinema_name: "利津齐纳国际影城"
   },
   {
-    order_cinema_name: "博兴齐纳国际影城",
-    sfc_cinema_name: "滨州博兴齐纳国际影城"
+    order_cinema_name: "滨州博兴齐纳国际影城",
+    sfc_cinema_name: "博兴齐纳国际影城"
   }
 ];
 // 红石影城惠南店特殊影院集合
 const HONGSHI_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "红石影城上海惠南店",
-    sfc_cinema_name: "红石影城惠南店"
+    order_cinema_name: "红石影城惠南店",
+    sfc_cinema_name: "红石影城上海惠南店"
   }
 ];
 // 利美华胤特殊影院集合
 const LIMEIHUA_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "上海利美华胤影城",
-    sfc_cinema_name: "上海利美华胤影城曹路恒越荣欣广场店"
+    order_cinema_name: "上海利美华胤影城曹路恒越荣欣广场店",
+    sfc_cinema_name: "上海利美华胤影城"
   }
 ];
 // 恒业电影城特殊影院集合
 const HENGYE_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "恒业影城武汉店",
-    sfc_cinema_name: "恒业影城武汉店"
+    order_cinema_name: "恒业国际影城",
+    sfc_cinema_name: "恒业影城芜湖店"
   },
   {
-    order_cinema_name: "恒业影城芜湖店",
-    sfc_cinema_name: "恒业国际影城"
-  },
-  {
-    order_cinema_name: "恒业影城新兴店",
-    sfc_cinema_name: "恒业国际影城新兴店"
+    order_cinema_name: "恒业国际影城新兴店",
+    sfc_cinema_name: "恒业影城新兴店"
   }
 ];
 
 // 银兴影城南昌店特殊影院集合
 const YINGXINGNC_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "长江银兴影城新华店",
-    sfc_cinema_name: "长江银兴影城南昌新华店"
+    order_cinema_name: "长江银兴影城南昌新华店",
+    sfc_cinema_name: "长江银兴影城新华店"
   }
 ];
 
 // 银兴影城襄阳店特殊影院集合
 const YINGXINGXY_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "长江银兴影城襄阳店",
-    sfc_cinema_name: "长江银兴影城襄城武商店"
+    order_cinema_name: "长江银兴影城襄城武商店",
+    sfc_cinema_name: "长江银兴影城襄阳店"
   }
 ];
 
 // 良辰乐娃特殊影院集合
 const LIANGCHEN_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "良辰乐娃影院",
-    sfc_cinema_name: "乐娃影院"
+    order_cinema_name: "乐娃影院",
+    sfc_cinema_name: "良辰乐娃影院"
   }
 ];
 
 // 永恒时代特殊影院集合
 const YONGHENG_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "永恒·中华大戏院",
-    sfc_cinema_name: "永恒·中华大戏院三街两巷电影院"
+    order_cinema_name: "永恒·中华大戏院三街两巷电影院",
+    sfc_cinema_name: "永恒·中华大戏院"
   }
 ];
 
 // 苏州中影特殊影院集合
 const SUZHOU_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "苏州中影影城甪直店",
-    sfc_cinema_name: "中影国际影城甪直ALPD激光店"
+    order_cinema_name: "中影国际影城甪直ALPD激光店",
+    sfc_cinema_name: "苏州中影影城甪直店"
   }
 ];
 
 // 全美影城特殊影院集合
 const QUANMEI_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "太原全美影院",
-    sfc_cinema_name: "全美影院太原N1店"
+    order_cinema_name: "全美影院太原N1店",
+    sfc_cinema_name: "太原全美影院"
   }
 ];
 
 // 南国金光华特殊影院集合
 const NANGUOJGH_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "金光华南国影城",
-    sfc_cinema_name: "深圳南国影城金光华店"
+    order_cinema_name: "深圳南国影城金光华店",
+    sfc_cinema_name: "金光华南国影城"
   },
   {
-    order_cinema_name: "深圳南国二期影城",
-    sfc_cinema_name: "深圳南国影城金光华二期店"
+    order_cinema_name: "深圳南国影城金光华二期店",
+    sfc_cinema_name: "深圳南国二期影城"
   }
 ];
 
