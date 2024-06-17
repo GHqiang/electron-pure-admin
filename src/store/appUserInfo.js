@@ -27,7 +27,8 @@ export const appUserInfo = defineStore("appUserInfo", {
       jinji: null,
       laina: null,
       ningbo: null,
-      hema: null
+      hema: null,
+      qina: null
     }
   }),
   getters: {},
