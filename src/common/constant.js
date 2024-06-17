@@ -15,6 +15,14 @@ const APP_LIST = {
   limeihua: "利美华胤",
   hengye: "恒业电影城",
   minzu: "民族影城",
+  yinxingws: "银兴武商",
+  yinxingnc: "银兴南昌",
+  yinxingxy: "银兴襄阳",
+  liangchen: "良辰乐娃",
+  suzhou: "苏州中影",
+  quanmei: "全美",
+  yongheng: "永恒时代",
+  nanguojgh: "南国影城金光华店",
   qina: "齐纳国际"
 };
 // 平台关联应用
@@ -30,6 +38,14 @@ const PLAT_LINK_APP = {
     "limeihua",
     "hengye",
     "minzu",
+    "yinxingws",
+    "yinxingnc",
+    "yinxingxy",
+    "liangchen",
+    "suzhou",
+    "quanmei",
+    "yongheng",
+    "nanguojgh",
     "lumiai"
   ],
   shengapp: ["sfc", "lumiai"]
@@ -245,6 +261,66 @@ const HENGYE_SPECIAL_CINEMA_LIST = [
   }
 ];
 
+// 银兴影城南昌店特殊影院集合
+const YINGXINGNC_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: "长江银兴影城新华店",
+    sfc_cinema_name: "长江银兴影城南昌新华店"
+  }
+];
+
+// 银兴影城襄阳店特殊影院集合
+const YINGXINGXY_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: "长江银兴影城襄阳店",
+    sfc_cinema_name: "长江银兴影城襄城武商店"
+  }
+];
+
+// 良辰乐娃特殊影院集合
+const LIANGCHEN_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: "良辰乐娃影院",
+    sfc_cinema_name: "乐娃影院"
+  }
+];
+
+// 永恒时代特殊影院集合
+const YONGHENG_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: "永恒·中华大戏院",
+    sfc_cinema_name: "永恒·中华大戏院三街两巷电影院"
+  }
+];
+
+// 苏州中影特殊影院集合
+const SUZHOU_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: "苏州中影影城甪直店",
+    sfc_cinema_name: "中影国际影城甪直ALPD激光店"
+  }
+];
+
+// 全美影城特殊影院集合
+const QUANMEI_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: "太原全美影院",
+    sfc_cinema_name: "全美影院太原N1店"
+  }
+];
+
+// 南国金光华特殊影院集合
+const NANGUOJGH_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: "金光华南国影城",
+    sfc_cinema_name: "深圳南国影城金光华店"
+  },
+  {
+    order_cinema_name: "深圳南国二期影城",
+    sfc_cinema_name: "深圳南国影城金光华二期店"
+  }
+];
+
 // 特殊的名字匹配集合
 const SPECIAL_CINEMA_OBJ = {
   sfc: SFC_SPECIAL_CINEMA_LIST,
@@ -257,6 +333,14 @@ const SPECIAL_CINEMA_OBJ = {
   limiehua: LIMEIHUA_SPECIAL_CINEMA_LIST,
   hengye: HENGYE_SPECIAL_CINEMA_LIST,
   minzu: [],
+  yinxingws: [],
+  yinxingnc: YINGXINGNC_SPECIAL_CINEMA_LIST,
+  yinxingxy: YINGXINGXY_SPECIAL_CINEMA_LIST,
+  liangchen: LIANGCHEN_SPECIAL_CINEMA_LIST,
+  suzhou: SUZHOU_SPECIAL_CINEMA_LIST,
+  quanmei: QUANMEI_SPECIAL_CINEMA_LIST,
+  yongheng: YONGHENG_SPECIAL_CINEMA_LIST,
+  nanguojgh: NANGUOJGH_SPECIAL_CINEMA_LIST,
   qina: QINA_SPECIAL_CINEMA_LIST
 };
 
@@ -272,6 +356,14 @@ const TICKET_CONPREFIX_OBJ = {
   limeihua: "【利美华胤自动出票】——",
   hengye: "【恒业电影城自动出票】——",
   minzu: "【民族影城自动出票】——",
+  yinxingws: "【银兴武商自动出票】——",
+  yinxingnc: "【银兴南昌自动出票】——",
+  yinxingxy: "【银兴襄阳自动出票】——",
+  liangchen: "【良辰乐娃自动出票】——",
+  suzhou: "【苏州中影自动出票】——",
+  quanmei: "【全美自动出票】——",
+  yongheng: "【永恒时代自动出票】——",
+  nanguojgh: "【南国影城金光华店自动出票】——",
   qina: "【齐纳国际自动出票】——"
 };
 
@@ -287,6 +379,14 @@ const APP_OPENID_OBJ = {
   limeihua: "ok7FI49HybuSq5RNx49q6eNnzof4",
   hengye: "okxaO68YGIDHtSOfKw4UOCv-_4Co",
   minzu: "o6jsm440WovuVPr1tSNm21xqj_nQ",
+  yinxingws: "oUBmX5OrQYOUcEPHN6LIb8yOGSLQ",
+  yinxingnc: "ohRBp5CS0H0jThxNFBnLVaBK2ROQ",
+  yinxingxy: "oqlIF5uEe7ueJzkhAHvPEsW4cwgw",
+  liangchen: "oFSv95QrvI3_5mUEAWBG_JrseZ-s",
+  suzhou: "o1pgA7dSvGDpwzo5qLgL0163Ibxo",
+  quanmei: "oQlN65N9QJFlABGHVcK1KFuwM-LY",
+  yongheng: "oyJTi5Ji8B2DoiiRmjWv4eakE684",
+  nanguojgh: "osJTy5IDMVmwodwKlj_uoHkyR3s0",
   qina: "ouKdc5bCNh_0ygvtmniED-u9kIbA"
 };
 
@@ -302,6 +402,14 @@ const APP_GROUP_OBJ = {
   limeihua: "20496",
   hengye: "20669",
   minzu: "20039",
+  yinxingws: "20325",
+  yinxingnc: "20087",
+  yinxingxy: "20320",
+  liangchen: "20604",
+  suzhou: "20710",
+  quanmei: "20529",
+  yongheng: "20012",
+  nanguojgh: "20288",
   qina: "20004"
 };
 
