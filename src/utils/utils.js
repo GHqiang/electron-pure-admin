@@ -241,6 +241,47 @@ const getCinemaFlag = item => {
     return "hongshi";
   } else if (cinema_name.includes("利美华胤") && ["上海"].includes(city_name)) {
     return "limeihua";
+  } else if (cinema_name.includes("河马国际") && ["上海"].includes(city_name)) {
+    return "hema";
+  } else if (
+    ["恒业影城", "恒业国际影城"].some(
+      itemA =>
+        cinema_name.includes(itemA) &&
+        ["北京", "武汉", "芜湖"].includes(city_name)
+    )
+  ) {
+    return "hengye";
+  } else if (
+    cinema_name.includes("长江银兴影城") &&
+    ["襄阳"].includes(city_name)
+  ) {
+    return "yinxingxy";
+  } else if (
+    cinema_name.includes("长江银兴影城") &&
+    ["南昌"].includes(city_name)
+  ) {
+    return "yinxingnc";
+  } else if (
+    cinema_name.includes("长江银兴影城") &&
+    ["武汉"].includes(city_name)
+  ) {
+    return "yinxingws";
+  } else if (cinema_name.includes("乐娃影院") && ["北京"].includes(city_name)) {
+    return "liangchen";
+  } else if (cinema_name.includes("全美影院") && ["太原"].includes(city_name)) {
+    return "quanmei";
+  } else if (cinema_name.includes("民族影城") && ["南宁"].includes(city_name)) {
+    return "minzu";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("南国影城金光华") &&
+    ["深圳"].includes(city_name)
+  ) {
+    return "nanguojgh";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("中影国际影城甪直ALPD激光店") &&
+    ["苏州"].includes(city_name)
+  ) {
+    return "suzhou";
   }
 };
 
