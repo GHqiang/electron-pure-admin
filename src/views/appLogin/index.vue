@@ -21,23 +21,25 @@
       >
     </el-button-group>
 
-    <SfcLogin
+    <MockSfcLogin
+      ref="childRef"
       v-if="sfcLoginActive"
       :app-name="appName"
       @loginSuccess="sfcLoginSuccess"
-    ></SfcLogin>
+    ></MockSfcLogin>
   </div>
 </template>
 
 <script setup>
 import { ref } from "vue";
-import SfcLogin from "@/components/AppLogin/SfcLogin.vue";
+import MockSfcLogin from "@/components/AppLogin/MockSfcLogin.vue";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
 const { allUserInfo } = userInfoAndTokens;
 
 const { setSfcUserInfo, removeSfcUserInfo } = userInfoAndTokens;
 import { APP_LIST } from "@/common/constant";
+const childRef = ref(null);
 
 const appList = ref([]);
 Object.keys(APP_LIST).forEach(item => {
@@ -52,6 +54,10 @@ const appName = ref("sfc");
 const sfcLoginActive = ref(false);
 
 const appLogin = name => {
+  // 先清空一下数据
+  if (childRef.value) {
+    childRef.value.resetForm();
+  }
   appName.value = name;
   sfcLoginActive.value = true;
 };
