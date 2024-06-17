@@ -275,7 +275,7 @@ const getOfferList = async () => {
     return res.data.offerList || [];
   } catch (error) {
     console.error(conPrefix + "获取猎人历史报价记录异常", error);
-    return [];
+    return Promise.reject("获取历史报价异常");
   }
 };
 // 判断该订单是否是新订单

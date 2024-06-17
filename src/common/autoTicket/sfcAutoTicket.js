@@ -791,56 +791,17 @@ class OrderAutoTicketQueue {
         const cardList = await this.getCardList({ city_id, cinema_id });
         // 2、使用会员卡
         let member_total_price = memberPrice * ticket_num;
-        const card_id = await this.useCard(member_total_price, cardList);
-        if (!card_id) {
-          console.error(conPrefix + "使用会员卡失败，会员卡余额不足");
-          return {
-            profit: 0,
-            card_id: ""
-          };
-        }
-        // 3、计算价格要求最终价格小于中标价
-        const priceInfo = await this.priceCalculation({
+        const { card_id, profit } = await this.useCard({
+          member_total_price,
+          cardList,
+          supplier_end_price,
+          ticket_num,
           city_id,
           cinema_id,
           show_id,
           seat_ids,
-          card_id
+          urgent: order.urgent
         });
-        console.warn(
-          conPrefix + "会员卡出票最终价格",
-          priceInfo?.total_price,
-          "中标价格*座位数：",
-          Number(supplier_end_price) * ticket_num
-        );
-        if (
-          !priceInfo ||
-          Number(priceInfo.total_price) >=
-            Number(supplier_end_price) * ticket_num
-        ) {
-          console.error(
-            conPrefix +
-              "计算订单价格失败或者最终计算大于等于中标价，单个订单直接出票结束"
-          );
-          // 后续要记录失败列表（订单信息、失败原因、时间戳）
-          return {
-            profit: 0,
-            card_id: ""
-          };
-        }
-        // 卡的话 1块钱成本就是一块钱，利润 =  中标价格-会员出票价格 -手续费（中标价格1%）
-        let profit =
-          supplier_end_price -
-          memberPrice -
-          (Number(supplier_end_price) * 100) / 10000;
-        profit = Number(profit) * Number(ticket_num);
-        if (order?.urgent == 1) {
-          // 特急奖励订单中标价格 * 张数 * 0.04;
-          let rewardPrice =
-            (Number(supplier_end_price) * Number(ticket_num) * 400) / 10000;
-          profit += rewardPrice;
-        }
-        profit = Number(profit).toFixed(2);
         return {
           card_id,
           profit // 利润
@@ -1351,16 +1312,109 @@ class OrderAutoTicketQueue {
   }
 
   // 使用会员卡
-  async useCard(member_total_price, cardList) {
-    const { conPrefix } = this;
+  async useCard({
+    member_total_price,
+    cardList,
+    supplier_end_price,
+    ticket_num,
+    city_id,
+    cinema_id,
+    show_id,
+    seat_ids,
+    urgent
+  }) {
+    const { conPrefix, appFlag } = this;
     try {
       let cards = cardList || [];
-      let cardInfo = cards.find(
+      let cardFilter = cards.filter(
         item => Number(item.balance) >= Number(member_total_price)
       );
-      return cardInfo?.id || "";
+      if (!cardFilter?.length) {
+        console.error(conPrefix + "使用会员卡失败，会员卡余额不足");
+        this.setErrInfo(appFlag + "会员卡余额不足");
+        return {
+          profit: 0,
+          card_id: ""
+        };
+      }
+      let cardData = cardFilter.sort((a, b) => {
+        // 如果a是默认卡且b不是，默认卡排前面
+        if (a.default_card === "1" && b.default_card !== "1") return -1;
+        // 如果b是默认卡且a不是，默认卡排前面
+        if (a.default_card !== "1" && b.default_card === "1") return 1;
+        // 如果两者都是默认卡或都不是，默认维持原有顺序
+        return 0;
+      });
+      let card_id;
+      // 开始尝试使用卡并获取成功使用的卡的结果
+      const attemptCardsSequentially = async () => {
+        for (const card of cardData) {
+          console.log(conPrefix + `正在尝试使用卡 ${card.card_num}...`);
+          const result = await this.priceCalculation({
+            city_id,
+            cinema_id,
+            show_id,
+            seat_ids,
+            card_id: card.id
+          });
+          if (result) {
+            card_id = card.id;
+            console.log(conPrefix + "卡使用成功，返回结果并停止尝试。");
+            return result; // 卡使用成功，返回结果并结束函数
+          }
+        }
+        console.error(conPrefix + "所有卡尝试均失败。");
+        return null; // 所有卡尝试失败后返回null
+      };
+      // 3、计算价格要求最终价格小于中标价
+      const priceInfo = await attemptCardsSequentially();
+      console.warn(
+        conPrefix + "会员卡出票最终价格",
+        priceInfo?.total_price,
+        "中标价格*座位数：",
+        Number(supplier_end_price) * ticket_num
+      );
+      if (
+        !priceInfo ||
+        Number(priceInfo.total_price) >= Number(supplier_end_price) * ticket_num
+      ) {
+        console.error(
+          conPrefix +
+            "计算订单价格失败或者最终计算大于等于中标价，单个订单直接出票结束"
+        );
+        this.setErrInfo(
+          appFlag + (priceInfo ? "最终价格大于等于中标价" : "计算订单价格失败")
+        );
+        // 后续要记录失败列表（订单信息、失败原因、时间戳）
+        return {
+          profit: 0,
+          card_id: ""
+        };
+      }
+      // 卡的话 1块钱成本就是一块钱，利润 =  中标价格-会员出票价格 -手续费（中标价格1%）
+      let profit =
+        supplier_end_price -
+        memberPrice -
+        (Number(supplier_end_price) * 100) / 10000;
+      profit = Number(profit) * Number(ticket_num);
+      if (urgent == 1) {
+        // 特急奖励订单中标价格 * 张数 * 0.04;
+        let rewardPrice =
+          (Number(supplier_end_price) * Number(ticket_num) * 400) / 10000;
+        profit += rewardPrice;
+      }
+      profit = Number(profit).toFixed(2);
+      return {
+        card_id,
+        profit
+      };
     } catch (error) {
       console.error(conPrefix + "使用会员卡异常", error);
+      this.setErrInfo("使用会员卡异常", error);
+      return {
+        card_id: "",
+        profit: 0
+      };
     }
   }
   // 获取城市列表
