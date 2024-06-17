@@ -157,6 +157,14 @@ const APP_OPENID_OBJ = {
   hema: "oD3rN4ge-6H9Q4mYVBBJcsMFoRkc"
 };
 
+const APP_GROUP_OBJ = {
+  sfc: "20045",
+  jiujin: "20253",
+  jinji: "20047",
+  ningbo: "20023",
+  laina: "20463",
+  hema: "20064"
+};
 // 报价规则
 const OFFER_LIST = [
   {
@@ -591,5 +599,6 @@ export {
   SPECIAL_CINEMA_OBJ,
   TICKET_CONPREFIX_OBJ,
   OFFER_LIST,
-  APP_OPENID_OBJ
+  APP_OPENID_OBJ,
+  APP_GROUP_OBJ
 };

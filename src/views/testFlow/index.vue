@@ -237,12 +237,14 @@ import {
   getCurrentFormattedDateTime,
   convertFullwidthToHalfwidth
 } from "@/utils/utils";
-import sfcApi from "@/api/sfc-api";
+import { SFC_API_OBJ } from "@/common/index.js";
 import lierenApi from "@/api/lieren-api";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
 const { allUserInfo, removeSfcUserInfo } = userInfoAndTokens;
-const appName = "sfc";
+const appName = "hema";
+let sfcApi = SFC_API_OBJ[appName];
+// console.log("sfcApi", sfcApi);
 import { useRouter } from "vue-router";
 const router = useRouter();
 
