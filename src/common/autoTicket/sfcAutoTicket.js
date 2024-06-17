@@ -224,7 +224,8 @@ class OrderAutoTicketQueue {
         quan_code: res?.quan_code || "",
         card_id: res?.card_id || "",
         err_msg: errMsg || "",
-        err_info: errInfo || ""
+        err_info: errInfo || "",
+        urgent: order.urgent // 是否是特急订单 1是 0否（特急有奖励）
       };
       if (res?.submitRes) {
         this.handleSuccessOrderList.push(order);
@@ -832,8 +833,14 @@ class OrderAutoTicketQueue {
           supplier_end_price -
           memberPrice -
           (Number(supplier_end_price) * 100) / 10000;
-        profit = Number(profit).toFixed(2);
         profit = Number(profit) * Number(ticket_num);
+        if (order?.urgent == 1) {
+          // 特急奖励订单中标价格 * 张数 * 0.04;
+          let rewardPrice =
+            (Number(supplier_end_price) * Number(ticket_num) * 400) / 10000;
+          profit += rewardPrice;
+        }
+        profit = Number(profit).toFixed(2);
         return {
           card_id,
           profit // 利润
@@ -851,7 +858,8 @@ class OrderAutoTicketQueue {
           ticket_num,
           supplier_end_price,
           quanList,
-          quanValue
+          quanValue,
+          urgent: order.urgent
         });
         return {
           quan_code: useQuans.join(),
@@ -1227,7 +1235,8 @@ class OrderAutoTicketQueue {
     ticket_num,
     supplier_end_price,
     quanList,
-    quanValue
+    quanValue,
+    urgent
   }) {
     const { conPrefix } = this;
     try {
@@ -1249,33 +1258,34 @@ class OrderAutoTicketQueue {
         .map(item => item.coupon_num);
       let profit = 0; // 利润
       // 券的话 30和35券没花头，成本就是券面价格。40的在39-30.5区间。 利润 =  中标价格-券价格 -手续费（中标价格1%）
+      // 券列表
+      let quanListObj = {
+        40: quanlist40,
+        35: quanlist35,
+        30: quanlist30
+      };
+      // 券成本（先不考虑成本，都以原价当做成本，后续添加券成本维护功能）
+      let quanCostObj = {
+        40: 40,
+        35: 35,
+        30: 30
+      };
       for (let index = 0; index < ticket_num; index++) {
-        if (quanValue === "40") {
-          useQuans.push(quanlist40.shift());
-          profit =
-            profit +
-            Number(supplier_end_price) -
-            40 -
-            (Number(supplier_end_price) * 100) / 10000;
-        } else if (quanValue === "35") {
-          useQuans.push(quanlist35.shift());
-          profit =
-            profit +
-            Number(supplier_end_price) -
-            35 -
-            (Number(supplier_end_price) * 100) / 10000;
-        } else if (quanValue === "30") {
-          useQuans.push(quanlist30.shift());
-          profit =
-            profit +
-            Number(supplier_end_price) -
-            30 -
-            (Number(supplier_end_price) * 100) / 10000;
-        }
-        // 四舍五入保留两位小数后再转为数值类型
-        profit = Number(profit).toFixed(2);
-        profit = Number(profit);
+        useQuans.push(quanListObj[quanValue].shift());
+        profit =
+          profit +
+          Number(supplier_end_price) -
+          quanCostObj[quanValue] -
+          (Number(supplier_end_price) * 100) / 10000;
       }
+      if (urgent == 1) {
+        // 特急奖励订单中标价格 * 张数 * 0.04;
+        let rewardPrice =
+          (Number(supplier_end_price) * Number(ticket_num) * 400) / 10000;
+        profit += rewardPrice;
+      }
+      // 四舍五入保留两位小数后再转为数值类型
+      profit = Number(profit).toFixed(2);
       if (useQuans.length !== useQuans.filter(item => !!item).length) {
         console.error(
           conPrefix + `${quanValue} 面额券不足，无法使用券`,

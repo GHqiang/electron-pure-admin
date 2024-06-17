@@ -219,7 +219,8 @@ class OrderAutoOfferQueue {
         quan_value: offerResult?.offerRule?.quanValue,
         order_status: offerResult?.res ? "1" : "2",
         // remark: '',
-        processing_time: +new Date() + ""
+        processing_time: +new Date() + "",
+        urgent: order.urgent // 是否是特急订单 1是 0否（特急有奖励）
       };
       if (offerResult?.res) {
         this.handleSuccessOrderList.push(order);

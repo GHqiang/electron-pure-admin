@@ -157,6 +157,7 @@ const APP_OPENID_OBJ = {
   hema: "oD3rN4ge-6H9Q4mYVBBJcsMFoRkc"
 };
 
+// 影院group组别标识
 const APP_GROUP_OBJ = {
   sfc: "20045",
   jiujin: "20253",
@@ -165,6 +166,7 @@ const APP_GROUP_OBJ = {
   laina: "20463",
   hema: "20064"
 };
+
 // 报价规则
 const OFFER_LIST = [
   {
