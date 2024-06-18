@@ -1217,8 +1217,10 @@ class OrderAutoTicketQueue {
   // 获取新券
   async getNewQuan({ quanValue, quanNum, city_id, cinema_id }) {
     try {
+      const { appFlag } = this;
       let quanRes = await svApi.queryQuanList({
         quan_value: quanValue,
+        app_name: appFlag,
         page_num: 1,
         page_size: quanNum
       });
