@@ -76,6 +76,11 @@ const createApi = ({ group, appName }) => {
   // 取消订单
   const cancelOrder = params =>
     axios.get("/api/order/cancel-my-order", { params });
+
+  // 绑定优惠券
+  const bandQuan = params =>
+    axios.get("/api/v2/coupon/bind-coupon-code", { params });
+
   return {
     getSmsCode,
     verifyLogin,
@@ -95,7 +100,8 @@ const createApi = ({ group, appName }) => {
     getLastOrder,
     cancelOrder,
     getOrderList,
-    buyTicket
+    buyTicket,
+    bandQuan
   };
 };
 export default createApi;

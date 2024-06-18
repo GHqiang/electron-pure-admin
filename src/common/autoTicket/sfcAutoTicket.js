@@ -1198,6 +1198,55 @@ class OrderAutoTicketQueue {
     }
   }
 
+  // 绑定券
+  async bandQuan({ coupon_num, cinema_id, city_id }) {
+    try {
+      await this.sfcApi.bandQuan({
+        city_id,
+        cinema_id,
+        coupon_code: coupon_num,
+        from_goods: "2"
+      });
+      return coupon_num;
+    } catch (error) {
+      console.error(conPrefix + "绑定新券异常", error);
+      this.setErrInfo("绑定新券异常", error);
+    }
+  }
+
+  // 获取新券
+  async getNewQuan({ quanValue, quanNum, city_id, cinema_id }) {
+    try {
+      let quanRes = await svApi.queryQuanList({
+        quan_value: quanValue,
+        page_num: 1,
+        page_size: quanNum
+      });
+      let quanList = quanRes.data.quanList || [];
+      if (!quanList?.length) {
+        console.error(conPrefix + `数据库${quanValue}面额券不足`);
+        this.setErrInfo(`数据库${quanValue}面额券不足`);
+        return;
+      }
+      let bandQuanList = [];
+      for (const quan of quanList) {
+        console.log(conPrefix + `正在尝试绑定券 ${quan.coupon_num}...`);
+        const coupon_num = await this.bandQuan({
+          city_id,
+          cinema_id,
+          coupon_num: quan.coupon_num
+        });
+        if (coupon_num) {
+          bandQuanList.push({ coupon_num, quan_cost: quan.quan_cost });
+        }
+      }
+      return bandQuanList;
+    } catch (error) {
+      console.error(conPrefix + "获取新券异常", error);
+      this.setErrInfo("获取新券异常", error);
+    }
+  }
+
   // 使用优惠券
   async useQuan({
     city_id,
@@ -1216,40 +1265,52 @@ class OrderAutoTicketQueue {
       // 1、成本不能高于中标价，即40券不能出中标价39.5的单
       // 2、1张票一个券，不能出现2张票用3个券的情况
       // 3、40出一线，35出二线国内，30出二线外国（暂时无法区分外国）
-      let useQuans = []; // 用券列表
       let quans = quanList || []; // 优惠券列表
-      let pay_money; // 实际支付金额
-      let quanlist40 = quans
-        .filter(item => item.coupon_info.indexOf("40") !== -1)
-        .map(item => item.coupon_num);
-      let quanlist35 = quans
-        .filter(item => item.coupon_info.indexOf("35") !== -1)
-        .map(item => item.coupon_num);
-      let quanlist30 = quans
-        .filter(item => item.coupon_info.indexOf("30") !== -1)
-        .map(item => item.coupon_num);
+      let targetQuanList = quans
+        .filter(item => item.coupon_info.indexOf(quanValue) !== -1)
+        .map(item => {
+          return {
+            coupon_num: item.coupon_num,
+            quan_cost: Number(quanValue)
+          };
+        });
+      if (targetQuanList?.length < ticket_num) {
+        console.error(
+          conPrefix + `${quanValue} 面额券不足，从服务端获取并绑定`,
+          targetQuanList
+        );
+        this.setErrInfo(`${quanValue} 面额券不足`);
+        // const newQuanList = await this.getNewQuan({
+        //   city_id,
+        //   cinema_id,
+        //   quanValue,
+        //   quanNum: Number(ticket_num) - targetQuanList.length
+        // });
+        // if (newQuanList?.length) {
+        //   targetQuanList = [...targetQuanList, ...newQuanList];
+        // }
+        if (targetQuanList?.length < ticket_num) {
+          // console.error(
+          //   conPrefix + `从服务端获取并绑定后${quanValue} 面额券仍不足，`,
+          //   targetQuanList
+          // );
+          // this.setErrInfo(`${quanValue} 面额券从数据库获取后仍不足`);
+          return {
+            profit: 0,
+            useQuans: []
+          };
+        }
+      }
+      // 用券列表
+      let useQuans = targetQuanList.map(item => item.coupon_num);
       let profit = 0; // 利润
-      // 券的话 30和35券没花头，成本就是券面价格。40的在39-30.5区间。 利润 =  中标价格-券价格 -手续费（中标价格1%）
-      // 券列表
-      let quanListObj = {
-        40: quanlist40,
-        35: quanlist35,
-        30: quanlist30
-      };
-      // 券成本（先不考虑成本，都以原价当做成本，后续添加券成本维护功能）
-      let quanCostObj = {
-        40: 40,
-        35: 35,
-        30: 30
-      };
-      for (let index = 0; index < ticket_num; index++) {
-        useQuans.push(quanListObj[quanValue].shift());
+      targetQuanList.forEach(item => {
         profit =
           profit +
           Number(supplier_end_price) -
-          quanCostObj[quanValue] -
+          item.quan_cost -
           (Number(supplier_end_price) * 100) / 10000;
-      }
+      });
       if (urgent == 1) {
         // 特急奖励订单中标价格 * 张数 * 0.04;
         let rewardPrice =
@@ -1257,18 +1318,8 @@ class OrderAutoTicketQueue {
         profit += rewardPrice;
       }
       // 四舍五入保留两位小数后再转为数值类型
-      profit = Number(profit).toFixed(2);
-      if (useQuans.length !== useQuans.filter(item => !!item).length) {
-        console.error(
-          conPrefix + `${quanValue} 面额券不足，无法使用券`,
-          quanList
-        );
-        this.setErrInfo(`${quanValue} 面额券不足`);
-        return {
-          profit: 0,
-          useQuans: []
-        };
-      }
+      profit = profit.toFixed(2);
+
       const priceInfo = await this.priceCalculation({
         city_id,
         cinema_id,
@@ -1284,7 +1335,8 @@ class OrderAutoTicketQueue {
           useQuans: []
         };
       }
-      pay_money = priceInfo.total_price;
+      // 实际支付金额
+      let pay_money = priceInfo.total_price;
       if (pay_money === "0.00") {
         return {
           profit,
