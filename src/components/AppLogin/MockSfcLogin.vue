@@ -7,12 +7,25 @@
     <el-form ref="formRef" :model="formData" :rules="rules" label-width="120px">
       <!-- 手机号输入框 -->
       <el-form-item label="手机号" prop="phoneNumber">
-        <el-input v-model.number="formData.phoneNumber"></el-input>
+        <el-input
+          v-model.number="formData.phoneNumber"
+          placeholder="请输入该影院的手机号"
+        ></el-input>
       </el-form-item>
 
       <!-- Session 输入框 -->
       <el-form-item label="Session ID" prop="sessionId">
-        <el-input v-model="formData.sessionId"></el-input>
+        <el-input
+          v-model="formData.sessionId"
+          placeholder="请输入该影院的Session ID"
+        ></el-input>
+      </el-form-item>
+
+      <el-form-item label="会员卡密码" prop="memberPwd">
+        <el-input
+          v-model="formData.memberPwd"
+          placeholder="请输入该影院的会员卡密码"
+        ></el-input>
       </el-form-item>
 
       <!-- 提交按钮 -->
@@ -45,7 +58,8 @@ watch(
 const formRef = ref(null);
 const formData = reactive({
   phoneNumber: "",
-  sessionId: ""
+  sessionId: "",
+  memberPwd: ""
 });
 
 const rules = {
@@ -60,6 +74,10 @@ const rules = {
   sessionId: [
     { required: true, message: "Session ID不能为空", trigger: "blur" }
     // 如果Session ID有特定格式要求，可以在这里添加pattern验证
+  ],
+  memberPwd: [
+    { required: true, message: "会员卡密码不能为空", trigger: "blur" }
+    // 如果Session ID有特定格式要求，可以在这里添加pattern验证
   ]
 };
 
@@ -71,7 +89,8 @@ const submitForm = () => {
       ElMessage.success("提交成功！");
       $emit("loginSuccess", {
         mobile: formData.phoneNumber,
-        session_id: formData.sessionId
+        session_id: formData.sessionId,
+        member_pwd: formData.sessionId
       });
     } else {
       ElMessage.warn("表单校验失败");

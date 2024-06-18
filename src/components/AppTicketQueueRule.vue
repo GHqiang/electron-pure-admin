@@ -55,6 +55,51 @@
         <span> {{ appTokenObj[row.appName] }}</span>
       </template>
     </el-table-column>
+    <el-table-column label="影院会员卡密码">
+      <template #default="{ row, $index }">
+        <span v-if="getMemberPwd(row.appName) && row.id === viewRowId">
+          {{ getMemberPwd(row.appName) }}</span
+        >
+        <span
+          v-if="getMemberPwd(row.appName) && row.id !== viewRowId"
+          style="font-size: 20px"
+        >
+          ······</span
+        >
+        <ElIcon
+          v-if="getMemberPwd(row.appName) && row.id !== viewRowId"
+          @click="viewRowId = row.id"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="1em"
+            height="1em"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fill="currentColor"
+              d="M.2 10a11 11 0 0 1 19.6 0A11 11 0 0 1 .2 10m9.8 4a4 4 0 1 0 0-8a4 4 0 0 0 0 8m0-2a2 2 0 1 1 0-4a2 2 0 0 1 0 4"
+            />
+          </svg>
+        </ElIcon>
+        <ElIcon
+          v-if="getMemberPwd(row.appName) && row.id === viewRowId"
+          @click="viewRowId = ''"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="1em"
+            height="1em"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fill="currentColor"
+              d="m12.81 4.36l-1.77 1.78a4 4 0 0 0-4.9 4.9l-2.76 2.75C2.06 12.79.96 11.49.2 10a11 11 0 0 1 12.6-5.64zm3.8 1.85c1.33 1 2.43 2.3 3.2 3.79a11 11 0 0 1-12.62 5.64l1.77-1.78a4 4 0 0 0 4.9-4.9l2.76-2.75zm-.25-3.99l1.42 1.42L3.64 17.78l-1.42-1.42z"
+            />
+          </svg>
+        </ElIcon>
+      </template>
+    </el-table-column>
     <el-table-column label="队列执行状态">
       <template #default="{ row }">
         <el-switch disabled v-model="row.isEnabled" />
@@ -154,6 +199,7 @@ const isActiveOneClickStart = computed(() => {
 const isActiveOneClickStop = computed(() => {
   return tableDataStore.items.filter(item => item.isEnabled).length > 0;
 });
+const getMemberPwd = appName => allUserInfo[appName]?.member_pwd || "";
 
 // 影线列表
 const shadowLineObj = APP_LIST;
@@ -162,6 +208,8 @@ const shadowLineObj = APP_LIST;
 const isCollapse = ref(true);
 // 正在编辑id
 const editingRowId = ref(null);
+// 正在查看id
+const viewRowId = ref(null);
 // 正在编辑内容
 const editingRow = ref({});
 
@@ -178,11 +226,12 @@ console.log("appTokenObj", appTokenObj);
 console.log("appTicketQueueObj", appTicketQueueObj);
 // 一键启动
 const oneClickAutoOffer = () => {
-  let pwd = tokens.userInfo.member_pwd;
   // console.log("pwd", pwd);
-
-  if (!pwd) {
-    ElMessage.error("会员卡密码未设置，请先去设置后再启动");
+  let isNOMemberPwd = tableDataStore.items.some(
+    item => !allUserInfo[item.appName]?.member_pwd
+  );
+  if (isNOMemberPwd) {
+    ElMessage.error("有会员卡密码未设置，请先去登录页退出重登该影院后再启动");
     return;
   }
   ElMessageBox.confirm("确定要一键全部启动吗?", "提示", {
@@ -228,7 +277,7 @@ const stopAutoOffer = () => {
 const singleStartOrStop = ({ id, appName }, flag) => {
   // 单个启动
   if (flag === 1) {
-    let pwd = tokens.userInfo.member_pwd;
+    let pwd = allUserInfo[appName]?.member_pwd;
     // console.log("pwd", pwd);
     if (!pwd) {
       ElMessage.error("会员卡密码未设置，请先去设置后再启动");
@@ -274,3 +323,10 @@ const cancelEdit = () => {
   editingRowId.value = null;
 };
 </script>
+<style scoped>
+/deep/ .el-icon {
+  font-size: 20px;
+  vertical-align: top;
+  margin: 0 10px;
+}
+</style>

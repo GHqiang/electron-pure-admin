@@ -56,14 +56,14 @@ export default {
         title: "影院余额查询"
       }
     },
-    {
-      path: "/set/memberPwdSet",
-      name: "memberPwdSet",
-      component: () => import("@/views/memberPwdSet/index.vue"),
-      meta: {
-        title: "会员卡密码设置"
-      }
-    },
+    // {
+    //   path: "/set/memberPwdSet",
+    //   name: "memberPwdSet",
+    //   component: () => import("@/views/memberPwdSet/index.vue"),
+    //   meta: {
+    //     title: "会员卡密码设置"
+    //   }
+    // },
     {
       path: "/set/test",
       name: "test",

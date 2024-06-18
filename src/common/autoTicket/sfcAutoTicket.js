@@ -23,9 +23,9 @@ const appTicketRuleList = computed(() => appRuleListStore.items);
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
 const {
-  userInfo: { user_id, member_pwd }
+  userInfo: { user_id }
 } = tokens;
-// console.log("user_id", user_id, "member_pwd", member_pwd);
+// console.log("user_id", user_id);
 
 // 影院登录用户信息
 import { appUserInfo } from "@/store/appUserInfo";
@@ -919,7 +919,7 @@ class OrderAutoTicketQueue {
             conPrefix + "调整会员卡密码参数再次发起创建订单请求",
             params
           );
-          let pwd = member_pwd;
+          let pwd = allUserInfo[appFlag]?.member_pwd || "";
           if (!pwd) {
             console.error(conPrefix + "会员卡密码未设置");
             this.setErrInfo("会员卡密码未设置");
