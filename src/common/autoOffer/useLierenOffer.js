@@ -352,7 +352,7 @@ async function getStayOfferList() {
       desc: "desc",
       type: 0
     };
-    console.log(conPrefix + "获取待报价订单列表参数", params);
+    // console.log(conPrefix + "获取待报价订单列表参数", params);
     const res = await lierenApi.stayTicketingList(params);
     // let mockRes = {
     //   success: true,

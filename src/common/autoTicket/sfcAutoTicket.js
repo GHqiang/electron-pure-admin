@@ -802,6 +802,7 @@ class OrderAutoTicketQueue {
           cinema_id,
           show_id,
           seat_ids,
+          memberPrice,
           urgent: order.urgent
         });
         return {
@@ -1330,6 +1331,7 @@ class OrderAutoTicketQueue {
     cinema_id,
     show_id,
     seat_ids,
+    memberPrice,
     urgent
   }) {
     const { conPrefix, appFlag } = this;
