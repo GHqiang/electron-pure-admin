@@ -799,7 +799,7 @@ const cinemaMatchHandle = (cinema_name, list, appName) => {
       noSpaceList,
       cinemaName
     );
-    setErrInfo("影院名称匹配-去掉空格及换行符后全字匹配影院名称失败");
+    // setErrInfo("影院名称匹配-去掉空格及换行符后全字匹配影院名称失败");
     // 3、模糊匹配
     // let targetCinemaName = findBestMatchByLevenshteinWithThreshold(list, cinema_name, 8)
     // console.log('targetCinemaName', targetCinemaName)
