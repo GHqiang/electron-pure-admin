@@ -37,7 +37,8 @@ console.log(conPrefix + "队列执行规则", getOrginValue(platOfferRuleList.va
 console.log(conPrefix + "自动报价规则", getOrginValue(appOfferRuleList.value));
 
 const cityList = ref([]); // 城市列表
-
+let errMsg = "";
+let errInfo = "";
 // 创建一个订单自动报价队列类
 class OrderAutoOfferQueue {
   constructor() {
@@ -45,8 +46,6 @@ class OrderAutoOfferQueue {
     this.isRunning = false; // 初始化时队列未运行
     this.handleSuccessOrderList = []; // 订单处理成功列表
     this.handleFailOrderList = []; // 订单处理失败列表
-    this.errMsg = ""; // 单次出票的错误语
-    this.errInfo = ""; // 单次出票的错误信息
   }
 
   // 启动队列（fetchDelay获取订单列表间隔，processDelay处理订单间隔）
@@ -197,7 +196,6 @@ class OrderAutoOfferQueue {
   // 添加订单处理记录
   async addOrderHandleRecored(order, offerResult) {
     try {
-      const { errMsg, errInfo } = this;
       // 数据库存储
       // offerResult: { res, offerRule } || { offerRule } || undefined
       console.warn(conPrefix + "数据库存储报价记录", order, offerResult);
@@ -267,52 +265,52 @@ class OrderAutoOfferQueue {
       handleFailOrderList
     );
   }
-
-  // 设置错误信息
-  setErrInfo(errMsg, errInfo) {
-    try {
-      if (errMsg === "") {
-        // 清空重置
-        this.errMsg = "";
-      } else {
-        this.errMsg = errMsg;
-      }
-      if (errInfo === "") {
-        // 清空重置
-        this.errInfo = "";
-      } else {
-        if (errInfo) {
-          if (errInfo instanceof Error) {
-            const cleanedError = {
-              message: errInfo.message,
-              stack: errInfo.stack,
-              name: errInfo.name
-            };
-            this.errInfo = JSON.stringify(
-              cleanedError,
-              (key, value) =>
-                typeof value === "function" || value instanceof Error
-                  ? undefined
-                  : value,
-              2
-            );
-          } else {
-            try {
-              this.errInfo = JSON.stringify(errInfo);
-            } catch (error) {
-              console.warn("错误信息转换异常", error);
-              this.errInfo = errInfo.toString();
-            }
-          }
-        }
-      }
-    } catch (error) {
-      console.warn("错误信息转换异常1", error);
-    }
-  }
 }
 // 报价队列实例
 const offerQueue = new OrderAutoOfferQueue();
+
+// 设置错误信息
+const setErrInfo = (err_msg, err_info) => {
+  try {
+    if (err_msg === "") {
+      // 清空重置
+      errMsg = "";
+    } else {
+      errMsg = err_msg;
+    }
+    if (err_info === "") {
+      // 清空重置
+      errInfo = "";
+    } else {
+      if (err_info) {
+        if (err_info instanceof Error) {
+          const cleanedError = {
+            message: err_info.message,
+            stack: err_info.stack,
+            name: err_info.name
+          };
+          errInfo = JSON.stringify(
+            cleanedError,
+            (key, value) =>
+              typeof value === "function" || value instanceof Error
+                ? undefined
+                : value,
+            2
+          );
+        } else {
+          try {
+            errInfo = JSON.stringify(err_info);
+          } catch (error) {
+            console.warn("错误信息转换异常", error);
+            errInfo = err_info.toString();
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.warn("错误信息转换异常1", error);
+  }
+};
 
 // 获取报价记录
 const getOfferList = async () => {
@@ -324,7 +322,7 @@ const getOfferList = async () => {
     return res.data.offerList || [];
   } catch (error) {
     console.error(conPrefix + "获取猎人历史报价记录异常", error);
-    this.setErrInfo("获取猎人历史报价记录异常", error);
+    setErrInfo("获取猎人历史报价记录异常", error);
     return Promise.reject("获取历史报价异常");
   }
 };
@@ -341,7 +339,7 @@ const judgeHandle = (item, app_name, offerList) => {
     return !isOffer;
   } catch (error) {
     console.error(conPrefix + "判断该订单是否是新订单异常", error);
-    this.setErrInfo("判断该订单是否是新订单异常", error);
+    setErrInfo("判断该订单是否是新订单异常", error);
   }
 };
 // 获取待报价订单列表
@@ -398,7 +396,7 @@ async function getStayOfferList() {
     return list;
   } catch (error) {
     console.error(conPrefix + "获取待报价列表异常", error);
-    this.setErrInfo("获取待报价列表异常", error);
+    setErrInfo("获取待报价列表异常", error);
     return [];
   }
 }
@@ -407,8 +405,8 @@ async function getStayOfferList() {
 async function singleOffer(item) {
   let offerRule;
   try {
-    this.errMsg = "";
-    this.errInfo = "";
+    errMsg = "";
+    errInfo = "";
     console.log(conPrefix + "待报价订单", item);
     let { id, supplier_max_price } = item || {};
     if (!id) return;
@@ -424,7 +422,7 @@ async function singleOffer(item) {
     if (!price) return { offerRule };
     if (Number(supplier_max_price) < price) {
       console.error(conPrefix + "当前报价超过供应商最高报价，不再进行报价");
-      this.setErrInfo("当前报价超过供应商最高报价，不再进行报价");
+      setErrInfo("当前报价超过供应商最高报价，不再进行报价");
       return { offerRule };
     }
 
@@ -438,7 +436,7 @@ async function singleOffer(item) {
     return { res, offerRule };
   } catch (error) {
     console.error(conPrefix + "订单报价异常", error);
-    this.setErrInfo("订单报价异常", error);
+    setErrInfo("订单报价异常", error);
     return { offerRule };
   }
 }
@@ -461,7 +459,7 @@ async function getMoviePlayInfo(data) {
     return res.data;
   } catch (error) {
     console.error(conPrefix + "获取电影放映信息异常", error);
-    this.setErrInfo("获取电影放映信息异常", error);
+    setErrInfo("获取电影放映信息异常", error);
   }
 }
 
@@ -656,12 +654,12 @@ const offerRuleMatch = async order => {
     console.warn(conPrefix + "最终匹配到的报价规则", endRule);
     if (!endRule) {
       console.error(conPrefix + "最终匹配到的报价规则不存在");
-      this.setErrInfo("最终匹配到的报价规则不存在");
+      setErrInfo("最终匹配到的报价规则不存在");
     }
     return endRule;
   } catch (error) {
     console.error(conPrefix + "报价规则匹配出现异常", error);
-    this.setErrInfo("报价规则匹配出现异常", error);
+    setErrInfo("报价规则匹配出现异常", error);
   }
 };
 
@@ -736,7 +734,7 @@ const getMinAmountOfferRule = async (ruleList, order) => {
       : mixAddAmountRule;
   } catch (error) {
     console.error(conPrefix + "获取最低报价规则异常", error);
-    this.setErrInfo("获取最低报价规则异常", error);
+    setErrInfo("获取最低报价规则异常", error);
   }
 };
 
@@ -763,7 +761,7 @@ const getMemberPrice = async order => {
     }
   } catch (error) {
     console.error(conPrefix + "获取会员价异常", error);
-    this.setErrInfo("获取会员价异常", error);
+    setErrInfo("获取会员价异常", error);
   }
 };
 
@@ -801,7 +799,7 @@ const cinemaMatchHandle = (cinema_name, list, appName) => {
       noSpaceList,
       cinemaName
     );
-    this.setErrInfo("影院名称匹配-去掉空格及换行符后全字匹配影院名称失败");
+    setErrInfo("影院名称匹配-去掉空格及换行符后全字匹配影院名称失败");
     // 3、模糊匹配
     // let targetCinemaName = findBestMatchByLevenshteinWithThreshold(list, cinema_name, 8)
     // console.log('targetCinemaName', targetCinemaName)
@@ -811,7 +809,7 @@ const cinemaMatchHandle = (cinema_name, list, appName) => {
     // console.error('【自动报价规则匹配】模糊匹配影院名称失败', list, cinema_name, 8)
   } catch (error) {
     console.error(conPrefix + "影院名称匹配异常", error);
-    this.setErrInfo("影院名称匹配异常", error);
+    setErrInfo("影院名称匹配异常", error);
   }
 };
 
@@ -855,9 +853,7 @@ const getCinemaId = (cinema_name, list, appName) => {
       cinemaName,
       noSpaceCinemaList
     );
-    this.setErrInfo(
-      "根据订单name获取影院id失败-去掉空格及换行符后全字匹配失败"
-    );
+    setErrInfo("根据订单name获取影院id失败-去掉空格及换行符后全字匹配失败");
 
     // // 3、不满足条件就走模糊匹配（模糊匹配不正确的就放到特殊匹配里面）
     // let cinemaNameList = list.map(item => item.name)
@@ -874,7 +870,7 @@ const getCinemaId = (cinema_name, list, appName) => {
     // return cinema_id
   } catch (error) {
     console.error(conPrefix + "根据订单name获取影院id失败", error);
-    this.setErrInfo("根据订单name获取影院id失败", error);
+    setErrInfo("根据订单name获取影院id失败", error);
   }
 };
 
@@ -926,7 +922,7 @@ const getMovieInfo = async item => {
     }
   } catch (error) {
     console.error(conPrefix + "获取当前场次电影信息异常", error);
-    this.setErrInfo("获取当前场次电影信息异常", error);
+    setErrInfo("获取当前场次电影信息异常", error);
   }
 };
 
@@ -941,7 +937,7 @@ async function getCityList({ cinema_group, cinema_name, city_name }) {
     cityList.value = res.data.all_city || [];
   } catch (error) {
     console.error(conPrefix + "获取城市列表异常", error);
-    this.setErrInfo("获取城市列表异常", error);
+    setErrInfo("获取城市列表异常", error);
   }
 }
 
