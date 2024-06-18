@@ -3,7 +3,7 @@
     <el-button-group
       v-for="(item, inx) in appList"
       :key="item.appName"
-      class="m-r-10"
+      class="m-r-10 m-t-10"
     >
       <el-button
         type="primary"
@@ -73,5 +73,8 @@ const sfcLoginSuccess = userInfo => {
 <style scoped>
 .m-r-10 {
   margin-right: 10px;
+}
+.m-t-10 {
+  margin-top: 10px;
 }
 </style>

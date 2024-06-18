@@ -476,47 +476,53 @@ const shadowLineChange = async val => {
 };
 // 打开弹窗
 const open = async ruleInfo => {
-  const loading = ElLoading.service({
-    lock: true,
-    text: "Loading",
-    background: "rgba(0, 0, 0, 0.7)"
-  });
-  if (ruleInfo) {
-    let formInfo = JSON.parse(JSON.stringify(ruleInfo));
-    if (formInfo.id !== undefined) {
-      formData.id = formInfo.id;
-      formData.ruleName = formInfo.ruleName;
-      formData.orderForm = formInfo.orderForm;
-      formData.shadowLineName = formInfo.shadowLineName;
-      formData.ruleStartTime = formInfo.ruleStartTime;
-      formData.ruleEndTime = formInfo.ruleEndTime;
-      formData.timeLimit = formInfo.timeLimit;
-      formData.offerAmount = formInfo.offerAmount;
-      formData.quanValue = formInfo.quanValue;
-      formData.weekDay = formInfo.weekDay; // 启用星期
-      formData.seatNum = formInfo.seatNum; // 座位数
-      formData.memberDay = formInfo.memberDay; // 会员日
-      formData.status = formInfo.status;
-      formData.offerType = formInfo.offerType;
-      formData.addAmount = formInfo.addAmount;
-      formData.includeCityNames = formInfo.includeCityNames;
-      formData.excludeCityNames = formInfo.excludeCityNames;
-      formData.includeCinemaNames = formInfo.includeCinemaNames;
-      formData.excludeCinemaNames = formInfo.excludeCinemaNames;
-      formData.includeHallNames = formInfo.includeHallNames;
-      formData.excludeHallNames = formInfo.excludeHallNames;
-      formData.includeFilmNames = formInfo.includeFilmNames;
-      formData.excludeFilmNames = formInfo.excludeFilmNames;
-    } else {
-      // 新增
-      formData.shadowLineName = formInfo.shadowLineName;
+  try {
+    const loading = ElLoading.service({
+      lock: true,
+      text: "Loading",
+      background: "rgba(0, 0, 0, 0.7)"
+    });
+    if (ruleInfo) {
+      let formInfo = JSON.parse(JSON.stringify(ruleInfo));
+      if (formInfo.id !== undefined) {
+        formData.id = formInfo.id;
+        formData.ruleName = formInfo.ruleName;
+        formData.orderForm = formInfo.orderForm;
+        formData.shadowLineName = formInfo.shadowLineName;
+        formData.ruleStartTime = formInfo.ruleStartTime;
+        formData.ruleEndTime = formInfo.ruleEndTime;
+        formData.timeLimit = formInfo.timeLimit;
+        formData.offerAmount = formInfo.offerAmount;
+        formData.quanValue = formInfo.quanValue;
+        formData.weekDay = formInfo.weekDay; // 启用星期
+        formData.seatNum = formInfo.seatNum; // 座位数
+        formData.memberDay = formInfo.memberDay; // 会员日
+        formData.status = formInfo.status;
+        formData.offerType = formInfo.offerType;
+        formData.addAmount = formInfo.addAmount;
+        formData.includeCityNames = formInfo.includeCityNames;
+        formData.excludeCityNames = formInfo.excludeCityNames;
+        formData.includeCinemaNames = formInfo.includeCinemaNames;
+        formData.excludeCinemaNames = formInfo.excludeCinemaNames;
+        formData.includeHallNames = formInfo.includeHallNames;
+        formData.excludeHallNames = formInfo.excludeHallNames;
+        formData.includeFilmNames = formInfo.includeFilmNames;
+        formData.excludeFilmNames = formInfo.excludeFilmNames;
+      } else {
+        // 新增
+        formData.shadowLineName = formInfo.shadowLineName;
+      }
+      const cityList = await getCityList();
+      const allCinemaList = await getAllCinemaList(cityList);
+      await getFilmList(cityList[0].id, allCinemaList[0].id);
     }
-    const cityList = await getCityList();
-    const allCinemaList = await getAllCinemaList(cityList);
-    await getFilmList(cityList[0].id, allCinemaList[0].id);
+    loading.close();
+    showSfcDialog.value = true;
+  } catch (error) {
+    console.warn("打开规则弹框异常", error);
+    loading.close();
+    showSfcDialog.value = false;
   }
-  loading.close();
-  showSfcDialog.value = true;
 };
 
 // 报价类型改变

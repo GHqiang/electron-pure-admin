@@ -30,6 +30,7 @@
           placeholder="影线名称"
           style="width: 194px"
           clearable
+          filterable
         >
           <el-option
             v-for="(keyValue, keyName) in shadowLineObj"
@@ -182,6 +183,7 @@
           <template #default>
             <el-select
               v-model="shadowLine"
+              filterable
               placeholder="请选择影线名称"
               style="width: 120px; margin-left: -1px"
             >

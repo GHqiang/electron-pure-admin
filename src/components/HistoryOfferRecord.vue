@@ -24,6 +24,7 @@
           placeholder="影线名称"
           style="width: 194px"
           clearable
+          filterable
         >
           <el-option
             v-for="(keyValue, keyName) in shadowLineObj"
