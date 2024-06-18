@@ -342,6 +342,10 @@ class OrderAutoTicketQueue {
       console.warn(conPrefix + "【转单】参数", params);
       const res = await lierenApi.transferOrder(params);
       console.warn(conPrefix + "【转单】结果", res);
+      // svApi.updateTicketRecord({
+      //   order_number: order.order_number,
+      //   transfer_flag: "1" // 1-代表走转单了
+      // });
     } catch (error) {
       console.error(conPrefix + "【转单】异常", error);
       this.setErrInfo("订单转单异常", error);

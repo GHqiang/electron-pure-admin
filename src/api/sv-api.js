@@ -11,7 +11,6 @@ const logout = params => axios.get("/svpi/users/logout", { params });
 // 设置会员卡密码
 const setMemBerPwd = params =>
   axios.get("/svpi/users/setMemBerPwd", { params });
-
 // 获取用户列表
 const getUserList = params => axios.get("/svpi/users", { params });
 
@@ -30,6 +29,18 @@ const queryTicketList = params =>
   axios.get("/svpi/ticketRecord/query", { params });
 // 添加出票记录
 const addTicketRecord = params => axios.post("/svpi/ticketRecord/add", params);
+// 更新出票记录
+const updateTicketRecord = params =>
+  axios.post("/svpi/ticketRecord/update", params);
+
+// 获取优惠券列表
+const getQuanList = params => axios.get("/svpi/quanRecord", { params });
+// 查询优惠券列表
+const queryQuanList = params => axios.get("/svpi/quanRecord/query", { params });
+// 添加优惠券
+const addQuanRecord = params => axios.post("/svpi/quanRecord/add", params);
+// 添加用券记录
+const addUseQuanRecord = params => axios.post("/svpi/quanRecord/use", params);
 
 export default {
   login,
@@ -41,5 +52,10 @@ export default {
   addOfferRecord,
   getTicketList,
   queryTicketList,
-  addTicketRecord
+  addTicketRecord,
+  updateTicketRecord,
+  getQuanList,
+  queryQuanList,
+  addQuanRecord,
+  addUseQuanRecord
 };
