@@ -145,6 +145,20 @@
         <el-button type="primary" @click="payOrder()">支付订单</el-button>
         <el-button type="primary" @click="logout">退出登录</el-button>
       </el-form-item>
+      <!-- <el-form-item>
+        <el-button type="primary" @click="getLierenOrderList(0)"
+          >获取待报价列表</el-button
+        >
+        <el-button type="primary" @click="getLierenOrderList(1)"
+          >获取已报价列表</el-button
+        >
+        <el-button type="primary" @click="getLierenOrderList(2)"
+          >获取待出票记录</el-button
+        >
+        <el-button type="primary" @click="getLierenOrderList(3)"
+          >获取已出票记录</el-button
+        >
+      </el-form-item> -->
     </el-form>
     <el-dialog
       v-model="dialogVisible"
@@ -325,16 +339,22 @@ const transferOrder = async order => {
 };
 
 // 获取待出票列表
-async function getStayTicketingList() {
+async function getLierenOrderList(type) {
   try {
     let params = {
       page: 1,
       limit: 100,
       sort: "id",
       desc: "desc",
-      type: 2
+      type
     };
-    console.log("【自动出票】获取待出票列表参数", params);
+    const typeObj = {
+      0: "待报价",
+      1: "已报价",
+      2: "待出票",
+      3: "已出票"
+    };
+    console.log(`获取${typeObj[type]}列表参数`, params);
     const res = await lierenApi.stayTicketingList(params);
     // let mockRes = {
     //     "success": true,
@@ -378,10 +398,10 @@ async function getStayTicketingList() {
     // }
     // let list = res?.data || mockRes?.data || []
     let list = res?.data || [];
-    console.warn("【自动出票】待出票列表", list);
+    console.warn(`获取${typeObj[type]}列表`, list);
     return list;
   } catch (error) {
-    console.warn("【自动出票】获取待出票列表异常", error);
+    console.warn(`获取订单列表异常`, error);
     return [];
   }
 }

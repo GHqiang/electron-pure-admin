@@ -19,7 +19,8 @@ instance.interceptors.request.use(
   config => {
     if (config.url.indexOf("/sp/") !== -1) {
       // 猎人平台接口添加token
-      const token = tokens.lierenToken || "";
+      const token =
+        tokens.lierenToken || window.localStorage.getItem("lierenToken") || "";
       if (token) {
         config.headers.Authorization = `${token}`;
       }

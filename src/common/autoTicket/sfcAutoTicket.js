@@ -334,7 +334,7 @@ class OrderAutoTicketQueue {
 
   // 转单
   async transferOrder(order, unlockSeatInfo) {
-    const { conPrefix } = this;
+    const { conPrefix, appFlag } = this;
     if (isTestOrder) return;
     try {
       // 先解锁座位再转单，负责转出去座位被占平台会处罚
@@ -368,10 +368,18 @@ class OrderAutoTicketQueue {
       console.warn(conPrefix + "【转单】参数", params);
       const res = await lierenApi.transferOrder(params);
       console.warn(conPrefix + "【转单】结果", res);
-      // svApi.updateTicketRecord({
-      //   order_number: order.order_number,
-      //   transfer_flag: "1" // 1-代表走转单了
-      // });
+      const { supplier_end_price, ticket_num } = order;
+      let transfer_fee = (
+        (Number(ticket_num) * Number(supplier_end_price) * 100 * 3) /
+        10000
+      ).toFixed(2);
+      svApi.updateTicketRecord({
+        order_number: order.order_number,
+        app_name: appFlag,
+        transfer_flag: "1", // 1-代表走转单了
+        transfer_fee // 转单手续费
+      });
+      console.warn(conPrefix + "【转单】手续费", transfer_fee);
     } catch (error) {
       console.error(conPrefix + "【转单】异常", error);
       this.setErrInfo("订单转单异常", error);
@@ -1276,6 +1284,7 @@ class OrderAutoTicketQueue {
       let quanRes = await svApi.queryQuanList({
         quan_value: quanValue,
         app_name: appFlag,
+        quan_status: "1",
         page_num: 1,
         page_size: quanNum
       });
@@ -1295,6 +1304,12 @@ class OrderAutoTicketQueue {
         });
         if (coupon_num) {
           bandQuanList.push({ coupon_num, quan_cost: quan.quan_cost });
+          svApi.addUseQuanRecord({
+            coupon_num: coupon_num,
+            app_name: appFlag,
+            quan_status: "2",
+            use_time: getCurrentFormattedDateTime()
+          });
         }
       }
       return bandQuanList;
@@ -1337,21 +1352,21 @@ class OrderAutoTicketQueue {
           targetQuanList
         );
         this.setErrInfo(`${quanValue} 面额券不足`);
-        // const newQuanList = await this.getNewQuan({
-        //   city_id,
-        //   cinema_id,
-        //   quanValue,
-        //   quanNum: Number(ticket_num) - targetQuanList.length
-        // });
-        // if (newQuanList?.length) {
-        //   targetQuanList = [...targetQuanList, ...newQuanList];
-        // }
+        const newQuanList = await this.getNewQuan({
+          city_id,
+          cinema_id,
+          quanValue,
+          quanNum: Number(ticket_num) - targetQuanList.length
+        });
+        if (newQuanList?.length) {
+          targetQuanList = [...targetQuanList, ...newQuanList];
+        }
         if (targetQuanList?.length < ticket_num) {
-          // console.error(
-          //   conPrefix + `从服务端获取并绑定后${quanValue} 面额券仍不足，`,
-          //   targetQuanList
-          // );
-          // this.setErrInfo(`${quanValue} 面额券从数据库获取后仍不足`);
+          console.error(
+            conPrefix + `从服务端获取并绑定后${quanValue} 面额券仍不足，`,
+            targetQuanList
+          );
+          this.setErrInfo(`${quanValue} 面额券从数据库获取后仍不足`);
           return {
             profit: 0,
             useQuans: []
