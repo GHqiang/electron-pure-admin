@@ -222,8 +222,9 @@ Object.keys(APP_LIST).forEach(item => {
   appTokenObj[item] = allUserInfo[item]?.session_id || "";
   appTicketQueueObj[item] = createTicketQueue(item);
 });
-console.log("appTokenObj", appTokenObj);
-console.log("appTicketQueueObj", appTicketQueueObj);
+// window.hongshiQueue = appTicketQueueObj["hongshi"];
+// console.log("appTokenObj", appTokenObj);
+// console.log("appTicketQueueObj", appTicketQueueObj);
 // 一键启动
 const oneClickAutoOffer = () => {
   // console.log("pwd", pwd);

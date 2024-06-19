@@ -41,7 +41,7 @@ import {
 } from "@/common/constant";
 import { SFC_API_OBJ } from "@/common/index";
 const getOrginValue = value => JSON.parse(JSON.stringify(value));
-
+let isTestOrder = false; //是否是测试订单
 // 创建一个订单自动出票队列类
 class OrderAutoTicketQueue {
   constructor(appFlag) {
@@ -105,10 +105,12 @@ class OrderAutoTicketQueue {
             order,
             res
           );
-          // 从缓存里面删除记录
-          deleteOrder(order.order_number, appFlag);
-          // 添加订单处理记录
-          await this.addOrderHandleRecored(order, res);
+          if (!isTestOrder) {
+            // 从缓存里面删除记录
+            deleteOrder(order.order_number, appFlag);
+            // 添加订单处理记录
+            await this.addOrderHandleRecored(order, res);
+          }
         }
       }
     }
@@ -131,6 +133,29 @@ class OrderAutoTicketQueue {
       let sfcStayOfferlist = getOrginValue(stayTicketList.items).filter(
         item => item.appName === appFlag
       );
+      if (isTestOrder) {
+        sfcStayOfferlist = [
+          {
+            id: 129,
+            plat_name: "lieren",
+            app_name: "hongshi",
+            ticket_num: 2,
+            urgent: "1",
+            order_number: "2024061821552236694",
+            supplier_end_price: 34,
+            order_id: "6240852",
+            tpp_price: "40.00",
+            city_name: "上海",
+            cinema_addr: "浦东新区惠南镇东门大街200号浦商百货4楼",
+            cinema_name: "红石影城（惠南店）",
+            hall_name: "5号激光厅",
+            film_name: "排球少年！！垃圾场决战",
+            lockseat: "8排5座 8排6座",
+            show_time: "2024-06-21 19:30:00",
+            cinema_group: "其它自动"
+          }
+        ];
+      }
       console.warn(
         conPrefix + "匹配已上架影院后的的待出票订单",
         sfcStayOfferlist
@@ -310,6 +335,7 @@ class OrderAutoTicketQueue {
   // 转单
   async transferOrder(order, unlockSeatInfo) {
     const { conPrefix } = this;
+    if (isTestOrder) return;
     try {
       // 先解锁座位再转单，负责转出去座位被占平台会处罚
       // 3、获取座位布局
@@ -360,7 +386,9 @@ class OrderAutoTicketQueue {
       this.errInfo = "";
       console.warn(conPrefix + "单个待出票订单信息", item);
       // 1、解锁座位
-      await this.unlockSeat(item.id);
+      if (!isTestOrder) {
+        await this.unlockSeat(item.id);
+      }
     } catch (error) {
       console.error(conPrefix + "解锁座位失败准备试错3次，间隔3秒", error);
       // 试错3次，间隔3秒
@@ -597,6 +625,9 @@ class OrderAutoTicketQueue {
       }
       let pay_money = Number(priceInfo.total_price) + ""; // 此处是为了将订单价格30.00转为30，将0.00转为0
       console.log(conPrefix + "订单最后价格", pay_money, priceInfo);
+      if (isTestOrder) {
+        return { offerRule };
+      }
       // 7、创建订单
       const order_num = await this.createOrder({
         city_id,
@@ -793,6 +824,17 @@ class OrderAutoTicketQueue {
         console.log(conPrefix + "使用会员卡出票");
         const memberPrice = await this.getMemberPrice(order);
         console.log(conPrefix + "获取会员价", memberPrice);
+        if (!memberPrice) {
+          console.warn(
+            conPrefix + "使用优惠券或者会员卡前获取会员价异常",
+            memberPrice
+          );
+          this.setErrInfo("使用优惠券或者会员卡前获取会员价异常");
+          return {
+            card_id: "",
+            profit: 0 // 利润
+          };
+        }
         // 1、获取会员卡列表
         const cardList = await this.getCardList({ city_id, cinema_id });
         // 2、使用会员卡
@@ -1160,6 +1202,19 @@ class OrderAutoTicketQueue {
       let movieInfo = movie_data.find(
         item => item.movie_name.indexOf(film_name) !== -1
       );
+      if (!movieInfo) {
+        console.warn(
+          conPrefix + "影院放映信息匹配订单影片名称全字匹配失败",
+          movie_data,
+          film_name
+        );
+        this.setErrInfo("影院放映信息匹配订单影片名称全字匹配失败");
+        movieInfo = movie_data.find(
+          item =>
+            convertFullwidthToHalfwidth(item.movie_name) ===
+            convertFullwidthToHalfwidth(film_name)
+        );
+      }
       if (movieInfo) {
         let { shows } = movieInfo;
         let showDay = show_time.split(" ")[0];

@@ -238,12 +238,13 @@ import {
   convertFullwidthToHalfwidth,
   cinemNameSpecial
 } from "@/utils/utils";
+import { SPECIAL_CINEMA_OBJ } from "@/common/constant";
 import { SFC_API_OBJ } from "@/common/index.js";
 import lierenApi from "@/api/lieren-api";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
 const { allUserInfo, removeSfcUserInfo } = userInfoAndTokens;
-const appName = "hema";
+const appName = "hongshi";
 let sfcApi = SFC_API_OBJ[appName];
 // console.log("sfcApi", sfcApi);
 import { useRouter } from "vue-router";
@@ -637,6 +638,53 @@ const getCityCinemaList = async city_id => {
   }
 };
 
+// 根据订单name获取影院id
+const getCinemaId = async (cinema_name, list) => {
+  try {
+    // 1、先全字匹配，匹配到就直接返回
+    let cinema_id = list.find(item => item.name === cinema_name)?.id;
+    if (cinema_id) {
+      return cinema_id;
+    }
+    // 2、匹配不到的如果满足条件就走特殊匹配
+    console.warn("全字匹配影院名称失败", cinema_name, list);
+    let cinemaName = cinemNameSpecial(cinema_name);
+    if (SPECIAL_CINEMA_OBJ[appName].length) {
+      let specialCinemaInfo = SPECIAL_CINEMA_OBJ[appName].find(
+        item => item.order_cinema_name === cinemaName
+      );
+      if (specialCinemaInfo) {
+        cinemaName = specialCinemaInfo.sfc_cinema_name;
+      } else {
+        console.warn(
+          "特殊匹配影院名称失败",
+          cinemaName,
+          SPECIAL_CINEMA_OBJ[appFlag]
+        );
+      }
+    }
+    // 3、去掉空格及换行符后全字匹配
+    // 去除空格及括号后的影院列表
+    let noSpaceCinemaList = list.map(item => {
+      return {
+        ...item,
+        name: cinemNameSpecial(item.name)
+      };
+    });
+    cinema_id = noSpaceCinemaList.find(item => item.name === cinemaName)?.id;
+    if (cinema_id) {
+      return cinema_id;
+    }
+    console.error(
+      "去掉空格及换行符后全字匹配失败",
+      cinemaName,
+      noSpaceCinemaList
+    );
+  } catch (error) {
+    console.error("根据订单name获取影院id失败", error);
+  }
+};
+
 // 获取电影放映信息
 async function getMoviePlayInfo(data) {
   try {
@@ -645,9 +693,10 @@ async function getMoviePlayInfo(data) {
     if (!data) {
       flag = true;
       city_id = cityId.value;
-      cinemaId.value = cinemaList.value.find(
-        item => item.name.indexOf(cinemaName.value) !== -1
-      )?.id;
+      cinemaId.value = await getCinemaId(cinemaName.value, cinemaList.value);
+      // cinemaId.value = cinemaList.value.find(
+      //   item => item.name.indexOf(cinemaName.value) !== -1
+      // )?.id;
       cinema_id = cinemaId.value;
     }
     let params = {
@@ -661,6 +710,39 @@ async function getMoviePlayInfo(data) {
     // 测试使用
     if (flag) {
       moviePlayInfo.value = res.data;
+    }
+    try {
+      // 3、匹配订单拿到会员价
+      const { movie_data } = res.data;
+      let movieInfo = movie_data.find(
+        item => item.movie_name.indexOf(movieName.value) !== -1
+      );
+      if (!movieInfo) {
+        console.warn(
+          "影院放映信息匹配订单影片名称全字匹配失败",
+          movie_data,
+          movieName.value
+        );
+        movieInfo = movie_data.find(
+          item =>
+            convertFullwidthToHalfwidth(item.movie_name) ===
+            convertFullwidthToHalfwidth(movieName.value)
+        );
+      }
+      console.log("获取会员价-movieInfo", movieInfo);
+      let member_price;
+      if (movieInfo) {
+        let { shows } = movieInfo;
+        let showDay = startDay.value;
+        let showList = shows[showDay] || [];
+        let showTime = startTime.value;
+        console.log("showDay", showDay, "showTime", showTime);
+        let ticketInfo = showList.find(item => item.start_time === showTime);
+        member_price = ticketInfo?.member_price;
+      }
+      console.warn("获取会员价-最终价格", member_price);
+    } catch (error) {
+      console.error("获取会员价失败", error);
     }
     return res.data;
   } catch (error) {
@@ -677,8 +759,10 @@ async function getSeatLayout(data) {
       flag = true;
       city_id = cityId.value;
       cinema_id = cinemaId.value;
-      let movieObj = moviePlayInfo.value.movie_data?.find(item =>
-        item.movie_name.includes(movieName.value)
+      let movieObj = moviePlayInfo.value.movie_data?.find(
+        item =>
+          convertFullwidthToHalfwidth(item.movie_name) ===
+          convertFullwidthToHalfwidth(movieName.value)
       );
       let start_day = startDay.value;
       let start_time = startTime.value;
@@ -1017,109 +1101,6 @@ const trial = (callback, number = 1, delayTime = 0) => {
       }
     }, delayTime * 1000);
   });
-};
-
-// 根据订单name获取影院id
-const getCinemaId = (cinema_name, list) => {
-  try {
-    let cinemaName = cinemNameSpecial(cinema_name);
-    let cinemaList = list.map(item => {
-      return {
-        ...item,
-        name: cinemNameSpecial(item.name)
-      };
-    });
-    let nameMatchingList = [
-      // 去除括号及空格后就一致了
-      {
-        order_cinema_name: "SFC上影影城金桥太茂IMAX店",
-        sfc_cinema_name: "SFC上影影城金桥太茂IMAX店"
-      },
-      // 去除括号及空格后就一致了
-      {
-        order_cinema_name: "SFC上影影城金沙江路店",
-        sfc_cinema_name: "SFC上影影城金沙江路店"
-      },
-      // 去除括号及空格后就一致了
-      {
-        order_cinema_name: "SFC上影影城LaLaport上海金桥店",
-        sfc_cinema_name: "SFC上影影城LaLaport上海金桥店"
-      },
-      {
-        order_cinema_name: "SFC上影影城天山缤谷广场IMAX店",
-        sfc_cinema_name: "SFC上影影城天山缤谷IMAX店"
-      },
-      {
-        order_cinema_name: "SFC上影百联影城大上海4DX店",
-        sfc_cinema_name: "SFC上影百联影城大上海店"
-      },
-      {
-        order_cinema_name: "SFC上影影城丁香路LUXE店",
-        sfc_cinema_name: "SFC上影影城丁香路店"
-      },
-      // 北京
-      {
-        order_cinema_name: "SFC上影影城北京大兴龙湖天街IMAX店",
-        sfc_cinema_name: "SFC上影影城北京大兴龙湖IMAX店"
-      },
-      {
-        order_cinema_name: "SFC上影影城房山绿地缤纷店",
-        sfc_cinema_name: "SFC上影影城北京房山店"
-      },
-      // 贵州
-      {
-        order_cinema_name: "SFC上影影城贵阳云上方舟LUXE店",
-        sfc_cinema_name: "SFC上影影城贵阳云上方舟店"
-      },
-      // 嘉兴
-      {
-        order_cinema_name: "SFC上影影城嘉兴八佰伴LUXE店",
-        sfc_cinema_name: "SFC上影影城嘉兴八佰伴店"
-      },
-      // 昆明
-      {
-        order_cinema_name: "SFC上影影城昆明南悦城LUXE店",
-        sfc_cinema_name: "SFC上影影城昆明南悦城店"
-      },
-      {
-        order_cinema_name: "SFC上影影城西城IMAX店",
-        sfc_cinema_name: "SFC上影影城昆明西城IMAX店"
-      },
-      // 南京
-      {
-        order_cinema_name: "SFC上影影城南京新城市广场店",
-        sfc_cinema_name: "SFC上影影城南京店"
-      },
-      // 无锡
-      {
-        order_cinema_name: "SFC上影影城东港店原红豆影城",
-        sfc_cinema_name: "SFC上影影城无锡东港店"
-      },
-      // 徐州
-      {
-        order_cinema_name: "SFC上影影城徐州环球港店",
-        sfc_cinema_name: "SFC上影影城徐州店"
-      },
-      // 湛江
-      {
-        order_cinema_name: "SFC上影影城万象金沙湾广场店",
-        sfc_cinema_name: "SFC上影影城湛江店"
-      }
-    ];
-    let obj = nameMatchingList.find(
-      item => item.order_cinema_name === cinemaName
-    );
-    if (obj) {
-      cinemaName = obj.sfc_cinema_name;
-    }
-    let cinema_id = cinemaList.find(item => item.name === cinemaName)?.id;
-    if (!cinema_id) {
-      console.error("根据订单name获取影院id异常", error, cinema_name, list);
-    }
-    return cinema_id;
-  } catch (error) {
-    console.error("根据订单name获取影院id失败", error, cinema_name, list);
-  }
 };
 
 // 获取优惠券列表
