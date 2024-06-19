@@ -318,7 +318,9 @@ const getOfferList = async () => {
   try {
     const res = await svApi.queryOfferList({
       user_id: tokens.userInfo.user_id,
-      plat_name: "lieren"
+      plat_name: "lieren",
+      page_num: 1,
+      page_size: 100
     });
     return res.data.offerList || [];
   } catch (error) {
@@ -418,13 +420,19 @@ async function singleOffer(item) {
       console.error(conPrefix + "获取匹配报价规则失败");
       return;
     }
-    const { offerAmount, memberOfferAmount } = offerRule;
-    const price = offerAmount || memberOfferAmount;
+    const { offerAmount, memberOfferAmount, memberPrice } = offerRule;
+    let price = offerAmount || memberOfferAmount;
     if (!price) return { offerRule };
     if (Number(supplier_max_price) < price) {
-      console.error(conPrefix + "当前报价超过供应商最高报价，不再进行报价");
-      setErrInfo("当前报价超过供应商最高报价，不再进行报价");
-      return { offerRule };
+      if (memberPrice && Number(supplier_max_price) > Number(memberPrice)) {
+        price = supplier_max_price;
+      } else {
+        console.error(
+          conPrefix + "供应商最高报价低于当前报价超过且低于会员价，不再进行报价"
+        );
+        setErrInfo("供应商最高报价低于当前报价超过且低于会员价，不再进行报价");
+        return { offerRule };
+      }
     }
 
     let params = {
@@ -711,6 +719,8 @@ const getMinAmountOfferRule = async (ruleList, order) => {
         );
         return mixFixedAmountRule;
       }
+      // 会员价
+      mixAddAmountRule.memberPrice = memberPrice;
       // 会员最终报价
       memberPrice = Number(memberPrice) + Number(mixAddAmountRule.addAmount);
       // 会员报价要求四舍五入取整

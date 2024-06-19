@@ -195,7 +195,9 @@ const getOfferList = async () => {
   try {
     const res = await svApi.queryOfferList({
       user_id: tokens.userInfo.user_id,
-      plat_name: "lieren"
+      plat_name: "lieren",
+      page_num: 1,
+      page_size: 50
     });
     return res.data.offerList || [];
   } catch (error) {
@@ -209,7 +211,9 @@ const getTicketList = async () => {
   try {
     const ticketRes = await svApi.queryTicketList({
       user_id: tokens.userInfo?.user_id,
-      plat_name: "lieren"
+      plat_name: "lieren",
+      page_num: 1,
+      page_size: 50
     });
     return ticketRes.data.ticketList || [];
   } catch (error) {
