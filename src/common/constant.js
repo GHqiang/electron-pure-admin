@@ -326,7 +326,7 @@ const SPECIAL_CINEMA_OBJ = {
   laina: LAINA_SPECIAL_CINEMA_LIST,
   hema: [],
   hongshi: HONGSHI_SPECIAL_CINEMA_LIST,
-  limiehua: LIMEIHUA_SPECIAL_CINEMA_LIST,
+  limeihua: LIMEIHUA_SPECIAL_CINEMA_LIST,
   hengye: HENGYE_SPECIAL_CINEMA_LIST,
   minzu: [],
   yinxingws: [],
