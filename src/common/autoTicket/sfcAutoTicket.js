@@ -244,7 +244,7 @@ class OrderAutoTicketQueue {
         quan_value: res?.offerRule?.quan_value || "",
         order_status: res?.submitRes ? "1" : "2",
         // remark: '',
-        processing_time: +new Date() + "",
+        processing_time: getCurrentFormattedDateTime(),
         profit: res?.profit || "",
         qrcode: res?.qrcode || "",
         quan_code: res?.quan_code || "",
