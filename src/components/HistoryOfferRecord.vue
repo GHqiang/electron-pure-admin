@@ -144,6 +144,11 @@
           <span>{{ offerTypeObj[scope.row.offer_type] || "" }}</span>
         </template>
       </el-table-column>
+      <el-table-column prop="rewards" label="奖励订单" width="90">
+        <template #default="scope">
+          <span>{{ scope.row.rewards == 1 ? "是" : "否" }}</span>
+        </template>
+      </el-table-column>
       <el-table-column prop="quan_value" label="用券面额" width="90" />
       <el-table-column prop="err_msg" label="失败原因" width="110" />
     </el-table>
