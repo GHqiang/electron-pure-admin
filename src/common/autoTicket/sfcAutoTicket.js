@@ -251,7 +251,7 @@ class OrderAutoTicketQueue {
         card_id: res?.card_id || "",
         err_msg: errMsg || "",
         err_info: errInfo || "",
-        urgent: order.urgent // 是否是特急订单 1是 0否（特急有奖励）
+        rewards: order.rewards // 是否是奖励订单 1是 0否
       };
       if (res?.submitRes) {
         this.handleSuccessOrderList.push(order);
@@ -849,7 +849,7 @@ class OrderAutoTicketQueue {
           show_id,
           seat_ids,
           memberPrice,
-          urgent: order.urgent
+          rewards: order.rewards
         });
         return {
           card_id,
@@ -869,7 +869,7 @@ class OrderAutoTicketQueue {
           supplier_end_price,
           quanList,
           quanValue,
-          urgent: order.urgent
+          rewards: order.rewards
         });
         return {
           quan_code: useQuans.join(),
@@ -1314,7 +1314,7 @@ class OrderAutoTicketQueue {
     supplier_end_price,
     quanList,
     quanValue,
-    urgent
+    rewards
   }) {
     const { conPrefix } = this;
     try {
@@ -1368,7 +1368,7 @@ class OrderAutoTicketQueue {
           item.quan_cost -
           (Number(supplier_end_price) * 100) / 10000;
       });
-      if (urgent == 1) {
+      if (rewards == 1) {
         // 特急奖励订单中标价格 * 张数 * 0.04;
         let rewardPrice =
           (Number(supplier_end_price) * Number(ticket_num) * 400) / 10000;
@@ -1445,7 +1445,7 @@ class OrderAutoTicketQueue {
     show_id,
     seat_ids,
     memberPrice,
-    urgent
+    rewards
   }) {
     const { conPrefix, appFlag } = this;
     try {
@@ -1521,7 +1521,7 @@ class OrderAutoTicketQueue {
         memberPrice -
         (Number(supplier_end_price) * 100) / 10000;
       profit = Number(profit) * Number(ticket_num);
-      if (urgent == 1) {
+      if (rewards == 1) {
         // 特急奖励订单中标价格 * 张数 * 0.04;
         let rewardPrice =
           (Number(supplier_end_price) * Number(ticket_num) * 400) / 10000;

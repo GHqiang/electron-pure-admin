@@ -224,7 +224,7 @@ class OrderAutoOfferQueue {
         processing_time: +new Date() + "",
         err_msg: errMsg || "",
         err_info: errInfo || "",
-        urgent: order.urgent // 是否是特急订单 1是 0否（特急有奖励）
+        rewards: order.rewards // 是否是奖励订单 1是 0否
       };
       if (offerResult?.res) {
         this.handleSuccessOrderList.push(order);
