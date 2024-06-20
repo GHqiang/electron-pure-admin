@@ -7,7 +7,7 @@ const { allUserInfo, removeSfcUserInfo } = userInfoAndTokens;
 import { APP_LIST } from "@/common/constant";
 import md5 from "../md5.js";
 import router from "@/router";
-const createAxios = ({ group, appName, timeout = 15 }) => {
+const createAxios = ({ group, appName, timeout = 20 }) => {
   // 创建axios实例
   const instance = axios.create({
     //   baseURL: process.env.VITE_API_BASE_URL,

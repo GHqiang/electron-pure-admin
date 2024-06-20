@@ -258,7 +258,7 @@ import lierenApi from "@/api/lieren-api";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
 const { allUserInfo, removeSfcUserInfo } = userInfoAndTokens;
-const appName = "hongshi";
+const appName = "sfc";
 let sfcApi = SFC_API_OBJ[appName];
 // console.log("sfcApi", sfcApi);
 import { useRouter } from "vue-router";
@@ -679,7 +679,7 @@ const getCinemaId = async (cinema_name, list) => {
         console.warn(
           "特殊匹配影院名称失败",
           cinemaName,
-          SPECIAL_CINEMA_OBJ[appFlag]
+          SPECIAL_CINEMA_OBJ[appName]
         );
       }
     }
@@ -937,7 +937,7 @@ async function priceCalculation(data) {
       additional_goods_info: "", // 附加商品信息
       goods_info: "", // 商品信息
       is_first: "0", // 是否是首次购买 0-不是 1-是
-      member_coupon_id: member_coupon_id || "", // 会员卡id
+      card_id: member_coupon_id || "", // 会员卡id
       option_goods_info: "", // 可选的额外商品信息
       quan_code: quan_code || "", // 优惠券券码
       update_time: getCurrentFormattedDateTime()

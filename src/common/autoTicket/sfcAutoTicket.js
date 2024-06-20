@@ -909,6 +909,8 @@ class OrderAutoTicketQueue {
         cinema_id: cinema_id,
         show_id: show_id,
         seat_ids: seat_ids,
+        quan_code: "",
+        card_id: "",
         additional_goods_info: "", // 附加商品信息
         goods_info: "", // 商品信息
         is_first: "0", // 是否是首次购买 0-不是 1-是
@@ -917,7 +919,6 @@ class OrderAutoTicketQueue {
       };
       if (quan_code) {
         params.quan_code = quan_code; // 优惠券编码
-        params.member_coupon_id = ""; // 会员优惠券ID，为空表示没有使用特定的会员优惠券
       } else if (card_id) {
         params.card_id = card_id; // 会员卡id
       }
