@@ -427,10 +427,9 @@ async function singleOffer(item) {
       if (memberPrice && Number(supplier_max_price) > Number(memberPrice)) {
         price = supplier_max_price;
       } else {
-        console.error(
-          conPrefix + "供应商最高报价低于当前报价超过且低于会员价，不再进行报价"
-        );
-        setErrInfo("供应商最高报价低于当前报价超过且低于会员价，不再进行报价");
+        let str = `供应商最高报价低于当前报价${memberOfferAmount ? "且低于会员价" : ""}，不再进行报价`;
+        console.error(conPrefix + str);
+        setErrInfo(str);
         return { offerRule };
       }
     }
