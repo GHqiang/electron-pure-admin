@@ -48,6 +48,10 @@ class OrderAutoFetchQueue {
       }
       const { getInterval } = platQueueRule[0];
       let fetchDelay = getInterval;
+      // if (!window.isFirst) {
+      //   console.time("第一次获取数据到解锁耗时");
+      //   window.isFirst = true;
+      // }
       await this.fetchOrders(fetchDelay);
     }
   }
@@ -68,8 +72,6 @@ class OrderAutoFetchQueue {
       let stayList = await lierenOrderFetch();
       if (!stayList?.length) return;
       stayList = stayList.map(item => ({ ...item, platName: "lieren" }));
-      const offerList = await getOfferList();
-      const ticketList = await getTicketList();
       // 先过滤出来目前已上架影院的，然后添加影院标识，最后从历史记录过滤
       stayList = stayList
         .filter(item => getCinemaFlag(item))
@@ -78,9 +80,25 @@ class OrderAutoFetchQueue {
             ...item,
             appName: getCinemaFlag(item)
           };
-        })
-        .filter(item => judgeHandle(item, item.appName, offerList, ticketList));
-      console.warn(conPrefix + "猎人待出票列表过滤后", stayList);
+        });
+      let stayTicketListByCache = getOrginValue(stayTicketList.items);
+      stayList = stayList.filter(
+        item =>
+          !stayTicketListByCache.some(
+            itemA =>
+              itemA.order_number === item.order_number &&
+              itemA.app_name === item.app_name
+          )
+      );
+      console.warn(conPrefix + "猎人待出票列表从本地缓存过滤后", stayList);
+      if (stayList?.length) {
+        const offerList = await getOfferList();
+        const ticketList = await getTicketList();
+        stayList = stayList.filter(item =>
+          judgeHandle(item, item.appName, offerList, ticketList)
+        );
+        console.warn(conPrefix + "猎人待出票列表从远端过滤后", stayList);
+      }
       if (!stayList?.length) return;
       addNewOrder(stayList);
     } catch (error) {
@@ -138,44 +156,23 @@ async function lierenOrderFetch() {
     //   total: 1,
     //   data: [
     //     {
-    //       id: 6103172,
-    //       supplier_id: 714632,
-    //       order_number: "2024052211291357372",
-    //       tpp_price: "61.00",
-    //       ticket_num: 1,
-    //       city_name: "上海",
-    //       film_img:
-    //         "https://gw.alicdn.com/tfscom/i1/O1CN01PTduxS1oVqloZeODY_!!6000000005231-0-alipicbeacon.jpg",
-    //       cinema_addr: "上海市浦东新区张杨路501号第一八佰伴10楼（近浦东南路）",
-    //       cinema_name: "上海华夏久金国际影城",
-    //       hall_name: "1厅",
-    //       film_name: "末路狂花钱",
-    //       show_time: "2024-05-27 20:50:00",
-    //       section_at: 1716348565,
-    //       winning_at: 1716348610,
-    //       lock_if: 1,
-    //       lockseat: "3排2座",
-    //       seat_flat: 0,
-    //       urgent: 0,
-    //       is_multi: 0,
-    //       seat_type: 0,
-    //       cinema_code: "31070901",
-    //       supplier_end_price: 40,
-    //       rewards: 0,
-    //       overdue: 0,
-    //       cinema_group: "久金国际",
-    //       type: 0,
-    //       group_urgent: 0,
-    //       sytime: 1716349300,
-    //       orderNumber: "2024052211291357372",
-    //       processingTime: 1716348629972,
-    //       qrcode: "",
-    //       quan_code: "",
-    //       card_id: "",
-    //       offerRule: "",
-    //       offerRuleName: "",
-    //       offerType: "",
-    //       quanValue: ""
+    //       id: 144,
+    //       plat_name: "lieren",
+    //       app_name: "sfc",
+    //       ticket_num: 2,
+    //       order_number: "2024062013010376202",
+    //       supplier_end_price: 32,
+    //       order_id: "6243881",
+    //       tpp_price: "36.00",
+    //       city_name: "天津",
+    //       cinema_addr:
+    //         "和平区天津市和平区小白楼街和平路263号天津天河城第八层809商铺",
+    //       cinema_name: "SFC上影影城（天津天河城IMAX店）",
+    //       hall_name: "5号激光厅",
+    //       film_name: "加菲猫家族",
+    //       lockseat: "6排1座 6排2座",
+    //       show_time: "2024-06-21 15:25:00",
+    //       cinema_group: "上影二线"
     //     }
     //   ],
     //   time: 1710125670

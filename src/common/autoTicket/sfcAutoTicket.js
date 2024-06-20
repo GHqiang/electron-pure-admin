@@ -136,23 +136,23 @@ class OrderAutoTicketQueue {
       if (isTestOrder) {
         sfcStayOfferlist = [
           {
-            id: 129,
+            id: 144,
             plat_name: "lieren",
-            app_name: "hongshi",
+            app_name: "sfc",
             ticket_num: 2,
-            urgent: "1",
-            order_number: "2024061821552236694",
-            supplier_end_price: 34,
-            order_id: "6240852",
-            tpp_price: "40.00",
-            city_name: "上海",
-            cinema_addr: "浦东新区惠南镇东门大街200号浦商百货4楼",
-            cinema_name: "红石影城（惠南店）",
+            order_number: "2024062013010376202",
+            supplier_end_price: 32,
+            order_id: "6243881",
+            tpp_price: "36.00",
+            city_name: "天津",
+            cinema_addr:
+              "和平区天津市和平区小白楼街和平路263号天津天河城第八层809商铺",
+            cinema_name: "SFC上影影城（天津天河城IMAX店）",
             hall_name: "5号激光厅",
-            film_name: "排球少年！！垃圾场决战",
-            lockseat: "8排5座 8排6座",
-            show_time: "2024-06-21 19:30:00",
-            cinema_group: "其它自动"
+            film_name: "加菲猫家族",
+            lockseat: "6排1座 6排2座",
+            show_time: "2024-06-21 15:25:00",
+            cinema_group: "上影二线"
           }
         ];
       }
@@ -335,7 +335,7 @@ class OrderAutoTicketQueue {
 
   // 转单
   async transferOrder(order, unlockSeatInfo) {
-    const { conPrefix, appFlag } = this;
+    const { conPrefix } = this;
     if (isTestOrder) return;
     try {
       // 先解锁座位再转单，负责转出去座位被占平台会处罚
@@ -392,6 +392,10 @@ class OrderAutoTicketQueue {
       this.errMsg = "";
       this.errInfo = "";
       console.warn(conPrefix + "单个待出票订单信息", item);
+      // if (!window.isFistUnlock) {
+      //   console.timeEnd("第一次获取数据到解锁耗时");
+      //   window.isFistUnlock = true;
+      // }
       // 1、解锁座位
       if (!isTestOrder) {
         await this.unlockSeat(item.id);
@@ -1376,7 +1380,9 @@ class OrderAutoTicketQueue {
         }
       }
       // 用券列表
-      let useQuans = targetQuanList.map(item => item.coupon_num);
+      let useQuans = targetQuanList
+        .map(item => item.coupon_num)
+        .filter((item, index) => index < ticket_num);
       let profit = 0; // 利润
       targetQuanList.forEach(item => {
         profit =
