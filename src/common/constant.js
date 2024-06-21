@@ -291,8 +291,8 @@ const HENGYE_SPECIAL_CINEMA_LIST = [
 // 银兴影城南昌店特殊影院集合
 const YINGXINGNC_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "长江银兴影城南昌新华店",
-    sfc_cinema_name: "长江银兴影城新华店"
+    order_cinema_name: "长江银兴影城新华店",
+    sfc_cinema_name: "长江银兴影城南昌新华店"
   }
 ];
 

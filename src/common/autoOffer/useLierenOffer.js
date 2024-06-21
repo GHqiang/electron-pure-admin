@@ -684,7 +684,7 @@ const offerRuleMatch = async order => {
     setErrInfo("报价规则匹配出现异常", error);
   }
 };
-
+window.offerRuleMatch = offerRuleMatch;
 // 获取报价最低的报价规则
 const getMinAmountOfferRule = async (ruleList, order) => {
   try {
