@@ -38,6 +38,7 @@ export const useAppBaseData = defineStore("appBaseData", {
       hfzywpcd: null,
       hfzyzdgcd: null,
       hfzydxjd: null,
+      hfzyzhd: null,
       qina: null
     }
   }),

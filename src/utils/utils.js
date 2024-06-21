@@ -344,6 +344,11 @@ const getCinemaFlag = item => {
     ["合肥"].includes(city_name)
   ) {
     return "hfzydxjd";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("合肥中影国际影城中环购物中心店") &&
+    ["合肥"].includes(city_name)
+  ) {
+    return "hfzyzhd";
   }
 };
 
