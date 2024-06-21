@@ -23,6 +23,11 @@ const APP_LIST = {
   quanmei: "全美",
   yongheng: "永恒时代",
   nanguojgh: "南国影城金光华店",
+  baoneng: "宝能影城",
+  hefeidianying: "合肥电影",
+  chaohuzhongying: "巢湖中影",
+  hfzybdd: "合肥中影百大店",
+  hfzywpcd: "合肥中影万派城店",
   qina: "齐纳国际"
 };
 // 平台关联应用
@@ -46,6 +51,11 @@ const PLAT_LINK_APP = {
     "quanmei",
     "yongheng",
     "nanguojgh",
+    "baoneng",
+    "hefeidianying",
+    "hfzybdd",
+    "chaohuzhongying",
+    "hfzywpcd",
     "lumiai"
   ],
   shengapp: ["sfc", "lumiai"]
@@ -320,6 +330,24 @@ const NANGUOJGH_SPECIAL_CINEMA_LIST = [
   }
 ];
 
+// 合肥电影特殊影院集合
+const HEFEIDIANYING_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: "长江影城杭州星光荟LUXE店影院",
+    sfc_cinema_name: "长江影城杭州星光荟LUXE店"
+  },
+  {
+    order_cinema_name: "解放电影院OnyxLED&LUXE",
+    sfc_cinema_name: "合肥解放影院"
+  }
+];
+// 巢湖电影特殊影院集合
+const CHAOHUZHONGYING_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: "巢湖中影国际影城百大店",
+    sfc_cinema_name: "安徽巢湖中影影城"
+  }
+];
 // 特殊的名字匹配集合
 const SPECIAL_CINEMA_OBJ = {
   sfc: SFC_SPECIAL_CINEMA_LIST,
@@ -340,6 +368,11 @@ const SPECIAL_CINEMA_OBJ = {
   quanmei: QUANMEI_SPECIAL_CINEMA_LIST,
   yongheng: YONGHENG_SPECIAL_CINEMA_LIST,
   nanguojgh: NANGUOJGH_SPECIAL_CINEMA_LIST,
+  baoneng: [],
+  hefeidianying: HEFEIDIANYING_SPECIAL_CINEMA_LIST,
+  chaohuzhongying: CHAOHUZHONGYING_SPECIAL_CINEMA_LIST,
+  hfzybdd: [],
+  hfzywpcd: [],
   qina: QINA_SPECIAL_CINEMA_LIST
 };
 
@@ -363,6 +396,11 @@ const TICKET_CONPREFIX_OBJ = {
   quanmei: "【全美自动出票】——",
   yongheng: "【永恒时代自动出票】——",
   nanguojgh: "【南国影城金光华店自动出票】——",
+  baoneng: "【宝能影城金光华店自动出票】——",
+  hefeidianying: "【合肥电影自动出票】——",
+  chaohuzhongying: "【巢湖中影自动出票】——",
+  hfzybdd: "【合肥中影百大店自动出票】——",
+  hfzywpcd: "【合肥中影万派城店自动出票】——",
   qina: "【齐纳国际自动出票】——"
 };
 
@@ -386,6 +424,11 @@ const APP_OPENID_OBJ = {
   quanmei: "oQlN65N9QJFlABGHVcK1KFuwM-LY",
   yongheng: "oyJTi5Ji8B2DoiiRmjWv4eakE684",
   nanguojgh: "osJTy5IDMVmwodwKlj_uoHkyR3s0",
+  baoneng: "oLPNc5YNrh5RFNfY-xCco1S5Cn-w",
+  hefeidianying: "oKYoo47HgpOfxBppN7iLt2ZUeCQI",
+  chaohuzhongying: "orMoC5MEcNYCRanvng3Jecq1O_eo",
+  hfzybdd: "oqu7r5QjhpZMU3pNUtdsaldYijd0",
+  hfzywpcd: "odZ1O5cB97ux2MWnhL0pA3ry_QkQ",
   qina: "ouKdc5bCNh_0ygvtmniED-u9kIbA"
 };
 
@@ -409,6 +452,11 @@ const APP_GROUP_OBJ = {
   quanmei: "20529",
   yongheng: "20012",
   nanguojgh: "20288",
+  baoneng: "20151",
+  hefeidianying: "20025",
+  chaohuzhongying: "20568",
+  hfzybdd: "20670",
+  hfzywpcd: "20392",
   qina: "20004"
 };
 

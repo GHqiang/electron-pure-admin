@@ -303,6 +303,35 @@ const getCinemaFlag = item => {
     )
   ) {
     return "qina";
+  } else if (
+    ["宝能影城", "莱华影城"].some(
+      itemA =>
+        cinema_name.includes(itemA) && ["深圳", "扬州"].includes(city_name)
+    )
+  ) {
+    return "baoneng";
+  } else if (
+    ["长江影城", "解放电影院", "合肥人民影城"].some(
+      itemA =>
+        cinema_name.includes(itemA) && ["杭州", "合肥"].includes(city_name)
+    )
+  ) {
+    return "hefeidianying";
+  } else if (
+    cinema_name.includes("巢湖中影国际") &&
+    city_name.includes("巢湖")
+  ) {
+    return "chaohuzhongying";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("合肥中影国际影城百大心悦城店") &&
+    ["合肥"].includes(city_name)
+  ) {
+    return "hfzybdd";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("合肥中影国际影城万派城店") &&
+    ["合肥"].includes(city_name)
+  ) {
+    return "hfzywpcd";
   }
 };
 

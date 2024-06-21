@@ -40,6 +40,11 @@ export const appUserInfo = defineStore("appUserInfo", {
       quanmei: null,
       yongheng: null,
       nanguojgh: null,
+      baoneng: null,
+      hefeidianying: null,
+      chaohuzhongying: null,
+      hfzybdd: null,
+      hfzywpcd: null,
       qina: null
     }
   }),
