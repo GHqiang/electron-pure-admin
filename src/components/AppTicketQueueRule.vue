@@ -15,6 +15,10 @@
     v-throttle
     >一键停止</el-button
   >
+  <el-button type="primary" @click="isAutoTransfer = !isAutoTransfer">{{
+    !isAutoTransfer ? "开启自动转单" : "关闭自动转单"
+  }}</el-button>
+
   <el-button type="primary" @click="isCollapse = !isCollapse">{{
     !isCollapse ? "展开" : "收起"
   }}</el-button>
@@ -168,7 +172,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { ElMessageBox, ElMessage } from "element-plus";
 import { useAppRuleListStore } from "@/store/appTicketRuleTable";
 import createTicketQueue from "@/common/autoTicket/sfcAutoTicket";
@@ -206,6 +210,14 @@ const shadowLineObj = APP_LIST;
 
 // 是否展开
 const isCollapse = ref(true);
+// 是否自动转单
+const isAutoTransfer = ref(true);
+window.localStorage.setItem("isAutoTransfer", 1);
+watch(isAutoTransfer, (newVal, oldVal) => {
+  console.log(`isAutoTransfer 的值从 '${oldVal}' 变为 '${newVal}'`);
+  window.localStorage.setItem("isAutoTransfer", newVal ? "1" : "0");
+});
+
 // 正在编辑id
 const editingRowId = ref(null);
 // 正在查看id

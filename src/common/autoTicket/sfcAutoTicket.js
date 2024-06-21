@@ -336,7 +336,8 @@ class OrderAutoTicketQueue {
   // 转单
   async transferOrder(order, unlockSeatInfo) {
     const { conPrefix } = this;
-    if (isTestOrder) return;
+    let isAutoTransfer = window.localStorage.getItem("isAutoTransfer");
+    if (isTestOrder || isAutoTransfer == "1") return;
     try {
       // 先解锁座位再转单，负责转出去座位被占平台会处罚
       // 3、获取座位布局
