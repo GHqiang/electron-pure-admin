@@ -37,7 +37,8 @@ const { allUserInfo } = userInfoAndTokens;
 import {
   SPECIAL_CINEMA_OBJ,
   TICKET_CONPREFIX_OBJ,
-  APP_OPENID_OBJ
+  APP_OPENID_OBJ,
+  APP_LIST
 } from "@/common/constant";
 import { SFC_API_OBJ } from "@/common/index";
 const getOrginValue = value => JSON.parse(JSON.stringify(value));
@@ -1479,7 +1480,7 @@ class OrderAutoTicketQueue {
       );
       if (!cardFilter?.length) {
         console.error(conPrefix + "使用会员卡失败，会员卡余额不足");
-        this.setErrInfo(appFlag + "会员卡余额不足");
+        this.setErrInfo(APP_LIST[appFlag] + "会员卡余额不足");
         return {
           profit: 0,
           card_id: ""
