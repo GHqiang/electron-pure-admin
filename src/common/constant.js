@@ -28,6 +28,8 @@ const APP_LIST = {
   chaohuzhongying: "巢湖中影",
   hfzybdd: "合肥中影百大店",
   hfzywpcd: "合肥中影万派城店",
+  hfzyzdgcd: "合肥中影正大广场店",
+  hfzydxjd: "合肥中影东西街店",
   qina: "齐纳国际"
 };
 // 平台关联应用
@@ -53,9 +55,11 @@ const PLAT_LINK_APP = {
     "nanguojgh",
     "baoneng",
     "hefeidianying",
-    "hfzybdd",
     "chaohuzhongying",
+    "hfzybdd",
     "hfzywpcd",
+    "hfzyzdgcd",
+    "hfzydxjd",
     "lumiai"
   ],
   shengapp: ["sfc", "lumiai"]
@@ -348,6 +352,13 @@ const CHAOHUZHONGYING_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "安徽巢湖中影影城"
   }
 ];
+// 合肥中影东西街特殊影院集合
+const HFZYDXJD_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: "合肥中影国际影城东西街店原1912店",
+    sfc_cinema_name: "合肥中影国际影城东西街店"
+  }
+];
 // 特殊的名字匹配集合
 const SPECIAL_CINEMA_OBJ = {
   sfc: SFC_SPECIAL_CINEMA_LIST,
@@ -373,6 +384,8 @@ const SPECIAL_CINEMA_OBJ = {
   chaohuzhongying: CHAOHUZHONGYING_SPECIAL_CINEMA_LIST,
   hfzybdd: [],
   hfzywpcd: [],
+  hfzyzdgcd: [],
+  hfzydxjd: HFZYDXJD_SPECIAL_CINEMA_LIST,
   qina: QINA_SPECIAL_CINEMA_LIST
 };
 
@@ -401,6 +414,8 @@ const TICKET_CONPREFIX_OBJ = {
   chaohuzhongying: "【巢湖中影自动出票】——",
   hfzybdd: "【合肥中影百大店自动出票】——",
   hfzywpcd: "【合肥中影万派城店自动出票】——",
+  hfzyzdgcd: "【合肥中影正大广场店自动出票】——",
+  hfzydxjd: "【合肥中影东西街店自动出票】——",
   qina: "【齐纳国际自动出票】——"
 };
 
@@ -429,6 +444,8 @@ const APP_OPENID_OBJ = {
   chaohuzhongying: "orMoC5MEcNYCRanvng3Jecq1O_eo",
   hfzybdd: "oqu7r5QjhpZMU3pNUtdsaldYijd0",
   hfzywpcd: "odZ1O5cB97ux2MWnhL0pA3ry_QkQ",
+  hfzyzdgcd: "oo9wS5PcefuVMi0W8dnvoUuClCJc",
+  hfzydxjd: "oIexg5L8JNyDhr0NSW6lD_t8U3lA",
   qina: "ouKdc5bCNh_0ygvtmniED-u9kIbA"
 };
 
@@ -457,6 +474,8 @@ const APP_GROUP_OBJ = {
   chaohuzhongying: "20568",
   hfzybdd: "20670",
   hfzywpcd: "20392",
+  hfzyzdgcd: "20667",
+  hfzydxjd: "20665",
   qina: "20004"
 };
 

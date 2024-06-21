@@ -332,6 +332,18 @@ const getCinemaFlag = item => {
     ["合肥"].includes(city_name)
   ) {
     return "hfzywpcd";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("合肥中影国际影城正大广场店") &&
+    ["合肥"].includes(city_name)
+  ) {
+    return "hfzyzdgcd";
+  } else if (
+    cinemNameSpecial(cinema_name).includes(
+      "合肥中影国际影城东西街店原1912店"
+    ) &&
+    ["合肥"].includes(city_name)
+  ) {
+    return "hfzydxjd";
   }
 };
 
