@@ -374,6 +374,11 @@ const getCinemaFlag = item => {
     ["合肥"].includes(city_name)
   ) {
     return "hflkldd";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("天通苑乐娃影城") &&
+    ["北京"].includes(city_name)
+  ) {
+    return "ttylw";
   }
 };
 

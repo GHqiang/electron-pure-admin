@@ -36,6 +36,7 @@ const APP_LIST = {
   nchgtdd: "南昌红谷滩丁丁",
   hfbddd: "合肥百大丁丁",
   hflkldd: "合肥乐客来丁丁",
+  ttylw: "天通苑乐娃",
   qina: "齐纳国际"
 };
 // 平台关联应用
@@ -72,6 +73,7 @@ const PLAT_LINK_APP = {
     "nchgtdd",
     "hfbddd",
     "hflkldd",
+    "ttylw",
     "lumiai"
   ],
   shengapp: ["sfc", "lumiai"]
@@ -378,7 +380,13 @@ const HFZYZHD_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "合肥中影国际影城中环店"
   }
 ];
-
+// 天通苑乐娃特殊影院集合
+const TTYLW_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: "天通苑乐娃影城",
+    sfc_cinema_name: "乐娃影城天通苑店"
+  }
+];
 // 特殊的名字匹配集合
 const SPECIAL_CINEMA_OBJ = {
   sfc: SFC_SPECIAL_CINEMA_LIST,
@@ -412,6 +420,7 @@ const SPECIAL_CINEMA_OBJ = {
   nchgtdd: [],
   hfbddd: [],
   hflkldd: [],
+  ttylw: TTYLW_SPECIAL_CINEMA_LIST,
   qina: QINA_SPECIAL_CINEMA_LIST
 };
 
@@ -448,6 +457,7 @@ const TICKET_CONPREFIX_OBJ = {
   nchgtdd: "【南昌红谷滩丁丁影城自动出票】——",
   hfbddd: "【合肥百大丁丁影城自动出票】——",
   hflkldd: "【合肥乐客来丁丁影城自动出票】——",
+  ttylw: "【天通苑乐娃自动出票】——",
   qina: "【齐纳国际自动出票】——"
 };
 
@@ -484,6 +494,7 @@ const APP_OPENID_OBJ = {
   nchgtdd: "oVMDU5J_aur4-Uw3ahi5HZ6gbNi8",
   hfbddd: "oCFwp43wXjAuzH64FqgCs5Onkcjw",
   hflkldd: "oPA485J9bAFDb1Cy1dmszU2YaENE",
+  ttylw: "os2pL5WIRCF9j_BUNXd5kpgrMEO0",
   qina: "ouKdc5bCNh_0ygvtmniED-u9kIbA"
 };
 
@@ -520,6 +531,7 @@ const APP_GROUP_OBJ = {
   nchgtdd: "20499",
   hfbddd: "20407",
   hflkldd: "20453",
+  ttylw: "20648",
   qina: "20004"
 };
 
