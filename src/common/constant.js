@@ -31,6 +31,8 @@ const APP_LIST = {
   hfzyzdgcd: "合肥中影正大广场店",
   hfzydxjd: "合肥中影东西街店",
   hfzyzhd: "合肥中影中环店",
+  wfzyyxhd: "潍坊中影印象汇店",
+  wfzygeshgcd: "潍坊中影歌尔生活广场店",
   qina: "齐纳国际"
 };
 // 平台关联应用
@@ -62,6 +64,8 @@ const PLAT_LINK_APP = {
     "hfzyzdgcd",
     "hfzydxjd",
     "hfzyzhd",
+    "wfzyyxhd",
+    "wfzygeshgcd",
     "lumiai"
   ],
   shengapp: ["sfc", "lumiai"]
@@ -396,6 +400,8 @@ const SPECIAL_CINEMA_OBJ = {
   hfzyzdgcd: [],
   hfzydxjd: HFZYDXJD_SPECIAL_CINEMA_LIST,
   hfzyzhd: HFZYZHD_SPECIAL_CINEMA_LIST,
+  wfzyyxhd: [],
+  wfzygeshgcd: [],
   qina: QINA_SPECIAL_CINEMA_LIST
 };
 
@@ -427,6 +433,8 @@ const TICKET_CONPREFIX_OBJ = {
   hfzyzdgcd: "【合肥中影正大广场店自动出票】——",
   hfzydxjd: "【合肥中影东西街店自动出票】——",
   hfzyzhd: "【合肥中影中环店自动出票】——",
+  wfzyyxhd: "【潍坊中影印象汇店自动出票】——",
+  wfzygeshgcd: "【潍坊中影歌尔生活广场店自动出票】——",
   qina: "【齐纳国际自动出票】——"
 };
 
@@ -458,6 +466,8 @@ const APP_OPENID_OBJ = {
   hfzyzdgcd: "oo9wS5PcefuVMi0W8dnvoUuClCJc",
   hfzydxjd: "oIexg5L8JNyDhr0NSW6lD_t8U3lA",
   hfzyzhd: "oFFe55S5HS4CFhmud2OKB5uBVd1k",
+  wfzyyxhd: "oQosr43DGV1bf-x6dVHOj6TOppwc",
+  wfzygeshgcd: "oC9Mu5B9W5Hvbi1OYcULLKonlfLE",
   qina: "ouKdc5bCNh_0ygvtmniED-u9kIbA"
 };
 
@@ -489,6 +499,8 @@ const APP_GROUP_OBJ = {
   hfzyzdgcd: "20667",
   hfzydxjd: "20665",
   hfzyzhd: "20270",
+  wfzyyxhd: "20684",
+  wfzygeshgcd: "20685",
   qina: "20004"
 };
 
