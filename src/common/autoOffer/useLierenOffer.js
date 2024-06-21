@@ -411,7 +411,7 @@ async function singleOffer(item) {
     errMsg = "";
     errInfo = "";
     console.log(conPrefix + "待报价订单", item);
-    let { id, supplier_max_price } = item || {};
+    let { id, supplier_max_price, rewards } = item || {};
     if (!id) return;
     // 报价逻辑
     console.log(conPrefix + "准备匹配报价规则", item);
@@ -420,14 +420,28 @@ async function singleOffer(item) {
       console.error(conPrefix + "获取匹配报价规则失败");
       return;
     }
-    const { offerAmount, memberOfferAmount, memberPrice } = offerRule;
+    const {
+      offerAmount,
+      memberOfferAmount,
+      memberPrice,
+      quanValue,
+      offerType
+    } = offerRule;
     let price = offerAmount || memberOfferAmount;
     if (!price) return { offerRule };
     if (Number(supplier_max_price) < price) {
-      if (memberPrice && Number(supplier_max_price) > Number(memberPrice)) {
-        price = supplier_max_price;
+      // 成本价
+      let cost_price =
+        offerType === "1"
+          ? quanValue == "40"
+            ? 39.3
+            : Number(quanValue)
+          : Number(memberPrice);
+      if (cost_price && cost_price < Number(supplier_max_price)) {
+        // 奖励单成本价，非奖励单最高限价
+        price = rewards == 1 ? cost_price : supplier_max_price;
       } else {
-        let str = `供应商最高报价低于当前报价${memberOfferAmount ? "且低于会员价" : ""}，不再进行报价`;
+        let str = `供应商限价低于成本价${cost_price}，不再进行报价`;
         console.error(conPrefix + str);
         setErrInfo(str);
         return { offerRule };
