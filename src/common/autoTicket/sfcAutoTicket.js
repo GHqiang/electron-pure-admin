@@ -1384,7 +1384,7 @@ class OrderAutoTicketQueue {
         .map(item => item.coupon_num)
         .filter((item, index) => index < ticket_num);
       let profit = 0; // 利润
-      targetQuanList.forEach(item => {
+      useQuans.forEach(item => {
         profit =
           profit +
           Number(supplier_end_price) -
