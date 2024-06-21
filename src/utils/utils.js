@@ -359,6 +359,21 @@ const getCinemaFlag = item => {
     ["潍坊"].includes(city_name)
   ) {
     return "wfzygeshgcd";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("丁丁影城红谷滩店") &&
+    ["南昌"].includes(city_name)
+  ) {
+    return "nchgtdd";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("合肥丁丁影城百大奥莱店") &&
+    ["合肥"].includes(city_name)
+  ) {
+    return "hfbddd";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("合肥丁丁影城乐客来店") &&
+    ["合肥"].includes(city_name)
+  ) {
+    return "hflkldd";
   }
 };
 
