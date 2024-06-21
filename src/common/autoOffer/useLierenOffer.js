@@ -441,7 +441,7 @@ async function singleOffer(item) {
         // 奖励单成本价，非奖励单最高限价
         price = rewards == 1 ? cost_price : supplier_max_price;
       } else {
-        let str = `供应商限价低于成本价${cost_price}，不再进行报价`;
+        let str = `最终报价超过平台限价${supplier_max_price}，不再进行报价`;
         console.error(conPrefix + str);
         setErrInfo(str);
         return { offerRule };
