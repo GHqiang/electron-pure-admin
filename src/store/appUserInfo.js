@@ -56,6 +56,10 @@ export const appUserInfo = defineStore("appUserInfo", {
       ttylw: null,
       ytgjyc: null,
       dghs: null,
+      tjlnx: null,
+      bjlnx: null,
+      cdlnx: null,
+      jsdgm: null,
       qina: null
     }
   }),

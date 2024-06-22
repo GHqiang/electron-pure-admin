@@ -39,6 +39,10 @@ const APP_LIST = {
   ttylw: "天通苑乐娃",
   ytgjyc: "益田国际影城",
   dghs: "东莞红石",
+  tjlnx: "天津莱纳星",
+  bjlnx: "北京莱纳星",
+  cdlnx: "成都莱纳星",
+  jsdgm: "金山大光明",
   qina: "齐纳国际"
 };
 // 平台关联应用
@@ -78,6 +82,10 @@ const PLAT_LINK_APP = {
     "ttylw",
     "ytgjyc",
     "dghs",
+    "tjlnx",
+    "bjlnx",
+    "cdlnx",
+    "jsdgm",
     "lumiai"
   ],
   shengapp: ["sfc", "lumiai"]
@@ -409,6 +417,14 @@ const DGHS_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "红石影城东莞中正广场店"
   }
 ];
+
+// 金山大光明特殊影院集合
+const JSDGM_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: "大光明影城金山百联店",
+    sfc_cinema_name: "大光明金山百联影城"
+  }
+];
 // 特殊的名字匹配集合
 const SPECIAL_CINEMA_OBJ = {
   sfc: SFC_SPECIAL_CINEMA_LIST,
@@ -445,6 +461,10 @@ const SPECIAL_CINEMA_OBJ = {
   ttylw: TTYLW_SPECIAL_CINEMA_LIST,
   ytgjyc: YTGJYC_SPECIAL_CINEMA_LIST,
   dghs: DGHS_SPECIAL_CINEMA_LIST,
+  tjlnx: [],
+  bjlnx: [],
+  cdlnx: [],
+  jsdgm: JSDGM_SPECIAL_CINEMA_LIST,
   qina: QINA_SPECIAL_CINEMA_LIST
 };
 
@@ -484,6 +504,10 @@ const TICKET_CONPREFIX_OBJ = {
   ttylw: "【天通苑乐娃自动出票】——",
   ytgjyc: "【益田国际影城自动出票】——",
   dghs: "【东莞红石影城自动出票】——",
+  tjlnx: "【天津莱纳星自动出票】——",
+  bjlnx: "【北京莱纳星自动出票】——",
+  cdlnx: "【成都莱纳星自动出票】——",
+  jsdgm: "【金山大光明自动出票】——",
   qina: "【齐纳国际自动出票】——"
 };
 
@@ -523,6 +547,10 @@ const APP_OPENID_OBJ = {
   ttylw: "os2pL5WIRCF9j_BUNXd5kpgrMEO0",
   ytgjyc: "oCoKA4m0U6JA1gOax7NVjNpNI_js",
   dghs: "oeeJH430q6SuIDVrUWXHHJ2Arn2U",
+  tjlnx: "o7R2D4rA_SO8aVRORMcIN9CKE8YY",
+  bjlnx: "oGOc_4y5CLlhc59W1esyqNLC1_sg",
+  cdlnx: "oitaV4qv9zQRcpnVIW0e6y3VEjrA",
+  jsdgm: "oBxHf5duN7bMnsd3T7-X9csx3x2A",
   qina: "ouKdc5bCNh_0ygvtmniED-u9kIbA"
 };
 
@@ -562,6 +590,10 @@ const APP_GROUP_OBJ = {
   ttylw: "20648",
   ytgjyc: "20176",
   dghs: "20416",
+  tjlnx: "20523",
+  bjlnx: "20622",
+  cdlnx: "20579",
+  jsdgm: "20618",
   qina: "20004"
 };
 

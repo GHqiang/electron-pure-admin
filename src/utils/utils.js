@@ -389,6 +389,26 @@ const getCinemaFlag = item => {
     ["东莞"].includes(city_name)
   ) {
     return "dghs";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("天津莱纳星影城") &&
+    ["天津"].includes(city_name)
+  ) {
+    return "tjlnx";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("北京莱纳星影城") &&
+    ["北京"].includes(city_name)
+  ) {
+    return "bjlnx";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("成都莱纳星影城") &&
+    ["成都"].includes(city_name)
+  ) {
+    return "cdlnx";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("大光明影城金山百联店") &&
+    ["上海"].includes(city_name)
+  ) {
+    return "jsdgm";
   }
 };
 
