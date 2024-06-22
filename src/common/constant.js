@@ -340,7 +340,7 @@ const YONGHENG_SPECIAL_CINEMA_LIST = [
 const SUZHOU_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: "中影国际影城甪直ALPD激光店",
-    sfc_cinema_name: "苏州中影影城甪直店"
+    sfc_cinema_name: "苏州中影影城吴中区甪直店"
   }
 ];
 
