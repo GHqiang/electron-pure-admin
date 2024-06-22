@@ -674,6 +674,7 @@ const offerRuleMatch = async order => {
     // 获取报价最低的报价规则
     const endRule = await getMinAmountOfferRule(memberDayRuleList, order);
     console.warn(conPrefix + "最终匹配到的报价规则", endRule);
+    if (endRule === 0) return;
     if (!endRule) {
       console.error(conPrefix + "最终匹配到的报价规则不存在");
       setErrInfo("最终匹配到的报价规则不存在");
@@ -725,6 +726,10 @@ const getMinAmountOfferRule = async (ruleList, order) => {
     if (mixAddAmountRule) {
       // 计算会员报价
       let memberPrice = await getMemberPrice(order);
+      if (memberPrice === 0) {
+        setErrInfo("获取当前场次电影信息失败,不再进行报价");
+        return 0;
+      }
       if (!memberPrice) {
         console.warn(
           conPrefix + "最小加价规则获取会员价失败,返回最小固定报价规则",
@@ -776,7 +781,7 @@ const getMemberPrice = async order => {
     console.log(conPrefix + `待报价订单当前场次电影相关信息`, movieInfo);
     if (!movieInfo) {
       console.error(conPrefix + "获取当前场次电影信息失败", "不再进行报价");
-      return;
+      return 0;
     }
     let { member_price } = movieInfo;
     console.log(conPrefix + "获取会员价", member_price);
