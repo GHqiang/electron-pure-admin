@@ -90,7 +90,7 @@ const submitForm = () => {
       $emit("loginSuccess", {
         mobile: formData.phoneNumber,
         session_id: formData.sessionId,
-        member_pwd: formData.sessionId
+        member_pwd: formData.memberPwd
       });
     } else {
       ElMessage.warn("表单校验失败");
