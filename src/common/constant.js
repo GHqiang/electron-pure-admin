@@ -125,6 +125,10 @@ const SFC_SPECIAL_CINEMA_LIST = [
     order_cinema_name: "上海影城SHO",
     sfc_cinema_name: "SFC上海影城SHO杜比剧场"
   },
+  {
+    order_cinema_name: "SFC上影影城国华广场店",
+    sfc_cinema_name: "SFC上影影城国华广场LUXE店"
+  },
   // 嘉兴
   {
     order_cinema_name: "SFC上影影城嘉兴八佰伴LUXE店",

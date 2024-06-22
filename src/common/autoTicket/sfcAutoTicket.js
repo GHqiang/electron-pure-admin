@@ -1216,7 +1216,9 @@ class OrderAutoTicketQueue {
       // 3、匹配订单拿到会员价
       const { movie_data } = moviePlayInfo;
       let movieInfo = movie_data.find(
-        item => item.movie_name.indexOf(film_name) !== -1
+        item =>
+          convertFullwidthToHalfwidth(item.movie_name) ===
+          convertFullwidthToHalfwidth(film_name)
       );
       if (!movieInfo) {
         console.warn(
@@ -1382,9 +1384,7 @@ class OrderAutoTicketQueue {
         }
       }
       // 用券列表
-      let useQuans = targetQuanList
-        .map(item => item.coupon_num)
-        .filter((item, index) => index < ticket_num);
+      let useQuans = targetQuanList.filter((item, index) => index < ticket_num);
       let profit = 0; // 利润
       useQuans.forEach(item => {
         profit =
@@ -1393,6 +1393,7 @@ class OrderAutoTicketQueue {
           item.quan_cost -
           (Number(supplier_end_price) * 100) / 10000;
       });
+      useQuans = useQuans.map(item => item.coupon_num);
       if (rewards == 1) {
         // 特急奖励订单中标价格 * 张数 * 0.04;
         let rewardPrice =
