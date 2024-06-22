@@ -818,17 +818,6 @@ class OrderAutoTicketQueue {
   }) {
     const { conPrefix } = this;
     try {
-      const priceInfo = await this.priceCalculation({
-        city_id,
-        cinema_id,
-        show_id,
-        seat_ids
-      });
-      let pay_money = priceInfo.total_price;
-      console.warn(
-        conPrefix + "使用优惠券或者会员卡前计算的订单总价",
-        pay_money
-      );
       console.log(
         conPrefix +
           `待出票订单：城市${city_name}, 影院${cinema_name}, 影厅${hall_name}`
