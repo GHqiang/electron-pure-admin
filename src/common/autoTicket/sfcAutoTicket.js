@@ -1518,29 +1518,22 @@ class OrderAutoTicketQueue {
       };
       // 3、计算价格要求最终价格小于中标价
       const priceInfo = await attemptCardsSequentially();
+      if (!priceInfo) {
+        console.error(conPrefix + "计算订单价格失败，单个订单直接出票结束");
+        this.setErrInfo(
+          APP_LIST[appFlag] + "计算订单价格失败，单个订单直接出票结束"
+        );
+        return {
+          profit: 0,
+          card_id: ""
+        };
+      }
       console.warn(
         conPrefix + "会员卡出票最终价格",
         priceInfo?.total_price,
         "中标价格*座位数：",
         Number(supplier_end_price) * ticket_num
       );
-      if (
-        !priceInfo ||
-        Number(priceInfo.total_price) >= Number(supplier_end_price) * ticket_num
-      ) {
-        console.error(
-          conPrefix +
-            "计算订单价格失败或者最终计算大于等于中标价，单个订单直接出票结束"
-        );
-        this.setErrInfo(
-          appFlag + (priceInfo ? "最终价格大于等于中标价" : "计算订单价格失败")
-        );
-        // 后续要记录失败列表（订单信息、失败原因、时间戳）
-        return {
-          profit: 0,
-          card_id: ""
-        };
-      }
       // 卡的话 1块钱成本就是一块钱，利润 =  中标价格-会员出票价格 -手续费（中标价格1%）
       let profit =
         supplier_end_price -
@@ -1554,6 +1547,17 @@ class OrderAutoTicketQueue {
         profit += rewardPrice;
       }
       profit = Number(profit).toFixed(2);
+      if (profit < 0) {
+        console.error(conPrefix + "最终利润为负，单个订单直接出票结束");
+        this.setErrInfo(
+          APP_LIST[appFlag] + "最终利润为负，单个订单直接出票结束"
+        );
+        // 后续要记录失败列表（订单信息、失败原因、时间戳）
+        return {
+          profit: 0,
+          card_id: ""
+        };
+      }
       return {
         card_id,
         profit
