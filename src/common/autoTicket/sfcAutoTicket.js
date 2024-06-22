@@ -905,11 +905,11 @@ class OrderAutoTicketQueue {
   // 计算订单价格
   async priceCalculation(data) {
     const { conPrefix } = this;
+    let { city_id, cinema_id, show_id, seat_ids, card_id, quan_code } =
+      data || {};
     try {
       // 模拟延迟调用，因为该接口出现过连续请求报超时的情况，增加请求间隔
       await this.delay(1);
-      let { city_id, cinema_id, show_id, seat_ids, card_id, quan_code } =
-        data || {};
       let params = {
         city_id: city_id,
         cinema_id: cinema_id,
@@ -934,7 +934,10 @@ class OrderAutoTicketQueue {
       return res.data?.price;
     } catch (error) {
       console.error(conPrefix + "计算订单价格异常", error);
-      this.setErrInfo("计算订单价格异常", error);
+      this.setErrInfo(
+        "计算订单价格异常:" + JSON.stringify({ card_id, quan_code }),
+        error
+      );
     }
   }
 
