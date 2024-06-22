@@ -379,6 +379,16 @@ const getCinemaFlag = item => {
     ["北京"].includes(city_name)
   ) {
     return "ttylw";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("深圳益田国际影城宝安店") &&
+    ["深圳"].includes(city_name)
+  ) {
+    return "ytgjyc";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("深圳益田国际影城宝安店") &&
+    ["东莞"].includes(city_name)
+  ) {
+    return "dghs";
   }
 };
 
