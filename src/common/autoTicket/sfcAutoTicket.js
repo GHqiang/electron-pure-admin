@@ -137,23 +137,25 @@ class OrderAutoTicketQueue {
       if (isTestOrder) {
         sfcStayOfferlist = [
           {
-            id: 144,
+            id: 183,
+            user_id: "9",
+            user_name: "苦瓜",
             plat_name: "lieren",
-            app_name: "sfc",
-            ticket_num: 2,
-            order_number: "2024062013010376202",
-            supplier_end_price: 32,
-            order_id: "6243881",
-            tpp_price: "36.00",
-            city_name: "天津",
-            cinema_addr:
-              "和平区天津市和平区小白楼街和平路263号天津天河城第八层809商铺",
-            cinema_name: "SFC上影影城（天津天河城IMAX店）",
-            hall_name: "5号激光厅",
-            film_name: "加菲猫家族",
-            lockseat: "6排1座 6排2座",
-            show_time: "2024-06-21 15:25:00",
-            cinema_group: "上影二线"
+            app_name: "ningbo",
+            ticket_num: 3,
+            rewards: "0",
+            order_number: "2024062213161666821",
+            supplier_end_price: 29,
+            order_id: "6255183",
+            tpp_price: "33.00",
+            city_name: "宁波",
+            cinema_addr: "海曙区开明街333号(天一广场旁)",
+            cinema_name: "宁波民光影城",
+            hall_name: "七楼5号厅（激光厅部分按摩椅）",
+            film_name: "排球少年！！垃圾场决战",
+            lockseat: "2排8座 2排9座 2排10座",
+            show_time: "2024-06-22 15:10:00",
+            cinema_group: "宁波影都"
           }
         ];
       }
@@ -212,6 +214,9 @@ class OrderAutoTicketQueue {
         return res;
       } else {
         console.warn(conPrefix + "订单出票队列已停止");
+        if (!this.errMsg) {
+          this.setErrInfo("订单出票队列停止");
+        }
       }
     } catch (error) {
       console.error(conPrefix + "订单执行出票异常", error);
@@ -536,7 +541,9 @@ class OrderAutoTicketQueue {
       let show_id =
         showList.find(item => item.start_time === start_time)?.show_id || "";
       if (!show_id) {
-        this.setErrInfo("影院放映信息匹配订单放映时间失败");
+        if (!this.errMsg) {
+          this.setErrInfo("影院放映信息匹配订单放映时间失败");
+        }
         const transferParams = await this.transferOrder(item);
         return { transferParams };
       }
@@ -547,6 +554,10 @@ class OrderAutoTicketQueue {
         show_id
       });
       if (!seatList?.length) {
+        console.error(conPrefix + "获取座位布局不存在");
+        if (!this.errMsg) {
+          this.setErrInfo("获取座位布局不存在");
+        }
         const transferParams = await this.transferOrder(item);
         return { transferParams };
       }
@@ -579,6 +590,9 @@ class OrderAutoTicketQueue {
             conPrefix + "单个订单试错后仍锁定座位失败",
             "需要走转单逻辑"
           );
+          if (!this.errMsg) {
+            this.setErrInfo("单个订单试错后仍锁定座位失败");
+          }
           const transferParams = await this.transferOrder(item);
           return { offerRule, transferParams };
         }
@@ -603,6 +617,9 @@ class OrderAutoTicketQueue {
           conPrefix + "优惠券和会员卡都无法使用，单个订单直接出票结束",
           "走转单逻辑"
         );
+        if (!this.errMsg) {
+          this.setErrInfo("优惠券和会员卡都无法使用，单个订单直接出票结束");
+        }
         const transferParams = await this.transferOrder(item, {
           city_id,
           cinema_id,
@@ -627,7 +644,9 @@ class OrderAutoTicketQueue {
             "使用优惠券或会员卡后计算订单价格失败，单个订单直接出票结束",
           "走转单逻辑"
         );
-        this.setErrInfo("使用优惠券或会员卡后计算订单价格失败");
+        if (!this.errMsg) {
+          this.setErrInfo("使用优惠券或会员卡后计算订单价格失败");
+        }
         // 后续要记录失败列表（订单信息、失败原因、时间戳）
         const transferParams = await this.transferOrder(item, {
           city_id,
@@ -659,6 +678,9 @@ class OrderAutoTicketQueue {
           conPrefix + "创建订单失败，单个订单直接出票结束",
           "走转单逻辑"
         );
+        if (!this.errMsg) {
+          this.setErrInfo("创建订单失败，单个订单直接出票结束");
+        }
         // 后续要记录失败列表（订单信息、失败原因、时间戳）
         const transferParams = await this.transferOrder(item, {
           city_id,
@@ -681,6 +703,9 @@ class OrderAutoTicketQueue {
           conPrefix + "订单购买失败，单个订单直接出票结束",
           "走转单逻辑"
         );
+        if (!this.errMsg) {
+          this.setErrInfo("订单购买失败，单个订单直接出票结束");
+        }
         // 后续要记录失败列表（订单信息、失败原因、时间戳）
         const transferParams = await this.transferOrder(item, {
           city_id,
@@ -1523,6 +1548,8 @@ class OrderAutoTicketQueue {
       console.warn(
         conPrefix + "会员卡出票最终价格",
         priceInfo?.total_price,
+        supplier_end_price,
+        ticket_num,
         "中标价格*座位数：",
         Number(supplier_end_price) * ticket_num
       );
