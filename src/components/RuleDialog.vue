@@ -399,7 +399,7 @@ let formData = reactive({
   ruleStartTime: "", // 规则启用时间
   ruleEndTime: "", // 规则结束时间
   offerType: "1", // 报价类型, 1-固定价 2-会员价加价 3-会员日报价
-  addAmount: "2", // 加价金额
+  addAmount: "", // 加价金额
   weekDay: [], // 启用星期
   seatNum: "", // 座位数
   memberDay: "", // 会员日
@@ -459,7 +459,7 @@ const resetForm = el => {
   formData.ruleStartTime = ""; // 规则启用时间
   formData.ruleEndTime = ""; // 规则结束时间
   formData.offerType = "1"; // 报价类型, 1-固定价 2-会员价加价 3-会员日报价
-  formData.addAmount = "2"; // 加价金额
+  formData.addAmount = ""; // 加价金额
   formData.weekDay = []; // 启用星期
   formData.seatNum = ""; // 座位数
   formData.memberDay = ""; // 会员日
@@ -545,10 +545,14 @@ const offerTypeChange = val => {
 // 保存规则
 const saveRule = async () => {
   $emit("submit", formData);
+};
+
+// 关闭
+const closeTck = () => {
+  console.log("关闭弹框");
   showSfcDialog.value = false;
   resetForm();
 };
-
 // 取消
 const cancel = el => {
   console.log("取消", el);
@@ -682,6 +686,7 @@ const getAllCinemaList = async cityList => {
 
 // 子暴露给父组件的值或方法$refs
 defineExpose({
-  open
+  open,
+  closeTck
 });
 </script>

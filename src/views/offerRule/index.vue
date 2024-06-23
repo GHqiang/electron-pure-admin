@@ -210,7 +210,7 @@
     <el-table
       ref="multipleTable"
       style="width: 100%"
-      :data="tableDataFilter"
+      :data="tableData"
       border
       stripe
       show-overflow-tooltip
@@ -355,11 +355,8 @@ import { ref, reactive, computed, toRaw } from "vue";
 import { ElMessageBox, ElMessage } from "element-plus";
 import RuleDialog from "@/components/RuleDialog.vue";
 import { ORDER_FORM, APP_LIST } from "@/common/constant";
-import { useDataTableStore } from "@/store/offerRule";
-const dataTableStore = useDataTableStore();
-const { addItem, updateItem, deleteItem, batchDeleteItem } = dataTableStore;
-// 使用computed确保items响应式
-const tableData = computed(() => dataTableStore.items);
+import svApi from "@/api/sv-api";
+const tableData = ref([]);
 
 // 是否展开
 const isCollapse = ref(false);
@@ -394,93 +391,45 @@ const formData = reactive({
   excludeFilmNames: "" // 排除影片
 });
 
-// 搜索过滤后的数据
-const tableDataFilter = ref([]);
-
 const judgeHandle = (arr, str) => {
   let tempArr = str.split(",");
   return tempArr.every(item => arr.join().indexOf(item) !== -1);
 };
 // 搜索数据
-const searchData = () => {
-  console.log("tableData==>", toRaw(tableData.value));
-  tableDataFilter.value = tableData.value.filter(item => {
-    const {
-      orderForm,
-      ruleName,
-      shadowLineName,
-      status,
-      offerType,
-      quanValue,
-      offerAmount,
-      seatNum, // 座位数
-      weekDay, // 星期几
-      includeCityNames,
-      excludeCityNames,
-      includeCinemaNames,
-      excludeCinemaNames,
-      includeHallNames,
-      excludeHallNames,
-      includeFilmNames,
-      excludeFilmNames
-    } = formData;
-    let judge0 = orderForm ? item.orderForm === orderForm : true;
-    let judge1 = shadowLineName ? item.shadowLineName === shadowLineName : true;
-    let judge2 = ruleName ? item.ruleName.indexOf(ruleName) !== -1 : true;
-    let judge3 = includeCityNames
-      ? judgeHandle(item.includeCityNames, includeCityNames)
-      : true;
-    let judge4 = excludeCityNames
-      ? judgeHandle(item.excludeCityNames, excludeCityNames)
-      : true;
-    let judge5 = includeCinemaNames
-      ? judgeHandle(item.includeCinemaNames, includeCinemaNames)
-      : true;
-    let judge6 = excludeCinemaNames
-      ? judgeHandle(item.excludeCinemaNames, excludeCinemaNames)
-      : true;
-    let judge7 = includeHallNames
-      ? judgeHandle(item.includeHallNames, includeHallNames)
-      : true;
-    let judge8 = excludeHallNames
-      ? judgeHandle(item.excludeHallNames, excludeHallNames)
-      : true;
-    let judge9 = includeFilmNames
-      ? judgeHandle(item.includeFilmNames, includeFilmNames)
-      : true;
-    let judge10 = excludeFilmNames
-      ? judgeHandle(item.excludeFilmNames, excludeFilmNames)
-      : true;
-    let judge11 = quanValue ? item.quanValue === quanValue : true;
-    let judge12 = status ? item.status === status : true;
-    let judge13 = offerType ? item.offerType === offerType : true;
-    let judge14 = offerAmount ? item.offerAmount === offerAmount : true;
-    let judge15 = seatNum ? item.seatNum === seatNum : true;
-    let judge16 = weekDay
-      ? weekDay.every(itemW => item.weekDay.includes(itemW))
-      : true;
-    return (
-      judge0 &&
-      judge1 &&
-      judge2 &&
-      judge3 &&
-      judge4 &&
-      judge5 &&
-      judge6 &&
-      judge7 &&
-      judge8 &&
-      judge9 &&
-      judge10 &&
-      judge11 &&
-      judge12 &&
-      judge13 &&
-      judge14 &&
-      judge15 &&
-      judge16
-    );
-  });
-  let list = JSON.parse(JSON.stringify(tableDataFilter.value));
-  console.log("tableDataFilter===>", list);
+const searchData = async () => {
+  try {
+    let formInfo = JSON.parse(JSON.stringify(formData));
+    const filteredEntries = Object.entries(formInfo).filter(([key, value]) => {
+      return value !== null && value !== undefined && value !== "";
+    });
+    // 使用Object.fromEntries将过滤后的键值对数组转换回对象
+    let queryParams = Object.fromEntries(filteredEntries);
+    // console.log("queryParams", queryParams);
+    let res;
+    if (JSON.stringify(queryParams) === "{}") {
+      res = await svApi.getRuleList({ page_num, page_size });
+    } else {
+      res = await svApi.queryRuleList({
+        ...queryParams
+      });
+    }
+    let ruleRecords = res.data.ruleList || [];
+    ruleRecords.forEach(item => {
+      item.includeCityNames = JSON.parse(item.includeCityNames);
+      item.excludeCityNames = JSON.parse(item.excludeCityNames);
+      item.includeCinemaNames = JSON.parse(item.includeCinemaNames);
+      item.excludeCinemaNames = JSON.parse(item.excludeCinemaNames);
+      item.includeHallNames = JSON.parse(item.includeHallNames);
+      item.excludeHallNames = JSON.parse(item.excludeHallNames);
+      item.includeFilmNames = JSON.parse(item.includeFilmNames);
+      item.excludeFilmNames = JSON.parse(item.excludeFilmNames);
+      item.weekDay = JSON.parse(item.weekDay);
+    });
+    // console.log("规则列表===>", ruleRecords);
+    tableData.value = ruleRecords;
+  } catch (error) {
+    console.warn("获取规则列表失败", error);
+  }
 };
 searchData();
 
@@ -502,25 +451,31 @@ const editRule = (row, type) => {
 };
 
 // 保存规则
-const saveRule = ruleInfo => {
-  ruleInfo = toRaw(ruleInfo);
-  ruleInfo = JSON.parse(JSON.stringify(ruleInfo));
-  if (ruleInfo.id) {
-    console.log("编辑保存规则", ruleInfo);
-    let inx = tableDataFilter.value.findIndex(item => item.id === ruleInfo.id);
-    console.log("inx", inx);
-    if (inx !== -1) {
-      updateItem(inx, ruleInfo);
+const saveRule = async ruleInfo => {
+  try {
+    ruleInfo = JSON.parse(JSON.stringify(ruleInfo));
+    ruleInfo.includeCityNames = JSON.stringify(ruleInfo.includeCityNames);
+    ruleInfo.excludeCityNames = JSON.stringify(ruleInfo.excludeCityNames);
+    ruleInfo.includeCinemaNames = JSON.stringify(ruleInfo.includeCinemaNames);
+    ruleInfo.excludeCinemaNames = JSON.stringify(ruleInfo.excludeCinemaNames);
+    ruleInfo.includeHallNames = JSON.stringify(ruleInfo.includeHallNames);
+    ruleInfo.excludeHallNames = JSON.stringify(ruleInfo.excludeHallNames);
+    ruleInfo.includeFilmNames = JSON.stringify(ruleInfo.includeFilmNames);
+    ruleInfo.excludeFilmNames = JSON.stringify(ruleInfo.excludeFilmNames);
+    ruleInfo.weekDay = JSON.stringify(ruleInfo.weekDay);
+    if (ruleInfo.id) {
+      console.log("编辑保存规则", ruleInfo);
+      await svApi.updateRuleRecord(ruleInfo);
+      sfcDialogRef.value.closeTck();
+      searchData();
+    } else {
+      console.log("新增保存规则", ruleInfo);
+      await svApi.addRuleRecord({ ...ruleInfo, id: undefined });
+      sfcDialogRef.value.closeTck();
       searchData();
     }
-  } else {
-    console.log("新增保存规则", ruleInfo);
-    let id = 1;
-    if (tableData.value.length) {
-      id = tableData.value[tableData.value.length - 1].id + 1;
-    }
-    addItem({ ...ruleInfo, id });
-    searchData();
+  } catch (error) {
+    console.warn("新增/编辑保存规则异常", error);
   }
 };
 
@@ -565,12 +520,9 @@ const deleteRow = (index, row) => {
     closeOnClickModal: false,
     closeOnPressEscape: false
   })
-    .then(() => {
-      let inx = tableDataFilter.value.findIndex(item => item.id === row.id);
-      if (inx !== -1) {
-        deleteItem(inx);
-        searchData();
-      }
+    .then(async () => {
+      await svApi.deleteRule({ id: row.id });
+      searchData();
       ElMessage({
         type: "success",
         message: "删除完成"
@@ -599,10 +551,12 @@ const batchDelete = () => {
         closeOnPressEscape: false
       }
     )
-      .then(() => {
+      .then(async () => {
         let ids = multipleSelection.value.map(item => item.id);
         console.log("ids===>", ids);
-        batchDeleteItem(ids);
+        for (let index = 0; index < ids.length; index++) {
+          await svApi.deleteRule({ id: ids[index] });
+        }
         searchData();
         multipleSelection.value = [];
         ElMessage({

@@ -42,6 +42,18 @@ const addQuanRecord = params => axios.post("/svpi/quanRecord/add", params);
 // 添加用券记录
 const addUseQuanRecord = params => axios.post("/svpi/quanRecord/use", params);
 
+// 获取规则列表
+const getRuleList = params => axios.get("/svpi/ruleRecord", { params });
+// 查询规则列表
+const queryRuleList = params => axios.get("/svpi/ruleRecord/query", { params });
+// 删除规则
+const deleteRule = params => axios.get("/svpi/ruleRecord/delete", { params });
+// 添加规则
+const addRuleRecord = params => axios.post("/svpi/ruleRecord/add", params);
+// 修改规则
+const updateRuleRecord = params =>
+  axios.post("/svpi/ruleRecord/update", params);
+
 export default {
   login,
   logout,
@@ -57,5 +69,10 @@ export default {
   getQuanList,
   queryQuanList,
   addQuanRecord,
-  addUseQuanRecord
+  addUseQuanRecord,
+  getRuleList,
+  queryRuleList,
+  deleteRule,
+  addRuleRecord,
+  updateRuleRecord
 };
