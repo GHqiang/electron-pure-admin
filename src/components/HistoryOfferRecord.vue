@@ -85,10 +85,10 @@
           <el-option label="30" value="30" />
         </el-select>
       </el-form-item>
-      <el-form-item label="报价价格">
+      <el-form-item label="失败原因">
         <el-input
-          v-model="formData.offer_end_amount"
-          placeholder="请输入报价价格"
+          v-model="formData.err_msg"
+          placeholder="请输入报价失败原因"
           clearable
         />
       </el-form-item>
@@ -232,7 +232,7 @@ const formData = reactive({
   user_id: "", // 报价用户
   order_status: "", // 状态
   offer_type: "", // 报价类型
-  offer_end_amount: "", // 中标价
+  err_msg: "", // 失败原因
   quan_value: "", // 用券面额
   start_time: "",
   end_time: ""
@@ -300,7 +300,7 @@ const resetForm = () => {
   formData.order_status = ""; // 状态
   formData.user_id = ""; // 报价用户
   formData.offer_type = ""; // 报价类型
-  formData.offer_end_amount = ""; // 最终报价
+  formData.err_msg = ""; // 最终报价
   formData.quan_value = ""; // 是否报价
   formData.start_time = "";
   formData.end_time = "";
