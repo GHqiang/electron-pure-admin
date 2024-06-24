@@ -738,11 +738,11 @@ const getMinAmountOfferRule = async (ruleList, order) => {
         return mixFixedAmountRule;
       }
       // 会员价
-      mixAddAmountRule.memberPrice = memberPrice;
+      mixAddAmountRule.memberPrice = Math.round(memberPrice);
       // 会员最终报价
       memberPrice = Number(memberPrice) + Number(mixAddAmountRule.addAmount);
       // 会员报价要求四舍五入取整
-      mixAddAmountRule.memberOfferAmount = Math.round(memberPrice);
+      mixAddAmountRule.memberOfferAmount = memberPrice;
     } else {
       console.warn(
         conPrefix + "最小加价规则不存在,返回最小固定报价规则",
