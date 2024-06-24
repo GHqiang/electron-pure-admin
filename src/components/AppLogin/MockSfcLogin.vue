@@ -10,7 +10,7 @@
         <el-input
           v-model.number="formData.phoneNumber"
           placeholder="请输入该影院的手机号"
-        ></el-input>
+        />
       </el-form-item>
 
       <!-- Session 输入框 -->
@@ -18,14 +18,14 @@
         <el-input
           v-model="formData.sessionId"
           placeholder="请输入该影院的Session ID"
-        ></el-input>
+        />
       </el-form-item>
 
       <el-form-item label="会员卡密码" prop="memberPwd">
         <el-input
           v-model="formData.memberPwd"
           placeholder="请输入该影院的会员卡密码"
-        ></el-input>
+        />
       </el-form-item>
 
       <!-- 提交按钮 -->
@@ -93,7 +93,7 @@ const submitForm = () => {
         member_pwd: formData.memberPwd
       });
     } else {
-      ElMessage.warn("表单校验失败");
+      ElMessage.warning("表单校验失败");
       return false;
     }
   });

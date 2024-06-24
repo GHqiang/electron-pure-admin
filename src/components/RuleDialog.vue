@@ -3,19 +3,25 @@
   <div>
     <!-- 对话框 -->
     <el-dialog
+      v-model="showSfcDialog"
       :close-on-click-modal="false"
       :close-on-press-escape="false"
       :title="dialogTitle"
-      v-model="showSfcDialog"
       width="50%"
       @close="resetForm(ruleFormRef)"
     >
-      <el-form :model="formData" ref="ruleFormRef" label-width="120px">
-        <el-form-item label="订单来源">
+      <el-form
+        ref="ruleFormRef"
+        :model="formData"
+        :rules="rules"
+        label-width="120px"
+      >
+        <el-form-item label="订单来源" prop="orderForm">
           <el-select
             v-model="formData.orderForm"
             placeholder="订单来源"
             clearable
+            required
           >
             <el-option
               v-for="(keyValue, keyName) in orderFormObj"
@@ -25,7 +31,7 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="影线名称">
+        <el-form-item label="影线名称" prop="shadowLineName">
           <el-select
             v-model="formData.shadowLineName"
             placeholder="请选择影线名称"
@@ -40,7 +46,7 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="规则名称">
+        <el-form-item label="规则名称" prop="ruleName">
           <el-input v-model="formData.ruleName" clearable />
         </el-form-item>
         <!-- // 报价规则：一线普通厅41、二线37、特殊厅会员卡 会员价加2，（特殊厅需要先查会员价） -->
@@ -50,11 +56,11 @@
             :disabled="
               !!(formData.excludeCityNames && formData.excludeCityNames.length)
             "
-            @change="includeCityChange"
             filterable
             multiple
             clearable
             placeholder="包含城市"
+            @change="includeCityChange"
           >
             <el-option
               v-for="item in cityList"
@@ -72,9 +78,9 @@
             "
             filterable
             multiple
-            @change="excludeCityChange"
             clearable
             placeholder="排除城市"
+            @change="excludeCityChange"
           >
             <el-option
               v-for="item in excludeCityList"
@@ -238,7 +244,18 @@
             <el-radio value="3" size="large">会员日价格</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="会员日" v-if="formData.offerType === '3'">
+        <el-form-item
+          v-if="formData.offerType === '3'"
+          label="会员日"
+          prop="memberDay"
+          :rules="[
+            {
+              required: true,
+              message: '会员日不可为空',
+              trigger: 'blur'
+            }
+          ]"
+        >
           <el-select
             v-model="formData.memberDay"
             placeholder="请选择会员日"
@@ -252,14 +269,36 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="报价金额" v-if="formData.offerType !== '2'">
+        <el-form-item
+          v-if="formData.offerType !== '2'"
+          label="报价金额"
+          prop="offerAmount"
+          :rules="[
+            {
+              required: true,
+              message: '报价金额不可为空',
+              trigger: 'blur'
+            }
+          ]"
+        >
           <el-input
             v-model="formData.offerAmount"
             placeholder="报价金额"
             clearable
           />
         </el-form-item>
-        <el-form-item label="用券面额" v-if="formData.offerType === '1'">
+        <el-form-item
+          v-if="formData.offerType === '1'"
+          label="用券面额"
+          prop="quanValue"
+          :rules="[
+            {
+              required: true,
+              message: '用券面额不可为空',
+              trigger: 'blur'
+            }
+          ]"
+        >
           <el-select
             v-model="formData.quanValue"
             placeholder="用券面额"
@@ -270,14 +309,25 @@
             <el-option label="30" value="30" />
           </el-select>
         </el-form-item>
-        <el-form-item label="加价金额" v-if="formData.offerType === '2'">
+        <el-form-item
+          v-if="formData.offerType === '2'"
+          label="加价金额"
+          prop="addAmount"
+          :rules="[
+            {
+              required: true,
+              message: '加价金额不可为空',
+              trigger: 'blur'
+            }
+          ]"
+        >
           <el-input
             v-model="formData.addAmount"
             placeholder="加价金额"
             clearable
           />
         </el-form-item>
-        <el-form-item label="星期几" v-if="formData.offerType !== '3'">
+        <el-form-item v-if="formData.offerType !== '3'" label="星期几">
           <el-select
             v-model="formData.weekDay"
             placeholder="星期几"
@@ -357,7 +407,7 @@
 import { SFC_API_OBJ } from "@/common/index.js";
 
 import { ref, reactive, computed, toRaw } from "vue";
-import { ElLoading } from "element-plus";
+import { ElLoading, ElMessage } from "element-plus";
 import { ORDER_FORM, APP_LIST } from "@/common/constant";
 import { useAppBaseData } from "@/store/appBaseData";
 const appBaseDataInfo = useAppBaseData();
@@ -410,6 +460,18 @@ let cityList = ref([]); // 城市列表
 let cinemaList = ref([]); // 影院列表
 let hallList = ref([]); // 影厅列表
 let filmList = ref([]); // 影片列表
+
+const rules = {
+  ruleName: [{ required: true, message: "规则名称不能为空", trigger: "blur" }],
+  orderForm: [
+    { required: true, message: "订单来源不能为空", trigger: "blur" }
+    // 如果Session ID有特定格式要求，可以在这里添加pattern验证
+  ],
+  shadowLineName: [
+    { required: true, message: "影线名称不能为空", trigger: "blur" }
+    // 如果Session ID有特定格式要求，可以在这里添加pattern验证
+  ]
+};
 
 // 排除城市列表
 const excludeCityList = computed(() => {
@@ -544,7 +606,17 @@ const offerTypeChange = val => {
 };
 // 保存规则
 const saveRule = async () => {
-  $emit("submit", formData);
+  ruleFormRef.value.validate(async valid => {
+    if (valid) {
+      // 提交逻辑
+      console.log("表单提交的数据:", formData);
+      ElMessage.success("必填数据校验成功！");
+      // $emit("submit", formData);
+    } else {
+      ElMessage.warning("表单校验失败");
+      return false;
+    }
+  });
 };
 
 // 关闭

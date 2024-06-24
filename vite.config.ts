@@ -46,8 +46,8 @@ export default ({ command, mode }: ConfigEnv): UserConfigExport => {
           rewrite: path => path.replace(/^\/opi/, "") // 重写路径，去除/api前缀
         },
         "/svpi": {
-          // target: "http://47.113.191.173:3000", // 后端API的真实地址
-          target: "http://localhost:3000", // 后端API的真实地址
+          target: "http://47.113.191.173:3000", // 后端API的真实地址
+          // target: "http://localhost:3000", // 后端API的真实地址
           changeOrigin: true, // 是否允许跨域
           rewrite: path => path.replace(/^\/svpi/, "") // 重写路径，去除/api前缀
         }
