@@ -137,25 +137,26 @@ class OrderAutoTicketQueue {
       if (isTestOrder) {
         sfcStayOfferlist = [
           {
-            id: 183,
+            id: 261,
             user_id: "9",
             user_name: "苦瓜",
             plat_name: "lieren",
-            app_name: "ningbo",
-            ticket_num: 3,
+            app_name: "sfc",
+            ticket_num: 2,
             rewards: "0",
-            order_number: "2024062213161666821",
-            supplier_end_price: 29,
-            order_id: "6255183",
-            tpp_price: "33.00",
-            city_name: "宁波",
-            cinema_addr: "海曙区开明街333号(天一广场旁)",
-            cinema_name: "宁波民光影城",
-            hall_name: "七楼5号厅（激光厅部分按摩椅）",
+            order_number: "2024062418330537167",
+            supplier_end_price: 40,
+            order_id: "6277236",
+            tpp_price: "56.00",
+            city_name: "上海",
+            cinema_addr: "浦东新区川沙路5398号4楼",
+            cinema_name: "SFC上影百联影城（川沙IMAX店）",
+            hall_name: "2号厅",
             film_name: "排球少年！！垃圾场决战",
-            lockseat: "2排8座 2排9座 2排10座",
-            show_time: "2024-06-22 15:10:00",
-            cinema_group: "宁波影都"
+            lockseat: "7排1座 7排2座",
+            show_time: "2024-06-25 22:30:00",
+            cinema_group: "上影上海",
+            offer_amount: "40"
           }
         ];
       }
@@ -481,7 +482,9 @@ class OrderAutoTicketQueue {
       let offerRecord = offerRes.data.offerList || [];
       offerRule = offerRecord?.[0];
       // 测试专用
-      // offerRule = { offer_type: "1", quan_value: "40" };
+      if (isTestOrder) {
+        offerRule = { offer_type: "1", quan_value: "40" };
+      }
       console.warn(conPrefix + "从该订单的报价记录获取到的报价规则", offerRule);
       if (!offerRule) {
         console.error(
@@ -1288,6 +1291,7 @@ class OrderAutoTicketQueue {
 
   // 绑定券
   async bandQuan({ coupon_num, cinema_id, city_id }) {
+    const { conPrefix } = this;
     try {
       const res = await this.sfcApi.bandQuan({
         city_id,
@@ -1300,15 +1304,15 @@ class OrderAutoTicketQueue {
         return coupon_num;
       }
     } catch (error) {
-      console.error("绑定新券异常", error);
-      this.setErrInfo("绑定新券异常", error);
+      console.error(conPrefix + "绑定新券异常", error);
+      this.setErrInfo(conPrefix + "绑定新券异常", error);
     }
   }
 
   // 获取新券
   async getNewQuan({ quanValue, quanNum, city_id, cinema_id }) {
+    const { conPrefix, appFlag } = this;
     try {
-      const { appFlag } = this;
       let quanRes = await svApi.queryQuanList({
         quan_value: quanValue,
         app_name: appFlag,

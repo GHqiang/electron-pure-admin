@@ -231,15 +231,20 @@ const transferFeeFilter = ({
   transfer_fee,
   order_status,
   ticket_num,
-  supplier_end_price
+  supplier_end_price,
+  processing_time
 }) => {
-  if (transfer_fee) return transfer_fee;
-  if (order_status === "2") {
-    return (
-      (Number(ticket_num) * Number(supplier_end_price) * 100 * 3) /
-      10000
-    ).toFixed(2);
+  if (+new Date(processing_time) <= +new Date("2024-06-16 23:15:25")) {
+    if (order_status === "2") {
+      return (
+        (Number(ticket_num) * Number(supplier_end_price) * 100 * 3) /
+        10000
+      ).toFixed(2);
+    }
+  } else {
+    return transfer_fee;
   }
+  if (transfer_fee);
 };
 
 let timer;

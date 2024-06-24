@@ -7,6 +7,7 @@
         <el-select
           v-model="formData.appName"
           placeholder="影线名称"
+          clearable
           style="width: 194px"
         >
           <el-option
@@ -34,8 +35,8 @@
       <el-table-column type="expand">
         <template #default="props">
           <div
-            style="padding: 5px 15px"
             v-if="props.row.cardList && props.row.cardList.length"
+            style="padding: 5px 15px"
           >
             <h3>会员卡余额详细信息</h3>
             <div
@@ -43,8 +44,11 @@
               :key="inx"
               style="margin-top: 10px"
             >
-              {{ inx }}、<span>卡名：{{ item.level }} </span
-              ><span style="margin-left: 20px"> 卡号：{{ item.card_num }}</span>
+              {{ inx }}、
+              <span style="margin-left: 20px">
+                影院：{{ item.cinema_name }}</span
+              >
+              <span style="margin-left: 20px"> 卡号：{{ item.card_num }}</span>
               <span style="margin-left: 20px"> 卡余额：{{ item.balance }}</span>
             </div>
           </div>
@@ -73,115 +77,85 @@
 import { ref, reactive } from "vue";
 import { APP_LIST } from "@/common/constant.js";
 import { SFC_API_OBJ } from "@/common/index.js";
-
+import { ElLoading } from "element-plus";
 // 影线列表
 const shadowLineObj = APP_LIST;
 
 // 表单查询数据
 const formData = reactive({
-  appName: "sfc" // 影线名称
+  appName: "" // 影线名称
 });
 
 // 搜索过滤后的数据
 const tableDataFilter = ref([]);
-
+const delay = delayTime => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve();
+    }, delayTime);
+  });
+};
 // 搜索数据
 const searchData = async () => {
+  const loading = ElLoading.service({
+    lock: true,
+    text: "Loading",
+    background: "rgba(0, 0, 0, 0.7)"
+  });
   try {
-    // 1、获取城市
-    // 2、获取影院
+    let allUserInfo = window.localStorage.getItem("allUserInfo");
+    if (allUserInfo) {
+      allUserInfo = JSON.parse(allUserInfo);
+    }
+    // 过滤一下已登录的
     let apiList = Object.entries(SFC_API_OBJ).filter(
-      item => item[0] === formData.appName
+      item =>
+        allUserInfo[item[0]] &&
+        (formData.appName ? item[0] === formData.appName : true)
     );
-    // console.log("apiList===>", apiList);
-    let appList = Object.keys(APP_LIST);
-    let paramsObj = {};
-    appList.forEach(item => {
-      paramsObj[item] = { city_id: "", cinema_id: "" };
-    });
-    let requestList = [];
+    console.log("apiList===>", apiList);
+    let tableList = [];
+
     for (let index = 0; index < apiList.length; index++) {
       const [appName, api] = apiList[index];
-      // console.log(appName, api);
-      let { city_id, cinema_id } = paramsObj[appName];
-      if (!city_id && !cinema_id) {
-        const cityRes = await api.getCityList({});
-        // console.log("获取城市列表返回", cityRes);
-        let cityList = cityRes.data.all_city || [];
-        paramsObj[appName].city_id = cityList[0]?.id;
-        city_id = cityList[0]?.id;
-        const cinemaRes = await api.getCinemaList({ city_id });
-        // console.log("【自动出票】获取城市影院返回", cinemaRes);
-        let cinemaList = cinemaRes.data.cinema_data || [];
-        paramsObj[appName].cinema_id = cinemaList[0]?.id;
-        cinema_id = cinemaList[0]?.id;
-      }
-      let { city_id: cityId, cinema_id: cinemaId } = paramsObj[appName];
-      requestList.push(
-        api.getCardList({ city_id: cityId, cinema_id: cinemaId })
-      );
-      requestList.push(
-        api.getQuanList({ city_id: cityId, cinema_id: cinemaId })
-      );
-    }
-    const resList = await Promise.all(requestList);
-    // console.log("resList", resList);
-    let tableList = [];
-    resList.forEach((res, inx) => {
-      let cardList = res.data.card_data || [];
-      let quanList = res.data.list || [];
-      // console.log("cardList", cardList, quanList);
+      let requestList = [];
+      await delay(200);
+      requestList.push(api.getCardList({ city_id: "500", cinema_id: "1" }));
+      requestList.push(api.getQuanList({ city_id: "500", cinema_id: "1" }));
+      const resList = await Promise.all(requestList);
+      console.log("resList", resList);
       let obj = {
-        appName: ""
+        appName: appName
       };
-      if (quanList.length) {
-        obj.quan_40_num = quanList.filter(
-          item => item.coupon_info.indexOf("40") !== -1
-        ).length;
-        obj.quan_35_num = quanList.filter(
-          item => item.coupon_info.indexOf("35") !== -1
-        ).length;
-        obj.quan_30_num = quanList.filter(
-          item => item.coupon_info.indexOf("30") !== -1
-        ).length;
-      }
-      if (cardList.length) {
-        obj.cardList = cardList;
-        obj.card_total_price = cardList.reduce((prev, item) => {
-          return Number(item.balance) + prev;
-        }, 0);
-      }
-      let appNameList = [];
-      // 创建一个新数组来存储结果，避免直接修改原数组
-      Object.keys(SFC_API_OBJ)
-        .filter(item => item === formData.appName)
-        .forEach((item, index) => {
-          // 先将当前元素插入新数组
-          appNameList.push(item);
-          // 在当前元素的下一个位置插入相同的元素
-          appNameList.splice(index + 1, 0, item);
-        });
-      obj.appName = appNameList[inx];
-      let index = tableList.findIndex(item => item.appName === obj.appName);
-      // console.log("obj", obj);
-      if (index !== -1) {
-        tableList[index] = {
-          ...tableList[index],
-          ...obj
-        };
-      } else {
-        tableList.push(obj);
-      }
-    });
-    const { appName } = formData;
-    tableDataFilter.value = tableList.filter(item => {
-      if (appName) {
-        return item.appName === appName;
-      }
-      return true;
-    });
+      resList.forEach((res, inx) => {
+        let cardList = res.data.card_data || [];
+        let quanList = res.data.list || [];
+        // console.log("cardList", cardList, quanList);
+        if (quanList.length) {
+          obj.quan_40_num = quanList.filter(
+            item => item.coupon_info.indexOf("40") !== -1
+          ).length;
+          obj.quan_35_num = quanList.filter(
+            item => item.coupon_info.indexOf("35") !== -1
+          ).length;
+          obj.quan_30_num = quanList.filter(
+            item => item.coupon_info.indexOf("30") !== -1
+          ).length;
+        }
+        if (cardList.length) {
+          obj.cardList = cardList;
+          obj.card_total_price = cardList.reduce((prev, item) => {
+            return Number(item.balance) + prev;
+          }, 0);
+        }
+      });
+      tableList.push(obj);
+    }
+    tableDataFilter.value = tableList;
+    loading.close();
   } catch (error) {
     console.error("查看影院余额失败===>", error);
+    loading.close();
   }
 };
 // searchData();
