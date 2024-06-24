@@ -1291,15 +1291,18 @@ class OrderAutoTicketQueue {
   // 绑定券
   async bandQuan({ coupon_num, cinema_id, city_id }) {
     try {
-      await this.sfcApi.bandQuan({
+      const res = await this.sfcApi.bandQuan({
         city_id,
         cinema_id,
         coupon_code: coupon_num,
         from_goods: "2"
       });
-      return coupon_num;
+      // console.log("res", res);
+      if (res.data?.success === "1") {
+        return coupon_num;
+      }
     } catch (error) {
-      console.error(conPrefix + "绑定新券异常", error);
+      console.error("绑定新券异常", error);
       this.setErrInfo("绑定新券异常", error);
     }
   }

@@ -43,9 +43,9 @@
         >
           <el-option
             v-for="(item, inx) in userList"
+            :key="inx"
             :label="item.name"
             :value="item.id"
-            :key="inx"
           />
         </el-select>
       </el-form-item>
@@ -89,6 +89,28 @@
           v-model="formData.supplier_end_price"
           placeholder="请输入中标价格"
           clearable
+        />
+      </el-form-item>
+      <el-form-item label="开始时间">
+        <el-date-picker
+          v-model="formData.start_time"
+          type="datetime"
+          style="width: 194px"
+          placeholder="请选择开始时间"
+          format="YYYY-MM-DD HH:mm:ss"
+          date-format="MMM DD, YYYY"
+          time-format="HH:mm"
+        />
+      </el-form-item>
+      <el-form-item label="结束时间">
+        <el-date-picker
+          v-model="formData.end_time"
+          type="datetime"
+          style="width: 194px"
+          placeholder="请选择结束时间"
+          format="YYYY-MM-DD HH:mm:ss"
+          date-format="MMM DD, YYYY"
+          time-format="HH:mm"
         />
       </el-form-item>
       <el-form-item>
@@ -154,9 +176,9 @@
       <el-table-column prop="err_msg" label="失败原因" width="110" />
     </el-table>
     <el-pagination
-      style="margin-top: 10px; display: flex; justify-content: flex-end"
       v-model:current-page="currentPage"
       v-model:page-size="pageSize"
+      style="margin-top: 10px; display: flex; justify-content: flex-end"
       :page-sizes="[10, 20, 30, 50]"
       :background="true"
       layout="total, sizes, prev, pager, next, jumper"
@@ -199,7 +221,9 @@ const formData = reactive({
   user_id: "", // 出票用户
   offer_type: "", // 报价类型
   supplier_end_price: "", // 中标价
-  quan_value: "" // 用券面额
+  quan_value: "", // 用券面额
+  start_time: "",
+  end_time: ""
 });
 
 // 转单手续费
@@ -209,7 +233,7 @@ const transferFeeFilter = ({
   ticket_num,
   supplier_end_price
 }) => {
-  if(transfer_fee) return transfer_fee
+  if (transfer_fee) return transfer_fee;
   if (order_status === "2") {
     return (
       (Number(ticket_num) * Number(supplier_end_price) * 100 * 3) /
@@ -280,6 +304,8 @@ const resetForm = () => {
   formData.offer_type = ""; // 报价类型
   formData.supplier_end_price = ""; // 中标价
   formData.quan_value = ""; // 是否报价
+  formData.start_time = "";
+  formData.end_time = "";
   currentPage.value = 1;
   pageSize.value = 10;
 };

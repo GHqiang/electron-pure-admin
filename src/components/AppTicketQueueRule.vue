@@ -235,7 +235,38 @@ Object.keys(APP_LIST).forEach(item => {
   appTokenObj[item] = allUserInfo[item]?.session_id || "";
   appTicketQueueObj[item] = createTicketQueue(item);
 });
-// window.hongshiQueue = appTicketQueueObj["hongshi"];
+window.sfcQueue = appTicketQueueObj["sfc"];
+const delay = delayTime => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve();
+    }, delayTime);
+  });
+};
+
+// 批量绑定优惠券程序
+window.testBandquan = async () => {
+  let quanList = (window.quanList || []).slice(0);
+  console.log(quanList, "quanList");
+  let successNum = 0;
+  for (let index = 0; index < quanList.length; index++) {
+    const coupon_num = quanList[index];
+    await delay(200);
+    const quan = await window.sfcQueue.bandQuan({
+      city_id: "304",
+      cinema_id: "33",
+      coupon_num
+    });
+    if (quan) {
+      successNum++;
+    }
+    if (successNum > 30) {
+      console.log("成功数已达30", quan, index);
+      return;
+    }
+  }
+  console.log("执行成功数", successNum);
+};
 // console.log("appTokenObj", appTokenObj);
 // console.log("appTicketQueueObj", appTicketQueueObj);
 // 一键启动
