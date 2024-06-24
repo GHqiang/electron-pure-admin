@@ -5,10 +5,7 @@
       <el-form-item label="城市">
         <el-row>
           <el-col :span="16">
-            <el-input
-              v-model="cityName"
-              placeholder="请输入所在城市"
-            ></el-input>
+            <el-input v-model="cityName" placeholder="请输入所在城市" />
           </el-col>
           <el-col :span="7" :offset="1">
             <el-button v-if="cityName" @click="getCityCinemaList()"
@@ -20,10 +17,7 @@
       <el-form-item label="影院">
         <el-row>
           <el-col :span="16">
-            <el-input
-              v-model="cinemaName"
-              placeholder="请输入所在影院"
-            ></el-input>
+            <el-input v-model="cinemaName" placeholder="请输入所在影院" />
           </el-col>
           <el-col :span="7" :offset="1">
             <el-button v-if="cinemaName" @click="getMoviePlayInfo()"
@@ -57,10 +51,7 @@
       <el-form-item label="片名">
         <el-row>
           <el-col :span="16">
-            <el-input
-              v-model="movieName"
-              placeholder="请输入电影片名"
-            ></el-input>
+            <el-input v-model="movieName" placeholder="请输入电影片名" />
           </el-col>
           <el-col :span="7" :offset="1">
             <el-button v-if="movieName" @click="getSeatLayout()"
@@ -72,7 +63,7 @@
       <el-form-item label="座位">
         <el-row>
           <el-col :span="16">
-            <el-input v-model="seatName" placeholder="请输入座位"></el-input>
+            <el-input v-model="seatName" placeholder="请输入座位" />
           </el-col>
           <el-col :span="7" :offset="1">
             <el-button v-if="seatName" @click="lockSeat()">锁定座位</el-button>
@@ -145,7 +136,7 @@
         <el-button type="primary" @click="payOrder()">支付订单</el-button>
         <el-button type="primary" @click="logout">退出登录</el-button>
       </el-form-item>
-      <!-- <el-form-item>
+      <el-form-item v-if="isAdmin">
         <el-button type="primary" @click="getLierenOrderList(0)"
           >获取待报价列表</el-button
         >
@@ -158,7 +149,7 @@
         <el-button type="primary" @click="getLierenOrderList(3)"
           >获取已出票记录</el-button
         >
-      </el-form-item> -->
+      </el-form-item>
     </el-form>
     <el-dialog
       v-model="dialogVisible"
@@ -255,6 +246,11 @@ import {
 import { SPECIAL_CINEMA_OBJ } from "@/common/constant";
 import { SFC_API_OBJ } from "@/common/index.js";
 import lierenApi from "@/api/lieren-api";
+import { platTokens } from "@/store/platTokens";
+// 平台toke列表
+const tokens = platTokens();
+const { isAdmin } = storeToRefs(tokens);
+console.log("isAdmin", isAdmin.value);
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
 const { allUserInfo, removeSfcUserInfo } = userInfoAndTokens;

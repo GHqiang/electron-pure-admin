@@ -11,6 +11,12 @@ export const platTokens = defineStore("platTokens", {
     selfToken: "", // 平台自身token
     userInfo: user || {} // 用户信息
   }),
+  getters: {
+    // sfc上影token
+    isAdmin(state) {
+      return state.userInfo.name === "暖光";
+    }
+  },
   actions: {
     // 设置猎人票务平台token
     setLierenPlatToken(data) {
