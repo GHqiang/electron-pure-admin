@@ -342,7 +342,7 @@ class OrderAutoTicketQueue {
 
   // 转单
   async transferOrder(order, unlockSeatInfo) {
-    const { conPrefix } = this;
+    const { conPrefix, errMsg } = this;
     let isAutoTransfer = window.localStorage.getItem("isAutoTransfer");
     // 关闭自动转单只针对座位异常生效
     if (isTestOrder || (isAutoTransfer == "0" && errMsg === "锁定座位异常")) {
