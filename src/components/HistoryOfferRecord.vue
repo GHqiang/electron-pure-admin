@@ -273,6 +273,7 @@ const searchData = async () => {
   }
 };
 const handleSizeChange = val => {
+  currentPage.value = 1;
   console.log(`${val} items per page`);
   searchData();
 };

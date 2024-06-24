@@ -114,69 +114,8 @@
           />
         </el-select>
       </el-form-item>
-      <template v-if="isCollapse">
-        <el-form-item label="包含城市">
-          <el-input
-            v-model="formData.includeCityNames"
-            placeholder="请输入包含城市"
-            clearable
-          />
-        </el-form-item>
-        <el-form-item label="排除城市">
-          <el-input
-            v-model="formData.excludeCityNames"
-            placeholder="请输入排除城市"
-            clearable
-          />
-        </el-form-item>
-        <el-form-item label="包含影院">
-          <el-input
-            v-model="formData.includeCinemaNames"
-            placeholder="请输入包含影院"
-            clearable
-          />
-        </el-form-item>
-        <el-form-item label="排除影院">
-          <el-input
-            v-model="formData.excludeCinemaNames"
-            placeholder="请输入排除影院"
-            clearable
-          />
-        </el-form-item>
-        <el-form-item label="包含影厅">
-          <el-input
-            v-model="formData.includeHallNames"
-            placeholder="请输入包含影厅"
-            clearable
-          />
-        </el-form-item>
-        <el-form-item label="排除影厅">
-          <el-input
-            v-model="formData.excludeHallNames"
-            placeholder="请输入排除影厅"
-            clearable
-          />
-        </el-form-item>
-        <el-form-item label="包含影片">
-          <el-input
-            v-model="formData.includeFilmNames"
-            placeholder="请输入包含影片"
-            clearable
-          />
-        </el-form-item>
-        <el-form-item label="排除影片">
-          <el-input
-            v-model="formData.excludeFilmNames"
-            placeholder="请输入排除影片"
-            clearable
-          />
-        </el-form-item>
-      </template>
 
       <el-form-item>
-        <el-button type="primary" @click="isCollapse = !isCollapse">{{
-          !isCollapse ? "展开" : "收起"
-        }}</el-button>
         <el-button type="primary" @click="searchData">搜索</el-button>
         <el-button @click="resetForm">重置</el-button>
         <el-button type="primary" style="padding-left: 0px" @click="addRule">
@@ -218,17 +157,17 @@
     >
       <el-table-column type="selection" fixed width="55" />
       <el-table-column prop="ruleName" fixed label="规则名称" width="110" />
-      <el-table-column prop="orderForm" fixed label="订单来源" width="90">
+      <el-table-column prop="orderForm" fixed label="订单来源" width="85">
         <template #default="scope">
           <span>{{ orderFormObj[scope.row.orderForm] }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="shadowLineName" fixed label="影线名称" width="90">
+      <el-table-column prop="shadowLineName" fixed label="影线名称" width="85">
         <template #default="scope">
           <span>{{ shadowLineObj[scope.row.shadowLineName] }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="状态" fixed width="60">
+      <el-table-column label="状态" fixed width="55">
         <template #default="scope">
           <span>{{ scope.row.status === "1" ? "正常" : "禁用" }}</span>
         </template>
@@ -238,10 +177,10 @@
           <span>{{ offerTypeObj[scope.row.offerType] || "" }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="用券面额" prop="quanValue" fixed width="90" />
-      <el-table-column label="报价金额" prop="offerAmount" fixed width="90" />
-      <el-table-column label="加价金额" prop="addAmount" fixed width="90" />
-      <el-table-column label="会员日" prop="memberDay" width="100" />
+      <el-table-column label="用券面额" prop="quanValue" width="85" />
+      <el-table-column label="报价金额" prop="offerAmount" width="85" />
+      <el-table-column label="加价金额" prop="addAmount" width="85" />
+      <el-table-column label="会员日" prop="memberDay" width="85" />
       <el-table-column label="开场时间限制" prop="timeLimit" width="110" />
       <el-table-column label="包含城市" width="110">
         <template #default="scope">
@@ -315,6 +254,18 @@
         </template>
       </el-table-column>
     </el-table>
+    <el-pagination
+      v-model:current-page="currentPage"
+      v-model:page-size="pageSize"
+      style="margin-top: 10px; display: flex; justify-content: flex-end"
+      :page-sizes="[10, 20, 30, 50]"
+      :background="true"
+      layout="total, sizes, prev, pager, next, jumper"
+      :total="totalNum"
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+    />
+
     <RuleDialog
       ref="sfcDialogRef"
       :dialogTitle="dialogTitle"
@@ -331,9 +282,9 @@ import RuleDialog from "@/components/RuleDialog.vue";
 import { ORDER_FORM, APP_LIST } from "@/common/constant";
 import { getCurrentFormattedDateTime } from "@/utils/utils";
 const tableData = ref([]);
-
-// 是否展开
-const isCollapse = ref(false);
+const currentPage = ref(1);
+const pageSize = ref(10);
+const totalNum = ref(0);
 // 订单来源枚举
 // 订单来源
 const orderFormObj = ref(ORDER_FORM);
@@ -354,15 +305,7 @@ const formData = reactive({
   offerAmount: "", // 报价金额
   quanValue: "", // 用券面额
   weekDay: [], // 星期几
-  seatNum: "", // 座位数
-  includeCityNames: "", // 包含城市
-  excludeCityNames: "", // 排除城市
-  includeCinemaNames: "", // 包含影院
-  excludeCinemaNames: "", // 排除影院
-  includeHallNames: "", // 包含影厅
-  excludeHallNames: "", // 排除影厅
-  includeFilmNames: "", // 包含影片
-  excludeFilmNames: "" // 排除影片
+  seatNum: "" // 座位数
 });
 
 const judgeHandle = (arr, str) => {
@@ -380,11 +323,15 @@ const searchData = async () => {
     let queryParams = Object.fromEntries(filteredEntries);
     // console.log("queryParams", queryParams);
     let res;
+    let page_num = currentPage.value;
+    let page_size = pageSize.value;
     if (JSON.stringify(queryParams) === "{}") {
       res = await svApi.getRuleList({ page_num, page_size });
     } else {
       res = await svApi.queryRuleList({
-        ...queryParams
+        ...queryParams,
+        page_num,
+        page_size
       });
     }
     let ruleRecords = res.data.ruleList || [];
@@ -401,12 +348,21 @@ const searchData = async () => {
     });
     // console.log("规则列表===>", ruleRecords);
     tableData.value = ruleRecords;
+    totalNum.value = res.data.totalNum || 0;
   } catch (error) {
     console.warn("获取规则列表失败", error);
   }
 };
 searchData();
-
+const handleSizeChange = val => {
+  console.log(`${val} items per page`);
+  currentPage.value = 1;
+  searchData();
+};
+const handleCurrentChange = val => {
+  console.log(`current page: ${val}`);
+  searchData();
+};
 // sfc弹框实例
 const sfcDialogRef = ref(null);
 const dialogTitle = ref("新增");
@@ -471,12 +427,8 @@ const resetForm = () => {
   formData.offerAmount = ""; // 报价金额
   formData.weekDay = []; // 星期几
   formData.seatNum = ""; // 座位数
-  formData.includeCityNames = ""; // 包含城市
-  formData.excludeCityNames = ""; // 排除城市
-  formData.includeCinemaNames = ""; // 包含影院
-  formData.excludeCinemaNames = ""; // 排除影院
-  formData.includeFilmNames = ""; // 包含影片
-  formData.excludeFilmNames = ""; // 排除影片
+  currentPage.value = 1;
+  pageSize.value = 10;
 };
 
 // 处理选择变化
