@@ -168,11 +168,7 @@
       </el-table-column>
       <el-table-column prop="quan_value" label="用券面额" width="90" />
       <el-table-column prop="profit" label="利润" width="80" />
-      <el-table-column label="转单手续费" width="100">
-        <template #default="scope">
-          <span>{{ transferFeeFilter(scope.row) }}</span>
-        </template>
-      </el-table-column>
+      <el-table-column prop="transfer_fee" label="转单手续费" width="100" />
       <el-table-column prop="err_msg" label="失败原因" width="110" />
     </el-table>
     <el-pagination
@@ -225,27 +221,6 @@ const formData = reactive({
   start_time: "",
   end_time: ""
 });
-
-// 转单手续费
-const transferFeeFilter = ({
-  transfer_fee,
-  order_status,
-  ticket_num,
-  supplier_end_price,
-  processing_time
-}) => {
-  if (+new Date(processing_time) <= +new Date("2024-06-16 23:15:25")) {
-    if (order_status === "2") {
-      return (
-        (Number(ticket_num) * Number(supplier_end_price) * 100 * 3) /
-        10000
-      ).toFixed(2);
-    }
-  } else {
-    return transfer_fee;
-  }
-  if (transfer_fee);
-};
 
 let timer;
 // 搜索数据
