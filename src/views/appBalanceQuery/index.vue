@@ -28,6 +28,7 @@
     <el-table
       style="width: 100%"
       :data="tableDataFilter"
+      show-summary
       border
       stripe
       show-overflow-tooltip
@@ -45,11 +46,28 @@
               style="margin-top: 10px"
             >
               {{ inx }}、
-              <span style="margin-left: 20px">
+              <span style="margin-left: 5px">
                 影院：{{ item.cinema_name }}</span
               >
               <span style="margin-left: 20px"> 卡号：{{ item.card_num }}</span>
               <span style="margin-left: 20px"> 卡余额：{{ item.balance }}</span>
+            </div>
+            <h3>优惠券-其它券详细信息</h3>
+            <div
+              v-for="(item, inx) in props.row.quan_other_list"
+              :key="inx"
+              style="margin-top: 10px"
+            >
+              {{ inx }}、
+              <span style="margin-left: 5px">
+                说明：{{ item.coupon_info }}</span
+              >
+              <span style="margin-left: 20px">
+                开始：{{ item.validate_date_start }}</span
+              >
+              <span style="margin-left: 20px">
+                截止：{{ item.validate_date_end }}</span
+              >
             </div>
           </div>
         </template>
@@ -62,6 +80,7 @@
       <el-table-column prop="quan_40_num" label="40券数量" />
       <el-table-column prop="quan_35_num" label="35券数量" />
       <el-table-column prop="quan_30_num" label="30券数量" />
+      <el-table-column prop="quan_other_num" label="其它券数量" />
       <el-table-column prop="card_total_price" label="会员卡总额" />
 
       <!-- <el-table-column label="报价类型" width="100">
@@ -141,6 +160,13 @@ const searchData = async () => {
           obj.quan_30_num = quanList.filter(
             item => item.coupon_info.indexOf("30") !== -1
           ).length;
+          obj.quan_other_list = quanList.filter(
+            item =>
+              !["30", "35", "40"].some(
+                itemA => item.coupon_info.indexOf(itemA) !== -1
+              )
+          );
+          obj.quan_other_num = obj.quan_other_list.length;
         }
         if (cardList.length) {
           obj.cardList = cardList;
