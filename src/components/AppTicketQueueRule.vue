@@ -1,18 +1,18 @@
 <!-- app自动出票规则设置 -->
 <template>
   <el-button
-    type="primary"
     v-if="isActiveOneClickStart"
-    @click="oneClickAutoOffer"
     v-throttle
+    type="primary"
+    @click="oneClickAutoOffer"
     >一键全部启动</el-button
   >
   <el-button
+    v-if="isActiveOneClickStop"
+    v-throttle
     type="primary"
     :style="{ marginLeft: isActiveOneClickStart ? '20px' : 0 }"
-    v-if="isActiveOneClickStop"
     @click="stopAutoOffer"
-    v-throttle
     >一键停止</el-button
   >
   <el-button type="primary" @click="isAutoTransfer = !isAutoTransfer">{{
@@ -22,7 +22,7 @@
   <el-button type="primary" @click="isCollapse = !isCollapse">{{
     !isCollapse ? "展开" : "收起"
   }}</el-button>
-  <el-table :data="displayItems" border v-if="isCollapse" show-overflow-tooltip>
+  <el-table v-if="isCollapse" :data="displayItems" border show-overflow-tooltip>
     <el-table-column prop="appName" label="影院名称">
       <template #default="{ row, $index }">
         <span v-if="row.id !== editingRowId">{{
@@ -106,14 +106,14 @@
     </el-table-column>
     <el-table-column label="队列执行状态">
       <template #default="{ row }">
-        <el-switch disabled v-model="row.isEnabled" />
+        <el-switch v-model="row.isEnabled" disabled />
       </template>
     </el-table-column>
     <el-table-column label="操作" width="270">
       <template #default="{ row, $index }">
         <el-popconfirm
-          title="确定启动吗？"
           v-if="!row.isEnabled && row.id !== editingRowId"
+          title="确定启动吗？"
           @confirm="singleStartOrStop(row, 1)"
         >
           <template #reference>
@@ -122,8 +122,8 @@
         </el-popconfirm>
 
         <el-popconfirm
-          title="确定停止吗？"
           v-if="row.isEnabled"
+          title="确定停止吗？"
           @confirm="singleStartOrStop(row, 2)"
         >
           <template #reference>
@@ -132,10 +132,10 @@
         </el-popconfirm>
 
         <el-button
-          type="primary"
           v-if="$index === 0 && row.id !== editingRowId"
-          @click="addNewItem"
+          type="primary"
           size="small"
+          @click="addNewItem"
           >新增</el-button
         >
         <el-button
@@ -158,8 +158,8 @@
           >保存</el-button
         >
         <el-popconfirm
-          title="确定删除吗？"
           v-if="displayItems.length > 1"
+          title="确定删除吗？"
           @confirm="deleteItem(row.id)"
         >
           <template #reference>
@@ -174,6 +174,7 @@
 <script setup>
 import { ref, computed, watch } from "vue";
 import { ElMessageBox, ElMessage } from "element-plus";
+import svApi from "@/api/sv-api";
 import { useAppRuleListStore } from "@/store/appTicketRuleTable";
 import createTicketQueue from "@/common/autoTicket/sfcAutoTicket";
 import { APP_LIST } from "@/common/constant.js";
@@ -263,6 +264,9 @@ const oneClickAutoOffer = () => {
           item.isEnabled = true;
           appTicketQueueObj[item.appName].start();
         }
+      });
+      svApi.updateUser({
+        plat_ticket_queue: JSON.stringify(tableDataStore.items)
       });
     })
     .catch(() => {});

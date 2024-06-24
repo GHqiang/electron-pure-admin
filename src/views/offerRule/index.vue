@@ -179,7 +179,7 @@
         }}</el-button>
         <el-button type="primary" @click="searchData">搜索</el-button>
         <el-button @click="resetForm">重置</el-button>
-        <el-button type="primary" @click="addRule" style="padding-left: 0px">
+        <el-button type="primary" style="padding-left: 0px" @click="addRule">
           <template #default>
             <el-select
               v-model="shadowLine"
@@ -204,7 +204,7 @@
     </el-form>
 
     <!-- 操作按钮 -->
-    <div style="margin-bottom: 15px"></div>
+    <div style="margin-bottom: 15px" />
 
     <!-- 表格 -->
     <el-table
@@ -238,34 +238,11 @@
           <span>{{ offerTypeObj[scope.row.offerType] || "" }}</span>
         </template>
       </el-table-column>
-      <el-table-column
-        label="用券面额"
-        prop="quanValue"
-        fixed
-        width="90"
-      ></el-table-column>
-      <el-table-column
-        label="报价金额"
-        prop="offerAmount"
-        fixed
-        width="90"
-      ></el-table-column>
-      <el-table-column
-        label="加价金额"
-        prop="addAmount"
-        fixed
-        width="90"
-      ></el-table-column>
-      <el-table-column
-        label="会员日"
-        prop="memberDay"
-        width="100"
-      ></el-table-column>
-      <el-table-column
-        label="开场时间限制"
-        prop="timeLimit"
-        width="110"
-      ></el-table-column>
+      <el-table-column label="用券面额" prop="quanValue" fixed width="90" />
+      <el-table-column label="报价金额" prop="offerAmount" fixed width="90" />
+      <el-table-column label="加价金额" prop="addAmount" fixed width="90" />
+      <el-table-column label="会员日" prop="memberDay" width="100" />
+      <el-table-column label="开场时间限制" prop="timeLimit" width="110" />
       <el-table-column label="包含城市" width="110">
         <template #default="scope">
           <span>{{ scope.row.includeCityNames.join() }}</span>
@@ -281,11 +258,7 @@
           <span>{{ scope.row.weekDay.join() }}</span>
         </template>
       </el-table-column>
-      <el-table-column
-        label="座位数"
-        prop="seatNum"
-        width="90"
-      ></el-table-column>
+      <el-table-column label="座位数" prop="seatNum" width="90" />
       <el-table-column prop="includeCinemaNames" label="包含影院" width="110">
         <template #default="scope">
           <span>{{ scope.row.includeCinemaNames.join() }}</span>
@@ -346,7 +319,7 @@
       ref="sfcDialogRef"
       :dialogTitle="dialogTitle"
       @submit="saveRule"
-    ></RuleDialog>
+    />
   </div>
 </template>
 
@@ -355,7 +328,7 @@ import { ref, reactive, computed, toRaw } from "vue";
 import { ElMessageBox, ElMessage } from "element-plus";
 import RuleDialog from "@/components/RuleDialog.vue";
 import { ORDER_FORM, APP_LIST } from "@/common/constant";
-import svApi from "@/api/sv-api";
+import { getCurrentFormattedDateTime } from "@/utils/utils";
 const tableData = ref([]);
 
 // 是否展开
@@ -463,6 +436,7 @@ const saveRule = async ruleInfo => {
     ruleInfo.includeFilmNames = JSON.stringify(ruleInfo.includeFilmNames);
     ruleInfo.excludeFilmNames = JSON.stringify(ruleInfo.excludeFilmNames);
     ruleInfo.weekDay = JSON.stringify(ruleInfo.weekDay);
+    ruleInfo.update_time = getCurrentFormattedDateTime();
     if (ruleInfo.id) {
       console.log("编辑保存规则", ruleInfo);
       await svApi.updateRuleRecord(ruleInfo);
@@ -554,9 +528,7 @@ const batchDelete = () => {
       .then(async () => {
         let ids = multipleSelection.value.map(item => item.id);
         console.log("ids===>", ids);
-        for (let index = 0; index < ids.length; index++) {
-          await svApi.deleteRule({ id: ids[index] });
-        }
+        await svApi.batchDeleteRule({ delIds: ids });
         searchData();
         multipleSelection.value = [];
         ElMessage({

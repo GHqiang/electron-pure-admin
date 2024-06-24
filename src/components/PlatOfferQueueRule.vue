@@ -1,18 +1,18 @@
 <!-- 平台自动报价队列规则列表 -->
 <template>
   <el-button
-    type="primary"
     v-if="isActiveOneClickStart"
-    @click="oneClickAutoOffer"
     v-throttle
+    type="primary"
+    @click="oneClickAutoOffer"
     >一键全部启动</el-button
   >
   <el-button
+    v-if="isActiveOneClickStop"
+    v-throttle
     type="primary"
     :style="{ marginLeft: isActiveOneClickStart ? '20px' : 0 }"
-    v-if="isActiveOneClickStop"
     @click="stopAutoOffer"
-    v-throttle
     >一键停止</el-button
   >
 
@@ -62,14 +62,14 @@
     </el-table-column>
     <el-table-column label="队列执行状态">
       <template #default="{ row }">
-        <el-switch disabled v-model="row.isEnabled" />
+        <el-switch v-model="row.isEnabled" disabled />
       </template>
     </el-table-column>
     <el-table-column label="操作" width="270">
       <template #default="{ row, $index }">
         <el-popconfirm
-          title="确定启动吗？"
           v-if="!row.isEnabled && row.id !== editingRowId"
+          title="确定启动吗？"
           @confirm="singleStartOrStop(row, 1)"
         >
           <template #reference>
@@ -78,8 +78,8 @@
         </el-popconfirm>
 
         <el-popconfirm
-          title="确定停止吗？"
           v-if="row.isEnabled"
+          title="确定停止吗？"
           @confirm="singleStartOrStop(row, 2)"
         >
           <template #reference>
@@ -88,10 +88,10 @@
         </el-popconfirm>
 
         <el-button
-          type="primary"
           v-if="$index === 0 && row.id !== editingRowId"
-          @click="addNewItem"
+          type="primary"
           size="small"
+          @click="addNewItem"
           >新增</el-button
         >
         <el-button
@@ -114,8 +114,8 @@
           >保存</el-button
         >
         <el-popconfirm
-          title="确定删除吗？"
           v-if="displayItems.length > 1"
+          title="确定删除吗？"
           @confirm="deleteItem(row.id)"
         >
           <template #reference>
@@ -130,6 +130,7 @@
 <script setup>
 import { ref, computed } from "vue";
 import { ElMessageBox, ElMessage } from "element-plus";
+import svApi from "@/api/sv-api";
 import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
 import lierenOfferQueue from "@/common/autoOffer/useLierenOffer";
 import { PLAT_LINK_APP, APP_LIST } from "@/common/constant";
@@ -183,6 +184,9 @@ const oneClickAutoOffer = () => {
           )?.platToken;
           lierenOfferQueue.start(platToken);
         }
+      });
+      svApi.updateUser({
+        plat_offer_queue: JSON.stringify(tableDataStore.items)
       });
     })
     .catch(() => {});

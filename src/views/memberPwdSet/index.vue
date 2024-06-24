@@ -6,10 +6,10 @@
       </p>
       <p v-else style="margin-bottom: 15px">你已设置过会员卡密码：{{ pwd }}</p>
 
-      <el-button type="primary" v-if="!pwd && !isActive" @click="setPwd()">
+      <el-button v-if="!pwd && !isActive" type="primary" @click="setPwd()">
         设置密码
       </el-button>
-      <el-button type="primary" v-if="pwd && !isActive" @click="updatePwd()">
+      <el-button v-if="pwd && !isActive" type="primary" @click="updatePwd()">
         修改密码
       </el-button>
     </div>
@@ -94,8 +94,7 @@ const submitForm = formEl => {
   formEl.validate(async valid => {
     if (valid) {
       console.log("submit!");
-      await svApi.setMemBerPwd({
-        user_id: tokens.userInfo.user_id,
+      await svApi.updateUser({
         member_pwd: ruleForm.pass
       });
       isActive.value = false;

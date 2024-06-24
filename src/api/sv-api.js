@@ -8,9 +8,8 @@ import axios from "@/utils/http/sv-request";
 const login = params => axios.get("/svpi/users/login", { params });
 // 退出登录
 const logout = params => axios.get("/svpi/users/logout", { params });
-// 设置会员卡密码
-const setMemBerPwd = params =>
-  axios.get("/svpi/users/setMemBerPwd", { params });
+// 更新用户信息
+const updateUser = params => axios.post("/svpi/users/update", params);
 // 获取用户列表
 const getUserList = params => axios.get("/svpi/users", { params });
 
@@ -48,6 +47,9 @@ const getRuleList = params => axios.get("/svpi/ruleRecord", { params });
 const queryRuleList = params => axios.get("/svpi/ruleRecord/query", { params });
 // 删除规则
 const deleteRule = params => axios.get("/svpi/ruleRecord/delete", { params });
+// 批量删除规则
+const batchDeleteRule = params =>
+  axios.post("/svpi/ruleRecord/batchdelete", params);
 // 添加规则
 const addRuleRecord = params => axios.post("/svpi/ruleRecord/add", params);
 // 修改规则
@@ -57,7 +59,7 @@ const updateRuleRecord = params =>
 export default {
   login,
   logout,
-  setMemBerPwd,
+  updateUser,
   getUserList,
   getOfferList,
   queryOfferList,
@@ -73,6 +75,7 @@ export default {
   getRuleList,
   queryRuleList,
   deleteRule,
+  batchDeleteRule,
   addRuleRecord,
   updateRuleRecord
 };
