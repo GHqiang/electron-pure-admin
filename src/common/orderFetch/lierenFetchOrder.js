@@ -14,7 +14,7 @@ const platFetchOrderRuleList = computed(() =>
 import { useStayTicketList } from "@/store/stayTicketList";
 const stayTicketList = useStayTicketList();
 const { addNewOrder } = stayTicketList;
-import { getCinemaFlag } from "@/utils/utils";
+import { getCinemaFlag, getCurrentFormattedDateTime } from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
 const tokens = platTokens();
@@ -193,8 +193,8 @@ const getOfferList = async () => {
     const res = await svApi.queryOfferList({
       user_id: tokens.userInfo.user_id,
       plat_name: "lieren",
-      page_num: 1,
-      page_size: 50
+      start_time: getCurrentFormattedDateTime(+new Date() - 6 * 60 * 60 * 1000),
+      end_time: getCurrentFormattedDateTime()
     });
     return res.data.offerList || [];
   } catch (error) {

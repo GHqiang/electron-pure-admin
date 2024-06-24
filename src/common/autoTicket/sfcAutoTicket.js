@@ -476,9 +476,7 @@ class OrderAutoTicketQueue {
         user_id: user_id,
         order_status: "1",
         app_name: appFlag,
-        order_number,
-        page_num: 1,
-        page_size: 50
+        order_number
       });
       let offerRecord = offerRes.data.offerList || [];
       offerRule = offerRecord?.[0];

@@ -319,8 +319,8 @@ const getOfferList = async () => {
     const res = await svApi.queryOfferList({
       user_id: tokens.userInfo.user_id,
       plat_name: "lieren",
-      page_num: 1,
-      page_size: 100
+      start_time: getCurrentFormattedDateTime(+new Date() - 6 * 60 * 60 * 1000),
+      end_time: getCurrentFormattedDateTime()
     });
     return res.data.offerList || [];
   } catch (error) {

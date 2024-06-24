@@ -5,8 +5,8 @@ import ExcelJS from "exceljs";
  * 无参数
  * @return {string} 返回格式为 "YYYY-MM-DD HH:MM:SS" 的字符串
  */
-function getCurrentFormattedDateTime() {
-  const now = new Date();
+function getCurrentFormattedDateTime(sjc) {
+  const now = !sjc ? new Date() : new Date(sjc);
 
   // 获取年、月、日、小时、分钟、秒
   const year = now.getFullYear();
