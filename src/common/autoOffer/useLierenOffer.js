@@ -51,7 +51,9 @@ class OrderAutoOfferQueue {
 
   // 启动队列（fetchDelay获取订单列表间隔，processDelay处理订单间隔）
   async start(platToken) {
-    tokens.setLierenPlatToken(platToken);
+    if (platToken) {
+      tokens.setLierenPlatToken(platToken);
+    }
     // 设置队列为运行状态
     this.isRunning = true;
     this.handleSuccessOrderList = [];
@@ -219,6 +221,7 @@ class OrderAutoOfferQueue {
         offer_type: offerResult?.offerRule?.offerType,
         offer_amount: offerResult?.offerRule?.offerAmount,
         member_offer_amount: offerResult?.offerRule?.memberOfferAmount,
+        member_price: offerResult?.offerRule?.memberPrice,
         quan_value: offerResult?.offerRule?.quanValue,
         order_status: offerResult?.res ? "1" : "2",
         // remark: '',
@@ -738,9 +741,10 @@ const getMinAmountOfferRule = async (ruleList, order) => {
         return mixFixedAmountRule;
       }
       // 会员价
-      mixAddAmountRule.memberPrice = Math.round(memberPrice);
+      mixAddAmountRule.memberPrice = memberPrice;
       // 会员最终报价
-      memberPrice = Number(memberPrice) + Number(mixAddAmountRule.addAmount);
+      memberPrice =
+        Math.round(memberPrice) + Number(mixAddAmountRule.addAmount);
       // 会员报价要求四舍五入取整
       mixAddAmountRule.memberOfferAmount = memberPrice;
     } else {
