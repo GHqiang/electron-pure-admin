@@ -201,6 +201,17 @@ const setLocalRuleList = async () => {
   });
   // console.log("ruleRes", ruleRes);
   let ruleRecords = ruleRes.data.ruleList || [];
+  ruleRecords.forEach(item => {
+    item.includeCityNames = JSON.parse(item.includeCityNames);
+    item.excludeCityNames = JSON.parse(item.excludeCityNames);
+    item.includeCinemaNames = JSON.parse(item.includeCinemaNames);
+    item.excludeCinemaNames = JSON.parse(item.excludeCinemaNames);
+    item.includeHallNames = JSON.parse(item.includeHallNames);
+    item.excludeHallNames = JSON.parse(item.excludeHallNames);
+    item.includeFilmNames = JSON.parse(item.includeFilmNames);
+    item.excludeFilmNames = JSON.parse(item.excludeFilmNames);
+    item.weekDay = JSON.parse(item.weekDay);
+  });
   rules.setRuleList(ruleRecords);
 };
 
