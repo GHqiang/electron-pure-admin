@@ -787,10 +787,13 @@ const getMemberPrice = async order => {
       console.error(conPrefix + "获取当前场次电影信息失败", "不再进行报价");
       return 0;
     }
-    let { member_price } = movieInfo;
+    let { member_price, nonmember_price } = movieInfo;
     console.log(conPrefix + "获取会员价", member_price);
-    if (member_price) {
+    if (member_price > 0) {
       return Number(member_price);
+    } else {
+      console.warn(conPrefix + "会员价未负，非会员价", nonmember_price);
+      if (nonmember_price) return Number(nonmember_price);
     }
   } catch (error) {
     console.error(conPrefix + "获取会员价异常", error);
