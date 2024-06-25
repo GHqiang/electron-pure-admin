@@ -129,6 +129,7 @@
 <script setup>
 import { ref, computed } from "vue";
 import { ElMessageBox, ElMessage } from "element-plus";
+import svApi from "@/api/sv-api";
 import { usePlatFetchOrderStore } from "@/store/platOfferRuleTable";
 import lierenFetchOrder from "@/common/orderFetch/lierenFetchOrder";
 import { ORDER_FORM } from "@/common/constant.js";
@@ -182,6 +183,9 @@ const oneClickAutoOffer = () => {
           }
           lierenFetchOrder.start();
         }
+      });
+      svApi.updateUser({
+        order_fetch_queue: JSON.stringify(tableDataStore.items)
       });
     })
     .catch(err => {
