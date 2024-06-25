@@ -67,7 +67,7 @@
     </el-table-column>
     <el-table-column label="操作" width="270">
       <template #default="{ row, $index }">
-        <el-popconfirm
+        <!-- <el-popconfirm
           v-if="!row.isEnabled && row.id !== editingRowId"
           title="确定启动吗？"
           @confirm="singleStartOrStop(row, 1)"
@@ -75,7 +75,7 @@
           <template #reference>
             <el-button size="small" type="success">启动</el-button>
           </template>
-        </el-popconfirm>
+        </el-popconfirm> -->
 
         <el-popconfirm
           v-if="row.isEnabled"
