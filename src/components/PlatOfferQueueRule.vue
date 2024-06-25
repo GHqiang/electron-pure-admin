@@ -141,6 +141,8 @@ const { allUserInfo } = userInfoAndTokens;
 const tableDataStore = usePlatTableDataStore();
 const displayItems = computed(() => tableDataStore.items);
 
+import { useDataTableStore } from "@/store/offerRule";
+const rules = useDataTableStore();
 // 是否显示一键启动
 const isActiveOneClickStart = computed(() => {
   return (
@@ -174,8 +176,9 @@ const oneClickAutoOffer = () => {
     closeOnClickModal: false,
     closeOnPressEscape: false
   })
-    .then(() => {
+    .then(async () => {
       console.warn("一键启动全部自动报价队列");
+      await setLocalRuleList();
       tableDataStore.items.forEach(item => {
         item.isEnabled = true;
         if (item.platName === "lieren") {
@@ -191,6 +194,16 @@ const oneClickAutoOffer = () => {
     })
     .catch(() => {});
 };
+// 设置本地的规则列表
+const setLocalRuleList = async () => {
+  const ruleRes = await svApi.queryRuleList({
+    status: "1"
+  });
+  // console.log("ruleRes", ruleRes);
+  let ruleRecords = ruleRes.data.ruleList || [];
+  rules.setRuleList(ruleRecords);
+};
+
 // 一键停止
 const stopAutoOffer = () => {
   ElMessageBox.confirm("确定要一键停止吗?", "提示", {

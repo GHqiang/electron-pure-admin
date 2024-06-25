@@ -1,36 +1,14 @@
 import { defineStore } from "pinia";
-import { OFFER_LIST } from "@/common/constant";
-let tableData = window.localStorage.getItem("tableData");
-if (tableData) {
-  tableData = JSON.parse(tableData);
-}
 export const useDataTableStore = defineStore("dataTable", {
   state: () => {
     return {
-      items: tableData || OFFER_LIST || []
+      items: []
     };
   },
   actions: {
-    addItem(item) {
-      this.items.push(item);
-      this.saveToLocalStorage();
-    },
-    updateItem(index, updatedItem) {
-      this.items[index] = updatedItem;
-      this.saveToLocalStorage();
-    },
-    deleteItem(index) {
-      this.items.splice(index, 1);
-      this.saveToLocalStorage();
-    },
-    batchDeleteItem(ids) {
-      let tempArr = this.items.filter(item => !ids.includes(item.id));
-      console.log("tempArr==>", tempArr);
-      this.items = tempArr;
-      this.saveToLocalStorage();
-    },
-    saveToLocalStorage() {
-      localStorage.setItem("tableData", JSON.stringify(this.items));
+    // 设置规则列表
+    setRuleList(list) {
+      this.items = list;
     }
   },
   getters: {

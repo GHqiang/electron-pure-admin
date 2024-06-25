@@ -54,6 +54,10 @@ class OrderAutoOfferQueue {
     if (platToken) {
       tokens.setLierenPlatToken(platToken);
     }
+    console.log(
+      "开始执行时获取到的规则列表",
+      getOrginValue(appOfferRuleList.value)
+    );
     // 设置队列为运行状态
     this.isRunning = true;
     this.handleSuccessOrderList = [];
