@@ -1546,9 +1546,9 @@ class OrderAutoTicketQueue {
       const priceInfo = await attemptCardsSequentially();
       if (!priceInfo) {
         console.error(conPrefix + "计算订单价格失败，单个订单直接出票结束");
-        this.setErrInfo(
-          APP_LIST[appFlag] + "计算订单价格失败，单个订单直接出票结束"
-        );
+        // this.setErrInfo(
+        //   APP_LIST[appFlag] + "计算订单价格失败，单个订单直接出票结束"
+        // );
         return {
           profit: 0,
           card_id: ""
