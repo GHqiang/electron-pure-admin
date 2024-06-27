@@ -611,7 +611,7 @@ const saveRule = async () => {
       // 提交逻辑
       console.log("表单提交的数据:", formData);
       ElMessage.success("必填数据校验成功！");
-      // $emit("submit", formData);
+      $emit("submit", formData);
     } else {
       ElMessage.warning("表单校验失败");
       return false;
