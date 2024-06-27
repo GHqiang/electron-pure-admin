@@ -409,6 +409,55 @@ const getCinemaFlag = item => {
     ["上海"].includes(city_name)
   ) {
     return "jsdgm";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("天津中影国际影城津湾CINITY店") &&
+    ["天津"].includes(city_name)
+  ) {
+    return "jwzy";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("SFC上影国际影城新达汇三林店") &&
+    ["上海"].includes(city_name)
+  ) {
+    return "slsy";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("上影国际影城古北店") &&
+    ["上海"].includes(city_name)
+  ) {
+    return "gbsy";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("金谊华夏影城") &&
+    ["上海"].includes(city_name)
+  ) {
+    return "jyhx";
+  } else if (
+    cinemNameSpecial(cinema_name).includes(
+      "海口中影国际影城上邦百汇城CINITY店"
+    ) &&
+    ["海口"].includes(city_name)
+  ) {
+    return "hkzy";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("万众国际影城CGS中国巨幕横岗店") &&
+    ["海口"].includes(city_name)
+  ) {
+    return "hgwz";
+  } else if (
+    cinemNameSpecial(cinema_name).includes(
+      "上海巨影国际影城前台办理免费三小时停车"
+    ) &&
+    ["上海"].includes(city_name)
+  ) {
+    return "shjy";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("乐奇国际影城天津店") &&
+    ["天津"].includes(city_name)
+  ) {
+    return "tjlq";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("太禾影城浦江欢乐颂店") &&
+    ["上海"].includes(city_name)
+  ) {
+    return "shth";
   }
 };
 

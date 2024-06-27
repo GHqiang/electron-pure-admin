@@ -447,6 +447,11 @@ async function singleOffer(item) {
       if (cost_price && cost_price < Number(supplier_max_price)) {
         // 奖励单成本价，非奖励单最高限价
         price = rewards == 1 ? cost_price : supplier_max_price;
+        if (offerType === "1") {
+          offerRule.offerAmount = price;
+        } else {
+          offerRule.memberOfferAmount = price;
+        }
       } else {
         let str = `最终报价超过平台限价${supplier_max_price}，不再进行报价`;
         console.error(conPrefix + str);
