@@ -48,17 +48,6 @@
         />
       </template>
     </el-table-column>
-    <el-table-column prop="platToken" label="平台Token">
-      <template #default="{ row, $index }">
-        <span v-if="row.id !== editingRowId">{{ row.platToken }}</span>
-        <el-input
-          v-else
-          v-model="editingRow.platToken"
-          show-password
-          @blur="saveEdit(row.id)"
-        />
-      </template>
-    </el-table-column>
     <el-table-column label="状态">
       <template #default="{ row }">
         <el-switch v-model="row.isEnabled" disabled />
@@ -135,10 +124,6 @@ import lierenFetchOrder from "@/common/orderFetch/lierenFetchOrder";
 import { ORDER_FORM } from "@/common/constant.js";
 const tableDataStore = usePlatFetchOrderStore();
 const displayItems = computed(() => tableDataStore.items);
-import { platTokens } from "@/store/platTokens";
-// 平台toke列表
-const platTokenInfo = platTokens();
-const { lierenToken, setLierenPlatToken } = platTokenInfo;
 
 // 是否显示一键启动
 const isActiveOneClickStart = computed(() => {
@@ -178,9 +163,6 @@ const oneClickAutoOffer = () => {
         // console.log("item", item, item.platName);
         item.isEnabled = true;
         if (item.platName === "lieren") {
-          if (!lierenToken) {
-            setLierenPlatToken(item.platToken);
-          }
           lierenFetchOrder.start();
         }
       });
@@ -212,12 +194,9 @@ const stopAutoOffer = () => {
 };
 
 // 单个启动或停止
-const singleStartOrStop = ({ id, platToken, platName }, flag) => {
+const singleStartOrStop = ({ id, platName }, flag) => {
   if (flag === 1) {
     if (platName === "lieren") {
-      if (!lierenToken) {
-        setLierenPlatToken(platToken);
-      }
       tableDataStore.toggleEnable(id);
       lierenFetchOrder.start();
     }

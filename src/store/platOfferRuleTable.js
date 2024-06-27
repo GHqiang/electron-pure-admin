@@ -1,25 +1,24 @@
 import { defineStore } from "pinia";
 
 // 每次优先从localStorage里获取
-let platQueueRule = window.localStorage.getItem("platQueueRule");
-if (platQueueRule) {
-  platQueueRule = JSON.parse(platQueueRule);
-  platQueueRule = platQueueRule.map(item => ({
-    ...item,
-    isEnabled: false
-  }));
-}
+// let platQueueRule = window.localStorage.getItem("platQueueRule");
+// if (platQueueRule) {
+//   platQueueRule = JSON.parse(platQueueRule);
+//   platQueueRule = platQueueRule.map(item => ({
+//     ...item,
+//     isEnabled: false
+//   }));
+// }
 // 平台自动报价
 export const usePlatTableDataStore = defineStore("platforms", {
   state: () => ({
-    items: platQueueRule || [
+    items: [
       {
         id: 1,
         platName: "lieren",
         getInterval: 2, // 订单获取间隔
-        handleInterval: 1, // 订单执行间隔
-        platToken:
-          "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzb20uempscm1vdmllLmNuIiwiYXVkIjoic29tLnpqbHJtb3ZpZS5jbiIsImlhdCI6MTcxNTM0NDk2MywibmJmIjoxNzE1MzQ0OTYzLCJleHAiOjE3MTc3NjQxNjMsImRhdGEiOnsiaWQiOjcxNDYzMiwidXNlcm5hbWUiOjcxNDYzMiwic3RhdHVzIjoxLCJvcGVuaWQiOiJvUXpFZjQ3a1ZLQ3F6bzRPSXl1ZHBZVllwX2g0In19.mwidYdjsGHIEnDxWlihB2LVdCtt0o1v_rrdbvSbSe50",
+        handleInterval: 2, // 订单执行间隔
+        platToken: "",
         isEnabled: false
       }
     ],
@@ -75,33 +74,30 @@ export const usePlatTableDataStore = defineStore("platforms", {
 });
 
 // 每次优先从localStorage里获取
-let platFetchOrderQueueRule = window.localStorage.getItem(
-  "platFetchOrderQueueRule"
-);
-if (platFetchOrderQueueRule) {
-  platFetchOrderQueueRule = JSON.parse(platFetchOrderQueueRule);
-  platFetchOrderQueueRule = platFetchOrderQueueRule.map(item => ({
-    ...item,
-    isEnabled: false
-  }));
-}
+// let platFetchOrderQueueRule = window.localStorage.getItem(
+//   "platFetchOrderQueueRule"
+// );
+// if (platFetchOrderQueueRule) {
+//   platFetchOrderQueueRule = JSON.parse(platFetchOrderQueueRule);
+//   platFetchOrderQueueRule = platFetchOrderQueueRule.map(item => ({
+//     ...item,
+//     isEnabled: false
+//   }));
+// }
 // 平台自动获取订单
 export const usePlatFetchOrderStore = defineStore("platFetchOrderQueue", {
   state: () => ({
-    items: platFetchOrderQueueRule || [
+    items: [
       {
         id: 1,
         platName: "lieren",
         getInterval: 2, // 订单获取间隔
-        platToken:
-          "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzb20uempscm1vdmllLmNuIiwiYXVkIjoic29tLnpqbHJtb3ZpZS5jbiIsImlhdCI6MTcxNTM0NDk2MywibmJmIjoxNzE1MzQ0OTYzLCJleHAiOjE3MTc3NjQxNjMsImRhdGEiOnsiaWQiOjcxNDYzMiwidXNlcm5hbWUiOjcxNDYzMiwic3RhdHVzIjoxLCJvcGVuaWQiOiJvUXpFZjQ3a1ZLQ3F6bzRPSXl1ZHBZVllwX2g0In19.mwidYdjsGHIEnDxWlihB2LVdCtt0o1v_rrdbvSbSe50",
         isEnabled: false
       }
     ],
     newItem: {
       platName: "",
       getInterval: 2,
-      platToken: "",
       isEnabled: false
     } // 初始化表单状态
   }),
@@ -128,7 +124,6 @@ export const usePlatFetchOrderStore = defineStore("platFetchOrderQueue", {
       this.newItem = {
         platName: "",
         getInterval: 2,
-        platToken: "",
         isEnabled: false
       }; // 重置表单
       window.localStorage.setItem(

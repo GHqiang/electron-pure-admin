@@ -55,7 +55,6 @@
         <el-input
           v-else
           v-model="editingRow.platToken"
-          show-password
           @blur="saveEdit(row.id)"
         />
       </template>
@@ -137,6 +136,10 @@ import { PLAT_LINK_APP, APP_LIST } from "@/common/constant";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
 const { allUserInfo } = userInfoAndTokens;
+
+import { platTokens } from "@/store/platTokens";
+// 平台toke列表
+const tokens = platTokens();
 
 const tableDataStore = usePlatTableDataStore();
 const displayItems = computed(() => tableDataStore.items);
@@ -282,6 +285,10 @@ const startEdit = row => {
 const saveEdit = id => {
   if (id === editingRowId.value) {
     tableDataStore.saveEdit(editingRow.value);
+    const { platToken, platName } = editingRow.value;
+    if (platName === "lieren") {
+      tokens.setLierenPlatToken(platToken);
+    }
     editingRowId.value = null;
   }
 };
