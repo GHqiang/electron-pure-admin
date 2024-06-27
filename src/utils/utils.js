@@ -438,7 +438,7 @@ const getCinemaFlag = item => {
     return "hkzy";
   } else if (
     cinemNameSpecial(cinema_name).includes("万众国际影城CGS中国巨幕横岗店") &&
-    ["海口"].includes(city_name)
+    ["深圳"].includes(city_name)
   ) {
     return "hgwz";
   } else if (
