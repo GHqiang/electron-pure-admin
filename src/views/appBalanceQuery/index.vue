@@ -52,7 +52,11 @@
               <span style="margin-left: 20px"> 卡号：{{ item.card_num }}</span>
               <span style="margin-left: 20px"> 卡余额：{{ item.balance }}</span>
             </div>
-            <h3 v-if="props.row.quan_other_list.length">
+            <h3
+              v-if="
+                props.row.quan_other_list && props.row.quan_other_list.length
+              "
+            >
               优惠券-其它券详细信息
             </h3>
             <div
