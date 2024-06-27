@@ -680,7 +680,7 @@ const offerRuleMatch = async order => {
     // 获取报价最低的报价规则
     const endRule = await getMinAmountOfferRule(memberDayRuleList, order);
     console.warn(conPrefix + "最终匹配到的报价规则", endRule);
-    if (endRule === 0) return;
+    if ([0, 2, 3].includes(endRule)) return;
     if (!endRule) {
       console.error(conPrefix + "最终匹配到的报价规则不存在");
       setErrInfo("最终匹配到的报价规则不存在");
@@ -736,6 +736,14 @@ const getMinAmountOfferRule = async (ruleList, order) => {
         setErrInfo("获取当前场次电影信息失败,不再进行报价");
         return 0;
       }
+      if (memberPrice === 2) {
+        setErrInfo("促销票数低于订单票数，不再进行报价");
+        return 2;
+      }
+      if (memberPrice === 3) {
+        console.error(conPrefix + "获取座位布局异常，不再进行报价");
+        return 3;
+      }
       if (!memberPrice) {
         console.warn(
           conPrefix + "最小加价规则获取会员价失败,返回最小固定报价规则",
@@ -773,12 +781,30 @@ const getMinAmountOfferRule = async (ruleList, order) => {
     setErrInfo("获取最低报价规则异常", error);
   }
 };
-
+// 获取座位布局
+const getSeatLayout = async data => {
+  try {
+    let { city_id, cinema_id, show_id, appName } = data || {};
+    let params = {
+      city_id: city_id,
+      cinema_id: cinema_id,
+      show_id: show_id,
+      width: "240"
+    };
+    console.log(conPrefix + "获取座位布局参数", params);
+    const res = await SFC_API_OBJ[appName].getMoviePlaySeat(params);
+    console.log(conPrefix + "获取座位布局返回", res);
+    return res.data?.play_data || {};
+  } catch (error) {
+    console.error(conPrefix + "获取座位布局异常", error);
+    setErrInfo("获取座位布局异常", error);
+  }
+};
 // 获取会员价
 const getMemberPrice = async order => {
   try {
     console.log(conPrefix + "准备获取会员价", order);
-    const { city_name, cinema_name, hall_name } = order;
+    const { city_name, cinema_name, hall_name, ticket_num, appName } = order;
     console.log(
       conPrefix +
         `待报价订单：城市${city_name}, 影院${cinema_name}, 影厅${hall_name}`
@@ -790,7 +816,30 @@ const getMemberPrice = async order => {
       console.error(conPrefix + "获取当前场次电影信息失败", "不再进行报价");
       return 0;
     }
-    let { member_price, nonmember_price } = movieInfo;
+    let { member_price, nonmember_price, city_id, cinema_id, show_id } =
+      movieInfo;
+    if (show_id) {
+      const seatInfo = await getSeatLayout({
+        city_id,
+        cinema_id,
+        show_id,
+        appName
+      });
+      if (!seatInfo) return 3;
+      const { promo_num, area_price } = seatInfo;
+      if (promo_num && promo_num < ticket_num) {
+        console.error(conPrefix + "促销票数低于订单票数，不再进行报价");
+        return 2;
+      }
+      if (area_price?.length > 1) {
+        let bigPrice = area_price.sort((a, b) => b.price - a.price)[0].price;
+        console.error(
+          conPrefix + "座位类型区分，取最高的价格座位会员价格",
+          bigPrice
+        );
+        return Number(bigPrice);
+      }
+    }
     console.log(conPrefix + "获取会员价", member_price);
     if (member_price > 0) {
       return Number(member_price);
@@ -964,7 +1013,7 @@ const getMovieInfo = async item => {
       let showList = shows[showDay] || [];
       let showTime = show_time.split(" ")[1].slice(0, 5);
       let ticketInfo = showList.find(item => item.start_time === showTime);
-      return ticketInfo;
+      return { ...ticketInfo, city_id, cinema_id };
     }
   } catch (error) {
     console.error(conPrefix + "获取当前场次电影信息异常", error);
