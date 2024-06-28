@@ -266,7 +266,7 @@ const getCinemaFlag = item => {
     ["武汉"].includes(city_name)
   ) {
     return "yinxingws";
-  } else if (cinema_name.includes("乐娃影院") && ["北京"].includes(city_name)) {
+  } else if (cinema_name === "乐娃影院" && ["北京"].includes(city_name)) {
     return "liangchen";
   } else if (cinema_name.includes("全美影院") && ["太原"].includes(city_name)) {
     return "quanmei";

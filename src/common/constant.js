@@ -351,6 +351,10 @@ const YONGHENG_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: "永恒中华大戏院三街两巷电影院",
     sfc_cinema_name: "永恒中华大戏院"
+  },
+  {
+    order_cinema_name: "永恒晶钻CINITYLED影城",
+    sfc_cinema_name: "永恒晶钻影城"
   }
 ];
 
@@ -471,6 +475,21 @@ const SHTH_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "上海太禾影城浦江欢乐颂店"
   }
 ];
+// 上海巨影特殊影院集合
+const SHJY_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: "上海巨影国际影城前台办理免费三小时停车",
+    sfc_cinema_name: "上海巨影国际影城"
+  }
+];
+// 合肥百大丁丁特殊影院集合
+const HFBDDD_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: "合肥丁丁影城百大奥莱店",
+    sfc_cinema_name: "丁丁影城百大奥莱店"
+  }
+];
+
 // 特殊的名字匹配集合
 const SPECIAL_CINEMA_OBJ = {
   sfc: SFC_SPECIAL_CINEMA_LIST,
@@ -502,7 +521,7 @@ const SPECIAL_CINEMA_OBJ = {
   wfzyyxhd: [],
   wfzygeshgcd: [],
   nchgtdd: [],
-  hfbddd: [],
+  hfbddd: HFBDDD_SPECIAL_CINEMA_LIST,
   hflkldd: [],
   ttylw: TTYLW_SPECIAL_CINEMA_LIST,
   ytgjyc: YTGJYC_SPECIAL_CINEMA_LIST,
@@ -517,7 +536,7 @@ const SPECIAL_CINEMA_OBJ = {
   jyhx: JYHX_SPECIAL_CINEMA_LIST,
   hkzy: [],
   hgwz: [],
-  shjy: [],
+  shjy: SHJY_SPECIAL_CINEMA_LIST,
   tjlq: TJLQ_SPECIAL_CINEMA_LIST,
   shth: SHTH_SPECIAL_CINEMA_LIST,
   qina: QINA_SPECIAL_CINEMA_LIST

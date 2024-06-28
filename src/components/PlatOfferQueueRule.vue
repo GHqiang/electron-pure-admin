@@ -127,7 +127,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onBeforeMount } from "vue";
 import { ElMessageBox, ElMessage } from "element-plus";
 import svApi from "@/api/sv-api";
 import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
@@ -181,7 +181,6 @@ const oneClickAutoOffer = () => {
   })
     .then(async () => {
       console.warn("一键启动全部自动报价队列");
-      await setLocalRuleList();
       tableDataStore.items.forEach(item => {
         item.isEnabled = true;
         if (item.platName === "lieren") {
@@ -300,4 +299,7 @@ const deleteItem = id => {
 const cancelEdit = () => {
   editingRowId.value = null;
 };
+onBeforeMount(() => {
+  setLocalRuleList();
+});
 </script>
