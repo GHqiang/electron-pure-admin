@@ -56,6 +56,21 @@ const addRuleRecord = params => axios.post("/svpi/ruleRecord/add", params);
 const updateRuleRecord = params =>
   axios.post("/svpi/ruleRecord/update", params);
 
+// 获取卡列表
+const getCardList = params => axios.get("/svpi/cardRecord", { params });
+// 查询卡列表
+const queryCardList = params => axios.get("/svpi/cardRecord/query", { params });
+// 删除卡
+const deleteCard = params => axios.get("/svpi/cardRecord/delete", { params });
+// 批量删除卡
+const batchDeleteCard = params =>
+  axios.post("/svpi/cardRecord/batchdelete", params);
+// 添加卡
+const addCardRecord = params => axios.post("/svpi/cardRecord/add", params);
+// 修改卡
+const updateCardRecord = params =>
+  axios.post("/svpi/cardRecord/update", params);
+
 export default {
   login,
   logout,
@@ -77,5 +92,11 @@ export default {
   deleteRule,
   batchDeleteRule,
   addRuleRecord,
-  updateRuleRecord
+  updateRuleRecord,
+  getCardList,
+  queryCardList,
+  deleteCard,
+  batchDeleteCard,
+  addCardRecord,
+  updateCardRecord
 };
