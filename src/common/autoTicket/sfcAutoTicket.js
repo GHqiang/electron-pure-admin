@@ -1272,20 +1272,31 @@ class OrderAutoTicketQueue {
   // 绑定券
   async bandQuan({ coupon_num, cinema_id, city_id }) {
     const { conPrefix } = this;
+    let params = {
+      city_id,
+      cinema_id,
+      coupon_code: coupon_num,
+      from_goods: "2"
+    };
     try {
-      const res = await this.sfcApi.bandQuan({
-        city_id,
-        cinema_id,
-        coupon_code: coupon_num,
-        from_goods: "2"
-      });
+      await this.delay(1);
+      const res = await this.sfcApi.bandQuan(params);
       // console.log("res", res);
       if (res.data?.success === "1") {
         return coupon_num;
+      } else {
+        console.error(conPrefix + "绑定新券异常", res);
+        this.setErrInfo(
+          conPrefix + "绑定新券异常:" + JSON.stringify(params),
+          res
+        );
       }
     } catch (error) {
       console.error(conPrefix + "绑定新券异常", error);
-      this.setErrInfo(conPrefix + "绑定新券异常", error);
+      this.setErrInfo(
+        conPrefix + "绑定新券异常:" + JSON.stringify(params),
+        error
+      );
     }
   }
 
@@ -1327,7 +1338,9 @@ class OrderAutoTicketQueue {
       return bandQuanList;
     } catch (error) {
       console.error(conPrefix + "获取新券异常", error);
-      this.setErrInfo("获取新券异常", error);
+      if (!this.errMsg) {
+        this.setErrInfo("获取新券异常", error);
+      }
     }
   }
 
@@ -1378,7 +1391,9 @@ class OrderAutoTicketQueue {
             conPrefix + `从服务端获取并绑定后${quanValue} 面额券仍不足，`,
             targetQuanList
           );
-          this.setErrInfo(`${quanValue} 面额券从数据库获取后仍不足`);
+          if (!this.errMsg) {
+            this.setErrInfo(`${quanValue} 面额券从数据库获取后仍不足`);
+          }
           return {
             profit: 0,
             useQuans: []
