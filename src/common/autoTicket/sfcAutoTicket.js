@@ -499,6 +499,8 @@ class OrderAutoTicketQueue {
         this.setErrInfo("获取该订单报价记录失败，不转单跳过");
         return;
       }
+      // 从报价记录里取出会员价赋值到订单里方便后面计算利润
+      // item.memberPrice = offerRule.memberPrice;
       await this.getCityList();
 
       let city_id = this.cityList.find(
@@ -852,12 +854,15 @@ class OrderAutoTicketQueue {
         conPrefix +
           `待出票订单：城市${city_name}, 影院${cinema_name}, 影厅${hall_name}`
       );
-      const { offer_type: offerType, quan_value: quanValue } = offerRule;
+      const {
+        offer_type: offerType,
+        quan_value: quanValue,
+        memberPrice
+      } = offerRule;
       // 拿订单号去匹配报价记录
       if (offerType !== "1") {
         console.log(conPrefix + "使用会员卡出票");
-        const memberPrice = await this.getMemberPrice(order);
-        console.log(conPrefix + "获取会员价", memberPrice);
+        console.log(conPrefix + "报价记录里的会员价", memberPrice);
         if (!memberPrice) {
           console.warn(
             conPrefix + "使用优惠券或者会员卡前获取会员价异常",
@@ -1131,35 +1136,6 @@ class OrderAutoTicketQueue {
         }
       }, delayTime * 1000);
     });
-  }
-
-  // 获取会员价
-  async getMemberPrice(order) {
-    const { conPrefix } = this;
-    try {
-      console.log(conPrefix + "准备获取会员价", order);
-      const { city_name, cinema_name, hall_name } = order;
-      console.log(
-        conPrefix +
-          `待报价订单：城市${city_name}, 影院${cinema_name}, 影厅${hall_name}`
-      );
-      // 获取当前场次电影信息
-      const movieInfo = await this.getMovieInfo(order);
-      console.log(conPrefix + `待报价订单当前场次电影相关信息`, movieInfo);
-      if (!movieInfo) {
-        console.error(conPrefix + "获取当前场次电影信息失败", "不再进行出票");
-        this.setErrInfo("获取当前场次电影信息失败");
-        return;
-      }
-      let { member_price } = movieInfo;
-      console.log(conPrefix + "获取会员价", member_price);
-      if (member_price) {
-        return Number(member_price);
-      }
-    } catch (error) {
-      console.error(conPrefix + "获取会员价异常", error);
-      this.setErrInfo("获取会员价异常", error);
-    }
   }
 
   // 根据订单name获取影院id
