@@ -56,14 +56,14 @@ export default {
         title: "影院余额查询"
       }
     },
-    // {
-    //   path: "/set/cardList",
-    //   name: "cardList",
-    //   component: () => import("@/views/appBalanceQuery/cardList.vue"),
-    //   meta: {
-    //     title: "会员卡列表"
-    //   }
-    // },
+    {
+      path: "/set/cardList",
+      name: "cardList",
+      component: () => import("@/views/appBalanceQuery/cardList.vue"),
+      meta: {
+        title: "会员卡列表"
+      }
+    },
     // {
     //   path: "/set/memberPwdSet",
     //   name: "memberPwdSet",

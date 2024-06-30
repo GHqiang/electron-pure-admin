@@ -38,38 +38,38 @@
             clearable
           />
         </el-form-item>
-        <el-form-item label="所属账号" prop="phone">
+        <el-form-item label="所属账号" prop="mobile">
           <el-input
-            v-model="formData.phone"
+            v-model="formData.mobile"
             placeholder="请输入该卡绑定的手机号"
             clearable
           />
         </el-form-item>
-        <el-form-item label="卡ID" prop="card_id">
+        <el-form-item label="卡 ID" prop="card_id">
           <el-input
             v-model="formData.card_id"
             placeholder="请输入卡ID"
             clearable
           />
         </el-form-item>
-        <el-form-item label="卡号" prop="card_num">
+        <el-form-item label="卡 号" prop="card_num">
           <el-input
             v-model="formData.card_num"
             placeholder="请输入卡号"
             clearable
           />
         </el-form-item>
-        <el-form-item label="卡余额" prop="balance">
+        <el-form-item label="卡 余额" prop="balance">
           <el-input
             v-model="formData.balance"
             placeholder="请输入卡余额"
             clearable
           />
         </el-form-item>
-        <el-form-item label="卡成本" prop="card_cost">
+        <el-form-item label="卡 折扣" prop="card_discount">
           <el-input
-            v-model="formData.card_cost"
-            placeholder="请输入卡成本（计算后的一个折扣值）"
+            v-model="formData.card_discount"
+            placeholder="请输入卡折扣（成本/卡金额）"
             clearable
           />
         </el-form-item>
@@ -121,10 +121,10 @@ let formData = reactive({
   cinema_name: "",
   card_id: "",
   card_num: "",
-  card_cost: "",
+  card_discount: "",
   balance: "",
   use_limit_day: "",
-  phone: ""
+  mobile: ""
 });
 const validatePhoneNumber = (rule, value, callback) => {
   if (!value) {
@@ -145,9 +145,11 @@ const rules = {
   ],
   card_id: [{ required: true, message: "卡ID不能为空", trigger: "blur" }],
   card_num: [{ required: true, message: "卡号不能为空", trigger: "blur" }],
-  card_cost: [{ required: true, message: "卡成本不能为空", trigger: "blur" }],
+  card_discount: [
+    { required: true, message: "卡折扣不能为空", trigger: "blur" }
+  ],
   balance: [{ required: true, message: "卡余额不能为空", trigger: "blur" }],
-  phone: [
+  mobile: [
     {
       required: true,
       validator: validatePhoneNumber,
@@ -166,10 +168,10 @@ const resetForm = el => {
   formData.cinema_name = "";
   formData.card_id = "";
   formData.card_num = "";
-  formData.card_cost = "";
+  formData.card_discount = "";
   formData.balance = "";
   formData.use_limit_day = "";
-  formData.phone = "";
+  formData.mobile = "";
 };
 
 // 影线改变
@@ -193,10 +195,10 @@ const open = async cardInfo => {
         formData.cinema_name = formInfo.cinema_name;
         formData.card_id = formInfo.card_id;
         formData.card_num = formInfo.card_num;
-        formData.card_cost = formInfo.card_cost;
+        formData.card_discount = formInfo.card_discount;
         formData.balance = formInfo.balance;
         formData.use_limit_day = formInfo.use_limit_day;
-        formData.phone = formInfo.phone;
+        formData.mobile = formInfo.mobile;
       } else {
         // 新增
         formData.app_name = formInfo.app_name;
@@ -205,7 +207,7 @@ const open = async cardInfo => {
     loading.close();
     showSfcDialog.value = true;
   } catch (error) {
-    console.warn("打开规则弹框异常", error);
+    console.warn("打开会员卡弹框异常", error);
     loading.close();
     showSfcDialog.value = false;
   }
@@ -217,7 +219,7 @@ const saveCard = async () => {
     if (valid) {
       // 提交逻辑
       console.log("表单提交的数据:", formData);
-      ElMessage.success("必填数据校验成功！");
+      // ElMessage.success("必填数据校验成功！");
       $emit("submit", formData);
     } else {
       ElMessage.warning("表单校验失败");

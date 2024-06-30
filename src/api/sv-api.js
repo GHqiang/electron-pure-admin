@@ -70,6 +70,9 @@ const addCardRecord = params => axios.post("/svpi/cardRecord/add", params);
 // 修改卡
 const updateCardRecord = params =>
   axios.post("/svpi/cardRecord/update", params);
+// 批量修改卡
+const batchUpdateCardRecord = params =>
+  axios.post("/svpi/cardRecord/batchUpdate", params);
 
 export default {
   login,
@@ -98,5 +101,6 @@ export default {
   deleteCard,
   batchDeleteCard,
   addCardRecord,
-  updateCardRecord
+  updateCardRecord,
+  batchUpdateCardRecord
 };

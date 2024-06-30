@@ -138,7 +138,7 @@ const searchData = async () => {
         allUserInfo[item[0]] &&
         (formData.appName ? item[0] === formData.appName : true)
     );
-    console.log("apiList===>", apiList);
+    // console.log("apiList===>", apiList);
     let tableList = [];
 
     for (let index = 0; index < apiList.length; index++) {
@@ -183,6 +183,7 @@ const searchData = async () => {
       });
       tableList.push(obj);
     }
+    console.warn("影院余额数据", tableList);
     tableDataFilter.value = tableList;
     loading.close();
   } catch (error) {

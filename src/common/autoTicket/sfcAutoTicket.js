@@ -1272,9 +1272,10 @@ class OrderAutoTicketQueue {
   // 绑定券
   async bandQuan({ coupon_num, cinema_id, city_id }) {
     const { conPrefix } = this;
+    // 由于要用二线城市影院且40券通用，故写死
     let params = {
-      city_id,
-      cinema_id,
+      city_id: "304",
+      cinema_id: "33",
       coupon_code: coupon_num,
       from_goods: "2"
     };
