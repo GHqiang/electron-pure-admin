@@ -500,7 +500,7 @@ class OrderAutoTicketQueue {
         return;
       }
       // 从报价记录里取出会员价赋值到订单里方便后面计算利润
-      // item.memberPrice = offerRule.memberPrice;
+      // item.member_price = offerRule.member_price;
       await this.getCityList();
 
       let city_id = this.cityList.find(
@@ -857,16 +857,16 @@ class OrderAutoTicketQueue {
       const {
         offer_type: offerType,
         quan_value: quanValue,
-        memberPrice
+        member_price
       } = offerRule;
       // 拿订单号去匹配报价记录
       if (offerType !== "1") {
         console.log(conPrefix + "使用会员卡出票");
-        console.log(conPrefix + "报价记录里的会员价", memberPrice);
-        if (!memberPrice) {
+        console.log(conPrefix + "报价记录里的会员价", member_price);
+        if (!member_price) {
           console.warn(
             conPrefix + "使用优惠券或者会员卡前获取会员价异常",
-            memberPrice
+            member_price
           );
           this.setErrInfo("使用优惠券或者会员卡前获取会员价异常");
           return {
@@ -877,7 +877,7 @@ class OrderAutoTicketQueue {
         // 1、获取会员卡列表
         const cardList = await this.getCardList({ city_id, cinema_id });
         // 2、使用会员卡
-        let member_total_price = memberPrice * ticket_num;
+        let member_total_price = member_price * ticket_num;
         const { card_id, profit } = await this.useCard({
           member_total_price,
           cardList,
@@ -887,7 +887,7 @@ class OrderAutoTicketQueue {
           cinema_id,
           show_id,
           seat_ids,
-          memberPrice,
+          member_price,
           rewards: order.rewards
         });
         return {
@@ -1487,7 +1487,7 @@ class OrderAutoTicketQueue {
     cinema_id,
     show_id,
     seat_ids,
-    memberPrice,
+    member_price,
     rewards
   }) {
     const { conPrefix, appFlag } = this;
@@ -1556,7 +1556,7 @@ class OrderAutoTicketQueue {
       // 卡的话 1块钱成本就是一块钱，利润 =  中标价格-会员出票价格 -手续费（中标价格1%）
       let profit =
         supplier_end_price -
-        memberPrice -
+        member_price -
         (Number(supplier_end_price) * 100) / 10000;
       profit = Number(profit) * Number(ticket_num);
       if (rewards == 1) {
