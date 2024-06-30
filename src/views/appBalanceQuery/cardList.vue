@@ -213,11 +213,39 @@ const formData = reactive({
   use_limit_day: "",
   mobile: ""
 });
-// window.testCard = () =>
+// window.testUpdateCardUse = () =>
 //   svApi.updateDayUsage({
 //     app_name: "sfc",
 //     card_id: "241071"
 //   });
+
+// window.testCardLimit = async () => {
+//   const member_price = "36.78",
+//     ticket_num = 2;
+//   const cardRes = await svApi.queryCardList({
+//     app_name: "sfc"
+//   });
+//   // 后续这块还要加上出票量限制判断
+//   let list = cardRes.data.cardList || [];
+//   // console.log("list", list);
+//   let cardList = list.filter(item =>
+//     !item.use_limit_day
+//       ? true
+//       : ticket_num <= item.use_limit_day - item.daily_usage
+//   );
+//   cardList = cardList.map(item => ({
+//     ...item,
+//     card_discount: !item.card_discount ? 100 : Number(item.card_discount)
+//   }));
+//   // console.log("cardList", cardList);
+//   cardList.sort((a, b) => a.card_discount - b.card_discount);
+//   // 按最低折扣取值报价
+//   let discount = cardList[0]?.card_discount;
+//   // console.log("discount", discount);
+//   return discount
+//     ? (Number(member_price) * discount) / 100
+//     : Number(member_price);
+// };
 // 搜索数据
 const searchData = async () => {
   try {

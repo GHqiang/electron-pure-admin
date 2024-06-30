@@ -680,7 +680,7 @@ const offerRuleMatch = async order => {
     // 获取报价最低的报价规则
     const endRule = await getMinAmountOfferRule(memberDayRuleList, order);
     console.warn(conPrefix + "最终匹配到的报价规则", endRule);
-    if ([0, 2, 3].includes(endRule)) return;
+    if ([0, -2, -3, -4].includes(endRule)) return;
     if (!endRule) {
       console.error(conPrefix + "最终匹配到的报价规则不存在");
       setErrInfo("最终匹配到的报价规则不存在");
@@ -736,13 +736,17 @@ const getMinAmountOfferRule = async (ruleList, order) => {
         setErrInfo("获取当前场次电影信息失败,不再进行报价");
         return 0;
       }
-      if (memberPrice === 2) {
+      if (memberPrice === -2) {
         setErrInfo("促销票数低于订单票数，不再进行报价");
-        return 2;
+        return -2;
       }
-      if (memberPrice === 3) {
+      if (memberPrice === -3) {
         console.error(conPrefix + "获取座位布局异常，不再进行报价");
-        return 3;
+        return -3;
+      }
+      if (memberPrice === -4) {
+        console.error(conPrefix + "促销票数低于订单票数，不再进行报价");
+        return -4;
       }
       if (!memberPrice) {
         console.warn(
@@ -825,11 +829,11 @@ const getMemberPrice = async order => {
         show_id,
         appName
       });
-      if (!seatInfo) return 3;
+      if (!seatInfo) return -3;
       const { promo_num, area_price } = seatInfo;
       if (promo_num && promo_num < ticket_num) {
         console.error(conPrefix + "促销票数低于订单票数，不再进行报价");
-        return 2;
+        return -2;
       }
       if (area_price?.length > 1) {
         let bigPrice = area_price.sort((a, b) => b.price - a.price)[0].price;
@@ -846,10 +850,28 @@ const getMemberPrice = async order => {
         app_name: appName
       });
       // 后续这块还要加上出票量限制判断
-      let cardList = cardRes.data.cardList || [];
-      cardList.sort(
-        (a, b) => Number(a.card_discount) - Number(b.card_discount)
+      // 后续这块还要加上出票量限制判断
+      let list = cardRes.data.cardList || [];
+      // console.log("list", list);
+      let cardList = list.filter(item =>
+        !item.use_limit_day
+          ? true
+          : ticket_num <= item.use_limit_day - item.daily_usage
       );
+      if (!cardList.length) {
+        console.error(conPrefix + "影院单卡出票限制,不再进行报价");
+        this.setErrInfo("促销票数低于订单票数，不再进行报价", {
+          list,
+          ticket_num
+        });
+        return -4;
+      }
+      cardList = cardList.map(item => ({
+        ...item,
+        card_discount: !item.card_discount ? 100 : Number(item.card_discount)
+      }));
+      // console.log("cardList", cardList);
+      cardList.sort((a, b) => a.card_discount - b.card_discount);
       // 按最低折扣取值报价
       let discount = cardList[0]?.card_discount;
       return discount
