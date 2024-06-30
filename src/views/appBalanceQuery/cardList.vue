@@ -141,6 +141,7 @@
         </template>
       </el-table-column>
       <el-table-column prop="integral" label="卡 积分" min-width="100" />
+      <el-table-column prop="remark" label="备注" min-width="100" />
 
       <el-table-column
         label="操作"

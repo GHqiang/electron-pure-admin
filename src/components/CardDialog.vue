@@ -74,18 +74,18 @@
           />
         </el-form-item>
         <el-form-item label="出票限制" prop="use_limit_day">
-          <el-select
+          <el-input
             v-model="formData.use_limit_day"
-            placeholder="出票限制（当天）"
+            placeholder="请输入出票限制（当天）"
             clearable
-          >
-            <el-option
-              v-for="(item, index) in 10"
-              :key="index"
-              :label="item"
-              :value="item"
-            />
-          </el-select>
+          />
+        </el-form-item>
+        <el-form-item label="备注" prop="remark">
+          <el-input
+            v-model="formData.remark"
+            placeholder="请输入备注"
+            clearable
+          />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="saveCard">保存</el-button>
@@ -124,7 +124,8 @@ let formData = reactive({
   card_discount: "",
   balance: "",
   use_limit_day: "",
-  mobile: ""
+  mobile: "",
+  remark: ""
 });
 const validatePhoneNumber = (rule, value, callback) => {
   if (!value) {
@@ -172,6 +173,7 @@ const resetForm = el => {
   formData.balance = "";
   formData.use_limit_day = "";
   formData.mobile = "";
+  formData.remark = "";
 };
 
 // 影线改变
@@ -199,6 +201,7 @@ const open = async cardInfo => {
         formData.balance = formInfo.balance;
         formData.use_limit_day = formInfo.use_limit_day;
         formData.mobile = formInfo.mobile;
+        formData.remark = formInfo.remark;
       } else {
         // 新增
         formData.app_name = formInfo.app_name;
