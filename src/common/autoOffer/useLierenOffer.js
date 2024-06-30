@@ -842,7 +842,19 @@ const getMemberPrice = async order => {
     }
     console.log(conPrefix + "获取会员价", member_price);
     if (member_price > 0) {
-      return Number(member_price);
+      const cardRes = await svApi.queryCardList({
+        app_name: appName
+      });
+      // 后续这块还要加上出票量限制判断
+      let cardList = cardRes.data.cardList || [];
+      cardList.sort(
+        (a, b) => Number(a.card_discount) - Number(b.card_discount)
+      );
+      // 按最低折扣取值报价
+      let discount = cardList[0]?.card_discount;
+      return discount
+        ? (Number(member_price) * discount) / 100
+        : Number(member_price);
     } else {
       console.warn(conPrefix + "会员价未负，非会员价", nonmember_price);
       if (nonmember_price) return Number(nonmember_price);

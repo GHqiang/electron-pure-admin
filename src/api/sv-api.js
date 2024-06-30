@@ -73,6 +73,9 @@ const updateCardRecord = params =>
 // 批量修改卡
 const batchUpdateCardRecord = params =>
   axios.post("/svpi/cardRecord/batchUpdate", params);
+// 批量卡当天使用量
+const updateDayUsage = params =>
+  axios.post("/svpi/cardRecord/updateUsage", params);
 
 export default {
   login,
@@ -102,5 +105,6 @@ export default {
   batchDeleteCard,
   addCardRecord,
   updateCardRecord,
-  batchUpdateCardRecord
+  batchUpdateCardRecord,
+  updateDayUsage
 };

@@ -213,7 +213,11 @@ const formData = reactive({
   use_limit_day: "",
   mobile: ""
 });
-
+// window.testCard = () =>
+//   svApi.updateDayUsage({
+//     app_name: "sfc",
+//     card_id: "241071"
+//   });
 // 搜索数据
 const searchData = async () => {
   try {

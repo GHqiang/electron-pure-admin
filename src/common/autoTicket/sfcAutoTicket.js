@@ -274,6 +274,10 @@ class OrderAutoTicketQueue {
         .catch(error => {
           console.error(conPrefix + "保存订单处理记录失败", error);
         });
+      svApi.updateDayUsage({
+        app_name: serOrderInfo.app_name,
+        card_id: serOrderInfo.card_id
+      });
     } catch (error) {
       console.error(conPrefix + "添加订单处理记录异常", error);
     }
@@ -1270,7 +1274,7 @@ class OrderAutoTicketQueue {
   }
 
   // 绑定券
-  async bandQuan({ coupon_num, cinema_id, city_id }) {
+  async bandQuan({ coupon_num }) {
     const { conPrefix } = this;
     // 由于要用二线城市影院且40券通用，故写死
     let params = {
