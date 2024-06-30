@@ -53,7 +53,7 @@ export default {
       name: "balanceQuery",
       component: () => import("@/views/appBalanceQuery/index.vue"),
       meta: {
-        title: "影院余额查询"
+        title: "影院券查询"
       }
     },
     {

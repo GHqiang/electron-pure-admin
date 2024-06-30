@@ -18,6 +18,13 @@
           />
         </el-select>
       </el-form-item>
+      <el-form-item label="所属账号">
+        <el-input
+          v-model="formData.mobile"
+          placeholder="请输入所属账号(手机号)"
+          clearable
+        />
+      </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="searchData">搜索</el-button>
         <el-button @click="resetForm">重置</el-button>
@@ -33,30 +40,13 @@
       stripe
       show-overflow-tooltip
     >
-      <el-table-column type="expand">
+      <el-table-column type="expand" width="70">
         <template #default="props">
           <div
-            v-if="props.row.cardList && props.row.cardList.length"
+            v-if="props.row.quan_other_list && props.row.quan_other_list.length"
             style="padding: 5px 15px"
           >
-            <h3>会员卡余额详细信息</h3>
-            <div
-              v-for="(item, inx) in props.row.cardList"
-              :key="inx"
-              style="margin-top: 10px"
-            >
-              {{ inx }}、
-              <span style="margin-left: 5px">
-                影院：{{ item.cinema_name }}</span
-              >
-              <span style="margin-left: 20px"> 卡号：{{ item.card_num }}</span>
-              <span style="margin-left: 20px"> 卡余额：{{ item.balance }}</span>
-            </div>
-            <h3
-              v-if="
-                props.row.quan_other_list && props.row.quan_other_list.length
-              "
-            >
+            <h3>
               优惠券-其它券详细信息
             </h3>
             <div
@@ -87,13 +77,6 @@
       <el-table-column prop="quan_35_num" label="35券数量" />
       <el-table-column prop="quan_30_num" label="30券数量" />
       <el-table-column prop="quan_other_num" label="其它券数量" />
-      <el-table-column prop="card_total_price" label="会员卡总额" />
-
-      <!-- <el-table-column label="报价类型" width="100">
-        <template #default="scope">
-          <span>{{ offerTypeObj[scope.row.offerType] || "" }}</span>
-        </template>
-      </el-table-column> -->
     </el-table>
   </div>
 </template>
@@ -108,7 +91,8 @@ const shadowLineObj = APP_LIST;
 
 // 表单查询数据
 const formData = reactive({
-  appName: "" // 影线名称
+  appName: "", // 影线名称
+  mobile: ""
 });
 
 // 搜索过滤后的数据
@@ -136,52 +120,38 @@ const searchData = async () => {
     let apiList = Object.entries(SFC_API_OBJ).filter(
       item =>
         allUserInfo[item[0]] &&
-        (formData.appName ? item[0] === formData.appName : true)
+        (formData.appName ? item[0] === formData.appName : true)  &&
+        (formData.mobile ? allUserInfo[item[0]].mobile == formData.mobile : true) 
     );
     // console.log("apiList===>", apiList);
     let tableList = [];
-
     for (let index = 0; index < apiList.length; index++) {
       const [appName, api] = apiList[index];
-      let requestList = [];
       await delay(200);
-      requestList.push(api.getCardList({ city_id: "500", cinema_id: "1" }));
-      requestList.push(api.getQuanList({ city_id: "500", cinema_id: "1" }));
-      const resList = await Promise.all(requestList);
-      console.log("resList", resList);
-      let obj = {
-        appName: appName
-      };
-      resList.forEach((res, inx) => {
-        let cardList = res.data.card_data || [];
-        let quanList = res.data.list || [];
-        // console.log("cardList", cardList, quanList);
-        if (quanList.length) {
-          obj.quan_40_num = quanList.filter(
-            item => item.coupon_info.indexOf("40") !== -1
-          ).length;
-          obj.quan_35_num = quanList.filter(
-            item => item.coupon_info.indexOf("35") !== -1
-          ).length;
-          obj.quan_30_num = quanList.filter(
-            item => item.coupon_info.indexOf("30") !== -1
-          ).length;
-          obj.quan_other_list = quanList.filter(
-            item =>
-              !["30", "35", "40"].some(
-                itemA => item.coupon_info.indexOf(itemA) !== -1
-              )
-          );
-          obj.quan_other_num = obj.quan_other_list.length;
-        }
-        if (cardList.length) {
-          obj.cardList = cardList;
-          obj.card_total_price = cardList.reduce((prev, item) => {
-            return Number(item.balance) + prev;
-          }, 0);
-        }
-      });
-      tableList.push(obj);
+      const res = await api.getQuanList({ city_id: "500", cinema_id: "1" });
+      let quanList = res.data.list || [];
+      if (quanList.length) {
+        let obj = {
+          appName: appName
+        };
+        obj.quan_40_num = quanList.filter(
+          item => item.coupon_info.indexOf("40") !== -1
+        ).length;
+        obj.quan_35_num = quanList.filter(
+          item => item.coupon_info.indexOf("35") !== -1
+        ).length;
+        obj.quan_30_num = quanList.filter(
+          item => item.coupon_info.indexOf("30") !== -1
+        ).length;
+        obj.quan_other_list = quanList.filter(
+          item =>
+            !["30", "35", "40"].some(
+              itemA => item.coupon_info.indexOf(itemA) !== -1
+            )
+        );
+        obj.quan_other_num = obj.quan_other_list.length;
+        tableList.push(obj);
+      }
     }
     console.warn("影院余额数据", tableList);
     tableDataFilter.value = tableList;
@@ -195,6 +165,7 @@ const searchData = async () => {
 
 // 重置表单
 const resetForm = () => {
-  formData.appName = "sfc"; // 影线名称
+  formData.appName = ""; // 影线名称
+  formData.mobile = ""; // 影线名称
 };
 </script>

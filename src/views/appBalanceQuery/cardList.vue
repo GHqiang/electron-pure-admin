@@ -252,7 +252,7 @@ const handleCurrentChange = val => {
 };
 const getSummaries = param => {
   const { columns, data } = param;
-  console.log(columns, data);
+  // console.log(columns, data);
   const sums = [];
   columns.forEach((column, index) => {
     if (index === 0) {
