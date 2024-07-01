@@ -30,8 +30,7 @@ const {
 // 影院登录用户信息
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
-const { allUserInfo } = userInfoAndTokens;
-// console.log("allUserInfo.sfc.mobile", allUserInfo["sfc"].mobile);
+const { loginInfoList } = userInfoAndTokens;
 
 // 影院特殊匹配列表及api
 import {
@@ -983,13 +982,16 @@ class OrderAutoTicketQueue {
         card_id,
         coupon
       } = data || {};
+      let obj = loginInfoList.find(
+        itemA => itemA.app_name === appFlag && itemA.mobile
+      );
       let params = {
         city_id,
         cinema_id,
         show_id,
         seat_ids,
         seat_info, // 座位描述，如：7排11号,7排10号
-        phone: allUserInfo[appFlag]?.mobile || "", // 用户手机号
+        phone: obj?.mobile || "", // 用户手机号
         additional_goods_info: "", // 附加商品信息
         companion_info: "", // 携伴信息
         goods_info: "", // 商品信息
@@ -1013,7 +1015,10 @@ class OrderAutoTicketQueue {
             conPrefix + "调整会员卡密码参数再次发起创建订单请求",
             params
           );
-          let pwd = allUserInfo[appFlag]?.member_pwd || "";
+          let obj = loginInfoList.find(
+            itemA => itemA.app_name === appFlag && itemA.member_pwd
+          );
+          let pwd = obj?.member_pwd || "";
           if (!pwd) {
             console.error(conPrefix + "会员卡密码未设置");
             this.setErrInfo("会员卡密码未设置");

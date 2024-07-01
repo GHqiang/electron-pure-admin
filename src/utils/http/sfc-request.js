@@ -3,7 +3,7 @@ import axios from "axios";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
-const { allUserInfo, removeSfcUserInfo } = userInfoAndTokens;
+const { loginInfoList, removeSfcUserInfo } = userInfoAndTokens;
 import { APP_LIST } from "@/common/constant";
 import md5 from "../md5.js";
 import router from "@/router";
@@ -41,7 +41,10 @@ const createAxios = ({ group, appName, timeout = 20 }) => {
     // e.group = "20045";
     // e.city_id = '500'
     // e.cinema_id = '19'
-    e.session_id = allUserInfo[appName]?.session_id || "";
+    let obj = loginInfoList.find(
+      itemA => itemA.app_name === appName && itemA.session_id
+    );
+    e.session_id = obj?.session_id || "";
     // console.log("sfcRequest===>", e);
   };
 
