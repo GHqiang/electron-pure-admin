@@ -56,6 +56,7 @@ const createAxios = ({ group, appName, timeout = 20 }) => {
   var n = function (e, o) {
     for (var r in o)
       o.hasOwnProperty(r) && !e.hasOwnProperty(r) && (e[r] = o[r]);
+    // 如果入参里面传了session_id就不会从o里面赋值了
   };
 
   /*
