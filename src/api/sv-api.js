@@ -77,6 +77,22 @@ const batchUpdateCardRecord = params =>
 const updateDayUsage = params =>
   axios.post("/svpi/cardRecord/updateUsage", params);
 
+// 获取登录信息列表
+const getLoginList = params => axios.get("/svpi/loginRecord", { params });
+// 查询登录信息列表
+const queryLoginList = params =>
+  axios.get("/svpi/loginRecord/query", { params });
+// 删除登录信息
+const deleteLogin = params => axios.get("/svpi/loginRecord/delete", { params });
+// 批量删除登录信息
+const batchDeleteLogin = params =>
+  axios.post("/svpi/loginRecord/batchdelete", params);
+// 添加登录信息
+const addLoginRecord = params => axios.post("/svpi/loginRecord/add", params);
+// 修改登录信息
+const updateLoginRecord = params =>
+  axios.post("/svpi/loginRecord/update", params);
+
 export default {
   login,
   logout,
@@ -106,5 +122,11 @@ export default {
   addCardRecord,
   updateCardRecord,
   batchUpdateCardRecord,
-  updateDayUsage
+  updateDayUsage,
+  getLoginList,
+  queryLoginList,
+  deleteLogin,
+  batchDeleteLogin,
+  addLoginRecord,
+  updateLoginRecord
 };

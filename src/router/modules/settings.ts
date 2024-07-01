@@ -25,6 +25,14 @@ export default {
       }
     },
     {
+      path: "/set/loginList",
+      name: "loginList",
+      component: () => import("@/views/appLogin/appLoginSet.vue"),
+      meta: {
+        title: "影院登录列表"
+      }
+    },
+    {
       path: "/set/offerRecord",
       name: "offerRecord",
       component: () => import("@/views/offerRecord/index.vue"),

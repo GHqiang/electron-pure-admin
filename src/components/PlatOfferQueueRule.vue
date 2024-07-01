@@ -198,23 +198,27 @@ const oneClickAutoOffer = () => {
 };
 // 设置本地的规则列表
 const setLocalRuleList = async () => {
-  const ruleRes = await svApi.queryRuleList({
-    status: "1"
-  });
-  // console.log("ruleRes", ruleRes);
-  let ruleRecords = ruleRes.data.ruleList || [];
-  ruleRecords.forEach(item => {
-    item.includeCityNames = JSON.parse(item.includeCityNames);
-    item.excludeCityNames = JSON.parse(item.excludeCityNames);
-    item.includeCinemaNames = JSON.parse(item.includeCinemaNames);
-    item.excludeCinemaNames = JSON.parse(item.excludeCinemaNames);
-    item.includeHallNames = JSON.parse(item.includeHallNames);
-    item.excludeHallNames = JSON.parse(item.excludeHallNames);
-    item.includeFilmNames = JSON.parse(item.includeFilmNames);
-    item.excludeFilmNames = JSON.parse(item.excludeFilmNames);
-    item.weekDay = JSON.parse(item.weekDay);
-  });
-  rules.setRuleList(ruleRecords);
+  try {
+    const ruleRes = await svApi.queryRuleList({
+      status: "1"
+    });
+    // console.log("ruleRes", ruleRes);
+    let ruleRecords = ruleRes.data.ruleList || [];
+    ruleRecords.forEach(item => {
+      item.includeCityNames = JSON.parse(item.includeCityNames);
+      item.excludeCityNames = JSON.parse(item.excludeCityNames);
+      item.includeCinemaNames = JSON.parse(item.includeCinemaNames);
+      item.excludeCinemaNames = JSON.parse(item.excludeCinemaNames);
+      item.includeHallNames = JSON.parse(item.includeHallNames);
+      item.excludeHallNames = JSON.parse(item.excludeHallNames);
+      item.includeFilmNames = JSON.parse(item.includeFilmNames);
+      item.excludeFilmNames = JSON.parse(item.excludeFilmNames);
+      item.weekDay = JSON.parse(item.weekDay);
+    });
+    rules.setRuleList(ruleRecords);
+  } catch (error) {
+    console.warn("进入报价队列页面时设置本地规则数据异常", error);
+  }
 };
 
 // 一键停止

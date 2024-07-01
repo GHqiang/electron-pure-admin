@@ -281,6 +281,9 @@ import { ElMessageBox, ElMessage } from "element-plus";
 import RuleDialog from "@/components/RuleDialog.vue";
 import { ORDER_FORM, APP_LIST } from "@/common/constant";
 import { getCurrentFormattedDateTime } from "@/utils/utils";
+import { useDataTableStore } from "@/store/offerRule";
+const rules = useDataTableStore();
+
 const tableData = ref([]);
 const currentPage = ref(1);
 const pageSize = ref(10);
@@ -311,6 +314,30 @@ const formData = reactive({
 const judgeHandle = (arr, str) => {
   let tempArr = str.split(",");
   return tempArr.every(item => arr.join().indexOf(item) !== -1);
+};
+// 设置本地的规则列表
+const setLocalRuleList = async () => {
+  try {
+    const ruleRes = await svApi.queryRuleList({
+      status: "1"
+    });
+    // console.log("ruleRes", ruleRes);
+    let ruleRecords = ruleRes.data.ruleList || [];
+    ruleRecords.forEach(item => {
+      item.includeCityNames = JSON.parse(item.includeCityNames);
+      item.excludeCityNames = JSON.parse(item.excludeCityNames);
+      item.includeCinemaNames = JSON.parse(item.includeCinemaNames);
+      item.excludeCinemaNames = JSON.parse(item.excludeCinemaNames);
+      item.includeHallNames = JSON.parse(item.includeHallNames);
+      item.excludeHallNames = JSON.parse(item.excludeHallNames);
+      item.includeFilmNames = JSON.parse(item.includeFilmNames);
+      item.excludeFilmNames = JSON.parse(item.excludeFilmNames);
+      item.weekDay = JSON.parse(item.weekDay);
+    });
+    rules.setRuleList(ruleRecords);
+  } catch (error) {
+    console.warn("查询规则列表时设置本地规则数据异常", error);
+  }
 };
 // 搜索数据
 const searchData = async () => {
@@ -349,6 +376,7 @@ const searchData = async () => {
     // console.log("规则列表===>", ruleRecords);
     tableData.value = ruleRecords;
     totalNum.value = res.data.totalNum || 0;
+    setLocalRuleList();
   } catch (error) {
     console.warn("获取规则列表失败", error);
   }

@@ -70,10 +70,17 @@ export const appUserInfo = defineStore("appUserInfo", {
       tjlq: null,
       shth: null,
       qina: null
-    }
+    },
+    loginInfoList: []
   }),
   getters: {},
   actions: {
+    // 设置sfc用户信息
+    setLoginInfoList(list) {
+      console.warn(`设置影院登录信息`, list);
+      this.loginInfoList = list;
+      window.localStorage.setItem("loginInfoList", JSON.stringify(list));
+    },
     // 设置sfc用户信息
     setSfcUserInfo({ appName, userInfo }) {
       console.warn(`设置${APP_LIST[appName]}-用户信息及token`, userInfo);
