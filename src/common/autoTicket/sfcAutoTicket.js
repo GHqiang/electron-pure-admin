@@ -650,13 +650,17 @@ class OrderAutoTicketQueue {
         return { offerRule, transferParams };
       }
       // 6计算订单价格
+      let currentParams = currentParamsList[this.currentParamsInx];
+      const { session_id } = currentParams;
       const priceInfo = await this.priceCalculation({
         city_id,
         cinema_id,
         show_id,
         seat_ids,
         card_id,
-        quan_code
+        quan_code,
+        session_id,
+        isRetry: true
       });
       if (!priceInfo) {
         console.error(
@@ -919,7 +923,7 @@ class OrderAutoTicketQueue {
           };
         } else {
           this.currentParamsInx++;
-          return await useQuanOrCard(params);
+          return await this.useQuanOrCard(params);
         }
       } else {
         console.log(conPrefix + "使用优惠券出票");
@@ -953,7 +957,7 @@ class OrderAutoTicketQueue {
           };
         } else {
           this.currentParamsInx++;
-          return await useQuanOrCard(params);
+          return await this.useQuanOrCard(params);
         }
       }
     } catch (error) {
@@ -977,7 +981,8 @@ class OrderAutoTicketQueue {
       seat_ids,
       card_id,
       quan_code,
-      session_id
+      session_id,
+      isRetry
     } = data || {};
     try {
       // 模拟延迟调用，因为该接口出现过连续请求报超时的情况，增加请求间隔
@@ -1004,7 +1009,17 @@ class OrderAutoTicketQueue {
       console.log(conPrefix + "计算订单价格参数", params);
       const res = await this.sfcApi.priceCalculation(params);
       console.log(conPrefix + "计算订单价格返回", res);
-      return res.data?.price;
+      let price = res.data?.price;
+      if (isRetry) {
+        // 如果已经是最后一次或者用卡成功就直接按原计划返回
+        if (this.currentParamsInx === currentParamsList.length - 1 || price) {
+          return price;
+        } else {
+          this.currentParamsInx++;
+          return await this.priceCalculation(data);
+        }
+      }
+      return price;
     } catch (error) {
       console.error(conPrefix + "计算订单价格异常", error);
       this.setErrInfo(
