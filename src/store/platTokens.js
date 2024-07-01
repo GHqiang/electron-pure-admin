@@ -15,6 +15,9 @@ export const platTokens = defineStore("platTokens", {
     // sfc上影token
     isAdmin(state) {
       return state.userInfo.name === "暖光";
+    },
+    loginMobile(state) {
+      return state.userInfo.mobile;
     }
   },
   actions: {

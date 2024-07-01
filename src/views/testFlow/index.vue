@@ -253,7 +253,7 @@ const { isAdmin } = storeToRefs(tokens);
 console.log("isAdmin", isAdmin.value);
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
-const { allUserInfo, removeSfcUserInfo } = userInfoAndTokens;
+const { loginInfoList, removeSfcUserInfo } = userInfoAndTokens;
 const appName = "sfc";
 let sfcApi = SFC_API_OBJ[appName];
 // console.log("sfcApi", sfcApi);
@@ -975,13 +975,16 @@ async function createOrder(data) {
       member_coupon_id = cardId.value;
       coupon = quanCodes.value.join();
     }
+    let obj = loginInfoList.find(
+      itemA => itemA.app_name === appName && itemA.mobile
+    );
     let params = {
       city_id,
       cinema_id,
       show_id,
       seat_ids,
       seat_info, // 座位描述，如：7排11号,7排10号
-      phone: allUserInfo[appName]?.mobile || "", // 用户手机号
+      phone: obj?.mobile || "", // 用户手机号
       additional_goods_info: "", // 附加商品信息
       companion_info: "", // 携伴信息
       goods_info: "", // 商品信息

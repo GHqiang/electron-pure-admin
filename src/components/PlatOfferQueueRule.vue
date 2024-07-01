@@ -135,7 +135,7 @@ import lierenOfferQueue from "@/common/autoOffer/useLierenOffer";
 import { PLAT_LINK_APP, APP_LIST } from "@/common/constant";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
-const { allUserInfo } = userInfoAndTokens;
+const { loginInfoList } = userInfoAndTokens;
 
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
@@ -167,7 +167,10 @@ const editingRow = ref({});
 const appTokenObj = {};
 // 填充token及队列集合
 Object.keys(APP_LIST).forEach(item => {
-  appTokenObj[item] = allUserInfo[item]?.session_id || "";
+  let obj = loginInfoList.find(
+    itemA => itemA.app_name === item && itemA.session_id
+  );
+  appTokenObj[item] = obj?.session_id || "";
 });
 // 一键启动
 const oneClickAutoOffer = () => {

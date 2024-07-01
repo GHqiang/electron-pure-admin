@@ -6,27 +6,27 @@
       class="m-r-10 m-t-10"
     >
       <el-button
-        type="primary"
         v-if="!item.appToken"
-        @click="appLogin(item.appName)"
         v-throttle
+        type="primary"
+        @click="appLogin(item.appName)"
         >{{ APP_LIST[item.appName] }}登录</el-button
       >
       <el-button
-        type="primary"
         v-else
-        @click="removeSfcUserInfo(item.appName), (item.appToken = '')"
         v-throttle
+        type="primary"
+        @click="removeSfcUserInfo(item.appName), (item.appToken = '')"
         >{{ APP_LIST[item.appName] }}退出</el-button
       >
     </el-button-group>
 
     <MockSfcLogin
-      ref="childRef"
       v-if="sfcLoginActive"
+      ref="childRef"
       :app-name="appName"
       @loginSuccess="sfcLoginSuccess"
-    ></MockSfcLogin>
+    />
   </div>
 </template>
 
@@ -35,7 +35,7 @@ import { ref } from "vue";
 import MockSfcLogin from "@/components/AppLogin/MockSfcLogin.vue";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
-const { allUserInfo } = userInfoAndTokens;
+const { loginInfoList } = userInfoAndTokens;
 
 const { setSfcUserInfo, removeSfcUserInfo } = userInfoAndTokens;
 import { APP_LIST } from "@/common/constant";
@@ -43,9 +43,10 @@ const childRef = ref(null);
 
 const appList = ref([]);
 Object.keys(APP_LIST).forEach(item => {
+  let obj = loginInfoList.find(itemA => itemA.app_name === item);
   appList.value.push({
     appName: item,
-    appToken: allUserInfo[item]?.session_id || ""
+    appToken: obj?.session_id || ""
   });
 });
 

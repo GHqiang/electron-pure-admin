@@ -331,14 +331,19 @@ const syncBalance = async () => {
     background: "rgba(0, 0, 0, 0.7)"
   });
   try {
-    let allUserInfo = window.localStorage.getItem("allUserInfo");
-    if (allUserInfo) {
-      allUserInfo = JSON.parse(allUserInfo);
+    let loginInfoList = window.localStorage.getItem("loginInfoList");
+    if (loginInfoList) {
+      loginInfoList = JSON.parse(loginInfoList);
     }
     // 过滤一下已登录的
     let apiList = Object.entries(SFC_API_OBJ).filter(
       // 如果有值证明就是登录过的
-      item => allUserInfo[item[0]] && allUserInfo[item[0]].mobile == phone
+      item => {
+        let obj = loginInfoList.find(
+          itemA => itemA.app_name === item[0] && itemA.mobile == phone
+        );
+        return !!obj;
+      }
     );
     console.log("过滤后的apiList", apiList);
     let memberCardList = [];

@@ -46,9 +46,7 @@
             v-if="props.row.quan_other_list && props.row.quan_other_list.length"
             style="padding: 5px 15px"
           >
-            <h3>
-              优惠券-其它券详细信息
-            </h3>
+            <h3>优惠券-其它券详细信息</h3>
             <div
               v-for="(item, inx) in props.row.quan_other_list"
               :key="inx"
@@ -112,17 +110,19 @@ const searchData = async () => {
     background: "rgba(0, 0, 0, 0.7)"
   });
   try {
-    let allUserInfo = window.localStorage.getItem("allUserInfo");
-    if (allUserInfo) {
-      allUserInfo = JSON.parse(allUserInfo);
+    let loginInfoList = window.localStorage.getItem("loginInfoList");
+    if (loginInfoList) {
+      loginInfoList = JSON.parse(loginInfoList);
     }
     // 过滤一下已登录的
-    let apiList = Object.entries(SFC_API_OBJ).filter(
-      item =>
-        allUserInfo[item[0]] &&
-        (formData.appName ? item[0] === formData.appName : true)  &&
-        (formData.mobile ? allUserInfo[item[0]].mobile == formData.mobile : true) 
-    );
+    let apiList = Object.entries(SFC_API_OBJ).filter(item => {
+      let obj = loginInfoList.find(
+        itemA =>
+          itemA.app_name === item[0] &&
+          (formData.mobile ? itemA.mobile == formData.mobile : true)
+      );
+      return obj && (formData.appName ? item[0] === formData.appName : true);
+    });
     // console.log("apiList===>", apiList);
     let tableList = [];
     for (let index = 0; index < apiList.length; index++) {
