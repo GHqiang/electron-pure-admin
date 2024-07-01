@@ -860,7 +860,7 @@ const getMemberPrice = async order => {
       );
       if (!cardList.length) {
         console.error(conPrefix + "影院单卡出票限制,不再进行报价");
-        this.setErrInfo("促销票数低于订单票数，不再进行报价", {
+        this.setErrInfo("影院单卡出票限制，不再进行报价", {
           list,
           ticket_num
         });

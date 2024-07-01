@@ -50,8 +50,8 @@ const createAxios = ({ group, appName, timeout = 20 }) => {
 
   /*
    * 用于对请求参数对象进行合并，将源对象中没有的属性从目标对象中复制过来
-   * @param {Object} e 请求参数对象
-   * @param {Object} o 请求参数对象
+   * @param {Object} e 目标对象
+   * @param {Object} o 源对象
    */
   var n = function (e, o) {
     for (var r in o)

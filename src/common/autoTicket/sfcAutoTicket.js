@@ -106,10 +106,10 @@ class OrderAutoTicketQueue {
             res
           );
           if (!isTestOrder) {
-            // 从缓存里面删除记录
-            deleteOrder(order.order_number, appFlag);
             // 添加订单处理记录
             await this.addOrderHandleRecored(order, res);
+            // 从缓存里面删除记录
+            deleteOrder(order.order_number, appFlag);
           }
         }
       }
