@@ -1031,36 +1031,37 @@ class OrderAutoTicketQueue {
 
   // 创建订单
   async createOrder(data) {
-    const { conPrefix, appFlag } = this;
+    const { conPrefix } = this;
+    let {
+      city_id,
+      cinema_id,
+      show_id,
+      seat_ids,
+      seat_info,
+      pay_money,
+      card_id,
+      coupon
+    } = data || {};
     try {
-      let {
-        city_id,
-        cinema_id,
-        show_id,
-        seat_ids,
-        seat_info,
-        pay_money,
-        card_id,
-        coupon
-      } = data || {};
-      let obj = loginInfoList.find(
-        itemA => itemA.app_name === appFlag && itemA.mobile
-      );
+      let currentParams = loginInfoList[this.currentParamsInx];
+      const { mobile, member_pwd, session_id } = currentParams;
       let params = {
         city_id,
         cinema_id,
         show_id,
         seat_ids,
         seat_info, // 座位描述，如：7排11号,7排10号
-        phone: obj?.mobile || "", // 用户手机号
+        phone: mobile || "", // 用户手机号
         additional_goods_info: "", // 附加商品信息
         companion_info: "", // 携伴信息
         goods_info: "", // 商品信息
         option_goods_info: "", // 可选的额外商品信息
         pay_money, // 支付金额
         promo_id: "0", // 促销活动ID，这里为0，表示没有参与特定的促销活动
-        update_time: getCurrentFormattedDateTime()
+        update_time: getCurrentFormattedDateTime(),
+        session_id
       };
+      let order_num;
       if (card_id) {
         params.card_id = card_id; // 会员卡id
         params.card_password = encode(""); // 会员卡密码
@@ -1068,7 +1069,7 @@ class OrderAutoTicketQueue {
           console.log(conPrefix + "创建订单参数", params);
           const res = await this.sfcApi.createOrder(params);
           console.log(conPrefix + "创建订单返回", res);
-          return res.data?.order_num || "";
+          order_num = res.data?.order_num || "";
         } catch (error) {
           console.warn(conPrefix + "会员卡第一次创建订单失败", error);
           this.setErrInfo("会员卡第一次创建订单失败", error);
@@ -1076,20 +1077,11 @@ class OrderAutoTicketQueue {
             conPrefix + "调整会员卡密码参数再次发起创建订单请求",
             params
           );
-          let obj = loginInfoList.find(
-            itemA => itemA.app_name === appFlag && itemA.member_pwd
-          );
-          let pwd = obj?.member_pwd || "";
-          if (!pwd) {
-            console.error(conPrefix + "会员卡密码未设置");
-            this.setErrInfo("会员卡密码未设置");
-            return;
-          }
-          params.card_password = encode(pwd); // 会员卡密码
+          params.card_password = encode(member_pwd); // 会员卡密码
           const res = await this.sfcApi.createOrder(params);
           console.log(conPrefix + "创建订单返回", res);
           this.setErrInfo("", "");
-          return res.data?.order_num || "";
+          order_num = res.data?.order_num || "";
         }
       } else if (coupon) {
         params.coupon = coupon; // 优惠券券码
@@ -1097,7 +1089,14 @@ class OrderAutoTicketQueue {
         const res = await this.sfcApi.createOrder(params);
         console.log(conPrefix + "创建订单返回", res);
         this.setErrInfo("", "");
-        return res.data?.order_num || "";
+        order_num = res.data?.order_num || "";
+      }
+      // 如果已经是最后一次或者用卡成功就直接按原计划返回
+      if (this.currentParamsInx === currentParamsList.length - 1 || order_num) {
+        return order_num;
+      } else {
+        this.currentParamsInx++;
+        return await this.createOrder(data);
       }
     } catch (error) {
       console.error(conPrefix + "创建订单异常", error);
@@ -1110,13 +1109,16 @@ class OrderAutoTicketQueue {
     const { conPrefix, appFlag } = this;
     try {
       let { city_id, cinema_id, order_num, pay_money } = data || {};
+      let currentParams = loginInfoList[this.currentParamsInx];
+      const { session_id } = currentParams;
       let params = {
         city_id,
         cinema_id,
         open_id: APP_OPENID_OBJ[appFlag], // 微信openId
         order_num, // 订单号
         pay_money, // 支付金额
-        pay_type: "" // 购买方式 传空意味着用优惠券或者会员卡
+        pay_type: "", // 购买方式 传空意味着用优惠券或者会员卡
+        session_id
       };
       console.log(conPrefix + "订单购买参数", params);
       const res = await this.sfcApi.buyTicket(params);
@@ -1133,12 +1135,15 @@ class OrderAutoTicketQueue {
     const { conPrefix } = this;
     try {
       let { city_id, cinema_id, order_num } = data || {};
+      let currentParams = loginInfoList[this.currentParamsInx];
+      const { session_id } = currentParams;
       let params = {
         city_id,
         cinema_id,
         order_num, // 订单号
         order_type: "ticket", // 订单类型
-        order_type_num: 1 // 订单子类型数量，可能是指购买的该类型票的数量
+        order_type_num: 1, // 订单子类型数量，可能是指购买的该类型票的数量
+        session_id
       };
       console.log(conPrefix + "支付订单参数", params);
       const res = await this.sfcApi.payOrder(params);
@@ -1154,6 +1159,8 @@ class OrderAutoTicketQueue {
   async submitTicketCode({ order_id, qrcode }) {
     const { conPrefix } = this;
     try {
+      let currentParams = loginInfoList[this.currentParamsInx];
+      const { session_id } = currentParams;
       let params = {
         // order_id: id || 5548629,
         // qupiao2: "[{\"result\":\"2024031154980669\",\"yzm\":\"\"}]"
@@ -1163,7 +1170,8 @@ class OrderAutoTicketQueue {
             result: qrcode.split("|")[0],
             yzm: qrcode.split("|")?.[1] || ""
           }
-        ])
+        ]),
+        session_id
       };
       console.log(conPrefix + "提交出票码参数", params);
       const res = await lierenApi.submitTicketCode(params);
