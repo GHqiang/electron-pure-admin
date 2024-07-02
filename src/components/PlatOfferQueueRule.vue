@@ -135,15 +135,14 @@ import lierenOfferQueue from "@/common/autoOffer/useLierenOffer";
 import { PLAT_LINK_APP, APP_LIST } from "@/common/constant";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
-const { loginInfoList } = userInfoAndTokens;
-
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
 const tokens = platTokens();
 
 const tableDataStore = usePlatTableDataStore();
 const displayItems = computed(() => tableDataStore.items);
-
+// 使其具有响应性
+const loginInfoList = computed(() => userInfoAndTokens.loginInfoList);
 import { useDataTableStore } from "@/store/offerRule";
 const rules = useDataTableStore();
 // 是否显示一键启动
@@ -166,14 +165,16 @@ const editingRow = ref({});
 // token集合
 const appTokenObj = {};
 // 填充token及队列集合
-Object.keys(APP_LIST).forEach(item => {
-  let obj = loginInfoList.find(
-    itemA => itemA.app_name === item && itemA.session_id
-  );
-  appTokenObj[item] = obj?.session_id || "";
-});
+
 // 一键启动
 const oneClickAutoOffer = () => {
+  // console.log("loginInfoList1", loginInfoList);
+  Object.keys(APP_LIST).forEach(item => {
+    let obj = loginInfoList.value.find(
+      itemA => itemA.app_name === item && itemA.session_id
+    );
+    appTokenObj[item] = obj?.session_id || "";
+  });
   ElMessageBox.confirm("确定要一键全部启动吗?", "提示", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
@@ -183,19 +184,28 @@ const oneClickAutoOffer = () => {
     closeOnPressEscape: false
   })
     .then(async () => {
-      console.warn("一键启动全部自动报价队列");
+      let isStart = true;
       tableDataStore.items.forEach(item => {
-        item.isEnabled = true;
         if (item.platName === "lieren") {
           let platToken = displayItems.value.find(
             item => item.platName === "lieren"
           )?.platToken;
-          lierenOfferQueue.start(platToken);
+          if (!platToken) {
+            isStart = false;
+          } else {
+            item.isEnabled = true;
+            lierenOfferQueue.start(platToken);
+          }
         }
       });
-      svApi.updateUser({
-        plat_offer_queue: JSON.stringify(tableDataStore.items)
-      });
+      if (isStart) {
+        console.warn("一键启动全部自动报价队列");
+        svApi.updateUser({
+          plat_offer_queue: JSON.stringify(tableDataStore.items)
+        });
+      } else {
+        ElMessage.warning("有平台token未设置，请先设置再启动");
+      }
     })
     .catch(() => {});
 };
@@ -224,6 +234,19 @@ const setLocalRuleList = async () => {
   }
 };
 
+// 设置本地的登录信息列表
+const setLocalLoginList = async () => {
+  const loginRes = await svApi.getLoginList();
+  // console.log("ruleRes", ruleRes);
+  let loginRecords = loginRes.data.loginList || [];
+  loginRecords = loginRecords.map(item => ({
+    app_name: item.app_name,
+    mobile: item.mobile,
+    session_id: item.session_id,
+    member_pwd: item.member_pwd
+  }));
+  userInfoAndTokens.setLoginInfoList(loginRecords);
+};
 // 一键停止
 const stopAutoOffer = () => {
   ElMessageBox.confirm("确定要一键停止吗?", "提示", {
@@ -308,5 +331,6 @@ const cancelEdit = () => {
 };
 onBeforeMount(() => {
   setLocalRuleList();
+  setLocalLoginList();
 });
 </script>

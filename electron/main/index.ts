@@ -63,36 +63,36 @@ function createMenu(label = "进入全屏幕") {
 }
 
 // 设置截止日期
-const expirationDate = new Date('2024-07-01 22:15:00')
+const expirationDate = new Date("2024-08-01 22:15:00");
 let expirationCheckIntervalId;
 
 function isExpired() {
-    const currentDate = new Date();
-    return currentDate >= expirationDate;
+  const currentDate = new Date();
+  return currentDate >= expirationDate;
 }
 
 function startExpirationCheck() {
-    expirationCheckIntervalId = setInterval(() => {
-        if (isExpired()) {
-            clearInterval(expirationCheckIntervalId);
-            showExpirationDialogAndQuit();
-        }
-    }, 10 * 1000); // 每分钟检查一次
+  expirationCheckIntervalId = setInterval(() => {
+    if (isExpired()) {
+      clearInterval(expirationCheckIntervalId);
+      showExpirationDialogAndQuit();
+    }
+  }, 10 * 1000); // 每分钟检查一次
 }
 
 function showExpirationDialogAndQuit() {
-    let options: any = null;
-    options = {
-        type: 'warning',
-        title: 'Application Expired',
-        message: 'This application has expired and will now close.',
-        detail: 'Please contact the application provider for further assistance.',
-        buttons: ['OK'],
-    };
+  let options: any = null;
+  options = {
+    type: "warning",
+    title: "Application Expired",
+    message: "This application has expired and will now close.",
+    detail: "Please contact the application provider for further assistance.",
+    buttons: ["OK"]
+  };
 
-    dialog.showMessageBox(options).then(() => {
-        app.quit();
-    });
+  dialog.showMessageBox(options).then(() => {
+    app.quit();
+  });
 }
 async function createWindow() {
   win = new BrowserWindow({
@@ -147,7 +147,7 @@ async function createWindow() {
 }
 
 app.whenReady().then(() => {
-  createWindow()
+  createWindow();
   // 开启定期过期检查
   startExpirationCheck();
 });

@@ -54,11 +54,6 @@
         />
       </template>
     </el-table-column>
-    <el-table-column label="影院Token">
-      <template #default="{ row, $index }">
-        <span> {{ appTokenObj[row.appName] }}</span>
-      </template>
-    </el-table-column>
     <el-table-column label="队列执行状态">
       <template #default="{ row }">
         <el-switch v-model="row.isEnabled" disabled />
@@ -137,8 +132,8 @@ import { useStayTicketList } from "@/store/stayTicketList";
 const stayTicketList = useStayTicketList();
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
-const { loginInfoList } = userInfoAndTokens;
-
+// 使其具有响应性
+const loginInfoList = computed(() => userInfoAndTokens.loginInfoList);
 const tableDataStore = useAppRuleListStore();
 
 import { platTokens } from "@/store/platTokens";
@@ -184,14 +179,7 @@ const editingRow = ref({});
 const appTicketQueueObj = {};
 // token集合
 const appTokenObj = {};
-// 填充token及队列集合
-Object.keys(APP_LIST).forEach(item => {
-  let obj = loginInfoList.find(
-    item => item.app_name === item && item.session_id
-  );
-  appTokenObj[item] = obj?.session_id || "";
-  appTicketQueueObj[item] = createTicketQueue(item);
-});
+
 window.sfcQueue = appTicketQueueObj["sfc"];
 const delay = delayTime => {
   return new Promise(resolve => {
@@ -228,14 +216,22 @@ window.testBandquan = async () => {
 // console.log("appTicketQueueObj", appTicketQueueObj);
 // 一键启动
 const oneClickAutoOffer = () => {
-  // console.log("pwd", pwd);
-  let isNOMemberPwd = tableDataStore.items.some(item => {
-    let obj = loginInfoList.find(
-      itemA => itemA.app_name === item.appName && itemA.member_pwd
+  // 填充token及队列集合
+  Object.keys(APP_LIST).forEach(item => {
+    let obj = loginInfoList.value.find(
+      itemA => itemA.app_name === item && itemA.session_id
     );
-    return !obj;
+    appTokenObj[item] = obj?.session_id || "";
+    appTicketQueueObj[item] = createTicketQueue(item);
   });
-  if (isNOMemberPwd) {
+  let noSetMemberPwdList = tableDataStore.items.filter(item => {
+    let obj = loginInfoList.value.some(
+      itemA => itemA.app_name === item.appName && !itemA.member_pwd
+    );
+    return obj;
+  });
+  console.warn("未设置会员卡密码的影院列表", noSetMemberPwdList);
+  if (noSetMemberPwdList.length) {
     ElMessage.error("有会员卡密码未设置，请先去维护影院登录信息后再启动");
     return;
   }
@@ -285,7 +281,7 @@ const stopAutoOffer = () => {
 const singleStartOrStop = ({ id, appName }, flag) => {
   // 单个启动
   if (flag === 1) {
-    let obj = loginInfoList.find(
+    let obj = loginInfoList.value.find(
       itemA => itemA.app_name === appName && itemA.member_pwd
     );
     let pwd = obj?.member_pwd;
