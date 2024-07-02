@@ -179,7 +179,7 @@ const appMenu = (fullscreenLabel: string) => {
   const menuItems = [
     { label: "关于", role: "about" },
     { label: "开发者工具", role: "toggleDevTools" },
-    { label: "强制刷新", role: "forcereload" },
+    // { label: "强制刷新", role: "forcereload" },
     { label: "退出", role: "quit" }
   ];
   // 生产环境删除开发者工具菜单
