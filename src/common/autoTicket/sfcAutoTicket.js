@@ -28,7 +28,6 @@ const {
 } = tokens;
 // console.log("user_id", user_id);
 
-let currentParamsList = [];
 // 影院特殊匹配列表及api
 import {
   SPECIAL_CINEMA_OBJ,
@@ -53,12 +52,13 @@ class OrderAutoTicketQueue {
     this.conPrefix = TICKET_CONPREFIX_OBJ[appFlag]; // 打印前缀
     this.sfcApi = SFC_API_OBJ[appFlag];
     this.currentParamsInx = 0;
+    this.currentParamsList = [];
   }
 
   // 启动队列（fetchDelay获取订单列表间隔，processDelay处理订单间隔）
   async start() {
     const { conPrefix, appFlag } = this;
-    currentParamsList = getCinemaLoginInfoList().filter(
+    this.currentParamsList = getCinemaLoginInfoList().filter(
       item =>
         item.app_name === appFlag &&
         item.mobile &&
@@ -80,7 +80,7 @@ class OrderAutoTicketQueue {
       );
       // console.log(conPrefix + "队列启动的执行规则", appQueueRule);
       if (!appQueueRule?.length) {
-        console.warn(conPrefix + "队列执行规则不存在或者未启用，直接停止");
+        // console.warn(conPrefix + "队列执行规则不存在或者未启用，直接停止");
         await this.stop();
         return;
       }
@@ -290,19 +290,19 @@ class OrderAutoTicketQueue {
   stop() {
     const { conPrefix } = this;
     this.isRunning = false;
-    console.warn(conPrefix + "主动停止订单自动出票队列");
+    // console.warn(conPrefix + "主动停止订单自动出票队列");
     // 打印处理结果
     const { handleSuccessOrderList, handleFailOrderList } = this;
-    console.warn(
-      conPrefix +
-        `订单处理记录：成功 ${handleSuccessOrderList.length} 个，失败 ${handleFailOrderList.length} 个`
-    );
-    console.warn(
-      conPrefix + "订单处理记录：成功-",
-      handleSuccessOrderList,
-      " 失败-",
-      handleFailOrderList
-    );
+    // console.warn(
+    //   conPrefix +
+    //     `订单处理记录：成功 ${handleSuccessOrderList.length} 个，失败 ${handleFailOrderList.length} 个`
+    // );
+    // console.warn(
+    //   conPrefix + "订单处理记录：成功-",
+    //   handleSuccessOrderList,
+    //   " 失败-",
+    //   handleFailOrderList
+    // );
   }
   // 设置错误信息
   setErrInfo(errMsg, errInfo) {
@@ -646,7 +646,7 @@ class OrderAutoTicketQueue {
         return { offerRule, transferParams };
       }
       // 6计算订单价格
-      let currentParams = currentParamsList[this.currentParamsInx];
+      let currentParams = this.currentParamsList[this.currentParamsInx];
       const { session_id } = currentParams;
       const priceInfo = await this.priceCalculation({
         city_id,
@@ -873,7 +873,7 @@ class OrderAutoTicketQueue {
         quan_value: quanValue,
         member_price
       } = offerRule;
-      let currentParams = currentParamsList[this.currentParamsInx];
+      let currentParams = this.currentParamsList[this.currentParamsInx];
       const { session_id } = currentParams;
       // 拿订单号去匹配报价记录
       if (offerType !== "1") {
@@ -912,7 +912,10 @@ class OrderAutoTicketQueue {
           session_id
         });
         // 如果已经是最后一次或者用卡成功就直接按原计划返回
-        if (this.currentParamsInx === currentParamsList.length - 1 || card_id) {
+        if (
+          this.currentParamsInx === this.currentParamsList.length - 1 ||
+          card_id
+        ) {
           return {
             card_id,
             profit // 利润
@@ -944,7 +947,7 @@ class OrderAutoTicketQueue {
         });
         // 如果已经是最后一次或者用券成功就直接按原计划返回
         if (
-          this.currentParamsInx === currentParamsList.length - 1 ||
+          this.currentParamsInx === this.currentParamsList.length - 1 ||
           useQuans.length
         ) {
           return {
@@ -1008,7 +1011,10 @@ class OrderAutoTicketQueue {
       let price = res.data?.price;
       if (isRetry) {
         // 如果已经是最后一次或者用卡成功就直接按原计划返回
-        if (this.currentParamsInx === currentParamsList.length - 1 || price) {
+        if (
+          this.currentParamsInx === this.currentParamsList.length - 1 ||
+          price
+        ) {
           return price;
         } else {
           this.currentParamsInx++;
@@ -1039,7 +1045,7 @@ class OrderAutoTicketQueue {
       coupon
     } = data || {};
     try {
-      let currentParams = currentParamsList[this.currentParamsInx];
+      let currentParams = this.currentParamsList[this.currentParamsInx];
       const { mobile, member_pwd, session_id } = currentParams;
       let params = {
         city_id,
@@ -1088,7 +1094,10 @@ class OrderAutoTicketQueue {
         order_num = res.data?.order_num || "";
       }
       // 如果已经是最后一次或者用卡成功就直接按原计划返回
-      if (this.currentParamsInx === currentParamsList.length - 1 || order_num) {
+      if (
+        this.currentParamsInx === this.currentParamsList.length - 1 ||
+        order_num
+      ) {
         return order_num;
       } else {
         this.currentParamsInx++;
@@ -1105,7 +1114,7 @@ class OrderAutoTicketQueue {
     const { conPrefix, appFlag } = this;
     try {
       let { city_id, cinema_id, order_num, pay_money } = data || {};
-      let currentParams = currentParamsList[this.currentParamsInx];
+      let currentParams = this.currentParamsList[this.currentParamsInx];
       const { session_id } = currentParams;
       let params = {
         city_id,
@@ -1131,7 +1140,7 @@ class OrderAutoTicketQueue {
     const { conPrefix } = this;
     try {
       let { city_id, cinema_id, order_num } = data || {};
-      let currentParams = currentParamsList[this.currentParamsInx];
+      let currentParams = this.currentParamsList[this.currentParamsInx];
       const { session_id } = currentParams;
       let params = {
         city_id,
@@ -1155,7 +1164,7 @@ class OrderAutoTicketQueue {
   async submitTicketCode({ order_id, qrcode }) {
     const { conPrefix } = this;
     try {
-      let currentParams = currentParamsList[this.currentParamsInx];
+      let currentParams = this.currentParamsList[this.currentParamsInx];
       const { session_id } = currentParams;
       let params = {
         // order_id: id || 5548629,
