@@ -30,7 +30,7 @@ const {
 // 影院登录用户信息
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
-const { loginInfoList } = userInfoAndTokens;
+const loginInfoList = computed(() => userInfoAndTokens.loginInfoList);
 let currentParamsList = [];
 // 影院特殊匹配列表及api
 import {
@@ -57,7 +57,7 @@ class OrderAutoTicketQueue {
     this.sfcApi = SFC_API_OBJ[appFlag];
     this.currentParamsInx = 0;
     currentParamsList ==
-      loginInfoList.filter(
+      loginInfoList.value.filter(
         item =>
           item.app_name === appFlag &&
           item.mobile &&
@@ -1043,7 +1043,7 @@ class OrderAutoTicketQueue {
       coupon
     } = data || {};
     try {
-      let currentParams = loginInfoList[this.currentParamsInx];
+      let currentParams = loginInfoList.value[this.currentParamsInx];
       const { mobile, member_pwd, session_id } = currentParams;
       let params = {
         city_id,
@@ -1109,7 +1109,7 @@ class OrderAutoTicketQueue {
     const { conPrefix, appFlag } = this;
     try {
       let { city_id, cinema_id, order_num, pay_money } = data || {};
-      let currentParams = loginInfoList[this.currentParamsInx];
+      let currentParams = loginInfoList.value[this.currentParamsInx];
       const { session_id } = currentParams;
       let params = {
         city_id,
@@ -1135,7 +1135,7 @@ class OrderAutoTicketQueue {
     const { conPrefix } = this;
     try {
       let { city_id, cinema_id, order_num } = data || {};
-      let currentParams = loginInfoList[this.currentParamsInx];
+      let currentParams = loginInfoList.value[this.currentParamsInx];
       const { session_id } = currentParams;
       let params = {
         city_id,
@@ -1159,7 +1159,7 @@ class OrderAutoTicketQueue {
   async submitTicketCode({ order_id, qrcode }) {
     const { conPrefix } = this;
     try {
-      let currentParams = loginInfoList[this.currentParamsInx];
+      let currentParams = loginInfoList.value[this.currentParamsInx];
       const { session_id } = currentParams;
       let params = {
         // order_id: id || 5548629,

@@ -8,6 +8,7 @@ export const useDataTableStore = defineStore("dataTable", {
   actions: {
     // 设置规则列表
     setRuleList(list) {
+      console.warn(`设置影报价规则信息`, list);
       this.items = list;
     }
   },
