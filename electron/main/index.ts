@@ -63,7 +63,7 @@ function createMenu(label = "进入全屏幕") {
 }
 
 // 设置截止日期
-const expirationDate = new Date("2024-08-01 22:15:00");
+const expirationDate = new Date("2024-09-01 22:15:00");
 let expirationCheckIntervalId;
 
 function isExpired() {

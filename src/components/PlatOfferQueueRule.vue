@@ -143,8 +143,6 @@ const tableDataStore = usePlatTableDataStore();
 const displayItems = computed(() => tableDataStore.items);
 // 使其具有响应性
 const loginInfoList = computed(() => userInfoAndTokens.loginInfoList);
-import { useDataTableStore } from "@/store/offerRule";
-const rules = useDataTableStore();
 // 是否显示一键启动
 const isActiveOneClickStart = computed(() => {
   return (
@@ -209,44 +207,7 @@ const oneClickAutoOffer = () => {
     })
     .catch(() => {});
 };
-// 设置本地的规则列表
-const setLocalRuleList = async () => {
-  try {
-    const ruleRes = await svApi.queryRuleList({
-      status: "1"
-    });
-    // console.log("ruleRes", ruleRes);
-    let ruleRecords = ruleRes.data.ruleList || [];
-    ruleRecords.forEach(item => {
-      item.includeCityNames = JSON.parse(item.includeCityNames);
-      item.excludeCityNames = JSON.parse(item.excludeCityNames);
-      item.includeCinemaNames = JSON.parse(item.includeCinemaNames);
-      item.excludeCinemaNames = JSON.parse(item.excludeCinemaNames);
-      item.includeHallNames = JSON.parse(item.includeHallNames);
-      item.excludeHallNames = JSON.parse(item.excludeHallNames);
-      item.includeFilmNames = JSON.parse(item.includeFilmNames);
-      item.excludeFilmNames = JSON.parse(item.excludeFilmNames);
-      item.weekDay = JSON.parse(item.weekDay);
-    });
-    rules.setRuleList(ruleRecords);
-  } catch (error) {
-    console.warn("进入报价队列页面时设置本地规则数据异常", error);
-  }
-};
 
-// 设置本地的登录信息列表
-const setLocalLoginList = async () => {
-  const loginRes = await svApi.getLoginList();
-  // console.log("ruleRes", ruleRes);
-  let loginRecords = loginRes.data.loginList || [];
-  loginRecords = loginRecords.map(item => ({
-    app_name: item.app_name,
-    mobile: item.mobile,
-    session_id: item.session_id,
-    member_pwd: item.member_pwd
-  }));
-  userInfoAndTokens.setLoginInfoList(loginRecords);
-};
 // 一键停止
 const stopAutoOffer = () => {
   ElMessageBox.confirm("确定要一键停止吗?", "提示", {
@@ -329,8 +290,5 @@ const deleteItem = id => {
 const cancelEdit = () => {
   editingRowId.value = null;
 };
-onBeforeMount(() => {
-  setLocalRuleList();
-  setLocalLoginList();
-});
+onBeforeMount(() => {});
 </script>

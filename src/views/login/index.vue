@@ -20,6 +20,10 @@ import svApi from "@/api/sv-api";
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
 
+import { useDataTableStore } from "@/store/offerRule";
+const rules = useDataTableStore();
+import { appUserInfo } from "@/store/appUserInfo";
+const userInfoAndTokens = appUserInfo();
 defineOptions({
   name: "Login"
 });
@@ -38,7 +42,44 @@ const ruleForm = reactive({
   username: "张三",
   password: "123456"
 });
+// 设置本地的规则列表
+const setLocalRuleList = async () => {
+  try {
+    const ruleRes = await svApi.queryRuleList({
+      status: "1"
+    });
+    // console.log("ruleRes", ruleRes);
+    let ruleRecords = ruleRes.data.ruleList || [];
+    ruleRecords.forEach(item => {
+      item.includeCityNames = JSON.parse(item.includeCityNames);
+      item.excludeCityNames = JSON.parse(item.excludeCityNames);
+      item.includeCinemaNames = JSON.parse(item.includeCinemaNames);
+      item.excludeCinemaNames = JSON.parse(item.excludeCinemaNames);
+      item.includeHallNames = JSON.parse(item.includeHallNames);
+      item.excludeHallNames = JSON.parse(item.excludeHallNames);
+      item.includeFilmNames = JSON.parse(item.includeFilmNames);
+      item.excludeFilmNames = JSON.parse(item.excludeFilmNames);
+      item.weekDay = JSON.parse(item.weekDay);
+    });
+    rules.setRuleList(ruleRecords);
+  } catch (error) {
+    console.warn("进入报价队列页面时设置本地规则数据异常", error);
+  }
+};
 
+// 设置本地的登录信息列表
+const setLocalLoginList = async () => {
+  const loginRes = await svApi.getLoginList();
+  // console.log("ruleRes", ruleRes);
+  let loginRecords = loginRes.data.loginList || [];
+  loginRecords = loginRecords.map(item => ({
+    app_name: item.app_name,
+    mobile: item.mobile,
+    session_id: item.session_id,
+    member_pwd: item.member_pwd
+  }));
+  userInfoAndTokens.setLoginInfoList(loginRecords);
+};
 const onLogin = async formEl => {
   if (!formEl) return;
   await formEl.validate(async (valid, fields) => {
@@ -56,6 +97,8 @@ const onLogin = async formEl => {
           });
           console.log("loginRes", loginRes);
           tokens.setSelfPlatToken(loginRes.data);
+          await setLocalLoginList();
+          await setLocalRuleList();
           // 获取后端路由
           await initRouter();
           let getTopMenuPath = getTopMenu(true).path;

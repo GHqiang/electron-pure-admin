@@ -16,14 +16,14 @@ export default {
         title: "报价规则"
       }
     },
-    {
-      path: "/set/appLogin",
-      name: "appLogin",
-      component: () => import("@/views/appLogin/index.vue"),
-      meta: {
-        title: "影院登录"
-      }
-    },
+    // {
+    //   path: "/set/appLogin",
+    //   name: "appLogin",
+    //   component: () => import("@/views/appLogin/index.vue"),
+    //   meta: {
+    //     title: "影院登录"
+    //   }
+    // },
     {
       path: "/set/loginList",
       name: "loginList",
