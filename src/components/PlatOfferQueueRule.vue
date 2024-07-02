@@ -133,16 +133,12 @@ import svApi from "@/api/sv-api";
 import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
 import lierenOfferQueue from "@/common/autoOffer/useLierenOffer";
 import { PLAT_LINK_APP, APP_LIST } from "@/common/constant";
-import { appUserInfo } from "@/store/appUserInfo";
-const userInfoAndTokens = appUserInfo();
+import { getCinemaLoginInfoList } from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
 const tokens = platTokens();
-const getOrginValue = value => JSON.parse(JSON.stringify(value));
 const tableDataStore = usePlatTableDataStore();
 const displayItems = computed(() => tableDataStore.items);
-// 使其具有响应性
-const loginInfoList = computed(() => userInfoAndTokens.loginInfoList);
 // 是否显示一键启动
 const isActiveOneClickStart = computed(() => {
   return (
@@ -166,9 +162,9 @@ const appTokenObj = {};
 
 // 一键启动
 const oneClickAutoOffer = () => {
-  // console.log("loginInfoList1", loginInfoList);
+  let loginInfoList = getCinemaLoginInfoList();
   Object.keys(APP_LIST).forEach(item => {
-    let obj = getOrginValue(loginInfoList.value).find(
+    let obj = loginInfoList.find(
       itemA => itemA.app_name === item && itemA.session_id
     );
     appTokenObj[item] = obj?.session_id || "";

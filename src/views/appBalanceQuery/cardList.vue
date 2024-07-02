@@ -198,7 +198,10 @@ import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import CardDialog from "@/components/CardDialog.vue";
 import { APP_LIST } from "@/common/constant";
 import { SFC_API_OBJ } from "@/common/index.js";
-import { getCurrentFormattedDateTime } from "@/utils/utils";
+import {
+  getCurrentFormattedDateTime,
+  getCinemaLoginInfoList
+} from "@/utils/utils";
 const tableData = ref([]);
 
 const currentPage = ref(1);
@@ -331,10 +334,7 @@ const syncBalance = async () => {
     background: "rgba(0, 0, 0, 0.7)"
   });
   try {
-    let loginInfoList = window.localStorage.getItem("loginInfoList");
-    if (loginInfoList) {
-      loginInfoList = JSON.parse(loginInfoList);
-    }
+    let loginInfoList = getCinemaLoginInfoList();
     // 过滤一下已登录的
     let apiList = Object.entries(SFC_API_OBJ).filter(
       // 如果有值证明就是登录过的

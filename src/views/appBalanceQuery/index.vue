@@ -84,6 +84,7 @@ import { ref, reactive } from "vue";
 import { APP_LIST } from "@/common/constant.js";
 import { SFC_API_OBJ } from "@/common/index.js";
 import { ElLoading } from "element-plus";
+import { getCinemaLoginInfoList } from "@/utils/utils";
 // 影线列表
 const shadowLineObj = APP_LIST;
 
@@ -110,29 +111,21 @@ const searchData = async () => {
     background: "rgba(0, 0, 0, 0.7)"
   });
   try {
-    let loginInfoList = window.localStorage.getItem("loginInfoList");
-    if (loginInfoList) {
-      loginInfoList = JSON.parse(loginInfoList);
-    }
+    let loginInfoList = getCinemaLoginInfoList();
     // 过滤一下已登录的
-    let apiList = Object.entries(SFC_API_OBJ).filter(item => {
-      let obj = loginInfoList.find(
-        itemA =>
-          itemA.app_name === item[0] &&
-          (formData.mobile ? itemA.mobile == formData.mobile : true)
-      );
-      return obj && (formData.appName ? item[0] === formData.appName : true);
-    });
-    // console.log("apiList===>", apiList);
     let tableList = [];
-    for (let index = 0; index < apiList.length; index++) {
-      const [appName, api] = apiList[index];
+    for (let index = 0; index < loginInfoList.length; index++) {
+      const { app_name, session_id } = loginInfoList[index];
       await delay(200);
-      const res = await api.getQuanList({ city_id: "500", cinema_id: "1" });
+      const res = await SFC_API_OBJ[app_name].getQuanList({
+        city_id: "500",
+        cinema_id: "1",
+        session_id
+      });
       let quanList = res.data.list || [];
       if (quanList.length) {
         let obj = {
-          appName: appName
+          appName: app_name
         };
         obj.quan_40_num = quanList.filter(
           item => item.coupon_info.indexOf("40") !== -1

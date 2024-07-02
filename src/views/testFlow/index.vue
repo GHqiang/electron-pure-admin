@@ -241,7 +241,8 @@ import { storeToRefs } from "pinia";
 import {
   getCurrentFormattedDateTime,
   convertFullwidthToHalfwidth,
-  cinemNameSpecial
+  cinemNameSpecial,
+  getCinemaLoginInfoList
 } from "@/utils/utils";
 import { SPECIAL_CINEMA_OBJ } from "@/common/constant";
 import { SFC_API_OBJ } from "@/common/index.js";
@@ -975,10 +976,7 @@ async function createOrder(data) {
       member_coupon_id = cardId.value;
       coupon = quanCodes.value.join();
     }
-    let loginInfoList = window.localStorage.getItem("loginInfoList");
-    if (loginInfoList) {
-      loginInfoList = JSON.parse(loginInfoList);
-    }
+    let loginInfoList = getCinemaLoginInfoList();
     let obj = loginInfoList.find(
       itemA => itemA.app_name === appName && itemA.mobile
     );

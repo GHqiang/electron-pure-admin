@@ -128,13 +128,9 @@ import svApi from "@/api/sv-api";
 import { useAppRuleListStore } from "@/store/appTicketRuleTable";
 import createTicketQueue from "@/common/autoTicket/sfcAutoTicket";
 import { APP_LIST } from "@/common/constant.js";
+import { getCinemaLoginInfoList } from "@/utils/utils";
 import { useStayTicketList } from "@/store/stayTicketList";
 const stayTicketList = useStayTicketList();
-import { appUserInfo } from "@/store/appUserInfo";
-const userInfoAndTokens = appUserInfo();
-// 使其具有响应性
-const loginInfoList = computed(() => userInfoAndTokens.loginInfoList);
-const getOrginValue = value => JSON.parse(JSON.stringify(value));
 const tableDataStore = useAppRuleListStore();
 
 import { platTokens } from "@/store/platTokens";
@@ -217,16 +213,17 @@ window.testBandquan = async () => {
 // console.log("appTicketQueueObj", appTicketQueueObj);
 // 一键启动
 const oneClickAutoOffer = () => {
+  let loginInfoList = getCinemaLoginInfoList();
   // 填充token及队列集合
   Object.keys(APP_LIST).forEach(item => {
-    let obj = getOrginValue(loginInfoList.value).find(
+    let obj = loginInfoList.find(
       itemA => itemA.app_name === item && itemA.session_id
     );
     appTokenObj[item] = obj?.session_id || "";
     appTicketQueueObj[item] = createTicketQueue(item);
   });
   let noSetMemberPwdList = tableDataStore.items.filter(item => {
-    let obj = getOrginValue(loginInfoList.value).some(
+    let obj = loginInfoList.some(
       itemA => itemA.app_name === item.appName && !itemA.member_pwd
     );
     return obj;
@@ -282,7 +279,8 @@ const stopAutoOffer = () => {
 const singleStartOrStop = ({ id, appName }, flag) => {
   // 单个启动
   if (flag === 1) {
-    let obj = getOrginValue(loginInfoList.value).find(
+    let loginInfoList = getCinemaLoginInfoList();
+    let obj = loginInfoList.find(
       itemA => itemA.app_name === appName && itemA.member_pwd
     );
     let pwd = obj?.member_pwd;
@@ -292,7 +290,7 @@ const singleStartOrStop = ({ id, appName }, flag) => {
       return;
     }
     Object.keys(APP_LIST).forEach(item => {
-      let obj = getOrginValue(loginInfoList.value).find(
+      let obj = loginInfoList.find(
         itemA => itemA.app_name === item && itemA.session_id
       );
       appTokenObj[item] = obj?.session_id || "";

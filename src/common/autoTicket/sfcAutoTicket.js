@@ -2,7 +2,8 @@ import { computed } from "vue";
 import {
   getCurrentFormattedDateTime,
   convertFullwidthToHalfwidth,
-  cinemNameSpecial
+  cinemNameSpecial,
+  getCinemaLoginInfoList
 } from "@/utils/utils";
 
 import lierenApi from "@/api/lieren-api";
@@ -27,10 +28,6 @@ const {
 } = tokens;
 // console.log("user_id", user_id);
 
-// 影院登录用户信息
-import { appUserInfo } from "@/store/appUserInfo";
-const userInfoAndTokens = appUserInfo();
-const loginInfoList = computed(() => userInfoAndTokens.loginInfoList);
 let currentParamsList = [];
 // 影院特殊匹配列表及api
 import {
@@ -61,7 +58,7 @@ class OrderAutoTicketQueue {
   // 启动队列（fetchDelay获取订单列表间隔，processDelay处理订单间隔）
   async start() {
     const { conPrefix, appFlag } = this;
-    currentParamsList = getOrginValue(loginInfoList.value).filter(
+    currentParamsList = getCinemaLoginInfoList().filter(
       item =>
         item.app_name === appFlag &&
         item.mobile &&

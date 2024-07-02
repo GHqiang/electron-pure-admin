@@ -499,6 +499,15 @@ const cinemNameSpecial = cinema_name => {
     .replace(/·/g, "");
 };
 
+// 获取影院登录信息列表
+const getCinemaLoginInfoList = () => {
+  let loginInfoList = window.localStorage.getItem("loginInfoList");
+  if (loginInfoList) {
+    loginInfoList = JSON.parse(loginInfoList);
+  }
+  return getLoginInfoList || [];
+};
+
 // 自定义console，支持字体颜色、背景颜色、前缀
 class CustomConsole {
   constructor(options = {}) {
@@ -539,5 +548,6 @@ export {
   getCinemaFlag,
   convertFullwidthToHalfwidth,
   cinemNameSpecial,
+  getCinemaLoginInfoList,
   CustomConsole
 };
