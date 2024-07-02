@@ -1,5 +1,6 @@
 // sfc请求拦截器封装
 import axios from "axios";
+import { computed } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
