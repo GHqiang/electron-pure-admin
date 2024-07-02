@@ -505,7 +505,7 @@ const getCinemaLoginInfoList = () => {
   if (loginInfoList) {
     loginInfoList = JSON.parse(loginInfoList);
   }
-  return getLoginInfoList || [];
+  return loginInfoList || [];
 };
 
 // 自定义console，支持字体颜色、背景颜色、前缀

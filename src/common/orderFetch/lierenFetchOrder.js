@@ -147,7 +147,7 @@ async function lierenOrderFetch() {
       desc: "desc",
       type: 2
     };
-    console.log(conPrefix + "获取猎人待出票订单列表参数", params);
+    // console.log(conPrefix + "获取猎人待出票订单列表参数", params);
     const res = await lierenApi.stayTicketingList(params);
     // let mockRes = {
     //   success: true,
@@ -179,7 +179,7 @@ async function lierenOrderFetch() {
     // };
     // let list = mockRes?.data || [];
     let list = res?.data || [];
-    console.log(conPrefix + "获取猎人待出票列表返回", list);
+    // console.log(conPrefix + "获取猎人待出票列表返回", list);
     return list;
   } catch (error) {
     console.error(conPrefix + "获取猎人待出票列表异常", error);

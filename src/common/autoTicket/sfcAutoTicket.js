@@ -78,7 +78,7 @@ class OrderAutoTicketQueue {
       let appQueueRule = getOrginValue(appTicketRuleList.value).filter(
         item => item.isEnabled && item.appName === appFlag
       );
-      console.log(conPrefix + "队列启动的执行规则", appQueueRule);
+      // console.log(conPrefix + "队列启动的执行规则", appQueueRule);
       if (!appQueueRule?.length) {
         console.warn(conPrefix + "队列执行规则不存在或者未启用，直接停止");
         await this.stop();
@@ -93,7 +93,7 @@ class OrderAutoTicketQueue {
       //     `队列启动, ${fetchDelay} 秒获取一次待报价订单, ${processDelay} 秒处理一次订单}`
       // );
       let orders = await this.fetchOrders(fetchDelay);
-      console.warn(conPrefix + "新的待出票订单列表", orders);
+      // console.warn(conPrefix + "新的待出票订单列表", orders);
       // 将订单加入队列
       this.enqueue(orders);
 
@@ -163,10 +163,10 @@ class OrderAutoTicketQueue {
           }
         ];
       }
-      console.warn(
-        conPrefix + "匹配已上架影院后的的待出票订单",
-        sfcStayOfferlist
-      );
+      // console.warn(
+      //   conPrefix + "匹配已上架影院后的的待出票订单",
+      //   sfcStayOfferlist
+      // );
       if (!sfcStayOfferlist?.length) return [];
       const { handleSuccessOrderList, handleFailOrderList } = this;
       const orderOfferRecord = [
@@ -197,7 +197,7 @@ class OrderAutoTicketQueue {
       console.log(conPrefix + "添加新订单到队列");
       this.queue.push(...orders);
     } else {
-      console.log(conPrefix + "从出票记录过滤后，无新订单添加到队列");
+      // console.log(conPrefix + "从出票记录过滤后，无新订单添加到队列");
     }
   }
 

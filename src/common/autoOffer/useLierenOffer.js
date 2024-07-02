@@ -86,7 +86,7 @@ class OrderAutoOfferQueue {
       //     `队列启动, ${fetchDelay} 秒获取一次待报价订单, ${processDelay} 秒处理一次订单}`
       // );
       let orders = await this.fetchOrders(fetchDelay);
-      console.warn(conPrefix + "新的待报价订单列表", orders);
+      // console.warn(conPrefix + "新的待报价订单列表", orders);
       // 将订单加入队列
       this.enqueue(orders);
 
@@ -131,10 +131,10 @@ class OrderAutoOfferQueue {
             appName: getCinemaFlag(item)
           };
         });
-      console.warn(
-        conPrefix + "匹配已上架影院后的的待报价订单",
-        sfcStayOfferlist
-      );
+      // console.warn(
+      //   conPrefix + "匹配已上架影院后的的待报价订单",
+      //   sfcStayOfferlist
+      // );
       if (!sfcStayOfferlist?.length) return [];
       const { handleSuccessOrderList, handleFailOrderList } = this;
       let orderOfferRecord = [
@@ -402,7 +402,7 @@ async function getStayOfferList() {
     // };
     // let list = mockRes?.data || [];
     let list = res?.data || [];
-    console.log(conPrefix + "获取待报价列表返回", list);
+    // console.log(conPrefix + "获取待报价列表返回", list);
     return list;
   } catch (error) {
     console.error(conPrefix + "获取待报价列表异常", error);
