@@ -9,6 +9,7 @@ const loginInfoList = computed(() => userInfoAndTokens.loginInfoList);
 import { APP_LIST } from "@/common/constant";
 import md5 from "../md5.js";
 import router from "@/router";
+const getOrginValue = value => JSON.parse(JSON.stringify(value));
 const createAxios = ({ group, appName, timeout = 20 }) => {
   // 创建axios实例
   const instance = axios.create({
@@ -43,9 +44,10 @@ const createAxios = ({ group, appName, timeout = 20 }) => {
     // e.group = "20045";
     // e.city_id = '500'
     // e.cinema_id = '19'
-    let obj = loginInfoList.value.find(
+    let obj = getOrginValue(loginInfoList.value).find(
       itemA => itemA.app_name === appName && itemA.session_id
     );
+
     e.session_id = obj?.session_id || "";
     // console.log("sfcRequest===>", e);
   };

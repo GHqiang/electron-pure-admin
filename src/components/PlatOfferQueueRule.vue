@@ -138,7 +138,7 @@ const userInfoAndTokens = appUserInfo();
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
 const tokens = platTokens();
-
+const getOrginValue = value => JSON.parse(JSON.stringify(value));
 const tableDataStore = usePlatTableDataStore();
 const displayItems = computed(() => tableDataStore.items);
 // 使其具有响应性
@@ -168,7 +168,7 @@ const appTokenObj = {};
 const oneClickAutoOffer = () => {
   // console.log("loginInfoList1", loginInfoList);
   Object.keys(APP_LIST).forEach(item => {
-    let obj = loginInfoList.value.find(
+    let obj = getOrginValue(loginInfoList.value).find(
       itemA => itemA.app_name === item && itemA.session_id
     );
     appTokenObj[item] = obj?.session_id || "";

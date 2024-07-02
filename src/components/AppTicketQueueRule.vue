@@ -134,6 +134,7 @@ import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
 // 使其具有响应性
 const loginInfoList = computed(() => userInfoAndTokens.loginInfoList);
+const getOrginValue = value => JSON.parse(JSON.stringify(value));
 const tableDataStore = useAppRuleListStore();
 
 import { platTokens } from "@/store/platTokens";
@@ -218,14 +219,14 @@ window.testBandquan = async () => {
 const oneClickAutoOffer = () => {
   // 填充token及队列集合
   Object.keys(APP_LIST).forEach(item => {
-    let obj = loginInfoList.value.find(
+    let obj = getOrginValue(loginInfoList.value).find(
       itemA => itemA.app_name === item && itemA.session_id
     );
     appTokenObj[item] = obj?.session_id || "";
     appTicketQueueObj[item] = createTicketQueue(item);
   });
   let noSetMemberPwdList = tableDataStore.items.filter(item => {
-    let obj = loginInfoList.value.some(
+    let obj = getOrginValue(loginInfoList.value).some(
       itemA => itemA.app_name === item.appName && !itemA.member_pwd
     );
     return obj;
@@ -281,7 +282,7 @@ const stopAutoOffer = () => {
 const singleStartOrStop = ({ id, appName }, flag) => {
   // 单个启动
   if (flag === 1) {
-    let obj = loginInfoList.value.find(
+    let obj = getOrginValue(loginInfoList.value).find(
       itemA => itemA.app_name === appName && itemA.member_pwd
     );
     let pwd = obj?.member_pwd;
@@ -290,6 +291,13 @@ const singleStartOrStop = ({ id, appName }, flag) => {
       ElMessage.error("会员卡密码未设置，请先去设置后再启动");
       return;
     }
+    Object.keys(APP_LIST).forEach(item => {
+      let obj = getOrginValue(loginInfoList.value).find(
+        itemA => itemA.app_name === item && itemA.session_id
+      );
+      appTokenObj[item] = obj?.session_id || "";
+      appTicketQueueObj[item] = createTicketQueue(item);
+    });
     if (!appTokenObj[appName]) {
       ElMessage.error(appName + "未登录，请先去影院登录页面登录后再启动");
       return;

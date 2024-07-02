@@ -56,19 +56,18 @@ class OrderAutoTicketQueue {
     this.conPrefix = TICKET_CONPREFIX_OBJ[appFlag]; // 打印前缀
     this.sfcApi = SFC_API_OBJ[appFlag];
     this.currentParamsInx = 0;
-    currentParamsList ==
-      loginInfoList.value.filter(
-        item =>
-          item.app_name === appFlag &&
-          item.mobile &&
-          item.session_id &&
-          item.member_pwd
-      );
   }
 
   // 启动队列（fetchDelay获取订单列表间隔，processDelay处理订单间隔）
   async start() {
     const { conPrefix, appFlag } = this;
+    currentParamsList = getOrginValue(loginInfoList.value).filter(
+      item =>
+        item.app_name === appFlag &&
+        item.mobile &&
+        item.session_id &&
+        item.member_pwd
+    );
     // 设置队列为运行状态
     this.isRunning = true;
     this.handleSuccessOrderList = [];
@@ -145,26 +144,25 @@ class OrderAutoTicketQueue {
       if (isTestOrder) {
         sfcStayOfferlist = [
           {
-            id: 261,
-            user_id: "9",
-            user_name: "苦瓜",
+            id: 484,
             plat_name: "lieren",
-            app_name: "sfc",
-            ticket_num: 2,
+            app_name: "ningbo",
+            order_status: "2",
+            ticket_num: 1,
             rewards: "0",
-            order_number: "2024062418330537167",
-            supplier_end_price: 40,
-            order_id: "6277236",
-            tpp_price: "56.00",
-            city_name: "上海",
-            cinema_addr: "浦东新区川沙路5398号4楼",
-            cinema_name: "SFC上影百联影城（川沙IMAX店）",
-            hall_name: "2号厅",
-            film_name: "排球少年！！垃圾场决战",
-            lockseat: "7排1座 7排2座",
-            show_time: "2024-06-25 22:30:00",
-            cinema_group: "上影上海",
-            offer_amount: "40"
+            offer_type: "2",
+            order_number: "2024070210451527271",
+            supplier_end_price: 29,
+            order_id: "6334306",
+            tpp_price: "33.00",
+            city_name: "宁波",
+            cinema_addr: "海曙区开明街333号(天一广场旁)",
+            cinema_name: "宁波民光影城",
+            hall_name: "七楼6号厅（激光厅部分按摩椅）",
+            film_name: "寂静之地：入侵日",
+            lockseat: "4排1座",
+            show_time: "2024-07-03 16:20:00",
+            cinema_group: "宁波影都"
           }
         ];
       }
@@ -499,7 +497,8 @@ class OrderAutoTicketQueue {
       offerRule = offerRecord?.[0];
       // 测试专用
       if (isTestOrder) {
-        offerRule = { offer_type: "1", quan_value: "40" };
+        // offerRule = { offer_type: "1", quan_value: "40" };
+        offerRule = { offer_type: "2", member_price: "28" };
       }
       console.warn(conPrefix + "从该订单的报价记录获取到的报价规则", offerRule);
       if (!offerRule) {
@@ -1043,7 +1042,7 @@ class OrderAutoTicketQueue {
       coupon
     } = data || {};
     try {
-      let currentParams = loginInfoList.value[this.currentParamsInx];
+      let currentParams = currentParamsList[this.currentParamsInx];
       const { mobile, member_pwd, session_id } = currentParams;
       let params = {
         city_id,
@@ -1109,7 +1108,7 @@ class OrderAutoTicketQueue {
     const { conPrefix, appFlag } = this;
     try {
       let { city_id, cinema_id, order_num, pay_money } = data || {};
-      let currentParams = loginInfoList.value[this.currentParamsInx];
+      let currentParams = currentParamsList[this.currentParamsInx];
       const { session_id } = currentParams;
       let params = {
         city_id,
@@ -1135,7 +1134,7 @@ class OrderAutoTicketQueue {
     const { conPrefix } = this;
     try {
       let { city_id, cinema_id, order_num } = data || {};
-      let currentParams = loginInfoList.value[this.currentParamsInx];
+      let currentParams = currentParamsList[this.currentParamsInx];
       const { session_id } = currentParams;
       let params = {
         city_id,
@@ -1159,7 +1158,7 @@ class OrderAutoTicketQueue {
   async submitTicketCode({ order_id, qrcode }) {
     const { conPrefix } = this;
     try {
-      let currentParams = loginInfoList.value[this.currentParamsInx];
+      let currentParams = currentParamsList[this.currentParamsInx];
       const { session_id } = currentParams;
       let params = {
         // order_id: id || 5548629,
