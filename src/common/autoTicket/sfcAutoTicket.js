@@ -277,10 +277,12 @@ class OrderAutoTicketQueue {
         .catch(error => {
           console.error(conPrefix + "保存订单处理记录失败", error);
         });
-      svApi.updateDayUsage({
-        app_name: serOrderInfo.app_name,
-        card_id: serOrderInfo.card_id
-      });
+      if (serOrderInfo.card_id && serOrderInfo.order_status === "1") {
+        svApi.updateDayUsage({
+          app_name: serOrderInfo.app_name,
+          card_id: serOrderInfo.card_id
+        });
+      }
     } catch (error) {
       console.error(conPrefix + "添加订单处理记录异常", error);
     }
