@@ -1530,7 +1530,7 @@ class OrderAutoTicketQueue {
       console.log(conPrefix + "获取会员卡列表参数", params);
       const res = await this.sfcApi.getCardList(params);
       console.log(conPrefix + "获取会员卡列表返回", res);
-      let list = res.data.card_data || [];
+      let list = res.data?.card_data || [];
       return list;
     } catch (error) {
       console.error(conPrefix + "获取会员卡列表异常", error);

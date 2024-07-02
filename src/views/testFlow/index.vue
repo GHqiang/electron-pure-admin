@@ -253,8 +253,8 @@ const { isAdmin } = storeToRefs(tokens);
 console.log("isAdmin", isAdmin.value);
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
-const { loginInfoList, removeSfcUserInfo } = userInfoAndTokens;
-const appName = "sfc";
+const { removeSfcUserInfo } = userInfoAndTokens;
+const appName = "ningbo";
 let sfcApi = SFC_API_OBJ[appName];
 // console.log("sfcApi", sfcApi);
 import { useRouter } from "vue-router";
@@ -974,6 +974,10 @@ async function createOrder(data) {
       pay_money = priceInfo.value.total_price || "";
       member_coupon_id = cardId.value;
       coupon = quanCodes.value.join();
+    }
+    let loginInfoList = window.localStorage.getItem("loginInfoList");
+    if (loginInfoList) {
+      loginInfoList = JSON.parse(loginInfoList);
     }
     let obj = loginInfoList.find(
       itemA => itemA.app_name === appName && itemA.mobile

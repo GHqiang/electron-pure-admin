@@ -1,15 +1,12 @@
 // sfc请求拦截器封装
 import axios from "axios";
-import { computed } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
 const { removeSfcUserInfo } = userInfoAndTokens;
-const loginInfoList = computed(() => userInfoAndTokens.loginInfoList);
 import { APP_LIST } from "@/common/constant";
 import md5 from "../md5.js";
 import router from "@/router";
-const getOrginValue = value => JSON.parse(JSON.stringify(value));
 const createAxios = ({ group, appName, timeout = 20 }) => {
   // 创建axios实例
   const instance = axios.create({
@@ -44,7 +41,13 @@ const createAxios = ({ group, appName, timeout = 20 }) => {
     // e.group = "20045";
     // e.city_id = '500'
     // e.cinema_id = '19'
-    let obj = getOrginValue(loginInfoList.value).find(
+
+    let loginInfoList = window.localStorage.getItem("loginInfoList");
+    if (loginInfoList) {
+      loginInfoList = JSON.parse(loginInfoList);
+    }
+    // console.log("loginInfoList", loginInfoList);
+    let obj = loginInfoList.find(
       itemA => itemA.app_name === appName && itemA.session_id
     );
 
