@@ -29,7 +29,7 @@ export default {
       name: "loginList",
       component: () => import("@/views/appLogin/appLoginSet.vue"),
       meta: {
-        title: "影院登录列表"
+        title: "影院登录"
       }
     },
     {
@@ -54,6 +54,14 @@ export default {
       component: () => import("@/views/queueManage/index.vue"),
       meta: {
         title: "队列管理"
+      }
+    },
+    {
+      path: "/set/adjustPrice",
+      name: "adjustPrice",
+      component: () => import("@/views/adjustPriceSet/index.vue"),
+      meta: {
+        title: "动态调价"
       }
     },
     {
