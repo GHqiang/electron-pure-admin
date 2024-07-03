@@ -141,24 +141,23 @@ class OrderAutoTicketQueue {
       if (isTestOrder) {
         sfcStayOfferlist = [
           {
-            id: 484,
+            id: 514,
             plat_name: "lieren",
             app_name: "ningbo",
-            order_status: "2",
             ticket_num: 1,
             rewards: "0",
             offer_type: "2",
-            order_number: "2024070210451527271",
-            supplier_end_price: 29,
-            order_id: "6334306",
-            tpp_price: "33.00",
+            order_number: "2024070312333145534",
+            supplier_end_price: 31,
+            order_id: "6339078",
+            tpp_price: "41.90",
             city_name: "宁波",
-            cinema_addr: "海曙区开明街333号(天一广场旁)",
-            cinema_name: "宁波民光影城",
-            hall_name: "七楼6号厅（激光厅部分按摩椅）",
-            film_name: "寂静之地：入侵日",
-            lockseat: "4排1座",
-            show_time: "2024-07-03 16:20:00",
+            cinema_addr: "海曙区药行街169号亚细亚商城A区7楼",
+            cinema_name: "宁波影都（亚细亚 IMAX店）",
+            hall_name: "1号激光厅（部分按摩椅）",
+            film_name: "头脑特工队2",
+            lockseat: "7排1座",
+            show_time: "2024-07-03 19:10:00",
             cinema_group: "宁波影都"
           }
         ];
@@ -352,6 +351,7 @@ class OrderAutoTicketQueue {
 
   // 释放座位
   async releaseSeat(unlockSeatInfo) {
+    const { conPrefix } = this;
     const { city_id, cinema_id, show_id, start_day, start_time } =
       unlockSeatInfo;
     const seatList = await this.getSeatLayout({
@@ -442,6 +442,7 @@ class OrderAutoTicketQueue {
       // 解锁成功后延迟6秒再执行
       await this.delay(6);
       // 2、一键买票
+      this.currentParamsInx = 0;
       const result = await this.oneClickBuyTicket(item);
       // result: { profit, submitRes, qrcode, quan_code, card_id, offerRule } || undefined
       if (result) {
@@ -515,7 +516,7 @@ class OrderAutoTicketQueue {
         // 测试专用
         if (isTestOrder) {
           // offerRule = { offer_type: "1", quan_value: "40" };
-          offerRule = { offer_type: "2", member_price: "28" };
+          offerRule = { offer_type: "2", member_price: "29.9" };
         }
         console.warn(
           conPrefix + "从该订单的报价记录获取到的报价规则",
@@ -651,7 +652,6 @@ class OrderAutoTicketQueue {
           return { offerRule, transferParams };
         }
       }
-      this.currentParamsInx = 0;
       // 5、使用优惠券或者会员卡
       const { card_id, quan_code, profit } = await this.useQuanOrCard({
         order_number,

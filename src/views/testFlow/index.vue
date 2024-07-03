@@ -271,7 +271,7 @@ const cinemaId = ref(""); // 影院id
 const moviePlayInfo = ref({}); // 放映信息
 const movieName = ref("末路狂花钱"); // 线上电影名称
 
-const startDay = ref("2024-05-27"); // 开始日期
+const startDay = ref("2024-07-3"); // 开始日期
 const startTime = ref("22:30"); // 开始时间
 const showId = ref(""); // 观看电影场次id
 
