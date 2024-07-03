@@ -58,13 +58,6 @@ class OrderAutoTicketQueue {
   // 启动队列（fetchDelay获取订单列表间隔，processDelay处理订单间隔）
   async start() {
     const { conPrefix, appFlag } = this;
-    this.currentParamsList = getCinemaLoginInfoList().filter(
-      item =>
-        item.app_name === appFlag &&
-        item.mobile &&
-        item.session_id &&
-        item.member_pwd
-    );
     // 设置队列为运行状态
     this.isRunning = true;
     this.handleSuccessOrderList = [];
@@ -414,7 +407,15 @@ class OrderAutoTicketQueue {
 
   // 单个订单出票
   async singleTicket(item) {
-    const { conPrefix } = this;
+    // 放到这里即使修改token也不用重启队列了
+    const { conPrefix, appFlag } = this;
+    this.currentParamsList = getCinemaLoginInfoList().filter(
+      item =>
+        item.app_name === appFlag &&
+        item.mobile &&
+        item.session_id &&
+        item.member_pwd
+    );
     try {
       this.errMsg = "";
       this.errInfo = "";
