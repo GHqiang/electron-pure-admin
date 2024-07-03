@@ -243,14 +243,7 @@ class OrderAutoOfferQueue {
           : "";
         this.handleFailOrderList.push(order);
       }
-      svApi
-        .addOfferRecord(serOrderInfo)
-        .then(res => {
-          console.log(conPrefix + "【报价成功】保存订单处理记录成功", res);
-        })
-        .catch(error => {
-          console.error("conPrefix + 【报价成功】保存订单处理记录失败", error);
-        });
+      await svApi.addOfferRecord(serOrderInfo);
     } catch (error) {
       console.error(conPrefix + "添加订单处理记录异常", error);
     }
@@ -849,8 +842,6 @@ const getMemberPrice = async order => {
       const cardRes = await svApi.queryCardList({
         app_name: appName
       });
-      // 后续这块还要加上出票量限制判断
-      // 后续这块还要加上出票量限制判断
       let list = cardRes.data.cardList || [];
       // console.log("list", list);
       let cardList = list.filter(item =>
