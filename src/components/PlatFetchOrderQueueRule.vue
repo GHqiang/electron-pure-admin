@@ -122,6 +122,7 @@ import svApi from "@/api/sv-api";
 import { usePlatFetchOrderStore } from "@/store/platOfferRuleTable";
 import lierenFetchOrder from "@/common/orderFetch/lierenFetchOrder";
 import { ORDER_FORM } from "@/common/constant.js";
+import { getCurrentFormattedDateTime } from "@/utils/utils";
 const tableDataStore = usePlatFetchOrderStore();
 const displayItems = computed(() => tableDataStore.items);
 
@@ -167,7 +168,8 @@ const oneClickAutoOffer = () => {
         }
       });
       svApi.updateUser({
-        order_fetch_queue: JSON.stringify(tableDataStore.items)
+        order_fetch_queue: JSON.stringify(tableDataStore.items),
+        fetch_queue_time: getCurrentFormattedDateTime()
       });
     })
     .catch(err => {

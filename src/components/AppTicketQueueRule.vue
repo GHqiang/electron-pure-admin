@@ -128,7 +128,10 @@ import svApi from "@/api/sv-api";
 import { useAppRuleListStore } from "@/store/appTicketRuleTable";
 import createTicketQueue from "@/common/autoTicket/sfcAutoTicket";
 import { APP_LIST } from "@/common/constant.js";
-import { getCinemaLoginInfoList } from "@/utils/utils";
+import {
+  getCinemaLoginInfoList,
+  getCurrentFormattedDateTime
+} from "@/utils/utils";
 import { useStayTicketList } from "@/store/stayTicketList";
 const stayTicketList = useStayTicketList();
 const tableDataStore = useAppRuleListStore();
@@ -251,7 +254,8 @@ const oneClickAutoOffer = () => {
         }
       });
       svApi.updateUser({
-        plat_ticket_queue: JSON.stringify(tableDataStore.items)
+        app_ticket_queue: JSON.stringify(tableDataStore.items),
+        ticket_queue_time: getCurrentFormattedDateTime()
       });
     })
     .catch(() => {});

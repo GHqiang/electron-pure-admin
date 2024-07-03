@@ -133,7 +133,10 @@ import svApi from "@/api/sv-api";
 import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
 import lierenOfferQueue from "@/common/autoOffer/useLierenOffer";
 import { PLAT_LINK_APP, APP_LIST } from "@/common/constant";
-import { getCinemaLoginInfoList } from "@/utils/utils";
+import {
+  getCinemaLoginInfoList,
+  getCurrentFormattedDateTime
+} from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
 const tokens = platTokens();
@@ -195,7 +198,8 @@ const oneClickAutoOffer = () => {
       if (isStart) {
         console.warn("一键启动全部自动报价队列");
         svApi.updateUser({
-          plat_offer_queue: JSON.stringify(tableDataStore.items)
+          plat_offer_queue: JSON.stringify(tableDataStore.items),
+          offer_queue_time: getCurrentFormattedDateTime()
         });
       } else {
         ElMessage.warning("有平台token未设置，请先设置再启动");
