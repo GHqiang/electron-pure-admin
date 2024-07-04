@@ -129,7 +129,11 @@
       </el-table-column>
       <el-table-column prop="cinema_name" label="影院名称" min-width="150" />
       <el-table-column prop="mobile" label="所属账号" min-width="120" />
-      <el-table-column prop="balance" label="卡 余额" min-width="80" />
+      <el-table-column prop="balance" label="卡 余额" min-width="80">
+        <template #default="{ row }">
+          <span :class="{ red: row.balance <= 200 }">{{ row.balance }}</span>
+        </template>
+      </el-table-column>
       <el-table-column prop="card_discount" label="卡 折扣" min-width="80" />
       <el-table-column prop="card_id" label="卡 ID" min-width="80" />
       <el-table-column prop="card_num" label="卡 号" min-width="120" />
@@ -530,3 +534,9 @@ const batchDelete = () => {
   }
 };
 </script>
+<style scoped>
+.red {
+  color: red;
+  font-weight: bold;
+}
+</style>
