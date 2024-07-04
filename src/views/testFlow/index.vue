@@ -136,7 +136,7 @@
         <el-button type="primary" @click="payOrder()">支付订单</el-button>
         <el-button type="primary" @click="logout">退出登录</el-button>
       </el-form-item>
-      <el-form-item v-if="isAdmin">
+      <el-form-item>
         <el-button type="primary" @click="getLierenOrderList(0)"
           >获取待报价列表</el-button
         >

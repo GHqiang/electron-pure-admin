@@ -47,6 +47,7 @@ class OrderAutoOfferQueue {
     this.isRunning = false; // 初始化时队列未运行
     this.handleSuccessOrderList = []; // 订单处理成功列表
     this.handleFailOrderList = []; // 订单处理失败列表
+    this.offerList = [];
   }
 
   // 启动队列（fetchDelay获取订单列表间隔，processDelay处理订单间隔）
@@ -154,6 +155,7 @@ class OrderAutoOfferQueue {
       if (!newOrders?.length) return [];
       // 如果过滤到这时候还有单子再调接口进行历史报价记录过滤
       const offerList = await getOfferList();
+      this.offerList = offerList;
       newOrders = newOrders.filter(item =>
         judgeHandle(item, item.appName, offerList)
       );
@@ -313,11 +315,30 @@ const setErrInfo = (err_msg, err_info) => {
   }
 };
 
+// 获取猎人已报价列表
+const getLierenOrderList = async () => {
+  try {
+    let params = {
+      page: 1,
+      limit: 300,
+      sort: "id",
+      desc: "desc",
+      type: "1"
+    };
+    const res = await lierenApi.stayTicketingList(params);
+    return res?.data || [];
+  } catch (error) {
+    console.error("获取猎人已报价列表异常", error);
+    return [];
+  }
+};
+
 // 获取报价记录
 const getOfferList = async () => {
   try {
     const res = await svApi.queryOfferList({
       user_id: tokens.userInfo.user_id,
+      // user_id: "9",
       plat_name: "lieren",
       start_time: getCurrentFormattedDateTime(+new Date() - 6 * 60 * 60 * 1000),
       end_time: getCurrentFormattedDateTime()
@@ -345,6 +366,84 @@ const judgeHandle = (item, app_name, offerList) => {
     setErrInfo("判断该订单是否是新订单异常", error);
   }
 };
+
+// 计算连续中标数
+const calcCount = data => {
+  let consecutiveWins = 0;
+  let consecutiveLosses = 0;
+  let isLastWin = null; // null, true (中标), false (不中标)
+
+  for (const item of data) {
+    const isWin = item.offer === item.supplier_end_price;
+
+    if (isLastWin === null) {
+      // 初始化中标或不中标的状态
+      isLastWin = isWin;
+    } else if (isWin === isLastWin) {
+      // 如果当前项与上一项状态相同，累计连续次数
+      isLastWin ? consecutiveWins++ : consecutiveLosses++;
+    } else {
+      // 中断连续计算
+      break;
+    }
+  }
+
+  // 第一个元素的中标或不中标状态需要单独计入
+  if (isLastWin) {
+    consecutiveWins++;
+  } else {
+    consecutiveLosses++;
+  }
+  console.log("连续中标次数:", consecutiveWins);
+  console.log("连续未中标次数:", consecutiveLosses);
+  return {
+    inCount: consecutiveWins,
+    outCount: consecutiveLosses
+  };
+};
+// 获取最终报价
+const getEndPrice = async params => {
+  try {
+    const { cost_price, supplier_max_price, price, rewards } = params || {};
+    // 远端报价记录
+    let serOfferRecord, lierenOfferRecord, lierenMachineOfferList;
+    let adjustPrice = window.localStorage.getItem("adjustPrice");
+    if (adjustPrice) {
+      adjustPrice = JSON.parse(adjustPrice);
+      // serOfferRecord = this.offerList;
+      serOfferRecord = await getOfferList();
+      // 猎人报价记录
+      lierenOfferRecord = await getLierenOrderList();
+      lierenMachineOfferList = lierenOfferRecord.filter(item =>
+        serOfferRecord.find(itemA => itemA.order_number === item.order_number)
+      );
+    }
+    if (adjustPrice && lierenMachineOfferList?.length) {
+      // console.warn(
+      //   "自动调价生效，开始进行相关处理",
+      //   adjustPrice,
+      //   lierenMachineOfferList
+      // );
+      // let countRes = calcCount(lierenMachineOfferList);
+      // return;
+    }
+    if (Number(supplier_max_price) < price) {
+      if (cost_price && cost_price < Number(supplier_max_price)) {
+        // 奖励单成本价，非奖励单最高限价
+        price = rewards == 1 ? cost_price : supplier_max_price;
+        return price;
+      } else {
+        let str = `最终报价超过平台限价${supplier_max_price}，不再进行报价`;
+        console.error(conPrefix + str);
+        setErrInfo(str);
+        return;
+      }
+    }
+  } catch (error) {
+    console.warn("获取最终报价异常", error);
+  }
+};
+window.getEndPrice = getEndPrice;
 // 获取待报价订单列表
 async function getStayOfferList() {
   try {
@@ -429,33 +528,30 @@ async function singleOffer(item) {
     } = offerRule;
     let price = offerAmount || memberOfferAmount;
     if (!price) return { offerRule };
-    if (Number(supplier_max_price) < price) {
-      // 成本价
-      let cost_price =
-        offerType === "1"
-          ? quanValue == "40"
-            ? 39.3
-            : Number(quanValue)
-          : Number(memberPrice);
-      if (cost_price && cost_price < Number(supplier_max_price)) {
-        // 奖励单成本价，非奖励单最高限价
-        price = rewards == 1 ? cost_price : supplier_max_price;
-        if (offerType === "1") {
-          offerRule.offerAmount = price;
-        } else {
-          offerRule.memberOfferAmount = price;
-        }
-      } else {
-        let str = `最终报价超过平台限价${supplier_max_price}，不再进行报价`;
-        console.error(conPrefix + str);
-        setErrInfo(str);
-        return { offerRule };
-      }
+    // 成本价
+    let cost_price =
+      offerType === "1"
+        ? quanValue == "40"
+          ? 39.3
+          : Number(quanValue)
+        : Number(memberPrice);
+    const endPrice = await getEndPrice({
+      cost_price,
+      supplier_max_price,
+      price,
+      rewards
+    });
+    if (!endPrice) {
+      return { offerRule };
     }
-
+    if (offerType === "1") {
+      offerRule.offerAmount = endPrice;
+    } else {
+      offerRule.memberOfferAmount = endPrice;
+    }
     let params = {
       id: id,
-      price
+      price: endPrice
     };
     console.log(conPrefix + "订单报价参数", params);
     const res = await lierenApi.submitOffer(params);

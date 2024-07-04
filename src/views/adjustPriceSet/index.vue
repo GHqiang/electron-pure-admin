@@ -23,6 +23,9 @@
     <el-button type="primary" class="save-btn" @click="submitForm"
       >保存</el-button
     >
+    <el-button type="primary" class="save-btn" @click="switchChange">{{
+      isOpen ? "关闭自动调价" : "开启自动调价"
+    }}</el-button>
   </div>
 </template>
 
@@ -34,6 +37,7 @@ const inCount = ref("3");
 const inPrice = ref(0.5);
 const outCount = ref("3");
 const outPrice = ref(0.5);
+const isOpen = ref(true);
 
 let adjustPrice = window.localStorage.getItem("adjustPrice");
 if (adjustPrice) {
@@ -43,6 +47,22 @@ if (adjustPrice) {
   outCount.value = adjustPrice.outCount;
   outPrice.value = adjustPrice.outPrice;
 }
+const switchChange = () => {
+  isOpen.value = !isOpen.value;
+  if (isOpen.value) {
+    window.localStorage.setItem(
+      "adjustPrice",
+      JSON.stringify({
+        inCount: inCount.value,
+        inPrice: inPrice.value,
+        outCount: outCount.value,
+        outPrice: outPrice.value
+      })
+    );
+  } else {
+    window.localStorage.removeItem("adjustPrice");
+  }
+};
 const submitForm = () => {
   // 在这里处理表单提交逻辑
   console.log("连续中标次数:", inCount.value);
