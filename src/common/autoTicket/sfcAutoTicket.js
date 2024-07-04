@@ -23,7 +23,7 @@ const appTicketRuleList = computed(() => appRuleListStore.items);
 // 机器登录用户信息
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
-
+// console.log("tokens.userInfo.user_id", tokens.userInfo.user_id);
 // 影院特殊匹配列表及api
 import {
   SPECIAL_CINEMA_OBJ,

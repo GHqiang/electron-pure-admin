@@ -35,9 +35,9 @@ export const platTokens = defineStore("platTokens", {
     // 设置自身平台token
     setSelfPlatToken(data) {
       console.warn("设置自身平台token", data);
-      window.localStorage.setItem("selfToken", data.token);
       this.selfToken = data.token;
       this.userInfo = data.user;
+      window.localStorage.setItem("selfToken", data.token);
       window.localStorage.setItem("userInfo", JSON.stringify(data.user));
     },
     // 删除自身平台token
