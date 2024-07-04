@@ -404,28 +404,41 @@ const calcCount = data => {
 // 获取最终报价
 const getEndPrice = async params => {
   try {
-    const { cost_price, supplier_max_price, price, rewards } = params || {};
+    let { cost_price, supplier_max_price, price, rewards } = params || {};
     // 远端报价记录
     let serOfferRecord, lierenOfferRecord, lierenMachineOfferList;
     let adjustPrice = window.localStorage.getItem("adjustPrice");
-    // if (adjustPrice) {
-    //   adjustPrice = JSON.parse(adjustPrice);
-    //   // serOfferRecord = this.offerList;
-    //   serOfferRecord = await getOfferList();
-    //   // 猎人报价记录
-    //   lierenOfferRecord = await getLierenOrderList();
-    //   lierenMachineOfferList = lierenOfferRecord.filter(item =>
-    //     serOfferRecord.find(itemA => itemA.order_number === item.order_number)
-    //   );
-    // }
+    if (adjustPrice) {
+      adjustPrice = JSON.parse(adjustPrice);
+      serOfferRecord = this.offerList;
+      // 测试用下面的
+      // serOfferRecord = await getOfferList();
+      // 猎人报价记录
+      lierenOfferRecord = await getLierenOrderList();
+      lierenMachineOfferList = lierenOfferRecord.filter(item =>
+        serOfferRecord.find(itemA => itemA.order_number === item.order_number)
+      );
+    }
     if (adjustPrice && lierenMachineOfferList?.length) {
-      // console.warn(
-      //   "自动调价生效，开始进行相关处理",
-      //   adjustPrice,
-      //   lierenMachineOfferList
-      // );
-      // let countRes = calcCount(lierenMachineOfferList);
-      // return;
+      console.warn(
+        "自动调价生效，开始进行相关处理",
+        adjustPrice,
+        lierenMachineOfferList
+      );
+      let countRes = calcCount(lierenMachineOfferList);
+      const { inCount, outCount, inPrice, outPrice } = adjustPrice;
+      // console.log("inCount", inCount, outCount, inPrice, outPrice);
+      if (countRes.inCount && inPrice && countRes.inCount >= inCount) {
+        price = price + Number(inPrice);
+        console.warn("动态调价后的价格", price, "增加", inPrice);
+      } else if (
+        countRes.outCount &&
+        outPrice &&
+        countRes.outCount >= outCount
+      ) {
+        price = price - Number(outCount);
+        console.warn("动态调价后的价格", price, "降低", outPrice);
+      }
     }
     if (Number(supplier_max_price) < price) {
       if (cost_price && cost_price < Number(supplier_max_price)) {
@@ -526,7 +539,7 @@ async function singleOffer(item) {
       quanValue,
       offerType
     } = offerRule;
-    let price = offerAmount || memberOfferAmount;
+    let price = Number(offerAmount || memberOfferAmount);
     if (!price) return { offerRule };
     // 成本价
     let cost_price =
