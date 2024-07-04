@@ -408,16 +408,16 @@ const getEndPrice = async params => {
     // 远端报价记录
     let serOfferRecord, lierenOfferRecord, lierenMachineOfferList;
     let adjustPrice = window.localStorage.getItem("adjustPrice");
-    if (adjustPrice) {
-      adjustPrice = JSON.parse(adjustPrice);
-      // serOfferRecord = this.offerList;
-      serOfferRecord = await getOfferList();
-      // 猎人报价记录
-      lierenOfferRecord = await getLierenOrderList();
-      lierenMachineOfferList = lierenOfferRecord.filter(item =>
-        serOfferRecord.find(itemA => itemA.order_number === item.order_number)
-      );
-    }
+    // if (adjustPrice) {
+    //   adjustPrice = JSON.parse(adjustPrice);
+    //   // serOfferRecord = this.offerList;
+    //   serOfferRecord = await getOfferList();
+    //   // 猎人报价记录
+    //   lierenOfferRecord = await getLierenOrderList();
+    //   lierenMachineOfferList = lierenOfferRecord.filter(item =>
+    //     serOfferRecord.find(itemA => itemA.order_number === item.order_number)
+    //   );
+    // }
     if (adjustPrice && lierenMachineOfferList?.length) {
       // console.warn(
       //   "自动调价生效，开始进行相关处理",

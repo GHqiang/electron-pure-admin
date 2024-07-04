@@ -35,7 +35,11 @@ import { ref } from "vue";
 import MockSfcLogin from "@/components/AppLogin/MockSfcLogin.vue";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
+// 这种方式相当于解包，不再具有响应性
 const { loginInfoList } = userInfoAndTokens;
+// ✅ 这样写是响应式的
+// 💡 当然你也可以直接使用 `userInfoAndTokens.loginInfoList`
+// const loginInfoList = computed(() => userInfoAndTokens.loginInfoList)
 
 const { setSfcUserInfo, removeSfcUserInfo } = userInfoAndTokens;
 import { APP_LIST } from "@/common/constant";
