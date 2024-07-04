@@ -23,10 +23,6 @@ const appTicketRuleList = computed(() => appRuleListStore.items);
 // 机器登录用户信息
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
-const {
-  userInfo: { user_id }
-} = tokens;
-// console.log("user_id", user_id);
 
 // 影院特殊匹配列表及api
 import {
@@ -507,7 +503,7 @@ class OrderAutoTicketQueue {
       if (this.currentParamsInx === 0) {
         // 获取该订单的报价记录，按对应报价规则出票
         const offerRes = await svApi.queryOfferList({
-          user_id: user_id,
+          user_id: tokens.userInfo.user_id,
           order_status: "1",
           app_name: appFlag,
           order_number

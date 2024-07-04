@@ -136,10 +136,6 @@ import { useStayTicketList } from "@/store/stayTicketList";
 const stayTicketList = useStayTicketList();
 const tableDataStore = useAppRuleListStore();
 
-import { platTokens } from "@/store/platTokens";
-// 平台toke列表
-const tokens = platTokens();
-
 const displayItems = computed(() => tableDataStore.items);
 
 // 是否显示一键启动

@@ -148,10 +148,10 @@ class OrderAutoOfferQueue {
           itemA => itemA.order_number === item.order_number
         );
       });
-      console.warn(
-        conPrefix + "从当前队列报价记录过滤后的的待报价订单",
-        newOrders
-      );
+      // console.warn(
+      //   conPrefix + "从当前队列报价记录过滤后的的待报价订单",
+      //   newOrders
+      // );
       if (!newOrders?.length) return [];
       // 如果过滤到这时候还有单子再调接口进行历史报价记录过滤
       const offerList = await getOfferList();
@@ -159,10 +159,10 @@ class OrderAutoOfferQueue {
       newOrders = newOrders.filter(item =>
         judgeHandle(item, item.appName, offerList)
       );
-      console.warn(
-        conPrefix + "从服务端历史报价记录过滤后的的待报价订单",
-        newOrders
-      );
+      // console.warn(
+      //   conPrefix + "从服务端历史报价记录过滤后的的待报价订单",
+      //   newOrders
+      // );
       return newOrders;
     } catch (error) {
       console.error(conPrefix + "获取待报价订单列表异常", error);
@@ -173,10 +173,10 @@ class OrderAutoOfferQueue {
   // 将订单添加至队列
   enqueue(orders) {
     if (orders.length) {
-      console.log(conPrefix + "添加新订单到队列");
+      // console.log(conPrefix + "添加新订单到队列");
       this.queue.push(...orders);
     } else {
-      console.log(conPrefix + "从报价记录过滤后，无新订单添加到队列");
+      // console.log(conPrefix + "从报价记录过滤后，无新订单添加到队列");
     }
   }
 
