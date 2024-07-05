@@ -452,6 +452,8 @@ const getEndPrice = async params => {
         return;
       }
     }
+    // 如果报价不小于最高限价返回报价
+    return price;
   } catch (error) {
     console.warn("获取最终报价异常", error);
   }
