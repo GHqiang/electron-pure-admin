@@ -452,6 +452,10 @@ const getEndPrice = async params => {
         return;
       }
     }
+    if (cost_price > price) {
+      // 如果最终价格低于成本价按成本价报
+      return cost_price;
+    }
     // 如果报价不小于最高限价返回报价
     return price;
   } catch (error) {
