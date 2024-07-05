@@ -460,6 +460,7 @@ const getEndPrice = async params => {
     return price;
   } catch (error) {
     console.warn("获取最终报价异常", error);
+    setErrInfo("获取最终报价异常", error);
   }
 };
 window.getEndPrice = getEndPrice;
