@@ -191,7 +191,7 @@ class OrderAutoOfferQueue {
       await this.delay(delayTime);
       console.log(conPrefix + `订单处理 ${order.id}`);
       if (this.isRunning) {
-        const offerResult = await singleOffer(order);
+        const offerResult = await singleOffer(order, this.offerList);
         // { res, offerRule } || { offerRule } || undefined
         return offerResult;
       } else {
@@ -404,13 +404,14 @@ const calcCount = data => {
 // 获取最终报价
 const getEndPrice = async params => {
   try {
-    let { cost_price, supplier_max_price, price, rewards } = params || {};
+    let { cost_price, supplier_max_price, price, rewards, offerList } =
+      params || {};
     // 远端报价记录
     let serOfferRecord, lierenOfferRecord, lierenMachineOfferList;
     let adjustPrice = window.localStorage.getItem("adjustPrice");
     if (adjustPrice) {
       adjustPrice = JSON.parse(adjustPrice);
-      serOfferRecord = this.offerList;
+      serOfferRecord = offerList;
       // 测试用下面的
       // serOfferRecord = await getOfferList();
       // 猎人报价记录
@@ -524,7 +525,7 @@ async function getStayOfferList() {
 }
 
 // 单个订单报价
-async function singleOffer(item) {
+async function singleOffer(item, offerList) {
   let offerRule;
   try {
     errMsg = "";
@@ -559,7 +560,8 @@ async function singleOffer(item) {
       cost_price,
       supplier_max_price,
       price,
-      rewards
+      rewards,
+      offerList
     });
     if (!endPrice) {
       return { offerRule };
