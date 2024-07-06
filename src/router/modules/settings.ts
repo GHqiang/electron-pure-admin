@@ -9,6 +9,14 @@ export default {
   },
   children: [
     {
+      path: "/set/todayStatistics",
+      name: "todayStatistics",
+      component: () => import("@/views/todayStatistics/index.vue"),
+      meta: {
+        title: "统计分析"
+      }
+    },
+    {
       path: "/set/offerRule",
       name: "offerRule",
       component: () => import("@/views/offerRule/index.vue"),
