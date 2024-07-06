@@ -406,6 +406,7 @@ const getEndPrice = async params => {
   try {
     let { cost_price, supplier_max_price, price, rewards, offerList } =
       params || {};
+    // console.log("获取最终报价相关字段", params);
     // 远端报价记录
     let serOfferRecord, lierenOfferRecord, lierenMachineOfferList;
     let adjustPrice = window.localStorage.getItem("adjustPrice");
@@ -453,7 +454,7 @@ const getEndPrice = async params => {
         return;
       }
     }
-    const shouxufei = (Number(price) * 100) / 1000;
+    const shouxufei = (Number(price) * 100) / 10000;
     if (cost_price + shouxufei > price) {
       // 如果最终价格低于成本价按成本价报
       return Math.round(cost_price + shouxufei);
