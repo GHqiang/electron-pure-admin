@@ -404,14 +404,8 @@ const calcCount = data => {
 // 获取最终报价
 const getEndPrice = async params => {
   try {
-    let {
-      cost_price,
-      supplier_max_price,
-      price,
-      rewards,
-      ticket_num,
-      offerList
-    } = params || {};
+    let { cost_price, supplier_max_price, price, rewards, offerList } =
+      params || {};
     // 远端报价记录
     let serOfferRecord, lierenOfferRecord, lierenMachineOfferList;
     let adjustPrice = window.localStorage.getItem("adjustPrice");
@@ -459,7 +453,7 @@ const getEndPrice = async params => {
         return;
       }
     }
-    const shouxufei = (ticket_num * (Number(supplier_max_price) * 100)) / 1000;
+    const shouxufei = (Number(price) * 100) / 1000;
     if (cost_price + shouxufei > price) {
       // 如果最终价格低于成本价按成本价报
       return Math.round(cost_price + shouxufei);
@@ -568,7 +562,6 @@ async function singleOffer(item, offerList) {
       supplier_max_price,
       price,
       rewards,
-      ticket_num,
       offerList
     });
     if (!endPrice) {
