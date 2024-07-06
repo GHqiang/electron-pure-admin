@@ -350,6 +350,11 @@ const syncBalance = async () => {
       }
     );
     console.log("过滤后的apiList", apiList);
+    let cardRes = await svApi.queryCardList({
+      page_num: 1,
+      page_size: 500
+    });
+    let serCardList = cardRes.data.cardList || [];
     let memberCardList = [];
     for (let index = 0; index < apiList.length; index++) {
       const [appName, api] = apiList[index];
@@ -379,25 +384,31 @@ const syncBalance = async () => {
     }
     console.log("本次同步会员卡余额拿到的数据信息", memberCardList);
     if (memberCardList.length) {
-      let updateList = memberCardList.map(item => {
-        return {
-          updateObj: {
+      let updateList = memberCardList
+        .map(item => {
+          return {
+            id: serCardList.find(
+              itemA =>
+                itemA.card_id === item.card_id &&
+                itemA.card_num === item.card_num &&
+                itemA.app_name === item.app_name
+            )?.id,
             balance: item.balance,
             default_card: item.default_card,
             card_status: item.card_status,
             update_time: getCurrentFormattedDateTime()
-          },
-          whereObj: {
-            card_id: item.card_id,
-            card_num: item.card_num,
-            app_name: item.app_name
-          }
-        };
-      });
+          };
+        })
+        .filter(item => item.id);
+      // 过滤掉未在会员卡列表维护的数据
       let params = {
         updateList
       };
-      console.log("同步余额入参", params);
+      console.log("同步余额入参", updateList);
+      // for (let index = 0; index < updateList.length; index++) {
+      //   const item = updateList[index];
+      //   await svApi.updateCardRecord(item);
+      // }
       await svApi.batchUpdateCardRecord(params);
       loading.close();
       ElMessage.success("同步成功！");
