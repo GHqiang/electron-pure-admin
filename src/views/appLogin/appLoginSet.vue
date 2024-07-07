@@ -130,7 +130,7 @@
 <script setup>
 import { ref, reactive, computed } from "vue";
 import svApi from "@/api/sv-api";
-import { ElMessageBox, ElMessage } from "element-plus";
+import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import LoginDialog from "@/components/LoginDialog.vue";
 import { APP_LIST } from "@/common/constant";
 import { getCurrentFormattedDateTime } from "@/utils/utils";
@@ -165,6 +165,11 @@ const setLocalLoginList = async () => {
 
 // 搜索数据
 const searchData = async () => {
+  const loading = ElLoading.service({
+    lock: true,
+    text: "Loading",
+    background: "rgba(0, 0, 0, 0.7)"
+  });
   try {
     let formInfo = JSON.parse(JSON.stringify(formData));
     const filteredEntries = Object.entries(formInfo).filter(([key, value]) => {
@@ -184,8 +189,10 @@ const searchData = async () => {
     // console.log("登录信息列表===>", loginList);
     tableData.value = loginList;
     totalNum.value = res.data.totalNum || 0;
+    loading.close();
     setLocalLoginList();
   } catch (error) {
+    loading.close();
     console.warn("获取登录信息列表失败", error);
   }
 };
