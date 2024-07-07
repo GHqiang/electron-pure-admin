@@ -132,6 +132,7 @@ import { ElMessageBox, ElMessage } from "element-plus";
 import svApi from "@/api/sv-api";
 import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
 import lierenOfferQueue from "@/common/autoOffer/useLierenOffer";
+// import shengOfferQueue from "@/common/autoOffer/useShengOffer";
 import { PLAT_LINK_APP, APP_LIST } from "@/common/constant";
 import {
   getCinemaLoginInfoList,
@@ -172,6 +173,7 @@ const oneClickAutoOffer = () => {
     );
     appTokenObj[item] = obj?.session_id || "";
   });
+  // shengOfferQueue.start();
   ElMessageBox.confirm("确定要一键全部启动吗?", "提示", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
@@ -290,5 +292,10 @@ const deleteItem = id => {
 const cancelEdit = () => {
   editingRowId.value = null;
 };
-onBeforeMount(() => {});
+onBeforeMount(() => {
+  // const socket = new WebSocket("ws://localhost:3000");
+  // socket.addEventListener("message", function (event) {
+  //   console.log("Message from server ", event.data);
+  // });
+});
 </script>
