@@ -248,8 +248,9 @@ const getSummaries = param => {
       }
     }
   });
-  sums[8] = Math.floor((sums[7] / sums[3]) * 100) + "%";
-  sums[10] = sums[9] > 0 ? Math.floor((sums[9] / sums[7]) * 100) + "%" : "0%";
+  sums[2] = Number(sums[2]).toFixed(2);
+  sums[9] = Math.floor((sums[8] / sums[4]) * 100) + "%";
+  sums[11] = sums[10] > 0 ? Math.floor((sums[10] / sums[8]) * 100) + "%" : "0%";
   return sums;
 };
 
