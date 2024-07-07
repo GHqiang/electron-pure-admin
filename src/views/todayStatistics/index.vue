@@ -97,6 +97,7 @@
           <span>{{ shadowLineObj[scope.row.app_name] }}</span>
         </template>
       </el-table-column>
+      <el-table-column prop="profitTotal" label="利润总和" min-width="90" />
       <el-table-column prop="offerTotalNum" label="报价总数" min-width="90" />
       <el-table-column prop="offerSuccessNum" label="成功数" min-width="90" />
       <el-table-column prop="offerFailNum" label="失败数" min-width="90" />
@@ -147,6 +148,7 @@
 </template>
 <script setup>
 import { ref, reactive, onBeforeMount } from "vue";
+import { ElLoading } from "element-plus";
 import svApi from "@/api/sv-api";
 import { ORDER_FORM, APP_LIST } from "@/common/constant.js";
 import { getCinemaFlag } from "@/utils/utils";
@@ -252,12 +254,18 @@ const getSummaries = param => {
 };
 
 const loadData = async () => {
+  const loading = ElLoading.service({
+    lock: true,
+    text: "Loading",
+    background: "rgba(0, 0, 0, 0.7)"
+  });
   try {
     let list = [];
     const offerRecord = await getOfferList();
     const ticketRecord = await getTicketList();
     list = Object.keys(APP_LIST).map(item => ({
       app_name: item,
+      profitTotal: 0,
       offerTotalNum: 0,
       offerSuccessNum: 0,
       offerFailNum: 0,
@@ -293,6 +301,10 @@ const loadData = async () => {
       }
       let inx = list.findIndex(itemA => itemA.app_name === appName);
       list[inx].ticketTotalNum++;
+      list[inx].profitTotal +=
+        Math.round(
+          (Number(item.profit || 0) - Number(item.transfer_fee || 0)) * 100
+        ) / 100;
       item.order_status === "1"
         ? list[inx].ticketSuccessNum++
         : list[inx].ticketFailNum++;
@@ -302,11 +314,20 @@ const loadData = async () => {
       item.transfer_fee ? list[inx].ticketTransferNum++ : null;
     });
     // console.log("最终数据", list);
-    list = list.sort((a, b) => b.offerTotalNum - a.offerTotalNum);
+    list = list
+      .sort((a, b) => b.offerTotalNum - a.offerTotalNum)
+      .map(item => {
+        return {
+          ...item,
+          profitTotal: Number(item.profitTotal.toFixed(2))
+        };
+      });
     tableData.value = list.filter(item =>
       !formData.app_name ? true : item.app_name === formData.app_name
     );
+    loading.close();
   } catch (error) {
+    loading.close();
     console.warn("加载数据异常", error);
   }
 };

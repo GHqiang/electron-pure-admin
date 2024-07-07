@@ -190,6 +190,7 @@
 
 <script setup>
 import { ref, reactive, onBeforeUnmount, onBeforeMount } from "vue";
+import { ElLoading } from "element-plus";
 import svApi from "@/api/sv-api";
 
 import { ORDER_FORM, APP_LIST } from "@/common/constant.js";
@@ -244,6 +245,11 @@ let timer;
 
 // 搜索数据
 const searchData = async () => {
+  const loading = ElLoading.service({
+    lock: true,
+    text: "Loading",
+    background: "rgba(0, 0, 0, 0.7)"
+  });
   try {
     let formInfo = JSON.parse(JSON.stringify(formData));
     const filteredEntries = Object.entries(formInfo).filter(([key, value]) => {
@@ -268,7 +274,9 @@ const searchData = async () => {
     // console.log("历史报价记录===>", offerRecords);
     tableData.value = offerRecords;
     totalNum.value = res.data.totalNum || 0;
+    loading.close();
   } catch (error) {
+    loading.close();
     console.warn("获取报价记录失败", error);
   }
 };

@@ -17,7 +17,7 @@ const getUserList = params => axios.get("/svpi/users", { params });
 const getOfferList = params => axios.get("/svpi/offerRecord", { params });
 // 查询报价记录
 const queryOfferList = params =>
-  axios.get("/svpi/offerRecord/query", { params });
+  axios.get("/svpi/offerRecord/query", { params, timeout: 40 * 1000 });
 // 添加报价记录
 const addOfferRecord = params => axios.post("/svpi/offerRecord/add", params);
 

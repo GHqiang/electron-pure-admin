@@ -256,6 +256,11 @@ const formData = reactive({
 // };
 // 搜索数据
 const searchData = async () => {
+  const loading = ElLoading.service({
+    lock: true,
+    text: "获取列表数据中",
+    background: "rgba(0, 0, 0, 0.7)"
+  });
   try {
     let formInfo = JSON.parse(JSON.stringify(formData));
     const filteredEntries = Object.entries(formInfo).filter(([key, value]) => {
@@ -275,7 +280,9 @@ const searchData = async () => {
     // console.log("卡列表===>", cardList);
     tableData.value = cardList;
     totalNum.value = res.data.totalNum || 0;
+    loading.close();
   } catch (error) {
+    loading.close();
     console.warn("获取卡列表失败", error);
   }
 };
