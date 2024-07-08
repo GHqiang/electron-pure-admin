@@ -1,4 +1,4 @@
-import { ref, computed } from "vue";
+import { computed } from "vue";
 import {
   isTimeAfter,
   getCinemaFlag,
@@ -10,7 +10,7 @@ import { SPECIAL_CINEMA_OBJ } from "@/common/constant";
 import svApi from "@/api/sv-api";
 import { SFC_API_OBJ } from "@/common/index.js";
 
-import lierenApi from "@/api/lieren-api";
+import shengApi from "@/api/sheng-api";
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
 const tokens = platTokens();
@@ -38,15 +38,17 @@ console.log(conPrefix + "队列执行规则", getOrginValue(platOfferRuleList.va
 console.log(conPrefix + "自动报价规则", getOrginValue(appOfferRuleList.value));
 let socket = new WebSocket("ws://localhost:3000/ws"); // 与后端WebSocket服务地址对应
 let stayOfferList = []; // 待报价订单
-console.log("准备建立socket链接");
 socket.addEventListener("open", () => {
   console.log("WebSocket连接已建立");
 });
 socket.addEventListener("message", event => {
-  console.log("收到消息:", event.data);
-  // stayOfferList =
+  console.log("收到省平台推送待报价订单消息:", event.data);
+  let data = JSON.parse(event.data);
+  if (stayOfferList.some(item => item.id !== data.id)) {
+    stayOfferList.push(data);
+  }
 });
-const cityList = ref([]); // 城市列表
+
 let errMsg = "";
 let errInfo = "";
 // 创建一个订单自动报价队列类
@@ -88,7 +90,7 @@ class OrderAutoOfferQueue {
       //   conPrefix +
       //     `队列启动, ${fetchDelay} 秒获取一次待报价订单, ${processDelay} 秒处理一次订单}`
       // );
-      let orders = await this.fetchOrders(fetchDelay);
+      let orders = await this.fetchOrders(fetchDelay, []);
       console.warn(conPrefix + "新的待报价订单列表", orders);
       // 将订单加入队列
       this.enqueue(orders);
@@ -211,7 +213,7 @@ class OrderAutoOfferQueue {
       console.warn(conPrefix + "数据库存储报价记录", order, offerResult);
       let serOrderInfo = {
         // user_id: order.user_id,
-        plat_name: "lieren",
+        plat_name: "sheng",
         app_name: offerResult?.offerRule?.shadowLineName || "",
         order_id: order.id,
         order_number: order.order_number,
@@ -327,14 +329,14 @@ const getOfferList = async () => {
   try {
     const res = await svApi.queryOfferList({
       user_id: tokens.userInfo.user_id,
-      plat_name: "lieren",
+      plat_name: "sheng",
       page_num: 1,
       page_size: 100
     });
     return res.data.offerList || [];
   } catch (error) {
-    console.error(conPrefix + "获取猎人历史报价记录异常", error);
-    setErrInfo("获取猎人历史报价记录异常", error);
+    console.error(conPrefix + "获取省历史报价记录异常", error);
+    setErrInfo("获取省历史报价记录异常", error);
     return Promise.reject("获取历史报价异常");
   }
 };
@@ -357,21 +359,10 @@ const judgeHandle = (item, app_name, offerList) => {
 // 获取待报价订单列表
 async function getStayOfferList() {
   try {
-    let params = {
-      page: 1,
-      limit: 100,
-      sort: "id",
-      desc: "desc",
-      type: 0
-    };
-    // console.log(conPrefix + "获取待报价订单列表参数", params);
-    const res = await lierenApi.stayTicketingList(params);
-    // let mockRes = {
-    //   success: true,
-    //   code: 1,
-    //   message: "成功！",
-    //   total: 1,
-    //   data: [
+    // 获取一次清空一次
+    let list = stayOfferList.slice();
+    stayOfferList = [];
+    // list = [
     //     {
     //       id: 6129818,
     //       tpp_price: "73.00",
@@ -399,11 +390,7 @@ async function getStayOfferList() {
     //       order_number: "2024053021282879718",
     //       sytime: 1717075788
     //     }
-    //   ],
-    //   time: 1710125678
-    // };
-    // let list = mockRes?.data || [];
-    let list = res?.data || [];
+    //   ]
     console.log(conPrefix + "获取待报价列表返回", list);
     return list;
   } catch (error) {
@@ -448,7 +435,7 @@ async function singleOffer(item) {
       price
     };
     console.log(conPrefix + "订单报价参数", params);
-    const res = await lierenApi.submitOffer(params);
+    const res = await shengApi.submitOffer(params);
     console.log(conPrefix + "订单报价返回", res);
     return { res, offerRule };
   } catch (error) {
@@ -898,8 +885,12 @@ const getMovieInfo = async item => {
   try {
     // 1、获取影院列表拿到影院id
     const { city_name, cinema_name, film_name, show_time, cinema_group } = item;
-    await getCityList({ cinema_group, cinema_name, city_name });
-    let city_id = cityList.value.find(
+    const cityList = await getCityList({
+      cinema_group,
+      cinema_name,
+      city_name
+    });
+    let city_id = cityList.find(
       item => item.name.indexOf(city_name) !== -1
     )?.id;
     let params = {
@@ -953,7 +944,7 @@ async function getCityList({ cinema_group, cinema_name, city_name }) {
     const appName = getCinemaFlag({ cinema_group, cinema_name, city_name });
     let res = await SFC_API_OBJ[appName].getCityList(params);
     console.log(conPrefix + "获取城市列表返回", res);
-    cityList.value = res.data.all_city || [];
+    return res.data.all_city || [];
   } catch (error) {
     console.error(conPrefix + "获取城市列表异常", error);
     setErrInfo("获取城市列表异常", error);

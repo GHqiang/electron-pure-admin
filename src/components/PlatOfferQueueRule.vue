@@ -132,7 +132,7 @@ import { ElMessageBox, ElMessage } from "element-plus";
 import svApi from "@/api/sv-api";
 import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
 import lierenOfferQueue from "@/common/autoOffer/useLierenOffer";
-// import shengOfferQueue from "@/common/autoOffer/useShengOffer";
+import shengOfferQueue from "@/common/autoOffer/useShengOffer";
 import { PLAT_LINK_APP, APP_LIST } from "@/common/constant";
 import {
   getCinemaLoginInfoList,
