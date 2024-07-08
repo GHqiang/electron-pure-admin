@@ -366,7 +366,14 @@ const syncBalance = async () => {
     for (let index = 0; index < apiList.length; index++) {
       const [appName, api] = apiList[index];
       await delay(200);
-      const res = await api.getCardList({ city_id: "500", cinema_id: "1" });
+      let session_id = loginInfoList.find(
+        item => item.app_name === appName && item.mobile === phone
+      )?.session_id;
+      const res = await api.getCardList({
+        city_id: "500",
+        cinema_id: "1",
+        session_id
+      });
       let cardList = res.data.card_data || [];
       cardList = cardList.map(item => {
         return {

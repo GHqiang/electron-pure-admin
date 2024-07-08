@@ -337,7 +337,7 @@ const cancelEdit = () => {
 };
 </script>
 <style scoped>
-/deep/ .el-icon {
+:deep(.el-icon) {
   font-size: 20px;
   vertical-align: top;
   margin: 0 10px;
