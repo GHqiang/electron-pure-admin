@@ -136,25 +136,25 @@ const createAxios = ({ group, appName, timeout = 20 }) => {
         !whitelistSfc.some(item => response.config.url.includes(item))
       ) {
         if (data.errcode === "205" && data.msg === "登录失效") {
-          // ElMessage.error("sfc登录失效，请重新登录");
-          ElMessageBox.confirm(
-            `${APP_LIST[appName]}登录失效，请重新登录`,
-            "提示",
-            {
-              confirmButtonText: "我知道了",
-              type: "warning",
-              showCancelButton: false,
-              showClose: false,
-              closeOnClickModal: false,
-              closeOnPressEscape: false
-            }
-          )
-            .then(() => {
-              removeSfcUserInfo(appName);
-              router.push({ path: "/set/appLogin" });
-            })
-            .catch(() => {});
-          return;
+          ElMessage.warning(`${APP_LIST[appName]}登录失效，请重新设置登录信息`);
+          // ElMessageBox.confirm(
+          //   `${APP_LIST[appName]}登录失效，请重新登录`,
+          //   "提示",
+          //   {
+          //     confirmButtonText: "我知道了",
+          //     type: "warning",
+          //     showCancelButton: false,
+          //     showClose: false,
+          //     closeOnClickModal: false,
+          //     closeOnPressEscape: false
+          //   }
+          // )
+          //   .then(() => {
+          //     // removeSfcUserInfo(appName);
+          //     router.push({ path: "/set/appLogin" });
+          //   })
+          //   .catch(() => {});
+          // return;
         }
         ElMessage.error(data.msg || "请求失败");
         return Promise.reject(data);

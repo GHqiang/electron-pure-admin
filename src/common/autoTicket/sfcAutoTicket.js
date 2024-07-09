@@ -129,24 +129,24 @@ class OrderAutoTicketQueue {
       if (isTestOrder) {
         sfcStayOfferlist = [
           {
-            id: 514,
+            id: 728,
             plat_name: "lieren",
-            app_name: "ningbo",
+            app_name: "sfc",
             ticket_num: 1,
             rewards: "0",
-            offer_type: "2",
-            order_number: "2024070312333145534",
-            supplier_end_price: 31,
-            order_id: "6339078",
-            tpp_price: "41.90",
-            city_name: "宁波",
-            cinema_addr: "海曙区药行街169号亚细亚商城A区7楼",
-            cinema_name: "宁波影都（亚细亚 IMAX店）",
-            hall_name: "1号激光厅（部分按摩椅）",
-            film_name: "头脑特工队2",
-            lockseat: "7排1座",
-            show_time: "2024-07-03 19:10:00",
-            cinema_group: "宁波影都"
+            offer_type: "1",
+            order_number: "2024070913561418627",
+            supplier_end_price: 36,
+            order_id: "6411461",
+            tpp_price: "40.90",
+            city_name: "昆明",
+            cinema_addr: "五华区东风西路2号百大新天地七楼",
+            cinema_name: "SFC上影影城（昆明永华4DX店）",
+            hall_name: "1号厅",
+            film_name: "默杀",
+            lockseat: "6排1座",
+            show_time: "2024-07-09 19:00:00",
+            cinema_group: "上影二线"
           }
         ];
       }
@@ -339,27 +339,35 @@ class OrderAutoTicketQueue {
 
   // 释放座位
   async releaseSeat(unlockSeatInfo) {
-    const { conPrefix } = this;
-    const { city_id, cinema_id, show_id, start_day, start_time } =
-      unlockSeatInfo;
-    const seatList = await this.getSeatLayout({
-      city_id,
-      cinema_id,
-      show_id
-    });
-    let availableSeatList = seatList.filter(item => item[2] === "0"); // 1表示已售
-    let seat_ids = availableSeatList.map(item => item[0])?.[0]; // 第0个代表座位id
-    // // 4、锁定座位
-    let lockParams = {
-      city_id,
-      cinema_id,
-      show_id,
-      seat_ids,
-      start_day,
-      start_time
-    };
-    console.warn(conPrefix + "转单时释放座位传参", lockParams);
-    await this.lockSeat(lockParams); // 锁定座位
+    try {
+      const { conPrefix } = this;
+      const { city_id, cinema_id, show_id, start_day, start_time, session_id } =
+        unlockSeatInfo;
+      const seatList = await this.getSeatLayout({
+        city_id,
+        cinema_id,
+        show_id,
+        session_id
+      });
+      let availableSeatList = seatList.filter(item => item[2] === "0"); // 1表示已售
+      let seat_ids = availableSeatList.map(item => item[0])?.[0]; // 第0个代表座位id
+      // // 4、锁定座位
+      let lockParams = {
+        city_id,
+        cinema_id,
+        show_id,
+        seat_ids,
+        start_day,
+        start_time,
+        session_id
+      };
+      console.warn(conPrefix + "转单时释放座位传参", lockParams);
+      await this.lockSeat(lockParams); // 锁定座位
+      return true;
+    } catch (error) {
+      console.warn("释放座位失败", error);
+      return false;
+    }
   }
 
   // 转单
@@ -373,9 +381,10 @@ class OrderAutoTicketQueue {
     }
     try {
       // 先解锁座位再转单，负责转出去座位被占平台会处罚
+      let session_id = this.currentParamsList[this.currentParamsInx].session_id;
       // 3、获取座位布局
       if (unlockSeatInfo) {
-        await this.releaseSeat(unlockSeatInfo);
+        await this.releaseSeat({ ...unlockSeatInfo, session_id });
       }
       const params = {
         id: order.id,
@@ -499,6 +508,7 @@ class OrderAutoTicketQueue {
         start_day,
         start_time
       } = otherParams || {};
+      console.log("this.currentParamsInx开始", this.currentParamsInx);
       if (this.currentParamsInx === 0) {
         // 获取该订单的报价记录，按对应报价规则出票
         const offerRes = await svApi.queryOfferList({
@@ -511,8 +521,8 @@ class OrderAutoTicketQueue {
         offerRule = offerRecord?.[0];
         // 测试专用
         if (isTestOrder) {
-          // offerRule = { offer_type: "1", quan_value: "40" };
-          offerRule = { offer_type: "2", member_price: "29.9" };
+          offerRule = { offer_type: "1", quan_value: "35" };
+          // offerRule = { offer_type: "2", member_price: "29.9" };
         }
         console.warn(
           conPrefix + "从该订单的报价记录获取到的报价规则",
@@ -618,8 +628,48 @@ class OrderAutoTicketQueue {
         console.log(conPrefix + "targetList", targetList);
         seat_ids = targetList.map(item => item[0]).join();
       } else {
+        // 拿上一个号的session去释放座位
+        let currentParams = this.currentParamsList[this.currentParamsInx - 1];
         // 先释放座位
-        await this.releaseSeat(unlockSeatInfo);
+        const unlockSeatInfo = {
+          city_id,
+          cinema_id,
+          show_id,
+          start_day,
+          start_time,
+          session_id: currentParams.session_id
+        };
+        const isPass = await this.releaseSeat(unlockSeatInfo);
+        if (!isPass) {
+          if (this.currentParamsInx === this.currentParamsList.length - 1) {
+            console.error(conPrefix + "换号结束还是失败", "走转单逻辑");
+            if (!this.errMsg) {
+              this.setErrInfo("换号结束还是失败，走转单逻辑");
+            }
+            const transferParams = await this.transferOrder(item, {
+              city_id,
+              cinema_id,
+              show_id,
+              start_day,
+              start_time
+            });
+            return { offerRule, transferParams };
+          } else {
+            this.currentParamsInx++;
+            return await this.oneClickBuyTicket({
+              ...item,
+              otherParams: {
+                offerRule,
+                city_id,
+                cinema_id,
+                show_id,
+                seat_ids,
+                start_day,
+                start_time
+              }
+            });
+          }
+        }
       }
       // 4、锁定座位
       let params = {
@@ -628,14 +678,15 @@ class OrderAutoTicketQueue {
         show_id,
         seat_ids,
         start_day,
-        start_time
+        start_time,
+        session_id: this.currentParamsList[this.currentParamsInx].session_id
       };
       try {
         await this.lockSeat(params); // 锁定座位
       } catch (error) {
-        console.error(conPrefix + "锁定座位失败准备试错3次，间隔5秒", error);
+        console.error(conPrefix + "锁定座位失败准备试错2次，间隔5秒", error);
         // 试错3次，间隔5秒
-        const res = await this.trial(() => this.lockSeat(params), 3, 5);
+        const res = await this.trial(() => this.lockSeat(params), 2, 5);
         if (!res) {
           console.error(
             conPrefix + "单个订单试错后仍锁定座位失败",
@@ -644,8 +695,34 @@ class OrderAutoTicketQueue {
           if (!this.errMsg) {
             this.setErrInfo("单个订单试错后仍锁定座位失败");
           }
-          const transferParams = await this.transferOrder(item);
-          return { offerRule, transferParams };
+          if (this.currentParamsInx === this.currentParamsList.length - 1) {
+            console.error(conPrefix + "换号结束还是失败", "走转单逻辑");
+            if (!this.errMsg) {
+              this.setErrInfo("换号结束还是失败，走转单逻辑");
+            }
+            const transferParams = await this.transferOrder(item, {
+              city_id,
+              cinema_id,
+              show_id,
+              start_day,
+              start_time
+            });
+            return { offerRule, transferParams };
+          } else {
+            this.currentParamsInx++;
+            return await this.oneClickBuyTicket({
+              ...item,
+              otherParams: {
+                offerRule,
+                city_id,
+                cinema_id,
+                show_id,
+                seat_ids,
+                start_day,
+                start_time
+              }
+            });
+          }
         }
       }
       // 5、使用优惠券或者会员卡
@@ -664,6 +741,8 @@ class OrderAutoTicketQueue {
         offerRule
       });
       if (!card_id && !quan_code) {
+        console.log("this.currentParamsInx", this.currentParamsInx);
+        console.log("this.currentParamsList", this.currentParamsList);
         if (this.currentParamsInx === this.currentParamsList.length - 1) {
           console.error(
             conPrefix + "优惠券和会员卡都无法使用，单个订单直接出票结束",
@@ -886,13 +965,19 @@ class OrderAutoTicketQueue {
   async getSeatLayout(data) {
     const { conPrefix } = this;
     try {
-      let { city_id, cinema_id, show_id } = data || {};
+      let { city_id, cinema_id, show_id, session_id } = data || {};
       let params = {
         city_id: city_id,
         cinema_id: cinema_id,
         show_id: show_id,
         width: "240"
       };
+      if (session_id) {
+        params.session_id = session_id;
+      } else {
+        params.session_id =
+          this.currentParamsList[this.currentParamsInx].session_id;
+      }
       console.log(conPrefix + "获取座位布局参数", params);
       const res = await this.sfcApi.getMoviePlaySeat(params);
       console.log(conPrefix + "获取座位布局返回", res);
@@ -906,11 +991,16 @@ class OrderAutoTicketQueue {
   // 锁定座位
   async lockSeat(data) {
     const { conPrefix } = this;
-    let currentParams = this.currentParamsList[this.currentParamsInx];
-    const { session_id } = currentParams;
     try {
-      let { city_id, cinema_id, show_id, seat_ids, start_day, start_time } =
-        data || {};
+      let {
+        city_id,
+        cinema_id,
+        show_id,
+        seat_ids,
+        start_day,
+        start_time,
+        session_id
+      } = data || {};
       let params = {
         city_id: city_id,
         cinema_id: cinema_id,
