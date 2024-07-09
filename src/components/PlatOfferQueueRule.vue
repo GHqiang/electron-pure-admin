@@ -130,6 +130,7 @@
 import { ref, computed, onBeforeMount } from "vue";
 import { ElMessageBox, ElMessage } from "element-plus";
 import svApi from "@/api/sv-api";
+import sApi from "@/api/sheng-api";
 import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
 import lierenOfferQueue from "@/common/autoOffer/useLierenOffer";
 import shengOfferQueue from "@/common/autoOffer/useShengOffer";
@@ -164,6 +165,19 @@ const editingRow = ref({});
 const appTokenObj = {};
 // 填充token及队列集合
 
+const test = async () => {
+  try {
+    const res = await sApi.queryStayOfferList({
+      supplierCode: "ccf7b11cdc944cf1940a149cff4243f9",
+      status: "0",
+      page: 1
+    });
+    console.log("查询待报价返回", res);
+  } catch (error) {
+    console.warn("查询待报价异常", error);
+  }
+};
+test();
 // 一键启动
 const oneClickAutoOffer = () => {
   let loginInfoList = getCinemaLoginInfoList();

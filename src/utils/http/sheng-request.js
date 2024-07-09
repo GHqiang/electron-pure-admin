@@ -1,9 +1,8 @@
 // src/utils/axiosInstance.js
 
 import axios from "axios";
+import md5 from "../md5.js";
 import { ElMessage } from "element-plus";
-import { platTokens } from "@/store/platTokens";
-const tokens = platTokens();
 // 创建axios实例
 const instance = axios.create({
   //   baseURL: process.env.VITE_API_BASE_URL,
@@ -14,22 +13,61 @@ const instance = axios.create({
 const NODE_ENV = process.env.NODE_ENV;
 const IS_DEV = NODE_ENV === "development";
 
+const paramsHandle = e => {
+  e.timestamp = +new Date();
+  let paramKeys = Object.keys(e).sort();
+  let signatureStr = "";
+
+  // 遍历排序后的key，构建签名前的字符串
+  paramKeys.forEach(key => {
+    signatureStr += `${key}=${e[key]}&`;
+  });
+
+  // 添加时间戳到签名字符串
+  signatureStr += `key=${e.timestamp}`;
+
+  // MD5加密并转换为大写
+  e.sign = md5.hex_md5(signatureStr).toUpperCase();
+
+  // 创建 FormData 对象
+  let formData = new FormData();
+
+  // 遍历 JSON 对象的键值对
+  Object.keys(e).forEach(key => {
+    formData.append(key, e[key]);
+  });
+
+  return formData;
+};
+
 // 请求拦截器
 instance.interceptors.request.use(
   config => {
-    if (config.url.indexOf("/sp/") !== -1) {
-      // 猎人平台接口添加token
-      // console.log("tokens.lierenToken", tokens.lierenToken);
-      const token = tokens.lierenToken || "";
-      if (token) {
-        config.headers.Authorization = `${token}`;
+    if (config.url.indexOf("/supplier/") !== -1) {
+      // config.headers["Content-Type"] = "multipart/form-data"; // 设置正确的 Content-Type
+      config.headers["Content-Type"] = "application/x-www-form-urlencoded";
+
+      // console.log("config.headers", config.headers);
+      if (config.method === "get") {
+        // 如果是GET请求，将参数添加到URL中
+        const urlParams = new URLSearchParams(config.params);
+        config.url += "?" + urlParams.toString();
+        delete config.params;
+      } else {
+        // POST请求，使用formData封装参数
+        config.data = paramsHandle(config.data);
+
+        // 将Content-Type设置为 application/x-www-form-urlencoded
+
+        // 将formData转换为查询字符串
+        const query = new URLSearchParams(config.data);
+        config.url += "?" + query.toString();
+        delete config.data;
       }
       // 生产环境不会跨域
-      config.url = IS_DEV
-        ? config.url
-        : "https://api.s.zjlrmovie.cn" + config.url;
+      config.url = IS_DEV ? config.url : "https://api.shenga.co" + config.url;
     }
-    // console.log('请求config', config)
+    // console.log("请求config", config);
     return config;
   },
   error => {
@@ -47,7 +85,7 @@ instance.interceptors.response.use(
     let whitelistSp = [];
 
     let isErrorByLieRen =
-      response.config.url.indexOf("/sp/") !== -1 && data.code !== 1;
+      response.config.url.indexOf("/supplier/") !== -1 && !data.success;
     if (
       isErrorByLieRen &&
       !whitelistSp.some(item => response.config.url.includes(item))

@@ -43,10 +43,12 @@ socket.addEventListener("open", () => {
 });
 socket.addEventListener("message", event => {
   console.log("收到省平台推送待报价订单消息:", event.data);
-  let data = JSON.parse(event.data);
-  if (stayOfferList.some(item => item.id !== data.id)) {
-    stayOfferList.push(data);
-  }
+  try {
+    let data = JSON.parse(event.data);
+    if (stayOfferList.some(item => item.id !== data.id)) {
+      stayOfferList.push(data);
+    }
+  } catch (error) {}
 });
 
 let errMsg = "";
