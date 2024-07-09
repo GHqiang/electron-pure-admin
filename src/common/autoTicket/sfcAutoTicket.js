@@ -363,9 +363,13 @@ class OrderAutoTicketQueue {
       };
       console.warn(conPrefix + "转单时释放座位传参", lockParams);
       await this.lockSeat(lockParams); // 锁定座位
+      // this.currentParamsList[this.currentParamsInx].releaseStatus = 1;
       return true;
     } catch (error) {
       console.warn("释放座位失败", error);
+      if (error?.msg === "登录失效") {
+        this.currentParamsList[this.currentParamsInx].errMsg = "登录失效";
+      }
       return false;
     }
   }
@@ -628,46 +632,52 @@ class OrderAutoTicketQueue {
         console.log(conPrefix + "targetList", targetList);
         seat_ids = targetList.map(item => item[0]).join();
       } else {
-        // 拿上一个号的session去释放座位
-        let currentParams = this.currentParamsList[this.currentParamsInx - 1];
-        // 先释放座位
-        const unlockSeatInfo = {
-          city_id,
-          cinema_id,
-          show_id,
-          start_day,
-          start_time,
-          session_id: currentParams.session_id
-        };
-        const isPass = await this.releaseSeat(unlockSeatInfo);
-        if (!isPass) {
-          if (this.currentParamsInx === this.currentParamsList.length - 1) {
-            console.error(conPrefix + "换号结束还是失败", "走转单逻辑");
-            if (!this.errMsg) {
-              this.setErrInfo("换号结束还是失败，走转单逻辑");
-            }
-            const transferParams = await this.transferOrder(item, {
-              city_id,
-              cinema_id,
-              show_id,
-              start_day,
-              start_time
-            });
-            return { offerRule, transferParams };
-          } else {
-            this.currentParamsInx++;
-            return await this.oneClickBuyTicket({
-              ...item,
-              otherParams: {
-                offerRule,
+        // 如果上个号释放座位token失效了就直接锁定token
+        if (
+          this.currentParamsList[this.currentParamsInx - 1].errMsg !==
+          "登录失效"
+        ) {
+          // 拿上一个号的session去释放座位
+          let currentParams = this.currentParamsList[this.currentParamsInx - 1];
+          // 先释放座位
+          const unlockSeatInfo = {
+            city_id,
+            cinema_id,
+            show_id,
+            start_day,
+            start_time,
+            session_id: currentParams.session_id
+          };
+          const isPass = await this.releaseSeat(unlockSeatInfo);
+          if (!isPass) {
+            if (this.currentParamsInx === this.currentParamsList.length - 1) {
+              console.error(conPrefix + "换号结束还是失败", "走转单逻辑");
+              if (!this.errMsg) {
+                this.setErrInfo("换号结束还是失败，走转单逻辑");
+              }
+              const transferParams = await this.transferOrder(item, {
                 city_id,
                 cinema_id,
                 show_id,
-                seat_ids,
                 start_day,
                 start_time
-              }
-            });
+              });
+              return { offerRule, transferParams };
+            } else {
+              this.currentParamsInx++;
+              return await this.oneClickBuyTicket({
+                ...item,
+                otherParams: {
+                  offerRule,
+                  city_id,
+                  cinema_id,
+                  show_id,
+                  seat_ids,
+                  start_day,
+                  start_time
+                }
+              });
+            }
           }
         }
       }
