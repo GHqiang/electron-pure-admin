@@ -129,23 +129,25 @@ class OrderAutoTicketQueue {
       if (isTestOrder) {
         sfcStayOfferlist = [
           {
-            id: 728,
+            id: 761,
             plat_name: "lieren",
             app_name: "sfc",
             ticket_num: 1,
             rewards: "0",
             offer_type: "1",
-            order_number: "2024070913561418627",
+            order_number: "2024071012402352191",
+
             supplier_end_price: 36,
-            order_id: "6411461",
-            tpp_price: "40.90",
-            city_name: "昆明",
-            cinema_addr: "五华区东风西路2号百大新天地七楼",
-            cinema_name: "SFC上影影城（昆明永华4DX店）",
-            hall_name: "1号厅",
-            film_name: "默杀",
-            lockseat: "6排1座",
-            show_time: "2024-07-09 19:00:00",
+            quan_value: "35",
+            order_id: "6418878",
+            tpp_price: "44.00",
+            city_name: "宁波",
+            cinema_addr: "鄞州区中山东路1083号世纪东方广场三楼",
+            cinema_name: "SFC上影影城（宁波店）",
+            hall_name: "7号厅（3小时停车券21点前扫码）",
+            film_name: "云边有个小卖部",
+            lockseat: "10排2座",
+            show_time: "2024-07-10 14:30:00",
             cinema_group: "上影二线"
           }
         ];
@@ -339,10 +341,10 @@ class OrderAutoTicketQueue {
 
   // 释放座位
   async releaseSeat(unlockSeatInfo) {
+    const { conPrefix } = this;
+    const { city_id, cinema_id, show_id, start_day, start_time, session_id } =
+      unlockSeatInfo;
     try {
-      const { conPrefix } = this;
-      const { city_id, cinema_id, show_id, start_day, start_time, session_id } =
-        unlockSeatInfo;
       const seatList = await this.getSeatLayout({
         city_id,
         cinema_id,
@@ -368,7 +370,10 @@ class OrderAutoTicketQueue {
     } catch (error) {
       console.warn("释放座位失败", error);
       if (error?.msg === "登录失效") {
-        this.currentParamsList[this.currentParamsInx].errMsg = "登录失效";
+        let inx = this.currentParamsList.findIndex(
+          item => item.session_id === session_id
+        );
+        this.currentParamsList[inx].errMsg = "登录失效";
       }
       return false;
     }
