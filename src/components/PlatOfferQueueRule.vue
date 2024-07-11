@@ -203,10 +203,11 @@ const oneClickAutoOffer = () => {
           let platToken = displayItems.value.find(
             item => item.platName === "lieren"
           )?.platToken;
+          console.log("platToken", platToken, displayItems.value);
           if (!platToken) {
             isStart = false;
           } else {
-            item.isEnabled = true;
+            tableDataStore.toggleEnable(item.id);
             lierenOfferQueue.start(platToken);
           }
         }
