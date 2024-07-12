@@ -442,25 +442,29 @@ const getEndPrice = async params => {
         console.warn("动态调价后的价格", price, "降低", outPrice);
       }
     }
-    if (Number(supplier_max_price) < price) {
-      if (cost_price && cost_price < Number(supplier_max_price)) {
-        // 奖励单成本价，非奖励单最高限价
-        price = rewards == 1 ? cost_price : supplier_max_price;
-        return price;
-      } else {
-        let str = `最终报价超过平台限价${supplier_max_price}，不再进行报价`;
-        console.error(conPrefix + str);
-        setErrInfo(str);
-        return;
-      }
-    }
+    // 手续费
     const shouxufei = (Number(price) * 100) / 10000;
-    if (cost_price + shouxufei > price) {
-      // 如果最终价格低于成本价按成本价报
-      return Math.round(cost_price + shouxufei);
+    // 奖励费用
+    let rewardPrice = rewards == 1 ? (Number(price) * 400) / 10000 : 0;
+    // 真实成本（加手续费）
+    cost_price = cost_price + shouxufei;
+    // 最终成本（减奖励费）
+    const ensCostPrice = cost_price - rewardPrice;
+    // 最终成本超过平台限价
+    if (ensCostPrice >= Number(supplier_max_price)) {
+      let str = `最终成本${ensCostPrice}超过平台限价${supplier_max_price}，不再进行报价`;
+      console.error(conPrefix + str);
+      setErrInfo(str);
+      return;
     }
-    // 如果报价不小于最高限价返回报价
-    return price;
+    // 最终报价超过平台限价
+    if (Number(supplier_max_price) < price + shouxufei) {
+      // 奖励单按真实成本（加手续费），非奖励单最高限价
+      price = rewards == 1 ? cost_price : supplier_max_price;
+      return price;
+    }
+    // 如果报最终报价不小于最高限价返回报价
+    return Math.round(price);
   } catch (error) {
     console.warn("获取最终报价异常", error);
     setErrInfo("获取最终报价异常", error);
@@ -871,8 +875,7 @@ const getMinAmountOfferRule = async (ruleList, order) => {
       // 会员价
       mixAddAmountRule.memberPrice = memberPrice;
       // 会员最终报价
-      memberPrice =
-        Math.round(memberPrice) + Number(mixAddAmountRule.addAmount);
+      memberPrice = Number(memberPrice) + Number(mixAddAmountRule.addAmount);
       // 会员报价要求四舍五入取整
       mixAddAmountRule.memberOfferAmount = memberPrice;
     } else {
