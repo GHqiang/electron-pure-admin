@@ -193,7 +193,7 @@ const getOfferList = async () => {
     const res = await svApi.queryOfferList({
       user_id: tokens.userInfo.user_id,
       plat_name: "lieren",
-      start_time: getCurrentFormattedDateTime(+new Date() - 6 * 60 * 60 * 1000),
+      start_time: getCurrentFormattedDateTime(+new Date() - 1 * 60 * 60 * 1000),
       end_time: getCurrentFormattedDateTime()
     });
     return res.data.offerList || [];

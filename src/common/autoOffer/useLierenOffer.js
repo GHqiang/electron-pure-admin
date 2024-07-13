@@ -341,7 +341,9 @@ const getOfferList = async () => {
       user_id: tokens.userInfo.user_id,
       // user_id: "9",
       plat_name: "lieren",
-      start_time: getCurrentFormattedDateTime(+new Date() - 6 * 60 * 60 * 1000),
+      start_time: getCurrentFormattedDateTime(
+        +new Date() - 0.5 * 60 * 60 * 1000
+      ),
       end_time: getCurrentFormattedDateTime()
     });
     return res.data.offerList || [];
