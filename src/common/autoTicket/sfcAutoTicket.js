@@ -1468,7 +1468,7 @@ class OrderAutoTicketQueue {
       let list = res.data.list || [];
       // let noUseLIst = ['1598162363509715', '1055968062906716', '1284460567801315', '1116166666409614']
       // 过滤掉不可用券
-      // list = list.filter(item => item.coupon_info.indexOf('员工券') !== -1)
+      list = list.filter(item => item.coupon_num.indexOf("t") !== -1);
       return list;
     } catch (error) {
       console.error(conPrefix + "获取优惠券列表异常", error);
