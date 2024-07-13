@@ -1038,7 +1038,7 @@ class OrderAutoTicketQueue {
         member_price
       } = offerRule;
       let currentParams = this.currentParamsList[this.currentParamsInx];
-      const { session_id } = currentParams;
+      const { session_id, mobile } = currentParams;
       // 拿订单号去匹配报价记录
       if (offerType !== "1") {
         console.log(conPrefix + "使用会员卡出票");
@@ -1073,7 +1073,8 @@ class OrderAutoTicketQueue {
           seat_ids,
           member_price,
           rewards,
-          session_id
+          session_id,
+          mobile
         });
         return {
           card_id,
@@ -1526,6 +1527,7 @@ class OrderAutoTicketQueue {
         this.setErrInfo(`数据库${quanValue}面额券不足`);
         return;
       }
+      // quanList = quanList.map(item => item.coupon_num.trim());
       let bandQuanList = [];
       for (const quan of quanList) {
         console.log(conPrefix + `正在尝试绑定券 ${quan.coupon_num}...`);
@@ -1679,7 +1681,8 @@ class OrderAutoTicketQueue {
     seat_ids,
     member_price,
     rewards,
-    session_id
+    session_id,
+    mobile
   }) {
     const { conPrefix, appFlag } = this;
     try {
@@ -1689,7 +1692,12 @@ class OrderAutoTicketQueue {
       );
       if (!cardFilter?.length) {
         console.error(conPrefix + "使用会员卡失败，会员卡余额不足");
-        this.setErrInfo(APP_LIST[appFlag] + "会员卡余额不足");
+        this.setErrInfo(APP_LIST[appFlag] + "会员卡余额不足", {
+          cards,
+          member_total_price,
+          session_id,
+          mobile
+        });
         return {
           profit: 0,
           card_id: ""
