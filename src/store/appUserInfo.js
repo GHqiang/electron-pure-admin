@@ -77,6 +77,18 @@ export const appUserInfo = defineStore("appUserInfo", {
   actions: {
     // 设置sfc用户信息
     setLoginInfoList(list) {
+      let userInfo = window.localStorage.getItem("userInfo");
+      if (userInfo) {
+        userInfo = JSON.parse(userInfo);
+      }
+      const { phone } = userInfo;
+      const appNameList = ["sfc", "ningbo"];
+      list = list.filter(item => {
+        if (appNameList.includes(item.app_name)) {
+          return item.mobile === phone;
+        }
+        return true;
+      });
       console.warn(`设置影院登录信息`, list);
       this.loginInfoList = list;
       window.localStorage.setItem("loginInfoList", JSON.stringify(list));

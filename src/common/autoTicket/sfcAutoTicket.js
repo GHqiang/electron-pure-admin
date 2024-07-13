@@ -710,34 +710,8 @@ class OrderAutoTicketQueue {
           if (!this.errMsg) {
             this.setErrInfo("单个订单试错后仍锁定座位失败");
           }
-          if (this.currentParamsInx === this.currentParamsList.length - 1) {
-            console.error(conPrefix + "换号结束还是失败", "走转单逻辑");
-            if (!this.errMsg) {
-              this.setErrInfo("换号结束还是失败，走转单逻辑");
-            }
-            const transferParams = await this.transferOrder(item, {
-              city_id,
-              cinema_id,
-              show_id,
-              start_day,
-              start_time
-            });
-            return { offerRule, transferParams };
-          } else {
-            this.currentParamsInx++;
-            return await this.oneClickBuyTicket({
-              ...item,
-              otherParams: {
-                offerRule,
-                city_id,
-                cinema_id,
-                show_id,
-                seat_ids,
-                start_day,
-                start_time
-              }
-            });
-          }
+          const transferParams = await this.transferOrder(item);
+          return { offerRule, transferParams };
         }
       }
       // 5、使用优惠券或者会员卡
