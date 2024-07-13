@@ -228,6 +228,7 @@ class OrderAutoOfferQueue {
         offer_amount: offerResult?.offerRule?.offerAmount,
         member_offer_amount: offerResult?.offerRule?.memberOfferAmount,
         member_price: offerResult?.offerRule?.memberPrice,
+        real_member_price: offerResult?.offerRule?.real_member_price,
         quan_value: offerResult?.offerRule?.quanValue,
         order_status: offerResult?.res ? "1" : "2",
         // remark: '',
@@ -848,32 +849,34 @@ const getMinAmountOfferRule = async (ruleList, order) => {
     )?.[0];
     if (mixAddAmountRule) {
       // 计算会员报价
-      let memberPrice = await getMemberPrice(order);
-      if (memberPrice === 0) {
+      let memberPriceRes = await getMemberPrice(order);
+      if (memberPriceRes === 0) {
         setErrInfo("获取当前场次电影信息失败,不再进行报价");
         return 0;
       }
-      if (memberPrice === -2) {
+      if (memberPriceRes === -2) {
         setErrInfo("促销票数低于订单票数，不再进行报价");
         return -2;
       }
-      if (memberPrice === -3) {
+      if (memberPriceRes === -3) {
         console.error(conPrefix + "获取座位布局异常，不再进行报价");
         return -3;
       }
-      if (memberPrice === -4) {
+      if (memberPriceRes === -4) {
         console.error(conPrefix + "促销票数低于订单票数，不再进行报价");
         return -4;
       }
-      if (!memberPrice) {
+      if (!memberPriceRes) {
         console.warn(
           conPrefix + "最小加价规则获取会员价失败,返回最小固定报价规则",
           mixFixedAmountRule
         );
         return mixFixedAmountRule;
       }
+      let memberPrice = memberPriceRes.memberPrice;
       // 会员价
       mixAddAmountRule.memberPrice = memberPrice;
+      mixAddAmountRule.real_member_price = memberPriceRes.real_member_price;
       // 会员最终报价
       memberPrice = Number(memberPrice) + Number(mixAddAmountRule.addAmount);
       // 会员报价要求四舍五入取整
@@ -988,12 +991,22 @@ const getMemberPrice = async order => {
       cardList.sort((a, b) => a.card_discount - b.card_discount);
       // 按最低折扣取值报价
       let discount = cardList[0]?.card_discount;
-      return discount
+      let real_member_price = member_price;
+      let member_price = discount
         ? (Number(member_price) * discount) / 100
         : Number(member_price);
+      return {
+        real_member_price,
+        member_price
+      };
     } else {
       console.warn(conPrefix + "会员价未负，非会员价", nonmember_price);
-      if (nonmember_price) return Number(nonmember_price);
+      if (nonmember_price) {
+        return {
+          member_price: Number(nonmember_price),
+          real_member_price: nonmember_price
+        };
+      }
     }
   } catch (error) {
     console.error(conPrefix + "获取会员价异常", error);
