@@ -813,6 +813,17 @@ class OrderAutoTicketQueue {
       }
       let pay_money = Number(priceInfo.total_price) + ""; // 此处是为了将订单价格30.00转为30，将0.00转为0
       console.log(conPrefix + "订单最后价格", pay_money, priceInfo);
+      if (offerRule.offer_type === "1" && pay_money !== "0") {
+        this.setErrInfo("用券计算订单价格后价格不为0，走转单");
+        const transferParams = await this.transferOrder(item, {
+          city_id,
+          cinema_id,
+          show_id,
+          start_day,
+          start_time
+        });
+        return { offerRule, transferParams };
+      }
       if (isTestOrder) {
         return { offerRule };
       }
