@@ -790,7 +790,11 @@ class OrderAutoTicketQueue {
             "走转单逻辑"
           );
           if (!this.errMsg) {
-            this.setErrInfo("使用优惠券或会员卡后计算订单价格失败");
+            this.setErrInfo("使用优惠券或会员卡后计算订单价格失败", {
+              cardCalcFail,
+              calcFail,
+              priceInfo
+            });
           }
           // 后续要记录失败列表（订单信息、失败原因、时间戳）
           const transferParams = await this.transferOrder(item, {
@@ -1504,7 +1508,7 @@ class OrderAutoTicketQueue {
       let list = res.data.list || [];
       // let noUseLIst = ['1598162363509715', '1055968062906716', '1284460567801315', '1116166666409614']
       // 过滤掉不可用券
-      list = list.filter(item => item.coupon_num.indexOf("t") !== -1);
+      // list = list.filter(item => item.coupon_num.indexOf("t") === -1);
       return list;
     } catch (error) {
       console.error(conPrefix + "获取优惠券列表异常", error);
