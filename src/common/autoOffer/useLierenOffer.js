@@ -994,7 +994,7 @@ const getMemberPrice = async order => {
       // 按最低折扣取值报价
       let discount = cardList[0]?.card_discount;
       let real_member_price = member_price;
-      let member_price = discount
+      member_price = discount
         ? (Number(member_price) * discount) / 100
         : Number(member_price);
       return {
