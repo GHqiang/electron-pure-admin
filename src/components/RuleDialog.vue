@@ -22,6 +22,7 @@
             placeholder="订单来源"
             clearable
             required
+            multiple
           >
             <el-option
               v-for="(keyValue, keyName) in orderFormObj"
@@ -433,7 +434,7 @@ const shadowLineObj = APP_LIST;
 let formData = reactive({
   id: "",
   ruleName: "", // 规则名称
-  orderForm: "lieren", // 订单来源
+  orderForm: [], // 订单来源
   shadowLineName: "sfc", // 影线名称
   includeCityNames: [], // 包含城市
   excludeCityNames: [], // 排除城市
@@ -504,7 +505,7 @@ const resetForm = el => {
   if (el !== 1) {
     formData.id = ""; // 规则id
     formData.ruleName = ""; // 规则名称
-    formData.orderForm = ""; // 订单来源
+    formData.orderForm = []; // 订单来源
     formData.shadowLineName = ""; // 影线
   }
   formData.includeCityNames = []; // 包含城市
@@ -549,7 +550,7 @@ const open = async ruleInfo => {
       if (formInfo.id !== undefined) {
         formData.id = formInfo.id;
         formData.ruleName = formInfo.ruleName;
-        formData.orderForm = formInfo.orderForm;
+        formData.orderForm = formInfo.orderForm.split(",");
         formData.shadowLineName = formInfo.shadowLineName;
         formData.ruleStartTime = formInfo.ruleStartTime;
         formData.ruleEndTime = formInfo.ruleEndTime;

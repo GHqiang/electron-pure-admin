@@ -159,7 +159,7 @@
       <el-table-column prop="ruleName" fixed label="规则名称" width="110" />
       <el-table-column prop="orderForm" fixed label="订单来源" width="85">
         <template #default="scope">
-          <span>{{ orderFormObj[scope.row.orderForm] }}</span>
+          <span>{{ formatPlatName(scope.row.orderForm) }}</span>
         </template>
       </el-table-column>
       <el-table-column prop="shadowLineName" fixed label="影线名称" width="85">
@@ -339,6 +339,15 @@ const setLocalRuleList = async () => {
     console.warn("查询规则列表时设置本地规则数据异常", error);
   }
 };
+
+// 格式化订单来源
+const formatPlatName = orderForm => {
+  return orderForm
+    .split(",")
+    .map(item => ORDER_FORM[item])
+    .join();
+};
+
 // 搜索数据
 const searchData = async () => {
   const loading = ElLoading.service({
@@ -429,6 +438,7 @@ const saveRule = async ruleInfo => {
     ruleInfo.excludeFilmNames = JSON.stringify(ruleInfo.excludeFilmNames);
     ruleInfo.weekDay = JSON.stringify(ruleInfo.weekDay);
     ruleInfo.update_time = getCurrentFormattedDateTime();
+    ruleInfo.orderForm = ruleInfo.orderForm.join();
     if (ruleInfo.id) {
       console.log("编辑保存规则", ruleInfo);
       await svApi.updateRuleRecord(ruleInfo);

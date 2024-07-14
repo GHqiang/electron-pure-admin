@@ -28,7 +28,9 @@ const dataTableStore = useDataTableStore();
 
 // 使用computed确保items响应式
 const appOfferRuleList = computed(() =>
-  dataTableStore.items.filter(item => item.orderForm === "lieren")
+  dataTableStore.items.filter(item =>
+    item.orderForm.split(",").includes("lieren")
+  )
 );
 
 let conPrefix = "【猎人自动报价】——"; // console打印前缀
