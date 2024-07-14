@@ -776,7 +776,13 @@ class OrderAutoTicketQueue {
         quan_code,
         session_id
       });
-      if (!priceInfo) {
+      let calcFail = !priceInfo;
+      let cardCalcFail =
+        priceInfo &&
+        offerRule.offer_type !== "1" &&
+        Number(priceInfo.total_price) >
+          Number(offerRule.real_member_price) * Number(ticket_num);
+      if (calcFail || cardCalcFail) {
         if (this.currentParamsInx === this.currentParamsList.length - 1) {
           console.error(
             conPrefix +
@@ -823,24 +829,25 @@ class OrderAutoTicketQueue {
           start_time
         });
         return { offerRule, transferParams };
-      } else if (offerRule.offer_type !== "1") {
-        let real_member_price = offerRule.real_member_price;
-        if (pay_money > Number(real_member_price) * Number(ticket_num)) {
-          this.setErrInfo("用卡计算订单价格后价格大于真实会员价*票数，走转单", {
-            pay_money,
-            real_member_price,
-            ticket_num
-          });
-          const transferParams = await this.transferOrder(item, {
-            city_id,
-            cinema_id,
-            show_id,
-            start_day,
-            start_time
-          });
-          return { offerRule, transferParams };
-        }
       }
+      // else if (offerRule.offer_type !== "1") {
+      //   let real_member_price = offerRule.real_member_price;
+      //   if (pay_money > Number(real_member_price) * Number(ticket_num)) {
+      //     this.setErrInfo("用卡计算订单价格后价格大于真实会员价*票数，走转单", {
+      //       pay_money,
+      //       real_member_price,
+      //       ticket_num
+      //     });
+      //     const transferParams = await this.transferOrder(item, {
+      //       city_id,
+      //       cinema_id,
+      //       show_id,
+      //       start_day,
+      //       start_time
+      //     });
+      //     return { offerRule, transferParams };
+      //   }
+      // }
       if (isTestOrder) {
         return { offerRule };
       }
