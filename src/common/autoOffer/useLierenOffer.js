@@ -877,7 +877,7 @@ const getMinAmountOfferRule = async (ruleList, order) => {
         );
         return mixFixedAmountRule;
       }
-      let memberPrice = memberPriceRes.memberPrice;
+      let memberPrice = memberPriceRes.member_price;
       // 会员价
       mixAddAmountRule.memberPrice = memberPrice;
       mixAddAmountRule.real_member_price = memberPriceRes.real_member_price;
@@ -964,7 +964,10 @@ const getMemberPrice = async order => {
           conPrefix + "座位类型区分，取最高的价格座位会员价格",
           bigPrice
         );
-        return Number(bigPrice);
+        return {
+          member_price: Number(bigPrice),
+          real_member_price: Number(bigPrice)
+        };
       }
     }
     console.log(conPrefix + "获取会员价", member_price);
@@ -995,7 +998,7 @@ const getMemberPrice = async order => {
       cardList.sort((a, b) => a.card_discount - b.card_discount);
       // 按最低折扣取值报价
       let discount = cardList[0]?.card_discount;
-      let real_member_price = member_price;
+      let real_member_price = Number(member_price);
       member_price = discount
         ? (Number(member_price) * discount) / 100
         : Number(member_price);
@@ -1008,7 +1011,7 @@ const getMemberPrice = async order => {
       if (nonmember_price) {
         return {
           member_price: Number(nonmember_price),
-          real_member_price: nonmember_price
+          real_member_price: Number(nonmember_price)
         };
       }
     }
