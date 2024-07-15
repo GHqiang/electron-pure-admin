@@ -22,6 +22,25 @@ function getCurrentFormattedDateTime(sjc) {
   return formattedDateTime;
 }
 
+/**
+ * 获取当前时间的格式化字符串
+ * 无参数
+ * @return {string} 返回格式为 "HH:MM:SS" 的字符串
+ */
+function getCurrentTime(sjc) {
+  const now = !sjc ? new Date() : new Date(sjc);
+
+  // 获取小时、分钟、秒
+  const hours = ("0" + now.getHours()).slice(-2);
+  const minutes = ("0" + now.getMinutes()).slice(-2);
+  const seconds = ("0" + now.getSeconds()).slice(-2);
+
+  // 组合成所需格式
+  const formattedDateTime = `${hours}:${minutes}:${seconds}`;
+
+  return formattedDateTime;
+}
+
 function getFormattedDateTime(sjc) {
   const now = new Date(sjc);
 
@@ -540,6 +559,7 @@ class CustomConsole {
 }
 export {
   getCurrentFormattedDateTime,
+  getCurrentTime,
   exportExcel,
   getFormattedDateTime,
   findBestMatchByLevenshtein,
