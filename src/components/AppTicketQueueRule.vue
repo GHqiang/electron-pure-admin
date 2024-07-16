@@ -157,8 +157,11 @@ const shadowLineObj = APP_LIST;
 // 是否展开
 const isCollapse = ref(true);
 // 是否自动转单
-const isAutoTransfer = ref(true);
-window.localStorage.setItem("isAutoTransfer", 1);
+let isOpen = localStorage.getItem("isAutoTransfer") == 1;
+const isAutoTransfer = ref(isOpen ? true : false);
+if (isOpen) {
+  window.localStorage.setItem("isAutoTransfer", 1);
+}
 watch(isAutoTransfer, (newVal, oldVal) => {
   console.log(`isAutoTransfer 的值从 '${oldVal}' 变为 '${newVal}'`);
   window.localStorage.setItem("isAutoTransfer", newVal ? "1" : "0");

@@ -976,6 +976,10 @@ const getMemberPrice = async order => {
         app_name: appName
       });
       let list = cardRes.data.cardList || [];
+      list = list.map(item => ({
+        ...item,
+        daily_usage: item.daily_usage || 0
+      }));
       // console.log("list", list);
       let cardList = list.filter(item =>
         !item.use_limit_day
@@ -984,7 +988,7 @@ const getMemberPrice = async order => {
       );
       if (!cardList.length) {
         console.error(conPrefix + "影院单卡出票限制,不再进行报价");
-        this.setErrInfo("影院单卡出票限制，不再进行报价", {
+        setErrInfo("影院单卡出票限制，不再进行报价", {
           list,
           ticket_num
         });
