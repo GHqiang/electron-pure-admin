@@ -959,27 +959,26 @@ class OrderAutoTicketQueue {
         return { offerRule, transferParams };
       }
       // this.operaLog += `${getCurrentTime()}：订单购买成功;\n`;
-      // 9、支付订单
-      const qrcode = await this.payOrder({ city_id, cinema_id, order_num });
-      if (!qrcode) {
-        console.error(conPrefix + "获取订单结果失败，单个订单直接出票结束");
-        this.setErrInfo("获取订单支付结果，取票码不存在", qrcode);
-        return { offerRule };
-      }
-      // this.operaLog += `${getCurrentTime()}：订单支付成功;\n`;
-      // 10、提交取票码
-      const submitRes = await this.submitTicketCode({
+      // 最后处理：获取支付结果上传取票码
+      const lastRes = await this.lastHandle({
+        city_id,
+        cinema_id,
+        order_num,
         order_id,
-        qrcode
+        app_name: appFlag,
+        card_id,
+        order_number,
+        session_id: this.currentParamsList[this.currentParamsInx].session_id
       });
-      if (!submitRes) {
-        console.error(conPrefix + "订单提交取票码失败，单个订单直接出票结束");
-        this.setErrInfo("订单提交取票码失败");
-        return { offerRule };
-      }
-      // this.operaLog += `${getCurrentTime()}：提交取票码成功;\n`;
-      console.log(conPrefix + "一键买票完成", qrcode);
-      return { profit, submitRes, qrcode, quan_code, card_id, offerRule };
+      console.log(conPrefix + "一键买票完成");
+      return {
+        profit,
+        qrcode: lastRes?.qrcode,
+        submitRes: lastRes?.submitRes,
+        quan_code,
+        card_id,
+        offerRule
+      };
     } catch (error) {
       console.error(conPrefix + "一键买票异常", error);
       this.setErrInfo("一键买票异常", error);
@@ -1336,9 +1335,7 @@ class OrderAutoTicketQueue {
   async payOrder(data) {
     const { conPrefix } = this;
     try {
-      let { city_id, cinema_id, order_num } = data || {};
-      let currentParams = this.currentParamsList[this.currentParamsInx];
-      const { session_id } = currentParams;
+      let { city_id, cinema_id, order_num, session_id } = data || {};
       let params = {
         city_id,
         cinema_id,
@@ -1361,8 +1358,6 @@ class OrderAutoTicketQueue {
   async submitTicketCode({ order_id, qrcode }) {
     const { conPrefix } = this;
     try {
-      let currentParams = this.currentParamsList[this.currentParamsInx];
-      const { session_id } = currentParams;
       let params = {
         // order_id: id || 5548629,
         // qupiao2: "[{\"result\":\"2024031154980669\",\"yzm\":\"\"}]"
@@ -1372,8 +1367,7 @@ class OrderAutoTicketQueue {
             result: qrcode.split("|")[0],
             yzm: qrcode.split("|")?.[1] || ""
           }
-        ]),
-        session_id
+        ])
       };
       console.log(conPrefix + "提交出票码参数", params);
       const res = await lierenApi.submitTicketCode(params);
@@ -1416,6 +1410,125 @@ class OrderAutoTicketQueue {
         }
       }, delayTime * 1000);
     });
+  }
+
+  async lastHandle({
+    city_id,
+    cinema_id,
+    order_num,
+    order_id,
+    app_name,
+    card_id,
+    order_number,
+    session_id
+  }) {
+    try {
+      // 9、获取订单结果
+      const qrcode = await this.payOrder({
+        city_id,
+        cinema_id,
+        order_num,
+        session_id
+      });
+      if (!qrcode) {
+        console.error(conPrefix + "获取订单结果失败，单个订单直接出票结束");
+        this.setErrInfo("获取订单支付结果，取票码不存在", qrcode);
+        // 异步轮训处理3分钟，没10秒重试一次
+        const fun = async ({
+          city_id,
+          cinema_id,
+          order_num,
+          session_id,
+          order_id,
+          app_name,
+          card_id,
+          order_number
+        }) => {
+          const qrcode = await this.trial(
+            () =>
+              this.payOrder({
+                city_id,
+                cinema_id,
+                order_num,
+                session_id
+              }),
+            18,
+            10
+          );
+          await this.submitQrcode({
+            order_id,
+            qrcode,
+            app_name,
+            card_id,
+            order_number,
+            flag: 2
+          });
+        };
+        fun({
+          city_id,
+          cinema_id,
+          order_num,
+          session_id,
+          order_id,
+          app_name,
+          card_id,
+          order_number
+        });
+        return;
+      }
+      // this.operaLog += `${getCurrentTime()}：订单支付成功;\n`;
+      const submitRes = await this.submitQrcode({
+        order_id,
+        qrcode,
+        app_name,
+        card_id,
+        order_number,
+        flag: 1
+      });
+      // this.operaLog += `${getCurrentTime()}：提交取票码成功;\n`;
+      return { submitRes, qrcode };
+    } catch (error) {
+      console.warn("出票最后处理异常", error);
+      this.setErrInfo("出票最后处理异常", error);
+    }
+  }
+  async submitQrcode({
+    order_id,
+    qrcode,
+    app_name,
+    card_id,
+    order_number,
+    flag
+  }) {
+    try {
+      // 10、提交取票码
+      const submitRes = await this.submitTicketCode({
+        order_id,
+        qrcode
+      });
+      if (!submitRes) {
+        console.error(conPrefix + "订单提交取票码失败，单个订单直接出票结束");
+        this.setErrInfo("订单提交取票码失败");
+        return;
+      }
+      if (flag !== "1") {
+        // 更新单卡使用量
+        svApi.updateDayUsage({
+          app_name,
+          card_id
+        });
+        // 更新出票结果
+        svApi.updateTicketRecord({
+          order_number,
+          qrcode,
+          order_status: "1"
+        });
+      }
+      return submitRes;
+    } catch (error) {
+      console.warn("提交取票码异常", error);
+      this.setErrInfo("提交取票码异常", error);
+    }
   }
 
   // 根据订单name获取影院id
