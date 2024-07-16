@@ -22,6 +22,20 @@ function getCurrentFormattedDateTime(sjc) {
   return formattedDateTime;
 }
 
+function getCurrentDay(sjc) {
+  const now = !sjc ? new Date() : new Date(sjc);
+
+  // 获取年、月、日、小时、分钟、秒
+  const year = now.getFullYear();
+  const month = ("0" + (now.getMonth() + 1)).slice(-2); // 月份数字是从0开始的，所以需要加1
+  const date = ("0" + now.getDate()).slice(-2);
+
+  // 组合成所需格式
+  const formattedDateTime = `${year}-${month}-${date}`;
+
+  return formattedDateTime;
+}
+
 /**
  * 获取当前时间的格式化字符串
  * 无参数
@@ -559,6 +573,7 @@ class CustomConsole {
 }
 export {
   getCurrentFormattedDateTime,
+  getCurrentDay,
   getCurrentTime,
   exportExcel,
   getFormattedDateTime,

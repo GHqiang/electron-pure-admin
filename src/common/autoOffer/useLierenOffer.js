@@ -3,6 +3,7 @@ import {
   isTimeAfter,
   getCinemaFlag,
   getCurrentFormattedDateTime,
+  getCurrentDay,
   convertFullwidthToHalfwidth,
   cinemNameSpecial
 } from "@/utils/utils";
@@ -978,7 +979,8 @@ const getMemberPrice = async order => {
       let list = cardRes.data.cardList || [];
       list = list.map(item => ({
         ...item,
-        daily_usage: item.daily_usage || 0
+        daily_usage:
+          item.usage_date !== getCurrentDay() ? 0 : item.daily_usage || 0
       }));
       // console.log("list", list);
       let cardList = list.filter(item =>
