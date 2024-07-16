@@ -815,7 +815,8 @@ class OrderAutoTicketQueue {
         priceInfo &&
         offerRule.offer_type !== "1" &&
         Number(priceInfo.total_price) >
-          Number(offerRule.real_member_price) * Number(ticket_num);
+          (Number(offerRule.real_member_price) * Number(ticket_num) * 100) /
+            100;
       if (calcFail || cardCalcFail) {
         if (this.currentParamsInx === this.currentParamsList.length - 1) {
           console.error(
@@ -854,9 +855,9 @@ class OrderAutoTicketQueue {
           });
         }
       }
-      let pay_money = Number(priceInfo.total_price) + ""; // 此处是为了将订单价格30.00转为30，将0.00转为0
+      let pay_money = Number(priceInfo.total_price); // 此处是为了将订单价格30.00转为30，将0.00转为0
       console.log(conPrefix + "订单最后价格", pay_money, priceInfo);
-      if (offerRule.offer_type === "1" && pay_money !== "0") {
+      if (offerRule.offer_type === "1" && pay_money !== 0) {
         this.setErrInfo("用券计算订单价格后价格不为0，走转单");
         const transferParams = await this.transferOrder(item, {
           city_id,
@@ -962,7 +963,7 @@ class OrderAutoTicketQueue {
       const qrcode = await this.payOrder({ city_id, cinema_id, order_num });
       if (!qrcode) {
         console.error(conPrefix + "获取订单结果失败，单个订单直接出票结束");
-        // 后续要记录失败列表（订单信息、失败原因、时间戳）
+        this.setErrInfo("获取订单支付结果，取票码不存在", qrcode);
         return { offerRule };
       }
       // this.operaLog += `${getCurrentTime()}：订单支付成功;\n`;
@@ -973,7 +974,7 @@ class OrderAutoTicketQueue {
       });
       if (!submitRes) {
         console.error(conPrefix + "订单提交取票码失败，单个订单直接出票结束");
-        // 后续要记录失败列表（订单信息、失败原因、时间戳）
+        this.setErrInfo("订单提交取票码失败");
         return { offerRule };
       }
       // this.operaLog += `${getCurrentTime()}：提交取票码成功;\n`;
@@ -1136,7 +1137,7 @@ class OrderAutoTicketQueue {
           session_id
         });
         // 2、使用会员卡
-        let member_total_price = member_price * ticket_num;
+        let member_total_price = (member_price * ticket_num * 100) / 100;
         const { card_id, profit } = await this.useCard({
           member_total_price,
           cardList,
@@ -1331,7 +1332,7 @@ class OrderAutoTicketQueue {
     }
   }
 
-  // 支付订单并返回购票信息
+  // 获取购票信息
   async payOrder(data) {
     const { conPrefix } = this;
     try {
