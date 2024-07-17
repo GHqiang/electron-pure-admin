@@ -962,6 +962,11 @@ class OrderAutoTicketQueue {
       if (isTestOrder) {
         return { offerRule };
       }
+      // 订单价格计算成功清除原先关于订单价格异常的错误信息
+      if (this.errMsg.includes("计算订单价格异常")) {
+        this.errMsg = "";
+        this.errInfo = "";
+      }
       // this.operaLog += `${getCurrentTime()}：创建订单前计算订单价格成功;\n`;
       // 7、创建订单
       const order_num = await this.createOrder({
