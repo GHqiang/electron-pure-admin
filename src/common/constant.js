@@ -1,7 +1,7 @@
 // 订单来源，即平台
 const ORDER_FORM = {
   lieren: "猎人",
-  shengapp: "省APP"
+  sheng: "省APP"
 };
 // 影院列表
 const APP_LIST = {
@@ -106,7 +106,7 @@ const PLAT_LINK_APP = {
     "shth",
     "lumiai"
   ],
-  shengapp: ["sfc", "lumiai"]
+  sheng: ["sfc", "lumiai"]
 };
 
 // sfc特殊影院集合

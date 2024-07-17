@@ -121,6 +121,8 @@ import { ElMessageBox, ElMessage } from "element-plus";
 import svApi from "@/api/sv-api";
 import { usePlatFetchOrderStore } from "@/store/platOfferRuleTable";
 import lierenFetchOrder from "@/common/orderFetch/lierenFetchOrder";
+import shengFetchOrder from "@/common/orderFetch/shengFetchOrder";
+
 import { ORDER_FORM } from "@/common/constant.js";
 import { getCurrentFormattedDateTime } from "@/utils/utils";
 const tableDataStore = usePlatFetchOrderStore();
@@ -162,9 +164,12 @@ const oneClickAutoOffer = () => {
       console.warn("一键启动订单自动获取队列");
       tableDataStore.items.forEach(item => {
         // console.log("item", item, item.platName);
-        item.isEnabled = true;
+        tableDataStore.toggleEnable(item.id);
         if (item.platName === "lieren") {
           lierenFetchOrder.start();
+        }
+        if (platName === "sheng") {
+          shengFetchOrder.start();
         }
       });
       svApi.updateUser({
@@ -201,6 +206,10 @@ const singleStartOrStop = ({ id, platName }, flag) => {
     if (platName === "lieren") {
       tableDataStore.toggleEnable(id);
       lierenFetchOrder.start();
+    }
+    if (platName === "sheng") {
+      tableDataStore.toggleEnable(id);
+      shengFetchOrder.start();
     }
   } else {
     tableDataStore.toggleEnable(id);

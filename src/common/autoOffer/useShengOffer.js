@@ -137,7 +137,6 @@ class OrderAutoOfferQueue {
       const stayList = await getStayOfferList();
       // console.log("stayList", stayList);
       if (!stayList?.length) return [];
-      const sfcIDList = [];
       let sfcStayOfferlist = stayList
         .map(item => {
           const {
@@ -148,6 +147,7 @@ class OrderAutoOfferQueue {
             priceNew, // 当前报价
             detail,
             order,
+            seatInfo,
             priceAuto, // 自动报价价格
             orderCode
           } = item;
@@ -159,7 +159,7 @@ class OrderAutoOfferQueue {
           // orderCode  订单code  string
           const {
             quantity,
-            sourceData: { show, film, cinema, label, seats }
+            sourceData: { show, film, cinema, label }
           } = detail;
           // quantity   座位数    integer
 
@@ -186,7 +186,7 @@ class OrderAutoOfferQueue {
                 : "其它自动",
             cinema_code: cinema.cinemaId, // 影院id
             order_number: orderCode,
-            seats // 座位信息
+            seats: seatInfo // 座位信息
           };
         })
         .filter(item => getCinemaFlag(item))
@@ -387,9 +387,10 @@ const setErrInfo = (err_msg, err_info) => {
 // 获取报价记录
 const getOfferList = async () => {
   try {
+    // 后面优化
     const res = await svApi.queryOfferList({
       user_id: tokens.userInfo.user_id,
-      plat_name: "sheng",
+      // plat_name: "sheng",
       page_num: 1,
       page_size: 100
     });
@@ -478,10 +479,13 @@ async function singleOffer(item) {
     let params = {
       supplierCode: "ccf7b11cdc944cf1940a149cff4243f9", // 供应商号
       orderCode: item.order_number,
-      seatInfo: item.seats.map(item => ({
-        seatId: item.seatId,
-        supplierPrice: price
-      }))
+      // 暂时先减1测试
+      seatInfo: JSON.stringify(
+        item.seats.map(item => ({
+          seatId: item.seatId,
+          supplierPrice: price - 1
+        }))
+      )
     };
     console.log(conPrefix + "订单报价参数", params);
     if (isTestOrder) {

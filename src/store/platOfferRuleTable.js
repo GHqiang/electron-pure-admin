@@ -13,7 +13,7 @@ if (platQueueRule) {
 // 平台自动报价
 export const usePlatTableDataStore = defineStore("platforms", {
   state: () => ({
-    items: [
+    items: platQueueRule || [
       {
         id: 1,
         platName: "lieren",
@@ -75,20 +75,20 @@ export const usePlatTableDataStore = defineStore("platforms", {
 });
 
 // 每次优先从localStorage里获取
-// let platFetchOrderQueueRule = window.localStorage.getItem(
-//   "platFetchOrderQueueRule"
-// );
-// if (platFetchOrderQueueRule) {
-//   platFetchOrderQueueRule = JSON.parse(platFetchOrderQueueRule);
-//   platFetchOrderQueueRule = platFetchOrderQueueRule.map(item => ({
-//     ...item,
-//     isEnabled: false
-//   }));
-// }
+let platFetchOrderQueueRule = window.localStorage.getItem(
+  "platFetchOrderQueueRule"
+);
+if (platFetchOrderQueueRule) {
+  platFetchOrderQueueRule = JSON.parse(platFetchOrderQueueRule);
+  platFetchOrderQueueRule = platFetchOrderQueueRule.map(item => ({
+    ...item,
+    isEnabled: false
+  }));
+}
 // 平台自动获取订单
 export const usePlatFetchOrderStore = defineStore("platFetchOrderQueue", {
   state: () => ({
-    items: [
+    items: platFetchOrderQueueRule || [
       {
         id: 1,
         platName: "lieren",
