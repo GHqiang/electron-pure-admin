@@ -605,6 +605,7 @@ class OrderAutoTicketQueue {
         supplier_end_price,
         rewards,
         supplierCode,
+        platName,
         otherParams
       } = item;
       // otherParams主要是为了换号出票时不用再走之前流程
@@ -1047,6 +1048,7 @@ class OrderAutoTicketQueue {
         card_id,
         order_number,
         supplierCode,
+        platName,
         session_id: this.currentParamsList[this.currentParamsInx].session_id
       });
       console.log(conPrefix + "一键买票完成");
@@ -1434,7 +1436,13 @@ class OrderAutoTicketQueue {
   }
 
   // 提交出票码
-  async submitTicketCode({ order_id, qrcode, order_number, supplierCode }) {
+  async submitTicketCode({
+    platName,
+    order_id,
+    qrcode,
+    order_number,
+    supplierCode
+  }) {
     const { conPrefix } = this;
     try {
       let params;
@@ -1516,6 +1524,7 @@ class OrderAutoTicketQueue {
     card_id,
     order_number,
     supplierCode,
+    platName,
     session_id
   }) {
     const { conPrefix } = this;
@@ -1539,6 +1548,7 @@ class OrderAutoTicketQueue {
           order_id,
           app_name,
           card_id,
+          platName,
           order_number
         }) => {
           const qrcode = await this.trial(
@@ -1559,6 +1569,7 @@ class OrderAutoTicketQueue {
             card_id,
             order_number,
             supplierCode,
+            platName,
             flag: 2
           });
         };
@@ -1570,6 +1581,7 @@ class OrderAutoTicketQueue {
           order_id,
           app_name,
           card_id,
+          platName,
           order_number
         });
         return;
@@ -1582,6 +1594,7 @@ class OrderAutoTicketQueue {
         card_id,
         order_number,
         supplierCode,
+        platName,
         flag: 1
       });
       // this.operaLog += `${getCurrentTime()}：提交取票码成功;\n`;
@@ -1598,12 +1611,14 @@ class OrderAutoTicketQueue {
     card_id,
     order_number,
     supplierCode,
+    platName,
     flag
   }) {
     const { conPrefix } = this;
     try {
       // 10、提交取票码
       const submitRes = await this.submitTicketCode({
+        platName,
         order_id,
         qrcode,
         order_number,
