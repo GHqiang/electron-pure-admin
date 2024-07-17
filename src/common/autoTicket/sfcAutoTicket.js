@@ -1629,17 +1629,20 @@ class OrderAutoTicketQueue {
         this.setErrInfo("订单提交取票码失败");
         return;
       }
-      if (flag !== "1") {
-        // 更新单卡使用量
-        svApi.updateDayUsage({
-          app_name,
-          card_id
-        });
+      if (flag !== 1) {
+        if (card_id) {
+          // 更新单卡使用量
+          svApi.updateDayUsage({
+            app_name,
+            card_id
+          });
+        }
         // 更新出票结果
         svApi.updateTicketRecord({
           order_number,
           qrcode,
-          order_status: "1"
+          order_status: "1",
+          err_msg: "系统延迟后轮询获取提交取票码成功"
         });
       }
       return submitRes;
