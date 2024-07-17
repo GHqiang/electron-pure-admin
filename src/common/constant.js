@@ -52,6 +52,10 @@ const APP_LIST = {
   shjy: "上海巨影",
   tjlq: "天津乐奇",
   shth: "上海太禾",
+  szyl: "苏州永乐",
+  xyfsy: "新业坊上影",
+  cszykd: "长沙中影凯德",
+  cszyyzx: "长沙中影壹中心",
   qina: "齐纳国际"
 };
 // 平台关联应用
@@ -104,6 +108,10 @@ const PLAT_LINK_APP = {
     "shjy",
     "tjlq",
     "shth",
+    "szyl",
+    "xyfsy",
+    "cszykd",
+    "cszyyzx",
     "lumiai"
   ],
   sheng: ["sfc", "lumiai"]
@@ -489,6 +497,27 @@ const HFBDDD_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "丁丁影城百大奥莱店"
   }
 ];
+// 苏州永乐特殊影院集合
+const SZYL_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: "永乐国际影城",
+    sfc_cinema_name: "苏州永乐国际影城"
+  }
+];
+// 新业坊上影特殊影院集合
+const XXFSY_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: "SFC上影国际影城(新业坊店)",
+    sfc_cinema_name: "SFC上影国际影城新业坊店"
+  }
+];
+// 长沙中影壹中心特殊影院集合
+const CSZYYZX_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: "中影国际影城（中国巨幕凯德壹中心店）",
+    sfc_cinema_name: "长沙中影国际影城（凯德壹中心店）"
+  }
+];
 
 // 特殊的名字匹配集合
 const SPECIAL_CINEMA_OBJ = {
@@ -539,6 +568,10 @@ const SPECIAL_CINEMA_OBJ = {
   shjy: SHJY_SPECIAL_CINEMA_LIST,
   tjlq: TJLQ_SPECIAL_CINEMA_LIST,
   shth: SHTH_SPECIAL_CINEMA_LIST,
+  szyl: SZYL_SPECIAL_CINEMA_LIST,
+  xyfsy: XXFSY_SPECIAL_CINEMA_LIST,
+  cszykd: [],
+  cszyyzx: CSZYYZX_SPECIAL_CINEMA_LIST,
   qina: QINA_SPECIAL_CINEMA_LIST
 };
 
@@ -591,6 +624,10 @@ const TICKET_CONPREFIX_OBJ = {
   shjy: "【上海巨影自动出票】——",
   tjlq: "【天津乐奇自动出票】——",
   shth: "【上海太禾自动出票】——",
+  szyl: "【苏州永乐自动出票】——",
+  xyfsy: "【新业坊上影自动出票】——",
+  cszykd: "【长沙中影凯德自动出票】——",
+  cszyyzx: "【长沙中影壹中心自动出票】——",
   qina: "【齐纳国际自动出票】——"
 };
 
@@ -643,6 +680,10 @@ const APP_OPENID_OBJ = {
   shjy: "oME2H5IYbp1zs5Vu_ySCoWA4w-MA",
   tjlq: "o3Eav4jNPOqQF9UAfd83UXgMnwxE",
   shth: "os4vr4k5lf2ZumgE-YcDACUVF3mY",
+  szyl: "on0L74gstiyCUfnWgwNt5NsCvjYE",
+  xyfsy: "okyGN62IVGBQpvqa4beaCs302oUE",
+  cszykd: "oK5yB5LS6D9H1pvdO6P8aSP0_ijQ",
+  cszyyzx: "o1ps25Y8zsCfmbp3etbugsnDaU_I",
   qina: "ouKdc5bCNh_0ygvtmniED-u9kIbA"
 };
 
@@ -695,6 +736,10 @@ const APP_GROUP_OBJ = {
   shjy: "20190",
   tjlq: "20400",
   shth: "20074",
+  szyl: "20333",
+  xyfsy: "20674",
+  cszykd: "20679",
+  cszyyzx: "20681",
   qina: "20004"
 };
 

@@ -491,6 +491,28 @@ const getCinemaFlag = item => {
     ["上海"].includes(city_name)
   ) {
     return "shth";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("永乐国际影城") &&
+    ["苏州"].includes(city_name)
+  ) {
+    return "szyl";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("SFC上影国际影城(新业坊店)") &&
+    ["上海"].includes(city_name)
+  ) {
+    return "xyfsy";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("长沙中影国际影城（凯德广场店）") &&
+    ["长沙"].includes(city_name)
+  ) {
+    return "cszykd";
+  } else if (
+    cinemNameSpecial(cinema_name).includes(
+      "中影国际影城（中国巨幕凯德壹中心店）"
+    ) &&
+    ["长沙"].includes(city_name)
+  ) {
+    return "cszyyzx";
   }
 };
 
