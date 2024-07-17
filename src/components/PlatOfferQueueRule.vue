@@ -66,7 +66,7 @@
     </el-table-column>
     <el-table-column label="操作" width="270">
       <template #default="{ row, $index }">
-        <!-- <el-popconfirm
+        <el-popconfirm
           v-if="!row.isEnabled && row.id !== editingRowId"
           title="确定启动吗？"
           @confirm="singleStartOrStop(row, 1)"
@@ -74,7 +74,7 @@
           <template #reference>
             <el-button size="small" type="success">启动</el-button>
           </template>
-        </el-popconfirm> -->
+        </el-popconfirm>
 
         <el-popconfirm
           v-if="row.isEnabled"
@@ -130,7 +130,6 @@
 import { ref, computed, onBeforeMount } from "vue";
 import { ElMessageBox, ElMessage } from "element-plus";
 import svApi from "@/api/sv-api";
-import sApi from "@/api/sheng-api";
 import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
 import lierenOfferQueue from "@/common/autoOffer/useLierenOffer";
 import shengOfferQueue from "@/common/autoOffer/useShengOffer";
@@ -165,19 +164,6 @@ const editingRow = ref({});
 const appTokenObj = {};
 // 填充token及队列集合
 
-const test = async () => {
-  try {
-    const res = await sApi.queryStayOfferList({
-      supplierCode: "ccf7b11cdc944cf1940a149cff4243f9",
-      status: "0",
-      page: 1
-    });
-    console.log("查询待报价返回", res);
-  } catch (error) {
-    console.warn("查询待报价异常", error);
-  }
-};
-test();
 // 一键启动
 const oneClickAutoOffer = () => {
   let loginInfoList = getCinemaLoginInfoList();
@@ -210,6 +196,9 @@ const oneClickAutoOffer = () => {
             tableDataStore.toggleEnable(item.id);
             lierenOfferQueue.start(platToken);
           }
+        } else if (item.platName === "sheng") {
+          tableDataStore.toggleEnable(item.id);
+          shengOfferQueue.start();
         }
       });
       if (isStart) {
@@ -248,30 +237,12 @@ const stopAutoOffer = () => {
 const singleStartOrStop = ({ id, platToken, platName }, flag) => {
   // 单个启动
   if (flag === 1) {
-    const checkToken = PLAT_LINK_APP[platName];
-    const noTokenByApp = checkToken.filter(item => !appTokenObj[item]);
-    let noTokenByAppName = noTokenByApp.map(item => APP_LIST[item]);
-    if (noTokenByAppName.length) {
-      ElMessageBox.confirm(
-        noTokenByAppName.join("，") + " 未登录，确定仍要启动报价吗?",
-        "提示",
-        {
-          confirmButtonText: "确定",
-          cancelButtonText: "取消",
-          type: "warning",
-          showClose: false,
-          closeOnClickModal: false,
-          closeOnPressEscape: false
-        }
-      )
-        .then(() => {
-          tableDataStore.toggleEnable(id);
-          lierenOfferQueue.start(platToken);
-        })
-        .catch(() => {});
-    } else {
+    if (platName === "lieren" && platToken) {
       tableDataStore.toggleEnable(id);
       lierenOfferQueue.start(platToken);
+    } else if (platName === "sheng") {
+      tableDataStore.toggleEnable(id);
+      shengOfferQueue.start();
     }
   } else {
     // 单个停止

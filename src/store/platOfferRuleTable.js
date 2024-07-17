@@ -1,14 +1,15 @@
 import { defineStore } from "pinia";
 
 // 每次优先从localStorage里获取
-// let platQueueRule = window.localStorage.getItem("platQueueRule");
-// if (platQueueRule) {
-//   platQueueRule = JSON.parse(platQueueRule);
-//   platQueueRule = platQueueRule.map(item => ({
-//     ...item,
-//     isEnabled: false
-//   }));
-// }
+let platQueueRule = window.localStorage.getItem("platQueueRule");
+if (platQueueRule) {
+  platQueueRule = JSON.parse(platQueueRule);
+  platQueueRule = platQueueRule.map(item => ({
+    ...item,
+    platToken: "",
+    isEnabled: false
+  }));
+}
 // 平台自动报价
 export const usePlatTableDataStore = defineStore("platforms", {
   state: () => ({

@@ -38,23 +38,26 @@ const getOrginValue = value => JSON.parse(JSON.stringify(value));
 
 console.log(conPrefix + "队列执行规则", getOrginValue(platOfferRuleList.value));
 console.log(conPrefix + "自动报价规则", getOrginValue(appOfferRuleList.value));
-let socket = new WebSocket("ws://localhost:3000/ws"); // 与后端WebSocket服务地址对应
-let stayOfferList = []; // 待报价订单
-socket.addEventListener("open", () => {
-  console.log("WebSocket连接已建立");
-});
-socket.addEventListener("message", event => {
-  console.log("收到省平台推送待报价订单消息:", event.data);
-  try {
-    let data = JSON.parse(event.data);
-    if (stayOfferList.some(item => item.id !== data.id)) {
-      stayOfferList.push(data);
-    }
-  } catch (error) {}
-});
+// let socket = new WebSocket("ws://localhost:3000/ws"); // 与后端WebSocket服务地址对应
+// let stayOfferList = []; // 待报价订单
+// socket.addEventListener("open", () => {
+//   console.log("WebSocket连接已建立");
+// });
+// socket.addEventListener("message", event => {
+//   console.log("收到省平台推送待报价订单消息:", event.data);
+//   try {
+//     let data = JSON.parse(event.data);
+//     if (stayOfferList.some(item => item.id !== data.id)) {
+//       stayOfferList.push(data);
+//     }
+//   } catch (error) {}
+// });
 
 let errMsg = "";
 let errInfo = "";
+
+//是否是测试订单
+let isTestOrder = false;
 // 创建一个订单自动报价队列类
 class OrderAutoOfferQueue {
   constructor() {
@@ -66,7 +69,6 @@ class OrderAutoOfferQueue {
 
   // 启动队列（fetchDelay获取订单列表间隔，processDelay处理订单间隔）
   async start(platToken) {
-    tokens.setLierenPlatToken(platToken);
     // 设置队列为运行状态
     this.isRunning = true;
     this.handleSuccessOrderList = [];
@@ -107,7 +109,9 @@ class OrderAutoOfferQueue {
           const offerResult = await this.orderHandle(order, processDelay);
           // { res, offerRule } || { offerRule } || undefined
           // 添加订单处理记录
-          await this.addOrderHandleRecored(order, offerResult);
+          if (!isTestOrder) {
+            await this.addOrderHandleRecored(order, offerResult);
+          }
           console.warn(
             conPrefix + `单个订单自动报价${offerResult?.res ? "成功" : "失败"}`,
             order
@@ -131,8 +135,61 @@ class OrderAutoOfferQueue {
     try {
       await this.delay(fetchDelay);
       const stayList = await getStayOfferList();
+      // console.log("stayList", stayList);
       if (!stayList?.length) return [];
+      const sfcIDList = [];
       let sfcStayOfferlist = stayList
+        .map(item => {
+          const {
+            orderId,
+            id,
+            showPrice,
+            grabPrice,
+            priceNew, // 当前报价
+            detail,
+            order,
+            priceAuto, // 自动报价价格
+            orderCode
+          } = item;
+          // orderId    订单id    integer
+          // id         抢单id    integer
+          // grabPrice  最高限价  string
+          // showPrice  市场价    string
+          // grabPrice  最高限价  string
+          // orderCode  订单code  string
+          const {
+            quantity,
+            sourceData: { show, film, cinema, label, seats }
+          } = detail;
+          // quantity   座位数    integer
+
+          return {
+            plat_name: "sheng",
+            id: orderId,
+            tpp_price: showPrice,
+            supplier_max_price: Number(grabPrice),
+            city_name: film.cityName,
+            cinema_addr: film.address,
+            ticket_num: quantity,
+            cinema_name: film.cinemaName,
+            hall_name: show.hallName,
+            film_name: film.filmName,
+            film_img: film.imgUrl,
+            show_time: show.startTime,
+            rewards: 0, // 省无奖励，只有快捷
+            quick: order.quick, // true表示为快捷订单（需12分钟内完成发货），false表示为特惠订单（需45分钟内完成发货）
+            // cinema_group:
+            //   label?.[0]?.name === "SFC"
+            //     ? "上影上海"
+            //     : label?.[0]?.name || "其它自动",
+            cinema_group:
+              film.cinemaName.includes("SFC") &&
+              sfcIDList.includes(cinema.cinemaId),
+            cinema_code: cinema.cinemaId, // 影院id
+            order_number: orderCode,
+            seats // 座位信息
+          };
+        })
         .filter(item => getCinemaFlag(item))
         .map(item => {
           return {
@@ -361,40 +418,25 @@ const judgeHandle = (item, app_name, offerList) => {
   }
 };
 // 获取待报价订单列表
-async function getStayOfferList() {
+async function getStayOfferList(page, stayList = []) {
   try {
     // 获取一次清空一次
-    let list = stayOfferList.slice();
-    stayOfferList = [];
-    // list = [
-    //     {
-    //       id: 6129818,
-    //       tpp_price: "73.00",
-    //       supplier_max_price: 68,
-    //       city_name: "上海",
-    //       cinema_addr: "浦东新区张杨路501号10楼",
-    //       ticket_num: 1,
-    //       cinema_name: "SFC上影百联影城（八佰伴IMAX店）",
-    //       hall_name: "3号厅",
-    //       film_name: "哈尔的移动城堡",
-    //       film_img:
-    //         "https://gw.alicdn.com/tfscom/i2/O1CN01fKrbRb1dWnpE5V54I_!!6000000003744-0-alipicbeacon.jpg",
-    //       show_time: "2024-06-06 21:50:00",
-    //       section_at: 1717075740,
-    //       seat_flat: 0,
-    //       urgent: 0,
-    //       is_multi: 0,
-    //       seat_type: 0,
-    //       offer: null,
-    //       rewards: 1,
-    //       overdue: 0,
-    //       cinema_group: "上影上海",
-    //       cinema_code: "31124201",
-    //       group_urgent: 1,
-    //       order_number: "2024053021282879718",
-    //       sytime: 1717075788
-    //     }
-    //   ]
+    // let list = stayOfferList.slice();
+    // stayOfferList = [];
+
+    const res = await shengApi.queryStayOfferList({
+      supplierCode: "ccf7b11cdc944cf1940a149cff4243f9", // 供应商号
+      status: "0", // 0待报价订单，1已报价订单
+      page: page || 1 // 1页20条
+    });
+    let list = res.data.rows || [];
+    // let count = res.data.count || 1;
+    // stayList = [...stayList, ...list];
+    // if (list.length < 20) {
+    //   return stayList;
+    // } else {
+    //   return await getStayOfferList(count++, stayList);
+    // }
     console.log(conPrefix + "获取待报价列表返回", list);
     return list;
   } catch (error) {
@@ -435,10 +477,17 @@ async function singleOffer(item) {
     }
 
     let params = {
-      id: id,
-      price
+      supplierCode: "ccf7b11cdc944cf1940a149cff4243f9", // 供应商号
+      orderCode: item.order_number,
+      seatInfo: item.seats.map(item => ({
+        seatId: item.seatId,
+        supplierPrice: price
+      }))
     };
     console.log(conPrefix + "订单报价参数", params);
+    if (isTestOrder) {
+      return { offerRule };
+    }
     const res = await shengApi.submitOffer(params);
     console.log(conPrefix + "订单报价返回", res);
     return { res, offerRule };

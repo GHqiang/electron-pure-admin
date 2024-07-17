@@ -25,7 +25,8 @@ const transferOrder = params =>
   axios.post("/supplier/cancelSupplierOrder", params);
 
 // 中签订单查询
-const queryHitOrder = params => axios.post("/supplier/listGrabOrder", params);
+const stayTicketingList = params =>
+  axios.post("/supplier/listGrabOrder", params);
 
 export default {
   queryStayOfferList, // 查询待报价列表
@@ -34,5 +35,5 @@ export default {
   confirmOrder, // 确认接货
   submitTicketCode, // 提交取票码
   transferOrder, // 转单
-  queryHitOrder // 查询中签订单
+  stayTicketingList // 查询中签订单
 };
