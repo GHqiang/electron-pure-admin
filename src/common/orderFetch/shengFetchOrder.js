@@ -3,6 +3,7 @@ import { onMounted, computed } from "vue";
 
 import shengApi from "@/api/sheng-api";
 import svApi from "@/api/sv-api";
+import { SFC_CINEMA_NAME } from "@/common/constant";
 // 平台自动获取订单规则列表
 import { usePlatFetchOrderStore } from "@/store/platOfferRuleTable";
 const platTableDataStore = usePlatFetchOrderStore();
@@ -74,22 +75,26 @@ class OrderAutoFetchQueue {
       let sfcStayOfferlist = stayList
         .map(item => {
           const {
-            orderId,
             id,
-            showPrice,
-            grabPrice,
-            priceNew, // 当前报价
+            marketPrice,
+            supplierPrice,
             detail,
-            order,
-            priceAuto, // 自动报价价格
-            orderCode
+            code,
+            supplierCode,
+            type,
+            status,
+            deliverMinute,
+            stopDeliverTime
           } = item;
-          // orderId    订单id    integer
-          // id         抢单id    integer
-          // grabPrice  最高限价  string
-          // showPrice  市场价    string
-          // grabPrice  最高限价  string
-          // orderCode  订单code  string
+          // id             订单id    integer
+          // marketPrice    市场价    string
+          // supplierPrice  供应价    string
+          // code           订单code  string
+          // type           订单类型   integer    0-电影，1-KFC，3-卡券
+          // status         订单状态   integer    2=待接单 5=已接单 4=完成 3=已发货 9=取消 10=售后申请 11=售后成功 12=售后失败 15=售后拒绝 14=系统审核中
+          // deliverMinute  是否特惠   integer    0 有大于0的数据则为快捷订单，其它为特惠订单
+          // stopDeliverTime 截止发货时间 string  示例：2024-01-11 12:58:33
+
           const {
             quantity,
             sourceData: { show, film, cinema, label, seats }
@@ -97,10 +102,9 @@ class OrderAutoFetchQueue {
           // quantity   座位数    integer
 
           return {
-            plat_name: "sheng",
-            id: orderId,
-            tpp_price: showPrice,
-            supplier_max_price: Number(grabPrice),
+            id: id, // 订单id
+            tpp_price: marketPrice,
+            supplier_end_price: Number(supplierPrice),
             city_name: film.cityName,
             cinema_addr: film.address,
             ticket_num: quantity,
@@ -110,17 +114,15 @@ class OrderAutoFetchQueue {
             film_img: film.imgUrl,
             show_time: show.startTime,
             rewards: 0, // 省无奖励，只有快捷
-            quick: order.quick, // true表示为快捷订单（需12分钟内完成发货），false表示为特惠订单（需45分钟内完成发货）
-            // cinema_group:
-            //   label?.[0]?.name === "SFC"
-            //     ? "上影上海"
-            //     : label?.[0]?.name || "其它自动",
-            cinema_group:
-              film.cinemaName.includes("SFC") &&
-              sfcIDList.includes(cinema.cinemaId),
+            quick: deliverMinute > 0, // true表示为快捷订单（需12分钟内完成发货），false表示为特惠订单（需45分钟内完成发货）
+            // 省暂定和猎人针对sfc影院名字一样
+            cinema_group: SFC_CINEMA_NAME.includes(film.cinemaName)
+              ? "上影上海"
+              : "其它自动",
             cinema_code: cinema.cinemaId, // 影院id
-            order_number: orderCode,
-            seats, // 座位信息
+            order_number: code, // 订单号
+            supplierCode, // 商户号
+            lockseat: seats.map(itemA => itemA.name).join(" "),
             platName: "sheng"
           };
         })

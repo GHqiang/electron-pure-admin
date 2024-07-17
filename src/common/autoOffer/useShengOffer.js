@@ -6,7 +6,7 @@ import {
   convertFullwidthToHalfwidth,
   cinemNameSpecial
 } from "@/utils/utils";
-import { SPECIAL_CINEMA_OBJ } from "@/common/constant";
+import { SPECIAL_CINEMA_OBJ, SFC_CINEMA_NAME } from "@/common/constant";
 import svApi from "@/api/sv-api";
 import { SFC_API_OBJ } from "@/common/index.js";
 
@@ -178,13 +178,12 @@ class OrderAutoOfferQueue {
             show_time: show.startTime,
             rewards: 0, // 省无奖励，只有快捷
             quick: order.quick, // true表示为快捷订单（需12分钟内完成发货），false表示为特惠订单（需45分钟内完成发货）
-            // cinema_group:
-            //   label?.[0]?.name === "SFC"
-            //     ? "上影上海"
-            //     : label?.[0]?.name || "其它自动",
+            // 省暂定和猎人针对sfc影院名字一样
             cinema_group:
               film.cinemaName.includes("SFC") &&
-              sfcIDList.includes(cinema.cinemaId),
+              SFC_CINEMA_NAME.includes(film.cinemaName)
+                ? "上影上海"
+                : "其它自动",
             cinema_code: cinema.cinemaId, // 影院id
             order_number: orderCode,
             seats // 座位信息

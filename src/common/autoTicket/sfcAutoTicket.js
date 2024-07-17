@@ -8,6 +8,7 @@ import {
 } from "@/utils/utils";
 
 import lierenApi from "@/api/lieren-api";
+import shengApi from "@/api/sheng-api";
 import svApi from "@/api/sv-api";
 import { encode } from "@/utils/sfc-member-password";
 
@@ -132,13 +133,14 @@ class OrderAutoTicketQueue {
         sfcStayOfferlist = [
           {
             id: 761,
-            plat_name: "lieren",
+            platName: "lieren",
             app_name: "sfc",
             ticket_num: 1,
             rewards: "0",
             offer_type: "1",
             order_number: "2024071012402352191",
-
+            // cinema_code: '', // 影院id
+            // supplierCode: 'ccf7b11cdc944cf1940a149cff4243f9', // 商户号
             supplier_end_price: 36,
             quan_value: "35",
             order_id: "6418878",
@@ -404,6 +406,7 @@ class OrderAutoTicketQueue {
   // 转单
   async transferOrder(order, unlockSeatInfo) {
     const { conPrefix, errMsg } = this;
+    const { platName } = order;
     let isAutoTransfer = window.localStorage.getItem("isAutoTransfer");
     // 关闭自动转单只针对座位异常生效
     if (isTestOrder || (isAutoTransfer == "0" && errMsg === "锁定座位异常")) {
@@ -419,12 +422,26 @@ class OrderAutoTicketQueue {
         await this.releaseSeat({ ...unlockSeatInfo, session_id }, 1);
         this.operaLog = `${getCurrentTime()}：转单释放座位完成;\n`;
       }
-      const params = {
-        id: order.id,
-        confirm: 1
+      let params;
+      if (platName === "lieren") {
+        params = {
+          id: order.id,
+          confirm: 1
+        };
+      } else if (platName === "sheng") {
+        params = {
+          orderCode: order.order_number,
+          supplierCode: order.supplierCode
+          // reason: ""
+        };
+      }
+      console.log(conPrefix + "解锁参数", params);
+      const requestApi = {
+        lieren: lierenApi,
+        sheng: shengApi
       };
       console.warn(conPrefix + "【转单】参数", params);
-      const res = await lierenApi.transferOrder(params);
+      const res = await requestApi[platName].transferOrder(params);
       console.warn(conPrefix + "【转单】结果", res);
       // this.operaLog = `${getCurrentTime()}：转单提交完成;\n`;
       const { supplier_end_price, ticket_num } = order;
@@ -448,6 +465,7 @@ class OrderAutoTicketQueue {
   async singleTicket(item) {
     // 放到这里即使修改token也不用重启队列了
     const { conPrefix, appFlag } = this;
+    const { id, platName, supplierCode, order_number } = item;
     this.currentParamsList = getCinemaLoginInfoList().filter(
       item =>
         item.app_name === appFlag &&
@@ -463,13 +481,33 @@ class OrderAutoTicketQueue {
       // }
       // 1、解锁座位
       if (!isTestOrder) {
-        await this.unlockSeat(item.id, 1);
+        if (platName === "lieren") {
+          await this.unlockSeat({ platName, order_id: id, inx: 1 });
+        } else if (platName === "sheng") {
+          await this.startDeliver({ order_number, supplierCode });
+          this.delay(2);
+          await this.unlockSeat({
+            platName,
+            order_number,
+            supplierCode,
+            inx: 1
+          });
+        }
         this.operaLog += `${getCurrentTime()}：订单首次解锁座位完成;\n`;
       }
     } catch (error) {
       console.error(conPrefix + "解锁座位失败准备试错3次，间隔3秒", error);
       // 试错3次，间隔3秒
-      const res = await this.trial(inx => this.unlockSeat(item.id, inx), 3, 3);
+      let params = {
+        order_id: id,
+        order_number,
+        supplierCode
+      };
+      const res = await this.trial(
+        inx => this.unlockSeat({ ...params, inx }),
+        3,
+        3
+      );
       if (!res) {
         console.error(conPrefix + "单个订单试错后仍解锁失败", "需要走转单逻辑");
         // 转单逻辑待补充
@@ -496,16 +534,49 @@ class OrderAutoTicketQueue {
       this.setErrInfo("单个订单出票异常", error);
     }
   }
-
-  // 解锁座位
-  async unlockSeat(order_id, inx = 0) {
-    const { conPrefix } = this;
+  // 确认接单
+  async startDeliver({ order_number, supplierCode }) {
     try {
       let params = {
-        order_id
+        orderCode: order_number,
+        supplierCode
       };
+      console.log(conPrefix + "确认接单参数", params);
+      const res = await shengApi.confirmOrder(params);
+      console.log(conPrefix + "确认接单返回", res);
+      return res;
+    } catch (error) {
+      console.warn("确认接单异常", error);
+    }
+  }
+
+  // 解锁座位
+  async unlockSeat({
+    platName,
+    order_id,
+    inx = 0,
+    order_number: orderCode,
+    supplierCode
+  }) {
+    const { conPrefix } = this;
+    try {
+      let params;
+      if (platName === "lieren") {
+        params = {
+          order_id
+        };
+      } else if (platName === "sheng") {
+        params = {
+          orderCode,
+          supplierCode
+        };
+      }
       console.log(conPrefix + "解锁参数", params);
-      const res = await lierenApi.unlockSeat(params);
+      const requestApi = {
+        lieren: lierenApi,
+        sheng: shengApi
+      };
+      const res = await requestApi[platName].unlockSeat(params);
       console.log(conPrefix + "解锁返回", res);
       return res;
     } catch (error) {
@@ -532,6 +603,7 @@ class OrderAutoTicketQueue {
         ticket_num,
         supplier_end_price,
         rewards,
+        supplierCode,
         otherParams
       } = item;
       // otherParams主要是为了换号出票时不用再走之前流程
@@ -968,6 +1040,7 @@ class OrderAutoTicketQueue {
         app_name: appFlag,
         card_id,
         order_number,
+        supplierCode,
         session_id: this.currentParamsList[this.currentParamsInx].session_id
       });
       console.log(conPrefix + "一键买票完成");
@@ -1355,22 +1428,38 @@ class OrderAutoTicketQueue {
   }
 
   // 提交出票码
-  async submitTicketCode({ order_id, qrcode }) {
+  async submitTicketCode({ order_id, qrcode, order_number, supplierCode }) {
     const { conPrefix } = this;
     try {
-      let params = {
-        // order_id: id || 5548629,
-        // qupiao2: "[{\"result\":\"2024031154980669\",\"yzm\":\"\"}]"
-        order_id,
-        qupiao2: JSON.stringify([
-          {
-            result: qrcode.split("|")[0],
-            yzm: qrcode.split("|")?.[1] || ""
-          }
-        ])
+      let params;
+      if (platName === "lieren") {
+        params = {
+          // order_id: id || 5548629,
+          // qupiao2: "[{\"result\":\"2024031154980669\",\"yzm\":\"\"}]"
+          order_id,
+          qupiao2: JSON.stringify([
+            {
+              result: qrcode.split("|")[0],
+              yzm: qrcode.split("|")?.[1] || ""
+            }
+          ])
+        };
+      } else if (platName === "sheng") {
+        params = {
+          orderCode: order_number, // 省APP的订单编号
+          supplierCode: supplierCode,
+          deliverInfos: JSON.stringify(qrcode.split("|")), // 提交的时候转成文本，格式是JSON数组，可以多个取票码
+          success: true // 是否成功 ，true，false需小写
+          // message: "", // 出票失败原因，不能发货才有（失败的情况下一定要传）
+          // desc: "" // 描述，允许空，换座信息也填在这里，如更换1排4座，1排5座
+        };
+      }
+      const requestApi = {
+        lieren: lierenApi,
+        sheng: shengApi
       };
       console.log(conPrefix + "提交出票码参数", params);
-      const res = await lierenApi.submitTicketCode(params);
+      const res = await requestApi[platName].submitTicketCode(params);
       console.log(conPrefix + "提交出票码返回", res);
       return res;
     } catch (error) {
@@ -1420,6 +1509,7 @@ class OrderAutoTicketQueue {
     app_name,
     card_id,
     order_number,
+    supplierCode,
     session_id
   }) {
     try {
@@ -1461,6 +1551,7 @@ class OrderAutoTicketQueue {
             app_name,
             card_id,
             order_number,
+            supplierCode,
             flag: 2
           });
         };
@@ -1483,6 +1574,7 @@ class OrderAutoTicketQueue {
         app_name,
         card_id,
         order_number,
+        supplierCode,
         flag: 1
       });
       // this.operaLog += `${getCurrentTime()}：提交取票码成功;\n`;
@@ -1498,13 +1590,16 @@ class OrderAutoTicketQueue {
     app_name,
     card_id,
     order_number,
+    supplierCode,
     flag
   }) {
     try {
       // 10、提交取票码
       const submitRes = await this.submitTicketCode({
         order_id,
-        qrcode
+        qrcode,
+        order_number,
+        supplierCode
       });
       if (!submitRes) {
         console.error(conPrefix + "订单提交取票码失败，单个订单直接出票结束");
