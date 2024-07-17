@@ -536,6 +536,7 @@ class OrderAutoTicketQueue {
   }
   // 确认接单
   async startDeliver({ order_number, supplierCode }) {
+    const { conPrefix } = this;
     try {
       let params = {
         orderCode: order_number,
@@ -887,7 +888,7 @@ class OrderAutoTicketQueue {
         priceInfo &&
         offerRule.offer_type !== "1" &&
         Number(priceInfo.total_price) >
-          (Number(offerRule.real_member_price) * Number(ticket_num) * 100) /
+          (Number(offerRule.real_member_price) * 100 * Number(ticket_num)) /
             100;
       if (calcFail || cardCalcFail) {
         if (this.currentParamsInx === this.currentParamsList.length - 1) {
@@ -1209,7 +1210,7 @@ class OrderAutoTicketQueue {
           session_id
         });
         // 2、使用会员卡
-        let member_total_price = (member_price * ticket_num * 100) / 100;
+        let member_total_price = (member_price * 100 * ticket_num) / 100;
         const { card_id, profit } = await this.useCard({
           member_total_price,
           cardList,
@@ -1512,6 +1513,7 @@ class OrderAutoTicketQueue {
     supplierCode,
     session_id
   }) {
+    const { conPrefix } = this;
     try {
       // 9、获取订单结果
       const qrcode = await this.payOrder({
@@ -1593,6 +1595,7 @@ class OrderAutoTicketQueue {
     supplierCode,
     flag
   }) {
+    const { conPrefix } = this;
     try {
       // 10、提交取票码
       const submitRes = await this.submitTicketCode({
