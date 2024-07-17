@@ -300,7 +300,7 @@ const offerTypeObj = {
 };
 // 表单查询数据
 const formData = reactive({
-  orderForm: "lieren", // 订单来源
+  orderForm: "", // 订单来源
   ruleName: "", // 规则名称
   shadowLineName: "", // 影线名称
   status: "", // 状态
