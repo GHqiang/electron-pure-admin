@@ -20,11 +20,19 @@
     <el-table-column prop="platName" label="平台名称">
       <template #default="{ row, $index }">
         <span v-if="row.id !== editingRowId">{{ row.platName }}</span>
-        <el-input
+        <el-select
           v-else
           v-model="editingRow.platName"
-          @blur="saveEdit(row.id)"
-        />
+          placeholder="平台名称"
+          clearable
+        >
+          <el-option
+            v-for="(keyValue, keyName) in ORDER_FORM"
+            :key="keyName"
+            :label="keyValue"
+            :value="keyName"
+          />
+        </el-select>
       </template>
     </el-table-column>
     <el-table-column prop="getInterval" label="订单获取间隔">
@@ -133,7 +141,7 @@ import svApi from "@/api/sv-api";
 import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
 import lierenOfferQueue from "@/common/autoOffer/useLierenOffer";
 import shengOfferQueue from "@/common/autoOffer/useShengOffer";
-import { PLAT_LINK_APP, APP_LIST } from "@/common/constant";
+import { ORDER_FORM, APP_LIST } from "@/common/constant";
 import {
   getCinemaLoginInfoList,
   getCurrentFormattedDateTime

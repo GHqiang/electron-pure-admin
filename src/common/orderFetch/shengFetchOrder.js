@@ -234,7 +234,7 @@ async function orderFetch() {
     //   time: 1710125670
     // };
     // let list = mockRes?.data || [];
-    let list = res?.data || [];
+    let list = res?.data.rows || [];
     // console.log(conPrefix + "获取猎人待出票列表返回", list);
     return list;
   } catch (error) {

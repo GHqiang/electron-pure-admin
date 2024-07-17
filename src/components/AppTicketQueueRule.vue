@@ -179,7 +179,6 @@ const appTicketQueueObj = {};
 // token集合
 const appTokenObj = {};
 
-window.sfcQueue = appTicketQueueObj["sfc"];
 const delay = delayTime => {
   return new Promise(resolve => {
     setTimeout(() => {
@@ -224,6 +223,7 @@ const oneClickAutoOffer = () => {
     appTokenObj[item] = obj?.session_id || "";
     appTicketQueueObj[item] = createTicketQueue(item);
   });
+  window.sfcQueue = appTicketQueueObj["sfc"];
   let noSetMemberPwdList = tableDataStore.items.filter(item => {
     let obj = loginInfoList.some(
       itemA => itemA.app_name === item.appName && !itemA.member_pwd
@@ -305,8 +305,9 @@ const singleStartOrStop = ({ id, appName }, flag) => {
     }
     tableDataStore.toggleEnable(id);
     // 过滤清空当前影院本地缓存的待出票数据
-    stayTicketList.removeStayTicketListByApp(appName);
-    appTicketQueueObj[appName].start();
+    // stayTicketList.removeStayTicketListByApp(appName);
+    // appTicketQueueObj[appName].start();
+    window.sfcQueue = appTicketQueueObj["sfc"];
   } else {
     // 单个停止
     tableDataStore.toggleEnable(id);

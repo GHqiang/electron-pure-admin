@@ -1462,7 +1462,7 @@ class OrderAutoTicketQueue {
         params = {
           orderCode: order_number, // 省APP的订单编号
           supplierCode: supplierCode,
-          deliverInfos: JSON.stringify(qrcode.split("|")), // 提交的时候转成文本，格式是JSON数组，可以多个取票码
+          deliverInfos: JSON.stringify([{ code: qrcode }]), // 提交的时候转成文本，格式是JSON数组，可以多个取票码
           success: true // 是否成功 ，true，false需小写
           // message: "", // 出票失败原因，不能发货才有（失败的情况下一定要传）
           // desc: "" // 描述，允许空，换座信息也填在这里，如更换1排4座，1排5座
