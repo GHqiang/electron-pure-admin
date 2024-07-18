@@ -205,10 +205,10 @@ class OrderAutoOfferQueue {
             appName: getCinemaFlag(item)
           };
         });
-      console.warn(
-        conPrefix + "匹配已上架影院后的的待报价订单",
-        sfcStayOfferlist
-      );
+      // console.warn(
+      //   conPrefix + "匹配已上架影院后的的待报价订单",
+      //   sfcStayOfferlist
+      // );
       if (!sfcStayOfferlist?.length) return [];
       const { handleSuccessOrderList, handleFailOrderList } = this;
       let orderOfferRecord = [
@@ -221,10 +221,10 @@ class OrderAutoOfferQueue {
           itemA => itemA.order_number === item.order_number
         );
       });
-      console.warn(
-        conPrefix + "从当前队列报价记录过滤后的的待报价订单",
-        newOrders
-      );
+      // console.warn(
+      //   conPrefix + "从当前队列报价记录过滤后的的待报价订单",
+      //   newOrders
+      // );
       if (!newOrders?.length) return [];
       // 如果过滤到这时候还有单子再调接口进行历史报价记录过滤
       const offerList = await getOfferList();
@@ -392,12 +392,14 @@ const setErrInfo = (err_msg, err_info) => {
 // 获取报价记录
 const getOfferList = async () => {
   try {
-    // 后面优化
     const res = await svApi.queryOfferList({
       user_id: tokens.userInfo.user_id,
-      // plat_name: "sheng",
-      page_num: 1,
-      page_size: 100
+      // user_id: "9",
+      plat_name: "sheng",
+      start_time: getCurrentFormattedDateTime(
+        +new Date() - 0.5 * 60 * 60 * 1000
+      ),
+      end_time: getCurrentFormattedDateTime()
     });
     return res.data.offerList || [];
   } catch (error) {
