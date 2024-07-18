@@ -104,7 +104,9 @@ class OrderAutoFetchQueue {
           return {
             id: id, // 订单id
             tpp_price: marketPrice,
-            supplier_end_price: Number(supplierPrice),
+            supplier_end_price: Number(
+              Number(supplierPrice) / Number(quantity).toFixed(2)
+            ),
             city_name: film.cityName,
             cinema_addr: film.address,
             ticket_num: quantity,

@@ -305,8 +305,8 @@ const singleStartOrStop = ({ id, appName }, flag) => {
     }
     tableDataStore.toggleEnable(id);
     // 过滤清空当前影院本地缓存的待出票数据
-    // stayTicketList.removeStayTicketListByApp(appName);
-    // appTicketQueueObj[appName].start();
+    stayTicketList.removeStayTicketListByApp(appName);
+    appTicketQueueObj[appName].start();
     window.sfcQueue = appTicketQueueObj["sfc"];
   } else {
     // 单个停止

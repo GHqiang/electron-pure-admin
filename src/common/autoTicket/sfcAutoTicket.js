@@ -1562,6 +1562,7 @@ class OrderAutoTicketQueue {
             18,
             10
           );
+          this.errMsg = "轮询获取订单取票码成功";
           await this.submitQrcode({
             order_id,
             qrcode,
@@ -1601,6 +1602,7 @@ class OrderAutoTicketQueue {
       return { submitRes, qrcode };
     } catch (error) {
       console.warn("出票最后处理异常", error);
+      this.setErrInfo("", "");
       this.setErrInfo("出票最后处理异常", error);
     }
   }
