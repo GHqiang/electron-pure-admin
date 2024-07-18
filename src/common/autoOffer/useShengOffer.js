@@ -1,8 +1,9 @@
-import { computed } from "vue";
+import { ref, computed } from "vue";
 import {
   isTimeAfter,
   getCinemaFlag,
   getCurrentFormattedDateTime,
+  getCurrentDay,
   convertFullwidthToHalfwidth,
   cinemNameSpecial
 } from "@/utils/utils";
@@ -53,6 +54,7 @@ console.log(conPrefix + "自动报价规则", getOrginValue(appOfferRuleList.val
 //   } catch (error) {}
 // });
 
+const cityList = ref([]); // 城市列表
 let errMsg = "";
 let errInfo = "";
 
@@ -65,10 +67,15 @@ class OrderAutoOfferQueue {
     this.isRunning = false; // 初始化时队列未运行
     this.handleSuccessOrderList = []; // 订单处理成功列表
     this.handleFailOrderList = []; // 订单处理失败列表
+    this.offerList = [];
   }
 
   // 启动队列（fetchDelay获取订单列表间隔，processDelay处理订单间隔）
-  async start(platToken) {
+  async start() {
+    console.log(
+      "开始执行时获取到的规则列表",
+      getOrginValue(appOfferRuleList.value)
+    );
     // 设置队列为运行状态
     this.isRunning = true;
     this.handleSuccessOrderList = [];
@@ -167,7 +174,9 @@ class OrderAutoOfferQueue {
             plat_name: "sheng",
             id: orderId,
             tpp_price: showPrice,
-            supplier_max_price: Number(grabPrice),
+            supplier_max_price: Number(
+              Number(grabPrice) / Number(quantity).toFixed(2)
+            ),
             city_name: film.cityName,
             cinema_addr: film.address,
             ticket_num: quantity,
@@ -219,6 +228,7 @@ class OrderAutoOfferQueue {
       if (!newOrders?.length) return [];
       // 如果过滤到这时候还有单子再调接口进行历史报价记录过滤
       const offerList = await getOfferList();
+      this.offerList = offerList;
       newOrders = newOrders.filter(item =>
         judgeHandle(item, item.appName, offerList)
       );
@@ -254,7 +264,7 @@ class OrderAutoOfferQueue {
       await this.delay(delayTime);
       console.log(conPrefix + `订单处理 ${order.id}`);
       if (this.isRunning) {
-        const offerResult = await singleOffer(order);
+        const offerResult = await singleOffer(order, this.offerList);
         // { res, offerRule } || { offerRule } || undefined
         return offerResult;
       } else {
@@ -274,7 +284,7 @@ class OrderAutoOfferQueue {
       let serOrderInfo = {
         // user_id: order.user_id,
         plat_name: "sheng",
-        app_name: offerResult?.offerRule?.shadowLineName || "",
+        app_name: order.appName || offerResult?.offerRule?.shadowLineName || "",
         order_id: order.id,
         order_number: order.order_number,
         tpp_price: order.tpp_price,
@@ -290,6 +300,8 @@ class OrderAutoOfferQueue {
         offer_type: offerResult?.offerRule?.offerType,
         offer_amount: offerResult?.offerRule?.offerAmount,
         member_offer_amount: offerResult?.offerRule?.memberOfferAmount,
+        member_price: offerResult?.offerRule?.memberPrice,
+        real_member_price: offerResult?.offerRule?.real_member_price,
         quan_value: offerResult?.offerRule?.quanValue,
         order_status: offerResult?.res ? "1" : "2",
         // remark: '',
@@ -307,14 +319,7 @@ class OrderAutoOfferQueue {
           : "";
         this.handleFailOrderList.push(order);
       }
-      svApi
-        .addOfferRecord(serOrderInfo)
-        .then(res => {
-          console.log(conPrefix + "【报价成功】保存订单处理记录成功", res);
-        })
-        .catch(error => {
-          console.error("conPrefix + 【报价成功】保存订单处理记录失败", error);
-        });
+      await svApi.addOfferRecord(serOrderInfo);
     } catch (error) {
       console.error(conPrefix + "添加订单处理记录异常", error);
     }
@@ -417,6 +422,111 @@ const judgeHandle = (item, app_name, offerList) => {
     setErrInfo("判断该订单是否是新订单异常", error);
   }
 };
+
+// 计算连续中标数
+const calcCount = data => {
+  let consecutiveWins = 0;
+  let consecutiveLosses = 0;
+  let isLastWin = null; // null, true (中标), false (不中标)
+
+  for (const item of data) {
+    const isWin = item.offer === item.supplier_end_price;
+
+    if (isLastWin === null) {
+      // 初始化中标或不中标的状态
+      isLastWin = isWin;
+    } else if (isWin === isLastWin) {
+      // 如果当前项与上一项状态相同，累计连续次数
+      isLastWin ? consecutiveWins++ : consecutiveLosses++;
+    } else {
+      // 中断连续计算
+      break;
+    }
+  }
+
+  // 第一个元素的中标或不中标状态需要单独计入
+  if (isLastWin) {
+    consecutiveWins++;
+  } else {
+    consecutiveLosses++;
+  }
+  console.log("连续中标次数:", consecutiveWins);
+  console.log("连续未中标次数:", consecutiveLosses);
+  return {
+    inCount: consecutiveWins,
+    outCount: consecutiveLosses
+  };
+};
+// 获取最终报价
+const getEndPrice = async params => {
+  try {
+    let { cost_price, supplier_max_price, price, rewards, offerList } =
+      params || {};
+    // console.log("获取最终报价相关字段", params);
+    // 远端报价记录
+    let serOfferRecord, lierenOfferRecord, lierenMachineOfferList;
+    let adjustPrice = window.localStorage.getItem("adjustPrice");
+    if (adjustPrice) {
+      adjustPrice = JSON.parse(adjustPrice);
+      serOfferRecord = offerList;
+      // 测试用下面的
+      // serOfferRecord = await getOfferList();
+      // 猎人报价记录
+      lierenOfferRecord = await getLierenOrderList();
+      lierenMachineOfferList = lierenOfferRecord.filter(item =>
+        serOfferRecord.find(itemA => itemA.order_number === item.order_number)
+      );
+    }
+    if (adjustPrice && lierenMachineOfferList?.length) {
+      console.warn(
+        "自动调价生效，开始进行相关处理",
+        adjustPrice,
+        lierenMachineOfferList
+      );
+      let countRes = calcCount(lierenMachineOfferList);
+      const { inCount, outCount, inPrice, outPrice } = adjustPrice;
+      // console.log("inCount", inCount, outCount, inPrice, outPrice);
+      if (countRes.inCount && inPrice && countRes.inCount >= inCount) {
+        price = price + Number(inPrice);
+        console.warn("动态调价后的价格", price, "增加", inPrice);
+      } else if (
+        countRes.outCount &&
+        outPrice &&
+        countRes.outCount >= outCount
+      ) {
+        price = price - Number(outCount);
+        console.warn("动态调价后的价格", price, "降低", outPrice);
+      }
+    }
+    // 手续费
+    const shouxufei = (Number(price) * 100) / 10000;
+    // 奖励费用
+    let rewardPrice = rewards == 1 ? (Number(price) * 400) / 10000 : 0;
+    // 真实成本（加手续费）
+    cost_price = cost_price + shouxufei;
+    // 最终成本（减奖励费）
+    const ensCostPrice = cost_price - rewardPrice;
+    // 最终成本超过平台限价
+    if (ensCostPrice >= Number(supplier_max_price)) {
+      let str = `最终成本${ensCostPrice}超过平台限价${supplier_max_price}，不再进行报价`;
+      console.error(conPrefix + str);
+      setErrInfo(str);
+      return;
+    }
+    // 最终报价超过平台限价
+    if (Number(supplier_max_price) < price + shouxufei) {
+      // 奖励单按真实成本（加手续费），非奖励单最高限价
+      price = rewards == 1 ? cost_price : supplier_max_price;
+      return price;
+    }
+    // 如果报最终报价不小于最高限价返回报价
+    return Math.round(price);
+  } catch (error) {
+    console.warn("获取最终报价异常", error);
+    setErrInfo("获取最终报价异常", error);
+  }
+};
+window.getEndPrice = getEndPrice;
 // 获取待报价订单列表
 async function getStayOfferList(page, stayList = []) {
   try {
@@ -447,13 +557,13 @@ async function getStayOfferList(page, stayList = []) {
 }
 
 // 单个订单报价
-async function singleOffer(item) {
+async function singleOffer(item, offerList) {
   let offerRule;
   try {
     errMsg = "";
     errInfo = "";
     console.log(conPrefix + "待报价订单", item);
-    let { id, supplier_max_price } = item || {};
+    let { id, supplier_max_price, rewards, ticket_num } = item || {};
     if (!id) return;
     // 报价逻辑
     console.log(conPrefix + "准备匹配报价规则", item);
@@ -462,18 +572,36 @@ async function singleOffer(item) {
       console.error(conPrefix + "获取匹配报价规则失败");
       return;
     }
-    const { offerAmount, memberOfferAmount, memberPrice } = offerRule;
-    let price = offerAmount || memberOfferAmount;
+    const {
+      offerAmount,
+      memberOfferAmount,
+      memberPrice,
+      quanValue,
+      offerType
+    } = offerRule;
+    let price = Number(offerAmount || memberOfferAmount);
     if (!price) return { offerRule };
-    if (Number(supplier_max_price) < price) {
-      if (memberPrice && Number(supplier_max_price) > Number(memberPrice)) {
-        price = supplier_max_price;
-      } else {
-        let str = `供应商最高报价低于当前报价${memberOfferAmount ? "且低于会员价" : ""}，不再进行报价`;
-        console.error(conPrefix + str);
-        setErrInfo(str);
-        return { offerRule };
-      }
+    // 成本价
+    let cost_price =
+      offerType === "1"
+        ? quanValue == "40"
+          ? 39.3
+          : Number(quanValue)
+        : Number(memberPrice);
+    const endPrice = await getEndPrice({
+      cost_price,
+      supplier_max_price,
+      price,
+      rewards,
+      offerList
+    });
+    if (!endPrice) {
+      return { offerRule };
+    }
+    if (offerType === "1") {
+      offerRule.offerAmount = endPrice;
+    } else {
+      offerRule.memberOfferAmount = endPrice;
     }
 
     let params = {
@@ -504,15 +632,13 @@ async function singleOffer(item) {
 // 获取电影放映信息
 async function getMoviePlayInfo(data) {
   try {
-    let { city_id, cinema_id, cinema_group, cinema_name, city_name } =
-      data || {};
+    let { city_id, cinema_id, appName } = data || {};
     let params = {
       city_id: city_id,
       cinema_id: cinema_id,
       width: "500"
     };
     console.log(conPrefix + "获取电影放映信息参数", params);
-    const appName = getCinemaFlag({ cinema_group, cinema_name, city_name });
     console.log(conPrefix + "影线名称", appName);
     let res = await SFC_API_OBJ[appName].getMoviePlayInfo(params);
     console.log(conPrefix + "获取电影放映信息返回", res);
@@ -528,19 +654,15 @@ const offerRuleMatch = async order => {
   try {
     console.warn(conPrefix + "匹配报价规则开始");
     const {
-      cinema_group,
       city_name,
       cinema_name,
       hall_name,
       film_name,
       show_time,
-      ticket_num
+      ticket_num,
+      appName
     } = order;
-    let shadowLineName = getCinemaFlag({
-      cinema_group,
-      cinema_name,
-      city_name
-    });
+    let shadowLineName = appName;
 
     console.log(conPrefix + "报价订单影线", shadowLineName);
     // 1、获取启用的规则列表（只有满足规则才报价）
@@ -712,6 +834,7 @@ const offerRuleMatch = async order => {
     // 获取报价最低的报价规则
     const endRule = await getMinAmountOfferRule(memberDayRuleList, order);
     console.warn(conPrefix + "最终匹配到的报价规则", endRule);
+    if ([0, -2, -3, -4].includes(endRule)) return;
     if (!endRule) {
       console.error(conPrefix + "最终匹配到的报价规则不存在");
       setErrInfo("最终匹配到的报价规则不存在");
@@ -722,7 +845,7 @@ const offerRuleMatch = async order => {
     setErrInfo("报价规则匹配出现异常", error);
   }
 };
-
+window.offerRuleMatch = offerRuleMatch;
 // 获取报价最低的报价规则
 const getMinAmountOfferRule = async (ruleList, order) => {
   try {
@@ -762,20 +885,38 @@ const getMinAmountOfferRule = async (ruleList, order) => {
     )?.[0];
     if (mixAddAmountRule) {
       // 计算会员报价
-      let memberPrice = await getMemberPrice(order);
-      if (!memberPrice) {
+      let memberPriceRes = await getMemberPrice(order);
+      if (memberPriceRes === 0) {
+        setErrInfo("获取当前场次电影信息失败,不再进行报价");
+        return 0;
+      }
+      if (memberPriceRes === -2) {
+        setErrInfo("促销票数低于订单票数，不再进行报价");
+        return -2;
+      }
+      if (memberPriceRes === -3) {
+        console.error(conPrefix + "获取座位布局异常，不再进行报价");
+        return -3;
+      }
+      if (memberPriceRes === -4) {
+        console.error(conPrefix + "促销票数低于订单票数，不再进行报价");
+        return -4;
+      }
+      if (!memberPriceRes) {
         console.warn(
           conPrefix + "最小加价规则获取会员价失败,返回最小固定报价规则",
           mixFixedAmountRule
         );
         return mixFixedAmountRule;
       }
+      let memberPrice = memberPriceRes.member_price;
       // 会员价
       mixAddAmountRule.memberPrice = memberPrice;
+      mixAddAmountRule.real_member_price = memberPriceRes.real_member_price;
       // 会员最终报价
       memberPrice = Number(memberPrice) + Number(mixAddAmountRule.addAmount);
       // 会员报价要求四舍五入取整
-      mixAddAmountRule.memberOfferAmount = Math.round(memberPrice);
+      mixAddAmountRule.memberOfferAmount = memberPrice;
     } else {
       console.warn(
         conPrefix + "最小加价规则不存在,返回最小固定报价规则",
@@ -799,12 +940,30 @@ const getMinAmountOfferRule = async (ruleList, order) => {
     setErrInfo("获取最低报价规则异常", error);
   }
 };
-
+// 获取座位布局
+const getSeatLayout = async data => {
+  try {
+    let { city_id, cinema_id, show_id, appName } = data || {};
+    let params = {
+      city_id: city_id,
+      cinema_id: cinema_id,
+      show_id: show_id,
+      width: "240"
+    };
+    console.log(conPrefix + "获取座位布局参数", params);
+    const res = await SFC_API_OBJ[appName].getMoviePlaySeat(params);
+    console.log(conPrefix + "获取座位布局返回", res);
+    return res.data?.play_data || {};
+  } catch (error) {
+    console.error(conPrefix + "获取座位布局异常", error);
+    setErrInfo("获取座位布局异常", error);
+  }
+};
 // 获取会员价
 const getMemberPrice = async order => {
   try {
     console.log(conPrefix + "准备获取会员价", order);
-    const { city_name, cinema_name, hall_name } = order;
+    const { city_name, cinema_name, hall_name, ticket_num, appName } = order;
     console.log(
       conPrefix +
         `待报价订单：城市${city_name}, 影院${cinema_name}, 影厅${hall_name}`
@@ -814,12 +973,84 @@ const getMemberPrice = async order => {
     console.log(conPrefix + `待报价订单当前场次电影相关信息`, movieInfo);
     if (!movieInfo) {
       console.error(conPrefix + "获取当前场次电影信息失败", "不再进行报价");
-      return;
+      return 0;
     }
-    let { member_price } = movieInfo;
+    let { member_price, nonmember_price, city_id, cinema_id, show_id } =
+      movieInfo;
+    if (show_id) {
+      const seatInfo = await getSeatLayout({
+        city_id,
+        cinema_id,
+        show_id,
+        appName
+      });
+      if (!seatInfo) return -3;
+      const { promo_num, area_price } = seatInfo;
+      if (promo_num && promo_num < ticket_num) {
+        console.error(conPrefix + "促销票数低于订单票数，不再进行报价");
+        return -2;
+      }
+      if (area_price?.length > 1) {
+        let bigPrice = area_price.sort((a, b) => b.price - a.price)[0].price;
+        console.error(
+          conPrefix + "座位类型区分，取最高的价格座位会员价格",
+          bigPrice
+        );
+        return {
+          member_price: Number(bigPrice),
+          real_member_price: Number(bigPrice)
+        };
+      }
+    }
     console.log(conPrefix + "获取会员价", member_price);
-    if (member_price) {
-      return Number(member_price);
+    if (member_price > 0) {
+      const cardRes = await svApi.queryCardList({
+        app_name: appName
+      });
+      let list = cardRes.data.cardList || [];
+      list = list.map(item => ({
+        ...item,
+        daily_usage:
+          item.usage_date !== getCurrentDay() ? 0 : item.daily_usage || 0
+      }));
+      // console.log("list", list);
+      let cardList = list.filter(item =>
+        !item.use_limit_day
+          ? true
+          : ticket_num <= item.use_limit_day - item.daily_usage
+      );
+      if (!cardList.length) {
+        console.error(conPrefix + "影院单卡出票限制,不再进行报价");
+        setErrInfo("影院单卡出票限制，不再进行报价", {
+          list,
+          ticket_num
+        });
+        return -4;
+      }
+      cardList = cardList.map(item => ({
+        ...item,
+        card_discount: !item.card_discount ? 100 : Number(item.card_discount)
+      }));
+      // console.log("cardList", cardList);
+      cardList.sort((a, b) => a.card_discount - b.card_discount);
+      // 按最低折扣取值报价
+      let discount = cardList[0]?.card_discount;
+      let real_member_price = Number(member_price);
+      member_price = discount
+        ? (Number(member_price) * discount) / 100
+        : Number(member_price);
+      return {
+        real_member_price,
+        member_price
+      };
+    } else {
+      console.warn(conPrefix + "会员价未负，非会员价", nonmember_price);
+      if (nonmember_price) {
+        return {
+          member_price: Number(nonmember_price),
+          real_member_price: Number(nonmember_price)
+        };
+      }
     }
   } catch (error) {
     console.error(conPrefix + "获取会员价异常", error);
@@ -940,20 +1171,22 @@ const getCinemaId = (cinema_name, list, appName) => {
 const getMovieInfo = async item => {
   try {
     // 1、获取影院列表拿到影院id
-    const { city_name, cinema_name, film_name, show_time, cinema_group } = item;
-    const cityList = await getCityList({
-      cinema_group,
+    const {
+      city_name,
       cinema_name,
-      city_name
-    });
-    let city_id = cityList.find(
+      film_name,
+      show_time,
+      cinema_group,
+      appName
+    } = item;
+    await getCityList({ appName });
+    let city_id = cityList.value.find(
       item => item.name.indexOf(city_name) !== -1
     )?.id;
     let params = {
       city_id: city_id
     };
     console.log(conPrefix + "获取城市影院参数", params);
-    const appName = getCinemaFlag({ cinema_group, cinema_name, city_name });
     let res = await SFC_API_OBJ[appName].getCinemaList(params);
     console.log(conPrefix + "获取城市影院返回", res);
     let cinemaList = res.data?.cinema_data || [];
@@ -968,7 +1201,8 @@ const getMovieInfo = async item => {
       cinema_id,
       cinema_group,
       cinema_name,
-      city_name
+      city_name,
+      appName
     });
     // 3、匹配订单拿到会员价
     const { movie_data } = moviePlayInfo;
@@ -984,7 +1218,7 @@ const getMovieInfo = async item => {
       let showList = shows[showDay] || [];
       let showTime = show_time.split(" ")[1].slice(0, 5);
       let ticketInfo = showList.find(item => item.start_time === showTime);
-      return ticketInfo;
+      return { ...ticketInfo, city_id, cinema_id };
     }
   } catch (error) {
     console.error(conPrefix + "获取当前场次电影信息异常", error);
@@ -993,14 +1227,13 @@ const getMovieInfo = async item => {
 };
 
 // 获取城市列表
-async function getCityList({ cinema_group, cinema_name, city_name }) {
+async function getCityList({ appName }) {
   try {
     let params = {};
     console.log(conPrefix + "获取城市列表参数", params);
-    const appName = getCinemaFlag({ cinema_group, cinema_name, city_name });
     let res = await SFC_API_OBJ[appName].getCityList(params);
     console.log(conPrefix + "获取城市列表返回", res);
-    return res.data.all_city || [];
+    cityList.value = res.data.all_city || [];
   } catch (error) {
     console.error(conPrefix + "获取城市列表异常", error);
     setErrInfo("获取城市列表异常", error);
