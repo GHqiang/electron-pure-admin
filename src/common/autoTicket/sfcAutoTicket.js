@@ -1441,7 +1441,8 @@ class OrderAutoTicketQueue {
     order_id,
     qrcode,
     order_number,
-    supplierCode
+    supplierCode,
+    flag
   }) {
     const { conPrefix } = this;
     try {
@@ -1478,7 +1479,38 @@ class OrderAutoTicketQueue {
       return res;
     } catch (error) {
       console.error(conPrefix + "提交出票码异常", error);
-      this.setErrInfo("提交出票码异常", error);
+      if (flag !== 2) {
+        this.setErrInfo("提交出票码异常", error);
+      } else {
+        let err_info;
+        if (error instanceof Error) {
+          const cleanedError = {
+            message: error.message,
+            stack: error.stack,
+            name: error.name
+          };
+          err_info = JSON.stringify(
+            cleanedError,
+            (key, value) =>
+              typeof value === "function" || value instanceof Error
+                ? undefined
+                : value,
+            2
+          );
+        } else {
+          try {
+            err_info = JSON.stringify(errInfo);
+          } catch (error) {
+            console.warn("错误信息转换异常", error);
+            err_info = errInfo.toString();
+          }
+        }
+        svApi.updateTicketRecord({
+          order_number,
+          err_msg: "系统延迟后提交出票码异常",
+          err_info
+        });
+      }
     }
   }
 
@@ -1538,9 +1570,11 @@ class OrderAutoTicketQueue {
       });
       if (!qrcode) {
         console.error(conPrefix + "获取订单结果失败，单个订单直接出票结束");
-        this.setErrInfo("获取订单支付结果，取票码不存在", qrcode);
-        // 异步轮训处理3分钟，没10秒重试一次
-        const fun = async ({
+        this.setErrInfo(
+          "获取订单支付结果，取票码不存在，暂时返回异步获取",
+          qrcode
+        );
+        this.asyncFetchQrcodeSubmit({
           city_id,
           cinema_id,
           order_num,
@@ -1549,41 +1583,8 @@ class OrderAutoTicketQueue {
           app_name,
           card_id,
           platName,
-          order_number
-        }) => {
-          const qrcode = await this.trial(
-            () =>
-              this.payOrder({
-                city_id,
-                cinema_id,
-                order_num,
-                session_id
-              }),
-            18,
-            10
-          );
-          this.errMsg = "轮询获取订单取票码成功";
-          await this.submitQrcode({
-            order_id,
-            qrcode,
-            app_name,
-            card_id,
-            order_number,
-            supplierCode,
-            platName,
-            flag: 2
-          });
-        };
-        fun({
-          city_id,
-          cinema_id,
-          order_num,
-          session_id,
-          order_id,
-          app_name,
-          card_id,
-          platName,
-          order_number
+          order_number,
+          supplierCode
         });
         return;
       }
@@ -1606,6 +1607,53 @@ class OrderAutoTicketQueue {
       this.setErrInfo("出票最后处理异常", error);
     }
   }
+
+  async asyncFetchQrcodeSubmit({
+    city_id,
+    cinema_id,
+    order_num,
+    session_id,
+    order_id,
+    app_name,
+    card_id,
+    platName,
+    order_number,
+    supplierCode
+  }) {
+    try {
+      const qrcode = await this.trial(
+        () =>
+          this.payOrder({
+            city_id,
+            cinema_id,
+            order_num,
+            session_id
+          }),
+        18,
+        10
+      );
+      if (!qrcode) {
+        svApi.updateTicketRecord({
+          order_number,
+          err_msg: "系统延迟轮询3分钟后获取取票码仍失败"
+        });
+        return;
+      }
+      await this.submitQrcode({
+        order_id,
+        qrcode,
+        app_name,
+        card_id,
+        order_number,
+        supplierCode,
+        platName,
+        flag: 2
+      });
+    } catch (error) {
+      console.warn("异步轮询获取取票码上传提交异常", error);
+    }
+  }
+
   async submitQrcode({
     order_id,
     qrcode,
@@ -1624,11 +1672,12 @@ class OrderAutoTicketQueue {
         order_id,
         qrcode,
         order_number,
-        supplierCode
+        supplierCode,
+        flag
       });
       if (!submitRes) {
         console.error(conPrefix + "订单提交取票码失败，单个订单直接出票结束");
-        this.setErrInfo("订单提交取票码失败");
+        // this.setErrInfo("订单提交取票码失败");
         return;
       }
       if (flag !== 1) {
