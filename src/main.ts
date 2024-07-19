@@ -24,10 +24,16 @@ import "./assets/iconfont/iconfont.css";
 
 const app = createApp(App);
 if (process.env.NODE_ENV !== "development") {
-  // const methods = ["log", "info", "warn", "error"];
-  // methods.forEach(method => {
-  //   window.console[method] = function () {}; // 或者使用() => {}箭头函数
-  // });
+  const methods = ["log", "info", "warn", "error"];
+  methods.forEach(method => {
+    const originalMethod = console[method];
+    window.console[method] = function (...params) {
+      // 使用function关键字以正确捕获arguments
+      if (window.isNeedLog) {
+        originalMethod.apply(console, params); // 使用apply来传递参数并保持正确的上下文
+      }
+    };
+  });
 }
 // 自定义指令
 import throttleDirective from "@/directives/throttle.js"; // 导入自定义指令
