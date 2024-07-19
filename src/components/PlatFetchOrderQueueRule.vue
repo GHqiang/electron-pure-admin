@@ -168,7 +168,7 @@ const oneClickAutoOffer = () => {
         if (item.platName === "lieren") {
           lierenFetchOrder.start();
         }
-        if (platName === "sheng") {
+        if (item.platName === "sheng") {
           shengFetchOrder.start();
         }
       });

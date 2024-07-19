@@ -507,7 +507,7 @@ const getEndPrice = async params => {
     // 真实成本（加手续费）
     cost_price = cost_price + shouxufei;
     // 最终成本（减奖励费）
-    const ensCostPrice = cost_price - rewardPrice;
+    const ensCostPrice = Number(cost_price - rewardPrice).toFixed();
     // 最终成本超过平台限价
     if (ensCostPrice >= Number(supplier_max_price)) {
       let str = `最终成本${ensCostPrice}超过平台限价${supplier_max_price}，不再进行报价`;

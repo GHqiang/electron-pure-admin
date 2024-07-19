@@ -24,10 +24,10 @@ import "./assets/iconfont/iconfont.css";
 
 const app = createApp(App);
 if (process.env.NODE_ENV !== "development") {
-  const methods = ["log", "info", "warn", "error"];
-  methods.forEach(method => {
-    window.console[method] = function () {}; // 或者使用() => {}箭头函数
-  });
+  // const methods = ["log", "info", "warn", "error"];
+  // methods.forEach(method => {
+  //   window.console[method] = function () {}; // 或者使用() => {}箭头函数
+  // });
 }
 // 自定义指令
 import throttleDirective from "@/directives/throttle.js"; // 导入自定义指令
