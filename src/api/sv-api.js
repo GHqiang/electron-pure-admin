@@ -93,6 +93,10 @@ const addLoginRecord = params => axios.post("/svpi/loginRecord/add", params);
 const updateLoginRecord = params =>
   axios.post("/svpi/loginRecord/update", params);
 
+// 上传出票过程操作日志
+const addTicketOperaLog = params =>
+  axios.post("/svpi/operaRecord/addList", params);
+
 export default {
   login,
   logout,
@@ -128,5 +132,6 @@ export default {
   deleteLogin,
   batchDeleteLogin,
   addLoginRecord,
-  updateLoginRecord
+  updateLoginRecord,
+  addTicketOperaLog
 };
