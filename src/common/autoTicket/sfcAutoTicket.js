@@ -1629,10 +1629,15 @@ class OrderAutoTicketQueue {
       console.log(conPrefix + "支付订单参数", params);
       const res = await this.sfcApi.payOrder(params);
       console.log(conPrefix + "支付订单返回", res);
-      return res.data.qrcode || "";
+      let qrcode = res.data.qrcode || "";
+      if (qrcode) {
+        return qrcode;
+      }
+      return Promise.reject("获取支付结果不存在");
     } catch (error) {
       console.error(conPrefix + "支付订单异常", error);
       this.setErrInfo("获取订单支付结果异常", error);
+      return Promise.reject(error);
     }
   }
 
@@ -1762,13 +1767,16 @@ class OrderAutoTicketQueue {
   }) {
     const { conPrefix } = this;
     try {
-      // 9、获取订单结果
-      const qrcode = await this.payOrder({
-        city_id,
-        cinema_id,
-        order_num,
-        session_id
-      });
+      let qrcode;
+      try {
+        // 9、获取订单结果
+        qrcode = await this.payOrder({
+          city_id,
+          cinema_id,
+          order_num,
+          session_id
+        });
+      } catch (error) {}
       if (!qrcode) {
         console.error(conPrefix + "获取订单结果失败，单个订单直接出票结束");
         this.setErrInfo(
