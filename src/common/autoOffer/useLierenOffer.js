@@ -629,9 +629,10 @@ const offerRuleMatch = async order => {
       film_name,
       show_time,
       ticket_num,
-      appName
+      appName,
+      app_name //该字段主要是为了方便测试
     } = order;
-    let shadowLineName = appName;
+    let shadowLineName = appName || app_name;
 
     console.log(conPrefix + "报价订单影线", shadowLineName);
     // 1、获取启用的规则列表（只有满足规则才报价）

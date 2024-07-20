@@ -662,9 +662,10 @@ const offerRuleMatch = async order => {
       film_name,
       show_time,
       ticket_num,
-      appName
+      appName,
+      app_name //该字段主要是为了方便测试
     } = order;
-    let shadowLineName = appName;
+    let shadowLineName = appName || app_name;
 
     console.log(conPrefix + "报价订单影线", shadowLineName);
     // 1、获取启用的规则列表（只有满足规则才报价）
@@ -847,7 +848,7 @@ const offerRuleMatch = async order => {
     setErrInfo("报价规则匹配出现异常", error);
   }
 };
-window.offerRuleMatch = offerRuleMatch;
+window.offerRuleMatchBySheng = offerRuleMatch;
 // 获取报价最低的报价规则
 const getMinAmountOfferRule = async (ruleList, order) => {
   try {
