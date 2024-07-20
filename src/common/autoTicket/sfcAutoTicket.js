@@ -1621,6 +1621,7 @@ class OrderAutoTicketQueue {
     supplierCode
   }) {
     try {
+      // 没搁30秒查一次，查20次，10分钟
       const qrcode = await this.trial(
         () =>
           this.payOrder({
@@ -1629,8 +1630,8 @@ class OrderAutoTicketQueue {
             order_num,
             session_id
           }),
-        18,
-        10
+        20,
+        30
       );
       if (!qrcode) {
         svApi.updateTicketRecord({
@@ -1930,7 +1931,7 @@ class OrderAutoTicketQueue {
     const { conPrefix } = this;
     try {
       // 规则如下:
-      // 1、成本不能高于中标价，即40券不能出中标价39.3的单
+      // 1、成本不能高于中标价，即40券不能出中标价38.8的单
       // 2、1张票一个券，不能出现2张票用3个券的情况
       // 3、40出一线，35出二线国内，30出二线外国（暂时无法区分外国）
       let quans = quanList || []; // 优惠券列表
@@ -1939,7 +1940,7 @@ class OrderAutoTicketQueue {
         .map(item => {
           return {
             coupon_num: item.coupon_num,
-            quan_cost: quanValue == 40 ? 39.3 : Number(quanValue)
+            quan_cost: quanValue == 40 ? 38.8 : Number(quanValue)
           };
         });
       if (targetQuanList?.length < ticket_num) {

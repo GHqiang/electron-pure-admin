@@ -587,7 +587,7 @@ async function singleOffer(item, offerList) {
     let cost_price =
       offerType === "1"
         ? quanValue == "40"
-          ? 39.3
+          ? 38.8
           : Number(quanValue)
         : Number(memberPrice);
     const endPrice = await getEndPrice({
