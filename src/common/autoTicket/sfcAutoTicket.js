@@ -102,9 +102,13 @@ class OrderAutoTicketQueue {
             });
             this.logUpload(order);
           } else {
-            this.prevOrderNumber = order.order_number;
+            this.logList.push({
+              opera_time: getCurrentTime(),
+              des: `订单开始出票，上个订单号-${this.prevOrderNumber}`
+            });
             // 处理订单
             const res = await this.orderHandle(order, processDelay);
+            this.prevOrderNumber = order.order_number;
             // res: { profit, submitRes, qrcode, quan_code, card_id, offerRule } || undefined
             console.warn(
               conPrefix + `单个订单自动出票${res?.submitRes ? "成功" : "失败"}`,
@@ -113,7 +117,7 @@ class OrderAutoTicketQueue {
             );
             this.logList.push({
               opera_time: getCurrentTime(),
-              des: `单个订单自动出票${res?.submitRes ? "成功" : "失败"}`,
+              des: `单个订单自动出票结束，状态-${res?.submitRes ? "成功" : "失败"}，赋值上个订单号为当前订单号-${this.prevOrderNumber}`,
               info: {
                 res
               }
@@ -231,7 +235,7 @@ class OrderAutoTicketQueue {
       this.logList = [];
       this.logList.push({
         opera_time: getCurrentTime(),
-        des: "订单开始出票"
+        des: `订单开始出票，订单号-${order.order_number}`
       });
       await this.delay(delayTime);
       console.log(conPrefix + `订单处理 ${order.id}`);
