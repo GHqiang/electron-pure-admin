@@ -174,8 +174,6 @@ const viewRowId = ref(null);
 // 正在编辑内容
 const editingRow = ref({});
 
-// 队列集合
-const appTicketQueueObj = {};
 // token集合
 const appTokenObj = {};
 
@@ -215,6 +213,8 @@ window.testBandquan = async () => {
 // 一键启动
 const oneClickAutoOffer = () => {
   let loginInfoList = getCinemaLoginInfoList();
+  // 队列集合
+  const appTicketQueueObj = {};
   // 填充token及队列集合
   Object.keys(APP_LIST).forEach(item => {
     let obj = loginInfoList.find(
@@ -292,6 +292,7 @@ const singleStartOrStop = ({ id, appName }, flag) => {
       ElMessage.error("会员卡密码未设置，请先去设置后再启动");
       return;
     }
+    const appTicketQueueObj = {};
     Object.keys(APP_LIST).forEach(item => {
       let obj = loginInfoList.find(
         itemA => itemA.app_name === item && itemA.session_id

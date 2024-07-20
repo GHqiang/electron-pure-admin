@@ -102,10 +102,6 @@ class OrderAutoTicketQueue {
             });
             this.logUpload(order);
           } else {
-            this.logList.push({
-              opera_time: getCurrentTime(),
-              des: `订单开始出票，上个订单号-${this.prevOrderNumber}`
-            });
             // 处理订单
             const res = await this.orderHandle(order, processDelay);
             this.prevOrderNumber = order.order_number;
@@ -235,7 +231,7 @@ class OrderAutoTicketQueue {
       this.logList = [];
       this.logList.push({
         opera_time: getCurrentTime(),
-        des: `订单开始出票，订单号-${order.order_number}`
+        des: `订单开始出票，订单号-${order.order_number}，上个订单号-${this.prevOrderNumber}`
       });
       await this.delay(delayTime);
       console.log(conPrefix + `订单处理 ${order.id}`);
@@ -1621,7 +1617,7 @@ class OrderAutoTicketQueue {
   async payOrder(data) {
     const { conPrefix } = this;
     try {
-      let { city_id, cinema_id, order_num, session_id } = data || {};
+      let { city_id, cinema_id, order_num, session_id, inx } = data || {};
       let params = {
         city_id,
         cinema_id,
@@ -1635,7 +1631,19 @@ class OrderAutoTicketQueue {
       console.log(conPrefix + "支付订单返回", res);
       let qrcode = res.data.qrcode || "";
       if (qrcode) {
+        if (inx) {
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: `第${inx}次异步轮询获取支付结果成功`
+          });
+        }
         return qrcode;
+      }
+      if (inx) {
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: `第${inx}次异步轮询获取支付结果失败`
+        });
       }
       return Promise.reject("获取支付结果不存在");
     } catch (error) {
@@ -1741,10 +1749,10 @@ class OrderAutoTicketQueue {
           ++inx;
           console.log(conPrefix + `第${inx}次试错开始`);
           try {
-            await callback(inx);
-            console.log(conPrefix + `第${inx}次试错成功`);
+            const result = await callback(inx);
+            console.log(conPrefix + `第${inx}次试错成功`, result);
             clearInterval(trialTimer);
-            resolve();
+            resolve(result);
           } catch (error) {
             console.error(conPrefix + `第${inx}次试错失败`, error);
           }
@@ -1847,12 +1855,13 @@ class OrderAutoTicketQueue {
     try {
       // 没搁30秒查一次，查20次，10分钟
       const qrcode = await this.trial(
-        () =>
+        inx =>
           this.payOrder({
             city_id,
             cinema_id,
             order_num,
-            session_id
+            session_id,
+            inx
           }),
         20,
         30
