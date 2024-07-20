@@ -993,10 +993,10 @@ class OrderAutoTicketQueue {
             "走转单逻辑"
           );
           this.setErrInfo("优惠券和会员卡都无法使用，单个订单直接出票结束");
-          // this.logList.push({
-          //   opera_time: getCurrentTime(),
-          //   des: `优惠券和会员卡都无法使用，单个订单直接出票结束`
-          // });
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: `优惠券和会员卡都无法使用，准备转单`
+          });
           const transferParams = await this.transferOrder(item, {
             city_id,
             cinema_id,
@@ -1042,34 +1042,18 @@ class OrderAutoTicketQueue {
         quan_code,
         session_id
       });
-      let calcFail = !priceInfo;
-      let cardCalcFail =
-        priceInfo &&
-        offerRule.offer_type !== "1" &&
-        Number(priceInfo.total_price) >
-          (Number(offerRule.real_member_price) * 100 * Number(ticket_num)) /
-            100;
-      if (calcFail || cardCalcFail) {
+      if (!priceInfo) {
         if (this.currentParamsInx === this.currentParamsList.length - 1) {
           console.error(
             conPrefix +
               "使用优惠券或会员卡后计算订单价格失败，单个订单直接出票结束",
             "走转单逻辑"
           );
-          this.setErrInfo("使用优惠券或会员卡后计算订单价格失败", {
-            cardCalcFail,
-            calcFail,
-            priceInfo
+          this.setErrInfo("使用优惠券或会员卡后计算订单价格失败");
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: `使用优惠券或会员卡后计算订单价格失败，准备转单`
           });
-          // this.logList.push({
-          //   opera_time: getCurrentTime(),
-          //   des: `使用优惠券或会员卡后计算订单价格失败`,
-          //   info: {
-          //     cardCalcFail,
-          //     calcFail,
-          //     priceInfo
-          //   }
-          // });
           // 后续要记录失败列表（订单信息、失败原因、时间戳）
           const transferParams = await this.transferOrder(item, {
             city_id,
@@ -1104,10 +1088,10 @@ class OrderAutoTicketQueue {
       console.log(conPrefix + "订单最后价格", pay_money, priceInfo);
       if (offerRule.offer_type === "1" && pay_money !== 0) {
         this.setErrInfo("用券计算订单价格后价格不为0，走转单");
-        // this.logList.push({
-        //   opera_time: getCurrentTime(),
-        //   des: `用券计算订单价格后价格不为0，走转单`
-        // });
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: `用券计算订单价格后价格不为0，准备转单`
+        });
         const transferParams = await this.transferOrder(item, {
           city_id,
           cinema_id,
@@ -1392,7 +1376,8 @@ class OrderAutoTicketQueue {
       const {
         offer_type: offerType,
         quan_value: quanValue,
-        member_price
+        member_price,
+        real_member_price
       } = offerRule;
       let currentParams = this.currentParamsList[this.currentParamsInx];
       const { session_id, mobile } = currentParams;
@@ -1429,6 +1414,7 @@ class OrderAutoTicketQueue {
           show_id,
           seat_ids,
           member_price,
+          real_member_price,
           rewards,
           session_id,
           mobile
@@ -2307,6 +2293,7 @@ class OrderAutoTicketQueue {
     show_id,
     seat_ids,
     member_price,
+    real_member_price,
     rewards,
     session_id,
     mobile
@@ -2356,9 +2343,20 @@ class OrderAutoTicketQueue {
             session_id
           });
           if (result) {
-            card_id = card.id;
-            console.log(conPrefix + "卡使用成功，返回结果并停止尝试。");
-            return result; // 卡使用成功，返回结果并结束函数
+            let cardCalcFail =
+              Number(result.total_price) >
+              (Number(real_member_price) * 100 * Number(ticket_num)) / 100;
+            if (cardCalcFail) {
+              let isChangeCard = card.id !== cardData[cardData.length - 1].id;
+              this.logList.push({
+                opera_time: getCurrentTime(),
+                des: `该会员卡计算后价格-${result.total_price}高于真实会员价-${real_member_price}*座位数-${ticket_num},${isChangeCard ? "准备换卡" : ""};`
+              });
+            } else {
+              card_id = card.id;
+              console.log(conPrefix + "卡使用成功，返回结果并停止尝试。");
+              return result; // 卡使用成功，返回结果并结束函数
+            }
           }
         }
         this.logList.push({
