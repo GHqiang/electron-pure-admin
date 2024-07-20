@@ -237,13 +237,13 @@ class OrderAutoTicketQueue {
       console.log(conPrefix + `订单处理 ${order.id}`);
       if (this.isRunning) {
         const res = await this.singleTicket(order);
-        this.logList.push({
-          operaTime: getCurrentTime(),
-          des: `订单出票${res?.submitRes ? "成功" : "失败"}`,
-          info: {
-            res
-          }
-        });
+        // this.logList.push({
+        //   operaTime: getCurrentTime(),
+        //   des: `订单出票${res?.submitRes ? "成功" : "失败"}`,
+        //   info: {
+        //     res
+        //   }
+        // });
         // result: { profit, submitRes, transferParams, qrcode, quan_code, card_id, offerRule }
         return res;
       } else {
