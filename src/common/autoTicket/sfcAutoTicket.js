@@ -9,6 +9,7 @@ import {
 
 import lierenApi from "@/api/lieren-api";
 import shengApi from "@/api/sheng-api";
+import mangguoApi from "@/api/mangguo-api";
 import svApi from "@/api/sv-api";
 import { encode } from "@/utils/sfc-member-password";
 
@@ -480,11 +481,17 @@ class OrderAutoTicketQueue {
           supplierCode: order.supplierCode
           // reason: ""
         };
+      } else if (platName === "mangguo") {
+        params = {
+          order_id: order.id,
+          remark: "渠道无法出票"
+        };
       }
-      console.log(conPrefix + "解锁参数", params);
+      console.log(conPrefix + "转单参数", params);
       const requestApi = {
         lieren: lierenApi,
-        sheng: shengApi
+        sheng: shengApi,
+        mangguo: mangguoApi
       };
       console.warn(conPrefix + "【转单】参数", params);
       const res = await requestApi[platName].transferOrder(params);
@@ -558,6 +565,8 @@ class OrderAutoTicketQueue {
             supplierCode,
             inx: 1
           });
+        } else if (platName === "mangguo") {
+          await this.unlockSeat({ platName, order_id: id, inx: 1 });
         }
         this.logList.push({
           opera_time: getCurrentTime(),
@@ -644,11 +653,16 @@ class OrderAutoTicketQueue {
           orderCode,
           supplierCode
         };
+      } else if (platName === "mangguo") {
+        params = {
+          order_id
+        };
       }
       console.log(conPrefix + "解锁参数", params);
       const requestApi = {
         lieren: lierenApi,
-        sheng: shengApi
+        sheng: shengApi,
+        mangguo: mangguoApi
       };
       const res = await requestApi[platName].unlockSeat(params);
       console.log(conPrefix + "解锁返回", res);
@@ -1228,7 +1242,8 @@ class OrderAutoTicketQueue {
         order_number,
         supplierCode,
         platName,
-        session_id: this.currentParamsList[this.currentParamsInx].session_id
+        session_id: this.currentParamsList[this.currentParamsInx].session_id,
+        lockseat
       });
       if (lastRes?.qrcode && lastRes?.submitRes) {
         this.logList.push({
@@ -1646,6 +1661,7 @@ class OrderAutoTicketQueue {
     qrcode,
     order_number,
     supplierCode,
+    lockseat,
     flag
   }) {
     const { conPrefix } = this;
@@ -1672,10 +1688,26 @@ class OrderAutoTicketQueue {
           // message: "", // 出票失败原因，不能发货才有（失败的情况下一定要传）
           // desc: "" // 描述，允许空，换座信息也填在这里，如更换1排4座，1排5座
         };
+      } else if (platName === "mangguo") {
+        params = {
+          order_id, // 省APP的订单编号
+          qupiao: [
+            {
+              result: qrcode.split("|")[0],
+              yzm: qrcode.split("|")?.[1] || "",
+              num: qrcode.split("|").length
+            }
+          ],
+          upticketinfo: [], // 里面是图片url，没有先不传 [{url: ''}]
+          seat_items: lockseat.split(" ").map(item => ({
+            position_seat: item
+          }))
+        };
       }
       const requestApi = {
         lieren: lierenApi,
-        sheng: shengApi
+        sheng: shengApi,
+        mangguo: mangguoApi
       };
       console.log(conPrefix + "提交出票码参数", params);
       const res = await requestApi[platName].submitTicketCode(params);
@@ -1761,7 +1793,8 @@ class OrderAutoTicketQueue {
     order_number,
     supplierCode,
     platName,
-    session_id
+    session_id,
+    lockseat
   }) {
     const { conPrefix } = this;
     try {
@@ -1796,7 +1829,8 @@ class OrderAutoTicketQueue {
           card_id,
           platName,
           order_number,
-          supplierCode
+          supplierCode,
+          lockseat
         });
         return;
       }
@@ -1812,6 +1846,7 @@ class OrderAutoTicketQueue {
         order_number,
         supplierCode,
         platName,
+        lockseat,
         flag: 1
       });
       this.logList.push({
@@ -1836,7 +1871,8 @@ class OrderAutoTicketQueue {
     card_id,
     platName,
     order_number,
-    supplierCode
+    supplierCode,
+    lockseat
   }) {
     try {
       // 没搁30秒查一次，查20次，10分钟
@@ -1872,6 +1908,7 @@ class OrderAutoTicketQueue {
         order_number,
         supplierCode,
         platName,
+        lockseat,
         flag: 2
       });
     } catch (error) {
@@ -1887,6 +1924,7 @@ class OrderAutoTicketQueue {
     order_number,
     supplierCode,
     platName,
+    lockseat,
     flag
   }) {
     const { conPrefix } = this;
@@ -1898,6 +1936,7 @@ class OrderAutoTicketQueue {
         qrcode,
         order_number,
         supplierCode,
+        lockseat,
         flag
       });
       if (!submitRes) {

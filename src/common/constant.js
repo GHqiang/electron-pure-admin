@@ -1,7 +1,8 @@
 // 订单来源，即平台
 const ORDER_FORM = {
   lieren: "猎人",
-  sheng: "省APP"
+  sheng: "省APP",
+  mangguo: "芒果"
 };
 // 影院列表
 const APP_LIST = {

@@ -141,6 +141,7 @@ import svApi from "@/api/sv-api";
 import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
 import lierenOfferQueue from "@/common/autoOffer/useLierenOffer";
 import shengOfferQueue from "@/common/autoOffer/useShengOffer";
+import mangguoOfferQueue from "@/common/autoOffer/useMangguoOffer";
 import { ORDER_FORM, APP_LIST } from "@/common/constant";
 import {
   getCinemaLoginInfoList,
@@ -204,7 +205,20 @@ const oneClickAutoOffer = () => {
             tableDataStore.toggleEnable(item.id);
             lierenOfferQueue.start(platToken);
           }
-        } else if (item.platName === "sheng") {
+        }
+        if (item.platName === "mangguo") {
+          let platToken = displayItems.value.find(
+            item => item.platName === "mangguo"
+          )?.platToken;
+          console.log("platToken", platToken, displayItems.value);
+          if (!platToken) {
+            isStart = false;
+          } else {
+            tableDataStore.toggleEnable(item.id);
+            mangguoOfferQueue.start(platToken);
+          }
+        }
+        if (item.platName === "sheng") {
           tableDataStore.toggleEnable(item.id);
           shengOfferQueue.start();
         }
@@ -248,7 +262,12 @@ const singleStartOrStop = ({ id, platToken, platName }, flag) => {
     if (platName === "lieren" && platToken) {
       tableDataStore.toggleEnable(id);
       lierenOfferQueue.start(platToken);
-    } else if (platName === "sheng") {
+    }
+    if (platName === "mangguo" && platToken) {
+      tableDataStore.toggleEnable(id);
+      mangguoOfferQueue.start(platToken);
+    }
+    if (platName === "sheng") {
       tableDataStore.toggleEnable(id);
       shengOfferQueue.start();
     }
