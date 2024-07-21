@@ -10,6 +10,7 @@ import {
 import lierenApi from "@/api/lieren-api";
 import shengApi from "@/api/sheng-api";
 import mangguoApi from "@/api/mangguo-api";
+import mayiApi from "@/api/mayi-api";
 import svApi from "@/api/sv-api";
 import { encode } from "@/utils/sfc-member-password";
 
@@ -486,12 +487,20 @@ class OrderAutoTicketQueue {
           order_id: order.id,
           remark: "渠道无法出票"
         };
+      } else if (platName === "mayi") {
+        params = {
+          tradeno: order.id,
+          certificateImgUrl: "",
+          reason: "",
+          type: "bj_error"
+        };
       }
       console.log(conPrefix + "转单参数", params);
       const requestApi = {
         lieren: lierenApi,
         sheng: shengApi,
-        mangguo: mangguoApi
+        mangguo: mangguoApi,
+        mayi: mayiApi
       };
       console.warn(conPrefix + "【转单】参数", params);
       const res = await requestApi[platName].transferOrder(params);
@@ -657,12 +666,17 @@ class OrderAutoTicketQueue {
         params = {
           order_id
         };
+      } else if (platName === "mayi") {
+        params = {
+          tradeno: order_id
+        };
       }
       console.log(conPrefix + "解锁参数", params);
       const requestApi = {
         lieren: lierenApi,
         sheng: shengApi,
-        mangguo: mangguoApi
+        mangguo: mangguoApi,
+        mayi: mayiApi
       };
       const res = await requestApi[platName].unlockSeat(params);
       console.log(conPrefix + "解锁返回", res);
@@ -1701,11 +1715,25 @@ class OrderAutoTicketQueue {
           ]),
           seats: JSON.stringify(lockseat.split(" "))
         };
+      } else if (platName === "mayi") {
+        params = {
+          tradeno: order_id, // 蚂蚁APP的订单编号
+          ticketCodeList: JSON.stringify([
+            {
+              picUrl: "",
+              ticketCode: qrcode,
+              verifyCinemaName: true,
+              verifyMovieName: true,
+              verifyPlaytime: true
+            }
+          ])
+        };
       }
       const requestApi = {
         lieren: lierenApi,
         sheng: shengApi,
-        mangguo: mangguoApi
+        mangguo: mangguoApi,
+        mayi: mayiApi
       };
       console.log(conPrefix + "提交出票码参数", params);
       const res = await requestApi[platName].submitTicketCode(params);

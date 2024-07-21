@@ -123,6 +123,7 @@ import { usePlatFetchOrderStore } from "@/store/platOfferRuleTable";
 import lierenFetchOrder from "@/common/orderFetch/lierenFetchOrder";
 import shengFetchOrder from "@/common/orderFetch/shengFetchOrder";
 import mangguoFetchOrder from "@/common/orderFetch/mangguoFetchOrder";
+import mayiFetchOrder from "@/common/orderFetch/mayiFetchOrder";
 
 import { ORDER_FORM } from "@/common/constant.js";
 import { getCurrentFormattedDateTime } from "@/utils/utils";
@@ -175,6 +176,9 @@ const oneClickAutoOffer = () => {
         if (item.platName === "mangguo") {
           mangguoFetchOrder.start();
         }
+        if (item.platName === "mayi") {
+          mayiFetchOrder.start();
+        }
       });
       svApi.updateUser({
         order_fetch_queue: JSON.stringify(tableDataStore.items),
@@ -218,6 +222,10 @@ const singleStartOrStop = ({ id, platName }, flag) => {
     if (platName === "mangguo") {
       tableDataStore.toggleEnable(id);
       mangguoFetchOrder.start();
+    }
+    if (platName === "mayi") {
+      tableDataStore.toggleEnable(id);
+      mayiFetchOrder.start();
     }
   } else {
     tableDataStore.toggleEnable(id);

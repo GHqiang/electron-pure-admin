@@ -142,6 +142,7 @@ import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
 import lierenOfferQueue from "@/common/autoOffer/useLierenOffer";
 import shengOfferQueue from "@/common/autoOffer/useShengOffer";
 import mangguoOfferQueue from "@/common/autoOffer/useMangguoOffer";
+import mayiOfferQueue from "@/common/autoOffer/useMayiOffer";
 import { ORDER_FORM, APP_LIST } from "@/common/constant";
 import {
   getCinemaLoginInfoList,
@@ -218,6 +219,19 @@ const oneClickAutoOffer = () => {
             mangguoOfferQueue.start(platToken);
           }
         }
+        if (item.platName === "mayi") {
+          let platToken = displayItems.value.find(
+            item => item.platName === "mayi"
+          )?.platToken;
+          console.log("platToken", platToken, displayItems.value);
+          if (!platToken) {
+            isStart = false;
+          } else {
+            tableDataStore.toggleEnable(item.id);
+            mayiOfferQueue.start(platToken);
+          }
+        }
+
         if (item.platName === "sheng") {
           tableDataStore.toggleEnable(item.id);
           shengOfferQueue.start();
@@ -266,6 +280,10 @@ const singleStartOrStop = ({ id, platToken, platName }, flag) => {
     if (platName === "mangguo" && platToken) {
       tableDataStore.toggleEnable(id);
       mangguoOfferQueue.start(platToken);
+    }
+    if (platName === "mayi" && platToken) {
+      tableDataStore.toggleEnable(id);
+      mayiOfferQueue.start(platToken);
     }
     if (platName === "sheng") {
       tableDataStore.toggleEnable(id);

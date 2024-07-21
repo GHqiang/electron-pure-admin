@@ -8,6 +8,7 @@ export const platTokens = defineStore("platTokens", {
   state: () => ({
     lierenToken: "",
     mangguoToken: "",
+    mayiToken: "",
     // eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzb20uempscm1vdmllLmNuIiwiYXVkIjoic29tLnpqbHJtb3ZpZS5jbiIsImlhdCI6MTcxNTM0NDk2MywibmJmIjoxNzE1MzQ0OTYzLCJleHAiOjE3MTc3NjQxNjMsImRhdGEiOnsiaWQiOjcxNDYzMiwidXNlcm5hbWUiOjcxNDYzMiwic3RhdHVzIjoxLCJvcGVuaWQiOiJvUXpFZjQ3a1ZLQ3F6bzRPSXl1ZHBZVllwX2g0In19.mwidYdjsGHIEnDxWlihB2LVdCtt0o1v_rrdbvSbSe50
     selfToken: "", // 平台自身token
     userInfo: user || {} // 用户信息
@@ -33,6 +34,12 @@ export const platTokens = defineStore("platTokens", {
       console.warn("设置芒果平台token", data);
       window.localStorage.setItem("mangguoToken", data);
       this.mangguoToken = data;
+    },
+    // 设置蚂蚁票务平台token
+    setMayiPlatToken(data) {
+      console.warn("设置蚂蚁平台token", data);
+      window.localStorage.setItem("mayiToken", data);
+      this.mayiToken = data;
     },
     // 设置自身平台token
     setSelfPlatToken(data) {
