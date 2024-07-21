@@ -970,7 +970,7 @@ const getMemberPrice = async order => {
           bigPrice
         );
         return {
-          member_price: Math.round(Number(bigPrice)),
+          member_price: Number(bigPrice),
           real_member_price: Number(bigPrice)
         };
       }
