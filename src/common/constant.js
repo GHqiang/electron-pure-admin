@@ -3,7 +3,8 @@ const ORDER_FORM = {
   lieren: "猎人",
   sheng: "省APP",
   mangguo: "芒果",
-  mayi: "蚂蚁"
+  mayi: "蚂蚁",
+  yangcong: "洋葱"
 };
 // 影院列表
 const APP_LIST = {

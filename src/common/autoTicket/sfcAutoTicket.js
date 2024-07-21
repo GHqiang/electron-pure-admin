@@ -11,6 +11,7 @@ import lierenApi from "@/api/lieren-api";
 import shengApi from "@/api/sheng-api";
 import mangguoApi from "@/api/mangguo-api";
 import mayiApi from "@/api/mayi-api";
+import yangcongApi from "@/api/yangcong-api";
 import svApi from "@/api/sv-api";
 import { encode } from "@/utils/sfc-member-password";
 
@@ -494,13 +495,18 @@ class OrderAutoTicketQueue {
           reason: "",
           type: "bj_error"
         };
+      } else if (platName === "yangcong") {
+        params = {
+          tradeno: order.id
+        };
       }
       console.log(conPrefix + "转单参数", params);
       const requestApi = {
         lieren: lierenApi,
         sheng: shengApi,
         mangguo: mangguoApi,
-        mayi: mayiApi
+        mayi: mayiApi,
+        yangcong: yangcongApi
       };
       console.warn(conPrefix + "【转单】参数", params);
       const res = await requestApi[platName].transferOrder(params);
@@ -670,13 +676,18 @@ class OrderAutoTicketQueue {
         params = {
           tradeno: order_id
         };
+      } else if (platName === "yangcong") {
+        params = {
+          tradeno: order_id
+        };
       }
       console.log(conPrefix + "解锁参数", params);
       const requestApi = {
         lieren: lierenApi,
         sheng: shengApi,
         mangguo: mangguoApi,
-        mayi: mayiApi
+        mayi: mayiApi,
+        yangcong: yangcongApi
       };
       const res = await requestApi[platName].unlockSeat(params);
       console.log(conPrefix + "解锁返回", res);
@@ -1728,12 +1739,19 @@ class OrderAutoTicketQueue {
             }
           ])
         };
+      } else if (platName === "yangcong") {
+        params = {
+          tradeno: order_id, // 蚂蚁APP的订单编号
+          ticketCodeUrls: "",
+          ticketCodes: qrcode
+        };
       }
       const requestApi = {
         lieren: lierenApi,
         sheng: shengApi,
         mangguo: mangguoApi,
-        mayi: mayiApi
+        mayi: mayiApi,
+        yangcong: yangcongApi
       };
       console.log(conPrefix + "提交出票码参数", params);
       const res = await requestApi[platName].submitTicketCode(params);

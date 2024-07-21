@@ -11,7 +11,7 @@ import { SPECIAL_CINEMA_OBJ } from "@/common/constant";
 import svApi from "@/api/sv-api";
 import { SFC_API_OBJ } from "@/common/index.js";
 
-import mayiApi from "@/api/mayi-api";
+import yangcongApi from "@/api/yangcong-api";
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
 const tokens = platTokens();
@@ -20,7 +20,7 @@ import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
 const platTableDataStore = usePlatTableDataStore();
 // 平台自动报价规则列表
 const platOfferRuleList = computed(() =>
-  platTableDataStore.items.filter(item => item.platName === "mayi")
+  platTableDataStore.items.filter(item => item.platName === "yangcong")
 );
 
 // app报价规则列表
@@ -30,11 +30,11 @@ const dataTableStore = useDataTableStore();
 // 使用computed确保items响应式
 const appOfferRuleList = computed(() =>
   dataTableStore.items.filter(item =>
-    item.orderForm.split(",").includes("mayi")
+    item.orderForm.split(",").includes("yangcong")
   )
 );
 
-let conPrefix = "【蚂蚁自动报价】——"; // console打印前缀
+let conPrefix = "【洋葱自动报价】——"; // console打印前缀
 const getOrginValue = value => JSON.parse(JSON.stringify(value));
 
 console.log(conPrefix + "队列执行规则", getOrginValue(platOfferRuleList.value));
@@ -59,7 +59,7 @@ class OrderAutoOfferQueue {
   // 启动队列（fetchDelay获取订单列表间隔，processDelay处理订单间隔）
   async start(platToken) {
     if (platToken) {
-      tokens.setMayiPlatToken(platToken);
+      tokens.setYangcongPlatToken(platToken);
     }
     console.log(
       "开始执行时获取到的规则列表",
@@ -136,36 +136,35 @@ class OrderAutoOfferQueue {
       let sfcStayOfferlist = stayList.map(item => {
         const {
           tradeno,
-          unitprice,
-          maxBaojia,
-          cityname,
-          address,
+          unitPrice,
+          supportMaxBaojia,
+          cityName,
+          cinemaAddress,
           quantity,
-          cinemaname,
-          roomname,
-          moviename,
-          logo,
+          cinemaName,
+          hallName,
+          movieName,
+          logoUrl,
           playTime,
-          jiorder,
           cinemaId,
           cinemaChain // 品牌名 上影上海、上影二线等
         } = item;
         return {
-          plat_name: "mayi",
+          plat_name: "yangcong",
           id: tradeno,
-          tpp_price: unitprice,
-          supplier_max_price: maxBaojia,
-          city_name: cityname,
-          cinema_addr: address,
+          tpp_price: unitPrice,
+          supplier_max_price: supportMaxBaojia,
+          city_name: cityName,
+          cinema_addr: cinemaAddress,
           ticket_num: quantity,
-          cinema_name: cinemaname,
-          hall_name: roomname,
-          film_name: moviename,
-          film_img: logo,
+          cinema_name: cinemaName,
+          hall_name: hallName,
+          film_name: movieName,
+          film_img: logoUrl,
           show_time: playTime,
-          rewards: 0, // 蚂蚁无奖励，只有快捷
-          is_urgent: jiorder, // 1紧急 0非紧急
-          cinema_group: cinemaChain === "" ? "上影上海" : "其它自动",
+          rewards: 0, // 洋葱无奖励，只有快捷
+          is_urgent: "", // 1紧急 0非紧急
+          cinema_group: cinemaChain === "c_sfc" ? "上影上海" : "其它自动",
           cinema_code: cinemaId, // 影院id
           order_number: tradeno
         };
@@ -257,7 +256,7 @@ class OrderAutoOfferQueue {
       console.warn(conPrefix + "数据库存储报价记录", order, offerResult);
       let serOrderInfo = {
         // user_id: order.user_id,
-        plat_name: "mayi",
+        plat_name: "yangcong",
         app_name: order.appName || offerResult?.offerRule?.shadowLineName || "",
         order_id: order.id,
         order_number: order.order_number,
@@ -386,7 +385,7 @@ const getOfferList = async () => {
     const res = await svApi.queryOfferList({
       user_id: tokens.userInfo.user_id,
       // user_id: "9",
-      plat_name: "mayi",
+      plat_name: "yangcong",
       start_time: getCurrentFormattedDateTime(
         +new Date() - 0.5 * 60 * 60 * 1000
       ),
@@ -394,8 +393,8 @@ const getOfferList = async () => {
     });
     return res.data.offerList || [];
   } catch (error) {
-    console.error(conPrefix + "获取蚂蚁历史报价记录异常", error);
-    setErrInfo("获取蚂蚁历史报价记录异常", error);
+    console.error(conPrefix + "获取洋葱历史报价记录异常", error);
+    setErrInfo("获取洋葱历史报价记录异常", error);
     return Promise.reject("获取历史报价异常");
   }
 };
@@ -464,7 +463,7 @@ const getEndPrice = async params => {
       serOfferRecord = offerList;
       // 测试用下面的
       // serOfferRecord = await getOfferList();
-      // 蚂蚁报价记录
+      // 洋葱报价记录
       // lierenOfferRecord = await getLierenOrderList();
       lierenOfferRecord = [];
       lierenMachineOfferList = lierenOfferRecord.filter(item =>
@@ -524,12 +523,8 @@ const getEndPrice = async params => {
 // 获取待报价订单列表
 async function getStayOfferList() {
   try {
-    const res = await mayiApi.queryStayOfferList({
-      specialHall: "",
-      minPrice: "",
-      maxPrice: ""
-    });
-    let list = res.data || [];
+    const res = await yangcongApi.queryStayOfferList({});
+    let list = res.data.records || [];
     console.log(conPrefix + "获取待报价列表返回", list);
     return list;
   } catch (error) {
@@ -546,7 +541,7 @@ async function singleOffer(item, offerList) {
     errMsg = "";
     errInfo = "";
     console.log(conPrefix + "待报价订单", item);
-    let { id, supplier_max_price, rewards, ticket_num } = item || {};
+    let { id, supplier_max_price, rewards, order_number } = item || {};
     if (!id) return;
     // 报价逻辑
     console.log(conPrefix + "准备匹配报价规则", item);
@@ -589,14 +584,14 @@ async function singleOffer(item, offerList) {
     }
 
     let params = {
-      tradeno: id,
+      tradeno: order_number,
       price: endPrice
     };
     console.log(conPrefix + "订单报价参数", params);
     if (isTestOrder) {
       return { offerRule };
     }
-    const res = await mayiApi.submitOffer(params);
+    const res = await yangcongApi.submitOffer(params);
     console.log(conPrefix + "订单报价返回", res);
     return { res, offerRule };
   } catch (error) {

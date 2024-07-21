@@ -1,14 +1,14 @@
-// sheng平台获取订单队列
+// 洋葱平台获取订单队列
 import { onMounted, computed } from "vue";
 
-import mayiApi from "@/api/mayi-api";
+import yangcongApi from "@/api/yangcong-api";
 import svApi from "@/api/sv-api";
 // 平台自动获取订单规则列表
 import { usePlatFetchOrderStore } from "@/store/platOfferRuleTable";
 const platTableDataStore = usePlatFetchOrderStore();
 
 const platFetchOrderRuleList = computed(() =>
-  platTableDataStore.items.filter(item => item.platName === "mayi")
+  platTableDataStore.items.filter(item => item.platName === "yangcong")
 );
 
 import { useStayTicketList } from "@/store/stayTicketList";
@@ -19,7 +19,7 @@ import { platTokens } from "@/store/platTokens";
 // 平台toke列表
 const tokens = platTokens();
 
-let conPrefix = "【蚂蚁自动获取订单】——"; // console打印前缀
+let conPrefix = "【洋葱自动获取订单】——"; // console打印前缀
 const getOrginValue = value => JSON.parse(JSON.stringify(value));
 
 // 创建一个订单自动报价队列类
@@ -75,41 +75,40 @@ class OrderAutoFetchQueue {
         .map(item => {
           const {
             tradeno,
-            unitprice,
-            mybaojia,
-            cityname,
-            address,
-            seat,
+            unitPrice,
+            baojia,
+            cityName,
+            cinemaAddress,
+            seatNames,
             quantity,
-            cinemaname,
-            roomname,
-            moviename,
-            logo,
+            cinemaName,
+            hallName,
+            movieName,
+            logoUrl,
             playTime,
-            jiorder,
             cinemaId,
             cinemaChain // 品牌名 上影上海、上影二线等
           } = item;
           return {
-            plat_name: "mayi",
+            plat_name: "yangcong",
             id: tradeno,
-            tpp_price: unitprice,
-            supplier_end_price: mybaojia,
-            city_name: cityname,
-            cinema_addr: address,
+            tpp_price: unitPrice,
+            supplier_end_price: baojia,
+            city_name: cityName,
+            cinema_addr: cinemaAddress,
             ticket_num: quantity,
-            cinema_name: cinemaname,
-            hall_name: roomname,
-            film_name: moviename,
-            film_img: logo,
+            cinema_name: cinemaName,
+            hall_name: hallName,
+            film_name: movieName,
+            film_img: logoUrl,
             show_time: playTime,
-            rewards: 0, // 蚂蚁无奖励，只有快捷
-            is_urgent: jiorder, // 1紧急 0非紧急
-            cinema_group: cinemaChain === "SFC" ? "上影上海" : "其它自动",
+            rewards: 0, // 洋葱无奖励，只有快捷
+            is_urgent: "", // 1紧急 0非紧急
+            cinema_group: cinemaChain === "c_sfc" ? "上影上海" : "其它自动",
             cinema_code: cinemaId, // 影院id
             order_number: tradeno,
-            lockseat: seat.split(",").join(" "),
-            platName: "mayi"
+            lockseat: seatNames.split("|").join(" "),
+            platName: "yangcong"
           };
         })
         .filter(item => getCinemaFlag(item))
@@ -129,7 +128,7 @@ class OrderAutoFetchQueue {
           )
       );
       // console.warn(
-      //   conPrefix + "蚂蚁待出票列表从本地缓存过滤后",
+      //   conPrefix + "洋葱待出票列表从本地缓存过滤后",
       //   sfcStayOfferlist
       // );
       if (sfcStayOfferlist?.length) {
@@ -139,7 +138,7 @@ class OrderAutoFetchQueue {
           judgeHandle(item, item.appName, offerList, ticketList)
         );
         // console.warn(
-        //   conPrefix + "蚂蚁待出票列表从远端过滤后",
+        //   conPrefix + "洋葱待出票列表从远端过滤后",
         //   sfcStayOfferlist
         // );
       }
@@ -184,13 +183,13 @@ const judgeHandle = (item, app_name, offerList, ticketList) => {
 // 获取待出票订单列表
 async function orderFetch() {
   try {
-    // console.log(conPrefix + "获取蚂蚁待出票订单列表参数", params);
-    const res = await mayiApi.stayTicketingList({});
-    let list = res?.data.records || [];
-    // console.log(conPrefix + "获取蚂蚁待出票列表返回", list);
+    // console.log(conPrefix + "获取洋葱待出票订单列表参数", params);
+    const res = await yangcongApi.stayTicketingList({});
+    let list = res?.data || [];
+    // console.log(conPrefix + "获取洋葱待出票列表返回", list);
     return list;
   } catch (error) {
-    console.error(conPrefix + "获取蚂蚁待出票列表异常", error);
+    console.error(conPrefix + "获取洋葱待出票列表异常", error);
     return [];
   }
 }
@@ -200,13 +199,13 @@ const getOfferList = async () => {
   try {
     const res = await svApi.queryOfferList({
       user_id: tokens.userInfo.user_id,
-      plat_name: "mayi",
+      plat_name: "yangcong",
       start_time: getCurrentFormattedDateTime(+new Date() - 1 * 60 * 60 * 1000),
       end_time: getCurrentFormattedDateTime()
     });
     return res.data.offerList || [];
   } catch (error) {
-    console.error(conPrefix + "获取蚂蚁历史报价记录异常", error);
+    console.error(conPrefix + "获取洋葱历史报价记录异常", error);
     return [];
   }
 };
@@ -216,13 +215,13 @@ const getTicketList = async () => {
   try {
     const ticketRes = await svApi.queryTicketList({
       user_id: tokens.userInfo?.user_id,
-      plat_name: "mayi",
+      plat_name: "yangcong",
       page_num: 1,
       page_size: 50
     });
     return ticketRes.data.ticketList || [];
   } catch (error) {
-    console.error(conPrefix + "获取蚂蚁历史出票记录异常", error);
+    console.error(conPrefix + "获取洋葱历史出票记录异常", error);
     return [];
   }
 };

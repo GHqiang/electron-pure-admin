@@ -66,6 +66,12 @@ export default ({ command, mode }: ConfigEnv): UserConfigExport => {
           target: "https://piao.mayiufu.com", // 后端API的真实地址
           changeOrigin: true, // 是否允许跨域
           rewrite: path => path.replace(/^\/newwww/, "/newwww") // 重写路径，去除/api前缀
+        },
+        // 洋葱
+        "/prod-api": {
+          target: "https://ticket.secretonion.com", // 后端API的真实地址
+          changeOrigin: true, // 是否允许跨域
+          rewrite: path => path.replace(/^\/prod-api/, "/prod-api") // 重写路径，去除/api前缀
         }
       },
       // 预热文件以提前转换和缓存结果，降低启动期间的初始页面加载时长并防止转换瀑布
