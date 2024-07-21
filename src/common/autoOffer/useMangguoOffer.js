@@ -600,7 +600,7 @@ async function singleOffer(item, offerList) {
 
     let params = {
       order_id: id,
-      price: price * 100
+      price: endPrice * 100
     };
     console.log(conPrefix + "订单报价参数", params);
     if (isTestOrder) {

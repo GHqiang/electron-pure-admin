@@ -616,7 +616,7 @@ async function singleOffer(item, offerList) {
       seatInfo: JSON.stringify(
         item.seats.map(item => ({
           seatId: item.seatId,
-          supplierPrice: price - 1
+          supplierPrice: endPrice - 1
         }))
       )
     };
