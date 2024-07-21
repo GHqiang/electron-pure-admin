@@ -178,10 +178,10 @@ class OrderAutoOfferQueue {
             appName: getCinemaFlag(item)
           };
         });
-      // console.warn(
-      //   conPrefix + "匹配已上架影院后的的待报价订单",
-      //   sfcStayOfferlist
-      // );
+      console.warn(
+        conPrefix + "匹配已上架影院后的的待报价订单",
+        sfcStayOfferlist
+      );
       if (!sfcStayOfferlist?.length) return [];
       const { handleSuccessOrderList, handleFailOrderList } = this;
       let orderOfferRecord = [
@@ -585,7 +585,7 @@ async function singleOffer(item, offerList) {
 
     let params = {
       tradeno: order_number,
-      price: endPrice
+      price: endPrice - 1
     };
     console.log(conPrefix + "订单报价参数", params);
     if (isTestOrder) {
@@ -1156,6 +1156,11 @@ const getMovieInfo = async item => {
     let city_id = cityList.value.find(
       item => item.name.indexOf(city_name) !== -1
     )?.id;
+    if (!city_id) {
+      console.error(conPrefix + "获取目标城市失败");
+      setErrInfo("获取目标城市失败");
+      return;
+    }
     let params = {
       city_id: city_id
     };
@@ -1166,6 +1171,7 @@ const getMovieInfo = async item => {
     let cinema_id = getCinemaId(cinema_name, cinemaList, appName);
     if (!cinema_id) {
       console.error(conPrefix + "获取目标影院失败");
+      setErrInfo("获取目标影院失败");
       return;
     }
     // 2、获取影院放映信息拿到会员价
