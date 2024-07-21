@@ -125,6 +125,7 @@
         </template>
       </el-table-column>
       <el-table-column prop="ticketSuccessNum" label="成功数" min-width="90" />
+      <el-table-column prop="ticketNum" label="出票数" min-width="90" />
       <el-table-column label="成功率" width="90">
         <template #default="{ row: { ticketTotalNum, ticketSuccessNum } }">
           <span
@@ -250,7 +251,7 @@ const getSummaries = param => {
   });
   sums[2] = Number(sums[2]).toFixed(2);
   sums[9] = Math.floor((sums[8] / sums[4]) * 100) + "%";
-  sums[11] = sums[10] > 0 ? Math.floor((sums[10] / sums[8]) * 100) + "%" : "0%";
+  sums[12] = sums[10] > 0 ? Math.floor((sums[10] / sums[8]) * 100) + "%" : "0%";
   return sums;
 };
 
@@ -274,6 +275,7 @@ const loadData = async () => {
       offerExceedLimitedPriceNum: 0,
       ticketTotalNum: 0,
       ticketSuccessNum: 0,
+      ticketNum: 0,
       ticketFailNum: 0,
       ticketTransferNum: 0
     }));
@@ -306,9 +308,12 @@ const loadData = async () => {
         Math.round(
           (Number(item.profit || 0) - Number(item.transfer_fee || 0)) * 100
         ) / 100;
-      item.order_status === "1"
-        ? list[inx].ticketSuccessNum++
-        : list[inx].ticketFailNum++;
+      if (item.order_status === "1") {
+        list[inx].ticketNum += Number(item.ticket_num);
+        list[inx].ticketSuccessNum++;
+      } else {
+        list[inx].ticketFailNum++;
+      }
       item.err_msg?.includes("规则不存在")
         ? list[inx].offerRuleMatchEmptyNum++
         : null;
