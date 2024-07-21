@@ -296,8 +296,8 @@ class OrderAutoTicketQueue {
         qrcode: res?.qrcode || "",
         quan_code: res?.quan_code || "",
         card_id: res?.card_id || "",
-        err_msg: errMsg || "",
-        err_info: errInfo || "",
+        err_msg: res?.submitRes ? "" : errMsg || "",
+        err_info: res?.submitRes ? "" : errInfo || "",
         rewards: order.rewards, // 是否是奖励订单 1是 0否
         transfer_fee: res?.transferParams?.transfer_fee || "", // 转单手续费
         mobile: currentParamsList[currentParamsInx]?.mobile || "" // 出票手机号
