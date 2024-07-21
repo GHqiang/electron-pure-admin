@@ -467,7 +467,7 @@ const getEndPrice = async params => {
     if (Number(supplier_max_price) < price + shouxufei) {
       // 奖励单按真实成本（加手续费），非奖励单最高限价
       price = rewards == 1 ? cost_price : supplier_max_price;
-      return price;
+      return Math.round(price);
     }
     // 如果报最终报价不小于最高限价返回报价
     return Math.round(price);
@@ -476,7 +476,7 @@ const getEndPrice = async params => {
     setErrInfo("获取最终报价异常", error);
   }
 };
-window.getEndPrice = getEndPrice;
+// window.getEndPrice = getEndPrice;
 // 获取待报价订单列表
 async function getStayOfferList() {
   try {
@@ -575,6 +575,7 @@ async function singleOffer(item, offerList) {
       rewards,
       offerList
     });
+    console.warn("最终报价返回", endPrice);
     if (!endPrice) {
       return { offerRule };
     }

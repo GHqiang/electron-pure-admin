@@ -133,45 +133,46 @@ class OrderAutoOfferQueue {
       const stayList = await getStayOfferList();
       // console.log("stayList", stayList);
       if (!stayList?.length) return [];
-      let sfcStayOfferlist = stayList
-        .map(item => {
-          const {
-            id,
-            maoyan_price,
-            supplier_max_price,
-            city_name,
-            relation_to_cinema,
-            ticket_num,
-            cinema_name,
-            hall_name,
-            film_name,
-            film_img,
-            show_time,
-            is_urgent,
-            order_number,
-            cinemaid,
-            line_name // 品牌名 上影上海、上影二线等
-          } = item;
-          return {
-            plat_name: "mangguo",
-            id: id,
-            tpp_price: maoyan_price,
-            supplier_max_price: supplier_max_price,
-            city_name: city_name,
-            cinema_addr: relation_to_cinema.cinema_addr,
-            ticket_num: ticket_num,
-            cinema_name: cinema_name,
-            hall_name: hall_name,
-            film_name: film_name,
-            film_img: film_img,
-            show_time: show_time,
-            rewards: 0, // 芒果无奖励，只有快捷
-            is_urgent: is_urgent, // 1紧急 0非紧急
-            cinema_group: line_name,
-            cinema_code: cinemaid, // 影院id
-            order_number: order_number
-          };
-        })
+      let sfcStayOfferlist = stayList.map(item => {
+        const {
+          id,
+          maoyan_price,
+          supplier_max_price,
+          city_name,
+          relation_to_cinema,
+          ticket_num,
+          cinema_name,
+          hall_name,
+          film_name,
+          film_img,
+          show_time,
+          is_urgent,
+          order_number,
+          cinemaid,
+          line_name // 品牌名 上影上海、上影二线等
+        } = item;
+        return {
+          plat_name: "mangguo",
+          id: id,
+          tpp_price: maoyan_price,
+          supplier_max_price: supplier_max_price,
+          city_name: city_name,
+          cinema_addr: relation_to_cinema.cinema_addr,
+          ticket_num: ticket_num,
+          cinema_name: cinema_name,
+          hall_name: hall_name,
+          film_name: film_name,
+          film_img: film_img,
+          show_time: show_time,
+          rewards: 0, // 芒果无奖励，只有快捷
+          is_urgent: is_urgent, // 1紧急 0非紧急
+          cinema_group: line_name,
+          cinema_code: cinemaid, // 影院id
+          order_number: order_number
+        };
+      });
+      console.warn(conPrefix + "转换后的订单列表", sfcStayOfferlist);
+      sfcStayOfferlist = sfcStayOfferlist
         .filter(item => getCinemaFlag(item))
         .map(item => {
           return {
@@ -511,7 +512,7 @@ const getEndPrice = async params => {
     if (Number(supplier_max_price) < price + shouxufei) {
       // 奖励单按真实成本（加手续费），非奖励单最高限价
       price = rewards == 1 ? cost_price : supplier_max_price;
-      return price;
+      return Math.round(price);
     }
     // 如果报最终报价不小于最高限价返回报价
     return Math.round(price);
@@ -520,14 +521,14 @@ const getEndPrice = async params => {
     setErrInfo("获取最终报价异常", error);
   }
 };
-window.getEndPrice = getEndPrice;
+// window.getEndPrice = getEndPrice;
 // 获取待报价订单列表
 async function getStayOfferList(page, stayList = []) {
   try {
     const res = await mangguoApi.queryStayOfferList({
       order_type: "1",
       page: page || 1,
-      page_size: 20,
+      page_size: 100,
       sort_field: "created_at",
       sort_order: "desc"
     });
@@ -587,6 +588,7 @@ async function singleOffer(item, offerList) {
       rewards,
       offerList
     });
+    console.warn("最终报价返回", endPrice);
     if (!endPrice) {
       return { offerRule };
     }
@@ -598,7 +600,7 @@ async function singleOffer(item, offerList) {
 
     let params = {
       order_id: id,
-      price: price - 1
+      price: price * 100
     };
     console.log(conPrefix + "订单报价参数", params);
     if (isTestOrder) {
@@ -983,7 +985,7 @@ const getMemberPrice = async order => {
           bigPrice
         );
         return {
-          member_price: Number(bigPrice),
+          member_price: Math.round(Number(bigPrice)),
           real_member_price: Number(bigPrice)
         };
       }

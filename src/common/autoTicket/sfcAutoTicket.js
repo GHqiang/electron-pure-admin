@@ -1691,17 +1691,15 @@ class OrderAutoTicketQueue {
       } else if (platName === "mangguo") {
         params = {
           order_id, // 省APP的订单编号
-          qupiao: [
+          tickets: JSON.stringify([
             {
-              result: qrcode.split("|")[0],
-              yzm: qrcode.split("|")?.[1] || "",
-              num: qrcode.split("|").length
+              num: lockseat.split(" ").length,
+              old_imgs: "",
+              old_text_ycode: qrcode.split("|")?.[1] || "",
+              text_info: qrcode.split("|")[0]
             }
-          ],
-          upticketinfo: [], // 里面是图片url，没有先不传 [{url: ''}]
-          seat_items: lockseat.split(" ").map(item => ({
-            position_seat: item
-          }))
+          ]),
+          seats: JSON.stringify(lockseat.split(" "))
         };
       }
       const requestApi = {

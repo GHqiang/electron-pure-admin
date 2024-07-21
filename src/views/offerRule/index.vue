@@ -391,7 +391,7 @@ const searchData = async () => {
     tableData.value = ruleRecords;
     totalNum.value = res.data.totalNum || 0;
     loading.close();
-    setLocalRuleList();
+    // setLocalRuleList();
   } catch (error) {
     loading.close();
     console.warn("获取规则列表失败", error);

@@ -515,7 +515,7 @@ const getCinemaFlag = item => {
     return "cszyyzx";
   }
 };
-
+window.getCinemaFlag = getCinemaFlag;
 // 全角字符转换成半角
 function convertFullwidthToHalfwidth(str) {
   // 全角到半角的映射表

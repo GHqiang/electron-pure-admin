@@ -215,7 +215,7 @@ const singleStartOrStop = ({ id, platName }, flag) => {
       tableDataStore.toggleEnable(id);
       shengFetchOrder.start();
     }
-    if (item.platName === "mangguo") {
+    if (platName === "mangguo") {
       tableDataStore.toggleEnable(id);
       mangguoFetchOrder.start();
     }

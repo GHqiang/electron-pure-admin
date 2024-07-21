@@ -144,60 +144,61 @@ class OrderAutoOfferQueue {
       const stayList = await getStayOfferList();
       // console.log("stayList", stayList);
       if (!stayList?.length) return [];
-      let sfcStayOfferlist = stayList
-        .map(item => {
-          const {
-            orderId,
-            id,
-            showPrice,
-            grabPrice,
-            priceNew, // 当前报价
-            detail,
-            order,
-            seatInfo,
-            priceAuto, // 自动报价价格
-            orderCode
-          } = item;
-          // orderId    订单id    integer
-          // id         抢单id    integer
-          // grabPrice  最高限价  string
-          // showPrice  市场价    string
-          // grabPrice  最高限价  string
-          // orderCode  订单code  string
-          const {
-            quantity,
-            sourceData: { show, film, cinema, label }
-          } = detail;
-          // quantity   座位数    integer
+      let sfcStayOfferlist = stayList.map(item => {
+        const {
+          orderId,
+          id,
+          showPrice,
+          grabPrice,
+          priceNew, // 当前报价
+          detail,
+          order,
+          seatInfo,
+          priceAuto, // 自动报价价格
+          orderCode
+        } = item;
+        // orderId    订单id    integer
+        // id         抢单id    integer
+        // grabPrice  最高限价  string
+        // showPrice  市场价    string
+        // grabPrice  最高限价  string
+        // orderCode  订单code  string
+        const {
+          quantity,
+          sourceData: { show, film, cinema, label }
+        } = detail;
+        // quantity   座位数    integer
 
-          return {
-            plat_name: "sheng",
-            id: orderId,
-            tpp_price: showPrice,
-            supplier_max_price: Number(
-              Number(grabPrice) / Number(quantity).toFixed(2)
-            ),
-            city_name: film.cityName,
-            cinema_addr: film.address,
-            ticket_num: quantity,
-            cinema_name: film.cinemaName,
-            hall_name: show.hallName,
-            film_name: film.filmName,
-            film_img: film.imgUrl,
-            show_time: show.startTime,
-            rewards: 0, // 省无奖励，只有快捷
-            quick: order.quick, // true表示为快捷订单（需12分钟内完成发货），false表示为特惠订单（需45分钟内完成发货）
-            // 省暂定和猎人针对sfc影院名字一样
-            cinema_group:
-              film.cinemaName.includes("SFC") &&
-              SFC_CINEMA_NAME.includes(film.cinemaName)
-                ? "上影上海"
-                : "其它自动",
-            cinema_code: cinema.cinemaId, // 影院id
-            order_number: orderCode,
-            seats: seatInfo // 座位信息
-          };
-        })
+        return {
+          plat_name: "sheng",
+          id: orderId,
+          tpp_price: showPrice,
+          supplier_max_price: Number(
+            Number(grabPrice) / Number(quantity).toFixed(2)
+          ),
+          city_name: film.cityName,
+          cinema_addr: film.address,
+          ticket_num: quantity,
+          cinema_name: film.cinemaName,
+          hall_name: show.hallName,
+          film_name: film.filmName,
+          film_img: film.imgUrl,
+          show_time: show.startTime,
+          rewards: 0, // 省无奖励，只有快捷
+          quick: order.quick, // true表示为快捷订单（需12分钟内完成发货），false表示为特惠订单（需45分钟内完成发货）
+          // 省暂定和猎人针对sfc影院名字一样
+          cinema_group:
+            film.cinemaName.includes("SFC") &&
+            SFC_CINEMA_NAME.includes(film.cinemaName)
+              ? "上影上海"
+              : "其它自动",
+          cinema_code: cinema.cinemaId, // 影院id
+          order_number: orderCode,
+          seats: seatInfo // 座位信息
+        };
+      });
+      console.warn("转换后的订单列表", sfcStayOfferlist);
+      sfcStayOfferlist = sfcStayOfferlist
         .filter(item => getCinemaFlag(item))
         .map(item => {
           return {
@@ -205,10 +206,10 @@ class OrderAutoOfferQueue {
             appName: getCinemaFlag(item)
           };
         });
-      // console.warn(
-      //   conPrefix + "匹配已上架影院后的的待报价订单",
-      //   sfcStayOfferlist
-      // );
+      console.warn(
+        conPrefix + "匹配已上架影院后的的待报价订单",
+        sfcStayOfferlist
+      );
       if (!sfcStayOfferlist?.length) return [];
       const { handleSuccessOrderList, handleFailOrderList } = this;
       let orderOfferRecord = [
@@ -221,10 +222,10 @@ class OrderAutoOfferQueue {
           itemA => itemA.order_number === item.order_number
         );
       });
-      // console.warn(
-      //   conPrefix + "从当前队列报价记录过滤后的的待报价订单",
-      //   newOrders
-      // );
+      console.warn(
+        conPrefix + "从当前队列报价记录过滤后的的待报价订单",
+        newOrders
+      );
       if (!newOrders?.length) return [];
       // 如果过滤到这时候还有单子再调接口进行历史报价记录过滤
       const offerList = await getOfferList();
@@ -520,7 +521,7 @@ const getEndPrice = async params => {
     if (Number(supplier_max_price) < price + shouxufei) {
       // 奖励单按真实成本（加手续费），非奖励单最高限价
       price = rewards == 1 ? cost_price : supplier_max_price;
-      return price;
+      return Math.round(price);
     }
     // 如果报最终报价不小于最高限价返回报价
     return Math.round(price);
@@ -529,7 +530,7 @@ const getEndPrice = async params => {
     setErrInfo("获取最终报价异常", error);
   }
 };
-window.getEndPrice = getEndPrice;
+// window.getEndPrice = getEndPrice;
 // 获取待报价订单列表
 async function getStayOfferList(page, stayList = []) {
   try {
@@ -598,6 +599,7 @@ async function singleOffer(item, offerList) {
       rewards,
       offerList
     });
+    console.warn("最终报价返回", endPrice);
     if (!endPrice) {
       return { offerRule };
     }

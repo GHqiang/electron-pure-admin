@@ -131,20 +131,20 @@ class OrderAutoFetchQueue {
               itemA.app_name === item.app_name
           )
       );
-      console.warn(
-        conPrefix + "芒果待出票列表从本地缓存过滤后",
-        sfcStayOfferlist
-      );
+      // console.warn(
+      //   conPrefix + "芒果待出票列表从本地缓存过滤后",
+      //   sfcStayOfferlist
+      // );
       if (sfcStayOfferlist?.length) {
         const offerList = await getOfferList();
         const ticketList = await getTicketList();
         sfcStayOfferlist = sfcStayOfferlist.filter(item =>
           judgeHandle(item, item.appName, offerList, ticketList)
         );
-        console.warn(
-          conPrefix + "芒果待出票列表从远端过滤后",
-          sfcStayOfferlist
-        );
+        // console.warn(
+        //   conPrefix + "芒果待出票列表从远端过滤后",
+        //   sfcStayOfferlist
+        // );
       }
       if (!sfcStayOfferlist?.length) return;
       addNewOrder(sfcStayOfferlist);
@@ -193,7 +193,7 @@ async function orderFetch() {
     };
     // console.log(conPrefix + "获取芒果待出票订单列表参数", params);
     const res = await mangguoApi.stayTicketingList(params);
-    let list = res?.data.rows || [];
+    let list = res?.data.list || [];
     // console.log(conPrefix + "获取芒果待出票列表返回", list);
     return list;
   } catch (error) {

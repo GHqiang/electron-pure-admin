@@ -19,10 +19,10 @@ const stayTicketingList = params =>
 const unlockSeat = params => axios.post("/v2/api/62e10db983b63", params);
 
 // 提交取票码(发货回调)
-const submitTicketCode = params => axios.post("/v2/api/62e8f86c4130a", params);
+const submitTicketCode = params => axios.post("/v2/api/62e11dd840696", params);
 
 // 取消订单
-const transferOrder = params => axios.post("//v2/api/64113ee99fa6e", params);
+const transferOrder = params => axios.post("/v2/api/64113ee99fa6e", params);
 
 export default {
   queryStayOfferList, // 查询待报价列表
