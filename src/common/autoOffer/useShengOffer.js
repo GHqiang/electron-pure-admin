@@ -473,8 +473,9 @@ const getEndPrice = async params => {
       serOfferRecord = offerList;
       // 测试用下面的
       // serOfferRecord = await getOfferList();
-      // 猎人报价记录
-      lierenOfferRecord = await getLierenOrderList();
+      // 省报价记录
+      // lierenOfferRecord = await getLierenOrderList();
+      lierenOfferRecord = [];
       lierenMachineOfferList = lierenOfferRecord.filter(item =>
         serOfferRecord.find(itemA => itemA.order_number === item.order_number)
       );

@@ -145,7 +145,7 @@ class OrderAutoFetchQueue {
           )
       );
       console.warn(
-        conPrefix + "猎人待出票列表从本地缓存过滤后",
+        conPrefix + "省待出票列表从本地缓存过滤后",
         sfcStayOfferlist
       );
       if (sfcStayOfferlist?.length) {
@@ -154,10 +154,7 @@ class OrderAutoFetchQueue {
         sfcStayOfferlist = sfcStayOfferlist.filter(item =>
           judgeHandle(item, item.appName, offerList, ticketList)
         );
-        console.warn(
-          conPrefix + "猎人待出票列表从远端过滤后",
-          sfcStayOfferlist
-        );
+        console.warn(conPrefix + "省待出票列表从远端过滤后", sfcStayOfferlist);
       }
       if (!sfcStayOfferlist?.length) return;
       addNewOrder(sfcStayOfferlist);
@@ -205,7 +202,7 @@ async function orderFetch() {
       status: "2", // 查询状态，只能查询2和5，2表示未接单的订单，5表示已接单的订单
       supplierCode: "ccf7b11cdc944cf1940a149cff4243f9" // 供应商号
     };
-    // console.log(conPrefix + "获取猎人待出票订单列表参数", params);
+    // console.log(conPrefix + "获取省待出票订单列表参数", params);
     const res = await shengApi.stayTicketingList(params);
     // let mockRes = {
     //   success: true,
@@ -237,10 +234,10 @@ async function orderFetch() {
     // };
     // let list = mockRes?.data || [];
     let list = res?.data.rows || [];
-    // console.log(conPrefix + "获取猎人待出票列表返回", list);
+    // console.log(conPrefix + "获取省待出票列表返回", list);
     return list;
   } catch (error) {
-    console.error(conPrefix + "获取猎人待出票列表异常", error);
+    console.error(conPrefix + "获取省待出票列表异常", error);
     return [];
   }
 }
@@ -256,7 +253,7 @@ const getOfferList = async () => {
     });
     return res.data.offerList || [];
   } catch (error) {
-    console.error(conPrefix + "获取猎人历史报价记录异常", error);
+    console.error(conPrefix + "获取省历史报价记录异常", error);
     return [];
   }
 };
@@ -272,7 +269,7 @@ const getTicketList = async () => {
     });
     return ticketRes.data.ticketList || [];
   } catch (error) {
-    console.error(conPrefix + "获取猎人历史出票记录异常", error);
+    console.error(conPrefix + "获取省历史出票记录异常", error);
     return [];
   }
 };
