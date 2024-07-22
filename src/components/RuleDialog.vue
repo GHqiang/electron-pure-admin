@@ -16,7 +16,7 @@
         :rules="rules"
         label-width="120px"
       >
-        <el-form-item label="订单来源" prop="orderForm">
+        <!-- <el-form-item label="订单来源" prop="orderForm">
           <el-select
             v-model="formData.orderForm"
             placeholder="订单来源"
@@ -31,7 +31,7 @@
               :value="keyName"
             />
           </el-select>
-        </el-form-item>
+        </el-form-item> -->
         <el-form-item label="影线名称" prop="shadowLineName">
           <el-select
             v-model="formData.shadowLineName"
@@ -270,7 +270,7 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item
+        <!-- <el-form-item
           v-if="formData.offerType !== '2'"
           label="报价金额"
           prop="offerAmount"
@@ -287,7 +287,79 @@
             placeholder="报价金额"
             clearable
           />
-        </el-form-item>
+        </el-form-item> -->
+
+        <!-- <el-form-item
+          v-if="formData.offerType === '2'"
+          label="加价金额"
+          prop="addAmount"
+          :rules="[
+            {
+              required: true,
+              message: '加价金额不可为空',
+              trigger: 'blur'
+            }
+          ]"
+        >
+          <el-input
+            v-model="formData.addAmount"
+            placeholder="加价金额"
+            clearable
+          />
+        </el-form-item> -->
+        <template v-if="formData.offerType !== '3'">
+          <el-form-item
+            v-for="(domain, index) in formData.platOfferList"
+            :key="domain.platName"
+            :label="
+              orderFormObj[domain.platName] + offerTypeObj[formData.offerType]
+            "
+            :prop="'platOfferList.' + index + '.value'"
+            :rules="{
+              required: true,
+              message:
+                orderFormObj[domain.platName] +
+                offerTypeObj[formData.offerType] +
+                '不可为空',
+              trigger: 'blur'
+            }"
+          >
+            <el-input
+              v-model="domain.value"
+              :placeholder="offerTypeObj[formData.offerType]"
+              clearable
+            >
+              <template #prepend>
+                <el-select
+                  v-model="domain.platName"
+                  placeholder="请选择平台"
+                  style="width: 120px"
+                >
+                  <el-option
+                    v-for="(keyValue, keyName) in orderFormObj"
+                    :key="keyName"
+                    :label="keyValue"
+                    :value="keyName"
+                  />
+                </el-select>
+              </template>
+            </el-input>
+            <el-button
+              v-if="index > 0"
+              class="mt-2"
+              @click.prevent="removeDomain(domain)"
+            >
+              删除
+            </el-button>
+            <el-button
+              v-if="index === 0"
+              class="mt-2"
+              @click.prevent="addDomain"
+              >新增</el-button
+            >
+          </el-form-item>
+        </template>
+
         <el-form-item
           v-if="formData.offerType === '1'"
           label="用券面额"
@@ -309,24 +381,6 @@
             <el-option label="35" value="35" />
             <el-option label="30" value="30" />
           </el-select>
-        </el-form-item>
-        <el-form-item
-          v-if="formData.offerType === '2'"
-          label="加价金额"
-          prop="addAmount"
-          :rules="[
-            {
-              required: true,
-              message: '加价金额不可为空',
-              trigger: 'blur'
-            }
-          ]"
-        >
-          <el-input
-            v-model="formData.addAmount"
-            placeholder="加价金额"
-            clearable
-          />
         </el-form-item>
         <el-form-item v-if="formData.offerType !== '3'" label="星期几">
           <el-select
@@ -427,6 +481,10 @@ let $emit = defineEmits([`submit`]);
 // 是否显示对话框
 const showSfcDialog = ref(false);
 
+const offerTypeObj = {
+  1: "报价金额",
+  2: "会员加价"
+};
 // 订单来源
 const orderFormObj = ref(ORDER_FORM);
 const shadowLineObj = APP_LIST;
@@ -454,7 +512,13 @@ let formData = reactive({
   weekDay: [], // 启用星期
   seatNum: "", // 座位数
   memberDay: "", // 会员日
-  status: "1" // 状态
+  status: "1", // 状态
+  platOfferList: [
+    {
+      platName: "lieren",
+      value: ""
+    }
+  ] // 平台报价规则
 });
 
 let cityList = ref([]); // 城市列表
@@ -464,10 +528,10 @@ let filmList = ref([]); // 影片列表
 
 const rules = {
   ruleName: [{ required: true, message: "规则名称不能为空", trigger: "blur" }],
-  orderForm: [
-    { required: true, message: "订单来源不能为空", trigger: "blur" }
-    // 如果Session ID有特定格式要求，可以在这里添加pattern验证
-  ],
+  // orderForm: [
+  //   { required: true, message: "订单来源不能为空", trigger: "blur" }
+  //   // 如果Session ID有特定格式要求，可以在这里添加pattern验证
+  // ],
   shadowLineName: [
     { required: true, message: "影线名称不能为空", trigger: "blur" }
     // 如果Session ID有特定格式要求，可以在这里添加pattern验证
@@ -527,6 +591,12 @@ const resetForm = el => {
   formData.seatNum = ""; // 座位数
   formData.memberDay = ""; // 会员日
   formData.status = "1"; // 状态
+  formData.platOfferList = [
+    {
+      platName: "lieren",
+      value: ""
+    }
+  ]; // 平台报价规则
 };
 
 // 影线改变
@@ -537,6 +607,23 @@ const shadowLineChange = async val => {
   const allCinemaList = await getAllCinemaList(cityList);
   await getFilmList(cityList[0].id, allCinemaList[0].id);
 };
+
+// 删除
+const removeDomain = item => {
+  const index = formData.platOfferList.indexOf(item);
+  if (index !== -1) {
+    formData.platOfferList.splice(index, 1);
+  }
+};
+
+// 新增
+const addDomain = () => {
+  formData.platOfferList.push({
+    platName: "",
+    value: ""
+  });
+};
+
 // 打开弹窗
 const open = async ruleInfo => {
   try {
@@ -571,6 +658,7 @@ const open = async ruleInfo => {
         formData.excludeHallNames = formInfo.excludeHallNames;
         formData.includeFilmNames = formInfo.includeFilmNames;
         formData.excludeFilmNames = formInfo.excludeFilmNames;
+        formData.platOfferList = formInfo.platOfferList;
       } else {
         // 新增
         formData.shadowLineName = formInfo.shadowLineName;
@@ -595,14 +683,27 @@ const offerTypeChange = val => {
     // 日常固定价
     formData.addAmount = "";
     formData.memberDay = "";
+    formData.platOfferList = [
+      {
+        platName: "lieren",
+        value: ""
+      }
+    ]; // 平台报价规则
   } else if (val === "2") {
     // 会员价加价
     formData.memberDay = "";
     formData.offerAmount = "";
     formData.quanValue = "";
+    formData.platOfferList = [
+      {
+        platName: "lieren",
+        value: ""
+      }
+    ]; // 平台报价规则
   } else if (val === "3") {
     // 会员日固定价
     formData.addAmount = "";
+    formData.platOfferList = []; // 平台报价规则
   }
 };
 // 保存规则

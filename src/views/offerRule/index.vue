@@ -159,7 +159,7 @@
       <el-table-column prop="ruleName" fixed label="规则名称" width="110" />
       <el-table-column prop="orderForm" fixed label="订单来源" width="85">
         <template #default="scope">
-          <span>{{ formatPlatName(scope.row.orderForm) }}</span>
+          <span>{{ formatPlatName(scope.row) }}</span>
         </template>
       </el-table-column>
       <el-table-column prop="shadowLineName" fixed label="影线名称" width="85">
@@ -178,8 +178,16 @@
         </template>
       </el-table-column>
       <el-table-column label="用券面额" prop="quanValue" width="85" />
-      <el-table-column label="报价金额" prop="offerAmount" width="85" />
-      <el-table-column label="加价金额" prop="addAmount" width="85" />
+      <el-table-column label="报价金额" prop="offerAmount" width="85">
+        <template #default="scope">
+          <span>{{ formatOfferAmount(scope.row) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="加价金额" prop="addAmount" width="85">
+        <template #default="scope">
+          <span>{{ formatAddAmount(scope.row) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="会员日" prop="memberDay" width="85" />
       <el-table-column label="开场时间限制" prop="timeLimit" width="110" />
       <el-table-column label="包含城市" width="110">
@@ -331,6 +339,7 @@ const setLocalRuleList = async () => {
       item.excludeHallNames = JSON.parse(item.excludeHallNames);
       item.includeFilmNames = JSON.parse(item.includeFilmNames);
       item.excludeFilmNames = JSON.parse(item.excludeFilmNames);
+      item.platOfferList = JSON.parse(item.platOfferList || "[]");
       item.weekDay = JSON.parse(item.weekDay);
     });
     rules.setRuleList(ruleRecords);
@@ -340,11 +349,35 @@ const setLocalRuleList = async () => {
 };
 
 // 格式化订单来源
-const formatPlatName = orderForm => {
-  return orderForm
-    .split(",")
-    .map(item => ORDER_FORM[item])
-    .join();
+const formatPlatName = ({ orderForm, platOfferList }) => {
+  return platOfferList?.length
+    ? platOfferList.map(item => ORDER_FORM[item.platName]).join()
+    : orderForm
+        .split(",")
+        .map(item => ORDER_FORM[item])
+        .join();
+};
+
+// 格式化报价金额
+const formatOfferAmount = ({ offerAmount, offerType, platOfferList }) => {
+  return platOfferList?.length
+    ? offerType === "1"
+      ? platOfferList
+          .map(item => ORDER_FORM[item.platName] + ":" + item.value)
+          .join(";")
+      : ""
+    : offerAmount;
+};
+
+// 格式化加价金额
+const formatAddAmount = ({ addAmount, offerType, platOfferList }) => {
+  return platOfferList?.length
+    ? offerType === "2"
+      ? platOfferList
+          .map(item => ORDER_FORM[item.platName] + ":" + item.value)
+          .join(";")
+      : ""
+    : addAmount;
 };
 
 // 搜索数据
@@ -384,6 +417,7 @@ const searchData = async () => {
       item.excludeHallNames = JSON.parse(item.excludeHallNames);
       item.includeFilmNames = JSON.parse(item.includeFilmNames);
       item.excludeFilmNames = JSON.parse(item.excludeFilmNames);
+      item.platOfferList = JSON.parse(item.platOfferList || "[]");
       item.weekDay = JSON.parse(item.weekDay);
     });
     // console.log("规则列表===>", ruleRecords);
@@ -435,6 +469,7 @@ const saveRule = async ruleInfo => {
     ruleInfo.excludeHallNames = JSON.stringify(ruleInfo.excludeHallNames);
     ruleInfo.includeFilmNames = JSON.stringify(ruleInfo.includeFilmNames);
     ruleInfo.excludeFilmNames = JSON.stringify(ruleInfo.excludeFilmNames);
+    ruleInfo.platOfferList = JSON.stringify(ruleInfo.platOfferList || []);
     ruleInfo.weekDay = JSON.stringify(ruleInfo.weekDay);
     ruleInfo.update_time = getCurrentFormattedDateTime();
     ruleInfo.orderForm = ruleInfo.orderForm.join();
