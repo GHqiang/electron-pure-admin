@@ -457,13 +457,13 @@ class OrderAutoTicketQueue {
       // this.logUpload(order);
       return;
     }
-    if (["mayi", "sheng", "yangcong"].includes(platName)) {
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: `${platName}平台处于测试阶段，暂不转单`
-      });
-      return;
-    }
+    // if (["mayi", "sheng", "yangcong"].includes(platName)) {
+    //   this.logList.push({
+    //     opera_time: getCurrentTime(),
+    //     des: `${platName}平台处于测试阶段，暂不转单`
+    //   });
+    //   return;
+    // }
     try {
       // 先解锁座位再转单，负责转出去座位被占平台会处罚
       let session_id = this.currentParamsList[this.currentParamsInx].session_id;
