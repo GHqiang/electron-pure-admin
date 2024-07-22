@@ -32,9 +32,11 @@ instance.interceptors.request.use(
         config.headers.W_auth_code = `${token}`;
       }
       if (config.method === "post") {
-        config.headers["Content-Type"] ===
-          "application/x-www-form-urlencoded;charset=UTF-8";
-        config.data = jsonToUrlEncoded(config.data);
+        if (config.url.indexOf("/newwww/api/order/uploadTicket4PicV2") !== -1) {
+          config.headers["Content-Type"] ===
+            "application/x-www-form-urlencoded;charset=UTF-8";
+          config.data = jsonToUrlEncoded(config.data);
+        }
       }
       // 生产环境不会跨域
       config.url = IS_DEV
