@@ -61,6 +61,7 @@ const setLocalRuleList = async () => {
       item.excludeHallNames = JSON.parse(item.excludeHallNames);
       item.includeFilmNames = JSON.parse(item.includeFilmNames);
       item.excludeFilmNames = JSON.parse(item.excludeFilmNames);
+      item.platOfferList = JSON.parse(item.platOfferList || "[]");
       item.weekDay = JSON.parse(item.weekDay);
     });
     rules.setRuleList(ruleRecords);
