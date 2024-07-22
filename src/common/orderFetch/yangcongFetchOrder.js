@@ -90,7 +90,6 @@ class OrderAutoFetchQueue {
             cinemaChain // 品牌名 上影上海、上影二线等
           } = item;
           return {
-            plat_name: "yangcong",
             id: tradeno,
             tpp_price: unitPrice,
             supplier_end_price: baojia,

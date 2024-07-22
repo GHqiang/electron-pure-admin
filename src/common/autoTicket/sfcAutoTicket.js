@@ -520,7 +520,7 @@ class OrderAutoTicketQueue {
       console.warn(conPrefix + "【转单】结果", res);
       this.logList.push({
         opera_time: getCurrentTime(),
-        des: `转单成功`
+        des: `转单成功-${JSON.stringify(res)}`
       });
       const { supplier_end_price, ticket_num } = order;
       let transfer_fee = (
@@ -537,6 +537,10 @@ class OrderAutoTicketQueue {
       this.logList.push({
         opera_time: getCurrentTime(),
         des: `转单原因-${this.errMsg}——${this.errInfo}`
+      });
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: `转单异常-${JSON.stringify(error)}`
       });
       this.setErrInfo("订单转单异常", error);
     }
@@ -698,10 +702,18 @@ class OrderAutoTicketQueue {
       };
       const res = await requestApi[platName].unlockSeat(params);
       console.log(conPrefix + "解锁返回", res);
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: `第${inx}次锁定座位成功-${JSON.stringify(res)}`
+      });
       return res;
     } catch (error) {
       console.error(conPrefix + "解锁异常", error);
       this.setErrInfo(`订单第${inx}次解锁失败`, error);
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: `第${inx}次锁定座位失败-${JSON.stringify(error)}`
+      });
       return Promise.reject(error);
     }
   }
@@ -1407,17 +1419,18 @@ class OrderAutoTicketQueue {
       console.log(conPrefix + "锁定座位参数", params);
       const res = await this.sfcApi.lockSeat(params);
       console.log(conPrefix + "锁定座位返回", res);
-      this.logUpload({
+      this.logList.push({
         opera_time: getCurrentTime(),
-        des: `第${inx}次锁定座位成功`
+        des: `第${inx}次锁定座位成功-${JSON.stringify(res)}`
       });
       return res;
     } catch (error) {
       console.error(conPrefix + "锁定座位异常", error);
+      this.setErrInfo("", "");
       this.setErrInfo(`第${inx}次锁定座位异常`, error);
-      this.logUpload({
+      this.logList.push({
         opera_time: getCurrentTime(),
-        des: `第${inx}次锁定座位失败`
+        des: `第${inx}次锁定座位失败-${JSON.stringify(error)}`
       });
       return Promise.reject(error);
     }
@@ -1787,11 +1800,19 @@ class OrderAutoTicketQueue {
       console.log(conPrefix + "提交出票码参数", params);
       const res = await requestApi[platName].submitTicketCode(params);
       console.log(conPrefix + "提交出票码返回", res);
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: `提交取票码返回-${JSON.stringify(res)}`
+      });
       return res;
     } catch (error) {
       console.error(conPrefix + "提交出票码异常", error);
       if (flag !== 2) {
         this.setErrInfo("提交出票码异常", error);
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: `提交出票码异常-${JSON.stringify(error)}`
+        });
       } else {
         let err_info;
         if (error instanceof Error) {

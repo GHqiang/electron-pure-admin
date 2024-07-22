@@ -92,7 +92,6 @@ class OrderAutoFetchQueue {
             line_name // 品牌名 上影上海、上影二线等
           } = item;
           return {
-            plat_name: "mangguo",
             id: id,
             tpp_price: maoyan_price,
             supplier_end_price: supplier_end_price,

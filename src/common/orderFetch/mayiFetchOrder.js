@@ -91,7 +91,6 @@ class OrderAutoFetchQueue {
             cinemaChain // 品牌名 上影上海、上影二线等
           } = item;
           return {
-            plat_name: "mayi",
             id: tradeno,
             tpp_price: unitprice,
             supplier_end_price: mybaojia,
