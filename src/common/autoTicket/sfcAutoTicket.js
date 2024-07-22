@@ -457,6 +457,13 @@ class OrderAutoTicketQueue {
       // this.logUpload(order);
       return;
     }
+    if (["mayi", "sheng", "yangcong"].includes(platName)) {
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: `${platName}平台处于测试阶段，暂不转单`
+      });
+      return;
+    }
     try {
       // 先解锁座位再转单，负责转出去座位被占平台会处罚
       let session_id = this.currentParamsList[this.currentParamsInx].session_id;
@@ -994,12 +1001,28 @@ class OrderAutoTicketQueue {
       } catch (error) {
         console.error(conPrefix + "锁定座位失败准备试错2次，间隔5秒", error);
         // 试错3次，间隔5秒
-        const res = await this.trial(inx => this.lockSeat(params, inx), 2, 5);
+        // 锁定座位尝试配置
+        let delayConfig = {
+          lieren: [3, 5],
+          mangguo: [3, 5],
+          sheng: [3, 5],
+          mayi: [6, 20],
+          yangcong: [6, 20]
+        };
+        const res = await this.trial(
+          inx => this.lockSeat(params, inx),
+          delayConfig[platName][0],
+          delayConfig[platName][1]
+        );
         if (!res) {
           console.error(
             conPrefix + "单个订单试错后仍锁定座位失败",
             "需要走转单逻辑"
           );
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: `首次锁定座位失败轮询尝试后仍失败，走转单`
+          });
           const transferParams = await this.transferOrder(item);
           return { offerRule, transferParams };
         }
@@ -1384,10 +1407,18 @@ class OrderAutoTicketQueue {
       console.log(conPrefix + "锁定座位参数", params);
       const res = await this.sfcApi.lockSeat(params);
       console.log(conPrefix + "锁定座位返回", res);
+      this.logUpload({
+        opera_time: getCurrentTime(),
+        des: `第${inx}次锁定座位成功`
+      });
       return res;
     } catch (error) {
       console.error(conPrefix + "锁定座位异常", error);
       this.setErrInfo(`第${inx}次锁定座位异常`, error);
+      this.logUpload({
+        opera_time: getCurrentTime(),
+        des: `第${inx}次锁定座位失败`
+      });
       return Promise.reject(error);
     }
   }
