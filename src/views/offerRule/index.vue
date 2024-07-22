@@ -318,11 +318,10 @@ const judgeHandle = (arr, str) => {
 // 设置本地的规则列表
 const setLocalRuleList = async () => {
   try {
-    const ruleRes = await svApi.queryRuleList({
-      status: "1"
-    });
+    const ruleRes = await svApi.getRuleList();
     // console.log("ruleRes", ruleRes);
     let ruleRecords = ruleRes.data.ruleList || [];
+    ruleRecords = ruleRecords.filter(item => item.status === "1");
     ruleRecords.forEach(item => {
       item.includeCityNames = JSON.parse(item.includeCityNames);
       item.excludeCityNames = JSON.parse(item.excludeCityNames);
@@ -391,7 +390,7 @@ const searchData = async () => {
     tableData.value = ruleRecords;
     totalNum.value = res.data.totalNum || 0;
     loading.close();
-    // setLocalRuleList();
+    setLocalRuleList();
   } catch (error) {
     loading.close();
     console.warn("获取规则列表失败", error);
