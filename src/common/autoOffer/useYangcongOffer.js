@@ -29,9 +29,25 @@ const dataTableStore = useDataTableStore();
 
 // 使用computed确保items响应式
 const appOfferRuleList = computed(() =>
-  dataTableStore.items.filter(item =>
-    item.orderForm.split(",").includes("yangcong")
-  )
+  dataTableStore.items
+    .filter(item =>
+      item.platOfferList?.length
+        ? item.platOfferList.map(item => item.platName).includes("yangcong")
+        : item.orderForm.split(",").includes("yangcong")
+    )
+    .map(itemA => ({
+      ...itemA,
+      offerAmount:
+        itemA.offerType === "1"
+          ? itemA.platOfferList?.find(item => item.platName === "yangcong")
+              ?.value
+          : itemA.offerAmount || "",
+      addAmount:
+        itemA.offerType === "2"
+          ? itemA.platOfferList?.find(item => item.platName === "yangcong")
+              ?.value
+          : itemA.addAmount || ""
+    }))
 );
 
 let conPrefix = "【洋葱自动报价】——"; // console打印前缀

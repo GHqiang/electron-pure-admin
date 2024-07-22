@@ -32,7 +32,8 @@ instance.interceptors.request.use(
         config.headers.W_auth_code = `${token}`;
       }
       if (config.method === "post") {
-        if (config.url.indexOf("/newwww/api/order/uploadTicket4PicV2") !== -1) {
+        // 除了该接口，其他都做特殊处理
+        if (config.url.indexOf("/newwww/api/order/uploadTicket4PicV2") === -1) {
           config.headers["Content-Type"] ===
             "application/x-www-form-urlencoded;charset=UTF-8";
           config.data = jsonToUrlEncoded(config.data);

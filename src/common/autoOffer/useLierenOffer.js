@@ -29,9 +29,23 @@ const dataTableStore = useDataTableStore();
 
 // 使用computed确保items响应式
 const appOfferRuleList = computed(() =>
-  dataTableStore.items.filter(item =>
-    item.orderForm.split(",").includes("lieren")
-  )
+  dataTableStore.items
+    .filter(item =>
+      item.platOfferList?.length
+        ? item.platOfferList.map(item => item.platName).includes("lieren")
+        : item.orderForm.split(",").includes("lieren")
+    )
+    .map(itemA => ({
+      ...itemA,
+      offerAmount:
+        itemA.offerType === "1"
+          ? itemA.platOfferList?.find(item => item.platName === "lieren")?.value
+          : itemA.offerAmount || "",
+      addAmount:
+        itemA.offerType === "2"
+          ? itemA.platOfferList?.find(item => item.platName === "lieren")?.value
+          : itemA.addAmount || ""
+    }))
 );
 
 let conPrefix = "【猎人自动报价】——"; // console打印前缀

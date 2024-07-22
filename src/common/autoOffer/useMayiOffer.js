@@ -29,9 +29,23 @@ const dataTableStore = useDataTableStore();
 
 // 使用computed确保items响应式
 const appOfferRuleList = computed(() =>
-  dataTableStore.items.filter(item =>
-    item.orderForm.split(",").includes("mayi")
-  )
+  dataTableStore.items
+    .filter(item =>
+      item.platOfferList?.length
+        ? item.platOfferList.map(item => item.platName).includes("mayi")
+        : item.orderForm.split(",").includes("mayi")
+    )
+    .map(itemA => ({
+      ...itemA,
+      offerAmount:
+        itemA.offerType === "1"
+          ? itemA.platOfferList?.find(item => item.platName === "mayi")?.value
+          : itemA.offerAmount || "",
+      addAmount:
+        itemA.offerType === "2"
+          ? itemA.platOfferList?.find(item => item.platName === "mayi")?.value
+          : itemA.addAmount || ""
+    }))
 );
 
 let conPrefix = "【蚂蚁自动报价】——"; // console打印前缀
