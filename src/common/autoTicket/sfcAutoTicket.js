@@ -598,10 +598,10 @@ class OrderAutoTicketQueue {
         } else if (platName === "yangcong") {
           await this.unlockSeat({ platName, order_id: id, inx: 1 });
         }
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: `订单首次解锁座位完成`
-        });
+        // this.logList.push({
+        //   opera_time: getCurrentTime(),
+        //   des: `订单首次解锁座位完成`
+        // });
       }
     } catch (error) {
       console.error(conPrefix + "解锁座位失败准备试错3次，间隔3秒", error);
@@ -667,7 +667,7 @@ class OrderAutoTicketQueue {
   async unlockSeat({
     platName,
     order_id,
-    inx = 0,
+    inx = 1,
     order_number: orderCode,
     supplierCode
   }) {
@@ -1010,10 +1010,10 @@ class OrderAutoTicketQueue {
       };
       try {
         await this.lockSeat(params); // 锁定座位
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: `首次锁定座位成功`
-        });
+        // this.logList.push({
+        //   opera_time: getCurrentTime(),
+        //   des: `首次锁定座位成功`
+        // });
       } catch (error) {
         console.error(conPrefix + "锁定座位失败准备试错2次，间隔5秒", error);
         // 试错3次，间隔5秒
@@ -1398,7 +1398,7 @@ class OrderAutoTicketQueue {
   }
 
   // 锁定座位
-  async lockSeat(data, inx = 0) {
+  async lockSeat(data, inx = 1) {
     const { conPrefix } = this;
     try {
       let {
@@ -1779,10 +1779,7 @@ class OrderAutoTicketQueue {
         ticketCodeList: [
           {
             picUrl: "",
-            ticketCode: qrcode,
-            verifyCinemaName: true,
-            verifyMovieName: true,
-            verifyPlaytime: true
+            ticketCode: qrcode
           }
         ]
       };
@@ -1858,7 +1855,7 @@ class OrderAutoTicketQueue {
    */
   trial(callback, number = 1, delayTime = 0) {
     const { conPrefix } = this;
-    let inx = 0,
+    let inx = 1,
       trialTimer = null;
     return new Promise(resolve => {
       trialTimer = setInterval(async () => {

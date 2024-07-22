@@ -585,7 +585,7 @@ async function singleOffer(item, offerList) {
 
     let params = {
       tradeno: order_number,
-      price: endPrice - 1
+      price: endPrice
     };
     console.log(conPrefix + "订单报价参数", params);
     if (isTestOrder) {
