@@ -593,6 +593,10 @@ class OrderAutoTicketQueue {
           });
         } else if (platName === "mangguo") {
           await this.unlockSeat({ platName, order_id: id, inx: 1 });
+        } else if (platName === "mayi") {
+          await this.unlockSeat({ platName, order_id: id, inx: 1 });
+        } else if (platName === "yangcong") {
+          await this.unlockSeat({ platName, order_id: id, inx: 1 });
         }
         this.logList.push({
           opera_time: getCurrentTime(),
@@ -704,7 +708,7 @@ class OrderAutoTicketQueue {
       console.log(conPrefix + "解锁返回", res);
       this.logList.push({
         opera_time: getCurrentTime(),
-        des: `第${inx}次锁定座位成功-${JSON.stringify(res)}`
+        des: `第${inx}次解锁座位成功-${JSON.stringify(res)}`
       });
       return res;
     } catch (error) {
@@ -712,7 +716,7 @@ class OrderAutoTicketQueue {
       this.setErrInfo(`订单第${inx}次解锁失败`, error);
       this.logList.push({
         opera_time: getCurrentTime(),
-        des: `第${inx}次锁定座位失败-${JSON.stringify(error)}`
+        des: `第${inx}次解锁座位失败-${JSON.stringify(error)}`
       });
       return Promise.reject(error);
     }
