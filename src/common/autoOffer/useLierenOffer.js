@@ -35,17 +35,25 @@ const appOfferRuleList = computed(() =>
         ? item.platOfferList.map(item => item.platName).includes("lieren")
         : item.orderForm.split(",").includes("lieren")
     )
-    .map(itemA => ({
-      ...itemA,
-      offerAmount:
-        itemA.offerType === "1"
-          ? itemA.platOfferList?.find(item => item.platName === "lieren")?.value
-          : itemA.offerAmount || "",
-      addAmount:
-        itemA.offerType === "2"
-          ? itemA.platOfferList?.find(item => item.platName === "lieren")?.value
-          : itemA.addAmount || ""
-    }))
+    .map(itemA => {
+      let offerAmount = itemA.offerAmount || "";
+      let addAmount = itemA.addAmount || "";
+      return {
+        ...itemA,
+        offerAmount:
+          itemA.offerType === "1"
+            ? itemA.platOfferList?.find(item => item.platName === "lieren")
+                ?.value || offerAmount
+            : itemA.offerType === "3"
+              ? offerAmount
+              : "",
+        addAmount:
+          itemA.offerType === "2"
+            ? itemA.platOfferList?.find(item => item.platName === "lieren")
+                ?.value || addAmount
+            : ""
+      };
+    })
 );
 
 let conPrefix = "【猎人自动报价】——"; // console打印前缀

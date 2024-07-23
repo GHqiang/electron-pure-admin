@@ -35,19 +35,25 @@ const appOfferRuleList = computed(() =>
         ? item.platOfferList.map(item => item.platName).includes("yangcong")
         : item.orderForm.split(",").includes("yangcong")
     )
-    .map(itemA => ({
-      ...itemA,
-      offerAmount:
-        itemA.offerType === "1"
-          ? itemA.platOfferList?.find(item => item.platName === "yangcong")
-              ?.value
-          : itemA.offerAmount || "",
-      addAmount:
-        itemA.offerType === "2"
-          ? itemA.platOfferList?.find(item => item.platName === "yangcong")
-              ?.value
-          : itemA.addAmount || ""
-    }))
+    .map(itemA => {
+      let offerAmount = itemA.offerAmount || "";
+      let addAmount = itemA.addAmount || "";
+      return {
+        ...itemA,
+        offerAmount:
+          itemA.offerType === "1"
+            ? itemA.platOfferList?.find(item => item.platName === "yangcong")
+                ?.value || offerAmount
+            : itemA.offerType === "3"
+              ? offerAmount
+              : "",
+        addAmount:
+          itemA.offerType === "2"
+            ? itemA.platOfferList?.find(item => item.platName === "yangcong")
+                ?.value || addAmount
+            : ""
+      };
+    })
 );
 
 let conPrefix = "【洋葱自动报价】——"; // console打印前缀

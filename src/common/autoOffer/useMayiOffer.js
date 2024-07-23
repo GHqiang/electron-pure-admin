@@ -35,17 +35,25 @@ const appOfferRuleList = computed(() =>
         ? item.platOfferList.map(item => item.platName).includes("mayi")
         : item.orderForm.split(",").includes("mayi")
     )
-    .map(itemA => ({
-      ...itemA,
-      offerAmount:
-        itemA.offerType === "1"
-          ? itemA.platOfferList?.find(item => item.platName === "mayi")?.value
-          : itemA.offerAmount || "",
-      addAmount:
-        itemA.offerType === "2"
-          ? itemA.platOfferList?.find(item => item.platName === "mayi")?.value
-          : itemA.addAmount || ""
-    }))
+    .map(itemA => {
+      let offerAmount = itemA.offerAmount || "";
+      let addAmount = itemA.addAmount || "";
+      return {
+        ...itemA,
+        offerAmount:
+          itemA.offerType === "1"
+            ? itemA.platOfferList?.find(item => item.platName === "mayi")
+                ?.value || offerAmount
+            : itemA.offerType === "3"
+              ? offerAmount
+              : "",
+        addAmount:
+          itemA.offerType === "2"
+            ? itemA.platOfferList?.find(item => item.platName === "mayi")
+                ?.value || addAmount
+            : ""
+      };
+    })
 );
 
 let conPrefix = "【蚂蚁自动报价】——"; // console打印前缀

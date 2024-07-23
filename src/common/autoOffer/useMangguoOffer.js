@@ -35,19 +35,25 @@ const appOfferRuleList = computed(() =>
         ? item.platOfferList.map(item => item.platName).includes("mangguo")
         : item.orderForm.split(",").includes("mangguo")
     )
-    .map(itemA => ({
-      ...itemA,
-      offerAmount:
-        itemA.offerType === "1"
-          ? itemA.platOfferList?.find(item => item.platName === "mangguo")
-              ?.value
-          : itemA.offerAmount || "",
-      addAmount:
-        itemA.offerType === "2"
-          ? itemA.platOfferList?.find(item => item.platName === "mangguo")
-              ?.value
-          : itemA.addAmount || ""
-    }))
+    .map(itemA => {
+      let offerAmount = itemA.offerAmount || "";
+      let addAmount = itemA.addAmount || "";
+      return {
+        ...itemA,
+        offerAmount:
+          itemA.offerType === "1"
+            ? itemA.platOfferList?.find(item => item.platName === "mangguo")
+                ?.value || offerAmount
+            : itemA.offerType === "3"
+              ? offerAmount
+              : "",
+        addAmount:
+          itemA.offerType === "2"
+            ? itemA.platOfferList?.find(item => item.platName === "mangguo")
+                ?.value || addAmount
+            : ""
+      };
+    })
 );
 
 let conPrefix = "【芒果自动报价】——"; // console打印前缀
