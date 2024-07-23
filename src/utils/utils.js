@@ -1,5 +1,6 @@
 // 导入 ExcelJS 库
 import ExcelJS from "exceljs";
+import axios from "axios";
 /**
  * 获取当前日期和时间的格式化字符串
  * 无参数
@@ -563,6 +564,38 @@ const getCinemaLoginInfoList = () => {
   return loginInfoList || [];
 };
 
+// 发送微信消息
+const sendWxPusherMessage = async params => {
+  const url = "https://wxpusher.zjiecode.com/api/manager/message/send";
+  const headers = {
+    "content-type": "application/json;charset=UTF-8",
+    token: "f64b234659d4934b4d1e5501534c6f52"
+  };
+
+  const messageData = {
+    appId: 80173,
+    topicIds: [],
+    contentType: 2,
+    verifyPay: false,
+    // uids: ["UID_AIFZVT3B4zcj10CvGFLKB2hS2wt7"],
+    // summary: "猎人平台出票失败2",
+    // content:
+    //   "<p>平台：猎人；<br/>单号：12345；<br/>影院：上海红宝石影院；</p><p>片名：你的名字；<br/>座位：6排1座 6排2座；</p><p>原因：会员卡使用超限</p>",
+    ...params
+  };
+  try {
+    const response = await axios.post(url, messageData, { headers });
+    console.log("Response:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error sending message:",
+      error.response ? error.response.data : error.message
+    );
+    throw error;
+  }
+};
+window.sendWxPusherMessage = sendWxPusherMessage;
 // 自定义console，支持字体颜色、背景颜色、前缀
 class CustomConsole {
   constructor(options = {}) {
@@ -606,5 +639,6 @@ export {
   convertFullwidthToHalfwidth,
   cinemNameSpecial,
   getCinemaLoginInfoList,
+  sendWxPusherMessage,
   CustomConsole
 };
