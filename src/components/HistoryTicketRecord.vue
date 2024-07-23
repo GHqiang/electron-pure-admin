@@ -212,7 +212,7 @@ const userList = ref([]);
 
 // 表单查询数据
 const formData = reactive({
-  plat_name: "lieren", // 订单来源
+  plat_name: "", // 订单来源
   app_name: "", // 影线名称
   order_status: "", // 状态
   user_id: "", // 出票用户
@@ -222,7 +222,17 @@ const formData = reactive({
   start_time: "",
   end_time: ""
 });
+const getTodayTime = sjc => {
+  const now = new Date(sjc);
+  // 获取年、月、日、小时、分钟、秒
+  const year = now.getFullYear();
+  const month = ("0" + (now.getMonth() + 1)).slice(-2); // 月份数字是从0开始的，所以需要加1
+  const date = ("0" + now.getDate()).slice(-2);
+  return `${year}-${month}-${date} 00:00:00`;
+};
 
+formData.start_time = getTodayTime(+new Date());
+formData.end_time = getTodayTime(+new Date() + 1 * 24 * 60 * 60 * 1000);
 let timer;
 // 搜索数据
 const searchData = async () => {
@@ -286,15 +296,15 @@ loadData();
 
 // 重置表单
 const resetForm = () => {
-  formData.plat_name = "lieren";
+  formData.plat_name = "";
   formData.app_name = ""; // 影线名称
   formData.order_status = ""; // 状态
   formData.user_id = ""; // 出票用户
   formData.offer_type = ""; // 报价类型
   formData.supplier_end_price = ""; // 中标价
   formData.quan_value = ""; // 是否报价
-  formData.start_time = "";
-  formData.end_time = "";
+  formData.start_time = getTodayTime(+new Date());
+  formData.end_time = getTodayTime(+new Date() + 1 * 24 * 60 * 60 * 1000);
   currentPage.value = 1;
   pageSize.value = 10;
 };
