@@ -1660,6 +1660,7 @@ class OrderAutoTicketQueue {
           console.log(conPrefix + "创建订单返回", res);
           order_num = res.data?.order_num || "";
         } catch (error) {
+          this.delay(1);
           console.warn(conPrefix + "会员卡第一次创建订单失败", error);
           console.warn(
             conPrefix + "调整会员卡密码参数再次发起创建订单请求",
@@ -1681,6 +1682,28 @@ class OrderAutoTicketQueue {
     } catch (error) {
       console.error(conPrefix + "创建订单异常", error);
       this.setErrInfo("创建订单异常", error);
+      if (error?.msg === "请求接口超时,请重试") {
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: `创建订单请求接口超时，延迟2秒后重试`
+        });
+        this.delay(2);
+        try {
+          const order_num = await this.createOrder(data);
+          if (order_num) {
+            this.logList.push({
+              opera_time: getCurrentTime(),
+              des: `创建订单请求接口超时，延迟2秒后重试成功`
+            });
+            return order_num;
+          }
+        } catch (err) {
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: `创建订单请求接口超时，延迟2秒后重试失败：${JSON.stringify(err)}`
+          });
+        }
+      }
     }
   }
 
@@ -1713,8 +1736,8 @@ class OrderAutoTicketQueue {
   // 获取购票信息
   async payOrder(data) {
     const { conPrefix } = this;
+    let { city_id, cinema_id, order_num, session_id, inx } = data || {};
     try {
-      let { city_id, cinema_id, order_num, session_id, inx } = data || {};
       let params = {
         city_id,
         cinema_id,
@@ -1746,6 +1769,41 @@ class OrderAutoTicketQueue {
     } catch (error) {
       console.error(conPrefix + "支付订单异常", error);
       this.setErrInfo("获取订单支付结果异常", error);
+      let params = {
+        cinema_id,
+        city_id,
+        order_status: "0",
+        page: "1",
+        session_id,
+        width: "240"
+      };
+      try {
+        const res = await this.sfcApi.getOrderList(params);
+        let list = res.data?.order_data || [];
+        if (list.length) {
+          let targetObj = list.find(item => item.order_num === order_num);
+          if (targetObj) {
+            let qrcode = targetObj.ticket_code?.split(",").join("|");
+            if (qrcode) {
+              this.logList.push({
+                opera_time: getCurrentTime(),
+                des: `第${inx}次从已完成订单里获取取票码成功：${qrcode}`
+              });
+              return qrcode;
+            } else {
+              this.logList.push({
+                opera_time: getCurrentTime(),
+                des: `第${inx}次从已完成订单里获取取票码失败`
+              });
+            }
+          }
+        }
+      } catch (err) {
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: `第${inx}次从已完成订单里获取取票码失败，${JSON.stringify(err)}`
+        });
+      }
       return Promise.reject(error);
     }
   }
