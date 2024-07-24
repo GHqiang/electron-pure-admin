@@ -746,6 +746,13 @@ const APP_GROUP_OBJ = {
   qina: "20004"
 };
 
+// 微信消息推送id
+const WX_MSG_UID = {
+  1: "UID_AIFZVT3B4zcj10CvGFLKB2hS2wt7", // 张三
+  9: "UID_Dc5u7HJZSLvjbGIwPeZmiSRPurim", // 苦瓜
+  10: "UID_NnfJzb7r8pPyfhuq89OOrzr216Ba" // 兜儿
+};
+
 // sfc上影影院名称
 const SFC_CINEMA_NAME = [
   "SFC上影百联影城（大上海4DX店）",
@@ -814,5 +821,6 @@ export {
   TICKET_CONPREFIX_OBJ,
   APP_OPENID_OBJ,
   APP_GROUP_OBJ,
+  WX_MSG_UID,
   SFC_CINEMA_NAME
 };

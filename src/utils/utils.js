@@ -1,6 +1,7 @@
 // 导入 ExcelJS 库
 import ExcelJS from "exceljs";
 import axios from "axios";
+import { WX_MSG_UID } from "@/common/constant";
 /**
  * 获取当前日期和时间的格式化字符串
  * 无参数
@@ -565,23 +566,38 @@ const getCinemaLoginInfoList = () => {
 };
 
 // 发送微信消息
-const sendWxPusherMessage = async params => {
+const sendWxPusherMessage = async ({
+  platName,
+  order_number,
+  city_name,
+  cinema_name,
+  film_name,
+  lockseat,
+  failReason
+}) => {
   const url = "https://wxpusher.zjiecode.com/api/manager/message/send";
   const headers = {
     "content-type": "application/json;charset=UTF-8",
     token: "f64b234659d4934b4d1e5501534c6f52"
   };
-
+  let userInfo = window.localStorage.getItem("userInfo");
+  if (userInfo) {
+    userInfo = JSON.parse(userInfo);
+  }
+  let content = `<p>
+  平台：${platName}; <br/>单号：${order_number}; <br/>
+  城市：${city_name}; <br/>影院：${cinema_name}; <br/>
+  片名：${film_name}; <br/>座位：${lockseat}; <br/>
+  原因：${failReason};
+  </p>`;
   const messageData = {
     appId: 80173,
     topicIds: [],
     contentType: 2,
     verifyPay: false,
-    // uids: ["UID_AIFZVT3B4zcj10CvGFLKB2hS2wt7"],
-    // summary: "猎人平台出票失败2",
-    // content:
-    //   "<p>平台：猎人；<br/>单号：12345；<br/>影院：上海红宝石影院；</p><p>片名：你的名字；<br/>座位：6排1座 6排2座；</p><p>原因：会员卡使用超限</p>",
-    ...params
+    uids: ["UID_AIFZVT3B4zcj10CvGFLKB2hS2wt7", WX_MSG_UID[userInfo.user_id]],
+    summary: platName + "平台出票失败",
+    content
   };
   try {
     const response = await axios.post(url, messageData, { headers });

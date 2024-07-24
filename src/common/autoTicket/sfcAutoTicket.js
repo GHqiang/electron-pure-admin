@@ -4,7 +4,8 @@ import {
   getCurrentTime,
   convertFullwidthToHalfwidth,
   cinemNameSpecial,
-  getCinemaLoginInfoList
+  getCinemaLoginInfoList,
+  sendWxPusherMessage
 } from "@/utils/utils";
 
 import lierenApi from "@/api/lieren-api";
@@ -444,17 +445,29 @@ class OrderAutoTicketQueue {
 
   // 转单
   async transferOrder(order, unlockSeatInfo) {
-    const { conPrefix, errMsg } = this;
+    const { conPrefix, errMsg, errInfo } = this;
     const { platName } = order;
     let isAutoTransfer = window.localStorage.getItem("isAutoTransfer");
     // 关闭自动转单只针对座位异常生效
-    if (isTestOrder || (isAutoTransfer == "0" && errMsg === "锁定座位异常")) {
+    // if (isTestOrder || (isAutoTransfer == "0" && errMsg === "锁定座位异常")) {
+    if (isTestOrder || isAutoTransfer == "0") {
       console.warn("锁定座位异常关闭自动转单");
       this.logList.push({
         opera_time: getCurrentTime(),
         des: `自动转单处于关闭状态`
       });
       // this.logUpload(order);
+      const { order_number, city_name, cinema_name, film_name, lockseat } =
+        order;
+      sendWxPusherMessage({
+        platName,
+        order_number,
+        city_name,
+        cinema_name,
+        film_name,
+        lockseat,
+        failReason: `${errMsg}——${errInfo}`
+      });
       return;
     }
     // if (["mayi", "sheng", "yangcong"].includes(platName)) {
@@ -542,7 +555,6 @@ class OrderAutoTicketQueue {
         opera_time: getCurrentTime(),
         des: `转单异常-${JSON.stringify(error)}`
       });
-      this.setErrInfo("订单转单异常", error);
     }
   }
 
@@ -643,7 +655,6 @@ class OrderAutoTicketQueue {
       }
     } catch (error) {
       console.error(conPrefix + "单个订单出票异常", error);
-      this.setErrInfo("单个订单出票异常", error);
     }
   }
   // 确认接单
@@ -713,7 +724,6 @@ class OrderAutoTicketQueue {
       return res;
     } catch (error) {
       console.error(conPrefix + "解锁异常", error);
-      this.setErrInfo(`订单第${inx}次解锁失败`, error);
       this.logList.push({
         opera_time: getCurrentTime(),
         des: `第${inx}次解锁座位失败-${JSON.stringify(error)}`
@@ -787,7 +797,20 @@ class OrderAutoTicketQueue {
               "获取该订单的报价记录失败，不进行出票，此处不转单，直接跳过",
             offerRecord
           );
-          this.setErrInfo("获取该订单报价记录失败，不转单跳过");
+          this.setErrInfo("获取该订单报价记录失败，微信通知手动出票");
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: `获取该订单报价记录失败，微信通知手动出票`
+          });
+          sendWxPusherMessage({
+            platName,
+            order_number,
+            city_name,
+            cinema_name,
+            film_name,
+            lockseat,
+            failReason: `获取该订单报价记录失败,需手动出票`
+          });
           return;
         }
         this.logList.push({

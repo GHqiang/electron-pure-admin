@@ -164,7 +164,7 @@ const orderFormObj = ORDER_FORM;
 const shadowLineObj = APP_LIST;
 // 表单查询数据
 const formData = reactive({
-  plat_name: "lieren", // 订单来源
+  plat_name: "", // 订单来源
   user_id: "", // 用户id
   app_name: "", // 影线名称
   start_time: "",
@@ -220,7 +220,7 @@ const getTicketList = async () => {
 
 // 重置
 const resetForm = () => {
-  formData.plat_name = "lieren";
+  formData.plat_name = "";
   formData.app_name = "";
   formData.user_id = "";
   formData.start_time = getTodayTime(+new Date());
