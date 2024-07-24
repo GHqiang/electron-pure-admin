@@ -596,6 +596,10 @@ class OrderAutoTicketQueue {
           await this.unlockSeat({ platName, order_id: id, inx: 1 });
         } else if (platName === "sheng") {
           await this.startDeliver({ order_number, supplierCode });
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            dec: "确认接单成功，2秒后解锁"
+          });
           this.delay(2);
           await this.unlockSeat({
             platName,

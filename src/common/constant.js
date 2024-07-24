@@ -806,7 +806,11 @@ const SFC_CINEMA_NAME = [
   "上海影城SHO",
   "SFC上影影城（房山绿地缤纷店）",
   "SFC上影影城（无锡硕放店）",
-  "SFC上影影城（黄山店）"
+  "SFC上影影城（黄山店）",
+  "SFC上影影城（港汇永华IMAX店）", // 注意：与前面的"港汇永华IMAX店"重复，可能是录入错误
+  "SFC上影影城（港汇永华IMAX激光店）",
+  "SFC上影影城（南桥百联CINITY店）",
+  "SFC上海影城（SHO杜比剧场）"
 ];
 export {
   ORDER_FORM,
