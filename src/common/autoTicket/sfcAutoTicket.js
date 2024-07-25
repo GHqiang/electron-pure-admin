@@ -749,6 +749,7 @@ class OrderAutoTicketQueue {
       return res;
     } catch (error) {
       console.error(conPrefix + "解锁异常", error);
+      this.setErrInfo(`第${inx}次解锁座位失败`, error);
       this.logList.push({
         opera_time: getCurrentTime(),
         des: `第${inx}次解锁座位失败-${JSON.stringify(error)}`
@@ -2409,7 +2410,7 @@ class OrderAutoTicketQueue {
     rewards,
     session_id
   }) {
-    const { conPrefix } = this;
+    const { conPrefix, appFlag } = this;
     try {
       // 规则如下:
       // 1、成本不能高于中标价，即40券不能出中标价38.8的单
@@ -2485,6 +2486,16 @@ class OrderAutoTicketQueue {
         let rewardPrice =
           (Number(supplier_end_price) * Number(ticket_num) * 400) / 10000;
         profit += rewardPrice;
+      }
+      if (profit < 0) {
+        console.error(conPrefix + "最终利润为负，单个订单直接出票结束");
+        this.setErrInfo(
+          APP_LIST[appFlag] + "最终利润为负，单个订单直接出票结束"
+        );
+        return {
+          profit: 0,
+          card_id: ""
+        };
       }
       // 四舍五入保留两位小数后再转为数值类型
       profit = profit.toFixed(2);
