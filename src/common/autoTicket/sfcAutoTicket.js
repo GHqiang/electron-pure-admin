@@ -600,7 +600,8 @@ class OrderAutoTicketQueue {
             opera_time: getCurrentTime(),
             dec: "确认接单成功，2秒后解锁"
           });
-          this.delay(2);
+          this.logUpload(item);
+          await this.delay(2);
           await this.unlockSeat({
             platName,
             order_number,
@@ -1664,7 +1665,7 @@ class OrderAutoTicketQueue {
           console.log(conPrefix + "创建订单返回", res);
           order_num = res.data?.order_num || "";
         } catch (error) {
-          this.delay(1);
+          await this.delay(1);
           console.warn(conPrefix + "会员卡第一次创建订单失败", error);
           console.warn(
             conPrefix + "调整会员卡密码参数再次发起创建订单请求",
@@ -1691,7 +1692,7 @@ class OrderAutoTicketQueue {
           opera_time: getCurrentTime(),
           des: `创建订单请求接口超时，延迟2秒后重试`
         });
-        this.delay(2);
+        await this.delay(2);
         try {
           const order_num = await this.createOrder(data);
           if (order_num) {
