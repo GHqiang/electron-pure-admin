@@ -61,17 +61,12 @@
         </el-select>
       </el-form-item>
 
-      <el-form-item label="报价类型">
-        <el-select
-          v-model="formData.offer_type"
-          placeholder="报价类型"
-          style="width: 194px"
+      <el-form-item label="订&nbsp;&nbsp;单&nbsp;&nbsp;号">
+        <el-input
+          v-model="formData.order_number"
+          placeholder="请输入订单号"
           clearable
-        >
-          <el-option label="固定价" value="1" />
-          <el-option label="会员价加价" value="2" />
-          <el-option label="会员日报价" value="3" />
-        </el-select>
+        />
       </el-form-item>
       <el-form-item label="用券面额">
         <el-select
@@ -213,7 +208,7 @@ const totalNum = ref(0);
 // 用户列表
 const userList = ref([]);
 
-// 格式化中标价格
+// 格式化最终价格
 const supplier_end_price_filter = row => {
   let obj = JSON.parse(JSON.stringify(row));
   // console.log("obj", obj);
@@ -232,7 +227,7 @@ const formData = reactive({
   app_name: "", // 影线名称
   user_id: "", // 报价用户
   order_status: "", // 状态
-  offer_type: "", // 报价类型
+  order_number: "", // 报价类型
   err_msg: "", // 失败原因
   quan_value: "", // 用券面额
   start_time: "",
@@ -318,7 +313,7 @@ const resetForm = () => {
   formData.app_name = ""; // 影线名称
   formData.order_status = ""; // 状态
   formData.user_id = ""; // 报价用户
-  formData.offer_type = ""; // 报价类型
+  formData.order_number = ""; // 报价类型
   formData.err_msg = ""; // 最终报价
   formData.quan_value = ""; // 是否报价
   formData.start_time = getTodayTime(+new Date());
