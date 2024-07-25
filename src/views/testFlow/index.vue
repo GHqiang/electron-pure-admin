@@ -137,6 +137,9 @@
         <el-button type="primary" @click="logout">退出登录</el-button>
       </el-form-item>
       <el-form-item>
+        <el-button type="primary" @click="getSuccessOrderList()"
+          >获取已完成订单列表</el-button
+        >
         <el-button type="primary" @click="getLierenOrderList(0)"
           >获取待报价列表</el-button
         >
@@ -255,7 +258,7 @@ console.log("isAdmin", isAdmin.value);
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
 const { removeSfcUserInfo } = userInfoAndTokens;
-const appName = "ningbo";
+const appName = "sfc";
 let sfcApi = SFC_API_OBJ[appName];
 // console.log("sfcApi", sfcApi);
 import { useRouter } from "vue-router";
@@ -334,6 +337,37 @@ const transferOrder = async order => {
     console.warn("【转单】异常", error);
   }
 };
+
+// 获取已完成订单列表
+async function getSuccessOrderList() {
+  try {
+    let loginInfoList = getCinemaLoginInfoList();
+    let userInfo = window.localStorage.getItem("userInfo");
+    userInfo = JSON.parse(userInfo);
+    // console.log("loginInfoList", loginInfoList);
+    // console.log("userInfo", userInfo);
+    let obj = loginInfoList.find(
+      itemA => itemA.app_name === appName && itemA.mobile === userInfo.phone
+    );
+
+    let params = window.successParams || {
+      cinema_id: "4",
+      city_id: "499",
+      order_status: "0",
+      page: "2",
+      session_id: obj?.session_id,
+      width: "240"
+    };
+    console.log(`获取已完成订单列表参数`, params);
+    const res = await sfcApi.getOrderList(params);
+    let list = res.data?.order_data || [];
+    console.warn(`获取已完成订单列表`, list);
+    return list;
+  } catch (error) {
+    console.warn(`获取已完成订单列表异常`, error);
+    return [];
+  }
+}
 
 // 获取待出票列表
 async function getLierenOrderList(type) {
