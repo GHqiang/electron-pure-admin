@@ -448,6 +448,7 @@ class OrderAutoTicketQueue {
     const { conPrefix, errMsg, errInfo } = this;
     const { platName } = order;
     let isAutoTransfer = window.localStorage.getItem("isAutoTransfer");
+    const { order_number, city_name, cinema_name, film_name, lockseat } = order;
     // 关闭自动转单只针对座位异常生效
     // if (isTestOrder || (isAutoTransfer == "0" && errMsg === "锁定座位异常")) {
     if (isTestOrder || isAutoTransfer == "0") {
@@ -457,8 +458,6 @@ class OrderAutoTicketQueue {
         des: `自动转单处于关闭状态`
       });
       // this.logUpload(order);
-      const { order_number, city_name, cinema_name, film_name, lockseat } =
-        order;
       sendWxPusherMessage({
         platName,
         order_number,
@@ -466,6 +465,7 @@ class OrderAutoTicketQueue {
         cinema_name,
         film_name,
         lockseat,
+        transferTip: "自动转单处于关闭状态,需手动出票或者转单",
         failReason: `${errMsg}——${errInfo}`
       });
       return;
@@ -535,6 +535,16 @@ class OrderAutoTicketQueue {
         opera_time: getCurrentTime(),
         des: `转单成功-${JSON.stringify(res)}`
       });
+      sendWxPusherMessage({
+        platName,
+        order_number,
+        city_name,
+        cinema_name,
+        film_name,
+        lockseat,
+        transferTip: "自动转单处于开启状态,已转单无需处理",
+        failReason: `${errMsg}——${errInfo}`
+      });
       const { supplier_end_price, ticket_num } = order;
       let transfer_fee = (
         (Number(ticket_num) * Number(supplier_end_price) * 100 * 3) /
@@ -554,6 +564,16 @@ class OrderAutoTicketQueue {
       this.logList.push({
         opera_time: getCurrentTime(),
         des: `转单异常-${JSON.stringify(error)}`
+      });
+      sendWxPusherMessage({
+        platName,
+        order_number,
+        city_name,
+        cinema_name,
+        film_name,
+        lockseat,
+        transferTip: "自动转单开启，转单失败，需手动出票或者转单",
+        failReason: `${errMsg}——${errInfo}`
       });
     }
   }
