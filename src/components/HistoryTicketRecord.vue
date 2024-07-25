@@ -79,10 +79,10 @@
           <el-option label="30" value="30" />
         </el-select>
       </el-form-item>
-      <el-form-item label="中标价格">
+      <el-form-item label="优惠券码">
         <el-input
-          v-model="formData.supplier_end_price"
-          placeholder="请输入中标价格"
+          v-model="formData.quan_code"
+          placeholder="请输入优惠券"
           clearable
         />
       </el-form-item>
@@ -162,6 +162,7 @@
         </template>
       </el-table-column>
       <el-table-column prop="quan_value" label="用券面额" width="90" />
+      <el-table-column prop="quan_code" label="优惠券码" width="90" />
       <el-table-column prop="profit" label="利润" width="80" />
       <el-table-column prop="transfer_fee" label="转单手续费" width="100" />
       <el-table-column prop="err_msg" label="失败原因" width="110" />
@@ -212,7 +213,7 @@ const formData = reactive({
   order_status: "", // 状态
   user_id: "", // 出票用户
   order_number: "", // 订单号
-  supplier_end_price: "", // 中标价
+  quan_code: "", // 优惠券
   quan_value: "", // 用券面额
   start_time: "",
   end_time: ""
@@ -296,7 +297,7 @@ const resetForm = () => {
   formData.order_status = ""; // 状态
   formData.user_id = ""; // 出票用户
   formData.order_number = ""; // 订单号
-  formData.supplier_end_price = ""; // 中标价
+  formData.quan_code = ""; // 优惠券码
   formData.quan_value = ""; // 是否报价
   formData.start_time = getTodayTime(+new Date());
   formData.end_time = getTodayTime(+new Date() + 1 * 24 * 60 * 60 * 1000);
