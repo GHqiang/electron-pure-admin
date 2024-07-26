@@ -1,6 +1,7 @@
 // 导入 ExcelJS 库
 import ExcelJS from "exceljs";
 import axios from "axios";
+import * as CryptoJS from 'crypto-js';
 import { WX_MSG_UID } from "@/common/constant";
 /**
  * 获取当前日期和时间的格式化字符串
@@ -612,6 +613,92 @@ const sendWxPusherMessage = async ({
   }
 };
 window.sendWxPusherMessage = sendWxPusherMessage;
+
+// 定义加密和解密相关的函数
+const cryptoFunctions = {
+  // 测试加密和解密的方法
+  testCrypto(encodeStr) {
+    // 示例加密后的字符串
+    const str = encodeStr /* 省略了原始的长字符串 */;
+
+    // 将十六进制字符串转换为CryptoJS字节数组
+    const encryptedHexStr = CryptoJS.enc.Hex.parse(str);
+
+    // 将字节数组转换为Base64字符串
+    const srcs = CryptoJS.enc.Base64.stringify(encryptedHexStr);
+
+    // 解密字符串
+    // 注意：这里需要提供正确的密钥（key）和初始化向量（iv）
+    const decrypt = CryptoJS.AES.decrypt(str, key, {
+      iv: iv,
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7
+    });
+
+    // 转换解密结果为UTF-8字符串
+    const decryptedStr = decrypt.toString(CryptoJS.enc.Utf8);
+
+    // 输出解密后的字符串
+    console.log('decryptedStr', decryptedStr);
+  },
+
+  // 加密方法
+  encrypt(message, HHtoken) {
+    // 从localStorage中获取token
+    const token = HHtoken || window.localStorage.getItem("HHtoken");
+
+    // 生成32位的密钥
+    const keyStr = CryptoJS.MD5(token + 'piaofan@123').toString();
+
+    // 生成16位的初始化向量
+    const ivStr = CryptoJS.MD5(token + 'piaofan@456').toString().substr(0, 16);
+
+    // 将密钥和初始化向量转换为CryptoJS字节数组
+    const key = CryptoJS.enc.Utf8.parse(keyStr);
+    const iv = CryptoJS.enc.Utf8.parse(ivStr);
+
+    // 将消息转换为JSON字符串
+    const data = JSON.stringify(message);
+
+    // 使用AES加密
+    const encryptedData = CryptoJS.AES.encrypt(data, key, {
+      iv,
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7
+    }).toString();
+
+    // 返回加密后的字符串
+    return encryptedData;
+  },
+
+  // 解密方法
+  decrypt(message, HHtoken) {
+    // 从localStorage中获取token
+    const token = HHtoken || window.localStorage.getItem("HHtoken");
+
+    // 生成32位的密钥
+    const keyStr = CryptoJS.MD5(token + 'piaofan@123').toString();
+
+    // 生成16位的初始化向量
+    const ivStr = CryptoJS.MD5(token + 'piaofan@456').toString().substr(0, 16);
+
+    // 将密钥和初始化向量转换为CryptoJS字节数组
+    const key = CryptoJS.enc.Utf8.parse(keyStr);
+    const iv = CryptoJS.enc.Utf8.parse(ivStr);
+
+    // 使用AES解密
+    const decrypted = CryptoJS.AES.decrypt(message, key, {
+      iv,
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7
+    });
+
+    // 返回解密后的字符串
+    return decrypted.toString(CryptoJS.enc.Utf8);
+  }
+};
+window.cryptoFunctions = cryptoFunctions
+
 // 自定义console，支持字体颜色、背景颜色、前缀
 class CustomConsole {
   constructor(options = {}) {
