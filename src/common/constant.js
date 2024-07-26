@@ -432,7 +432,7 @@ const HFZYZHD_SPECIAL_CINEMA_LIST = [
 // 天通苑乐娃特殊影院集合
 const TTYLW_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "天通苑乐娃影城",
+    order_cinema_name: "天通苑乐娃影院",
     sfc_cinema_name: "乐娃影城天通苑店"
   }
 ];

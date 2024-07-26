@@ -410,7 +410,7 @@ const getCinemaFlag = item => {
   ) {
     return "hflkldd";
   } else if (
-    cinemNameSpecial(cinema_name).includes("天通苑乐娃影城") &&
+    cinemNameSpecial(cinema_name).includes("天通苑乐娃影院") &&
     ["北京"].includes(city_name)
   ) {
     return "ttylw";
