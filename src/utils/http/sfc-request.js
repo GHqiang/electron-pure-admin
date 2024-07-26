@@ -101,14 +101,14 @@ const createAxios = ({ group, appName, timeout = 20 }) => {
   // 请求拦截器
   instance.interceptors.request.use(
     config => {
-      if (config.url.indexOf("/api/") !== -1) {
+      if (config.url.indexOf("/sfc/") !== -1) {
         if (config.method === "get") {
           config.params = paramsHandle(config.params);
         } else {
           config.data = paramsHandle(config.data);
         }
         if (!IS_DEV) {
-          // 截取掉/api/
+          // 截取掉/sfc/
           config.url = "https://group.leying.com" + config.url.slice(4);
         }
       }
@@ -129,7 +129,7 @@ const createAxios = ({ group, appName, timeout = 20 }) => {
       let whitelistSfc = ["/v2/user/send-login-or-reg-validate-code"];
 
       let isErrorBySFC =
-        (!IS_DEV ? true : response.config.url.indexOf("/api/") !== -1) &&
+        (!IS_DEV ? true : response.config.url.indexOf("/sfc/") !== -1) &&
         data.status === 0;
       if (
         isErrorBySFC &&

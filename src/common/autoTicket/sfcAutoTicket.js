@@ -37,6 +37,7 @@ import {
   APP_LIST
 } from "@/common/constant";
 import { SFC_API_OBJ } from "@/common/index";
+import hahaApi from "../../api/haha-api";
 const getOrginValue = value => JSON.parse(JSON.stringify(value));
 let isTestOrder = false; //是否是测试订单
 // 创建一个订单自动出票队列类
@@ -600,7 +601,7 @@ class OrderAutoTicketQueue {
   async singleTicket(item) {
     // 放到这里即使修改token也不用重启队列了
     const { conPrefix, appFlag } = this;
-    const { id, platName, supplierCode, order_number } = item;
+    const { id, platName, supplierCode, order_number, bid } = item;
     this.currentParamsList = getCinemaLoginInfoList().filter(
       item =>
         item.app_name === appFlag &&
@@ -615,7 +616,11 @@ class OrderAutoTicketQueue {
         if (platName === "lieren") {
           await this.unlockSeat({ platName, order_id: id, inx: 1 });
         } else if (platName === "sheng") {
-          await this.startDeliver({ order_number, supplierCode });
+          await this.startDeliver({
+            platName,
+            order_number,
+            supplierCode
+          });
           this.logList.push({
             opera_time: getCurrentTime(),
             dec: "确认接单成功，2秒后解锁"
@@ -634,6 +639,20 @@ class OrderAutoTicketQueue {
           await this.unlockSeat({ platName, order_id: id, inx: 1 });
         } else if (platName === "yangcong") {
           await this.unlockSeat({ platName, order_id: id, inx: 1 });
+        } else if (platName === "haha") {
+          await this.startDeliver({ platName, bid });
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            dec: "确认接单成功，2秒后解锁"
+          });
+          this.logUpload(item);
+          await this.delay(2);
+          await this.unlockSeat({
+            platName,
+            order_number,
+            supplierCode,
+            inx: 1
+          });
         }
         // this.logList.push({
         //   opera_time: getCurrentTime(),
@@ -683,15 +702,26 @@ class OrderAutoTicketQueue {
     }
   }
   // 确认接单
-  async startDeliver({ order_number, supplierCode }) {
+  async startDeliver({ order_number, supplierCode, platName, bid }) {
     const { conPrefix } = this;
     try {
-      let params = {
-        orderCode: order_number,
-        supplierCode
+      let params;
+      if (platName === "sheng") {
+        params = {
+          orderCode: order_number,
+          supplierCode
+        };
+      } else if (platName === "haha") {
+        params = {
+          bid
+        };
+      }
+      const requestApi = {
+        sheng: shengApi,
+        haha: hahaApi
       };
       console.log(conPrefix + "确认接单参数", params);
-      const res = await shengApi.confirmOrder(params);
+      const res = await requestApi[platName].confirmOrder(params);
       console.log(conPrefix + "确认接单返回", res);
       return res;
     } catch (error) {
@@ -748,7 +778,7 @@ class OrderAutoTicketQueue {
       });
       return res;
     } catch (error) {
-      if((error?.msg || error?.message || '').includes('已经解锁')) {
+      if ((error?.msg || error?.message || "").includes("已经解锁")) {
         this.logList.push({
           opera_time: getCurrentTime(),
           des: `第${inx}次解锁座位发现已解锁-${JSON.stringify(error)}`

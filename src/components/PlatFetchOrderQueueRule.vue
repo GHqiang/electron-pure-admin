@@ -125,6 +125,7 @@ import shengFetchOrder from "@/common/orderFetch/shengFetchOrder";
 import mangguoFetchOrder from "@/common/orderFetch/mangguoFetchOrder";
 import mayiFetchOrder from "@/common/orderFetch/mayiFetchOrder";
 import yangcongFetchOrder from "@/common/orderFetch/yangcongFetchOrder";
+import hahaFetchOrder from "@/common/orderFetch/hahaFetchOrder";
 
 import { ORDER_FORM } from "@/common/constant.js";
 import { getCurrentFormattedDateTime } from "@/utils/utils";
@@ -183,6 +184,9 @@ const oneClickAutoOffer = () => {
         if (item.platName === "yangcong") {
           yangcongFetchOrder.start();
         }
+        if (item.platName === "haha") {
+          hahaFetchOrder.start();
+        }
       });
       svApi.updateUser({
         order_fetch_queue: JSON.stringify(tableDataStore.items),
@@ -234,6 +238,10 @@ const singleStartOrStop = ({ id, platName }, flag) => {
     if (platName === "yangcong") {
       tableDataStore.toggleEnable(id);
       yangcongFetchOrder.start();
+    }
+    if (platName === "haha") {
+      tableDataStore.toggleEnable(id);
+      hahaFetchOrder.start();
     }
   } else {
     tableDataStore.toggleEnable(id);

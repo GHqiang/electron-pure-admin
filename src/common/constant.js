@@ -4,7 +4,8 @@ const ORDER_FORM = {
   sheng: "省APP",
   mangguo: "芒果",
   mayi: "蚂蚁",
-  yangcong: "洋葱"
+  yangcong: "洋葱",
+  haha: "哈哈"
 };
 // 影院列表
 const APP_LIST = {
