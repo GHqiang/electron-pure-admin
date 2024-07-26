@@ -748,6 +748,13 @@ class OrderAutoTicketQueue {
       });
       return res;
     } catch (error) {
+      if((error?.msg || error?.message || '').includes('已经解锁')) {
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: `第${inx}次解锁座位发现已解锁-${JSON.stringify(error)}`
+        });
+        return;
+      }
       console.error(conPrefix + "解锁异常", error);
       this.setErrInfo(`第${inx}次解锁座位失败`, error);
       this.logList.push({
