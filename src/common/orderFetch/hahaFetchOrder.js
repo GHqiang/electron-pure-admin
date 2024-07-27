@@ -10,7 +10,7 @@ const platTableDataStore = usePlatFetchOrderStore();
 const platFetchOrderRuleList = computed(() =>
   platTableDataStore.items.filter(item => item.platName === "haha")
 );
-
+import { SFC_CINEMA_NAME } from "@/common/constant";
 import { useStayTicketList } from "@/store/stayTicketList";
 const stayTicketList = useStayTicketList();
 const { addNewOrder } = stayTicketList;
@@ -102,7 +102,9 @@ class OrderAutoFetchQueue {
             show_time: time,
             rewards: 0, // 哈哈无奖励，只有快捷
             is_urgent: 0, // 1紧急 0非紧急
-            cinema_group: line_name,
+            cinema_group: SFC_CINEMA_NAME.includes(cinemaName)
+              ? "上影上海"
+              : "其它自动",
             cinema_code: "", // 影院id
             order_number: orderNumber,
             lockseat: seatInfo

@@ -548,7 +548,7 @@ const getEndPrice = async params => {
 async function getStayOfferList(page, stayList = []) {
   try {
     const res = await hahaApi.queryStayOfferList({
-      limit: 100
+      limit: 200
     });
     let list = res.data || [];
     // let count = res.data.count || 1; // 总数
@@ -617,8 +617,8 @@ async function singleOffer(item, offerList) {
     }
 
     let params = {
-      order_id: id,
-      price: endPrice * 100
+      id: id,
+      price: endPrice
     };
     console.log(conPrefix + "订单报价参数", params);
     if (isTestOrder) {

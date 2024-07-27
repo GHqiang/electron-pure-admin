@@ -9,7 +9,7 @@ const queryStayOfferList = params =>
   axios.post("/api/Synchro/pcToList", params);
 
 // 提交报价
-const submitOffer = params => axios.post("/v2/api/62e100228cf89", params);
+const submitOffer = params => axios.post("/api/Synchro/toPrice", params);
 
 // 中签订单查询
 const stayTicketingList = params =>
@@ -19,10 +19,10 @@ const stayTicketingList = params =>
 const confirmOrder = params => axios.post("/api/Synchro/orderConfirm", params);
 
 // 解锁座位
-const unlockSeat = params => axios.post("/v2/api/62e10db983b63", params);
+const unlockSeat = params => axios.post("/api/synchro/unLockSeat", params);
 
 // 提交取票码(发货回调)
-const submitTicketCode = params => axios.post("/v2/api/62e11dd840696", params);
+const submitTicketCode = params => axios.post("/api/Synchro/pushOrder", params);
 
 // 取消订单
 const transferOrder = params => axios.post("/v2/api/64113ee99fa6e", params);

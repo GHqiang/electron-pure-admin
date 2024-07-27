@@ -623,7 +623,7 @@ class OrderAutoTicketQueue {
           });
           this.logList.push({
             opera_time: getCurrentTime(),
-            dec: "确认接单成功，2秒后解锁"
+            des: "确认接单成功，2秒后解锁"
           });
           this.logUpload(item);
           await this.delay(2);
@@ -643,14 +643,13 @@ class OrderAutoTicketQueue {
           await this.startDeliver({ platName, bid });
           this.logList.push({
             opera_time: getCurrentTime(),
-            dec: "确认接单成功，2秒后解锁"
+            des: "确认接单成功，2秒后解锁"
           });
           this.logUpload(item);
           await this.delay(2);
           await this.unlockSeat({
             platName,
-            order_number,
-            supplierCode,
+            order_id: id,
             inx: 1
           });
         }
@@ -665,7 +664,8 @@ class OrderAutoTicketQueue {
       let params = {
         order_id: id,
         order_number,
-        supplierCode
+        supplierCode,
+        platName
       };
       const res = await this.trial(
         inx => this.unlockSeat({ ...params, inx }),
@@ -761,6 +761,10 @@ class OrderAutoTicketQueue {
         params = {
           tradeno: order_id
         };
+      } else if (platName === "haha") {
+        params = {
+          id: order_id
+        };
       }
       console.log(conPrefix + "解锁参数", params);
       const requestApi = {
@@ -768,7 +772,8 @@ class OrderAutoTicketQueue {
         sheng: shengApi,
         mangguo: mangguoApi,
         mayi: mayiApi,
-        yangcong: yangcongApi
+        yangcong: yangcongApi,
+        haha: hahaApi
       };
       const res = await requestApi[platName].unlockSeat(params);
       console.log(conPrefix + "解锁返回", res);
@@ -2527,11 +2532,13 @@ class OrderAutoTicketQueue {
       if (profit < 0) {
         console.error(conPrefix + "最终利润为负，单个订单直接出票结束");
         this.setErrInfo(
-          APP_LIST[appFlag] + "最终利润为负，单个订单直接出票结束"
+          APP_LIST[appFlag] +
+            "最终利润为负，单个订单直接出票结束, 利润：" +
+            profit
         );
         return {
           profit: 0,
-          card_id: ""
+          useQuans: []
         };
       }
       // 四舍五入保留两位小数后再转为数值类型
@@ -2692,7 +2699,9 @@ class OrderAutoTicketQueue {
       if (profit < 0) {
         console.error(conPrefix + "最终利润为负，单个订单直接出票结束");
         this.setErrInfo(
-          APP_LIST[appFlag] + "最终利润为负，单个订单直接出票结束"
+          APP_LIST[appFlag] +
+            "最终利润为负，单个订单直接出票结束, 利润：" +
+            profit
         );
         // 后续要记录失败列表（订单信息、失败原因、时间戳）
         return {
