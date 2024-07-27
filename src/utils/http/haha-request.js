@@ -15,6 +15,14 @@ const instance = axios.create({
 const NODE_ENV = process.env.NODE_ENV;
 const IS_DEV = NODE_ENV === "development";
 
+function jsonToUrlEncoded(json) {
+  return Object.keys(json)
+    .map(key => {
+      return encodeURIComponent(key) + "=" + encodeURIComponent(json[key]);
+    })
+    .join("&");
+}
+
 // 请求拦截器
 instance.interceptors.request.use(
   config => {
@@ -27,6 +35,14 @@ instance.interceptors.request.use(
       }
       // 生产环境不会跨域
       config.url = IS_DEV ? config.url : "https://hahapiao.cn" + config.url;
+      if (config.method === "post") {
+        // 除了该接口，其他都做特殊处理
+        if (config.url.indexOf("/api/Synchro/pushOrder") !== -1) {
+          config.headers["Content-Type"] ===
+            "application/x-www-form-urlencoded";
+          config.data = jsonToUrlEncoded(config.data);
+        }
+      }
     }
     // console.log('请求config', config)
     return config;

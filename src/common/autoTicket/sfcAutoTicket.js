@@ -667,10 +667,18 @@ class OrderAutoTicketQueue {
         supplierCode,
         platName
       };
+      let delayConfig = {
+        lieren: [3, 3],
+        mangguo: [3, 3],
+        sheng: [3, 3],
+        haha: [3, 3],
+        mayi: [60, 1],
+        yangcong: [3, 3]
+      };
       const res = await this.trial(
         inx => this.unlockSeat({ ...params, inx }),
-        3,
-        3
+        delayConfig[platName][0],
+        delayConfig[platName][1]
       );
       if (!res) {
         console.error(conPrefix + "单个订单试错后仍解锁失败", "需要走转单逻辑");
@@ -1398,6 +1406,7 @@ class OrderAutoTicketQueue {
         supplierCode,
         platName,
         session_id: this.currentParamsList[this.currentParamsInx].session_id,
+        orderInfo: item,
         lockseat
       });
       if (lastRes?.qrcode && lastRes?.submitRes) {
@@ -1884,6 +1893,7 @@ class OrderAutoTicketQueue {
     order_number,
     supplierCode,
     lockseat,
+    orderInfo,
     flag
   }) {
     const { conPrefix } = this;
@@ -1938,6 +1948,52 @@ class OrderAutoTicketQueue {
         ticketCodeUrls: "",
         ticketCodes: qrcode
       };
+    } else if (platName === "haha") {
+      const { bid, cinema_name, hall_name, film_name, show_time } = orderInfo;
+      params = {
+        oid: order_id,
+        bid,
+        seat: lockseat.split(" "), // [("5排4座", "5排3座")]
+        info: [
+          {
+            code: qrcode.split("|")[1], // 199079
+            // img: "http://aliyun-oss.hahapiao.cn/ticket-code-images/2024-07-27/17214193533.jpg",
+            num: qrcode.split("|")[0], // 230628
+            // imgIndex: "d447f1bfc24fdd80badc5d0e908f589f",
+            seat: lockseat.split(" "), // [("5排4座", "5排3座")]
+            comparison: {
+              movie: film_name,
+              movieStatus: 1,
+              showTime: show_time,
+              showTimeStatus: 1,
+              seat: lockseat.split(" "), // [("5排4座", "5排3座")]
+              seatStatus: 1,
+              cinema: cinema_name,
+              cinemaStatus: 1,
+              hall: hall_name,
+              hallStatus: 1
+            }
+          }
+        ],
+        seat_type: 0,
+        recogniseSeat: lockseat.split(" ").map(item => ({
+          oldSeat: item,
+          newSeat: item
+          // imgIndex: "d447f1bfc24fdd80badc5d0e908f589f"
+        }))
+        // [
+        //   {
+        //     oldSeat: "5排4座",
+        //     newSeat: "5排4座",
+        //     imgIndex: "d447f1bfc24fdd80badc5d0e908f589f"
+        //   },
+        //   {
+        //     oldSeat: "5排3座",
+        //     newSeat: "5排3座",
+        //     imgIndex: "d447f1bfc24fdd80badc5d0e908f589f"
+        //   }
+        // ]
+      };
     }
     try {
       const requestApi = {
@@ -1945,7 +2001,8 @@ class OrderAutoTicketQueue {
         sheng: shengApi,
         mangguo: mangguoApi,
         mayi: mayiApi,
-        yangcong: yangcongApi
+        yangcong: yangcongApi,
+        haha: hahaApi
       };
       console.log(conPrefix + "提交出票码参数", params);
       const res = await requestApi[platName].submitTicketCode(params);
@@ -2040,6 +2097,7 @@ class OrderAutoTicketQueue {
     supplierCode,
     platName,
     session_id,
+    orderInfo,
     lockseat
   }) {
     const { conPrefix } = this;
@@ -2076,6 +2134,7 @@ class OrderAutoTicketQueue {
           platName,
           order_number,
           supplierCode,
+          orderInfo,
           lockseat
         });
         return;
@@ -2093,6 +2152,7 @@ class OrderAutoTicketQueue {
         supplierCode,
         platName,
         lockseat,
+        orderInfo,
         flag: 1
       });
       this.logList.push({
@@ -2118,6 +2178,7 @@ class OrderAutoTicketQueue {
     platName,
     order_number,
     supplierCode,
+    orderInfo,
     lockseat
   }) {
     try {
@@ -2155,6 +2216,7 @@ class OrderAutoTicketQueue {
         supplierCode,
         platName,
         lockseat,
+        orderInfo,
         flag: 2
       });
     } catch (error) {
@@ -2171,6 +2233,7 @@ class OrderAutoTicketQueue {
     supplierCode,
     platName,
     lockseat,
+    orderInfo,
     flag
   }) {
     const { conPrefix } = this;
@@ -2183,6 +2246,7 @@ class OrderAutoTicketQueue {
         order_number,
         supplierCode,
         lockseat,
+        orderInfo,
         flag
       });
       if (!submitRes) {
