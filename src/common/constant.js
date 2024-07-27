@@ -9,6 +9,8 @@ const ORDER_FORM = {
 };
 // 影院列表
 const APP_LIST = {
+  ume: "UME",
+  yaolai: "耀莱",
   sfc: "上影",
   jiujin: "华夏久金",
   jinji: "北京金鸡",
@@ -525,6 +527,7 @@ const CSZYYZX_SPECIAL_CINEMA_LIST = [
 
 // 特殊的名字匹配集合
 const SPECIAL_CINEMA_OBJ = {
+  ume: [],
   sfc: SFC_SPECIAL_CINEMA_LIST,
   jiujin: JIUJIN_SPECIAL_CINEMA_LIST,
   jinji: JINJI_SPECIAL_CINEMA_LIST,
@@ -581,6 +584,7 @@ const SPECIAL_CINEMA_OBJ = {
 
 // 出票队列打印前缀
 const TICKET_CONPREFIX_OBJ = {
+  ume: "【UME自动出票】——",
   sfc: "【上影自动出票】——",
   jiujin: "【华夏久金自动出票】——",
   jinji: "【北京金鸡自动出票】——",

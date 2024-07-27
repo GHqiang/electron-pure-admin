@@ -1,12 +1,8 @@
 // sfc请求拦截器封装
 import axios from "axios";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { appUserInfo } from "@/store/appUserInfo";
-const userInfoAndTokens = appUserInfo();
-const { removeSfcUserInfo } = userInfoAndTokens;
 import { APP_LIST } from "@/common/constant";
 import md5 from "../md5.js";
-import router from "@/router";
 const createAxios = ({ group, appName, timeout = 20 }) => {
   // 创建axios实例
   const instance = axios.create({
