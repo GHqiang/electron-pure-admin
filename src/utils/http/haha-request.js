@@ -69,10 +69,10 @@ instance.interceptors.request.use(
       config.url = IS_DEV ? config.url : "https://hahapiao.cn" + config.url;
 
       if (config.url.indexOf("/api/Synchro/pushOrder") !== -1) {
-        // 特殊处理pushOrder接口
-        config.headers["Content-Type"] ===
-          "application/x-www-form-urlencoded;charset=UTF-8";
-        config.data = jsonToUrlEncoded(config.data);
+        // // 特殊处理pushOrder接口（web端需要这样处理，app不需要）
+        // config.headers["Content-Type"] ===
+        //   "application/x-www-form-urlencoded;charset=UTF-8";
+        // config.data = jsonToUrlEncoded(config.data);
       }
     }
     return config;

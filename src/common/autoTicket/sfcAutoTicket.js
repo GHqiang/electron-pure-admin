@@ -520,6 +520,12 @@ class OrderAutoTicketQueue {
         params = {
           tradeno: order.id
         };
+      } else if (platName === "haha") {
+        params = {
+          id: order.id,
+          reasonId: 9,
+          text: "其他-"
+        };
       }
       console.log(conPrefix + "转单参数", params);
       const requestApi = {
@@ -527,7 +533,8 @@ class OrderAutoTicketQueue {
         sheng: shengApi,
         mangguo: mangguoApi,
         mayi: mayiApi,
-        yangcong: yangcongApi
+        yangcong: yangcongApi,
+        haha: hahaApi
       };
       console.warn(conPrefix + "【转单】参数", params);
       const res = await requestApi[platName].transferOrder(params);
@@ -791,10 +798,19 @@ class OrderAutoTicketQueue {
       });
       return res;
     } catch (error) {
+      // 芒果偶尔会这样
       if ((error?.msg || error?.message || "").includes("已经解锁")) {
         this.logList.push({
           opera_time: getCurrentTime(),
           des: `第${inx}次解锁座位发现已解锁-${JSON.stringify(error)}`
+        });
+        return;
+      }
+      // 哈哈偶尔会这样
+      if (error?.msg === "当前订单座位没有被锁") {
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: `第${inx}次解锁座位发现座位没有被锁-${JSON.stringify(error)}`
         });
         return;
       }
@@ -1122,7 +1138,8 @@ class OrderAutoTicketQueue {
           mangguo: [3, 5],
           sheng: [3, 5],
           mayi: [6, 20],
-          yangcong: [6, 20]
+          yangcong: [6, 20],
+          haha: [6, 5]
         };
         const res = await this.trial(
           inx => this.lockSeat(params, inx),
@@ -1951,48 +1968,80 @@ class OrderAutoTicketQueue {
     } else if (platName === "haha") {
       const { bid, cinema_name, hall_name, film_name, show_time } = orderInfo;
       params = {
+        // oid: order_id,
+        // bid,
+        // seat: lockseat.split(" "), // [("5排4座", "5排3座")]
+        // info: [
+        //   {
+        //     code: qrcode.split("|")[1], // 199079
+        //     img: "",
+        //     num: qrcode.split("|")[0], // 230628
+        //     imgIndex: "",
+        //     seat: lockseat.split(" "), // [("5排4座", "5排3座")]
+        //     comparison: {
+        //       movie: film_name,
+        //       movieStatus: 1,
+        //       showTime: show_time,
+        //       showTimeStatus: 1,
+        //       seat: lockseat.split(" "), // [("5排4座", "5排3座")]
+        //       seatStatus: 1,
+        //       cinema: cinema_name,
+        //       cinemaStatus: 1,
+        //       hall: hall_name,
+        //       hallStatus: 1
+        //     }
+        //   }
+        // ],
+        // seat_type: 0,
+        // recogniseSeat: lockseat.split(" ").map(item => ({
+        //   oldSeat: item,
+        //   newSeat: item,
+        //   imgIndex: ""
+        // }))
+
+        // 以下app参数，上面是web参数
         oid: order_id,
         bid,
-        seat: lockseat.split(" "), // [("5排4座", "5排3座")]
-        info: [
-          {
-            code: qrcode.split("|")[1], // 199079
-            // img: "http://aliyun-oss.hahapiao.cn/ticket-code-images/2024-07-27/17214193533.jpg",
-            num: qrcode.split("|")[0], // 230628
-            // imgIndex: "d447f1bfc24fdd80badc5d0e908f589f",
-            seat: lockseat.split(" "), // [("5排4座", "5排3座")]
-            comparison: {
-              movie: film_name,
-              movieStatus: 1,
-              showTime: show_time,
-              showTimeStatus: 1,
-              seat: lockseat.split(" "), // [("5排4座", "5排3座")]
-              seatStatus: 1,
-              cinema: cinema_name,
-              cinemaStatus: 1,
-              hall: hall_name,
-              hallStatus: 1
-            }
+        seat: lockseat.split(" "),
+        info: lockseat.split(" ").map((item, inx) => {
+          if (inx === 0) {
+            return {
+              img: " ", // 传空格可以成功
+              num: qrcode.split("|")[0],
+              code: qrcode.split("|")[1],
+              imgIndex: " ", // 传空格可以成功
+              isChai: false,
+              blob: "",
+              seat: lockseat.split(" "),
+              comparison: {
+                movie: film_name,
+                movieStatus: 1,
+                showTime: show_time,
+                showTimeStatus: 1,
+                seat: lockseat.split(" "),
+                seatStatus: 1,
+                cinema: cinema_name,
+                cinemaStatus: 1,
+                hall: hall_name,
+                hallStatus: 1
+              }
+            };
+          } else {
+            return {
+              img: "",
+              num: "",
+              code: "",
+              imgIndex: null
+            };
           }
-        ],
+        }),
         seat_type: 0,
+        ocr_code: [qrcode],
         recogniseSeat: lockseat.split(" ").map(item => ({
           oldSeat: item,
-          newSeat: item
-          // imgIndex: "d447f1bfc24fdd80badc5d0e908f589f"
+          newSeat: item,
+          imgIndex: ""
         }))
-        // [
-        //   {
-        //     oldSeat: "5排4座",
-        //     newSeat: "5排4座",
-        //     imgIndex: "d447f1bfc24fdd80badc5d0e908f589f"
-        //   },
-        //   {
-        //     oldSeat: "5排3座",
-        //     newSeat: "5排3座",
-        //     imgIndex: "d447f1bfc24fdd80badc5d0e908f589f"
-        //   }
-        // ]
       };
     }
     try {
@@ -2593,18 +2642,18 @@ class OrderAutoTicketQueue {
           (Number(supplier_end_price) * Number(ticket_num) * 400) / 10000;
         profit += rewardPrice;
       }
-      if (profit < 0) {
-        console.error(conPrefix + "最终利润为负，单个订单直接出票结束");
-        this.setErrInfo(
-          APP_LIST[appFlag] +
-            "最终利润为负，单个订单直接出票结束, 利润：" +
-            profit
-        );
-        return {
-          profit: 0,
-          useQuans: []
-        };
-      }
+      // if (profit < 0) {
+      //   console.error(conPrefix + "最终利润为负，单个订单直接出票结束");
+      //   this.setErrInfo(
+      //     APP_LIST[appFlag] +
+      //       "最终利润为负，单个订单直接出票结束, 利润：" +
+      //       profit
+      //   );
+      //   return {
+      //     profit: 0,
+      //     useQuans: []
+      //   };
+      // }
       // 四舍五入保留两位小数后再转为数值类型
       profit = profit.toFixed(2);
 
@@ -2760,19 +2809,19 @@ class OrderAutoTicketQueue {
         profit += rewardPrice;
       }
       profit = Number(profit).toFixed(2);
-      if (profit < 0) {
-        console.error(conPrefix + "最终利润为负，单个订单直接出票结束");
-        this.setErrInfo(
-          APP_LIST[appFlag] +
-            "最终利润为负，单个订单直接出票结束, 利润：" +
-            profit
-        );
-        // 后续要记录失败列表（订单信息、失败原因、时间戳）
-        return {
-          profit: 0,
-          card_id: ""
-        };
-      }
+      // if (profit < 0) {
+      //   console.error(conPrefix + "最终利润为负，单个订单直接出票结束");
+      //   this.setErrInfo(
+      //     APP_LIST[appFlag] +
+      //       "最终利润为负，单个订单直接出票结束, 利润：" +
+      //       profit
+      //   );
+      //   // 后续要记录失败列表（订单信息、失败原因、时间戳）
+      //   return {
+      //     profit: 0,
+      //     card_id: ""
+      //   };
+      // }
       return {
         card_id,
         profit

@@ -13,7 +13,7 @@ const submitOffer = params => axios.post("/api/Synchro/toPrice", params);
 
 // 中签订单查询
 const stayTicketingList = params =>
-  axios.get("/api/Synchro/getOrderList", { params });
+  axios.post("/api/Synchro/getOrderList", params, { timeout: 25 * 1000 });
 
 // 确认接货
 const confirmOrder = params => axios.post("/api/Synchro/orderConfirm", params);
