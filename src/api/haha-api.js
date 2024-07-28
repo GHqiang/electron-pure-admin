@@ -6,7 +6,7 @@ import axios from "@/utils/http/haha-request";
 
 // 待报价列表查询
 const queryStayOfferList = params =>
-  axios.post("/api/Synchro/pcToList", params);
+  axios.post("/api/Synchro/pcToList", params, { timeout: 25 * 1000 });
 
 // 提交报价
 const submitOffer = params => axios.post("/api/Synchro/toPrice", params);
@@ -25,7 +25,7 @@ const unlockSeat = params => axios.post("/api/synchro/unLockSeat", params);
 const submitTicketCode = params => axios.post("/api/Synchro/pushOrder", params);
 
 // 取消订单
-const transferOrder = params => axios.post("/v2/api/64113ee99fa6e", params);
+const transferOrder = params => axios.post("/api/Synchro/toOutOrder", params);
 
 export default {
   queryStayOfferList, // 查询待报价列表

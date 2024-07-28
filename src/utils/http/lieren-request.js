@@ -52,7 +52,7 @@ instance.interceptors.response.use(
       isErrorByLieRen &&
       !whitelistSp.some(item => response.config.url.includes(item))
     ) {
-      ElMessage.error(data.message || "请求失败");
+      ElMessage.error(data.message || data.msg || "请求失败");
       return Promise.reject(data);
     }
     return data;
@@ -68,7 +68,9 @@ instance.interceptors.response.use(
           //   store.dispatch('auth/logout');
           break;
         default:
-          ElMessage.error(`请求错误 ${response.status}: ${error.message}`);
+          ElMessage.error(
+            `请求错误 ${response.status}: ${error.message || error.msg}`
+          );
       }
     } else {
       ElMessage.error("网络连接异常，请稍后再试");
