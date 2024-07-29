@@ -2642,18 +2642,18 @@ class OrderAutoTicketQueue {
           (Number(supplier_end_price) * Number(ticket_num) * 400) / 10000;
         profit += rewardPrice;
       }
-      // if (profit < 0) {
-      //   console.error(conPrefix + "最终利润为负，单个订单直接出票结束");
-      //   this.setErrInfo(
-      //     APP_LIST[appFlag] +
-      //       "最终利润为负，单个订单直接出票结束, 利润：" +
-      //       profit
-      //   );
-      //   return {
-      //     profit: 0,
-      //     useQuans: []
-      //   };
-      // }
+      if (profit < 0) {
+        console.error(conPrefix + "最终利润为负，单个订单直接出票结束");
+        this.setErrInfo(
+          APP_LIST[appFlag] +
+            "最终利润为负，单个订单直接出票结束, 利润：" +
+            profit
+        );
+        return {
+          profit: 0,
+          useQuans: []
+        };
+      }
       // 四舍五入保留两位小数后再转为数值类型
       profit = profit.toFixed(2);
 
@@ -2809,19 +2809,19 @@ class OrderAutoTicketQueue {
         profit += rewardPrice;
       }
       profit = Number(profit).toFixed(2);
-      // if (profit < 0) {
-      //   console.error(conPrefix + "最终利润为负，单个订单直接出票结束");
-      //   this.setErrInfo(
-      //     APP_LIST[appFlag] +
-      //       "最终利润为负，单个订单直接出票结束, 利润：" +
-      //       profit
-      //   );
-      //   // 后续要记录失败列表（订单信息、失败原因、时间戳）
-      //   return {
-      //     profit: 0,
-      //     card_id: ""
-      //   };
-      // }
+      if (profit < 0) {
+        console.error(conPrefix + "最终利润为负，单个订单直接出票结束");
+        this.setErrInfo(
+          APP_LIST[appFlag] +
+            "最终利润为负，单个订单直接出票结束, 利润：" +
+            profit
+        );
+        // 后续要记录失败列表（订单信息、失败原因、时间戳）
+        return {
+          profit: 0,
+          card_id: ""
+        };
+      }
       return {
         card_id,
         profit
