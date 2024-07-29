@@ -490,10 +490,16 @@ const getEndPrice = async params => {
       // 奖励单按真实成本（加手续费），非奖励单安装成本和最高限价取高的报
       price =
         rewards == 1 ? cost_price : Math.max(cost_price, supplier_max_price);
-      return Math.round(price);
+    }
+    price = Math.round(price);
+    if (price <= cost_price) {
+      let str = `最终报价${price}小于等于成本价${cost_price}，不再进行报价`;
+      console.error(conPrefix + str);
+      setErrInfo(str);
+      return;
     }
     // 如果报最终报价不小于最高限价返回报价
-    return Math.round(price);
+    return price;
   } catch (error) {
     console.warn("获取最终报价异常", error);
     setErrInfo("获取最终报价异常", error);
