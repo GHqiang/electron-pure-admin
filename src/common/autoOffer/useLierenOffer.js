@@ -59,8 +59,8 @@ const appOfferRuleList = computed(() =>
 let conPrefix = "【猎人自动报价】——"; // console打印前缀
 const getOrginValue = value => JSON.parse(JSON.stringify(value));
 
-console.log(conPrefix + "队列执行规则", getOrginValue(platOfferRuleList.value));
-console.log(conPrefix + "自动报价规则", getOrginValue(appOfferRuleList.value));
+// console.log(conPrefix + "队列执行规则", getOrginValue(platOfferRuleList.value));
+// console.log(conPrefix + "自动报价规则", getOrginValue(appOfferRuleList.value));
 
 const cityList = ref([]); // 城市列表
 let errMsg = "";
@@ -80,10 +80,7 @@ class OrderAutoOfferQueue {
     if (platToken) {
       tokens.setLierenPlatToken(platToken);
     }
-    console.log(
-      "开始执行时获取到的规则列表",
-      getOrginValue(appOfferRuleList.value)
-    );
+    console.log(conPrefix + "开始执行");
     // 设置队列为运行状态
     this.isRunning = true;
     this.handleSuccessOrderList = [];
@@ -99,18 +96,13 @@ class OrderAutoOfferQueue {
       );
       // console.log(conPrefix + "队列启动的执行规则", platQueueRule);
       if (!platQueueRule?.length) {
-        console.warn(conPrefix + "队列执行规则不存在或者未启用，直接停止");
+        console.error(conPrefix + "队列不存在或未启用，直接停止");
         await this.stop();
         return;
       }
-      // console.log(conPrefix + "队列每次执行时的规则", platQueueRule[0]);
       const { getInterval, handleInterval } = platQueueRule[0];
       let fetchDelay = getInterval;
       let processDelay = handleInterval;
-      // console.warn(
-      //   conPrefix +
-      //     `队列启动, ${fetchDelay} 秒获取一次待报价订单, ${processDelay} 秒处理一次订单}`
-      // );
       let orders = await this.fetchOrders(fetchDelay);
       // console.warn(conPrefix + "新的待报价订单列表", orders);
       // 将订单加入队列
@@ -214,7 +206,7 @@ class OrderAutoOfferQueue {
   async orderHandle(order, delayTime) {
     try {
       await this.delay(delayTime);
-      console.log(conPrefix + `订单处理 ${order.id}`);
+      // console.log(conPrefix + `订单处理 ${order.id}`);
       if (this.isRunning) {
         const offerResult = await singleOffer(order, this.offerList);
         // { res, offerRule } || { offerRule } || undefined
@@ -337,7 +329,7 @@ const setErrInfo = (err_msg, err_info) => {
       }
     }
   } catch (error) {
-    console.warn("错误信息转换异常1", error);
+    console.error("错误信息转换异常1", error);
   }
 };
 
@@ -501,7 +493,7 @@ const getEndPrice = async params => {
     // 如果报最终报价不小于最高限价返回报价
     return price;
   } catch (error) {
-    console.warn("获取最终报价异常", error);
+    console.error("获取最终报价异常", error);
     setErrInfo("获取最终报价异常", error);
   }
 };
@@ -575,7 +567,7 @@ async function singleOffer(item, offerList) {
     let { id, supplier_max_price, rewards, ticket_num } = item || {};
     if (!id) return;
     // 报价逻辑
-    console.log(conPrefix + "准备匹配报价规则", item);
+    console.log(conPrefix + "准备匹配报价规则");
     offerRule = await offerRuleMatch(item);
     if (!offerRule) {
       console.error(conPrefix + "获取匹配报价规则失败");
@@ -604,7 +596,7 @@ async function singleOffer(item, offerList) {
       rewards,
       offerList
     });
-    console.warn("最终报价返回", endPrice);
+    console.warn(conPrefix + "最终报价返回", endPrice);
     if (!endPrice) {
       return { offerRule };
     }
@@ -638,7 +630,7 @@ async function getMoviePlayInfo(data) {
       width: "500"
     };
     console.log(conPrefix + "获取电影放映信息参数", params);
-    console.log(conPrefix + "影线名称", appName);
+    // console.log(conPrefix + "影线名称", appName);
     let res = await SFC_API_OBJ[appName].getMoviePlayInfo(params);
     console.log(conPrefix + "获取电影放映信息返回", res);
     return res.data;

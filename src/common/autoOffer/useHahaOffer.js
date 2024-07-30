@@ -59,8 +59,8 @@ const appOfferRuleList = computed(() =>
 let conPrefix = "【哈哈自动报价】——"; // console打印前缀
 const getOrginValue = value => JSON.parse(JSON.stringify(value));
 
-console.log(conPrefix + "队列执行规则", getOrginValue(platOfferRuleList.value));
-console.log(conPrefix + "自动报价规则", getOrginValue(appOfferRuleList.value));
+// console.log(conPrefix + "队列执行规则", getOrginValue(platOfferRuleList.value));
+// console.log(conPrefix + "自动报价规则", getOrginValue(appOfferRuleList.value));
 
 const cityList = ref([]); // 城市列表
 let errMsg = "";
@@ -84,7 +84,7 @@ class OrderAutoOfferQueue {
       tokens.setHahaPlatToken(platToken);
     }
     console.log(
-      "开始执行时获取到的规则列表",
+      conPrefix + "开始执行时获取到的规则列表",
       getOrginValue(appOfferRuleList.value)
     );
     // 设置队列为运行状态
@@ -416,9 +416,9 @@ const getOfferList = async () => {
     });
     return res.data.offerList || [];
   } catch (error) {
-    console.error(conPrefix + "获取省历史报价记录异常", error);
-    setErrInfo("获取省历史报价记录异常", error);
-    return Promise.reject("获取历史报价异常");
+    console.error(conPrefix + "获取哈哈历史报价记录异常", error);
+    setErrInfo("获取哈哈历史报价记录异常", error);
+    return Promise.reject("获取哈哈历史报价异常");
   }
 };
 // 判断该订单是否是新订单
@@ -583,7 +583,7 @@ async function singleOffer(item, offerList) {
     let { id, supplier_max_price, rewards, ticket_num } = item || {};
     if (!id) return;
     // 报价逻辑
-    console.log(conPrefix + "准备匹配报价规则", item);
+    // console.log(conPrefix + "准备匹配报价规则", item);
     offerRule = await offerRuleMatch(item);
     if (!offerRule) {
       console.error(conPrefix + "获取匹配报价规则失败");
