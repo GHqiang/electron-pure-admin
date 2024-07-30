@@ -108,6 +108,13 @@
           time-format="HH:mm"
         />
       </el-form-item>
+      <el-form-item label="失败原因">
+        <el-input
+          v-model="formData.err_msg"
+          placeholder="请输入失败原因"
+          clearable
+        />
+      </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="searchData">搜索</el-button>
         <el-button @click="resetForm">重置</el-button>
@@ -215,6 +222,7 @@ const formData = reactive({
   order_number: "", // 订单号
   quan_code: "", // 优惠券
   quan_value: "", // 用券面额
+  err_msg: "",
   start_time: "",
   end_time: ""
 });
@@ -297,6 +305,7 @@ const resetForm = () => {
   formData.order_status = ""; // 状态
   formData.user_id = ""; // 出票用户
   formData.order_number = ""; // 订单号
+  formData.err_msg = ""; // 失败原因
   formData.quan_code = ""; // 优惠券码
   formData.quan_value = ""; // 是否报价
   formData.start_time = getTodayTime(+new Date());

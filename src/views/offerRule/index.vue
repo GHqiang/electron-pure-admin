@@ -75,45 +75,6 @@
           <el-option label="30" value="30" />
         </el-select>
       </el-form-item>
-      <el-form-item label="报价金额">
-        <el-input
-          v-model="formData.offerAmount"
-          placeholder="请输入报价金额"
-          clearable
-        />
-      </el-form-item>
-      <el-form-item label="星期&nbsp;&nbsp;&nbsp;&nbsp;几">
-        <el-select
-          v-model="formData.weekDay"
-          placeholder="星期几"
-          style="width: 194px"
-          multiple
-          clearable
-        >
-          <el-option label="星期一" value="星期一" />
-          <el-option label="星期二" value="星期二" />
-          <el-option label="星期三" value="星期三" />
-          <el-option label="星期四" value="星期四" />
-          <el-option label="星期五" value="星期五" />
-          <el-option label="星期六" value="星期六" />
-          <el-option label="星期日" value="星期日" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="座位&nbsp;&nbsp;&nbsp;&nbsp;数">
-        <el-select
-          v-model="formData.seatNum"
-          placeholder="座位数"
-          clearable
-          style="width: 194px"
-        >
-          <el-option
-            v-for="(item, index) in 10"
-            :key="index"
-            :label="item"
-            :value="String(item)"
-          />
-        </el-select>
-      </el-form-item>
 
       <el-form-item>
         <el-button type="primary" @click="searchData">搜索</el-button>
@@ -313,10 +274,7 @@ const formData = reactive({
   shadowLineName: "", // 影线名称
   status: "", // 状态
   offerType: "", // 报价类型
-  offerAmount: "", // 报价金额
-  quanValue: "", // 用券面额
-  weekDay: [], // 星期几
-  seatNum: "" // 座位数
+  quanValue: "" // 用券面额
 });
 
 const judgeHandle = (arr, str) => {
@@ -469,10 +427,12 @@ const saveRule = async ruleInfo => {
     ruleInfo.excludeHallNames = JSON.stringify(ruleInfo.excludeHallNames);
     ruleInfo.includeFilmNames = JSON.stringify(ruleInfo.includeFilmNames);
     ruleInfo.excludeFilmNames = JSON.stringify(ruleInfo.excludeFilmNames);
+    ruleInfo.orderForm = (ruleInfo.platOfferList || [])
+      .map(item => item.platName)
+      .join();
     ruleInfo.platOfferList = JSON.stringify(ruleInfo.platOfferList || []);
     ruleInfo.weekDay = JSON.stringify(ruleInfo.weekDay);
     ruleInfo.update_time = getCurrentFormattedDateTime();
-    ruleInfo.orderForm = ruleInfo.orderForm.join();
     if (ruleInfo.id) {
       console.log("编辑保存规则", ruleInfo);
       await svApi.updateRuleRecord(ruleInfo);
@@ -503,9 +463,6 @@ const resetForm = () => {
   formData.quanValue = ""; // 是否报价
   formData.status = ""; // 状态
   formData.offerType = ""; // 报价类型
-  formData.offerAmount = ""; // 报价金额
-  formData.weekDay = []; // 星期几
-  formData.seatNum = ""; // 座位数
   currentPage.value = 1;
   pageSize.value = 10;
 };
