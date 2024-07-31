@@ -530,14 +530,19 @@ const getEndPrice = async params => {
       return;
     }
     // 最终报价超过平台限价
-    if (Number(supplier_max_price) < price + shouxufei) {
-      // 奖励单按真实成本（加手续费），非奖励单安装成本和最高限价取高的报
-      price =
-        rewards == 1 ? cost_price : Math.max(cost_price, supplier_max_price);
+    if (price > Number(supplier_max_price)) {
+      // 奖励单按真实成本（加手续费），非奖励单报最高限价
+      price = rewards == 1 ? cost_price : supplier_max_price;
     }
     price = Math.round(price);
     if (price <= cost_price) {
       let str = `最终报价${price}小于等于成本价${cost_price}，不再进行报价`;
+      console.error(conPrefix + str);
+      setErrInfo(str);
+      return;
+    }
+    if (price > Number(supplier_max_price)) {
+      let str = `最终报价${price}超过平台限价${supplier_max_price}，不再进行报价`;
       console.error(conPrefix + str);
       setErrInfo(str);
       return;
