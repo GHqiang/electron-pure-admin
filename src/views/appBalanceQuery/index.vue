@@ -82,7 +82,7 @@
 <script setup>
 import { ref, reactive } from "vue";
 import { APP_LIST } from "@/common/constant.js";
-import { SFC_API_OBJ } from "@/common/index.js";
+import { APP_API_OBJ } from "@/common/index.js";
 import { ElLoading } from "element-plus";
 import { getCinemaLoginInfoList } from "@/utils/utils";
 // 影线列表
@@ -117,7 +117,7 @@ const searchData = async () => {
     for (let index = 0; index < loginInfoList.length; index++) {
       const { app_name, session_id } = loginInfoList[index];
       await delay(200);
-      const res = await SFC_API_OBJ[app_name].getQuanList({
+      const res = await APP_API_OBJ[app_name].getQuanList({
         city_id: "500",
         cinema_id: "1",
         session_id

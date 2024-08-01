@@ -9,7 +9,7 @@ import {
 } from "@/utils/utils";
 import { SPECIAL_CINEMA_OBJ, SFC_CINEMA_NAME } from "@/common/constant";
 import svApi from "@/api/sv-api";
-import { SFC_API_OBJ } from "@/common/index.js";
+import { APP_API_OBJ } from "@/common/index.js";
 
 import hahaApi from "@/api/haha-api";
 import { platTokens } from "@/store/platTokens";
@@ -656,7 +656,7 @@ async function getMoviePlayInfo(data) {
     };
     console.log(conPrefix + "获取电影放映信息参数", params);
     console.log(conPrefix + "影线名称", appName);
-    let res = await SFC_API_OBJ[appName].getMoviePlayInfo(params);
+    let res = await APP_API_OBJ[appName].getMoviePlayInfo(params);
     console.log(conPrefix + "获取电影放映信息返回", res);
     return res.data;
   } catch (error) {
@@ -968,7 +968,7 @@ const getSeatLayout = async data => {
       width: "240"
     };
     console.log(conPrefix + "获取座位布局参数", params);
-    const res = await SFC_API_OBJ[appName].getMoviePlaySeat(params);
+    const res = await APP_API_OBJ[appName].getMoviePlaySeat(params);
     console.log(conPrefix + "获取座位布局返回", res);
     return res.data?.play_data || {};
   } catch (error) {
@@ -1204,7 +1204,7 @@ const getMovieInfo = async item => {
       city_id: city_id
     };
     console.log(conPrefix + "获取城市影院参数", params);
-    let res = await SFC_API_OBJ[appName].getCinemaList(params);
+    let res = await APP_API_OBJ[appName].getCinemaList(params);
     console.log(conPrefix + "获取城市影院返回", res);
     let cinemaList = res.data?.cinema_data || [];
     let cinema_id = getCinemaId(cinema_name, cinemaList, appName);
@@ -1248,7 +1248,7 @@ async function getCityList({ appName }) {
   try {
     let params = {};
     console.log(conPrefix + "获取城市列表参数", params);
-    let res = await SFC_API_OBJ[appName].getCityList(params);
+    let res = await APP_API_OBJ[appName].getCityList(params);
     console.log(conPrefix + "获取城市列表返回", res);
     cityList.value = res.data.all_city || [];
   } catch (error) {

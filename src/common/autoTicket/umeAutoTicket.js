@@ -40,7 +40,7 @@ import {
   APP_LIST
 } from "@/common/constant";
 const getOrginValue = value => JSON.parse(JSON.stringify(value));
-let isTestOrder = false; //是否是测试订单
+let isTestOrder = true; //是否是测试订单
 // 创建一个订单自动出票队列类
 class OrderAutoTicketQueue {
   constructor(appFlag) {
@@ -162,25 +162,26 @@ class OrderAutoTicketQueue {
           {
             id: 761,
             platName: "lieren",
-            app_name: "sfc",
+            app_name: "ume",
             ticket_num: 1,
             rewards: "0",
             offer_type: "1",
             order_number: "2024071012402352191",
             // cinema_code: '', // 影院id
             // supplierCode: 'ccf7b11cdc944cf1940a149cff4243f9', // 商户号
-            supplier_end_price: 36,
-            quan_value: "35",
+            supplier_end_price: 69,
+            quan_value: "",
             order_id: "6418878",
-            tpp_price: "44.00",
-            city_name: "宁波",
+            tpp_price: "78.00",
+            city_name: "北京",
             cinema_addr: "鄞州区中山东路1083号世纪东方广场三楼",
-            cinema_name: "SFC上影影城（宁波店）",
-            hall_name: "7号厅（3小时停车券21点前扫码）",
-            film_name: "云边有个小卖部",
-            lockseat: "10排2座",
-            show_time: "2024-07-10 14:30:00",
-            cinema_group: "上影二线"
+            cinema_name: "UME影城（双#CINITY巨幕店）",
+            hall_name: "六层9号激光厅",
+            film_name: "抓娃娃",
+            lockseat: "B排11座",
+            show_time: "2024-08-01 14:50:00",
+            cinema_group: 'ume一线',
+            cinema code: "11051901"
           }
         ];
       }
@@ -806,6 +807,7 @@ class OrderAutoTicketQueue {
         order_number,
         city_name,
         cinema_name,
+        cinema_code,
         hall_name,
         film_name,
         show_time,
@@ -848,8 +850,8 @@ class OrderAutoTicketQueue {
         offerRule = offerRecord?.[0];
         // 测试专用
         if (isTestOrder) {
-          offerRule = { offer_type: "1", quan_value: "35" };
-          // offerRule = { offer_type: "2", member_price: "29.9" };
+          // offerRule = { offer_type: "1", quan_value: "35" };
+          offerRule = { offer_type: "2", member_price: "66.9" };
         }
         console.warn(
           conPrefix + "从该订单的报价记录获取到的报价规则",
@@ -903,7 +905,7 @@ class OrderAutoTicketQueue {
           return { transferParams };
         }
         // 获取目标影院
-        let targetCinema = this.getTargetCinema(cinema_name, cinemaList);
+        let targetCinema = cinemaList.find(item => item.cinemaCode === cinema_code);
         if (!targetCinema) {
           console.error(conPrefix + "根据订单中的影院名称获取目标影院失败");
           this.setErrInfo("根据订单中的影院名称获取目标影院失败");

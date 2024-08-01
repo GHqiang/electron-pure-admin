@@ -459,7 +459,7 @@
 </template>
 
 <script setup>
-import { SFC_API_OBJ } from "@/common/index.js";
+import { APP_API_OBJ } from "@/common/index.js";
 
 import { ref, reactive, computed, toRaw } from "vue";
 import { ElLoading, ElMessage } from "element-plus";
@@ -778,7 +778,7 @@ const getCityList = async () => {
     let list = appBaseData[shadowLineName]?.cityList;
     console.log("获取城市列表参数", params, shadowLineName, toRaw(list));
     if (!list?.length) {
-      const res = await SFC_API_OBJ[shadowLineName].getCityList(params);
+      const res = await APP_API_OBJ[shadowLineName].getCityList(params);
       list = res?.data?.all_city || [];
       setSfcBaseData({ cityList: list }, shadowLineName);
     }
@@ -801,7 +801,7 @@ const getFilmList = async (city_id, cinema_id) => {
     };
     console.log("获取线上电影列表参数", params);
     const { shadowLineName } = formData;
-    const res = await SFC_API_OBJ[shadowLineName].getMovieList(params);
+    const res = await APP_API_OBJ[shadowLineName].getMovieList(params);
     console.log("获取线上电影列表返回", res);
     let list = res.data?.movie_data || [];
     filmList.value = list;
@@ -819,7 +819,7 @@ const getCinemaListByCityId = async city_id => {
     };
     console.log("根据城市获取影院列表参数", params);
     const { shadowLineName } = formData;
-    const res = await SFC_API_OBJ[shadowLineName].getCinemaList(params);
+    const res = await APP_API_OBJ[shadowLineName].getCinemaList(params);
     console.log("根据城市获取影院列表返回", res);
     let cinemaList = res.data?.cinema_data || [];
     return cinemaList;

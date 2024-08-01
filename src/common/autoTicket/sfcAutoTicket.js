@@ -36,7 +36,7 @@ import {
   APP_OPENID_OBJ,
   APP_LIST
 } from "@/common/constant";
-import { SFC_API_OBJ } from "@/common/index";
+import { APP_API_OBJ } from "@/common/index";
 import hahaApi from "../../api/haha-api";
 const getOrginValue = value => JSON.parse(JSON.stringify(value));
 let isTestOrder = false; //是否是测试订单
@@ -52,7 +52,7 @@ class OrderAutoTicketQueue {
     this.errInfo = ""; // 单次出票的错误信息
     this.appFlag = appFlag; // 影线标识
     this.conPrefix = TICKET_CONPREFIX_OBJ[appFlag]; // 打印前缀
-    this.sfcApi = SFC_API_OBJ[appFlag];
+    this.sfcApi = APP_API_OBJ[appFlag];
     this.currentParamsInx = 0;
     this.currentParamsList = [];
     this.logList = []; // 操作运行日志

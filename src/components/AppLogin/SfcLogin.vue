@@ -10,26 +10,23 @@
           v-model="phoneNumber"
           placeholder="请输入手机号"
           @input="validatePhoneNumber"
-        ></el-input>
+        />
       </el-form-item>
 
       <el-form-item v-if="showCaptcha" label="图形验证码">
         <el-row>
           <el-col :span="16">
-            <el-input
-              v-model="captchaCode"
-              placeholder="请输入图形验证码"
-            ></el-input>
+            <el-input v-model="captchaCode" placeholder="请输入图形验证码" />
           </el-col>
           <el-col :span="7" :offset="1">
             <el-image
+              v-if="captchaUrl"
+              v-throttle
               :src="captchaUrl"
               fit="contain"
               @click="refreshCaptcha"
-              v-if="captchaUrl"
-              v-throttle
             />
-            <el-button v-if="!captchaUrl" @click="getCaptcha" v-throttle
+            <el-button v-if="!captchaUrl" v-throttle @click="getCaptcha"
               >获取验证码</el-button
             >
           </el-col>
@@ -37,22 +34,22 @@
       </el-form-item>
 
       <el-form-item v-if="showSmsCode" label="短信验证码">
-        <el-input v-model="smsCode" placeholder="请输入短信验证码"></el-input>
+        <el-input v-model="smsCode" placeholder="请输入短信验证码" />
       </el-form-item>
 
       <el-form-item>
         <el-button
-          type="primary"
-          @click="sendSmsCode"
           v-if="captchaCode && !sentSms"
           v-throttle
+          type="primary"
+          @click="sendSmsCode"
           >发送短信验证码</el-button
         >
         <el-button
-          type="primary"
-          @click="autoLogin"
           v-if="smsCode && sentSms"
           v-throttle
+          type="primary"
+          @click="autoLogin"
           >登录</el-button
         >
       </el-form-item>
@@ -71,14 +68,14 @@ import {
   ElRow,
   ElCol
 } from "element-plus";
-import { SFC_API_OBJ } from "@/common/index.js";
+import { APP_API_OBJ } from "@/common/index.js";
 import { APP_LIST } from "@/common/constant";
 let $emit = defineEmits([`loginSuccess`]);
 // 父传子props
 const props = defineProps({
   appName: String
 });
-let sfcApi = SFC_API_OBJ[props.appName];
+let sfcApi = APP_API_OBJ[props.appName];
 const phoneNumber = ref(""); // 手机号
 const captchaCode = ref(""); // 图形验证码
 const smsCode = ref(""); // 短信验证码

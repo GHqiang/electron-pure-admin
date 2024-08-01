@@ -248,7 +248,7 @@ import {
   getCinemaLoginInfoList
 } from "@/utils/utils";
 import { SPECIAL_CINEMA_OBJ } from "@/common/constant";
-import { SFC_API_OBJ } from "@/common/index.js";
+import { APP_API_OBJ } from "@/common/index.js";
 import lierenApi from "@/api/lieren-api";
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
@@ -259,7 +259,7 @@ import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
 const { removeSfcUserInfo } = userInfoAndTokens;
 const appName = "sfc";
-let sfcApi = SFC_API_OBJ[appName];
+let sfcApi = APP_API_OBJ[appName];
 // console.log("sfcApi", sfcApi);
 import { useRouter } from "vue-router";
 const router = useRouter();

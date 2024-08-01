@@ -201,7 +201,7 @@ import svApi from "@/api/sv-api";
 import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import CardDialog from "@/components/CardDialog.vue";
 import { APP_LIST } from "@/common/constant";
-import { SFC_API_OBJ } from "@/common/index.js";
+import { APP_API_OBJ } from "@/common/index.js";
 import {
   getCurrentFormattedDateTime,
   getCinemaLoginInfoList
@@ -347,7 +347,7 @@ const syncBalance = async () => {
   try {
     let loginInfoList = getCinemaLoginInfoList();
     // 过滤一下已登录的
-    let apiList = Object.entries(SFC_API_OBJ).filter(
+    let apiList = Object.entries(APP_API_OBJ).filter(
       // 如果有值证明就是登录过的
       item => {
         let obj = loginInfoList.find(
