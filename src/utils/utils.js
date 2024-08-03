@@ -2,7 +2,8 @@
 import ExcelJS from "exceljs";
 import axios from "axios";
 import * as CryptoJS from "crypto-js";
-import { WX_MSG_UID } from "@/common/constant";
+import svApi from "@/api/sv-api";
+import { WX_MSG_UID, SPECIAL_CINEMA_OBJ } from "@/common/constant";
 /**
  * 获取当前日期和时间的格式化字符串
  * 无参数
@@ -248,6 +249,9 @@ const getCinemaFlag = item => {
   const { cinema_group, cinema_name, city_name } = item;
   if (["上影上海", "上影二线"].includes(cinema_group)) {
     return "sfc";
+    // 蚂蚁和洋葱、哈哈：UME。 猎人和芒果：ume一线、ume二线
+  } else if (["UME", "ume一线", "ume二线"].includes(cinema_group)) {
+    return "ume";
   } else if (
     cinema_name.includes("华夏久金国际影城") &&
     ["上海"].includes(city_name)
@@ -733,6 +737,396 @@ class CustomConsole {
     console.error(`${prefix + firstMessage}`, ...otherParams);
   }
 }
+
+// 计算连续中标数
+const calcCount = data => {
+  try {
+    let consecutiveWins = 0;
+    let consecutiveLosses = 0;
+    let isLastWin = null; // null, true (中标), false (不中标)
+
+    for (const item of data) {
+      const isWin = item.offer === item.supplier_end_price;
+
+      if (isLastWin === null) {
+        // 初始化中标或不中标的状态
+        isLastWin = isWin;
+      } else if (isWin === isLastWin) {
+        // 如果当前项与上一项状态相同，累计连续次数
+        isLastWin ? consecutiveWins++ : consecutiveLosses++;
+      } else {
+        // 中断连续计算
+        break;
+      }
+    }
+
+    // 第一个元素的中标或不中标状态需要单独计入
+    if (isLastWin) {
+      consecutiveWins++;
+    } else {
+      consecutiveLosses++;
+    }
+    console.log("连续中标次数:", consecutiveWins);
+    console.log("连续未中标次数:", consecutiveLosses);
+    return {
+      inCount: consecutiveWins,
+      outCount: consecutiveLosses
+    };
+  } catch (error) {
+    console.error("计算连续中标数异常", error);
+  }
+};
+
+// 根据订单name获取影院id
+const getCinemaId = (cinema_name, list, appName) => {
+  try {
+    // 1、先全字匹配，匹配到就直接返回
+    let cinema_id = list.find(item => item.name === cinema_name)?.id;
+    if (cinema_id) {
+      return { cinema_id };
+    }
+    // 2、匹配不到的如果满足条件就走特殊匹配
+    console.warn("全字匹配影院名称失败", cinema_name, list);
+    let cinemaName = cinemNameSpecial(cinema_name);
+    let specialCinemaInfo = SPECIAL_CINEMA_OBJ[appName].find(
+      item => item.order_cinema_name === cinemaName
+    );
+    if (specialCinemaInfo) {
+      cinemaName = specialCinemaInfo.sfc_cinema_name;
+    } else {
+      console.warn(
+        "特殊匹配影院名称失败",
+        cinemaName,
+        SPECIAL_CINEMA_OBJ[appName]
+      );
+    }
+    // 3、去掉空格及换行符后全字匹配
+    // 去除空格及括号后的影院列表
+    let noSpaceCinemaList = list.map(item => {
+      return {
+        ...item,
+        name: cinemNameSpecial(item.name)
+      };
+    });
+    cinema_id = noSpaceCinemaList.find(item => item.name === cinemaName)?.id;
+    if (cinema_id) {
+      return { cinema_id };
+    }
+    console.error(
+      "去掉空格及换行符后全字匹配失败",
+      cinemaName,
+      noSpaceCinemaList
+    );
+  } catch (error) {
+    console.error("根据订单name获取影院id失败", error);
+    return {
+      error
+    };
+  }
+};
+
+// 影院名称匹配（匹配报价规则时使用）
+const cinemaMatchHandle = (cinema_name, list, appName) => {
+  try {
+    // 1、全字匹配
+    let isHasMatch = list.some(item => item === cinema_name);
+    if (isHasMatch) {
+      return true;
+    }
+    console.warn("全字匹配影院名称失败", cinema_name, list);
+    let cinemaName = cinemNameSpecial(cinema_name);
+    // 2、特殊匹配
+    let specialCinemaInfo = SPECIAL_CINEMA_OBJ[appName].find(
+      item => item.order_cinema_name === cinemaName
+    );
+    if (specialCinemaInfo) {
+      cinemaName = specialCinemaInfo.sfc_cinema_name;
+    } else {
+      console.warn(
+        "特殊匹配影院名称失败",
+        cinemaName,
+        SPECIAL_CINEMA_OBJ[appName]
+      );
+    }
+    // 3、去掉空格及换行符后全字匹配
+    const noSpaceList = list.map(item => cinemNameSpecial(item));
+    isHasMatch = noSpaceList.some(item => item === cinemaName);
+    if (isHasMatch) {
+      return true;
+    }
+    console.error(
+      "去掉空格及换行符后全字匹配影院名称失败",
+      noSpaceList,
+      cinemaName
+    );
+  } catch (error) {
+    console.error("影院名称匹配异常", error);
+  }
+};
+
+// 判断该订单是否是新订单
+const judgeHandle = (item, app_name, offerList) => {
+  try {
+    let targetOfferList = offerList.filter(
+      itemA => itemA.app_name === app_name
+    );
+    let isOffer = targetOfferList.some(
+      itemA => itemA.order_number === item.order_number
+    );
+    // 报过价新订单
+    return !isOffer;
+  } catch (error) {
+    console.error("判断该订单是否是新订单异常", error);
+  }
+};
+
+// 报价规则匹配
+const offerRuleMatch = (order, appOfferRuleList) => {
+  try {
+    console.warn("匹配报价规则开始");
+    const {
+      city_name,
+      cinema_name,
+      hall_name,
+      film_name,
+      show_time,
+      ticket_num,
+      appName,
+      app_name //该字段主要是为了方便测试
+    } = order;
+    let shadowLineName = appName || app_name;
+
+    console.log("报价订单影线", shadowLineName);
+    // 1、获取启用的规则列表（只有满足规则才报价）
+    let useRuleList = appOfferRuleList.filter(item => item.status === "1");
+    console.log("启用的规则列表", useRuleList);
+    // 2、获取某个影线的规则列表
+    let shadowLineRuleList = useRuleList.filter(
+      item => item.shadowLineName === shadowLineName
+    );
+    console.log("影线的规则列表", shadowLineRuleList);
+    // 3、匹配城市
+    let cityRuleList = shadowLineRuleList.filter(item => {
+      console.log(
+        "匹配城市",
+        item.includeCityNames,
+        item.excludeCityNames,
+        city_name
+      );
+      if (!item.includeCityNames.length && !item.excludeCityNames.length) {
+        return true;
+      }
+      if (item.includeCityNames.length) {
+        return item.includeCityNames.join().indexOf(city_name) > -1;
+      }
+      if (item.excludeCityNames.length) {
+        return item.excludeCityNames.join().indexOf(city_name) === -1;
+      }
+    });
+    console.log("匹配城市后的规则列表", cityRuleList);
+    // 4、匹配影院
+    let cinemaRuleList = cityRuleList.filter(item => {
+      if (!item.includeCinemaNames.length && !item.excludeCinemaNames.length) {
+        return true;
+      }
+      if (item.includeCinemaNames.length) {
+        return cinemaMatchHandle(
+          cinema_name,
+          item.includeCinemaNames,
+          shadowLineName
+        );
+      }
+      if (item.excludeCinemaNames.length) {
+        return !cinemaMatchHandle(
+          cinema_name,
+          item.excludeCinemaNames,
+          shadowLineName
+        );
+      }
+    });
+    console.log("匹配影院后的规则列表", cinemaRuleList);
+    // 5、匹配影厅
+    let hallRuleList = cinemaRuleList.filter(item => {
+      console.log(
+        "匹配影厅",
+        item.includeHallNames,
+        item.excludeHallNames,
+        hall_name.toUpperCase()
+      );
+      if (!item.includeHallNames.length && !item.excludeHallNames.length) {
+        return true;
+      }
+      if (item.includeHallNames.length) {
+        let isMatch = item.includeHallNames.some(hallName => {
+          return hall_name.toUpperCase().indexOf(hallName.toUpperCase()) > -1;
+        });
+        console.log("isMatch1-1", isMatch);
+        return isMatch;
+      }
+      if (item.excludeHallNames.length) {
+        let isMatch = item.excludeHallNames.every(hallName => {
+          return hall_name.toUpperCase().indexOf(hallName.toUpperCase()) === -1;
+        });
+        console.log("isMatch1-2", isMatch);
+        return isMatch;
+      }
+    });
+    console.log("匹配影厅后的规则列表", hallRuleList);
+    // 6、匹配影片
+    let filmRuleList = hallRuleList.filter(item => {
+      console.log(
+        "匹配影片",
+        item.includeFilmNames,
+        item.excludeFilmNames,
+        film_name.toUpperCase()
+      );
+      if (!item.includeFilmNames.length && !item.excludeFilmNames.length) {
+        return true;
+      }
+      if (item.includeFilmNames.length) {
+        let isMatch = item.includeFilmNames.some(filmName => {
+          return (
+            convertFullwidthToHalfwidth(film_name) ===
+            convertFullwidthToHalfwidth(filmName)
+          );
+        });
+        console.log("isMatch2-1", isMatch);
+        return isMatch;
+      }
+      if (item.excludeFilmNames.length) {
+        let isMatch = item.excludeFilmNames.every(filmName => {
+          return (
+            convertFullwidthToHalfwidth(film_name) !==
+            convertFullwidthToHalfwidth(filmName)
+          );
+        });
+        console.log("isMatch2-2", isMatch);
+        return isMatch;
+      }
+    });
+    console.log("匹配影片后的规则列表", filmRuleList);
+    // 7、匹配座位数限制
+    let seatRuleList = filmRuleList.filter(item => {
+      if (!item.seatNum) {
+        return true;
+      }
+      return Number(item.seatNum) >= Number(ticket_num);
+    });
+    console.log("匹配座位数后的规则列表", seatRuleList);
+    // 8、匹配开场时间限制
+    let timeRuleList = seatRuleList.filter(item => {
+      let startTime = show_time.split(" ")[1];
+      if (!item.ruleStartTime && !item.ruleEndTime) {
+        return true;
+      }
+      if (item.ruleStartTime && item.ruleEndTime) {
+        return (
+          isTimeAfter(startTime, item.ruleStartTime + ":00") &&
+          isTimeAfter(item.ruleEndTime + ":00", startTime)
+        );
+      }
+      if (item.ruleStartTime) {
+        return isTimeAfter(startTime, item.ruleStartTime + ":00");
+      }
+      if (item.ruleEndTime) {
+        return isTimeAfter(item.ruleEndTime + ":00", startTime);
+      }
+    });
+    console.log("匹配开场时间后的规则列表", timeRuleList);
+    // 9、匹配星期几
+    let weekRuleList = timeRuleList.filter(item => {
+      const weekdays = [
+        "星期日",
+        "星期一",
+        "星期二",
+        "星期三",
+        "星期四",
+        "星期五",
+        "星期六"
+      ];
+      const today = new Date(show_time).getDay();
+      const dayOfWeek = weekdays[today];
+      if (item.weekDay?.length) {
+        return item.ruleWeek.includes(dayOfWeek);
+      }
+      return true;
+    });
+    console.log("匹配星期几后的规则列表", weekRuleList);
+    // 10、匹配会员日
+    let memberDayRuleList = weekRuleList.filter(item => {
+      const day = show_time.split(" ")[0].split("-")[2];
+      if (item.memberDay) {
+        return Number(item.memberDay) === Number(day);
+      }
+      return true;
+    });
+    console.log("匹配会员日后的规则列表", memberDayRuleList);
+    return memberDayRuleList;
+  } catch (error) {
+    console.error("匹配报价规则异常", error);
+  }
+};
+
+// 日志上传
+const logUpload = async (order, logList) => {
+  try {
+    if (!logList.length) return;
+    let log_list = getOrginValue(logList);
+    // type 1-报价 2-获取订单 3-出票
+    const { order_number, app_name, plat_name, type = 3 } = order;
+    await svApi.addTicketOperaLog({
+      plat_name: plat_name || "",
+      app_name: app_name || "",
+      order_number: order_number || "",
+      type,
+      log_list
+    });
+    // log_list 数组对象里的level： error\warn\info
+  } catch (error) {
+    console.error("日志上送异常", error);
+  }
+};
+
+// 模拟延时
+const mockDelay = delayTime => {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve();
+    }, delayTime * 1000);
+  });
+};
+
+// 对象深拷贝（获取对象源值）
+const getOrginValue = value => JSON.parse(JSON.stringify(value));
+
+// 格式化错误信息对象
+const formatErrInfo = errInfo => {
+  let errInfoStr;
+  if (!errInfo) return "";
+  if (errInfo instanceof Error) {
+    const cleanedError = {
+      message: errInfo.message,
+      stack: errInfo.stack,
+      name: errInfo.name
+    };
+    errInfoStr = JSON.stringify(
+      cleanedError,
+      (key, value) =>
+        typeof value === "function" || value instanceof Error
+          ? undefined
+          : value,
+      2
+    );
+  } else {
+    try {
+      errInfoStr = JSON.stringify(errInfo);
+    } catch (error) {
+      console.warn("错误信息转换异常", error);
+      errInfoStr = errInfo.toString();
+    }
+  }
+  return errInfoStr;
+};
 export {
   getCurrentFormattedDateTime,
   getCurrentDay,
@@ -747,6 +1141,15 @@ export {
   cinemNameSpecial,
   getCinemaLoginInfoList,
   sendWxPusherMessage,
+  calcCount,
+  judgeHandle,
+  getCinemaId,
+  cinemaMatchHandle,
+  offerRuleMatch,
+  logUpload,
+  mockDelay,
+  getOrginValue,
+  formatErrInfo,
   cryptoFunctions,
   CustomConsole
 };

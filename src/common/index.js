@@ -3,14 +3,12 @@ import umeApi from "@/api/ume-api";
 import { APP_LIST, APP_GROUP_OBJ } from "@/common/constant";
 const SFC_API_OBJ = {};
 let keyList = Object.keys(APP_LIST);
-keyList
-  .filter(item => item === "sfc")
-  .forEach(item => {
-    SFC_API_OBJ[item] = createApi({
-      group: APP_GROUP_OBJ[item],
-      appName: item
-    });
+keyList.forEach(item => {
+  SFC_API_OBJ[item] = createApi({
+    group: APP_GROUP_OBJ[item],
+    appName: item
   });
+});
 const APP_API_OBJ = {
   ...SFC_API_OBJ,
   ume: umeApi

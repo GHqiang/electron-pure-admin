@@ -199,7 +199,8 @@ class OrderAutoOfferQueue {
             ...item,
             appName: getCinemaFlag(item)
           };
-        });
+        })
+        .filter(item => item.appName !== "ume");
       console.warn(
         conPrefix + "匹配已上架影院后的的待报价订单",
         sfcStayOfferlist
@@ -291,6 +292,7 @@ class OrderAutoOfferQueue {
         hall_name: order.hall_name,
         film_name: order.film_name,
         show_time: order.show_time,
+        cinema_code: order.cinema_code,
         cinema_group: order.cinema_group,
         offer_type: offerResult?.offerRule?.offerType,
         offer_amount: offerResult?.offerRule?.offerAmount,
@@ -906,7 +908,7 @@ const getMinAmountOfferRule = async (ruleList, order) => {
         return -3;
       }
       if (memberPriceRes === -4) {
-        console.error(conPrefix + "促销票数低于订单票数，不再进行报价");
+        console.error(conPrefix + "影院单卡出票限制,不再进行报价");
         return -4;
       }
       if (!memberPriceRes) {

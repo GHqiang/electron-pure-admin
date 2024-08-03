@@ -103,7 +103,8 @@ class OrderAutoTicketQueue {
           if (this.prevOrderNumber === order.order_number) {
             this.logList.push({
               opera_time: getCurrentTime(),
-              des: `当前订单重复执行,直接执行下个`
+              des: `当前订单重复执行,直接执行下个`,
+              level: "error"
             });
             this.logUpload(order);
           } else {
@@ -119,6 +120,7 @@ class OrderAutoTicketQueue {
             this.logList.push({
               opera_time: getCurrentTime(),
               des: `单个订单自动出票结束，状态-${res?.submitRes ? "成功" : "失败"}，赋值上个订单号为当前订单号-${this.prevOrderNumber}`,
+              level: "error",
               info: {
                 res
               }
@@ -130,7 +132,8 @@ class OrderAutoTicketQueue {
               deleteOrder(order.order_number, appFlag);
               this.logList.push({
                 opera_time: getCurrentTime(),
-                des: `订单出票结束，远端已添加出票记录，本地缓存删除该订单数据`
+                des: `订单出票结束，远端已添加出票记录，本地缓存删除该订单数据`,
+                level: "info"
               });
               this.logUpload(order);
             }
@@ -236,7 +239,8 @@ class OrderAutoTicketQueue {
       this.logList = [];
       this.logList.push({
         opera_time: getCurrentTime(),
-        des: `订单开始出票，订单号-${order.order_number}，上个订单号-${this.prevOrderNumber}`
+        des: `订单开始出票，订单号-${order.order_number}，上个订单号-${this.prevOrderNumber}`,
+        level: "info"
       });
       await this.delay(delayTime);
       console.log(conPrefix + `订单处理 ${order.id}`);
@@ -317,7 +321,8 @@ class OrderAutoTicketQueue {
         });
         this.logList.push({
           opera_time: getCurrentTime(),
-          des: `订单用卡出票成功后更新当天使用量`
+          des: `订单用卡出票成功后更新当天使用量`,
+          level: "info"
         });
         this.logUpload(order);
       }
@@ -456,7 +461,8 @@ class OrderAutoTicketQueue {
       console.warn("锁定座位异常关闭自动转单");
       this.logList.push({
         opera_time: getCurrentTime(),
-        des: `自动转单处于关闭状态`
+        des: `自动转单处于关闭状态`,
+        level: "info"
       });
       // this.logUpload(order);
       sendWxPusherMessage({
@@ -482,7 +488,8 @@ class OrderAutoTicketQueue {
         );
         this.logList.push({
           opera_time: getCurrentTime(),
-          des: `转单前释放座位${isPass ? "成功" : "失败"}`
+          des: `转单前释放座位${isPass ? "成功" : "失败"}`,
+          level: "info"
         });
       }
       let params;
@@ -534,7 +541,8 @@ class OrderAutoTicketQueue {
       console.warn(conPrefix + "【转单】结果", res);
       this.logList.push({
         opera_time: getCurrentTime(),
-        des: `转单成功-${JSON.stringify(res)}`
+        des: `转单成功-${JSON.stringify(res)}`,
+        level: "info"
       });
       sendWxPusherMessage({
         platName,
@@ -560,11 +568,13 @@ class OrderAutoTicketQueue {
       console.error(conPrefix + "【转单】异常", error);
       this.logList.push({
         opera_time: getCurrentTime(),
-        des: `转单原因-${this.errMsg}——${this.errInfo}`
+        des: `转单原因-${this.errMsg}——${this.errInfo}`,
+        level: "error"
       });
       this.logList.push({
         opera_time: getCurrentTime(),
-        des: `转单异常-${JSON.stringify(error)}`
+        des: `转单异常-${JSON.stringify(error)}`,
+        level: "error"
       });
       sendWxPusherMessage({
         platName,
@@ -590,6 +600,7 @@ class OrderAutoTicketQueue {
         plat_name: platName,
         app_name: appFlag,
         order_number,
+        type: 2,
         log_list
       });
     } catch (error) {
@@ -623,7 +634,8 @@ class OrderAutoTicketQueue {
           });
           this.logList.push({
             opera_time: getCurrentTime(),
-            des: "确认接单成功，2秒后解锁"
+            des: "确认接单成功，2秒后解锁",
+            level: "info"
           });
           this.logUpload(item);
           await this.delay(2);
