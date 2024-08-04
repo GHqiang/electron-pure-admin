@@ -3,7 +3,8 @@ import {
   getCurrentFormattedDateTime,
   getCurrentTime,
   convertFullwidthToHalfwidth,
-  cinemNameSpecial,
+  getCinemaId,
+  getOrginValue,
   getCinemaLoginInfoList,
   sendWxPusherMessage
 } from "@/utils/utils";
@@ -31,14 +32,12 @@ import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
 // 影院特殊匹配列表及api
 import {
-  SPECIAL_CINEMA_OBJ,
   TICKET_CONPREFIX_OBJ,
   APP_OPENID_OBJ,
   APP_LIST
 } from "@/common/constant";
 import { APP_API_OBJ } from "@/common/index";
 import hahaApi from "../../api/haha-api";
-const getOrginValue = value => JSON.parse(JSON.stringify(value));
 let isTestOrder = false; //是否是测试订单
 // 创建一个订单自动出票队列类
 class OrderAutoTicketQueue {
@@ -398,22 +397,29 @@ class OrderAutoTicketQueue {
 
   // 释放座位 flag: 1-转单，2换号
   async releaseSeat(unlockSeatInfo, flag) {
-    const { conPrefix } = this;
+    const { conPrefix, appFlag } = this;
     const { city_id, cinema_id, show_id, start_day, start_time, session_id } =
       unlockSeatInfo;
     try {
-      const seatList = await this.getSeatLayout(
-        {
-          city_id,
-          cinema_id,
-          show_id,
-          session_id
-        },
-        flag
-      );
-      let errFlag = ["正常出票", "转单", "换号出票"][flag];
+      const seatDataRes = await getSeatLayout({
+        city_id,
+        cinema_id,
+        show_id,
+        session_id,
+        appFlag
+      });
+      let errFlag = ["正常出票", "转单释放座位时", "换号出票释放座位时"][flag];
+      let seatList = seatDataRes?.seatData || [];
       if (!seatList?.length) {
-        this.setErrInfo(`${errFlag}-获取座位布局为空`);
+        this.setErrInfo(`${errFlag}-获取座位布局异常`, seatDataRes?.error);
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: `${errFlag}-获取座位布局异常`,
+          level: "error",
+          info: {
+            error: seatDataRes?.error
+          }
+        });
         return false;
       }
       let availableSeatList = seatList.filter(item => item[2] === "0"); // 1表示已售
@@ -871,7 +877,7 @@ class OrderAutoTicketQueue {
             currentParamsList: this.currentParamsList
           }
         });
-        // 获取该订单的报价记录，按对应报价规则出票
+        // 1、获取该订单的报价记录，按对应报价规则出票
         const offerRes = await svApi.queryOfferList({
           user_id: tokens.userInfo.user_id,
           order_status: "1",
@@ -898,7 +904,8 @@ class OrderAutoTicketQueue {
           this.setErrInfo("获取该订单报价记录失败，微信通知手动出票");
           this.logList.push({
             opera_time: getCurrentTime(),
-            des: `获取该订单报价记录失败，微信通知手动出票`
+            des: `获取该订单报价记录失败，微信通知手动出票`,
+            level: "error"
           });
           sendWxPusherMessage({
             platName,
@@ -915,44 +922,74 @@ class OrderAutoTicketQueue {
           opera_time: getCurrentTime(),
           des: `获取该订单报价记录成功`
         });
-        // 从报价记录里取出会员价赋值到订单里方便后面计算利润
-        // item.member_price = offerRule.member_price;
-        await this.getCityList();
-        // this.logList.push({
-        //   opera_time: getCurrentTime(),
-        //   des: `获取城市列表成功`
-        // });
-        city_id = this.cityList.find(
-          item => item.name.indexOf(city_name) !== -1
-        )?.id;
-        // 1、获取城市影城列表
-        const cinemaList = await this.getCityCinemaList(city_id);
-        // this.logList.push({
-        //   opera_time: getCurrentTime(),
-        //   des: `获取影院列表成功`
-        // });
-        cinema_id = this.getCinemaId(cinema_name, cinemaList);
-        if (!cinema_id) {
-          console.error(conPrefix + "根据订单中的影院名称获取影院id失败");
-          this.setErrInfo("根据订单中的影院名称获取影院id失败");
-          // this.logList.push({
-          //   opera_time: getCurrentTime(),
-          //   des: `根据订单中的影院名称获取影院id失败`,
-          //   info: {
-          //     cinemaList,
-          //     cinema_name
-          //   }
-          // });
+        // 2、获取城市列表
+        const cityListRes = await getCityList({ appFlag });
+        this.cityList = cityListRes?.cityList || [];
+        if (!this.cityList?.length) {
+          this.setErrInfo("获取城市列表异常", cityListRes?.error);
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: `获取城市列表异常`,
+            level: "error",
+            info: {
+              error: cityListRes?.error
+            }
+          });
           const transferParams = await this.transferOrder(item);
           return { transferParams };
         }
-        // 2、获取影院放映信息
-        const moviePlayInfo = await this.getMoviePlayInfo({
+        city_id = this.cityList.find(
+          item => item.name.indexOf(city_name) !== -1
+        )?.id;
+        // 3、获取城市影城列表
+        const cinemaListRes = await getCityCinemaList({ city_id, appFlag });
+        const cinemaList = cinemaListRes?.cinemaList || [];
+        if (!cinemaList.length) {
+          this.setErrInfo("获取城市影院列表异常", cinemaListRes?.error);
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: `获取城市影院列表异常`,
+            level: "error",
+            info: {
+              error: cinemaListRes?.error
+            }
+          });
+          const transferParams = await this.transferOrder(item);
+          return { transferParams };
+        }
+        // 4、根据影院名称获取目标影院id
+        let cinemaIdRes = getCinemaId(cinema_name, cinemaList, appFlag);
+        cinema_id = cinemaIdRes?.cinema_id;
+        if (!cinema_id) {
+          this.setErrInfo("根据影院名称获取目标影院id异常", cinemaIdRes?.error);
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: conPrefix + "获取目标影院失败",
+            level: "error",
+            info: {
+              error: cinemaIdRes?.error
+            }
+          });
+          const transferParams = await this.transferOrder(item);
+          return { transferParams };
+        }
+        // 5、获取目标影院放映列表
+        const movieDataRes = await getMoviePlayInfo({
           city_id,
-          cinema_id
+          cinema_id,
+          appFlag
         });
-        let movie_data = moviePlayInfo?.movie_data || [];
+        let movie_data = movieDataRes?.movieData || [];
         if (!movie_data?.length) {
+          this.setErrInfo("获取影院放映列表异常", movieDataRes?.error);
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: conPrefix + "获取影院放映列表异常",
+            level: "error",
+            info: {
+              error: movieDataRes?.error
+            }
+          });
           const transferParams = await this.transferOrder(item);
           return { transferParams };
         }
@@ -1014,19 +1051,28 @@ class OrderAutoTicketQueue {
           const transferParams = await this.transferOrder(item);
           return { transferParams };
         }
+        let sessionId =
+          this.currentParamsList[this.currentParamsInx].session_id;
         // 3、获取座位布局
-        const seatList = await this.getSeatLayout({
+        const seatDataRes = await getSeatLayout({
           city_id,
           cinema_id,
-          show_id
+          show_id,
+          session_id: sessionId,
+          appFlag
         });
+        let seatList = seatDataRes?.seatData || [];
         if (!seatList?.length) {
-          console.error(conPrefix + "获取座位布局不存在");
-          this.setErrInfo("获取座位布局不存在");
-          // this.logList.push({
-          //   opera_time: getCurrentTime(),
-          //   des: `获取座位布局不存在`
-          // });
+          console.error(conPrefix + "获取座位布局异常");
+          this.setErrInfo("获取座位布局异常", seatDataRes?.error);
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: `获取座位布局异常`,
+            level: "error",
+            info: {
+              error: seatDataRes?.error
+            }
+          });
           const transferParams = await this.transferOrder(item);
           return { transferParams };
         }
@@ -1451,72 +1497,6 @@ class OrderAutoTicketQueue {
       console.error(conPrefix + "一键买票异常", error);
       this.setErrInfo("一键买票异常", error);
       return { offerRule };
-    }
-  }
-
-  // 获取城市影院列表
-  async getCityCinemaList(city_id) {
-    const { conPrefix } = this;
-    try {
-      let params = {
-        city_id
-      };
-      console.log(conPrefix + "获取城市影院参数", params);
-      const res = await this.sfcApi.getCinemaList(params);
-      console.log(conPrefix + "获取城市影院返回", res);
-      let list = res.data.cinema_data || [];
-      return list;
-    } catch (error) {
-      console.error(conPrefix + "获取城市影院异常", error);
-      this.setErrInfo("获取城市影院异常", error);
-    }
-  }
-
-  // 获取电影放映信息
-  async getMoviePlayInfo(data) {
-    const { conPrefix } = this;
-    try {
-      let { city_id, cinema_id } = data || {};
-      let params = {
-        city_id: city_id,
-        cinema_id: cinema_id,
-        width: "500"
-      };
-      console.log(conPrefix + "获取电影放映信息参数", params);
-      const res = await this.sfcApi.getMoviePlayInfo(params);
-      console.log(conPrefix + "获取电影放映信息返回", res);
-      return res.data;
-    } catch (error) {
-      console.error(conPrefix + "获取电影放映信息异常", error);
-      this.setErrInfo("获取电影放映信息异常", error);
-    }
-  }
-
-  // 获取座位布局 flag:1-转单 2-换号
-  async getSeatLayout(data, flag = 0) {
-    const { conPrefix } = this;
-    try {
-      let { city_id, cinema_id, show_id, session_id } = data || {};
-      let params = {
-        city_id: city_id,
-        cinema_id: cinema_id,
-        show_id: show_id,
-        width: "240"
-      };
-      if (session_id) {
-        params.session_id = session_id;
-      } else {
-        params.session_id =
-          this.currentParamsList[this.currentParamsInx].session_id;
-      }
-      console.log(conPrefix + "获取座位布局参数", params);
-      const res = await this.sfcApi.getMoviePlaySeat(params);
-      console.log(conPrefix + "获取座位布局返回", res);
-      return res.data?.play_data?.seat_data || [];
-    } catch (error) {
-      let errFlag = ["正常出票", "转单", "换号出票"][flag];
-      console.error(conPrefix + "获取座位布局异常", error);
-      this.setErrInfo(`${errFlag}获取座位布局异常`, error);
     }
   }
 
@@ -2337,59 +2317,9 @@ class OrderAutoTicketQueue {
     }
   }
 
-  // 根据订单name获取影院id
-  getCinemaId(cinema_name, list) {
-    const { conPrefix, appFlag } = this;
-    try {
-      // 1、先全字匹配，匹配到就直接返回
-      let cinema_id = list.find(item => item.name === cinema_name)?.id;
-      if (cinema_id) {
-        return cinema_id;
-      }
-      // 2、匹配不到的如果满足条件就走特殊匹配
-      console.warn(conPrefix + "全字匹配影院名称失败", cinema_name, list);
-      let cinemaName = cinemNameSpecial(cinema_name);
-      if (SPECIAL_CINEMA_OBJ[appFlag].length) {
-        let specialCinemaInfo = SPECIAL_CINEMA_OBJ[appFlag].find(
-          item => item.order_cinema_name === cinemaName
-        );
-        if (specialCinemaInfo) {
-          cinemaName = specialCinemaInfo.sfc_cinema_name;
-        } else {
-          console.warn(
-            conPrefix + "特殊匹配影院名称失败",
-            cinemaName,
-            SPECIAL_CINEMA_OBJ[appFlag]
-          );
-        }
-      }
-      // 3、去掉空格及换行符后全字匹配
-      // 去除空格及括号后的影院列表
-      let noSpaceCinemaList = list.map(item => {
-        return {
-          ...item,
-          name: cinemNameSpecial(item.name)
-        };
-      });
-      cinema_id = noSpaceCinemaList.find(item => item.name === cinemaName)?.id;
-      if (cinema_id) {
-        return cinema_id;
-      }
-      console.error(
-        conPrefix + "去掉空格及换行符后全字匹配失败",
-        cinemaName,
-        noSpaceCinemaList
-      );
-      this.setErrInfo("根据订单name获取影院id-去掉空格及换行符后全字匹配失败");
-    } catch (error) {
-      console.error(conPrefix + "根据订单name获取影院id失败", error);
-      this.setErrInfo("根据订单name获取影院id失败", error);
-    }
-  }
-
   // 获取电影信息
   async getMovieInfo(item) {
-    const { conPrefix, cityList } = this;
+    const { conPrefix, cityList, appFlag } = this;
     try {
       // 1、获取影院列表拿到影院id
       const { city_name, cinema_name, film_name, show_time } = item;
@@ -2403,15 +2333,41 @@ class OrderAutoTicketQueue {
       const res = await this.sfcApi.getCinemaList(params);
       console.log(conPrefix + "获取城市影院返回", res);
       let cinemaList = res.data?.cinema_data || [];
-      let cinema_id = this.getCinemaId(cinema_name, cinemaList);
+      let cinemaIdRes = getCinemaId(cinema_name, cinemaList, appFlag);
+      let cinema_id = cinemaIdRes?.cinema_id;
       if (!cinema_id) {
         console.error(conPrefix + "获取目标影院失败");
+        this.setErrInfo("根据影院名称获取目标影院id异常", cinemaIdRes?.error);
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: conPrefix + "获取目标影院失败",
+          level: "error",
+          info: {
+            error: cinemaIdRes?.error
+          }
+        });
         return;
       }
       // 2、获取影院放映信息拿到会员价
-      const moviePlayInfo = await this.getMoviePlayInfo({ city_id, cinema_id });
+      const movieDataRes = await getMoviePlayInfo({
+        city_id,
+        cinema_id,
+        appFlag
+      });
+      let movie_data = movieDataRes?.movieData || [];
+      if (!movie_data?.length) {
+        this.setErrInfo("获取影院放映列表异常", movieDataRes?.error);
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: conPrefix + "获取影院放映列表异常",
+          level: "error",
+          info: {
+            error: movieDataRes?.error
+          }
+        });
+        return;
+      }
       // 3、匹配订单拿到会员价
-      const { movie_data } = moviePlayInfo;
       let movieInfo = movie_data.find(
         item =>
           convertFullwidthToHalfwidth(item.movie_name) ===
@@ -2842,21 +2798,105 @@ class OrderAutoTicketQueue {
       };
     }
   }
-  // 获取城市列表
-  async getCityList() {
-    const { conPrefix } = this;
-    try {
-      let params = {};
-      console.log(conPrefix + "获取城市列表参数", params);
-      const res = await this.sfcApi.getCityList(params);
-      console.log(conPrefix + "获取城市列表返回", res);
-      this.cityList = res.data.all_city || [];
-    } catch (error) {
-      console.error(conPrefix + "获取城市列表异常", error);
-      this.setErrInfo("获取城市列表异常", error);
-    }
-  }
 }
 // 生成出票队列实例
 const createTicketQueue = appFlag => new OrderAutoTicketQueue(appFlag);
+
+// 获取城市列表
+const getCityList = async ({ appFlag }) => {
+  let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
+  try {
+    let params = {};
+    console.log(conPrefix + "获取城市列表参数", params);
+    const res = await APP_API_OBJ[appFlag].getCityList(params);
+    console.log(conPrefix + "获取城市列表返回", res);
+    let cityList = res.data?.all_city || [];
+    return {
+      cityList
+    };
+  } catch (error) {
+    console.error(conPrefix + "获取城市列表异常", error);
+    return {
+      error
+    };
+  }
+};
+
+// 获取城市影院列表
+const getCityCinemaList = async ({ city_id, appFlag }) => {
+  let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
+  try {
+    let params = {
+      city_id
+    };
+    console.log(conPrefix + "获取城市影院参数", params);
+    const res = await APP_API_OBJ[appFlag].getCinemaList(params);
+    console.log(conPrefix + "获取城市影院返回", res);
+    let cinemaList = res.data?.cinema_data || [];
+    return {
+      cinemaList
+    };
+  } catch (error) {
+    console.error(conPrefix + "获取城市影院异常", error);
+    return {
+      error
+    };
+  }
+};
+
+// 获取电影放映列表
+const getMoviePlayInfo = async ({ city_id, cinema_id, appFlag }) => {
+  let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
+  try {
+    let params = {
+      city_id: city_id,
+      cinema_id: cinema_id,
+      width: "500"
+    };
+    console.log(conPrefix + "获取电影放映列表参数", params);
+    const res = await APP_API_OBJ[appFlag].getMoviePlayInfo(params);
+    console.log(conPrefix + "获取电影放映列表返回", res);
+    return {
+      movieData: res.data?.movie_data || []
+    };
+  } catch (error) {
+    console.error(conPrefix + "获取电影放映列表异常", error);
+    return {
+      error
+    };
+  }
+};
+
+// 获取座位布局
+const getSeatLayout = async ({
+  city_id,
+  cinema_id,
+  show_id,
+  session_id,
+  appFlag
+}) => {
+  let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
+  try {
+    let params = {
+      city_id: city_id,
+      cinema_id: cinema_id,
+      show_id: show_id,
+      session_id,
+      width: "240"
+    };
+    console.log(conPrefix + "获取座位布局参数", params);
+    const res = await APP_API_OBJ[appFlag].getMoviePlaySeat(params);
+    console.log(conPrefix + "获取座位布局返回", res);
+    let seatData = res.data?.play_data?.seat_data || [];
+    return {
+      seatData
+    };
+  } catch (error) {
+    console.error(conPrefix + "获取座位布局异常", error);
+    return {
+      error
+    };
+  }
+};
+
 export default createTicketQueue;
