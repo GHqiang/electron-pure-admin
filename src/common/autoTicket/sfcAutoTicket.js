@@ -6,6 +6,7 @@ import {
   getOrginValue,
   mockDelay,
   logUpload,
+  trial,
   getCinemaLoginInfoList,
   sendWxPusherMessage
 } from "@/utils/utils";
@@ -571,10 +572,11 @@ class OrderAutoTicketQueue {
         if (platName === "lieren") {
           await this.unlockSeat({ platName, order_id: id, inx: 1 });
         } else if (platName === "sheng") {
-          await this.startDeliver({
+          await startDeliver({
             platName,
             order_number,
-            supplierCode
+            supplierCode,
+            appFlag
           });
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
@@ -605,7 +607,7 @@ class OrderAutoTicketQueue {
         } else if (platName === "yangcong") {
           await this.unlockSeat({ platName, order_id: id, inx: 1 });
         } else if (platName === "haha") {
-          await this.startDeliver({ platName, bid });
+          await startDeliver({ platName, bid, appFlag });
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
             des: "确认接单成功，2秒后解锁"
@@ -639,10 +641,11 @@ class OrderAutoTicketQueue {
         mayi: [60, 1],
         yangcong: [3, 3]
       };
-      const res = await this.trial(
+      const res = await trial(
         inx => this.unlockSeat({ ...params, inx }),
         delayConfig[platName][0],
-        delayConfig[platName][1]
+        delayConfig[platName][1],
+        conPrefix
       );
       if (!res) {
         console.error(conPrefix + "单个订单试错后仍解锁失败", "需要走转单逻辑");
@@ -680,33 +683,6 @@ class OrderAutoTicketQueue {
       }
     } catch (error) {
       console.error(conPrefix + "单个订单出票异常", error);
-    }
-  }
-  // 确认接单
-  async startDeliver({ order_number, supplierCode, platName, bid }) {
-    const { conPrefix } = this;
-    try {
-      let params;
-      if (platName === "sheng") {
-        params = {
-          orderCode: order_number,
-          supplierCode
-        };
-      } else if (platName === "haha") {
-        params = {
-          bid
-        };
-      }
-      const requestApi = {
-        sheng: shengApi,
-        haha: hahaApi
-      };
-      console.log(conPrefix + "确认接单参数", params);
-      const res = await requestApi[platName].confirmOrder(params);
-      console.log(conPrefix + "确认接单返回", res);
-      return res;
-    } catch (error) {
-      console.warn("确认接单异常", error);
     }
   }
 
@@ -1147,10 +1123,11 @@ class OrderAutoTicketQueue {
           yangcong: [6, 20],
           haha: [6, 5]
         };
-        const res = await this.trial(
+        const res = await trial(
           inx => this.lockSeat(params, inx),
           delayConfig[platName][0],
-          delayConfig[platName][1]
+          delayConfig[platName][1],
+          conPrefix
         );
         if (!res) {
           console.error(
@@ -2018,39 +1995,6 @@ class OrderAutoTicketQueue {
     }
   }
 
-  /**
-   * 试错方法
-   * @param { Function } 	callback	要试错的方法，携带参数的话可以在传参时嵌套一层
-   * @param { Number } 	number	    试错次数
-   * @param { Number } 	delayTime	试错间隔时间
-   */
-  trial(callback, number = 1, delayTime = 0) {
-    const { conPrefix } = this;
-    let inx = 1,
-      trialTimer = null;
-    return new Promise(resolve => {
-      trialTimer = setInterval(async () => {
-        console.log("inx", inx, "number", number, "trialTimer", trialTimer);
-        if (inx < number && trialTimer) {
-          ++inx;
-          console.log(conPrefix + `第${inx}次试错开始`);
-          try {
-            const result = await callback(inx);
-            console.log(conPrefix + `第${inx}次试错成功`, result);
-            clearInterval(trialTimer);
-            resolve(result);
-          } catch (error) {
-            console.error(conPrefix + `第${inx}次试错失败`, error);
-          }
-        } else {
-          console.log(conPrefix + `第${inx}次试错结束`);
-          clearInterval(trialTimer);
-          resolve();
-        }
-      }, delayTime * 1000);
-    });
-  }
-
   async lastHandle({
     city_id,
     cinema_id,
@@ -2141,6 +2085,7 @@ class OrderAutoTicketQueue {
     }
   }
 
+  //
   async asyncFetchQrcodeSubmit({
     city_id,
     cinema_id,
@@ -2155,9 +2100,10 @@ class OrderAutoTicketQueue {
     orderInfo,
     lockseat
   }) {
+    const { conPrefix } = this;
     try {
       // 没搁30秒查一次，查20次，10分钟
-      const qrcode = await this.trial(
+      const qrcode = await trial(
         inx =>
           this.payOrder({
             city_id,
@@ -2167,7 +2113,8 @@ class OrderAutoTicketQueue {
             inx
           }),
         20,
-        30
+        30,
+        conPrefix
       );
       if (!qrcode) {
         this.logList.push({
@@ -2346,8 +2293,6 @@ class OrderAutoTicketQueue {
   async useQuan({
     city_id,
     cinema_id,
-    show_id,
-    seat_ids,
     ticket_num,
     supplier_end_price,
     quanList,
@@ -2887,6 +2832,40 @@ const buyTicket = async ({
     return {
       error
     };
+  }
+};
+
+// 确认接单
+const startDeliver = async ({
+  order_number,
+  supplierCode,
+  platName,
+  bid,
+  appFlag
+}) => {
+  let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
+  try {
+    let params;
+    if (platName === "sheng") {
+      params = {
+        orderCode: order_number,
+        supplierCode
+      };
+    } else if (platName === "haha") {
+      params = {
+        bid
+      };
+    }
+    const requestApi = {
+      sheng: shengApi,
+      haha: hahaApi
+    };
+    console.log(conPrefix + "确认接单参数", params);
+    const res = await requestApi[platName].confirmOrder(params);
+    console.log(conPrefix + "确认接单返回", res);
+    return res;
+  } catch (error) {
+    console.warn("确认接单异常", error);
   }
 };
 

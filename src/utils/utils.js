@@ -1177,6 +1177,40 @@ const formatErrInfo = errInfo => {
   }
   return errInfoStr;
 };
+
+/**
+ * 试错方法
+ * @param { Function } 	callback	要试错的方法，携带参数的话可以在传参时嵌套一层
+ * @param { Number } 	number	    试错次数
+ * @param { Number } 	delayTime	试错间隔时间
+ * @param { String } 	conPrefix	前缀打印
+ */
+const trial = (callback, number = 1, delayTime = 0, conPrefix) => {
+  let inx = 1,
+    trialTimer = null;
+  return new Promise(resolve => {
+    trialTimer = setInterval(async () => {
+      console.log("inx", inx, "number", number, "trialTimer", trialTimer);
+      if (inx < number && trialTimer) {
+        ++inx;
+        console.log(conPrefix + `第${inx}次试错开始`);
+        try {
+          const result = await callback(inx);
+          console.log(conPrefix + `第${inx}次试错成功`, result);
+          clearInterval(trialTimer);
+          resolve(result);
+        } catch (error) {
+          console.error(conPrefix + `第${inx}次试错失败`, error);
+        }
+      } else {
+        console.log(conPrefix + `第${inx}次试错结束`);
+        clearInterval(trialTimer);
+        resolve();
+      }
+    }, delayTime * 1000);
+  });
+};
+
 export {
   getCurrentFormattedDateTime, // 获取当前时间：YYYY-MM-DD HH:MM:SS
   getCurrentDay, // 获取当前天：YYYY-MM-DD
@@ -1202,6 +1236,7 @@ export {
   mockDelay, // 模拟延时
   getOrginValue, // 对象深拷贝（获取对象源值）
   formatErrInfo, // 格式化错误信息对象
+  trial, // 试错方法
   cryptoFunctions,
   CustomConsole
 };
