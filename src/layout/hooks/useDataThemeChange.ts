@@ -126,6 +126,8 @@ export function useDataThemeChange() {
     toggleClass(Grey, "html-grey", document.querySelector("html"));
     toggleClass(Weak, "html-weakness", document.querySelector("html"));
     router.push("/login");
+    // 刷新页面以确保状态完全重置
+    location.reload();
     useMultiTagsStoreHook().handleTags("equal", [...routerArrays]);
     resetRouter();
   }

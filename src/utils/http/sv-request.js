@@ -67,6 +67,8 @@ instance.interceptors.response.use(
             window.localStorage.removeItem("userInfo");
             window.localStorage.removeItem("user-info");
             router.push("/login");
+            // 刷新页面以确保状态完全重置
+            location.reload();
           })
           .catch(() => {});
         return;

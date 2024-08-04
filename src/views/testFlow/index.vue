@@ -1326,6 +1326,8 @@ async function logout() {
     router.push("/login");
   } finally {
     removeSfcUserInfo(appName);
+    // 刷新页面以确保状态完全重置
+    location.reload();
   }
 }
 
