@@ -435,7 +435,6 @@ class OrderAutoOfferQueue {
         limit: 200
       });
       let list = res.data || [];
-
       console.log(conPrefix + "获取待报价列表返回", list);
       return list;
     } catch (error) {

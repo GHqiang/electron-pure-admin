@@ -342,9 +342,9 @@ class OrderAutoOfferQueue {
   }
 
   // 提交报价
-  async submitOffer({ id, price }) {
+  async submitOffer({ order_id, price }) {
     try {
-      let params = { id, price };
+      let params = { order_id, price };
       console.log(this.conPrefix + "提交报价参数", params);
       if (isTestOrder) {
         this.logList.push({
@@ -392,7 +392,7 @@ class OrderAutoOfferQueue {
         return { offerRule, err_msg, err_info };
       }
       const res = await this.submitOffer({
-        id: order.id,
+        order_id: order.id,
         price: endPrice * 100
       });
       return { res, offerRule };

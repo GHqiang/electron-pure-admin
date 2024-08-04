@@ -474,7 +474,7 @@ class OrderAutoOfferQueue {
       // if (list.length < 20) {
       //   return stayList;
       // } else {
-      //   return await getStayOfferList(count++, stayList);
+      //   return await this.getStayOfferList(count++, stayList);
       // }
       console.log(conPrefix + "获取待报价列表返回", list);
       return list;
