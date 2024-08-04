@@ -26,6 +26,7 @@ function getCurrentFormattedDateTime(sjc) {
   return formattedDateTime;
 }
 
+// YYYY-MM-DD
 function getCurrentDay(sjc) {
   const now = !sjc ? new Date() : new Date(sjc);
 
@@ -553,7 +554,7 @@ function convertFullwidthToHalfwidth(str) {
   return result;
 }
 
-// 影院名称特殊处理（为了特殊匹配）
+// 影院名称特殊处理（为了特殊匹配,去括号、空格及中间点）
 const cinemNameSpecial = cinema_name => {
   return cinema_name
     .replace(/[\(\)\（\）-]/g, "")
@@ -777,7 +778,7 @@ const calcCount = data => {
   }
 };
 
-// 根据订单name获取影院id
+// 根据订单name获取影院id(主要用于sfc系统)
 const getCinemaId = (cinema_name, list, appName) => {
   try {
     // 1、先全字匹配，匹配到就直接返回
@@ -822,6 +823,55 @@ const getCinemaId = (cinema_name, list, appName) => {
     return {
       error
     };
+  }
+};
+
+// 根据订单name获取目标影院(主要用于ume系统)
+const getTargetCinema = (cinema_name, list) => {
+  try {
+    // 1、先全字匹配，匹配到就直接返回
+    let targetCinema = list.find(item => item.cinemaName === cinema_name);
+    if (targetCinema) {
+      return targetCinema;
+    }
+    // 2、匹配不到的如果满足条件就走特殊匹配
+    console.warn("全字匹配影院名称失败", cinema_name, list);
+    let cinemaName = cinemNameSpecial(cinema_name);
+    if (SPECIAL_CINEMA_OBJ[appFlag].length) {
+      let specialCinemaInfo = SPECIAL_CINEMA_OBJ[appFlag].find(
+        item => item.order_cinema_name === cinemaName
+      );
+      if (specialCinemaInfo) {
+        cinemaName = specialCinemaInfo.sfc_cinema_name;
+      } else {
+        console.warn(
+          "特殊匹配影院名称失败",
+          cinemaName,
+          SPECIAL_CINEMA_OBJ[appFlag]
+        );
+      }
+    }
+    // 3、去掉空格及换行符后全字匹配
+    // 去除空格及括号后的影院列表
+    let noSpaceCinemaList = list.map(item => {
+      return {
+        ...item,
+        cinemaName: cinemNameSpecial(item.cinemaName)
+      };
+    });
+    targetCinema = noSpaceCinemaList.find(
+      item => item.cinemaName === cinemaName
+    );
+    if (targetCinema) {
+      return targetCinema;
+    }
+    console.error(
+      "去掉空格及换行符后全字匹配失败",
+      cinemaName,
+      noSpaceCinemaList
+    );
+  } catch (error) {
+    console.error("根据订单name获取目标影院失败", error);
   }
 };
 
@@ -1128,28 +1178,30 @@ const formatErrInfo = errInfo => {
   return errInfoStr;
 };
 export {
-  getCurrentFormattedDateTime,
-  getCurrentDay,
-  getCurrentTime,
-  exportExcel,
-  getFormattedDateTime,
+  getCurrentFormattedDateTime, // 获取当前时间：YYYY-MM-DD HH:MM:SS
+  getCurrentDay, // 获取当前天：YYYY-MM-DD
+  getCurrentTime, // 获取当前时间：HH:MM:SS
+  exportExcel, // 导出
+  getFormattedDateTime, // 获取当前时间：YYYY-MM-DD HH:MM:SS
   findBestMatchByLevenshtein,
   findBestMatchByLevenshteinWithThreshold,
-  isTimeAfter,
-  getCinemaFlag,
-  convertFullwidthToHalfwidth,
-  cinemNameSpecial,
-  getCinemaLoginInfoList,
-  sendWxPusherMessage,
-  calcCount,
-  judgeHandle,
-  getCinemaId,
-  cinemaMatchHandle,
-  offerRuleMatch,
-  logUpload,
-  mockDelay,
-  getOrginValue,
-  formatErrInfo,
+  isTimeAfter, // 判断time1时间是否在time2之后
+  getCinemaFlag, // 获取影院标识
+  convertFullwidthToHalfwidth, // 全角字符转换成半角
+  cinemNameSpecial, // 影院名称特殊处理（为了特殊匹配,去括号、空格及中间点）
+  getCinemaLoginInfoList, // 获取影院登录信息列表
+  sendWxPusherMessage, // 发送微信消息
+  calcCount, // 计算连续中标数
+  judgeHandle, // 判断该订单是否是新订单
+  getCinemaId, // 根据订单name获取影院id(主要用于sfc系统)
+  getTargetCinema,
+  // 根据订单name获取目标影院(主要用于ume系统)
+  cinemaMatchHandle, // 影院名称匹配（匹配报价规则时使用）
+  offerRuleMatch, // 报价规则匹配
+  logUpload, // 日志上传
+  mockDelay, // 模拟延时
+  getOrginValue, // 对象深拷贝（获取对象源值）
+  formatErrInfo, // 格式化错误信息对象
   cryptoFunctions,
   CustomConsole
 };

@@ -13,7 +13,7 @@ import svApi from "@/api/sv-api"; // 机器api
 import hahaApi from "@/api/haha-api"; // 哈哈平台api
 
 // 获取最终报价信息实体类
-import getOfferPriceFun from "./sfcOffer";
+import getOfferPriceFun from "./commonOfferHandle";
 
 // 平台toke列表
 import { platTokens } from "@/store/platTokens";
