@@ -61,7 +61,8 @@ export default {
       name: "queueManage",
       component: () => import("@/views/queueManage/index.vue"),
       meta: {
-        title: "队列管理"
+        title: "队列管理",
+        fixedTag: true
       }
     },
     {

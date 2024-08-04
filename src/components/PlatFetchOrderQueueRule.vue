@@ -134,10 +134,7 @@ const displayItems = computed(() => tableDataStore.items);
 
 // 是否显示一键启动
 const isActiveOneClickStart = computed(() => {
-  return (
-    tableDataStore.items.filter(item => item.isEnabled).length <
-    tableDataStore.items.length
-  );
+  return !isActiveOneClickStop.value;
 });
 
 // 是否显示一键停止

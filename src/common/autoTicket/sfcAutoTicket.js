@@ -69,6 +69,7 @@ class OrderAutoTicketQueue {
     this.prevOrderNumber = "";
     // 由于及时队列停了 this.enqueue方法仍可能运行一次，故在每次启动重置队列
     this.queue = [];
+    console.warn(conPrefix + `队列启动`);
     // 循环直到队列停止
     while (this.isRunning) {
       // 获取订单列表(支持时间间隔)
@@ -91,7 +92,7 @@ class OrderAutoTicketQueue {
       //     `队列启动, ${fetchDelay} 秒获取一次待报价订单, ${processDelay} 秒处理一次订单}`
       // );
       let orders = await this.fetchOrders(fetchDelay);
-      // console.warn(conPrefix + "新的待出票订单列表", orders);
+      console.warn(conPrefix + "新的待出票订单列表", orders);
       // 将订单加入队列
       this.enqueue(orders);
 
@@ -335,7 +336,7 @@ class OrderAutoTicketQueue {
   stop() {
     const { conPrefix } = this;
     this.isRunning = false;
-    // console.warn(conPrefix + "主动停止订单自动出票队列");
+    console.warn(conPrefix + "自动出票队列停止");
     // 打印处理结果
     const { handleSuccessOrderList, handleFailOrderList } = this;
     // console.warn(

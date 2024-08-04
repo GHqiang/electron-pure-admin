@@ -140,10 +140,7 @@ const displayItems = computed(() => tableDataStore.items);
 
 // 是否显示一键启动
 const isActiveOneClickStart = computed(() => {
-  return (
-    tableDataStore.items.filter(item => item.isEnabled).length <
-    tableDataStore.items.length
-  );
+  return !isActiveOneClickStop.value;
 });
 
 // 是否显示一键停止
@@ -283,36 +280,25 @@ const singleStartOrStop = ({ id, appName }, flag) => {
   // 单个启动
   if (flag === 1) {
     let loginInfoList = getCinemaLoginInfoList();
-    let obj = loginInfoList.find(
-      itemA => itemA.app_name === appName && itemA.member_pwd
+    let appLoginInfo = loginInfoList.find(
+      itemA =>
+        itemA.app_name === appName && itemA.member_pwd && itemA.session_id
     );
-    let pwd = obj?.member_pwd;
-    // console.log("pwd", pwd);
-    if (!pwd) {
-      ElMessage.error("会员卡密码未设置，请先去设置后再启动");
-      return;
-    }
-    const appTicketQueueObj = {};
-    Object.keys(APP_LIST).forEach(item => {
-      let obj = loginInfoList.find(
-        itemA => itemA.app_name === item && itemA.session_id
-      );
-      appTokenObj[item] = obj?.session_id || "";
-      appTicketQueueObj[item] = createTicketQueue(item);
-    });
-    if (!appTokenObj[appName]) {
+    if (!appLoginInfo) {
       ElMessage.error(appName + "未登录，请先去影院登录页面登录后再启动");
       return;
     }
+    const appTicketQueueObj = {};
+    appTokenObj[appName] = appLoginInfo?.session_id || "";
+    appTicketQueueObj[appName] = createTicketQueue(appName);
     tableDataStore.toggleEnable(id);
     // 过滤清空当前影院本地缓存的待出票数据
     stayTicketList.removeStayTicketListByApp(appName);
     appTicketQueueObj[appName].start();
-    window.sfcQueue = appTicketQueueObj["sfc"];
+    window.ticketQueue = appTicketQueueObj[appName];
   } else {
     // 单个停止
     tableDataStore.toggleEnable(id);
-    appTicketQueueObj[appName].stop();
   }
 };
 
