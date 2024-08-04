@@ -15,6 +15,7 @@ import shengApi from "@/api/sheng-api";
 import mangguoApi from "@/api/mangguo-api";
 import mayiApi from "@/api/mayi-api";
 import yangcongApi from "@/api/yangcong-api";
+import hahaApi from "../../api/haha-api";
 import svApi from "@/api/sv-api";
 import { encode } from "@/utils/sfc-member-password";
 
@@ -38,8 +39,7 @@ import {
   APP_LIST
 } from "@/common/constant";
 import { APP_API_OBJ } from "@/common/index";
-import hahaApi from "../../api/haha-api";
-import { app } from "electron/main";
+
 let isTestOrder = false; //是否是测试订单
 // 创建一个订单自动出票队列类
 class OrderAutoTicketQueue {
@@ -1448,22 +1448,32 @@ class OrderAutoTicketQueue {
         des: `创建订单成功`
       });
       // 8、购买电影票
-      const buyRes = await this.buyTicket({
+      const buyTicketRes = await buyTicket({
         city_id,
         cinema_id,
         order_num,
-        pay_money
+        pay_money,
+        session_id: this.currentParamsList[this.currentParamsInx].session_id,
+        appFlag
       });
+      const buyRes = buyTicketRes?.buyRes;
       if (!buyRes) {
         console.error(
           conPrefix + "订单购买失败，单个订单直接出票结束",
           "走转单逻辑"
         );
-        this.setErrInfo("订单购买失败，单个订单直接出票结束");
-        // this.logList.push({
-        //   opera_time: getCurrentTime(),
-        //   des: `订单购买失败，单个订单直接出票结束`
-        // });
+        this.setErrInfo(
+          "订单购买失败，单个订单直接出票结束",
+          buyTicketRes?.error
+        );
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: `订单购买失败，单个订单直接出票结束`,
+          level: "error",
+          info: {
+            error: buyTicketRes?.error
+          }
+        });
         // 后续要记录失败列表（订单信息、失败原因、时间戳）
         const transferParams = await this.transferOrder(item, {
           city_id,
@@ -1780,32 +1790,6 @@ class OrderAutoTicketQueue {
           });
         }
       }
-    }
-  }
-
-  // 订单购买
-  async buyTicket(data) {
-    const { conPrefix, appFlag } = this;
-    try {
-      let { city_id, cinema_id, order_num, pay_money } = data || {};
-      let currentParams = this.currentParamsList[this.currentParamsInx];
-      const { session_id } = currentParams;
-      let params = {
-        city_id,
-        cinema_id,
-        open_id: APP_OPENID_OBJ[appFlag], // 微信openId
-        order_num, // 订单号
-        pay_money, // 支付金额
-        pay_type: "", // 购买方式 传空意味着用优惠券或者会员卡
-        session_id
-      };
-      console.log(conPrefix + "订单购买参数", params);
-      const res = await this.sfcApi.buyTicket(params);
-      console.log(conPrefix + "订单购买返回", res);
-      return res;
-    } catch (error) {
-      console.error(conPrefix + "订单购买异常", error);
-      this.setErrInfo("订单购买异常", error);
     }
   }
 
@@ -2404,39 +2388,6 @@ class OrderAutoTicketQueue {
     }
   }
 
-  // 绑定券
-  async bandQuan({ coupon_num, session_id }) {
-    const { conPrefix } = this;
-    // 由于要用二线城市影院且40券通用，故写死
-    let params = {
-      city_id: "304",
-      cinema_id: "33",
-      session_id,
-      coupon_code: coupon_num,
-      from_goods: "2"
-    };
-    try {
-      await this.delay(1);
-      const res = await this.sfcApi.bandQuan(params);
-      // console.log("res", res);
-      if (res.data?.success === "1") {
-        return coupon_num;
-      } else {
-        console.error(conPrefix + "绑定新券异常", res);
-        this.setErrInfo(
-          conPrefix + "绑定新券异常:" + JSON.stringify(params),
-          res
-        );
-      }
-    } catch (error) {
-      console.error(conPrefix + "绑定新券异常", error);
-      this.setErrInfo(
-        conPrefix + "绑定新券异常:" + JSON.stringify(params),
-        error
-      );
-    }
-  }
-
   // 获取新券
   async getNewQuan({
     quanValue,
@@ -2470,12 +2421,24 @@ class OrderAutoTicketQueue {
       let bandQuanList = [];
       for (const quan of quanList) {
         console.log(conPrefix + `正在尝试绑定券 ${quan.coupon_num}...`);
-        const coupon_num = await this.bandQuan({
+        const couponNumRes = await bandQuan({
           city_id,
           cinema_id,
           session_id,
-          coupon_num: quan.coupon_num
+          coupon_num: quan.coupon_num,
+          appFlag
         });
+        const coupon_num = couponNumRes?.coupon_num;
+        if (couponNumRes?.error) {
+          this.logList.push({
+            opera_time: getCurrentTime,
+            des: couponNumRes?.errMsg,
+            level: "error",
+            info: {
+              error: couponNumRes?.error
+            }
+          });
+        }
         if (coupon_num) {
           bandQuanList.push({ coupon_num, quan_cost: quan.quan_cost });
           svApi.addUseQuanRecord({
@@ -2971,4 +2934,74 @@ const priceCalculation = async ({
     };
   }
 };
+
+// 绑定券
+const bandQuan = async ({ coupon_num, session_id, appFlag }) => {
+  let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
+  // 由于要用二线城市影院且40券通用，故写死
+  let params = {
+    city_id: "304",
+    cinema_id: "33",
+    session_id,
+    coupon_code: coupon_num,
+    from_goods: "2"
+  };
+  try {
+    await mockDelay(1);
+    const res = await APP_API_OBJ[appFlag].bandQuan(params);
+    // console.log("res", res);
+    if (res.data?.success === "1") {
+      return {
+        coupon_num
+      };
+    } else {
+      console.error(conPrefix + "绑定新券异常", res);
+      return {
+        error,
+        errMsg: "绑定新券异常:" + JSON.stringify(res)
+      };
+    }
+  } catch (error) {
+    console.error(conPrefix + "绑定新券异常", error);
+    return {
+      error,
+      errMsg: "绑定新券异常:" + JSON.stringify(params)
+    };
+  }
+};
+
+// 订单购买
+const buyTicket = async ({
+  city_id,
+  cinema_id,
+  order_num,
+  pay_money,
+  session_id,
+  appFlag
+}) => {
+  let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
+  try {
+    let params = {
+      city_id,
+      cinema_id,
+      open_id: APP_OPENID_OBJ[appFlag], // 微信openId
+      order_num, // 订单号
+      pay_money, // 支付金额
+      pay_type: "", // 购买方式 传空意味着用优惠券或者会员卡
+      session_id
+    };
+    console.log(conPrefix + "订单购买参数", params);
+    const buyRes = await APP_API_OBJ[appFlag].buyTicket(params);
+    console.log(conPrefix + "订单购买返回", buyRes);
+    return {
+      buyRes
+    };
+  } catch (error) {
+    console.error(conPrefix + "订单购买异常", error);
+    return {
+      error
+    };
+  }
+};
+
 export default createTicketQueue;
