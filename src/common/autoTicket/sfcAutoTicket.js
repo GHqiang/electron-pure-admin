@@ -6,6 +6,7 @@ import {
   getCinemaId,
   getOrginValue,
   mockDelay,
+  logUpload,
   getCinemaLoginInfoList,
   sendWxPusherMessage
 } from "@/utils/utils";
@@ -103,12 +104,22 @@ class OrderAutoTicketQueue {
         const order = this.dequeue();
         if (order) {
           if (this.prevOrderNumber === order.order_number) {
-            this.logList.push({
-              opera_time: getCurrentTime(),
-              des: `当前订单重复执行,直接执行下个`,
-              level: "error"
-            });
-            this.logUpload(order);
+            let log_list = [
+              {
+                opera_time: getCurrentTime(),
+                des: `当前订单重复执行,直接执行下个`,
+                level: "error"
+              }
+            ];
+            logUpload(
+              {
+                plat_name: order.platName,
+                app_name: appFlag,
+                order_number: order.order_number,
+                type: 2
+              },
+              log_list
+            );
           } else {
             // 处理订单
             const res = await this.orderHandle(order, processDelay);
@@ -129,7 +140,20 @@ class OrderAutoTicketQueue {
             });
             if (!isTestOrder) {
               // 添加订单处理记录
-              await this.addOrderHandleRecored(order, res);
+              if (res?.submitRes) {
+                this.handleSuccessOrderList.push(order);
+              } else {
+                this.handleFailOrderList.push(order);
+              }
+              let params = {
+                order,
+                ticketRes: res,
+                appFlag,
+                errMsg: this.errMsg,
+                errInfo: this.errInfo,
+                mobile: this.currentParamsList[this.currentParamsInx].mobile
+              };
+              await addOrderHandleRecored(params);
               // 从缓存里面删除记录
               deleteOrder(order.order_number, appFlag);
               this.logList.push({
@@ -137,7 +161,16 @@ class OrderAutoTicketQueue {
                 des: `订单出票结束，远端已添加出票记录，本地缓存删除该订单数据`,
                 level: "info"
               });
-              this.logUpload(order);
+              logUpload(
+                {
+                  plat_name: order.platName,
+                  app_name: appFlag,
+                  order_number: order.order_number,
+                  type: 2
+                },
+                this.logList.slice()
+              );
+              this.logList = [];
             }
           }
         }
@@ -145,20 +178,11 @@ class OrderAutoTicketQueue {
     }
   }
 
-  // 模拟延时
-  delay(delayTime) {
-    return new Promise(resolve => {
-      setTimeout(() => {
-        resolve();
-      }, delayTime * 1000);
-    });
-  }
-
   // 获取订单
   async fetchOrders(fetchDelay) {
     const { conPrefix, appFlag } = this;
     try {
-      await this.delay(fetchDelay);
+      await mockDelay(fetchDelay);
       let sfcStayOfferlist = getOrginValue(stayTicketList.items).filter(
         item => item.appName === appFlag
       );
@@ -244,7 +268,7 @@ class OrderAutoTicketQueue {
         des: `订单开始出票，订单号-${order.order_number}，上个订单号-${this.prevOrderNumber}`,
         level: "info"
       });
-      await this.delay(delayTime);
+      await mockDelay(delayTime);
       console.log(conPrefix + `订单处理 ${order.id}`);
       if (this.isRunning) {
         const res = await this.singleTicket(order);
@@ -262,74 +286,6 @@ class OrderAutoTicketQueue {
       }
     } catch (error) {
       console.error(conPrefix + "订单执行出票异常", error);
-    }
-  }
-
-  // 添加订单处理记录
-  async addOrderHandleRecored(order, res) {
-    const {
-      conPrefix,
-      appFlag,
-      errMsg,
-      errInfo,
-      currentParamsList,
-      currentParamsInx
-    } = this;
-    try {
-      // res：{ profit, submitRes, qrcode, quan_code, card_id, offerRule }
-      const serOrderInfo = {
-        plat_name: order.platName,
-        app_name: res?.offerRule?.app_name || appFlag,
-        order_id: order.id,
-        order_number: order.order_number,
-        tpp_price: order.tpp_price,
-        supplier_end_price: order.supplier_end_price,
-        city_name: order.city_name,
-        cinema_addr: order.cinema_addr,
-        ticket_num: order.ticket_num,
-        cinema_name: order.cinema_name,
-        hall_name: order.hall_name,
-        film_name: order.film_name,
-        lockseat: order.lockseat,
-        show_time: order.show_time,
-        cinema_group: order.cinema_group,
-        offer_type: res?.offerRule?.offer_type || "",
-        offer_amount: res?.offerRule?.offer_amount || "",
-        member_offer_amount: res?.offerRule?.member_offer_amount || "",
-        quan_value: res?.offerRule?.quan_value || "",
-        order_status: res?.submitRes ? "1" : "2",
-        // remark: '',
-        processing_time: getCurrentFormattedDateTime(),
-        profit: res?.profit || "",
-        qrcode: res?.qrcode || "",
-        quan_code: res?.quan_code || "",
-        card_id: res?.card_id || "",
-        err_msg: res?.submitRes ? "" : errMsg || "",
-        err_info: res?.submitRes ? "" : errInfo || "",
-        rewards: order.rewards, // 是否是奖励订单 1是 0否
-        transfer_fee: res?.transferParams?.transfer_fee || "", // 转单手续费
-        mobile: currentParamsList[currentParamsInx]?.mobile || "" // 出票手机号
-      };
-      if (res?.submitRes) {
-        this.handleSuccessOrderList.push(order);
-      } else {
-        this.handleFailOrderList.push(order);
-      }
-      await svApi.addTicketRecord(serOrderInfo);
-      if (serOrderInfo.card_id && serOrderInfo.order_status === "1") {
-        svApi.updateDayUsage({
-          app_name: serOrderInfo.app_name,
-          card_id: serOrderInfo.card_id
-        });
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: `订单用卡出票成功后更新当天使用量`,
-          level: "info"
-        });
-        this.logUpload(order);
-      }
-    } catch (error) {
-      console.error(conPrefix + "添加订单处理记录异常", error);
     }
   }
 
@@ -473,7 +429,6 @@ class OrderAutoTicketQueue {
         des: `自动转单处于关闭状态`,
         level: "info"
       });
-      // this.logUpload(order);
       sendWxPusherMessage({
         platName,
         order_number,
@@ -598,25 +553,6 @@ class OrderAutoTicketQueue {
     }
   }
 
-  // 日志上传
-  async logUpload(order) {
-    try {
-      let log_list = this.logList.slice();
-      this.logList = [];
-      const { platName, order_number } = order;
-      const { appFlag } = this;
-      await svApi.addTicketOperaLog({
-        plat_name: platName,
-        app_name: appFlag,
-        order_number,
-        type: 2,
-        log_list
-      });
-    } catch (error) {
-      console.error("日志上送异常", error);
-    }
-  }
-
   // 单个订单出票
   async singleTicket(item) {
     // 放到这里即使修改token也不用重启队列了
@@ -646,8 +582,17 @@ class OrderAutoTicketQueue {
             des: "确认接单成功，2秒后解锁",
             level: "info"
           });
-          this.logUpload(item);
-          await this.delay(2);
+          logUpload(
+            {
+              plat_name: platName,
+              app_name: appFlag,
+              order_number: order_number,
+              type: 2
+            },
+            this.logList.slice()
+          );
+          this.logList = [];
+          await mockDelay(2);
           await this.unlockSeat({
             platName,
             order_number,
@@ -666,8 +611,7 @@ class OrderAutoTicketQueue {
             opera_time: getCurrentTime(),
             des: "确认接单成功，2秒后解锁"
           });
-          this.logUpload(item);
-          await this.delay(2);
+          await mockDelay(2);
           await this.unlockSeat({
             platName,
             order_id: id,
@@ -712,10 +656,19 @@ class OrderAutoTicketQueue {
         des: `订单首次解锁失败试错后解锁成功`
       });
     }
-    this.logUpload(item);
+    logUpload(
+      {
+        plat_name: platName,
+        app_name: appFlag,
+        order_number: order_number,
+        type: 2
+      },
+      this.logList.slice()
+    );
+    this.logList = [];
     try {
       // 解锁成功后延迟6秒再执行
-      await this.delay(6);
+      await mockDelay(6);
       // 2、一键买票
       this.currentParamsInx = 0;
       const result = await this.oneClickBuyTicket(item);
@@ -1258,7 +1211,6 @@ class OrderAutoTicketQueue {
             opera_time: getCurrentTime(),
             des: `非最后一次用卡用券失败，走换号`
           });
-          // this.logUpload(item);
           this.currentParamsInx++;
           return await this.oneClickBuyTicket({
             ...item,
@@ -1329,7 +1281,6 @@ class OrderAutoTicketQueue {
             opera_time: getCurrentTime(),
             des: `非最后一次创建订单前计算价格失败，走换号`
           });
-          // this.logUpload(item);
           this.currentParamsInx++;
           return await this.oneClickBuyTicket({
             ...item,
@@ -1746,7 +1697,7 @@ class OrderAutoTicketQueue {
           console.log(conPrefix + "创建订单返回", res);
           order_num = res.data?.order_num || "";
         } catch (error) {
-          await this.delay(1);
+          await mockDelay(1);
           console.warn(conPrefix + "会员卡第一次创建订单失败", error);
           console.warn(
             conPrefix + "调整会员卡密码参数再次发起创建订单请求",
@@ -1773,7 +1724,7 @@ class OrderAutoTicketQueue {
           opera_time: getCurrentTime(),
           des: `创建订单请求接口超时，延迟2秒后重试`
         });
-        await this.delay(2);
+        await mockDelay(2);
         try {
           const order_num = await this.createOrder(data);
           if (order_num) {
@@ -2115,7 +2066,7 @@ class OrderAutoTicketQueue {
     orderInfo,
     lockseat
   }) {
-    const { conPrefix } = this;
+    const { conPrefix, appFlag } = this;
     try {
       let qrcode;
       try {
@@ -2137,7 +2088,16 @@ class OrderAutoTicketQueue {
           opera_time: getCurrentTime(),
           des: `获取订单支付结果，取票码不存在，暂时返回异步获取`
         });
-        this.logUpload({ platName, order_number });
+        logUpload(
+          {
+            plat_name: platName,
+            app_name: appFlag,
+            order_number: order_number,
+            type: 2
+          },
+          this.logList.slice()
+        );
+        this.logList = [];
         this.asyncFetchQrcodeSubmit({
           city_id,
           cinema_id,
@@ -2215,7 +2175,16 @@ class OrderAutoTicketQueue {
           opera_time: getCurrentTime(),
           des: `系统延迟轮询10分钟后获取取票码仍失败`
         });
-        this.logUpload({ platName, order_number });
+        logUpload(
+          {
+            plat_name: platName,
+            app_name: app_name,
+            order_number: order_number,
+            type: 2
+          },
+          this.logList.slice()
+        );
+        this.logList = [];
         svApi.updateTicketRecord({
           order_number,
           err_msg: "系统延迟轮询10分钟后获取取票码仍失败"
@@ -2281,7 +2250,16 @@ class OrderAutoTicketQueue {
           opera_time: getCurrentTime(),
           des: `系统延迟后轮询获取提交取票码成功`
         });
-        this.logUpload({ platName, order_number });
+        logUpload(
+          {
+            plat_name: platName,
+            app_name: app_name,
+            order_number: order_number,
+            type: 2
+          },
+          this.logList.slice()
+        );
+        this.logList = [];
         // 更新出票结果
         svApi.updateTicketRecord({
           order_number,
@@ -2294,97 +2272,6 @@ class OrderAutoTicketQueue {
     } catch (error) {
       console.warn("提交取票码异常", error);
       this.setErrInfo("提交取票码异常", error);
-    }
-  }
-
-  // 获取电影信息
-  async getMovieInfo(item) {
-    const { conPrefix, cityList, appFlag } = this;
-    try {
-      // 1、获取影院列表拿到影院id
-      const { city_name, cinema_name, film_name, show_time } = item;
-      let city_id = cityList.find(
-        item => item.name.indexOf(city_name) !== -1
-      )?.id;
-      // 3、获取城市影城列表
-      const cinemaListRes = await getCityCinemaList({ city_id, appFlag });
-      const cinemaList = cinemaListRes?.cinemaList || [];
-      if (!cinemaList.length) {
-        this.setErrInfo("获取城市影院列表异常", cinemaListRes?.error);
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: `获取城市影院列表异常`,
-          level: "error",
-          info: {
-            error: cinemaListRes?.error
-          }
-        });
-        return;
-      }
-      let cinemaIdRes = getCinemaId(cinema_name, cinemaList, appFlag);
-      let cinema_id = cinemaIdRes?.cinema_id;
-      if (!cinema_id) {
-        console.error(conPrefix + "获取目标影院失败");
-        this.setErrInfo("根据影院名称获取目标影院id异常", cinemaIdRes?.error);
-        this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
-          des: conPrefix + "获取目标影院失败",
-          level: "error",
-          info: {
-            error: cinemaIdRes?.error
-          }
-        });
-        return;
-      }
-      // 2、获取影院放映信息拿到会员价
-      const movieDataRes = await getMoviePlayInfo({
-        city_id,
-        cinema_id,
-        appFlag
-      });
-      let movie_data = movieDataRes?.movieData || [];
-      if (!movie_data?.length) {
-        this.setErrInfo("获取影院放映列表异常", movieDataRes?.error);
-        this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
-          des: conPrefix + "获取影院放映列表异常",
-          level: "error",
-          info: {
-            error: movieDataRes?.error
-          }
-        });
-        return;
-      }
-      // 3、匹配订单拿到会员价
-      let movieInfo = movie_data.find(
-        item =>
-          convertFullwidthToHalfwidth(item.movie_name) ===
-          convertFullwidthToHalfwidth(film_name)
-      );
-      if (!movieInfo) {
-        console.warn(
-          conPrefix + "影院放映信息匹配订单影片名称全字匹配失败",
-          movie_data,
-          film_name
-        );
-        this.setErrInfo("影院放映信息匹配订单影片名称全字匹配失败");
-        movieInfo = movie_data.find(
-          item =>
-            convertFullwidthToHalfwidth(item.movie_name) ===
-            convertFullwidthToHalfwidth(film_name)
-        );
-      }
-      if (movieInfo) {
-        let { shows } = movieInfo;
-        let showDay = show_time.split(" ")[0];
-        let showList = shows[showDay] || [];
-        let showTime = show_time.split(" ")[1].slice(0, 5);
-        let ticketInfo = showList.find(item => item.start_time === showTime);
-        return ticketInfo;
-      }
-    } catch (error) {
-      console.error(conPrefix + "获取当前场次电影信息异常", error);
-      this.setErrInfo("获取当前场次电影信息异常", error);
     }
   }
 
@@ -3004,4 +2891,75 @@ const buyTicket = async ({
   }
 };
 
+// 添加订单处理记录
+const addOrderHandleRecored = async ({
+  ticketRes: res,
+  order,
+  appFlag,
+  errMsg,
+  errInfo
+}) => {
+  try {
+    // res：{ profit, submitRes, qrcode, quan_code, card_id, offerRule }
+    const serOrderInfo = {
+      plat_name: order.platName,
+      app_name: res?.offerRule?.app_name || appFlag,
+      order_id: order.id,
+      order_number: order.order_number,
+      tpp_price: order.tpp_price,
+      supplier_end_price: order.supplier_end_price,
+      city_name: order.city_name,
+      cinema_addr: order.cinema_addr,
+      ticket_num: order.ticket_num,
+      cinema_name: order.cinema_name,
+      hall_name: order.hall_name,
+      film_name: order.film_name,
+      lockseat: order.lockseat,
+      show_time: order.show_time,
+      cinema_group: order.cinema_group,
+      offer_type: res?.offerRule?.offer_type || "",
+      offer_amount: res?.offerRule?.offer_amount || "",
+      member_offer_amount: res?.offerRule?.member_offer_amount || "",
+      quan_value: res?.offerRule?.quan_value || "",
+      order_status: res?.submitRes ? "1" : "2",
+      // remark: '',
+      processing_time: getCurrentFormattedDateTime(),
+      profit: res?.profit || "",
+      qrcode: res?.qrcode || "",
+      quan_code: res?.quan_code || "",
+      card_id: res?.card_id || "",
+      err_msg: res?.submitRes ? "" : errMsg || "",
+      err_info: res?.submitRes ? "" : errInfo || "",
+      rewards: order.rewards, // 是否是奖励订单 1是 0否
+      transfer_fee: res?.transferParams?.transfer_fee || "", // 转单手续费
+      mobile: mobile || "" // 出票手机号
+    };
+
+    await svApi.addTicketRecord(serOrderInfo);
+    if (serOrderInfo.card_id && serOrderInfo.order_status === "1") {
+      svApi.updateDayUsage({
+        app_name: serOrderInfo.app_name,
+        card_id: serOrderInfo.card_id
+      });
+      let log_list = [
+        {
+          opera_time: getCurrentTime(),
+          des: `订单用卡出票成功后更新当天使用量`,
+          level: "info"
+        }
+      ];
+      logUpload(
+        {
+          plat_name: serOrderInfo.plat_name,
+          app_name: serOrderInfo.app_name,
+          order_number: serOrderInfo.order_number,
+          type: 2
+        },
+        log_list
+      );
+    }
+  } catch (error) {
+    console.error("添加订单处理记录异常", error);
+  }
+};
 export default createTicketQueue;
