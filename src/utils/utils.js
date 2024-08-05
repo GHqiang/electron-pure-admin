@@ -579,6 +579,7 @@ const sendWxPusherMessage = async ({
   cinema_name,
   film_name,
   lockseat,
+  transferTip,
   failReason
 }) => {
   const url = "https://wxpusher.zjiecode.com/api/manager/message/send";
@@ -594,7 +595,7 @@ const sendWxPusherMessage = async ({
   平台：${platName}; <br/>单号：${order_number}; <br/>
   城市：${city_name}; <br/>影院：${cinema_name}; <br/>
   片名：${film_name}; <br/>座位：${lockseat}; <br/>
-  原因：${failReason};
+  原因：${failReason};<br/> 提示：${transferTip};<br/>
   </p>`;
   const messageData = {
     appId: 80173,

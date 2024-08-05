@@ -2,11 +2,11 @@ import { computed } from "vue";
 import {
   getCurrentFormattedDateTime,
   convertFullwidthToHalfwidth,
-  getCinemaId,
-  getOrginValue,
-  mockDelay,
-  logUpload,
-  trial,
+  getCinemaId, // 根据影院名称获取影院id
+  getOrginValue, // 深拷贝获取原值
+  mockDelay, // 模拟延时
+  logUpload, // 日志上传
+  trial, // 试错重试
   getCinemaLoginInfoList,
   sendWxPusherMessage
 } from "@/utils/utils";
@@ -844,7 +844,8 @@ class OrderAutoTicketQueue {
             cinema_name,
             film_name,
             lockseat,
-            failReason: `获取该订单报价记录失败,需手动出票`
+            transferTip: "此处不转单，直接跳过，需手动出票",
+            failReason: `获取该订单报价记录失败`
           });
           return;
         }
@@ -2102,8 +2103,8 @@ class OrderAutoTicketQueue {
   }) {
     const { conPrefix } = this;
     try {
-      // 没搁30秒查一次，查20次，10分钟
-      const qrcode = await trial(
+      // 每搁30秒查一次，查10次，5分钟
+      let qrcode = await trial(
         inx =>
           this.payOrder({
             city_id,
@@ -2112,10 +2113,37 @@ class OrderAutoTicketQueue {
             session_id,
             inx
           }),
-        20,
+        10,
         30,
         conPrefix
       );
+      if (!qrcode) {
+        // 5分钟后还失败消息推送
+        sendWxPusherMessage({
+          platName,
+          order_number,
+          city_name: orderInfo.city_name,
+          cinema_name: orderInfo.cinema_name,
+          film_name: orderInfo.film_name,
+          lockseat,
+          transferTip: "此处不转单，需关注该订单，适时手动上传取票码",
+          failReason: `系统延迟轮询5分钟后获取取票码仍失败`
+        });
+        // 每搁30秒查一次，查10次，5分钟
+        qrcode = await trial(
+          inx =>
+            this.payOrder({
+              city_id,
+              cinema_id,
+              order_num,
+              session_id,
+              inx
+            }),
+          10,
+          30,
+          conPrefix
+        );
+      }
       if (!qrcode) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
