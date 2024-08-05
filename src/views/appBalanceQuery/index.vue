@@ -111,7 +111,9 @@ const searchData = async () => {
     background: "rgba(0, 0, 0, 0.7)"
   });
   try {
-    let loginInfoList = getCinemaLoginInfoList();
+    let loginInfoList = getCinemaLoginInfoList().filter(
+      item => item.app_name !== "ume"
+    );
     // 过滤一下已登录的
     let tableList = [];
     for (let index = 0; index < loginInfoList.length; index++) {

@@ -345,7 +345,9 @@ const syncBalance = async () => {
     background: "rgba(0, 0, 0, 0.7)"
   });
   try {
-    let loginInfoList = getCinemaLoginInfoList();
+    let loginInfoList = getCinemaLoginInfoList().filter(
+      item => item.app_name !== "ume"
+    );
     // 过滤一下已登录的
     let apiList = Object.entries(APP_API_OBJ).filter(
       // 如果有值证明就是登录过的
