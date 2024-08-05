@@ -15,6 +15,7 @@ const IS_DEV = NODE_ENV === "development";
 instance.interceptors.request.use(
   config => {
     if (config.url.indexOf("/ume/") !== -1) {
+      config.headers["Content-Type"] = "multipart/form-data";
       // 猎人平台接口添加token
       let loginInfoList = window.localStorage.getItem("loginInfoList");
       if (loginInfoList) {
@@ -24,7 +25,7 @@ instance.interceptors.request.use(
         itemA => itemA.app_name === "ume" && itemA.session_id
       );
       let token = obj?.session_id || "";
-
+      // console.log("ume-token", token);
       if (config.method === "get") {
         let params = config.params;
         if (params.session_id) {
@@ -37,6 +38,10 @@ instance.interceptors.request.use(
           token = params.session_id;
           delete config.data.session_id;
         }
+        const formData = new FormData();
+        // 添加 Certificate 到 FormData 中
+        formData.append("params", JSON.stringify(config.data));
+        config.data = formData;
       }
       if (token) {
         config.headers.Certificate = `${token}`;

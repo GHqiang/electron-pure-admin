@@ -4,6 +4,7 @@ import {
   getCurrentDay,
   convertFullwidthToHalfwidth,
   offerRuleMatch,
+  cinemNameSpecial,
   logUpload,
   formatErrInfo
 } from "@/utils/utils";
@@ -37,15 +38,15 @@ class getUmeOfferPrice {
         const errInfoObj = this.logList
           .filter(item => item.level === "error")
           .reverse()?.[0];
-          logUpload(
-            {
-              plat_name: platName,
-              app_name: appFlag,
-              order_number: order.order_number,
-              type: 1
-            },
-            this.logList.slice()
-          );
+        logUpload(
+          {
+            plat_name: platName,
+            app_name: appFlag,
+            order_number: order.order_number,
+            type: 1
+          },
+          this.logList.slice()
+        );
         return {
           err_msg: errInfoObj?.des || "匹配报价规则失败",
           err_info: errInfoObj?.info
@@ -503,7 +504,7 @@ class getUmeOfferPrice {
   // 获取电影信息
   async getMovieInfo(order) {
     const { conPrefix } = this;
-    let { city_name, film_name, show_time, cinema_code } = order;
+    let { city_name, film_name, show_time, cinema_code, cinema_name } = order;
     try {
       // 1、获取城市影院列表
       let allCinemaList = await this.getCityCinemaList();
@@ -513,9 +514,12 @@ class getUmeOfferPrice {
       console.log(conPrefix + "获取城市影院列表返回", cinemaList);
 
       // 2、获取目标影院
-      let targetCinema = cinemaList.find(
-        item => item.cinemaCode === cinema_code
-      );
+      let targetCinema = cinemaList.find(item => {
+        return (
+          item.cinemaCode === cinema_code ||
+          cinemNameSpecial(item.cinemaName) === cinemNameSpecial(cinema_name)
+        );
+      });
       if (!targetCinema) {
         console.error(conPrefix + "获取目标影院失败");
         this.logList.push({
@@ -589,6 +593,7 @@ class getUmeOfferPrice {
         item => item.showDateTime.split(" ")[1].slice(0, 5) === start_time
       );
       if (!targetShow) {
+        console.error("匹配影片放映场次失败", showList, start_time);
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: "匹配影片放映场次失败",

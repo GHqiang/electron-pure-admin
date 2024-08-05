@@ -94,15 +94,15 @@ class getSfcOfferPrice {
         const errInfoObj = this.logList
           .filter(item => item.level === "error")
           .reverse()?.[0];
-          logUpload(
-            {
-              plat_name: platName,
-              app_name: appFlag,
-              order_number: order.order_number,
-              type: 1
-            },
-            this.logList.slice()
-          );
+        logUpload(
+          {
+            plat_name: platName,
+            app_name: appFlag,
+            order_number: order.order_number,
+            type: 1
+          },
+          this.logList.slice()
+        );
         return {
           err_msg: errInfoObj?.des || "匹配报价规则失败",
           err_info: errInfoObj?.info
@@ -198,7 +198,7 @@ class getSfcOfferPrice {
       };
     }
   }
-  
+
   // 获取最终匹配到的报价规则
   async getEndMatchOfferRule(order, appOfferRuleList) {
     const { conPrefix } = this;

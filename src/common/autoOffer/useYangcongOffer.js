@@ -107,7 +107,9 @@ class OrderAutoOfferQueue {
         },
         this.logList
       );
-      // console.warn(conPrefix + "新的待报价订单列表", orders);
+      if (orders.length) {
+        console.warn(conPrefix + "新的待报价订单列表", orders);
+      }
       // 将订单加入队列
       this.enqueue(orders);
 
@@ -432,7 +434,7 @@ class OrderAutoOfferQueue {
     try {
       const res = await yangcongApi.queryStayOfferList({});
       let list = res.data.records || [];
-      console.log(conPrefix + "获取待报价列表返回", list);
+      // console.log(conPrefix + "获取待报价列表返回", list);
       return list;
     } catch (error) {
       console.error(conPrefix + "获取待报价列表异常", error);

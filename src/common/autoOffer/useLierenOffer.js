@@ -107,7 +107,9 @@ class OrderAutoOfferQueue {
         },
         this.logList
       );
-      // console.warn(conPrefix + "新的待报价订单列表", orders);
+      if (orders.length) {
+        console.warn(conPrefix + "新的待报价订单列表", orders);
+      }
       // 将订单加入队列
       this.enqueue(orders);
 
@@ -233,7 +235,8 @@ class OrderAutoOfferQueue {
         offerResult,
         this.logList
       );
-      const log_list = getOrginValue(this.logList);
+      const log_list = this.logList.slice();
+      this.logList = [];
       let errInfoObj = log_list
         .filter(item => item?.level === "error")
         ?.reverse()?.[0];
@@ -406,42 +409,32 @@ class OrderAutoOfferQueue {
         total: 1,
         data: [
           {
-            id: 6964398,
-            tpp_price: "42.00",
-            supplier_max_price: 39,
-            city_name: "杭州",
-            cinema_addr: "临平区南苑街道迎宾路501号余之城生活广场东区6楼",
+            id: 71546,
+            plat_name: "lieren",
+            app_name: "ume",
             ticket_num: 2,
-            cinema_name: "SFC上影影城（杭州余之城IMAX店）",
-            hall_name: "2号付费按摩椅厅",
+            rewards: "0",
+            order_number: "2024080521075844108",
+            supplier_max_price: 46.4,
+            order_id: "10741620",
+            tpp_price: "99.80",
+            city_name: "武汉",
+            cinema_addr: "青山区和平大道1278号武汉印象城3楼",
+            cinema_code: "42019471",
+            cinema_name: "UME影城（武汉青山店）",
+            hall_name: "4D厅（儿童需购票）",
             film_name: "死侍与金刚狼",
-            film_img:
-              "https://gw.alicdn.com/tfscom/i1/O1CN01y7MtHL1LgjLODdiFA_!!6000000001329-0-alipicbeacon.jpg",
-            show_time: "2024-08-03 19:35:00",
-            section_at: 1722674477,
-            seat_flat: 0,
-            urgent: 0,
-            is_multi: 0,
-            seat_type: 0,
-            offer: null,
-            rewards: 0,
-            overdue: 0,
-            cinema_group: "上影二线",
-            cinema_code: "33018841",
-            group_urgent: 0,
-            order_number: "2024080316413050736",
-            sytime: 1722674522
+            show_time: "2024-08-06 16:20:00",
+            cinema_group: "ume二线"
           }
         ],
         time: 1710125678
       };
-      let list;
+      let list = res?.data || [];
       if (isTestOrder) {
         list = mockRes?.data || [];
-      } else {
-        list = res?.data || [];
       }
-      console.log(conPrefix + "获取待报价列表返回", list);
+      // console.log(conPrefix + "获取待报价列表返回", list);
       return list;
     } catch (error) {
       console.error(conPrefix + "获取待报价列表异常", error);
