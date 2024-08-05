@@ -8,7 +8,7 @@ import {
   getOrginValue, // 获取对象源值
   formatErrInfo // 格式化errInfo
 } from "@/utils/utils";
-
+import { SFC_CINEMA_NAME } from "@/common/constant";
 import svApi from "@/api/sv-api"; // 机器api
 import hahaApi from "@/api/haha-api"; // 哈哈平台api
 

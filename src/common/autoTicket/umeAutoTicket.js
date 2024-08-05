@@ -91,7 +91,9 @@ class OrderAutoTicketQueue {
       //     `队列启动, ${fetchDelay} 秒获取一次待报价订单, ${processDelay} 秒处理一次订单}`
       // );
       let orders = await this.fetchOrders(fetchDelay);
-      // console.warn(conPrefix + "新的待出票订单列表", orders);
+      if (orders?.length) {
+        console.warn(conPrefix + "新的待出票订单列表", orders);
+      }
       // 将订单加入队列
       this.enqueue(orders);
 
@@ -453,8 +455,8 @@ class OrderAutoTicketQueue {
     let isAutoTransfer = window.localStorage.getItem("isAutoTransfer");
     const { order_number, city_name, cinema_name, film_name, lockseat } = order;
     // 关闭自动转单只针对座位异常生效
-    // if (isTestOrder || (isAutoTransfer == "0" && errMsg === "锁定座位异常")) {
-    if (isTestOrder || isAutoTransfer == "0") {
+    // if (isTestOrder || (isAutoTransfer !== "1" && errMsg === "锁定座位异常")) {
+    if (isTestOrder || isAutoTransfer !== "1") {
       console.warn("锁定座位异常关闭自动转单");
       this.logList.push({
         opera_time: getCurrentTime(),
