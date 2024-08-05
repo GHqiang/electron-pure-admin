@@ -425,12 +425,14 @@ const getCinemaFlag = item => {
     ["深圳"].includes(city_name)
   ) {
     return "ytgjyc";
-  } else if (
-    cinemNameSpecial(cinema_name).includes("深圳益田国际影城宝安店") &&
-    ["东莞"].includes(city_name)
-  ) {
-    return "dghs";
-  } else if (
+  }
+  // else if (
+  //   cinemNameSpecial(cinema_name).includes("深圳益田国际影城宝安店") &&
+  //   ["东莞"].includes(city_name)
+  // ) {
+  //   return "dghs";
+  // }
+  else if (
     cinemNameSpecial(cinema_name).includes("天津莱纳星影城") &&
     ["天津"].includes(city_name)
   ) {
@@ -477,12 +479,14 @@ const getCinemaFlag = item => {
     ["海口"].includes(city_name)
   ) {
     return "hkzy";
-  } else if (
-    cinemNameSpecial(cinema_name).includes("万众国际影城CGS中国巨幕横岗店") &&
-    ["深圳"].includes(city_name)
-  ) {
-    return "hgwz";
-  } else if (
+  }
+  // else if (
+  //   cinemNameSpecial(cinema_name).includes("万众国际影城CGS中国巨幕横岗店") &&
+  //   ["深圳"].includes(city_name)
+  // ) {
+  //   return "hgwz";
+  // }
+  else if (
     cinemNameSpecial(cinema_name).includes(
       "上海巨影国际影城前台办理免费三小时停车"
     ) &&
@@ -505,18 +509,18 @@ const getCinemaFlag = item => {
   ) {
     return "szyl";
   } else if (
-    cinemNameSpecial(cinema_name).includes("SFC上影国际影城(新业坊店)") &&
+    cinemNameSpecial(cinema_name).includes("SFC上影国际影城新业坊店") &&
     ["上海"].includes(city_name)
   ) {
     return "xyfsy";
   } else if (
-    cinemNameSpecial(cinema_name).includes("长沙中影国际影城（凯德广场店）") &&
+    cinemNameSpecial(cinema_name).includes("长沙中影国际影城凯德广场店") &&
     ["长沙"].includes(city_name)
   ) {
     return "cszykd";
   } else if (
     cinemNameSpecial(cinema_name).includes(
-      "中影国际影城（中国巨幕凯德壹中心店）"
+      "中影国际影城中国巨幕凯德壹中心店"
     ) &&
     ["长沙"].includes(city_name)
   ) {
