@@ -626,12 +626,12 @@ const addDomain = () => {
 
 // 打开弹窗
 const open = async ruleInfo => {
+  const loading = ElLoading.service({
+    lock: true,
+    text: "Loading",
+    background: "rgba(0, 0, 0, 0.7)"
+  });
   try {
-    const loading = ElLoading.service({
-      lock: true,
-      text: "Loading",
-      background: "rgba(0, 0, 0, 0.7)"
-    });
     if (ruleInfo) {
       let formInfo = JSON.parse(JSON.stringify(ruleInfo));
       if (formInfo.id !== undefined) {

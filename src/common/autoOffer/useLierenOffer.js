@@ -124,8 +124,7 @@ class OrderAutoOfferQueue {
           // 添加订单处理记录
           await this.addOrderHandleRecored(order, offerResult);
           console.warn(
-            this.conPrefix +
-              `单个订单自动报价${offerResult?.res ? "成功" : "失败"}`,
+            conPrefix + `单个订单自动报价${offerResult?.res ? "成功" : "失败"}`,
             order
           );
         }
@@ -135,6 +134,7 @@ class OrderAutoOfferQueue {
 
   // 获取订单
   async fetchOrders(fetchDelay) {
+    const { conPrefix } = this;
     try {
       await mockDelay(fetchDelay);
       // 获取待报价列表
@@ -147,10 +147,9 @@ class OrderAutoOfferQueue {
             ...item,
             appName: getCinemaFlag(item)
           };
-        })
-        .filter(item => item.appName !== "ume");
+        });
       // console.warn(
-      //   this.conPrefix + "匹配已上架影院后的的待报价订单",
+      //   conPrefix + "匹配已上架影院后的的待报价订单",
       //   sfcStayOfferlist
       // );
       if (!sfcStayOfferlist?.length) return [];
@@ -166,7 +165,7 @@ class OrderAutoOfferQueue {
         );
       });
       // console.warn(
-      //   this.conPrefix + "从当前队列报价记录过滤后的的待报价订单",
+      //   conPrefix + "从当前队列报价记录过滤后的的待报价订单",
       //   newOrders
       // );
       if (!newOrders?.length) return [];
@@ -177,12 +176,12 @@ class OrderAutoOfferQueue {
         judgeHandle(item, item.appName, offerList)
       );
       // console.warn(
-      //   this.conPrefix + "从服务端历史报价记录过滤后的的待报价订单",
+      //   conPrefix + "从服务端历史报价记录过滤后的的待报价订单",
       //   newOrders
       // );
       return newOrders;
     } catch (error) {
-      console.error(this.conPrefix + "获取待报价订单异常", error);
+      console.error(conPrefix + "获取待报价订单异常", error);
       return [];
     }
   }
@@ -218,7 +217,7 @@ class OrderAutoOfferQueue {
         // { res, offerRule } || { offerRule, err_msg, err_info } || undefined
         return offerResult;
       } else {
-        console.warn(this.conPrefix + "订单报价队列已停止");
+        console.warn(conPrefix + "订单报价队列已停止");
       }
     } catch (error) {
       console.error("订单执行报价异常", error);
@@ -304,9 +303,10 @@ class OrderAutoOfferQueue {
 
   // 提交报价
   async submitOffer({ id, price }) {
+    const { conPrefix } = this;
     try {
       let params = { id, price };
-      console.log(this.conPrefix + "提交报价参数", params);
+      console.log(conPrefix + "提交报价参数", params);
       if (isTestOrder) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
@@ -317,10 +317,10 @@ class OrderAutoOfferQueue {
         return;
       }
       const res = await lierenApi.submitOffer(params);
-      console.log(this.conPrefix + "提交报价返回", res);
+      console.log(conPrefix + "提交报价返回", res);
       return res;
     } catch (error) {
-      console.error(this.conPrefix + "提交报价异常", error);
+      console.error(conPrefix + "提交报价异常", error);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: "提交报价异常",
@@ -332,6 +332,7 @@ class OrderAutoOfferQueue {
 
   // 单个报价
   async singleOffer({ order, offerList }) {
+    const { conPrefix } = this;
     try {
       let offerExample = getOfferPriceFun({
         appFlag: order.appName,
@@ -344,18 +345,18 @@ class OrderAutoOfferQueue {
       });
       // result: {endPrice, offerRule} | {offerRule, err_msg, err_info} | {err_msg, err_info}
       if (!result) {
-        console.error(this.conPrefix + "获取最终报价返回空");
+        console.error(conPrefix + "获取最终报价返回空");
         return;
       }
       const { endPrice, offerRule, err_msg, err_info } = result || {};
-      console.warn(this.conPrefix + "获取最终报价返回", endPrice);
+      console.warn(conPrefix + "获取最终报价返回", endPrice);
       if (!endPrice) {
         return { offerRule, err_msg, err_info };
       }
       const res = await this.submitOffer({ id: order.id, price: endPrice });
       return { res, offerRule };
     } catch (error) {
-      console.error(this.conPrefix + "单个报价异常", error);
+      console.error(conPrefix + "单个报价异常", error);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: "单个报价异常",
@@ -368,7 +369,7 @@ class OrderAutoOfferQueue {
   stop() {
     const { conPrefix } = this;
     this.isRunning = false;
-    console.warn(this.conPrefix + "主动停止订单自动报价队列");
+    console.warn(conPrefix + "主动停止订单自动报价队列");
     this.logList.push({
       opera_time: getCurrentFormattedDateTime(),
       des: "停止订单自动报价队列",
@@ -382,7 +383,7 @@ class OrderAutoOfferQueue {
         `订单处理记录：成功 ${handleSuccessOrderList.length} 个，失败 ${handleFailOrderList.length} 个`
     );
     console.warn(
-      this.conPrefix + "订单处理记录：成功-",
+      conPrefix + "订单处理记录：成功-",
       handleSuccessOrderList,
       " 失败-",
       handleFailOrderList
@@ -460,6 +461,7 @@ class OrderAutoOfferQueue {
   }
   // 获取报价记录
   async getOfferList() {
+    const { conPrefix } = this;
     try {
       const res = await svApi.queryOfferList({
         user_id: tokens.userInfo.user_id,
@@ -471,7 +473,7 @@ class OrderAutoOfferQueue {
       });
       return res.data.offerList || [];
     } catch (error) {
-      console.error(this.conPrefix + "获取历史报价记录异常", error);
+      console.error(conPrefix + "获取历史报价记录异常", error);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: "获取历史报价记录异常",

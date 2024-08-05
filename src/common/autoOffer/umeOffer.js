@@ -1,4 +1,4 @@
-// sfc报价逻辑
+// ume报价逻辑
 import {
   getCurrentFormattedDateTime,
   getCurrentDay,
@@ -411,8 +411,8 @@ class getUmeOfferPrice {
         return -1;
       }
       let { ticketMemberPrice, handlingMemberFee } = movieInfo;
-      let member_price =
-        (Number(ticketMemberPrice) + Number(handlingMemberFee)) / 100;
+      let member_price = Number(ticketMemberPrice) / 100;
+      // let member_price = (Number(ticketMemberPrice) + Number(handlingMemberFee)) / 100;
       console.log(conPrefix + "获取会员价", member_price);
       if (member_price > 0) {
         const cardRes = await svApi.queryCardList({
