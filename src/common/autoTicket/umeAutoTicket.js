@@ -2457,63 +2457,6 @@ class OrderAutoTicketQueue {
     }
   }
 
-  // 获取电影信息
-  async getMovieInfo(item) {
-    const { conPrefix, cityList } = this;
-    try {
-      // 1、获取影院列表拿到影院id
-      const { city_name, cinema_name, film_name, show_time } = item;
-      let city_id = cityList.find(
-        item => item.name.indexOf(city_name) !== -1
-      )?.id;
-      let params = {
-        city_id: city_id
-      };
-      console.log(conPrefix + "获取城市影院参数", params);
-      const res = await umeApi.getCinemaList(params);
-      console.log(conPrefix + "获取城市影院返回", res);
-      let cinemaList = res.data || [];
-      let targetCinema = this.getTargetCinema(cinema_name, cinemaList);
-      if (!targetCinema) {
-        console.error(conPrefix + "获取目标影院失败");
-        return;
-      }
-      // 2、获取影院放映信息拿到会员价
-      const moviePlayInfo = await this.getMoviePlayInfo(targetCinema);
-      // 3、匹配订单拿到会员价
-      const { movie_data } = moviePlayInfo;
-      let movieInfo = movie_data.find(
-        item =>
-          convertFullwidthToHalfwidth(item.movie_name) ===
-          convertFullwidthToHalfwidth(film_name)
-      );
-      if (!movieInfo) {
-        console.warn(
-          conPrefix + "影院放映信息匹配订单影片名称全字匹配失败",
-          movie_data,
-          film_name
-        );
-        this.setErrInfo("影院放映信息匹配订单影片名称全字匹配失败");
-        movieInfo = movie_data.find(
-          item =>
-            convertFullwidthToHalfwidth(item.movie_name) ===
-            convertFullwidthToHalfwidth(film_name)
-        );
-      }
-      if (movieInfo) {
-        let { shows } = movieInfo;
-        let showDay = show_time.split(" ")[0];
-        let showList = shows[showDay] || [];
-        let showTime = show_time.split(" ")[1].slice(0, 5);
-        let ticketInfo = showList.find(item => item.start_time === showTime);
-        return ticketInfo;
-      }
-    } catch (error) {
-      console.error(conPrefix + "获取当前场次电影信息异常", error);
-      this.setErrInfo("获取当前场次电影信息异常", error);
-    }
-  }
-
   // 获取优惠券列表
   async getQuanList(data) {
     const { conPrefix } = this;
@@ -2908,21 +2851,10 @@ class OrderAutoTicketQueue {
       };
     }
   }
-  // 获取城市列表
-  async getCityList() {
-    const { conPrefix } = this;
-    try {
-      let params = {};
-      console.log(conPrefix + "获取城市列表参数", params);
-      const res = await umeApi.getCityList(params);
-      console.log(conPrefix + "获取城市列表返回", res);
-      this.cityList = res.data.all_city || [];
-    } catch (error) {
-      console.error(conPrefix + "获取城市列表异常", error);
-      this.setErrInfo("获取城市列表异常", error);
-    }
-  }
+
 }
 // 生成出票队列实例
 const createTicketQueue = appFlag => new OrderAutoTicketQueue(appFlag);
+
+
 export default createTicketQueue;
