@@ -7,6 +7,7 @@ import {
   mockDelay, // 模拟延时
   logUpload, // 日志上传
   trial, // 试错重试
+  formatErrInfo, // 格式化错误信息
   getCinemaLoginInfoList,
   sendWxPusherMessage
 } from "@/utils/utils";
@@ -324,28 +325,7 @@ class OrderAutoTicketQueue {
         // 如果上个错误信息存在就不允许有新的错误信息
         if (this.errInfo) return;
         if (errInfo) {
-          if (errInfo instanceof Error) {
-            const cleanedError = {
-              message: errInfo.message,
-              stack: errInfo.stack,
-              name: errInfo.name
-            };
-            this.errInfo = JSON.stringify(
-              cleanedError,
-              (key, value) =>
-                typeof value === "function" || value instanceof Error
-                  ? undefined
-                  : value,
-              2
-            );
-          } else {
-            try {
-              this.errInfo = JSON.stringify(errInfo);
-            } catch (error) {
-              console.warn("错误信息转换异常", error);
-              this.errInfo = errInfo.toString();
-            }
-          }
+          this.errInfo = formatErrInfo(errInfo);
         }
       }
     } catch (error) {
@@ -1964,29 +1944,7 @@ class OrderAutoTicketQueue {
           des: `提交出票码异常，响应-${JSON.stringify(error)}，参数-${JSON.stringify(params)}`
         });
       } else {
-        let err_info;
-        if (error instanceof Error) {
-          const cleanedError = {
-            message: error.message,
-            stack: error.stack,
-            name: error.name
-          };
-          err_info = JSON.stringify(
-            cleanedError,
-            (key, value) =>
-              typeof value === "function" || value instanceof Error
-                ? undefined
-                : value,
-            2
-          );
-        } else {
-          try {
-            err_info = JSON.stringify(errInfo);
-          } catch (error) {
-            console.warn("错误信息转换异常", error);
-            err_info = errInfo.toString();
-          }
-        }
+        let err_info = formatErrInfo(error);
         svApi.updateTicketRecord({
           order_number,
           err_msg: "系统延迟后提交出票码异常",
@@ -2086,7 +2044,7 @@ class OrderAutoTicketQueue {
     }
   }
 
-  //
+  // 异步轮询获取取票码并提交
   async asyncFetchQrcodeSubmit({
     city_id,
     cinema_id,
@@ -2943,29 +2901,39 @@ const addOrderHandleRecored = async ({
 
     await svApi.addTicketRecord(serOrderInfo);
     if (serOrderInfo.card_id && serOrderInfo.order_status === "1") {
-      svApi.updateDayUsage({
+      updateCardDayUse({
         app_name: serOrderInfo.app_name,
-        card_id: serOrderInfo.card_id
+        card_id: serOrderInfo.card_id,
+        plat_name: serOrderInfo.plat_name,
+        order_number: serOrderInfo.order_number
       });
-      let log_list = [
-        {
-          opera_time: getCurrentFormattedDateTime(),
-          des: `订单用卡出票成功后更新当天使用量`,
-          level: "info"
-        }
-      ];
-      logUpload(
-        {
-          plat_name: serOrderInfo.plat_name,
-          app_name: serOrderInfo.app_name,
-          order_number: serOrderInfo.order_number,
-          type: 2
-        },
-        log_list
-      );
     }
   } catch (error) {
     console.error("添加订单处理记录异常", error);
   }
+};
+
+// 更新卡当天使用量
+const updateCardDayUse = ({ app_name, card_id, plat_name, order_number }) => {
+  svApi.updateDayUsage({
+    app_name: app_name,
+    card_id: card_id
+  });
+  let log_list = [
+    {
+      opera_time: getCurrentFormattedDateTime(),
+      des: `订单用卡出票成功后更新当天使用量`,
+      level: "info"
+    }
+  ];
+  logUpload(
+    {
+      plat_name: plat_name,
+      app_name: app_name,
+      order_number: order_number,
+      type: 2
+    },
+    log_list
+  );
 };
 export default createTicketQueue;
