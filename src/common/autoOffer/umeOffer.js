@@ -535,7 +535,7 @@ class getUmeOfferPrice {
         );
         if (!movieInfo) {
           this.logList.push({
-            opera_time: getCurrentTime(),
+            opera_time: getCurrentFormattedDateTime(),
             des: `获取目标影片信息失败`,
             info: {
               movie_data,
@@ -557,7 +557,7 @@ class getUmeOfferPrice {
       let targetDate = playDateList?.find(item => item.showDate === start_day);
       if (!targetDate) {
         this.logList.push({
-          opera_time: getCurrentTime(),
+          opera_time: getCurrentFormattedDateTime(),
           des: "匹配影片放映日期失败",
           info: {
             playDateList,
@@ -579,7 +579,7 @@ class getUmeOfferPrice {
       );
       if (!targetShow) {
         this.logList.push({
-          opera_time: getCurrentTime(),
+          opera_time: getCurrentFormattedDateTime(),
           des: "匹配影片放映场次失败",
           info: {
             showList,
