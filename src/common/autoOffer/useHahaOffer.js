@@ -74,11 +74,8 @@ class OrderAutoOfferQueue {
   }
 
   // 启动队列（fetchDelay获取订单列表间隔，processDelay处理订单间隔）
-  async start(platToken) {
+  async start() {
     const { conPrefix } = this;
-    if (platToken) {
-      tokens.setHahaPlatToken(platToken);
-    }
     console.log(conPrefix + "开始执行");
     // 设置队列为运行状态
     this.isRunning = true;

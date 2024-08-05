@@ -173,6 +173,31 @@ const editingRow = ref({});
 const appTokenObj = {};
 // 填充token及队列集合
 
+// 是否启动队列（该为false可进行测试用户）
+let isStartQueue = true;
+
+// 平台报价队列集合
+let platOfferQueueObj = {
+  lieren: lierenOfferQueue,
+  mangguo: lierenOfferQueue,
+  mayi: mayiOfferQueue,
+  yangcong: yangcongOfferQueue,
+  haha: hahaOfferQueue,
+  sheng: shengOfferQueue
+};
+
+window.offerQueueObj = platOfferQueueObj;
+
+// 设置平台token方法集合
+let setPlatFunObj = {
+  lieren: tokens.setLierenPlatToken,
+  mangguo: tokens.setMangguoPlatToken,
+  mayi: tokens.setMayiPlatToken,
+  yangcong: tokens.setYangcongPlatToken,
+  haha: tokens.setHahaPlatToken,
+  sheng: () => {}
+};
+
 // 一键启动
 const oneClickAutoOffer = () => {
   let loginInfoList = getCinemaLoginInfoList();
@@ -194,70 +219,15 @@ const oneClickAutoOffer = () => {
     .then(async () => {
       let isStart = true;
       tableDataStore.items.forEach(item => {
-        if (item.platName === "lieren") {
-          let platToken = displayItems.value.find(
-            item => item.platName === "lieren"
-          )?.platToken;
-          console.log("platToken", platToken, displayItems.value);
-          if (!platToken) {
-            isStart = false;
-          } else {
-            tableDataStore.toggleEnable(item.id);
-            lierenOfferQueue.start(platToken);
-          }
-        }
-        if (item.platName === "mangguo") {
-          let platToken = displayItems.value.find(
-            item => item.platName === "mangguo"
-          )?.platToken;
-          console.log("platToken", platToken, displayItems.value);
-          if (!platToken) {
-            isStart = false;
-          } else {
-            tableDataStore.toggleEnable(item.id);
-            mangguoOfferQueue.start(platToken);
-          }
-        }
-        if (item.platName === "mayi") {
-          let platToken = displayItems.value.find(
-            item => item.platName === "mayi"
-          )?.platToken;
-          console.log("platToken", platToken, displayItems.value);
-          if (!platToken) {
-            isStart = false;
-          } else {
-            tableDataStore.toggleEnable(item.id);
-            mayiOfferQueue.start(platToken);
-          }
-        }
-        if (item.platName === "yangcong") {
-          let platToken = displayItems.value.find(
-            item => item.platName === "yangcong"
-          )?.platToken;
-          console.log("platToken", platToken, displayItems.value);
-          if (!platToken) {
-            isStart = false;
-          } else {
-            tableDataStore.toggleEnable(item.id);
-            yangcongOfferQueue.start(platToken);
-          }
-        }
-        if (item.platName === "haha") {
-          let platToken = displayItems.value.find(
-            item => item.platName === "haha"
-          )?.platToken;
-          console.log("platToken", platToken, displayItems.value);
-          if (!platToken) {
-            isStart = false;
-          } else {
-            tableDataStore.toggleEnable(item.id);
-            hahaOfferQueue.start(platToken);
-          }
-        }
-
-        if (item.platName === "sheng") {
+        let platToken = displayItems.value.find(
+          itemA => itemA.platName === item.platName
+        )?.platToken;
+        if (!platToken && item.platName !== "sheng") {
+          isStart = false;
+        } else {
           tableDataStore.toggleEnable(item.id);
-          shengOfferQueue.start();
+          setPlatFunObj[item.platName](platToken);
+          isStartQueue && platOfferQueueObj[item.platName].start();
         }
       });
       if (isStart) {
@@ -296,31 +266,9 @@ const stopAutoOffer = () => {
 const singleStartOrStop = ({ id, platToken, platName }, flag) => {
   // 单个启动
   if (flag === 1) {
-    if (platName === "lieren" && platToken) {
-      tableDataStore.toggleEnable(id);
-      lierenOfferQueue.start(platToken);
-    }
-    if (platName === "mangguo" && platToken) {
-      tableDataStore.toggleEnable(id);
-      mangguoOfferQueue.start(platToken);
-    }
-    if (platName === "mayi" && platToken) {
-      tableDataStore.toggleEnable(id);
-      mayiOfferQueue.start(platToken);
-    }
-    if (platName === "yangcong" && platToken) {
-      tableDataStore.toggleEnable(id);
-      yangcongOfferQueue.start(platToken);
-    }
-    if (platName === "haha" && platToken) {
-      tableDataStore.toggleEnable(id);
-      hahaOfferQueue.start(platToken);
-    }
-
-    if (platName === "sheng") {
-      tableDataStore.toggleEnable(id);
-      shengOfferQueue.start();
-    }
+    tableDataStore.toggleEnable(id);
+    setPlatFunObj[platName](platToken);
+    isStartQueue && platOfferQueueObj[platName].start();
   } else {
     // 单个停止
     tableDataStore.toggleEnable(id);
@@ -341,9 +289,7 @@ const saveEdit = id => {
   if (id === editingRowId.value) {
     tableDataStore.saveEdit(editingRow.value);
     const { platToken, platName } = editingRow.value;
-    if (platName === "lieren") {
-      tokens.setLierenPlatToken(platToken);
-    }
+    platToken && setPlatFunObj[platName](platToken);
     editingRowId.value = null;
   }
 };
