@@ -181,8 +181,8 @@ class OrderAutoTicketQueue {
             film_name: "抓娃娃",
             lockseat: "B排11座",
             show_time: "2024-08-01 14:50:00",
-            cinema_group: 'ume一线',
-            cinema code: "11051901"
+            cinema_group: "ume一线",
+            cinema_code: "11051901"
           }
         ];
       }
@@ -906,7 +906,9 @@ class OrderAutoTicketQueue {
           return { transferParams };
         }
         // 获取目标影院
-        let targetCinema = cinemaList.find(item => item.cinemaCode === cinema_code);
+        let targetCinema = cinemaList.find(
+          item => item.cinemaCode === cinema_code
+        );
         if (!targetCinema) {
           console.error(conPrefix + "根据订单中的影院名称获取目标影院失败");
           this.setErrInfo("根据订单中的影院名称获取目标影院失败");
@@ -2851,10 +2853,8 @@ class OrderAutoTicketQueue {
       };
     }
   }
-
 }
 // 生成出票队列实例
 const createTicketQueue = appFlag => new OrderAutoTicketQueue(appFlag);
-
 
 export default createTicketQueue;
