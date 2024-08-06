@@ -126,7 +126,7 @@ import { ref, computed, watch } from "vue";
 import { ElMessageBox, ElMessage } from "element-plus";
 import svApi from "@/api/sv-api";
 import { useAppRuleListStore } from "@/store/appTicketRuleTable";
-import createTicketQueue from "@/common/autoTicket/sfcAutoTicket";
+import createTucketQueueFun from "@/common/autoTicket/comTicketHandle";
 import { APP_LIST } from "@/common/constant.js";
 import {
   getCinemaLoginInfoList,
@@ -218,7 +218,7 @@ const oneClickAutoOffer = () => {
       itemA => itemA.app_name === item && itemA.session_id
     );
     appTokenObj[item] = obj?.session_id || "";
-    appTicketQueueObj[item] = createTicketQueue(item);
+    appTicketQueueObj[item] = createTucketQueueFun(item);
   });
   window.ticketQueueObj = appTicketQueueObj;
   let noSetMemberPwdList = tableDataStore.items.filter(item => {
@@ -290,7 +290,7 @@ const singleStartOrStop = ({ id, appName }, flag) => {
     }
     const appTicketQueueObj = {};
     appTokenObj[appName] = appLoginInfo?.session_id || "";
-    appTicketQueueObj[appName] = createTicketQueue(appName);
+    appTicketQueueObj[appName] = createTucketQueueFun(appName);
     tableDataStore.toggleEnable(id);
     // 过滤清空当前影院本地缓存的待出票数据
     stayTicketList.removeStayTicketListByApp(appName);

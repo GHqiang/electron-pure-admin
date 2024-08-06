@@ -19,7 +19,6 @@ import mayiApi from "@/api/mayi-api";
 import yangcongApi from "@/api/yangcong-api";
 import hahaApi from "@/api/haha-api";
 import svApi from "@/api/sv-api";
-import { encode } from "@/utils/sfc-member-password";
 
 // 待出票数据
 import { useStayTicketList } from "@/store/stayTicketList";
@@ -41,9 +40,8 @@ import {
   APP_LIST
 } from "@/common/constant";
 import { APP_API_OBJ } from "@/common/index";
-import { error } from "console";
 
-let isTestOrder = false; //是否是测试订单
+let isTestOrder = true; //是否是测试订单
 // 创建一个订单自动出票队列类
 class OrderAutoTicketQueue {
   constructor(appFlag) {
@@ -193,22 +191,23 @@ class OrderAutoTicketQueue {
       if (isTestOrder) {
         sfcStayOfferlist = [
           {
-            id: 71546,
-            plat_name: "lieren",
+            id: 72939,
+            platName: "lieren",
             app_name: "ume",
             ticket_num: 2,
             rewards: "0",
-            order_number: "2024080521075844108",
-            supplier_end_price: 36,
-            order_id: "10741620",
-            tpp_price: "99.80",
-            city_name: "武汉",
-            cinema_addr: "青山区和平大道1278号武汉印象城3楼",
-            cinema_code: "42019471",
-            cinema_name: "UME影城（武汉青山店）",
-            hall_name: "4D厅（儿童需购票）",
-            film_name: "死侍与金刚狼",
-            show_time: "2024-08-06 16:20:00",
+            order_number: "2024080619281519354",
+            supplier_end_price: 40,
+            order_id: "7013650",
+            tpp_price: "43.89",
+            city_name: "宁波",
+            cinema_addr: "镇海区庄市大道1088号万科1902广场4楼",
+            cinema_code: "33047701",
+            cinema_name: "UME影城宁波镇海店（万科广场中国巨幕店）",
+            hall_name: "4号厅",
+            film_name: "神偷奶爸4",
+            show_time: "2024-08-08 14:20:00",
+            lockseat: "B排11座,B排10座",
             cinema_group: "ume二线"
           }
         ];
@@ -403,7 +402,7 @@ class OrderAutoTicketQueue {
     // 关闭自动转单只针对座位异常生效
     // if (isTestOrder || (isAutoTransfer !== "1" && errMsg === "锁定座位异常")) {
     if (isTestOrder || isAutoTransfer !== "1") {
-      console.warn("锁定座位异常关闭自动转单");
+      console.warn("自动转单处于关闭状态");
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: `自动转单处于关闭状态`,
@@ -749,34 +748,47 @@ class OrderAutoTicketQueue {
   // 一键买票逻辑
   async oneClickBuyTicket(item) {
     const { conPrefix, appFlag } = this;
+    console.log(conPrefix + "一键买票待下单信息", item);
+    let {
+      id: order_id,
+      order_number,
+      city_name,
+      cinema_name,
+      cinema_code,
+      hall_name,
+      film_name,
+      show_time,
+      lockseat,
+      ticket_num,
+      supplier_end_price,
+      rewards,
+      supplierCode,
+      platName,
+      otherParams
+    } = item;
+    // otherParams主要是为了换号出票时不用再走之前流程
+    let {
+      cinemaLinkId,
+      cinemaCode,
+      filmUniqueId,
+      scheduleId,
+      scheduleKey,
+      showDate,
+      showDateTime,
+      orderCode,
+      orderHeaderId,
+      lockOrderId,
+      total_price,
+      seat_ids,
+      ticketDetail,
+      offerRule,
+      city_id,
+      cinema_id,
+      show_id,
+      start_day,
+      start_time
+    } = otherParams || {};
     try {
-      console.log(conPrefix + "一键买票待下单信息", item);
-      let {
-        id: order_id,
-        order_number,
-        city_name,
-        cinema_name,
-        hall_name,
-        film_name,
-        show_time,
-        lockseat,
-        ticket_num,
-        supplier_end_price,
-        rewards,
-        supplierCode,
-        platName,
-        otherParams
-      } = item;
-      // otherParams主要是为了换号出票时不用再走之前流程
-      let {
-        offerRule,
-        city_id,
-        cinema_id,
-        show_id,
-        seat_ids,
-        start_day,
-        start_time
-      } = otherParams || {};
       console.log("this.currentParamsInx开始", this.currentParamsInx);
       if (this.currentParamsInx === 0) {
         const phone = this.currentParamsList[0].mobile;
@@ -799,7 +811,7 @@ class OrderAutoTicketQueue {
         // 测试专用
         if (isTestOrder) {
           // offerRule = { offer_type: "1", quan_value: "35" };
-          offerRule = { offer_type: "2", member_price: "29" };
+          offerRule = { offer_type: "2", member_price: "36" };
         }
         console.warn(
           conPrefix + "从该订单的报价记录获取到的报价规则",
@@ -895,7 +907,8 @@ class OrderAutoTicketQueue {
           return { transferParams };
         }
         // 4、获取目标影院放映列表
-        const { cinemaCode, cinemaLinkId } = targetCinema;
+        cinemaLinkId = targetCinema.cinemaLinkId;
+        cinemaCode = targetCinema.cinemaCode;
         const movieDataRes = await getMoviePlayInfo({
           cinemaCode,
           cinemaLinkId,
@@ -943,7 +956,7 @@ class OrderAutoTicketQueue {
           }
         }
         // 6、获取目标影片的放映日期
-        const { filmUniqueId } = movieInfo;
+        filmUniqueId = movieInfo.filmUniqueId;
         const moviePlayDataRes = await getMoviePlayDate({
           cinemaCode,
           cinemaLinkId,
@@ -979,15 +992,16 @@ class OrderAutoTicketQueue {
           const transferParams = await this.transferOrder(item);
           return { transferParams };
         }
+        showDate = targetDate.showDate;
         // 7、获取某个放映日期的场次列表
         const showListRes = await getMoviePlayTime({
           cinemaCode,
           cinemaLinkId,
           filmUniqueId,
-          showDate: targetDate.showDate,
+          showDate,
           appFlag
         });
-        const showList = showListRes?.showList || [];
+        const showList = showListRes?.moviePlayTime || [];
         if (!showList?.length) {
           this.setErrInfo("获取某个放映日期的场次列表异常", showListRes?.error);
           this.logList.push({
@@ -1019,21 +1033,21 @@ class OrderAutoTicketQueue {
           return { transferParams };
         }
         console.log(
-          conPrefix + "movieObj===>",
-          movieObj,
+          conPrefix + "targetShow===>",
+          targetShow,
           start_day,
-          start_time,
-          "targetShow===>",
-          targetShow
+          start_time
         );
-
+        showDateTime = targetShow.showDateTime;
         // 8、获取座位布局
-        const { scheduleId, scheduleKey } = targetShow;
+        scheduleId = targetShow.scheduleId;
+        scheduleKey = targetShow.scheduleKey;
         const seatListRes = await getSeatLayout({
           cinemaCode,
           cinemaLinkId,
           scheduleId,
           scheduleKey,
+          session_id: this.currentParamsList[this.currentParamsInx].session_id,
           appFlag
         });
         const seatList = seatListRes?.seatData || [];
@@ -1155,6 +1169,10 @@ class OrderAutoTicketQueue {
           });
         }
       }
+      ticketDetail = seat_ids.map(item => ({
+        seatCode: item,
+        buyerRemark: ""
+      }));
       // 4、锁定座位
       let params = {
         cinemaCode,
@@ -1162,12 +1180,9 @@ class OrderAutoTicketQueue {
         filmUniqueId,
         scheduleId,
         scheduleKey,
-        showDate: targetDate.showDate,
-        ticketDetail: seat_ids.map(item => ({
-          seatCode: item,
-          buyerRemark: ""
-        })),
-        showDateTime: targetShow.showDateTime,
+        showDate,
+        ticketDetail,
+        showDateTime,
         channelCode: "QD0000001",
         sysSourceCode: "YZ001",
         session_id: this.currentParamsList[this.currentParamsInx].session_id,
@@ -1191,7 +1206,7 @@ class OrderAutoTicketQueue {
           mayi: [6, 20],
           yangcong: [6, 20]
         };
-        lockRes = await this.trial(
+        lockRes = await trial(
           inx => this.lockSeatHandle(params, inx),
           delayConfig[platName][0],
           delayConfig[platName][1]
@@ -1213,155 +1228,41 @@ class OrderAutoTicketQueue {
           des: `首次锁定座位失败试错后锁定成功`
         });
       }
+      // 锁定座位时取消订单无需传订单号，只用传当前影院信息如：
+      // {"channelCode":"QD0000001","sysSourceCode":"YZ001","cinemaCode":"33047701","cinemaLinkId":"15950"}
       // 获取最优卡券组合
       const { orderInfo, orderPriceInfo } = lockRes;
-      const { orderCode, orderHeaderId, lockOrderId } = orderInfo;
-      const cardQuanres = await getOptimalCardQuanCompose({
+      orderCode = orderInfo.orderCode;
+      orderHeaderId = orderInfo.orderHeaderId;
+      lockOrderId = orderInfo.lockOrderId;
+      // total_price =
+      //   (orderPriceInfo?.scheduleInfo?.areaSettlePriceMin + 100) / 100;
+      const cardQuanListRes = await getOptimalCardQuanCompose({
         orderCode,
+        orderHeaderId,
+        lockOrderId,
         cinemaCode,
         cinemaLinkId,
-        orderHeaderId,
         scheduleId,
         scheduleKey,
         filmUniqueId,
         showDate,
         ticketDetail,
         showDateTime,
-        lockOrderId
-      });
-      // 5、使用优惠券或者会员卡
-      const { card_id, quan_code, profit } = await this.useQuanOrCard({
-        order_number,
-        city_name,
-        cinema_name,
-        hall_name,
-        city_id,
-        cinema_id,
-        show_id,
-        seat_ids,
-        ticket_num,
-        supplier_end_price,
-        rewards,
-        offerRule
-      });
-      if (!card_id && !quan_code) {
-        console.log("this.currentParamsInx", this.currentParamsInx);
-        console.log("this.currentParamsList", this.currentParamsList);
-        if (this.currentParamsInx === this.currentParamsList.length - 1) {
-          console.error(
-            conPrefix + "优惠券和会员卡都无法使用，单个订单直接出票结束",
-            "走转单逻辑"
-          );
-          this.setErrInfo("优惠券和会员卡都无法使用，单个订单直接出票结束");
-          this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
-            des: `优惠券和会员卡都无法使用，准备转单`
-          });
-          const transferParams = await this.transferOrder(item, {
-            city_id,
-            cinema_id,
-            show_id,
-            start_day,
-            start_time
-          });
-          return { offerRule, transferParams };
-        } else {
-          this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
-            des: `非最后一次用卡用券失败，走换号`
-          });
-          this.currentParamsInx++;
-          return await this.oneClickBuyTicket({
-            ...item,
-            otherParams: {
-              offerRule,
-              city_id,
-              cinema_id,
-              show_id,
-              seat_ids,
-              start_day,
-              start_time
-            }
-          });
-        }
-      }
-      this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
-        des: `使用优惠券或者会员卡成功`
-      });
-      // 6计算订单价格
-      let currentParams = this.currentParamsList[this.currentParamsInx];
-      const { session_id } = currentParams;
-      const priceRes = await priceCalculation({
-        city_id,
-        cinema_id,
-        show_id,
-        seat_ids,
-        card_id,
-        quan_code,
-        session_id,
         appFlag
       });
-      let priceInfo = priceRes?.price;
-      if (priceRes?.error) {
-        this.setErrInfo(priceRes?.errMsg, priceRes?.error);
+      if (cardQuanListRes?.error) {
+        console.error(
+          conPrefix + "获取最优卡券组合失败",
+          cardQuanListRes?.error
+        );
+        this.setErrInfo("获取最优卡券组合失败", cardQuanListRes?.error);
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: priceRes?.errMsg,
-          level: "error",
+          des: `获取最优卡券组合失败`,
           info: {
-            error: priceRes?.error
+            error: cardQuanListRes?.error
           }
-        });
-      }
-      if (!priceInfo) {
-        if (this.currentParamsInx === this.currentParamsList.length - 1) {
-          console.error(
-            conPrefix +
-              "使用优惠券或会员卡后计算订单价格失败，单个订单直接出票结束",
-            "走转单逻辑"
-          );
-          this.setErrInfo("使用优惠券或会员卡后计算订单价格失败");
-          this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
-            des: `使用优惠券或会员卡后计算订单价格失败，准备转单`
-          });
-          // 后续要记录失败列表（订单信息、失败原因、时间戳）
-          const transferParams = await this.transferOrder(item, {
-            city_id,
-            cinema_id,
-            show_id,
-            start_day,
-            start_time
-          });
-          return { offerRule, transferParams };
-        } else {
-          this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
-            des: `非最后一次创建订单前计算价格失败，走换号`
-          });
-          this.currentParamsInx++;
-          return await this.oneClickBuyTicket({
-            ...item,
-            otherParams: {
-              offerRule,
-              city_id,
-              cinema_id,
-              show_id,
-              seat_ids,
-              start_day,
-              start_time
-            }
-          });
-        }
-      }
-      let pay_money = Number(priceInfo.total_price); // 此处是为了将订单价格30.00转为30，将0.00转为0
-      console.log(conPrefix + "订单最后价格", pay_money, priceInfo);
-      if (offerRule.offer_type === "1" && pay_money !== 0) {
-        this.setErrInfo("用券计算订单价格后价格不为0，走转单");
-        this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
-          des: `用券计算订单价格后价格不为0，准备转单`
         });
         const transferParams = await this.transferOrder(item, {
           city_id,
@@ -1372,13 +1273,36 @@ class OrderAutoTicketQueue {
         });
         return { offerRule, transferParams };
       }
-      // else if (offerRule.offer_type !== "1") {
-      //   let real_member_price = offerRule.real_member_price;
-      //   if (pay_money > Number(real_member_price) * Number(ticket_num)) {
-      //     this.setErrInfo("用卡计算订单价格后价格大于真实会员价*票数，走转单", {
-      //       pay_money,
-      //       real_member_price,
-      //       ticket_num
+      let cardList = cardQuanListRes.cards;
+      let quanList = cardQuanListRes.coupons;
+      console.warn("获取最优卡券组合列表返回", cardList, quanList);
+      // // 5、使用优惠券或者会员卡
+      // const { card_id, quan_code, profit } = await this.useQuanOrCard({
+      //   order_number,
+      //   city_name,
+      //   cinema_name,
+      //   hall_name,
+      //   city_id,
+      //   cinema_id,
+      //   show_id,
+      //   seat_ids,
+      //   ticket_num,
+      //   supplier_end_price,
+      //   rewards,
+      //   offerRule
+      // });
+      // if (!card_id && !quan_code) {
+      //   console.log("this.currentParamsInx", this.currentParamsInx);
+      //   console.log("this.currentParamsList", this.currentParamsList);
+      //   if (this.currentParamsInx === this.currentParamsList.length - 1) {
+      //     console.error(
+      //       conPrefix + "优惠券和会员卡都无法使用，单个订单直接出票结束",
+      //       "走转单逻辑"
+      //     );
+      //     this.setErrInfo("优惠券和会员卡都无法使用，单个订单直接出票结束");
+      //     this.logList.push({
+      //       opera_time: getCurrentFormattedDateTime(),
+      //       des: `优惠券和会员卡都无法使用，准备转单`
       //     });
       //     const transferParams = await this.transferOrder(item, {
       //       city_id,
@@ -1388,31 +1312,170 @@ class OrderAutoTicketQueue {
       //       start_time
       //     });
       //     return { offerRule, transferParams };
+      //   } else {
+      //     this.logList.push({
+      //       opera_time: getCurrentFormattedDateTime(),
+      //       des: `非最后一次用卡用券失败，走换号`
+      //     });
+      //     this.currentParamsInx++;
+      //     return await this.oneClickBuyTicket({
+      //       ...item,
+      //       otherParams: {
+      //         offerRule,
+      //         city_id,
+      //         cinema_id,
+      //         show_id,
+      //         seat_ids,
+      //         start_day,
+      //         start_time
+      //       }
+      //     });
       //   }
       // }
-      if (isTestOrder) {
-        return { offerRule };
-      }
-      // 订单价格计算成功清除原先关于订单价格异常的错误信息
-      if (this.errMsg.includes("计算订单价格异常")) {
-        this.errMsg = "";
-        this.errInfo = "";
-      }
-      this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
-        des: `创建订单前计算订单价格成功`
-      });
+      // this.logList.push({
+      //   opera_time: getCurrentFormattedDateTime(),
+      //   des: `使用优惠券或者会员卡成功`
+      // });
+      // // 6计算订单价格
+      // let currentParams = this.currentParamsList[this.currentParamsInx];
+      // const { session_id } = currentParams;
+      // const priceRes = await priceCalculation({
+      //   city_id,
+      //   cinema_id,
+      //   show_id,
+      //   seat_ids,
+      //   card_id,
+      //   quan_code,
+      //   session_id,
+      //   appFlag
+      // });
+      // let priceInfo = priceRes?.price;
+      // if (priceRes?.error) {
+      //   this.setErrInfo(priceRes?.errMsg, priceRes?.error);
+      //   this.logList.push({
+      //     opera_time: getCurrentFormattedDateTime(),
+      //     des: priceRes?.errMsg,
+      //     level: "error",
+      //     info: {
+      //       error: priceRes?.error
+      //     }
+      //   });
+      // }
+      // if (!priceInfo) {
+      //   if (this.currentParamsInx === this.currentParamsList.length - 1) {
+      //     console.error(
+      //       conPrefix +
+      //         "使用优惠券或会员卡后计算订单价格失败，单个订单直接出票结束",
+      //       "走转单逻辑"
+      //     );
+      //     this.setErrInfo("使用优惠券或会员卡后计算订单价格失败");
+      //     this.logList.push({
+      //       opera_time: getCurrentFormattedDateTime(),
+      //       des: `使用优惠券或会员卡后计算订单价格失败，准备转单`
+      //     });
+      //     // 后续要记录失败列表（订单信息、失败原因、时间戳）
+      //     const transferParams = await this.transferOrder(item, {
+      //       city_id,
+      //       cinema_id,
+      //       show_id,
+      //       start_day,
+      //       start_time
+      //     });
+      //     return { offerRule, transferParams };
+      //   } else {
+      //     this.logList.push({
+      //       opera_time: getCurrentFormattedDateTime(),
+      //       des: `非最后一次创建订单前计算价格失败，走换号`
+      //     });
+      //     this.currentParamsInx++;
+      //     return await this.oneClickBuyTicket({
+      //       ...item,
+      //       otherParams: {
+      //         offerRule,
+      //         city_id,
+      //         cinema_id,
+      //         show_id,
+      //         seat_ids,
+      //         start_day,
+      //         start_time
+      //       }
+      //     });
+      //   }
+      // }
+      // let pay_money = Number(priceInfo.total_price); // 此处是为了将订单价格30.00转为30，将0.00转为0
+      // console.log(conPrefix + "订单最后价格", pay_money, priceInfo);
+      // if (offerRule.offer_type === "1" && pay_money !== 0) {
+      //   this.setErrInfo("用券计算订单价格后价格不为0，走转单");
+      //   this.logList.push({
+      //     opera_time: getCurrentFormattedDateTime(),
+      //     des: `用券计算订单价格后价格不为0，准备转单`
+      //   });
+      //   const transferParams = await this.transferOrder(item, {
+      //     city_id,
+      //     cinema_id,
+      //     show_id,
+      //     start_day,
+      //     start_time
+      //   });
+      //   return { offerRule, transferParams };
+      // }
+      // // else if (offerRule.offer_type !== "1") {
+      // //   let real_member_price = offerRule.real_member_price;
+      // //   if (pay_money > Number(real_member_price) * Number(ticket_num)) {
+      // //     this.setErrInfo("用卡计算订单价格后价格大于真实会员价*票数，走转单", {
+      // //       pay_money,
+      // //       real_member_price,
+      // //       ticket_num
+      // //     });
+      // //     const transferParams = await this.transferOrder(item, {
+      // //       city_id,
+      // //       cinema_id,
+      // //       show_id,
+      // //       start_day,
+      // //       start_time
+      // //     });
+      // //     return { offerRule, transferParams };
+      // //   }
+      // // }
+      // if (isTestOrder) {
+      //   return { offerRule };
+      // }
+      // // 订单价格计算成功清除原先关于订单价格异常的错误信息
+      // if (this.errMsg.includes("计算订单价格异常")) {
+      //   this.errMsg = "";
+      //   this.errInfo = "";
+      // }
+      // this.logList.push({
+      //   opera_time: getCurrentFormattedDateTime(),
+      //   des: `创建订单前计算订单价格成功`
+      // });
       // 7、创建订单
+      let card_id = cardList[0]?.cardNo || "";
+      // let card_id = "";
+      const { ticketLowestPrice, areaSettlePriceMin, ticketStandardPrice } =
+        orderPriceInfo?.scheduleInfo || {};
+      if (card_id) {
+        // 会员价格这计算目前从在问题，需重新梳理
+        total_price =
+          ((Number(areaSettlePriceMin) + Number(ticketStandardPrice)) *
+            ticket_num) /
+            100 -
+          (Number(areaSettlePriceMin) - Number(ticketLowestPrice)) / 100;
+      } else {
+        total_price =
+          ((Number(areaSettlePriceMin) + Number(ticketStandardPrice)) *
+            ticket_num) /
+          100;
+      }
       const order_num = await this.createOrder({
-        city_id,
-        cinema_id,
-        show_id,
-        seat_ids,
+        cinemaCode,
+        cinemaLinkId,
+        orderHeaderId,
+        coupon: [],
         card_id,
-        coupon: quan_code,
-        seat_info: lockseat.replaceAll(" ", ",").replaceAll("座", "号"),
-        pay_money
+        total_price
       });
+      return;
       if (!order_num) {
         if (this.currentParamsInx === this.currentParamsList.length - 1) {
           console.error(
@@ -1726,86 +1789,67 @@ class OrderAutoTicketQueue {
   // 创建订单
   async createOrder(data) {
     const { conPrefix } = this;
-    let {
-      city_id,
-      cinema_id,
-      show_id,
-      seat_ids,
-      seat_info,
-      pay_money,
+    const {
+      cinemaCode,
+      cinemaLinkId,
+      orderHeaderId,
+      coupon,
       card_id,
-      coupon
-    } = data || {};
+      total_price
+    } = data;
     try {
-      let currentParams = this.currentParamsList[this.currentParamsInx];
-      const { mobile, member_pwd, session_id } = currentParams;
       let params = {
-        city_id,
-        cinema_id,
-        show_id,
-        seat_ids,
-        seat_info, // 座位描述，如：7排11号,7排10号
-        phone: mobile || "", // 用户手机号
-        additional_goods_info: "", // 附加商品信息
-        companion_info: "", // 携伴信息
-        goods_info: "", // 商品信息
-        option_goods_info: "", // 可选的额外商品信息
-        pay_money, // 支付金额
-        promo_id: "0", // 促销活动ID，这里为0，表示没有参与特定的促销活动
-        update_time: getCurrentFormattedDateTime(),
-        session_id
+        orderType: "ticket_order",
+        cinemaCode,
+        cinemaLinkId,
+        sysSourceCode: "YZ001",
+        timestamp: +new Date(),
+        ticket: {
+          orderHeaderId: orderHeaderId,
+          activityId: null,
+          coupon: coupon || [],
+          totalPrice: total_price
+        },
+        product: null,
+        mainPushCard: null,
+        cardId: card_id || "",
+        // ticketMobile: JSON.parse(localStorage.getItem("userInfo")).phone, // 登录手机号
+        ticketMobile: "13073792313", // 登录手机号
+        inviteCode: "",
+        fulfillPlace: "影院柜台",
+        fulfillTime: "",
+        fulfillType: "",
+        channelCode: "QD0000001"
       };
       let order_num;
-      if (card_id) {
-        params.card_id = card_id; // 会员卡id
-        params.card_password = encode(""); // 会员卡密码
-        try {
-          console.log(conPrefix + "创建订单参数", params);
-          const res = await this.sfcApi.createOrder(params);
-          console.log(conPrefix + "创建订单返回", res);
-          order_num = res.data?.order_num || "";
-        } catch (error) {
-          await mockDelay(1);
-          console.warn(conPrefix + "会员卡第一次创建订单失败", error);
-          console.warn(
-            conPrefix + "调整会员卡密码参数再次发起创建订单请求",
-            params
-          );
-          params.card_password = encode(member_pwd); // 会员卡密码
-          const res = await this.sfcApi.createOrder(params);
-          console.log(conPrefix + "创建订单返回", res);
-          order_num = res.data?.order_num || "";
-        }
-      } else if (coupon) {
-        params.coupon = coupon; // 优惠券券码
-        console.log(conPrefix + "创建订单参数", params);
-        const res = await this.sfcApi.createOrder(params);
-        console.log(conPrefix + "创建订单返回", res);
-        order_num = res.data?.order_num || "";
-      }
+      console.log(conPrefix + "创建订单参数", params);
+      const res = await this.sfcApi.createOrder(params);
+      console.log(conPrefix + "创建订单返回", res);
+      order_num = res.data?.order_num || "";
       return order_num;
     } catch (error) {
       console.error(conPrefix + "创建订单异常", error);
       this.setErrInfo("创建订单异常", error);
-      if (error?.msg === "请求接口超时,请重试") {
+      if (error?.msg === "系统繁忙！") {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: `创建订单请求接口超时，延迟2秒后重试`
+          des: `创建订单请求系统繁忙！，延迟10秒后重试`
         });
-        await mockDelay(2);
+        await mockDelay(10);
         try {
-          const order_num = await this.createOrder(data);
-          if (order_num) {
-            this.logList.push({
-              opera_time: getCurrentFormattedDateTime(),
-              des: `创建订单请求接口超时，延迟2秒后重试成功`
-            });
-            return order_num;
-          }
+          // 这会死循环
+          // const order_num = await this.createOrder(data);
+          // if (order_num) {
+          //   this.logList.push({
+          //     opera_time: getCurrentFormattedDateTime(),
+          //     des: `创建订单请求系统繁忙！，延迟10秒后重试成功`
+          //   });
+          //   return order_num;
+          // }
         } catch (err) {
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
-            des: `创建订单请求接口超时，延迟2秒后重试失败：${JSON.stringify(err)}`
+            des: `创建订单请求系统繁忙！，延迟10秒后重试失败：${JSON.stringify(err)}`
           });
         }
       }
@@ -2801,30 +2845,86 @@ const getMoviePlayTime = async ({
 
 // 获取座位布局
 const getSeatLayout = async ({
-  city_id,
-  cinema_id,
-  show_id,
+  cinemaCode,
+  cinemaLinkId,
+  scheduleId,
+  scheduleKey,
   session_id,
   appFlag
 }) => {
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
   try {
     let params = {
-      city_id: city_id,
-      cinema_id: cinema_id,
-      show_id: show_id,
+      cinemaCode,
+      cinemaLinkId,
+      scheduleId,
+      scheduleKey,
       session_id,
-      width: "240"
+      channelCode: "QD0000001",
+      sysSourceCode: "YZ001"
     };
     console.log(conPrefix + "获取座位布局参数", params);
     const res = await APP_API_OBJ[appFlag].getMoviePlaySeat(params);
     console.log(conPrefix + "获取座位布局返回", res);
-    let seatData = res.data?.play_data?.seat_data || [];
+    let seatData = res.data?.seatList || [];
     return {
       seatData
     };
   } catch (error) {
     console.error(conPrefix + "获取座位布局异常", error);
+    return {
+      error
+    };
+  }
+};
+
+// 获取最优卡券列表组合
+const getOptimalCardQuanCompose = async ({
+  orderCode,
+  cinemaCode,
+  cinemaLinkId,
+  orderHeaderId,
+  scheduleId,
+  scheduleKey,
+  filmUniqueId,
+  showDate,
+  ticketDetail,
+  showDateTime,
+  lockOrderId,
+  session_id,
+  appFlag
+}) => {
+  let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
+  try {
+    let params = {
+      orderCode,
+      cinemaCode,
+      cinemaLinkId,
+      sysSourceCode: "YZ001",
+      orderHeaderId,
+      timestamp: +new Date(),
+      productInfo: null,
+      orderType: "ticket_order",
+      scheduleId,
+      scheduleKey,
+      filmUniqueId,
+      showDate,
+      ticketDetail,
+      showDateTime,
+      channelCode: "QD0000001",
+      lockFlag: lockOrderId,
+      session_id
+    };
+    console.log(conPrefix + "获取最优卡券列表组合参数", params);
+    const res = await APP_API_OBJ[appFlag].getCardQuanList(params);
+    console.log(conPrefix + "获取最优卡券列表组合返回", res);
+    let ticketOptimalComb = res.data?.ticketOptimalComb || {};
+    return {
+      cards: ticketOptimalComb.cards || [],
+      coupons: ticketOptimalComb.coupons || []
+    };
+  } catch (error) {
+    console.error(conPrefix + "获取最优卡券列表组合返回异常", error);
     return {
       error
     };
