@@ -54,6 +54,46 @@ const getCardQuanList = params =>
 const priceCalculation = params =>
   axios.post("/sfc/v2/price/calculate", params);
 
+// 获取零食商品信息
+const findProductInfoByCinema = params =>
+  axios.post(
+    "/ume/api/storeServer/productInfoService/findProductInfoByCinema",
+    params
+  );
+// 获取微信菜单信息
+const findAppMenuInfoV2 = params =>
+  axios.post(
+    "/ume/api/storeServer/wechatMenuInfoService/findAppMenuInfoV2",
+    params
+  );
+
+// 获取订单微信消息模版
+const getTemplateIdList = params =>
+  axios.post(
+    "/ume/api/storeServer/wechatMiniAppMessageService/getTemplateIdList",
+    params
+  );
+
+// 获取配送服务相关的影厅列表
+const findDeliveryGetHallList = params =>
+  axios.post(
+    "/ume/api/storeServer/storeOrderExpressDeliveryService/findDeliveryGetHallList",
+    params
+  );
+
+// 获取配送商品的日期信息
+const findDeliveryGoodsDateInfo = params =>
+  axios.post(
+    "/ume/api/storeServer/storeOrderExpressDeliveryService/findDeliveryGoodsDateInfo",
+    params
+  );
+
+// 获取会员的历史观影记录
+const findStoreMemberMoviegoersByMemberId = params =>
+  axios.post(
+    "/ume/api/storeServer/storeOrderMoviegoersService/findStoreMemberMoviegoersByMemberId",
+    params
+  );
 // 创建订单
 const createOrder = params =>
   axios.post(
@@ -61,6 +101,18 @@ const createOrder = params =>
     params
   );
 
+// 获取订单时间
+const getOrderTime = params =>
+  axios.post(
+    "/ume/api/storeServer/storeTkOrderHeaderService/getOrderTime",
+    params
+  );
+// 获取订单列表
+const findStoreTkOrderInfoApp = params =>
+  axios.post(
+    "/ume/api/storeServer/storeTkOrderHeaderService/findStoreTkOrderInfoApp",
+    params
+  );
 // 电影票购买
 const buyTicket = params => axios.get("/sfc/ticket/ng-buy", { params });
 
@@ -85,9 +137,17 @@ export default {
   lockSeat,
   getCardQuanList,
   priceCalculation,
+  findProductInfoByCinema,
+  findAppMenuInfoV2,
+  getTemplateIdList,
+  findStoreMemberMoviegoersByMemberId,
+  findDeliveryGetHallList,
+  findDeliveryGoodsDateInfo,
   createOrder,
+  getOrderTime,
   payOrder,
   getOrderList,
+  findStoreTkOrderInfoApp,
   buyTicket,
   bandQuan
 };

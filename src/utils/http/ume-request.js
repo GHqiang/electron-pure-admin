@@ -15,7 +15,7 @@ const IS_DEV = NODE_ENV === "development";
 instance.interceptors.request.use(
   config => {
     if (config.url.indexOf("/ume/") !== -1) {
-      config.headers["Content-Type"] = "multipart/form-data";
+      config.headers["Content-Type"] === "application/x-www-form-urlencoded;";
       // 猎人平台接口添加token
       let loginInfoList = window.localStorage.getItem("loginInfoList");
       if (loginInfoList) {
@@ -36,15 +36,22 @@ instance.interceptors.request.use(
         let params = config.data;
         if (params.session_id) {
           token = params.session_id;
-          delete config.data.session_id;
+          delete params.session_id;
         }
-        const formData = new FormData();
-        // 添加 Certificate 到 FormData 中
-        formData.append("params", JSON.stringify(config.data));
-        config.data = formData;
+        let str = Object.keys(params).reduce((prev, item, inx) => {
+          // console.log("item", item, prev, params);
+          let value = params[item];
+          let valueStr =
+            typeof value === "object"
+              ? encodeURIComponent(JSON.stringify(value))
+              : value;
+          return prev + `${inx > 0 ? "&" : ""}${item}=${valueStr}`;
+        }, "");
+        config.data = str;
       }
       if (token) {
         config.headers.Certificate = `${token}`;
+        config.headers.tenantCode = `cinema_umedy`;
       }
       if (!IS_DEV) {
         // 截取掉/sfc/
@@ -66,7 +73,9 @@ instance.interceptors.response.use(
     // 对响应进行统一处理
     const data = response.data;
     // let whitelistSp = ['/sp/order', '/sp/unlock']
-    let whitelistSp = [];
+    let whitelistSp = [
+      "api/storeServer/storeOrderExpressDeliveryService/findDeliveryGoodsDateInfo"
+    ];
 
     let isErrorByLieRen =
       response.config.url.indexOf("/ume/") !== -1 && data.status !== "S";

@@ -41,7 +41,7 @@ import {
 } from "@/common/constant";
 import { APP_API_OBJ } from "@/common/index";
 
-let isTestOrder = true; //是否是测试订单
+let isTestOrder = false; //是否是测试订单
 // 创建一个订单自动出票队列类
 class OrderAutoTicketQueue {
   constructor(appFlag) {
@@ -194,7 +194,7 @@ class OrderAutoTicketQueue {
             id: 72939,
             platName: "lieren",
             app_name: "ume",
-            ticket_num: 2,
+            ticket_num: 1,
             rewards: "0",
             order_number: "2024080619281519354",
             supplier_end_price: 40,
@@ -207,7 +207,7 @@ class OrderAutoTicketQueue {
             hall_name: "4号厅",
             film_name: "神偷奶爸4",
             show_time: "2024-08-08 14:20:00",
-            lockseat: "B排11座,B排10座",
+            lockseat: "A排11座",
             cinema_group: "ume二线"
           }
         ];
@@ -761,6 +761,7 @@ class OrderAutoTicketQueue {
       lockseat,
       ticket_num,
       supplier_end_price,
+      member_price,
       rewards,
       supplierCode,
       platName,
@@ -811,8 +812,9 @@ class OrderAutoTicketQueue {
         // 测试专用
         if (isTestOrder) {
           // offerRule = { offer_type: "1", quan_value: "35" };
-          offerRule = { offer_type: "2", member_price: "36" };
+          offerRule = { offer_type: "2", member_price: "32" };
         }
+        member_price = offerRule.member_price;
         console.warn(
           conPrefix + "从该订单的报价记录获取到的报价规则",
           offerRule
@@ -1228,13 +1230,24 @@ class OrderAutoTicketQueue {
           des: `首次锁定座位失败试错后锁定成功`
         });
       }
-      // 锁定座位时取消订单无需传订单号，只用传当前影院信息如：
+      // 锁定座位时取消订单无需传订单号（）取消完需要重新锁定座位，只用传当前影院信息如：
       // {"channelCode":"QD0000001","sysSourceCode":"YZ001","cinemaCode":"33047701","cinemaLinkId":"15950"}
+      // await this.sfcApi.getOrderTime({
+      //   params: {
+      //     keepLoading: true,
+      //     channelCode: "QD0000001",
+      //     sysSourceCode: "YZ001",
+      //     cinemaCode,
+      //     cinemaLinkId
+      //   }
+      // });
       // 获取最优卡券组合
       const { orderInfo, orderPriceInfo } = lockRes;
       orderCode = orderInfo.orderCode;
       orderHeaderId = orderInfo.orderHeaderId;
       lockOrderId = orderInfo.lockOrderId;
+      // 这个时间戳需要和创建订单提交接口传参一致
+      let timestamp = +new Date();
       // total_price =
       //   (orderPriceInfo?.scheduleInfo?.areaSettlePriceMin + 100) / 100;
       const cardQuanListRes = await getOptimalCardQuanCompose({
@@ -1249,6 +1262,7 @@ class OrderAutoTicketQueue {
         showDate,
         ticketDetail,
         showDateTime,
+        timestamp,
         appFlag
       });
       if (cardQuanListRes?.error) {
@@ -1451,16 +1465,20 @@ class OrderAutoTicketQueue {
       // });
       // 7、创建订单
       let card_id = cardList[0]?.cardNo || "";
-      // let card_id = "";
+      let profit = 0;
       const { ticketLowestPrice, areaSettlePriceMin, ticketStandardPrice } =
         orderPriceInfo?.scheduleInfo || {};
       if (card_id) {
         // 会员价格这计算目前从在问题，需重新梳理
         total_price =
-          ((Number(areaSettlePriceMin) + Number(ticketStandardPrice)) *
+          ((Number(ticketLowestPrice) + Number(ticketStandardPrice)) *
             ticket_num) /
-            100 -
-          (Number(areaSettlePriceMin) - Number(ticketLowestPrice)) / 100;
+          100;
+        profit =
+          supplier_end_price -
+          member_price -
+          (Number(supplier_end_price) * 100) / 10000;
+        profit = Number(profit) * Number(ticket_num);
       } else {
         total_price =
           ((Number(areaSettlePriceMin) + Number(ticketStandardPrice)) *
@@ -1473,10 +1491,20 @@ class OrderAutoTicketQueue {
         orderHeaderId,
         coupon: [],
         card_id,
-        total_price
+        total_price,
+        timestamp
       });
-      return;
       if (!order_num) {
+        // 订单列表
+        // await this.sfcApi.findStoreTkOrderInfoApp({
+        //   params: {
+        //     orderType: "ticket_order",
+        //     isDetail: "Y",
+        //     channelCode: "QD0000001"
+        //   },
+        //   pageIndex: 1,
+        //   pageRow: 5
+        // });
         if (this.currentParamsInx === this.currentParamsList.length - 1) {
           console.error(
             conPrefix + "创建订单失败，单个订单直接出票结束",
@@ -1516,10 +1544,19 @@ class OrderAutoTicketQueue {
           });
         }
       }
+      console.warn("创建订单成功", order_num, profit, card_id, offerRule);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: `创建订单成功`
       });
+      return {
+        profit,
+        qrcode: "",
+        submitRes: null,
+        quan_code: "",
+        card_id,
+        offerRule
+      };
       // 8、购买电影票
       const buyTicketRes = await buyTicket({
         city_id,
@@ -1617,18 +1654,20 @@ class OrderAutoTicketQueue {
     const { conPrefix } = this;
     try {
       let params = {
-        orderType: "ticket_order",
-        scheduleId,
-        scheduleKey,
-        filmUniqueId,
-        showDate,
-        ticketDetail,
-        showDateTime,
-        channelCode: "QD0000001",
-        sysSourceCode: "YZ001",
-        cinemaCode,
-        cinemaLinkId,
-        session_id
+        params: {
+          orderType: "ticket_order",
+          scheduleId,
+          scheduleKey,
+          filmUniqueId,
+          showDate,
+          ticketDetail,
+          showDateTime,
+          channelCode: "QD0000001",
+          sysSourceCode: "YZ001",
+          cinemaCode,
+          cinemaLinkId,
+          session_id
+        }
       };
       console.log(conPrefix + "锁定座位参数", params);
       const res = await APP_API_OBJ[appFlag].lockSeat(params);
@@ -1795,64 +1834,67 @@ class OrderAutoTicketQueue {
       orderHeaderId,
       coupon,
       card_id,
-      total_price
+      total_price,
+      timestamp
     } = data;
     try {
       let params = {
-        orderType: "ticket_order",
-        cinemaCode,
-        cinemaLinkId,
-        sysSourceCode: "YZ001",
-        timestamp: +new Date(),
-        ticket: {
-          orderHeaderId: orderHeaderId,
-          activityId: null,
-          coupon: coupon || [],
-          totalPrice: total_price
-        },
-        product: null,
-        mainPushCard: null,
-        cardId: card_id || "",
-        // ticketMobile: JSON.parse(localStorage.getItem("userInfo")).phone, // 登录手机号
-        ticketMobile: "13073792313", // 登录手机号
-        inviteCode: "",
-        fulfillPlace: "影院柜台",
-        fulfillTime: "",
-        fulfillType: "",
-        channelCode: "QD0000001"
+        params: {
+          orderType: "ticket_order",
+          cinemaCode,
+          cinemaLinkId,
+          sysSourceCode: "YZ001",
+          timestamp,
+          ticket: {
+            orderHeaderId: "" + orderHeaderId,
+            activityId: null,
+            coupon: coupon || [],
+            totalPrice: total_price
+          },
+          product: null,
+          mainPushCard: null,
+          cardId: card_id || "",
+          // ticketMobile: JSON.parse(localStorage.getItem("userInfo")).phone, // 登录手机号
+          ticketMobile: "13073792313", // 登录手机号
+          inviteCode: "",
+          fulfillPlace: "影院柜台",
+          fulfillTime: "",
+          fulfillType: "",
+          channelCode: "QD0000001"
+        }
       };
       let order_num;
       console.log(conPrefix + "创建订单参数", params);
       const res = await this.sfcApi.createOrder(params);
       console.log(conPrefix + "创建订单返回", res);
-      order_num = res.data?.order_num || "";
+      order_num = res.data?.payOrderCode || "";
       return order_num;
     } catch (error) {
       console.error(conPrefix + "创建订单异常", error);
       this.setErrInfo("创建订单异常", error);
-      if (error?.msg === "系统繁忙！") {
-        this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
-          des: `创建订单请求系统繁忙！，延迟10秒后重试`
-        });
-        await mockDelay(10);
-        try {
-          // 这会死循环
-          // const order_num = await this.createOrder(data);
-          // if (order_num) {
-          //   this.logList.push({
-          //     opera_time: getCurrentFormattedDateTime(),
-          //     des: `创建订单请求系统繁忙！，延迟10秒后重试成功`
-          //   });
-          //   return order_num;
-          // }
-        } catch (err) {
-          this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
-            des: `创建订单请求系统繁忙！，延迟10秒后重试失败：${JSON.stringify(err)}`
-          });
-        }
-      }
+      // if (error?.msg === "系统繁忙！") {
+      //   this.logList.push({
+      //     opera_time: getCurrentFormattedDateTime(),
+      //     des: `创建订单请求系统繁忙！，延迟10秒后重试`
+      //   });
+      //   await mockDelay(10);
+      //   try {
+      //     // 这会死循环
+      //     // const order_num = await this.createOrder(data);
+      //     // if (order_num) {
+      //     //   this.logList.push({
+      //     //     opera_time: getCurrentFormattedDateTime(),
+      //     //     des: `创建订单请求系统繁忙！，延迟10秒后重试成功`
+      //     //   });
+      //     //   return order_num;
+      //     // }
+      //   } catch (err) {
+      //     this.logList.push({
+      //       opera_time: getCurrentFormattedDateTime(),
+      //       des: `创建订单请求系统繁忙！，延迟10秒后重试失败：${JSON.stringify(err)}`
+      //     });
+      //   }
+      // }
     }
   }
 
@@ -2708,35 +2750,17 @@ class OrderAutoTicketQueue {
 // 生成出票队列实例
 const createTicketQueue = appFlag => new OrderAutoTicketQueue(appFlag);
 
-// 获取城市列表
-const getCityList = async ({ appFlag }) => {
-  let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
-  try {
-    let params = {};
-    console.log(conPrefix + "获取城市列表参数", params);
-    const res = await APP_API_OBJ[appFlag].getCityList(params);
-    console.log(conPrefix + "获取城市列表返回", res);
-    let cityList = res.data?.all_city || [];
-    return {
-      cityList
-    };
-  } catch (error) {
-    console.error(conPrefix + "获取城市列表异常", error);
-    return {
-      error
-    };
-  }
-};
-
 // 获取城市影院列表
 const getCityCinemaList = async ({ appFlag }) => {
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
   try {
     let params = {
-      channelCode: "QD0000001",
-      sysSourceCode: "YZ001",
-      cinemaCode: "32012801",
-      cinemaLinkId: "15946"
+      params: {
+        channelCode: "QD0000001",
+        sysSourceCode: "YZ001",
+        cinemaCode: "32012801",
+        cinemaLinkId: "15946"
+      }
     };
     console.log(conPrefix + "获取城市影院列表参数", params);
     const res = await APP_API_OBJ[appFlag].getCinemaList(params);
@@ -2758,10 +2782,12 @@ const getMoviePlayInfo = async ({ cinemaCode, cinemaLinkId, appFlag }) => {
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
   try {
     let params = {
-      channelCode: "QD0000001",
-      sysSourceCode: "YZ001",
-      cinemaCode,
-      cinemaLinkId
+      params: {
+        channelCode: "QD0000001",
+        sysSourceCode: "YZ001",
+        cinemaCode,
+        cinemaLinkId
+      }
     };
     console.log(conPrefix + "获取影院放映列表参数", params);
     const res = await APP_API_OBJ[appFlag].getMoviePlayInfo(params);
@@ -2790,12 +2816,14 @@ const getMoviePlayDate = async ({
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
   try {
     let params = {
-      cinemaCode: cinemaCode,
-      filmUniqueId: filmUniqueId,
-      keepLoading: true,
-      channelCode: "QD0000001",
-      sysSourceCode: "YZ001",
-      cinemaLinkId: cinemaLinkId
+      params: {
+        cinemaCode: cinemaCode,
+        filmUniqueId: filmUniqueId,
+        keepLoading: true,
+        channelCode: "QD0000001",
+        sysSourceCode: "YZ001",
+        cinemaLinkId: cinemaLinkId
+      }
     };
     console.log(conPrefix + "获取电影放映日期参数", params);
     const res = await APP_API_OBJ[appFlag].getMoviePlayDate(params);
@@ -2822,12 +2850,14 @@ const getMoviePlayTime = async ({
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
   try {
     let params = {
-      cinemaCode: cinemaCode,
-      filmUniqueId: filmUniqueId,
-      showDate: showDate,
-      channelCode: "QD0000001",
-      sysSourceCode: "YZ001",
-      cinemaLinkId: cinemaLinkId
+      params: {
+        cinemaCode: cinemaCode,
+        filmUniqueId: filmUniqueId,
+        showDate: showDate,
+        channelCode: "QD0000001",
+        sysSourceCode: "YZ001",
+        cinemaLinkId: cinemaLinkId
+      }
     };
     console.log(conPrefix + "获取电影放映场次参数", params);
     const res = await APP_API_OBJ[appFlag].getMoviePlayTime(params);
@@ -2855,13 +2885,15 @@ const getSeatLayout = async ({
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
   try {
     let params = {
-      cinemaCode,
-      cinemaLinkId,
-      scheduleId,
-      scheduleKey,
-      session_id,
-      channelCode: "QD0000001",
-      sysSourceCode: "YZ001"
+      params: {
+        cinemaCode,
+        cinemaLinkId,
+        scheduleId,
+        scheduleKey,
+        session_id,
+        channelCode: "QD0000001",
+        sysSourceCode: "YZ001"
+      }
     };
     console.log(conPrefix + "获取座位布局参数", params);
     const res = await APP_API_OBJ[appFlag].getMoviePlaySeat(params);
@@ -2891,29 +2923,32 @@ const getOptimalCardQuanCompose = async ({
   ticketDetail,
   showDateTime,
   lockOrderId,
+  timestamp,
   session_id,
   appFlag
 }) => {
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
   try {
     let params = {
-      orderCode,
-      cinemaCode,
-      cinemaLinkId,
-      sysSourceCode: "YZ001",
-      orderHeaderId,
-      timestamp: +new Date(),
-      productInfo: null,
-      orderType: "ticket_order",
-      scheduleId,
-      scheduleKey,
-      filmUniqueId,
-      showDate,
-      ticketDetail,
-      showDateTime,
-      channelCode: "QD0000001",
-      lockFlag: lockOrderId,
-      session_id
+      params: {
+        orderCode,
+        cinemaCode,
+        cinemaLinkId,
+        sysSourceCode: "YZ001",
+        orderHeaderId,
+        timestamp,
+        productInfo: null,
+        orderType: "ticket_order",
+        scheduleId,
+        scheduleKey,
+        filmUniqueId,
+        showDate,
+        ticketDetail,
+        showDateTime,
+        channelCode: "QD0000001",
+        lockFlag: lockOrderId,
+        session_id
+      }
     };
     console.log(conPrefix + "获取最优卡券列表组合参数", params);
     const res = await APP_API_OBJ[appFlag].getCardQuanList(params);
