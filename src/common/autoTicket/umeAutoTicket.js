@@ -359,7 +359,11 @@ class OrderAutoTicketQueue {
       // 先解锁座位再转单，负责转出去座位被占平台会处罚
       // 3、获取座位布局
       if (unlockSeatInfo) {
-        const isPass = await cannelOneOrder({ ...unlockSeatInfo }, 1);
+        const { cinemaCode, cinemaLinkId, orderHeaderId } = unlockSeatInfo;
+        const isPass = await cannelOneOrder(
+          { cinemaCode, cinemaLinkId, orderHeaderId, appFlag },
+          1
+        );
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: `转单前释放座位${isPass ? "成功" : "失败"}`,
@@ -1114,11 +1118,9 @@ class OrderAutoTicketQueue {
           }
         });
         const transferParams = await this.transferOrder(item, {
-          city_id,
-          cinema_id,
-          show_id,
-          start_day,
-          start_time
+          cinemaCode,
+          cinemaLinkId,
+          orderHeaderId
         });
         return { offerRule, transferParams };
       }
@@ -1179,11 +1181,9 @@ class OrderAutoTicketQueue {
         // });
         // 后续要记录失败列表（订单信息、失败原因、时间戳）
         const transferParams = await this.transferOrder(item, {
-          city_id,
-          cinema_id,
-          show_id,
-          start_day,
-          start_time
+          cinemaCode,
+          cinemaLinkId,
+          orderHeaderId
         });
         return { offerRule, transferParams };
       }
@@ -1228,11 +1228,9 @@ class OrderAutoTicketQueue {
         });
         // 后续要记录失败列表（订单信息、失败原因、时间戳）
         const transferParams = await this.transferOrder(item, {
-          city_id,
-          cinema_id,
-          show_id,
-          start_day,
-          start_time
+          cinemaCode,
+          cinemaLinkId,
+          orderHeaderId
         });
         return { offerRule, transferParams };
       }
