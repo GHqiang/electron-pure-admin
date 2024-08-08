@@ -146,7 +146,7 @@ class OrderAutoOfferQueue {
           order_number: tradeno
         };
       });
-      console.warn(conPrefix + "转换后的订单列表", sfcStayOfferlist);
+      // console.warn(conPrefix + "转换后的订单列表", sfcStayOfferlist);
       sfcStayOfferlist = sfcStayOfferlist
         .filter(item => getCinemaFlag(item))
         .map(item => {

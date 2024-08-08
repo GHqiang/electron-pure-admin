@@ -114,6 +114,7 @@ class OrderAutoOfferQueue {
         .map(item => {
           return {
             ...item,
+            plat_name: 'lieren',
             appName: getCinemaFlag(item)
           };
         });
@@ -400,9 +401,9 @@ class OrderAutoOfferQueue {
         time: 1710125678
       };
       let list = res?.data || [];
-      if (isTestOrder) {
-        list = mockRes?.data || [];
-      }
+      // if (isTestOrder) {
+      //   list = mockRes?.data || [];
+      // }
       // console.log(conPrefix + "获取待报价列表返回", list);
       return list;
     } catch (error) {

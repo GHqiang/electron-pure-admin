@@ -938,7 +938,7 @@ const judgeHandle = (item, app_name, offerList) => {
 // 报价规则匹配
 const offerRuleMatch = order => {
   try {
-    console.warn("匹配报价规则开始");
+    console.warn("匹配报价规则开始", order);
     const {
       city_name,
       cinema_name,
@@ -951,9 +951,9 @@ const offerRuleMatch = order => {
       app_name //该字段主要是为了方便测试
     } = order;
     let shadowLineName = appName || app_name;
-    console.log("报价订单影线", shadowLineName);
+    console.log("报价订单影线", shadowLineName, plat_name);
 
-    let appOfferRuleList = widnow.localStorage.getItem("offerRuleList");
+    let appOfferRuleList = window.localStorage.getItem("offerRuleList");
     if (appOfferRuleList) {
       appOfferRuleList = JSON.parse(appOfferRuleList);
       appOfferRuleList = appOfferRuleList
