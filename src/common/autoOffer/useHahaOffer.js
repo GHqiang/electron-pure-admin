@@ -99,14 +99,16 @@ class OrderAutoOfferQueue {
       const { getInterval, handleInterval } = platQueueRule[0];
       let fetchDelay = getInterval;
       let processDelay = handleInterval;
+      this.logList = [];
       let orders = await this.fetchOrders(fetchDelay);
       logUpload(
         {
           plat_name: "haha",
           type: 1
         },
-        this.logList
+        this.logList.slice()
       );
+      this.logList = [];
       if (orders.length) {
         console.warn(conPrefix + "新的待报价订单列表", orders);
       }
