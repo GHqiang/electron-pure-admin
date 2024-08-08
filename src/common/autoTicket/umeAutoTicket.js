@@ -1479,6 +1479,7 @@ class OrderAutoTicketQueue {
           member_price -
           (Number(supplier_end_price) * 100) / 10000;
         profit = Number(profit) * Number(ticket_num);
+        profit = Number(profit).toFixed(2);
       } else {
         total_price =
           ((Number(areaSettlePriceMin) + Number(ticketStandardPrice)) *

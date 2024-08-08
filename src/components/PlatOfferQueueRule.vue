@@ -179,7 +179,7 @@ let isStartQueue = true;
 // 平台报价队列集合
 let platOfferQueueObj = {
   lieren: lierenOfferQueue,
-  mangguo: lierenOfferQueue,
+  mangguo: mangguoOfferQueue,
   mayi: mayiOfferQueue,
   yangcong: yangcongOfferQueue,
   haha: hahaOfferQueue,
