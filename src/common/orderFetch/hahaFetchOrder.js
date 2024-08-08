@@ -147,6 +147,7 @@ class OrderAutoFetchQueue {
         // );
       }
       if (!sfcStayOfferlist?.length) return;
+      console.warn(conPrefix + "待出票列表新订单", stayList);
       addNewOrder(sfcStayOfferlist);
     } catch (error) {
       console.error(conPrefix + "获取订单列表异常", error);
@@ -198,7 +199,7 @@ async function orderFetch() {
     // console.log(conPrefix + "获取哈哈待出票订单列表参数", params);
     const res = await hahaApi.stayTicketingList(params);
     let list = res?.data || [];
-    console.log(conPrefix + "获取哈哈待出票列表返回", list);
+    // console.log(conPrefix + "获取哈哈待出票列表返回", list);
     return list;
   } catch (error) {
     console.error(conPrefix + "获取哈哈待出票列表异常", error);

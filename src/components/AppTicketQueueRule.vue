@@ -136,9 +136,8 @@ import { useStayTicketList } from "@/store/stayTicketList";
 const stayTicketList = useStayTicketList();
 const tableDataStore = useAppRuleListStore();
 
-const displayItems = computed(() =>
-  tableDataStore.items.filter(item => APP_LIST[item.appName])
-);
+const displayItems = computed(() => tableDataStore.items);
+// tableDataStore.items.filter(item => APP_LIST[item.appName])
 
 // 是否显示一键启动
 const isActiveOneClickStart = computed(() => {

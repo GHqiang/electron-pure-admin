@@ -90,16 +90,17 @@ class OrderAutoFetchQueue {
               itemA.app_name === item.app_name
           )
       );
-      console.warn(conPrefix + "猎人待出票列表从本地缓存过滤后", stayList);
+      // console.warn(conPrefix + "猎人待出票列表从本地缓存过滤后", stayList);
       if (stayList?.length) {
         const offerList = await getOfferList();
         const ticketList = await getTicketList();
         stayList = stayList.filter(item =>
           judgeHandle(item, item.appName, offerList, ticketList)
         );
-        console.warn(conPrefix + "猎人待出票列表从远端过滤后", stayList);
+        // console.warn(conPrefix + "猎人待出票列表从远端过滤后", stayList);
       }
       if (!stayList?.length) return;
+      console.warn(conPrefix + "待出票列表新订单", stayList);
       addNewOrder(stayList);
     } catch (error) {
       console.error(conPrefix + "获取订单列表异常", error);

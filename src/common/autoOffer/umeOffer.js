@@ -384,12 +384,14 @@ class getUmeOfferPrice {
     try {
       let { cinemaCode, cinemaLinkId, scheduleId, scheduleKey } = data || {};
       let params = {
-        cinemaCode,
-        cinemaLinkId,
-        scheduleId,
-        scheduleKey,
-        channelCode: "QD0000001",
-        sysSourceCode: "YZ001"
+        params: {
+          cinemaCode,
+          cinemaLinkId,
+          scheduleId,
+          scheduleKey,
+          channelCode: "QD0000001",
+          sysSourceCode: "YZ001"
+        }
       };
       console.log(conPrefix + "获取座位布局参数", params);
       const res = await this.appApi.getMoviePlaySeat(params);
@@ -623,10 +625,12 @@ class getUmeOfferPrice {
     try {
       let { cinemaCode, cinemaLinkId } = data || {};
       let params = {
-        channelCode: "QD0000001",
-        sysSourceCode: "YZ001",
-        cinemaCode,
-        cinemaLinkId
+        params: {
+          channelCode: "QD0000001",
+          sysSourceCode: "YZ001",
+          cinemaCode,
+          cinemaLinkId
+        }
       };
       console.log(conPrefix + "获取影院放映列表参数", params);
       const res = await this.appApi.getMoviePlayInfo(params);
@@ -653,12 +657,14 @@ class getUmeOfferPrice {
     try {
       let { cinemaCode, cinemaLinkId, filmUniqueId } = data || {};
       let params = {
-        cinemaCode: cinemaCode,
-        filmUniqueId: filmUniqueId,
-        keepLoading: true,
-        channelCode: "QD0000001",
-        sysSourceCode: "YZ001",
-        cinemaLinkId: cinemaLinkId
+        params: {
+          cinemaCode: cinemaCode,
+          filmUniqueId: filmUniqueId,
+          keepLoading: true,
+          channelCode: "QD0000001",
+          sysSourceCode: "YZ001",
+          cinemaLinkId: cinemaLinkId
+        }
       };
       console.log(conPrefix + "获取电影放映日期参数", params);
       const res = await this.appApi.getMoviePlayDate(params);
@@ -683,12 +689,14 @@ class getUmeOfferPrice {
     try {
       let { cinemaCode, cinemaLinkId, filmUniqueId, showDate } = data || {};
       let params = {
-        cinemaCode: cinemaCode,
-        filmUniqueId: filmUniqueId,
-        showDate: showDate,
-        channelCode: "QD0000001",
-        sysSourceCode: "YZ001",
-        cinemaLinkId: cinemaLinkId
+        params: {
+          cinemaCode: cinemaCode,
+          filmUniqueId: filmUniqueId,
+          showDate: showDate,
+          channelCode: "QD0000001",
+          sysSourceCode: "YZ001",
+          cinemaLinkId: cinemaLinkId
+        }
       };
       console.log(conPrefix + "获取电影放映场次参数", params);
       const res = await this.appApi.getMoviePlayTime(params);
@@ -712,10 +720,12 @@ class getUmeOfferPrice {
     const { conPrefix } = this;
     try {
       let params = {
-        channelCode: "QD0000001",
-        sysSourceCode: "YZ001",
-        cinemaCode: "32012801",
-        cinemaLinkId: "15946"
+        params: {
+          channelCode: "QD0000001",
+          sysSourceCode: "YZ001",
+          cinemaCode: "32012801",
+          cinemaLinkId: "15946"
+        }
       };
       console.log(conPrefix + "获取城市影院列表参数", params);
       const res = await this.appApi.getCinemaList(params);

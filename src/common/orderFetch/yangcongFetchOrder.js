@@ -142,6 +142,7 @@ class OrderAutoFetchQueue {
         // );
       }
       if (!sfcStayOfferlist?.length) return;
+      console.warn(conPrefix + "待出票列表新订单", stayList);
       addNewOrder(sfcStayOfferlist);
     } catch (error) {
       console.error(conPrefix + "获取订单列表异常", error);

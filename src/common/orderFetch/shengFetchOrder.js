@@ -154,9 +154,10 @@ class OrderAutoFetchQueue {
         sfcStayOfferlist = sfcStayOfferlist.filter(item =>
           judgeHandle(item, item.appName, offerList, ticketList)
         );
-        console.warn(conPrefix + "省待出票列表从远端过滤后", sfcStayOfferlist);
+        // console.warn(conPrefix + "省待出票列表从远端过滤后", sfcStayOfferlist);
       }
       if (!sfcStayOfferlist?.length) return;
+      console.warn(conPrefix + "待出票列表新订单", stayList);
       addNewOrder(sfcStayOfferlist);
     } catch (error) {
       console.error(conPrefix + "获取订单列表异常", error);
