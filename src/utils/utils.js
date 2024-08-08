@@ -936,7 +936,7 @@ const judgeHandle = (item, app_name, offerList) => {
 };
 
 // 报价规则匹配
-const offerRuleMatch = (order, appOfferRuleList) => {
+const offerRuleMatch = order => {
   try {
     console.warn("匹配报价规则开始");
     const {
@@ -946,12 +946,42 @@ const offerRuleMatch = (order, appOfferRuleList) => {
       film_name,
       show_time,
       ticket_num,
+      plat_name,
       appName,
       app_name //该字段主要是为了方便测试
     } = order;
     let shadowLineName = appName || app_name;
-
     console.log("报价订单影线", shadowLineName);
+
+    let appOfferRuleList = widnow.localStorage.getItem("offerRuleList");
+    if (appOfferRuleList) {
+      appOfferRuleList = JSON.parse(appOfferRuleList);
+      appOfferRuleList = appOfferRuleList
+        .filter(item =>
+          item.platOfferList?.length
+            ? item.platOfferList.map(item => item.platName).includes(plat_name)
+            : item.orderForm.split(",").includes(plat_name)
+        )
+        .map(itemA => {
+          let offerAmount = itemA.offerAmount || "";
+          let addAmount = itemA.addAmount || "";
+          return {
+            ...itemA,
+            offerAmount:
+              itemA.offerType === "1"
+                ? itemA.platOfferList?.find(item => item.platName === plat_name)
+                    ?.value || offerAmount
+                : itemA.offerType === "3"
+                  ? offerAmount
+                  : "",
+            addAmount:
+              itemA.offerType === "2"
+                ? itemA.platOfferList?.find(item => item.platName === plat_name)
+                    ?.value || addAmount
+                : ""
+          };
+        });
+    }
     // 1、获取启用的规则列表（只有满足规则才报价）
     let useRuleList = appOfferRuleList.filter(item => item.status === "1");
     console.log("启用的规则列表", useRuleList);

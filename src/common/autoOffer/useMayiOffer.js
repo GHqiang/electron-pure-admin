@@ -26,39 +26,7 @@ const platOfferRuleList = computed(() =>
   platTableDataStore.items.filter(item => item.platName === "mayi")
 );
 
-// app报价规则列表 使用computed确保items响应式
-import { useDataTableStore } from "@/store/offerRule";
-const dataTableStore = useDataTableStore();
-const appOfferRuleList = computed(() =>
-  dataTableStore.items
-    .filter(item =>
-      item.platOfferList?.length
-        ? item.platOfferList.map(item => item.platName).includes("mayi")
-        : item.orderForm.split(",").includes("mayi")
-    )
-    .map(itemA => {
-      let offerAmount = itemA.offerAmount || "";
-      let addAmount = itemA.addAmount || "";
-      return {
-        ...itemA,
-        offerAmount:
-          itemA.offerType === "1"
-            ? itemA.platOfferList?.find(item => item.platName === "mayi")
-                ?.value || offerAmount
-            : itemA.offerType === "3"
-              ? offerAmount
-              : "",
-        addAmount:
-          itemA.offerType === "2"
-            ? itemA.platOfferList?.find(item => item.platName === "mayi")
-                ?.value || addAmount
-            : ""
-      };
-    })
-);
-
 // console.log("队列执行规则", getOrginValue(platOfferRuleList.value));
-// console.log("自动报价规则", getOrginValue(appOfferRuleList.value));
 
 let isTestOrder = false; //是否是测试订单
 // 创建一个订单自动报价队列类
@@ -379,8 +347,7 @@ class OrderAutoOfferQueue {
       });
       const result = await offerExample.getEndOfferPrice({
         order,
-        offerList,
-        appOfferRuleList: getOrginValue(appOfferRuleList.value)
+        offerList
       });
       // result: {endPrice, offerRule} | {offerRule, err_msg, err_info} | {err_msg, err_info}
       if (!result) {

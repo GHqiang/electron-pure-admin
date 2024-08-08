@@ -22,7 +22,7 @@ class getUmeOfferPrice {
   }
 
   // 获取最终报价信息（唯一暴漏给外包用的方法）
-  async getEndOfferPrice({ order, offerList, appOfferRuleList }) {
+  async getEndOfferPrice({ order, offerList }) {
     const { conPrefix, platName, appFlag } = this;
     try {
       let { id, supplier_max_price, rewards } = order || {};
@@ -33,7 +33,7 @@ class getUmeOfferPrice {
         };
       }
       // 获取匹配到的最终报价规则
-      let offerRule = await this.getEndMatchOfferRule(order, appOfferRuleList);
+      let offerRule = await this.getEndMatchOfferRule(order);
       if (!offerRule) {
         const errInfoObj = this.logList
           .filter(item => item.level === "error")
@@ -144,18 +144,17 @@ class getUmeOfferPrice {
   }
 
   // 获取最终匹配到的报价规则
-  async getEndMatchOfferRule(order, appOfferRuleList) {
+  async getEndMatchOfferRule(order) {
     const { conPrefix } = this;
     try {
-      const matchRuleList = offerRuleMatch(order, appOfferRuleList);
+      const matchRuleList = offerRuleMatch(order);
       if (!matchRuleList.length) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: "报价规则匹配后为空",
           level: "error",
           info: {
-            order,
-            appOfferRuleList
+            order
           }
         });
         return;
