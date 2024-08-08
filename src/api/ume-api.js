@@ -113,6 +113,13 @@ const findStoreTkOrderInfoApp = params =>
     "/ume/api/storeServer/storeTkOrderHeaderService/findStoreTkOrderInfoApp",
     params
   );
+
+// 取消订单
+const cannelOneOrder = params =>
+  axios.post(
+    "/ume/api/storeServer/StoreReturnOrderService/cannelOneOrder",
+    params
+  );
 // 电影票购买
 const buyTicket = params => axios.get("/sfc/ticket/ng-buy", { params });
 
@@ -144,6 +151,7 @@ export default {
   findDeliveryGetHallList,
   findDeliveryGoodsDateInfo,
   createOrder,
+  cannelOneOrder,
   getOrderTime,
   payOrder,
   getOrderList,

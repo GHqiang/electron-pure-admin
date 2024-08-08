@@ -27,17 +27,8 @@ instance.interceptors.request.use(
       let token = obj?.session_id || "";
       // console.log("ume-token", token);
       if (config.method === "get") {
-        let params = config.params;
-        if (params.session_id) {
-          token = params.session_id;
-          delete config.params.session_id;
-        }
       } else {
         let params = config.data;
-        if (params.session_id) {
-          token = params.session_id;
-          delete params.session_id;
-        }
         let str = Object.keys(params).reduce((prev, item, inx) => {
           // console.log("item", item, prev, params);
           let value = params[item];
