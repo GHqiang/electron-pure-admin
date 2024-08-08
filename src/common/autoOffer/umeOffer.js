@@ -468,6 +468,7 @@ class getUmeOfferPrice {
         member_price = discount
           ? (Number(member_price) * discount) / 100
           : Number(member_price);
+        member_price = member_price + handlingMemberFee / 100;
         return {
           real_member_price,
           member_price
