@@ -1625,7 +1625,8 @@ class OrderAutoTicketQueue {
       seat_info,
       pay_money,
       card_id,
-      coupon
+      coupon,
+      isTimeoutRetry = 1 // 默认超时重试
     } = data || {};
     try {
       let currentParams = this.currentParamsList[this.currentParamsInx];
@@ -1676,16 +1677,22 @@ class OrderAutoTicketQueue {
       }
       return order_num;
     } catch (error) {
-      console.error(conPrefix + "创建订单异常", error);
+      console.error(
+        conPrefix + `创建订单异常:${JSON.stringify({ card_id, coupon })}`,
+        error
+      );
       this.setErrInfo("创建订单异常", error);
-      if (error?.msg === "请求接口超时,请重试") {
+      if (error?.msg === "请求接口超时,请重试" && isTimeoutRetry === 1) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: `创建订单请求接口超时，延迟2秒后重试`
         });
         await mockDelay(2);
         try {
-          const order_num = await this.createOrder(data);
+          const order_num = await this.createOrder({
+            ...data,
+            isTimeoutRetry: 0
+          });
           if (order_num) {
             this.logList.push({
               opera_time: getCurrentFormattedDateTime(),

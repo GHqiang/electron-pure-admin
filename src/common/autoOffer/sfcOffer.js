@@ -204,7 +204,7 @@ class getSfcOfferPrice {
     const { conPrefix } = this;
     try {
       const matchRuleList = offerRuleMatch(order);
-      if (!matchRuleList.length) {
+      if (!matchRuleList?.length) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: "报价规则匹配后为空",
