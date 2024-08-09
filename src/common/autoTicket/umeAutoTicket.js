@@ -1580,7 +1580,8 @@ class OrderAutoTicketQueue {
       console.log(conPrefix + "支付订单参数", params);
       const res = await this.umeApi.getPayResult(params);
       console.log(conPrefix + "支付订单返回", res);
-      let qrcode = res.data?.ticketCode?.split(",").join("|") || "";
+      let list = res.data || [];
+      let qrcode = list[0]?.ticketCode?.split(",").join("|") || "";
       if (qrcode) {
         if (inx) {
           this.logList.push({

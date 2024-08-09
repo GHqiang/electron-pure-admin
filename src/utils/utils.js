@@ -601,6 +601,7 @@ const sendWxPusherMessage = async ({
     userInfo = JSON.parse(userInfo);
   }
   let content = `<p>
+  用户：${userInfo.name}; <br/>
   平台：${platName}; <br/>单号：${order_number}; <br/>
   城市：${city_name}; <br/>影院：${cinema_name}; <br/>
   片名：${film_name}; <br/>座位：${lockseat}; <br/>
