@@ -312,8 +312,8 @@ class OrderAutoOfferQueue {
   // 提交报价
   async submitOffer({ id, price }) {
     const { conPrefix } = this;
+    let params = { id, price };
     try {
-      let params = { id, price };
       console.log(conPrefix + "提交报价参数", params);
       if (isTestOrder) {
         this.logList.push({
@@ -333,7 +333,7 @@ class OrderAutoOfferQueue {
         opera_time: getCurrentFormattedDateTime(),
         des: "提交报价异常",
         level: "error",
-        info: { error }
+        info: { error, params }
       });
     }
   }
