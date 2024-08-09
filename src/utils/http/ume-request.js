@@ -70,9 +70,7 @@ const createAxios = ({ appName, timeout = 20 }) => {
       // 对响应进行统一处理
       const data = response.data;
       // let whitelistSp = ['/sp/order', '/sp/unlock']
-      let whitelistSp = [
-        "api/storeServer/storeOrderExpressDeliveryService/findDeliveryGoodsDateInfo"
-      ];
+      let whitelistSp = [];
 
       let isErrorByLieRen =
         response.config.url.indexOf(`/${appName}/`) !== -1 &&

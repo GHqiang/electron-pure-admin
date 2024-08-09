@@ -1160,16 +1160,6 @@ class OrderAutoTicketQueue {
         timestamp
       });
       if (!order_num) {
-        // 订单列表
-        // await this.sfcApi.findStoreTkOrderInfoApp({
-        //   params: {
-        //     orderType: "ticket_order",
-        //     isDetail: "Y",
-        //     channelCode: "QD0000001"
-        //   },
-        //   pageIndex: 1,
-        //   pageRow: 5
-        // });
         console.error(
           conPrefix + "创建订单失败，单个订单直接出票结束",
           "走转单逻辑"
@@ -1192,20 +1182,12 @@ class OrderAutoTicketQueue {
         opera_time: getCurrentFormattedDateTime(),
         des: `创建订单成功`
       });
-      return {
-        profit,
-        qrcode: "",
-        submitRes: null,
-        quan_code: "",
-        card_id,
-        offerRule
-      };
       // 8、购买电影票
       const buyTicketRes = await buyTicket({
-        city_id,
-        cinema_id,
-        order_num,
-        pay_money,
+        cinemaCode,
+        cinemaLinkId,
+        card_id,
+        orderHeaderId,
         appFlag
       });
       const buyRes = buyTicketRes?.buyRes;
@@ -1240,9 +1222,7 @@ class OrderAutoTicketQueue {
       });
       // 最后处理：获取支付结果上传取票码
       const lastRes = await this.lastHandle({
-        city_id,
-        cinema_id,
-        order_num,
+        orderHeaderId,
         order_id,
         app_name: appFlag,
         card_id,
@@ -1467,7 +1447,8 @@ class OrderAutoTicketQueue {
       coupon,
       card_id,
       total_price,
-      timestamp
+      timestamp,
+      isTimeoutRetry = 1 // 默认超时重试
     } = data;
     try {
       let params = {
@@ -1504,46 +1485,50 @@ class OrderAutoTicketQueue {
     } catch (error) {
       console.error(conPrefix + "创建订单异常", error);
       this.setErrInfo("创建订单异常", error);
-      // if (error?.msg === "系统繁忙！") {
-      //   this.logList.push({
-      //     opera_time: getCurrentFormattedDateTime(),
-      //     des: `创建订单请求系统繁忙！，延迟10秒后重试`
-      //   });
-      //   await mockDelay(10);
-      //   try {
-      //     // 这会死循环
-      //     // const order_num = await this.createOrder(data);
-      //     // if (order_num) {
-      //     //   this.logList.push({
-      //     //     opera_time: getCurrentFormattedDateTime(),
-      //     //     des: `创建订单请求系统繁忙！，延迟10秒后重试成功`
-      //     //   });
-      //     //   return order_num;
-      //     // }
-      //   } catch (err) {
-      //     this.logList.push({
-      //       opera_time: getCurrentFormattedDateTime(),
-      //       des: `创建订单请求系统繁忙！，延迟10秒后重试失败：${JSON.stringify(err)}`
-      //     });
-      //   }
-      // }
+      if (error?.msg?.includes("超时") && isTimeoutRetry === 1) {
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: `创建订单接口超时，延迟2秒后重试`
+        });
+        await mockDelay(2);
+        try {
+          const order_num = await this.createOrder({
+            ...data,
+            isTimeoutRetry: 0
+          });
+          if (order_num) {
+            this.logList.push({
+              opera_time: getCurrentFormattedDateTime(),
+              des: `创建订单请求接口超时，延迟2秒后重试成功`
+            });
+            return order_num;
+          }
+        } catch (err) {
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: `创建订单请求接口超时，延迟2秒后重试失败：${JSON.stringify(err)}`
+          });
+        }
+      }
     }
   }
 
   // 获取购票信息
-  async payOrder(data) {
+  async getPayResult(data) {
     const { conPrefix } = this;
-    let { city_id, cinema_id, order_num, inx } = data || {};
+    let { orderHeaderId, inx = 1 } = data || {};
     try {
       let params = {
-        city_id,
-        cinema_id,
-        order_num, // 订单号
-        order_type: "ticket", // 订单类型
-        order_type_num: 1 // 订单子类型数量，可能是指购买的该类型票的数量
+        params: {
+          orderType: "ticket_order",
+          isDetail: "Y",
+          orderHeaderId: orderHeaderId,
+          keepLoading: true,
+          channelCode: "QD0000001"
+        }
       };
       console.log(conPrefix + "支付订单参数", params);
-      const res = await this.sfcApi.payOrder(params);
+      const res = await this.sfcApi.getPayResult(params);
       console.log(conPrefix + "支付订单返回", res);
       let qrcode = res.data.qrcode || "";
       if (qrcode) {
@@ -1565,20 +1550,23 @@ class OrderAutoTicketQueue {
     } catch (error) {
       console.error(conPrefix + "支付订单异常", error);
       this.setErrInfo("获取订单支付结果异常", error);
-      let params = {
-        cinema_id,
-        city_id,
-        order_status: "0",
-        page: "1",
-        width: "240"
-      };
       try {
-        const res = await this.sfcApi.getOrderList(params);
-        let list = res.data?.order_data || [];
+        const res = await this.sfcApi.findStoreTkOrderInfoApp({
+          params: {
+            orderType: "ticket_order",
+            isDetail: "Y",
+            channelCode: "QD0000001"
+          },
+          pageIndex: 1,
+          pageRow: 5
+        });
+        let list = res.data || [];
         if (list.length) {
-          let targetObj = list.find(item => item.order_num === order_num);
+          let targetObj = list.find(
+            item => item.orderHeaderId == orderHeaderId
+          );
           if (targetObj) {
-            let qrcode = targetObj.ticket_code?.split(",").join("|");
+            let qrcode = targetObj.ticketCode?.split(",").join("|");
             if (qrcode) {
               this.logList.push({
                 opera_time: getCurrentFormattedDateTime(),
@@ -1782,9 +1770,7 @@ class OrderAutoTicketQueue {
   }
 
   async lastHandle({
-    city_id,
-    cinema_id,
-    order_num,
+    orderHeaderId,
     order_id,
     app_name,
     card_id,
@@ -1799,10 +1785,8 @@ class OrderAutoTicketQueue {
       let qrcode;
       try {
         // 9、获取订单结果
-        qrcode = await this.payOrder({
-          city_id,
-          cinema_id,
-          order_num
+        qrcode = await this.getPayResult({
+          orderHeaderId
         });
       } catch (error) {}
       if (!qrcode) {
@@ -1826,9 +1810,7 @@ class OrderAutoTicketQueue {
         );
         this.logList = [];
         this.asyncFetchQrcodeSubmit({
-          city_id,
-          cinema_id,
-          order_num,
+          orderHeaderId,
           order_id,
           app_name,
           card_id,
@@ -1870,9 +1852,7 @@ class OrderAutoTicketQueue {
 
   // 异步轮询获取取票码并提交
   async asyncFetchQrcodeSubmit({
-    city_id,
-    cinema_id,
-    order_num,
+    orderHeaderId,
     order_id,
     app_name,
     card_id,
@@ -1887,10 +1867,8 @@ class OrderAutoTicketQueue {
       // 每搁30秒查一次，查10次，5分钟
       let qrcode = await trial(
         inx =>
-          this.payOrder({
-            city_id,
-            cinema_id,
-            order_num,
+          this.getPayResult({
+            orderHeaderId,
             inx
           }),
         10,
@@ -1912,10 +1890,8 @@ class OrderAutoTicketQueue {
         // 每搁30秒查一次，查10次，5分钟
         qrcode = await trial(
           inx =>
-            this.payOrder({
-              city_id,
-              cinema_id,
-              order_num,
+            this.getPayResult({
+              orderHeaderId,
               inx
             }),
           10,
@@ -2738,21 +2714,25 @@ const bandQuan = async ({ coupon_num, appFlag }) => {
 
 // 订单购买
 const buyTicket = async ({
-  city_id,
-  cinema_id,
-  order_num,
-  pay_money,
+  cinemaCode,
+  cinemaLinkId,
+  card_id,
+  orderHeaderId,
   appFlag
 }) => {
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
   try {
     let params = {
-      city_id,
-      cinema_id,
-      open_id: APP_OPENID_OBJ[appFlag], // 微信openId
-      order_num, // 订单号
-      pay_money, // 支付金额
-      pay_type: "" // 购买方式 传空意味着用优惠券或者会员卡
+      params: {
+        paymentWay: "Z0006",
+        orderHeaderId,
+        cardNo: card_id || "",
+        isMultiplePay: "",
+        channelCode: "QD0000001",
+        sysSourceCode: "YZ001",
+        cinemaCode,
+        cinemaLinkId
+      }
     };
     console.log(conPrefix + "订单购买参数", params);
     const buyRes = await APP_API_OBJ[appFlag].buyTicket(params);

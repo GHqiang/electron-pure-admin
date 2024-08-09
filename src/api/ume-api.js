@@ -63,40 +63,6 @@ const createApi = ({ appName }) => {
   const priceCalculation = params =>
     axios.post(`/sfc/v2/price/calculate`, params);
 
-  // 获取零食商品信息
-  const findProductInfoByCinema = params =>
-    axios.post(
-      `/${appName}/api/storeServer/productInfoService/findProductInfoByCinema`,
-      params
-    );
-  // 获取微信菜单信息
-  const findAppMenuInfoV2 = params =>
-    axios.post(
-      `/${appName}/api/storeServer/wechatMenuInfoService/findAppMenuInfoV2`,
-      params
-    );
-
-  // 获取订单微信消息模版
-  const getTemplateIdList = params =>
-    axios.post(
-      `/${appName}/api/storeServer/wechatMiniAppMessageService/getTemplateIdList`,
-      params
-    );
-
-  // 获取配送服务相关的影厅列表
-  const findDeliveryGetHallList = params =>
-    axios.post(
-      `/${appName}/api/storeServer/storeOrderExpressDeliveryService/findDeliveryGetHallList`,
-      params
-    );
-
-  // 获取配送商品的日期信息
-  const findDeliveryGoodsDateInfo = params =>
-    axios.post(
-      `/${appName}/api/storeServer/storeOrderExpressDeliveryService/findDeliveryGoodsDateInfo`,
-      params
-    );
-
   // 耀莱创建订单前需要先获取观影人列表添加观影人
   // 获取观影人列表
   const findStoreMemberMoviegoersByMemberId = params =>
@@ -137,12 +103,20 @@ const createApi = ({ appName }) => {
       `/${appName}/api/storeServer/StoreReturnOrderService/cannelOneOrder`,
       params
     );
-  // 电影票购买
-  const buyTicket = params => axios.get(`/sfc/ticket/ng-buy`, { params });
 
-  // 支付订单并返回购票信息
-  const payOrder = params =>
-    axios.get(`/sfc/order/get-my-order-result`, { params });
+  // 电影票购买
+  const buyTicket = params =>
+    axios.post(
+      `/${appName}/api/storeServer/storeTkOrderHeaderService/saveMemberOrderPayAmount`,
+      params
+    );
+
+  // 获取购票信息
+  const getPayResult = params =>
+    axios.post(
+      `/${appName}/api/storeServer/storeTkOrderHeaderService/findStoreTkOrderInfoApp`,
+      params
+    );
 
   // 获取订单列表
   const getOrderList = params =>
@@ -161,17 +135,12 @@ const createApi = ({ appName }) => {
     lockSeat,
     getCardQuanList,
     priceCalculation,
-    findProductInfoByCinema,
-    findAppMenuInfoV2,
-    getTemplateIdList,
     findStoreMemberMoviegoersByMemberId,
     updateStoreOrderMoviegoers,
-    findDeliveryGetHallList,
-    findDeliveryGoodsDateInfo,
     createOrder,
     cannelOneOrder,
     getOrderTime,
-    payOrder,
+    getPayResult,
     getOrderList,
     findStoreTkOrderInfoApp,
     buyTicket,
