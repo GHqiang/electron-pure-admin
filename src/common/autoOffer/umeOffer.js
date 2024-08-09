@@ -396,7 +396,7 @@ class getUmeOfferPrice {
       console.log(conPrefix + "获取座位布局参数", params);
       const res = await this.appApi.getMoviePlaySeat(params);
       console.log(conPrefix + "获取座位布局返回", res);
-      return res.data?.seatList || [];
+      return res.data?.areaInfoList || [];
     } catch (error) {
       console.error(conPrefix + "获取座位布局异常", error);
       this.logList.push({
@@ -423,8 +423,12 @@ class getUmeOfferPrice {
         console.error(conPrefix + "获取当前场次电影信息失败", "不再进行报价");
         return -1;
       }
-      let { ticketMemberPrice, handlingMemberFee } = movieInfo;
-      let member_price = Number(ticketMemberPrice) / 100;
+      let {
+        ticketMemberPrice,
+        maxSeatPrice = 0,
+        handlingMemberFee
+      } = movieInfo;
+      let member_price = Math.max(ticketMemberPrice, maxSeatPrice) / 100;
       // let member_price = (Number(ticketMemberPrice) + Number(handlingMemberFee)) / 100;
       console.log(conPrefix + "获取会员价", member_price);
       if (member_price > 0) {
@@ -605,6 +609,25 @@ class getUmeOfferPrice {
           }
         });
         return;
+      }
+      const areaInfoList = await this.getSeatLayout({
+        cinemaCode,
+        cinemaLinkId,
+        scheduleId: targetShow?.scheduleId,
+        scheduleKey: targetShow?.scheduleKey
+      });
+      if (areaInfoList?.length) {
+        let maxSeatPrice = areaInfoList
+          .map(item => {
+            return item.areaMemberPrice?.length
+              ? item.areaMemberPrice[0]
+              : { settlePrice: 0 };
+          })
+          .sort((a, b) => b.settlePrice - a.settlePrice)[0].settlePrice;
+        return {
+          ...targetShow,
+          maxSeatPrice
+        };
       }
       return targetShow;
     } catch (error) {

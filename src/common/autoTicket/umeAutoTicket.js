@@ -33,11 +33,7 @@ const appTicketRuleList = computed(() => appRuleListStore.items);
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
 // 影院特殊匹配列表及api
-import {
-  TICKET_CONPREFIX_OBJ,
-  APP_OPENID_OBJ,
-  APP_LIST
-} from "@/common/constant";
+import { TICKET_CONPREFIX_OBJ, APP_LIST } from "@/common/constant";
 import { APP_API_OBJ } from "@/common/index";
 
 let isTestOrder = false; //是否是测试订单
@@ -53,7 +49,7 @@ class OrderAutoTicketQueue {
     this.errInfo = ""; // 单次出票的错误信息
     this.appFlag = appFlag; // 影线标识
     this.conPrefix = TICKET_CONPREFIX_OBJ[appFlag]; // 打印前缀
-    this.sfcApi = APP_API_OBJ[appFlag];
+    this.umeApi = APP_API_OBJ[appFlag];
     this.logList = []; // 操作运行日志
     this.prevOrderNumber = ""; // 上个订单号
   }
@@ -1071,7 +1067,7 @@ class OrderAutoTicketQueue {
       }
       // 锁定座位时取消订单无需传订单号（）取消完需要重新锁定座位，只用传当前影院信息如：
       // {"channelCode":"QD0000001","sysSourceCode":"YZ001","cinemaCode":"33047701","cinemaLinkId":"15950"}
-      // await this.sfcApi.getOrderTime({
+      // await this.umeApi.getOrderTime({
       //   params: {
       //     keepLoading: true,
       //     channelCode: "QD0000001",
@@ -1478,7 +1474,7 @@ class OrderAutoTicketQueue {
       };
       let order_num;
       console.log(conPrefix + "创建订单参数", params);
-      const res = await this.sfcApi.createOrder(params);
+      const res = await this.umeApi.createOrder(params);
       console.log(conPrefix + "创建订单返回", res);
       order_num = res.data?.payOrderCode || "";
       return order_num;
@@ -1528,7 +1524,7 @@ class OrderAutoTicketQueue {
         }
       };
       console.log(conPrefix + "支付订单参数", params);
-      const res = await this.sfcApi.getPayResult(params);
+      const res = await this.umeApi.getPayResult(params);
       console.log(conPrefix + "支付订单返回", res);
       let qrcode = res.data.qrcode || "";
       if (qrcode) {
@@ -1551,7 +1547,7 @@ class OrderAutoTicketQueue {
       console.error(conPrefix + "支付订单异常", error);
       this.setErrInfo("获取订单支付结果异常", error);
       try {
-        const res = await this.sfcApi.findStoreTkOrderInfoApp({
+        const res = await this.umeApi.findStoreTkOrderInfoApp({
           params: {
             orderType: "ticket_order",
             isDetail: "Y",
