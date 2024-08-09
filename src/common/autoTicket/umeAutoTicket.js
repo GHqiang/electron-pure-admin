@@ -1120,9 +1120,64 @@ class OrderAutoTicketQueue {
         });
         return { offerRule, transferParams };
       }
-      let cardList = cardQuanListRes.cards;
-      let quanList = cardQuanListRes.coupons;
+      let cardList = cardQuanListRes?.cards || [];
+      let quanList = cardQuanListRes?.coupons || [];
       console.warn("获取最优卡券组合列表返回", cardList, quanList);
+      // 7、耀莱需要获取观影人列表添加观影人
+      if (appFlag === "yaolai") {
+        const moviegoersListRes = await findStoreMemberMoviegoersByMemberId({
+          cinemaCode,
+          cinemaLinkId,
+          appFlag
+        });
+        if (moviegoersListRes?.error) {
+          console.error(
+            conPrefix + "获取观影人列表失败",
+            moviegoersListRes?.error
+          );
+          this.setErrInfo("获取观影人列表失败", moviegoersListRes?.error);
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: `获取观影人列表失败`,
+            info: {
+              error: moviegoersListRes?.error
+            }
+          });
+          const transferParams = await this.transferOrder(item, {
+            cinemaCode,
+            cinemaLinkId,
+            orderHeaderId
+          });
+          return { offerRule, transferParams };
+        }
+        const moviegoersList = moviegoersListRes.moviegoersList;
+        const orderMoviegoers = [moviegoersList[0]];
+        const addMoviegoersRes = await updateStoreOrderMoviegoers({
+          cinemaCode,
+          cinemaLinkId,
+          orderHeaderId,
+          orderMoviegoers,
+          appFlag
+        });
+        if (addMoviegoersRes?.error) {
+          console.error(conPrefix + "添加观影人失败", addMoviegoersRes?.error);
+          this.setErrInfo("添加观影人失败", addMoviegoersRes?.error);
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: `添加观影人失败`,
+            info: {
+              error: addMoviegoersRes?.error
+            }
+          });
+          const transferParams = await this.transferOrder(item, {
+            cinemaCode,
+            cinemaLinkId,
+            orderHeaderId
+          });
+          return { offerRule, transferParams };
+        }
+      }
+
       // 7、创建订单
       let card_id = cardList[0]?.cardNo || "";
       let profit = 0;
@@ -2538,6 +2593,70 @@ const getOptimalCardQuanCompose = async ({
     };
   } catch (error) {
     console.error(conPrefix + "获取最优卡券列表组合返回异常", error);
+    return {
+      error
+    };
+  }
+};
+
+// 获取观影人列表
+const findStoreMemberMoviegoersByMemberId = async ({
+  cinemaCode,
+  cinemaLinkId,
+  appFlag
+}) => {
+  let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
+  try {
+    let params = {
+      params: {
+        channelCode: "QD0000001",
+        sysSourceCode: "YZ001",
+        cinemaCode,
+        cinemaLinkId
+      }
+    };
+    console.log(conPrefix + "获取观影人列表参数", params);
+    const res =
+      await APP_API_OBJ[appFlag].findStoreMemberMoviegoersByMemberId(params);
+    console.log(conPrefix + "获取观影人列表返回", res);
+    let moviegoersList = res.data || [];
+    return {
+      moviegoersList
+    };
+  } catch (error) {
+    console.error(conPrefix + "获取观影人列表异常", error);
+    return {
+      error
+    };
+  }
+};
+
+// 添加观影人
+const updateStoreOrderMoviegoers = async ({
+  cinemaCode,
+  cinemaLinkId,
+  orderHeaderId,
+  orderMoviegoers,
+  appFlag
+}) => {
+  let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
+  try {
+    let params = {
+      params: {
+        orderHeaderId,
+        orderMoviegoers,
+        keepLoading: true,
+        channelCode: "QD0000001",
+        sysSourceCode: "YZ001",
+        cinemaCode,
+        cinemaLinkId
+      }
+    };
+    console.log(conPrefix + "添加观影人参数", params);
+    const res = await APP_API_OBJ[appFlag].updateStoreOrderMoviegoers(params);
+    console.log(conPrefix + "添加观影人返回", res);
+  } catch (error) {
+    console.error(conPrefix + "添加观影人异常", error);
     return {
       error
     };

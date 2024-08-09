@@ -1157,6 +1157,7 @@ const offerRuleMatch = order => {
   }
 };
 
+window.offerRuleMatch = offerRuleMatch;
 // 日志上传
 const logUpload = async (order, logList) => {
   try {
