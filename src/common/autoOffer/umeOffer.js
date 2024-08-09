@@ -426,10 +426,14 @@ class getUmeOfferPrice {
       let {
         ticketMemberPrice,
         maxSeatPrice = 0,
-        handlingMemberFee
+        handlingMemberFee,
+        ticketMemberServiceFeeMin = 0
       } = movieInfo;
       let member_price = Math.max(ticketMemberPrice, maxSeatPrice) / 100;
-      // let member_price = (Number(ticketMemberPrice) + Number(handlingMemberFee)) / 100;
+      // 会员价等于真实会员价加手续费加会员服务费
+      member_price =
+        member_price +
+        (Number(handlingMemberFee) + Number(ticketMemberServiceFeeMin)) / 100;
       console.log(conPrefix + "获取会员价", member_price);
       if (member_price > 0) {
         const cardRes = await svApi.queryCardList({
@@ -472,7 +476,6 @@ class getUmeOfferPrice {
         member_price = discount
           ? (Number(member_price) * discount) / 100
           : Number(member_price);
-        member_price = member_price + handlingMemberFee / 100;
         return {
           real_member_price,
           member_price

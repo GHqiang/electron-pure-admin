@@ -1183,7 +1183,6 @@ class OrderAutoTicketQueue {
       const { ticketLowestPrice, areaSettlePriceMin, ticketStandardPrice } =
         orderPriceInfo?.scheduleInfo || {};
       if (card_id) {
-        // 会员价格这计算目前从在问题，需重新梳理
         total_price =
           ((Number(ticketLowestPrice) + Number(ticketStandardPrice)) *
             ticket_num) /
