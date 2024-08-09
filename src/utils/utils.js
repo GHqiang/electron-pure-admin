@@ -800,7 +800,9 @@ const getCinemaId = (cinema_name, list, appName) => {
     console.warn("全字匹配影院名称失败", cinema_name, list);
     let cinemaName = cinemNameSpecial(cinema_name);
     let specialCinemaInfo = SPECIAL_CINEMA_OBJ[appName].find(
-      item => item.order_cinema_name === cinemaName
+      item =>
+        item.order_cinema_name === cinemaName ||
+        item.order_cinema_name.includes(cinemaName)
     );
     if (specialCinemaInfo) {
       cinemaName = specialCinemaInfo.sfc_cinema_name;
@@ -849,7 +851,9 @@ const getTargetCinema = (cinema_name, list) => {
     let cinemaName = cinemNameSpecial(cinema_name);
     if (SPECIAL_CINEMA_OBJ[appFlag].length) {
       let specialCinemaInfo = SPECIAL_CINEMA_OBJ[appFlag].find(
-        item => item.order_cinema_name === cinemaName
+        item =>
+          item.order_cinema_name === cinemaName ||
+          item.order_cinema_name.includes(cinemaName)
       );
       if (specialCinemaInfo) {
         cinemaName = specialCinemaInfo.sfc_cinema_name;
@@ -894,10 +898,13 @@ const cinemaMatchHandle = (cinema_name, list, appName) => {
       return true;
     }
     console.warn("全字匹配影院名称失败", cinema_name, list);
+    // 去括号、空格及中间点
     let cinemaName = cinemNameSpecial(cinema_name);
     // 2、特殊匹配
     let specialCinemaInfo = SPECIAL_CINEMA_OBJ[appName].find(
-      item => item.order_cinema_name === cinemaName
+      item =>
+        item.order_cinema_name === cinemaName ||
+        item.order_cinema_name.includes(cinemaName)
     );
     if (specialCinemaInfo) {
       cinemaName = specialCinemaInfo.sfc_cinema_name;

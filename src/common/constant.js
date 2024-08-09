@@ -513,21 +513,29 @@ const SZYL_SPECIAL_CINEMA_LIST = [
 // 新业坊上影特殊影院集合
 const XXFSY_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "SFC上影国际影城(新业坊店)",
+    order_cinema_name: "SFC上影国际影城新业坊店",
     sfc_cinema_name: "SFC上影国际影城新业坊店"
   }
 ];
 // 长沙中影壹中心特殊影院集合
 const CSZYYZX_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "中影国际影城（中国巨幕凯德壹中心店）",
-    sfc_cinema_name: "长沙中影国际影城（凯德壹中心店）"
+    order_cinema_name: "中影国际影城中国巨幕凯德壹中心店",
+    sfc_cinema_name: "长沙中影国际影城凯德壹中心店"
+  }
+];
+
+// UME特殊影院集合(芒果平台cinemaCode不对，需要用名字匹配)
+const UME_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: ["CMC华人影城泸州摩尔店"],
+    sfc_cinema_name: "CMC华人影城摩尔国际店"
   }
 ];
 
 // 特殊的名字匹配集合
 const SPECIAL_CINEMA_OBJ = {
-  ume: [],
+  ume: UME_SPECIAL_CINEMA_LIST,
   yaolai: [],
   sfc: SFC_SPECIAL_CINEMA_LIST,
   jiujin: JIUJIN_SPECIAL_CINEMA_LIST,

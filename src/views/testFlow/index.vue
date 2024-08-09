@@ -702,7 +702,9 @@ const getCinemaId = async (cinema_name, list) => {
     let cinemaName = cinemNameSpecial(cinema_name);
     if (SPECIAL_CINEMA_OBJ[appName].length) {
       let specialCinemaInfo = SPECIAL_CINEMA_OBJ[appName].find(
-        item => item.order_cinema_name === cinemaName
+        item =>
+          item.order_cinema_name === cinemaName ||
+          item.order_cinema_name.includes(cinemaName)
       );
       if (specialCinemaInfo) {
         cinemaName = specialCinemaInfo.sfc_cinema_name;

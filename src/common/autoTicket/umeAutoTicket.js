@@ -111,7 +111,7 @@ class OrderAutoTicketQueue {
                 plat_name: order.platName,
                 app_name: appFlag,
                 order_number: order.order_number,
-                type: 2
+                type: 3
               },
               log_list
             );
@@ -161,7 +161,7 @@ class OrderAutoTicketQueue {
                   plat_name: order.platName,
                   app_name: appFlag,
                   order_number: order.order_number,
-                  type: 2
+                  type: 3
                 },
                 this.logList.slice()
               );
@@ -491,7 +491,7 @@ class OrderAutoTicketQueue {
               plat_name: platName,
               app_name: appFlag,
               order_number: order_number,
-              type: 2
+              type: 3
             },
             this.logList.slice()
           );
@@ -558,7 +558,8 @@ class OrderAutoTicketQueue {
       }
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
-        des: `订单首次解锁失败试错后解锁成功`
+        des: `订单首次解锁失败试错后解锁成功`,
+        level: "info"
       });
     }
     logUpload(
@@ -566,7 +567,7 @@ class OrderAutoTicketQueue {
         plat_name: platName,
         app_name: appFlag,
         order_number: order_number,
-        type: 2
+        type: 3
       },
       this.logList.slice()
     );
@@ -678,14 +679,12 @@ class OrderAutoTicketQueue {
       city_name,
       cinema_name,
       cinema_code,
-      hall_name,
       film_name,
       show_time,
       lockseat,
       ticket_num,
       supplier_end_price,
       member_price,
-      rewards,
       supplierCode,
       platName,
       otherParams
@@ -706,9 +705,6 @@ class OrderAutoTicketQueue {
       seat_ids,
       ticketDetail,
       offerRule,
-      city_id,
-      cinema_id,
-      show_id,
       start_day,
       start_time
     } = otherParams || {};
@@ -716,7 +712,8 @@ class OrderAutoTicketQueue {
       const phone = JSON.parse(localStorage.getItem("userInfo")).phone;
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
-        des: `首次出票手机号-${phone}`
+        des: `首次出票手机号-${phone}`,
+        level: "info"
       });
       // 1、获取该订单的报价记录，按对应报价规则出票
       const offerRes = await svApi.queryOfferList({
@@ -760,7 +757,8 @@ class OrderAutoTicketQueue {
       }
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
-        des: `获取该订单报价记录成功`
+        des: `获取该订单报价记录成功`,
+        level: "info"
       });
       // 2、获取目标城市影院列表
       let cityCinemaListRes = await getCityCinemaList({ appFlag });
@@ -987,9 +985,9 @@ class OrderAutoTicketQueue {
       console.log(conPrefix + "selectSeatList", selectSeatList);
       let targeSeatList = seatList.filter(item => {
         const { yCoord, rowName, columnName } = item;
-        let seat1 = yCoord + "排" + columnName + "号";
+        // let seat1 = yCoord + "排" + columnName + "号";
         let seat2 = rowName + "排" + columnName + "号";
-        return selectSeatList.includes(seat1) || selectSeatList.includes(seat2);
+        return selectSeatList.includes(seat2);
       });
       console.log(conPrefix + "targeSeatList", targeSeatList);
       seat_ids = targeSeatList.map(item => item.seatCode);
@@ -1180,6 +1178,7 @@ class OrderAutoTicketQueue {
 
       // 7、创建订单
       let card_id = cardList[0]?.cardNo || "";
+      let quan_code = "";
       let profit = 0;
       const { ticketLowestPrice, areaSettlePriceMin, ticketStandardPrice } =
         orderPriceInfo?.scheduleInfo || {};
@@ -1573,7 +1572,7 @@ class OrderAutoTicketQueue {
         params: {
           orderType: "ticket_order",
           isDetail: "Y",
-          orderHeaderId: orderHeaderId,
+          orderHeaderId,
           keepLoading: true,
           channelCode: "QD0000001"
         }
@@ -1581,7 +1580,7 @@ class OrderAutoTicketQueue {
       console.log(conPrefix + "支付订单参数", params);
       const res = await this.umeApi.getPayResult(params);
       console.log(conPrefix + "支付订单返回", res);
-      let qrcode = res.data.qrcode || "";
+      let qrcode = res.data?.ticketCode?.split(",").join("|") || "";
       if (qrcode) {
         if (inx) {
           this.logList.push({
@@ -1855,7 +1854,7 @@ class OrderAutoTicketQueue {
             plat_name: platName,
             app_name: appFlag,
             order_number: order_number,
-            type: 2
+            type: 3
           },
           this.logList.slice()
         );
@@ -1960,7 +1959,7 @@ class OrderAutoTicketQueue {
             plat_name: platName,
             app_name: app_name,
             order_number: order_number,
-            type: 2
+            type: 3
           },
           this.logList.slice()
         );
@@ -2035,7 +2034,7 @@ class OrderAutoTicketQueue {
             plat_name: platName,
             app_name: app_name,
             order_number: order_number,
-            type: 2
+            type: 3
           },
           this.logList.slice()
         );
@@ -2974,7 +2973,7 @@ const updateCardDayUse = ({ app_name, card_id, plat_name, order_number }) => {
       plat_name: plat_name,
       app_name: app_name,
       order_number: order_number,
-      type: 2
+      type: 3
     },
     log_list
   );
