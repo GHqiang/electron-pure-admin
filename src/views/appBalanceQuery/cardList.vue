@@ -346,7 +346,7 @@ const syncBalance = async () => {
   });
   try {
     let loginInfoList = getCinemaLoginInfoList().filter(
-      item => item.app_name !== "ume"
+      item => !["ume", "yaolai"].includes(item.app_name)
     );
     // 过滤一下已登录的
     let apiList = Object.entries(APP_API_OBJ).filter(

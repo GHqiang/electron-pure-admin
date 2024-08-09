@@ -250,9 +250,14 @@ const getCinemaFlag = item => {
   const { cinema_group, cinema_name, city_name } = item;
   if (["上影上海", "上影二线"].includes(cinema_group)) {
     return "sfc";
-    // 蚂蚁和洋葱、哈哈：UME。 猎人和芒果：ume一线、ume二线
-  } else if (["UME", "ume一线", "ume二线"].includes(cinema_group)) {
+  }
+  // 蚂蚁和洋葱、哈哈：UME。 猎人和芒果：ume一线、ume二线
+  else if (["UME", "ume一线", "ume二线"].includes(cinema_group)) {
     return "ume";
+  }
+  // 蚂蚁和洋葱、哈哈：耀莱成龙。 猎人和芒果：耀莱一线、耀莱二线
+  else if (["耀莱成龙", "耀莱一线", "耀莱二线"].includes(cinema_group)) {
+    return "yaolai";
   } else if (
     cinema_name.includes("华夏久金国际影城") &&
     ["上海"].includes(city_name)

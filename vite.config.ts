@@ -73,7 +73,13 @@ export default ({ command, mode }: ConfigEnv): UserConfigExport => {
           changeOrigin: true, // 是否允许跨域
           rewrite: path => path.replace(/^\/prod-api/, "/prod-api") // 重写路径，去除/api前缀
         },
-        // ume-耀莱
+        // ume
+        "/ume": {
+          target: "https://oc.yuekeyun.com", // 后端API的真实地址
+          changeOrigin: true, // 是否允许跨域
+          rewrite: path => path.replace(/^\/ume/, "") // 重写路径，去除/api前缀
+        },
+        // 耀莱
         "/yaolai": {
           target: "https://jccinema.yuekeyun.com", // 后端API的真实地址
           changeOrigin: true, // 是否允许跨域

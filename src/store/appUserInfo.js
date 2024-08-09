@@ -23,6 +23,8 @@ export const appUserInfo = defineStore("appUserInfo", {
         modified_info: "0",
         member_center_h5_url: "http://group.leying.com/point/member-center"
       },
+      ume: null,
+      yaolai: null,
       jiujin: null,
       jinji: null,
       laina: null,

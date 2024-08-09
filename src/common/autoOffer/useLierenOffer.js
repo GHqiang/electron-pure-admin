@@ -114,7 +114,7 @@ class OrderAutoOfferQueue {
         .map(item => {
           return {
             ...item,
-            plat_name: 'lieren',
+            plat_name: "lieren",
             appName: getCinemaFlag(item)
           };
         });
