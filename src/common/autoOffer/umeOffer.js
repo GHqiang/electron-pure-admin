@@ -54,13 +54,8 @@ class getUmeOfferPrice {
             : ""
         };
       }
-      const {
-        offerAmount,
-        memberOfferAmount,
-        memberCostPrice,
-        quanValue,
-        offerType
-      } = offerRule;
+      const { offerAmount, memberOfferAmount, memberCostPrice, offerType } =
+        offerRule;
       let price = Number(offerAmount || memberOfferAmount);
       if (!price) {
         const errInfoObj = this.logList
@@ -75,12 +70,7 @@ class getUmeOfferPrice {
         };
       }
       // 成本价
-      let cost_price =
-        offerType === "1"
-          ? quanValue == "40"
-            ? 38.8
-            : Number(quanValue)
-          : Number(memberCostPrice);
+      let cost_price = offerType === "1" ? 32 : Number(memberCostPrice);
       // 获取最终报价
       const endPrice = await this.getEndPrice({
         cost_price,
