@@ -727,7 +727,11 @@ class OrderAutoTicketQueue {
       // 测试专用
       if (isTestOrder) {
         // offerRule = { offer_type: "1", quan_value: "35" };
-        offerRule = { offer_type: "2", member_price: "32" };
+        offerRule = {
+          offer_type: "2",
+          member_price: "32",
+          real_member_price: "36"
+        };
       }
       member_price = offerRule.member_price;
       console.warn(conPrefix + "从该订单的报价记录获取到的报价规则", offerRule);
@@ -1183,10 +1187,25 @@ class OrderAutoTicketQueue {
       const { ticketLowestPrice, areaSettlePriceMin, ticketStandardPrice } =
         orderPriceInfo?.scheduleInfo || {};
       if (card_id) {
-        total_price =
-          ((Number(ticketLowestPrice) + Number(ticketStandardPrice)) *
-            ticket_num) /
-          100;
+        const { real_member_price } = offerRule;
+        let mbmberPrice =
+          Number(ticketLowestPrice) + Number(ticketStandardPrice);
+        if (mbmberPrice > real_member_price) {
+          let errTip = `最终单张价格${mbmberPrice}超过会员真实价${real_member_price}`;
+          this.setErrInfo(errTip);
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: errTip,
+            level: "error"
+          });
+          const transferParams = await this.transferOrder(item, {
+            cinemaCode,
+            cinemaLinkId,
+            orderHeaderId
+          });
+          return { offerRule, transferParams };
+        }
+        total_price = (mbmberPrice * ticket_num) / 100;
         profit =
           supplier_end_price -
           member_price -
