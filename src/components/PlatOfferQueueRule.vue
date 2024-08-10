@@ -15,6 +15,9 @@
     @click="stopAutoOffer"
     >一键停止</el-button
   >
+  <el-button type="primary" @click="isOverrunOffer = !isOverrunOffer">{{
+    !isOverrunOffer ? "开启超限报价" : "关闭超限报价"
+  }}</el-button>
 
   <el-table :data="displayItems" border show-overflow-tooltip>
     <el-table-column prop="platName" label="平台名称">
@@ -135,7 +138,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onBeforeMount } from "vue";
+import { ref, computed, onBeforeMount, watch } from "vue";
 import { ElMessageBox, ElMessage } from "element-plus";
 import svApi from "@/api/sv-api";
 import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
@@ -164,6 +167,18 @@ const isActiveOneClickStart = computed(() => {
 const isActiveOneClickStop = computed(() => {
   return tableDataStore.items.filter(item => item.isEnabled).length > 0;
 });
+
+// 是否超限报价
+let isOpen = localStorage.getItem("isOverrunOffer") == 1;
+const isOverrunOffer = ref(isOpen ? true : false);
+if (isOpen) {
+  window.localStorage.setItem("isOverrunOffer", 1);
+}
+watch(isOverrunOffer, (newVal, oldVal) => {
+  console.log(`isOverrunOffer 的值从 '${oldVal}' 变为 '${newVal}'`);
+  window.localStorage.setItem("isOverrunOffer", newVal ? "1" : "0");
+});
+
 // 正在编辑id
 const editingRowId = ref(null);
 // 正在编辑内容

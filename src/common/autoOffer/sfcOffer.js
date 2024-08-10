@@ -443,6 +443,15 @@ class getSfcOfferPrice {
       }
       // 最终报价超过平台限价
       if (price > Number(supplier_max_price)) {
+        let isOverrunOffer = window.localStorage.getItem("isOverrunOffer");
+        if (isOverrunOffer !== "1") {
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: `最终报价${price}超过平台限价${supplier_max_price}，超限报价处于关闭状态，不再进行报价`,
+            level: "error"
+          });
+          return;
+        }
         // 奖励单按真实成本（加手续费），非奖励单报最高限价
         price = rewards == 1 ? cost_price : supplier_max_price;
         // 不重新赋值的话按平台规则会员价四舍五入后+固定加价
