@@ -1186,7 +1186,7 @@ class OrderAutoTicketQueue {
       let mbmberPrice =
         (Number(ticketLowestPrice) + Number(ticketStandardPrice)) / 100;
       total_price = mbmberPrice * ticket_num;
-      let { card_id, quan_code, profit } = useQuanOrCard({
+      let { card_id, useQuan, profit } = useQuanOrCard({
         cardList,
         quanList,
         supplier_end_price,
@@ -1195,8 +1195,9 @@ class OrderAutoTicketQueue {
         mbmberPrice,
         total_price
       });
+      let quan_code = useQuan.map(item => item.couponCode)?.join();
       // 使用优惠券及会员卡
-      if (!card_id && !"") {
+      if (!card_id && !useQuan?.length) {
         console.error(conPrefix + "无可用会员卡及优惠券");
         this.setErrInfo("无可用会员卡及优惠券");
         this.logList.push({
@@ -1210,12 +1211,16 @@ class OrderAutoTicketQueue {
         });
         return { offerRule, transferParams };
       }
+      // 用券时总价为0
+      if (offerRule.offer_type === "1") {
+        total_price = 0;
+      }
       // 7、创建订单
       const order_num = await this.createOrder({
         cinemaCode,
         cinemaLinkId,
         orderHeaderId,
-        coupon: quan_code?.split(","),
+        coupon: useQuan,
         card_id,
         total_price,
         timestamp
@@ -2365,7 +2370,7 @@ const useQuanOrCard = ({
         console.warn(conPrefix + "无可用优惠券");
         this.setErrInfo("无可用优惠券", { quanList });
         return {
-          quan_code: "",
+          useQuan: [],
           profit: 0 // 利润
         };
       }
@@ -2373,17 +2378,30 @@ const useQuanOrCard = ({
         console.warn(conPrefix + "优惠券不够用");
         this.setErrInfo("优惠券不够用", { quanList, ticket_num });
         return {
-          quan_code: "",
+          useQuan: [],
           profit: 0 // 利润
         };
       }
-      let quan_code = quanList.map(item => item.couponCode).join(",");
+      let useQuan = quanList.slice(0, ticket_num).map(item => {
+        let seatCode = Object.keys(item.discountAmountMap)?.[0];
+        return {
+          couponInstanceId: item.couponInstanceId,
+          couponType: item.couponType,
+          // 以下两个值一样
+          seatCode: seatCode,
+          salesKeySku: seatCode,
+          couponCode: item.couponCode,
+          couponName: item.couponName,
+          templateCode: item.templateCode,
+          discountAmount: seatCode ? item.discountAmountMap?.[seatCode] : 0
+        };
+      });
       let profit =
         supplier_end_price - 32 - (Number(supplier_end_price) * 100) / 10000;
       profit = Number(profit) * Number(ticket_num);
       profit = Number(profit).toFixed(2);
       return {
-        quan_code,
+        useQuan,
         profit
       };
     }
