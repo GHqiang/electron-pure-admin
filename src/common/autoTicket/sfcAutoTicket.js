@@ -1657,6 +1657,13 @@ class OrderAutoTicketQueue {
           console.log(conPrefix + "创建订单返回", res);
           order_num = res.data?.order_num || "";
         } catch (error) {
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: `会员卡第一次使用空密码创建订单失败`,
+            info: {
+              error
+            }
+          });
           await mockDelay(1);
           console.warn(conPrefix + "会员卡第一次创建订单失败", error);
           console.warn(
@@ -1681,6 +1688,13 @@ class OrderAutoTicketQueue {
         conPrefix + `创建订单异常:${JSON.stringify({ card_id, coupon })}`,
         error
       );
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: `创建订单异常:${JSON.stringify({ card_id, coupon })}`,
+        info: {
+          error
+        }
+      });
       this.setErrInfo("创建订单异常", error);
       if (error?.msg === "请求接口超时,请重试" && isTimeoutRetry === 1) {
         this.logList.push({

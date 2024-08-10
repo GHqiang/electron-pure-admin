@@ -73,7 +73,7 @@ const createAxios = ({ appName, timeout = 20 }) => {
       let whitelistSp = [];
 
       let isErrorByLieRen =
-        response.config.url.indexOf(`/${appName}/`) !== -1 &&
+        (!IS_DEV ? true : response.config.url.indexOf(`/${appName}/`) !== -1) &&
         data.status !== "S";
       if (
         isErrorByLieRen &&

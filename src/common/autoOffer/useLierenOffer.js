@@ -231,7 +231,7 @@ class OrderAutoOfferQueue {
         offer_type: offerResult?.offerRule?.offerType,
         offer_amount: offerResult?.offerRule?.offerAmount,
         member_offer_amount: offerResult?.offerRule?.memberOfferAmount,
-        member_price: offerResult?.offerRule?.memberPrice,
+        member_price: offerResult?.offerRule?.memberCostPrice,
         real_member_price: offerResult?.offerRule?.real_member_price,
         quan_value: offerResult?.offerRule?.quanValue,
         order_status: offerResult?.res ? "1" : "2",

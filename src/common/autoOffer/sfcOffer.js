@@ -113,7 +113,7 @@ class getSfcOfferPrice {
       const {
         offerAmount,
         memberOfferAmount,
-        memberPrice,
+        memberCostPrice,
         quanValue,
         offerType
       } = offerRule;
@@ -136,7 +136,7 @@ class getSfcOfferPrice {
           ? quanValue == "40"
             ? 38.8
             : Number(quanValue)
-          : Number(memberPrice);
+          : Number(memberCostPrice);
       // 获取最终报价
       const endPrice = await this.getEndPrice({
         cost_price,
@@ -310,14 +310,18 @@ class getSfcOfferPrice {
           });
           return mixFixedAmountRule;
         }
-        let memberPrice = memberPriceRes.member_price;
-        // 会员价*折扣价
-        mixAddAmountRule.memberPrice = memberPrice;
         // 真实会员价
         mixAddAmountRule.real_member_price = memberPriceRes.real_member_price;
+        // 会员成本价(会员价*折扣价)
+        mixAddAmountRule.memberCostPrice = memberPriceRes.member_price;
+        // 会员价*折扣价四舍五入
+        mixAddAmountRule.memberRoundPrice = Math.round(
+          membememberPriceRes.member_pricerPrice
+        );
         // 会员最终报价
-        memberPrice = Number(memberPrice) + Number(mixAddAmountRule.addAmount);
-        mixAddAmountRule.memberOfferAmount = memberPrice;
+        mixAddAmountRule.memberOfferAmount =
+          mixAddAmountRule.memberRoundPrice +
+          Number(mixAddAmountRule.addAmount);
       } else {
         console.warn(
           conPrefix + "最小加价规则不存在,返回最小固定报价规则",
@@ -441,8 +445,9 @@ class getSfcOfferPrice {
       if (price > Number(supplier_max_price)) {
         // 奖励单按真实成本（加手续费），非奖励单报最高限价
         price = rewards == 1 ? cost_price : supplier_max_price;
+        // 不重新赋值的话按平台规则会员价四舍五入后+固定加价
+        price = Math.round(price);
       }
-      price = Math.round(price);
       if (price <= cost_price) {
         let str = `最终报价${price}小于等于成本价${cost_price}，不再进行报价`;
         console.error(conPrefix + str);
