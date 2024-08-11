@@ -1193,7 +1193,8 @@ class OrderAutoTicketQueue {
         ticket_num,
         offerRule,
         mbmberPrice,
-        total_price
+        total_price,
+        appFlag
       });
       let quan_code = useQuan.map(item => item.couponCode)?.join();
       // 使用优惠券及会员卡
@@ -2335,19 +2336,20 @@ const useQuanOrCard = ({
   supplier_end_price,
   ticket_num,
   offerRule,
-  mbmberPrice,
-  total_price
+  total_price,
+  appFlag
 }) => {
   try {
     const { offer_type: offerType, member_price } = offerRule;
+    let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
     if (offerType !== "1") {
       console.log(conPrefix + "使用会员卡出票");
       let cardData = cardList.filter(
-        item => item.cardAmount > total_price * 100
+        item => item.cardAmount >= total_price * 100
       );
       if (!cardData?.length) {
         console.warn(conPrefix + "无可用会员卡", member_price);
-        this.setErrInfo("无可用会员卡", { cardList, total_price });
+        // this.setErrInfo("无可用会员卡", { cardList, total_price });
         return {
           card_id: "",
           profit: 0 // 利润
@@ -2361,14 +2363,14 @@ const useQuanOrCard = ({
       profit = Number(profit) * Number(ticket_num);
       profit = Number(profit).toFixed(2);
       return {
-        card_id: cardData[0]?.cardNo,
+        card_id: cardData?.[0]?.cardNo,
         profit // 利润
       };
     } else {
       console.log(conPrefix + "使用优惠券出票");
       if (!quanList?.length) {
         console.warn(conPrefix + "无可用优惠券");
-        this.setErrInfo("无可用优惠券", { quanList });
+        // this.setErrInfo("无可用优惠券", { quanList });
         return {
           useQuan: [],
           profit: 0 // 利润
@@ -2376,7 +2378,7 @@ const useQuanOrCard = ({
       }
       if (quanList.length < ticket_num) {
         console.warn(conPrefix + "优惠券不够用");
-        this.setErrInfo("优惠券不够用", { quanList, ticket_num });
+        // this.setErrInfo("优惠券不够用", { quanList, ticket_num });
         return {
           useQuan: [],
           profit: 0 // 利润
