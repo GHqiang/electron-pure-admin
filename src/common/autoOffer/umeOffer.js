@@ -54,8 +54,12 @@ class getUmeOfferPrice {
             : ""
         };
       }
-      const { offerAmount, memberOfferAmount, memberCostPrice, offerType } =
-        offerRule;
+      const {
+        offerAmount,
+        memberOfferAmount,
+        memberCostPrice = 0,
+        offerType
+      } = offerRule;
       let price = Number(offerAmount || memberOfferAmount);
       if (!price) {
         const errInfoObj = this.logList
@@ -250,7 +254,7 @@ class getUmeOfferPrice {
         mixAddAmountRule.memberCostPrice = memberPriceRes.member_price;
         // 会员价*折扣价四舍五入
         mixAddAmountRule.memberRoundPrice = Math.round(
-          membememberPriceRes.member_pricerPrice
+          memberPriceRes.member_price
         );
         // 会员最终报价
         mixAddAmountRule.memberOfferAmount =

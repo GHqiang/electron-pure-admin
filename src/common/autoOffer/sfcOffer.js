@@ -113,7 +113,7 @@ class getSfcOfferPrice {
       const {
         offerAmount,
         memberOfferAmount,
-        memberCostPrice,
+        memberCostPrice = 0,
         quanValue,
         offerType
       } = offerRule;
@@ -316,7 +316,7 @@ class getSfcOfferPrice {
         mixAddAmountRule.memberCostPrice = memberPriceRes.member_price;
         // 会员价*折扣价四舍五入
         mixAddAmountRule.memberRoundPrice = Math.round(
-          membememberPriceRes.member_pricerPrice
+          memberPriceRes.member_price
         );
         // 会员最终报价
         mixAddAmountRule.memberOfferAmount =
