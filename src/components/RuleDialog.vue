@@ -825,6 +825,11 @@ const getFilmList = async (oneCity, oneCinema) => {
       console.log("获取线上电影列表返回", res);
       list =
         res.data?.find(item => item.showStatus === "SHOWING")?.fimlList || [];
+      list = list.map(item => ({
+        ...item,
+        id: item.filmHeadId,
+        movie_name: item.filmName
+      }));
     } else {
       const params = {
         city_id: oneCity.id,
