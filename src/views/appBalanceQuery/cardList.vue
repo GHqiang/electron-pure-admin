@@ -200,7 +200,7 @@ import { ref, reactive, computed } from "vue";
 import svApi from "@/api/sv-api";
 import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import CardDialog from "@/components/CardDialog.vue";
-import { APP_LIST } from "@/common/constant";
+import { APP_LIST, UME_LIST } from "@/common/constant";
 import { APP_API_OBJ } from "@/common/index.js";
 import {
   getCurrentFormattedDateTime,
@@ -346,7 +346,7 @@ const syncBalance = async () => {
   });
   try {
     let loginInfoList = getCinemaLoginInfoList().filter(
-      item => !["ume", "yaolai"].includes(item.app_name)
+      item => !UME_LIST.includes(item.app_name)
     );
     // 过滤一下已登录的
     let apiList = Object.entries(APP_API_OBJ).filter(

@@ -463,7 +463,7 @@ import { APP_API_OBJ } from "@/common/index.js";
 
 import { ref, reactive, computed, toRaw } from "vue";
 import { ElLoading, ElMessage } from "element-plus";
-import { ORDER_FORM, APP_LIST } from "@/common/constant";
+import { ORDER_FORM, APP_LIST, UME_LIST } from "@/common/constant";
 import { useAppBaseData } from "@/store/appBaseData";
 const appBaseDataInfo = useAppBaseData();
 const { appBaseData, setSfcBaseData } = appBaseDataInfo;
@@ -778,7 +778,7 @@ const getCityList = async () => {
     let list = appBaseData[shadowLineName]?.cityList;
     console.log("获取城市列表参数", params, shadowLineName, toRaw(list));
     if (!list?.length) {
-      if (["ume", "yaolai"].includes(shadowLineName)) {
+      if (UME_LIST.includes(shadowLineName)) {
         let params = {
           params: {
             channelCode: "QD0000001",
@@ -812,7 +812,7 @@ const getFilmList = async (oneCity, oneCinema) => {
   try {
     const { shadowLineName } = formData;
     let list = [];
-    if (["ume", "yaolai"].includes(shadowLineName)) {
+    if (UME_LIST.includes(shadowLineName)) {
       const params = {
         params: {
           channelCode: "QD0000001",
@@ -854,7 +854,7 @@ const getCinemaListByCityId = async city_id => {
     console.log("根据城市获取影院列表参数", params);
     const { shadowLineName } = formData;
     let cinemaList = [];
-    if (["ume", "yaolai"].includes(shadowLineName)) {
+    if (UME_LIST.includes(shadowLineName)) {
       cinemaList =
         cityCinemaList.find(item => item.cityCode === city_id)?.cinemaList ||
         [];

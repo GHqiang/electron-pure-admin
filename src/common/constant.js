@@ -7,10 +7,17 @@ const ORDER_FORM = {
   yangcong: "洋葱",
   haha: "哈哈"
 };
+
+// ume系统影院
+const UME_LIST = ["ume", "yaolai", "wanmei", "yinghuang", "zheyingshidai"];
+
 // 影院列表
 const APP_LIST = {
   ume: "UME",
   yaolai: "耀莱",
+  // wanmei: "完美",
+  // yinghuang: "英皇",
+  // zheyingshidai: "浙影时代",
   sfc: "上影",
   jiujin: "华夏久金",
   jinji: "北京金鸡",
@@ -829,6 +836,7 @@ const SFC_CINEMA_NAME = [
 ];
 export {
   ORDER_FORM,
+  UME_LIST,
   APP_LIST,
   PLAT_LINK_APP,
   SFC_SPECIAL_CINEMA_LIST,

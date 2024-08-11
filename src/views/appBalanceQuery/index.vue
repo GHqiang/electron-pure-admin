@@ -81,7 +81,7 @@
 
 <script setup>
 import { ref, reactive } from "vue";
-import { APP_LIST } from "@/common/constant.js";
+import { APP_LIST, UME_LIST } from "@/common/constant.js";
 import { APP_API_OBJ } from "@/common/index.js";
 import { ElLoading } from "element-plus";
 import { getCinemaLoginInfoList } from "@/utils/utils";
@@ -112,7 +112,7 @@ const searchData = async () => {
   });
   try {
     let loginInfoList = getCinemaLoginInfoList().filter(
-      item => !["ume", "yaolai"].includes(item.app_name)
+      item => !UME_LIST.includes(item.app_name)
     );
     // 过滤一下已登录的
     let tableList = [];
