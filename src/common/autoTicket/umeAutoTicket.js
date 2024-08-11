@@ -186,22 +186,22 @@ class OrderAutoTicketQueue {
           {
             id: 72939,
             platName: "lieren",
-            app_name: "ume",
+            app_name: "yaolai",
             ticket_num: 1,
             rewards: "0",
             order_number: "2024080619281519354",
             supplier_end_price: 40,
             order_id: "7013650",
             tpp_price: "43.89",
-            city_name: "宁波",
+            city_name: "南阳",
             cinema_addr: "镇海区庄市大道1088号万科1902广场4楼",
-            cinema_code: "33047701",
-            cinema_name: "UME影城宁波镇海店（万科广场中国巨幕店）",
-            hall_name: "4号厅",
-            film_name: "神偷奶爸4",
-            show_time: "2024-08-08 14:20:00",
-            lockseat: "A排11座",
-            cinema_group: "ume二线"
+            cinema_code: "41134401",
+            cinema_name: "南阳耀莱成龙影城（孔明南路店）",
+            hall_name: "5号厅",
+            film_name: "抓娃娃",
+            show_time: "2024-08-11 23:50:00",
+            lockseat: "1排1座",
+            cinema_group: "耀莱二线"
           }
         ];
       }
@@ -1186,7 +1186,11 @@ class OrderAutoTicketQueue {
       let mbmberPrice =
         (Number(ticketLowestPrice) + Number(ticketStandardPrice)) / 100;
       total_price = mbmberPrice * ticket_num;
-      let { card_id, useQuan, profit } = useQuanOrCard({
+      let {
+        card_id,
+        useQuan = [],
+        profit
+      } = useQuanOrCard({
         cardList,
         quanList,
         supplier_end_price,
@@ -1249,6 +1253,14 @@ class OrderAutoTicketQueue {
         opera_time: getCurrentFormattedDateTime(),
         des: `创建订单成功`
       });
+      if (isTestOrder) {
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: `测试单暂不购买`,
+          level: "error"
+        });
+        return { offerRule };
+      }
       // 8、购买电影票
       const buyTicketRes = await buyTicket({
         cinemaCode,
@@ -2356,7 +2368,7 @@ const useQuanOrCard = ({
         };
       }
       // 中标价-会员成本价
-      profit =
+      let profit =
         supplier_end_price -
         member_price -
         (Number(supplier_end_price) * 100) / 10000;
@@ -2407,7 +2419,9 @@ const useQuanOrCard = ({
         profit
       };
     }
-  } catch (error) {}
+  } catch (error) {
+    console.error("使用会员卡或优惠券报错", error);
+  }
 };
 // 添加订单处理记录
 const addOrderHandleRecored = async ({
