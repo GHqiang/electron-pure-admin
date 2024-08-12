@@ -45,7 +45,7 @@ class getUmeOfferPrice {
             order_number: order.order_number,
             type: 1
           },
-          this.logList.slice()
+          this.logList
         );
         return {
           err_msg: errInfoObj?.des || "匹配报价规则失败",

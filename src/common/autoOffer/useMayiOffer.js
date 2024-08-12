@@ -74,9 +74,8 @@ class OrderAutoOfferQueue {
           plat_name: "mayi",
           type: 1
         },
-        this.logList.slice()
+        this.logList
       );
-      this.logList = [];
       if (orders.length) {
         console.warn(conPrefix + "新的待报价订单列表", orders);
       }
@@ -243,8 +242,7 @@ class OrderAutoOfferQueue {
         offerResult,
         this.logList
       );
-      const log_list = getOrginValue(this.logList);
-      let errInfoObj = log_list
+      let errInfoObj = this.logList
         .filter(item => item?.level === "error")
         ?.reverse()?.[0];
       let serOrderInfo = {
@@ -296,7 +294,7 @@ class OrderAutoOfferQueue {
           order_number: serOrderInfo.order_number,
           type: 1
         },
-        log_list
+        this.logList
       );
       if (isTestOrder) {
         console.warn("数据库存储当前订单报价记录", serOrderInfo);

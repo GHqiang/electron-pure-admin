@@ -171,9 +171,8 @@ class OrderAutoTicketQueue {
                   order_number: order.order_number,
                   type: 2
                 },
-                this.logList.slice()
+                this.logList
               );
-              this.logList = [];
             }
           }
         }
@@ -572,9 +571,8 @@ class OrderAutoTicketQueue {
               order_number: order_number,
               type: 2
             },
-            this.logList.slice()
+            this.logList
           );
-          this.logList = [];
           await mockDelay(2);
           await this.unlockSeat({
             platName,
@@ -637,7 +635,8 @@ class OrderAutoTicketQueue {
       }
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
-        des: `订单首次解锁失败试错后解锁成功`
+        des: `订单首次解锁失败试错后解锁成功`,
+        level: 'info'
       });
     }
     logUpload(
@@ -647,9 +646,8 @@ class OrderAutoTicketQueue {
         order_number: order_number,
         type: 2
       },
-      this.logList.slice()
+      this.logList
     );
-    this.logList = [];
     try {
       // 解锁成功后延迟6秒再执行
       await mockDelay(6);
@@ -2011,7 +2009,8 @@ class OrderAutoTicketQueue {
         );
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: `获取订单支付结果，取票码不存在，暂时返回异步获取`
+          des: `获取订单支付结果，取票码不存在，暂时返回异步获取`,
+          level: 'error'
         });
         logUpload(
           {
@@ -2020,9 +2019,8 @@ class OrderAutoTicketQueue {
             order_number: order_number,
             type: 2
           },
-          this.logList.slice()
+          this.logList
         );
-        this.logList = [];
         this.asyncFetchQrcodeSubmit({
           city_id,
           cinema_id,
@@ -2128,7 +2126,8 @@ class OrderAutoTicketQueue {
       if (!qrcode) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: `系统延迟轮询10分钟后获取取票码仍失败`
+          des: `系统延迟轮询10分钟后获取取票码仍失败`,
+          level: 'error'
         });
         logUpload(
           {
@@ -2137,9 +2136,8 @@ class OrderAutoTicketQueue {
             order_number: order_number,
             type: 2
           },
-          this.logList.slice()
+          this.logList
         );
-        this.logList = [];
         svApi.updateTicketRecord({
           order_number,
           err_msg: "系统延迟轮询10分钟后获取取票码仍失败"
@@ -2203,7 +2201,8 @@ class OrderAutoTicketQueue {
         }
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: `系统延迟后轮询获取提交取票码成功`
+          des: `系统延迟后轮询获取提交取票码成功`,
+          level: 'info'
         });
         logUpload(
           {
@@ -2212,9 +2211,8 @@ class OrderAutoTicketQueue {
             order_number: order_number,
             type: 2
           },
-          this.logList.slice()
+          this.logList
         );
-        this.logList = [];
         // 更新出票结果
         svApi.updateTicketRecord({
           order_number,
