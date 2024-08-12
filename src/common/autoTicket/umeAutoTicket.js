@@ -196,10 +196,10 @@ class OrderAutoTicketQueue {
             cinema_addr: "镇海区庄市大道1088号万科1902广场4楼",
             cinema_code: "41134401",
             cinema_name: "南阳耀莱成龙影城（孔明南路店）",
-            hall_name: "5号厅",
+            hall_name: "3号厅",
             film_name: "抓娃娃",
-            show_time: "2024-08-11 23:50:00",
-            lockseat: "1排1座",
+            show_time: "2024-08-12 23:50:00",
+            lockseat: "1排2座",
             cinema_group: "耀莱二线"
           }
         ];
@@ -1120,7 +1120,9 @@ class OrderAutoTicketQueue {
       }
       let cardList = cardQuanListRes?.cards || [];
       let quanList = cardQuanListRes?.coupons || [];
-      console.warn("获取最优卡券组合列表返回", cardList, quanList);
+      let activities = cardQuanListRes?.activities || [];
+      let discountAmount = activities[0]?.discountAmount || 0; // 活动日优惠金额
+      console.warn("获取最优卡券组合列表返回", cardList, quanList, activities);
       // 7、耀莱需要获取观影人列表添加观影人
       if (appFlag === "yaolai") {
         const moviegoersListRes = await findStoreMemberMoviegoersByMemberId({
@@ -1180,7 +1182,10 @@ class OrderAutoTicketQueue {
       const { ticketLowestPrice, ticketStandardPrice } =
         orderPriceInfo?.scheduleInfo || {};
       let mbmberPrice =
-        (Number(ticketLowestPrice) + Number(ticketStandardPrice)) / 100;
+        (Number(ticketLowestPrice) +
+          Number(ticketStandardPrice) -
+          Number(discountAmount)) /
+        100;
       total_price = mbmberPrice * ticket_num;
       let {
         card_id = "",
@@ -1716,7 +1721,7 @@ class OrderAutoTicketQueue {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: `获取订单支付结果，取票码不存在，暂时返回异步获取`,
-          level: 'error'
+          level: "error"
         });
         logUpload(
           {
@@ -1821,7 +1826,7 @@ class OrderAutoTicketQueue {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: `系统延迟轮询10分钟后获取取票码仍失败`,
-          level: 'error'
+          level: "error"
         });
         logUpload(
           {
@@ -1896,7 +1901,7 @@ class OrderAutoTicketQueue {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: `系统延迟后轮询获取提交取票码成功`,
-          level: 'info'
+          level: "info"
         });
         logUpload(
           {
