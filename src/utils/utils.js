@@ -1159,9 +1159,14 @@ const offerRuleMatch = order => {
       return true;
     });
     console.log("匹配会员日后的规则列表", memberDayRuleList);
-    return memberDayRuleList;
+    return {
+      matchRuleList: memberDayRuleList
+    };
   } catch (error) {
     console.error("匹配报价规则异常", error);
+    return {
+      error
+    }
   }
 };
 
@@ -1170,8 +1175,8 @@ window.offerRuleMatch = offerRuleMatch;
 const logUpload = async (order, logList) => {
   try {
     if (!logList.length) return;
-    
-    let log_list = logList.slice() 
+
+    let log_list = logList.slice()
 	logList.length = 0 // 清空原数组（堆内存里面的值会被清空）
     log_list = log_list.map(item => {
       let info = item.info;

@@ -97,13 +97,15 @@ class getUmeOfferPrice {
   async getEndMatchOfferRule(order) {
     const { conPrefix } = this;
     try {
-      const matchRuleList = offerRuleMatch(order);
+      const matchRuleListRes = offerRuleMatch(order);
+      const matchRuleList = matchRuleListRes?.matchRuleList || []
       if (!matchRuleList?.length) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: "报价规则匹配后为空",
           level: "error",
           info: {
+            error: matchRuleListRes?.error,
             order
           }
         });
