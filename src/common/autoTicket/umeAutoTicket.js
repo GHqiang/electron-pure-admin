@@ -1035,11 +1035,11 @@ class OrderAutoTicketQueue {
         // 试错3次，间隔5秒
         // 锁定座位尝试配置
         let delayConfig = {
-          lieren: [3, 5],
-          mangguo: [3, 5],
-          sheng: [3, 5],
-          mayi: [6, 20],
-          yangcong: [6, 20]
+          lieren: [10, 5],
+          mangguo: [10, 5],
+          sheng: [10, 5],
+          mayi: [12, 10],
+          yangcong: [12, 10]
         };
         lockRes = await trial(
           inx => this.lockSeatHandle(params, inx),

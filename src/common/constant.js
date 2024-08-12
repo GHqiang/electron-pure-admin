@@ -9,13 +9,20 @@ const ORDER_FORM = {
 };
 
 // ume系统影院
-const UME_LIST = ["ume", "yaolai", "renhengmeng", "wanmei", "yinghuang", "zheyingshidai"];
+const UME_LIST = [
+  "ume",
+  "yaolai",
+  "renhengmeng",
+  "wanmei",
+  "yinghuang",
+  "zheyingshidai"
+];
 
 // 影院列表
 const APP_LIST = {
   ume: "UME",
   yaolai: "耀莱",
-  renhengmeng: '仁恒梦影廊'
+  renhengmeng: "仁恒梦影廊",
   // wanmei: "完美",
   // yinghuang: "英皇",
   // zheyingshidai: "浙影时代",
