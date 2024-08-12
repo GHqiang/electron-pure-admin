@@ -393,7 +393,8 @@ class getUmeOfferPrice {
         ticketMemberPrice,
         maxSeatPrice = 0,
         handlingMemberFee,
-        ticketMemberServiceFeeMin = 0
+        ticketMemberServiceFeeMin = 0,
+        activityPrices = []
       } = movieInfo;
       let member_price = Math.max(ticketMemberPrice, maxSeatPrice) / 100;
       // 会员价等于真实会员价加手续费加会员服务费
@@ -401,6 +402,19 @@ class getUmeOfferPrice {
         member_price +
         (Number(handlingMemberFee) + Number(ticketMemberServiceFeeMin)) / 100;
       console.log(conPrefix + "获取会员价", member_price);
+      if(activityPrices?.length) {
+         // [{
+         //    "activityId": 23,
+         //    "activityCode": "YPHD000000023",
+         //    "filmActivityType": "10",
+         //    "promotionMethod": "UNITY",
+         //    "activityName": "【华中区】周一会员日",
+         //    "amountOrSale": 610.00, // 优惠金额
+         //    "partCardType": "CHOOSE"
+         //  }]
+        // 如果存在会员活动会员价先减1，不减amountOrSale是因为怕把价格压下去
+        member_price = member_price - 1
+      }
       if (member_price > 0) {
         const cardRes = await svApi.queryCardList({
           app_name: appName
