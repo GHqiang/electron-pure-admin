@@ -9,12 +9,13 @@ const ORDER_FORM = {
 };
 
 // ume系统影院
-const UME_LIST = ["ume", "yaolai", "wanmei", "yinghuang", "zheyingshidai"];
+const UME_LIST = ["ume", "yaolai", "renhengmeng", "wanmei", "yinghuang", "zheyingshidai"];
 
 // 影院列表
 const APP_LIST = {
   ume: "UME",
   yaolai: "耀莱",
+  renhengmeng: '仁恒梦影廊'
   // wanmei: "完美",
   // yinghuang: "英皇",
   // zheyingshidai: "浙影时代",
@@ -544,6 +545,7 @@ const UME_SPECIAL_CINEMA_LIST = [
 const SPECIAL_CINEMA_OBJ = {
   ume: UME_SPECIAL_CINEMA_LIST,
   yaolai: [],
+  renhengmeng: [],
   sfc: SFC_SPECIAL_CINEMA_LIST,
   jiujin: JIUJIN_SPECIAL_CINEMA_LIST,
   jinji: JINJI_SPECIAL_CINEMA_LIST,
@@ -602,6 +604,7 @@ const SPECIAL_CINEMA_OBJ = {
 const TICKET_CONPREFIX_OBJ = {
   ume: "【UME自动出票】——",
   yaolai: "【耀莱自动出票】——",
+  renhengmeng: "【仁恒梦影廊自动出票】——",
   sfc: "【上影自动出票】——",
   jiujin: "【华夏久金自动出票】——",
   jinji: "【北京金鸡自动出票】——",

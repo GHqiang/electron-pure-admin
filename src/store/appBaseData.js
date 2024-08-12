@@ -11,6 +11,7 @@ export const useAppBaseData = defineStore("appBaseData", {
     appBaseData: {
       ume: null,
       yaolai: null,
+      renhengmeng: null,
       sfc: null,
       // {
       //   cityList: null,

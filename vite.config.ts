@@ -85,6 +85,12 @@ export default ({ command, mode }: ConfigEnv): UserConfigExport => {
           changeOrigin: true, // 是否允许跨域
           rewrite: path => path.replace(/^\/yaolai/, "") // 重写路径，去除/api前缀
         },
+        // 仁恒梦
+        "/renhengmeng": {
+          target: "https://oc.yuekeyun.com", // 后端API的真实地址
+          changeOrigin: true, // 是否允许跨域
+          rewrite: path => path.replace(/^\/renhengmeng/, "") // 重写路径，去除/api前缀
+        },
         // 哈哈
         "/api": {
           target: "https://hahapiao.cn", // 后端API的真实地址
