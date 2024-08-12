@@ -1180,7 +1180,7 @@ const logUpload = async (order, logList) => {
 	logList.length = 0 // 清空原数组（堆内存里面的值会被清空）
     log_list = log_list.map(item => {
       let info = item.info;
-      if(info.error) {
+      if(info?.error) {
         info.error = formatErrInfo(info.error)
       }
       return {
