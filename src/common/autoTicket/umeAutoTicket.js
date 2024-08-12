@@ -1121,6 +1121,15 @@ class OrderAutoTicketQueue {
       let cardList = cardQuanListRes?.cards || [];
       let quanList = cardQuanListRes?.coupons || [];
       let activities = cardQuanListRes?.activities || [];
+      // [{
+      //    "activityId": 23,
+      //    "activityCode": "YPHD000000023",
+      //    "filmActivityType": "10",
+      //    "promotionMethod": "UNITY",
+      //    "activityName": "【华中区】周一会员日",
+      //    "amountOrSale": 610.00, // 优惠金额
+      //    "partCardType": "CHOOSE"
+      //  }]
       let discountAmount = activities[0]?.discountAmount || 0; // 活动日优惠金额
       console.warn("获取最优卡券组合列表返回", cardList, quanList, activities);
       // 7、耀莱需要获取观影人列表添加观影人
@@ -1187,6 +1196,7 @@ class OrderAutoTicketQueue {
           Number(discountAmount)) /
         100;
       total_price = mbmberPrice * ticket_num;
+      let activityId = activities[0]?.activityId || null; // 活动id
       let {
         card_id = "",
         useQuan = [],
@@ -1228,6 +1238,7 @@ class OrderAutoTicketQueue {
         orderHeaderId,
         coupon: useQuan,
         card_id,
+        activityId,
         total_price,
         timestamp
       });
@@ -1400,6 +1411,7 @@ class OrderAutoTicketQueue {
       orderHeaderId,
       coupon,
       card_id,
+      activityId,
       total_price,
       timestamp,
       isTimeoutRetry = 1 // 默认超时重试
@@ -1414,7 +1426,7 @@ class OrderAutoTicketQueue {
           timestamp,
           ticket: {
             orderHeaderId: "" + orderHeaderId,
-            activityId: null,
+            activityId: activityId || null,
             coupon: coupon || [],
             totalPrice: total_price
           },
