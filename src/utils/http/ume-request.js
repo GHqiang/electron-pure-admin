@@ -52,7 +52,8 @@ const createAxios = ({ appName, timeout = 20 }) => {
         }
         if (!IS_DEV) {
           // 截取掉/sfc/
-          config.url = appHostObj[appName] + config.url.slice(4);
+          config.url =
+            appHostObj[appName] + config.url.slice(appName.length + 1);
         }
       }
       // console.log('请求config', config)
