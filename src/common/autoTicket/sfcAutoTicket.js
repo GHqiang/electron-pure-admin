@@ -264,7 +264,6 @@ class OrderAutoTicketQueue {
     try {
       this.errMsg = "";
       this.errInfo = "";
-      this.logList = [];
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: `订单开始出票，订单号-${order.order_number}，上个订单号-${this.prevOrderNumber}`,

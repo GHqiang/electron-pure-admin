@@ -67,7 +67,6 @@ class OrderAutoOfferQueue {
       const { getInterval, handleInterval } = platQueueRule[0];
       let fetchDelay = getInterval;
       let processDelay = handleInterval;
-      this.logList = [];
       let orders = await this.fetchOrders(fetchDelay);
       logUpload(
         {
