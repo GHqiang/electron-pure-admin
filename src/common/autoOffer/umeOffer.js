@@ -24,103 +24,62 @@ class getUmeOfferPrice {
   // 获取最终报价信息（唯一暴漏给外包用的方法）
   async getEndOfferPrice({ order, offerList }) {
     const { conPrefix, platName, appFlag } = this;
+    let err_msg, err_info, endPrice, offerRule;
+    let { supplier_max_price, rewards } = order || {};
     try {
-      let { id, supplier_max_price, rewards } = order || {};
-      if (!id) {
-        return {
-          err_msg: "获取最终报价信息时订单id为空",
-          err_info: ""
-        };
-      }
       // 获取匹配到的最终报价规则
-      let offerRule = await this.getEndMatchOfferRule(order);
-      if (!offerRule) {
-        const errInfoObj = this.logList
-          .filter(item => item.level === "error")
-          .reverse()?.[0];
-        logUpload(
-          {
-            plat_name: platName,
-            app_name: appFlag,
-            order_number: order.order_number,
-            type: 1
-          },
-          this.logList
-        );
-        return {
-          err_msg: errInfoObj?.des || "匹配报价规则失败",
-          err_info: errInfoObj?.info
-            ? formatErrInfo(errInfoObj?.info?.error)
-            : ""
-        };
-      }
-      const {
-        offerAmount,
-        memberOfferAmount,
-        memberCostPrice = 0,
-        offerType
-      } = offerRule;
-      let price = Number(offerAmount || memberOfferAmount);
-      if (!price) {
-        const errInfoObj = this.logList
-          .filter(item => item.level === "error")
-          .reverse()?.[0];
-        return {
-          offerRule,
-          err_msg: errInfoObj?.des || "从匹配到的报价规则里获取报价价格失败",
-          err_info: errInfoObj?.info
-            ? formatErrInfo(errInfoObj?.info?.error)
-            : ""
-        };
-      }
-      // 成本价
-      let cost_price = offerType === "1" ? 32 : Number(memberCostPrice);
-      // 获取最终报价
-      const endPrice = await this.getEndPrice({
-        cost_price,
-        supplier_max_price,
-        price,
-        rewards,
-        offerList
-      });
-      console.warn(conPrefix + "最终报价返回", endPrice);
-      if (!endPrice) {
-        const errInfoObj = this.logList
-          .filter(item => item.level === "error")
-          .reverse()?.[0];
-        return {
-          offerRule,
-          err_msg: errInfoObj?.des || "获取最终报价价格失败",
-          err_info: errInfoObj?.info
-            ? formatErrInfo(errInfoObj?.info?.error)
-            : ""
-        };
-      }
-      if (offerType === "1") {
-        offerRule.offerAmount = endPrice;
-      } else {
-        offerRule.memberOfferAmount = endPrice;
-      }
-      logUpload(
-        {
-          plat_name: platName,
-          app_name: appFlag,
-          order_number: order.order_number,
-          type: 1
-        },
-        this.logList
-      );
-      return { endPrice, offerRule };
-    } catch (error) {
-      console.error(conPrefix + "获取最终报价信息异常", error);
-      this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
-        des: "获取最终报价信息异常",
-        level: "error",
-        info: {
-          error
+      offerRule = await this.getEndMatchOfferRule(order);
+      if (offerRule) {
+        const {
+          offerAmount,
+          memberOfferAmount,
+          memberCostPrice = 0,
+          quanValue,
+          offerType
+        } = offerRule;
+        let price = Number(offerAmount || memberOfferAmount);
+        if (price) {
+          // 成本价
+          let cost_price =
+            offerType === "1"
+              ? quanValue == "40"
+                ? 38.8
+                : Number(quanValue)
+              : Number(memberCostPrice);
+          // 获取最终报价
+          endPrice = await this.getEndPrice({
+            cost_price,
+            supplier_max_price,
+            price,
+            rewards,
+            offerList
+          });
+          console.warn(conPrefix + "最终报价返回", endPrice);
+          if (endPrice) {
+            if (offerType === "1") {
+              offerRule.offerAmount = endPrice;
+            } else {
+              offerRule.memberOfferAmount = endPrice;
+            }
+          } else {
+            err_msg = "获取最终报价价格失败";
+          }
+        } else {
+          err_msg = "从最终报价规则里获取报价价格失败";
         }
-      });
+      } else {
+        err_msg = "获取最终报价规则失败";
+      }
+    } catch (error) {
+      console.error(conPrefix + "获取最终报价信息方法执行异常", error);
+      err_msg = "获取最终报价信息方法执行异常";
+      err_info = formatErrInfo(error);
+    } finally {
+      const errInfoObj = this.logList
+        .filter(item => item.level === "error")
+        .reverse()?.[0];
+      err_msg = errInfoObj?.des || err_msg || "";
+      err_info = formatErrInfo(errInfoObj?.info?.error) || err_info || "";
       logUpload(
         {
           plat_name: platName,
@@ -130,10 +89,7 @@ class getUmeOfferPrice {
         },
         this.logList
       );
-      return {
-        err_msg: "获取最终报价信息异常",
-        err_info: error
-      };
+      return { err_msg, err_info, endPrice, offerRule };
     }
   }
 
