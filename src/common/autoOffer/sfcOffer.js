@@ -15,7 +15,7 @@ import { APP_LIST } from "@/common/constant.js";
 import lierenApi from "@/api/lieren-api";
 class getSfcOfferPrice {
   constructor({ appFlag, platName }) {
-    console.log("APP_API_OBJ", APP_API_OBJ, appFlag, platName);
+    // console.log("APP_API_OBJ", APP_API_OBJ, appFlag, platName);
     this.appFlag = appFlag; // 影线标识
     this.platName = platName; // 平台标识
     this.conPrefix = APP_LIST[appFlag] + "自动报价——"; // 打印前缀
@@ -609,7 +609,7 @@ class getSfcOfferPrice {
         let discount = cardList[0]?.card_discount;
         let real_member_price = Number(member_price);
         member_price = discount
-          ? (Number(member_price) * discount) / 100
+          ? (Number(member_price) * 100 * discount) / 10000
           : Number(member_price);
         return {
           real_member_price,

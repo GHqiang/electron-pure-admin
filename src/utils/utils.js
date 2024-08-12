@@ -1170,7 +1170,19 @@ window.offerRuleMatch = offerRuleMatch;
 const logUpload = async (order, logList) => {
   try {
     if (!logList.length) return;
-    let log_list = getOrginValue(logList);
+    
+    let log_list = logList.slice() 
+	logList.length = 0 // 清空原数组（堆内存里面的值会被清空）
+    log_list = log_list.map(item => {
+      let info = item.info;
+      if(info.error) {
+        info.error = formatErrInfo(info.error)
+      }
+      return {
+        ...item,
+        info
+      }
+    })
     // type 1-报价 2-获取订单 3-出票
     const { order_number, app_name, plat_name, type = 3 } = order;
     await svApi.addTicketOperaLog({

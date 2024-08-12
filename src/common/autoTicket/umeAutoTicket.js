@@ -1187,9 +1187,9 @@ class OrderAutoTicketQueue {
         (Number(ticketLowestPrice) + Number(ticketStandardPrice)) / 100;
       total_price = mbmberPrice * ticket_num;
       let {
-        card_id,
+        card_id = "",
         useQuan = [],
-        profit
+        profit = 0
       } = useQuanOrCard({
         cardList,
         quanList,
