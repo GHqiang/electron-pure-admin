@@ -154,7 +154,7 @@ class getSfcOfferPrice {
     const { conPrefix } = this;
     try {
       const matchRuleListRes = offerRuleMatch(order);
-      const matchRuleList = matchRuleListRes?.matchRuleList || []
+      const matchRuleList = matchRuleListRes?.matchRuleList || [];
       if (!matchRuleList?.length) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
@@ -621,7 +621,12 @@ class getSfcOfferPrice {
       let res = await this.appApi.getCinemaList(params);
       console.log(conPrefix + "获取城市影院返回", res);
       let cinemaList = res.data?.cinema_data || [];
-      let cinemaIdRes = getCinemaId(cinema_name, cinemaList, appName);
+      let cinemaIdRes = getCinemaId(
+        cinema_name,
+        cinemaList,
+        appName,
+        city_name
+      );
       let cinema_id = cinemaIdRes?.cinema_id;
       if (!cinema_id) {
         console.error(conPrefix + "获取目标影院失败");

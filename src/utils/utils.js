@@ -296,7 +296,7 @@ const getCinemaFlag = item => {
     return "hema";
   } else if (
     cinema_name.includes("华熙国际影城") &&
-    ["重庆"].includes(city_name)
+    ["重庆", "成都"].includes(city_name)
   ) {
     return "cqhx";
   } else if (
@@ -325,8 +325,11 @@ const getCinemaFlag = item => {
   ) {
     return "whyx";
   } else if (
-    cinemNameSpecial(cinema_name).includes("中影国际影城杭州星光大道店") &&
-    ["杭州"].includes(city_name)
+    ["杭州中影国际影城", "中影国际影城杭州星光大道店"].some(
+      itemA =>
+        cinemNameSpecial(cinema_name).includes(itemA) &&
+        ["杭州"].includes(city_name)
+    )
   ) {
     return "hzzy";
   } else if (
@@ -835,7 +838,7 @@ const calcCount = data => {
 };
 
 // 根据订单name获取影院id(主要用于sfc系统)
-const getCinemaId = (cinema_name, list, appName) => {
+const getCinemaId = (cinema_name, list, appName, city_name) => {
   try {
     // 1、先全字匹配，匹配到就直接返回
     let cinema_id = list.find(item => item.name === cinema_name)?.id;
@@ -845,11 +848,28 @@ const getCinemaId = (cinema_name, list, appName) => {
     // 2、匹配不到的如果满足条件就走特殊匹配
     console.warn("全字匹配影院名称失败", cinema_name, list);
     let cinemaName = cinemNameSpecial(cinema_name);
-    let specialCinemaInfo = SPECIAL_CINEMA_OBJ[appName].find(
+    let specialCinemaList = SPECIAL_CINEMA_OBJ[appName].filter(
       item =>
         item.order_cinema_name === cinemaName ||
         item.order_cinema_name.includes(cinemaName)
     );
+    // const CQHX_SPECIAL_CINEMA_LIST = [
+    //   {
+    //     order_cinema_name: "华熙国际影城",
+    //     sfc_cinema_name: "重庆华熙国际影城"
+    //   },
+    //   {
+    //     order_cinema_name: "华熙国际影城",
+    //     sfc_cinema_name: "成都华熙国际影城"
+    //   }
+    // ];
+    // 存在以上情况故需要做特殊处理
+    if (specialCinemaList.length > 1 && city_name) {
+      specialCinemaList = specialCinemaList.filter(item =>
+        item.sfc_cinema_name.includes(city_name)
+      );
+    }
+    let specialCinemaInfo = specialCinemaList[0];
     if (specialCinemaInfo) {
       cinemaName = specialCinemaInfo.sfc_cinema_name;
     } else {

@@ -635,7 +635,7 @@ class OrderAutoTicketQueue {
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: `订单首次解锁失败试错后解锁成功`,
-        level: 'info'
+        level: "info"
       });
     }
     logUpload(
@@ -868,7 +868,12 @@ class OrderAutoTicketQueue {
           return { transferParams };
         }
         // 4、根据影院名称获取目标影院id
-        let cinemaIdRes = getCinemaId(cinema_name, cinemaList, appFlag);
+        let cinemaIdRes = getCinemaId(
+          cinema_name,
+          cinemaList,
+          appFlag,
+          city_name
+        );
         cinema_id = cinemaIdRes?.cinema_id;
         if (!cinema_id) {
           this.setErrInfo("根据影院名称获取目标影院id异常", cinemaIdRes?.error);
@@ -2009,7 +2014,7 @@ class OrderAutoTicketQueue {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: `获取订单支付结果，取票码不存在，暂时返回异步获取`,
-          level: 'error'
+          level: "error"
         });
         logUpload(
           {
@@ -2126,7 +2131,7 @@ class OrderAutoTicketQueue {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: `系统延迟轮询10分钟后获取取票码仍失败`,
-          level: 'error'
+          level: "error"
         });
         logUpload(
           {
@@ -2201,7 +2206,7 @@ class OrderAutoTicketQueue {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: `系统延迟后轮询获取提交取票码成功`,
-          level: 'info'
+          level: "info"
         });
         logUpload(
           {

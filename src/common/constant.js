@@ -557,10 +557,19 @@ const SHZY_SPECIAL_CINEMA_LIST = [
 // 杭州中影特殊影院集合
 const HZZY_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "中影国际影城杭州星光大道店e街店",
+    order_cinema_name: "中影国际影城杭州星光大道店",
     sfc_cinema_name: "杭州中影国际影城星光大道店"
   }
+  // {
+  //   order_cinema_name: "杭州中影国际影城星光二期CINITY店",
+  //   sfc_cinema_name: "杭州中影国际影城星光大道二期CINITY店"
+  // },
+  // {
+  //   order_cinema_name: "杭州中影国际影城东站西子国际店",
+  //   sfc_cinema_name: "杭州中影国际影城东站西子国际店"
+  // }
 ];
+
 // 九江中影特殊影院集合
 const JJZY_SPECIAL_CINEMA_LIST = [
   {
@@ -580,6 +589,10 @@ const CQHX_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: "华熙国际影城",
     sfc_cinema_name: "重庆华熙国际影城"
+  },
+  {
+    order_cinema_name: "华熙国际影城",
+    sfc_cinema_name: "成都华熙国际影城"
   }
 ];
 
