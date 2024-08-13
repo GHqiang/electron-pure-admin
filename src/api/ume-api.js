@@ -118,13 +118,16 @@ const createApi = ({ appName }) => {
       params
     );
 
+  // 绑定优惠券
+  const bandQuan = params =>
+    axios.post(
+      `/${appName}/api/storeServer/couponYlInstanceService/findIsNeedPin`,
+      params
+    );
+
   // 获取订单列表
   const getOrderList = params =>
     axios.get(`/sfc/order/movie-ticket-orders`, { params });
-
-  // 绑定优惠券
-  const bandQuan = params =>
-    axios.get(`/sfc/v2/coupon/bind-coupon-code`, { params });
 
   return {
     getCinemaList,
