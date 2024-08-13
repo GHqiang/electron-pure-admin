@@ -1404,7 +1404,7 @@ class OrderAutoTicketQueue {
 
   // 创建订单
   async createOrder(data) {
-    const { conPrefix } = this;
+    const { conPrefix, appFlag } = this;
     const {
       cinemaCode,
       cinemaLinkId,
@@ -1434,12 +1434,17 @@ class OrderAutoTicketQueue {
           mainPushCard: null,
           cardId: card_id || "",
           ticketMobile: JSON.parse(localStorage.getItem("userInfo")).phone, // 登录手机号
-          // ticketMobile: "13073792313", // 登录手机号
           inviteCode: "",
-          fulfillPlace: "影院柜台",
-          fulfillTime: "",
-          fulfillType: "",
-          channelCode: "QD0000001"
+          channelCode: "QD0000001",
+          ...(appFlag === "ume" && {
+            fulfillPlace: "影院柜台",
+            fulfillTime: "",
+            fulfillType: ""
+          }),
+          ...(appFlag === "yaolai" && {
+            digitalCode: "",
+            isManual: "N"
+          })
         }
       };
       let order_num;
