@@ -5,6 +5,7 @@ import { ElMessage } from "element-plus";
 
 let appHostObj = {
   ume: "https://oc.yuekeyun.com",
+  renhengmeng: "https://oc.yuekeyun.com",
   yaolai: "https://jccinema.yuekeyun.com"
 };
 const createAxios = ({ appName, timeout = 20 }) => {

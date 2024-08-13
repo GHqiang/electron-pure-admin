@@ -1436,7 +1436,7 @@ class OrderAutoTicketQueue {
           ticketMobile: JSON.parse(localStorage.getItem("userInfo")).phone, // 登录手机号
           inviteCode: "",
           channelCode: "QD0000001",
-          ...(appFlag === "ume" && {
+          ...(["ume", "renhengmeng"].includes(appFlag) && {
             fulfillPlace: "影院柜台",
             fulfillTime: "",
             fulfillType: ""
