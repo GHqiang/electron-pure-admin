@@ -31,6 +31,14 @@ export const appUserInfo = defineStore("appUserInfo", {
       laina: null,
       ningbo: null,
       hema: null,
+      cqhx: null,
+      jqx: null,
+      fszy: null,
+      xywszy: null,
+      jjzy: null,
+      whyx: null,
+      hzzy: null,
+      shzy: null,
       hongshi: null,
       limeihua: null,
       hengye: null,
@@ -85,7 +93,7 @@ export const appUserInfo = defineStore("appUserInfo", {
         userInfo = JSON.parse(userInfo);
       }
       const { phone } = userInfo;
-      const appNameList = ["sfc", "ningbo", "ume", "yaolai", 'renhengmeng'];
+      const appNameList = ["sfc", "ningbo", "ume", "yaolai", "renhengmeng"];
       list = list.filter(item => {
         if (appNameList.includes(item.app_name)) {
           return item.mobile === phone;

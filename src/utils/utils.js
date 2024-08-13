@@ -258,12 +258,12 @@ const getCinemaFlag = item => {
   // 蚂蚁和洋葱、哈哈：耀莱成龙。 猎人和芒果：耀莱一线、耀莱二线
   else if (["耀莱成龙", "耀莱一线", "耀莱二线"].includes(cinema_group)) {
     return "yaolai";
-  }
-  else if (cinema_name.includes("仁恒梦影廊电影院") &&
-    ["深圳"].includes(city_name)) {
+  } else if (
+    cinema_name.includes("仁恒梦影廊电影院") &&
+    ["深圳"].includes(city_name)
+  ) {
     return "renhengmeng";
-  }
-  else if (
+  } else if (
     cinema_name.includes("华夏久金国际影城") &&
     ["上海"].includes(city_name)
   ) {
@@ -294,6 +294,46 @@ const getCinemaFlag = item => {
     return "limeihua";
   } else if (cinema_name.includes("河马国际") && ["上海"].includes(city_name)) {
     return "hema";
+  } else if (
+    cinema_name.includes("华熙国际影城") &&
+    ["重庆"].includes(city_name)
+  ) {
+    return "cqhx";
+  } else if (
+    cinema_name.includes("北京金泉港IMAX国际影城") &&
+    ["北京"].includes(city_name)
+  ) {
+    return "jqx";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("佛山中影国际影城桂城万达广场店") &&
+    ["佛山"].includes(city_name)
+  ) {
+    return "fszy";
+  } else if (
+    cinema_name.includes("襄阳中影国际影城武商mall天河店") &&
+    ["襄阳"].includes(city_name)
+  ) {
+    return "xywszy";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("中影国际影城九江花园城店") &&
+    ["九江"].includes(city_name)
+  ) {
+    return "jjzy";
+  } else if (
+    cinema_name.includes("银兴国际影城M+店") &&
+    ["武汉"].includes(city_name)
+  ) {
+    return "whyx";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("中影国际影城杭州星光大道店") &&
+    ["杭州"].includes(city_name)
+  ) {
+    return "hzzy";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("上海中影国际影城嘉定菊园新e街店") &&
+    ["上海"].includes(city_name)
+  ) {
+    return "shzy";
   } else if (
     ["恒业影城", "恒业国际影城"].some(
       itemA =>
@@ -1171,7 +1211,7 @@ const offerRuleMatch = order => {
     console.error("匹配报价规则异常", error);
     return {
       error
-    }
+    };
   }
 };
 
@@ -1181,18 +1221,18 @@ const logUpload = async (order, logList) => {
   try {
     if (!logList.length) return;
 
-    let log_list = logList.slice()
-	logList.length = 0 // 清空原数组（堆内存里面的值会被清空）
+    let log_list = logList.slice();
+    logList.length = 0; // 清空原数组（堆内存里面的值会被清空）
     log_list = log_list.map(item => {
       let info = item.info;
-      if(info?.error) {
-        info.error = formatErrInfo(info.error)
+      if (info?.error) {
+        info.error = formatErrInfo(info.error);
       }
       return {
         ...item,
         info
-      }
-    })
+      };
+    });
     // type 1-报价 2-获取订单 3-出票
     const { order_number, app_name, plat_name, type = 3 } = order;
     await svApi.addTicketOperaLog({

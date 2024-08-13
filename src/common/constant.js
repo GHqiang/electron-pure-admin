@@ -32,6 +32,14 @@ const APP_LIST = {
   ningbo: "宁波影都",
   laina: "莱纳龙域",
   hema: "河马国际",
+  cqhx: "重庆华熙",
+  jqx: "金泉港",
+  fszy: "佛山中影",
+  xywszy: "襄阳武商中影",
+  jjzy: "九江中影",
+  whyx: "武汉银兴",
+  hzzy: "杭州中影",
+  shzy: "上海中影",
   hongshi: "红石影城惠南店",
   limeihua: "利美华胤",
   hengye: "恒业电影城",
@@ -539,6 +547,41 @@ const CSZYYZX_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "长沙中影国际影城凯德壹中心店"
   }
 ];
+// 上海中影特殊影院集合
+const SHZY_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: "上海中影国际影城嘉定菊园新e街店",
+    sfc_cinema_name: "中影国际影城上海嘉定菊园店"
+  }
+];
+// 杭州中影特殊影院集合
+const HZZY_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: "中影国际影城杭州星光大道店e街店",
+    sfc_cinema_name: "杭州中影国际影城星光大道店"
+  }
+];
+// 九江中影特殊影院集合
+const JJZY_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: "中影国际影城九江花园城店",
+    sfc_cinema_name: "九江中影国际影城花园城店"
+  }
+];
+// 金泉巷特殊影院集合
+const JQX_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: "北京金泉港IMAX国际影城",
+    sfc_cinema_name: "金泉港IMAX国际影城"
+  }
+];
+// 重庆华熙特殊影院集合
+const CQHX_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: "华熙国际影城",
+    sfc_cinema_name: "重庆华熙国际影城"
+  }
+];
 
 // UME特殊影院集合(芒果平台cinemaCode不对，需要用名字匹配)
 const UME_SPECIAL_CINEMA_LIST = [
@@ -559,6 +602,14 @@ const SPECIAL_CINEMA_OBJ = {
   ningbo: NINGBO_SPECIAL_CINEMA_LIST,
   laina: LAINA_SPECIAL_CINEMA_LIST,
   hema: [],
+  cqhx: CQHX_SPECIAL_CINEMA_LIST,
+  jqx: JQX_SPECIAL_CINEMA_LIST,
+  fszy: [],
+  xywszy: [],
+  jjzy: JJZY_SPECIAL_CINEMA_LIST,
+  whyx: [],
+  hzzy: HZZY_SPECIAL_CINEMA_LIST,
+  shzy: SHZY_SPECIAL_CINEMA_LIST,
   hongshi: HONGSHI_SPECIAL_CINEMA_LIST,
   limeihua: LIMEIHUA_SPECIAL_CINEMA_LIST,
   hengye: HENGYE_SPECIAL_CINEMA_LIST,
@@ -618,6 +669,14 @@ const TICKET_CONPREFIX_OBJ = {
   ningbo: "【宁波影都自动出票】——",
   laina: "【莱纳龙域自动出票】——",
   hema: "【河马国际自动出票】——",
+  cqhx: "【重庆华熙自动出票】——",
+  jqx: "【金泉港自动出票】——",
+  fszy: "【佛山中影自动出票】——",
+  xywszy: "【襄阳武商中影自动出票】——",
+  jjzy: "【九江中影自动出票】——",
+  whyx: "【武汉银兴自动出票】——",
+  hzzy: "【杭州中影自动出票】——",
+  shzy: "【上海中影自动出票】——",
   hongshi: "【红石影城惠南店自动出票】——",
   limeihua: "【利美华胤自动出票】——",
   hengye: "【恒业电影城自动出票】——",
@@ -674,6 +733,14 @@ const APP_OPENID_OBJ = {
   ningbo: "o1TM95HQabEWcsC6u2S0XPd4ge5w",
   laina: "oPKih4oNM3oGJGcEItWiN5lJ93oA",
   hema: "oD3rN4ge-6H9Q4mYVBBJcsMFoRkc",
+  cqhx: "0c3Jfd0006WfDS1F4T300zV4v81Jfd0N",
+  jqx: "0c3dq2nl2aYFVd4B7Yll2FTobD1dq2n8",
+  fszy: "0c34Cu000WxYCS10LS1002gyW824Cu0v",
+  xywszy: "0d3eLY0w3BFPi33zlU3w3G2Jmy3eLY02",
+  jjzy: "0a3qMuml26eyZd4MdKkl2IS2kX3qMumV",
+  whyx: "0d3L6v000AqYCS1cDv200Nk1Rj1L6v0P",
+  hzzy: "0b3kzk100aSlES1Z4Y300MotTC3kzk1s",
+  shzy: "0f35vI0w3ir7j33lkh3w39K8cv15vI0O",
   hongshi: "owgjs4gKzy5Q5dz6eTqR-hMFHy0M",
   limeihua: "ok7FI49HybuSq5RNx49q6eNnzof4",
   hengye: "okxaO68YGIDHtSOfKw4UOCv-_4Co",
@@ -730,6 +797,14 @@ const APP_GROUP_OBJ = {
   ningbo: "20023",
   laina: "20463",
   hema: "20064",
+  cqhx: "20142",
+  jqx: "20664",
+  fszy: "20121",
+  xywszy: "20011",
+  jjzy: "20703",
+  whyx: "20717",
+  hzzy: "20637",
+  shzy: "20677",
   hongshi: "20120",
   limeihua: "20496",
   hengye: "20669",
