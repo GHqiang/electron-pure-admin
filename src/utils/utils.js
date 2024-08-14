@@ -300,6 +300,13 @@ const getCinemaFlag = item => {
   ) {
     return "cqhx";
   } else if (
+    cinema_name.includes("大商影城") &&
+    ["邹平", "大连", "大庆", "漯河", "盘锦", "青岛", "沈阳", "淄博"].includes(
+      city_name
+    )
+  ) {
+    return "dsyc";
+  } else if (
     cinema_name.includes("北京金泉港IMAX国际影城") &&
     ["北京"].includes(city_name)
   ) {

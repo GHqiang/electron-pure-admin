@@ -31,6 +31,7 @@ export const appUserInfo = defineStore("appUserInfo", {
       laina: null,
       ningbo: null,
       hema: null,
+      dsyc: null,
       cqhx: null,
       jqx: null,
       fszy: null,

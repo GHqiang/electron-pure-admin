@@ -32,7 +32,8 @@ const APP_LIST = {
   ningbo: "宁波影都",
   laina: "莱纳龙域",
   hema: "河马国际",
-  cqhx: "重庆华熙",
+  dsyc: "大商影城",
+  cqhx: "华熙国际",
   jqx: "金泉港",
   fszy: "佛山中影",
   xywszy: "襄阳武商中影",
@@ -584,7 +585,20 @@ const JQX_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "金泉港IMAX国际影城"
   }
 ];
-// 重庆华熙特殊影院集合
+
+// 大商影城特殊影院集合
+const DSYC_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: "邹平新玛特大商影城",
+    sfc_cinema_name: "邹平大商影城新玛特店"
+  },
+  {
+    order_cinema_name: "大商影城于洪黄海路店",
+    sfc_cinema_name: "沈阳市大商影城于洪店"
+  }
+];
+
+// 华熙国际特殊影院集合
 const CQHX_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: "华熙国际影城",
@@ -615,6 +629,7 @@ const SPECIAL_CINEMA_OBJ = {
   ningbo: NINGBO_SPECIAL_CINEMA_LIST,
   laina: LAINA_SPECIAL_CINEMA_LIST,
   hema: [],
+  dsyc: DSYC_SPECIAL_CINEMA_LIST,
   cqhx: CQHX_SPECIAL_CINEMA_LIST,
   jqx: JQX_SPECIAL_CINEMA_LIST,
   fszy: [],
@@ -682,7 +697,8 @@ const TICKET_CONPREFIX_OBJ = {
   ningbo: "【宁波影都自动出票】——",
   laina: "【莱纳龙域自动出票】——",
   hema: "【河马国际自动出票】——",
-  cqhx: "【重庆华熙自动出票】——",
+  dsyc: "【大商影城自动出票】——",
+  cqhx: "【华熙国际自动出票】——",
   jqx: "【金泉港自动出票】——",
   fszy: "【佛山中影自动出票】——",
   xywszy: "【襄阳武商中影自动出票】——",
@@ -746,6 +762,7 @@ const APP_OPENID_OBJ = {
   ningbo: "o1TM95HQabEWcsC6u2S0XPd4ge5w",
   laina: "oPKih4oNM3oGJGcEItWiN5lJ93oA",
   hema: "oD3rN4ge-6H9Q4mYVBBJcsMFoRkc",
+  dsyc: "0e3M6p200SW2CS1VcJ100oErLd0M6p2y",
   cqhx: "0c3Jfd0006WfDS1F4T300zV4v81Jfd0N",
   jqx: "0c3dq2nl2aYFVd4B7Yll2FTobD1dq2n8",
   fszy: "0c34Cu000WxYCS10LS1002gyW824Cu0v",
@@ -810,6 +827,7 @@ const APP_GROUP_OBJ = {
   ningbo: "20023",
   laina: "20463",
   hema: "20064",
+  dsyc: "200659",
   cqhx: "20142",
   jqx: "20664",
   fszy: "20121",

@@ -103,7 +103,7 @@ class OrderAutoFetchQueue {
             show_time: playTime,
             rewards: 0, // 洋葱无奖励，只有快捷
             is_urgent: "", // 1紧急 0非紧急
-            cinema_group: cinemaChain === "c_sfc" ? "上影上海" : "其它自动",
+            cinema_group: cinemaChain === "c_sfc" ? "上影上海" : cinemaChain,
             cinema_code: cinemaId, // 影院id
             order_number: tradeno,
             lockseat: seatNames.split("|").join(" "),
