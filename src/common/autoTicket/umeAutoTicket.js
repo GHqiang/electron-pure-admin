@@ -1010,6 +1010,8 @@ class OrderAutoTicketQueue {
         seatCode: item,
         buyerRemark: ""
       }));
+      // 锁定座位前延迟一秒
+      await mockDelay(1);
       // 4、锁定座位
       let params = {
         cinemaCode,
@@ -1380,10 +1382,21 @@ class OrderAutoTicketQueue {
       cinemaLinkId,
       appFlag
     },
-    inx = 1
+    inx = 0
   ) {
     const { conPrefix } = this;
     try {
+      // 不需要每个都调下，解决锁定座位时没座位返回重进就有座位的问题
+      if (inx % 2 === 1) {
+        await getSeatLayout({
+          cinemaCode,
+          cinemaLinkId,
+          scheduleId,
+          scheduleKey,
+          appFlag
+        });
+        await mockDelay(1);
+      }
       let params = {
         params: {
           orderType: "ticket_order",
@@ -1503,7 +1516,7 @@ class OrderAutoTicketQueue {
 
   // 获取购票信息
   async getPayResult(data) {
-    const { conPrefix } = this;
+    const { conPrefix, appFlag } = this;
     let { orderHeaderId, inx = 1 } = data || {};
     try {
       let params = {
@@ -1519,7 +1532,12 @@ class OrderAutoTicketQueue {
       const res = await this.umeApi.getPayResult(params);
       console.log(conPrefix + "支付订单返回", res);
       let list = res.data || [];
-      let qrcode = list[0]?.ticketCode?.split(",").join("|") || "";
+      let qrcode;
+      if (["ume", "renhengmeng"].includes(appFlag)) {
+        qrcode = list[0]?.ticketCode?.split(",").join("|") || "";
+      } else if (appFlag === "yaolai") {
+        qrcode = list[0]?.lockOrderId?.split(",").join("|") || "";
+      }
       if (qrcode) {
         if (inx) {
           this.logList.push({
