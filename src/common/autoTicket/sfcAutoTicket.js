@@ -119,7 +119,7 @@ class OrderAutoTicketQueue {
                 plat_name: order.platName,
                 app_name: appFlag,
                 order_number: order.order_number,
-                type: 2
+                type: 3
               },
               log_list
             );
@@ -169,7 +169,7 @@ class OrderAutoTicketQueue {
                   plat_name: order.platName,
                   app_name: appFlag,
                   order_number: order.order_number,
-                  type: 2
+                  type: 3
                 },
                 this.logList
               );
@@ -568,7 +568,7 @@ class OrderAutoTicketQueue {
               plat_name: platName,
               app_name: appFlag,
               order_number: order_number,
-              type: 2
+              type: 3
             },
             this.logList
           );
@@ -643,7 +643,7 @@ class OrderAutoTicketQueue {
         plat_name: platName,
         app_name: appFlag,
         order_number: order_number,
-        type: 2
+        type: 3
       },
       this.logList
     );
@@ -2016,15 +2016,15 @@ class OrderAutoTicketQueue {
           des: `获取订单支付结果，取票码不存在，暂时返回异步获取`,
           level: "error"
         });
-        logUpload(
-          {
-            plat_name: platName,
-            app_name: appFlag,
-            order_number: order_number,
-            type: 2
-          },
-          this.logList
-        );
+        // logUpload(
+        //   {
+        //     plat_name: platName,
+        //     app_name: appFlag,
+        //     order_number: order_number,
+        //     type: 3
+        //   },
+        //   this.logList
+        // );
         this.asyncFetchQrcodeSubmit({
           city_id,
           cinema_id,
@@ -2138,7 +2138,7 @@ class OrderAutoTicketQueue {
             plat_name: platName,
             app_name: app_name,
             order_number: order_number,
-            type: 2
+            type: 3
           },
           this.logList
         );
@@ -2213,7 +2213,7 @@ class OrderAutoTicketQueue {
             plat_name: platName,
             app_name: app_name,
             order_number: order_number,
-            type: 2
+            type: 3
           },
           this.logList
         );
@@ -2957,7 +2957,7 @@ const updateCardDayUse = ({ app_name, card_id, plat_name, order_number }) => {
       plat_name: plat_name,
       app_name: app_name,
       order_number: order_number,
-      type: 2
+      type: 3
     },
     log_list
   );
