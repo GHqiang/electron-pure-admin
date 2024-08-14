@@ -98,7 +98,7 @@ class getUmeOfferPrice {
     const { conPrefix } = this;
     try {
       const matchRuleListRes = offerRuleMatch(order);
-      const matchRuleList = matchRuleListRes?.matchRuleList || []
+      const matchRuleList = matchRuleListRes?.matchRuleList || [];
       if (!matchRuleList?.length) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
@@ -378,7 +378,7 @@ class getUmeOfferPrice {
 
   // 获取会员价
   async getMemberPrice(order) {
-    const { conPrefix } = this;
+    const { conPrefix, appFlag } = this;
     try {
       console.log(conPrefix + "准备获取会员价", order);
       const { ticket_num, appName } = order;
@@ -402,18 +402,19 @@ class getUmeOfferPrice {
         member_price +
         (Number(handlingMemberFee) + Number(ticketMemberServiceFeeMin)) / 100;
       console.log(conPrefix + "获取会员价", member_price);
-      if(activityPrices?.length) {
-         // [{
-         //    "activityId": 23,
-         //    "activityCode": "YPHD000000023",
-         //    "filmActivityType": "10",
-         //    "promotionMethod": "UNITY",
-         //    "activityName": "【华中区】周一会员日",
-         //    "amountOrSale": 610.00, // 优惠金额
-         //    "partCardType": "CHOOSE"
-         //  }]
+      // 耀莱暂时不考虑
+      if (activityPrices?.length && ["ume", "renhengmeng"].includes(appFlag)) {
+        // [{
+        //    "activityId": 23,
+        //    "activityCode": "YPHD000000023",
+        //    "filmActivityType": "10",
+        //    "promotionMethod": "UNITY",
+        //    "activityName": "【华中区】周一会员日",
+        //    "amountOrSale": 610.00, // 优惠金额
+        //    "partCardType": "CHOOSE"
+        //  }]
         // 如果存在会员活动会员价先减1，不减amountOrSale是因为怕把价格压下去
-        member_price = member_price - 1
+        member_price = member_price - 1;
       }
       if (member_price > 0) {
         const cardRes = await svApi.queryCardList({
@@ -454,7 +455,7 @@ class getUmeOfferPrice {
         let discount = cardList[0]?.card_discount;
         let real_member_price = Number(member_price);
         member_price = discount
-          ? (Number(member_price) * 100* discount) / 10000
+          ? (Number(member_price) * 100 * discount) / 10000
           : Number(member_price);
         return {
           real_member_price,
@@ -586,7 +587,7 @@ class getUmeOfferPrice {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: "匹配影片放映场次失败",
-          level: 'error',
+          level: "error",
           info: {
             showList,
             start_time

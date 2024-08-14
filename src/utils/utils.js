@@ -1242,7 +1242,6 @@ const logUpload = async (order, logList) => {
     if (!logList.length) return;
 
     let log_list = logList.slice();
-    logList.length = 0; // 清空原数组（堆内存里面的值会被清空）
     log_list = log_list.map(item => {
       let info = item.info;
       if (info?.error) {
@@ -1253,6 +1252,7 @@ const logUpload = async (order, logList) => {
         info
       };
     });
+    logList.length = 0; // 清空原数组（堆内存里面的值会被清空）
     // type 1-报价 2-获取订单 3-出票
     const { order_number, app_name, plat_name, type = 3 } = order;
     await svApi.addTicketOperaLog({
