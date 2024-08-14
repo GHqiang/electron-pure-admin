@@ -612,9 +612,67 @@ const CQHX_SPECIAL_CINEMA_LIST = [
 
 // UME特殊影院集合(芒果平台cinemaCode不对，需要用名字匹配)
 const UME_SPECIAL_CINEMA_LIST = [
+  // 泸州
   {
     order_cinema_name: ["CMC华人影城泸州摩尔店"],
     sfc_cinema_name: "CMC华人影城摩尔国际店"
+  },
+  {
+    order_cinema_name: ["UME影城OnyxLED4K巨幕新天地店"],
+    sfc_cinema_name: "UME影城上海新天地店"
+  },
+  // 北京
+  {
+    order_cinema_name: ["UME影城双井CINITY巨幕店"],
+    sfc_cinema_name: "UME影城北京双井店"
+  },
+  {
+    order_cinema_name: ["UME影城华星IMAX店"],
+    sfc_cinema_name: "UME影城北京华星店"
+  },
+  {
+    order_cinema_name: ["UME影城安贞DTSX店"],
+    sfc_cinema_name: "UME影城北京安贞店"
+  },
+  // 重庆
+  {
+    order_cinema_name: ["UME影城金沙天街OnyxLED店"],
+    sfc_cinema_name: "UME影城重庆金沙店"
+  },
+  // 杭州
+  {
+    order_cinema_name: ["UME影城紫荆天街店"],
+    sfc_cinema_name: "UME影城杭州紫荆天街店"
+  },
+  // 合肥
+  {
+    order_cinema_name: ["合肥UME影城CGS中国巨幕合肥高新店"],
+    sfc_cinema_name: "UME影城合肥高新店"
+  },
+  // 邯郸
+  {
+    order_cinema_name: ["邯郸UME影城新世纪广场店"],
+    sfc_cinema_name: "UME影城河北邯郸店"
+  },
+  // 宁波
+  {
+    order_cinema_name: ["UME影城宁波镇海店万科广场中国巨幕店"],
+    sfc_cinema_name: "UME影城宁波镇海店"
+  },
+  // 芜湖
+  {
+    order_cinema_name: ["UME影城DMAX芜湖镜湖店"],
+    sfc_cinema_name: "UME影城芜湖镜湖店"
+  },
+  // 贵阳
+  {
+    order_cinema_name: ["UME影城小河店"],
+    sfc_cinema_name: "UME影城贵阳小河店"
+  },
+  // 石家庄
+  {
+    order_cinema_name: ["UME影城石家庄店"],
+    sfc_cinema_name: "UME影城河北石家庄店"
   }
 ];
 
