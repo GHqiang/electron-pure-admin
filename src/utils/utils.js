@@ -593,6 +593,7 @@ function convertFullwidthToHalfwidth(str) {
   // 全角到半角的映射表
   const fullwidthToHalfwidthMap = {
     "！": "!", // 全角感叹号
+    "：": ":", // 全角说明号
     "，": ",", // 全角逗号
     "。": "." // 全角句号
     // 可以根据需要添加更多全角字符到半角字符的映射

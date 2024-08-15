@@ -2,7 +2,7 @@ import { computed } from "vue";
 import {
   getCurrentFormattedDateTime,
   convertFullwidthToHalfwidth,
-  cinemNameSpecial,
+  getTargetCinema,
   getOrginValue, // 深拷贝获取原值
   mockDelay, // 模拟延时
   logUpload, // 日志上传
@@ -806,10 +806,11 @@ class OrderAutoTicketQueue {
       }
       // 3、获取目标影院
       let targetCinema = cinemaList.find(
-        item =>
-          item.cinemaCode === cinema_code ||
-          cinemNameSpecial(item.cinemaName) === cinemNameSpecial(cinema_name)
+        item => item.cinemaCode === cinema_code
       );
+      if (!targetCinema) {
+        targetCinema = getTargetCinema(cinema_name, cinemaList);
+      }
       if (!targetCinema) {
         console.error(
           conPrefix + "根据订单中的影院名称获取目标影院失败",

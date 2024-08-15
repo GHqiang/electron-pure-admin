@@ -4,7 +4,7 @@ import {
   getCurrentDay,
   convertFullwidthToHalfwidth,
   offerRuleMatch,
-  cinemNameSpecial,
+  getTargetCinema,
   logUpload,
   formatErrInfo
 } from "@/utils/utils";
@@ -504,12 +504,12 @@ class getUmeOfferPrice {
       console.log(conPrefix + "获取城市影院列表返回", cinemaList);
 
       // 2、获取目标影院
-      let targetCinema = cinemaList.find(item => {
-        return (
-          item.cinemaCode === cinema_code ||
-          cinemNameSpecial(item.cinemaName) === cinemNameSpecial(cinema_name)
-        );
-      });
+      let targetCinema = cinemaList.find(
+        item => item.cinemaCode === cinema_code
+      );
+      if (!targetCinema) {
+        targetCinema = getTargetCinema(cinema_name, cinemaList);
+      }
       if (!targetCinema) {
         console.error(conPrefix + "获取目标影院失败");
         this.logList.push({
