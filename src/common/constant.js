@@ -885,7 +885,7 @@ const APP_GROUP_OBJ = {
   ningbo: "20023",
   laina: "20463",
   hema: "20064",
-  dsyc: "200659",
+  dsyc: "20659",
   cqhx: "20142",
   jqx: "20664",
   fszy: "20121",
