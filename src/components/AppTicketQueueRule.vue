@@ -174,54 +174,26 @@ const editingRow = ref({});
 
 // token集合
 const appTokenObj = {};
+// 平台出票队列集合
+let appTicketQueueObj = {};
 
-const delay = delayTime => {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve();
-    }, delayTime);
-  });
-};
-
-// // 批量绑定优惠券程序
-// window.testBandquan = async () => {
-//   let quanList = (window.quanList || []).slice(0);
-//   console.log(quanList, "quanList");
-//   let successNum = 0;
-//   for (let index = 0; index < quanList.length; index++) {
-//     const coupon_num = quanList[index];
-//     await delay(200);
-//     const quan = await window.sfcQueue.bandQuan({
-//       city_id: "304",
-//       cinema_id: "33",
-//       coupon_num
-//     });
-//     if (quan) {
-//       successNum++;
-//     }
-//     if (successNum > 30) {
-//       console.log("成功数已达30", quan, index);
-//       return;
-//     }
-//   }
-//   console.log("执行成功数", successNum);
-// };
-// console.log("appTokenObj", appTokenObj);
-// console.log("appTicketQueueObj", appTicketQueueObj);
-// 一键启动
-const oneClickAutoOffer = () => {
-  let loginInfoList = getCinemaLoginInfoList();
-  // 队列集合
-  const appTicketQueueObj = {};
-  // 填充token及队列集合
-  Object.keys(APP_LIST).forEach(item => {
-    let obj = loginInfoList.find(
-      itemA => itemA.app_name === item && itemA.session_id
-    );
+let loginInfoList = getCinemaLoginInfoList();
+// 填充token及队列集合
+Object.keys(APP_LIST).forEach(item => {
+  let obj = loginInfoList.find(
+    itemA => itemA.app_name === item && itemA.session_id
+  );
+  if (obj?.session_id) {
     appTokenObj[item] = obj?.session_id || "";
     appTicketQueueObj[item] = createTucketQueueFun(item);
-  });
-  window.ticketQueueObj = appTicketQueueObj;
+  }
+});
+window.appTicketQueueObj = appTicketQueueObj;
+
+console.log("appTokenObj", appTokenObj);
+console.log("appTicketQueueObj", appTicketQueueObj);
+// 一键启动
+const oneClickAutoOffer = () => {
   let noSetMemberPwdList = tableDataStore.items.filter(item => {
     let obj = loginInfoList.some(
       itemA => itemA.app_name === item.appName && !itemA.member_pwd
@@ -280,23 +252,10 @@ const stopAutoOffer = () => {
 const singleStartOrStop = ({ id, appName }, flag) => {
   // 单个启动
   if (flag === 1) {
-    let loginInfoList = getCinemaLoginInfoList();
-    let appLoginInfo = loginInfoList.find(
-      itemA =>
-        itemA.app_name === appName && itemA.member_pwd && itemA.session_id
-    );
-    if (!appLoginInfo) {
-      ElMessage.error(appName + "未登录，请先去影院登录页面登录后再启动");
-      return;
-    }
-    const appTicketQueueObj = {};
-    appTokenObj[appName] = appLoginInfo?.session_id || "";
-    appTicketQueueObj[appName] = createTucketQueueFun(appName);
     tableDataStore.toggleEnable(id);
     // 过滤清空当前影院本地缓存的待出票数据
     stayTicketList.removeStayTicketListByApp(appName);
     appTicketQueueObj[appName].start();
-    window.ticketQueueObj = appTicketQueueObj;
   } else {
     // 单个停止
     tableDataStore.toggleEnable(id);
