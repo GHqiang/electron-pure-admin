@@ -1213,11 +1213,22 @@ class OrderAutoTicketQueue {
       }
 
       // 7、使用优惠券或者会员卡
-      const { ticketLowestPrice, ticketStandardPrice } =
-        orderPriceInfo?.scheduleInfo || {};
+      const {
+        ticketMemberPrice,
+        handlingMemberFee,
+        ticketMemberServiceFeeMin
+      } = targetShow;
+      console.warn(
+        "ticketMemberPrice",
+        ticketMemberPrice,
+        handlingMemberFee,
+        ticketMemberServiceFeeMin,
+        discountAmount
+      );
       let mbmberPrice =
-        (Number(ticketLowestPrice) +
-          Number(ticketStandardPrice) -
+        (Number(ticketMemberPrice) +
+          Number(handlingMemberFee) +
+          Number(ticketMemberServiceFeeMin) -
           Number(discountAmount)) /
         100;
       total_price = mbmberPrice * ticket_num;

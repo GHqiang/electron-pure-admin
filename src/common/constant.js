@@ -460,7 +460,7 @@ const HFZYZHD_SPECIAL_CINEMA_LIST = [
 const TTYLW_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: "天通苑乐娃影院",
-    sfc_cinema_name: "乐娃影城天通苑店"
+    sfc_cinema_name: "乐娃影院天通苑店"
   }
 ];
 // 深圳益田国际影城特殊影院集合
@@ -560,11 +560,11 @@ const HZZY_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: "中影国际影城杭州星光大道店",
     sfc_cinema_name: "杭州中影国际影城星光大道店"
+  },
+  {
+    order_cinema_name: "杭州中影国际影城星光二期CINITY店",
+    sfc_cinema_name: "杭州中影国际影城星光大道二期CINITY店"
   }
-  // {
-  //   order_cinema_name: "杭州中影国际影城星光二期CINITY店",
-  //   sfc_cinema_name: "杭州中影国际影城星光大道二期CINITY店"
-  // },
   // {
   //   order_cinema_name: "杭州中影国际影城东站西子国际店",
   //   sfc_cinema_name: "杭州中影国际影城东站西子国际店"
@@ -638,6 +638,10 @@ const UME_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: ["UME影城金沙天街OnyxLED店"],
     sfc_cinema_name: "UME影城重庆金沙店"
+  },
+  {
+    order_cinema_name: ["UME影城北城天街CINITY店"],
+    sfc_cinema_name: "UME影城重庆江北店"
   },
   // 杭州
   {
