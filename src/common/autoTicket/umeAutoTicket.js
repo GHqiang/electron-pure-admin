@@ -183,22 +183,22 @@ class OrderAutoTicketQueue {
       if (isTestOrder) {
         sfcStayOfferlist = [
           {
-            id: 6430,
+            id: 6499,
             platName: "lieren",
             app_name: "renhengmeng",
-            ticket_num: 1,
+            ticket_num: 2,
             rewards: "0",
-            order_number: "2024081514154516943",
+            order_number: "2024081518482568193",
             supplier_end_price: 47,
-            order_id: "7132990",
-            tpp_price: "63.00",
+            order_id: "7136537",
+            tpp_price: "65.00",
             city_name: "深圳",
             cinema_addr: "龙岗区龙城街道回龙埔社区梦创广场梦中心L3",
             cinema_name: "仁恒梦影廊电影院",
-            hall_name: "3号激光厅",
-            film_name: "名侦探柯南：百万美元的五棱星",
-            lockseat: "4排1座",
-            show_time: "2024-08-16 19:30:00",
+            hall_name: "8号厅双人贵宾厅",
+            film_name: "抓娃娃",
+            lockseat: "1排1座 1排2座",
+            show_time: "2024-08-16 18:00:00",
             cinema_group: "杂牌"
           }
         ];
@@ -1342,6 +1342,12 @@ class OrderAutoTicketQueue {
         orderHeaderId,
         appFlag
       });
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: `订单购买返回`,
+        level: "info",
+        info: buyTicketRes
+      });
       const buyRes = buyTicketRes?.buyRes;
       if (!buyRes) {
         console.error(
@@ -2443,8 +2449,9 @@ const buyTicket = async ({
     console.log(conPrefix + "订单购买参数", params);
     const buyRes = await APP_API_OBJ[appFlag].buyTicket(params);
     console.log(conPrefix + "订单购买返回", buyRes);
+    let result;
     if (appFlag === "renhengmeng") {
-      const result = await APP_API_OBJ[appFlag].findZoneByChannel({
+      result = await APP_API_OBJ[appFlag].findZoneByChannel({
         params: {
           channelCode: "QD0000001",
           sysSourceCode: "YZ001",
@@ -2456,7 +2463,8 @@ const buyTicket = async ({
       console.warn("获取优惠活动返回结果", result);
     }
     return {
-      buyRes
+      buyRes,
+      result
     };
   } catch (error) {
     console.error(conPrefix + "订单购买异常", error);
