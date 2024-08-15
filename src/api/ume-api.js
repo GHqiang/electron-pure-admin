@@ -111,6 +111,13 @@ const createApi = ({ appName }) => {
       params
     );
 
+  // 获取影院优惠活动
+  const findZoneByChannel = params =>
+    axios.post(
+      `/${appName}/api/storeServer/storeActivityZoneService/findZoneByChannel`,
+      params
+    );
+
   // 获取购票信息
   const getPayResult = params =>
     axios.post(
@@ -147,6 +154,7 @@ const createApi = ({ appName }) => {
     getOrderList,
     findStoreTkOrderInfoApp,
     buyTicket,
+    findZoneByChannel,
     bandQuan
   };
 };

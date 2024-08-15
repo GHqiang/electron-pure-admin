@@ -183,24 +183,23 @@ class OrderAutoTicketQueue {
       if (isTestOrder) {
         sfcStayOfferlist = [
           {
-            id: 72939,
+            id: 6430,
             platName: "lieren",
-            app_name: "yaolai",
+            app_name: "renhengmeng",
             ticket_num: 1,
             rewards: "0",
-            order_number: "2024080619281519354",
-            supplier_end_price: 40,
-            order_id: "7013650",
-            tpp_price: "43.89",
-            city_name: "南阳",
-            cinema_addr: "镇海区庄市大道1088号万科1902广场4楼",
-            cinema_code: "41134401",
-            cinema_name: "南阳耀莱成龙影城（孔明南路店）",
-            hall_name: "3号厅",
-            film_name: "抓娃娃",
-            show_time: "2024-08-12 23:50:00",
-            lockseat: "1排2座",
-            cinema_group: "耀莱二线"
+            order_number: "2024081514154516943",
+            supplier_end_price: 47,
+            order_id: "7132990",
+            tpp_price: "63.00",
+            city_name: "深圳",
+            cinema_addr: "龙岗区龙城街道回龙埔社区梦创广场梦中心L3",
+            cinema_name: "仁恒梦影廊电影院",
+            hall_name: "3号激光厅",
+            film_name: "名侦探柯南：百万美元的五棱星",
+            lockseat: "4排1座",
+            show_time: "2024-08-16 19:30:00",
+            cinema_group: "杂牌"
           }
         ];
       }
@@ -729,12 +728,12 @@ class OrderAutoTicketQueue {
       offerRule = offerRecord?.[0];
       // 测试专用
       if (isTestOrder) {
-        // offerRule = { offer_type: "1", quan_value: "35" };
-        offerRule = {
-          offer_type: "2",
-          member_price: "32",
-          real_member_price: "36"
-        };
+        offerRule = { offer_type: "1", quan_value: "40" };
+        // offerRule = {
+        //   offer_type: "2",
+        //   member_price: "32",
+        //   real_member_price: "36"
+        // };
       }
       // member_price = offerRule.member_price;
       console.warn(conPrefix + "从该订单的报价记录获取到的报价规则", offerRule);
@@ -1250,7 +1249,8 @@ class OrderAutoTicketQueue {
             cardList,
             quanList,
             supplier_end_price,
-            ticket_num
+            ticket_num,
+            total_price
           }
         });
         const transferParams = await this.transferOrder(item, {
@@ -1760,6 +1760,14 @@ class OrderAutoTicketQueue {
         haha: hahaApi
       };
       console.log(conPrefix + "提交出票码参数", params);
+      if (isTestOrder) {
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: `测试单暂不上传`,
+          level: "error"
+        });
+        return;
+      }
       const res = await requestApi[platName].submitTicketCode(params);
       console.log(conPrefix + "提交出票码返回", res);
       this.logList.push({
@@ -2411,7 +2419,7 @@ const buyTicket = async ({
     let params = {
       params: {
         paymentWay: appFlag === "renhengmeng" ? "Z0010" : "Z0006",
-        orderHeaderId,
+        orderHeaderId: "" + orderHeaderId,
         cardNo: card_id || "",
         isMultiplePay: "",
         channelCode: "QD0000001",
@@ -2423,6 +2431,18 @@ const buyTicket = async ({
     console.log(conPrefix + "订单购买参数", params);
     const buyRes = await APP_API_OBJ[appFlag].buyTicket(params);
     console.log(conPrefix + "订单购买返回", buyRes);
+    if (appFlag === "renhengmeng") {
+      const result = await APP_API_OBJ[appFlag].findZoneByChannel({
+        params: {
+          channelCode: "QD0000001",
+          sysSourceCode: "YZ001",
+          zoneSource: "20",
+          cinemaCode,
+          cinemaLinkId
+        }
+      });
+      console.warn("获取优惠活动返回结果", result);
+    }
     return {
       buyRes
     };
