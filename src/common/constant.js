@@ -237,14 +237,14 @@ const JIUJIN_SPECIAL_CINEMA_LIST = [
 // 莱纳龙域特殊影院集合
 const LAINA_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "莱纳龙域影城昌发展万科广场店",
+    order_cinema_name: ["莱纳龙域影城", "莱纳龙域影城昌发展万科广场店"],
     sfc_cinema_name: "北京莱纳龙域影城"
   }
 ];
 // 北京金鸡特殊影院集合
 const JINJI_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "北京金鸡百花影城影协影院",
+    order_cinema_name: ["金鸡百花影城和平东桥店", "北京金鸡百花影城影协影院"],
     sfc_cinema_name: "金鸡百花影城"
   }
 ];
@@ -261,6 +261,10 @@ const NINGBO_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: "天一蝴蝶影院",
     sfc_cinema_name: "蝴蝶影院天一广场店"
+  },
+  {
+    order_cinema_name: "宁波影都鄞州印象城店",
+    sfc_cinema_name: "宁波影都鄞州印象城CINITY店"
   }
 ];
 // 齐纳国际特殊影院集合
@@ -282,6 +286,24 @@ const QINA_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "临淄齐纳国际影城"
   },
   {
+    order_cinema_name: "中影齐纳国际影城淄博银泰城店",
+    sfc_cinema_name: "中影齐纳国际影城银泰城店"
+  },
+
+  {
+    order_cinema_name: "高青齐纳国际影城全激光影城",
+    sfc_cinema_name: "高青齐纳国际影城"
+  },
+  {
+    order_cinema_name: "安丘齐纳国际影城安丘泰华城店",
+    sfc_cinema_name: "安丘齐纳国际影城全激光巨幕影城"
+  },
+  {
+    order_cinema_name: "齐纳国际影城柳泉路店4K激光巨幕",
+    sfc_cinema_name: "齐纳影城柳泉路店4K激光巨幕"
+  },
+
+  {
     order_cinema_name: "沂源齐纳国际影城全激光影城",
     sfc_cinema_name: "沂源齐纳国际影城"
   },
@@ -290,11 +312,14 @@ const QINA_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "齐纳国际影城淄博银座店激光IMAX"
   },
   {
-    order_cinema_name: "齐纳国际影城宏程OnyxLED&LUXE店",
+    order_cinema_name: [
+      "齐纳国际影城宏程OnyxLED&amp;LUXE店",
+      "齐纳国际影城宏程OnyxLED&LUXE店"
+    ],
     sfc_cinema_name: "齐纳国际影城宏程店"
   },
   {
-    order_cinema_name: "齐纳国际影城马桥店",
+    order_cinema_name: ["桓台齐纳国际影城", "齐纳国际影城马桥店"],
     sfc_cinema_name: "桓台齐纳影城马桥店"
   },
   {
@@ -302,7 +327,10 @@ const QINA_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "齐纳影城吾悦店"
   },
   {
-    order_cinema_name: "齐纳影城荣盛店可躺式座椅影城",
+    order_cinema_name: [
+      "齐纳影城荣盛店全可躺式座椅影城",
+      "齐纳影城荣盛店可躺式座椅影城"
+    ],
     sfc_cinema_name: "齐纳影城荣盛店"
   },
   {
@@ -314,7 +342,10 @@ const QINA_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "诸城齐纳国际影城"
   },
   {
-    order_cinema_name: "蒙阴齐纳国际影城全激光影城",
+    order_cinema_name: [
+      "齐纳全激光影城银座奥特莱斯店",
+      "蒙阴齐纳国际影城全激光影城"
+    ],
     sfc_cinema_name: "蒙阴齐纳国际影城银座店"
   },
   {
@@ -326,12 +357,20 @@ const QINA_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "德州齐纳国际影城"
   },
   {
-    order_cinema_name: "东营利津齐纳国际影城全激光影城",
+    order_cinema_name: [
+      "利津齐纳国际影城全激光影城",
+      "东营齐纳国际影城垦利店",
+      "东营利津齐纳国际影城全激光影城"
+    ],
     sfc_cinema_name: "利津齐纳国际影城"
   },
   {
     order_cinema_name: "滨州博兴齐纳国际影城",
     sfc_cinema_name: "博兴齐纳国际影城"
+  },
+  {
+    order_cinema_name: "齐纳国际影城泰华新天地店",
+    sfc_cinema_name: "潍坊齐纳国际影城"
   }
 ];
 // 红石影城惠南店特殊影院集合
@@ -344,7 +383,10 @@ const HONGSHI_SPECIAL_CINEMA_LIST = [
 // 利美华胤特殊影院集合
 const LIMEIHUA_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "上海利美华胤影城曹路恒越荣欣广场店",
+    order_cinema_name: [
+      "利美华胤影城曹路恒越荣欣广场店",
+      "上海利美华胤影城曹路恒越荣欣广场店"
+    ],
     sfc_cinema_name: "上海利美华胤影城"
   }
 ];
@@ -357,6 +399,10 @@ const HENGYE_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: "恒业国际影城新兴店",
     sfc_cinema_name: "恒业影城新兴店"
+  },
+  {
+    order_cinema_name: "恒业影城武汉店保利广场",
+    sfc_cinema_name: "恒业影城-武汉店"
   }
 ];
 
@@ -371,7 +417,7 @@ const YINGXINGNC_SPECIAL_CINEMA_LIST = [
 // 银兴影城襄阳店特殊影院集合
 const YINGXINGXY_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "长江银兴影城襄城武商店",
+    order_cinema_name: ["长江银兴影城襄城武商店", "长江银兴影城武商MALL世贸店"],
     sfc_cinema_name: "长江银兴影城襄阳店"
   }
 ];
@@ -387,12 +433,23 @@ const LIANGCHEN_SPECIAL_CINEMA_LIST = [
 // 永恒时代特殊影院集合
 const YONGHENG_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "永恒中华大戏院三街两巷电影院",
+    order_cinema_name: [
+      "永恒中华大戏院三街两巷4K巨幕店",
+      "永恒中华大戏院三街两巷电影院"
+    ],
     sfc_cinema_name: "永恒中华大戏院"
   },
   {
-    order_cinema_name: "永恒晶钻CINITYLED影城",
+    order_cinema_name: [
+      "永恒晶钻CINITYLED影城",
+      "永恒晶钻IMAX影城",
+      "永恒晶钻CINITYLED影城西大店"
+    ],
     sfc_cinema_name: "永恒晶钻影城"
+  },
+  {
+    order_cinema_name: ["永恒星湖影城青秀巨幕店"],
+    sfc_cinema_name: "永恒星湖影城"
   }
 ];
 
@@ -419,7 +476,7 @@ const NANGUOJGH_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "金光华南国影城"
   },
   {
-    order_cinema_name: "深圳南国影城金光华二期店",
+    order_cinema_name: ["南国影城金光华二期店", "深圳南国影城金光华二期店"],
     sfc_cinema_name: "深圳南国二期影城"
   }
 ];
@@ -431,7 +488,7 @@ const HEFEIDIANYING_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "长江影城杭州星光荟LUXE店"
   },
   {
-    order_cinema_name: "解放电影院OnyxLED&LUXE",
+    order_cinema_name: ["解放电影院OnyxLED&amp;LUXE", "解放电影院OnyxLED&LUXE"],
     sfc_cinema_name: "合肥解放影院"
   }
 ];
@@ -495,7 +552,7 @@ const JWZY_SPECIAL_CINEMA_LIST = [
 // 金谊华夏特殊影院集合
 const JYHX_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "金谊华夏影城",
+    order_cinema_name: ["金谊华夏影城三林店", "金谊华夏影城"],
     sfc_cinema_name: "上海金谊华夏影城"
   }
 ];
@@ -530,7 +587,7 @@ const HFBDDD_SPECIAL_CINEMA_LIST = [
 // 苏州永乐特殊影院集合
 const SZYL_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "永乐国际影城",
+    order_cinema_name: ["苏州永乐国际影城吾悦广场店", "永乐国际影城"],
     sfc_cinema_name: "苏州永乐国际影城"
   }
 ];
@@ -591,6 +648,10 @@ const DSYC_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: "邹平新玛特大商影城",
     sfc_cinema_name: "邹平大商影城新玛特店"
+  },
+  {
+    order_cinema_name: "大商影城新玛特店",
+    sfc_cinema_name: "淄博大商影城新玛特店"
   },
   {
     order_cinema_name: "大商影城于洪黄海路店",
@@ -680,10 +741,48 @@ const UME_SPECIAL_CINEMA_LIST = [
   }
 ];
 
+// 耀莱特殊影院集合
+const YAOLAI_SPECIAL_CINEMA_LIST = [
+  // 石家庄
+  {
+    order_cinema_name: ["新乐耀莱成龙影城新华路店"],
+    sfc_cinema_name: "石家庄耀莱成龙影城新乐店"
+  },
+  // 福州
+  {
+    order_cinema_name: ["春天国际影城福州大学店"],
+    sfc_cinema_name: "福建闽候春天国际影城大学城店"
+  },
+  {
+    order_cinema_name: ["长乐市春天国际影城十洋店"],
+    sfc_cinema_name: "福建省长乐市春天国际影城十洋店"
+  },
+  // 成都
+  {
+    order_cinema_name: ["成都耀莱成龙影城新津店"],
+    sfc_cinema_name: "成都耀莱成龙影城兴园路店"
+  },
+  // 南平
+  {
+    order_cinema_name: ["浦城县春天影城"],
+    sfc_cinema_name: "福建浦城春天国际影城永晖店"
+  },
+  // 泉州
+  {
+    order_cinema_name: ["春天国际影城泉港永嘉店"],
+    sfc_cinema_name: "福建泉州春天国际影城泉港永嘉店"
+  },
+  // 北京
+  {
+    order_cinema_name: ["北京耀莱成龙影城房山天街店"],
+    sfc_cinema_name: "北京耀莱成龙国际影城房山店"
+  }
+];
+
 // 特殊的名字匹配集合
 const SPECIAL_CINEMA_OBJ = {
   ume: UME_SPECIAL_CINEMA_LIST,
-  yaolai: [],
+  yaolai: YAOLAI_SPECIAL_CINEMA_LIST,
   renhengmeng: [],
   sfc: SFC_SPECIAL_CINEMA_LIST,
   jiujin: JIUJIN_SPECIAL_CINEMA_LIST,
