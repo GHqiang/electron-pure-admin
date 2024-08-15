@@ -1245,7 +1245,13 @@ class OrderAutoTicketQueue {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: `无可用会员卡及优惠券`,
-          level: "error"
+          level: "error",
+          info: {
+            cardList,
+            quanList,
+            supplier_end_price,
+            ticket_num
+          }
         });
         const transferParams = await this.transferOrder(item, {
           cinemaCode,
@@ -2404,7 +2410,7 @@ const buyTicket = async ({
   try {
     let params = {
       params: {
-        paymentWay: "Z0006",
+        paymentWay: appFlag === "renhengmeng" ? "Z0010" : "Z0006",
         orderHeaderId,
         cardNo: card_id || "",
         isMultiplePay: "",

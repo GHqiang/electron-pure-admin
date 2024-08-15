@@ -2057,10 +2057,13 @@ class OrderAutoTicketQueue {
         orderInfo,
         flag: 1
       });
-      this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
-        des: `非异步提交取票码成功`
-      });
+      // submitRes: {} | undefined
+      if (submitRes) {
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: `非异步提交取票码成功`
+        });
+      }
       return { submitRes, qrcode };
     } catch (error) {
       console.warn("出票最后处理异常", error);

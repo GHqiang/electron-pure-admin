@@ -604,9 +604,13 @@ class getUmeOfferPrice {
       if (areaInfoList?.length) {
         let maxSeatPrice = areaInfoList
           .map(item => {
-            return item.areaMemberPrice?.length
-              ? item.areaMemberPrice[0]
-              : { settlePrice: 0 };
+            if (item.areaMemberPrice?.length) {
+              return item.areaMemberPrice.sort(
+                (a, b) => b.settlePrice - a.settlePrice
+              )[0];
+            } else {
+              return { settlePrice: 0 };
+            }
           })
           .sort((a, b) => b.settlePrice - a.settlePrice)[0].settlePrice;
         return {
