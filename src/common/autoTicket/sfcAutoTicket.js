@@ -377,7 +377,7 @@ class OrderAutoTicketQueue {
         session_id
       };
       console.warn(conPrefix + "转单时释放座位传参", lockParams);
-      await this.lockSeat(lockParams); // 锁定座位
+      await this.lockSeatHandle(lockParams); // 锁定座位
       // this.currentParamsList[this.currentParamsInx].releaseStatus = 1;
       return true;
     } catch (error) {
@@ -671,7 +671,8 @@ class OrderAutoTicketQueue {
     order_id,
     inx = 1,
     order_number: orderCode,
-    supplierCode
+    supplierCode,
+    formFlag
   }) {
     const { conPrefix } = this;
     try {
@@ -741,6 +742,10 @@ class OrderAutoTicketQueue {
         opera_time: getCurrentFormattedDateTime(),
         des: `第${inx}次解锁座位失败-${JSON.stringify(error)}`
       });
+      // 这种情况下不需要返回异常
+      if (platName === "mayi" && formFlag === 1) {
+        return;
+      }
       return Promise.reject(error);
     }
   }
@@ -1082,6 +1087,8 @@ class OrderAutoTicketQueue {
       }
       // 4、锁定座位
       let params = {
+        order_id,
+        platName,
         city_id,
         cinema_id,
         show_id,
@@ -1091,7 +1098,7 @@ class OrderAutoTicketQueue {
         session_id: this.currentParamsList[this.currentParamsInx].session_id
       };
       try {
-        await this.lockSeat(params); // 锁定座位
+        await this.lockSeatHandle(params); // 锁定座位
         // this.logList.push({
         //   opera_time: getCurrentFormattedDateTime(),
         //   des: `首次锁定座位成功`
@@ -1104,12 +1111,12 @@ class OrderAutoTicketQueue {
           lieren: [3, 5],
           mangguo: [3, 5],
           sheng: [3, 5],
-          mayi: [6, 20],
+          mayi: [30, 2],
           yangcong: [6, 20],
           haha: [6, 5]
         };
         const res = await trial(
-          inx => this.lockSeat(params, inx),
+          inx => this.lockSeatHandle(params, inx),
           delayConfig[platName][0],
           delayConfig[platName][1],
           conPrefix
@@ -1438,18 +1445,20 @@ class OrderAutoTicketQueue {
   }
 
   // 锁定座位
-  async lockSeat(data, inx = 1) {
+  async lockSeatHandle(data, inx = 0) {
     const { conPrefix } = this;
+    let {
+      order_id,
+      platName,
+      city_id,
+      cinema_id,
+      show_id,
+      seat_ids,
+      start_day,
+      start_time,
+      session_id
+    } = data || {};
     try {
-      let {
-        city_id,
-        cinema_id,
-        show_id,
-        seat_ids,
-        start_day,
-        start_time,
-        session_id
-      } = data || {};
       let params = {
         city_id: city_id,
         cinema_id: cinema_id,
@@ -1476,6 +1485,10 @@ class OrderAutoTicketQueue {
         opera_time: getCurrentFormattedDateTime(),
         des: `第${inx}次锁定座位失败-${JSON.stringify(error)}`
       });
+      // 蚂蚁锁定座位失败需要先解锁
+      if (order_id && platName === "mayi" && error?.msg === "座位锁定失败") {
+        await this.unlockSeat({ platName, order_id, formFlag: 1 });
+      }
       return Promise.reject(error);
     }
   }
