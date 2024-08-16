@@ -493,7 +493,7 @@ class getUmeOfferPrice {
 
   // 获取电影信息
   async getMovieInfo(order) {
-    const { conPrefix } = this;
+    const { conPrefix, appFlag } = this;
     let { city_name, film_name, show_time, cinema_code, cinema_name } = order;
     try {
       // 1、获取城市影院列表
@@ -508,7 +508,7 @@ class getUmeOfferPrice {
         item => item.cinemaCode === cinema_code
       );
       if (!targetCinema) {
-        targetCinema = getTargetCinema(cinema_name, cinemaList);
+        targetCinema = getTargetCinema(cinema_name, cinemaList, appFlag);
       }
       if (!targetCinema) {
         console.error(conPrefix + "获取目标影院失败");

@@ -914,7 +914,7 @@ const getCinemaId = (cinema_name, list, appName, city_name) => {
 };
 
 // 根据订单name获取目标影院(主要用于ume系统)
-const getTargetCinema = (cinema_name, list) => {
+const getTargetCinema = (cinema_name, list, appFlag) => {
   try {
     // 1、先全字匹配，匹配到就直接返回
     let targetCinema = list.find(item => item.cinemaName === cinema_name);

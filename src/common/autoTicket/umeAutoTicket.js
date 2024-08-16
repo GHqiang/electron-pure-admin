@@ -809,7 +809,7 @@ class OrderAutoTicketQueue {
         item => item.cinemaCode === cinema_code
       );
       if (!targetCinema) {
-        targetCinema = getTargetCinema(cinema_name, cinemaList);
+        targetCinema = getTargetCinema(cinema_name, cinemaList, appFlag);
       }
       if (!targetCinema) {
         console.error(
