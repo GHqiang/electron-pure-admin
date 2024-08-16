@@ -1111,8 +1111,8 @@ class OrderAutoTicketQueue {
           lieren: [3, 5],
           mangguo: [3, 5],
           sheng: [3, 5],
-          mayi: [30, 2],
-          yangcong: [6, 20],
+          mayi: [12, 10],
+          yangcong: [12, 10],
           haha: [6, 5]
         };
         const res = await trial(
@@ -1486,9 +1486,9 @@ class OrderAutoTicketQueue {
         des: `第${inx}次锁定座位失败-${JSON.stringify(error)}`
       });
       // 蚂蚁锁定座位失败需要先解锁
-      if (order_id && platName === "mayi" && error?.msg === "座位锁定失败") {
-        await this.unlockSeat({ platName, order_id, formFlag: 1 });
-      }
+      // if (order_id && platName === "mayi" && error?.msg === "座位锁定失败") {
+      //   await this.unlockSeat({ platName, order_id, formFlag: 1 });
+      // }
       return Promise.reject(error);
     }
   }
