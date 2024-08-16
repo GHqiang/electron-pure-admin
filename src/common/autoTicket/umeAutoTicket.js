@@ -1884,11 +1884,6 @@ class OrderAutoTicketQueue {
         orderInfo,
         flag: 1
       });
-      this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
-        des: `非异步提交取票码成功`,
-        level: "info"
-      });
       return { submitRes, qrcode };
     } catch (error) {
       console.warn("出票最后处理异常", error);
@@ -2011,9 +2006,30 @@ class OrderAutoTicketQueue {
       });
       if (!submitRes) {
         console.error(conPrefix + "订单提交取票码失败，单个订单直接出票结束");
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: `提交取票码失败`,
+          level: "error"
+        });
+        const { errMsg, errInfo } = this;
+        sendWxPusherMessage({
+          platName,
+          order_number,
+          city_name: orderInfo?.city_name,
+          cinema_name: orderInfo?.cinema_name,
+          film_name: orderInfo?.film_name,
+          lockseat,
+          transferTip: "提交取票码失败,需手动上传",
+          failReason: `${errMsg}——${errInfo}`
+        });
         // this.setErrInfo("订单提交取票码失败");
         return;
       }
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: `提交取票码成功`,
+        level: "info"
+      });
       if (flag !== 1) {
         if (card_id) {
           // 更新单卡使用量
