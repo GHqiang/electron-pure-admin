@@ -401,8 +401,8 @@ const HENGYE_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "恒业影城新兴店"
   },
   {
-    order_cinema_name: "恒业影城武汉店保利广场",
-    sfc_cinema_name: "恒业影城-武汉店"
+    order_cinema_name: ["恒业影城武汉店", "恒业影城武汉店保利广场"],
+    sfc_cinema_name: "恒业影城武汉店"
   }
 ];
 
@@ -751,7 +751,7 @@ const YAOLAI_SPECIAL_CINEMA_LIST = [
   // 福州
   {
     order_cinema_name: ["春天国际影城福州大学店"],
-    sfc_cinema_name: "福建闽候春天国际影城大学城店"
+    sfc_cinema_name: "福建闽侯春天国际影城大学城店"
   },
   {
     order_cinema_name: ["长乐市春天国际影城十洋店"],
