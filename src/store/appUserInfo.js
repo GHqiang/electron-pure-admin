@@ -94,7 +94,7 @@ export const appUserInfo = defineStore("appUserInfo", {
         userInfo = JSON.parse(userInfo);
       }
       const { phone } = userInfo;
-      const appNameList = ["sfc", "ningbo", "ume", "yaolai", "renhengmeng"];
+      const appNameList = ["sfc", "ningbo", "renhengmeng"];
       list = list.filter(item => {
         if (appNameList.includes(item.app_name)) {
           return item.mobile === phone;

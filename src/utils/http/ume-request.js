@@ -36,6 +36,10 @@ const createAxios = ({ appName, timeout = 20 }) => {
         if (config.method === "get") {
         } else {
           let params = config.data;
+          if (params.session_id) {
+            token = params?.session_id;
+            delete params.session_id;
+          }
           let str = Object.keys(params).reduce((prev, item, inx) => {
             // console.log("item", item, prev, params);
             let value = params[item];
