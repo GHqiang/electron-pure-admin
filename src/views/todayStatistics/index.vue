@@ -290,7 +290,7 @@ const loadData = async () => {
       item.order_status === "1"
         ? list[inx].offerSuccessNum++
         : list[inx].offerFailNum++;
-      item.err_msg?.includes("规则不存在")
+      item.err_msg?.includes("报价规则匹配后为空")
         ? list[inx].offerRuleMatchEmptyNum++
         : null;
       item.err_msg?.includes("超过平台限价")

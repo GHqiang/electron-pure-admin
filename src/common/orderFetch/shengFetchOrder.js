@@ -72,6 +72,7 @@ class OrderAutoFetchQueue {
       await this.delay(fetchDelay);
       let stayList = await orderFetch();
       if (!stayList?.length) return;
+      const offerList = await getOfferList();
       let sfcStayOfferlist = stayList
         .map(item => {
           const {
@@ -100,7 +101,15 @@ class OrderAutoFetchQueue {
             sourceData: { show, film, cinema, label, seats }
           } = detail;
           // quantity   座位数    integer
-
+          let cinema_group = label?.[0]?.name || cinema?.label?.[0]?.name;
+          if (cinema_group) {
+            let targetObj = offerList.find(
+              item =>
+                item.order_number === code &&
+                item.user_id == tokens.userInfo?.user_id
+            );
+            cinema_group = targetObj?.cinema_group;
+          }
           return {
             id: id, // 订单id
             tpp_price: marketPrice,
@@ -118,9 +127,7 @@ class OrderAutoFetchQueue {
             rewards: 0, // 省无奖励，只有快捷
             quick: deliverMinute > 0, // true表示为快捷订单（需12分钟内完成发货），false表示为特惠订单（需45分钟内完成发货）
             // 省暂定和猎人针对sfc影院名字一样
-            cinema_group: SFC_CINEMA_NAME.includes(film.cinemaName)
-              ? "上影上海"
-              : "其它自动",
+            cinema_group: cinema_group,
             cinema_code: cinema.cinemaId, // 影院id
             order_number: code, // 订单号
             supplierCode, // 商户号
@@ -149,7 +156,6 @@ class OrderAutoFetchQueue {
         sfcStayOfferlist
       );
       if (sfcStayOfferlist?.length) {
-        const offerList = await getOfferList();
         const ticketList = await getTicketList();
         sfcStayOfferlist = sfcStayOfferlist.filter(item =>
           judgeHandle(item, item.appName, offerList, ticketList)

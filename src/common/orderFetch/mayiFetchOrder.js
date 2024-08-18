@@ -104,7 +104,7 @@ class OrderAutoFetchQueue {
             show_time: playTime,
             rewards: 0, // 蚂蚁无奖励，只有快捷
             is_urgent: jiorder, // 1紧急 0非紧急
-            cinema_group: cinemaChain === "SFC" ? "上影上海" : cinemaChain,
+            cinema_group: cinemaChain,
             cinema_code: cinemaId, // 影院id
             order_number: tradeno,
             lockseat: seat.split(",").join(" "),

@@ -110,14 +110,12 @@ class OrderAutoOfferQueue {
       let sfcStayOfferlist = stayList.map(item => {
         const {
           orderId,
-          id,
           showPrice,
           grabPrice,
-          priceNew, // 当前报价
           detail,
           order,
-          seatInfo,
-          priceAuto, // 自动报价价格
+          supplierCode, // 供应商号
+          seatInfo, // 座位信息
           orderCode
         } = item;
         // orderId    订单id    integer
@@ -128,10 +126,15 @@ class OrderAutoOfferQueue {
         // orderCode  订单code  string
         const {
           quantity,
-          sourceData: { show, film, cinema, label }
+          sourceData: {
+            show,
+            film,
+            cinema: { label, cinemaId }
+          }
         } = detail;
         // quantity   座位数    integer
 
+        let cinema_group = label[0]?.name;
         return {
           plat_name: "sheng",
           id: orderId,
@@ -150,10 +153,8 @@ class OrderAutoOfferQueue {
           rewards: 0, // 省无奖励，只有快捷
           quick: order.quick, // true表示为快捷订单（需12分钟内完成发货），false表示为特惠订单（需45分钟内完成发货）
           // 省暂定和猎人针对sfc影院名字一样
-          cinema_group: SFC_CINEMA_NAME.includes(film.cinemaName)
-            ? "上影上海"
-            : "其它自动",
-          cinema_code: cinema.cinemaId, // 影院id
+          cinema_group: cinema_group,
+          cinema_code: cinemaId, // 影院id
           order_number: orderCode,
           seats: seatInfo // 座位信息
         };
