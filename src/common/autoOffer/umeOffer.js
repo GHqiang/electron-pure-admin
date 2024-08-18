@@ -459,7 +459,7 @@ class getUmeOfferPrice {
           : Number(member_price);
         return {
           real_member_price,
-          member_price
+          member_price: Number(member_price.toFixed(2))
         };
       } else {
         console.warn(conPrefix + "会员价未负，非会员价");
