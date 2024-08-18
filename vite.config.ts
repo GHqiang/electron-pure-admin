@@ -91,6 +91,24 @@ export default ({ command, mode }: ConfigEnv): UserConfigExport => {
           changeOrigin: true, // 是否允许跨域
           rewrite: path => path.replace(/^\/renhengmeng/, "") // 重写路径，去除/api前缀
         },
+        // 完美
+        "/wanmei": {
+          target: "https://oc.yuekeyun.com", // 后端API的真实地址
+          changeOrigin: true, // 是否允许跨域
+          rewrite: path => path.replace(/^\/wanmei/, "") // 重写路径，去除/api前缀
+        },
+        // 英皇
+        "/yinghuang": {
+          target: "https://oc.yuekeyun.com", // 后端API的真实地址
+          changeOrigin: true, // 是否允许跨域
+          rewrite: path => path.replace(/^\/yinghuang/, "") // 重写路径，去除/api前缀
+        },
+        // 浙影时代
+        "/zheyingshidai": {
+          target: "https://oc.yuekeyun.com", // 后端API的真实地址
+          changeOrigin: true, // 是否允许跨域
+          rewrite: path => path.replace(/^\/zheyingshidai/, "") // 重写路径，去除/api前缀
+        },
         // 哈哈
         "/api": {
           target: "https://hahapiao.cn", // 后端API的真实地址

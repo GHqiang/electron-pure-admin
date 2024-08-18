@@ -403,7 +403,12 @@ class getUmeOfferPrice {
         (Number(handlingMemberFee) + Number(ticketMemberServiceFeeMin)) / 100;
       console.log(conPrefix + "获取会员价", member_price);
       // 耀莱暂时不考虑
-      if (activityPrices?.length && ["ume", "renhengmeng"].includes(appFlag)) {
+      if (
+        activityPrices?.length &&
+        ["ume", "renhengmeng", "wanmei", "yinghuang", "zheyingshidai"].includes(
+          appFlag
+        )
+      ) {
         // [{
         //    "activityId": 23,
         //    "activityCode": "YPHD000000023",
