@@ -151,8 +151,14 @@
         </template>
       </el-table-column>
       <el-table-column label="出票状态" fixed width="90">
-        <template #default="scope">
-          <span>{{ scope.row.order_status === "1" ? "成功" : (scope.row.order_status === "3" ? "已退票" : "失败") }}</span>
+        <template #default="{ row: { order_status } }">
+          <span>{{
+            order_status === "1"
+              ? "成功"
+              : order_status === "3"
+                ? "已退票"
+                : "失败"
+          }}</span>
         </template>
       </el-table-column>
       <el-table-column prop="user_name" fixed label="出票人" width="110" />
@@ -178,13 +184,13 @@
       <el-table-column prop="original_profit" label="原利润" width="80" />
       <el-table-column prop="transfer_fee" label="转单手续费" width="100" />
       <el-table-column prop="err_msg" label="失败原因" width="110" />
-      <el-table-column label="操作" fixed="right" align="center" width="200">
-        <template #default="scope">
+      <el-table-column label="操作" fixed="right" align="center" width="120">
+        <template #default="{ row: { order_status, profit } }">
           <el-button
-            v-if="scope.row.order_status === '1'"
+            v-if="profit && order_status === '1'"
             size="small"
             type="danger"
-            @click="refundTicket(scope.$index, scope.row)"
+            @click="refundTicket(row)"
             >退票</el-button
           >
           <!-- <el-button size="small" @click="viewDetails(scope.row)">详情</el-button> -->
@@ -294,7 +300,7 @@ const searchData = async () => {
 };
 
 // 单个退票
-const refundTicket = (index, row) => {
+const refundTicket = ({ id, profit }) => {
   ElMessageBox.confirm("确定要退票吗?", "提示", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
@@ -304,7 +310,7 @@ const refundTicket = (index, row) => {
     closeOnPressEscape: false
   })
     .then(async () => {
-      await svApi.refundTicketRecord({ id: row.id , profit: row.profit });
+      await svApi.refundTicketRecord({ id, profit });
       searchData();
       ElMessage({
         type: "success",
@@ -368,6 +374,4 @@ onBeforeUnmount(() => {
   clearInterval(timer);
   timer = null;
 });
-
-
 </script>
