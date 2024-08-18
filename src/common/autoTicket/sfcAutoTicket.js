@@ -1590,7 +1590,7 @@ class OrderAutoTicketQueue {
           appFlag
         });
         const quanList = quanListRes?.quanList || [];
-        if (!quanListRes?.error) {
+        if (quanListRes?.error) {
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
             des: conPrefix + "获取优惠券列表异常",
