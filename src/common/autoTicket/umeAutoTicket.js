@@ -8,6 +8,7 @@ import {
   logUpload, // 日志上传
   trial, // 试错重试
   formatErrInfo, // 格式化错误信息
+  getCinemaLoginInfoList,
   sendWxPusherMessage
 } from "@/utils/utils";
 
@@ -36,7 +37,7 @@ const tokens = platTokens();
 import { TICKET_CONPREFIX_OBJ, APP_LIST } from "@/common/constant";
 import { APP_API_OBJ } from "@/common/index";
 
-let isTestOrder = false; //是否是测试订单
+let isTestOrder = true; //是否是测试订单
 // 创建一个订单自动出票队列类
 class OrderAutoTicketQueue {
   constructor(appFlag) {
@@ -185,23 +186,24 @@ class OrderAutoTicketQueue {
       if (isTestOrder) {
         sfcStayOfferlist = [
           {
-            id: 6499,
+            id: 7177,
             platName: "lieren",
-            app_name: "renhengmeng",
-            ticket_num: 2,
+            app_name: "ume",
+            ticket_num: 1,
             rewards: "0",
-            order_number: "2024081518482568193",
-            supplier_end_price: 47,
-            order_id: "7136537",
-            tpp_price: "65.00",
-            city_name: "深圳",
-            cinema_addr: "龙岗区龙城街道回龙埔社区梦创广场梦中心L3",
-            cinema_name: "仁恒梦影廊电影院",
-            hall_name: "8号厅双人贵宾厅",
-            film_name: "抓娃娃",
-            lockseat: "1排1座 1排2座",
-            show_time: "2024-08-16 18:00:00",
-            cinema_group: "杂牌"
+            order_number: "2024081810003958318",
+            supplier_end_price: 32.5,
+            order_id: "7195870",
+            tpp_price: "49.90",
+            city_name: "杭州",
+            cinema_addr:
+              "西湖区古墩路1009号龙湖紫荆天街5楼（晚10点后观影请从紫荆花北路停车场入口对面商场3号门进入）",
+            cinema_name: "UME影城(紫荆天街店)",
+            hall_name: "5号激光厅--部分按摩椅",
+            film_name: "名侦探柯南：百万美元的五棱星",
+            lockseat: "7排1座",
+            show_time: "2024-08-18 15:10:00",
+            cinema_group: "ume二线"
           }
         ];
       }
@@ -741,12 +743,12 @@ class OrderAutoTicketQueue {
         offerRule = offerRecord?.[0];
         // 测试专用
         if (isTestOrder) {
-          offerRule = { offer_type: "1", quan_value: "40" };
-          // offerRule = {
-          //   offer_type: "2",
-          //   member_price: "32",
-          //   real_member_price: "36"
-          // };
+          // offerRule = { offer_type: "1", quan_value: "40" };
+          offerRule = {
+            offer_type: "2",
+            member_price: "31.2",
+            real_member_price: "40"
+          };
         }
         // member_price = offerRule.member_price;
         console.warn(
