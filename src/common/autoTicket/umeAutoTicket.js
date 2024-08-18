@@ -1668,12 +1668,7 @@ class OrderAutoTicketQueue {
       const res = await this.umeApi.getPayResult(params);
       console.log(conPrefix + "支付订单返回", res);
       let list = res.data || [];
-      let qrcode;
-      if (["ume", "renhengmeng"].includes(appFlag)) {
-        qrcode = list[0]?.ticketCode?.split(",").join("|") || "";
-      } else if (appFlag === "yaolai") {
-        qrcode = list[0]?.lockOrderId?.split(",").join("|") || "";
-      }
+      let qrcode = list[0]?.ticketCode?.split(",").join("|") || "";
       if (qrcode) {
         if (inx) {
           this.logList.push({
