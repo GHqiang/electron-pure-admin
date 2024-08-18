@@ -58,6 +58,7 @@
         >
           <el-option label="成功" value="1" />
           <el-option label="失败" value="2" />
+          <el-option label="已退票" value="3" />
         </el-select>
       </el-form-item>
       <el-form-item label="订&nbsp;&nbsp;单&nbsp;&nbsp;号">
@@ -121,6 +122,9 @@
       </el-form-item>
     </el-form>
 
+    <!-- 操作按钮 -->
+    <div style="margin-bottom: 15px" />
+
     <!-- 表格 -->
     <el-table
       style="width: 100%"
@@ -148,7 +152,7 @@
       </el-table-column>
       <el-table-column label="出票状态" fixed width="90">
         <template #default="scope">
-          <span>{{ scope.row.order_status === "1" ? "成功" : "失败" }}</span>
+          <span>{{ scope.row.order_status === "1" ? "成功" : (scope.row.order_status === "3" ? "已退票" : "失败") }}</span>
         </template>
       </el-table-column>
       <el-table-column prop="user_name" fixed label="出票人" width="110" />
@@ -171,8 +175,21 @@
       <el-table-column prop="quan_value" label="用券面额" width="90" />
       <el-table-column prop="quan_code" label="优惠券码" width="90" />
       <el-table-column prop="profit" label="利润" width="80" />
+      <el-table-column prop="original_profit" label="原利润" width="80" />
       <el-table-column prop="transfer_fee" label="转单手续费" width="100" />
       <el-table-column prop="err_msg" label="失败原因" width="110" />
+      <el-table-column label="操作" fixed="right" align="center" width="200">
+        <template #default="scope">
+          <el-button
+            v-if="scope.row.order_status === '1'"
+            size="small"
+            type="danger"
+            @click="refundTicket(scope.$index, scope.row)"
+            >退票</el-button
+          >
+          <!-- <el-button size="small" @click="viewDetails(scope.row)">详情</el-button> -->
+        </template>
+      </el-table-column>
     </el-table>
     <el-pagination
       v-model:current-page="currentPage"
@@ -190,7 +207,7 @@
 
 <script setup>
 import { ref, reactive, onBeforeUnmount, onBeforeMount } from "vue";
-import { ElLoading } from "element-plus";
+import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import svApi from "@/api/sv-api";
 import { ORDER_FORM, APP_LIST } from "@/common/constant.js";
 // console.log("ORDER_FORM", ORDER_FORM);
@@ -276,6 +293,32 @@ const searchData = async () => {
   }
 };
 
+// 单个退票
+const refundTicket = (index, row) => {
+  ElMessageBox.confirm("确定要退票吗?", "提示", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning",
+    showClose: false,
+    closeOnClickModal: false,
+    closeOnPressEscape: false
+  })
+    .then(async () => {
+      await svApi.refundTicketRecord({ id: row.id , profit: row.profit });
+      searchData();
+      ElMessage({
+        type: "success",
+        message: "退票完成"
+      });
+    })
+    .catch(() => {
+      ElMessage({
+        type: "info",
+        message: "退票取消"
+      });
+    });
+};
+
 const handleSizeChange = val => {
   currentPage.value = 1;
   console.log(`${val} items per page`);
@@ -325,4 +368,6 @@ onBeforeUnmount(() => {
   clearInterval(timer);
   timer = null;
 });
+
+
 </script>

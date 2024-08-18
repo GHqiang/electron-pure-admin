@@ -29,8 +29,10 @@ const queryTicketList = params =>
 // 添加出票记录
 const addTicketRecord = params => axios.post("/svpi/ticketRecord/add", params);
 // 更新出票记录
-const updateTicketRecord = params =>
-  axios.post("/svpi/ticketRecord/update", params);
+const updateTicketRecord = params => axios.post("/svpi/ticketRecord/update", params);
+
+// 单个退票
+const refundTicketRecord = params => axios.post("/svpi/ticketRecord/refund", params);
 
 // 获取优惠券列表
 const getQuanList = params => axios.get("/svpi/quanRecord", { params });
@@ -109,6 +111,7 @@ export default {
   queryTicketList,
   addTicketRecord,
   updateTicketRecord,
+  refundTicketRecord,
   getQuanList,
   queryQuanList,
   addQuanRecord,
