@@ -37,7 +37,7 @@ const tokens = platTokens();
 import { TICKET_CONPREFIX_OBJ, APP_LIST } from "@/common/constant";
 import { APP_API_OBJ } from "@/common/index";
 
-let isTestOrder = true; //是否是测试订单
+let isTestOrder = false; //是否是测试订单
 // 创建一个订单自动出票队列类
 class OrderAutoTicketQueue {
   constructor(appFlag) {
