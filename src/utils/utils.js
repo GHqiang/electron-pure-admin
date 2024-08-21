@@ -1345,6 +1345,7 @@ const trial = (callback, number = 1, delayTime = 0, conPrefix) => {
           const result = await callback(inx);
           console.log(conPrefix + `第${inx}次试错成功`, result);
           clearInterval(trialTimer);
+          trialTimer = null;
           resolve(result);
         } catch (error) {
           console.error(conPrefix + `第${inx}次试错失败`, error);
@@ -1352,6 +1353,7 @@ const trial = (callback, number = 1, delayTime = 0, conPrefix) => {
       } else {
         console.log(conPrefix + `第${inx}次试错结束`);
         clearInterval(trialTimer);
+        trialTimer = null;
         resolve();
       }
     }, delayTime * 1000);

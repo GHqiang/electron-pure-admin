@@ -1878,6 +1878,22 @@ class OrderAutoTicketQueue {
         ticketCodes: qrcode
       };
     } else if (platName === "haha") {
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: `哈哈暂不上传取票码,需手动上传`,
+        level: "info"
+      });
+      sendWxPusherMessage({
+        platName,
+        order_number,
+        city_name: orderInfo?.city_name,
+        cinema_name: orderInfo?.cinema_name,
+        film_name: orderInfo?.film_name,
+        lockseat,
+        transferTip: "哈哈暂不上传取票码,需手动上传",
+        failReason: `哈哈暂不上传取票码,需手动上传`
+      });
+      return { code: 1, msg: "哈哈暂不上传取票码,需手动上传" };
       const { bid, cinema_name, hall_name, film_name, show_time } = orderInfo;
       params = {
         // oid: order_id,
