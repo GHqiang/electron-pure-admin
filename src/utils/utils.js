@@ -257,9 +257,14 @@ const getCinemaFlag = item => {
   }
   // 蚂蚁和洋葱、哈哈：耀莱成龙。 猎人和芒果：耀莱一线、耀莱二线
   else if (
-    ["耀莱成龙", "耀莱一线", "耀莱二线", "一线耀莱", "二线耀莱"].includes(
-      cinema_group
-    )
+    [
+      "耀莱成龙",
+      "耀莱一线",
+      "耀莱二线",
+      "一线耀莱",
+      "二线耀莱",
+      "耀莱"
+    ].includes(cinema_group)
   ) {
     return "yaolai";
   } else if (
