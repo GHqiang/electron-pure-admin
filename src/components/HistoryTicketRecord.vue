@@ -185,12 +185,12 @@
       <el-table-column prop="transfer_fee" label="转单手续费" width="100" />
       <el-table-column prop="err_msg" label="失败原因" width="110" />
       <el-table-column label="操作" fixed="right" align="center" width="120">
-        <template #default="{ row: { order_status, profit } }">
+        <template #default="{ row: { order_status, profit, id } }">
           <el-button
             v-if="profit && order_status === '1'"
             size="small"
             type="danger"
-            @click="refundTicket(row)"
+            @click="refundTicket({ profit, id })"
             >退票</el-button
           >
           <!-- <el-button size="small" @click="viewDetails(scope.row)">详情</el-button> -->
