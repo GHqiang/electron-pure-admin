@@ -247,12 +247,12 @@ const colorObj = {
 };
 // 获取影院标识
 const getCinemaFlag = item => {
-  const { cinema_group, cinema_name, city_name } = item;
+  const { cinema_group, cinema_name, city_name, plat_name } = item;
   if (["上影上海", "上影二线", "SFC", "c_sfc"].includes(cinema_group)) {
     return "sfc";
   }
   // 蚂蚁和洋葱、哈哈：UME。 猎人和芒果：ume一线、ume二线
-  else if (["UME", "ume一线", "ume二线"].includes(cinema_group)) {
+  else if (["UME", "ume一线", "ume二线", "c_ume"].includes(cinema_group)) {
     return "ume";
   }
   // 蚂蚁和洋葱、哈哈：耀莱成龙。 猎人和芒果：耀莱一线、耀莱二线
@@ -264,7 +264,8 @@ const getCinemaFlag = item => {
       "一线耀莱",
       "二线耀莱",
       "耀莱"
-    ].includes(cinema_group)
+    ].includes(cinema_group) ||
+    (plat_name === "yangcong" && cinema_name.includes("耀莱成龙"))
   ) {
     return "yaolai";
   } else if (
