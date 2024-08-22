@@ -113,7 +113,7 @@ class OrderAutoOfferQueue {
           return {
             ...item,
             plat_name: "lieren",
-            appName: getCinemaFlag(item)
+            app_name: getCinemaFlag(item)
           };
         });
       // console.warn(
@@ -141,7 +141,7 @@ class OrderAutoOfferQueue {
       const offerList = await this.getOfferList();
       this.offerList = offerList;
       newOrders = newOrders.filter(item =>
-        judgeHandle(item, item.appName, offerList)
+        judgeHandle(item, item.app_name, offerList)
       );
       // console.warn(
       //   conPrefix + "从服务端历史报价记录过滤后的的待报价订单",
@@ -209,7 +209,7 @@ class OrderAutoOfferQueue {
       let serOrderInfo = {
         // user_id: order.user_id,
         plat_name: "lieren",
-        app_name: order.appName || offerResult?.offerRule?.shadowLineName || "",
+        app_name: order.app_name || offerResult?.offerRule?.shadowLineName || "",
         order_id: order.id,
         order_number: order.order_number,
         tpp_price: order.tpp_price,
@@ -301,8 +301,8 @@ class OrderAutoOfferQueue {
     const { conPrefix } = this;
     try {
       let offerExample = getOfferPriceFun({
-        appFlag: order.appName,
-        platName: "lieren"
+        appFlag: order.app_name,
+        plat_name: "lieren"
       });
       const result = await offerExample.getEndOfferPrice({
         order,

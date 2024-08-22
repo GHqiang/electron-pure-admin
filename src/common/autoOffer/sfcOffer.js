@@ -14,10 +14,10 @@ import { APP_API_OBJ } from "@/common/index.js";
 import { APP_LIST } from "@/common/constant.js";
 import lierenApi from "@/api/lieren-api";
 class getSfcOfferPrice {
-  constructor({ appFlag, platName }) {
-    // console.log("APP_API_OBJ", APP_API_OBJ, appFlag, platName);
+  constructor({ appFlag, plat_name }) {
+    // console.log("APP_API_OBJ", APP_API_OBJ, appFlag, plat_name);
     this.appFlag = appFlag; // 影线标识
-    this.platName = platName; // 平台标识
+    this.plat_name = plat_name; // 平台标识
     this.conPrefix = APP_LIST[appFlag] + "自动报价——"; // 打印前缀
     this.appApi = APP_API_OBJ[appFlag];
     this.logList = []; // 操作运行日志
@@ -56,7 +56,7 @@ class getSfcOfferPrice {
       const res = await svApi.queryOfferList({
         user_id: tokens.userInfo.user_id,
         // user_id: "9",
-        plat_name: this.platName,
+        plat_name: this.plat_name,
         start_time: getCurrentFormattedDateTime(
           +new Date() - 0.5 * 60 * 60 * 1000
         ),
@@ -79,7 +79,7 @@ class getSfcOfferPrice {
 
   // 获取最终报价信息（唯一暴漏给外包用的方法）
   async getEndOfferPrice({ order, offerList }) {
-    const { conPrefix, platName, appFlag } = this;
+    const { conPrefix, plat_name, appFlag } = this;
     let err_msg, err_info, endPrice, offerRule;
     let { supplier_max_price, rewards } = order || {};
     try {
@@ -138,7 +138,7 @@ class getSfcOfferPrice {
       err_info = formatErrInfo(errInfoObj?.info?.error) || err_info || "";
       logUpload(
         {
-          plat_name: platName,
+          plat_name: plat_name,
           app_name: appFlag,
           order_number: order.order_number,
           type: 1
@@ -477,7 +477,7 @@ class getSfcOfferPrice {
     const { conPrefix } = this;
     try {
       console.log(conPrefix + "准备获取会员价", order);
-      const { ticket_num, appName } = order;
+      const { ticket_num, app_name } = order;
       // 获取当前场次电影信息
       let movieInfo = await this.getMovieInfo(order);
       console.log(conPrefix + `待报价订单当前场次电影相关信息`, movieInfo);
@@ -492,7 +492,7 @@ class getSfcOfferPrice {
           city_id,
           cinema_id,
           show_id,
-          appName
+          app_name
         });
         if (!seatInfo) return -3;
         const { promo_num, area_price } = seatInfo;
@@ -524,7 +524,7 @@ class getSfcOfferPrice {
       console.log(conPrefix + "获取会员价", member_price);
       if (member_price > 0) {
         const cardRes = await svApi.queryCardList({
-          app_name: appName
+          app_name: app_name
         });
         let list = cardRes.data.cardList || [];
         list = list.map(item => ({
@@ -608,7 +608,7 @@ class getSfcOfferPrice {
         film_name,
         show_time,
         cinema_group,
-        appName
+        app_name
       } = item;
       const cityList = await this.getCityList();
       let city_id = cityList?.find(
@@ -624,7 +624,7 @@ class getSfcOfferPrice {
       let cinemaIdRes = getCinemaId(
         cinema_name,
         cinemaList,
-        appName,
+        app_name,
         city_name
       );
       let cinema_id = cinemaIdRes?.cinema_id;
@@ -648,7 +648,7 @@ class getSfcOfferPrice {
         cinema_group,
         cinema_name,
         city_name,
-        appName
+        app_name
       });
       // 3、匹配订单拿到会员价
       const { movie_data } = moviePlayInfo;
