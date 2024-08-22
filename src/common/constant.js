@@ -8,6 +8,17 @@ const ORDER_FORM = {
   haha: "哈哈"
 };
 
+// 优惠券类型
+const QUAN_TYPE = {
+  40: "sfc-40",
+  35: "sfc-35",
+  30: "sfc-30",
+  "ume-p": "ume-通兑-普通",
+  "ume-t": "ume-通兑-特殊",
+  "yaolai-30-p": "耀莱30通兑",
+  "yaolai-30-b": "耀莱30通兑会员补差价"
+};
+
 // ume系统影院
 const UME_LIST = [
   "ume",
@@ -1119,6 +1130,7 @@ const SFC_CINEMA_NAME = [
 ];
 export {
   ORDER_FORM,
+  QUAN_TYPE,
   UME_LIST,
   APP_LIST,
   PLAT_LINK_APP,

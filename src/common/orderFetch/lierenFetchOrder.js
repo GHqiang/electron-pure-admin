@@ -71,7 +71,7 @@ class OrderAutoFetchQueue {
       await this.delay(fetchDelay);
       let stayList = await lierenOrderFetch();
       if (!stayList?.length) return;
-      stayList = stayList.map(item => ({ ...item, platName: "lieren" }));
+      stayList = stayList.map(item => ({ ...item, plat_name: "lieren" }));
       // 先过滤出来目前已上架影院的，然后添加影院标识，最后从历史记录过滤
       stayList = stayList
         .filter(item => getCinemaFlag(item))

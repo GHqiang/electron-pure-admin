@@ -107,7 +107,7 @@ class OrderAutoFetchQueue {
             cinema_code: cinemaId, // 影院id
             order_number: tradeno,
             lockseat: seatNames.split("|").join(" "),
-            platName: "yangcong"
+            plat_name: "yangcong"
           };
         })
         .filter(item => getCinemaFlag(item))

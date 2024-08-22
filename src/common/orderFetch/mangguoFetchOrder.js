@@ -111,7 +111,7 @@ class OrderAutoFetchQueue {
             lockseat: relation_to_seat
               .map(itemA => itemA.position_seat.replace(/\s+/g, ""))
               .join(" "),
-            platName: "mangguo"
+            plat_name: "mangguo"
           };
         })
         .filter(item => getCinemaFlag(item))

@@ -112,7 +112,7 @@ class OrderAutoFetchQueue {
               .map(itemA => itemA + "座")
               .join(" "),
             bid: b_id,
-            platName: "haha"
+            plat_name: "haha"
           };
         })
         .filter(item => getCinemaFlag(item))

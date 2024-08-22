@@ -132,7 +132,7 @@ class OrderAutoFetchQueue {
             order_number: code, // 订单号
             supplierCode, // 商户号
             lockseat: seats.map(itemA => itemA.name).join(" "),
-            platName: "sheng"
+            plat_name: "sheng"
           };
         })
         .filter(item => getCinemaFlag(item))

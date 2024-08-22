@@ -362,24 +362,24 @@
 
         <el-form-item
           v-if="formData.offerType === '1'"
-          label="用券面额"
+          label="用券类型"
           prop="quanValue"
           :rules="[
             {
               required: true,
-              message: '用券面额不可为空',
+              message: '用券类型不可为空',
               trigger: 'blur'
             }
           ]"
         >
           <el-select
             v-model="formData.quanValue"
-            placeholder="用券面额"
+            placeholder="用券类型"
             clearable
           >
-            <el-option label="40" value="40" />
-            <el-option label="35" value="35" />
-            <el-option label="30" value="30" />
+            <el-option label="sfc—40" value="40" />
+            <el-option label="sfc-35" value="35" />
+            <el-option label="sfc-30" value="30" />
           </el-select>
         </el-form-item>
         <el-form-item v-if="formData.offerType !== '3'" label="星期几">

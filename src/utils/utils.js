@@ -263,7 +263,8 @@ const getCinemaFlag = item => {
       "耀莱二线",
       "一线耀莱",
       "二线耀莱",
-      "耀莱"
+      "耀莱",
+      "c_jccinema"
     ].includes(cinema_group) ||
     (plat_name === "yangcong" && cinema_name.includes("耀莱成龙"))
   ) {
@@ -648,7 +649,7 @@ const getCinemaLoginInfoList = () => {
 
 // 发送微信消息
 const sendWxPusherMessage = async ({
-  platName,
+  plat_name,
   order_number,
   city_name,
   cinema_name,
@@ -669,7 +670,7 @@ const sendWxPusherMessage = async ({
   let content = `<p>
   时间：${getCurrentFormattedDateTime()}; <br/>
   用户：${userInfo.name}; <br/>
-  平台：${platName}; <br/>单号：${order_number}; <br/>
+  平台：${plat_name}; <br/>单号：${order_number}; <br/>
   城市：${city_name}; <br/>影院：${cinema_name}; <br/>
   片名：${film_name}; <br/>座位：${lockseat}; <br/>
   原因：${failReason};<br/> 提示：${transferTip};<br/>

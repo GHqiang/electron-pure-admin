@@ -116,7 +116,7 @@ class OrderAutoTicketQueue {
             ];
             logUpload(
               {
-                plat_name: order.platName,
+                plat_name: order.plat_name,
                 app_name: appFlag,
                 order_number: order.order_number,
                 type: 3
@@ -166,7 +166,7 @@ class OrderAutoTicketQueue {
               });
               logUpload(
                 {
-                  plat_name: order.platName,
+                  plat_name: order.plat_name,
                   app_name: appFlag,
                   order_number: order.order_number,
                   type: 3
@@ -192,7 +192,7 @@ class OrderAutoTicketQueue {
         sfcStayOfferlist = [
           {
             id: 761,
-            platName: "lieren",
+            plat_name: "lieren",
             app_name: "sfc",
             ticket_num: 1,
             rewards: "0",
@@ -397,7 +397,7 @@ class OrderAutoTicketQueue {
   // 转单
   async transferOrder(order, unlockSeatInfo) {
     const { conPrefix, errMsg, errInfo } = this;
-    const { platName } = order;
+    const { plat_name } = order;
     let isAutoTransfer = window.localStorage.getItem("isAutoTransfer");
     const { order_number, city_name, cinema_name, film_name, lockseat } = order;
     // 关闭自动转单只针对座位异常生效
@@ -410,7 +410,7 @@ class OrderAutoTicketQueue {
         level: "info"
       });
       sendWxPusherMessage({
-        platName,
+        plat_name,
         order_number,
         city_name,
         cinema_name,
@@ -437,34 +437,34 @@ class OrderAutoTicketQueue {
         });
       }
       let params;
-      if (platName === "lieren") {
+      if (plat_name === "lieren") {
         params = {
           id: order.id,
           confirm: 1
         };
-      } else if (platName === "sheng") {
+      } else if (plat_name === "sheng") {
         params = {
           orderCode: order.order_number,
           supplierCode: order.supplierCode
           // reason: ""
         };
-      } else if (platName === "mangguo") {
+      } else if (plat_name === "mangguo") {
         params = {
           order_id: order.id,
           remark: "渠道无法出票"
         };
-      } else if (platName === "mayi") {
+      } else if (plat_name === "mayi") {
         params = {
           tradeno: order.id,
           certificateImgUrl: "",
           reason: "",
           type: "bj_error"
         };
-      } else if (platName === "yangcong") {
+      } else if (plat_name === "yangcong") {
         params = {
           tradeno: order.id
         };
-      } else if (platName === "haha") {
+      } else if (plat_name === "haha") {
         params = {
           id: order.id,
           reasonId: 9,
@@ -481,7 +481,7 @@ class OrderAutoTicketQueue {
         haha: hahaApi
       };
       console.warn(conPrefix + "【转单】参数", params);
-      const res = await requestApi[platName].transferOrder(params);
+      const res = await requestApi[plat_name].transferOrder(params);
       console.warn(conPrefix + "【转单】结果", res);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
@@ -489,7 +489,7 @@ class OrderAutoTicketQueue {
         level: "info"
       });
       sendWxPusherMessage({
-        platName,
+        plat_name,
         order_number,
         city_name,
         cinema_name,
@@ -521,7 +521,7 @@ class OrderAutoTicketQueue {
         level: "error"
       });
       sendWxPusherMessage({
-        platName,
+        plat_name,
         order_number,
         city_name,
         cinema_name,
@@ -537,7 +537,7 @@ class OrderAutoTicketQueue {
   async singleTicket(item) {
     // 放到这里即使修改token也不用重启队列了
     const { conPrefix, appFlag } = this;
-    const { id, platName, supplierCode, order_number, bid } = item;
+    const { id, plat_name, supplierCode, order_number, bid } = item;
     this.currentParamsList = getCinemaLoginInfoList()
       .filter(
         item =>
@@ -558,11 +558,11 @@ class OrderAutoTicketQueue {
       console.warn(conPrefix + "单个待出票订单信息", item);
       // 1、解锁座位
       if (!isTestOrder) {
-        if (platName === "lieren") {
-          await this.unlockSeat({ platName, order_id: id, inx: 1 });
-        } else if (platName === "sheng") {
+        if (plat_name === "lieren") {
+          await this.unlockSeat({ plat_name, order_id: id, inx: 1 });
+        } else if (plat_name === "sheng") {
           await startDeliver({
-            platName,
+            plat_name,
             order_number,
             supplierCode,
             appFlag
@@ -574,7 +574,7 @@ class OrderAutoTicketQueue {
           });
           logUpload(
             {
-              plat_name: platName,
+              plat_name: plat_name,
               app_name: appFlag,
               order_number: order_number,
               type: 3
@@ -583,26 +583,26 @@ class OrderAutoTicketQueue {
           );
           await mockDelay(2);
           await this.unlockSeat({
-            platName,
+            plat_name,
             order_number,
             supplierCode,
             inx: 1
           });
-        } else if (platName === "mangguo") {
-          await this.unlockSeat({ platName, order_id: id, inx: 1 });
-        } else if (platName === "mayi") {
-          await this.unlockSeat({ platName, order_id: id, inx: 1 });
-        } else if (platName === "yangcong") {
-          await this.unlockSeat({ platName, order_id: id, inx: 1 });
-        } else if (platName === "haha") {
-          await startDeliver({ platName, bid, appFlag });
+        } else if (plat_name === "mangguo") {
+          await this.unlockSeat({ plat_name, order_id: id, inx: 1 });
+        } else if (plat_name === "mayi") {
+          await this.unlockSeat({ plat_name, order_id: id, inx: 1 });
+        } else if (plat_name === "yangcong") {
+          await this.unlockSeat({ plat_name, order_id: id, inx: 1 });
+        } else if (plat_name === "haha") {
+          await startDeliver({ plat_name, bid, appFlag });
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
             des: "确认接单成功，2秒后解锁"
           });
           await mockDelay(2);
           await this.unlockSeat({
-            platName,
+            plat_name,
             order_id: id,
             inx: 1
           });
@@ -619,7 +619,7 @@ class OrderAutoTicketQueue {
         order_id: id,
         order_number,
         supplierCode,
-        platName
+        plat_name
       };
       let delayConfig = {
         lieren: [3, 3],
@@ -631,8 +631,8 @@ class OrderAutoTicketQueue {
       };
       const res = await trial(
         inx => this.unlockSeat({ ...params, inx }),
-        delayConfig[platName][0],
-        delayConfig[platName][1],
+        delayConfig[plat_name][0],
+        delayConfig[plat_name][1],
         conPrefix
       );
       if (!res) {
@@ -649,7 +649,7 @@ class OrderAutoTicketQueue {
     }
     logUpload(
       {
-        plat_name: platName,
+        plat_name: plat_name,
         app_name: appFlag,
         order_number: order_number,
         type: 3
@@ -676,7 +676,7 @@ class OrderAutoTicketQueue {
 
   // 解锁座位
   async unlockSeat({
-    platName,
+    plat_name,
     order_id,
     inx = 1,
     order_number: orderCode,
@@ -686,28 +686,28 @@ class OrderAutoTicketQueue {
     const { conPrefix } = this;
     try {
       let params;
-      if (platName === "lieren") {
+      if (plat_name === "lieren") {
         params = {
           order_id
         };
-      } else if (platName === "sheng") {
+      } else if (plat_name === "sheng") {
         params = {
           orderCode,
           supplierCode
         };
-      } else if (platName === "mangguo") {
+      } else if (plat_name === "mangguo") {
         params = {
           order_id
         };
-      } else if (platName === "mayi") {
+      } else if (plat_name === "mayi") {
         params = {
           tradeno: order_id
         };
-      } else if (platName === "yangcong") {
+      } else if (plat_name === "yangcong") {
         params = {
           tradeno: order_id
         };
-      } else if (platName === "haha") {
+      } else if (plat_name === "haha") {
         params = {
           id: order_id
         };
@@ -721,7 +721,7 @@ class OrderAutoTicketQueue {
         yangcong: yangcongApi,
         haha: hahaApi
       };
-      const res = await requestApi[platName].unlockSeat(params);
+      const res = await requestApi[plat_name].unlockSeat(params);
       console.log(conPrefix + "解锁返回", res);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
@@ -752,7 +752,7 @@ class OrderAutoTicketQueue {
         des: `第${inx}次解锁座位失败-${JSON.stringify(error)}`
       });
       // 这种情况下不需要返回异常
-      if (platName === "mayi" && formFlag === 1) {
+      if (plat_name === "mayi" && formFlag === 1) {
         return;
       }
       return Promise.reject(error);
@@ -777,7 +777,7 @@ class OrderAutoTicketQueue {
         supplier_end_price,
         rewards,
         supplierCode,
-        platName,
+        plat_name,
         otherParams
       } = item;
       // otherParams主要是为了换号出票时不用再走之前流程
@@ -831,7 +831,7 @@ class OrderAutoTicketQueue {
             level: "error"
           });
           sendWxPusherMessage({
-            platName,
+            plat_name,
             order_number,
             city_name,
             cinema_name,
@@ -1097,7 +1097,7 @@ class OrderAutoTicketQueue {
       // 4、锁定座位
       let params = {
         order_id,
-        platName,
+        plat_name,
         city_id,
         cinema_id,
         show_id,
@@ -1126,8 +1126,8 @@ class OrderAutoTicketQueue {
         };
         const res = await trial(
           inx => this.lockSeatHandle(params, inx),
-          delayConfig[platName][0],
-          delayConfig[platName][1],
+          delayConfig[plat_name][0],
+          delayConfig[plat_name][1],
           conPrefix
         );
         if (!res) {
@@ -1426,7 +1426,7 @@ class OrderAutoTicketQueue {
         card_id,
         order_number,
         supplierCode,
-        platName,
+        plat_name,
         session_id: this.currentParamsList[this.currentParamsInx].session_id,
         orderInfo: item,
         lockseat
@@ -1458,7 +1458,7 @@ class OrderAutoTicketQueue {
     const { conPrefix } = this;
     let {
       order_id,
-      platName,
+      plat_name,
       city_id,
       cinema_id,
       show_id,
@@ -1495,8 +1495,8 @@ class OrderAutoTicketQueue {
         des: `第${inx}次锁定座位失败-${JSON.stringify(error)}`
       });
       // 蚂蚁锁定座位失败需要先解锁
-      // if (order_id && platName === "mayi" && error?.msg === "座位锁定失败") {
-      //   await this.unlockSeat({ platName, order_id, formFlag: 1 });
+      // if (order_id && plat_name === "mayi" && error?.msg === "座位锁定失败") {
+      //   await this.unlockSeat({ plat_name, order_id, formFlag: 1 });
       // }
       return Promise.reject(error);
     }
@@ -1825,7 +1825,7 @@ class OrderAutoTicketQueue {
 
   // 提交出票码
   async submitTicketCode({
-    platName,
+    plat_name,
     order_id,
     qrcode,
     order_number,
@@ -1836,7 +1836,7 @@ class OrderAutoTicketQueue {
   }) {
     const { conPrefix } = this;
     let params;
-    if (platName === "lieren") {
+    if (plat_name === "lieren") {
       params = {
         // order_id: id || 5548629,
         // qupiao2: "[{\"result\":\"2024031154980669\",\"yzm\":\"\"}]"
@@ -1848,7 +1848,7 @@ class OrderAutoTicketQueue {
           }
         ])
       };
-    } else if (platName === "sheng") {
+    } else if (plat_name === "sheng") {
       params = {
         orderCode: order_number, // 省APP的订单编号
         supplierCode: supplierCode,
@@ -1857,7 +1857,7 @@ class OrderAutoTicketQueue {
         // message: "", // 出票失败原因，不能发货才有（失败的情况下一定要传）
         // desc: "" // 描述，允许空，换座信息也填在这里，如更换1排4座，1排5座
       };
-    } else if (platName === "mangguo") {
+    } else if (plat_name === "mangguo") {
       params = {
         order_id, // 省APP的订单编号
         tickets: JSON.stringify([
@@ -1870,7 +1870,7 @@ class OrderAutoTicketQueue {
         ]),
         seats: JSON.stringify(lockseat.split(" "))
       };
-    } else if (platName === "mayi") {
+    } else if (plat_name === "mayi") {
       params = {
         tradeno: order_id, // 蚂蚁APP的订单编号
         ticketCodeList: [
@@ -1880,20 +1880,20 @@ class OrderAutoTicketQueue {
           }
         ]
       };
-    } else if (platName === "yangcong") {
+    } else if (plat_name === "yangcong") {
       params = {
         tradeno: order_id, // 蚂蚁APP的订单编号
         ticketCodeUrls: "",
         ticketCodes: qrcode
       };
-    } else if (platName === "haha") {
+    } else if (plat_name === "haha") {
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: `哈哈暂不上传取票码,需手动上传`,
         level: "info"
       });
       sendWxPusherMessage({
-        platName,
+        plat_name,
         order_number,
         city_name: orderInfo?.city_name,
         cinema_name: orderInfo?.cinema_name,
@@ -1991,7 +1991,7 @@ class OrderAutoTicketQueue {
         haha: hahaApi
       };
       console.log(conPrefix + "提交出票码参数", params);
-      const res = await requestApi[platName].submitTicketCode(params);
+      const res = await requestApi[plat_name].submitTicketCode(params);
       console.log(conPrefix + "提交出票码返回", res);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
@@ -2026,7 +2026,7 @@ class OrderAutoTicketQueue {
     card_id,
     order_number,
     supplierCode,
-    platName,
+    plat_name,
     session_id,
     orderInfo,
     lockseat
@@ -2056,7 +2056,7 @@ class OrderAutoTicketQueue {
         });
         // logUpload(
         //   {
-        //     plat_name: platName,
+        //     plat_name: plat_name,
         //     app_name: appFlag,
         //     order_number: order_number,
         //     type: 3
@@ -2071,7 +2071,7 @@ class OrderAutoTicketQueue {
           order_id,
           app_name,
           card_id,
-          platName,
+          plat_name,
           order_number,
           supplierCode,
           orderInfo,
@@ -2090,7 +2090,7 @@ class OrderAutoTicketQueue {
         card_id,
         order_number,
         supplierCode,
-        platName,
+        plat_name,
         lockseat,
         orderInfo,
         flag: 1
@@ -2119,7 +2119,7 @@ class OrderAutoTicketQueue {
     order_id,
     app_name,
     card_id,
-    platName,
+    plat_name,
     order_number,
     supplierCode,
     orderInfo,
@@ -2144,7 +2144,7 @@ class OrderAutoTicketQueue {
       if (!qrcode) {
         // 5分钟后还失败消息推送
         sendWxPusherMessage({
-          platName,
+          plat_name,
           order_number,
           city_name: orderInfo.city_name,
           cinema_name: orderInfo.cinema_name,
@@ -2176,7 +2176,7 @@ class OrderAutoTicketQueue {
         });
         logUpload(
           {
-            plat_name: platName,
+            plat_name: plat_name,
             app_name: app_name,
             order_number: order_number,
             type: 3
@@ -2196,7 +2196,7 @@ class OrderAutoTicketQueue {
         card_id,
         order_number,
         supplierCode,
-        platName,
+        plat_name,
         lockseat,
         orderInfo,
         flag: 2
@@ -2213,7 +2213,7 @@ class OrderAutoTicketQueue {
     card_id,
     order_number,
     supplierCode,
-    platName,
+    plat_name,
     lockseat,
     orderInfo,
     flag
@@ -2222,7 +2222,7 @@ class OrderAutoTicketQueue {
     try {
       // 10、提交取票码
       const submitRes = await this.submitTicketCode({
-        platName,
+        plat_name,
         order_id,
         qrcode,
         order_number,
@@ -2240,7 +2240,7 @@ class OrderAutoTicketQueue {
         });
         const { errMsg, errInfo } = this;
         sendWxPusherMessage({
-          platName,
+          plat_name,
           order_number,
           city_name: orderInfo?.city_name,
           cinema_name: orderInfo?.cinema_name,
@@ -2266,7 +2266,7 @@ class OrderAutoTicketQueue {
         });
         logUpload(
           {
-            plat_name: platName,
+            plat_name: plat_name,
             app_name: app_name,
             order_number: order_number,
             type: 3
@@ -2906,19 +2906,19 @@ const buyTicket = async ({
 const startDeliver = async ({
   order_number,
   supplierCode,
-  platName,
+  plat_name,
   bid,
   appFlag
 }) => {
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
   try {
     let params;
-    if (platName === "sheng") {
+    if (plat_name === "sheng") {
       params = {
         orderCode: order_number,
         supplierCode
       };
-    } else if (platName === "haha") {
+    } else if (plat_name === "haha") {
       params = {
         bid
       };
@@ -2928,7 +2928,7 @@ const startDeliver = async ({
       haha: hahaApi
     };
     console.log(conPrefix + "确认接单参数", params);
-    const res = await requestApi[platName].confirmOrder(params);
+    const res = await requestApi[plat_name].confirmOrder(params);
     console.log(conPrefix + "确认接单返回", res);
     return res;
   } catch (error) {
@@ -2948,7 +2948,7 @@ const addOrderHandleRecored = async ({
   try {
     // res：{ profit, submitRes, qrcode, quan_code, card_id, offerRule }
     const serOrderInfo = {
-      plat_name: order.platName,
+      plat_name: order.plat_name,
       app_name: res?.offerRule?.app_name || appFlag,
       order_id: order.id,
       order_number: order.order_number,
