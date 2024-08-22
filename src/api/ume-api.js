@@ -118,6 +118,13 @@ const createApi = ({ appName }) => {
       params
     );
 
+  // 获取其它活动信息
+  const findTsgGift = params =>
+    axios.post(
+      `/${appName}/api/storeServer/ticketSaleGiftActivityService/findTsgGift`,
+      params
+    );
+
   // 获取购票信息
   const getPayResult = params =>
     axios.post(
@@ -155,6 +162,7 @@ const createApi = ({ appName }) => {
     findStoreTkOrderInfoApp,
     buyTicket,
     findZoneByChannel,
+    findTsgGift,
     bandQuan
   };
 };

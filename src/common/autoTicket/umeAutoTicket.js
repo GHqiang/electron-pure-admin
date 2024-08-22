@@ -717,6 +717,7 @@ class OrderAutoTicketQueue {
       showDate,
       showDateTime,
       orderCode,
+      orderDate,
       orderHeaderId,
       lockOrderId,
       total_price,
@@ -1148,6 +1149,7 @@ class OrderAutoTicketQueue {
       orderCode = orderInfo.orderCode;
       orderHeaderId = orderInfo.orderHeaderId;
       lockOrderId = orderInfo.lockOrderId;
+      orderDate = orderInfo.creationDate;
       // 这个时间戳需要和创建订单提交接口传参一致
       let timestamp = +new Date();
       // total_price =
@@ -1414,6 +1416,8 @@ class OrderAutoTicketQueue {
         cinemaLinkId,
         card_id,
         orderHeaderId,
+        orderCode,
+        orderDate,
         appFlag,
         session_id: this.currentParamsList[this.currentParamsInx].session_id
       });
@@ -2558,6 +2562,8 @@ const cannelOneOrder = async ({
 const buyTicket = async ({
   cinemaCode,
   cinemaLinkId,
+  orderCode,
+  orderDate,
   card_id,
   orderHeaderId,
   appFlag,
@@ -2581,9 +2587,9 @@ const buyTicket = async ({
     console.log(conPrefix + "订单购买参数", params);
     const buyRes = await APP_API_OBJ[appFlag].buyTicket(params);
     console.log(conPrefix + "订单购买返回", buyRes);
-    let result;
+    let zoneRes, tsgRes;
     if (appFlag === "renhengmeng") {
-      result = await APP_API_OBJ[appFlag].findZoneByChannel({
+      zoneRes = await APP_API_OBJ[appFlag].findZoneByChannel({
         params: {
           channelCode: "QD0000001",
           sysSourceCode: "YZ001",
@@ -2593,11 +2599,34 @@ const buyTicket = async ({
         },
         session_id
       });
-      console.warn("获取优惠活动返回结果", result);
+      console.warn("获取优惠活动返回结果", zoneRes);
+      tsgRes = await APP_API_OBJ[appFlag].findTsgGift({
+        params: {
+          channelCode: "QD0000001",
+          sysSourceCode: "YZ001",
+          cinemaCode,
+          cinemaLinkId,
+          orderHeaderId,
+          orderDate,
+          orderCode
+        },
+        session_id
+        // {
+        //   "orderHeaderId": 47560,
+        //   "orderCode":"LD24082200002000063",
+        //   "sysSourceCode":"YZ001",
+        //   "cinemaCode":"44010031",
+        //   "cinemaLinkId":"16226",
+        //   "orderDate":"2024-08-22 12:25:14",
+        //   "channelCode":"QD0000001",
+        // }
+      });
+      console.warn("获取其它活动返回结果", tsgRes);
     }
     return {
       buyRes,
-      result
+      zoneRes,
+      tsgRes
     };
   } catch (error) {
     console.error(conPrefix + "订单购买异常", error);
