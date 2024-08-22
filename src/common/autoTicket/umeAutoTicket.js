@@ -1419,6 +1419,22 @@ class OrderAutoTicketQueue {
         });
         return { offerRule };
       }
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: `购买电影票参数`,
+        level: "info",
+        info: {
+          params: {
+            cinemaCode,
+            cinemaLinkId,
+            card_id,
+            orderHeaderId,
+            orderCode,
+            orderDate,
+            appFlag
+          }
+        }
+      });
       // 8、购买电影票
       const buyTicketRes = await buyTicket({
         cinemaCode,
@@ -1626,6 +1642,12 @@ class OrderAutoTicketQueue {
       };
       let order_num;
       console.log(conPrefix + "创建订单参数", params);
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: `创建订单参数`,
+        level: "info",
+        info: { params }
+      });
       const res = await this.umeApi.createOrder(params);
       console.log(conPrefix + "创建订单返回", res);
       order_num = res.data?.payOrderCode || "";
