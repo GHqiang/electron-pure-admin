@@ -3,7 +3,7 @@ import axios from "axios";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { APP_LIST } from "@/common/constant";
 import md5 from "../md5.js";
-const createAxios = ({ group, appName, timeout = 20 }) => {
+const createAxios = ({ group, app_name, timeout = 20 }) => {
   // 创建axios实例
   const instance = axios.create({
     //   baseURL: process.env.VITE_API_BASE_URL,
@@ -44,7 +44,7 @@ const createAxios = ({ group, appName, timeout = 20 }) => {
     }
     // console.log("loginInfoList", loginInfoList);
     let obj = loginInfoList.find(
-      itemA => itemA.app_name === appName && itemA.session_id
+      itemA => itemA.app_name === app_name && itemA.session_id
     );
 
     e.session_id = obj?.session_id || "";
@@ -132,9 +132,9 @@ const createAxios = ({ group, appName, timeout = 20 }) => {
         !whitelistSfc.some(item => response.config.url.includes(item))
       ) {
         if (data.errcode === "205" && data.msg === "登录失效") {
-          ElMessage.warning(`${APP_LIST[appName]}登录失效，请重新设置登录信息`);
+          ElMessage.warning(`${APP_LIST[app_name]}登录失效，请重新设置登录信息`);
           // ElMessageBox.confirm(
-          //   `${APP_LIST[appName]}登录失效，请重新登录`,
+          //   `${APP_LIST[app_name]}登录失效，请重新登录`,
           //   "提示",
           //   {
           //     confirmButtonText: "我知道了",
@@ -146,7 +146,7 @@ const createAxios = ({ group, appName, timeout = 20 }) => {
           //   }
           // )
           //   .then(() => {
-          //     // removeSfcUserInfo(appName);
+          //     // removeSfcUserInfo(app_name);
           //     router.push({ path: "/set/appLogin" });
           //   })
           //   .catch(() => {});

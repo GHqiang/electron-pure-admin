@@ -11,13 +11,13 @@ let sfcList = Object.keys(APP_LIST).filter(item => !noSfcList.includes(item));
 sfcList.forEach(item => {
   SFC_API_OBJ[item] = createSfcApi({
     group: APP_GROUP_OBJ[item],
-    appName: item
+    app_name: item
   });
 });
 
 UME_LIST.forEach(item => {
   UME_API_OBJ[item] = createUmeApi({
-    appName: item
+    app_name: item
   });
 });
 const APP_API_OBJ = {

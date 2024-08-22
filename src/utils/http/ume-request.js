@@ -11,7 +11,7 @@ let appHostObj = {
   renhengmeng: "https://oc.yuekeyun.com",
   yaolai: "https://jccinema.yuekeyun.com"
 };
-const createAxios = ({ appName, timeout = 20 }) => {
+const createAxios = ({ app_name, timeout = 20 }) => {
   // 创建axios实例
   const instance = axios.create({
     //   baseURL: process.env.VITE_API_BASE_URL,
@@ -24,7 +24,7 @@ const createAxios = ({ appName, timeout = 20 }) => {
   // 请求拦截器
   instance.interceptors.request.use(
     config => {
-      if (config.url.indexOf(`/${appName}/`) !== -1) {
+      if (config.url.indexOf(`/${app_name}/`) !== -1) {
         config.headers["Content-Type"] === "application/x-www-form-urlencoded;";
         // 猎人平台接口添加token
         let loginInfoList = window.localStorage.getItem("loginInfoList");
@@ -32,7 +32,7 @@ const createAxios = ({ appName, timeout = 20 }) => {
           loginInfoList = JSON.parse(loginInfoList);
         }
         let obj = loginInfoList.find(
-          itemA => itemA.app_name === appName && itemA.session_id
+          itemA => itemA.app_name === app_name && itemA.session_id
         );
         let token = obj?.session_id || "";
         // console.log("ume-token", token);
@@ -61,7 +61,7 @@ const createAxios = ({ appName, timeout = 20 }) => {
         if (!IS_DEV) {
           // 截取掉/sfc/
           config.url =
-            appHostObj[appName] + config.url.slice(appName.length + 1);
+            appHostObj[app_name] + config.url.slice(app_name.length + 1);
         }
       }
       // console.log('请求config', config)
@@ -82,7 +82,7 @@ const createAxios = ({ appName, timeout = 20 }) => {
       let whitelistSp = [];
 
       let isErrorByLieRen =
-        (!IS_DEV ? true : response.config.url.indexOf(`/${appName}/`) !== -1) &&
+        (!IS_DEV ? true : response.config.url.indexOf(`/${app_name}/`) !== -1) &&
         data.status !== "S";
       if (
         isErrorByLieRen &&

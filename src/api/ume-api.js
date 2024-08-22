@@ -6,56 +6,56 @@
  */
 
 import createAxios from "@/utils/http/ume-request";
-const createApi = ({ appName }) => {
+const createApi = ({ app_name }) => {
   let axios = createAxios({
-    appName: appName
+    app_name: app_name
   });
   // 获取城市及影院列表
   const getCinemaList = params =>
     axios.post(
-      `/${appName}/api/storeServer/cinCinemaInfoService/findCinCityToApp`,
+      `/${app_name}/api/storeServer/cinCinemaInfoService/findCinCityToApp`,
       params
     );
 
   // 获取电影放映列表
   const getMoviePlayInfo = params =>
     axios.post(
-      `/${appName}/api/storeServer/cinCinemaFilmInfoService/findFilmInfoToApp`,
+      `/${app_name}/api/storeServer/cinCinemaFilmInfoService/findFilmInfoToApp`,
       params
     );
 
   // 获取电影放映日期
   const getMoviePlayDate = params =>
     axios.post(
-      `/${appName}/api/storeServer/cinScheduleInfoService/findCinScheduleDataToApp`,
+      `/${app_name}/api/storeServer/cinScheduleInfoService/findCinScheduleDataToApp`,
       params
     );
 
   // 获取电影放映场次
   const getMoviePlayTime = params =>
     axios.post(
-      `/${appName}/api/storeServer/cinScheduleInfoService/findScheduleInfoToApp`,
+      `/${app_name}/api/storeServer/cinScheduleInfoService/findScheduleInfoToApp`,
       params
     );
 
   // 获取座位布局
   const getMoviePlaySeat = params =>
     axios.post(
-      `/${appName}/api/storeServer/cinSyncService/findSeatMapInfo`,
+      `/${app_name}/api/storeServer/cinSyncService/findSeatMapInfo`,
       params
     );
 
   // 锁定座位
   const lockSeat = params =>
     axios.post(
-      `/${appName}/api/storeServer/storeTkOrderHeaderService/createMovieTicketsOrder`,
+      `/${app_name}/api/storeServer/storeTkOrderHeaderService/createMovieTicketsOrder`,
       params
     );
 
   // 获取卡券列表
   const getCardQuanList = params =>
     axios.post(
-      `/${appName}/api/storeServer/optimalCombinatService/getOptimalCombination`,
+      `/${app_name}/api/storeServer/optimalCombinatService/getOptimalCombination`,
       params
     );
 
@@ -80,62 +80,62 @@ const createApi = ({ appName }) => {
   // 创建订单
   const createOrder = params =>
     axios.post(
-      `/${appName}/api/storeServer/storeTkOrderHeaderService/commitMovieTicketsOrder`,
+      `/${app_name}/api/storeServer/storeTkOrderHeaderService/commitMovieTicketsOrder`,
       params
     );
 
   // 获取订单时间
   const getOrderTime = params =>
     axios.post(
-      `/${appName}/api/storeServer/storeTkOrderHeaderService/getOrderTime`,
+      `/${app_name}/api/storeServer/storeTkOrderHeaderService/getOrderTime`,
       params
     );
   // 获取订单列表
   const findStoreTkOrderInfoApp = params =>
     axios.post(
-      `/${appName}/api/storeServer/storeTkOrderHeaderService/findStoreTkOrderInfoApp`,
+      `/${app_name}/api/storeServer/storeTkOrderHeaderService/findStoreTkOrderInfoApp`,
       params
     );
 
   // 取消订单
   const cannelOneOrder = params =>
     axios.post(
-      `/${appName}/api/storeServer/StoreReturnOrderService/cannelOneOrder`,
+      `/${app_name}/api/storeServer/StoreReturnOrderService/cannelOneOrder`,
       params
     );
 
   // 电影票购买
   const buyTicket = params =>
     axios.post(
-      `/${appName}/api/storeServer/storeTkOrderHeaderService/saveMemberOrderPayAmount`,
+      `/${app_name}/api/storeServer/storeTkOrderHeaderService/saveMemberOrderPayAmount`,
       params
     );
 
   // 获取影院优惠活动
   const findZoneByChannel = params =>
     axios.post(
-      `/${appName}/api/storeServer/storeActivityZoneService/findZoneByChannel`,
+      `/${app_name}/api/storeServer/storeActivityZoneService/findZoneByChannel`,
       params
     );
 
   // 获取其它活动信息
   const findTsgGift = params =>
     axios.post(
-      `/${appName}/api/storeServer/ticketSaleGiftActivityService/findTsgGift`,
+      `/${app_name}/api/storeServer/ticketSaleGiftActivityService/findTsgGift`,
       params
     );
 
   // 获取购票信息
   const getPayResult = params =>
     axios.post(
-      `/${appName}/api/storeServer/storeTkOrderHeaderService/findStoreTkOrderInfoApp`,
+      `/${app_name}/api/storeServer/storeTkOrderHeaderService/findStoreTkOrderInfoApp`,
       params
     );
 
   // 绑定优惠券
   const bandQuan = params =>
     axios.post(
-      `/${appName}/api/storeServer/couponYlInstanceService/findIsNeedPin`,
+      `/${app_name}/api/storeServer/couponYlInstanceService/findIsNeedPin`,
       params
     );
 

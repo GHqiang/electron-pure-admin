@@ -3,10 +3,10 @@
  */
 
 import createAxios from "@/utils/http/sfc-request";
-const createApi = ({ group, appName }) => {
+const createApi = ({ group, app_name }) => {
   let axios = createAxios({
     group: group,
-    appName: appName
+    app_name: app_name
   });
   // 获取图形/短信验证码
   const getSmsCode = params =>
