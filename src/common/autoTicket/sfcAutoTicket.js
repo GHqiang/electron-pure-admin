@@ -538,13 +538,22 @@ class OrderAutoTicketQueue {
     // 放到这里即使修改token也不用重启队列了
     const { conPrefix, appFlag } = this;
     const { id, platName, supplierCode, order_number, bid } = item;
-    this.currentParamsList = getCinemaLoginInfoList().filter(
-      item =>
-        item.app_name === appFlag &&
-        item.mobile &&
-        item.session_id &&
-        item.member_pwd
-    );
+    this.currentParamsList = getCinemaLoginInfoList()
+      .filter(
+        item =>
+          item.app_name === appFlag &&
+          item.mobile &&
+          item.session_id &&
+          item.member_pwd
+      )
+      .sort((a, b) => {
+        // 如果 a.priority 为真，则 a 应该排在 b 之前，因此返回负数
+        if (a.mobile === tokens.userInfo.phone) return -1;
+        // 如果 b.priority 为真，则 b 应该排在 a 之前，因此返回正数
+        if (b.mobile === tokens.userInfo.phone) return 1;
+        // 如果两个对象的 priority 属性都相同或都是假，则按默认顺序排列
+        return 0;
+      });
     try {
       console.warn(conPrefix + "单个待出票订单信息", item);
       // 1、解锁座位
