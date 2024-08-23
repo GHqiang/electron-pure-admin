@@ -499,7 +499,11 @@ const HEFEIDIANYING_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "长江影城杭州星光荟LUXE店"
   },
   {
-    order_cinema_name: ["解放电影院OnyxLED&amp;LUXE", "解放电影院OnyxLED&LUXE"],
+    order_cinema_name: [
+      "合肥解放电影院",
+      "解放电影院OnyxLED&amp;LUXE",
+      "解放电影院OnyxLED&LUXE"
+    ],
     sfc_cinema_name: "合肥解放影院"
   }
 ];
@@ -665,8 +669,17 @@ const DSYC_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "淄博大商影城新玛特店"
   },
   {
+    order_cinema_name: "大商影城乘风新玛特店",
+    sfc_cinema_name: "大庆大商影城乘风新玛特店"
+  },
+
+  {
     order_cinema_name: "大商影城于洪黄海路店",
     sfc_cinema_name: "沈阳市大商影城于洪店"
+  },
+  {
+    order_cinema_name: "大商影城千盛店",
+    sfc_cinema_name: "漯河大商影城千盛店"
   }
 ];
 
@@ -749,6 +762,16 @@ const UME_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: ["UME影城石家庄店"],
     sfc_cinema_name: "UME影城河北石家庄店"
+  },
+  // 绍兴
+  {
+    order_cinema_name: ["绍兴UME影城CGS中国巨幕厅绍兴曲屯店"],
+    sfc_cinema_name: "UME影城绍兴曲屯店"
+  },
+  // 南充
+  {
+    order_cinema_name: ["UME影城中国巨幕南充店"],
+    sfc_cinema_name: "UME影城四川南充店"
   }
 ];
 

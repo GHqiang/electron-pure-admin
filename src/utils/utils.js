@@ -681,7 +681,7 @@ const sendWxPusherMessage = async ({
     contentType: 2,
     verifyPay: false,
     uids: ["UID_AIFZVT3B4zcj10CvGFLKB2hS2wt7", WX_MSG_UID[userInfo.user_id]],
-    summary: platName + "平台出票失败",
+    summary: plat_name + "平台出票失败",
     content
   };
   try {
