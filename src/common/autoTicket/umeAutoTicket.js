@@ -359,17 +359,33 @@ class OrderAutoTicketQueue {
         const session_id =
           this.currentParamsList[this.currentParamsInx].session_id;
         const { cinemaCode, cinemaLinkId, orderHeaderId } = unlockSeatInfo;
-        const isPass = await cannelOneOrder({
+        const cancelRes = await cannelOneOrder({
           cinemaCode,
           cinemaLinkId,
           orderHeaderId,
           appFlag,
           session_id
         });
+        if (cancelRes.error) {
+          sendWxPusherMessage({
+            plat_name,
+            order_number,
+            city_name,
+            cinema_name,
+            film_name,
+            lockseat,
+            transferTip:
+              "转单前取消订单失败，建议手动取消订单，以便后续订单正常出票",
+            failReason: `${JSON.stringify(cancelRes.error)}`
+          });
+        }
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: `转单前释放座位${isPass ? "成功" : "失败"}`,
-          level: "info"
+          des: `转单前释放座位${!cancelRes.error ? "成功" : "失败"}`,
+          level: "info",
+          info: {
+            cancelRes
+          }
         });
       }
       let params;
@@ -1057,7 +1073,7 @@ class OrderAutoTicketQueue {
         }));
       } else {
         // 先用上个号的token取消订单，然后再重新出票
-        const isPass = await cannelOneOrder({
+        const cancelRes = await cannelOneOrder({
           cinemaCode,
           cinemaLinkId,
           orderHeaderId,
@@ -1065,7 +1081,14 @@ class OrderAutoTicketQueue {
           session_id:
             this.currentParamsList[this.currentParamsInx - 1].session_id
         });
-        if (!isPass) {
+        if (cancelRes.error) {
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: `上个号取消订单失败`,
+            info: {
+              error: cancelRes.error
+            }
+          });
           console.warn("上个号取消订单失败,微信发送消息通知并直接走转单");
           const transferParams = await this.transferOrder(item);
           return { transferParams };
@@ -1284,6 +1307,7 @@ class OrderAutoTicketQueue {
           return await this.oneClickBuyTicket({
             ...item,
             otherParams: {
+              orderHeaderId,
               cinemaLinkId,
               cinemaCode,
               filmUniqueId,
