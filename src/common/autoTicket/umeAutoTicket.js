@@ -2826,7 +2826,7 @@ const useQuanOrCard = ({
         let seatCode = Object.keys(item.discountAmountMap)?.[0];
         return {
           couponInstanceId: item.couponInstanceId,
-          couponType: item.couponType,
+          couponType: item.templateType,
           // 以下两个值一样
           seatCode: seatCode,
           salesKeySku: seatCode,
