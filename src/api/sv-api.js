@@ -14,7 +14,8 @@ const updateUser = params => axios.post("/svpi/users/update", params);
 const getUserList = params => axios.get("/svpi/users", { params });
 
 //查询统计分析
-const queryAnalysis = params => axios.get("/svpi/statisticalAnalysis/query", { params });
+const queryAnalysis = params =>
+  axios.get("/svpi/statisticalAnalysis/query", { params, timeout: 60 * 1000 });
 // 获取报价列表
 const getOfferList = params => axios.get("/svpi/offerRecord", { params });
 // 查询报价记录
@@ -31,10 +32,12 @@ const queryTicketList = params =>
 // 添加出票记录
 const addTicketRecord = params => axios.post("/svpi/ticketRecord/add", params);
 // 更新出票记录
-const updateTicketRecord = params => axios.post("/svpi/ticketRecord/update", params);
+const updateTicketRecord = params =>
+  axios.post("/svpi/ticketRecord/update", params);
 
 // 单个退票
-const refundTicketRecord = params => axios.post("/svpi/ticketRecord/refund", params);
+const refundTicketRecord = params =>
+  axios.post("/svpi/ticketRecord/refund", params);
 
 // 获取优惠券列表
 const getQuanList = params => axios.get("/svpi/quanRecord", { params });

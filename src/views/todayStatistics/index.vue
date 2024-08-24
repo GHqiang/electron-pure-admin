@@ -98,7 +98,11 @@
         </template>
       </el-table-column>
       <el-table-column prop="profitTotal" label="利润总和" min-width="90" />
-      <el-table-column prop="transferTotal" label="手续费总和" min-width="100" />
+      <el-table-column
+        prop="transferTotal"
+        label="手续费总和"
+        min-width="100"
+      />
       <el-table-column prop="offerTotalNum" label="报价总数" min-width="90" />
       <el-table-column prop="offerSuccessNum" label="成功数" min-width="90" />
       <el-table-column prop="offerFailNum" label="失败数" min-width="90" />
@@ -153,10 +157,6 @@ import { ref, reactive, onBeforeMount } from "vue";
 import { ElLoading } from "element-plus";
 import svApi from "@/api/sv-api";
 import { ORDER_FORM, APP_LIST } from "@/common/constant.js";
-import { getCinemaFlag } from "@/utils/utils";
-defineOptions({
-  name: "Welcome"
-});
 // 用户列表
 const userList = ref([]);
 // 订单来源
@@ -218,7 +218,7 @@ const getSummaries = param => {
     }
   });
   sums[2] = Number(sums[2]).toFixed(2);
-  sums[3] = 
+  sums[3] = Number(sums[3]).toFixed(2);
   sums[10] = Math.floor((sums[9] / sums[5]) * 100) + "%";
   sums[13] = sums[11] > 0 ? Math.floor((sums[11] / sums[9]) * 100) + "%" : "0%";
   return sums;
@@ -237,11 +237,11 @@ const loadData = async () => {
     });
     // 使用Object.fromEntries将过滤后的键值对数组转换回对象
     let queryParams = Object.fromEntries(filteredEntries);
-    // console.log("queryParams", queryParams);
-    let res;
-    res = await svApi.queryAnalysis(queryParams);
+    queryParams.appList = JSON.stringify(APP_LIST);
+    console.log("queryParams", queryParams);
+    const res = await svApi.queryAnalysis(queryParams);
     // console.log("res", res);
-    let list = res.data.List || [];
+    let list = res.data?.list || [];
     console.warn("list", list);
     tableData.value = list;
     loading.close();

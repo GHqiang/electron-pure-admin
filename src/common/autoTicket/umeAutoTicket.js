@@ -1409,6 +1409,7 @@ class OrderAutoTicketQueue {
         card_id,
         activityId,
         total_price,
+        cardList,
         timestamp
       });
       if (!order_num) {
@@ -1619,12 +1620,13 @@ class OrderAutoTicketQueue {
   // 创建订单
   async createOrder(data) {
     const { conPrefix, appFlag } = this;
-    const {
+    let {
       cinemaCode,
       cinemaLinkId,
       orderHeaderId,
       coupon,
       card_id,
+      cardList,
       activityId,
       total_price,
       timestamp,
@@ -1633,6 +1635,10 @@ class OrderAutoTicketQueue {
     const session_id = this.currentParamsList[this.currentParamsInx].session_id;
     const mobile = this.currentParamsList[this.currentParamsInx].mobile;
     try {
+      // 仁恒梦貌似创建订单时传会员卡，支付时不传
+      if (appFlag === "renhengmeng" && coupon?.length) {
+        card_id = cardList?.[0]?.cardNo || "";
+      }
       let params = {
         params: {
           orderType: "ticket_order",
