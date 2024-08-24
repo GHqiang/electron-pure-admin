@@ -89,7 +89,7 @@ const APP_LIST = {
   gbsy: "古北上影",
   jyhx: "金谊华夏",
   hkzy: "海口中影",
-  // hgwz: "横岗万众",
+  hgwz: "横岗万众",
   shjy: "上海巨影",
   tjlq: "天津乐奇",
   shth: "上海太禾",

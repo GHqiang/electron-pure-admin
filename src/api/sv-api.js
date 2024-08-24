@@ -13,6 +13,8 @@ const updateUser = params => axios.post("/svpi/users/update", params);
 // 获取用户列表
 const getUserList = params => axios.get("/svpi/users", { params });
 
+//查询统计分析
+const queryAnalysis = params => axios.get("/svpi/statisticalAnalysis/query", { params });
 // 获取报价列表
 const getOfferList = params => axios.get("/svpi/offerRecord", { params });
 // 查询报价记录
@@ -104,6 +106,7 @@ export default {
   logout,
   updateUser,
   getUserList,
+  queryAnalysis,
   getOfferList,
   queryOfferList,
   addOfferRecord,

@@ -98,6 +98,7 @@
         </template>
       </el-table-column>
       <el-table-column prop="profitTotal" label="利润总和" min-width="90" />
+      <el-table-column prop="transferTotal" label="手续费总和" min-width="100" />
       <el-table-column prop="offerTotalNum" label="报价总数" min-width="90" />
       <el-table-column prop="offerSuccessNum" label="成功数" min-width="90" />
       <el-table-column prop="offerFailNum" label="失败数" min-width="90" />
@@ -184,39 +185,6 @@ const getTodayTime = sjc => {
 formData.start_time = getTodayTime(+new Date());
 formData.end_time = getTodayTime(+new Date() + 1 * 24 * 60 * 60 * 1000);
 // 每个影院报价数
-// 获取当天报价记录
-const getOfferList = async () => {
-  try {
-    let formInfo = JSON.parse(JSON.stringify(formData));
-    const filteredEntries = Object.entries(formInfo).filter(([key, value]) => {
-      return value !== null && value !== undefined && value !== "";
-    });
-    // 使用Object.fromEntries将过滤后的键值对数组转换回对象
-    let queryParams = Object.fromEntries(filteredEntries);
-    const res = await svApi.queryOfferList(queryParams);
-    return res.data.offerList || [];
-  } catch (error) {
-    console.error("获取报价记录异常", error);
-    return [];
-  }
-};
-
-// 获取当天出票记录
-const getTicketList = async () => {
-  try {
-    let formInfo = JSON.parse(JSON.stringify(formData));
-    const filteredEntries = Object.entries(formInfo).filter(([key, value]) => {
-      return value !== null && value !== undefined && value !== "";
-    });
-    // 使用Object.fromEntries将过滤后的键值对数组转换回对象
-    let queryParams = Object.fromEntries(filteredEntries);
-    const ticketRes = await svApi.queryTicketList(queryParams);
-    return ticketRes.data.ticketList || [];
-  } catch (error) {
-    console.error("获取出票记录异常", error);
-    return [];
-  }
-};
 
 // 重置
 const resetForm = () => {
@@ -250,8 +218,9 @@ const getSummaries = param => {
     }
   });
   sums[2] = Number(sums[2]).toFixed(2);
-  sums[9] = Math.floor((sums[8] / sums[4]) * 100) + "%";
-  sums[12] = sums[10] > 0 ? Math.floor((sums[10] / sums[8]) * 100) + "%" : "0%";
+  sums[3] = 
+  sums[10] = Math.floor((sums[9] / sums[5]) * 100) + "%";
+  sums[13] = sums[11] > 0 ? Math.floor((sums[11] / sums[9]) * 100) + "%" : "0%";
   return sums;
 };
 
@@ -262,75 +231,19 @@ const loadData = async () => {
     background: "rgba(0, 0, 0, 0.7)"
   });
   try {
-    let list = [];
-    const offerRecord = await getOfferList();
-    const ticketRecord = await getTicketList();
-    list = Object.keys(APP_LIST).map(item => ({
-      app_name: item,
-      profitTotal: 0,
-      offerTotalNum: 0,
-      offerSuccessNum: 0,
-      offerFailNum: 0,
-      offerRuleMatchEmptyNum: 0,
-      offerExceedLimitedPriceNum: 0,
-      ticketTotalNum: 0,
-      ticketSuccessNum: 0,
-      ticketNum: 0,
-      ticketFailNum: 0,
-      ticketTransferNum: 0
-    }));
-    offerRecord.forEach(item => {
-      let appName = item.app_name;
-      if (!appName) {
-        appName = getCinemaFlag(item);
-      }
-      let inx = list.findIndex(itemA => itemA.app_name === appName);
-      // console.log("inx", inx, list);
-      list[inx].offerTotalNum++;
-      item.order_status === "1"
-        ? list[inx].offerSuccessNum++
-        : list[inx].offerFailNum++;
-      item.err_msg?.includes("报价规则匹配后为空")
-        ? list[inx].offerRuleMatchEmptyNum++
-        : null;
-      item.err_msg?.includes("超过平台限价")
-        ? list[inx].offerExceedLimitedPriceNum++
-        : null;
+    let formInfo = JSON.parse(JSON.stringify(formData));
+    const filteredEntries = Object.entries(formInfo).filter(([key, value]) => {
+      return value !== null && value !== undefined && value !== "";
     });
-    ticketRecord.forEach(item => {
-      let appName = item.app_name;
-      if (!appName) {
-        appName = getCinemaFlag(item);
-      }
-      let inx = list.findIndex(itemA => itemA.app_name === appName);
-      list[inx].ticketTotalNum++;
-      list[inx].profitTotal +=
-        Math.round(
-          (Number(item.profit || 0) - Number(item.transfer_fee || 0)) * 100
-        ) / 100;
-      if (item.order_status === "1") {
-        list[inx].ticketNum += Number(item.ticket_num);
-        list[inx].ticketSuccessNum++;
-      } else {
-        list[inx].ticketFailNum++;
-      }
-      item.err_msg?.includes("规则不存在")
-        ? list[inx].offerRuleMatchEmptyNum++
-        : null;
-      item.transfer_fee ? list[inx].ticketTransferNum++ : null;
-    });
-    // console.log("最终数据", list);
-    list = list
-      .sort((a, b) => b.offerTotalNum - a.offerTotalNum)
-      .map(item => {
-        return {
-          ...item,
-          profitTotal: Number(item.profitTotal.toFixed(2))
-        };
-      });
-    tableData.value = list.filter(item =>
-      !formData.app_name ? true : item.app_name === formData.app_name
-    );
+    // 使用Object.fromEntries将过滤后的键值对数组转换回对象
+    let queryParams = Object.fromEntries(filteredEntries);
+    // console.log("queryParams", queryParams);
+    let res;
+    res = await svApi.queryAnalysis(queryParams);
+    // console.log("res", res);
+    let list = res.data.List || [];
+    console.warn("list", list);
+    tableData.value = list;
     loading.close();
   } catch (error) {
     loading.close();
