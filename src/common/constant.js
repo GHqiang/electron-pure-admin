@@ -16,8 +16,9 @@ const QUAN_TYPE = {
   "renhengmeng-40": "仁恒梦-40",
   "ume-putong": "ume-普通厅",
   "ume-teshu": "ume-特殊厅",
-  "yaolai-30-p": "耀莱30通兑",
-  "yaolai-30-b": "耀莱30通兑会员补差价"
+  "yaolai-yixain": "耀莱一线普通",
+  "yaolai-erxian": "耀莱二线普通",
+  "yaolai-yixianbu5": "耀莱一线普通补5"
 };
 
 // 优惠券成本
@@ -28,8 +29,9 @@ const QUAN_TYPE_COST = {
   "renhengmeng-40": 40,
   "ume-putong": 32,
   "ume-teshu": 32,
-  "yaolai-30-p": 29.3,
-  "yaolai-30-b": 29.3
+  "yaolai-yixain": 29.3,
+  "yaolai-erxian": 29.3,
+  "yaolai-yixianbu5": 29.3
 };
 
 // 优惠券标识
@@ -40,8 +42,9 @@ const QUAN_TYPE_FLAG = {
   "renhengmeng-40": "团体券",
   "ume-putong": "会员普通厅",
   "ume-teshu": "会员特殊厅",
-  "yaolai-30-p": 29.3,
-  "yaolai-30-b": 29.3
+  "yaolai-yixain": "（小程序）免费影票兑换券",
+  "yaolai-erxian": "影票兑换券",
+  "yaolai-yixianbu5": "影票兑换券"
 };
 
 // ume系统影院

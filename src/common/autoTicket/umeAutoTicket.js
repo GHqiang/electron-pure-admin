@@ -2838,7 +2838,7 @@ const useQuanOrCard = ({
         } else if (appFlag === "ume") {
           return item.couponName.includes(QUAN_TYPE_FLAG[quan_value]);
         } else if (appFlag === "yaolai") {
-          return true;
+          return item.couponName === QUAN_TYPE_FLAG[quan_value];
         }
       });
       let useQuan = targeQuanList.slice(0, ticket_num).map(item => {
