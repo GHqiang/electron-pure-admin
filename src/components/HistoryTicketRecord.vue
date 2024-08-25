@@ -68,16 +68,19 @@
           clearable
         />
       </el-form-item>
-      <el-form-item label="用券面额">
+      <el-form-item label="用券类型">
         <el-select
           v-model="formData.quan_value"
-          placeholder="用券面额"
+          placeholder="用券类型"
           style="width: 194px"
           clearable
         >
-          <el-option label="40" value="40" />
-          <el-option label="35" value="35" />
-          <el-option label="30" value="30" />
+          <el-option
+            v-for="(keyValue, keyName) in QUAN_TYPE"
+            :key="keyName"
+            :label="keyValue"
+            :value="keyName"
+          />
         </el-select>
       </el-form-item>
       <el-form-item label="优惠券码">
@@ -178,7 +181,7 @@
           <span>{{ scope.row.rewards == 1 ? "是" : "否" }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="quan_value" label="用券面额" width="90" />
+      <el-table-column prop="quan_value" label="用券类型" width="90" />
       <el-table-column prop="quan_code" label="优惠券码" width="90" />
       <el-table-column prop="profit" label="利润" width="80" />
       <el-table-column prop="original_profit" label="原利润" width="80" />
@@ -215,7 +218,7 @@
 import { ref, reactive, onBeforeUnmount, onBeforeMount } from "vue";
 import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import svApi from "@/api/sv-api";
-import { ORDER_FORM, APP_LIST } from "@/common/constant.js";
+import { ORDER_FORM, APP_LIST, QUAN_TYPE } from "@/common/constant.js";
 // console.log("ORDER_FORM", ORDER_FORM);
 // 订单来源
 const orderFormObj = ORDER_FORM;
@@ -244,7 +247,7 @@ const formData = reactive({
   user_id: "", // 出票用户
   order_number: "", // 订单号
   quan_code: "", // 优惠券
-  quan_value: "", // 用券面额
+  quan_value: "", // 用券类型
   err_msg: "",
   start_time: "",
   end_time: ""

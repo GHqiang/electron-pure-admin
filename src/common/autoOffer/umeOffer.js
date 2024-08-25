@@ -10,7 +10,7 @@ import {
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
-import { APP_LIST } from "@/common/constant.js";
+import { APP_LIST, QUAN_TYPE_COST } from "@/common/constant.js";
 class getUmeOfferPrice {
   constructor({ appFlag, plat_name }) {
     // console.log("APP_API_OBJ", APP_API_OBJ, appFlag, plat_name);
@@ -42,9 +42,7 @@ class getUmeOfferPrice {
           // 成本价
           let cost_price =
             offerType === "1"
-              ? quanValue == "40"
-                ? 38.8
-                : Number(quanValue)
+              ? QUAN_TYPE_COST[quanValue]
               : Number(memberCostPrice);
           // 获取最终报价
           endPrice = await this.getEndPrice({

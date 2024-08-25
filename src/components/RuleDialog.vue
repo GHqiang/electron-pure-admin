@@ -352,7 +352,7 @@
               删除
             </el-button>
             <el-button
-              v-if="index === 0"
+              v-if="index === formData.platOfferList.length - 1"
               class="mt-2"
               @click.prevent="addDomain"
               >新增</el-button
@@ -377,9 +377,12 @@
             placeholder="用券类型"
             clearable
           >
-            <el-option label="sfc—40" value="40" />
-            <el-option label="sfc-35" value="35" />
-            <el-option label="sfc-30" value="30" />
+            <el-option
+              v-for="(keyValue, keyName) in QUAN_TYPE"
+              :key="keyName"
+              :label="keyValue"
+              :value="keyName"
+            />
           </el-select>
         </el-form-item>
         <el-form-item v-if="formData.offerType !== '3'" label="星期几">
@@ -463,7 +466,7 @@ import { APP_API_OBJ } from "@/common/index.js";
 
 import { ref, reactive, computed, toRaw } from "vue";
 import { ElLoading, ElMessage } from "element-plus";
-import { ORDER_FORM, APP_LIST, UME_LIST } from "@/common/constant";
+import { ORDER_FORM, APP_LIST, UME_LIST, QUAN_TYPE } from "@/common/constant";
 import { useAppBaseData } from "@/store/appBaseData";
 const appBaseDataInfo = useAppBaseData();
 const { appBaseData, setSfcBaseData } = appBaseDataInfo;
@@ -504,7 +507,7 @@ let formData = reactive({
   excludeFilmNames: [], // 排除影片
   timeLimit: "", // 开场时间限制
   offerAmount: "", // 报价金额
-  quanValue: "", // 用券面额
+  quanValue: "", // 用券类型
   ruleStartTime: "", // 规则启用时间
   ruleEndTime: "", // 规则结束时间
   offerType: "1", // 报价类型, 1-固定价 2-会员价加价 3-会员日报价
@@ -582,7 +585,7 @@ const resetForm = el => {
   formData.excludeFilmNames = []; // 排除影片
   formData.timeLimit = ""; // 开场时间限制
   formData.offerAmount = ""; // 报价金额
-  formData.quanValue = ""; // 用券面额
+  formData.quanValue = ""; // 用券类型
   formData.ruleStartTime = ""; // 规则启用时间
   formData.ruleEndTime = ""; // 规则结束时间
   formData.offerType = "1"; // 报价类型, 1-固定价 2-会员价加价 3-会员日报价

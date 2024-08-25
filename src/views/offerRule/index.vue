@@ -63,16 +63,19 @@
           <el-option label="会员日报价" value="3" />
         </el-select>
       </el-form-item>
-      <el-form-item label="用券面额">
+      <el-form-item label="用券类型">
         <el-select
           v-model="formData.quanValue"
-          placeholder="用券面额"
+          placeholder="用券类型"
           style="width: 194px"
           clearable
         >
-          <el-option label="40" value="40" />
-          <el-option label="35" value="35" />
-          <el-option label="30" value="30" />
+          <el-option
+            v-for="(keyValue, keyName) in QUAN_TYPE"
+            :key="keyName"
+            :label="keyValue"
+            :value="keyName"
+          />
         </el-select>
       </el-form-item>
 
@@ -138,7 +141,7 @@
           <span>{{ offerTypeObj[scope.row.offerType] || "" }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="用券面额" prop="quanValue" width="85" />
+      <el-table-column label="用券类型" prop="quanValue" width="85" />
       <el-table-column label="报价金额" prop="offerAmount" width="85">
         <template #default="scope">
           <span>{{ formatOfferAmount(scope.row) }}</span>
@@ -248,7 +251,7 @@ import { ref, reactive, computed, toRaw } from "vue";
 import svApi from "@/api/sv-api";
 import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import RuleDialog from "@/components/RuleDialog.vue";
-import { ORDER_FORM, APP_LIST } from "@/common/constant";
+import { ORDER_FORM, APP_LIST, QUAN_TYPE } from "@/common/constant";
 import { getCurrentFormattedDateTime } from "@/utils/utils";
 import { useDataTableStore } from "@/store/offerRule";
 const rules = useDataTableStore();
@@ -274,7 +277,7 @@ const formData = reactive({
   shadowLineName: "", // 影线名称
   status: "", // 状态
   offerType: "", // 报价类型
-  quanValue: "" // 用券面额
+  quanValue: "" // 用券类型
 });
 
 const judgeHandle = (arr, str) => {

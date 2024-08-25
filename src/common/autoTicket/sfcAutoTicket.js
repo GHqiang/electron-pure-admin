@@ -38,7 +38,8 @@ const tokens = platTokens();
 import {
   TICKET_CONPREFIX_OBJ,
   APP_OPENID_OBJ,
-  APP_LIST
+  APP_LIST,
+  QUAN_TYPE_COST
 } from "@/common/constant";
 import { APP_API_OBJ } from "@/common/index";
 
@@ -1523,16 +1524,12 @@ class OrderAutoTicketQueue {
         conPrefix +
           `待出票订单：城市${city_name}, 影院${cinema_name}, 影厅${hall_name}`
       );
-      const {
-        offer_type: offerType,
-        quan_value: quanValue,
-        member_price,
-        real_member_price
-      } = offerRule;
+      const { offer_type, quan_value, member_price, real_member_price } =
+        offerRule;
       let currentParams = this.currentParamsList[this.currentParamsInx];
       const { session_id, mobile } = currentParams;
       // 拿订单号去匹配报价记录
-      if (offerType !== "1") {
+      if (offer_type !== "1") {
         console.log(conPrefix + "使用会员卡出票");
         console.log(conPrefix + "报价记录里的会员价", member_price);
         if (!member_price) {
@@ -1618,7 +1615,7 @@ class OrderAutoTicketQueue {
           ticket_num,
           supplier_end_price,
           quanList,
-          quanValue,
+          quan_value,
           rewards,
           session_id
         });
@@ -2290,7 +2287,7 @@ class OrderAutoTicketQueue {
 
   // 获取新券
   async getNewQuan({
-    quanValue,
+    quan_value,
     quanNum,
     city_id,
     cinema_id,
@@ -2300,7 +2297,7 @@ class OrderAutoTicketQueue {
     const { conPrefix, appFlag } = this;
     try {
       let quanRes = await svApi.queryQuanList({
-        quan_value: quanValue,
+        quan_value: quan_value,
         app_name: appFlag,
         quan_status: "1",
         page_num: 1,
@@ -2313,8 +2310,8 @@ class OrderAutoTicketQueue {
 
       let quanList = quanRes.data.quanList || [];
       if (!quanList?.length && asyncFlag != 1) {
-        console.error(conPrefix + `数据库${quanValue}面额券不足`);
-        this.setErrInfo(`数据库${quanValue}面额券不足`);
+        console.error(conPrefix + `数据库${quan_value}面额券不足`);
+        this.setErrInfo(`数据库${quan_value}面额券不足`);
         return;
       }
       // quanList = quanList.map(item => item.coupon_num.trim());
@@ -2363,7 +2360,7 @@ class OrderAutoTicketQueue {
     ticket_num,
     supplier_end_price,
     quanList,
-    quanValue,
+    quan_value,
     rewards,
     session_id
   }) {
@@ -2375,22 +2372,22 @@ class OrderAutoTicketQueue {
       // 3、40出一线，35出二线国内，30出二线外国（暂时无法区分外国）
       let quans = quanList || []; // 优惠券列表
       let targetQuanList = quans
-        .filter(item => item.coupon_info.indexOf(quanValue) !== -1)
+        .filter(item => item.coupon_info.indexOf(quan_value) !== -1)
         .map(item => {
           return {
             coupon_num: item.coupon_num,
-            quan_cost: quanValue == 40 ? 38.8 : Number(quanValue)
+            quan_cost: QUAN_TYPE_COST[quan_value]
           };
         });
       if (targetQuanList?.length < ticket_num) {
         console.error(
-          conPrefix + `${quanValue} 面额券不足，从服务端获取并绑定`,
+          conPrefix + `${quan_value} 面额券不足，从服务端获取并绑定`,
           targetQuanList
         );
         const newQuanList = await this.getNewQuan({
           city_id,
           cinema_id,
-          quanValue,
+          quan_value,
           session_id,
           quanNum: Number(ticket_num) - targetQuanList.length
         });
@@ -2403,10 +2400,10 @@ class OrderAutoTicketQueue {
         });
         if (targetQuanList?.length < ticket_num) {
           console.error(
-            conPrefix + `从服务端获取并绑定后${quanValue} 面额券仍不足，`,
+            conPrefix + `从服务端获取并绑定后${quan_value} 面额券仍不足，`,
             targetQuanList
           );
-          this.setErrInfo(`${quanValue} 面额券从数据库获取后仍不足`);
+          this.setErrInfo(`${quan_value} 面额券从数据库获取后仍不足`);
           return {
             profit: 0,
             useQuans: []
@@ -2421,7 +2418,7 @@ class OrderAutoTicketQueue {
         this.getNewQuan({
           city_id,
           cinema_id,
-          quanValue,
+          quan_value,
           session_id,
           quanNum: 10 - (targetQuanList.length - Number(ticket_num)),
           asyncFlag: 1

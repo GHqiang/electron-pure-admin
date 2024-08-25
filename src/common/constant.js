@@ -13,10 +13,23 @@ const QUAN_TYPE = {
   40: "sfc-40",
   35: "sfc-35",
   30: "sfc-30",
-  "ume-p": "ume-通兑-普通",
-  "ume-t": "ume-通兑-特殊",
+  "renhengmeng-40": "仁恒梦-40",
+  "ume-putong": "ume-普通厅",
+  "ume-teshu": "ume-特殊厅",
   "yaolai-30-p": "耀莱30通兑",
   "yaolai-30-b": "耀莱30通兑会员补差价"
+};
+
+// 优惠券成本
+const QUAN_TYPE_COST = {
+  40: 38.8,
+  35: 35,
+  30: 30,
+  "renhengmeng-40": 40,
+  "ume-putong": 32,
+  "ume-teshu": 32,
+  "yaolai-30-p": 29.3,
+  "yaolai-30-b": 29.3
 };
 
 // ume系统影院
@@ -1154,6 +1167,7 @@ const SFC_CINEMA_NAME = [
 export {
   ORDER_FORM,
   QUAN_TYPE,
+  QUAN_TYPE_COST,
   UME_LIST,
   APP_LIST,
   PLAT_LINK_APP,

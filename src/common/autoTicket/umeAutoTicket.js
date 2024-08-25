@@ -34,7 +34,7 @@ const appTicketRuleList = computed(() => appRuleListStore.items);
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
 // 影院特殊匹配列表及api
-import { TICKET_CONPREFIX_OBJ, APP_LIST } from "@/common/constant";
+import { TICKET_CONPREFIX_OBJ, QUAN_TYPE_COST } from "@/common/constant";
 import { APP_API_OBJ } from "@/common/index";
 
 let isTestOrder = false; //是否是测试订单
@@ -2778,9 +2778,9 @@ const useQuanOrCard = ({
   appFlag
 }) => {
   try {
-    const { offer_type: offerType, member_price } = offerRule;
+    const { offer_type, member_price, quan_value } = offerRule;
     let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
-    if (offerType !== "1") {
+    if (offer_type !== "1") {
       console.log(conPrefix + "使用会员卡出票");
       let cardData = cardList.filter(
         item => item.cardAmount >= total_price * 100
@@ -2842,14 +2842,14 @@ const useQuanOrCard = ({
           discountAmount: seatCode ? item.discountAmountMap?.[seatCode] : 0
         };
       });
-      let quanCostObj = {
-        ume: 32,
-        yaolai: 32,
-        renhengmeng: 40
-      };
+      let quanCost = QUAN_TYPE_COST[quan_value];
+      // 兼容仁恒梦券类型为切换为自己类型而是用sfc-40类型的情况
+      if (appFlag === "renhengmeng" && quan_value !== "renhengmeng-40") {
+        quanCost = 40;
+      }
       let profit =
         supplier_end_price -
-        quanCostObj[appFlag] -
+        quanCost -
         (Number(supplier_end_price) * 100) / 10000;
       profit = Number(profit) * Number(ticket_num);
       if (rewards == 1) {
