@@ -34,7 +34,11 @@ const appTicketRuleList = computed(() => appRuleListStore.items);
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
 // 影院特殊匹配列表及api
-import { TICKET_CONPREFIX_OBJ, QUAN_TYPE_COST } from "@/common/constant";
+import {
+  TICKET_CONPREFIX_OBJ,
+  QUAN_TYPE_COST,
+  QUAN_TYPE_FLAG
+} from "@/common/constant";
 import { APP_API_OBJ } from "@/common/index";
 
 let isTestOrder = false; //是否是测试订单
@@ -2828,7 +2832,16 @@ const useQuanOrCard = ({
           profit: 0 // 利润
         };
       }
-      let useQuan = quanList.slice(0, ticket_num).map(item => {
+      let targeQuanList = quanList.filter(item => {
+        if (appFlag === "renhengmeng") {
+          return true;
+        } else if (appFlag === "ume") {
+          return item.couponName.includes(QUAN_TYPE_FLAG[quan_value]);
+        } else if (appFlag === "yaolai") {
+          return true;
+        }
+      });
+      let useQuan = targeQuanList.slice(0, ticket_num).map(item => {
         let seatCode = Object.keys(item.discountAmountMap)?.[0];
         return {
           couponInstanceId: item.couponInstanceId,

@@ -32,6 +32,18 @@ const QUAN_TYPE_COST = {
   "yaolai-30-b": 29.3
 };
 
+// 优惠券标识
+const QUAN_TYPE_FLAG = {
+  40: "上影券-40",
+  35: "上影券-35",
+  30: "上影券-30",
+  "renhengmeng-40": "团体券",
+  "ume-putong": "会员普通厅",
+  "ume-teshu": "会员特殊厅",
+  "yaolai-30-p": 29.3,
+  "yaolai-30-b": 29.3
+};
+
 // ume系统影院
 const UME_LIST = [
   "ume",
@@ -1168,6 +1180,7 @@ export {
   ORDER_FORM,
   QUAN_TYPE,
   QUAN_TYPE_COST,
+  QUAN_TYPE_FLAG,
   UME_LIST,
   APP_LIST,
   PLAT_LINK_APP,
