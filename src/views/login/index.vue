@@ -45,10 +45,11 @@ const ruleForm = reactive({
   password: "123456"
 });
 // 设置本地的规则列表
-const setLocalRuleList = async () => {
+const setLocalRuleList = async rule => {
   try {
     const ruleRes = await svApi.queryRuleList({
-      status: "1"
+      status: "1",
+      rule
     });
     // console.log("ruleRes", ruleRes);
     let ruleRecords = ruleRes.data.ruleList || [];
@@ -71,8 +72,8 @@ const setLocalRuleList = async () => {
 };
 
 // 设置本地的登录信息列表
-const setLocalLoginList = async () => {
-  const loginRes = await svApi.getLoginList();
+const setLocalLoginList = async rule => {
+  const loginRes = await svApi.queryLoginList({ rule });
   // console.log("loginRes", loginRes);
   let loginRecords = loginRes.data.loginList || [];
   loginRecords = loginRecords.map(item => ({
@@ -103,8 +104,8 @@ const onLogin = async formEl => {
           await svApi.updateUser({
             login_time: getCurrentFormattedDateTime()
           });
-          await setLocalLoginList();
-          await setLocalRuleList();
+          await setLocalLoginList(loginRes.data?.user.rule);
+          await setLocalRuleList(loginRes.data?.user.rule);
           // 获取后端路由
           await initRouter();
           let getTopMenuPath = getTopMenu(true).path;

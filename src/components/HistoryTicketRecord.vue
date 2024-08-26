@@ -40,6 +40,7 @@
           placeholder="出票用户"
           style="width: 194px"
           clearable
+          :disabled="rule === 3"
         >
           <el-option
             v-for="(item, inx) in userList"
@@ -218,6 +219,11 @@
 import { ref, reactive, onBeforeUnmount, onBeforeMount } from "vue";
 import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import svApi from "@/api/sv-api";
+import { platTokens } from "@/store/platTokens";
+const {
+  userInfo: { rule, user_id }
+} = platTokens();
+
 import { ORDER_FORM, APP_LIST, QUAN_TYPE } from "@/common/constant.js";
 // console.log("ORDER_FORM", ORDER_FORM);
 // 订单来源
@@ -252,6 +258,10 @@ const formData = reactive({
   start_time: "",
   end_time: ""
 });
+
+if (rule === 3) {
+  formData.user_id = user_id;
+}
 const getTodayTime = sjc => {
   const now = new Date(sjc);
   // 获取年、月、日、小时、分钟、秒

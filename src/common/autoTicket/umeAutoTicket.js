@@ -2938,7 +2938,8 @@ const addOrderHandleRecored = async ({
       err_info: res?.submitRes ? "" : errInfo || "",
       rewards: order.rewards, // 是否是奖励订单 1是 0否
       transfer_fee: res?.transferParams?.transfer_fee || "", // 转单手续费
-      mobile: mobile || "" // 出票手机号
+      mobile: mobile || "", // 出票手机号
+      rule: tokens.userInfo.rule || 2
     };
 
     await svApi.addTicketRecord(serOrderInfo);

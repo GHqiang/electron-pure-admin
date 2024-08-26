@@ -198,6 +198,11 @@
 <script setup>
 import { ref, reactive, computed } from "vue";
 import svApi from "@/api/sv-api";
+import { platTokens } from "@/store/platTokens";
+const {
+  userInfo: { rule }
+} = platTokens();
+
 import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import CardDialog from "@/components/CardDialog.vue";
 import { APP_LIST, UME_LIST } from "@/common/constant";
@@ -274,7 +279,8 @@ const searchData = async () => {
     let res = await svApi.queryCardList({
       ...queryParams,
       page_num,
-      page_size
+      page_size,
+      rule
     });
     let cardList = res.data.cardList || [];
     // console.log("卡列表===>", cardList);
@@ -361,7 +367,8 @@ const syncBalance = async () => {
     console.log("过滤后的apiList", apiList);
     let cardRes = await svApi.queryCardList({
       page_num: 1,
-      page_size: 500
+      page_size: 500,
+      rule
     });
     let serCardList = cardRes.data.cardList || [];
     let memberCardList = [];
@@ -458,6 +465,7 @@ const editCard = (row, type) => {
 const saveCard = async cardInfo => {
   try {
     cardInfo.update_time = getCurrentFormattedDateTime();
+    cardInfo.rule = rule;
     if (cardInfo.id) {
       console.log("编辑保存卡", cardInfo);
       await svApi.updateCardRecord(cardInfo);

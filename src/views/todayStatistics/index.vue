@@ -22,6 +22,7 @@
           placeholder="用户"
           style="width: 194px"
           clearable
+          :disabled="rule === 3"
         >
           <el-option
             v-for="(item, inx) in userList"
@@ -156,6 +157,11 @@
 import { ref, reactive, onBeforeMount } from "vue";
 import { ElLoading } from "element-plus";
 import svApi from "@/api/sv-api";
+import { platTokens } from "@/store/platTokens";
+const {
+  userInfo: { rule, user_id }
+} = platTokens();
+
 import { ORDER_FORM, APP_LIST } from "@/common/constant.js";
 // 用户列表
 const userList = ref([]);
@@ -172,6 +178,12 @@ const formData = reactive({
   end_time: ""
 });
 const tableData = ref([]);
+
+if (rule === 3) {
+  formData.user_id = user_id;
+}else {
+  formData.rule = rule;
+}
 
 const getTodayTime = sjc => {
   const now = new Date(sjc);

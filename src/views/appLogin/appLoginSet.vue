@@ -136,6 +136,10 @@ import { APP_LIST } from "@/common/constant";
 import { getCurrentFormattedDateTime } from "@/utils/utils";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
+import { platTokens } from "@/store/platTokens";
+const {
+  userInfo: { rule }
+} = platTokens();
 
 const tableData = ref([]);
 
@@ -149,9 +153,10 @@ const formData = reactive({
   mobile: ""
 });
 
+formData.rule = rule;
 // 设置本地的登录信息列表
 const setLocalLoginList = async () => {
-  const loginRes = await svApi.getLoginList();
+  const loginRes = await svApi.queryLoginList({ rule });
   // console.log("ruleRes", ruleRes);
   let loginRecords = loginRes.data.loginList || [];
   loginRecords = loginRecords.map(item => ({
@@ -230,6 +235,7 @@ const editCard = (row, type) => {
 const saveCard = async cardInfo => {
   try {
     cardInfo.update_time = getCurrentFormattedDateTime();
+    cardInfo.rule = rule;
     if (cardInfo.id) {
       console.log("编辑保存登录信息", cardInfo);
       await svApi.updateLoginRecord(cardInfo);

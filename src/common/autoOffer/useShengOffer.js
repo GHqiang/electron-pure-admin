@@ -261,7 +261,8 @@ class OrderAutoOfferQueue {
       let serOrderInfo = {
         // user_id: order.user_id,
         plat_name: "sheng",
-        app_name: order.app_name || offerResult?.offerRule?.shadowLineName || "",
+        app_name:
+          order.app_name || offerResult?.offerRule?.shadowLineName || "",
         order_id: order.id,
         order_number: order.order_number,
         tpp_price: order.tpp_price,
@@ -288,7 +289,8 @@ class OrderAutoOfferQueue {
         err_info:
           offerResult?.err_info ||
           (errInfoObj?.info ? formatErrInfo(errInfoObj?.info?.error) : ""),
-        rewards: order.rewards // 是否是奖励订单 1是 0否
+        rewards: order.rewards, // 是否是奖励订单 1是 0否
+        rule: tokens.userInfo.rule || 2
       };
       if (offerResult?.res) {
         this.handleSuccessOrderList.push(order);

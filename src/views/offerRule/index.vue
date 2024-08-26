@@ -255,6 +255,10 @@ import { ORDER_FORM, APP_LIST, QUAN_TYPE } from "@/common/constant";
 import { getCurrentFormattedDateTime } from "@/utils/utils";
 import { useDataTableStore } from "@/store/offerRule";
 const rules = useDataTableStore();
+import { platTokens } from "@/store/platTokens";
+const {
+  userInfo: { rule }
+} = platTokens();
 
 const tableData = ref([]);
 const currentPage = ref(1);
@@ -280,6 +284,8 @@ const formData = reactive({
   quanValue: "" // 用券类型
 });
 
+formData.rule = rule;
+
 const judgeHandle = (arr, str) => {
   let tempArr = str.split(",");
   return tempArr.every(item => arr.join().indexOf(item) !== -1);
@@ -287,7 +293,7 @@ const judgeHandle = (arr, str) => {
 // 设置本地的规则列表
 const setLocalRuleList = async () => {
   try {
-    const ruleRes = await svApi.getRuleList();
+    const ruleRes = await svApi.queryRuleList({ rule });
     // console.log("ruleRes", ruleRes);
     let ruleRecords = ruleRes.data.ruleList || [];
     ruleRecords = ruleRecords.filter(item => item.status === "1");
@@ -436,6 +442,7 @@ const saveRule = async ruleInfo => {
     ruleInfo.platOfferList = JSON.stringify(ruleInfo.platOfferList || []);
     ruleInfo.weekDay = JSON.stringify(ruleInfo.weekDay);
     ruleInfo.update_time = getCurrentFormattedDateTime();
+    ruleInfo.rule = rule;
     if (ruleInfo.id) {
       console.log("编辑保存规则", ruleInfo);
       await svApi.updateRuleRecord(ruleInfo);
