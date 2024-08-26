@@ -2872,6 +2872,21 @@ const useQuanOrCard = ({
         profit += rewardPrice;
       }
       profit = Number(profit).toFixed(2);
+      if (appFlag === "yaolai" && quan_value === "yaolai-yixianbu5") {
+        let cardData = cardList.filter(item => item.cardAmount >= 5 * 100);
+        if (cardData?.length) {
+          return {
+            useQuan: [],
+            card_id: "",
+            profit: 0 // 利润
+          };
+        }
+        return {
+          useQuan,
+          card_id: cardData?.[0]?.cardNo,
+          profit
+        };
+      }
       return {
         useQuan,
         profit
