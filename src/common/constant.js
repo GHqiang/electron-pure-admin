@@ -28,10 +28,10 @@ const QUAN_TYPE_COST = {
   30: 30,
   "renhengmeng-40": 40,
   "ume-putong": 32,
-  "ume-teshu": 32,
-  "yaolai-yixain": 29.3,
-  "yaolai-erxian": 29.3,
-  "yaolai-yixianbu5": 29.3
+  "ume-teshu": 45,
+  "yaolai-yixain": 34,
+  "yaolai-erxian": 30,
+  "yaolai-yixianbu5": 30
 };
 
 // 优惠券标识
