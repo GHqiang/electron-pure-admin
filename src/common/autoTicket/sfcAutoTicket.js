@@ -626,9 +626,9 @@ class OrderAutoTicketQueue {
         lieren: [3, 3],
         mangguo: [3, 3],
         sheng: [3, 3],
-        haha: [3, 3],
         mayi: [60, 1],
-        yangcong: [3, 3]
+        yangcong: [3, 3],
+        haha: [3, 3]
       };
       const res = await trial(
         inx => this.unlockSeat({ ...params, inx }),

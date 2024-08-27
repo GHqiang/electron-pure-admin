@@ -583,9 +583,9 @@ class OrderAutoTicketQueue {
         lieren: [3, 3],
         mangguo: [3, 3],
         sheng: [3, 3],
-        haha: [3, 3],
         mayi: [60, 1],
-        yangcong: [3, 3]
+        yangcong: [3, 3],
+        haha: [3, 3]
       };
       const res = await trial(
         inx => this.unlockSeat({ ...params, inx }),
@@ -1143,7 +1143,8 @@ class OrderAutoTicketQueue {
           mangguo: [10, 5],
           sheng: [10, 5],
           mayi: [12, 10],
-          yangcong: [12, 10]
+          yangcong: [12, 10],
+          haha: [6, 5]
         };
         lockRes = await trial(
           inx => this.lockSeatHandle(params, inx),
