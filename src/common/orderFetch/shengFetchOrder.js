@@ -3,7 +3,6 @@ import { onMounted, computed } from "vue";
 
 import shengApi from "@/api/sheng-api";
 import svApi from "@/api/sv-api";
-import { SFC_CINEMA_NAME } from "@/common/constant";
 // 平台自动获取订单规则列表
 import { usePlatFetchOrderStore } from "@/store/platOfferRuleTable";
 const platTableDataStore = usePlatFetchOrderStore();
@@ -15,7 +14,11 @@ const platFetchOrderRuleList = computed(() =>
 import { useStayTicketList } from "@/store/stayTicketList";
 const stayTicketList = useStayTicketList();
 const { addNewOrder } = stayTicketList;
-import { getCinemaFlag, getCurrentFormattedDateTime } from "@/utils/utils";
+import {
+  getCinemaFlag,
+  logUpload,
+  getCurrentFormattedDateTime
+} from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
 const tokens = platTokens();
@@ -72,6 +75,24 @@ class OrderAutoFetchQueue {
       await this.delay(fetchDelay);
       let stayList = await orderFetch();
       if (!stayList?.length) return;
+      console.warn("省待出票列表返回", stayList);
+      let logList = [
+        {
+          opera_time: getCurrentFormattedDateTime(),
+          des: "省待出票列表返回",
+          level: "info",
+          info: {
+            stayList
+          }
+        }
+      ];
+      logUpload(
+        {
+          plat_name: "sheng",
+          type: 2
+        },
+        logList
+      );
       const offerList = await getOfferList();
       let sfcStayOfferlist = stayList
         .map(item => {
@@ -101,8 +122,8 @@ class OrderAutoFetchQueue {
             sourceData: { show, film, cinema, label, seats }
           } = detail;
           // quantity   座位数    integer
-          let cinema_group = label?.[0]?.name || cinema?.label?.[0]?.name;
-          if (cinema_group) {
+          let cinema_group = label?.[0]?.name || cinema?.label?.[0]?.name || "";
+          if (!cinema_group) {
             let targetObj = offerList.find(
               item =>
                 item.order_number === code &&
@@ -160,10 +181,15 @@ class OrderAutoFetchQueue {
         sfcStayOfferlist = sfcStayOfferlist.filter(item =>
           judgeHandle(item, item.appName, offerList, ticketList)
         );
-        // console.warn(conPrefix + "省待出票列表从远端过滤后", sfcStayOfferlist);
+        console.warn(
+          conPrefix + "省待出票列表从远端过滤后",
+          sfcStayOfferlist,
+          offerList,
+          ticketList
+        );
       }
       if (!sfcStayOfferlist?.length) return;
-      console.warn(conPrefix + "待出票列表新订单", stayList);
+      console.warn(conPrefix + "待出票列表新订单", sfcStayOfferlist);
       addNewOrder(sfcStayOfferlist);
     } catch (error) {
       console.error(conPrefix + "获取订单列表异常", error);
@@ -204,46 +230,36 @@ const judgeHandle = (item, app_name, offerList, ticketList) => {
 // 获取待出票订单列表
 async function orderFetch() {
   try {
-    let params = {
+    let params1 = {
       page: 1, // （一页20条）
       status: "2", // 查询状态，只能查询2和5，2表示未接单的订单，5表示已接单的订单
       // supplierCode: "ccf7b11cdc944cf1940a149cff4243f9", // 供应商号-付勋
       supplierCode: "2820ad3f7b644ad898771deee7c324a1" // 供应商号-兜
     };
-    // console.log(conPrefix + "获取省待出票订单列表参数", params);
-    const res = await shengApi.stayTicketingList(params);
-    // let mockRes = {
-    //   success: true,
-    //   code: 1,
-    //   message: "成功！",
-    //   total: 1,
-    //   data: [
-    //     {
-    //       id: 144,
-    //       plat_name: "lieren",
-    //       app_name: "sfc",
-    //       ticket_num: 2,
-    //       order_number: "2024062013010376202",
-    //       supplier_end_price: 32,
-    //       order_id: "6243881",
-    //       tpp_price: "36.00",
-    //       city_name: "天津",
-    //       cinema_addr:
-    //         "和平区天津市和平区小白楼街和平路263号天津天河城第八层809商铺",
-    //       cinema_name: "SFC上影影城（天津天河城IMAX店）",
-    //       hall_name: "5号激光厅",
-    //       film_name: "加菲猫家族",
-    //       lockseat: "6排1座 6排2座",
-    //       show_time: "2024-06-21 15:25:00",
-    //       cinema_group: "上影二线"
-    //     }
-    //   ],
-    //   time: 1710125670
-    // };
-    // let list = mockRes?.data || [];
-    let list = res?.data.rows || [];
+    let params2 = {
+      page: 1,
+      status: "5",
+      supplierCode: "2820ad3f7b644ad898771deee7c324a1"
+    };
+
+    const [res1, res2] = await Promise.allSettled([
+      shengApi.stayTicketingList(params1),
+      shengApi.stayTicketingList(params2)
+    ]);
+
+    let list1 = res1.status === "fulfilled" ? res1.value.data.rows : [];
+    let list2 = res2.status === "fulfilled" ? res2.value.data.rows : [];
+
+    // 合并两个列表
+    let combinedList = [...list1, ...list2];
+
+    // 去重
+    let uniqueList = combinedList.filter((item, index, self) => {
+      return index === self.findIndex(t => t.code === item.code);
+    });
+
+    return uniqueList;
     // console.log(conPrefix + "获取省待出票列表返回", list);
-    return list;
   } catch (error) {
     console.error(conPrefix + "获取省待出票列表异常", error);
     return [];

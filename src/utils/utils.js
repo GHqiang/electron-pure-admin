@@ -1339,34 +1339,84 @@ const formatErrInfo = errInfo => {
  * @param { Number } 	delayTime	试错间隔时间
  * @param { String } 	conPrefix	前缀打印
  */
-const trial = (callback, number = 1, delayTime = 0, conPrefix) => {
-  let inx = 1,
-    trialTimer = null;
-  return new Promise(resolve => {
-    trialTimer = setInterval(async () => {
-      console.log("inx", inx, "number", number, "trialTimer", trialTimer);
-      if (inx < number && trialTimer) {
-        ++inx;
-        console.log(conPrefix + `第${inx}次试错开始`);
-        try {
-          const result = await callback(inx);
-          console.log(conPrefix + `第${inx}次试错成功`, result);
-          clearInterval(trialTimer);
-          trialTimer = null;
-          resolve(result);
-        } catch (error) {
-          console.error(conPrefix + `第${inx}次试错失败`, error);
-        }
-      } else {
-        console.log(conPrefix + `第${inx}次试错结束`);
-        clearInterval(trialTimer);
-        trialTimer = null;
-        resolve();
-      }
-    }, delayTime * 1000);
-  });
-};
+// const trial = (callback, number = 1, delayTime = 0, conPrefix) => {
+//   let inx = 1,
+//     trialTimer = null;
+//   return new Promise(resolve => {
+//     trialTimer = setInterval(async () => {
+//       console.log("inx", inx, "number", number, "trialTimer", trialTimer);
+//       if (inx < number && trialTimer) {
+//         ++inx;
+//         console.log(conPrefix + `第${inx}次试错开始`);
+//         try {
+//           const result = await callback(inx);
+//           console.log(conPrefix + `第${inx}次试错成功`, result);
+//           clearInterval(trialTimer);
+//           trialTimer = null;
+//           resolve(result);
+//         } catch (error) {
+//           console.error(conPrefix + `第${inx}次试错失败`, error);
+//         }
+//       } else {
+//         console.log(conPrefix + `第${inx}次试错结束`);
+//         clearInterval(trialTimer);
+//         trialTimer = null;
+//         resolve();
+//       }
+//     }, delayTime * 1000);
+//   });
+// };
 
+/**
+ * 试错方法
+ * @param { Function } 	callback	    要试错的方法，携带参数的话可以在传参时嵌套一层
+ * @param { Number } 	  maxAttempts	  最大试错次数, 默认5
+ * @param { Number } 	  delayTime	    试错间隔时间（单位 秒），默认5
+ * @param { String } 	  conPrefix	    前缀打印
+ * @param { Number } 	  timeout	      最大总耗时，默认为 120秒
+ * @param { Number } 	  attempt	      当前尝试次数，默认为 1
+ * @param { Number } 	  consumedTime	执行消耗时间
+ */
+async function trial(
+  callback,
+  maxAttempts = 5,
+  delayTime = 5,
+  conPrefix = "",
+  timeout = 120,
+  attempt = 1,
+  consumedTime = 0
+) {
+  const start = Date.now();
+  let end;
+  try {
+    const result = await callback();
+    console.warn(`${conPrefix}：第${attempt}次尝试成功`, consumedTime);
+    return result;
+  } catch (error) {
+    end = Date.now();
+    consumedTime += end - start;
+    if (attempt >= maxAttempts || consumedTime >= timeout * 1000) {
+      console.error("重试超时"); // 达到最大重试次数或超时后抛出错误
+      return;
+    }
+    console.warn(
+      `${conPrefix}：第${attempt}次尝试失败，将在${delayTime}秒后重试...`,
+      consumedTime
+    );
+    await mockDelay(delayTime);
+    consumedTime += delayTime * 1000;
+    // 递归调用自身，尝试次数加 1
+    return trial(
+      callback,
+      maxAttempts,
+      delayTime,
+      conPrefix,
+      timeout,
+      attempt + 1,
+      consumedTime
+    );
+  }
+}
 export {
   getCurrentFormattedDateTime, // 获取当前时间：YYYY-MM-DD HH:MM:SS
   getCurrentDay, // 获取当前天：YYYY-MM-DD

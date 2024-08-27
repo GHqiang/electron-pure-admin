@@ -2852,7 +2852,6 @@ const bandQuan = async ({ coupon_num, session_id, appFlag }) => {
     } else {
       console.error(conPrefix + "绑定新券异常", res);
       return {
-        error,
         errMsg: "绑定新券异常:" + JSON.stringify(res)
       };
     }

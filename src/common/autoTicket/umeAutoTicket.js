@@ -1288,7 +1288,7 @@ class OrderAutoTicketQueue {
           level: "error",
           info: {
             cardList,
-            quanList,
+            quanList: quanList.slice(0, 20),
             supplier_end_price,
             ticket_num,
             total_price
