@@ -234,12 +234,13 @@ async function orderFetch() {
       page: 1, // （一页20条）
       status: "2", // 查询状态，只能查询2和5，2表示未接单的订单，5表示已接单的订单
       // supplierCode: "ccf7b11cdc944cf1940a149cff4243f9", // 供应商号-付勋
-      supplierCode: "2820ad3f7b644ad898771deee7c324a1" // 供应商号-兜
+      // supplierCode: "2820ad3f7b644ad898771deee7c324a1" // 供应商号-兜
+      supplierCode: tokens.shengToken
     };
     let params2 = {
       page: 1,
       status: "5",
-      supplierCode: "2820ad3f7b644ad898771deee7c324a1"
+      supplierCode: tokens.shengToken
     };
 
     const [res1, res2] = await Promise.allSettled([

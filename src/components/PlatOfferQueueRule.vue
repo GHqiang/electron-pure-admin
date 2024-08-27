@@ -210,7 +210,7 @@ let setPlatFunObj = {
   mayi: tokens.setMayiPlatToken,
   yangcong: tokens.setYangcongPlatToken,
   haha: tokens.setHahaPlatToken,
-  sheng: () => {}
+  sheng: tokens.setShengPlatToken
 };
 
 // 一键启动

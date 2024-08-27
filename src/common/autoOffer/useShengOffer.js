@@ -378,13 +378,14 @@ class OrderAutoOfferQueue {
       }
       const res = await this.submitOffer({
         // supplierCode: "ccf7b11cdc944cf1940a149cff4243f9", // 供应商号-付勋
-        supplierCode: "2820ad3f7b644ad898771deee7c324a1", // 供应商号-兜
+        // supplierCode: "2820ad3f7b644ad898771deee7c324a1", // 供应商号-兜
+        supplierCode: tokens.shengToken,
         orderCode: order.order_number,
         // 暂时先减1测试
         seatInfo: JSON.stringify(
           order.seats.map(item => ({
             seatId: item.seatId,
-            supplierPrice: endPrice - 1
+            supplierPrice: endPrice
           }))
         )
       });
@@ -433,7 +434,8 @@ class OrderAutoOfferQueue {
 
       const res = await shengApi.queryStayOfferList({
         // supplierCode: "ccf7b11cdc944cf1940a149cff4243f9", // 供应商号-付勋
-        supplierCode: "2820ad3f7b644ad898771deee7c324a1", // 供应商号-兜
+        // supplierCode: "2820ad3f7b644ad898771deee7c324a1", // 供应商号-兜
+        supplierCode: tokens.shengToken,
         status: "0", // 0待报价订单，1已报价订单
         page: page || 1 // 1页20条
       });
