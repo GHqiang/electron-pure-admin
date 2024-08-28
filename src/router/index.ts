@@ -123,14 +123,14 @@ router.beforeEach((to: ToRouteType, _from, next) => {
     whiteList.includes(to.fullPath) ? next(_from.fullPath) : next();
   }
   if (userInfo) {
-    // 无权限跳转403页面
-    if (to.meta?.roles && !isOneOfArray(to.meta?.roles, userInfo?.roles)) {
-      next({ path: "/error/403" });
-    }
-    // 开启隐藏首页后在浏览器地址栏手动输入首页welcome路由则跳转到404页面
-    if (VITE_HIDE_HOME === "true" && to.fullPath === "/welcome") {
-      next({ path: "/error/404" });
-    }
+    // // 无权限跳转403页面
+    // if (to.meta?.roles && !isOneOfArray(to.meta?.roles, userInfo?.roles)) {
+    //   next({ path: "/error/403" });
+    // }
+    // // 开启隐藏首页后在浏览器地址栏手动输入首页welcome路由则跳转到404页面
+    // if (VITE_HIDE_HOME === "true" && to.fullPath === "/welcome") {
+    //   next({ path: "/error/404" });
+    // }
     if (_from?.name) {
       // name为超链接
       if (externalLink) {

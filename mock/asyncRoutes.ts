@@ -14,27 +14,27 @@ const permissionRouter = {
     rank: 10
   },
   children: [
-    {
-      path: "/permission/page/index",
-      name: "PermissionPage",
-      meta: {
-        title: "页面权限",
-        roles: ["admin", "common"]
-      }
-    },
-    {
-      path: "/permission/button/index",
-      name: "PermissionButton",
-      meta: {
-        title: "按钮权限",
-        roles: ["admin", "common"],
-        auths: [
-          "permission:btn:add",
-          "permission:btn:edit",
-          "permission:btn:delete"
-        ]
-      }
-    }
+    // {
+    //   path: "/permission/page/index",
+    //   name: "PermissionPage",
+    //   meta: {
+    //     title: "页面权限",
+    //     roles: ["admin", "common"]
+    //   }
+    // },
+    // {
+    //   path: "/permission/button/index",
+    //   name: "PermissionButton",
+    //   meta: {
+    //     title: "按钮权限",
+    //     roles: ["admin", "common"],
+    //     auths: [
+    //       "permission:btn:add",
+    //       "permission:btn:edit",
+    //       "permission:btn:delete"
+    //     ]
+    //   }
+    // }
   ]
 };
 
