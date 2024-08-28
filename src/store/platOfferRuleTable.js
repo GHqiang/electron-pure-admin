@@ -6,7 +6,7 @@ if (platQueueRule) {
   platQueueRule = JSON.parse(platQueueRule);
   platQueueRule = platQueueRule.map(item => ({
     ...item,
-    platToken: "",
+    // platToken: "",
     isEnabled: false
   }));
 }

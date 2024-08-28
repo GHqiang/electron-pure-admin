@@ -5,5 +5,7 @@ defineOptions({
 </script>
 
 <template>
-  <h1>Pure-Admin-Thin（非国际化版本）</h1>
+  <div style="height: 100%; display: flex; align-items: center; justify-content: center;">
+     <h1>仪表台功能正在开发中......</h1>
+  </div>
 </template>

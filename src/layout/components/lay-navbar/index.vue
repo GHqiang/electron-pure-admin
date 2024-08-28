@@ -41,7 +41,7 @@ const {
 
     <div v-if="layout === 'vertical'" class="vertical-header-right p-r-15">
       <!-- 菜单搜索 -->
-      <LaySearch id="header-search" />
+      <!-- <LaySearch id="header-search" /> -->
       <!-- 全屏 -->
       <LaySidebarFullScreen id="full-screen" />
       <!-- 消息通知 -->
