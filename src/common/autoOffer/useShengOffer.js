@@ -134,7 +134,7 @@ class OrderAutoOfferQueue {
         } = detail;
         // quantity   座位数    integer
 
-        let cinema_group = label[0]?.name;
+        let cinema_group = label[0]?.name || "";
         return {
           plat_name: "sheng",
           id: orderId,

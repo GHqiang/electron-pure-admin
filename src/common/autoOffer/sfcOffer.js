@@ -165,6 +165,14 @@ class getSfcOfferPrice {
         });
         return;
       }
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "报价规则匹配列表",
+        level: "info",
+        info: {
+          matchRuleList
+        }
+      });
       // 获取报价最低的报价规则
       const endRule = await this.getMinAmountOfferRule(matchRuleList, order);
       console.warn(conPrefix + "最终匹配到的报价规则", endRule);
@@ -177,6 +185,14 @@ class getSfcOfferPrice {
           level: "error"
         });
       }
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "最终匹配到的报价规则",
+        level: "info",
+        info: {
+          endRule
+        }
+      });
       return endRule;
     } catch (error) {
       console.error(conPrefix + "获取最终匹配报价规则异常", error);

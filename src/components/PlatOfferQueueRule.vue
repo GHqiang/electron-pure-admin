@@ -281,6 +281,10 @@ const stopAutoOffer = () => {
 const singleStartOrStop = ({ id, platToken, platName }, flag) => {
   // 单个启动
   if (flag === 1) {
+    if (!platToken) {
+      ElMessage.warning("请先设置平台token后再启动");
+      return;
+    }
     tableDataStore.toggleEnable(id);
     setPlatFunObj[platName](platToken);
     isStartQueue && platOfferQueueObj[platName].start();

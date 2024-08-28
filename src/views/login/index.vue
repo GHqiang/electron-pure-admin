@@ -41,8 +41,8 @@ dataThemeChange(overallStyle.value);
 const { title } = useNav();
 
 const ruleForm = reactive({
-  username: "张三",
-  password: "123456"
+  username: "",
+  password: ""
 });
 // 设置本地的规则列表
 const setLocalRuleList = async rule => {
