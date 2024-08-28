@@ -1068,6 +1068,7 @@ class OrderAutoTicketQueue {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: `第${this.currentParamsInx}次换号出票手机号-${phone}`,
+          level: "error",
           info: {
             currentParamsInx: this.currentParamsInx,
             currentParamsList: this.currentParamsList
@@ -1511,7 +1512,7 @@ class OrderAutoTicketQueue {
   }
 
   // 锁定座位
-  async lockSeatHandle(data, inx = 0) {
+  async lockSeatHandle(data, inx = 1) {
     const { conPrefix } = this;
     let {
       city_id,
@@ -1534,17 +1535,17 @@ class OrderAutoTicketQueue {
         session_id
       };
       console.log(conPrefix + "锁定座位参数", params);
-		if(inx == 1) {
-this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
-        des: `第${inx}次锁定座位参数`,
-        level: "info",
-        info: {
-          params
-        }
-      });
-	}
-      
+      if (inx == 1) {
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: `第${inx}次锁定座位参数`,
+          level: "info",
+          info: {
+            params
+          }
+        });
+      }
+
       const res = await this.sfcApi.lockSeat(params);
       console.log(conPrefix + "锁定座位返回", res);
       this.logList.push({
@@ -2637,7 +2638,7 @@ this.logList.push({
         });
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: 会员卡余额不足",
+          des: "会员卡余额不足",
           level: "error",
           info: {
             cards,

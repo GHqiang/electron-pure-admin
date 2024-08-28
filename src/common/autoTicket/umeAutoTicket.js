@@ -1292,7 +1292,8 @@ class OrderAutoTicketQueue {
             quanList: quanList.slice(0, 20),
             supplier_end_price,
             ticket_num,
-            total_price
+            total_price,
+            activities
           }
         });
         if (this.currentParamsInx === this.currentParamsList.length - 1) {
@@ -1566,7 +1567,7 @@ class OrderAutoTicketQueue {
       cinemaLinkId,
       appFlag
     },
-    inx = 0
+    inx = 1
   ) {
     const { conPrefix } = this;
     try {
@@ -1706,7 +1707,10 @@ class OrderAutoTicketQueue {
             this.logList.push({
               opera_time: getCurrentFormattedDateTime(),
               des: `创建订单请求接口超时，延迟2秒后重试成功`,
-              level: "error"
+              level: "error",
+              info: {
+                order_num
+              }
             });
             return order_num;
           }
@@ -1737,26 +1741,30 @@ class OrderAutoTicketQueue {
         session_id
       };
       console.log(conPrefix + "支付订单参数", params);
+      if (inx == 1) {
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: `获取支付结果参数`,
+          level: "info",
+          info: {
+            params
+          }
+        });
+      }
       const res = await this.umeApi.getPayResult(params);
       console.log(conPrefix + "支付订单返回", res);
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: `第${inx}次获取支付结果返回`,
+        level: "info",
+        info: {
+          res
+        }
+      });
       let list = res.data || [];
       let qrcode = list[0]?.ticketCode?.split(",").join("|") || "";
       if (qrcode) {
-        if (inx) {
-          this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
-            des: `第${inx}次异步轮询获取支付结果成功`,
-            level: "error"
-          });
-        }
         return qrcode;
-      }
-      if (inx) {
-        this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
-          des: `第${inx}次异步轮询获取支付结果失败`,
-          level: "error"
-        });
       }
       return Promise.reject("获取支付结果不存在");
     } catch (error) {

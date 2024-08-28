@@ -1389,7 +1389,7 @@ async function trial(
   const start = Date.now();
   let end;
   try {
-    const result = await callback(attempt);
+    const result = await callback(attempt + 1);
     console.warn(`${conPrefix}：第${attempt}次尝试成功`, consumedTime);
     return result;
   } catch (error) {
