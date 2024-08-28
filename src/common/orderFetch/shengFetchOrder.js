@@ -76,23 +76,23 @@ class OrderAutoFetchQueue {
       let stayList = await orderFetch();
       if (!stayList?.length) return;
       console.warn("省待出票列表返回", stayList);
-      let logList = [
-        {
-          opera_time: getCurrentFormattedDateTime(),
-          des: "省待出票列表返回",
-          level: "info",
-          info: {
-            stayList
-          }
-        }
-      ];
-      logUpload(
-        {
-          plat_name: "sheng",
-          type: 2
-        },
-        logList
-      );
+      // let logList = [
+      //   {
+      //     opera_time: getCurrentFormattedDateTime(),
+      //     des: "省待出票列表返回",
+      //     level: "info",
+      //     info: {
+      //       stayList
+      //     }
+      //   }
+      // ];
+      // logUpload(
+      //   {
+      //     plat_name: "sheng",
+      //     type: 2
+      //   },
+      //   logList
+      // );
       const offerList = await getOfferList();
       let sfcStayOfferlist = stayList
         .map(item => {
