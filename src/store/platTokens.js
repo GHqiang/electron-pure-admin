@@ -12,6 +12,7 @@ export const platTokens = defineStore("platTokens", {
     yangcongToken: "",
     hahaToken: "",
     shengToken: "",
+    yinghuasuanToken: "",
     // eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzb20uempscm1vdmllLmNuIiwiYXVkIjoic29tLnpqbHJtb3ZpZS5jbiIsImlhdCI6MTcxNTM0NDk2MywibmJmIjoxNzE1MzQ0OTYzLCJleHAiOjE3MTc3NjQxNjMsImRhdGEiOnsiaWQiOjcxNDYzMiwidXNlcm5hbWUiOjcxNDYzMiwic3RhdHVzIjoxLCJvcGVuaWQiOiJvUXpFZjQ3a1ZLQ3F6bzRPSXl1ZHBZVllwX2g0In19.mwidYdjsGHIEnDxWlihB2LVdCtt0o1v_rrdbvSbSe50
     selfToken: "", // 平台自身token
     userInfo:
@@ -69,6 +70,12 @@ export const platTokens = defineStore("platTokens", {
       console.warn("设置省平台token", data);
       window.localStorage.setItem("shengToken", data);
       this.shengToken = data;
+    },
+    // 设置影划算平台token
+    setYinghuasuanPlatToken(data) {
+      console.warn("设置影划算平台token", data);
+      window.localStorage.setItem("yinghuasuanToken", data);
+      this.yinghuasuanToken = data;
     },
     // 设置自身平台token
     setSelfPlatToken(data) {

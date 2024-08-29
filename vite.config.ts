@@ -30,24 +30,18 @@ export default ({ command, mode }: ConfigEnv): UserConfigExport => {
       host: "0.0.0.0",
       // 本地跨域代理 https://cn.vitejs.dev/config/server-options.html#server-proxy
       proxy: {
-        // sfc乐影
-        "/sfc": {
-          target: "https://group.leying.com", // 后端API的真实地址
-          changeOrigin: true, // 是否允许跨域
-          rewrite: path => path.replace(/^\/sfc/, "") // 重写路径，去除/api前缀
-        },
-        // 猎人
-        "/sp": {
-          target: "https://api.s.zjlrmovie.cn", // 后端API的真实地址
-          changeOrigin: true, // 是否允许跨域
-          rewrite: path => path.replace(/^\/sp/, "/sp") // 重写路径，去除/api前缀
-        },
         // 机器
         "/svpi": {
           target: "http://47.113.191.173:3000", // 后端API的真实地址
           // target: "http://localhost:3000", // 后端API的真实地址
           changeOrigin: true, // 是否允许跨域
           rewrite: path => path.replace(/^\/svpi/, "") // 重写路径，去除/api前缀
+        },
+        // 猎人
+        "/sp": {
+          target: "https://api.s.zjlrmovie.cn", // 后端API的真实地址
+          changeOrigin: true, // 是否允许跨域
+          rewrite: path => path.replace(/^\/sp/, "/sp") // 重写路径，去除/api前缀
         },
         // 省
         "/supplier": {
@@ -72,6 +66,24 @@ export default ({ command, mode }: ConfigEnv): UserConfigExport => {
           target: "https://ticket.secretonion.com", // 后端API的真实地址
           changeOrigin: true, // 是否允许跨域
           rewrite: path => path.replace(/^\/prod-api/, "/prod-api") // 重写路径，去除/api前缀
+        },
+        // 影划算
+        "/broker": {
+          target: "https://merchant-api.yinghuasuan.com", // 后端API的真实地址
+          changeOrigin: true, // 是否允许跨域
+          rewrite: path => path.replace(/^\/broker/, "broker") // 重写路径，去除/api前缀
+        },
+        // 哈哈
+        "/api": {
+          target: "https://hahapiao.cn", // 后端API的真实地址
+          changeOrigin: true, // 是否允许跨域
+          rewrite: path => path.replace(/^\/api/, "api") // 重写路径，去除/api前缀
+        },
+        // sfc乐影
+        "/sfc": {
+          target: "https://group.leying.com", // 后端API的真实地址
+          changeOrigin: true, // 是否允许跨域
+          rewrite: path => path.replace(/^\/sfc/, "") // 重写路径，去除/api前缀
         },
         // ume
         "/ume": {
@@ -108,12 +120,6 @@ export default ({ command, mode }: ConfigEnv): UserConfigExport => {
           target: "https://oc.yuekeyun.com", // 后端API的真实地址
           changeOrigin: true, // 是否允许跨域
           rewrite: path => path.replace(/^\/zheyingshidai/, "") // 重写路径，去除/api前缀
-        },
-        // 哈哈
-        "/api": {
-          target: "https://hahapiao.cn", // 后端API的真实地址
-          changeOrigin: true, // 是否允许跨域
-          rewrite: path => path.replace(/^\/api/, "api") // 重写路径，去除/api前缀
         }
       },
       // 预热文件以提前转换和缓存结果，降低启动期间的初始页面加载时长并防止转换瀑布

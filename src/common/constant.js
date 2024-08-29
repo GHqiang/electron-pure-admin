@@ -5,6 +5,7 @@ const ORDER_FORM = {
   mangguo: "芒果",
   mayi: "蚂蚁",
   yangcong: "洋葱",
+  yinghuasuan: "影划算",
   haha: "哈哈"
 };
 

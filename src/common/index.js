@@ -1,3 +1,11 @@
+import lierenApi from "@/api/lieren-api";
+import shengApi from "@/api/sheng-api";
+import mangguoApi from "@/api/mangguo-api";
+import mayiApi from "@/api/mayi-api";
+import yangcongApi from "@/api/yangcong-api";
+import hahaApi from "@/api/haha-api";
+import yinghuasuanApi from "@/api/yinghuasuan-api";
+
 import createSfcApi from "@/api/sfc-api";
 import createUmeApi from "@/api/ume-api";
 import { APP_LIST, UME_LIST, APP_GROUP_OBJ } from "@/common/constant";
@@ -24,5 +32,15 @@ const APP_API_OBJ = {
   ...SFC_API_OBJ,
   ...UME_API_OBJ
 };
+
+const PLAT_API_OBJ = {
+  lieren: lierenApi,
+  sheng: shengApi,
+  mangguo: mangguoApi,
+  mayi: mayiApi,
+  yangcong: yangcongApi,
+  haha: hahaApi,
+  yinghuasuan: yinghuasuanApi
+};
 // console.log("SFC_API_OBJ"), SFC_API_OBJ;
-export { APP_API_OBJ };
+export { APP_API_OBJ, PLAT_API_OBJ };

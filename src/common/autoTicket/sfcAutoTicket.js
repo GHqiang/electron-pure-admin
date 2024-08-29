@@ -12,12 +12,6 @@ import {
   sendWxPusherMessage
 } from "@/utils/utils";
 
-import lierenApi from "@/api/lieren-api";
-import shengApi from "@/api/sheng-api";
-import mangguoApi from "@/api/mangguo-api";
-import mayiApi from "@/api/mayi-api";
-import yangcongApi from "@/api/yangcong-api";
-import hahaApi from "../../api/haha-api";
 import svApi from "@/api/sv-api";
 import { encode } from "@/utils/sfc-member-password";
 
@@ -41,7 +35,7 @@ import {
   APP_LIST,
   QUAN_TYPE_COST
 } from "@/common/constant";
-import { APP_API_OBJ } from "@/common/index";
+import { APP_API_OBJ, PLAT_API_OBJ } from "@/common/index";
 
 let isTestOrder = false; //是否是测试订单
 // 创建一个订单自动出票队列类
@@ -474,18 +468,15 @@ class OrderAutoTicketQueue {
           reasonId: 9,
           text: "其他-"
         };
+      } else if (plat_name === "yinghuasuan") {
+        params = {
+          order_sn: order_number,
+          close_cause: "价格过低无法出票"
+        };
       }
       console.log(conPrefix + "转单参数", params);
-      const requestApi = {
-        lieren: lierenApi,
-        sheng: shengApi,
-        mangguo: mangguoApi,
-        mayi: mayiApi,
-        yangcong: yangcongApi,
-        haha: hahaApi
-      };
       console.warn(conPrefix + "【转单】参数", params);
-      const res = await requestApi[plat_name].transferOrder(params);
+      const res = await PLAT_API_OBJ[plat_name].transferOrder(params);
       console.warn(conPrefix + "【转单】结果", res);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
@@ -582,15 +573,6 @@ class OrderAutoTicketQueue {
               deliverRes
             }
           });
-          logUpload(
-            {
-              plat_name: plat_name,
-              app_name: appFlag,
-              order_number: order_number,
-              type: 3
-            },
-            this.logList
-          );
           await mockDelay(2);
           await this.unlockSeat({
             plat_name,
@@ -620,6 +602,26 @@ class OrderAutoTicketQueue {
             order_id: id,
             inx: 1
           });
+        } else if (plat_name === "yinghuasuan") {
+          const deliverRes = await startDeliver({
+            plat_name,
+            quote_id: 0,
+            appFlag
+          });
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: "确认接单返回",
+            level: "info",
+            info: {
+              deliverRes
+            }
+          });
+          await mockDelay(2);
+          await this.unlockSeat({
+            plat_name,
+            order_number,
+            inx: 1
+          });
         }
         // this.logList.push({
         //   opera_time: getCurrentFormattedDateTime(),
@@ -642,7 +644,8 @@ class OrderAutoTicketQueue {
         sheng: [3, 3],
         mayi: [60, 1],
         yangcong: [3, 3],
-        haha: [3, 3]
+        haha: [3, 3],
+        yinghuasuan: [3, 3]
       };
       const res = await trial(
         inx => this.unlockSeat({ ...params, inx }),
@@ -726,16 +729,12 @@ class OrderAutoTicketQueue {
         params = {
           id: order_id
         };
+      } else if (plat_name === "yinghuasuan") {
+        params = {
+          order_sn: orderCode
+        };
       }
       console.log(conPrefix + "解锁参数", params);
-      const requestApi = {
-        lieren: lierenApi,
-        sheng: shengApi,
-        mangguo: mangguoApi,
-        mayi: mayiApi,
-        yangcong: yangcongApi,
-        haha: hahaApi
-      };
       if (inx == 1) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
@@ -747,7 +746,7 @@ class OrderAutoTicketQueue {
         });
       }
 
-      const res = await requestApi[plat_name].unlockSeat(params);
+      const res = await PLAT_API_OBJ[plat_name].unlockSeat(params);
       console.log(conPrefix + "解锁返回", res);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
@@ -1167,12 +1166,13 @@ class OrderAutoTicketQueue {
         // 试错3次，间隔5秒
         // 锁定座位尝试配置
         let delayConfig = {
-          lieren: [3, 5],
-          mangguo: [3, 5],
-          sheng: [3, 5],
+          lieren: [6, 5],
+          mangguo: [6, 5],
+          sheng: [6, 5],
           mayi: [12, 10],
           yangcong: [12, 10],
-          haha: [6, 5]
+          haha: [6, 5],
+          yinghuasuan: [6, 5]
         };
         const res = await trial(
           inx => this.lockSeatHandle(params, inx),
@@ -1998,6 +1998,23 @@ class OrderAutoTicketQueue {
         ticketCodeUrls: "",
         ticketCodes: qrcode
       };
+    } else if (plat_name === "yinghuasuan") {
+      params = {
+        order_sn: order_number,
+        ticket_code: qrcode,
+        ticket_image: " ",
+        real_seat_no: lockseat,
+        ticket_original_info: [
+          {
+            url: " ",
+            seat: lockseat.split(" "),
+            ticketCode: {
+              code: qrcode.split("|")[0],
+              pwd: qrcode.split("|")?.[1] || ""
+            }
+          }
+        ]
+      };
     } else if (plat_name === "haha") {
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
@@ -2094,14 +2111,6 @@ class OrderAutoTicketQueue {
       };
     }
     try {
-      const requestApi = {
-        lieren: lierenApi,
-        sheng: shengApi,
-        mangguo: mangguoApi,
-        mayi: mayiApi,
-        yangcong: yangcongApi,
-        haha: hahaApi
-      };
       console.log(conPrefix + "提交出票码参数", params);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
@@ -2111,7 +2120,7 @@ class OrderAutoTicketQueue {
           params
         }
       });
-      const res = await requestApi[plat_name].submitTicketCode(params);
+      const res = await PLAT_API_OBJ[plat_name].submitTicketCode(params);
       console.log(conPrefix + "提交出票码返回", res);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
@@ -3054,6 +3063,7 @@ const startDeliver = async ({
   supplierCode,
   plat_name,
   bid,
+  quote_id,
   appFlag
 }) => {
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
@@ -3068,13 +3078,13 @@ const startDeliver = async ({
       params = {
         bid
       };
+    } else if (plat_name === "yinghuasuan") {
+      params = {
+        quote_id
+      };
     }
-    const requestApi = {
-      sheng: shengApi,
-      haha: hahaApi
-    };
     console.log(conPrefix + "确认接单参数", params);
-    const res = await requestApi[plat_name].confirmOrder(params);
+    const res = await PLAT_API_OBJ[plat_name].confirmOrder(params);
     console.log(conPrefix + "确认接单返回", res);
     return res;
   } catch (error) {
