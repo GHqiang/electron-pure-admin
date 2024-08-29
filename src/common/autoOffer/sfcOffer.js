@@ -119,26 +119,29 @@ class getSfcOfferPrice {
             } else {
               offerRule.memberOfferAmount = endPrice;
             }
-            // sfc需要检查下系统是否异常（连续两个订单创建失败）
-            let ticketList = await this.getTicketList();
-            ticketList = ticketList?.filter(
-              item => !NO_SFC_APP_LIST.includes(item.app_name)
-            );
-            let isAbnormal =
-              ticketList?.length >= 2
-                ? checkConsecutiveErrors(ticketList)
-                : false;
-            if (isAbnormal) {
-              this.logList.push({
-                opera_time: getCurrentFormattedDateTime(),
-                des: "sfc疑似故障，暂不报价",
-                level: "error",
-                info: {
-                  isAbnormal,
-                  ticketList
-                }
-              });
-              endPrice = "";
+            let isAnomaly = window.localStorage.getItem("isAnomaly");
+            if (isAnomaly === "1") {
+              // sfc需要检查下系统是否异常（连续两个订单创建失败）
+              let ticketList = await this.getTicketList();
+              ticketList = ticketList?.filter(
+                item => !NO_SFC_APP_LIST.includes(item.app_name)
+              );
+              let isAbnormal =
+                ticketList?.length >= 2
+                  ? checkConsecutiveErrors(ticketList)
+                  : false;
+              if (isAbnormal) {
+                this.logList.push({
+                  opera_time: getCurrentFormattedDateTime(),
+                  des: "sfc疑似故障，暂不报价",
+                  level: "error",
+                  info: {
+                    isAbnormal,
+                    ticketList
+                  }
+                });
+                endPrice = "";
+              }
             }
           } else {
             err_msg = "获取最终报价价格失败";

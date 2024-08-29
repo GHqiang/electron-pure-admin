@@ -19,6 +19,10 @@
     !isOverrunOffer ? "开启超限报价" : "关闭超限报价"
   }}</el-button>
 
+  <el-button type="primary" @click="isAnomaly = !isAnomaly">{{
+    !isAnomaly ? "开启sfc故障检测" : "关闭sfc故障检测"
+  }}</el-button>
+
   <el-table :data="displayItems" border show-overflow-tooltip>
     <el-table-column prop="platName" label="平台名称">
       <template #default="{ row, $index }">
@@ -169,14 +173,19 @@ const isActiveOneClickStop = computed(() => {
 });
 
 // 是否超限报价
-let isOpen = localStorage.getItem("isOverrunOffer") == 1;
-const isOverrunOffer = ref(isOpen ? true : false);
-if (isOpen) {
-  window.localStorage.setItem("isOverrunOffer", 1);
-}
+let isOpenOverrunOffer = localStorage.getItem("isOverrunOffer") == 1;
+const isOverrunOffer = ref(isOpenOverrunOffer ? true : false);
 watch(isOverrunOffer, (newVal, oldVal) => {
   console.log(`isOverrunOffer 的值从 '${oldVal}' 变为 '${newVal}'`);
   window.localStorage.setItem("isOverrunOffer", newVal ? "1" : "0");
+});
+
+// 是否sfc故障检测
+let isOpenAnomaly = localStorage.getItem("isAnomaly") == 1;
+const isAnomaly = ref(isOpenAnomaly ? true : false);
+watch(isAnomaly, (newVal, oldVal) => {
+  console.log(`isAnomaly 的值从 '${oldVal}' 变为 '${newVal}'`);
+  window.localStorage.setItem("isAnomaly", newVal ? "1" : "0");
 });
 
 // 正在编辑id
