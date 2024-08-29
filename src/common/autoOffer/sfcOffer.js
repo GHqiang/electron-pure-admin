@@ -13,6 +13,10 @@ import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
 import { APP_LIST, QUAN_TYPE_COST } from "@/common/constant.js";
 import lierenApi from "@/api/lieren-api";
+import { platTokens } from "@/store/platTokens";
+// 平台toke列表
+const tokens = platTokens();
+
 class getSfcOfferPrice {
   constructor({ appFlag, plat_name }) {
     // console.log("APP_API_OBJ", APP_API_OBJ, appFlag, plat_name);
@@ -114,6 +118,27 @@ class getSfcOfferPrice {
               offerRule.offerAmount = endPrice;
             } else {
               offerRule.memberOfferAmount = endPrice;
+            }
+            // sfc需要检查下系统是否异常（连续两个订单创建失败）
+            let ticketList = await this.getTicketList();
+            ticketList = ticketList?.filter(
+              item => !NO_SFC_APP_LIST.includes(item.app_name)
+            );
+            let isAbnormal =
+              ticketList?.length >= 2
+                ? checkConsecutiveErrors(ticketList)
+                : false;
+            if (isAbnormal) {
+              this.logList.push({
+                opera_time: getCurrentFormattedDateTime(),
+                des: "sfc疑似故障，暂不报价",
+                level: "error",
+                info: {
+                  isAbnormal,
+                  ticketList
+                }
+              });
+              endPrice = "";
             }
           } else {
             err_msg = "获取最终报价价格失败";
@@ -762,6 +787,58 @@ class getSfcOfferPrice {
       });
     }
   }
+
+  // 获取出票记录
+  async getTicketList() {
+    try {
+      const ticketRes = await svApi.queryTicketList({
+        user_id: tokens.userInfo?.user_id,
+        page_num: 1,
+        page_size: 50
+      });
+      return ticketRes.data.ticketList || [];
+    } catch (error) {
+      console.error("获取最新50条出票记录异常", error);
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取最新50条出票记录异常",
+        level: "error",
+        info: {
+          error
+        }
+      });
+    }
+  }
 }
 
+// 判断sfc是否系统故障
+const checkConsecutiveErrors = orders => {
+  let consecutiveErrors = false;
+  if (orders?.length) {
+    return false;
+  }
+  for (let i = 0; i < orders.length - 1; i++) {
+    const currentOrder = orders[i];
+    const nextOrder = orders[i + 1];
+
+    // 判断当前订单是否满足条件
+    const currentMatches =
+      currentOrder.err_msg?.includes("计算订单价格异常") &&
+      currentOrder.err_info &&
+      JSON.parse(currentOrder.err_info)?.msg === "请求接口超时,请重试";
+
+    // 判断下一个订单是否满足条件
+    const nextMatches =
+      nextOrder.err_msg.includes("计算订单价格异常") &&
+      nextOrder.err_info &&
+      JSON.parse(nextOrder.err_info)?.msg === "请求接口超时,请重试";
+
+    if (currentMatches && nextMatches) {
+      consecutiveErrors = true;
+      break;
+    }
+  }
+
+  return consecutiveErrors;
+};
 export default getSfcOfferPrice;

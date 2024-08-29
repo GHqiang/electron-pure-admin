@@ -128,6 +128,17 @@ const APP_LIST = {
   cszyyzx: "长沙中影壹中心",
   qina: "齐纳国际"
 };
+
+// 非SFC影院集合列表
+const NO_SFC_APP_LIST = [
+  ...UME_LIST
+  // "ume",
+  // "yaolai",
+  // "renhengmeng",
+  // "wanmei",
+  // "yinghuang",
+  // "zheyingshidai"
+];
 // 平台关联应用
 const PLAT_LINK_APP = {
   lieren: [
@@ -1187,6 +1198,7 @@ export {
   QUAN_TYPE_FLAG,
   UME_LIST,
   APP_LIST,
+  NO_SFC_APP_LIST,
   PLAT_LINK_APP,
   SFC_SPECIAL_CINEMA_LIST,
   JIUJIN_SPECIAL_CINEMA_LIST,
