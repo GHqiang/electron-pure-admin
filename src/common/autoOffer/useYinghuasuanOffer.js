@@ -122,6 +122,7 @@ class OrderAutoOfferQueue {
           show_time,
           fast_buy: is_urgent,
           cinemaid,
+          seat_no,
           brand_name // 品牌名 上影-上海、上影二线等
         } = item;
         return {
@@ -141,7 +142,8 @@ class OrderAutoOfferQueue {
           is_urgent, // 1紧急 0非紧急
           cinema_group: brand_name || "",
           cinema_code: cinemaid || "", // 影院id
-          order_number: id
+          order_number: id || "",
+          lockseat: seat_no?.split(",").join(" ") || ''
         };
       });
       // console.warn(conPrefix + "转换后的订单列表", sfcStayOfferlist);
@@ -250,6 +252,7 @@ class OrderAutoOfferQueue {
           order.app_name || offerResult?.offerRule?.shadowLineName || "",
         order_id: order.id,
         order_number: order.order_number,
+        lockseat: order.lockseat,
         tpp_price: order.tpp_price,
         supplier_max_price: order.supplier_max_price,
         city_name: order.city_name,
@@ -408,7 +411,7 @@ class OrderAutoOfferQueue {
         net_price: "",
         keywords: ""
       });
-      let list = res.data.list || [];
+      let list = res.data || [];
       // console.log(conPrefix + "获取待报价列表返回", list);
       return list;
     } catch (error) {

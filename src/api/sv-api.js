@@ -23,6 +23,9 @@ const queryOfferList = params =>
   axios.get("/svpi/offerRecord/query", { params, timeout: 60 * 1000 });
 // 添加报价记录
 const addOfferRecord = params => axios.post("/svpi/offerRecord/add", params);
+// 更新报价记录
+const updateOfferRecord = params =>
+  axios.post("/svpi/offerRecord/update", params);
 
 // 获取出票列表
 const getTicketList = params => axios.get("/svpi/ticketRecord", { params });
@@ -113,6 +116,7 @@ export default {
   getOfferList,
   queryOfferList,
   addOfferRecord,
+  updateOfferRecord,
   getTicketList,
   queryTicketList,
   addTicketRecord,

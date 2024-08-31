@@ -12,13 +12,17 @@ const queryStayOfferList = params =>
 const submitOffer = params =>
   axios.post("/broker/v1/invitation/quote/add", params);
 
-// 获取待出票列表
-const stayTicketingList = params =>
-  axios.get("/broker/v1/order/list", { params });
+// 获取待确认列表
+const queryStayConfirmList = params =>
+  axios.get("/broker/v1/invitation/quote/list", { params });
 
 // 确认接货
 const confirmOrder = params =>
   axios.post("/broker/v1/invitation/quote/confirm", params);
+
+// 获取待出票列表
+const stayTicketingList = params =>
+  axios.get("/broker/v1/order/list", { params });
 
 // 解锁座位
 const unlockSeat = params => axios.post("/broker/v1/order/unlock_seat", params);
@@ -32,9 +36,10 @@ const transferOrder = params => axios.post("/broker/v1/order/giveup", params);
 
 export default {
   queryStayOfferList, // 待报价列表
-  stayTicketingList, // 获取待出票列表
   submitOffer, // 提交报价
+  queryStayConfirmList, // 待确认列表
   confirmOrder, // 确认接货
+  stayTicketingList, // 获取待出票列表
   unlockSeat, // 解锁座位
   submitTicketCode, // 提交取票码
   transferOrder // 转单

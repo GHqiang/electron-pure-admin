@@ -603,20 +603,6 @@ class OrderAutoTicketQueue {
             inx: 1
           });
         } else if (plat_name === "yinghuasuan") {
-          const deliverRes = await startDeliver({
-            plat_name,
-            quote_id: 0,
-            appFlag
-          });
-          this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
-            des: "确认接单返回",
-            level: "info",
-            info: {
-              deliverRes
-            }
-          });
-          await mockDelay(2);
           await this.unlockSeat({
             plat_name,
             order_number,
@@ -847,7 +833,8 @@ class OrderAutoTicketQueue {
           user_id: tokens.userInfo.user_id,
           order_status: "1",
           app_name: appFlag,
-          order_number
+          order_number,
+          plat_name
         });
         let offerRecord = offerRes?.data?.offerList || [];
         offerRule = offerRecord?.[0];
@@ -2146,9 +2133,14 @@ class OrderAutoTicketQueue {
       } else {
         let err_info = formatErrInfo(error);
         svApi.updateTicketRecord({
-          order_number,
-          err_msg: "系统延迟后提交出票码异常",
-          err_info
+          whereObj: {
+            order_number,
+            plat_name
+          },
+          updateObj: {
+            err_msg: "系统延迟后提交出票码异常",
+            err_info
+          }
         });
       }
     }
@@ -2323,8 +2315,13 @@ class OrderAutoTicketQueue {
           this.logList
         );
         svApi.updateTicketRecord({
-          order_number,
-          err_msg: "系统延迟轮询10分钟后获取取票码仍失败"
+          whereObj: {
+            order_number,
+            plat_name
+          },
+          updateObj: {
+            err_msg: "系统延迟轮询10分钟后获取取票码仍失败"
+          }
         });
         return;
       }
@@ -2414,10 +2411,15 @@ class OrderAutoTicketQueue {
         );
         // 更新出票结果
         svApi.updateTicketRecord({
-          order_number,
-          qrcode,
-          order_status: "1",
-          err_msg: "系统延迟后轮询获取提交取票码成功"
+          whereObj: {
+            order_number,
+            plat_name
+          },
+          updateObj: {
+            qrcode,
+            order_status: "1",
+            err_msg: "系统延迟后轮询获取提交取票码成功"
+          }
         });
       }
       return submitRes;
