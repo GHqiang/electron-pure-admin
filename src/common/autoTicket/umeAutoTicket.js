@@ -751,7 +751,10 @@ class OrderAutoTicketQueue {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: `首次出票手机号-${phone}`,
-          level: "info"
+          level: "info",
+          info: {
+            currentParamsList: this.currentParamsList
+          }
         });
         // 1、获取该订单的报价记录，按对应报价规则出票
         const offerRes = await svApi.queryOfferList({
@@ -1720,8 +1723,9 @@ class OrderAutoTicketQueue {
 
   // 获取购票信息
   async getPayResult(data) {
-    const { conPrefix, appFlag } = this;
+    const { conPrefix } = this;
     let { orderHeaderId, session_id, inx = 1 } = data || {};
+    let qrcode;
     try {
       let params = {
         params: {
@@ -1733,7 +1737,7 @@ class OrderAutoTicketQueue {
         },
         session_id
       };
-      console.log(conPrefix + "支付订单参数", params);
+      console.log(conPrefix + "获取支付结果参数", params);
       if (inx == 1) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
@@ -1745,7 +1749,7 @@ class OrderAutoTicketQueue {
         });
       }
       const res = await this.umeApi.getPayResult(params);
-      console.log(conPrefix + "支付订单返回", res);
+      console.log(conPrefix + "获取支付结果返回", res);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: `第${inx}次获取支付结果返回`,
@@ -1755,57 +1759,64 @@ class OrderAutoTicketQueue {
         }
       });
       let list = res.data || [];
-      let qrcode = list[0]?.ticketCode?.split(",").join("|") || "";
-      if (qrcode) {
-        return qrcode;
-      }
-      return Promise.reject("获取支付结果不存在");
+      qrcode = list[0]?.ticketCode?.split(",").join("|") || "";
     } catch (error) {
-      console.error(conPrefix + "支付订单异常", error);
+      console.error(conPrefix + "获取订单支付结果异常", error);
       this.setErrInfo("获取订单支付结果异常", error);
-      try {
-        const res = await this.umeApi.findStoreTkOrderInfoApp({
-          params: {
-            orderType: "ticket_order",
-            isDetail: "Y",
-            channelCode: "QD0000001"
-          },
-          pageIndex: 1,
-          pageRow: 5,
-          session_id
-        });
-        let list = res.data || [];
-        if (list.length) {
-          let targetObj = list.find(
-            item => item.orderHeaderId == orderHeaderId
-          );
-          if (targetObj) {
-            let qrcode = targetObj.ticketCode?.split(",").join("|");
-            if (qrcode) {
-              this.logList.push({
-                opera_time: getCurrentFormattedDateTime(),
-                des: `第${inx}次从已完成订单里获取取票码成功：${qrcode}`,
-                level: "error"
-              });
-              return qrcode;
-            } else {
-              this.logList.push({
-                opera_time: getCurrentFormattedDateTime(),
-                des: `第${inx}次从已完成订单里获取取票码失败`,
-                level: "error"
-              });
-            }
-          }
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: `第${inx}次获取订单支付结果异常`,
+        level: "error",
+        info: {
+          error
         }
-      } catch (err) {
-        this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
-          des: `第${inx}次从已完成订单里获取取票码失败，${JSON.stringify(err)}`,
-          level: "error"
-        });
-      }
-      return Promise.reject(error);
+      });
     }
+    // 获取失败后从已完成订单里匹配获取
+    try {
+      const listRes = await this.umeApi.findStoreTkOrderInfoApp({
+        params: {
+          orderType: "ticket_order",
+          isDetail: "Y",
+          channelCode: "QD0000001"
+        },
+        pageIndex: 1,
+        pageRow: 5,
+        session_id
+      });
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: `第${inx}次获取已完成订单列表返回`,
+        level: "error",
+        info: {
+          listRes
+        }
+      });
+      let payList = listRes.data || [];
+      let targetObj = payList.find(item => item.orderHeaderId == orderHeaderId);
+      qrcode = targetObj?.ticketCode?.split(",").join("|");
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: `第${inx}次从已完成订单里获取取票码${qrcode ? "成功" : "失败"}`,
+        level: "error",
+        info: {
+          qrcode
+        }
+      });
+    } catch (error) {
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: `第${inx}次获取已完成订单列表异常`,
+        level: "error",
+        info: {
+          error
+        }
+      });
+    }
+    if (qrcode) {
+      return qrcode;
+    }
+    return Promise.reject("获取支付结果不存在");
   }
 
   // 提交出票码
@@ -1953,6 +1964,14 @@ class OrderAutoTicketQueue {
     }
     try {
       console.log(conPrefix + "提交出票码参数", params);
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: `提交出票码参数`,
+        level: "info",
+        info: {
+          params
+        }
+      });
       if (isTestOrder) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
@@ -1965,8 +1984,11 @@ class OrderAutoTicketQueue {
       console.log(conPrefix + "提交出票码返回", res);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
-        des: `提交取票码返回-${JSON.stringify(res)}`,
-        level: "info"
+        des: `提交取票码返回`,
+        level: "info",
+        info: {
+          res
+        }
       });
       return res;
     } catch (error) {
