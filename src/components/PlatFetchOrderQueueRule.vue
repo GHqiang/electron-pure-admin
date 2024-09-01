@@ -153,6 +153,23 @@ const editingRowId = ref(null);
 // 正在编辑内容
 const editingRow = ref({});
 
+// 是否启动队列（该为false可进行测试用户）
+let isStartQueue = true;
+
+// 平台获取待出票订单队列集合
+let platFetchOrderQueueObj = {
+  lieren: lierenFetchOrder,
+  mangguo: mangguoFetchOrder,
+  mayi: mayiFetchOrder,
+  yangcong: yangcongFetchOrder,
+  yinghuasuan: yinghuasuanFetchOrder,
+  shangzhan: shangzhanFetchOrder,
+  haha: hahaFetchOrder,
+  sheng: shengFetchOrder
+};
+
+window.platFetchOrderQueueObj = platFetchOrderQueueObj;
+
 // 一键启动
 const oneClickAutoOffer = () => {
   ElMessageBox.confirm("确定要一键启动吗?", "提示", {
@@ -168,30 +185,7 @@ const oneClickAutoOffer = () => {
       tableDataStore.items.forEach(item => {
         // console.log("item", item, item.platName);
         tableDataStore.toggleEnable(item.id);
-        if (item.platName === "lieren") {
-          lierenFetchOrder.start();
-        }
-        if (item.platName === "sheng") {
-          shengFetchOrder.start();
-        }
-        if (item.platName === "mangguo") {
-          mangguoFetchOrder.start();
-        }
-        if (item.platName === "mayi") {
-          mayiFetchOrder.start();
-        }
-        if (item.platName === "yangcong") {
-          yangcongFetchOrder.start();
-        }
-        if (item.platName === "yinghuasuan") {
-          yinghuasuanFetchOrder.start();
-        }
-        if (item.platName === "shangzhan") {
-          shangzhanFetchOrder.start();
-        }
-        if (item.platName === "haha") {
-          hahaFetchOrder.start();
-        }
+        isStartQueue && platFetchOrderQueueObj[item.platName].start();
       });
       svApi.updateUser({
         order_fetch_queue: JSON.stringify(tableDataStore.items),
@@ -223,41 +217,9 @@ const stopAutoOffer = () => {
 
 // 单个启动或停止
 const singleStartOrStop = ({ id, platName }, flag) => {
+  tableDataStore.toggleEnable(item.id);
   if (flag === 1) {
-    if (platName === "lieren") {
-      tableDataStore.toggleEnable(id);
-      lierenFetchOrder.start();
-    }
-    if (platName === "sheng") {
-      tableDataStore.toggleEnable(id);
-      shengFetchOrder.start();
-    }
-    if (platName === "mangguo") {
-      tableDataStore.toggleEnable(id);
-      mangguoFetchOrder.start();
-    }
-    if (platName === "mayi") {
-      tableDataStore.toggleEnable(id);
-      mayiFetchOrder.start();
-    }
-    if (platName === "yangcong") {
-      tableDataStore.toggleEnable(id);
-      yangcongFetchOrder.start();
-    }
-    if (item.platName === "yinghuasuan") {
-      tableDataStore.toggleEnable(id);
-      yinghuasuanFetchOrder.start();
-    }
-    if (item.platName === "shangzhan") {
-      tableDataStore.toggleEnable(id);
-      shangzhanFetchOrder.start();
-    }
-    if (platName === "haha") {
-      tableDataStore.toggleEnable(id);
-      hahaFetchOrder.start();
-    }
-  } else {
-    tableDataStore.toggleEnable(id);
+    isStartQueue && platFetchOrderQueueObj[item.platName].start();
   }
 };
 
