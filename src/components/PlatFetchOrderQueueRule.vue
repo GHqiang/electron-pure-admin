@@ -125,6 +125,8 @@ import shengFetchOrder from "@/common/orderFetch/shengFetchOrder";
 import mangguoFetchOrder from "@/common/orderFetch/mangguoFetchOrder";
 import mayiFetchOrder from "@/common/orderFetch/mayiFetchOrder";
 import yangcongFetchOrder from "@/common/orderFetch/yangcongFetchOrder";
+import yinghuasuanFetchOrder from "@/common/orderFetch/yinghuasuanFetchOrder";
+import shangzhanFetchOrder from "@/common/orderFetch/shangzhanFetchOrder";
 import hahaFetchOrder from "@/common/orderFetch/hahaFetchOrder";
 
 import { ORDER_FORM } from "@/common/constant.js";
@@ -181,6 +183,12 @@ const oneClickAutoOffer = () => {
         if (item.platName === "yangcong") {
           yangcongFetchOrder.start();
         }
+        if (item.platName === "yinghuasuan") {
+          yinghuasuanFetchOrder.start();
+        }
+        if (item.platName === "shangzhan") {
+          shangzhanFetchOrder.start();
+        }
         if (item.platName === "haha") {
           hahaFetchOrder.start();
         }
@@ -235,6 +243,14 @@ const singleStartOrStop = ({ id, platName }, flag) => {
     if (platName === "yangcong") {
       tableDataStore.toggleEnable(id);
       yangcongFetchOrder.start();
+    }
+    if (item.platName === "yinghuasuan") {
+      tableDataStore.toggleEnable(id);
+      yinghuasuanFetchOrder.start();
+    }
+    if (item.platName === "shangzhan") {
+      tableDataStore.toggleEnable(id);
+      shangzhanFetchOrder.start();
     }
     if (platName === "haha") {
       tableDataStore.toggleEnable(id);

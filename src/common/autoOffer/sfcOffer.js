@@ -677,7 +677,11 @@ class getSfcOfferPrice {
           des: conPrefix + "获取目标影院失败",
           level: "error",
           info: {
-            error: cinemaIdRes?.error
+            error: cinemaIdRes?.error,
+            cinema_name,
+            cinemaList,
+            app_name,
+            city_name
           }
         });
         return;

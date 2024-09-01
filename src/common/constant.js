@@ -6,6 +6,7 @@ const ORDER_FORM = {
   mayi: "蚂蚁",
   yangcong: "洋葱",
   yinghuasuan: "影划算",
+  shangzhan: "商展",
   haha: "哈哈"
 };
 
@@ -204,6 +205,10 @@ const SFC_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: "SFC上影影城东港店原红豆影城",
     sfc_cinema_name: "SFC上影影城无锡东港店"
+  },
+  {
+    order_cinema_name: "SFC上影影城硕放店",
+    sfc_cinema_name: "SFC上影影城无锡硕放店"
   },
   // 湛江
   {
@@ -712,7 +717,10 @@ const DSYC_SPECIAL_CINEMA_LIST = [
     order_cinema_name: "大商影城乘风新玛特店",
     sfc_cinema_name: "大庆大商影城乘风新玛特店"
   },
-
+  {
+    order_cinema_name: "大商影城新玛特店",
+    sfc_cinema_name: "大连大商影城新玛特店"
+  },
   {
     order_cinema_name: "大商影城于洪黄海路店",
     sfc_cinema_name: "沈阳市大商影城于洪店"
@@ -720,6 +728,10 @@ const DSYC_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: "大商影城千盛店",
     sfc_cinema_name: "漯河大商影城千盛店"
+  },
+  {
+    order_cinema_name: "大商影城千盛店",
+    sfc_cinema_name: "沈阳大商影城千盛店"
   }
 ];
 

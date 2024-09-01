@@ -73,6 +73,12 @@ export default ({ command, mode }: ConfigEnv): UserConfigExport => {
           changeOrigin: true, // 是否允许跨域
           rewrite: path => path.replace(/^\/broker/, "broker") // 重写路径，去除/api前缀
         },
+        // 商展
+        "/openapi": {
+          target: "https://www.huobanos.com", // 后端API的真实地址
+          changeOrigin: true, // 是否允许跨域
+          rewrite: path => path.replace(/^\/openapi/, "openapi") // 重写路径，去除/api前缀
+        },
         // 哈哈
         "/api": {
           target: "https://hahapiao.cn", // 后端API的真实地址

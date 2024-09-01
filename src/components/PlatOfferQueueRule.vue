@@ -151,6 +151,8 @@ import shengOfferQueue from "@/common/autoOffer/useShengOffer";
 import mangguoOfferQueue from "@/common/autoOffer/useMangguoOffer";
 import mayiOfferQueue from "@/common/autoOffer/useMayiOffer";
 import yangcongOfferQueue from "@/common/autoOffer/useYangcongOffer";
+import yinghuasuanOfferQueue from "@/common/autoOffer/useYinghuasuanOffer";
+import shangzhanOfferQueue from "@/common/autoOffer/useShangzhanOffer";
 import hahaOfferQueue from "@/common/autoOffer/useHahaOffer";
 import { ORDER_FORM, APP_LIST } from "@/common/constant";
 import {
@@ -206,6 +208,8 @@ let platOfferQueueObj = {
   mangguo: mangguoOfferQueue,
   mayi: mayiOfferQueue,
   yangcong: yangcongOfferQueue,
+  yinghuasuan: yinghuasuanOfferQueue,
+  shangzhan: shangzhanOfferQueue,
   haha: hahaOfferQueue,
   sheng: shengOfferQueue
 };
@@ -218,6 +222,8 @@ let setPlatFunObj = {
   mangguo: tokens.setMangguoPlatToken,
   mayi: tokens.setMayiPlatToken,
   yangcong: tokens.setYangcongPlatToken,
+  yinghuasuan: tokens.setYinghuasuanPlatToken,
+  shangzhan: tokens.setShangzhanPlatToken,
   haha: tokens.setHahaPlatToken,
   sheng: tokens.setShengPlatToken
 };

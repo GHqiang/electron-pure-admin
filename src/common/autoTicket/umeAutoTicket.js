@@ -425,6 +425,12 @@ class OrderAutoTicketQueue {
           order_sn: order_number,
           close_cause: "价格过低无法出票"
         };
+      } else if (plat_name === "shangzhan") {
+        params = {
+          order_sn: order_number,
+          order_status: "3", // 出票状态（3：出票失败 9：出票成功）
+          cancel_reason: "价格过低无法出票" // 出票失败原因（出票失败必传）
+        };
       }
       console.log(conPrefix + "转单参数", params);
       console.warn(conPrefix + "【转单】参数", params);
@@ -1140,7 +1146,8 @@ class OrderAutoTicketQueue {
           mayi: [12, 10],
           yangcong: [12, 10],
           haha: [6, 5],
-          yinghuasuan: [6, 5]
+          yinghuasuan: [6, 5],
+          shangzhan: [6, 5]
         };
         lockRes = await trial(
           inx => this.lockSeatHandle(params, inx),
@@ -1896,6 +1903,18 @@ class OrderAutoTicketQueue {
               code: qrcode.split("|")[0],
               pwd: qrcode.split("|")?.[1] || ""
             }
+          }
+        ]
+      };
+    } else if (plat_name === "shangzhan") {
+      params = {
+        order_sn: order_number,
+        order_status: "9", // 出票状态（3：出票失败 9：出票成功）
+        // cancel_reason: "", // 出票失败原因（出票失败必传）
+        ticket_list: [
+          {
+            ticket_code: qrcode.split("|")[0],
+            ticket_msg_code: qrcode.split("|")?.[1] || ""
           }
         ]
       };
