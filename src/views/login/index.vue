@@ -48,11 +48,11 @@ const ruleForm = reactive({
 const setLocalRuleList = async rule => {
   try {
     const ruleRes = await svApi.queryRuleList({
-      status: "1",
       rule
     });
     // console.log("ruleRes", ruleRes);
     let ruleRecords = ruleRes.data.ruleList || [];
+    ruleRecords = ruleRecords.filter(item => ["1", "3"].includes(item.status));
     ruleRecords.forEach(item => {
       item.includeCityNames = JSON.parse(item.includeCityNames);
       item.excludeCityNames = JSON.parse(item.excludeCityNames);

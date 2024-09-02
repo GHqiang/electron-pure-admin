@@ -222,6 +222,20 @@
             @click="deleteRow(scope.$index, scope.row)"
             >删除</el-button
           >
+          <el-button
+            v-if="scope.row.status === '1' && rule == 2"
+            size="small"
+            type="primary"
+            @click="switchOnlyOffer(scope.row, '3')"
+            >开启仅报价</el-button
+          >
+          <el-button
+            v-if="scope.row.status === '3' && rule == 2"
+            size="small"
+            type="primary"
+            @click="switchOnlyOffer(scope.row, '1')"
+            >关闭仅报价</el-button
+          >
           <!-- <el-button size="small" @click="viewDetails(scope.row)">详情</el-button> -->
         </template>
       </el-table-column>
@@ -296,7 +310,7 @@ const setLocalRuleList = async () => {
     const ruleRes = await svApi.queryRuleList({ rule });
     // console.log("ruleRes", ruleRes);
     let ruleRecords = ruleRes.data.ruleList || [];
-    ruleRecords = ruleRecords.filter(item => item.status === "1");
+    ruleRecords = ruleRecords.filter(item => ["1", "3"].includes(item.status));
     ruleRecords.forEach(item => {
       item.includeCityNames = JSON.parse(item.includeCityNames);
       item.excludeCityNames = JSON.parse(item.excludeCityNames);
@@ -416,6 +430,57 @@ const shadowLine = ref("sfc");
 const addRule = () => {
   dialogTitle.value = "新增";
   sfcDialogRef.value.open({ shadowLineName: shadowLine.value });
+};
+
+// 开启关闭仅报价
+const switchOnlyOffer = async (row, type) => {
+  try {
+    ElMessageBox.confirm(
+      `确定要${type === "3" ? "开启" : "关闭"}仅报价吗?`,
+      "提示",
+      {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+        showClose: false,
+        closeOnClickModal: false,
+        closeOnPressEscape: false
+      }
+    )
+      .then(async () => {
+        let ruleInfo = JSON.parse(JSON.stringify(row));
+        ruleInfo.includeCityNames = JSON.stringify(ruleInfo.includeCityNames);
+        ruleInfo.excludeCityNames = JSON.stringify(ruleInfo.excludeCityNames);
+        ruleInfo.includeCinemaNames = JSON.stringify(
+          ruleInfo.includeCinemaNames
+        );
+        ruleInfo.excludeCinemaNames = JSON.stringify(
+          ruleInfo.excludeCinemaNames
+        );
+        ruleInfo.includeHallNames = JSON.stringify(ruleInfo.includeHallNames);
+        ruleInfo.excludeHallNames = JSON.stringify(ruleInfo.excludeHallNames);
+        ruleInfo.includeFilmNames = JSON.stringify(ruleInfo.includeFilmNames);
+        ruleInfo.excludeFilmNames = JSON.stringify(ruleInfo.excludeFilmNames);
+        ruleInfo.platOfferList = JSON.stringify(ruleInfo.platOfferList || []);
+        ruleInfo.weekDay = JSON.stringify(ruleInfo.weekDay);
+        ruleInfo.update_time = getCurrentFormattedDateTime();
+        ruleInfo.status = type === "3" ? "3" : "1";
+        await svApi.updateRuleRecord(ruleInfo);
+        searchData();
+        ElMessage({
+          type: "success",
+          message: "操作完成"
+        });
+      })
+      .catch(() => {
+        ElMessage({
+          type: "info",
+          message: "操作取消"
+        });
+      });
+  } catch (err) {
+    //TODO handle the exception
+  }
 };
 
 // 编辑规则
