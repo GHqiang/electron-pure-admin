@@ -149,7 +149,7 @@ async function createWindow() {
 app.whenReady().then(() => {
   createWindow();
   // 开启定期过期检查
-  startExpirationCheck();
+  // startExpirationCheck();
 });
 
 app.on("window-all-closed", () => {
