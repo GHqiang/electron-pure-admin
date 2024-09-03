@@ -147,6 +147,14 @@ class OrderAutoOfferQueue {
       //   conPrefix + "从服务端历史报价记录过滤后的的待报价订单",
       //   newOrders
       // );
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "新的待报价订单列表",
+        level: "info",
+        info: {
+          newOrders
+        }
+      });
       return newOrders;
     } catch (error) {
       console.error(conPrefix + "获取待报价订单异常", error);
