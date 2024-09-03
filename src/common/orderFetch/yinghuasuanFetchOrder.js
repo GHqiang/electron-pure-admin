@@ -250,17 +250,19 @@ const getStayConfirmOrderAndSure = async () => {
       inv_id: item.inv_id,
       quote_price: item.quote_price
     }));
-    const offerList = await getOfferList();
-    // 匹配报价记录
-    list = list.filter(item => {
-      return !offerList.some(itemA => itemA.order_id === item.inv_id);
-    });
-    // 和报价记录匹配上了再接单
-    for (var i = 0; i < list.length; i++) {
-      const item = list[i];
-      const res = await startDeliver(item);
-      if (res) {
-        this.confimrOrderList.push(order);
+    if (list?.length) {
+      const offerList = await getOfferList();
+      // 匹配报价记录
+      list = list.filter(item => {
+        return !offerList.some(itemA => itemA.order_id === item.inv_id);
+      });
+      // 和报价记录匹配上了再接单
+      for (var i = 0; i < list.length; i++) {
+        const item = list[i];
+        const res = await startDeliver(item);
+        if (res) {
+          this.confimrOrderList.push(order);
+        }
       }
     }
   } catch (error) {

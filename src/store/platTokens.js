@@ -86,6 +86,7 @@ export const platTokens = defineStore("platTokens", {
     },
     // 设置自身平台token
     setSelfPlatToken(data) {
+      // data.user.phone = "13073792313";
       console.warn("设置自身平台token", data);
       this.selfToken = data.token;
       this.userInfo = data.user;

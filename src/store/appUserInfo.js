@@ -101,7 +101,6 @@ export const appUserInfo = defineStore("appUserInfo", {
       list = list.filter(item => {
         if (appNameList.includes(item.app_name)) {
           return item.mobile === phone;
-          // return item.mobile === "13073792313";
         }
         return true;
       });

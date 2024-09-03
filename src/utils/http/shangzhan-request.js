@@ -3,6 +3,8 @@
 import axios from "axios";
 import md5 from "../md5.js";
 import { ElMessage } from "element-plus";
+import { platTokens } from "@/store/platTokens";
+const tokens = platTokens();
 // 创建axios实例
 const instance = axios.create({
   //   baseURL: process.env.VITE_API_BASE_URL,
@@ -43,8 +45,11 @@ instance.interceptors.request.use(
       config.headers["Content-Type"] = "application/x-www-form-urlencoded";
 
       // console.log("config.headers", config.headers);
-      const appSecret = "YOUR_APP_SECRET"; // 请替换为实际的 app-secret
-      config.data["appid"] = "";
+      const token = tokens.shangzhanToken || "";
+
+      // 付勋："4E540CA451984A574540E2C4974E0E95";
+      const appSecret = token || ""; // 请替换为实际的 app-secret
+      config.data["app-id"] = tokens?.userInfo?.phone || "";
       config.data["time"] = parseInt(+new Date() / 1000);
       config.data = new URLSearchParams(config.data); // 转换为 URLSearchParams
 

@@ -217,9 +217,9 @@ const stopAutoOffer = () => {
 
 // 单个启动或停止
 const singleStartOrStop = ({ id, platName }, flag) => {
-  tableDataStore.toggleEnable(item.id);
+  tableDataStore.toggleEnable(id);
   if (flag === 1) {
-    isStartQueue && platFetchOrderQueueObj[item.platName].start();
+    isStartQueue && platFetchOrderQueueObj[platName].start();
   }
 };
 

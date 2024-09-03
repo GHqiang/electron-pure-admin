@@ -3,7 +3,13 @@ import ExcelJS from "exceljs";
 import axios from "axios";
 import * as CryptoJS from "crypto-js";
 import svApi from "@/api/sv-api";
-import { WX_MSG_UID, SPECIAL_CINEMA_OBJ } from "@/common/constant";
+import {
+  WX_MSG_UID,
+  SPECIAL_CINEMA_OBJ,
+  SFC_CINEMA_NAME,
+  YAOLAI_CINEMA_NAME,
+  UME_CINEMA_NAME
+} from "@/common/constant";
 /**
  * 获取当前日期和时间的格式化字符串
  * 无参数
@@ -248,26 +254,51 @@ const colorObj = {
 // 获取影院标识
 const getCinemaFlag = item => {
   const { cinema_group, cinema_name, city_name, plat_name } = item;
-  if (["上影上海", "上影二线", "SFC", "c_sfc"].includes(cinema_group)) {
+  let noGroupPlatList = ["yinghuasuan", "shangzhan"];
+
+  let isSfcGroup = ["上影上海", "上影二线", "SFC", "c_sfc"].includes(
+    cinema_group
+  );
+  let isSfcName =
+    noGroupPlatList.includes(plat_name) &&
+    SFC_CINEMA_NAME.some(
+      item => cinemNameSpecial(item) === cinemNameSpecial(cinema_name)
+    );
+
+  let isUmeGroup = ["UME", "ume一线", "ume二线", "c_ume"].includes(
+    cinema_group
+  );
+  let isUmeName =
+    noGroupPlatList.includes(plat_name) &&
+    UME_CINEMA_NAME.some(
+      item => cinemNameSpecial(item) === cinemNameSpecial(cinema_name)
+    );
+
+  let isYaolaiGroup = [
+    "耀莱成龙",
+    "耀莱一线",
+    "耀莱二线",
+    "一线耀莱",
+    "二线耀莱",
+    "耀莱",
+    "c_jccinema"
+  ].includes(cinema_group);
+  let isYaolaiName =
+    (noGroupPlatList.includes(plat_name) &&
+      YAOLAI_CINEMA_NAME.some(
+        item => cinemNameSpecial(item) === cinemNameSpecial(cinema_name)
+      )) ||
+    (plat_name === "yangcong" && cinema_name.includes("耀莱成龙"));
+
+  if (isSfcGroup || isSfcName) {
     return "sfc";
   }
   // 蚂蚁和洋葱、哈哈：UME。 猎人和芒果：ume一线、ume二线
-  else if (["UME", "ume一线", "ume二线", "c_ume"].includes(cinema_group)) {
+  else if (isUmeGroup || isUmeName) {
     return "ume";
   }
   // 蚂蚁和洋葱、哈哈：耀莱成龙。 猎人和芒果：耀莱一线、耀莱二线
-  else if (
-    [
-      "耀莱成龙",
-      "耀莱一线",
-      "耀莱二线",
-      "一线耀莱",
-      "二线耀莱",
-      "耀莱",
-      "c_jccinema"
-    ].includes(cinema_group) ||
-    (plat_name === "yangcong" && cinema_name.includes("耀莱成龙"))
-  ) {
+  else if (isYaolaiGroup || isYaolaiName) {
     return "yaolai";
   } else if (
     cinema_name.includes("仁恒梦影廊电影院") &&

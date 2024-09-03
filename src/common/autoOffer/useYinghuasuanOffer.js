@@ -146,7 +146,7 @@ class OrderAutoOfferQueue {
           lockseat: seat_no?.split(",").join(" ") || ""
         };
       });
-      // console.warn(conPrefix + "转换后的订单列表", sfcStayOfferlist);
+      console.warn(conPrefix + "转换后的订单列表", sfcStayOfferlist);
       sfcStayOfferlist = sfcStayOfferlist
         .filter(item => getCinemaFlag(item))
         .map(item => {
@@ -155,10 +155,10 @@ class OrderAutoOfferQueue {
             app_name: getCinemaFlag(item)
           };
         });
-      // console.warn(
-      //   conPrefix + "匹配已上架影院后的的待报价订单",
-      //   sfcStayOfferlist
-      // );
+      console.warn(
+        conPrefix + "匹配已上架影院后的的待报价订单",
+        sfcStayOfferlist
+      );
       if (!sfcStayOfferlist?.length) return [];
       const { handleSuccessOrderList, handleFailOrderList } = this;
       let orderOfferRecord = [
