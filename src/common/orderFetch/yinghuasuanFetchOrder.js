@@ -177,6 +177,14 @@ class OrderAutoFetchQueue {
       }
       if (!targetList?.length) return;
       console.warn(conPrefix + "待出票列表新订单", targetList);
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "新的待出票订单列表",
+        level: "info",
+        info: {
+          newOrders: targetList
+        }
+      });
       addNewOrder(targetList);
     } catch (error) {
       console.error(conPrefix + "获取订单列表异常", error);
