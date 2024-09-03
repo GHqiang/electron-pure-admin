@@ -278,6 +278,7 @@ class OrderAutoOfferQueue {
         cinema_group: order.cinema_group,
         offer_type: offerResult?.offerRule?.offerType,
         offer_amount: offerResult?.offerRule?.offerAmount,
+        rule_status: offerResult?.offerRule?.status,
         member_offer_amount: offerResult?.offerRule?.memberOfferAmount,
         member_price: offerResult?.offerRule?.memberCostPrice,
         real_member_price: offerResult?.offerRule?.real_member_price,

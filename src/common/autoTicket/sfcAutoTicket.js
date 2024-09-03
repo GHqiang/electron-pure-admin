@@ -542,6 +542,8 @@ class OrderAutoTicketQueue {
     // 放到这里即使修改token也不用重启队列了
     const { conPrefix, appFlag } = this;
     const { id, plat_name, supplierCode, order_number, bid } = item;
+    const {city_name, cinema_name, film_name, lockseat} = item
+    console.warn(conPrefix + "单个待出票订单信息", item);
     this.currentParamsList = getCinemaLoginInfoList()
       .filter(
         item =>
@@ -558,6 +560,73 @@ class OrderAutoTicketQueue {
         // 如果两个对象的 priority 属性都相同或都是假，则按默认顺序排列
         return 0;
       });
+    this.currentParamsInx = 0;
+    let offerRule;
+    try{
+      // 1、获取该订单的报价记录，按对应报价规则出票
+      const offerRes = await svApi.queryOfferList({
+        user_id: tokens.userInfo.user_id,
+        order_status: "1",
+        app_name: appFlag,
+        order_number,
+        plat_name
+      });
+      let offerRecord = offerRes?.data?.offerList || [];
+      offerRule = offerRecord?.[0];
+    }catch(error){
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: '获取该订单报价记录异常',
+        level: "error",
+        info: {
+          error
+        }
+      });
+    }
+    // 测试专用
+    if (isTestOrder) {
+      offerRule = { offer_type: "1", quan_value: "35" };
+      // offerRule = { offer_type: "2", member_price: "29.9" };
+    }
+    console.warn(
+      conPrefix + "从该订单的报价记录获取到的报价规则",
+      offerRule
+    );
+    if (!offerRule || offerRule?.rule_status === '3') {
+      let str = '获取该订单报价记录失败，微信通知手动出票';
+      if(offerRule) {
+        str = '该订单报价规则为仅报价，需手动出票并抓包相关接口';
+      }
+      console.error( conPrefix + str, offerRule);
+      this.setErrInfo(str);
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: str,
+        level: "error",
+        info: {
+          offerRule
+        }
+      });
+      sendWxPusherMessage({
+        plat_name,
+        order_number,
+        city_name,
+        cinema_name,
+        film_name,
+        lockseat,
+        transferTip: "此处不转单，直接跳过，需手动出票",
+        failReason: str
+      });
+      return;
+    }
+    this.logList.push({
+      opera_time: getCurrentFormattedDateTime(),
+      des: `获取该订单报价记录成功`,
+      level: "info",
+      info: {
+        offerRule
+      }
+    });
     try {
       console.warn(conPrefix + "单个待出票订单信息", item);
       // 1、解锁座位
@@ -670,8 +739,12 @@ class OrderAutoTicketQueue {
       // 解锁成功后延迟6秒再执行
       await mockDelay(6);
       // 2、一键买票
-      this.currentParamsInx = 0;
-      const result = await this.oneClickBuyTicket(item);
+      const result = await this.oneClickBuyTicket({
+        ...item,
+        otherParams: {
+          offerRule
+        }
+      });
       // result: { profit, submitRes, qrcode, quan_code, card_id, offerRule } || undefined
       if (result) {
         console.warn(conPrefix + "单个订单出票完成");
@@ -832,57 +905,6 @@ class OrderAutoTicketQueue {
           level: "info",
           info: {
             currentParamsList: this.currentParamsList
-          }
-        });
-        // 1、获取该订单的报价记录，按对应报价规则出票
-        const offerRes = await svApi.queryOfferList({
-          user_id: tokens.userInfo.user_id,
-          order_status: "1",
-          app_name: appFlag,
-          order_number,
-          plat_name
-        });
-        let offerRecord = offerRes?.data?.offerList || [];
-        offerRule = offerRecord?.[0];
-        // 测试专用
-        if (isTestOrder) {
-          offerRule = { offer_type: "1", quan_value: "35" };
-          // offerRule = { offer_type: "2", member_price: "29.9" };
-        }
-        console.warn(
-          conPrefix + "从该订单的报价记录获取到的报价规则",
-          offerRule
-        );
-        if (!offerRule) {
-          console.error(
-            conPrefix +
-              "获取该订单的报价记录失败，不进行出票，此处不转单，直接跳过",
-            offerRecord
-          );
-          this.setErrInfo("获取该订单报价记录失败，微信通知手动出票");
-          this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
-            des: `获取该订单报价记录失败，微信通知手动出票`,
-            level: "error"
-          });
-          sendWxPusherMessage({
-            plat_name,
-            order_number,
-            city_name,
-            cinema_name,
-            film_name,
-            lockseat,
-            transferTip: "此处不转单，直接跳过，需手动出票",
-            failReason: `获取该订单报价记录失败`
-          });
-          return;
-        }
-        this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
-          des: `获取该订单报价记录成功`,
-          level: "info",
-          info: {
-            offerRule
           }
         });
         // 2、获取城市列表
