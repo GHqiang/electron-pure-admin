@@ -14,7 +14,11 @@ const platFetchOrderRuleList = computed(() =>
 import { useStayTicketList } from "@/store/stayTicketList";
 const stayTicketList = useStayTicketList();
 const { addNewOrder } = stayTicketList;
-import { getCinemaFlag, getCurrentFormattedDateTime } from "@/utils/utils";
+import {
+  getCinemaFlag,
+  logUpload,
+  getCurrentFormattedDateTime
+} from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
 const tokens = platTokens();
@@ -101,14 +105,23 @@ class OrderAutoFetchQueue {
       }
       if (!stayList?.length) return;
       console.warn(conPrefix + "待出票列表新订单", stayList);
-      this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
-        des: "新的待出票订单列表",
-        level: "info",
-        info: {
-          newOrders: stayList
+      let logList = [
+        {
+          opera_time: getCurrentFormattedDateTime(),
+          des: "新的待出票订单列表",
+          level: "info",
+          info: {
+            newOrders: stayList
+          }
         }
-      });
+      ];
+      logUpload(
+        {
+          plat_name: "lieren",
+          type: 2
+        },
+        logList
+      );
       addNewOrder(stayList);
     } catch (error) {
       console.error(conPrefix + "获取订单列表异常", error);
