@@ -327,13 +327,22 @@ class OrderAutoOfferQueue {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: "测试单暂不进行报价",
-          level: "error",
-          info: { error: { code: 0, msg: "这是个测试" } }
+          level: "info",
+          info: { params }
         });
         return;
       }
       const res = await mayiApi.submitOffer(params);
       console.log(conPrefix + "提交报价返回", res);
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "提交报价入参和返回",
+        level: "info",
+        info: {
+          params,
+          res
+        }
+      });
       return res;
     } catch (error) {
       console.error(conPrefix + "提交报价异常", error);

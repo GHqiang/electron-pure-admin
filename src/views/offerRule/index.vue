@@ -202,7 +202,7 @@
       </el-table-column>
       <el-table-column prop="ruleStartTime" label="开始放映时间" width="110" />
       <el-table-column prop="ruleEndTime" label="结束放映时间" width="110" />
-      <el-table-column label="操作" fixed="right" align="center" width="200">
+      <el-table-column label="操作" fixed="right" align="left" width="350">
         <template #default="scope">
           <el-button
             size="small"

@@ -316,6 +316,18 @@ class getSfcOfferPrice {
         mixAddAmountRule.memberOfferAmount =
           mixAddAmountRule.memberRoundPrice +
           Number(mixAddAmountRule.addAmount);
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: "会员最终报价相关信息",
+          level: "info",
+          info: {
+            real_member_price: mixAddAmountRule.real_member_price,
+            memberCostPrice: mixAddAmountRule.memberCostPrice,
+            memberRoundPrice: mixAddAmountRule.memberRoundPrice,
+            addAmount: mixAddAmountRule.addAmount,
+            memberOfferAmount: mixAddAmountRule.memberOfferAmount
+          }
+        });
       } else {
         console.warn(
           conPrefix + "最小加价规则不存在,返回最小固定报价规则",
@@ -424,6 +436,18 @@ class getSfcOfferPrice {
       cost_price = cost_price + shouxufei;
       // 最终成本（减奖励费）
       const ensCostPrice = Number(cost_price - rewardPrice).toFixed();
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "sfc计算报价相关信息",
+        level: "info",
+        info: {
+          rule_price: price,
+          supplier_max_price,
+          shouxufei,
+          rewardPrice,
+          ensCostPrice
+        }
+      });
       // 最终成本超过平台限价
       if (ensCostPrice >= Number(supplier_max_price)) {
         let str = `最终成本${ensCostPrice}超过平台限价${supplier_max_price}，不再进行报价`;
@@ -605,6 +629,16 @@ class getSfcOfferPrice {
         member_price = discount
           ? (Number(member_price) * 100 * discount) / 10000
           : Number(member_price);
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: "获取会员价相关信息返回",
+          level: "info",
+          info: {
+            real_member_price,
+            discount,
+            cost_member_price: Number(member_price.toFixed(2))
+          }
+        });
         return {
           real_member_price,
           member_price: Number(member_price.toFixed(2))
