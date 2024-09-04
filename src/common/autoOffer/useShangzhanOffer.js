@@ -379,7 +379,7 @@ class OrderAutoOfferQueue {
       }
       const res = await this.submitOffer({
         order_sn: order.order_number,
-        seat_data: order_detail.map(item => {
+        seat_data: order.order_detail.map(item => {
           return {
             area_id: item.area_id,
             quoted: endPrice
