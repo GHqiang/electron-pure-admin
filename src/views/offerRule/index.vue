@@ -133,7 +133,7 @@
       </el-table-column>
       <el-table-column label="状态" fixed width="55">
         <template #default="scope">
-          <span>{{ scope.row.status === "1" ? "正常" : "禁用" }}</span>
+          <span>{{ statusObj[scope.row.status] }}</span>
         </template>
       </el-table-column>
       <el-table-column label="报价类型" fixed width="100">
@@ -288,6 +288,13 @@ const offerTypeObj = {
   2: "会员价加价",
   3: "会员日报价"
 };
+// 规则状态枚举
+const statusObj = {
+  1: "正常",
+  2: "禁用",
+  3: "仅报价"
+};
+
 // 表单查询数据
 const formData = reactive({
   orderForm: "", // 订单来源

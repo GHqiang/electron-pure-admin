@@ -671,15 +671,6 @@ class OrderAutoTicketQueue {
         level: "info"
       });
     }
-    // logUpload(
-    //   {
-    //     plat_name: plat_name,
-    //     app_name: appFlag,
-    //     order_number: order_number,
-    //     type: 3
-    //   },
-    //   this.logList
-    // );
     try {
       // 解锁成功后延迟6秒再执行
       await mockDelay(6);
@@ -1747,8 +1738,9 @@ class OrderAutoTicketQueue {
   // 获取购票信息
   async getPayResult(data) {
     const { conPrefix } = this;
-    let { orderHeaderId, session_id, inx = 1 } = data || {};
+    let { orderHeaderId, session_id, syncQueryLogList, inx = 1 } = data || {};
     let qrcode;
+    let targetLogList = syncQueryLogList || this.logList;
     try {
       let params = {
         params: {
@@ -1762,7 +1754,7 @@ class OrderAutoTicketQueue {
       };
       console.log(conPrefix + "获取支付结果参数", params);
       if (inx == 1) {
-        this.logList.push({
+        targetLogList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: `获取支付结果参数`,
           level: "info",
@@ -1773,7 +1765,7 @@ class OrderAutoTicketQueue {
       }
       const res = await this.umeApi.getPayResult(params);
       console.log(conPrefix + "获取支付结果返回", res);
-      this.logList.push({
+      targetLogList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: `第${inx}次获取支付结果返回`,
         level: "info",
@@ -1786,7 +1778,7 @@ class OrderAutoTicketQueue {
     } catch (error) {
       console.error(conPrefix + "获取订单支付结果异常", error);
       this.setErrInfo("获取订单支付结果异常", error);
-      this.logList.push({
+      targetLogList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: `第${inx}次获取订单支付结果异常`,
         level: "error",
@@ -1807,7 +1799,7 @@ class OrderAutoTicketQueue {
         pageRow: 5,
         session_id
       });
-      this.logList.push({
+      targetLogList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: `第${inx}次获取已完成订单列表返回`,
         level: "error",
@@ -1818,7 +1810,7 @@ class OrderAutoTicketQueue {
       let payList = listRes.data || [];
       let targetObj = payList.find(item => item.orderHeaderId == orderHeaderId);
       qrcode = targetObj?.ticketCode?.split(",").join("|");
-      this.logList.push({
+      targetLogList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: `第${inx}次从已完成订单里获取取票码${qrcode ? "成功" : "失败"}`,
         level: "error",
@@ -1827,7 +1819,7 @@ class OrderAutoTicketQueue {
         }
       });
     } catch (error) {
-      this.logList.push({
+      targetLogList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: `第${inx}次获取已完成订单列表异常`,
         level: "error",
@@ -1851,9 +1843,11 @@ class OrderAutoTicketQueue {
     supplierCode,
     lockseat,
     orderInfo,
-    flag
+    flag,
+    syncQueryLogList
   }) {
     const { conPrefix } = this;
+    let targetLogList = flag === 1 ? this.logList : syncQueryLogList;
     let params;
     if (plat_name === "lieren") {
       params = {
@@ -1935,7 +1929,7 @@ class OrderAutoTicketQueue {
         ]
       };
     } else if (plat_name === "haha") {
-      this.logList.push({
+      targetLogList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: `哈哈暂不上传取票码,需手动上传`,
         level: "info"
@@ -1999,7 +1993,7 @@ class OrderAutoTicketQueue {
     }
     try {
       console.log(conPrefix + "提交出票码参数", params);
-      this.logList.push({
+      targetLogList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: `提交出票码参数`,
         level: "info",
@@ -2008,7 +2002,7 @@ class OrderAutoTicketQueue {
         }
       });
       if (isTestOrder) {
-        this.logList.push({
+        targetLogList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: `测试单暂不上传`,
           level: "error"
@@ -2017,7 +2011,7 @@ class OrderAutoTicketQueue {
       }
       const res = await PLAT_API_OBJ[plat_name].submitTicketCode(params);
       console.log(conPrefix + "提交出票码返回", res);
-      this.logList.push({
+      targetLogList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: `提交取票码返回`,
         level: "info",
@@ -2028,13 +2022,16 @@ class OrderAutoTicketQueue {
       return res;
     } catch (error) {
       console.error(conPrefix + "提交出票码异常", error);
+      targetLogList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: `提交出票码异常`,
+        level: "error",
+        info: {
+          error
+        }
+      });
       if (flag !== 2) {
         this.setErrInfo("提交出票码异常", error);
-        this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
-          des: `提交出票码异常，响应-${JSON.stringify(error)}，参数-${JSON.stringify(params)}`,
-          level: "error"
-        });
       } else {
         let err_info = formatErrInfo(error);
         svApi.updateTicketRecord({
@@ -2085,15 +2082,6 @@ class OrderAutoTicketQueue {
           des: `获取订单支付结果，取票码不存在，暂时返回异步获取`,
           level: "error"
         });
-        // logUpload(
-        //   {
-        //     plat_name: plat_name,
-        //     app_name: appFlag,
-        //     order_number: order_number,
-        //     type: 3
-        //   },
-        //   this.logList
-        // );
         this.asyncFetchQrcodeSubmit({
           orderHeaderId,
           order_id,
@@ -2147,18 +2135,26 @@ class OrderAutoTicketQueue {
     session_id
   }) {
     const { conPrefix } = this;
+    let syncQueryLogList = []; // 异步运行日志
     try {
+      syncQueryLogList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: `异步轮询获取取票码并提交方法开始执行`,
+        level: "error"
+      });
       // 每搁30秒查一次，查10次，5分钟
       let qrcode = await trial(
         inx =>
           this.getPayResult({
             orderHeaderId,
             session_id,
-            inx
+            inx,
+            syncQueryLogList
           }),
         10,
         30,
-        conPrefix
+        conPrefix,
+        5 * 60
       );
       if (!qrcode) {
         // 5分钟后还失败消息推送
@@ -2172,21 +2168,28 @@ class OrderAutoTicketQueue {
           transferTip: "此处不转单，需关注该订单，适时手动上传取票码",
           failReason: `系统延迟轮询5分钟后获取取票码仍失败`
         });
+        syncQueryLogList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: `系统延迟轮询5分钟后获取取票码仍失败`,
+          level: "error"
+        });
         // 每搁30秒查一次，查10次，5分钟
         qrcode = await trial(
           inx =>
             this.getPayResult({
               orderHeaderId,
               session_id,
-              inx
+              inx,
+              syncQueryLogList
             }),
           10,
           30,
-          conPrefix
+          conPrefix,
+          5 * 60
         );
       }
       if (!qrcode) {
-        this.logList.push({
+        syncQueryLogList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: `系统延迟轮询10分钟后获取取票码仍失败`,
           level: "error"
@@ -2198,7 +2201,7 @@ class OrderAutoTicketQueue {
             order_number: order_number,
             type: 3
           },
-          this.logList
+          syncQueryLogList
         );
         svApi.updateTicketRecord({
           whereObj: {
@@ -2221,8 +2224,18 @@ class OrderAutoTicketQueue {
         plat_name,
         lockseat,
         orderInfo,
-        flag: 2
+        flag: 2,
+        syncQueryLogList
       });
+      logUpload(
+        {
+          plat_name: plat_name,
+          app_name: app_name,
+          order_number: order_number,
+          type: 3
+        },
+        syncQueryLogList
+      );
     } catch (error) {
       console.warn("异步轮询获取取票码上传提交异常", error);
     }
@@ -2238,7 +2251,8 @@ class OrderAutoTicketQueue {
     plat_name,
     lockseat,
     orderInfo,
-    flag
+    flag,
+    syncQueryLogList
   }) {
     const { conPrefix } = this;
     try {
@@ -2251,11 +2265,13 @@ class OrderAutoTicketQueue {
         supplierCode,
         lockseat,
         orderInfo,
-        flag
+        flag,
+        syncQueryLogList
       });
+      let targetLogList = flag === 1 ? this.logList : syncQueryLogList;
       if (!submitRes) {
         console.error(conPrefix + "订单提交取票码失败，单个订单直接出票结束");
-        this.logList.push({
+        targetLogList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: `提交取票码失败`,
           level: "error"
@@ -2274,7 +2290,7 @@ class OrderAutoTicketQueue {
         // this.setErrInfo("订单提交取票码失败");
         return;
       }
-      this.logList.push({
+      targetLogList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: `提交取票码成功`,
         level: "info"
@@ -2287,22 +2303,6 @@ class OrderAutoTicketQueue {
             card_id
           });
         }
-        let log_list = [
-          {
-            opera_time: getCurrentFormattedDateTime(),
-            des: `系统延迟后轮询获取提交取票码成功`,
-            level: "info"
-          }
-        ];
-        logUpload(
-          {
-            plat_name: plat_name,
-            app_name: app_name,
-            order_number: order_number,
-            type: 3
-          },
-          log_list
-        );
         // 更新出票结果
         svApi.updateTicketRecord({
           whereObj: {
@@ -2319,7 +2319,9 @@ class OrderAutoTicketQueue {
       return submitRes;
     } catch (error) {
       console.warn("提交取票码异常", error);
-      this.setErrInfo("提交取票码异常", error);
+      if (flag === 1) {
+        this.setErrInfo("提交取票码异常", error);
+      }
     }
   }
   // 获取新券
