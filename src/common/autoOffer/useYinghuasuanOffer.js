@@ -8,6 +8,7 @@ import {
   getOrginValue, // 获取对象源值
   formatErrInfo // 格式化errInfo
 } from "@/utils/utils";
+import { TEST_NEW_PLAT_LIST } from "@/common/constant.js";
 
 import svApi from "@/api/sv-api"; // 机器api
 import yinghuasuanApi from "@/api/yinghuasuan-api"; // 影划算平台api
@@ -375,10 +376,13 @@ class OrderAutoOfferQueue {
         console.error(conPrefix + "获取最终报价返回空");
         return;
       }
-      const { endPrice, offerRule, err_msg, err_info } = result || {};
+      let { endPrice, offerRule, err_msg, err_info } = result || {};
       console.warn(conPrefix + "获取最终报价返回", endPrice);
       if (!endPrice) {
         return { offerRule, err_msg, err_info };
+      }
+      if (TEST_NEW_PLAT_LIST.includes("yinghuasuan")) {
+        endPrice = endPrice - 1;
       }
       const res = await this.submitOffer({
         inv_id: "" + order.id,

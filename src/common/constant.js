@@ -10,6 +10,9 @@ const ORDER_FORM = {
   haha: "哈哈"
 };
 
+// 测试新平台列表
+const TEST_NEW_PLAT_LIST = ["yinghuasuan", "shangzhan"];
+
 // 优惠券类型
 const QUAN_TYPE = {
   40: "sfc-40",
@@ -1301,6 +1304,7 @@ const UME_CINEMA_NAME = [
 
 export {
   ORDER_FORM,
+  TEST_NEW_PLAT_LIST,
   QUAN_TYPE,
   QUAN_TYPE_COST,
   QUAN_TYPE_FLAG,

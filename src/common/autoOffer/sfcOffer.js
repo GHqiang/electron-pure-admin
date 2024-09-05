@@ -11,7 +11,11 @@ import {
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
-import { APP_LIST, QUAN_TYPE_COST } from "@/common/constant.js";
+import {
+  APP_LIST,
+  QUAN_TYPE_COST,
+  TEST_NEW_PLAT_LIST
+} from "@/common/constant.js";
 import lierenApi from "@/api/lieren-api";
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
@@ -110,7 +114,8 @@ class getSfcOfferPrice {
             supplier_max_price,
             price,
             rewards,
-            offerList
+            offerList,
+            plat_name
           });
           console.warn(conPrefix + "最终报价返回", endPrice);
           if (endPrice) {
@@ -381,8 +386,14 @@ class getSfcOfferPrice {
   async getEndPrice(params) {
     const { conPrefix } = this;
     try {
-      let { cost_price, supplier_max_price, price, rewards, offerList } =
-        params || {};
+      let {
+        cost_price,
+        supplier_max_price,
+        price,
+        rewards,
+        offerList,
+        plat_name
+      } = params || {};
       // console.log("获取最终报价相关字段", params);
       // 远端报价记录
       let serOfferRecord, lierenOfferRecord, lierenMachineOfferList;
@@ -475,7 +486,7 @@ class getSfcOfferPrice {
         // 不重新赋值的话按平台规则会员价四舍五入后+固定加价
         price = Math.round(price);
       }
-      if (price <= cost_price) {
+      if (price <= cost_price && !TEST_NEW_PLAT_LIST.includes(plat_name)) {
         let str = `最终报价${price}小于等于成本价${cost_price}，不再进行报价`;
         console.error(conPrefix + str);
         this.logList.push({

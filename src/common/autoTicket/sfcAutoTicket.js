@@ -33,7 +33,8 @@ import {
   TICKET_CONPREFIX_OBJ,
   APP_OPENID_OBJ,
   APP_LIST,
-  QUAN_TYPE_COST
+  QUAN_TYPE_COST,
+  TEST_NEW_PLAT_LIST
 } from "@/common/constant";
 import { APP_API_OBJ, PLAT_API_OBJ } from "@/common/index";
 
@@ -1216,7 +1217,8 @@ class OrderAutoTicketQueue {
         ticket_num,
         supplier_end_price,
         rewards,
-        offerRule
+        offerRule,
+        plat_name
       });
       if (!card_id && !quan_code) {
         console.log("this.currentParamsInx", this.currentParamsInx);
@@ -1591,7 +1593,8 @@ class OrderAutoTicketQueue {
       ticket_num,
       supplier_end_price,
       offerRule,
-      rewards
+      rewards,
+      plat_name
     } = params;
     try {
       console.log(
@@ -1654,7 +1657,8 @@ class OrderAutoTicketQueue {
           real_member_price,
           rewards,
           session_id,
-          mobile
+          mobile,
+          plat_name
         });
         return {
           card_id,
@@ -1691,7 +1695,8 @@ class OrderAutoTicketQueue {
           quanList,
           quan_value,
           rewards,
-          session_id
+          session_id,
+          plat_name
         });
         return {
           quan_code: useQuans.join(),
@@ -2553,7 +2558,8 @@ class OrderAutoTicketQueue {
     quanList,
     quan_value,
     rewards,
-    session_id
+    session_id,
+    plat_name
   }) {
     const { conPrefix, appFlag } = this;
     try {
@@ -2634,7 +2640,7 @@ class OrderAutoTicketQueue {
           (Number(supplier_end_price) * Number(ticket_num) * 400) / 10000;
         profit += rewardPrice;
       }
-      if (profit < 0) {
+      if (profit < 0 && !TEST_NEW_PLAT_LIST.includes(plat_name)) {
         console.error(conPrefix + "最终利润为负，单个订单直接出票结束");
         this.setErrInfo(
           APP_LIST[appFlag] +
@@ -2677,7 +2683,8 @@ class OrderAutoTicketQueue {
     real_member_price,
     rewards,
     session_id,
-    mobile
+    mobile,
+    plat_name
   }) {
     const { conPrefix, appFlag } = this;
     try {
@@ -2807,7 +2814,7 @@ class OrderAutoTicketQueue {
         profit += rewardPrice;
       }
       profit = Number(profit).toFixed(2);
-      if (profit < 0) {
+      if (profit < 0 && !TEST_NEW_PLAT_LIST.includes(plat_name)) {
         console.error(conPrefix + "最终利润为负，单个订单直接出票结束");
         this.setErrInfo(
           APP_LIST[appFlag] +
