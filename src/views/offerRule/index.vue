@@ -131,9 +131,18 @@
           <span>{{ shadowLineObj[scope.row.shadowLineName] }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="状态" fixed width="55">
+      <el-table-column label="状态" fixed width="100">
         <template #default="scope">
-          <span>{{ statusObj[scope.row.status] }}</span>
+          <span v-if="scope.row.status === '3'">{{
+            statusObj[scope.row.status]
+          }}</span>
+          <el-switch
+            v-else
+            v-model="scope.row.status"
+            active-value="1"
+            inactive-value="2"
+            @change="handleStatusChange(scope.row)"
+          />
         </template>
       </el-table-column>
       <el-table-column label="报价类型" fixed width="100">
@@ -439,6 +448,51 @@ const addRule = () => {
   sfcDialogRef.value.open({ shadowLineName: shadowLine.value });
 };
 
+// 处理状态更改
+const handleStatusChange = async row => {
+  // 显示二次确认对话框
+  const confirmResult = await ElMessageBox.confirm(
+    `确定要${row.status === "1" ? "启用" : "禁用"}该报价规则吗?`,
+    "提示",
+    {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning",
+      showClose: false,
+      closeOnClickModal: false,
+      closeOnPressEscape: false
+    }
+  ).catch(err => err);
+
+  if (confirmResult !== "confirm") {
+    // 用户取消了操作，恢复原状态
+    row.status = row.status === "1" ? "2" : "1";
+    return;
+  }
+
+  // 更新状态
+  try {
+    await editStatus(row);
+  } catch (err) {
+    console.warn("状态更新失败, 还原原状态", err);
+    row.status = row.status === "1" ? "2" : "1";
+  }
+};
+
+// 启用禁用状态
+const editStatus = async row => {
+  try {
+    await svApi.updateRuleRecord({
+      id: row.id,
+      status: row.status
+    });
+    searchData();
+    ElMessage.success("状态更新成功");
+  } catch (err) {
+    throw new Error("状态更新失败");
+  }
+};
+
 // 开启关闭仅报价
 const switchOnlyOffer = async (row, type) => {
   try {
@@ -455,24 +509,10 @@ const switchOnlyOffer = async (row, type) => {
       }
     )
       .then(async () => {
-        let ruleInfo = JSON.parse(JSON.stringify(row));
-        ruleInfo.includeCityNames = JSON.stringify(ruleInfo.includeCityNames);
-        ruleInfo.excludeCityNames = JSON.stringify(ruleInfo.excludeCityNames);
-        ruleInfo.includeCinemaNames = JSON.stringify(
-          ruleInfo.includeCinemaNames
-        );
-        ruleInfo.excludeCinemaNames = JSON.stringify(
-          ruleInfo.excludeCinemaNames
-        );
-        ruleInfo.includeHallNames = JSON.stringify(ruleInfo.includeHallNames);
-        ruleInfo.excludeHallNames = JSON.stringify(ruleInfo.excludeHallNames);
-        ruleInfo.includeFilmNames = JSON.stringify(ruleInfo.includeFilmNames);
-        ruleInfo.excludeFilmNames = JSON.stringify(ruleInfo.excludeFilmNames);
-        ruleInfo.platOfferList = JSON.stringify(ruleInfo.platOfferList || []);
-        ruleInfo.weekDay = JSON.stringify(ruleInfo.weekDay);
-        ruleInfo.update_time = getCurrentFormattedDateTime();
-        ruleInfo.status = type === "3" ? "3" : "1";
-        await svApi.updateRuleRecord(ruleInfo);
+        await svApi.updateRuleRecord({
+          id: row.id,
+          status: type === "3" ? "3" : "1"
+        });
         searchData();
         ElMessage({
           type: "success",
