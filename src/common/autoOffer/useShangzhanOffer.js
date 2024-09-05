@@ -481,7 +481,7 @@ function parseTimeStr(timeStr) {
 
   // 解析输入的字符串
   const parts = timeStr.split(" ");
-  const datePart = parts[0];
+  const datePart = parts[0].replace("日", ""); // 移除 "日" 字符
   const timePart = parts[1];
 
   // 解析日期部分
@@ -489,12 +489,12 @@ function parseTimeStr(timeStr) {
   const [startTime, endTime] = timePart.split("-");
 
   // 格式化日期和时间
-  const startFormatted = `${currentYear}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")} ${startTime}`;
-  const endFormatted = `${currentYear}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")} ${endTime}`;
+  const startFormatted = `${currentYear}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")} ${startTime}:00`;
+  const endFormatted = `${currentYear}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")} ${endTime}:00`;
 
   return {
-    startTime: startFormatted + ":00",
-    endTime: endFormatted + ":00"
+    startTime: startFormatted,
+    endTime: endFormatted
   };
 }
 // 报价队列实例
