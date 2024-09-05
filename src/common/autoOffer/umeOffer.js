@@ -400,6 +400,14 @@ class getUmeOfferPrice {
       console.log(conPrefix + "获取座位布局参数", params);
       const res = await this.appApi.getMoviePlaySeat(params);
       console.log(conPrefix + "获取座位布局返回", res);
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取座位布局返回",
+        level: "info",
+        info: {
+          res
+        }
+      });
       return res.data?.areaInfoList || [];
     } catch (error) {
       console.error(conPrefix + "获取座位布局异常", error);
@@ -434,6 +442,18 @@ class getUmeOfferPrice {
         ticketMemberServiceFeeMin = 0,
         activityPrices = []
       } = movieInfo;
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取会员价相关信息0",
+        level: "info",
+        info: {
+          ticketMemberPrice,
+          maxSeatPrice,
+          handlingMemberFee,
+          ticketMemberServiceFeeMin,
+          activityPrices
+        }
+      });
       let member_price = Math.max(ticketMemberPrice, maxSeatPrice) / 100;
       // 会员价等于真实会员价加手续费加会员服务费
       member_price =
@@ -502,7 +522,7 @@ class getUmeOfferPrice {
           : Number(member_price);
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: "获取会员价相关信息返回",
+          des: "获取会员价相关信息1",
           level: "info",
           info: {
             real_member_price,
@@ -648,6 +668,14 @@ class getUmeOfferPrice {
         });
         return;
       }
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取电影放映信息从而获取会员价",
+        level: "info",
+        info: {
+          targetShow
+        }
+      });
       const areaInfoList = await this.getSeatLayout({
         cinemaCode,
         cinemaLinkId,

@@ -524,6 +524,14 @@ class getSfcOfferPrice {
       console.log(conPrefix + "获取座位布局参数", params);
       const res = await this.appApi.getMoviePlaySeat(params);
       console.log(conPrefix + "获取座位布局返回", res);
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取座位布局返回",
+        level: "error",
+        info: {
+          res
+        }
+      });
       return res.data?.play_data || {};
     } catch (error) {
       console.error(conPrefix + "获取座位布局异常", error);
@@ -756,6 +764,14 @@ class getSfcOfferPrice {
           });
           return;
         }
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: "获取电影放映信息从而获取会员价",
+          level: "info",
+          info: {
+            ticketInfo
+          }
+        });
         return { ...ticketInfo, city_id, cinema_id };
       } else {
         this.logList.push({
