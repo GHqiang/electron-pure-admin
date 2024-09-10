@@ -98,7 +98,7 @@
           style="width: 194px"
           placeholder="请选择开始时间"
           format="YYYY-MM-DD HH:mm:ss"
-          date-format="MMM DD, YYYY"
+          value-format="YYYY-MM-DD HH:mm:ss"
           time-format="HH:mm"
         />
       </el-form-item>
@@ -109,7 +109,7 @@
           style="width: 194px"
           placeholder="请选择结束时间"
           format="YYYY-MM-DD HH:mm:ss"
-          date-format="MMM DD, YYYY"
+          value-format="YYYY-MM-DD HH:mm:ss"
           time-format="HH:mm"
         />
       </el-form-item>

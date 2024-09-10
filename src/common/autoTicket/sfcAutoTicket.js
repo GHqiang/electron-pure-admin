@@ -1870,8 +1870,14 @@ class OrderAutoTicketQueue {
   // 获取购票信息
   async payOrder(data) {
     const { conPrefix } = this;
-    let { city_id, cinema_id, order_num, session_id, syncQueryLogList, inx } =
-      data || {};
+    let {
+      city_id,
+      cinema_id,
+      order_num,
+      session_id,
+      syncQueryLogList,
+      inx = 1
+    } = data || {};
     let targetLogList = syncQueryLogList || this.logList;
     try {
       let params = {
