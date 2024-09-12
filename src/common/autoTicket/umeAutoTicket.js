@@ -177,7 +177,7 @@ class OrderAutoTicketQueue {
   async fetchOrders(fetchDelay) {
     const { conPrefix, appFlag } = this;
     try {
-      await mockDelay(fetchDelay);
+      // await mockDelay(fetchDelay);
       let sfcStayOfferlist = getOrginValue(stayTicketList.items).filter(
         item => item.appName === appFlag
       );
@@ -257,9 +257,13 @@ class OrderAutoTicketQueue {
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: `订单开始出票，订单号-${order.order_number}，上个订单号-${this.prevOrderNumber}`,
-        level: "info"
+        level: "info",
+        info: {
+          order,
+          delayTime
+        }
       });
-      await mockDelay(delayTime);
+      // await mockDelay(delayTime);
       console.log(conPrefix + `订单处理 ${order.id}`);
       if (this.isRunning) {
         const res = await this.singleTicket(order);
@@ -673,7 +677,7 @@ class OrderAutoTicketQueue {
     }
     try {
       // 解锁成功后延迟6秒再执行
-      await mockDelay(6);
+      await mockDelay(1);
       // 2、一键买票
       const result = await this.oneClickBuyTicket({
         ...item,
@@ -1118,9 +1122,8 @@ class OrderAutoTicketQueue {
           }
         });
       }
-
       // 锁定座位前延迟一秒
-      await mockDelay(1);
+      // await mockDelay(1);
       // 4、锁定座位
       let params = {
         cinemaCode,
@@ -1299,7 +1302,7 @@ class OrderAutoTicketQueue {
           level: "error",
           info: {
             cardList,
-            quanList: quanList.slice(0, 20),
+            quanList: quanList.slice(0, 10),
             supplier_end_price,
             ticket_num,
             total_price,
@@ -1704,10 +1707,10 @@ class OrderAutoTicketQueue {
       if (error?.msg?.includes("超时") && isTimeoutRetry === 1) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: `创建订单接口超时，延迟2秒后重试`,
+          des: `创建订单接口超时，延迟1秒后重试`,
           level: "error"
         });
-        await mockDelay(2);
+        await mockDelay(1);
         try {
           const order_num = await this.createOrder({
             ...data,
@@ -1804,7 +1807,7 @@ class OrderAutoTicketQueue {
         des: `第${inx}次获取已完成订单列表返回`,
         level: "error",
         info: {
-          listRes
+          listRes: listRes?.data?.slice(0, 3)
         }
       });
       let payList = listRes.data || [];

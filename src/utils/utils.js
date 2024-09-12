@@ -1307,6 +1307,9 @@ const logUpload = async (order, logList) => {
         info
       };
     });
+    // 解决后端接口里面返回特殊表情接口报错无法入库的问题
+    log_list = JSON.stringify(log_list).replace(/[\u{1F600}-\u{1F64F}]/gu, "");
+    log_list = JSON.parse(log_list);
     logList.length = 0; // 清空原数组（堆内存里面的值会被清空）
     // type 1-报价 2-获取订单 3-出票
     const { order_number, app_name, plat_name, type = 3 } = order;

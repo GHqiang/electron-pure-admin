@@ -1144,7 +1144,8 @@ const APP_GROUP_OBJ = {
 const WX_MSG_UID = {
   1: "UID_AIFZVT3B4zcj10CvGFLKB2hS2wt7", // 张三
   9: "UID_Dc5u7HJZSLvjbGIwPeZmiSRPurim", // 苦瓜
-  10: "UID_NnfJzb7r8pPyfhuq89OOrzr216Ba" // 兜儿
+  10: "UID_NnfJzb7r8pPyfhuq89OOrzr216Ba", // 兜儿
+  11: "UID_aN8haBm8iKK2rlufRiBqNVL0pCen" // 婷婷
 };
 
 // sfc上影影院名称(小程序名称)

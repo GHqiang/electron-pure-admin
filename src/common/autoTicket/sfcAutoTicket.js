@@ -180,7 +180,7 @@ class OrderAutoTicketQueue {
   async fetchOrders(fetchDelay) {
     const { conPrefix, appFlag } = this;
     try {
-      await mockDelay(fetchDelay);
+      // await mockDelay(fetchDelay);
       let sfcStayOfferlist = getOrginValue(stayTicketList.items).filter(
         item => item.appName === appFlag
       );
@@ -265,10 +265,11 @@ class OrderAutoTicketQueue {
         des: `订单开始出票，订单号-${order.order_number}，上个订单号-${this.prevOrderNumber}`,
         level: "info",
         info: {
-          order
+          order,
+          delayTime
         }
       });
-      await mockDelay(delayTime);
+      // await mockDelay(delayTime);
       console.log(conPrefix + `订单处理 ${order.id}`);
       if (this.isRunning) {
         const res = await this.singleTicket(order);
@@ -726,7 +727,7 @@ class OrderAutoTicketQueue {
     }
     try {
       // 解锁成功后延迟6秒再执行
-      await mockDelay(6);
+      await mockDelay(1);
       // 2、一键买票
       const result = await this.oneClickBuyTicket({
         ...item,
@@ -1833,10 +1834,10 @@ class OrderAutoTicketQueue {
       if (error?.msg === "请求接口超时,请重试" && isTimeoutRetry === 1) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: `创建订单请求接口超时，延迟2秒后重试`,
+          des: `创建订单请求接口超时，延迟1秒后重试`,
           level: "error"
         });
-        await mockDelay(2);
+        await mockDelay(1);
         try {
           const order_num = await this.createOrder({
             ...data,
@@ -1845,7 +1846,7 @@ class OrderAutoTicketQueue {
           if (order_num) {
             this.logList.push({
               opera_time: getCurrentFormattedDateTime(),
-              des: `创建订单请求接口超时，延迟2秒后重试成功`,
+              des: `创建订单请求接口超时，延迟1秒后重试成功`,
               level: "info",
               info: {
                 order_num
