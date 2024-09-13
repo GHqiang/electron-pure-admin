@@ -71,8 +71,12 @@ class OrderAutoTicketQueue {
   // 监听新订单
   setupListeners() {
     // 先移除旧的监听器再注册新的，避免多次监听重复执行
-    window.removeEventListener(this.eventName, this.handleNewOrder.bind(this));
-    window.addEventListener(this.eventName, this.handleNewOrder.bind(this));
+    if (this.handleNewOrderBound) {
+      window.removeEventListener(this.eventName, this.handleNewOrderBound);
+    }
+
+    this.handleNewOrderBound = this.handleNewOrder.bind(this);
+    window.addEventListener(this.eventName, this.handleNewOrderBound);
   }
 
   // 测试新订单
@@ -103,8 +107,7 @@ class OrderAutoTicketQueue {
     // 动态生成事件名称
     const eventName = `newOrder_${appFlag}`;
     // 创建一个事件对象
-    const newOrderEvent = new CustomEvent(eventName, { detail: {} });
-    newOrderEvent.detail = newOrder;
+    const newOrderEvent = new CustomEvent(eventName, { detail: newOrder });
     window.dispatchEvent(newOrderEvent);
     console.log(
       `Sent new order to the ticketing queue (${appFlag}):`,
@@ -116,6 +119,24 @@ class OrderAutoTicketQueue {
   handleNewOrder(event) {
     const { appFlag } = this;
     const order = event.detail;
+    logUpload(
+      {
+        plat_name: order.plat_name || "",
+        app_name: appFlag,
+        order_number: order.order_number || "",
+        type: 3
+      },
+      [
+        {
+          opera_time: getCurrentFormattedDateTime(),
+          des: "监听到发送的新订单消息",
+          level: "info",
+          info: {
+            newOrders: order
+          }
+        }
+      ]
+    );
     console.log(`Received new order (${appFlag}):`, order);
     const { handleSuccessOrderList, handleFailOrderList, queue } = this;
     const orderTicketRecord = [

@@ -127,8 +127,7 @@ class OrderAutoFetchQueue {
         // 动态生成事件名称
         const eventName = `newOrder_${item.appName}`;
         // 创建一个事件对象
-        const newOrderEvent = new CustomEvent(eventName, { detail: {} });
-        newOrderEvent.detail = item;
+        const newOrderEvent = new CustomEvent(eventName, { detail: item });
         window.dispatchEvent(newOrderEvent);
       });
     } catch (error) {
