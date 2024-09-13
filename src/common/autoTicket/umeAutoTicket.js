@@ -90,6 +90,25 @@ class OrderAutoTicketQueue {
       let orders = await this.fetchOrders(fetchDelay);
       if (orders?.length) {
         console.warn(conPrefix + "新的待出票订单列表", orders);
+        let logList = [
+          {
+            opera_time: getCurrentFormattedDateTime(),
+            des: "自动出票队列获取到新的待出票列表",
+            level: "info",
+            info: {
+              newOrders: orders
+            }
+          }
+        ];
+        logUpload(
+          {
+            plat_name: orders[0].plat_name,
+            app_name: appFlag,
+            order_number: orders[0].order_number,
+            type: 3
+          },
+          logList
+        );
       }
       // 将订单加入队列
       this.enqueue(orders);
@@ -177,7 +196,7 @@ class OrderAutoTicketQueue {
   async fetchOrders(fetchDelay) {
     const { conPrefix, appFlag } = this;
     try {
-      // await mockDelay(fetchDelay);
+      await mockDelay(0.01);
       let sfcStayOfferlist = getOrginValue(stayTicketList.items).filter(
         item => item.appName === appFlag
       );
@@ -210,15 +229,18 @@ class OrderAutoTicketQueue {
       //   sfcStayOfferlist
       // );
       if (!sfcStayOfferlist?.length) return [];
-      const { handleSuccessOrderList, handleFailOrderList } = this;
+      const { handleSuccessOrderList, handleFailOrderList, queue } = this;
       const orderOfferRecord = [
         ...handleSuccessOrderList,
-        ...handleFailOrderList
+        ...handleFailOrderList,
+        ...queue
       ];
       let newOrders = sfcStayOfferlist.filter(item => {
         // 过滤出来新订单（未进行过出票的）
         return !orderOfferRecord.some(
-          itemA => itemA.order_number === item.order_number
+          itemA =>
+            itemA.plat_name === item.plat_name &&
+            itemA.order_number === item.order_number
         );
       });
       console.warn(
