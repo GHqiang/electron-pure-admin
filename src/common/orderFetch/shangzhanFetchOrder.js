@@ -167,7 +167,15 @@ class OrderAutoFetchQueue {
         },
         logList
       );
-      addNewOrder(sfcStayOfferlist);
+      // addNewOrder(sfcStayOfferlist);
+      sfcStayOfferlist.forEach(item => {
+        // 动态生成事件名称
+        const eventName = `newOrder_${item.appName}`;
+        // 创建一个事件对象
+        const newOrderEvent = new CustomEvent(eventName, { detail: {} });
+        newOrderEvent.detail = item;
+        window.dispatchEvent(newOrderEvent);
+      });
     } catch (error) {
       console.error(conPrefix + "获取订单列表异常", error);
     }

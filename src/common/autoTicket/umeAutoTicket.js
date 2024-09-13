@@ -53,22 +53,114 @@ class OrderAutoTicketQueue {
     this.currentParamsList = [];
     this.logList = []; // 操作运行日志
     this.prevOrderNumber = ""; // 上个订单号
+    this.eventName = `newOrder_${appFlag}`;
   }
 
-  // 启动队列（fetchDelay获取订单列表间隔，processDelay处理订单间隔）
+  // 启动队列
   async start() {
-    const { conPrefix, appFlag } = this;
-    // 设置队列为运行状态
-    this.isRunning = true;
+    const { conPrefix } = this;
     this.handleSuccessOrderList = [];
     this.handleFailOrderList = [];
     this.prevOrderNumber = "";
     // 由于及时队列停了 this.enqueue方法仍可能运行一次，故在每次启动重置队列
     this.queue = [];
-    console.warn(conPrefix + `队列启动`);
-    // 循环直到队列停止
-    while (this.isRunning) {
-      // 获取订单列表(支持时间间隔)
+    console.warn(conPrefix + `队列启动，开始监听是否有新订单`);
+    this.setupListeners();
+  }
+
+  // 监听新订单
+  setupListeners() {
+    // 先移除旧的监听器再注册新的，避免多次监听重复执行
+    window.removeEventListener(this.eventName, this.handleNewOrder.bind(this));
+    window.addEventListener(this.eventName, this.handleNewOrder.bind(this));
+  }
+
+  // 测试新订单
+  testSendNewOrder(order) {
+    const { appFlag } = this;
+    isTestOrder = true;
+    let newOrder = order || {
+      id: 7177,
+      plat_name: "lieren",
+      app_name: "ume",
+      ticket_num: 1,
+      rewards: "0",
+      order_number: "2024081810003958318",
+      supplier_end_price: 32.5,
+      order_id: "7195870",
+      tpp_price: "49.90",
+      city_name: "杭州",
+      cinema_addr:
+        "西湖区古墩路1009号龙湖紫荆天街5楼（晚10点后观影请从紫荆花北路停车场入口对面商场3号门进入）",
+      cinema_name: "UME影城(紫荆天街店)",
+      hall_name: "5号激光厅--部分按摩椅",
+      film_name: "名侦探柯南：百万美元的五棱星",
+      lockseat: "7排1座",
+      show_time: "2024-08-18 15:10:00",
+      cinema_group: "ume二线"
+    };
+
+    // 动态生成事件名称
+    const eventName = `newOrder_${appFlag}`;
+    // 创建一个事件对象
+    const newOrderEvent = new CustomEvent(eventName, { detail: {} });
+    newOrderEvent.detail = newOrder;
+    window.dispatchEvent(newOrderEvent);
+    console.log(
+      `Sent new order to the ticketing queue (${appFlag}):`,
+      newOrder
+    );
+  }
+
+  // 处理新订单
+  handleNewOrder(event) {
+    const { appFlag } = this;
+    const order = event.detail;
+    console.log(`Received new order (${appFlag}):`, order);
+    const { handleSuccessOrderList, handleFailOrderList, queue } = this;
+    const orderTicketRecord = [
+      ...handleSuccessOrderList,
+      ...handleFailOrderList,
+      ...queue
+    ];
+    let isNewOrder = !orderTicketRecord.some(
+      itemA =>
+        itemA.plat_name === order.plat_name &&
+        itemA.order_number === order.order_number
+    );
+    if (isNewOrder) {
+      console.warn(conPrefix + "新的待出票订单", order);
+      let logList = [
+        {
+          opera_time: getCurrentFormattedDateTime(),
+          des: "自动出票队列获取到新的待出票订单",
+          level: "info",
+          info: {
+            newOrders: order
+          }
+        }
+      ];
+      logUpload(
+        {
+          plat_name: order.plat_name,
+          app_name: appFlag,
+          order_number: order.order_number,
+          type: 3
+        },
+        logList
+      );
+      this.queue.push(order);
+      if (!this.isRunning) {
+        this.startProcessingQueue();
+      }
+    }
+  }
+
+  // 开始队列上传
+  async startProcessingQueue() {
+    const { conPrefix, appFlag } = this;
+    this.isRunning = true;
+    while (this.queue.length > 0) {
       // 1、获取当前影院的队列规则状态，如果禁用直接停止
       let appQueueRule = getOrginValue(appTicketRuleList.value).filter(
         item => item.isEnabled && item.appName === appFlag
@@ -79,53 +171,67 @@ class OrderAutoTicketQueue {
         await this.stop();
         return;
       }
-      // console.log(conPrefix + "队列每次执行时的规则", appQueueRule[0]);
-      const { getInterval, handleInterval } = appQueueRule[0];
-      let fetchDelay = getInterval;
-      let processDelay = handleInterval;
-      // console.warn(
-      //   conPrefix +
-      //     `队列启动, ${fetchDelay} 秒获取一次待报价订单, ${processDelay} 秒处理一次订单}`
-      // );
-      let orders = await this.fetchOrders(fetchDelay);
-      if (orders?.length) {
-        console.warn(conPrefix + "新的待出票订单列表", orders);
-        let logList = [
-          {
-            opera_time: getCurrentFormattedDateTime(),
-            des: "自动出票队列获取到新的待出票列表",
-            level: "info",
-            info: {
-              newOrders: orders
+      // 取出队列首部订单并从队列里去掉
+      const order = this.dequeue();
+      if (order) {
+        if (this.prevOrderNumber === order.order_number) {
+          let log_list = [
+            {
+              opera_time: getCurrentFormattedDateTime(),
+              des: `当前订单重复执行,直接执行下个`,
+              level: "error"
             }
-          }
-        ];
-        logUpload(
-          {
-            plat_name: orders[0].plat_name,
-            app_name: appFlag,
-            order_number: orders[0].order_number,
-            type: 3
-          },
-          logList
-        );
-      }
-      // 将订单加入队列
-      this.enqueue(orders);
-
-      // 处理队列中的订单，直到队列为空或停止
-      while (this.queue.length > 0 && this.isRunning) {
-        // 取出队列首部订单并从队列里去掉
-        const order = this.dequeue();
-        if (order) {
-          if (this.prevOrderNumber === order.order_number) {
-            let log_list = [
-              {
-                opera_time: getCurrentFormattedDateTime(),
-                des: `当前订单重复执行,直接执行下个`,
-                level: "error"
-              }
-            ];
+          ];
+          logUpload(
+            {
+              plat_name: order.plat_name,
+              app_name: appFlag,
+              order_number: order.order_number,
+              type: 3
+            },
+            log_list
+          );
+        } else {
+          // 处理订单
+          const res = await this.orderHandle(order);
+          this.prevOrderNumber = order.order_number;
+          // res: { profit, submitRes, qrcode, quan_code, card_id, offerRule } || undefined
+          console.warn(
+            conPrefix + `单个订单自动出票${res?.submitRes ? "成功" : "失败"}`,
+            order,
+            res
+          );
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: `单个订单自动出票结束，状态-${res?.submitRes ? "成功" : "失败"}，赋值上个订单号为当前订单号-${this.prevOrderNumber}`,
+            level: "error",
+            info: {
+              res
+            }
+          });
+          if (!isTestOrder) {
+            // 添加订单处理记录
+            if (res?.submitRes) {
+              this.handleSuccessOrderList.push(order);
+            } else {
+              this.handleFailOrderList.push(order);
+            }
+            let params = {
+              order,
+              ticketRes: res,
+              appFlag,
+              errMsg: this.errMsg,
+              errInfo: this.errInfo,
+              mobile: this.currentParamsList[this.currentParamsInx].mobile
+            };
+            await addOrderHandleRecored(params);
+            // 从缓存里面删除记录
+            // deleteOrder(order.order_number, appFlag);
+            this.logList.push({
+              opera_time: getCurrentFormattedDateTime(),
+              des: `订单出票结束，远端已添加出票记录`,
+              level: "info"
+            });
             logUpload(
               {
                 plat_name: order.plat_name,
@@ -133,133 +239,21 @@ class OrderAutoTicketQueue {
                 order_number: order.order_number,
                 type: 3
               },
-              log_list
+              this.logList
             );
-          } else {
-            // 处理订单
-            const res = await this.orderHandle(order, processDelay);
-            this.prevOrderNumber = order.order_number;
-            // res: { profit, submitRes, qrcode, quan_code, card_id, offerRule } || undefined
-            console.warn(
-              conPrefix + `单个订单自动出票${res?.submitRes ? "成功" : "失败"}`,
-              order,
-              res
-            );
-            this.logList.push({
-              opera_time: getCurrentFormattedDateTime(),
-              des: `单个订单自动出票结束，状态-${res?.submitRes ? "成功" : "失败"}，赋值上个订单号为当前订单号-${this.prevOrderNumber}`,
-              level: "error",
-              info: {
-                res
-              }
-            });
-            if (!isTestOrder) {
-              // 添加订单处理记录
-              if (res?.submitRes) {
-                this.handleSuccessOrderList.push(order);
-              } else {
-                this.handleFailOrderList.push(order);
-              }
-              let params = {
-                order,
-                ticketRes: res,
-                appFlag,
-                errMsg: this.errMsg,
-                errInfo: this.errInfo,
-                mobile: this.currentParamsList[this.currentParamsInx].mobile
-              };
-              await addOrderHandleRecored(params);
-              // 从缓存里面删除记录
-              deleteOrder(order.order_number, appFlag);
-              this.logList.push({
-                opera_time: getCurrentFormattedDateTime(),
-                des: `订单出票结束，远端已添加出票记录，本地缓存删除该订单数据`,
-                level: "info"
-              });
-              logUpload(
-                {
-                  plat_name: order.plat_name,
-                  app_name: appFlag,
-                  order_number: order.order_number,
-                  type: 3
-                },
-                this.logList
-              );
-            }
           }
         }
       }
     }
-  }
-
-  // 获取订单
-  async fetchOrders(fetchDelay) {
-    const { conPrefix, appFlag } = this;
-    try {
-      await mockDelay(0.01);
-      let sfcStayOfferlist = getOrginValue(stayTicketList.items).filter(
-        item => item.appName === appFlag
-      );
-      if (isTestOrder) {
-        sfcStayOfferlist = [
-          {
-            id: 7177,
-            plat_name: "lieren",
-            app_name: "ume",
-            ticket_num: 1,
-            rewards: "0",
-            order_number: "2024081810003958318",
-            supplier_end_price: 32.5,
-            order_id: "7195870",
-            tpp_price: "49.90",
-            city_name: "杭州",
-            cinema_addr:
-              "西湖区古墩路1009号龙湖紫荆天街5楼（晚10点后观影请从紫荆花北路停车场入口对面商场3号门进入）",
-            cinema_name: "UME影城(紫荆天街店)",
-            hall_name: "5号激光厅--部分按摩椅",
-            film_name: "名侦探柯南：百万美元的五棱星",
-            lockseat: "7排1座",
-            show_time: "2024-08-18 15:10:00",
-            cinema_group: "ume二线"
-          }
-        ];
-      }
-      // console.warn(
-      //   conPrefix + "匹配已上架影院后的的待出票订单",
-      //   sfcStayOfferlist
-      // );
-      if (!sfcStayOfferlist?.length) return [];
-      const { handleSuccessOrderList, handleFailOrderList, queue } = this;
-      const orderOfferRecord = [
-        ...handleSuccessOrderList,
-        ...handleFailOrderList,
-        ...queue
-      ];
-      let newOrders = sfcStayOfferlist.filter(item => {
-        // 过滤出来新订单（未进行过出票的）
-        return !orderOfferRecord.some(
-          itemA =>
-            itemA.plat_name === item.plat_name &&
-            itemA.order_number === item.order_number
-        );
-      });
-      console.warn(
-        conPrefix + "从当前队列出票记录过滤后的的待报价订单",
-        newOrders
-      );
-      return newOrders;
-    } catch (error) {
-      console.error(conPrefix + "获取待出票订单列表异常", error);
-      return [];
-    }
+    this.isRunning = false;
   }
 
   // 将订单添加至队列
-  enqueue(orders) {
+  enqueue(order) {
     const { conPrefix } = this;
-    if (orders.length) {
+    if (order) {
       console.log(conPrefix + "添加新订单到队列");
-      this.queue.push(...orders);
+      this.queue.push(order);
     } else {
       // console.log(conPrefix + "从出票记录过滤后，无新订单添加到队列");
     }
