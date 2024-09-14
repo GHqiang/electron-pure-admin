@@ -33,6 +33,7 @@ let isTestOrder = false; //是否是测试订单
 class OrderAutoTicketQueue {
   constructor(appFlag) {
     this.queue = []; // 初始化空队列
+    this.ticketRecord = []; // 出票记录
     this.isRunning = false; // 初始化时队列未运行
     this.cityList = []; // 城市列表
     this.errMsg = ""; // 单次出票的错误语
@@ -53,6 +54,7 @@ class OrderAutoTicketQueue {
     this.prevOrderNumber = "";
     // 由于及时队列停了 this.enqueue方法仍可能运行一次，故在每次启动重置队列
     this.queue = [];
+    this.ticketRecord = [];
     console.warn(conPrefix + `队列启动，开始监听是否有新订单`);
     this.setupListeners();
   }
@@ -129,7 +131,8 @@ class OrderAutoTicketQueue {
     //   ]
     // );
     console.log(`Received new order (${appFlag}):`, order);
-    let isNewOrder = !this.queue.some(
+    const ticketRecord = [...this.queue, ...this.ticketRecord];
+    let isNewOrder = !ticketRecord.some(
       itemA =>
         itemA.plat_name === order.plat_name &&
         itemA.order_number === order.order_number
@@ -190,8 +193,7 @@ class OrderAutoTicketQueue {
         } else {
           // 处理订单
           const res = await this.orderHandle(order);
-          // 从队列里移除首个订单（正在出票订单）
-          this.queue.shift();
+          this.ticketRecord.push(order);
           this.prevOrderNumber = order.order_number;
           // res: { profit, submitRes, qrcode, quan_code, card_id, offerRule } || undefined
           console.warn(
@@ -217,6 +219,8 @@ class OrderAutoTicketQueue {
               mobile: this.currentParamsList[this.currentParamsInx].mobile
             };
             await addOrderHandleRecored(params);
+            // 从队列里移除首个订单（正在出票订单）
+            this.queue.shift();
             this.logList.push({
               opera_time: getCurrentFormattedDateTime(),
               des: `订单出票结束，远端已添加出票记录`,
