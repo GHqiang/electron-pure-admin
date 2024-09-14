@@ -101,7 +101,7 @@ class getUmeOfferPrice {
     const { conPrefix } = this;
     try {
       const matchRuleListRes = offerRuleMatch(order);
-      const matchRuleList = matchRuleListRes?.matchRuleList || [];
+      let matchRuleList = matchRuleListRes?.matchRuleList || [];
       if (!matchRuleList?.length) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
@@ -114,6 +114,7 @@ class getUmeOfferPrice {
         });
         return;
       }
+      matchRuleList = JSON.parse(JSON.stringify(matchRuleList));
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: "报价规则匹配列表",
@@ -123,7 +124,7 @@ class getUmeOfferPrice {
         }
       });
       // 获取报价最低的报价规则
-      const endRule = await this.getMinAmountOfferRule(matchRuleList, order);
+      let endRule = await this.getMinAmountOfferRule(matchRuleList, order);
       console.warn(conPrefix + "最终匹配到的报价规则", endRule);
       if ([0, -2, -3, -4].includes(endRule)) return;
       if (!endRule) {
@@ -134,6 +135,7 @@ class getUmeOfferPrice {
           level: "error"
         });
       }
+      endRule = JSON.parse(JSON.stringify(endRule));
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: "最终匹配到的报价规则",
