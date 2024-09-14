@@ -1,6 +1,4 @@
 // sheng平台获取订单队列
-import { onMounted, computed } from "vue";
-
 import mayiApi from "@/api/mayi-api";
 import svApi from "@/api/sv-api";
 
@@ -14,7 +12,6 @@ import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
 
 let conPrefix = "【蚂蚁自动获取订单】——"; // console打印前缀
-const getOrginValue = value => JSON.parse(JSON.stringify(value));
 
 // 创建一个订单自动报价队列类
 class OrderAutoFetchQueue {
@@ -219,9 +216,5 @@ const getTicketList = async () => {
     return [];
   }
 };
-
-onMounted(() => {
-  console.log(conPrefix + "onMounted");
-});
 
 export default orderFetchQueue;
