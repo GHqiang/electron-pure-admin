@@ -14,16 +14,6 @@ import {
 
 import svApi from "@/api/sv-api";
 
-// 待出票数据
-import { useStayTicketList } from "@/store/stayTicketList";
-const stayTicketList = useStayTicketList();
-const { deleteOrder } = stayTicketList;
-
-// 影院自动出票规则
-import { useAppRuleListStore } from "@/store/appTicketRuleTable";
-const appRuleListStore = useAppRuleListStore();
-const appTicketRuleList = computed(() => appRuleListStore.items);
-
 // 机器登录用户信息
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
@@ -171,17 +161,7 @@ class OrderAutoTicketQueue {
   async startProcessingQueue() {
     const { conPrefix, appFlag } = this;
     this.isRunning = true;
-    while (this.queue.length > 0) {
-      // 1、获取当前影院的队列规则状态，如果禁用直接停止
-      let appQueueRule = getOrginValue(appTicketRuleList.value).filter(
-        item => item.isEnabled && item.appName === appFlag
-      );
-      // console.log(conPrefix + "队列启动的执行规则", appQueueRule);
-      if (!appQueueRule?.length) {
-        // console.warn(conPrefix + "队列执行规则不存在或者未启用，直接停止");
-        await this.stop();
-        return;
-      }
+    while (this.queue.length > 0 && this.isRunning) {
       // 取出队列首部订单并从队列里去掉
       const order = this.queue[0];
       if (order) {
@@ -232,8 +212,6 @@ class OrderAutoTicketQueue {
               mobile: this.currentParamsList[this.currentParamsInx].mobile
             };
             await addOrderHandleRecored(params);
-            // 从缓存里面删除记录
-            // deleteOrder(order.order_number, appFlag);
             this.logList.push({
               opera_time: getCurrentFormattedDateTime(),
               des: `订单出票结束，远端已添加出票记录`,

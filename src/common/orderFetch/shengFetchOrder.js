@@ -3,17 +3,7 @@ import { onMounted, computed } from "vue";
 
 import shengApi from "@/api/sheng-api";
 import svApi from "@/api/sv-api";
-// 平台自动获取订单规则列表
-import { usePlatFetchOrderStore } from "@/store/platOfferRuleTable";
-const platTableDataStore = usePlatFetchOrderStore();
 
-const platFetchOrderRuleList = computed(() =>
-  platTableDataStore.items.filter(item => item.platName === "sheng")
-);
-
-import { useStayTicketList } from "@/store/stayTicketList";
-const stayTicketList = useStayTicketList();
-const { addNewOrder } = stayTicketList;
 import {
   getCinemaFlag,
   logUpload,
@@ -40,22 +30,7 @@ class OrderAutoFetchQueue {
     // 循环直到队列停止
     while (this.isRunning) {
       // 获取订单列表(支持时间间隔)
-      // 1、获取当前平台的队列规则状态，如果禁用直接停止
-      let platQueueRule = getOrginValue(
-        getOrginValue(platFetchOrderRuleList.value)
-      ).filter(item => item.isEnabled);
-      // console.log(conPrefix + "队列启动的执行规则", platQueueRule);
-      if (!platQueueRule?.length) {
-        console.warn(conPrefix + "队列执行规则不存在或者未启用，直接停止");
-        await this.stop();
-        return;
-      }
-      const { getInterval } = platQueueRule[0];
-      let fetchDelay = getInterval;
-      // if (!window.isFirst) {
-      //   console.time("第一次获取数据到解锁耗时");
-      //   window.isFirst = true;
-      // }
+      let fetchDelay = 2;
       await this.fetchOrders(fetchDelay);
     }
   }
@@ -163,19 +138,6 @@ class OrderAutoFetchQueue {
             appName: getCinemaFlag(item)
           };
         });
-      let stayTicketListByCache = getOrginValue(stayTicketList.items);
-      sfcStayOfferlist = sfcStayOfferlist.filter(
-        item =>
-          !stayTicketListByCache.some(
-            itemA =>
-              itemA.order_number === item.order_number &&
-              itemA.app_name === item.app_name
-          )
-      );
-      console.warn(
-        conPrefix + "省待出票列表从本地缓存过滤后",
-        sfcStayOfferlist
-      );
       if (sfcStayOfferlist?.length) {
         const ticketList = await getTicketList();
         sfcStayOfferlist = sfcStayOfferlist.filter(item =>
@@ -209,7 +171,6 @@ class OrderAutoFetchQueue {
         },
         logList
       );
-      // addNewOrder(sfcStayOfferlist);
       sfcStayOfferlist.forEach(item => {
         // 动态生成事件名称
         const eventName = `newOrder_${item.appName}`;
