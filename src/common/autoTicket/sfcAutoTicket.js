@@ -44,8 +44,6 @@ class OrderAutoTicketQueue {
   constructor(appFlag) {
     this.queue = []; // 初始化空队列
     this.isRunning = false; // 初始化时队列未运行
-    this.handleSuccessOrderList = []; // 订单处理成功列表
-    this.handleFailOrderList = []; // 订单处理失败列表
     this.cityList = []; // 城市列表
     this.errMsg = ""; // 单次出票的错误语
     this.errInfo = ""; // 单次出票的错误信息
@@ -62,8 +60,6 @@ class OrderAutoTicketQueue {
   // 启动队列
   async start() {
     const { conPrefix } = this;
-    this.handleSuccessOrderList = [];
-    this.handleFailOrderList = [];
     this.prevOrderNumber = "";
     // 由于及时队列停了 this.enqueue方法仍可能运行一次，故在每次启动重置队列
     this.queue = [];
@@ -143,13 +139,7 @@ class OrderAutoTicketQueue {
     //   ]
     // );
     console.log(`Received new order (${appFlag}):`, order);
-    const { handleSuccessOrderList, handleFailOrderList, queue } = this;
-    const orderTicketRecord = [
-      ...handleSuccessOrderList,
-      ...handleFailOrderList,
-      ...queue
-    ];
-    let isNewOrder = !orderTicketRecord.some(
+    let isNewOrder = !this.queue.some(
       itemA =>
         itemA.plat_name === order.plat_name &&
         itemA.order_number === order.order_number
@@ -198,7 +188,7 @@ class OrderAutoTicketQueue {
         return;
       }
       // 取出队列首部订单并从队列里去掉
-      const order = this.dequeue();
+      const order = this.queue[0];
       if (order) {
         if (this.prevOrderNumber === order.order_number) {
           let log_list = [
@@ -220,6 +210,8 @@ class OrderAutoTicketQueue {
         } else {
           // 处理订单
           const res = await this.orderHandle(order);
+          // 从队列里移除首个订单（正在出票订单）
+          this.queue.shift();
           this.prevOrderNumber = order.order_number;
           // res: { profit, submitRes, qrcode, quan_code, card_id, offerRule } || undefined
           console.warn(
@@ -236,12 +228,6 @@ class OrderAutoTicketQueue {
             }
           });
           if (!isTestOrder) {
-            // 添加订单处理记录
-            if (res?.submitRes) {
-              this.handleSuccessOrderList.push(order);
-            } else {
-              this.handleFailOrderList.push(order);
-            }
             let params = {
               order,
               ticketRes: res,
@@ -285,11 +271,6 @@ class OrderAutoTicketQueue {
     }
   }
 
-  // 从队列中移除并返回首部订单
-  dequeue() {
-    return this.queue.shift();
-  }
-
   // 处理订单
   async orderHandle(order, delayTime) {
     const { conPrefix } = this;
@@ -331,18 +312,6 @@ class OrderAutoTicketQueue {
     const { conPrefix } = this;
     this.isRunning = false;
     console.warn(conPrefix + "自动出票队列停止");
-    // 打印处理结果
-    const { handleSuccessOrderList, handleFailOrderList } = this;
-    // console.warn(
-    //   conPrefix +
-    //     `订单处理记录：成功 ${handleSuccessOrderList.length} 个，失败 ${handleFailOrderList.length} 个`
-    // );
-    // console.warn(
-    //   conPrefix + "订单处理记录：成功-",
-    //   handleSuccessOrderList,
-    //   " 失败-",
-    //   handleFailOrderList
-    // );
   }
   // 设置错误信息
   setErrInfo(errMsg, errInfo) {
