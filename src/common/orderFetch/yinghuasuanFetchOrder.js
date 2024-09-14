@@ -18,6 +18,7 @@ class OrderAutoFetchQueue {
   constructor() {
     this.isRunning = false; // 初始化时队列未运行
     this.confimrOrderList = []; // 已接单列表（用于匹配过滤待出票订单）
+    this.orderRecord = []; // 订单记录
   }
 
   // 启动队列（fetchDelay获取订单列表间隔，processDelay处理订单间隔）
@@ -26,6 +27,7 @@ class OrderAutoFetchQueue {
     // 设置队列为运行状态
     this.isRunning = true;
     this.confimrOrderList = [];
+    this.orderRecord = []; // 订单记录
     // 循环直到队列停止
     while (this.isRunning) {
       // 获取订单列表(支持时间间隔)
@@ -101,6 +103,14 @@ class OrderAutoFetchQueue {
             appName: getCinemaFlag(item)
           };
         });
+      sfcStayOfferlist = sfcStayOfferlist.filter(item => {
+        // 过滤出来新订单（未发送过新订单消息的）
+        return !this.orderRecord.some(
+          itemA =>
+            itemA.plat_name === item.plat_name &&
+            itemA.order_number === item.order_number
+        );
+      });
       if (sfcStayOfferlist?.length) {
         const offerList = await getOfferList();
         const ticketList = await getTicketList();
@@ -162,6 +172,7 @@ class OrderAutoFetchQueue {
         const eventName = `newOrder_${item.appName}`;
         // 创建一个事件对象
         const newOrderEvent = new CustomEvent(eventName, { detail: item });
+        this.orderRecord.push(item);
         window.dispatchEvent(newOrderEvent);
       });
     } catch (error) {
