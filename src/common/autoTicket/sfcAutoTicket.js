@@ -124,24 +124,24 @@ class OrderAutoTicketQueue {
   handleNewOrder(event) {
     const { appFlag, conPrefix } = this;
     const order = event.detail;
-    logUpload(
-      {
-        plat_name: order.plat_name || "",
-        app_name: appFlag,
-        order_number: order.order_number || "",
-        type: 3
-      },
-      [
-        {
-          opera_time: getCurrentFormattedDateTime(),
-          des: "监听到发送的新订单消息",
-          level: "info",
-          info: {
-            newOrders: order
-          }
-        }
-      ]
-    );
+    // logUpload(
+    //   {
+    //     plat_name: order.plat_name || "",
+    //     app_name: appFlag,
+    //     order_number: order.order_number || "",
+    //     type: 3
+    //   },
+    //   [
+    //     {
+    //       opera_time: getCurrentFormattedDateTime(),
+    //       des: "监听到发送的新订单消息",
+    //       level: "info",
+    //       info: {
+    //         newOrders: order
+    //       }
+    //     }
+    //   ]
+    // );
     console.log(`Received new order (${appFlag}):`, order);
     const { handleSuccessOrderList, handleFailOrderList, queue } = this;
     const orderTicketRecord = [
