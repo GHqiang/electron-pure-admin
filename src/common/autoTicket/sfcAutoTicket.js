@@ -122,7 +122,7 @@ class OrderAutoTicketQueue {
 
   // 处理新订单
   handleNewOrder(event) {
-    const { appFlag } = this;
+    const { appFlag, conPrefix } = this;
     const order = event.detail;
     logUpload(
       {
