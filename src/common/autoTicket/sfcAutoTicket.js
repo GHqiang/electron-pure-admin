@@ -600,7 +600,9 @@ class OrderAutoTicketQueue {
         transferTip: "此处不转单，直接跳过，需手动出票",
         failReason: str
       });
-      return;
+      return {
+        offerRule
+      };
     }
     this.logList.push({
       opera_time: getCurrentFormattedDateTime(),
@@ -3149,6 +3151,10 @@ const addOrderHandleRecored = async ({
 }) => {
   try {
     // res：{ profit, submitRes, qrcode, quan_code, card_id, offerRule }
+    let order_status = res?.submitRes ? "1" : "2";
+    if (res?.offerRule?.rule_status === "3") {
+      order_status = "4";
+    }
     const serOrderInfo = {
       plat_name: order.plat_name,
       app_name: res?.offerRule?.app_name || appFlag,
@@ -3169,7 +3175,7 @@ const addOrderHandleRecored = async ({
       offer_amount: res?.offerRule?.offer_amount || "",
       member_offer_amount: res?.offerRule?.member_offer_amount || "",
       quan_value: res?.offerRule?.quan_value || "",
-      order_status: res?.submitRes ? "1" : "2",
+      order_status: order_status,
       // remark: '',
       processing_time: getCurrentFormattedDateTime(),
       profit: res?.profit || "",

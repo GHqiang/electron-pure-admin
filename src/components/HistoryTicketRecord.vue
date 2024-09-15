@@ -156,13 +156,7 @@
       </el-table-column>
       <el-table-column label="出票状态" fixed width="90">
         <template #default="{ row: { order_status } }">
-          <span>{{
-            order_status === "1"
-              ? "成功"
-              : order_status === "3"
-                ? "已退票"
-                : "失败"
-          }}</span>
+          <span>{{ TICKET_STATUS[order_status] }}</span>
         </template>
       </el-table-column>
       <el-table-column prop="user_name" fixed label="出票人" width="110" />
@@ -224,7 +218,12 @@ const {
   userInfo: { rule, user_id }
 } = platTokens();
 
-import { ORDER_FORM, APP_LIST, QUAN_TYPE } from "@/common/constant.js";
+import {
+  ORDER_FORM,
+  APP_LIST,
+  QUAN_TYPE,
+  TICKET_STATUS
+} from "@/common/constant.js";
 // console.log("ORDER_FORM", ORDER_FORM);
 // 订单来源
 const orderFormObj = ORDER_FORM;

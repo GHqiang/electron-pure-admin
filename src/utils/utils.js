@@ -1116,7 +1116,9 @@ const offerRuleMatch = order => {
         });
     }
     // 1、获取启用的规则列表（只有满足规则才报价）
-    let useRuleList = appOfferRuleList.filter(item => item.status === "1");
+    let useRuleList = appOfferRuleList.filter(item =>
+      ["1", "3"].includes(item.status)
+    );
     console.log("启用的规则列表", useRuleList);
     // 2、获取某个影线的规则列表
     let shadowLineRuleList = useRuleList.filter(

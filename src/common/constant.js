@@ -13,6 +13,13 @@ const ORDER_FORM = {
 // 测试新平台列表
 const TEST_NEW_PLAT_LIST = ["yinghuasuan", "shangzhan"];
 
+// 出票状态
+const TICKET_STATUS = {
+  1: "成功",
+  2: "失败",
+  3: "已退票",
+  4: "仅报价"
+};
 // 优惠券类型
 const QUAN_TYPE = {
   40: "sfc-40",
@@ -1305,6 +1312,7 @@ const UME_CINEMA_NAME = [
 
 export {
   ORDER_FORM,
+  TICKET_STATUS,
   TEST_NEW_PLAT_LIST,
   QUAN_TYPE,
   QUAN_TYPE_COST,
