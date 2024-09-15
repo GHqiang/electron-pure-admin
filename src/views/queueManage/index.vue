@@ -246,6 +246,10 @@ let platFetchOrderQueueObj = {
 
 // 平台出票队列集合
 let appTicketQueueObj = {};
+Object.keys(APP_LIST).forEach(item => {
+  appTicketQueueObj[item] = createTucketQueueFun(item);
+});
+window.appTicketQueueObj = appTicketQueueObj;
 
 window.offerQueueObj = platOfferQueueObj;
 window.platFetchOrderQueueObj = platFetchOrderQueueObj;
@@ -269,17 +273,16 @@ let isStartTicket = true; // 自动出票队列
 
 // 一键启动
 const oneClickStart = () => {
-  // 拿到有登录信息的应用列表（只启动该部分应用的自动出票）
+  // 删除没有登录信息的队列
   let loginInfoList = getCinemaLoginInfoList();
   Object.keys(APP_LIST).forEach(item => {
     let obj = loginInfoList.find(
       itemA => itemA.app_name === item && itemA.session_id
     );
-    if (obj) {
-      appTicketQueueObj[item] = createTucketQueueFun(item);
+    if (!obj) {
+      delete appTicketQueueObj[item];
     }
   });
-  window.appTicketQueueObj = appTicketQueueObj;
 
   ElMessageBox.confirm("确定要一键全部启动吗?", "提示", {
     confirmButtonText: "确定",
@@ -348,7 +351,7 @@ const oneClickStop = () => {
 };
 
 // 单个启动或停止
-const singleStartOrStop = ({ id, platToken, platName, appName }, flag) => {
+const singleStartOrStop = ({ id, platToken, platName }, flag) => {
   // 单个启动
   if (flag === 1) {
     if (!platToken) {
@@ -359,13 +362,27 @@ const singleStartOrStop = ({ id, platToken, platName, appName }, flag) => {
     setPlatFunObj[platName](platToken);
     isStartOffer && platOfferQueueObj[platName].start();
     isStartFetch && platFetchOrderQueueObj[platName].start();
-    isStartTicket && appTicketQueueObj[appName].start();
+    // 删除没有登录信息的队列
+    let loginInfoList = getCinemaLoginInfoList();
+    Object.keys(APP_LIST).forEach(item => {
+      let obj = loginInfoList.find(
+        itemA => itemA.app_name === item && itemA.session_id
+      );
+      if (!obj) {
+        delete appTicketQueueObj[item];
+      }
+    });
+    Object.keys(appTicketQueueObj).forEach(item => {
+      isStartTicket && appTicketQueueObj[item].start();
+    });
   } else {
     // 单个停止
     tableDataStore.toggleEnable(id);
     isStartOffer && platOfferQueueObj[platName].stop();
     isStartFetch && platFetchOrderQueueObj[platName].stop();
-    isStartTicket && appTicketQueueObj[appName].stop();
+    Object.keys(appTicketQueueObj).forEach(item => {
+      isStartTicket && appTicketQueueObj[item].stop();
+    });
   }
   svApi.updateUser({
     plat_offer_queue: JSON.stringify(tableDataStore.items),
