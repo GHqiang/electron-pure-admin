@@ -30,7 +30,6 @@ let isTestOrder = false; //是否是测试订单
 class OrderAutoTicketQueue {
   constructor(appFlag) {
     this.queue = []; // 初始化空队列
-    this.ticketRecord = []; // 出票记录
     this.isRunning = false; // 初始化时队列未运行
     this.cityList = []; // 城市列表
     this.errMsg = ""; // 单次出票的错误语
@@ -43,6 +42,7 @@ class OrderAutoTicketQueue {
     this.logList = []; // 操作运行日志
     this.prevOrderNumber = ""; // 上个订单号
     this.eventName = `newOrder_${appFlag}`;
+    this.handledOrders = new Map(); // 用于存储已处理订单号及其相关信息
   }
 
   // 启动队列
@@ -51,7 +51,7 @@ class OrderAutoTicketQueue {
     this.prevOrderNumber = "";
     // 由于及时队列停了 this.enqueue方法仍可能运行一次，故在每次启动重置队列
     this.queue = [];
-    this.ticketRecord = [];
+    this.handledOrders = new Map();
     console.warn(conPrefix + `队列启动，开始监听是否有新订单`);
     this.setupListeners();
   }
@@ -107,40 +107,16 @@ class OrderAutoTicketQueue {
   handleNewOrder(event) {
     const { appFlag, conPrefix } = this;
     const order = event.detail;
-    // logUpload(
-    //   {
-    //     plat_name: order.plat_name || "",
-    //     app_name: appFlag,
-    //     order_number: order.order_number || "",
-    //     type: 3
-    //   },
-    //   [
-    //     {
-    //       opera_time: getCurrentFormattedDateTime(),
-    //       des: "监听到发送的新订单消息",
-    //       level: "info",
-    //       info: {
-    //         newOrders: order
-    //       }
-    //     }
-    //   ]
-    // );
-    console.log(`Received new order (${appFlag}):`, order);
-    const ticketRecord = [...this.queue, ...this.ticketRecord];
-    let isNewOrder = !ticketRecord.some(
-      itemA =>
-        itemA.plat_name === order.plat_name &&
-        itemA.order_number === order.order_number
-    );
-    if (isNewOrder) {
-      console.warn(conPrefix + "新的待出票订单", order);
+    // 检查是否已经处理过此订单
+    if (this.handledOrders.has(order.plat_name + "_" + order.order_number)) {
+      console.warn(conPrefix + "订单已被处理过，忽略重复消息", order);
       let logList = [
         {
           opera_time: getCurrentFormattedDateTime(),
-          des: "自动出票队列获取到新的待出票订单",
+          des: "订单已被处理过，忽略重复消息",
           level: "info",
           info: {
-            newOrders: order
+            repeatOrder: order
           }
         }
       ];
@@ -153,10 +129,34 @@ class OrderAutoTicketQueue {
         },
         logList
       );
-      this.queue.push(order);
-      if (!this.isRunning) {
-        this.startProcessingQueue();
+      return;
+    }
+
+    // 标记此订单为已处理
+    this.handledOrders.set(order.plat_name + "_" + order.order_number, 1);
+    console.warn(conPrefix + "新的待出票订单", order);
+    let logList = [
+      {
+        opera_time: getCurrentFormattedDateTime(),
+        des: "自动出票队列获取到新的待出票订单",
+        level: "info",
+        info: {
+          newOrders: order
+        }
       }
+    ];
+    logUpload(
+      {
+        plat_name: order.plat_name,
+        app_name: appFlag,
+        order_number: order.order_number,
+        type: 3
+      },
+      logList
+    );
+    this.queue.push(order);
+    if (!this.isRunning) {
+      this.startProcessingQueue();
     }
   }
 
@@ -166,7 +166,7 @@ class OrderAutoTicketQueue {
     this.isRunning = true;
     while (this.queue.length > 0 && this.isRunning) {
       // 取出队列首部订单并从队列里去掉
-      const order = this.queue[0];
+      const order = this.queue.shift();
       if (order) {
         if (this.prevOrderNumber === order.order_number) {
           let log_list = [
@@ -188,7 +188,6 @@ class OrderAutoTicketQueue {
         } else {
           // 处理订单
           const res = await this.orderHandle(order);
-          this.ticketRecord.push(order);
           this.prevOrderNumber = order.order_number;
           // res: { profit, submitRes, qrcode, quan_code, card_id, offerRule } || undefined
           console.warn(
@@ -214,8 +213,6 @@ class OrderAutoTicketQueue {
               mobile: this.currentParamsList[this.currentParamsInx].mobile
             };
             await addOrderHandleRecored(params);
-            // 从队列里移除首个订单（正在出票订单）
-            this.queue.shift();
             this.logList.push({
               opera_time: getCurrentFormattedDateTime(),
               des: `订单出票结束，远端已添加出票记录`,
