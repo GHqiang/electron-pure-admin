@@ -47,6 +47,10 @@ class OrderAutoTicketQueue {
 
   // 启动队列
   async start() {
+    // 防止单个停止单个启动导致重复监听
+    if (this.queue?.length && this.isRunning) {
+      return;
+    }
     const { conPrefix } = this;
     this.prevOrderNumber = "";
     // 由于及时队列停了 this.enqueue方法仍可能运行一次，故在每次启动重置队列
@@ -286,6 +290,11 @@ class OrderAutoTicketQueue {
     const { conPrefix } = this;
     this.isRunning = false;
     console.warn(conPrefix + "自动出票队列停止");
+    // 停止的时候判断是否有事件监听，有就移除
+    if (this.handleNewOrderBound) {
+      window.removeEventListener(this.eventName, this.handleNewOrderBound);
+      this.handleNewOrderBound = null;
+    }
   }
   // 设置错误信息
   setErrInfo(errMsg, errInfo) {
@@ -2986,7 +2995,9 @@ const useQuanOrCard = ({
           couponName: item.couponName,
           templateCode: item.templateCode,
           discountAmount: seatCode
-            ? item.discountAmountMap?.[seatCode[index]]
+            ? appFlag !== "yaolai"
+              ? item.discountAmountMap?.[seatCode[index]]
+              : item.discountAmountMap?.[seatCode[index]]?.[1]
             : 0
         };
       });
