@@ -25,11 +25,6 @@ function getSign(params, appSecret) {
       return obj;
     }, {});
 
-  // 序列化 seat_data
-  if (sortedParams.seat_data) {
-    sortedParams.seat_data = JSON.stringify(sortedParams.seat_data);
-  }
-
   // 将参数的 key 和 value 用 "=" 连接，然后用 "&" 将它们连接起来
   for (let key in sortedParams) {
     stringParts.push(`${key}=${sortedParams[key]}`);

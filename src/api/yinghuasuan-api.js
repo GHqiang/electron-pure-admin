@@ -14,7 +14,7 @@ const submitOffer = params =>
 
 // 获取待确认列表
 const queryStayConfirmList = params =>
-  axios.get("/broker/v1/invitation/quote/list", { params });
+  axios.get("/broker/v1/invitation/quote/list", { params, timeout: 20 * 1000 });
 
 // 确认接货
 const confirmOrder = params =>
