@@ -1417,7 +1417,7 @@ class OrderAutoTicketQueue {
         }
       }
       // 7、创建订单
-      const order_num = await this.createOrder({
+      const createOrderRes = await this.createOrder({
         cinemaCode,
         cinemaLinkId,
         orderHeaderId,
@@ -1428,6 +1428,8 @@ class OrderAutoTicketQueue {
         cardList,
         timestamp
       });
+      let order_num = createOrderRes?.payOrderCode;
+      let paymentAmount = createOrderRes?.paymentAmount;
       if (!order_num) {
         console.error(
           conPrefix + "创建订单失败，单个订单直接出票结束",
@@ -1457,6 +1459,24 @@ class OrderAutoTicketQueue {
           opera_time: getCurrentFormattedDateTime(),
           des: `测试单暂不购买`,
           level: "error"
+        });
+        return { offerRule };
+      }
+      if (useQuan?.length && paymentAmount != 0) {
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: `用完券发现支付金额不为0，暂不购买`,
+          level: "error"
+        });
+        sendWxPusherMessage({
+          plat_name,
+          order_number,
+          city_name,
+          cinema_name,
+          film_name,
+          lockseat,
+          transferTip: "此处不转单,需手动出票",
+          failReason: `用完券发现支付金额不为0，暂不购买,需手动出票`
         });
         return { offerRule };
       }
@@ -1697,8 +1717,17 @@ class OrderAutoTicketQueue {
       });
       const res = await this.umeApi.createOrder(params);
       console.log(conPrefix + "创建订单返回", res);
-      order_num = res.data?.payOrderCode || "";
-      return order_num;
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: `创建订单返回`,
+        level: "error",
+        info: {
+          res
+        }
+      });
+      let createOrderRes = res.data;
+      // order_num = res.data?.payOrderCode || "";
+      return createOrderRes;
     } catch (error) {
       console.error(conPrefix + "创建订单异常", error);
       this.setErrInfo("创建订单异常", error);
@@ -1710,20 +1739,20 @@ class OrderAutoTicketQueue {
         });
         await mockDelay(1);
         try {
-          const order_num = await this.createOrder({
+          const createOrderRes = await this.createOrder({
             ...data,
             isTimeoutRetry: 0
           });
-          if (order_num) {
+          if (createOrderRes) {
             this.logList.push({
               opera_time: getCurrentFormattedDateTime(),
               des: `创建订单请求接口超时，延迟2秒后重试成功`,
               level: "error",
               info: {
-                order_num
+                createOrderRes
               }
             });
-            return order_num;
+            return createOrderRes;
           }
         } catch (err) {
           this.logList.push({
@@ -2722,20 +2751,20 @@ const buyTicket = async ({
   session_id
 }) => {
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
+  let params = {
+    params: {
+      paymentWay: useQuan?.length ? "Z0010" : "Z0006",
+      orderHeaderId: "" + orderHeaderId,
+      cardNo: card_id || "",
+      isMultiplePay: "",
+      channelCode: "QD0000001",
+      sysSourceCode: "YZ001",
+      cinemaCode,
+      cinemaLinkId
+    },
+    session_id
+  };
   try {
-    let params = {
-      params: {
-        paymentWay: appFlag === "renhengmeng" ? "Z0010" : "Z0006",
-        orderHeaderId: "" + orderHeaderId,
-        cardNo: card_id || "",
-        isMultiplePay: "",
-        channelCode: "QD0000001",
-        sysSourceCode: "YZ001",
-        cinemaCode,
-        cinemaLinkId
-      },
-      session_id
-    };
     console.log(conPrefix + "订单购买参数", params);
     const buyRes = await APP_API_OBJ[appFlag].buyTicket(params);
     console.log(conPrefix + "订单购买返回", buyRes);
@@ -2776,6 +2805,7 @@ const buyTicket = async ({
       console.warn("获取其它活动返回结果", tsgRes);
     }
     return {
+      params,
       buyRes,
       zoneRes,
       tsgRes
