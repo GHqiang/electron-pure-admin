@@ -147,7 +147,7 @@ class OrderAutoOfferQueue {
           lockseat: seat_no?.split(",").join(" ") || ""
         };
       });
-      console.warn(conPrefix + "转换后的订单列表", sfcStayOfferlist);
+      // console.warn(conPrefix + "转换后的订单列表", sfcStayOfferlist);
       sfcStayOfferlist = sfcStayOfferlist
         .filter(item => getCinemaFlag(item))
         .map(item => {
@@ -156,10 +156,10 @@ class OrderAutoOfferQueue {
             app_name: getCinemaFlag(item)
           };
         });
-      console.warn(
-        conPrefix + "匹配已上架影院后的的待报价订单",
-        sfcStayOfferlist
-      );
+      // console.warn(
+      //   conPrefix + "匹配已上架影院后的的待报价订单",
+      //   sfcStayOfferlist
+      // );
       if (!sfcStayOfferlist?.length) return [];
       const { handleSuccessOrderList, handleFailOrderList } = this;
       let orderOfferRecord = [
@@ -183,10 +183,7 @@ class OrderAutoOfferQueue {
       newOrders = newOrders.filter(item =>
         judgeHandle(item, item.app_name, offerList)
       );
-      // console.warn(
-      //   conPrefix + "从服务端历史报价记录过滤后的的待报价订单",
-      //   newOrders
-      // );
+      console.warn(conPrefix + "新的待报价订单列表", newOrders);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: "新的待报价订单列表",

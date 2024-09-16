@@ -50,7 +50,7 @@ class OrderAutoFetchQueue {
     try {
       await this.delay(fetchDelay);
       // 获取待确认列表并确认接单
-      await getStayConfirmOrderAndSure();
+      await getStayConfirmOrderAndSure(this.confimrOrderList);
       await this.delay(1);
       let stayList = await orderFetch();
       if (!stayList?.length) return;
@@ -234,12 +234,12 @@ const judgeHandle = (item, app_name, offerList, ticketList) => {
 };
 
 // 获取待确认订单并接单
-const getStayConfirmOrderAndSure = async () => {
+const getStayConfirmOrderAndSure = async confimrOrderList => {
   try {
     let list = await stayConfirmOrderFetch();
     // 从已接单列表里过滤
     list = list.filter(
-      item => !this.confimrOrderList.some(itemA => itemA.id === item.id)
+      item => !confimrOrderList.some(itemA => itemA.id === item.id)
     );
     list = list.map(item => ({
       ...item.demands,
@@ -258,7 +258,7 @@ const getStayConfirmOrderAndSure = async () => {
         const item = list[i];
         const res = await startDeliver(item);
         if (res) {
-          this.confimrOrderList.push(order);
+          confimrOrderList.push(order);
         }
       }
     }

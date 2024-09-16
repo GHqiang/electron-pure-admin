@@ -2959,18 +2959,20 @@ const useQuanOrCard = ({
           return item.couponName === QUAN_TYPE_FLAG[quan_value];
         }
       });
-      let useQuan = targeQuanList.slice(0, ticket_num).map(item => {
-        let seatCode = Object.keys(item.discountAmountMap)?.[0];
+      let useQuan = targeQuanList.slice(0, ticket_num).map((item, index) => {
+        let seatCode = Object.keys(item.discountAmountMap);
         return {
           couponInstanceId: item.couponInstanceId,
           couponType: item.templateType,
           // 以下两个值一样
-          seatCode: seatCode,
-          salesKeySku: seatCode,
+          seatCode: seatCode[index],
+          salesKeySku: seatCode[index],
           couponCode: item.couponCode,
           couponName: item.couponName,
           templateCode: item.templateCode,
-          discountAmount: seatCode ? item.discountAmountMap?.[seatCode] : 0
+          discountAmount: seatCode
+            ? item.discountAmountMap?.[seatCode[index]]
+            : 0
         };
       });
       let quanCost = QUAN_TYPE_COST[quan_value];
