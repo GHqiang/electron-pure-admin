@@ -1481,6 +1481,7 @@ class OrderAutoTicketQueue {
         cinemaCode,
         cinemaLinkId,
         card_id,
+        useQuan,
         orderHeaderId,
         orderCode,
         orderDate,
@@ -2715,6 +2716,7 @@ const buyTicket = async ({
   orderCode,
   orderDate,
   card_id,
+  useQuan,
   orderHeaderId,
   appFlag,
   session_id
@@ -2738,7 +2740,7 @@ const buyTicket = async ({
     const buyRes = await APP_API_OBJ[appFlag].buyTicket(params);
     console.log(conPrefix + "订单购买返回", buyRes);
     let zoneRes, tsgRes;
-    if (appFlag === "renhengmeng") {
+    if (useQuan?.length) {
       zoneRes = await APP_API_OBJ[appFlag].findZoneByChannel({
         params: {
           channelCode: "QD0000001",
