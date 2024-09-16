@@ -1462,7 +1462,11 @@ class OrderAutoTicketQueue {
         });
         return { offerRule };
       }
-      if (useQuan?.length && paymentAmount != 0) {
+      if (
+        useQuan?.length &&
+        offerRule.quan_value !== "yaolai-yixianbu5" &&
+        paymentAmount != 0
+      ) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: `用完券发现支付金额不为0，暂不购买`,
@@ -1479,6 +1483,17 @@ class OrderAutoTicketQueue {
           failReason: `用完券发现支付金额不为0，暂不购买,需手动出票`
         });
         return { offerRule };
+        // this.logList.push({
+        //   opera_time: getCurrentFormattedDateTime(),
+        //   des: `用完券发现支付金额不为0，走转单`,
+        //   level: "error"
+        // });
+        // const transferParams = await this.transferOrder(item, {
+        //   cinemaCode,
+        //   cinemaLinkId,
+        //   orderHeaderId
+        // });
+        // return { offerRule, transferParams };
       }
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
