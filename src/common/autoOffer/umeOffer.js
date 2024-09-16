@@ -485,7 +485,7 @@ class getUmeOfferPrice {
         //    "partCardType": "CHOOSE"
         //  }]
         // 如果存在会员活动会员价先减1，不减amountOrSale是因为怕把价格压下去
-        member_price = member_price - 1;
+        // member_price = member_price - 1;
       }
       if (member_price > 0) {
         const cardRes = await svApi.queryCardList({

@@ -1231,6 +1231,16 @@ class OrderAutoTicketQueue {
       let cardList = cardQuanListRes?.cards || [];
       let quanList = cardQuanListRes?.coupons || [];
       let activities = cardQuanListRes?.activities || [];
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: `获取最优卡券组合返回`,
+        level: "info",
+        info: {
+          cardList,
+          quanList: quanList.slice(0, 10),
+          activities
+        }
+      });
       // [{
       //    "activityId": 23,
       //    "activityCode": "YPHD000000023",
