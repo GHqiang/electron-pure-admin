@@ -378,14 +378,14 @@ class OrderAutoOfferQueue {
       if (TEST_NEW_PLAT_LIST.includes("shangzhan")) {
         endPrice = endPrice - 1;
       }
+      let area_id = order.order_detail[0]?.area_id;
+      // 先测试单个座位分区报价，多个后面再说
       const res = await this.submitOffer({
         order_sn: order.order_number,
-        seat_data: order.order_detail.map(item => {
-          return {
-            area_id: item.area_id,
-            quoted: "" + endPrice
-          };
-        }),
+        seat_data: {
+          area_id: area_id,
+          quoted: endPrice.tofixed()
+        },
         bidd_notify: ""
       });
       return { res, offerRule };

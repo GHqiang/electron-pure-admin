@@ -2536,16 +2536,14 @@ class OrderAutoTicketQueue {
           appFlag
         });
         const coupon_num = couponNumRes?.coupon_num;
-        if (couponNumRes?.error) {
-          targetLogList.push({
-            opera_time: getCurrentFormattedDateTime(),
-            des: `${conPrev}绑定券返回`,
-            level: "error",
-            info: {
-              ...couponNumRes
-            }
-          });
-        }
+        targetLogList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: `${conPrev}绑定券返回`,
+          level: "error",
+          info: {
+            ...couponNumRes
+          }
+        });
         if (coupon_num) {
           bandQuanList.push({ coupon_num, quan_cost: quan.quan_cost });
           svApi.addUseQuanRecord({

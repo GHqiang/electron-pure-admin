@@ -272,12 +272,13 @@ const getStayConfirmOrderAndSure = async confimrOrderList => {
 const stayConfirmOrderFetch = async () => {
   try {
     let params = {
-      status: "0%2C1",
+      status: "0%2C1", // 0:竞价中 1-竞价成功
       page: 1
     };
     // console.log(conPrefix + "获取影划算待出票订单列表参数", params);
     const res = await yinghuasuanApi.queryStayConfirmList(params);
     let list = res?.data.data || [];
+    list = list.filter(item => item.status === "1");
     // console.log(conPrefix + "获取影划算待确认列表返回", list);
     return list;
   } catch (error) {

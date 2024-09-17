@@ -5,7 +5,8 @@
 import axios from "@/utils/http/shangzhan-request";
 
 // 待报价列表查询
-const queryStayOfferList = params => axios.post("/openapi/orderList", params);
+const queryStayOfferList = params =>
+  axios.post("/openapi/orderList", params, { timeout: 20 * 1000 });
 
 // 提交报价
 const submitOffer = params => axios.post("/openapi/orderBidding", params);

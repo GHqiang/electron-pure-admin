@@ -6,7 +6,7 @@ import axios from "@/utils/http/yinghuasuan-request";
 
 // 获取待报价列表
 const queryStayOfferList = params =>
-  axios.post("/broker/v1/invitation/list", params);
+  axios.post("/broker/v1/invitation/list", params, { timeout: 20 * 1000 });
 
 // 提交报价
 const submitOffer = params =>
