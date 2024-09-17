@@ -178,7 +178,8 @@ import createTucketQueueFun from "@/common/autoTicket/comTicketHandle";
 import { ORDER_FORM, APP_LIST } from "@/common/constant";
 import {
   getCinemaLoginInfoList,
-  getCurrentFormattedDateTime
+  getCurrentFormattedDateTime,
+  logUpload
 } from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
@@ -314,6 +315,16 @@ const oneClickStart = () => {
           plat_offer_queue: JSON.stringify(tableDataStore.items),
           offer_queue_time: getCurrentFormattedDateTime()
         });
+        logUpload({ plat_name: "", type: 1 }, [
+          {
+            opera_time: getCurrentFormattedDateTime(),
+            des: "一键启动队列",
+            level: "info",
+            info: {
+              queue: JSON.stringify(tableDataStore.items)
+            }
+          }
+        ]);
       } else {
         ElMessage.warning("有平台token未设置，请先设置再启动");
       }
@@ -346,6 +357,16 @@ const oneClickStop = () => {
         plat_offer_queue: JSON.stringify(tableDataStore.items),
         offer_queue_time: getCurrentFormattedDateTime()
       });
+      logUpload({ plat_name: "", type: 1 }, [
+        {
+          opera_time: getCurrentFormattedDateTime(),
+          des: "一键停止队列",
+          level: "info",
+          info: {
+            queue: JSON.stringify(tableDataStore.items)
+          }
+        }
+      ]);
     })
     .catch(() => {});
 };
@@ -397,6 +418,16 @@ const singleStartOrStop = ({ id, platToken, platName }, flag) => {
     plat_offer_queue: JSON.stringify(tableDataStore.items),
     offer_queue_time: getCurrentFormattedDateTime()
   });
+  logUpload({ plat_name: platName, type: 1 }, [
+    {
+      opera_time: getCurrentFormattedDateTime(),
+      des: `单个${flag !== 1 ? "停止" : "启动"}队列`,
+      level: "info",
+      info: {
+        queue: JSON.stringify(tableDataStore.items)
+      }
+    }
+  ]);
 };
 
 // 正在编辑id
