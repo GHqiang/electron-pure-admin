@@ -290,6 +290,22 @@ const getCinemaFlag = item => {
       )) ||
     (plat_name === "yangcong" && cinema_name.includes("耀莱成龙"));
 
+  let isWanmeiGroup = ["完美世界"].includes(cinema_group);
+  let isYinghuangiGroup = ["英皇电影城", "英皇UA影城", "英皇"].includes(
+    cinema_group
+  );
+  let isZheyingshidaiGroup = ["浙影时代", "浙江时代"].includes(cinema_group);
+
+  // 后续再补充名字匹配
+  if (isWanmeiGroup) {
+    return "wanmei";
+  }
+  if (isYinghuangiGroup) {
+    return "yinghuang";
+  }
+  if (isZheyingshidaiGroup) {
+    return "zheyingshidai";
+  }
   if (isSfcGroup || isSfcName) {
     return "sfc";
   }

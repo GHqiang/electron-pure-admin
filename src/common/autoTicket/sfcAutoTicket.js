@@ -1590,7 +1590,8 @@ class OrderAutoTicketQueue {
       supplier_end_price,
       offerRule,
       rewards,
-      plat_name
+      plat_name,
+      order_number
     } = params;
     try {
       console.log(
@@ -1692,7 +1693,8 @@ class OrderAutoTicketQueue {
           quan_value,
           rewards,
           session_id,
-          plat_name
+          plat_name,
+          order_number
         });
         return {
           quan_code: useQuans.join(),
@@ -2489,9 +2491,14 @@ class OrderAutoTicketQueue {
     city_id,
     cinema_id,
     session_id,
-    asyncFlag
+    asyncFlag,
+    asyncBandQuanList,
+    plat_name,
+    order_number
   }) {
     const { conPrefix, appFlag } = this;
+    let targetLogList = asyncFlag === 1 ? asyncBandQuanList : this.logList;
+    let conPrev = asyncFlag === 1 ? "异步绑券_" : "";
     try {
       let quanRes = await svApi.queryQuanList({
         quan_value: quan_value,
@@ -2500,13 +2507,18 @@ class OrderAutoTicketQueue {
         page_num: 1,
         page_size: quanNum
       });
-      this.logList.push({
+      targetLogList.push({
         opera_time: getCurrentFormattedDateTime(),
-        des: `从服务端获取券完成`,
-        level: "info"
+        des: `${conPrev}从服务端获取券返回`,
+        level: "info",
+        info: {
+          quanRes,
+          quanNum,
+          quan_value
+        }
       });
 
-      let quanList = quanRes.data.quanList || [];
+      let quanList = quanRes?.data?.quanList || [];
       if (!quanList?.length && asyncFlag != 1) {
         console.error(conPrefix + `数据库${quan_value}面额券不足`);
         this.setErrInfo(`数据库${quan_value}面额券不足`);
@@ -2525,12 +2537,12 @@ class OrderAutoTicketQueue {
         });
         const coupon_num = couponNumRes?.coupon_num;
         if (couponNumRes?.error) {
-          this.logList.push({
+          targetLogList.push({
             opera_time: getCurrentFormattedDateTime(),
-            des: couponNumRes?.errMsg,
+            des: `${conPrev}绑定券返回`,
             level: "error",
             info: {
-              error: couponNumRes?.error
+              ...couponNumRes
             }
           });
         }
@@ -2547,7 +2559,29 @@ class OrderAutoTicketQueue {
       return bandQuanList;
     } catch (error) {
       console.error(conPrefix + "获取新券异常", error);
+      targetLogList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: `${conPrev}获取新券异常`,
+        level: "error",
+        info: {
+          error,
+          quanNum,
+          quan_value
+        }
+      });
       this.setErrInfo("获取新券异常", error);
+    } finally {
+      if (asyncFlag) {
+        logUpload(
+          {
+            plat_name: plat_name,
+            app_name: appFlag,
+            order_number: order_number,
+            type: 3
+          },
+          targetLogList
+        );
+      }
     }
   }
 
@@ -2561,7 +2595,8 @@ class OrderAutoTicketQueue {
     quan_value,
     rewards,
     session_id,
-    plat_name
+    plat_name,
+    order_number
   }) {
     const { conPrefix, appFlag } = this;
     try {
@@ -2596,7 +2631,12 @@ class OrderAutoTicketQueue {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: `从服务端获取券绑定完成`,
-          level: "info"
+          level: "info",
+          info: {
+            newQuanList,
+            targetQuanList,
+            ticket_num
+          }
         });
         if (targetQuanList?.length < ticket_num) {
           console.error(
@@ -2622,7 +2662,10 @@ class OrderAutoTicketQueue {
           quan_value,
           session_id,
           quanNum: 10 - (targetQuanList.length - Number(ticket_num)),
-          asyncFlag: 1
+          asyncFlag: 1,
+          asyncBandQuanList: [],
+          plat_name,
+          order_number
         });
       }
       // 用券列表
