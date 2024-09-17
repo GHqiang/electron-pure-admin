@@ -404,24 +404,6 @@ class OrderAutoOfferQueue {
     const { conPrefix } = this;
     this.isRunning = false;
     console.warn(conPrefix + "主动停止订单自动报价队列");
-    this.logList.push({
-      opera_time: getCurrentFormattedDateTime(),
-      des: "停止订单自动报价队列",
-      level: "info"
-    });
-    logUpload({ plat_name: "shangzhan", type: 1 }, this.logList);
-    // 打印处理结果
-    const { handleSuccessOrderList, handleFailOrderList } = this;
-    console.warn(
-      conPrefix +
-        `订单处理记录：成功 ${handleSuccessOrderList.length} 个，失败 ${handleFailOrderList.length} 个`
-    );
-    console.warn(
-      conPrefix + "订单处理记录：成功-",
-      handleSuccessOrderList,
-      " 失败-",
-      handleFailOrderList
-    );
   }
   // 获取待报价订单列表
   async getStayOfferList() {
