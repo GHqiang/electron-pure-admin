@@ -352,6 +352,9 @@ const oneClickStop = () => {
 
 // 单个启动或停止
 const singleStartOrStop = ({ id, platToken, platName }, flag) => {
+  let otherPlatQueueList = tableDataStore.items.filter(
+    item => item.platName !== platName
+  );
   // 单个启动
   if (flag === 1) {
     if (!platToken) {
@@ -372,17 +375,23 @@ const singleStartOrStop = ({ id, platToken, platName }, flag) => {
         delete appTicketQueueObj[item];
       }
     });
-    Object.keys(appTicketQueueObj).forEach(item => {
-      isStartTicket && appTicketQueueObj[item].start();
-    });
+    // 其它没有一个启动的再停止
+    if (!otherPlatQueueList.some(item => item.isEnabled)) {
+      Object.keys(appTicketQueueObj).forEach(item => {
+        isStartTicket && appTicketQueueObj[item].start();
+      });
+    }
   } else {
     // 单个停止
     tableDataStore.toggleEnable(id);
     isStartOffer && platOfferQueueObj[platName].stop();
     isStartFetch && platFetchOrderQueueObj[platName].stop();
-    Object.keys(appTicketQueueObj).forEach(item => {
-      isStartTicket && appTicketQueueObj[item].stop();
-    });
+    // 其它没有一个启动的再停止
+    if (!otherPlatQueueList.some(item => item.isEnabled)) {
+      Object.keys(appTicketQueueObj).forEach(item => {
+        isStartTicket && appTicketQueueObj[item].stop();
+      });
+    }
   }
   svApi.updateUser({
     plat_offer_queue: JSON.stringify(tableDataStore.items),

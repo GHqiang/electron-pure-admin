@@ -47,10 +47,6 @@ class OrderAutoTicketQueue {
 
   // 启动队列
   async start() {
-    // 防止单个停止单个启动导致重复监听
-    if (this.queue?.length && this.isRunning) {
-      return;
-    }
     const { conPrefix } = this;
     this.prevOrderNumber = "";
     // 由于及时队列停了 this.enqueue方法仍可能运行一次，故在每次启动重置队列
