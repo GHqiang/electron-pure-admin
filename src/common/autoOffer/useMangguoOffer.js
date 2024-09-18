@@ -35,9 +35,7 @@ class OrderAutoOfferQueue {
     // 循环直到队列停止
     while (this.isRunning) {
       // 获取订单列表(支持时间间隔)
-      let platQueueRule = window.localStorage.getItem(
-        "platFetchOrderQueueRule"
-      );
+      let platQueueRule = window.localStorage.getItem("platQueueRule");
       platQueueRule = JSON.parse(platQueueRule).filter(
         item => item.platName === "mangguo"
       );

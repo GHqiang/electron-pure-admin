@@ -35,9 +35,7 @@ class OrderAutoOfferQueue {
     // 循环直到队列停止
     while (this.isRunning) {
       // 获取订单列表(支持时间间隔)
-      let platQueueRule = window.localStorage.getItem(
-        "platFetchOrderQueueRule"
-      );
+      let platQueueRule = window.localStorage.getItem("platQueueRule");
       platQueueRule = JSON.parse(platQueueRule).filter(
         item => item.platName === "haha"
       );
@@ -103,7 +101,7 @@ class OrderAutoOfferQueue {
           show_time: time,
           rewards: 0, // 哈哈无奖励，只有快捷
           is_urgent: 0, // 1紧急 0非紧急
-          cinema_group: '', // 哈哈没有影院标识
+          cinema_group: "", // 哈哈没有影院标识
           cinema_code: cinemaId, // 影院id
           order_number: order_id
         };
