@@ -1470,6 +1470,30 @@ async function trial(
     );
   }
 }
+
+// 商展格式化获取放映时间
+const parseTimeStr = timeStr => {
+  // 当前年份
+  const currentYear = new Date().getFullYear();
+
+  // 解析输入的字符串
+  const parts = timeStr.split(" ");
+  const datePart = parts[0].replace("日", ""); // 移除 "日" 字符
+  const timePart = parts[1];
+
+  // 解析日期部分
+  const [month, day] = datePart.split("月");
+  const [startTime, endTime] = timePart.split("-");
+
+  // 格式化日期和时间
+  const startFormatted = `${currentYear}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")} ${startTime}:00`;
+  const endFormatted = `${currentYear}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")} ${endTime}:00`;
+
+  return {
+    startTime: startFormatted,
+    endTime: endFormatted
+  };
+};
 export {
   getCurrentFormattedDateTime, // 获取当前时间：YYYY-MM-DD HH:MM:SS
   getCurrentDay, // 获取当前天：YYYY-MM-DD
@@ -1496,6 +1520,7 @@ export {
   getOrginValue, // 对象深拷贝（获取对象源值）
   formatErrInfo, // 格式化错误信息对象
   trial, // 试错方法
+  parseTimeStr, // 商展格式化获取放映时间
   cryptoFunctions,
   CustomConsole
 };
