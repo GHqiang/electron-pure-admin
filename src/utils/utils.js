@@ -254,7 +254,7 @@ const colorObj = {
 // 获取影院标识
 const getCinemaFlag = item => {
   const { cinema_group, cinema_name, city_name, plat_name } = item;
-  let noGroupPlatList = ["yinghuasuan", "shangzhan"];
+  let noGroupPlatList = ["yinghuasuan", "shangzhan", "haha"];
 
   let isSfcGroup = ["上影上海", "上影二线", "SFC", "c_sfc"].includes(
     cinema_group

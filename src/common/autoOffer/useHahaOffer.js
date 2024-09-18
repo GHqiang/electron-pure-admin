@@ -5,7 +5,6 @@ import {
   mockDelay, // 模拟延时
   formatErrInfo // 格式化errInfo
 } from "@/utils/utils";
-import { SFC_CINEMA_NAME } from "@/common/constant";
 import svApi from "@/api/sv-api"; // 机器api
 import hahaApi from "@/api/haha-api"; // 哈哈平台api
 // 获取最终报价信息实体类
@@ -104,9 +103,7 @@ class OrderAutoOfferQueue {
           show_time: time,
           rewards: 0, // 哈哈无奖励，只有快捷
           is_urgent: 0, // 1紧急 0非紧急
-          cinema_group: SFC_CINEMA_NAME.includes(cinemaName)
-            ? "上影上海"
-            : "其它自动",
+          cinema_group: '', // 哈哈没有影院标识
           cinema_code: cinemaId, // 影院id
           order_number: order_id
         };
