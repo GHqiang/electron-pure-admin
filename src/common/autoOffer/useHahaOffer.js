@@ -1,32 +1,18 @@
-import { computed } from "vue";
 import {
   getCinemaFlag, // 获取影院标识
-  judgeHandle, // 判断是否是新订单
   getCurrentFormattedDateTime, // 格式化当前日期时间
   logUpload, // 日志上传
   mockDelay, // 模拟延时
-  getOrginValue, // 获取对象源值
   formatErrInfo // 格式化errInfo
 } from "@/utils/utils";
 import { SFC_CINEMA_NAME } from "@/common/constant";
 import svApi from "@/api/sv-api"; // 机器api
 import hahaApi from "@/api/haha-api"; // 哈哈平台api
-
 // 获取最终报价信息实体类
-import getOfferPriceFun from "./commonOfferHandle";
-
+import getOfferPriceFun from "./commonOfferHandle.js";
 // 平台toke列表
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
-
-// 平台自动报价队列规则列表
-import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
-const platTableDataStore = usePlatTableDataStore();
-const platOfferRuleList = computed(() =>
-  platTableDataStore.items.filter(item => item.platName === "haha")
-);
-
-// console.log("队列执行规则", getOrginValue(platOfferRuleList.value));
 
 let isTestOrder = false; //是否是测试订单
 // 创建一个订单自动报价队列类
@@ -34,11 +20,9 @@ class OrderAutoOfferQueue {
   constructor() {
     this.queue = []; // 初始化空队列
     this.isRunning = false; // 初始化时队列未运行
-    this.handleSuccessOrderList = []; // 订单处理成功列表
-    this.handleFailOrderList = []; // 订单处理失败列表
-    this.offerList = []; // 报价记录列表
     this.conPrefix = "【哈哈自动报价】——"; // console打印前缀
     this.logList = []; // 队列运行日志
+    this.handledOrders = new Map(); // 用于存储已处理订单号及其相关信息
   }
 
   // 启动队列（fetchDelay获取订单列表间隔，processDelay处理订单间隔）
@@ -47,43 +31,26 @@ class OrderAutoOfferQueue {
     console.log(conPrefix + "开始执行");
     // 设置队列为运行状态
     this.isRunning = true;
-    this.handleSuccessOrderList = [];
-    this.handleFailOrderList = [];
-    // 由于及时队列停了 this.enqueue方法仍可能运行一次，故在每次启动重置队列
+    this.handledOrders = new Map();
     this.queue = [];
     // 循环直到队列停止
     while (this.isRunning) {
       // 获取订单列表(支持时间间隔)
-      // 1、获取当前平台的队列规则状态，如果禁用直接停止
-      let platQueueRule = getOrginValue(platOfferRuleList.value).filter(
-        item => item.isEnabled
+      let platQueueRule = window.localStorage.getItem(
+        "platFetchOrderQueueRule"
       );
-      // console.log(conPrefix + "队列启动的执行规则", platQueueRule);
-      if (!platQueueRule?.length) {
-        console.error(conPrefix + "队列不存在或未启用，直接停止");
-        await this.stop();
-        return;
-      }
+      platQueueRule = JSON.parse(platQueueRule).filter(
+        item => item.platName === "haha"
+      );
       const { getInterval, handleInterval } = platQueueRule[0];
       let fetchDelay = getInterval;
       let processDelay = handleInterval;
       let orders = await this.fetchOrders(fetchDelay);
-      logUpload(
-        {
-          plat_name: "haha",
-          type: 1
-        },
-        this.logList
-      );
-      if (orders.length) {
-        console.warn(conPrefix + "新的待报价订单列表", orders);
-      }
       // 将订单加入队列
-      this.enqueue(orders);
-
+      this.queue.push(...orders);
       // 处理队列中的订单，直到队列为空或停止
       while (this.queue.length > 0 && this.isRunning) {
-        const order = this.dequeue(); // 取出队列首部订单并从队列里去掉
+        const order = this.queue.shift(); // 取出队列首部订单并从队列里去掉
         if (order) {
           // 处理订单
           const offerResult = await this.orderHandle(order, processDelay);
@@ -98,7 +65,6 @@ class OrderAutoOfferQueue {
       }
     }
   }
-
   // 获取订单
   async fetchOrders(fetchDelay) {
     const { conPrefix } = this;
@@ -159,41 +125,35 @@ class OrderAutoOfferQueue {
       //   sfcStayOfferlist
       // );
       if (!sfcStayOfferlist?.length) return [];
-      const { handleSuccessOrderList, handleFailOrderList } = this;
-      let orderOfferRecord = [
-        ...handleSuccessOrderList,
-        ...handleFailOrderList
-      ];
-      let newOrders = sfcStayOfferlist.filter(item => {
-        // 过滤出来新订单（未进行过报价的）
-        return !orderOfferRecord.some(
-          itemA => itemA.order_number === item.order_number
-        );
-      });
+      let newOrders = sfcStayOfferlist.filter(
+        item => !this.handledOrders.has(item.order_number)
+      );
       // console.warn(
       //   conPrefix + "从当前队列报价记录过滤后的的待报价订单",
       //   newOrders
       // );
       if (!newOrders?.length) return [];
-      // 如果过滤到这时候还有单子再调接口进行历史报价记录过滤
-      const offerList = await this.getOfferList();
-      this.offerList = offerList;
-      newOrders = newOrders.filter(item =>
-        judgeHandle(item, item.app_name, offerList)
-      );
-      // console.warn(
-      //   conPrefix + "从服务端历史报价记录过滤后的的待报价订单",
-      //   newOrders
-      // );
-      this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
-        des: "新的待报价订单列表",
-        level: "info",
-        info: {
-          newOrders: stayList.filter(item =>
-            newOrders.some(itemA => itemA.order_number === item.order_id)
-          )
-        }
+      newOrders.forEach(item => {
+        this.handledOrders.set(item.order_number, 1);
+        let logList = [
+          {
+            opera_time: getCurrentFormattedDateTime(),
+            des: "哈哈新的待报价订单",
+            level: "info",
+            info: {
+              newOrder: item
+            }
+          }
+        ];
+        logUpload(
+          {
+            plat_name: item.plat_name,
+            app_name: item.app_name,
+            order_number: item.order_number,
+            type: 1
+          },
+          logList
+        );
       });
       return newOrders;
     } catch (error) {
@@ -201,23 +161,6 @@ class OrderAutoOfferQueue {
       return [];
     }
   }
-
-  // 将订单添加至队列
-  enqueue(orders) {
-    const { conPrefix } = this;
-    if (orders.length) {
-      // console.log(conPrefix + "添加新订单到队列");
-      this.queue.push(...orders);
-    } else {
-      // console.log(conPrefix + "从报价记录过滤后，无新订单添加到队列");
-    }
-  }
-
-  // 从队列中移除并返回首部订单
-  dequeue() {
-    return this.queue.shift();
-  }
-
   // 处理订单
   async orderHandle(order, delayTime) {
     const { conPrefix } = this;
@@ -227,7 +170,7 @@ class OrderAutoOfferQueue {
       if (this.isRunning) {
         const offerResult = await this.singleOffer({
           order,
-          offerList: this.offerList
+          offerList: [] // 动态调价暂时不用先传空
         });
         // { res, offerRule } || { offerRule, err_msg, err_info } || undefined
         return offerResult;
@@ -289,15 +232,6 @@ class OrderAutoOfferQueue {
         rewards: order.rewards, // 是否是奖励订单 1是 0否
         rule: tokens.userInfo.rule || 2
       };
-      if (offerResult?.res) {
-        this.handleSuccessOrderList.push(order);
-      } else {
-        // 失败场景添加offer_rule用以排查问题
-        serOrderInfo.offer_rule = offerResult?.offerRule
-          ? JSON.stringify(getOrginValue(offerResult.offerRule))
-          : "";
-        this.handleFailOrderList.push(order);
-      }
       // 上传该订单的运行日志
       logUpload(
         {
@@ -308,11 +242,10 @@ class OrderAutoOfferQueue {
         },
         this.logList
       );
-      if (isTestOrder) {
+      if (!isTestOrder) {
         console.warn("数据库存储当前订单报价记录", serOrderInfo);
-        return;
+        await svApi.addOfferRecord(serOrderInfo);
       }
-      await svApi.addOfferRecord(serOrderInfo);
     } catch (error) {
       console.error(conPrefix + "添加订单处理记录异常", error);
     }
@@ -408,41 +341,23 @@ class OrderAutoOfferQueue {
       return list;
     } catch (error) {
       console.error(conPrefix + "获取待报价列表异常", error);
-      this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
-        des: "获取待报价列表异常",
-        level: "error",
-        info: {
-          error
-        }
-      });
+      logUpload(
+        {
+          plat_name: "haha",
+          type: 1
+        },
+        [
+          {
+            opera_time: getCurrentFormattedDateTime(),
+            des: "获取待报价列表异常",
+            level: "error",
+            info: {
+              error
+            }
+          }
+        ]
+      );
       return [];
-    }
-  }
-  // 获取报价记录
-  async getOfferList() {
-    const { conPrefix } = this;
-    try {
-      const res = await svApi.queryOfferList({
-        user_id: tokens.userInfo.user_id,
-        plat_name: "haha",
-        start_time: getCurrentFormattedDateTime(
-          +new Date() - 0.5 * 60 * 60 * 1000
-        ),
-        end_time: getCurrentFormattedDateTime()
-      });
-      return res.data.offerList || [];
-    } catch (error) {
-      console.error(conPrefix + "获取历史报价记录异常", error);
-      this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
-        des: "获取历史报价记录异常",
-        level: "error",
-        info: {
-          error
-        }
-      });
-      return Promise.reject("获取历史报价异常");
     }
   }
 }
