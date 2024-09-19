@@ -8,7 +8,10 @@ import {
   SPECIAL_CINEMA_OBJ,
   SFC_CINEMA_NAME,
   YAOLAI_CINEMA_NAME,
-  UME_CINEMA_NAME
+  UME_CINEMA_NAME,
+  WANMEI_CINEMA_NAME,
+  YINGHUANG_CINEMA_NAME,
+  ZHEYINGSHIDAI_CINEMA_NAME
 } from "@/common/constant";
 /**
  * 获取当前日期和时间的格式化字符串
@@ -255,12 +258,13 @@ const colorObj = {
 const getCinemaFlag = item => {
   const { cinema_group, cinema_name, city_name, plat_name } = item;
   let noGroupPlatList = ["yinghuasuan", "shangzhan", "haha"];
+  let isNoGroup = noGroupPlatList.includes(plat_name);
 
   let isSfcGroup = ["上影上海", "上影二线", "SFC", "c_sfc"].includes(
     cinema_group
   );
-  let isSfcName =
-    noGroupPlatList.includes(plat_name) &&
+  let isSfcCinemaName =
+    isNoGroup &&
     SFC_CINEMA_NAME.some(
       item => cinemNameSpecial(item) === cinemNameSpecial(cinema_name)
     );
@@ -268,8 +272,8 @@ const getCinemaFlag = item => {
   let isUmeGroup = ["UME", "ume一线", "ume二线", "c_ume"].includes(
     cinema_group
   );
-  let isUmeName =
-    noGroupPlatList.includes(plat_name) &&
+  let isUmeCinemaName =
+    isNoGroup &&
     UME_CINEMA_NAME.some(
       item => cinemNameSpecial(item) === cinemNameSpecial(cinema_name)
     );
@@ -283,51 +287,53 @@ const getCinemaFlag = item => {
     "耀莱",
     "c_jccinema"
   ].includes(cinema_group);
-  let isYaolaiName =
-    (noGroupPlatList.includes(plat_name) &&
+  let isYaolaiCinemaName =
+    (isNoGroup &&
       YAOLAI_CINEMA_NAME.some(
         item => cinemNameSpecial(item) === cinemNameSpecial(cinema_name)
       )) ||
     (plat_name === "yangcong" && cinema_name.includes("耀莱成龙"));
 
   let isWanmeiGroup = ["完美世界"].includes(cinema_group);
+
   let isYinghuangiGroup = ["英皇电影城", "英皇UA影城", "英皇"].includes(
     cinema_group
   );
+  let isYinghuangCinemaName =
+    isNoGroup &&
+    YINGHUANG_CINEMA_NAME.some(
+      item => cinemNameSpecial(item) === cinemNameSpecial(cinema_name)
+    );
+
   let isZheyingshidaiGroup =
     ["浙影时代"].includes(cinema_group) ||
     (cinema_group === "浙江时代" && cinema_name.includes("浙影时代"));
-  let zheyingshidaiCityList = [
-    "北京",
-    "合肥",
-    "杭州",
-    "吉安",
-    "嘉兴",
-    "六安",
-    "宁波",
-    "上海",
-    "台州",
-    "舟山"
-  ];
+
+  let isZheyingshidaiCinemaName =
+    isNoGroup &&
+    ZHEYINGSHIDAI_CINEMA_NAME.some(
+      item => cinemNameSpecial(item) === cinemNameSpecial(cinema_name)
+    );
+
   // 后续再补充名字匹配
   if (isWanmeiGroup) {
     return "wanmei";
   }
-  if (isYinghuangiGroup) {
+  if (isYinghuangiGroup || isYinghuangCinemaName) {
     return "yinghuang";
   }
-  if (isZheyingshidaiGroup && zheyingshidaiCityList.includes(city_name)) {
+  if (isZheyingshidaiGroup || isZheyingshidaiCinemaName) {
     return "zheyingshidai";
   }
-  if (isSfcGroup || isSfcName) {
+  if (isSfcGroup || isSfcCinemaName) {
     return "sfc";
   }
   // 蚂蚁和洋葱、哈哈：UME。 猎人和芒果：ume一线、ume二线
-  else if (isUmeGroup || isUmeName) {
+  else if (isUmeGroup || isUmeCinemaName) {
     return "ume";
   }
   // 蚂蚁和洋葱、哈哈：耀莱成龙。 猎人和芒果：耀莱一线、耀莱二线
-  else if (isYaolaiGroup || isYaolaiName) {
+  else if (isYaolaiGroup || isYaolaiCinemaName) {
     return "yaolai";
   } else if (
     cinema_name.includes("仁恒梦影廊电影院") &&
