@@ -294,8 +294,21 @@ const getCinemaFlag = item => {
   let isYinghuangiGroup = ["英皇电影城", "英皇UA影城", "英皇"].includes(
     cinema_group
   );
-  let isZheyingshidaiGroup = ["浙影时代", "浙江时代"].includes(cinema_group);
-
+  let isZheyingshidaiGroup =
+    ["浙影时代"].includes(cinema_group) ||
+    (cinema_group === "浙江时代" && cinema_name.includes("浙影时代"));
+  let zheyingshidaiCityList = [
+    "北京",
+    "合肥",
+    "杭州",
+    "吉安",
+    "嘉兴",
+    "六安",
+    "宁波",
+    "上海",
+    "台州",
+    "舟山"
+  ];
   // 后续再补充名字匹配
   if (isWanmeiGroup) {
     return "wanmei";
@@ -303,7 +316,7 @@ const getCinemaFlag = item => {
   if (isYinghuangiGroup) {
     return "yinghuang";
   }
-  if (isZheyingshidaiGroup) {
+  if (isZheyingshidaiGroup && zheyingshidaiCityList.includes(city_name)) {
     return "zheyingshidai";
   }
   if (isSfcGroup || isSfcName) {
@@ -394,7 +407,11 @@ const getCinemaFlag = item => {
       itemA =>
         cinemNameSpecial(cinema_name).includes(itemA) &&
         ["杭州"].includes(city_name)
+    ) &&
+    !["杭州中影国际影城西溪印象", "杭州中影国际影城良渚永旺"].some(itemA =>
+      cinemNameSpecial(cinema_name).includes(itemA)
     )
+    // 非上面两个店，这两个店单子还不少，后面可以加下
   ) {
     return "hzzy";
   } else if (
@@ -683,7 +700,8 @@ const cinemNameSpecial = cinema_name => {
   return cinema_name
     .replace(/[\(\)\（\）-]/g, "")
     .replace(/\s*/g, "")
-    .replace(/·/g, "");
+    .replace(/·/g, "")
+    .replace(/:/g, "");
 };
 
 // 获取影院登录信息列表

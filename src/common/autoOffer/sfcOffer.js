@@ -166,7 +166,7 @@ class getSfcOfferPrice {
         .filter(item => item.level === "error")
         .reverse()?.[0];
       err_msg = errInfoObj?.des || err_msg || "";
-      err_info = formatErrInfo(errInfoObj?.info?.error) || err_info || "";
+      err_info = formatErrInfo(errInfoObj?.info) || err_info || "";
       logUpload(
         {
           plat_name: plat_name,

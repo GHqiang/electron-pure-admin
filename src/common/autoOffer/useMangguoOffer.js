@@ -225,7 +225,7 @@ class OrderAutoOfferQueue {
         err_msg: offerResult?.err_msg || errInfoObj?.des || "",
         err_info:
           offerResult?.err_info ||
-          (errInfoObj?.info ? formatErrInfo(errInfoObj?.info?.error) : ""),
+          (errInfoObj?.info ? formatErrInfo(errInfoObj?.info) : ""),
         rewards: order.rewards, // 是否是奖励订单 1是 0否
         rule: tokens.userInfo.rule || 2
       };
