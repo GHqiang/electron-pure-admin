@@ -272,10 +272,14 @@
 <script setup>
 import { ref, reactive, computed, toRaw } from "vue";
 import svApi from "@/api/sv-api";
+import { APP_API_OBJ } from "@/common/index.js";
 import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import RuleDialog from "@/components/RuleDialog.vue";
-import { ORDER_FORM, APP_LIST, QUAN_TYPE } from "@/common/constant";
-import { getCurrentFormattedDateTime } from "@/utils/utils";
+import { ORDER_FORM, APP_LIST, QUAN_TYPE, UME_LIST } from "@/common/constant";
+import {
+  getCurrentFormattedDateTime,
+  getCinemaLoginInfoList
+} from "@/utils/utils";
 import { useDataTableStore } from "@/store/offerRule";
 const rules = useDataTableStore();
 import { platTokens } from "@/store/platTokens";
@@ -315,6 +319,77 @@ const formData = reactive({
 });
 
 formData.rule = rule;
+
+const getAllCinemaList = async () => {
+  let appList = [];
+  let loginInfoList = getCinemaLoginInfoList();
+  Object.keys(APP_LIST).forEach(item => {
+    let obj = loginInfoList.find(
+      itemA => itemA.app_name === item && itemA.session_id
+    );
+    if (obj) {
+      appList.push(item);
+    }
+  });
+  console.log("appList", appList);
+  return;
+  let allCinemaList = [];
+  for (const appName of appList) {
+    const list = await getCinemaList(appName);
+    allCinemaList.push(...list);
+  }
+  console.log("allCinemaList", allCinemaList);
+};
+window.getAllCinemaList = getAllCinemaList;
+// 获取影院列表
+const getCinemaList = async appName => {
+  try {
+    let list = [];
+    if (UME_LIST.includes(appName)) {
+      let params = {
+        params: {
+          channelCode: "QD0000001",
+          sysSourceCode: "YZ001",
+          cinemaCode: "32012801",
+          cinemaLinkId: "15946"
+        }
+      };
+      const res = await APP_API_OBJ[appName].getCinemaList(params);
+      const cityCinemaList = res.data || [];
+      // console.log(appName+ "根据城市获取影院列表返回", cityCinemaList);
+      list = cityCinemaList
+        .map(item => item.cinemaList)
+        .flat()
+        .map(itemA => ({
+          app_name: appName,
+          cinema_code: itemA.cinemaCode,
+          cinema_name: itemA.cinemaName
+        }));
+    } else {
+      const res = await APP_API_OBJ[appName].getCityList({});
+      let cityList = res?.data?.all_city || [];
+
+      for (const item of cityList) {
+        const res = await APP_API_OBJ[appName].getCinemaList({
+          city_id: item.id
+        });
+        // console.log("根据城市获取影院列表返回", res);
+        let cinemaList = res.data?.cinema_data || [];
+        // console.log(appName+ "根据城市获取影院列表返回", cinemaList);
+        cinemaList = cinemaList.map(item => ({
+          app_name: appName,
+          cinema_code: item.id,
+          cinema_name: item.name
+        }));
+        list.push(...cinemaList);
+      }
+    }
+    console.log(appName + "获取全部影院列表返回", list);
+    return list;
+  } catch (error) {
+    console.warn(appName + "获取全部影院列表异常", error);
+  }
+};
 
 const judgeHandle = (arr, str) => {
   let tempArr = str.split(",");

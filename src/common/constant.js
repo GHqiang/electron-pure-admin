@@ -88,7 +88,7 @@ const APP_LIST = {
   jqx: "金泉港",
   fszy: "佛山中影",
   xywszy: "襄阳武商中影",
-  jjzy: "九江中影",
+  jjzy: "九江中影", // 线上不让办卡，未维护登录信息
   whyx: "武汉银兴",
   hzzy: "杭州中影",
   shzy: "上海中影",
