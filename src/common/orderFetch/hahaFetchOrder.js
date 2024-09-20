@@ -122,28 +122,26 @@ class OrderAutoFetchQueue {
       }
       if (!sfcStayOfferlist?.length) return;
       console.warn(conPrefix + "待出票列表新订单", stayList);
-      let logList = [
-        {
-          opera_time: getCurrentFormattedDateTime(),
-          des: "新的待出票订单列表",
-          level: "info",
-          info: {
-            newOrders: stayList.filter(item =>
-              sfcStayOfferlist.some(
-                itemA => itemA.order_number === item.orderNumber
-              )
-            )
-          }
-        }
-      ];
-      logUpload(
-        {
-          plat_name: "haha",
-          type: 2
-        },
-        logList
-      );
       sfcStayOfferlist.forEach(item => {
+        let logList = [
+          {
+            opera_time: getCurrentFormattedDateTime(),
+            des: "哈哈新的待出票订单",
+            level: "info",
+            info: {
+              newOrder: item
+            }
+          }
+        ];
+        logUpload(
+          {
+            plat_name: item.plat_name,
+            app_name: item.appName,
+            order_number: item.order_number,
+            type: 2
+          },
+          logList
+        );
         // 动态生成事件名称
         const eventName = `newOrder_${item.appName}`;
         // 创建一个事件对象
