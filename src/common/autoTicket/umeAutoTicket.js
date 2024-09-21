@@ -1257,6 +1257,21 @@ class OrderAutoTicketQueue {
       //  }]
       let discountAmount = activities[0]?.discountAmount || 0; // 活动日优惠金额
       console.warn("获取最优卡券组合列表返回", cardList, quanList, activities);
+      // 增加已用完过滤，防止核销延迟导致用券失败
+      if (offerRule.offer_type === "1") {
+        const usedQuanList = await this.queryUsedQuanList({
+          quan_value: offerRule.quan_value,
+          app_name: appFlag
+        });
+        if (usedQuanList?.length) {
+          quanList = quanList.filter(
+            item =>
+              !usedQuanList.some(itemA =>
+                itemA.quan_code?.includes(item.couponCode)
+              )
+          );
+        }
+      }
       // 7、使用优惠券或者会员卡
       const {
         ticketMemberPrice,
@@ -1602,6 +1617,45 @@ class OrderAutoTicketQueue {
       console.error(conPrefix + "一键买票异常", error);
       this.setErrInfo("一键买票异常", error);
       return { offerRule };
+    }
+  }
+
+  // 查询最近用券记录返回
+  async queryUsedQuanList({ quan_value, app_name }) {
+    const params = {
+      order_status: "1",
+      quan_value,
+      app_name,
+      user_id: tokens.userInfo.user_id,
+      start_time: getCurrentFormattedDateTime(
+        +new Date() - 3 * 24 * 60 * 60 * 1000
+      ),
+      end_time: getCurrentFormattedDateTime()
+    };
+    try {
+      const res = await svApi.queryUsedQuanList(params);
+      const usedQuanList = res.data?.usedQuanList || [];
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: `获取最近用券记录入参及返回`,
+        level: "info",
+        info: {
+          params,
+          res
+        }
+      });
+      return usedQuanList;
+    } catch (error) {
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: `获取最近用券记录异常`,
+        level: "info",
+        info: {
+          params,
+          error
+        }
+      });
+      return [];
     }
   }
 

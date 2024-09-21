@@ -1971,9 +1971,13 @@ class OrderAutoTicketQueue {
     flag,
     syncQueryLogList
   }) {
-    const { conPrefix } = this;
+    const { conPrefix, appFlag } = this;
     let targetLogList = flag === 1 ? this.logList : syncQueryLogList;
     let params;
+    // sfc系统连锁店所有平台去除|
+    if (appFlag === "sfc") {
+      qrcode = qrcode.replace(/\|/g, "");
+    }
     if (plat_name === "lieren") {
       params = {
         // order_id: id || 5548629,

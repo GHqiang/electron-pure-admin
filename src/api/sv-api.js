@@ -32,6 +32,10 @@ const getTicketList = params => axios.get("/svpi/ticketRecord", { params });
 // 查询出票记录
 const queryTicketList = params =>
   axios.get("/svpi/ticketRecord/query", { params, timeout: 60 * 1000 });
+
+// 查询最近出票用券记录
+const queryUsedQuanList = params =>
+  axios.get("/svpi/ticketRecord/queryUsedQuan", { params, timeout: 20 * 1000 });
 // 添加出票记录
 const addTicketRecord = params => axios.post("/svpi/ticketRecord/add", params);
 // 更新出票记录
@@ -119,6 +123,7 @@ export default {
   updateOfferRecord,
   getTicketList,
   queryTicketList,
+  queryUsedQuanList,
   addTicketRecord,
   updateTicketRecord,
   refundTicketRecord,
