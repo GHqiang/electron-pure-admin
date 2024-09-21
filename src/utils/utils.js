@@ -336,7 +336,7 @@ const getCinemaFlag = item => {
   else if (isYaolaiGroup || isYaolaiCinemaName) {
     return "yaolai";
   } else if (
-    cinema_name.includes("仁恒梦影廊电影院") &&
+    cinemNameSpecial(cinema_name).includes("深圳梦影廊电影院龙岗梦中心店") &&
     ["深圳"].includes(city_name)
   ) {
     return "renhengmeng";
