@@ -13,7 +13,8 @@ import { APP_API_OBJ } from "@/common/index.js";
 import {
   APP_LIST,
   QUAN_TYPE_COST,
-  TEST_NEW_PLAT_LIST
+  TEST_NEW_PLAT_LIST,
+  UME_LIST
 } from "@/common/constant.js";
 class getUmeOfferPrice {
   constructor({ appFlag, plat_name }) {
@@ -470,10 +471,9 @@ class getUmeOfferPrice {
       console.log(conPrefix + "获取会员价", member_price);
       // 耀莱暂时不考虑
       if (
+        appFlag !== "yaolai" &&
         activityPrices?.length &&
-        ["ume", "renhengmeng", "wanmei", "yinghuang", "zheyingshidai"].includes(
-          appFlag
-        )
+        UME_LIST.includes(appFlag)
       ) {
         // [{
         //    "activityId": 23,

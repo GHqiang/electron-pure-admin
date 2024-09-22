@@ -66,6 +66,17 @@ const UME_LIST = [
   "renhengmeng",
   "wanmei",
   "yinghuang",
+  "jqgw",
+  "hfhlxh",
+  "hsd",
+  "zyxmccone",
+  "bnxm",
+  "tpyyc",
+  "hzxhyd",
+  "ywycssd",
+  "xgjyycnjystjd",
+  "sjzhlh",
+  "zhuying",
   "zheyingshidai"
 ];
 
@@ -76,6 +87,17 @@ const APP_LIST = {
   renhengmeng: "仁恒梦影廊",
   wanmei: "完美",
   yinghuang: "英皇",
+  jqgw: "金桥国文",
+  hfhlxh: "合肥欢乐星会",
+  hsd: "华士达",
+  zyxmccone: "中影星美CCONE",
+  bnxm: "博纳戏幕",
+  tpyyc: "太平洋影城",
+  hzxhyd: "杭州新华影都",
+  ywycssd: "悦惟影城佘山店",
+  xgjyycnjystjd: "星光嘉映影城南京雨山天街店",
+  sjzhlh: "石家庄欢乐汇",
+  zhuying: "珠影",
   zheyingshidai: "浙影时代",
   sfc: "上影",
   jiujin: "华夏久金",
@@ -141,15 +163,7 @@ const APP_LIST = {
 };
 
 // 非SFC影院集合列表
-const NO_SFC_APP_LIST = [
-  ...UME_LIST
-  // "ume",
-  // "yaolai",
-  // "renhengmeng",
-  // "wanmei",
-  // "yinghuang",
-  // "zheyingshidai"
-];
+const NO_SFC_APP_LIST = [...UME_LIST];
 // 平台关联应用
 const PLAT_LINK_APP = {
   lieren: [
@@ -920,6 +934,69 @@ const YINGHUANG_SPECIAL_CINEMA_LIST = [
   }
 ];
 
+// 金桥国文
+const JQGW_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: ["国文全激光影城金桥精品店"],
+    sfc_cinema_name: "国文全激光影城金桥精品店"
+  }
+];
+// 合肥欢乐星会
+const HFHLXH_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: ["欢乐星会影城原合肥百老汇影城"],
+    sfc_cinema_name: "合肥欢乐星会影城"
+  }
+];
+// 中影星美CCONE
+const ZYXMCCONE_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: ["中影星美国际影城坪地CCONE店"],
+    sfc_cinema_name: "中影星美国际影城CCONE店"
+  }
+];
+// 博纳戏幕
+const BNXM_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: ["金华博纳院线戏幕影城双机CINITY金华之心银泰店"],
+    sfc_cinema_name: "金华博纳院线戏幕影城金华之心CINITY巨幕店"
+  }
+];
+// 珠影
+const ZHUYING_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: ["珠影耳东传奇影城原传奇时代影城"],
+    sfc_cinema_name: "珠影耳东传奇影城"
+  },
+  {
+    order_cinema_name: ["中影红毯巨幕影城昇宝广场店"],
+    sfc_cinema_name: "佛山中影红毯影城"
+  },
+  {
+    order_cinema_name: ["青宫电影城CINITY店"],
+    sfc_cinema_name: "广州华影青宫电影城"
+  },
+  {
+    order_cinema_name: ["珠影星寰CINITY影城"],
+    sfc_cinema_name: "广州珠影星寰国际影城"
+  },
+  {
+    order_cinema_name: ["珠影飞扬CINITY影城番禺天河城店"],
+    sfc_cinema_name: "广州珠影飞扬影城番禺天河城店"
+  },
+  {
+    order_cinema_name: ["广州太古仓电影库"],
+    sfc_cinema_name: "太古仓电影库"
+  },
+  {
+    order_cinema_name: ["兰州华影飞天国际影城"],
+    sfc_cinema_name: "兰州华影飞天影城"
+  },
+  {
+    order_cinema_name: ["珠影CC达美影城太阳宫"],
+    sfc_cinema_name: "珠影CC影城太阳宫店"
+  }
+];
 // 浙影时代特殊影院集合
 const ZHEYINGSHIDAI_SPECIAL_CINEMA_LIST = [
   // 杭州
@@ -958,6 +1035,17 @@ const SPECIAL_CINEMA_OBJ = {
   renhengmeng: [],
   wanmei: [],
   yinghuang: YINGHUANG_SPECIAL_CINEMA_LIST,
+  jqgw: JQGW_SPECIAL_CINEMA_LIST,
+  hfhlxh: HFHLXH_SPECIAL_CINEMA_LIST,
+  hsd: [],
+  zyxmccone: ZYXMCCONE_SPECIAL_CINEMA_LIST,
+  bnxm: BNXM_SPECIAL_CINEMA_LIST,
+  tpyyc: [],
+  hzxhyd: [],
+  ywycssd: [],
+  xgjyycnjystjd: [],
+  sjzhlh: [],
+  zhuying: ZHUYING_SPECIAL_CINEMA_LIST,
   zheyingshidai: ZHEYINGSHIDAI_SPECIAL_CINEMA_LIST,
   sfc: SFC_SPECIAL_CINEMA_LIST,
   jiujin: JIUJIN_SPECIAL_CINEMA_LIST,
@@ -1029,6 +1117,17 @@ const TICKET_CONPREFIX_OBJ = {
   renhengmeng: "【仁恒梦影廊自动出票】——",
   wanmei: "【完美自动出票】——",
   yinghuang: "【英皇自动出票】——",
+  jqgw: "【金桥国文自动出票】——",
+  hfhlxh: "【合肥欢乐星会自动出票】——",
+  hsd: "【华士达自动出票】——",
+  zyxmccone: "【中影星美CCONE自动出票】——",
+  bnxm: "【博纳戏幕自动出票】——",
+  tpyyc: "【太平洋影城自动出票】——",
+  hzxhyd: "【杭州新华影都自动出票】——",
+  ywycssd: "【悦惟影城佘山店自动出票】——",
+  xgjyycnjystjd: "【星光嘉映影城南京雨山天街店自动出票】——",
+  sjzhlh: "【石家庄欢乐汇自动出票】——",
+  zhuying: "【珠影自动出票】——",
   zheyingshidai: "【浙影时代自动出票】——",
   sfc: "【上影自动出票】——",
   jiujin: "【华夏久金自动出票】——",

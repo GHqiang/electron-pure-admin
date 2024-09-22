@@ -295,7 +295,7 @@ const getCinemaFlag = item => {
     (plat_name === "yangcong" && cinema_name.includes("耀莱成龙"));
 
   let isWanmeiGroup = ["完美世界"].includes(cinema_group);
-
+  let isTpyycGroup = ["太平洋"].includes(cinema_group);
   let isYinghuangiGroup = ["英皇电影城", "英皇UA影城", "英皇"].includes(
     cinema_group
   );
@@ -319,6 +319,9 @@ const getCinemaFlag = item => {
   if (isWanmeiGroup) {
     return "wanmei";
   }
+  if (isTpyycGroup) {
+    return "ypyyc";
+  }
   if (isYinghuangiGroup || isYinghuangCinemaName) {
     return "yinghuang";
   }
@@ -340,6 +343,70 @@ const getCinemaFlag = item => {
     ["深圳"].includes(city_name)
   ) {
     return "renhengmeng";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("国文全激光影城金桥精品店") &&
+    ["上海"].includes(city_name)
+  ) {
+    return "jqgw";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("欢乐星会影城") &&
+    ["合肥"].includes(city_name)
+  ) {
+    return "hfhlxh";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("华士达影城") &&
+    ["上海"].includes(city_name)
+  ) {
+    return "hsd";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("中影星美国际影城坪地CCONE店") &&
+    ["深圳"].includes(city_name)
+  ) {
+    return "zyxmccone";
+  } else if (
+    ["博纳院线戏幕影城", "好格国际影城绿地新都会店"].some(
+      itemA =>
+        cinemNameSpecial(cinema_name).includes(itemA) &&
+        ["合肥", "杭州", "青岛", "金华"].includes(city_name)
+    )
+  ) {
+    return "bnxm";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("杭州新华影都") &&
+    ["杭州"].includes(city_name)
+  ) {
+    return "hzxhyd";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("悦惟影城宝乐汇佘山店") &&
+    ["上海"].includes(city_name)
+  ) {
+    return "ywycssd";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("星光嘉映影城南京雨山天街店") &&
+    ["南京"].includes(city_name)
+  ) {
+    return "xgjyycnjystjd";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("UME影城石家庄欢乐汇店") &&
+    ["石家庄"].includes(city_name)
+  ) {
+    return "sjzhlh";
+  } else if (
+    [
+      "珠影耳东传奇影城原传奇时代影城",
+      "中影红毯巨幕影城昇宝广场店",
+      "青宫电影城CINITY店",
+      "广州太古仓电影库",
+      "珠影CC影城",
+      "华影",
+      "珠影"
+    ].some(
+      itemA =>
+        cinemNameSpecial(cinema_name).includes(itemA) &&
+        ["北京", "佛山", "广州", "兰州", "南京", "深圳"].includes(city_name)
+    )
+  ) {
+    return "zhuying";
   } else if (
     cinema_name.includes("华夏久金国际影城") &&
     ["上海"].includes(city_name)
@@ -940,11 +1007,12 @@ const getCinemaId = (cinema_name, list, appName, city_name) => {
     // 2、匹配不到的如果满足条件就走特殊匹配
     console.warn("全字匹配影院名称失败", cinema_name, list);
     let cinemaName = cinemNameSpecial(cinema_name);
-    let specialCinemaList = SPECIAL_CINEMA_OBJ[appName].filter(
-      item =>
-        item.order_cinema_name === cinemaName ||
-        item.order_cinema_name.includes(cinemaName)
-    );
+    let specialCinemaList =
+      SPECIAL_CINEMA_OBJ[appName]?.filter(
+        item =>
+          item.order_cinema_name === cinemaName ||
+          item.order_cinema_name.includes(cinemaName)
+      ) || [];
     // const CQHX_SPECIAL_CINEMA_LIST = [
     //   {
     //     order_cinema_name: "华熙国际影城",
@@ -1008,8 +1076,8 @@ const getTargetCinema = (cinema_name, list, appFlag) => {
     // 2、匹配不到的如果满足条件就走特殊匹配
     console.warn("全字匹配影院名称失败", cinema_name, list, appFlag);
     let cinemaName = cinemNameSpecial(cinema_name);
-    if (SPECIAL_CINEMA_OBJ[appFlag].length) {
-      let specialCinemaInfo = SPECIAL_CINEMA_OBJ[appFlag].find(
+    if (SPECIAL_CINEMA_OBJ[appFlag]?.length) {
+      let specialCinemaInfo = SPECIAL_CINEMA_OBJ[appFlag]?.find(
         item =>
           item.order_cinema_name === cinemaName ||
           item.order_cinema_name.includes(cinemaName)
@@ -1062,7 +1130,7 @@ const cinemaMatchHandle = (cinema_name, list, appName) => {
     // 去括号、空格及中间点
     let cinemaName = cinemNameSpecial(cinema_name);
     // 2、特殊匹配
-    let specialCinemaInfo = SPECIAL_CINEMA_OBJ[appName].find(
+    let specialCinemaInfo = SPECIAL_CINEMA_OBJ[appName]?.find(
       item =>
         item.order_cinema_name === cinemaName ||
         item.order_cinema_name.includes(cinemaName)
