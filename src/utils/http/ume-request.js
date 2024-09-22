@@ -2,15 +2,6 @@
 
 import axios from "axios";
 import { ElMessage } from "element-plus";
-
-let appHostObj = {
-  ume: "https://oc.yuekeyun.com",
-  wanmei: "https://oc.yuekeyun.com",
-  yinghuang: "https://oc.yuekeyun.com",
-  zheyingshidai: "https://oc.yuekeyun.com",
-  renhengmeng: "https://oc.yuekeyun.com",
-  yaolai: "https://jccinema.yuekeyun.com"
-};
 const createAxios = ({ app_name, timeout = 20 }) => {
   // 创建axios实例
   const instance = axios.create({
@@ -20,11 +11,15 @@ const createAxios = ({ app_name, timeout = 20 }) => {
   });
   const NODE_ENV = process.env.NODE_ENV;
   const IS_DEV = NODE_ENV === "development";
-
+  const proxyStr = app_name === "yaolai" ? "yaolai" : "ume";
+  const host =
+    app_name === "yaolai"
+      ? "https://jccinema.yuekeyun.com"
+      : "https://oc.yuekeyun.com";
   // 请求拦截器
   instance.interceptors.request.use(
     config => {
-      if (config.url.indexOf(`/${app_name}/`) !== -1) {
+      if (config.url.indexOf(`/${proxyStr}/`) !== -1) {
         config.headers["Content-Type"] === "application/x-www-form-urlencoded;";
         // 猎人平台接口添加token
         let loginInfoList = window.localStorage.getItem("loginInfoList");
@@ -59,9 +54,8 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           // config.headers.tenantCode = `cinema_umedy`;
         }
         if (!IS_DEV) {
-          // 截取掉/sfc/
-          config.url =
-            appHostObj[app_name] + config.url.slice(app_name.length + 1);
+          // 截取掉/ume/
+          config.url = host + config.url.slice(proxyStr.length + 1);
         }
       }
       // console.log('请求config', config)
@@ -82,7 +76,9 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       let whitelistSp = [];
 
       let isErrorByLieRen =
-        (!IS_DEV ? true : response.config.url.indexOf(`/${app_name}/`) !== -1) &&
+        (!IS_DEV
+          ? true
+          : response.config.url.indexOf(`/${proxyStr}/`) !== -1) &&
         data.status !== "S";
       if (
         isErrorByLieRen &&

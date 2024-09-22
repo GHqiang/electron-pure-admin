@@ -10,6 +10,9 @@ const createApi = ({ app_name }) => {
   let axios = createAxios({
     app_name: app_name
   });
+  if (app_name !== "yaolai") {
+    app_name = "ume";
+  }
   // 获取城市及影院列表
   const getCinemaList = params =>
     axios.post(

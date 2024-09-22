@@ -102,30 +102,6 @@ export default ({ command, mode }: ConfigEnv): UserConfigExport => {
           target: "https://jccinema.yuekeyun.com", // 后端API的真实地址
           changeOrigin: true, // 是否允许跨域
           rewrite: path => path.replace(/^\/yaolai/, "") // 重写路径，去除/api前缀
-        },
-        // 仁恒梦
-        "/renhengmeng": {
-          target: "https://oc.yuekeyun.com", // 后端API的真实地址
-          changeOrigin: true, // 是否允许跨域
-          rewrite: path => path.replace(/^\/renhengmeng/, "") // 重写路径，去除/api前缀
-        },
-        // 完美
-        "/wanmei": {
-          target: "https://oc.yuekeyun.com", // 后端API的真实地址
-          changeOrigin: true, // 是否允许跨域
-          rewrite: path => path.replace(/^\/wanmei/, "") // 重写路径，去除/api前缀
-        },
-        // 英皇
-        "/yinghuang": {
-          target: "https://oc.yuekeyun.com", // 后端API的真实地址
-          changeOrigin: true, // 是否允许跨域
-          rewrite: path => path.replace(/^\/yinghuang/, "") // 重写路径，去除/api前缀
-        },
-        // 浙影时代
-        "/zheyingshidai": {
-          target: "https://oc.yuekeyun.com", // 后端API的真实地址
-          changeOrigin: true, // 是否允许跨域
-          rewrite: path => path.replace(/^\/zheyingshidai/, "") // 重写路径，去除/api前缀
         }
       },
       // 预热文件以提前转换和缓存结果，降低启动期间的初始页面加载时长并防止转换瀑布
