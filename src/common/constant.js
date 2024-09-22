@@ -100,6 +100,12 @@ const APP_LIST = {
   zhuying: "珠影",
   zheyingshidai: "浙影时代",
   sfc: "上影",
+  zhongying: "中影",
+  xywdgmyc: "新杨湾大光明影城",
+  lyzy: "龙岩中影",
+  cswyh: "长沙万影汇",
+  bjdzlt: "北京地质礼堂",
+  glyc: "果岭影城",
   jiujin: "华夏久金",
   jinji: "北京金鸡",
   ningbo: "宁波影都",
@@ -164,64 +170,6 @@ const APP_LIST = {
 
 // 非SFC影院集合列表
 const NO_SFC_APP_LIST = [...UME_LIST];
-// 平台关联应用
-const PLAT_LINK_APP = {
-  lieren: [
-    "sfc",
-    "jiujin",
-    "jinji",
-    "laina",
-    "ningbo",
-    "qina",
-    "hongshi",
-    "limeihua",
-    "hengye",
-    "minzu",
-    "yinxingws",
-    "yinxingnc",
-    "yinxingxy",
-    "liangchen",
-    "suzhou",
-    "quanmei",
-    "yongheng",
-    "nanguojgh",
-    "baoneng",
-    "hefeidianying",
-    "chaohuzhongying",
-    "hfzybdd",
-    "hfzywpcd",
-    "hfzyzdgcd",
-    "hfzydxjd",
-    "hfzyzhd",
-    "wfzyyxhd",
-    "wfzygeshgcd",
-    "nchgtdd",
-    "hfbddd",
-    "hflkldd",
-    "ttylw",
-    "ytgjyc",
-    "dghs",
-    "tjlnx",
-    "bjlnx",
-    "cdlnx",
-    "jsdgm",
-    "jwzy",
-    "slsy",
-    "gbsy",
-    "jyhx",
-    "hkzy",
-    "hgwz",
-    "shjy",
-    "tjlq",
-    "shth",
-    "szyl",
-    "xyfsy",
-    "cszykd",
-    "cszyyzx",
-    "lumiai"
-  ],
-  sheng: ["sfc", "lumiai"]
-};
 
 // sfc特殊影院集合
 const SFC_SPECIAL_CINEMA_LIST = [
@@ -305,6 +253,20 @@ const SFC_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: "SFC上影影城贵阳云上方舟LUXE店",
     sfc_cinema_name: "SFC上影影城贵阳云上方舟店"
+  }
+];
+// 龙岩中影特殊影院集合
+const LYZY_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: ["龙岩中影国际影城京华中心店"],
+    sfc_cinema_name: "龙岩中影国际影城龙岩京华店"
+  }
+];
+// 长沙万影汇特殊影院集合
+const CSWYH_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: ["万影汇影城高升天地LUXE店"],
+    sfc_cinema_name: "万影汇影城长沙高升天地店"
   }
 ];
 // 华夏久金特殊影院集合
@@ -1048,6 +1010,12 @@ const SPECIAL_CINEMA_OBJ = {
   zhuying: ZHUYING_SPECIAL_CINEMA_LIST,
   zheyingshidai: ZHEYINGSHIDAI_SPECIAL_CINEMA_LIST,
   sfc: SFC_SPECIAL_CINEMA_LIST,
+  xywdgmyc: [],
+  zhongying: [],
+  lyzy: LYZY_SPECIAL_CINEMA_LIST,
+  cswyh: CSWYH_SPECIAL_CINEMA_LIST,
+  bjdzlt: [],
+  glyc: [],
   jiujin: JIUJIN_SPECIAL_CINEMA_LIST,
   jinji: JINJI_SPECIAL_CINEMA_LIST,
   ningbo: NINGBO_SPECIAL_CINEMA_LIST,
@@ -1130,6 +1098,12 @@ const TICKET_CONPREFIX_OBJ = {
   zhuying: "【珠影自动出票】——",
   zheyingshidai: "【浙影时代自动出票】——",
   sfc: "【上影自动出票】——",
+  xywdgmyc: "【新杨湾大光明影城自动出票】——",
+  zhongying: "【中影自动出票】——",
+  lyzy: "【龙岩中影自动出票】——",
+  cswyh: "【长沙万影汇自动出票】——",
+  bjdzlt: "【北京地质礼堂自动出票】——",
+  glyc: "【果岭影城自动出票】——",
   jiujin: "【华夏久金自动出票】——",
   jinji: "【北京金鸡自动出票】——",
   ningbo: "【宁波影都自动出票】——",
@@ -1195,6 +1169,12 @@ const TICKET_CONPREFIX_OBJ = {
 // 微信小程序openid
 const APP_OPENID_OBJ = {
   sfc: "otEMo42FC38PgJiYDvu6HrGjrwQY",
+  xywdgmyc: "oOiC55RPsQs1XZLzM_cklZ2pbvnk",
+  zhongying: "oZQEA7Xzuot6Gb4Xj9ELwRlYEri0",
+  lyzy: "oekH_4_xX7k0hZwTopPN_CDpWNdo",
+  cswyh: "oKLyP4hIUw8CggpTmS3P5zcU9FXQ",
+  bjdzlt: "oIkMV5BkjhLVUj5ws2wPVBYieqJ4",
+  glyc: "o5nuI64TLqvAat13QOPN5rlTpwkY",
   jiujin: "o9z475KmUY5DGBCmA8iHonVW4zco",
   jinji: "oTJ0a48lR3TPBfblHCqLLn-kdRro",
   ningbo: "o1TM95HQabEWcsC6u2S0XPd4ge5w",
@@ -1260,6 +1240,12 @@ const APP_OPENID_OBJ = {
 // 影院group组别标识
 const APP_GROUP_OBJ = {
   sfc: "20045",
+  xywdgmyc: "20371",
+  zhongying: "20020",
+  lyzy: "20482",
+  cswyh: "20328",
+  bjdzlt: "20615",
+  glyc: "20673",
   jiujin: "20253",
   jinji: "20047",
   ningbo: "20023",
@@ -1540,7 +1526,6 @@ export {
   UME_LIST,
   APP_LIST,
   NO_SFC_APP_LIST,
-  PLAT_LINK_APP,
   SFC_SPECIAL_CINEMA_LIST,
   JIUJIN_SPECIAL_CINEMA_LIST,
   LAINA_SPECIAL_CINEMA_LIST,

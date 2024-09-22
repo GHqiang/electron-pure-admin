@@ -269,6 +269,9 @@ const getCinemaFlag = item => {
       item => cinemNameSpecial(item) === cinemNameSpecial(cinema_name)
     );
 
+  let isZhongyingGroup = ["中影", "中影直营", "中影国际", "中影影票"].includes(
+    cinema_group
+  );
   let isUmeGroup = ["UME", "ume一线", "ume二线", "c_ume"].includes(
     cinema_group
   );
@@ -321,6 +324,9 @@ const getCinemaFlag = item => {
   }
   if (isTpyycGroup) {
     return "ypyyc";
+  }
+  if (isZhongyingGroup) {
+    return "zhongying";
   }
   if (isYinghuangiGroup || isYinghuangCinemaName) {
     return "yinghuang";
@@ -412,6 +418,31 @@ const getCinemaFlag = item => {
     ["上海"].includes(city_name)
   ) {
     return "jiujin";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("龙岩中影国际影城京华中心店") &&
+    ["龙岩"].includes(city_name)
+  ) {
+    return "lyzy";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("万影汇影城高升天地LUXE店") &&
+    ["长沙"].includes(city_name)
+  ) {
+    return "cswyh";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("北京地质礼堂") &&
+    ["北京"].includes(city_name)
+  ) {
+    return "bjdzlt";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("果岭影城") &&
+    ["北京"].includes(city_name)
+  ) {
+    return "glyc";
+  } else if (
+    cinemNameSpecial(cinema_name).includes("新杨湾大光明影城") &&
+    ["上海"].includes(city_name)
+  ) {
+    return "xywdgmyc";
   } else if (
     cinema_name.includes("金鸡百花影城") &&
     ["北京"].includes(city_name)
