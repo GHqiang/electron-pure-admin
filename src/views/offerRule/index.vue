@@ -133,7 +133,7 @@
       </el-table-column>
       <el-table-column label="状态" fixed width="100">
         <template #default="scope">
-          <span v-if="scope.row.status === '3'">{{
+          <span v-if="scope.row.status === '3'" style="color: red">{{
             statusObj[scope.row.status]
           }}</span>
           <el-switch
@@ -571,6 +571,16 @@ const editStatus = async row => {
 // 开启关闭仅报价
 const switchOnlyOffer = async (row, type) => {
   try {
+    await svApi.updateRuleRecord({
+      id: row.id,
+      status: type === "3" ? "3" : "1"
+    });
+    searchData();
+    ElMessage({
+      type: "success",
+      message: "操作完成"
+    });
+    return;
     ElMessageBox.confirm(
       `确定要${type === "3" ? "开启" : "关闭"}仅报价吗?`,
       "提示",
