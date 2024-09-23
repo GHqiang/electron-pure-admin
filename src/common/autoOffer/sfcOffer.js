@@ -294,12 +294,12 @@ class getSfcOfferPrice {
         //   "-3": "获取座位布局异常，不再进行报价",
         //   "-4": "影院单卡出票限制,不再进行报价"
         // };
-        if (memberPriceRes && [(-1, -2, -3, -4)].includes(memberPriceRes)) {
+        if (memberPriceRes && [-1].includes(memberPriceRes)) {
           // 返回特殊标识出去
           return memberPriceRes;
         }
 
-        if (!memberPriceRes) {
+        if (!memberPriceRes || [-2, -3, -4].includes(memberPriceRes)) {
           console.warn(
             conPrefix + "最小加价规则获取会员价失败,返回最小固定报价规则",
             mixFixedAmountRule
@@ -307,7 +307,10 @@ class getSfcOfferPrice {
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
             des: "最小加价规则获取会员价失败,返回最小固定报价规则",
-            level: "warn"
+            level: "warn",
+            info: {
+              memberPriceRes
+            }
           });
           return mixFixedAmountRule;
         }
