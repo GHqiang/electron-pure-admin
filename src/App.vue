@@ -23,4 +23,9 @@ export default defineComponent({
     }
   }
 });
+window.onbeforeunload = function (e) {
+  window.localStorage.removeItem("selfToken");
+  window.localStorage.removeItem("userInfo");
+  window.localStorage.removeItem("user-info");
+};
 </script>
