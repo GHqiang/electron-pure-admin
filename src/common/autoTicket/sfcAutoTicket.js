@@ -3256,15 +3256,26 @@ const addOrderHandleRecored = async ({
 
 // 更新卡当天使用量
 const updateCardDayUse = ({ app_name, card_id, plat_name, order_number }) => {
-  svApi.updateDayUsage({
-    app_name: app_name,
-    card_id: card_id
-  });
+  let error;
+  try {
+    svApi.updateDayUsage({
+      app_name: app_name,
+      card_id: card_id
+    });
+  } catch (err) {
+    error = err;
+  }
+
   let log_list = [
     {
       opera_time: getCurrentFormattedDateTime(),
       des: `订单用卡出票成功后更新当天使用量`,
-      level: "info"
+      level: "info",
+      info: {
+        app_name,
+        card_id,
+        error
+      }
     }
   ];
   logUpload(
