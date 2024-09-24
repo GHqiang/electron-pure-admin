@@ -19,6 +19,7 @@ class OrderAutoOfferQueue {
   constructor() {
     this.queue = []; // 初始化空队列
     this.isRunning = false; // 初始化时队列未运行
+    this.isOfferRunning = false;
     this.conPrefix = "【猎人自动报价】——"; // console打印前缀
     this.logList = []; // 队列运行日志
     this.handledOrders = new Map(); // 用于存储已处理订单号及其相关信息
@@ -39,28 +40,74 @@ class OrderAutoOfferQueue {
       platQueueRule = JSON.parse(platQueueRule).filter(
         item => item.platName === "lieren"
       );
-      const { getInterval, handleInterval } = platQueueRule[0];
+      const { getInterval } = platQueueRule[0];
       let fetchDelay = getInterval;
-      let processDelay = handleInterval;
-      let orders = await this.fetchOrders(fetchDelay);
-      // 将订单加入队列
-      this.queue.push(...orders);
-      // 处理队列中的订单，直到队列为空或停止
-      while (this.queue.length > 0 && this.isRunning) {
-        const order = this.queue.shift(); // 取出队列首部订单并从队列里去掉
-        if (order) {
-          // 处理订单
-          const offerResult = await this.orderHandle(order, processDelay);
-          // offerResult：{ res, offerRule } || { offerRule, err_msg, err_info } || undefined
-          // 添加订单处理记录
-          await this.addOrderHandleRecored(order, offerResult);
-          console.warn(
-            conPrefix + `单个订单自动报价${offerResult?.res ? "成功" : "失败"}`,
-            order
-          );
+      await this.fetchOrders(fetchDelay);
+    }
+  }
+
+  // 处理新订单
+  handleNewOrder(item) {
+    console.warn(this.conPrefix + "新的待报价订单", item);
+    this.handledOrders.set(item.order_number, 1);
+    let logList = [
+      {
+        opera_time: getCurrentFormattedDateTime(),
+        des: "猎人新的待报价订单",
+        level: "info",
+        info: {
+          newOrder: item
         }
       }
+    ];
+    logUpload(
+      {
+        plat_name: item.plat_name,
+        app_name: item.app_name,
+        order_number: item.order_number,
+        type: 1
+      },
+      logList
+    );
+    this.insertOrderIntoQueue(item);
+    if (!this.isOfferRunning) {
+      this.startProcessingQueue();
     }
+  }
+
+  // 插入队列
+  insertOrderIntoQueue(order) {
+    // this.queue.push(order);
+    // 根据倒计时时间插入订单
+    // 如果时间不足配置阈值，即不够进行报价，则不进行插入
+    const index = this.queue.findIndex(item => order.sytime < item.sytime);
+    if (index === -1) {
+      this.queue.push(order);
+    } else {
+      this.queue.splice(index, 0, order);
+    }
+  }
+
+  // 开始队列上传
+  async startProcessingQueue() {
+    const { conPrefix } = this;
+    this.isOfferRunning = true;
+    // 处理队列中的订单，直到队列为空或停止
+    while (this.queue.length > 0 && this.isRunning) {
+      const order = this.queue.shift(); // 取出队列首部订单并从队列里去掉
+      if (order) {
+        // 处理订单
+        const offerResult = await this.orderHandle(order);
+        // offerResult：{ res, offerRule } || { offerRule, err_msg, err_info } || undefined
+        // 添加订单处理记录
+        await this.addOrderHandleRecored(order, offerResult);
+        console.warn(
+          conPrefix + `单个订单自动报价${offerResult?.res ? "成功" : "失败"}`,
+          order
+        );
+      }
+    }
+    this.isOfferRunning = false;
   }
   // 获取订单
   async fetchOrders(fetchDelay) {
@@ -93,28 +140,8 @@ class OrderAutoOfferQueue {
       // );
       if (!newOrders?.length) return [];
       newOrders.forEach(item => {
-        this.handledOrders.set(item.order_number, 1);
-        let logList = [
-          {
-            opera_time: getCurrentFormattedDateTime(),
-            des: "猎人新的待报价订单",
-            level: "info",
-            info: {
-              newOrder: item
-            }
-          }
-        ];
-        logUpload(
-          {
-            plat_name: item.plat_name,
-            app_name: item.app_name,
-            order_number: item.order_number,
-            type: 1
-          },
-          logList
-        );
+        this.handleNewOrder(item);
       });
-      return newOrders;
     } catch (error) {
       console.error(conPrefix + "获取待报价订单异常", error);
       return [];
