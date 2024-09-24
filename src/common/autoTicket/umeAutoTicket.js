@@ -1297,7 +1297,7 @@ class OrderAutoTicketQueue {
         card_id = "",
         useQuan = [],
         profit = 0
-      } = await useQuanOrCard({
+      } = await this.useQuanOrCard({
         cardList,
         quanList,
         supplier_end_price,
@@ -1307,7 +1307,9 @@ class OrderAutoTicketQueue {
         total_price,
         rewards,
         appFlag,
-        session_id: this.currentParamsList[this.currentParamsInx].session_id
+        session_id: this.currentParamsList[this.currentParamsInx].session_id,
+        cinemaCode,
+        cinemaLinkId
       });
       let quan_code = useQuan.map(item => item.couponCode)?.join();
       // 使用优惠券及会员卡
@@ -1362,7 +1364,8 @@ class OrderAutoTicketQueue {
       // 用券时总价为0
       if (offerRule.offer_type === "1") {
         total_price = 0;
-        if (["yaolai", "zheyingshidai", "renhengmeng"].includes(appFlag)) {
+        // yaolai绑券逻辑不一样，暂不处理
+        if (["zheyingshidai", "renhengmeng"].includes(appFlag)) {
           if (quanList.length - ticket_num < 10) {
             this.logList.push({
               opera_time: getCurrentFormattedDateTime(),
@@ -2435,6 +2438,179 @@ class OrderAutoTicketQueue {
       }
     }
   }
+  // 使用优惠券或会员卡
+  async useQuanOrCard({
+    cardList,
+    quanList,
+    supplier_end_price,
+    ticket_num,
+    offerRule,
+    total_price,
+    rewards,
+    appFlag,
+    session_id,
+    cinemaCode,
+    cinemaLinkId
+  }) {
+    try {
+      const { offer_type, member_price, quan_value } = offerRule;
+      let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
+      if (offer_type !== "1") {
+        console.log(conPrefix + "使用会员卡出票");
+        let cardData = cardList.filter(
+          item => item.cardAmount >= total_price * 100
+        );
+        if (!cardData?.length) {
+          console.warn(conPrefix + "无可用会员卡", member_price);
+          // this.setErrInfo("无可用会员卡", { cardList, total_price });
+          return {
+            card_id: "",
+            profit: 0 // 利润
+          };
+        }
+        // 中标价-会员成本价
+        let profit =
+          supplier_end_price -
+          member_price -
+          (Number(supplier_end_price) * 100) / 10000;
+        profit = Number(profit) * Number(ticket_num);
+        if (rewards == 1) {
+          // 特急奖励订单中标价格 * 张数 * 0.04;
+          let rewardPrice =
+            (Number(supplier_end_price) * Number(ticket_num) * 400) / 10000;
+          profit += rewardPrice;
+        }
+        profit = Number(profit).toFixed(2);
+        return {
+          card_id: cardData?.[0]?.cardNo,
+          profit // 利润
+        };
+      } else {
+        console.log(conPrefix + "使用优惠券出票");
+        let targetQuanList = quanList.filter(item => {
+          if (appFlag === "renhengmeng") {
+            return true;
+          } else if (appFlag === "ume") {
+            return item.couponName.includes(QUAN_TYPE_FLAG[quan_value]);
+          } else if (appFlag === "yaolai") {
+            return item.couponName === QUAN_TYPE_FLAG[quan_value];
+          } else if (appFlag === "zheying") {
+            return item.couponName === QUAN_TYPE_FLAG[quan_value];
+          }
+        });
+        if (targetQuanList.length < ticket_num) {
+          console.warn(conPrefix + "优惠券不够用");
+          console.error(
+            conPrefix + `${quan_value} 面额券不足，从服务端获取并绑定`
+          );
+          return {
+            profit: 0,
+            useQuans: []
+          };
+          // 由于用券时用到了不止券号，故此处咱不支持同步绑券，不然还得再调一下获取最优卡券列表接口重新用券
+          const newQuanList = await this.getNewQuan({
+            cinemaCode,
+            cinemaLinkId,
+            quanValue: quan_value,
+            quanNum: Number(ticket_num) - targetQuanList.length,
+            session_id
+          });
+
+          if (newQuanList?.length) {
+            targetQuanList = [...targetQuanList, ...newQuanList];
+          }
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: `从服务端获取券绑定完成`,
+            level: "info",
+            info: {
+              newQuanList,
+              targetQuanList,
+              ticket_num
+            }
+          });
+          if (targetQuanList?.length < ticket_num) {
+            console.error(
+              conPrefix + `从服务端获取并绑定后${quan_value} 面额券仍不足，`,
+              targetQuanList
+            );
+            this.setErrInfo(`${quan_value} 面额券从数据库获取后仍不足`);
+            return {
+              profit: 0,
+              useQuans: []
+            };
+          }
+        }
+
+        let useQuan = targeQuanList.slice(0, ticket_num).map((item, index) => {
+          let seatCode = Object.keys(item.discountAmountMap);
+          return {
+            couponInstanceId: item.couponInstanceId,
+            couponType: item.templateType,
+            // 以下两个值一样
+            seatCode: seatCode[index],
+            salesKeySku: seatCode[index],
+            couponCode: item.couponCode,
+            couponName: item.couponName,
+            templateCode: item.templateCode,
+            discountAmount: seatCode
+              ? appFlag !== "yaolai"
+                ? item.discountAmountMap?.[seatCode[index]]
+                : item.discountAmountMap?.[seatCode[index]]?.[1]
+              : 0
+          };
+        });
+        let quanCost = QUAN_TYPE_COST[quan_value];
+        // 兼容仁恒梦券类型为切换为自己类型而是用sfc-40类型的情况
+        if (appFlag === "renhengmeng" && quan_value !== "renhengmeng-40") {
+          quanCost = 40;
+        }
+        let profit =
+          supplier_end_price -
+          quanCost -
+          (Number(supplier_end_price) * 100) / 10000;
+        profit = Number(profit) * Number(ticket_num);
+        if (rewards == 1) {
+          // 特急奖励订单中标价格 * 张数 * 0.04;
+          let rewardPrice =
+            (Number(supplier_end_price) * Number(ticket_num) * 400) / 10000;
+          profit += rewardPrice;
+        }
+        profit = Number(profit).toFixed(2);
+        if (appFlag === "yaolai" && quan_value === "yaolai-yixianbu5") {
+          let cardData = cardList.filter(item => item.cardAmount >= 5 * 100);
+          if (cardData?.length) {
+            return {
+              useQuan: [],
+              card_id: "",
+              profit: 0 // 利润
+            };
+          }
+          return {
+            useQuan,
+            card_id: cardData?.[0]?.cardNo,
+            profit
+          };
+        }
+        return {
+          useQuan,
+          profit
+        };
+      }
+    } catch (error) {
+      console.error("使用会员卡或优惠券报错", error);
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: `使用会员卡或优惠券报错`,
+        level: "error",
+        info: {
+          error
+        }
+      });
+      // return {}
+    }
+  }
+
   // 获取新券
   async getNewQuan({
     cinemaCode,
@@ -2472,7 +2648,7 @@ class OrderAutoTicketQueue {
       let quanList = quanRes.data?.quanList || [];
       if (!quanList?.length && asyncFlag != 1) {
         console.error(conPrefix + `数据库${quan_value}面额券不足`);
-        this.setErrInfo(`数据库${quan_value}面额券不足`);
+        // this.setErrInfo(`数据库${quan_value}面额券不足`);
         return;
       }
       // quanList = quanList.map(item => item.coupon_num.trim());
@@ -2508,7 +2684,7 @@ class OrderAutoTicketQueue {
       return bandQuanList;
     } catch (error) {
       console.error(conPrefix + "获取新券异常", error);
-      this.logList.push({
+      targetLogList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: `从服务端获取券异常`,
         level: "error",
@@ -3002,167 +3178,6 @@ const bandQuan = async ({
   }
 };
 
-// 使用优惠券或会员卡
-const useQuanOrCard = async ({
-  cardList,
-  quanList,
-  supplier_end_price,
-  ticket_num,
-  offerRule,
-  total_price,
-  rewards,
-  appFlag,
-  session_id
-}) => {
-  try {
-    const { offer_type, member_price, quan_value } = offerRule;
-    let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
-    if (offer_type !== "1") {
-      console.log(conPrefix + "使用会员卡出票");
-      let cardData = cardList.filter(
-        item => item.cardAmount >= total_price * 100
-      );
-      if (!cardData?.length) {
-        console.warn(conPrefix + "无可用会员卡", member_price);
-        // this.setErrInfo("无可用会员卡", { cardList, total_price });
-        return {
-          card_id: "",
-          profit: 0 // 利润
-        };
-      }
-      // 中标价-会员成本价
-      let profit =
-        supplier_end_price -
-        member_price -
-        (Number(supplier_end_price) * 100) / 10000;
-      profit = Number(profit) * Number(ticket_num);
-      if (rewards == 1) {
-        // 特急奖励订单中标价格 * 张数 * 0.04;
-        let rewardPrice =
-          (Number(supplier_end_price) * Number(ticket_num) * 400) / 10000;
-        profit += rewardPrice;
-      }
-      profit = Number(profit).toFixed(2);
-      return {
-        card_id: cardData?.[0]?.cardNo,
-        profit // 利润
-      };
-    } else {
-      console.log(conPrefix + "使用优惠券出票");
-      let targetQuanList = quanList.filter(item => {
-        if (appFlag === "renhengmeng") {
-          return true;
-        } else if (appFlag === "ume") {
-          return item.couponName.includes(QUAN_TYPE_FLAG[quan_value]);
-        } else if (appFlag === "yaolai") {
-          return item.couponName === QUAN_TYPE_FLAG[quan_value];
-        } else if (appFlag === "zheying") {
-          return item.couponName === QUAN_TYPE_FLAG[quan_value];
-        }
-      });
-      if (targetQuanList.length < ticket_num) {
-        console.warn(conPrefix + "优惠券不够用");
-        console.error(
-          conPrefix + `${quan_value} 面额券不足，从服务端获取并绑定`
-        );
-        return {
-          profit: 0,
-          useQuans: []
-        };
-        // 由于用券时用到了不止券号，故此处咱不支持同步绑券，不然还得再调一下获取最优卡券列表接口重新用券
-        const newQuanList = await this.getNewQuan({
-          cinemaCode,
-          cinemaLinkId,
-          quanValue: quan_value,
-          quanNum: Number(ticket_num) - targetQuanList.length,
-          session_id
-        });
-
-        if (newQuanList?.length) {
-          targetQuanList = [...targetQuanList, ...newQuanList];
-        }
-        this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
-          des: `从服务端获取券绑定完成`,
-          level: "info",
-          info: {
-            newQuanList,
-            targetQuanList,
-            ticket_num
-          }
-        });
-        if (targetQuanList?.length < ticket_num) {
-          console.error(
-            conPrefix + `从服务端获取并绑定后${quan_value} 面额券仍不足，`,
-            targetQuanList
-          );
-          this.setErrInfo(`${quan_value} 面额券从数据库获取后仍不足`);
-          return {
-            profit: 0,
-            useQuans: []
-          };
-        }
-      }
-
-      let useQuan = targeQuanList.slice(0, ticket_num).map((item, index) => {
-        let seatCode = Object.keys(item.discountAmountMap);
-        return {
-          couponInstanceId: item.couponInstanceId,
-          couponType: item.templateType,
-          // 以下两个值一样
-          seatCode: seatCode[index],
-          salesKeySku: seatCode[index],
-          couponCode: item.couponCode,
-          couponName: item.couponName,
-          templateCode: item.templateCode,
-          discountAmount: seatCode
-            ? appFlag !== "yaolai"
-              ? item.discountAmountMap?.[seatCode[index]]
-              : item.discountAmountMap?.[seatCode[index]]?.[1]
-            : 0
-        };
-      });
-      let quanCost = QUAN_TYPE_COST[quan_value];
-      // 兼容仁恒梦券类型为切换为自己类型而是用sfc-40类型的情况
-      if (appFlag === "renhengmeng" && quan_value !== "renhengmeng-40") {
-        quanCost = 40;
-      }
-      let profit =
-        supplier_end_price -
-        quanCost -
-        (Number(supplier_end_price) * 100) / 10000;
-      profit = Number(profit) * Number(ticket_num);
-      if (rewards == 1) {
-        // 特急奖励订单中标价格 * 张数 * 0.04;
-        let rewardPrice =
-          (Number(supplier_end_price) * Number(ticket_num) * 400) / 10000;
-        profit += rewardPrice;
-      }
-      profit = Number(profit).toFixed(2);
-      if (appFlag === "yaolai" && quan_value === "yaolai-yixianbu5") {
-        let cardData = cardList.filter(item => item.cardAmount >= 5 * 100);
-        if (cardData?.length) {
-          return {
-            useQuan: [],
-            card_id: "",
-            profit: 0 // 利润
-          };
-        }
-        return {
-          useQuan,
-          card_id: cardData?.[0]?.cardNo,
-          profit
-        };
-      }
-      return {
-        useQuan,
-        profit
-      };
-    }
-  } catch (error) {
-    console.error("使用会员卡或优惠券报错", error);
-  }
-};
 // 添加订单处理记录
 const addOrderHandleRecored = async ({
   ticketRes: res,
