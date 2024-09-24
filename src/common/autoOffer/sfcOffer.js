@@ -266,7 +266,7 @@ class getSfcOfferPrice {
         });
         return onlyMemberDayRuleList[0];
       }
-      // 2、比对那个利润更高，就用那个规则出
+      // 2、比对那个报价更低，就用那个规则出
       let otherRuleList = ruleList.filter(
         item => !item.memberDay && item.offerType !== "3"
       );
@@ -285,6 +285,14 @@ class getSfcOfferPrice {
       let mixAddAmountRule = addAmountRuleList.sort(
         (itemA, itemB) => itemA.addAmount - itemB.addAmount
       )?.[0];
+      // 预估利润单张
+      let cardExpectProfit = 0,
+        quanExpectProfit = 0;
+      if (mixFixedAmountRule) {
+        quanExpectProfit =
+          mixFixedAmountRule.offerAmount -
+          QUAN_TYPE_COST[mixFixedAmountRule.quanValue];
+      }
       if (mixAddAmountRule) {
         // 计算会员报价
         let memberPriceRes = await this.getMemberPrice(order);
@@ -309,7 +317,9 @@ class getSfcOfferPrice {
             des: "最小加价规则获取会员价失败,返回最小固定报价规则",
             level: "warn",
             info: {
-              memberPriceRes
+              memberPriceRes,
+              fixedOfferAmount: mixFixedAmountRule?.offerAmount,
+              quanExpectProfit
             }
           });
           return mixFixedAmountRule;
@@ -326,6 +336,8 @@ class getSfcOfferPrice {
         mixAddAmountRule.memberOfferAmount =
           mixAddAmountRule.memberRoundPrice +
           Number(mixAddAmountRule.addAmount);
+        cardExpectProfit =
+          mixAddAmountRule.memberOfferAmount - mixAddAmountRule.memberCostPrice;
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: "会员最终报价相关信息",
@@ -335,7 +347,8 @@ class getSfcOfferPrice {
             memberCostPrice: mixAddAmountRule.memberCostPrice,
             memberRoundPrice: mixAddAmountRule.memberRoundPrice,
             addAmount: mixAddAmountRule.addAmount,
-            memberOfferAmount: mixAddAmountRule.memberOfferAmount
+            memberOfferAmount: mixAddAmountRule.memberOfferAmount,
+            cardExpectProfit
           }
         });
       } else {
@@ -346,7 +359,11 @@ class getSfcOfferPrice {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: "最小加价规则不存在,返回最小固定报价规则",
-          level: "info"
+          level: "info",
+          info: {
+            fixedOfferAmount: mixFixedAmountRule?.offerAmount,
+            quanExpectProfit
+          }
         });
         return mixFixedAmountRule;
       }
@@ -364,14 +381,26 @@ class getSfcOfferPrice {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: "会员报价高于固定报价，返回最小固定报价规则",
-          level: "info"
+          level: "info",
+          info: {
+            memberOfferAmount: mixAddAmountRule.memberOfferAmount,
+            fixedOfferAmount: mixFixedAmountRule.offerAmount,
+            quanExpectProfit,
+            cardExpectProfit
+          }
         });
         return mixFixedAmountRule;
       } else {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: "会员报价低于固定报价，返回最小加价报价规则",
-          level: "info"
+          level: "info",
+          info: {
+            memberOfferAmount: mixAddAmountRule.memberOfferAmount,
+            fixedOfferAmount: mixFixedAmountRule.offerAmount,
+            quanExpectProfit,
+            cardExpectProfit
+          }
         });
         return mixAddAmountRule;
       }
