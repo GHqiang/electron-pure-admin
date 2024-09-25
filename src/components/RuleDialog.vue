@@ -7,7 +7,7 @@
       :close-on-click-modal="false"
       :close-on-press-escape="false"
       :title="dialogTitle"
-      width="50%"
+      width="60%"
       @close="resetForm(ruleFormRef)"
     >
       <el-form
@@ -452,6 +452,29 @@
             <el-radio value="2" size="large">禁用</el-radio>
           </el-radio-group>
         </el-form-item>
+        <!-- <el-form-item label="灵活用券配置">
+          <el-row :gutter="24" style="width: 100%">
+            <el-col :span="2">
+              <el-switch v-model="formData.status" />
+            </el-col>
+            <el-col :span="8">
+              中标价超过&nbsp;&nbsp;<el-input
+                v-model="formData.status"
+                type="number"
+                style="width: 80px"
+              />&nbsp;&nbsp;用券
+            </el-col>
+            <el-col :span="14">
+              券标识：<el-input
+                v-model="formData.status"
+                style="width: 240px"
+                :rows="2"
+                type="textarea"
+                placeholder="请输入券标识，不同标识用;分隔"
+              />
+            </el-col>
+          </el-row>
+        </el-form-item> -->
         <el-form-item>
           <el-button type="primary" @click="saveRule">保存</el-button>
           <el-button @click="cancel(ruleFormRef)">取消</el-button>

@@ -99,26 +99,53 @@
           <span>{{ shadowLineObj[scope.row.app_name] }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="profitTotal" label="利润总和" min-width="90" />
+      <el-table-column
+        prop="profitTotal"
+        sortable
+        label="利润总和"
+        min-width="105"
+      />
       <el-table-column
         prop="transferTotal"
         label="手续费总和"
         min-width="100"
       />
-      <el-table-column prop="offerTotalNum" label="报价总数" min-width="90" />
-      <el-table-column prop="offerSuccessNum" label="成功数" min-width="90" />
-      <el-table-column prop="offerFailNum" label="失败数" min-width="90" />
+      <el-table-column
+        prop="offerTotalNum"
+        sortable
+        label="报价总数"
+        min-width="105"
+      />
+      <el-table-column
+        prop="offerSuccessNum"
+        sortable
+        label="成功数"
+        min-width="95"
+      />
+      <el-table-column
+        prop="offerFailNum"
+        sortable
+        label="失败数"
+        min-width="95"
+      />
       <el-table-column
         prop="offerRuleMatchEmptyNum"
+        sortable
         label="规则为空"
-        min-width="90"
+        min-width="105"
       />
       <el-table-column
         prop="offerExceedLimitedPriceNum"
+        sortable
         label="超过限价"
-        min-width="90"
+        min-width="105"
       />
-      <el-table-column prop="ticketTotalNum" label="中标数" min-width="90" />
+      <el-table-column
+        prop="ticketTotalNum"
+        sortable
+        label="中标数"
+        min-width="95"
+      />
       <el-table-column label="中标率%" width="90">
         <template #default="{ row: { ticketTotalNum, offerTotalNum } }">
           <span
@@ -131,8 +158,18 @@
           >
         </template>
       </el-table-column>
-      <el-table-column prop="ticketSuccessNum" label="成功数" min-width="90" />
-      <el-table-column prop="ticketNum" label="出票数" min-width="90" />
+      <el-table-column
+        prop="ticketSuccessNum"
+        sortable
+        label="成功数"
+        min-width="95"
+      />
+      <el-table-column
+        prop="ticketNum"
+        sortable
+        label="出票数"
+        min-width="95"
+      />
       <el-table-column label="成功率" width="90">
         <template #default="{ row: { ticketTotalNum, ticketSuccessNum } }">
           <span
@@ -145,11 +182,17 @@
           >
         </template>
       </el-table-column>
-      <el-table-column prop="ticketFailNum" label="失败数" min-width="90" />
+      <el-table-column
+        prop="ticketFailNum"
+        sortable
+        label="失败数"
+        min-width="95"
+      />
       <el-table-column
         prop="ticketTransferNum"
+        sortable
         label="转单数"
-        min-width="100"
+        min-width="95"
       />
     </el-table>
   </div>
@@ -182,7 +225,7 @@ const tableData = ref([]);
 
 if (rule === 3) {
   formData.user_id = user_id;
-}else {
+} else {
   formData.rule = rule;
 }
 
