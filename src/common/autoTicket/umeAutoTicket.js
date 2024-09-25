@@ -2542,7 +2542,7 @@ class OrderAutoTicketQueue {
           }
         }
 
-        let useQuan = targeQuanList.slice(0, ticket_num).map((item, index) => {
+        let useQuan = targetQuanList.slice(0, ticket_num).map((item, index) => {
           let seatCode = Object.keys(item.discountAmountMap);
           return {
             couponInstanceId: item.couponInstanceId,
