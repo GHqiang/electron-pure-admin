@@ -103,7 +103,9 @@ class OrderAutoOfferQueue {
           is_urgent: 0, // 1紧急 0非紧急
           cinema_group: "", // 哈哈没有影院标识
           cinema_code: cinemaId, // 影院id
-          order_number: order_id
+          order_number: order_id,
+          // 转为截止时间戳，原值： 1727009811
+          offer_end_time: item.endDownTime * 1000
         };
       });
       // console.warn(conPrefix + "转换后的订单列表", sfcStayOfferlist);

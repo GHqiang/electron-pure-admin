@@ -105,7 +105,9 @@ class OrderAutoOfferQueue {
           is_urgent: is_urgent, // 1紧急 0非紧急
           cinema_group: line_name,
           cinema_code: cinemaid, // 影院id
-          order_number: order_number
+          order_number: order_number,
+          // 转为截止时间戳，原值： 180 倒计时(单位秒)
+          offer_end_time: +new Date() + item.quote_countdown * 1000
         };
       });
       // console.warn(conPrefix + "转换后的订单列表", sfcStayOfferlist);

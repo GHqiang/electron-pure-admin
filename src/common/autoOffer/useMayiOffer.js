@@ -104,7 +104,9 @@ class OrderAutoOfferQueue {
           is_urgent: jiorder, // 1紧急 0非紧急
           cinema_group: cinemaChain,
           cinema_code: cinemaId, // 影院id
-          order_number: tradeno
+          order_number: tradeno,
+          // 转为截止时间戳，原值： "2024-09-22 21:02:55"
+          offer_end_time: +new Date(item.expiretime)
         };
       });
       // console.warn(conPrefix + "转换后的订单列表", sfcStayOfferlist);

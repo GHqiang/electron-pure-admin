@@ -109,7 +109,9 @@ class OrderAutoOfferQueue {
           cinema_group: brand_name || "",
           cinema_code: cinemaid || "", // 影院id
           order_number: id || "",
-          lockseat: seat_no?.split(",").join(" ") || ""
+          lockseat: seat_no?.split(",").join(" ") || "",
+          // 转为截止时间戳，原值： 1727009794
+          offer_end_time: item.stop_time * 1000
         };
       });
       // console.warn(conPrefix + "转换后的订单列表", sfcStayOfferlist);

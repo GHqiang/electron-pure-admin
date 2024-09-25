@@ -108,6 +108,8 @@ class OrderAutoOfferQueue {
           order_number: item.order_sn || "",
           lockseat: "",
           order_detail
+          // // 转为截止时间戳，字段未确定，暂不处理
+          // offer_end_time: +new Date(item.orderExpireTime)
         };
       });
       // console.warn(conPrefix + "转换后的订单列表", sfcStayOfferlist);

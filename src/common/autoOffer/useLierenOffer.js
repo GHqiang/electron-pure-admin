@@ -80,7 +80,9 @@ class OrderAutoOfferQueue {
     // this.queue.push(order);
     // 根据倒计时时间插入订单
     // 如果时间不足配置阈值，即不够进行报价，则不进行插入
-    const index = this.queue.findIndex(item => order.sytime < item.sytime);
+    const index = this.queue.findIndex(
+      item => order.offer_end_time < item.offer_end_time
+    );
     if (index === -1) {
       this.queue.push(order);
     } else {
@@ -123,7 +125,9 @@ class OrderAutoOfferQueue {
           return {
             ...item,
             plat_name: "lieren",
-            app_name: getCinemaFlag(item)
+            app_name: getCinemaFlag(item),
+            // 转为截止时间戳，原值： 1727009794
+            offer_end_time: item.sytime * 1000
           };
         });
       // console.warn(
