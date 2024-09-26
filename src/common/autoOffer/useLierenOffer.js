@@ -213,14 +213,14 @@ class OrderAutoOfferQueue {
         real_member_price: offerResult?.offerRule?.real_member_price,
         quan_value: offerResult?.offerRule?.quanValue,
         order_status: offerResult?.res ? "1" : "2",
-        // remark: '',
         processing_time: getCurrentFormattedDateTime(),
         err_msg: offerResult?.err_msg || errInfoObj?.des || "",
         err_info:
           offerResult?.err_info ||
           (errInfoObj?.info ? formatErrInfo(errInfoObj?.info) : ""),
         rewards: order.rewards, // 是否是奖励订单 1是 0否
-        rule: tokens.userInfo.rule || 2
+        rule: tokens.userInfo.rule || 2,
+        offer_rule_id: offerResult?.offerRule?.id
       };
       // 上传该订单的运行日志
       logUpload(
