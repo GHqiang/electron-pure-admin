@@ -1207,6 +1207,16 @@ const judgeHandle = (item, app_name, offerList) => {
   }
 };
 
+// 根据报价规则id获取报价规则
+const getOfferRuleById = id => {
+  let appOfferRuleList = window.localStorage.getItem("offerRuleList");
+  if (appOfferRuleList) {
+    appOfferRuleList = JSON.parse(appOfferRuleList);
+    appOfferRuleList = appOfferRuleList.filter(item => id == item.id);
+    return appOfferRuleList?.[0];
+  }
+};
+
 // 报价规则匹配
 const offerRuleMatch = order => {
   try {
@@ -1637,6 +1647,7 @@ export {
   getTargetCinema,
   // 根据订单name获取目标影院(主要用于ume系统)
   cinemaMatchHandle, // 影院名称匹配（匹配报价规则时使用）
+  getOfferRuleById, // 根据报价规则id获取报价规则
   offerRuleMatch, // 报价规则匹配
   logUpload, // 日志上传
   mockDelay, // 模拟延时

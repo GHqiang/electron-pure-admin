@@ -1,15 +1,14 @@
-import { computed } from "vue";
 import {
   getCurrentFormattedDateTime,
   convertFullwidthToHalfwidth,
   getCinemaId, // 根据影院名称获取影院id
-  getOrginValue, // 深拷贝获取原值
   mockDelay, // 模拟延时
   logUpload, // 日志上传
   trial, // 试错重试
   formatErrInfo, // 格式化错误信息
   getCinemaLoginInfoList,
-  sendWxPusherMessage
+  sendWxPusherMessage,
+  getOfferRuleById // 根据报价规则id获取详细内容
 } from "@/utils/utils";
 
 import svApi from "@/api/sv-api";
@@ -1594,12 +1593,47 @@ class OrderAutoTicketQueue {
         conPrefix +
           `待出票订单：城市${city_name}, 影院${cinema_name}, 影厅${hall_name}`
       );
-      const { offer_type, quan_value, member_price, real_member_price } =
-        offerRule;
+      const {
+        offer_type,
+        quan_value,
+        member_price,
+        real_member_price,
+        offer_rule_id
+      } = offerRule;
       let currentParams = this.currentParamsList[this.currentParamsInx];
       const { session_id, mobile } = currentParams;
       // 拿订单号去匹配报价记录
       if (offer_type !== "1") {
+        const ruleInfo = getOfferRuleById(offer_rule_id);
+        if (ruleInfo) {
+          const { autoUseQuanStatus, autoUseQuanPrice, autoUseQuanFlag } =
+            ruleInfo;
+          let quanFlagList = autoUseQuanFlag
+            ?.replace(/\s*/g, "")
+            ?.replace(/;|；/g, "—")
+            ?.split("—");
+          if (
+            autoUseQuanStatus === "1" &&
+            supplier_end_price > autoUseQuanPrice &&
+            quanFlagList?.length
+          ) {
+            const useQuans = await this.firstUseQuanHandle({
+              city_id,
+              cinema_id,
+              show_id,
+              seat_ids,
+              session_id,
+              appFlag,
+              quanFlagList
+            });
+            if (useQuans?.length) {
+              return {
+                quan_code: useQuans.join(),
+                profit: 0 // 利润
+              };
+            }
+          }
+        }
         console.log(conPrefix + "使用会员卡出票");
         console.log(conPrefix + "报价记录里的会员价", member_price);
         if (!member_price) {
@@ -1705,6 +1739,98 @@ class OrderAutoTicketQueue {
         quan_code: "",
         profit: 0 // 利润
       };
+    }
+  }
+
+  // 优先用券处理
+  async firstUseQuanHandle(params) {
+    const {
+      city_id,
+      cinema_id,
+      show_id,
+      seat_ids,
+      session_id,
+      appFlag,
+      quanFlagList
+    } = params;
+    try {
+      const quanListRes = await getQuanList({
+        city_id,
+        cinema_id,
+        session_id,
+        appFlag
+      });
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "优先用券时-获取优惠券列表返回",
+        level: "info",
+        info: {
+          quanListRes
+        }
+      });
+      const quanList = quanListRes?.quanList || [];
+      let targetQuanList = quanList
+        .filter(item =>
+          quanFlagList.some(itemA => item.coupon_info.includes(itemA))
+        )
+        .map(item => item.coupon_num);
+      if (!targetQuanList?.length) {
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: "优先用券时按券标识过滤后为空",
+          level: "info",
+          info: {
+            quanList,
+            quanFlagList
+          }
+        });
+        return;
+      }
+      const quan_code = targetQuanList.join();
+      const priceRes = await priceCalculation({
+        city_id,
+        cinema_id,
+        show_id,
+        seat_ids,
+        card_id: "",
+        quan_code,
+        session_id,
+        appFlag
+      });
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "优先用券时计算价格返回",
+        level: "info",
+        info: {
+          priceRes
+        }
+      });
+      if (priceRes?.error) {
+        return;
+      }
+      let priceInfo = priceRes?.price?.total_price;
+      let pay_money = Number(priceInfo); // 此处是为了将订单价格30.00转为30，将0.00转为0
+      if (pay_money !== 0) {
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: `优先用券时计算价格后价格不为0`,
+          level: "info",
+          info: {
+            priceInfo
+          }
+        });
+        return;
+      }
+      return targetQuanList;
+    } catch (error) {
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "优先用券时发现异常",
+        level: "error",
+        info: {
+          error
+        }
+      });
     }
   }
 
