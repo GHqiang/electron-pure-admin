@@ -47,8 +47,12 @@
           style="width: 194px"
           clearable
         >
-          <el-option label="正常" value="1" />
-          <el-option label="禁用" value="2" />
+          <el-option
+            v-for="(keyValue, keyName) in statusObj"
+            :key="keyName"
+            :label="keyValue"
+            :value="keyName"
+          />
         </el-select>
       </el-form-item>
       <el-form-item label="报价类型">
@@ -306,6 +310,7 @@ const statusObj = {
   1: "正常",
   2: "禁用",
   3: "仅报价"
+  // 4: "删除"
 };
 
 // 表单查询数据

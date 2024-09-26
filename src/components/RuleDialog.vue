@@ -401,6 +401,39 @@
             <el-option label="星期日" value="星期日" />
           </el-select>
         </el-form-item>
+        <el-form-item
+          v-if="
+            formData.offerType !== '1' &&
+            !UME_LIST.includes(formData.shadowLineName)
+          "
+          label="灵活用券配置"
+        >
+          <el-row :gutter="24" style="width: 100%">
+            <el-col :span="2">
+              <el-switch
+                v-model="formData.autoUseQuanStatus"
+                active-value="1"
+                inactive-value="2"
+              />
+            </el-col>
+            <el-col :span="8">
+              中标价超过&nbsp;&nbsp;<el-input
+                v-model="formData.autoUseQuanPrice"
+                type="number"
+                style="width: 80px"
+              />&nbsp;&nbsp;用券
+            </el-col>
+            <el-col :span="14">
+              券标识：<el-input
+                v-model="formData.autoUseQuanFlag"
+                style="width: 240px"
+                :rows="2"
+                type="textarea"
+                placeholder="请输入券标识，不同标识用;分隔"
+              />
+            </el-col>
+          </el-row>
+        </el-form-item>
         <el-form-item label="座位数">
           <el-select v-model="formData.seatNum" placeholder="座位数" clearable>
             <el-option
@@ -450,31 +483,9 @@
           <el-radio-group v-model="formData.status">
             <el-radio value="1" size="large">正常</el-radio>
             <el-radio value="2" size="large">禁用</el-radio>
+            <el-radio value="3" size="large">仅报价</el-radio>
           </el-radio-group>
         </el-form-item>
-        <!-- <el-form-item label="灵活用券配置">
-          <el-row :gutter="24" style="width: 100%">
-            <el-col :span="2">
-              <el-switch v-model="formData.status" />
-            </el-col>
-            <el-col :span="8">
-              中标价超过&nbsp;&nbsp;<el-input
-                v-model="formData.status"
-                type="number"
-                style="width: 80px"
-              />&nbsp;&nbsp;用券
-            </el-col>
-            <el-col :span="14">
-              券标识：<el-input
-                v-model="formData.status"
-                style="width: 240px"
-                :rows="2"
-                type="textarea"
-                placeholder="请输入券标识，不同标识用;分隔"
-              />
-            </el-col>
-          </el-row>
-        </el-form-item> -->
         <el-form-item>
           <el-button type="primary" @click="saveRule">保存</el-button>
           <el-button @click="cancel(ruleFormRef)">取消</el-button>
@@ -544,7 +555,10 @@ let formData = reactive({
       platName: "lieren",
       value: ""
     }
-  ] // 平台报价规则
+  ], // 平台报价规则
+  autoUseQuanStatus: "2", // 自动用券状态 1-开启 2-关闭
+  autoUseQuanPrice: "", // 自动用券价格
+  autoUseQuanFlag: "" // 自动用券标识
 });
 
 let cityList = ref([]); // 城市列表
@@ -623,6 +637,9 @@ const resetForm = el => {
       value: ""
     }
   ]; // 平台报价规则
+  formData.autoUseQuanStatus = "2"; // 自动用券状态 1-开启 2-关闭
+  formData.autoUseQuanPrice = ""; // 自动用券价格
+  formData.autoUseQuanFlag = ""; // 自动用券标识
 };
 
 // 影线改变
@@ -685,6 +702,9 @@ const open = async ruleInfo => {
         formData.includeFilmNames = formInfo.includeFilmNames;
         formData.excludeFilmNames = formInfo.excludeFilmNames;
         formData.platOfferList = formInfo.platOfferList;
+        formData.autoUseQuanStatus = formInfo.autoUseQuanStatus;
+        formData.autoUseQuanPrice = formInfo.autoUseQuanPrice;
+        formData.autoUseQuanFlag = formInfo.autoUseQuanFlag;
       } else {
         // 新增
         formData.shadowLineName = formInfo.shadowLineName;
@@ -715,6 +735,9 @@ const offerTypeChange = val => {
         value: ""
       }
     ]; // 平台报价规则
+    formData.autoUseQuanStatus = "2"; // 自动用券状态 1-开启 2-关闭
+    formData.autoUseQuanPrice = ""; // 自动用券价格
+    formData.autoUseQuanFlag = ""; // 自动用券标识
   } else if (val === "2") {
     // 会员价加价
     formData.memberDay = "";
