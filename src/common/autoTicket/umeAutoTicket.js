@@ -2494,7 +2494,7 @@ class OrderAutoTicketQueue {
             return item.couponName.includes(QUAN_TYPE_FLAG[quan_value]);
           } else if (appFlag === "yaolai") {
             return item.couponName === QUAN_TYPE_FLAG[quan_value];
-          } else if (appFlag === "zheying") {
+          } else if (appFlag === "zheyingshidai") {
             return item.couponName === QUAN_TYPE_FLAG[quan_value];
           }
         });

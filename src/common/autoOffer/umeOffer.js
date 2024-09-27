@@ -131,7 +131,7 @@ class getUmeOfferPrice {
       // 获取报价最低的报价规则
       let endRule = await this.getMinAmountOfferRule(matchRuleList, order);
       console.warn(conPrefix + "最终匹配到的报价规则", endRule);
-      if ([0, -2, -3, -4].includes(endRule)) return;
+      if ([0, -1, -5, -2, -3, -4].includes(endRule)) return;
       if (!endRule) {
         console.error(conPrefix + "最终匹配到的报价规则不存在");
         this.logList.push({
@@ -222,8 +222,9 @@ class getUmeOfferPrice {
         //   "-2": "获取当前场次电影信息失败,促销票数低于订单票数，不再进行报价",
         //   "-3": "获取座位布局异常，不再进行报价",
         //   "-4": "影院单卡出票限制,不再进行报价"
+        //   "-5": "会员价为0,不再进行报价"
         // };
-        if (memberPriceRes && [-1].includes(memberPriceRes)) {
+        if (memberPriceRes && [-1, -5].includes(memberPriceRes)) {
           // 返回特殊标识出去
           return memberPriceRes;
         }
@@ -485,7 +486,6 @@ class getUmeOfferPrice {
         maxSeatPrice = 0,
         handlingMemberFee,
         ticketMemberServiceFeeMin = 0,
-        areaSettlePriceMin = 0,
         activityPrices = []
       } = movieInfo;
       this.logList.push({
@@ -501,9 +501,18 @@ class getUmeOfferPrice {
         }
       });
       let member_price = Math.max(ticketMemberPrice, maxSeatPrice) / 100;
-      // 会员价为0时取原价
+      // 会员价为0时不报
       if (member_price === 0) {
-        member_price = Number(areaSettlePriceMin) / 100;
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: "获取会员价为0，不进行报价",
+          level: "error",
+          info: {
+            ticketMemberPrice,
+            maxSeatPrice
+          }
+        });
+        return -5;
       }
       // 会员价等于真实会员价加手续费加会员服务费
       member_price =
