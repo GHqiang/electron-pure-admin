@@ -262,7 +262,7 @@ const SFC_SPECIAL_CINEMA_LIST = [
 const LYZY_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: ["龙岩中影国际影城京华中心店"],
-    sfc_cinema_name: "龙岩中影国际影城龙岩京华店"
+    sfc_cinema_name: "中影国际影城龙岩京华店"
   }
 ];
 // 长沙万影汇特殊影院集合
@@ -270,6 +270,13 @@ const CSWYH_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: ["万影汇影城高升天地LUXE店"],
     sfc_cinema_name: "万影汇影城长沙高升天地店"
+  }
+];
+// 北京地质礼堂特殊影院集合
+const BJDZLT_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: ["北京地质礼堂影剧院"],
+    sfc_cinema_name: "地质礼堂"
   }
 ];
 // 华夏久金特殊影院集合
@@ -680,7 +687,7 @@ const HZZY_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "杭州中影国际影城星光大道二期CINITY店"
   }
   // {
-  //   order_cinema_name: "杭州中影国际影城东站西子国际店",
+  //   order_cinema_name: "杭州中影国际影城钱塘永旺梦乐城CINTYLED店",
   //   sfc_cinema_name: "杭州中影国际影城东站西子国际店"
   // }
 ];
@@ -777,6 +784,10 @@ const UME_SPECIAL_CINEMA_LIST = [
     order_cinema_name: ["UME影城北城天街CINITY店"],
     sfc_cinema_name: "UME影城重庆江北店"
   },
+  {
+    order_cinema_name: ["UME影城渝中"],
+    sfc_cinema_name: "UME影城重庆渝中店"
+  },
   // 杭州
   {
     order_cinema_name: ["UME影城紫荆天街店"],
@@ -871,6 +882,19 @@ const YAOLAI_SPECIAL_CINEMA_LIST = [
   }
 ];
 
+// 完美特殊影院集合
+const WANMEI_SPECIAL_CINEMA_LIST = [
+  // 成都
+  {
+    order_cinema_name: ["完美世界影城LUXE成都印象城店"],
+    sfc_cinema_name: "完美世界影城成都印象城店"
+  },
+  {
+    order_cinema_name: ["完美世界影城重庆爱融荟城店"],
+    sfc_cinema_name: "完美世界影城重庆华融店"
+  }
+];
+
 // 英皇特殊影院集合
 const YINGHUANG_SPECIAL_CINEMA_LIST = [
   // 合肥
@@ -892,10 +916,24 @@ const YINGHUANG_SPECIAL_CINEMA_LIST = [
     order_cinema_name: ["英皇电影城新光天地IMAX激光店"],
     sfc_cinema_name: "英皇电影城成都新光天地店"
   },
+  {
+    order_cinema_name: ["英皇电影城悠方店"],
+    sfc_cinema_name: "英皇电影城成都悠方店"
+  },
+  {
+    order_cinema_name: ["英皇电影城IFS国金中心IMAX激光店"],
+    sfc_cinema_name: "英皇电影城成都国金中心店"
+  },
+
   // 沈阳
   {
     order_cinema_name: ["英皇电影城中街盛京龙城店"],
     sfc_cinema_name: "英皇电影城沈阳盛京龙城店"
+  },
+  // 赣州
+  {
+    order_cinema_name: ["英皇电影城杉杉奥莱IMAX店"],
+    sfc_cinema_name: "英皇电影城赣州杉杉奥特莱斯店"
   }
 ];
 
@@ -981,6 +1019,22 @@ const ZHEYINGSHIDAI_SPECIAL_CINEMA_LIST = [
     order_cinema_name: ["浙影时代影城翠苑店"],
     sfc_cinema_name: "浙影时代翠苑店"
   },
+  {
+    order_cinema_name: ["浙影时代影城奥斯卡店"],
+    sfc_cinema_name: "浙影时代奥斯卡店"
+  },
+  {
+    order_cinema_name: ["浙影时代影城富阳鹿山时代店"],
+    sfc_cinema_name: "浙影时代富阳鹿山时代店"
+  },
+  {
+    order_cinema_name: ["浙影时代影城和达店"],
+    sfc_cinema_name: "浙影时代和达店"
+  },
+  {
+    order_cinema_name: ["浙影时代影城众安广场店"],
+    sfc_cinema_name: "浙影时代众安广场店"
+  },
   // 舟山
   {
     order_cinema_name: ["浙影时代影城舟山金球东港凯虹广场店"],
@@ -990,6 +1044,31 @@ const ZHEYINGSHIDAI_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: ["浙影时代影城吉安万象广场店"],
     sfc_cinema_name: "东影时代影城吉安店"
+  },
+  // 宁波
+  {
+    order_cinema_name: ["浙影时代影城慈溪新都汇店"],
+    sfc_cinema_name: "浙影时代慈溪新都汇店"
+  },
+  {
+    order_cinema_name: ["浙影时代影城宁波东门银泰店原宁波时代电影大世界"],
+    sfc_cinema_name: "浙影时代宁波东门银泰店"
+  },
+
+  // 六安
+  {
+    order_cinema_name: ["浙影时代影城六安海心沙广场店"],
+    sfc_cinema_name: "浙影时代六安海心沙广场店"
+  },
+  // 北京
+  {
+    order_cinema_name: ["浙影时代影城密云店"],
+    sfc_cinema_name: "浙影时代密云店"
+  },
+  // 合肥
+  {
+    order_cinema_name: ["浙影时代影城合肥金球宝业东城广场店"],
+    sfc_cinema_name: "浙影时代合肥金球宝业东城广场店"
   }
 ];
 
@@ -998,7 +1077,7 @@ const SPECIAL_CINEMA_OBJ = {
   ume: UME_SPECIAL_CINEMA_LIST,
   yaolai: YAOLAI_SPECIAL_CINEMA_LIST,
   renhengmeng: [],
-  wanmei: [],
+  wanmei: WANMEI_SPECIAL_CINEMA_LIST,
   yinghuang: YINGHUANG_SPECIAL_CINEMA_LIST,
   jqgw: JQGW_SPECIAL_CINEMA_LIST,
   hfhlxh: HFHLXH_SPECIAL_CINEMA_LIST,
@@ -1017,7 +1096,7 @@ const SPECIAL_CINEMA_OBJ = {
   zhongying: [],
   lyzy: LYZY_SPECIAL_CINEMA_LIST,
   cswyh: CSWYH_SPECIAL_CINEMA_LIST,
-  bjdzlt: [],
+  bjdzlt: BJDZLT_SPECIAL_CINEMA_LIST,
   glyc: [],
   jiujin: JIUJIN_SPECIAL_CINEMA_LIST,
   jinji: JINJI_SPECIAL_CINEMA_LIST,
