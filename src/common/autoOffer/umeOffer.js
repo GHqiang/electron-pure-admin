@@ -445,14 +445,14 @@ class getUmeOfferPrice {
       console.log(conPrefix + "获取座位布局参数", params);
       const res = await this.appApi.getMoviePlaySeat(params);
       console.log(conPrefix + "获取座位布局返回", res);
-      this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
-        des: "获取座位布局返回",
-        level: "info",
-        info: {
-          res
-        }
-      });
+      // this.logList.push({
+      //   opera_time: getCurrentFormattedDateTime(),
+      //   des: "获取座位布局返回",
+      //   level: "info",
+      //   info: {
+      //     res
+      //   }
+      // });
       return res.data?.areaInfoList || [];
     } catch (error) {
       console.error(conPrefix + "获取座位布局异常", error);
@@ -485,6 +485,7 @@ class getUmeOfferPrice {
         maxSeatPrice = 0,
         handlingMemberFee,
         ticketMemberServiceFeeMin = 0,
+        areaSettlePriceMin = 0,
         activityPrices = []
       } = movieInfo;
       this.logList.push({
@@ -500,6 +501,10 @@ class getUmeOfferPrice {
         }
       });
       let member_price = Math.max(ticketMemberPrice, maxSeatPrice) / 100;
+      // 会员价为0时取原价
+      if (member_price === 0) {
+        member_price = Number(areaSettlePriceMin) / 100;
+      }
       // 会员价等于真实会员价加手续费加会员服务费
       member_price =
         member_price +
