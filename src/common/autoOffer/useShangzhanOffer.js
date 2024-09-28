@@ -4,6 +4,7 @@ import {
   logUpload, // 日志上传
   mockDelay, // 模拟延时
   formatErrInfo, // 格式化errInfo
+  getCinemaLoginInfoList,
   parseTimeStr
 } from "@/utils/utils";
 import { TEST_NEW_PLAT_LIST } from "@/common/constant.js";
@@ -114,7 +115,16 @@ class OrderAutoOfferQueue {
       });
       // console.warn(conPrefix + "转换后的订单列表", sfcStayOfferlist);
       sfcStayOfferlist = sfcStayOfferlist
-        .filter(item => getCinemaFlag(item))
+        .filter(item => {
+          let appFlag = getCinemaFlag(item);
+          // 如果没有对应登录信息先过滤掉
+          let appLoginInfo = getCinemaLoginInfoList().find(
+            item => item.app_name === appFlag && item.mobile && item.session_id
+          );
+          if (appLoginInfo) {
+            return appFlag;
+          }
+        })
         .map(item => {
           return {
             ...item,
