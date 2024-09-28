@@ -51,6 +51,10 @@ const createApi = ({ group, app_name }) => {
   const getQuanList = params =>
     axios.get("/sfc/v2/coupon/get-offline-coupon-list", { params });
 
+  // 个人中心优惠券列表，优先用券时使用
+  const getQuanListByFirstUseQuan = params =>
+    axios.get("/sfc/coupon/get-list", { params });
+
   // 订单价格计算
   const priceCalculation = params =>
     axios.post("/sfc/v2/price/calculate", params);
@@ -94,6 +98,7 @@ const createApi = ({ group, app_name }) => {
     lockSeat,
     getCardList,
     getQuanList,
+    getQuanListByFirstUseQuan,
     priceCalculation,
     createOrder,
     payOrder,

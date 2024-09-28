@@ -1758,7 +1758,8 @@ class OrderAutoTicketQueue {
         city_id,
         cinema_id,
         session_id,
-        appFlag
+        appFlag,
+        firstFlag: 1
       });
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
@@ -3136,7 +3137,13 @@ const getCardList = async ({ city_id, cinema_id, session_id, appFlag }) => {
 };
 
 // 获取优惠券列表
-const getQuanList = async ({ city_id, cinema_id, session_id, appFlag }) => {
+const getQuanList = async ({
+  city_id,
+  cinema_id,
+  session_id,
+  appFlag,
+  firstFlag
+}) => {
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
   try {
     let params = {
@@ -3149,6 +3156,15 @@ const getQuanList = async ({ city_id, cinema_id, session_id, appFlag }) => {
     const res = await APP_API_OBJ[appFlag].getQuanList(params);
     console.log(conPrefix + "获取优惠券列表返回", res);
     let quanList = res.data?.list || [];
+    let res2;
+    if (!quanList?.length && firstFlag === 1) {
+      delete params.request_from;
+      params.status = "4";
+      params.page = 1;
+      res2 = await APP_API_OBJ[appFlag].getQuanListByFirstUseQuan(params);
+      console.log(conPrefix + "获取优惠券列表返回2", res2);
+      quanList = res2.data?.unused?.lists || [];
+    }
     // let noUseLIst = ['1598162363509715', '1055968062906716', '1284460567801315', '1116166666409614']
     // 过滤掉不可用券
     // list = list.filter(item => item.coupon_num.indexOf("t") === -1);
@@ -3348,8 +3364,9 @@ const addOrderHandleRecored = async ({
       show_time: order.show_time,
       cinema_group: order.cinema_group,
       offer_type: res?.offerRule?.offer_type || "",
-      offer_amount: res?.offerRule?.offer_amount || "",
-      member_offer_amount: res?.offerRule?.member_offer_amount || "",
+      // cinema_code: order.cinema_code,
+      // offer_amount: res?.offerRule?.offer_amount || "",
+      // member_offer_amount: res?.offerRule?.member_offer_amount || "",
       quan_value: res?.offerRule?.quan_value || "",
       order_status: order_status,
       // remark: '',
