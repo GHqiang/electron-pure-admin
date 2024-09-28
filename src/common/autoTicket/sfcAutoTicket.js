@@ -8,7 +8,8 @@ import {
   formatErrInfo, // 格式化错误信息
   getCinemaLoginInfoList,
   sendWxPusherMessage,
-  getOfferRuleById // 根据报价规则id获取详细内容
+  getOfferRuleById, // 根据报价规则id获取详细内容
+  couponInfoSpecial
 } from "@/utils/utils";
 
 import svApi from "@/api/sv-api";
@@ -1772,7 +1773,11 @@ class OrderAutoTicketQueue {
       const quanList = quanListRes?.quanList || [];
       let targetQuanList = quanList
         .filter(item =>
-          quanFlagList.some(itemA => item.coupon_info.includes(itemA))
+          quanFlagList.some(itemA =>
+            couponInfoSpecial(item.coupon_info).includes(
+              couponInfoSpecial(itemA)
+            )
+          )
         )
         .map(item => item.coupon_num);
       if (!targetQuanList?.length) {

@@ -799,15 +799,6 @@ function convertFullwidthToHalfwidth(str) {
   return result;
 }
 
-// 影院名称特殊处理（为了特殊匹配,去括号、空格及中间点）
-const cinemNameSpecial = cinema_name => {
-  return cinema_name
-    .replace(/[\(\)\（\）-]/g, "")
-    .replace(/\s*/g, "")
-    .replace(/·/g, "")
-    .replace(/:/g, "");
-};
-
 // 获取影院登录信息列表
 const getCinemaLoginInfoList = () => {
   let loginInfoList = window.localStorage.getItem("loginInfoList");
@@ -1191,6 +1182,22 @@ const cinemaMatchHandle = (cinema_name, list, appName) => {
   }
 };
 
+// 影院名称特殊处理（为了特殊匹配,去括号、空格及中间点）
+const cinemNameSpecial = cinema_name => {
+  return cinema_name
+    .replace(/[\(\)\（\）-]/g, "")
+    .replace(/\s*/g, "")
+    .replace(/·/g, "")
+    .replace(/:/g, "");
+};
+// 券名称特殊处理（为了特殊匹配,去括号、空格、中间点、中横线及冒号）
+const couponInfoSpecial = coupon_info => {
+  return coupon_info
+    .replace(/[\(\)\（\）-]/g, "")
+    .replace(/\s*/g, "")
+    .replace(/·/g, "")
+    .replace(/:/g, "");
+};
 // 判断该订单是否是新订单
 const judgeHandle = (item, app_name, offerList) => {
   try {
@@ -1639,6 +1646,7 @@ export {
   getCinemaFlag, // 获取影院标识
   convertFullwidthToHalfwidth, // 全角字符转换成半角
   cinemNameSpecial, // 影院名称特殊处理（为了特殊匹配,去括号、空格及中间点）
+  couponInfoSpecial, // 券名称特殊处理（为了特殊匹配,去括号、空格、中间点、中横线及冒号）
   getCinemaLoginInfoList, // 获取影院登录信息列表
   sendWxPusherMessage, // 发送微信消息
   calcCount, // 计算连续中标数
