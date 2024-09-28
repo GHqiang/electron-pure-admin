@@ -882,6 +882,15 @@ const YAOLAI_SPECIAL_CINEMA_LIST = [
   }
 ];
 
+// 仁恒梦特殊影院集合
+const RENHENGMENG_SPECIAL_CINEMA_LIST = [
+  {
+    // 深圳梦影廊电影院(龙岗梦中心店)
+    order_cinema_name: ["深圳梦影廊电影院龙岗梦中心店"],
+    sfc_cinema_name: "梦影廊电影院"
+  }
+];
+
 // 完美特殊影院集合
 const WANMEI_SPECIAL_CINEMA_LIST = [
   // 成都
@@ -1076,7 +1085,7 @@ const ZHEYINGSHIDAI_SPECIAL_CINEMA_LIST = [
 const SPECIAL_CINEMA_OBJ = {
   ume: UME_SPECIAL_CINEMA_LIST,
   yaolai: YAOLAI_SPECIAL_CINEMA_LIST,
-  renhengmeng: [],
+  renhengmeng: RENHENGMENG_SPECIAL_CINEMA_LIST,
   wanmei: WANMEI_SPECIAL_CINEMA_LIST,
   yinghuang: YINGHUANG_SPECIAL_CINEMA_LIST,
   jqgw: JQGW_SPECIAL_CINEMA_LIST,
