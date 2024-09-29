@@ -150,7 +150,6 @@ const APP_LIST = {
   hflkldd: "合肥乐客来丁丁",
   ttylw: "天通苑乐娃",
   ytgjyc: "益田国际影城",
-  // dghs: "东莞红石",
   tjlnx: "天津莱纳星",
   bjlnx: "北京莱纳星",
   cdlnx: "成都莱纳星",
@@ -160,7 +159,6 @@ const APP_LIST = {
   gbsy: "古北上影",
   jyhx: "金谊华夏",
   hkzy: "海口中影",
-  // hgwz: "横岗万众",
   shjy: "上海巨影",
   tjlq: "天津乐奇",
   shth: "上海太禾",
@@ -169,6 +167,8 @@ const APP_LIST = {
   cszykd: "长沙中影凯德",
   cszyyzx: "长沙中影壹中心",
   qina: "齐纳国际"
+  // dghs: "东莞红石",
+  // hgwz: "横岗万众",
 };
 
 // 非SFC影院集合列表

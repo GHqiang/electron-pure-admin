@@ -323,7 +323,7 @@ const getCinemaFlag = item => {
     return "wanmei";
   }
   if (isTpyycGroup) {
-    return "ypyyc";
+    return "tpyyc";
   }
   if (isZhongyingGroup) {
     return "zhongying";
