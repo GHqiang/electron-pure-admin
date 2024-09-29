@@ -275,7 +275,7 @@ const CSWYH_SPECIAL_CINEMA_LIST = [
 // 北京地质礼堂特殊影院集合
 const BJDZLT_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: ["北京地质礼堂影剧院"],
+    order_cinema_name: ["北京地质礼堂影剧院", "北京地质礼堂"],
     sfc_cinema_name: "地质礼堂"
   }
 ];
@@ -742,7 +742,7 @@ const DSYC_SPECIAL_CINEMA_LIST = [
 // 华熙国际特殊影院集合
 const CQHX_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "华熙国际影城",
+    order_cinema_name: ["华熙国际影城", "华熙LIVE鱼洞华熙国际影城"],
     sfc_cinema_name: "重庆华熙国际影城"
   },
   {
@@ -898,9 +898,19 @@ const WANMEI_SPECIAL_CINEMA_LIST = [
     order_cinema_name: ["完美世界影城LUXE成都印象城店"],
     sfc_cinema_name: "完美世界影城成都印象城店"
   },
+  // 重庆
   {
     order_cinema_name: ["完美世界影城重庆爱融荟城店"],
     sfc_cinema_name: "完美世界影城重庆华融店"
+  },
+  {
+    order_cinema_name: ["完美世界影城永川中央大街店"],
+    sfc_cinema_name: "完美世界影城重庆永川店"
+  },
+  // 娄底
+  {
+    order_cinema_name: ["完美世界杜比全景声巨幕影城娄底春园店"],
+    sfc_cinema_name: "完美世界影城娄底春园店"
   }
 ];
 
