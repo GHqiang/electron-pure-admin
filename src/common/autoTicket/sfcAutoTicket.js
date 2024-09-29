@@ -1197,22 +1197,23 @@ class OrderAutoTicketQueue {
         });
       }
       // 5、使用优惠券或者会员卡
-      const { card_id, quan_code, profit } = await this.useQuanOrCard({
-        order_number,
-        city_name,
-        cinema_name,
-        hall_name,
-        city_id,
-        cinema_id,
-        show_id,
-        seat_ids,
-        ticket_num,
-        supplier_end_price,
-        rewards,
-        offerRule,
-        plat_name
-      });
-      if (!card_id && !quan_code) {
+      const { card_id, quan_code, member_coupon_id, profit } =
+        await this.useQuanOrCard({
+          order_number,
+          city_name,
+          cinema_name,
+          hall_name,
+          city_id,
+          cinema_id,
+          show_id,
+          seat_ids,
+          ticket_num,
+          supplier_end_price,
+          rewards,
+          offerRule,
+          plat_name
+        });
+      if (!card_id && !quan_code && !member_coupon_id) {
         console.log("this.currentParamsInx", this.currentParamsInx);
         console.log("this.currentParamsList", this.currentParamsList);
         if (this.currentParamsInx === this.currentParamsList.length - 1) {
@@ -1269,6 +1270,7 @@ class OrderAutoTicketQueue {
         seat_ids,
         card_id,
         quan_code,
+        member_coupon_id,
         session_id,
         appFlag
       });
@@ -1383,7 +1385,7 @@ class OrderAutoTicketQueue {
         show_id,
         seat_ids,
         card_id,
-        coupon: quan_code,
+        coupon: quan_code || member_coupon_id,
         seat_info: lockseat.replaceAll(" ", ",").replaceAll("座", "号"),
         pay_money
       });
@@ -1629,7 +1631,8 @@ class OrderAutoTicketQueue {
             });
             if (useQuans?.length) {
               return {
-                quan_code: useQuans.join(),
+                quan_code: "",
+                member_coupon_id: useQuans.join(),
                 profit: 0 // 利润
               };
             }
@@ -1779,7 +1782,7 @@ class OrderAutoTicketQueue {
             )
           )
         )
-        .map(item => item.coupon_num);
+        .map(item => item.coupon_id);
       if (!targetQuanList?.length) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
@@ -1792,16 +1795,17 @@ class OrderAutoTicketQueue {
         });
         return;
       }
-      const quan_code = targetQuanList.join();
+      const member_coupon_id = targetQuanList.join();
       const priceRes = await priceCalculation({
         city_id,
         cinema_id,
         show_id,
         seat_ids,
         card_id: "",
-        quan_code,
+        quan_code: "",
         session_id,
-        appFlag
+        appFlag,
+        member_coupon_id
       });
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
@@ -3193,7 +3197,8 @@ const priceCalculation = async ({
   card_id,
   quan_code,
   session_id,
-  appFlag
+  appFlag,
+  member_coupon_id
 }) => {
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
   try {
@@ -3217,6 +3222,8 @@ const priceCalculation = async ({
       params.quan_code = quan_code; // 优惠券编码
     } else if (card_id) {
       params.card_id = card_id; // 会员卡id
+    } else if (member_coupon_id) {
+      params.member_coupon_id = member_coupon_id; // 会员卡赠送券id
     }
     console.log(conPrefix + "计算订单价格参数", params);
     const res = await APP_API_OBJ[appFlag].priceCalculation(params);

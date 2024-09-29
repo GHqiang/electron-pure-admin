@@ -404,6 +404,7 @@
         <el-form-item
           v-if="
             formData.offerType !== '1' &&
+            formData.shadowLineName !== 'sfc' &&
             !UME_LIST.includes(formData.shadowLineName)
           "
           label="灵活用券配置"
