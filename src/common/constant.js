@@ -921,6 +921,15 @@ const WANMEI_SPECIAL_CINEMA_LIST = [
     order_cinema_name: ["完美世界影城永川中央大街店"],
     sfc_cinema_name: "完美世界影城重庆永川店"
   },
+  {
+    order_cinema_name: ["完美世界杜比全景声巨幕影城万州鸿鸥店"],
+    sfc_cinema_name: "完美世界影城重庆万州店"
+  },
+  {
+    order_cinema_name: ["完美世界影城江北嘴财信广场店"],
+    sfc_cinema_name: "完美世界影城重庆江北嘴店"
+  },
+
   // 娄底
   {
     order_cinema_name: ["完美世界杜比全景声巨幕影城娄底春园店"],
@@ -961,6 +970,30 @@ const WANMEI_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: ["完美世界影城北京天宫院凯德MALL店"],
     sfc_cinema_name: "完美世界影城天宫院凯德MALL店"
+  },
+  // 杭州
+  {
+    order_cinema_name: ["完美世界影城临安万华店"],
+    sfc_cinema_name: "完美世界影城杭州临安店"
+  },
+  {
+    order_cinema_name: ["完美世界影城杭州铂金店原中影铂金影城"],
+    sfc_cinema_name: "完美世界影城杭州铂金店"
+  },
+  // 天津
+  {
+    order_cinema_name: ["完美世界影城天津环宇城CINITY店"],
+    sfc_cinema_name: "完美世界影城天津环宇城店"
+  },
+  {
+    order_cinema_name: ["完美世界影城幸福广场店"],
+    sfc_cinema_name: "完美世界影城天津大港店"
+  },
+
+  // 深圳
+  {
+    order_cinema_name: ["完美世界影城沙井店"],
+    sfc_cinema_name: "完美世界影城深圳沙井店"
   }
 ];
 
