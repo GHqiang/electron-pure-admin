@@ -1386,7 +1386,8 @@ class OrderAutoTicketQueue {
         show_id,
         seat_ids,
         card_id,
-        coupon: quan_code || member_coupon_id,
+        coupon: quan_code,
+        member_coupon_id,
         seat_info: lockseat.replaceAll(" ", ",").replaceAll("座", "号"),
         pay_money
       });
@@ -1808,27 +1809,33 @@ class OrderAutoTicketQueue {
       }
       let card_id, coupon_id, member_coupon_id;
       if (targetQuanList[0]?.coupon_type === "1") {
-        // 线上
-        const cardListRes = await getCardList({
-          city_id,
-          cinema_id,
-          session_id,
-          appFlag
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: "线上券优先用券时暂不处理",
+          level: "info"
         });
-        const cardList = cardListRes?.cardList || [];
-        if (!cardList?.length) {
-          this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
-            des: "线上券优先用券时获取会员卡列表异常",
-            level: "error",
-            info: {
-              error: cardListRes?.error
-            }
-          });
-          return;
-        }
-        card_id = cardList[0]?.card_num;
-        coupon_id = targetQuanList.map(item => item.id).join();
+        return;
+        // 线上
+        // const cardListRes = await getCardList({
+        //   city_id,
+        //   cinema_id,
+        //   session_id,
+        //   appFlag
+        // });
+        // const cardList = cardListRes?.cardList || [];
+        // if (!cardList?.length) {
+        //   this.logList.push({
+        //     opera_time: getCurrentFormattedDateTime(),
+        //     des: "线上券优先用券时获取会员卡列表异常",
+        //     level: "error",
+        //     info: {
+        //       error: cardListRes?.error
+        //     }
+        //   });
+        //   return;
+        // }
+        // card_id = cardList[0]?.card_num;
+        // coupon_id = targetQuanList.map(item => item.id).join();
       } else {
         // 线下
         member_coupon_id = targetQuanList.map(item => item.id).join();
@@ -1897,6 +1904,7 @@ class OrderAutoTicketQueue {
       pay_money,
       card_id,
       coupon,
+      member_coupon_id,
       isTimeoutRetry = 1 // 默认超时重试
     } = data || {};
     try {
@@ -1963,8 +1971,12 @@ class OrderAutoTicketQueue {
           console.log(conPrefix + "创建订单返回", res);
           order_num = res.data?.order_num || "";
         }
-      } else if (coupon) {
-        params.coupon = coupon; // 优惠券券码
+      } else if (coupon || member_coupon_id) {
+        if (coupon) {
+          params.coupon = coupon; // 优惠券券码
+        } else {
+          params.member_coupon_id = member_coupon_id; // 开卡赠送线下券
+        }
         console.log(conPrefix + "创建订单参数", params);
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
@@ -3268,7 +3280,8 @@ const priceCalculation = async ({
     } else if (member_coupon_id) {
       params.member_coupon_id = member_coupon_id; // 会员卡赠送线下券id
     } else if (coupon_id) {
-      params.coupon_id = coupon_id; // 会员卡赠送线上券id
+      // 会员卡赠送线上券id（线上券时还要必传card_id，而且创建订单接口也需要特殊处理）
+      params.coupon_id = coupon_id;
     }
     console.log(conPrefix + "计算订单价格参数", params);
     const res = await APP_API_OBJ[appFlag].priceCalculation(params);
