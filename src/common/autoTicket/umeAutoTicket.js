@@ -1810,6 +1810,14 @@ class OrderAutoTicketQueue {
       return createOrderRes;
     } catch (error) {
       console.error(conPrefix + "创建订单异常", error);
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: `创建订单异常`,
+        level: "error",
+        info: {
+          error
+        }
+      });
       this.setErrInfo("创建订单异常", error);
       if (error?.msg?.includes("超时") && isTimeoutRetry === 1) {
         this.logList.push({
@@ -2550,7 +2558,7 @@ class OrderAutoTicketQueue {
             couponName: item.couponName,
             templateCode: item.templateCode,
             discountAmount: seatCode
-              ? appFlag !== "yaolai"
+              ? !["zheyingshidai", "yaolai"].includes(appFlag)
                 ? item.discountAmountMap?.[seatCode[index]]
                 : item.discountAmountMap?.[seatCode[index]]?.[1]
               : 0

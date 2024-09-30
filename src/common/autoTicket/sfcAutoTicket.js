@@ -1197,7 +1197,8 @@ class OrderAutoTicketQueue {
         });
       }
       // 5、使用优惠券或者会员卡
-      const { card_id, quan_code, member_coupon_id, profit } =
+      // 会员卡出票必传card_id，上影券必传quan_code，赠送线上券必传card_id和coupon_id，赠送线下券必传member_coupon_id
+      const { card_id, quan_code, coupon_id, member_coupon_id, profit } =
         await this.useQuanOrCard({
           order_number,
           city_name,
@@ -1213,7 +1214,7 @@ class OrderAutoTicketQueue {
           offerRule,
           plat_name
         });
-      if (!card_id && !quan_code && !member_coupon_id) {
+      if (!card_id && !quan_code && !member_coupon_id && !coupon_id) {
         console.log("this.currentParamsInx", this.currentParamsInx);
         console.log("this.currentParamsList", this.currentParamsList);
         if (this.currentParamsInx === this.currentParamsList.length - 1) {
@@ -1620,19 +1621,22 @@ class OrderAutoTicketQueue {
             supplier_end_price > autoUseQuanPrice &&
             quanFlagList?.length
           ) {
-            const useQuans = await this.firstUseQuanHandle({
+            const firstUseQuanRes = await this.firstUseQuanHandle({
               city_id,
               cinema_id,
               show_id,
               seat_ids,
               session_id,
               appFlag,
+              ticket_num,
               quanFlagList
             });
-            if (useQuans?.length) {
+            if (firstUseQuanRes) {
               return {
                 quan_code: "",
-                member_coupon_id: useQuans.join(),
+                card_id: firstUseQuanRes.card_id,
+                coupon_id: firstUseQuanRes.coupon_id,
+                member_coupon_id: firstUseQuanRes.member_coupon_id,
                 profit: 0 // 利润
               };
             }
@@ -1755,6 +1759,7 @@ class OrderAutoTicketQueue {
       seat_ids,
       session_id,
       appFlag,
+      ticket_num,
       quanFlagList
     } = params;
     try {
@@ -1777,25 +1782,57 @@ class OrderAutoTicketQueue {
       let targetQuanList = quanList
         .filter(item =>
           quanFlagList.some(itemA =>
-            couponInfoSpecial(item.coupon_info).includes(
+            couponInfoSpecial(item.coupon_name).includes(
               couponInfoSpecial(itemA)
             )
           )
         )
-        .map(item => item.coupon_id);
+        .slice(0, ticket_num);
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "优先用券时按券标识过滤后返回",
+        level: "info",
+        info: {
+          targetQuanList,
+          quanList,
+          quanFlagList
+        }
+      });
       if (!targetQuanList?.length) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: "优先用券时按券标识过滤后为空",
-          level: "info",
-          info: {
-            quanList,
-            quanFlagList
-          }
+          level: "info"
         });
         return;
       }
-      const member_coupon_id = targetQuanList.join();
+      let card_id, coupon_id, member_coupon_id;
+      if (targetQuanList[0]?.coupon_type === "1") {
+        // 线上
+        const cardListRes = await getCardList({
+          city_id,
+          cinema_id,
+          session_id,
+          appFlag
+        });
+        const cardList = cardListRes?.cardList || [];
+        if (!cardList?.length) {
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: "线上券优先用券时获取会员卡列表异常",
+            level: "error",
+            info: {
+              error: cardListRes?.error
+            }
+          });
+          return;
+        }
+        card_id = cardList[0]?.card_num;
+        coupon_id = targetQuanList.map(item => item.id).join();
+      } else {
+        // 线下
+        member_coupon_id = targetQuanList.map(item => item.id).join();
+      }
       const priceRes = await priceCalculation({
         city_id,
         cinema_id,
@@ -1831,7 +1868,11 @@ class OrderAutoTicketQueue {
         });
         return;
       }
-      return targetQuanList;
+      return {
+        card_id,
+        coupon_id,
+        member_coupon_id
+      };
     } catch (error) {
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
@@ -3161,18 +3202,19 @@ const getQuanList = async ({
       session_id,
       request_from: "1"
     };
-    console.log(conPrefix + "获取优惠券列表参数", params);
-    const res = await APP_API_OBJ[appFlag].getQuanList(params);
-    console.log(conPrefix + "获取优惠券列表返回", res);
-    let quanList = res.data?.list || [];
-    let res2;
-    if (!quanList?.length && firstFlag === 1) {
+    let quanList;
+    if (firstFlag !== 1) {
+      console.log(conPrefix + "获取优惠券列表参数", params);
+      const res = await APP_API_OBJ[appFlag].getQuanList(params);
+      console.log(conPrefix + "获取优惠券列表返回", res);
+      quanList = res.data?.list || [];
+    } else {
       delete params.request_from;
       params.status = "4";
       params.page = 1;
-      res2 = await APP_API_OBJ[appFlag].getQuanListByFirstUseQuan(params);
-      console.log(conPrefix + "获取优惠券列表返回2", res2);
-      quanList = res2.data?.unused?.lists || [];
+      const res = await APP_API_OBJ[appFlag].getQuanListByFirstUseQuan(params);
+      console.log(conPrefix + "获取优惠券列表返回", res);
+      quanList = res.data?.unused?.lists || [];
     }
     // let noUseLIst = ['1598162363509715', '1055968062906716', '1284460567801315', '1116166666409614']
     // 过滤掉不可用券
@@ -3198,7 +3240,8 @@ const priceCalculation = async ({
   quan_code,
   session_id,
   appFlag,
-  member_coupon_id
+  member_coupon_id,
+  coupon_id
 }) => {
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
   try {
@@ -3223,7 +3266,9 @@ const priceCalculation = async ({
     } else if (card_id) {
       params.card_id = card_id; // 会员卡id
     } else if (member_coupon_id) {
-      params.member_coupon_id = member_coupon_id; // 会员卡赠送券id
+      params.member_coupon_id = member_coupon_id; // 会员卡赠送线下券id
+    } else if (coupon_id) {
+      params.coupon_id = coupon_id; // 会员卡赠送线上券id
     }
     console.log(conPrefix + "计算订单价格参数", params);
     const res = await APP_API_OBJ[appFlag].priceCalculation(params);

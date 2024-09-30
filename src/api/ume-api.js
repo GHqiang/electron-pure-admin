@@ -138,7 +138,7 @@ const createApi = ({ app_name }) => {
   // 绑定优惠券
   const bandQuan = params =>
     axios.post(
-      `/${app_name}/api/storeServer/couponYlInstanceService/findIsNeedPin`,
+      `/${app_name}/api/storeServer/couponYlInstanceService/bindCouponToMember`,
       params
     );
 

@@ -565,7 +565,13 @@ const getCinemaFlag = item => {
   } else if (cinema_name.includes("永恒") && ["南宁"].includes(city_name)) {
     return "yongheng";
   } else if (
-    ["齐纳影城", "齐纳国际影城", "齐纳全激光影城", "齐纳激光IMAX影城"].some(
+    [
+      "齐纳影城",
+      "齐纳国际影城",
+      "齐纳全激光影城",
+      "齐纳全激光国际影城",
+      "齐纳激光IMAX影城"
+    ].some(
       itemA =>
         cinema_name.includes(itemA) &&
         [
@@ -598,7 +604,9 @@ const getCinemaFlag = item => {
   ) {
     return "hefeidianying";
   } else if (
-    cinema_name.includes("巢湖中影国际") &&
+    ["巢湖中影国际影城百大店", "中影国际影城巢湖店"].some(item =>
+      cinemNameSpecial(cinema_name).includes(item)
+    ) &&
     city_name.includes("巢湖")
   ) {
     return "chaohuzhongying";
@@ -1091,7 +1099,11 @@ const getCinemaId = (cinema_name, list, appName, city_name) => {
 const getTargetCinema = (cinema_name, list, appFlag) => {
   try {
     // 1、先全字匹配，匹配到就直接返回
-    let targetCinema = list.find(item => item.cinemaName === cinema_name);
+    let targetCinema = list.find(
+      item =>
+        item.cinemaName === cinema_name ||
+        cinemNameSpecial(item.cinemaName) === cinemNameSpecial(cinema_name)
+    );
     if (targetCinema) {
       return targetCinema;
     }
