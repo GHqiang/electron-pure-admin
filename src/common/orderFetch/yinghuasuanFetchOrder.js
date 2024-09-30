@@ -19,6 +19,7 @@ class OrderAutoFetchQueue {
     this.isRunning = false; // 初始化时队列未运行
     this.confimrOrderList = []; // 已接单列表（用于匹配过滤待出票订单）
     this.orderRecord = []; // 订单记录
+    this.logList = [];
   }
 
   // 启动队列（fetchDelay获取订单列表间隔，processDelay处理订单间隔）
@@ -28,6 +29,7 @@ class OrderAutoFetchQueue {
     this.isRunning = true;
     this.confimrOrderList = [];
     this.orderRecord = []; // 订单记录
+    this.logList = [];
     // 循环直到队列停止
     while (this.isRunning) {
       // 获取订单列表(支持时间间隔)
@@ -48,9 +50,10 @@ class OrderAutoFetchQueue {
   // 获取订单
   async fetchOrders(fetchDelay) {
     try {
+      this.logList = [];
       await this.delay(fetchDelay);
       // 获取待确认列表并确认接单
-      await getStayConfirmOrderAndSure(this.confimrOrderList);
+      await getStayConfirmOrderAndSure(this.confimrOrderList, this.logList);
       await this.delay(1);
       let stayList = await orderFetch();
       if (!stayList?.length) return;

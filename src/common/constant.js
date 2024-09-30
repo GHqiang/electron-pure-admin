@@ -1078,8 +1078,9 @@ const TPYYC_SPECIAL_CINEMA_LIST = [
     order_cinema_name: ["太平洋影城广元新华街店"],
     sfc_cinema_name: "太平洋影城广元店"
   },
+  // 德阳
   {
-    order_cinema_name: ["太平洋东方影都"],
+    order_cinema_name: ["太平洋东方影都", "太平洋影城德阳沃尔玛店"],
     sfc_cinema_name: "太平洋影城德阳东方影都店"
   },
   {
@@ -1109,6 +1110,16 @@ const TPYYC_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: ["339影城"],
     sfc_cinema_name: "339电影城原新时代电影城高塔旗舰店"
+  },
+  // 广元
+  {
+    order_cinema_name: ["太平洋影城广元新华街店"],
+    sfc_cinema_name: "太平洋影城广元店"
+  },
+  // 绵阳
+  {
+    order_cinema_name: ["太平洋影城绵阳1958CBOX店"],
+    sfc_cinema_name: "太平洋影城绵阳五和店"
   }
 ];
 // 珠影
@@ -1220,6 +1231,11 @@ const ZHEYINGSHIDAI_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: ["浙影时代影城桐庐金球店"],
     sfc_cinema_name: "浙影时代桐庐金球店"
+  },
+  // 台州
+  {
+    order_cinema_name: ["浙影时代影城玉环店"],
+    sfc_cinema_name: "浙影时代玉环店"
   }
 ];
 

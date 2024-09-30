@@ -650,7 +650,8 @@ class getUmeOfferPrice {
           level: "error",
           info: {
             cinemaList,
-            cinema_code
+            cinema_code,
+            cinema_name
           }
         });
         return;
