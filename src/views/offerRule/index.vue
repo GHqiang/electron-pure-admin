@@ -279,10 +279,17 @@ import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
 import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import RuleDialog from "@/components/RuleDialog.vue";
-import { ORDER_FORM, APP_LIST, QUAN_TYPE, UME_LIST } from "@/common/constant";
+import {
+  ORDER_FORM,
+  APP_LIST,
+  QUAN_TYPE,
+  UME_LIST,
+  SPECIAL_CINEMA_OBJ
+} from "@/common/constant";
 import {
   getCurrentFormattedDateTime,
-  getCinemaLoginInfoList
+  getCinemaLoginInfoList,
+  cinemNameSpecial
 } from "@/utils/utils";
 import { useDataTableStore } from "@/store/offerRule";
 const rules = useDataTableStore();
@@ -326,26 +333,84 @@ const formData = reactive({
 formData.rule = rule;
 
 const getAllCinemaList = async () => {
-  let appList = [];
-  let loginInfoList = getCinemaLoginInfoList();
-  Object.keys(APP_LIST).forEach(item => {
-    let obj = loginInfoList.find(
-      itemA => itemA.app_name === item && itemA.session_id
-    );
-    if (obj) {
-      appList.push(item);
+  try {
+    let appList = [];
+    let loginInfoList = getCinemaLoginInfoList();
+    Object.keys(APP_LIST).forEach(item => {
+      let obj = loginInfoList.find(
+        itemA => itemA.app_name === item && itemA.session_id
+      );
+      if (obj) {
+        appList.push(item);
+      }
+    });
+    console.log("appList", appList);
+    let allCinemaList = [];
+    for (const appName of appList) {
+      const list = await getCinemaList(appName);
+      allCinemaList.push(...list);
     }
-  });
-  console.log("appList", appList);
-  return;
-  let allCinemaList = [];
-  for (const appName of appList) {
-    const list = await getCinemaList(appName);
-    allCinemaList.push(...list);
+    console.log("allCinemaList", allCinemaList);
+    return allCinemaList;
+  } catch (err) {
+    console.warn("获取全部影院列表异常", err);
+    return [];
   }
-  console.log("allCinemaList", allCinemaList);
 };
 window.getAllCinemaList = getAllCinemaList;
+
+// app影院名字集合
+let appCinemaNameList = [];
+// 统计所有影院各平台报价情况（入参已报价影院集合，可通过sql查询导出excel转为json再传）
+const tongjiOfferInfo = async offerCinemaList => {
+  const isMatch = (app_name, cinema_name, cinemaName) => {
+    // console.log(app_name, cinema_name, cinemaName);
+    cinemaName = cinemNameSpecial(cinemaName);
+    const isPass = cinemNameSpecial(cinema_name) === cinemaName;
+    // console.log("isPass", isPass);
+    if (isPass) {
+      return true;
+    }
+    let specialCinemaList = SPECIAL_CINEMA_OBJ[app_name]?.filter(
+      item =>
+        item.order_cinema_name === cinemaName ||
+        item.order_cinema_name.includes(cinemaName)
+    );
+    // console.log("specialCinemaList", specialCinemaList?.[0]);
+    return (
+      specialCinemaList?.[0]?.sfc_cinema_name === cinemNameSpecial(cinema_name)
+    );
+  };
+  if (!appCinemaNameList?.length) {
+    appCinemaNameList = await getAllCinemaList();
+  }
+  const statisticResult = appCinemaNameList.map(item => {
+    const { app_name, cinema_name } = item;
+    item.platCinemaList = [];
+    item.offerPlat = [];
+    let list = offerCinemaList.filter(itemA => {
+      return (
+        itemA.app_name === app_name &&
+        isMatch(app_name, cinema_name, itemA.cinema_name)
+      );
+    });
+    // console.log("list", list);
+    list.forEach(itemA => {
+      if (!item.offerPlat.includes(itemA.plat_name)) {
+        item.offerPlat.push(itemA.plat_name);
+      }
+      if (!item.platCinemaList.includes(itemA.cinema_name)) {
+        item.platCinemaList.push(itemA.cinema_name);
+      }
+    });
+    item.platCinemaList = item.platCinemaList.join();
+    item.offerPlat = item.offerPlat.join();
+    return item;
+  });
+  console.log("statisticResult", statisticResult);
+};
+
+window.tongjiOfferInfo = tongjiOfferInfo;
 // 获取影院列表
 const getCinemaList = async appName => {
   try {
