@@ -8,6 +8,7 @@ import yinghuasuanApi from "@/api/yinghuasuan-api";
 
 import createSfcApi from "@/api/sfc-api";
 import createUmeApi from "@/api/ume-api";
+import createLmaApi from "@/api/lma-api";
 import { APP_LIST, UME_LIST, APP_GROUP_OBJ } from "@/common/constant";
 
 const SFC_API_OBJ = {};
@@ -30,7 +31,10 @@ UME_LIST.forEach(item => {
 });
 const APP_API_OBJ = {
   ...SFC_API_OBJ,
-  ...UME_API_OBJ
+  ...UME_API_OBJ,
+  lma: createLmaApi({
+    app_name: "lma"
+  })
 };
 
 const PLAT_API_OBJ = {

@@ -351,29 +351,30 @@ class OrderAutoOfferQueue {
           {
             id: 71546,
             plat_name: "lieren",
-            app_name: "ume",
+            app_name: "lma",
             ticket_num: 2,
             rewards: "0",
             order_number: "2024080521075844108",
             supplier_max_price: 46.4,
             order_id: "10741620",
             tpp_price: "99.80",
-            city_name: "武汉",
+            city_name: "北京",
             cinema_addr: "青山区和平大道1278号武汉印象城3楼",
             cinema_code: "42019471",
-            cinema_name: "UME影城（武汉青山店）",
+            cinema_name: "卢米埃北京芳草地影城",
             hall_name: "4D厅（儿童需购票）",
-            film_name: "死侍与金刚狼",
-            show_time: "2024-08-06 16:20:00",
-            cinema_group: "ume二线"
+            film_name: "浴火之路",
+            show_time: "2024-10-06 21:40:00",
+            cinema_group: "卢米埃",
+            sytime: 1710125678
           }
         ],
         time: 1710125678
       };
       let list = res?.data || [];
-      // if (isTestOrder) {
-      //   list = mockRes?.data || [];
-      // }
+      if (isTestOrder) {
+        list = mockRes?.data || [];
+      }
       // console.log(conPrefix + "获取待报价列表返回", list);
       return list;
     } catch (error) {

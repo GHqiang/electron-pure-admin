@@ -504,7 +504,7 @@ import { ElLoading, ElMessage } from "element-plus";
 import { ORDER_FORM, APP_LIST, UME_LIST, QUAN_TYPE } from "@/common/constant";
 import { useAppBaseData } from "@/store/appBaseData";
 const appBaseDataInfo = useAppBaseData();
-const { appBaseData, setSfcBaseData } = appBaseDataInfo;
+const { appBaseData, setBaseData } = appBaseDataInfo;
 const ruleFormRef = ref(null);
 // 父传子props
 defineProps({
@@ -843,11 +843,18 @@ const getCityList = async () => {
           name: item.cityName,
           id: item.cityCode
         }));
+      } else if (shadowLineName === "lma") {
+        const res = await APP_API_OBJ[shadowLineName].getCityList();
+        list = res.data.list || [];
+        list = list.map(item => ({
+          name: item.city_name,
+          id: item.city_id
+        }));
       } else {
         const res = await APP_API_OBJ[shadowLineName].getCityList(params);
         list = res?.data?.all_city || [];
-        setSfcBaseData({ cityList: list }, shadowLineName);
       }
+      setBaseData({ cityList: list }, shadowLineName);
     }
     console.log("获取城市列表返回", toRaw(list));
     cityList.value = list;
@@ -879,6 +886,18 @@ const getFilmList = async (oneCity, oneCinema) => {
         ...item,
         id: item.filmHeadId,
         movie_name: item.filmName
+      }));
+    } else if (shadowLineName === "lma") {
+      const res = await APP_API_OBJ[shadowLineName].getMoviePlayInfo({
+        cinema_id: oneCinema.id
+      });
+      // console.log("获取线上电影列表返回", res);
+
+      list = res.data.film || [];
+      list = list.map(item => ({
+        ...item,
+        id: item.film_code,
+        movie_name: item.title
       }));
     } else {
       const params = {
@@ -918,6 +937,14 @@ const getCinemaListByCityId = async city_id => {
         id: item.cinemaCode,
         name: item.cinemaName
       }));
+    } else if (shadowLineName === "lma") {
+      const res = await APP_API_OBJ[shadowLineName].getCinemaList(city_id);
+      cinemaList = res.data.list || [];
+      cinemaList = cinemaList.map(item => ({
+        ...item,
+        id: item.cinema_id,
+        name: item.cinema_name
+      }));
     } else {
       const res = await APP_API_OBJ[shadowLineName].getCinemaList(params);
       console.log("根据城市获取影院列表返回", res);
@@ -951,7 +978,7 @@ const getAllCinemaList = async cityList => {
           allCinemaList = allCinemaList.concat(list);
         }
       }
-      setSfcBaseData({ allCinemaList: allCinemaList }, shadowLineName);
+      setBaseData({ allCinemaList: allCinemaList }, shadowLineName);
     }
     cinemaList.value = allCinemaList;
     return allCinemaList;

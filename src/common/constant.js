@@ -85,6 +85,7 @@ const UME_LIST = [
 
 // 影院列表
 const APP_LIST = {
+  lma: "卢米埃",
   ume: "UME",
   yaolai: "耀莱",
   renhengmeng: "仁恒梦影廊",
@@ -1241,6 +1242,7 @@ const ZHEYINGSHIDAI_SPECIAL_CINEMA_LIST = [
 
 // 特殊的名字匹配集合
 const SPECIAL_CINEMA_OBJ = {
+  lma: [],
   ume: UME_SPECIAL_CINEMA_LIST,
   yaolai: YAOLAI_SPECIAL_CINEMA_LIST,
   renhengmeng: RENHENGMENG_SPECIAL_CINEMA_LIST,
@@ -1329,6 +1331,7 @@ const SPECIAL_CINEMA_OBJ = {
 
 // 出票队列打印前缀
 const TICKET_CONPREFIX_OBJ = {
+  lma: "【卢米埃自动出票】——",
   ume: "【UME自动出票】——",
   yaolai: "【耀莱自动出票】——",
   renhengmeng: "【仁恒梦影廊自动出票】——",

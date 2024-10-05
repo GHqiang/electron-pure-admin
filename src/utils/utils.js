@@ -318,6 +318,11 @@ const getCinemaFlag = item => {
       item => cinemNameSpecial(item) === cinemNameSpecial(cinema_name)
     );
 
+  // let isLmaGroup = ["卢米埃"].includes(cinema_group);
+  // if (isLmaGroup) {
+  //   return "lma";
+  // }
+
   // 后续再补充名字匹配
   if (isWanmeiGroup) {
     return "wanmei";
@@ -1095,6 +1100,78 @@ const getCinemaId = (cinema_name, list, appName, city_name) => {
   }
 };
 
+// 根据订单name获取影院id(主要用于lma系统)
+const getCinemaIdByLma = (cinema_name, list, appName, city_name) => {
+  try {
+    // 1、先全字匹配，匹配到就直接返回
+    let cinema_id = list.find(
+      item => item.cinema_name === cinema_name
+    )?.cinema_id;
+    if (cinema_id) {
+      return { cinema_id };
+    }
+    // 2、匹配不到的如果满足条件就走特殊匹配
+    console.warn("全字匹配影院名称失败", cinema_name, list);
+    let cinemaName = cinemNameSpecial(cinema_name);
+    let specialCinemaList =
+      SPECIAL_CINEMA_OBJ[appName]?.filter(
+        item =>
+          item.order_cinema_name === cinemaName ||
+          item.order_cinema_name.includes(cinemaName)
+      ) || [];
+    // const CQHX_SPECIAL_CINEMA_LIST = [
+    //   {
+    //     order_cinema_name: "华熙国际影城",
+    //     sfc_cinema_name: "重庆华熙国际影城"
+    //   },
+    //   {
+    //     order_cinema_name: "华熙国际影城",
+    //     sfc_cinema_name: "成都华熙国际影城"
+    //   }
+    // ];
+    // 存在以上情况故需要做特殊处理
+    if (specialCinemaList.length > 1 && city_name) {
+      specialCinemaList = specialCinemaList.filter(item =>
+        item.sfc_cinema_name.includes(city_name)
+      );
+    }
+    let specialCinemaInfo = specialCinemaList[0];
+    if (specialCinemaInfo) {
+      cinemaName = specialCinemaInfo.sfc_cinema_name;
+      console.warn("特殊匹配影院名称成功", cinemaName);
+    } else {
+      console.warn(
+        "特殊匹配影院名称失败",
+        cinemaName,
+        SPECIAL_CINEMA_OBJ[appName]
+      );
+    }
+    // 3、去掉空格及换行符后全字匹配
+    // 去除空格及括号后的影院列表
+    let noSpaceCinemaList = list.map(item => {
+      return {
+        ...item,
+        cinema_name: cinemNameSpecial(item.cinema_name)
+      };
+    });
+    cinema_id = noSpaceCinemaList.find(
+      item => item.cinema_name === cinemaName
+    )?.cinema_name;
+    if (cinema_id) {
+      return { cinema_id };
+    }
+    console.error(
+      "去掉空格及换行符后全字匹配失败",
+      cinemaName,
+      noSpaceCinemaList
+    );
+  } catch (error) {
+    console.error("根据订单name获取影院id失败", error);
+    return {
+      error
+    };
+  }
+};
 // 根据订单name获取目标影院(主要用于ume系统)
 const getTargetCinema = (cinema_name, list, appFlag) => {
   try {
@@ -1646,6 +1723,26 @@ const parseTimeStr = timeStr => {
     endTime: endFormatted
   };
 };
+
+// 卢米埃解析日期
+const formatTimeStrByLma = timeStr => {
+  // 当前年份
+  const currentYear = new Date().getFullYear();
+
+  // 解析月份和日期
+  const [month, day] = timeStr
+    .substr(2)
+    .replace("月", "-")
+    .replace("日", "-")
+    .split("-");
+  const formattedMonth = String(month).padStart(2, "0"); // 月份从0开始，所以需要加1，并确保两位数
+  const formattedDay = String(day).padStart(2, "0"); // 确保日期是两位数
+
+  // 组合成 yyyy-MM-dd 格式
+  const formattedDate = `${currentYear}-${formattedMonth}-${formattedDay}`;
+  return formattedDate;
+};
+
 export {
   getCurrentFormattedDateTime, // 获取当前时间：YYYY-MM-DD HH:MM:SS
   getCurrentDay, // 获取当前天：YYYY-MM-DD
@@ -1664,6 +1761,7 @@ export {
   calcCount, // 计算连续中标数
   judgeHandle, // 判断该订单是否是新订单
   getCinemaId, // 根据订单name获取影院id(主要用于sfc系统)
+  getCinemaIdByLma, // 根据订单name获取影院id(主要用于lma系统)
   getTargetCinema,
   // 根据订单name获取目标影院(主要用于ume系统)
   cinemaMatchHandle, // 影院名称匹配（匹配报价规则时使用）
@@ -1675,6 +1773,7 @@ export {
   formatErrInfo, // 格式化错误信息对象
   trial, // 试错方法
   parseTimeStr, // 商展格式化获取放映时间
+  formatTimeStrByLma,
   cryptoFunctions,
   CustomConsole
 };

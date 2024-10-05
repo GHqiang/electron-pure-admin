@@ -9,6 +9,7 @@ export const useAppBaseData = defineStore("appBaseData", {
   state: () => ({
     // eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzb20uempscm1vdmllLmNuIiwiYXVkIjoic29tLnpqbHJtb3ZpZS5jbiIsImlhdCI6MTcxNTM0NDk2MywibmJmIjoxNzE1MzQ0OTYzLCJleHAiOjE3MTc3NjQxNjMsImRhdGEiOnsiaWQiOjcxNDYzMiwidXNlcm5hbWUiOjcxNDYzMiwic3RhdHVzIjoxLCJvcGVuaWQiOiJvUXpFZjQ3a1ZLQ3F6bzRPSXl1ZHBZVllwX2g0In19.mwidYdjsGHIEnDxWlihB2LVdCtt0o1v_rrdbvSbSe50
     appBaseData: {
+      lma: null,
       ume: null,
       wanmei: null,
       yinghuang: null,
@@ -98,7 +99,7 @@ export const useAppBaseData = defineStore("appBaseData", {
   getters: {},
   actions: {
     // 设置sfc基础数据
-    setSfcBaseData(baseData, appName) {
+    setBaseData(baseData, appName) {
       console.warn(`设置${appName}-基础数据`, baseData, appName);
       const tempData = this.appBaseData[appName];
       this.appBaseData[appName] = tempData
