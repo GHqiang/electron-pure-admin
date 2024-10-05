@@ -12,6 +12,7 @@ import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
 
 let conPrefix = "【猎人自动获取订单】——"; // console打印前缀
+const isTestOrder = false;
 
 // 创建一个订单自动报价队列类
 class OrderAutoFetchQueue {
@@ -152,36 +153,37 @@ async function lierenOrderFetch() {
     };
     // console.log(conPrefix + "获取猎人待出票订单列表参数", params);
     const res = await lierenApi.stayTicketingList(params);
-    // let mockRes = {
-    //   success: true,
-    //   code: 1,
-    //   message: "成功！",
-    //   total: 1,
-    //   data: [
-    //     {
-    //       id: 144,
-    //       plat_name: "lieren",
-    //       app_name: "sfc",
-    //       ticket_num: 2,
-    //       order_number: "2024062013010376202",
-    //       supplier_end_price: 32,
-    //       order_id: "6243881",
-    //       tpp_price: "36.00",
-    //       city_name: "天津",
-    //       cinema_addr:
-    //         "和平区天津市和平区小白楼街和平路263号天津天河城第八层809商铺",
-    //       cinema_name: "SFC上影影城（天津天河城IMAX店）",
-    //       hall_name: "5号激光厅",
-    //       film_name: "加菲猫家族",
-    //       lockseat: "6排1座 6排2座",
-    //       show_time: "2024-06-21 15:25:00",
-    //       cinema_group: "上影二线"
-    //     }
-    //   ],
-    //   time: 1710125670
-    // };
-    // let list = mockRes?.data || [];
+    let mockRes = {
+      success: true,
+      code: 1,
+      message: "成功！",
+      total: 1,
+      data: [
+        {
+          id: 7787887,
+          supplier_id: 714632,
+          order_number: "2024100520441715153",
+          tpp_price: "79.00",
+          ticket_num: 2,
+          city_name: "北京",
+          cinema_addr:
+            "徐汇区凯滨路218号绿地缤纷城中庭3楼（近东安路、龙华中路）",
+          cinema_name: "卢米埃北京芳草地影城",
+          hall_name: "7号厅",
+          film_name: "浴火之路",
+          show_time: "2024-10-06 21:40:00",
+          lockseat: "5排7座 5排6座",
+          cinema_code: "31074201",
+          supplier_end_price: 39.5,
+          cinema_group: "卢米埃"
+        }
+      ],
+      time: 1710125670
+    };
     let list = res?.data || [];
+    if (isTestOrder) {
+      list = mockRes?.data || [];
+    }
     // console.log(conPrefix + "获取猎人待出票列表返回", list);
     return list;
   } catch (error) {
