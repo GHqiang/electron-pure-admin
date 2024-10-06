@@ -88,7 +88,7 @@ const createApi = ({ app_name }) => {
     axios.get("/lma/mp/ihistory/ticket_info", { params });
 
   // 取消订单
-  const cancelOrder = params => axios.post("/lma/mp/iorder/cancel", { params });
+  const cannelOneOrder = params => axios.post("/lma/mp/iorder/cancle", params);
 
   // 绑定优惠券
   const bandQuan = params =>
@@ -108,7 +108,7 @@ const createApi = ({ app_name }) => {
     createOrder,
     payOrder,
     getOrderDetail,
-    cancelOrder,
+    cannelOneOrder,
     getOrderList,
     buyTicket,
     bandQuan

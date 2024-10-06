@@ -325,7 +325,7 @@ class OrderAutoTicketQueue {
 
   // 转单
   async transferOrder(order, unlockSeatInfo) {
-    const { conPrefix, errMsg, errInfo } = this;
+    const { conPrefix, errMsg, errInfo, appFlag } = this;
     const { plat_name } = order;
     let isAutoTransfer = window.localStorage.getItem("isAutoTransfer");
     const { order_number, city_name, cinema_name, film_name, lockseat } = order;
@@ -1160,7 +1160,7 @@ class OrderAutoTicketQueue {
           level: "info"
         });
       }
-      order_str = lockRes.order_str;
+      order_str = lockRes?.data?.order_str;
       console.warn("order_str", order_str);
       // 5、使用优惠券或者会员卡
       // 会员卡出票必传card_id，上影券必传quan_code，赠送线上券必传card_id和coupon_id，赠送线下券必传member_coupon_id
@@ -1239,7 +1239,8 @@ class OrderAutoTicketQueue {
         quan_code,
         member_coupon_id,
         lmaToken,
-        appFlag
+        appFlag,
+        order_str
       });
       let priceInfo = priceRes?.price;
       if (priceRes?.error) {
@@ -1268,11 +1269,7 @@ class OrderAutoTicketQueue {
           });
           // 后续要记录失败列表（订单信息、失败原因、时间戳）
           const transferParams = await this.transferOrder(item, {
-            city_id,
-            cinema_id,
-            show_id,
-            start_day,
-            start_time
+            order_str
           });
           return { offerRule, transferParams };
         } else {
@@ -1306,11 +1303,7 @@ class OrderAutoTicketQueue {
           level: "error"
         });
         const transferParams = await this.transferOrder(item, {
-          city_id,
-          cinema_id,
-          show_id,
-          start_day,
-          start_time
+          order_str
         });
         return { offerRule, transferParams };
       }
@@ -1323,11 +1316,7 @@ class OrderAutoTicketQueue {
       //       ticket_num
       //     });
       //     const transferParams = await this.transferOrder(item, {
-      //       city_id,
-      //       cinema_id,
-      //       show_id,
-      //       start_day,
-      //       start_time
+      //       order_str
       //     });
       //     return { offerRule, transferParams };
       //   }
@@ -1366,11 +1355,7 @@ class OrderAutoTicketQueue {
           this.setErrInfo("创建订单失败，单个订单直接出票结束");
           // 后续要记录失败列表（订单信息、失败原因、时间戳）
           const transferParams = await this.transferOrder(item, {
-            city_id,
-            cinema_id,
-            show_id,
-            start_day,
-            start_time
+            order_str
           });
           return { offerRule, transferParams };
         } else {
@@ -1428,11 +1413,7 @@ class OrderAutoTicketQueue {
         });
         // 后续要记录失败列表（订单信息、失败原因、时间戳）
         const transferParams = await this.transferOrder(item, {
-          city_id,
-          cinema_id,
-          show_id,
-          start_day,
-          start_time
+          order_str
         });
         return { offerRule, transferParams };
       }
@@ -3260,7 +3241,8 @@ const priceCalculation = async ({
   lmaToken,
   appFlag,
   member_coupon_id,
-  coupon_id
+  coupon_id,
+  order_str
 }) => {
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
   try {
