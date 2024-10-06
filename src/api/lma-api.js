@@ -30,6 +30,11 @@ const createApi = ({ app_name }) => {
     };
   };
 
+  // 获取城市影院版本信息（用于过滤城市及影院）
+  const getDiffVersion = params =>
+    axios.get("/lma/mp/icity/get_diff_version", {
+      params
+    });
   // 获取电影放映列表
   const getMoviePlayInfo = params =>
     axios.get("/lma/mp/index/film", { params, withCredentials: true });

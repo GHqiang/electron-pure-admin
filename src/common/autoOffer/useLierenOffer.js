@@ -355,7 +355,7 @@ class OrderAutoOfferQueue {
             ticket_num: 2,
             rewards: "0",
             order_number: "2024080521075844108",
-            supplier_max_price: 46.4,
+            supplier_max_price: 96.4,
             order_id: "10741620",
             tpp_price: "99.80",
             city_name: "北京",

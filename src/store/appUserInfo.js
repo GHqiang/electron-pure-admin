@@ -120,6 +120,7 @@ export const appUserInfo = defineStore("appUserInfo", {
         if (appNameList.includes(item.app_name)) {
           return item.mobile === phone;
         }
+        // return item.app_name === "lma";
         return true;
       });
       console.warn(`设置影院登录信息`, list);

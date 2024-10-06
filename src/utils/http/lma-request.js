@@ -29,9 +29,20 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           itemA => itemA.app_name === app_name && itemA.session_id
         );
         let token = obj?.session_id || "";
-        if (token && !Cookies.get("ig_session")) {
+        let params = config.method === "get" ? config.params : config.data;
+        if (params.lmaToken) {
+          token = params?.lmaToken;
+          delete params.lmaToken;
+        }
+        if (token) {
           Cookies.set("ig_session", token);
           // config.headers["Cookie"] = `ig_session=${token}`;
+        }
+        if (config.method === "get") {
+          config.params = params;
+        } else {
+          config.data = params;
+          config.data = new URLSearchParams(config.data); // 转换为 URLSearchParams
         }
         // 生产环境不会跨域
         config.url = IS_DEV

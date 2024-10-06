@@ -68,7 +68,8 @@ class OrderAutoFetchQueue {
             itemA.order_number === item.order_number
         );
       });
-      if (stayList?.length) {
+      // 如果是测试订单就不从远端过滤
+      if (stayList?.length && !isTestOrder) {
         const offerList = await getOfferList();
         const ticketList = await getTicketList();
         stayList = stayList.filter(item =>
@@ -172,7 +173,7 @@ async function lierenOrderFetch() {
           hall_name: "7号厅",
           film_name: "浴火之路",
           show_time: "2024-10-06 21:40:00",
-          lockseat: "5排7座 5排6座",
+          lockseat: "5排8座 5排9座",
           cinema_code: "31074201",
           supplier_end_price: 39.5,
           cinema_group: "卢米埃"
