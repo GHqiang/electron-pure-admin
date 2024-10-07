@@ -828,6 +828,7 @@ const sendWxPusherMessage = async ({
   city_name,
   cinema_name,
   film_name,
+  show_time,
   lockseat,
   transferTip,
   failReason
@@ -844,10 +845,15 @@ const sendWxPusherMessage = async ({
   let content = `<p>
   时间：${getCurrentFormattedDateTime()}; <br/>
   用户：${userInfo.name}; <br/>
-  平台：${plat_name}; <br/>单号：${order_number}; <br/>
-  城市：${city_name}; <br/>影院：${cinema_name}; <br/>
-  片名：${film_name}; <br/>座位：${lockseat}; <br/>
-  原因：${failReason};<br/> 提示：${transferTip};<br/>
+  平台：${plat_name}; <br/>
+  单号：${order_number}; <br/>
+  城市：${city_name}; <br/>
+  影院：${cinema_name}; <br/>
+  片名：${film_name}; <br/>
+  场次：${show_time}; <br/>
+  座位：${lockseat}; <br/>
+  原因：${failReason};<br/> 
+  提示：${transferTip};<br/>
   </p>`;
   const messageData = {
     appId: 80173,
