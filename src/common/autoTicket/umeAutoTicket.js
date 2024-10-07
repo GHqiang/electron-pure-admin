@@ -1235,6 +1235,11 @@ class OrderAutoTicketQueue {
       }
       let cardList = cardQuanListRes?.cards || [];
       let quanList = cardQuanListRes?.coupons || [];
+      if (appFlag === "yaolai" && offerRule.offer_type === "1") {
+        quanList.sort(
+          (a, b) => +new Date(a.endDateTime) - new Date(b.endDateTime)
+        );
+      }
       let activities = cardQuanListRes?.activities || [];
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
