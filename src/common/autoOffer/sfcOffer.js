@@ -741,6 +741,9 @@ class getSfcOfferPrice {
         app_name
       } = item;
       const cityList = await this.getCityList();
+      if (!cityList?.length) {
+        return;
+      }
       let city_id = cityList?.find(
         item => item.name.indexOf(city_name) !== -1
       )?.id;
@@ -784,6 +787,7 @@ class getSfcOfferPrice {
         city_name,
         app_name
       });
+      if (!moviePlayInfo) return;
       // 3、匹配订单拿到会员价
       const { movie_data } = moviePlayInfo;
       let movieInfo = movie_data.find(

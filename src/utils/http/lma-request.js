@@ -3,6 +3,9 @@
 import axios from "axios";
 import { ElMessage } from "element-plus";
 import Cookies from "js-cookie";
+// 机器登录用户信息
+import { platTokens } from "@/store/platTokens";
+const tokens = platTokens();
 const createAxios = ({ app_name, timeout = 20 }) => {
   // 创建axios实例
   const instance = axios.create({
@@ -26,7 +29,12 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           loginInfoList = JSON.parse(loginInfoList);
         }
         let obj = loginInfoList.find(
-          itemA => itemA.app_name === app_name && itemA.session_id
+          itemA =>
+            itemA.app_name === app_name &&
+            itemA.session_id &&
+            (tokens.userInfo.user_id != 1
+              ? item.mobile === tokens.userInfo.phone
+              : true)
         );
         let token = obj?.session_id || "";
         let params = config.method === "get" ? config.params : config.data;

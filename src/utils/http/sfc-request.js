@@ -1,8 +1,13 @@
 // sfc请求拦截器封装
 import axios from "axios";
-import { ElMessage, ElMessageBox } from "element-plus";
+import { ElMessage } from "element-plus";
 import { APP_LIST } from "@/common/constant";
 import md5 from "../md5.js";
+import { sendWxPusherMessage } from "@/utils/utils";
+// 机器登录用户信息
+import { platTokens } from "@/store/platTokens";
+const tokens = platTokens();
+
 const createAxios = ({ group, app_name, timeout = 20 }) => {
   // 创建axios实例
   const instance = axios.create({
@@ -43,8 +48,14 @@ const createAxios = ({ group, app_name, timeout = 20 }) => {
       loginInfoList = JSON.parse(loginInfoList);
     }
     // console.log("loginInfoList", loginInfoList);
+    // 优先用自己账号token
     let obj = loginInfoList.find(
-      itemA => itemA.app_name === app_name && itemA.session_id
+      itemA =>
+        itemA.app_name === app_name &&
+        itemA.session_id &&
+        (tokens.userInfo.user_id != 1
+          ? item.mobile === tokens.userInfo.phone
+          : true)
     );
 
     e.session_id = obj?.session_id || "";
@@ -98,14 +109,29 @@ const createAxios = ({ group, app_name, timeout = 20 }) => {
   instance.interceptors.request.use(
     config => {
       if (config.url.indexOf("/sfc/") !== -1) {
-        if (config.method === "get") {
-          config.params = paramsHandle(config.params);
-        } else {
-          config.data = paramsHandle(config.data);
+        // 保存原始参数和原始URL
+        if (!config.originalParams) {
+          config.originalParams = { ...config.params };
         }
+        if (!config.originalData) {
+          config.originalData = { ...config.data };
+        }
+        if (!config.originalUrl) {
+          config.originalUrl = config.url;
+        }
+        if (!config.retryCount) {
+          config.retryCount = 0;
+        }
+        if (config.method === "get") {
+          config.params = paramsHandle(config.originalParams);
+        } else {
+          config.data = paramsHandle(config.originalData);
+        }
+
+        // 重试时使用原始url进行截取
         if (!IS_DEV) {
           // 截取掉/sfc/
-          config.url = "https://group.leying.com" + config.url.slice(4);
+          config.url = "https://group.leying.com" + config.originalUrl.slice(4);
         }
       }
       // console.log('请求config', config)
@@ -132,34 +158,44 @@ const createAxios = ({ group, app_name, timeout = 20 }) => {
         !whitelistSfc.some(item => response.config.url.includes(item))
       ) {
         if (data.errcode === "205" && data.msg === "登录失效") {
-          ElMessage.warning(`${APP_LIST[app_name]}登录失效，请重新设置登录信息`);
-          // ElMessageBox.confirm(
-          //   `${APP_LIST[app_name]}登录失效，请重新登录`,
-          //   "提示",
-          //   {
-          //     confirmButtonText: "我知道了",
-          //     type: "warning",
-          //     showCancelButton: false,
-          //     showClose: false,
-          //     closeOnClickModal: false,
-          //     closeOnPressEscape: false
-          //   }
-          // )
-          //   .then(() => {
-          //     // removeSfcUserInfo(app_name);
-          //     router.push({ path: "/set/appLogin" });
-          //   })
-          //   .catch(() => {});
-          // return;
+          ElMessage.warning(
+            `${APP_LIST[app_name]}登录失效，请重新设置登录信息`
+          );
+          sendWxPusherMessage({
+            msgType: 1,
+            app_name: APP_LIST[app_name],
+            transferTip: `${APP_LIST[app_name]}登录失效，请检查登录信息维护`
+          });
+          // 此处加个消息推送
+          return Promise.reject(data);
         }
         ElMessage.error(data.msg || "请求失败");
         return Promise.reject(data);
       }
       return data;
     },
-    error => {
+    async error => {
+      const { response, config } = error;
+      const maxRetries = 3;
+      const retryDelay = 1000; // 1 second
+      // 重试接口名单
+      let retrieUrls = ["/city/list", "/cinema/list"];
+      let isRetry = shouldRetry(error, config, maxRetries, retrieUrls);
+      // console.log("isRetry", isRetry, config);
+      if (isRetry) {
+        // 检查是否需要重试
+        config.retryCount = config.retryCount + 1;
+        retryCount++;
+        console.log(`请求失败，正在进行第 ${config.retryCount} 次重试...`);
+
+        // 等待一段时间后重试
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
+
+        // 重试请求
+        return instance(config);
+      }
+
       // 对HTTP错误码进行处理
-      const { response } = error;
       if (response && response.status) {
         switch (response.status) {
           case 401:
@@ -176,6 +212,28 @@ const createAxios = ({ group, app_name, timeout = 20 }) => {
       return Promise.reject(error);
     }
   );
+
+  // 判断是否需要重试
+  const shouldRetry = (error, config, maxRetries, retrieUrls) => {
+    let isCountCheck = config.retryCount < maxRetries;
+    let isUrlCheck = retrieUrls.some(item => config.url.includes(item));
+    let isErrorCheck = false;
+    // 检查错误类型
+    if (axios.isAxiosError(error)) {
+      const message = error.message.toLowerCase();
+      isErrorCheck =
+        message.includes("timeout of") || message.includes("network error");
+    }
+    // console.log(
+    //   "isCountCheck",
+    //   isCountCheck,
+    //   "isUrlCheck",
+    //   isUrlCheck,
+    //   isErrorCheck
+    // );
+    return isCountCheck && isUrlCheck && isErrorCheck;
+  };
+
   return instance;
 };
 

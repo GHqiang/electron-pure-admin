@@ -1138,7 +1138,7 @@ const ZHUYING_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "广州华影青宫电影城"
   },
   {
-    order_cinema_name: ["珠影星寰CINITY影城"],
+    order_cinema_name: ["珠影星寰CINITY影城", "珠影星寰国际影城CINITY店"],
     sfc_cinema_name: "广州珠影星寰国际影城"
   },
   {
@@ -1154,8 +1154,20 @@ const ZHUYING_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "兰州华影飞天影城"
   },
   {
-    order_cinema_name: ["珠影CC达美影城太阳宫"],
+    order_cinema_name: ["珠影CC达美影城太阳宫", "珠影CC达美影城太阳宫店"],
     sfc_cinema_name: "珠影CC影城太阳宫店"
+  },
+  {
+    order_cinema_name: ["深圳华影信和影城"],
+    sfc_cinema_name: "华影信和影城"
+  },
+  {
+    order_cinema_name: ["华影西固影城"],
+    sfc_cinema_name: "兰州华影西固影城"
+  },
+  {
+    order_cinema_name: ["华影万晟国际影城"],
+    sfc_cinema_name: "珠影市三宫影城原华影万晟国际影城"
   }
 ];
 // 浙影时代特殊影院集合

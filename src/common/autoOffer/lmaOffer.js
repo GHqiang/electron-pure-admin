@@ -737,6 +737,9 @@ class getLmaOfferPrice {
       // 1、获取影院列表拿到影院id
       const { city_name, cinema_name, film_name, show_time, app_name } = item;
       const cityList = await this.getCityList();
+      if (!cityList?.length) {
+        return;
+      }
       let city_id = cityList?.find(
         item => item.city_name.indexOf(city_name) !== -1
       )?.city_id;
@@ -771,6 +774,7 @@ class getLmaOfferPrice {
       const moviePlayInfo = await this.getMoviePlayInfo({
         cinema_id
       });
+      if (!moviePlayInfo) return;
       // 3、匹配订单拿到会员价
       const { film } = moviePlayInfo;
       // 4、获取目标影片信息

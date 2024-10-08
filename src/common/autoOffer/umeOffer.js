@@ -630,6 +630,9 @@ class getUmeOfferPrice {
     try {
       // 1、获取城市影院列表
       let allCinemaList = await this.getCityCinemaList();
+      if (!allCinemaList) {
+        return;
+      }
       let cinemaList =
         allCinemaList?.find(item => item.cityName.includes(city_name))
           ?.cinemaList || [];

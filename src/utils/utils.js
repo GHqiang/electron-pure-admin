@@ -404,13 +404,17 @@ const getCinemaFlag = item => {
     return "sjzhlh";
   } else if (
     [
-      "珠影耳东传奇影城原传奇时代影城",
       "中影红毯巨幕影城昇宝广场店",
       "青宫电影城CINITY店",
       "广州太古仓电影库",
-      "珠影CC影城",
-      "华影",
-      "珠影"
+      "珠影耳东传奇影城",
+      "珠影市三宫影城",
+      "珠影CC",
+      "珠影星寰",
+      "珠影飞扬",
+      "华影飞天",
+      "华影信和影城",
+      "华影万晟国际影城"
     ].some(
       itemA =>
         cinemNameSpecial(cinema_name).includes(itemA) &&
@@ -831,7 +835,9 @@ const sendWxPusherMessage = async ({
   show_time,
   lockseat,
   transferTip,
-  failReason
+  failReason,
+  app_name,
+  msgType // 消息类型 1-登录失效
 }) => {
   const url = "https://wxpusher.zjiecode.com/api/manager/message/send";
   const headers = {
@@ -842,6 +848,8 @@ const sendWxPusherMessage = async ({
   if (userInfo) {
     userInfo = JSON.parse(userInfo);
   }
+
+  let summary = plat_name + "平台出票失败";
   let content = `<p>
   时间：${getCurrentFormattedDateTime()}; <br/>
   用户：${userInfo.name}; <br/>
@@ -852,16 +860,26 @@ const sendWxPusherMessage = async ({
   片名：${film_name}; <br/>
   场次：${show_time}; <br/>
   座位：${lockseat}; <br/>
-  原因：${failReason};<br/> 
+  原因：${failReason};<br/>
   提示：${transferTip};<br/>
   </p>`;
+
+  if (msgType === 1) {
+    summary = app_name + "影院登录失效";
+    content = `<p>
+    时间：${getCurrentFormattedDateTime()}; <br/>
+    用户：${userInfo.name}; <br/>
+    影院：${app_name}; <br/>
+    提示：${transferTip};<br/>
+    </p>`;
+  }
   const messageData = {
     appId: 80173,
     topicIds: [],
     contentType: 2,
     verifyPay: false,
     uids: ["UID_AIFZVT3B4zcj10CvGFLKB2hS2wt7", WX_MSG_UID[userInfo.user_id]],
-    summary: plat_name + "平台出票失败",
+    summary,
     content
   };
   try {
