@@ -37,7 +37,23 @@ const createAxios = ({ app_name, timeout = 20 }) => {
               : true)
         );
         let token = obj?.session_id || "";
-        let params = config.method === "get" ? config.params : config.data;
+
+        // 保存原始参数和原始URL
+        if (!config.originalParams) {
+          config.originalParams = { ...config.params };
+        }
+        if (!config.originalData) {
+          config.originalData = { ...config.data };
+        }
+        if (!config.originalUrl) {
+          config.originalUrl = config.url;
+        }
+        if (!config.retryCount) {
+          config.retryCount = 0;
+        }
+
+        let params =
+          config.method === "get" ? config.originalParams : config.originalData;
         if (params.lmaToken) {
           token = params?.lmaToken;
           delete params.lmaToken;
@@ -49,13 +65,12 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         if (config.method === "get") {
           config.params = params;
         } else {
-          config.data = params;
-          config.data = new URLSearchParams(config.data); // 转换为 URLSearchParams
+          config.data = new URLSearchParams(params); // 转换为 URLSearchParams
         }
         // 生产环境不会跨域
         config.url = IS_DEV
           ? config.url
-          : "https://app.lumiai.com" + config.url.slice(4);
+          : "https://app.lumiai.com" + config.originalUrl.slice(4);
       }
       // console.log('请求config', config)
       return config;
@@ -85,9 +100,34 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       }
       return data;
     },
-    error => {
+    async error => {
+      const { response, config } = error;
+      const maxRetries = 3;
+      const retryDelay = 1000; // 1 second
+      // 重试接口名单
+      let retrieUrls = [
+        "/index/film",
+        "/index/sell_session",
+        "/ibuypro/index",
+        "/imember/index",
+        "/icoupon/index",
+      ];
+      let isRetry = shouldRetry(error, config, maxRetries, retrieUrls);
+      // console.log("isRetry", isRetry, config);
+      if (isRetry) {
+        // 检查是否需要重试
+        config.retryCount = config.retryCount + 1;
+        retryCount++;
+        console.log(`请求失败，正在进行第 ${config.retryCount} 次重试...`);
+
+        // 等待一段时间后重试
+        await new Promise(resolve => setTimeout(resolve, retryDelay));
+
+        // 重试请求
+        return instance(config);
+      }
+
       // 对HTTP错误码进行处理
-      const { response } = error;
       if (response && response.status) {
         switch (response.status) {
           case 401:
@@ -106,6 +146,28 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       return Promise.reject(error);
     }
   );
+
+  // 判断是否需要重试
+  const shouldRetry = (error, config, maxRetries, retrieUrls) => {
+    let isCountCheck = config.retryCount < maxRetries;
+    let isUrlCheck = retrieUrls.some(item => config.url.includes(item));
+    let isErrorCheck = false;
+    // 检查错误类型
+    if (axios.isAxiosError(error)) {
+      const message = error.message.toLowerCase();
+      isErrorCheck =
+        message.includes("timeout of") || message.includes("network error");
+    }
+    // console.log(
+    //   "isCountCheck",
+    //   isCountCheck,
+    //   "isUrlCheck",
+    //   isUrlCheck,
+    //   isErrorCheck
+    // );
+    return isCountCheck && isUrlCheck && isErrorCheck;
+  };
+
   return instance;
 };
 export default createAxios;

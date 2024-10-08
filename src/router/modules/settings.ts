@@ -72,7 +72,15 @@ export default {
       meta: {
         title: "会员卡列表"
       }
-    }
+    },
+    // {
+    //   path: "/set/test",
+    //   name: "test",
+    //   component: () => import("@/views/testFlow/index.vue"),
+    //   meta: {
+    //     title: "测试流程"
+    //   }
+    // }
     // {
     //   path: "/set/balanceQuery",
     //   name: "balanceQuery",
@@ -97,13 +105,6 @@ export default {
     //     title: "会员卡密码设置"
     //   }
     // },
-    // {
-    //   path: "/set/test",
-    //   name: "test",
-    //   component: () => import("@/views/testFlow/index.vue"),
-    //   meta: {
-    //     title: "测试流程"
-    //   }
-    // }
+
   ]
 } satisfies RouteConfigsTable;

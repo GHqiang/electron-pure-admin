@@ -179,7 +179,12 @@ const createAxios = ({ group, app_name, timeout = 20 }) => {
       const maxRetries = 3;
       const retryDelay = 1000; // 1 second
       // 重试接口名单
-      let retrieUrls = ["/city/list", "/cinema/list"];
+      let retrieUrls = [
+        "/city/list",
+        "/cinema/list",
+        "/cinema/play-info",
+        "/play/seat"
+      ];
       let isRetry = shouldRetry(error, config, maxRetries, retrieUrls);
       // console.log("isRetry", isRetry, config);
       if (isRetry) {
