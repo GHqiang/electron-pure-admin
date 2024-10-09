@@ -160,13 +160,17 @@ class OrderAutoFetchQueue {
       if (!sfcStayOfferlist?.length) return;
       console.warn(conPrefix + "待出票列表新订单", sfcStayOfferlist);
       sfcStayOfferlist.forEach(item => {
+        const originalOrder = stayList.find(
+          itemA => itemA.code === item.order_number
+        );
         let logList = [
           {
             opera_time: getCurrentFormattedDateTime(),
             des: "省新的待出票订单",
             level: "info",
             info: {
-              newOrder: item
+              newOrder: item,
+              originalOrder
             }
           }
         ];

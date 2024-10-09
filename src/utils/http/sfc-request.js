@@ -190,7 +190,6 @@ const createAxios = ({ group, app_name, timeout = 20 }) => {
       if (isRetry) {
         // 检查是否需要重试
         config.retryCount = config.retryCount + 1;
-        retryCount++;
         console.log(`请求失败，正在进行第 ${config.retryCount} 次重试...`);
 
         // 等待一段时间后重试

@@ -11,7 +11,8 @@ import {
   UME_CINEMA_NAME,
   WANMEI_CINEMA_NAME,
   YINGHUANG_CINEMA_NAME,
-  ZHEYINGSHIDAI_CINEMA_NAME
+  ZHEYINGSHIDAI_CINEMA_NAME,
+  TPYYC_CINEMA_NAME_BY_SFC
 } from "@/common/constant";
 /**
  * 获取当前日期和时间的格式化字符串
@@ -327,7 +328,13 @@ const getCinemaFlag = item => {
   if (isWanmeiGroup) {
     return "wanmei";
   }
-  if (isTpyycGroup) {
+  // 过滤掉sfc系列的太平洋影院名
+  if (
+    isTpyycGroup &&
+    !TPYYC_CINEMA_NAME_BY_SFC.some(
+      item => cinemNameSpecial(item) === cinemNameSpecial(cinema_name)
+    )
+  ) {
     return "tpyyc";
   }
   if (isZhongyingGroup) {

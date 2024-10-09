@@ -121,14 +121,13 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         "/cinScheduleInfoService/findCinScheduleDataToApp",
         "/cinScheduleInfoService/findScheduleInfoToApp",
         "/cinSyncService/findSeatMapInfo",
-        "/optimalCombinatService/getOptimalCombination",
+        "/optimalCombinatService/getOptimalCombination"
       ];
       let isRetry = shouldRetry(error, config, maxRetries, retrieUrls);
       // console.log("isRetry", isRetry, config);
       if (isRetry) {
         // 检查是否需要重试
         config.retryCount = config.retryCount + 1;
-        retryCount++;
         console.log(`请求失败，正在进行第 ${config.retryCount} 次重试...`);
 
         // 等待一段时间后重试

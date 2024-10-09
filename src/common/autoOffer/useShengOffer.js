@@ -48,7 +48,7 @@ class OrderAutoOfferQueue {
   }
 
   // 处理新订单
-  handleNewOrder(item) {
+  handleNewOrder(item, originalOrder) {
     console.warn(this.conPrefix + "新的待报价订单", item);
     this.handledOrders.set(item.order_number, 1);
     let logList = [
@@ -57,7 +57,8 @@ class OrderAutoOfferQueue {
         des: "省新的待报价订单",
         level: "info",
         info: {
-          newOrder: item
+          newOrder: item,
+          originalOrder
         }
       }
     ];
@@ -206,7 +207,10 @@ class OrderAutoOfferQueue {
       // );
       if (!newOrders?.length) return [];
       newOrders.forEach(item => {
-        this.handleNewOrder(item);
+        const originalOrder = stayList.find(
+          itemA => itemA.orderCode === item.order_number
+        );
+        this.handleNewOrder(item, originalOrder);
       });
     } catch (error) {
       console.error(conPrefix + "获取待报价订单异常", error);

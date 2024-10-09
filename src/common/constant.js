@@ -1011,7 +1011,10 @@ const YINGHUANG_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "英皇电影城深圳平安金融中心店"
   },
   {
-    order_cinema_name: ["英皇电影城深圳深业上城CINITY店"],
+    order_cinema_name: [
+      "英皇电影城深圳深业上城CINITY店",
+      "英皇电影城深业上城CINITY店"
+    ],
     sfc_cinema_name: "英皇电影城深圳深业上城店"
   },
   // 成都
@@ -1073,7 +1076,19 @@ const BNXM_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "金华博纳院线戏幕影城金华之心CINITY巨幕店"
   }
 ];
-// 太平洋影城
+
+// 太平洋影城sfc影院名
+const TPYYC_CINEMA_NAME_BY_SFC = [
+  "太平洋影城（深圳喜荟城店）",
+  "名山太平洋院线盛世影城",
+  "太平洋影城（简阳德盛店）",
+  "太平洋影城（内江店）",
+  "太平洋影城（德阳沃尔玛店）",
+  "太平洋影城（大丰店）",
+  "太平洋影城（和盛店）"
+];
+
+// 太平洋影城-ume系统
 const TPYYC_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: ["太平洋影城广元新华街店"],
@@ -1805,5 +1820,6 @@ export {
   UME_CINEMA_NAME,
   WANMEI_CINEMA_NAME,
   YINGHUANG_CINEMA_NAME,
-  ZHEYINGSHIDAI_CINEMA_NAME
+  ZHEYINGSHIDAI_CINEMA_NAME,
+  TPYYC_CINEMA_NAME_BY_SFC
 };
