@@ -19,11 +19,11 @@ const createApi = ({ group, app_name }) => {
   // 退出登录
   const logout = params => axios.get("/sfc/user/logout", { params });
 
-  // 获取城市列表
-  const getCityList = params => axios.get("/sfc/city/list", { params });
+  // 获取城市列表(可支持自定义控制axios配置，如超时时间、重试次数、重试间隔，配合拦截器使用)
+  const getCityList = (params, config = {}) => axios.get("/sfc/city/list", { params, ...config});
 
   // 获取影院列表
-  const getCinemaList = params => axios.get("/sfc/cinema/list", { params });
+  const getCinemaList = params => axios.get("/sfc/cinema/list", { params});
 
   // 获取线上电影列表
   const getMovieList = params =>

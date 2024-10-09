@@ -2,6 +2,12 @@
 
 import axios from "axios";
 import { ElMessage } from "element-plus";
+import {
+  sendWxPusherMessage,
+  logUpload,
+  getCurrentFormattedDateTime,
+  mockDelay
+} from "@/utils/utils";
 // 机器登录用户信息
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
@@ -91,6 +97,29 @@ const createAxios = ({ app_name, timeout = 20 }) => {
   // 响应拦截器
   instance.interceptors.response.use(
     response => {
+      // 如果是重试后的成功响应，记录日志
+      if (response?.config?.retryCount > 0) {
+        logUpload(
+          {
+            plat_name: "",
+            app_name: app_name,
+            order_number: "",
+            type: ""
+          },
+          [
+            {
+              opera_time: getCurrentFormattedDateTime(),
+              des: "接口重试成功",
+              level: "info",
+              info: {
+                retryCount: response?.config?.retryCount,
+                originalUrl: response?.config?.originalUrl
+              }
+            }
+          ]
+        );
+      }
+
       // 对响应进行统一处理
       const data = response.data;
       // let whitelistSp = ['/sp/order', '/sp/unlock']
@@ -112,8 +141,19 @@ const createAxios = ({ app_name, timeout = 20 }) => {
     },
     async error => {
       const { response, config } = error;
-      const maxRetries = 3;
-      const retryDelay = 1000; // 1 second
+      // console.warn('error-config', config, 'error-response', response)
+      // 确保 config 存在
+      if (!config) {
+        console.warn("请求配置丢失，请稍后再试");
+        return Promise.reject(error);
+      }
+
+      // 初始化 retryCount 如果它不存在
+      if (config.retryCount === undefined) {
+        config.retryCount = 0;
+      }
+      const maxRetries = config.maxRetries || 3;
+      const retryDelay = config.retryDelay || 1; // 1 second
       // 重试接口名单
       let retrieUrls = [
         "/cinCinemaInfoService/findCinCityToApp",
@@ -131,12 +171,35 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         console.log(`请求失败，正在进行第 ${config.retryCount} 次重试...`);
 
         // 等待一段时间后重试
-        await new Promise(resolve => setTimeout(resolve, retryDelay));
+        await mockDelay(retryDelay);
 
         // 重试请求
         return instance(config);
       }
-
+      // 仍旧重试失败增加日志上送
+      if (config.retryCount) {
+        logUpload(
+          {
+            plat_name: "",
+            app_name: app_name,
+            order_number: "",
+            type: ""
+          },
+          [
+            {
+              opera_time: getCurrentFormattedDateTime(),
+              des: "接口重试到最后还是失败",
+              level: "info",
+              info: {
+                originalUrl: config.originalUrl,
+                retryCount: config.retryCount,
+                params: config.params,
+                data: config.data
+              }
+            }
+          ]
+        );
+      }
       // 对HTTP错误码进行处理
       if (response && response.status) {
         switch (response.status) {
@@ -159,23 +222,28 @@ const createAxios = ({ app_name, timeout = 20 }) => {
 
   // 判断是否需要重试
   const shouldRetry = (error, config, maxRetries, retrieUrls) => {
-    let isCountCheck = config.retryCount < maxRetries;
-    let isUrlCheck = retrieUrls.some(item => config.url.includes(item));
-    let isErrorCheck = false;
-    // 检查错误类型
-    if (axios.isAxiosError(error)) {
-      const message = error.message.toLowerCase();
-      isErrorCheck =
-        message.includes("timeout of") || message.includes("network error");
+    try {
+      let isCountCheck = config.retryCount < maxRetries;
+      let isUrlCheck = retrieUrls.some(item => config.url.includes(item));
+      let isErrorCheck = false;
+      // 检查错误类型
+      if (axios.isAxiosError(error)) {
+        const message = error.message.toLowerCase();
+        isErrorCheck =
+          message.includes("timeout of") || message.includes("network error");
+      }
+      // console.log(
+      //   "isCountCheck",
+      //   isCountCheck,
+      //   "isUrlCheck",
+      //   isUrlCheck,
+      //   isErrorCheck
+      // );
+      return isCountCheck && isUrlCheck && isErrorCheck;
+    } catch (e) {
+      //TODO handle the exception
+      return false;
     }
-    // console.log(
-    //   "isCountCheck",
-    //   isCountCheck,
-    //   "isUrlCheck",
-    //   isUrlCheck,
-    //   isErrorCheck
-    // );
-    return isCountCheck && isUrlCheck && isErrorCheck;
   };
 
   return instance;
