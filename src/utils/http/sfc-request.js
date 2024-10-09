@@ -59,7 +59,7 @@ const createAxios = ({ group, app_name, timeout = 20 }) => {
         itemA.app_name === app_name &&
         itemA.session_id &&
         (tokens.userInfo.user_id != 1
-          ? item.mobile === tokens.userInfo.phone
+          ? itemA.mobile === tokens.userInfo.phone
           : true)
     );
 
