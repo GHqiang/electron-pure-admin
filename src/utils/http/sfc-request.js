@@ -54,16 +54,19 @@ const createAxios = ({ group, app_name, timeout = 20 }) => {
     }
     // console.log("loginInfoList", loginInfoList);
     // 优先用自己账号token
-    let obj = loginInfoList.find(
-      itemA =>
-        itemA.app_name === app_name &&
-        itemA.session_id &&
-        (tokens.userInfo.user_id != 1
-          ? itemA.mobile === tokens.userInfo.phone
-          : true)
-    );
 
-    e.session_id = obj?.session_id || "";
+    let targetList = loginInfoList.filter(
+      itemA => itemA.app_name === app_name && itemA.session_id
+    );
+    let targetInfo = targetList?.[0] || "";
+    if (targetList?.length > 1) {
+      targetInfo = targetList.find(itemA =>
+        tokens.userInfo.user_id != 1
+          ? itemA.mobile === tokens.userInfo.phone
+          : true
+      );
+    }
+    e.session_id = targetInfo?.session_id || "";
     // console.log("sfcRequest===>", e);
   };
 

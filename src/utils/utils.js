@@ -323,6 +323,15 @@ const getCinemaFlag = item => {
   // if (isLmaGroup) {
   //   return "lma";
   // }
+  if (
+    ["山文星辉影城", "鲁信影城潍坊寿光店"].some(
+      itemA =>
+        cinemNameSpecial(cinema_name).includes(itemA) &&
+        ["济南", "聊城", "青岛", "泰安", "潍坊"].includes(city_name)
+    )
+  ) {
+    return "swxh";
+  }
 
   // 后续再补充名字匹配
   if (isWanmeiGroup) {

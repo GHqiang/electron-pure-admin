@@ -1382,7 +1382,7 @@ class OrderAutoTicketQueue {
       if (offerRule.offer_type === "1") {
         total_price = 0;
         // yaolai绑券逻辑不一样，暂不处理
-        if (["zheyingshidai", "renhengmeng"].includes(appFlag)) {
+        if (["zheyingshidai", "renhengmeng", "swxh"].includes(appFlag)) {
           if (quanList.length - ticket_num < 15) {
             this.logList.push({
               opera_time: getCurrentFormattedDateTime(),
@@ -2520,6 +2520,8 @@ class OrderAutoTicketQueue {
           } else if (appFlag === "yaolai") {
             return item.couponName === QUAN_TYPE_FLAG[quan_value];
           } else if (appFlag === "zheyingshidai") {
+            return item.couponName === QUAN_TYPE_FLAG[quan_value];
+          } else if (appFlag === "swxh") {
             return item.couponName === QUAN_TYPE_FLAG[quan_value];
           }
         });

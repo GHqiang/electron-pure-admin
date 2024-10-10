@@ -25,6 +25,7 @@ const QUAN_TYPE = {
   40: "sfc-40",
   35: "sfc-35",
   30: "sfc-30",
+  "xinghui-putong": "星辉-普通厅",
   "renhengmeng-40": "仁恒梦-40",
   "ume-putong": "ume-普通厅",
   "ume-teshu": "ume-特殊厅",
@@ -39,6 +40,7 @@ const QUAN_TYPE_COST = {
   40: 38.8,
   35: 35,
   30: 30,
+  "xinghui-putong": 30,
   "renhengmeng-40": 40,
   "ume-putong": 32,
   "ume-teshu": 45,
@@ -53,6 +55,7 @@ const QUAN_TYPE_FLAG = {
   40: "上影券-40",
   35: "上影券-35",
   30: "上影券-30",
+  "xinghui-putong": "通用30元3DH5券",
   "renhengmeng-40": "团体券",
   "ume-putong": "会员普通厅",
   "ume-teshu": "会员特殊厅",
@@ -66,6 +69,7 @@ const QUAN_TYPE_FLAG = {
 const UME_LIST = [
   "ume",
   "yaolai",
+  "swxh",
   "renhengmeng",
   "wanmei",
   "yinghuang",
@@ -88,6 +92,7 @@ const APP_LIST = {
   lma: "卢米埃",
   ume: "UME",
   yaolai: "耀莱",
+  swxh: "山文星辉",
   renhengmeng: "仁恒梦影廊",
   wanmei: "完美",
   yinghuang: "英皇",
@@ -906,6 +911,43 @@ const RENHENGMENG_SPECIAL_CINEMA_LIST = [
   }
 ];
 
+// 山文星辉特殊影院集合
+const SWXH_SPECIAL_CINEMA_LIST = [
+  // 济南
+  {
+    order_cinema_name: ["山文星辉影城莱芜银座店"],
+    sfc_cinema_name: "山文星辉影城莱芜店"
+  },
+  {
+    order_cinema_name: ["山文星辉影城济南和谐广场店"],
+    sfc_cinema_name: "山文星辉影城济南和谐店"
+  },
+  {
+    order_cinema_name: ["山文星辉影城莱钢金茂广场店"],
+    sfc_cinema_name: "山文星辉影城钢城店"
+  },
+  // 聊城
+  {
+    order_cinema_name: ["山文星辉影城聊城金鼎店"],
+    sfc_cinema_name: "山文星辉影城聊城店"
+  },
+  // 青岛
+  {
+    order_cinema_name: ["山文星辉影城青岛和谐广场店"],
+    sfc_cinema_name: "山文星辉影城青岛和谐店"
+  },
+  // 泰安
+  {
+    order_cinema_name: ["山文星辉影城泰安青年路店"],
+    sfc_cinema_name: "山东文旅影城泰安店"
+  },
+  // 潍坊
+  {
+    order_cinema_name: ["鲁信影城潍坊寿光店"],
+    sfc_cinema_name: "山东文旅影城寿光店"
+  }
+];
+
 // 完美特殊影院集合
 const WANMEI_SPECIAL_CINEMA_LIST = [
   // 成都
@@ -1273,6 +1315,7 @@ const SPECIAL_CINEMA_OBJ = {
   ume: UME_SPECIAL_CINEMA_LIST,
   yaolai: YAOLAI_SPECIAL_CINEMA_LIST,
   renhengmeng: RENHENGMENG_SPECIAL_CINEMA_LIST,
+  swxh: SWXH_SPECIAL_CINEMA_LIST,
   wanmei: WANMEI_SPECIAL_CINEMA_LIST,
   yinghuang: YINGHUANG_SPECIAL_CINEMA_LIST,
   jqgw: JQGW_SPECIAL_CINEMA_LIST,
@@ -1362,6 +1405,7 @@ const TICKET_CONPREFIX_OBJ = {
   ume: "【UME自动出票】——",
   yaolai: "【耀莱自动出票】——",
   renhengmeng: "【仁恒梦影廊自动出票】——",
+  swxh: "【山文星辉自动出票】——",
   wanmei: "【完美自动出票】——",
   yinghuang: "【英皇自动出票】——",
   jqgw: "【金桥国文自动出票】——",

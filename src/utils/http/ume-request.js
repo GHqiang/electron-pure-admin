@@ -36,15 +36,18 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         if (loginInfoList) {
           loginInfoList = JSON.parse(loginInfoList);
         }
-        let obj = loginInfoList.find(
-          itemA =>
-            itemA.app_name === app_name &&
-            itemA.session_id &&
-            (tokens.userInfo.user_id != 1
-              ? itemA.mobile === tokens.userInfo.phone
-              : true)
+        let targetList = loginInfoList.filter(
+          itemA => itemA.app_name === app_name && itemA.session_id
         );
-        let token = obj?.session_id || "";
+        let targetInfo = targetList?.[0] || "";
+        if (targetList?.length > 1) {
+          targetInfo = targetList.find(itemA =>
+            tokens.userInfo.user_id != 1
+              ? itemA.mobile === tokens.userInfo.phone
+              : true
+          );
+        }
+        let token = targetInfo?.session_id || "";
         // 保存原始参数和原始URL
         if (!config.originalParams) {
           config.originalParams = { ...config.params };
