@@ -32,7 +32,8 @@ const QUAN_TYPE = {
   "yaolai-yixain": "耀莱一线普通",
   "yaolai-erxian": "耀莱二线普通",
   "yaolai-yixianbu5": "耀莱一线普通补5",
-  "zheying-35": "浙影-35"
+  "zheying-35": "浙影-35",
+  jinbaojia: "仅报价券"
 };
 
 // 优惠券成本
@@ -47,7 +48,8 @@ const QUAN_TYPE_COST = {
   "yaolai-yixain": 34,
   "yaolai-erxian": 30,
   "yaolai-yixianbu5": 30,
-  "zheying-35": 31
+  "zheying-35": 31,
+  jinbaojia: 0
 };
 
 // 优惠券标识
@@ -62,7 +64,8 @@ const QUAN_TYPE_FLAG = {
   "yaolai-yixain": "（小程序）免费影票兑换券",
   "yaolai-erxian": "影票兑换券",
   "yaolai-yixianbu5": "影票兑换券",
-  "zheying-35": "全国合作券"
+  "zheying-35": "全国合作券",
+  jinbaojia: "" // 仅报价不出无需考虑标识
 };
 
 // ume系统影院

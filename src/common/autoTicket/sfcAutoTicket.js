@@ -590,10 +590,16 @@ class OrderAutoTicketQueue {
       // offerRule = { offer_type: "2", member_price: "29.9" };
     }
     console.warn(conPrefix + "从该订单的报价记录获取到的报价规则", offerRule);
-    if (!offerRule || offerRule?.rule_status === "3") {
+    if (
+      !offerRule ||
+      offerRule?.rule_status === "3" ||
+      offerRule?.quan_value === "jinbaojia"
+    ) {
       let str = "获取该订单报价记录失败，微信通知手动出票";
-      if (offerRule) {
-        str = "该订单报价规则为仅报价，需手动出票并抓包相关接口";
+      if (offerRule?.rule_status === "3") {
+        str = "该订单报价规则为仅报价，需手动出票";
+      } else if (offerRule?.quan_value === "jinbaojia") {
+        str = "该订单报价规则用券类型为仅报价券，需手动出票";
       }
       console.error(conPrefix + str, offerRule);
       this.setErrInfo(str);
@@ -3428,7 +3434,10 @@ const addOrderHandleRecored = async ({
   try {
     // res：{ profit, submitRes, qrcode, quan_code, card_id, offerRule }
     let order_status = res?.submitRes ? "1" : "2";
-    if (res?.offerRule?.rule_status === "3") {
+    if (
+      res?.offerRule?.rule_status === "3" ||
+      res?.offerRule?.quan_value === "jinbaojia"
+    ) {
       order_status = "4";
     }
     const serOrderInfo = {
