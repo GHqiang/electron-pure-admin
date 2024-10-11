@@ -1387,7 +1387,14 @@ class OrderAutoTicketQueue {
       if (offerRule.offer_type === "1") {
         total_price = 0;
         // yaolai绑券逻辑不一样，暂不处理
-        if (["zheyingshidai", "renhengmeng", "swxh"].includes(appFlag)) {
+        let syncBandQuanTypeList = ["zheyingshidai", "renhengmeng", "swxh"];
+        if (token.userInfo.rule === 3) {
+          // 过滤掉不让外部用户用的
+          syncBandQuanTypeList = syncBandQuanTypeList.filter(
+            item => !["renhengmeng"].includes(item)
+          );
+        }
+        if (syncBandQuanTypeList.includes(appFlag)) {
           if (quanList.length - ticket_num < 15) {
             this.logList.push({
               opera_time: getCurrentFormattedDateTime(),
