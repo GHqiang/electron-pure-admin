@@ -458,7 +458,11 @@ class OrderAutoTicketQueue {
         transferTip: "自动转单处于开启状态,已转单无需处理",
         failReason: `${errMsg}——${errInfo}`
       });
-      const { supplier_end_price, ticket_num } = order;
+      let { supplier_end_price, tpp_price, ticket_num } = order;
+      // 蚂蚁、洋葱转单是原价的百分之三
+      if (["mayi", "yangcong"].includes(plat_name) && tpp_price) {
+        supplier_end_price = tpp_price;
+      }
       let transfer_fee = (
         (Number(ticket_num) * Number(supplier_end_price) * 100 * 3) /
         10000
