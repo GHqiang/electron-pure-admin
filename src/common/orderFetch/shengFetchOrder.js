@@ -119,7 +119,7 @@ class OrderAutoFetchQueue {
             film_name: film.filmName,
             film_img: film.imgUrl,
             show_time: show.startTime,
-            rewards: 0, // 省无奖励，只有快捷
+            rewards: "", // 省的奖励从报价记录里获取
             quick: deliverMinute > 0, // true表示为快捷订单（需12分钟内完成发货），false表示为特惠订单（需45分钟内完成发货）
             // 省暂定和猎人针对sfc影院名字一样
             cinema_group: cinema_group,

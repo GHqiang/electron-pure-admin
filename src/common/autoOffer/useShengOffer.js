@@ -121,6 +121,13 @@ class OrderAutoOfferQueue {
       // 获取待报价列表
       const stayList = await this.getStayOfferList();
       if (!stayList?.length) return [];
+      // 奖励百分比枚举
+      const rewardsTypeObj = {
+        0: 0,
+        1: 3,
+        2: 4,
+        3: 0
+      };
       let sfcStayOfferlist = stayList.map(item => {
         const {
           orderId,
@@ -130,7 +137,8 @@ class OrderAutoOfferQueue {
           order,
           supplierCode, // 供应商号
           seatInfo, // 座位信息
-          orderCode
+          orderCode,
+          property // 奖励字段标识0 （45分钟无奖励）1（12分钟奖励中标价格3个点）2（五分钟奖励订单4个点） 3 （27分钟无奖励）
         } = item;
         // orderId    订单id    integer
         // id         抢单id    integer
@@ -164,7 +172,7 @@ class OrderAutoOfferQueue {
           film_name: film.filmName,
           film_img: film.imgUrl,
           show_time: show.startTime,
-          rewards: 0, // 省无奖励，只有快捷
+          rewards: rewardsTypeObj?.[property] || 0, // 奖励百分比
           quick: order.quick, // true表示为快捷订单（需12分钟内完成发货），false表示为特惠订单（需45分钟内完成发货）
           // 省暂定和猎人针对sfc影院名字一样
           cinema_group: cinema_group,
@@ -284,7 +292,7 @@ class OrderAutoOfferQueue {
         err_info:
           offerResult?.err_info ||
           (errInfoObj?.info ? formatErrInfo(errInfoObj?.info) : ""),
-        rewards: order.rewards, // 是否是奖励订单 1是 0否
+        rewards: order.rewards, // 奖励百分比
         rule: tokens.userInfo.rule || 2,
         offer_rule_id: offerResult?.offerRule?.id
       };

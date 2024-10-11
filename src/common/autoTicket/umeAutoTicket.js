@@ -819,6 +819,7 @@ class OrderAutoTicketQueue {
       offerRule,
       targetShow
     } = otherParams || {};
+    rewards = offerRule?.rewards || 0;
     try {
       if (this.currentParamsInx === 0) {
         const phone = this.currentParamsList[0].mobile;
@@ -2499,10 +2500,11 @@ class OrderAutoTicketQueue {
           member_price -
           (Number(supplier_end_price) * 100) / 10000;
         profit = Number(profit) * Number(ticket_num);
-        if (rewards == 1) {
+        if (rewards > 0) {
           // 特急奖励订单中标价格 * 张数 * 0.04;
           let rewardPrice =
-            (Number(supplier_end_price) * Number(ticket_num) * 400) / 10000;
+            (Number(supplier_end_price) * Number(ticket_num) * 100 * rewards) /
+            10000;
           profit += rewardPrice;
         }
         profit = Number(profit).toFixed(2);
@@ -2597,10 +2599,11 @@ class OrderAutoTicketQueue {
           quanCost -
           (Number(supplier_end_price) * 100) / 10000;
         profit = Number(profit) * Number(ticket_num);
-        if (rewards == 1) {
+        if (rewards > 0) {
           // 特急奖励订单中标价格 * 张数 * 0.04;
           let rewardPrice =
-            (Number(supplier_end_price) * Number(ticket_num) * 400) / 10000;
+            (Number(supplier_end_price) * Number(ticket_num) * 100 * rewards) /
+            10000;
           profit += rewardPrice;
         }
         profit = Number(profit).toFixed(2);
@@ -3250,7 +3253,7 @@ const addOrderHandleRecored = async ({
       card_id: res?.card_id || "",
       err_msg: res?.submitRes ? "" : errMsg || "",
       err_info: res?.submitRes ? "" : errInfo || "",
-      rewards: order.rewards, // 是否是奖励订单 1是 0否
+      rewards: res?.offerRule?.rewards || 0, // 奖励百分比
       transfer_fee: res?.transferParams?.transfer_fee || "", // 转单手续费
       mobile: mobile || "", // 出票手机号
       rule: tokens.userInfo.rule || 2

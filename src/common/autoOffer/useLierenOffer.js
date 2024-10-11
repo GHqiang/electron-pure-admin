@@ -228,7 +228,7 @@ class OrderAutoOfferQueue {
         err_info:
           offerResult?.err_info ||
           (errInfoObj?.info ? formatErrInfo(errInfoObj?.info) : ""),
-        rewards: order.rewards, // 是否是奖励订单 1是 0否
+        rewards: order.rewards == 1 ? 4 : 0, // 奖励百分比, 4个点
         rule: tokens.userInfo.rule || 2,
         offer_rule_id: offerResult?.offerRule?.id
       };
