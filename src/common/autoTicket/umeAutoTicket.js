@@ -1388,7 +1388,7 @@ class OrderAutoTicketQueue {
         total_price = 0;
         // yaolai绑券逻辑不一样，暂不处理
         let syncBandQuanTypeList = ["zheyingshidai", "renhengmeng", "swxh"];
-        if (token.userInfo.rule === 3) {
+        if (tokens.userInfo.rule === 3) {
           // 过滤掉不让外部用户用的
           syncBandQuanTypeList = syncBandQuanTypeList.filter(
             item => !["renhengmeng"].includes(item)
@@ -1656,6 +1656,14 @@ class OrderAutoTicketQueue {
     } catch (error) {
       console.error(conPrefix + "一键买票异常", error);
       this.setErrInfo("一键买票异常", error);
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: `一键买票异常`,
+        level: "error",
+        info: {
+          error
+        }
+      });
       return { offerRule };
     }
   }

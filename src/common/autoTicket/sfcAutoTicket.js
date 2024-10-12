@@ -1531,6 +1531,14 @@ class OrderAutoTicketQueue {
     } catch (error) {
       console.error(conPrefix + "一键买票异常", error);
       this.setErrInfo("一键买票异常", error);
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: `一键买票异常`,
+        level: "error",
+        info: {
+          error
+        }
+      });
       return { offerRule };
     }
   }
