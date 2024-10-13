@@ -200,23 +200,28 @@ class OrderAutoTicketQueue {
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
             des: `单个订单自动出票结束，状态-${res?.submitRes ? "成功" : "失败"}，赋值上个订单号为当前订单号-${this.prevOrderNumber}`,
-            level: "error",
+            level: "info",
             info: {
               res
             }
           });
           if (!isTestOrder) {
-            const errInfoObj = this.logList
-              .filter(item => item.level === "error")
-              .reverse()?.[0];
-            let err_msg = errInfoObj?.des || "";
-            let err_info = formatErrInfo(errInfoObj?.info?.error) || "";
+            let errMsg = "",
+              errInfo = "";
+            if (!res?.submitRes) {
+              const errInfoObj = this.logList
+                .filter(item => item.level === "error")
+                .reverse()?.[0];
+              errMsg = errInfoObj?.des || "";
+              errInfo = formatErrInfo(errInfoObj?.info?.error) || "";
+            }
+
             let params = {
               order,
               ticketRes: res,
               appFlag,
-              errMsg: err_msg,
-              errInfo: err_info,
+              errMsg: errMsg,
+              errInfo: errInfo,
               mobile: this.currentParamsList[this.currentParamsInx].mobile
             };
             await addOrderHandleRecored(params);
@@ -269,13 +274,6 @@ class OrderAutoTicketQueue {
       console.log(conPrefix + `订单处理 ${order.id}`);
       if (this.isRunning) {
         const res = await this.singleTicket(order);
-        // this.logList.push({
-        //   opera_time: getCurrentFormattedDateTime(),
-        //   des: `订单出票${res?.submitRes ? "成功" : "失败"}`,
-        //   info: {
-        //     res
-        //   }
-        // });
         // result: { profit, submitRes, transferParams, qrcode, quan_code, card_id, offerRule }
         return res;
       } else {
@@ -506,7 +504,7 @@ class OrderAutoTicketQueue {
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: `转单原因-${errMsg}——${errInfo}`,
-        level: "error"
+        level: "info"
       });
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
@@ -1156,10 +1154,6 @@ class OrderAutoTicketQueue {
       };
       try {
         await this.lockSeatHandle(params); // 锁定座位
-        // this.logList.push({
-        //   opera_time: getCurrentFormattedDateTime(),
-        //   des: `首次锁定座位成功`
-        // });
       } catch (error) {
         console.error(conPrefix + "锁定座位失败准备试错2次，间隔5秒", error);
         // 试错3次，间隔5秒
@@ -1242,7 +1236,7 @@ class OrderAutoTicketQueue {
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
             des: `非最后一次用卡用券失败，走换号`,
-            level: "error"
+            level: "info"
           });
           this.currentParamsInx++;
           return await this.oneClickBuyTicket({
@@ -1261,7 +1255,8 @@ class OrderAutoTicketQueue {
       }
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
-        des: `使用优惠券或者会员卡成功`
+        des: `使用优惠券或者会员卡成功`,
+        level: "info"
       });
       // 6计算订单价格
       let currentParams = this.currentParamsList[this.currentParamsInx];
@@ -1381,7 +1376,7 @@ class OrderAutoTicketQueue {
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
             des: `非最后一次创建订单失败，走换号`,
-            level: "error"
+            level: "info"
           });
           this.currentParamsInx++;
           return await this.oneClickBuyTicket({
@@ -1476,7 +1471,7 @@ class OrderAutoTicketQueue {
       console.error(conPrefix + "一键买票异常", error);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
-        des: `一键买票异常`,
+        des: "一键买票异常",
         level: "error",
         info: {
           error
@@ -3030,7 +3025,7 @@ class OrderAutoTicketQueue {
         }
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: `所有会员卡尝试均失败;`,
+          des: `所有会员卡尝试均失败`,
           level: "error"
         });
         console.error(conPrefix + "所有卡尝试均失败。");
