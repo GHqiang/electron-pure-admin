@@ -476,7 +476,7 @@ class getSfcOfferPrice {
       // 手续费
       const shouxufei = (Number(price) * 100) / 10000;
       // 奖励费用
-      let rewardPrice = rewards == 1 ? (Number(price) * 400) / 10000 : 0;
+      let rewardPrice = rewards ? (Number(price) * 100 * rewards) / 10000 : 0;
       // 真实成本（加手续费）
       cost_price = cost_price + shouxufei;
       // 最终成本（减奖励费）
@@ -516,7 +516,7 @@ class getSfcOfferPrice {
           return;
         }
         // 奖励单按真实成本（加手续费），非奖励单报最高限价
-        price = rewards == 1 ? cost_price : supplier_max_price;
+        price = rewards ? cost_price : supplier_max_price;
         // 不重新赋值的话按平台规则会员价四舍五入后+固定加价
         price = Math.round(price);
       }
