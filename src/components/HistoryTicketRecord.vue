@@ -181,7 +181,13 @@
       <el-table-column prop="profit" label="利润" width="80" />
       <el-table-column prop="original_profit" label="原利润" width="80" />
       <el-table-column prop="transfer_fee" label="转单手续费" width="100" />
-      <el-table-column prop="err_msg" label="失败原因" width="110" />
+      <el-table-column prop="err_msg" label="失败原因" width="110">
+        <template #default="scope">
+          <span>{{
+            scope.row.order_status === "2" ? scope.row.err_msg : ""
+          }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="操作" fixed="right" align="center" width="120">
         <template #default="{ row: { order_status, profit, id } }">
           <el-button
