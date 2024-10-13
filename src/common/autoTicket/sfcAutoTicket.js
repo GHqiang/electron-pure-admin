@@ -22,7 +22,6 @@ const tokens = platTokens();
 import {
   TICKET_CONPREFIX_OBJ,
   APP_OPENID_OBJ,
-  APP_LIST,
   QUAN_TYPE_COST,
   TEST_NEW_PLAT_LIST
 } from "@/common/constant";
@@ -35,8 +34,6 @@ class OrderAutoTicketQueue {
     this.queue = []; // 初始化空队列
     this.isRunning = false; // 初始化时队列未运行
     this.cityList = []; // 城市列表
-    this.errMsg = ""; // 单次出票的错误语
-    this.errInfo = ""; // 单次出票的错误信息
     this.appFlag = appFlag; // 影线标识
     this.conPrefix = TICKET_CONPREFIX_OBJ[appFlag]; // 打印前缀
     this.sfcApi = APP_API_OBJ[appFlag];
@@ -209,12 +206,17 @@ class OrderAutoTicketQueue {
             }
           });
           if (!isTestOrder) {
+            const errInfoObj = this.logList
+              .filter(item => item.level === "error")
+              .reverse()?.[0];
+            let err_msg = errInfoObj?.des || "";
+            let err_info = formatErrInfo(errInfoObj?.info?.error) || "";
             let params = {
               order,
               ticketRes: res,
               appFlag,
-              errMsg: this.errMsg,
-              errInfo: this.errInfo,
+              errMsg: err_msg,
+              errInfo: err_info,
               mobile: this.currentParamsList[this.currentParamsInx].mobile
             };
             await addOrderHandleRecored(params);
@@ -254,8 +256,6 @@ class OrderAutoTicketQueue {
   async orderHandle(order, delayTime) {
     const { conPrefix } = this;
     try {
-      this.errMsg = "";
-      this.errInfo = "";
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: `订单开始出票，订单号-${order.order_number}，上个订单号-${this.prevOrderNumber}`,
@@ -297,30 +297,6 @@ class OrderAutoTicketQueue {
     }
     console.warn(conPrefix + "自动出票队列停止");
   }
-  // 设置错误信息
-  setErrInfo(errMsg, errInfo) {
-    try {
-      if (errMsg === "") {
-        // 清空重置
-        this.errMsg = "";
-      } else {
-        // 如果上个错误信息存在就不允许有新的错误信息
-        this.errMsg = this.errMsg || errMsg;
-      }
-      if (errInfo === "") {
-        // 清空重置
-        this.errInfo = "";
-      } else {
-        // 如果上个错误信息存在就不允许有新的错误信息
-        if (this.errInfo) return;
-        if (errInfo) {
-          this.errInfo = formatErrInfo(errInfo);
-        }
-      }
-    } catch (error) {
-      console.warn("错误信息转换异常1", error);
-    }
-  }
 
   // 释放座位 flag: 1-转单，2换号
   async releaseSeat(unlockSeatInfo, flag) {
@@ -338,7 +314,6 @@ class OrderAutoTicketQueue {
       let errFlag = ["正常出票", "转单释放座位时", "换号出票释放座位时"][flag];
       let seatList = seatDataRes?.seatData || [];
       if (!seatList?.length) {
-        this.setErrInfo(`${errFlag}-获取座位布局异常`, seatDataRes?.error);
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: `${errFlag}-获取座位布局异常`,
@@ -352,7 +327,14 @@ class OrderAutoTicketQueue {
       let availableSeatList = seatList.filter(item => item[2] === "0"); // 1表示已售
       let seat_ids = availableSeatList.map(item => item[0])?.[0]; // 第0个代表座位id
       if (!seat_ids) {
-        this.setErrInfo(`${errFlag}-获取未售座位为空`);
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: `${errFlag}-获取未售座位为空`,
+          level: "error",
+          info: {
+            seatList
+          }
+        });
         return false;
       }
       // // 4、锁定座位
@@ -371,21 +353,27 @@ class OrderAutoTicketQueue {
       return true;
     } catch (error) {
       console.warn("释放座位失败", error);
-      if (error?.msg === "登录失效") {
-        let inx = this.currentParamsList.findIndex(
-          item => item.session_id === session_id
-        );
-        this.currentParamsList[inx].errMsg = "登录失效";
-      }
       let errFlag = ["正常出票", "转单", "换号出票"][flag];
-      this.setErrInfo(`${errFlag}-释放座位异常`, error);
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: `${errFlag}-释放座位异常`,
+        level: "error",
+        info: {
+          error
+        }
+      });
       return false;
     }
   }
 
   // 转单
   async transferOrder(order, unlockSeatInfo) {
-    const { conPrefix, errMsg, errInfo } = this;
+    const { conPrefix } = this;
+    const errInfoObj = this.logList
+      .filter(item => item.level === "error")
+      .reverse()?.[0];
+    let errMsg = errInfoObj?.des || "";
+    let errInfo = formatErrInfo(errInfoObj?.info?.error) || "";
     const { plat_name } = order;
     let isAutoTransfer = window.localStorage.getItem("isAutoTransfer");
     const {
@@ -517,7 +505,7 @@ class OrderAutoTicketQueue {
       console.error(conPrefix + "【转单】异常", error);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
-        des: `转单原因-${this.errMsg}——${this.errInfo}`,
+        des: `转单原因-${errMsg}——${errInfo}`,
         level: "error"
       });
       this.logList.push({
@@ -606,7 +594,6 @@ class OrderAutoTicketQueue {
         str = "该订单报价规则用券类型为仅报价券，需手动出票";
       }
       console.error(conPrefix + str, offerRule);
-      this.setErrInfo(str);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: str,
@@ -651,6 +638,18 @@ class OrderAutoTicketQueue {
             supplierCode,
             appFlag
           });
+          if (deliverRes?.error) {
+            this.logList.push({
+              opera_time: getCurrentFormattedDateTime(),
+              des: "确认接单返回异常",
+              level: "error",
+              info: {
+                error: deliverRes.error
+              }
+            });
+            const transferParams = await this.transferOrder(item);
+            return { transferParams };
+          }
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
             des: "确认接单返回",
@@ -674,6 +673,18 @@ class OrderAutoTicketQueue {
           await this.unlockSeat({ plat_name, order_id: id, inx: 1 });
         } else if (plat_name === "haha") {
           const deliverRes = await startDeliver({ plat_name, bid, appFlag });
+          if (deliverRes?.error) {
+            this.logList.push({
+              opera_time: getCurrentFormattedDateTime(),
+              des: "确认接单返回异常",
+              level: "error",
+              info: {
+                error: deliverRes.error
+              }
+            });
+            const transferParams = await this.transferOrder(item);
+            return { transferParams };
+          }
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
             des: "确认接单返回",
@@ -765,8 +776,7 @@ class OrderAutoTicketQueue {
     order_id,
     inx = 1,
     order_number: orderCode,
-    supplierCode,
-    formFlag
+    supplierCode
   }) {
     const { conPrefix } = this;
     try {
@@ -830,7 +840,7 @@ class OrderAutoTicketQueue {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: `第${inx}次解锁座位发现已解锁`,
-          level: "error",
+          level: "info",
           info: {
             error
           }
@@ -842,7 +852,7 @@ class OrderAutoTicketQueue {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: `第${inx}次解锁座位发现座位没有被锁`,
-          level: "error",
+          level: "info",
           info: {
             error
           }
@@ -850,7 +860,6 @@ class OrderAutoTicketQueue {
         return;
       }
       console.error(conPrefix + "解锁异常", error);
-      this.setErrInfo(`第${inx}次解锁座位失败`, error);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: `第${inx}次解锁座位失败`,
@@ -859,10 +868,6 @@ class OrderAutoTicketQueue {
           error
         }
       });
-      // 这种情况下不需要返回异常
-      if (plat_name === "mayi" && formFlag === 1) {
-        return;
-      }
       return Promise.reject(error);
     }
   }
@@ -914,7 +919,6 @@ class OrderAutoTicketQueue {
         const cityListRes = await getCityList({ appFlag });
         this.cityList = cityListRes?.cityList || [];
         if (!this.cityList?.length) {
-          this.setErrInfo("获取城市列表异常", cityListRes?.error);
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
             des: `获取城市列表异常`,
@@ -933,7 +937,6 @@ class OrderAutoTicketQueue {
         const cinemaListRes = await getCityCinemaList({ city_id, appFlag });
         const cinemaList = cinemaListRes?.cinemaList || [];
         if (!cinemaList.length) {
-          this.setErrInfo("获取城市影院列表异常", cinemaListRes?.error);
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
             des: `获取城市影院列表异常`,
@@ -954,7 +957,6 @@ class OrderAutoTicketQueue {
         );
         cinema_id = cinemaIdRes?.cinema_id;
         if (!cinema_id) {
-          this.setErrInfo("根据影院名称获取目标影院id异常", cinemaIdRes?.error);
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
             des: conPrefix + "获取目标影院失败",
@@ -978,7 +980,6 @@ class OrderAutoTicketQueue {
         });
         let movie_data = movieDataRes?.movieData || [];
         if (!movie_data?.length) {
-          this.setErrInfo("获取影院放映列表异常", movieDataRes?.error);
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
             des: conPrefix + "获取影院放映列表异常",
@@ -1003,9 +1004,6 @@ class OrderAutoTicketQueue {
               convertFullwidthToHalfwidth(film_name)
           );
           if (!movieObj) {
-            this.setErrInfo(
-              "影院放映信息匹配订单影片名称失败-全角字符转换成半角后"
-            );
             this.logList.push({
               opera_time: getCurrentFormattedDateTime(),
               des: `影院放映信息匹配订单影片名称失败`,
@@ -1033,7 +1031,6 @@ class OrderAutoTicketQueue {
         show_id =
           showList.find(item => item.start_time === start_time)?.show_id || "";
         if (!show_id) {
-          this.setErrInfo("影院放映信息匹配订单放映时间失败");
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
             des: `影院放映信息匹配订单放映时间失败`,
@@ -1059,7 +1056,6 @@ class OrderAutoTicketQueue {
         let seatList = seatDataRes?.seatData || [];
         if (!seatList?.length) {
           console.error(conPrefix + "获取座位布局异常");
-          this.setErrInfo("获取座位布局异常", seatDataRes?.error);
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
             des: `获取座位布局异常`,
@@ -1085,81 +1081,66 @@ class OrderAutoTicketQueue {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: `第${this.currentParamsInx}次换号出票手机号-${phone}`,
-          level: "error",
+          level: "info",
           info: {
             currentParamsInx: this.currentParamsInx,
             currentParamsList: this.currentParamsList
           }
         });
-        // 清空上个号的出票失败信息
-        this.errMsg = "";
-        this.errInfo = "";
-        // 如果上个号释放座位token失效了就直接锁定token
-        if (
-          this.currentParamsList[this.currentParamsInx - 1].errMsg !==
-          "登录失效"
-        ) {
-          // 拿上一个号的session去释放座位
-          let currentParams = this.currentParamsList[this.currentParamsInx - 1];
-          // 先释放座位
-          const unlockSeatInfo = {
-            city_id,
-            cinema_id,
-            show_id,
-            start_day,
-            start_time,
-            session_id: currentParams.session_id
-          };
-          this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
-            des: `上个号准备释放座位token-${currentParams.session_id}`,
-            level: "error"
-          });
-          const isPass = await this.releaseSeat(unlockSeatInfo, 2);
-          if (!isPass) {
-            if (this.currentParamsInx === this.currentParamsList.length - 1) {
-              console.error(conPrefix + "换号结束还是失败", "走转单逻辑");
-              this.logList.push({
-                opera_time: getCurrentFormattedDateTime(),
-                des: `换号结束还是失败，走转单`,
-                level: "error"
-              });
-              const transferParams = await this.transferOrder(item, {
+        // 拿上一个号的session去释放座位
+        let currentParams = this.currentParamsList[this.currentParamsInx - 1];
+        // 先释放座位
+        const unlockSeatInfo = {
+          city_id,
+          cinema_id,
+          show_id,
+          start_day,
+          start_time,
+          session_id: currentParams.session_id
+        };
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: `上个号准备释放座位token-${currentParams.session_id}`,
+          level: "info"
+        });
+        const isPass = await this.releaseSeat(unlockSeatInfo, 2);
+        if (!isPass) {
+          if (this.currentParamsInx === this.currentParamsList.length - 1) {
+            console.error(conPrefix + "换号结束还是失败", "走转单逻辑");
+            this.logList.push({
+              opera_time: getCurrentFormattedDateTime(),
+              des: `换号结束还是失败，走转单`,
+              level: "info"
+            });
+            const transferParams = await this.transferOrder(item, {
+              city_id,
+              cinema_id,
+              show_id,
+              start_day,
+              start_time
+            });
+            return { offerRule, transferParams };
+          } else {
+            this.currentParamsInx++;
+            return await this.oneClickBuyTicket({
+              ...item,
+              otherParams: {
+                offerRule,
                 city_id,
                 cinema_id,
                 show_id,
+                seat_ids,
                 start_day,
                 start_time
-              });
-              return { offerRule, transferParams };
-            } else {
-              this.currentParamsInx++;
-              return await this.oneClickBuyTicket({
-                ...item,
-                otherParams: {
-                  offerRule,
-                  city_id,
-                  cinema_id,
-                  show_id,
-                  seat_ids,
-                  start_day,
-                  start_time
-                }
-              });
-            }
+              }
+            });
           }
-          this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
-            des: `上个号释放座位成功`,
-            level: "error"
-          });
-        } else {
-          this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
-            des: `上个号释放座位时token失效`,
-            level: "error"
-          });
         }
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: `上个号释放座位成功`,
+          level: "info"
+        });
       }
       // 4、锁定座位
       let params = {
@@ -1207,7 +1188,7 @@ class OrderAutoTicketQueue {
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
             des: `首次锁定座位失败轮询尝试后仍失败，走转单`,
-            level: "error"
+            level: "info"
           });
           const transferParams = await this.transferOrder(item);
           return { offerRule, transferParams };
@@ -1244,10 +1225,9 @@ class OrderAutoTicketQueue {
             conPrefix + "优惠券和会员卡都无法使用，单个订单直接出票结束",
             "走转单逻辑"
           );
-          this.setErrInfo("优惠券和会员卡都无法使用，单个订单直接出票结束");
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
-            des: `优惠券和会员卡都无法使用，准备转单`,
+            des: `优惠券和会员卡都无法使用`,
             level: "error"
           });
           const transferParams = await this.transferOrder(item, {
@@ -1299,10 +1279,9 @@ class OrderAutoTicketQueue {
       });
       let priceInfo = priceRes?.price;
       if (priceRes?.error) {
-        this.setErrInfo(priceRes?.errMsg, priceRes?.error);
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: priceRes?.errMsg,
+          des: "使用优惠券或会员卡后计算订单价格异常" + priceRes?.errMsg,
           level: "error",
           info: {
             error: priceRes?.error
@@ -1316,12 +1295,6 @@ class OrderAutoTicketQueue {
               "使用优惠券或会员卡后计算订单价格失败，单个订单直接出票结束",
             "走转单逻辑"
           );
-          this.setErrInfo("使用优惠券或会员卡后计算订单价格失败");
-          this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
-            des: `使用优惠券或会员卡后计算订单价格失败，准备转单`,
-            level: "error"
-          });
           // 后续要记录失败列表（订单信息、失败原因、时间戳）
           const transferParams = await this.transferOrder(item, {
             city_id,
@@ -1335,7 +1308,7 @@ class OrderAutoTicketQueue {
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
             des: `非最后一次创建订单前计算价格失败，走换号`,
-            level: "error"
+            level: "info"
           });
           this.currentParamsInx++;
           return await this.oneClickBuyTicket({
@@ -1355,10 +1328,9 @@ class OrderAutoTicketQueue {
       let pay_money = Number(priceInfo.total_price); // 此处是为了将订单价格30.00转为30，将0.00转为0
       console.log(conPrefix + "订单最后价格", pay_money, priceInfo);
       if (offerRule.offer_type === "1" && pay_money !== 0) {
-        this.setErrInfo("用券计算订单价格后价格不为0，走转单");
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: `用券计算订单价格后价格不为0，准备转单`,
+          des: `用券计算订单价格后价格不为0`,
           level: "error"
         });
         const transferParams = await this.transferOrder(item, {
@@ -1370,31 +1342,8 @@ class OrderAutoTicketQueue {
         });
         return { offerRule, transferParams };
       }
-      // else if (offerRule.offer_type !== "1") {
-      //   let real_member_price = offerRule.real_member_price;
-      //   if (pay_money > Number(real_member_price) * Number(ticket_num)) {
-      //     this.setErrInfo("用卡计算订单价格后价格大于真实会员价*票数，走转单", {
-      //       pay_money,
-      //       real_member_price,
-      //       ticket_num
-      //     });
-      //     const transferParams = await this.transferOrder(item, {
-      //       city_id,
-      //       cinema_id,
-      //       show_id,
-      //       start_day,
-      //       start_time
-      //     });
-      //     return { offerRule, transferParams };
-      //   }
-      // }
       if (isTestOrder) {
         return { offerRule };
-      }
-      // 订单价格计算成功清除原先关于订单价格异常的错误信息
-      if (this.errMsg.includes("计算订单价格异常")) {
-        this.errMsg = "";
-        this.errInfo = "";
       }
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
@@ -1419,7 +1368,6 @@ class OrderAutoTicketQueue {
             conPrefix + "创建订单失败，单个订单直接出票结束",
             "走转单逻辑"
           );
-          this.setErrInfo("创建订单失败，单个订单直接出票结束");
           // 后续要记录失败列表（订单信息、失败原因、时间戳）
           const transferParams = await this.transferOrder(item, {
             city_id,
@@ -1469,10 +1417,6 @@ class OrderAutoTicketQueue {
         console.error(
           conPrefix + "订单购买失败，单个订单直接出票结束",
           "走转单逻辑"
-        );
-        this.setErrInfo(
-          "订单购买失败，单个订单直接出票结束",
-          buyTicketRes?.error
         );
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
@@ -1530,7 +1474,6 @@ class OrderAutoTicketQueue {
       };
     } catch (error) {
       console.error(conPrefix + "一键买票异常", error);
-      this.setErrInfo("一键买票异常", error);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: `一键买票异常`,
@@ -1591,8 +1534,6 @@ class OrderAutoTicketQueue {
       return res;
     } catch (error) {
       console.error(conPrefix + "锁定座位异常", error);
-      this.setErrInfo("", "");
-      this.setErrInfo(`第${inx}次锁定座位异常`, error);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: `第${inx}次锁定座位失败`,
@@ -1680,7 +1621,11 @@ class OrderAutoTicketQueue {
             conPrefix + "使用优惠券或者会员卡前获取会员价异常",
             member_price
           );
-          this.setErrInfo("使用优惠券或者会员卡前获取会员价异常");
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: `使用会员卡前从该订单报价记录里获取会员价异常`,
+            level: "error"
+          });
           return {
             card_id: "",
             profit: 0 // 利润
@@ -1743,7 +1688,7 @@ class OrderAutoTicketQueue {
         if (quanListRes?.error) {
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
-            des: conPrefix + "获取优惠券列表异常",
+            des: "获取优惠券列表异常",
             level: "error",
             info: {
               error: quanListRes?.error
@@ -1772,7 +1717,14 @@ class OrderAutoTicketQueue {
       }
     } catch (error) {
       console.error(conPrefix + "使用优惠券或者会员卡异常", error);
-      this.setErrInfo("使用优惠券或者会员卡异常", error);
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "使用优惠券或者会员卡异常",
+        level: "error",
+        info: {
+          error
+        }
+      });
       return {
         card_id: "",
         quan_code: "",
@@ -1914,7 +1866,7 @@ class OrderAutoTicketQueue {
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: "优先用券时发现异常",
-        level: "error",
+        level: "info",
         info: {
           error
         }
@@ -2042,12 +1994,11 @@ class OrderAutoTicketQueue {
           error
         }
       });
-      this.setErrInfo("创建订单异常", error);
       if (error?.msg === "请求接口超时,请重试" && isTimeoutRetry === 1) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: `创建订单请求接口超时，延迟1秒后重试`,
-          level: "error"
+          level: "info"
         });
         await mockDelay(1);
         try {
@@ -2129,7 +2080,14 @@ class OrderAutoTicketQueue {
       return Promise.reject("获取支付结果不存在");
     } catch (error) {
       console.error(conPrefix + "支付订单异常", error);
-      this.setErrInfo("获取订单支付结果异常", error);
+      targetLogList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: `第${inx}次获取订单支付结果异常`,
+        level: "error",
+        info: {
+          error
+        }
+      });
       let params = {
         cinema_id,
         city_id,
@@ -2159,7 +2117,11 @@ class OrderAutoTicketQueue {
               targetLogList.push({
                 opera_time: getCurrentFormattedDateTime(),
                 des: `第${inx}次从已完成订单里获取取票码失败`,
-                level: "error"
+                level: "error",
+                info: {
+                  list,
+                  order_num
+                }
               });
             }
           }
@@ -2403,9 +2365,7 @@ class OrderAutoTicketQueue {
           error
         }
       });
-      if (flag !== 2) {
-        this.setErrInfo("提交出票码异常", error);
-      } else {
+      if (flag === 2) {
         let err_info = formatErrInfo(error);
         svApi.updateTicketRecord({
           whereObj: {
@@ -2418,6 +2378,9 @@ class OrderAutoTicketQueue {
           }
         });
       }
+      return {
+        error
+      };
     }
   }
 
@@ -2449,10 +2412,6 @@ class OrderAutoTicketQueue {
       } catch (error) {}
       if (!qrcode) {
         console.error(conPrefix + "获取订单结果失败，单个订单直接出票结束");
-        this.setErrInfo(
-          "获取订单支付结果，取票码不存在，暂时返回异步获取",
-          qrcode
-        );
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: `获取订单支付结果，取票码不存在，暂时返回异步获取`,
@@ -2502,8 +2461,14 @@ class OrderAutoTicketQueue {
       return { submitRes, qrcode };
     } catch (error) {
       console.warn("出票最后处理异常", error);
-      this.setErrInfo("", "");
-      this.setErrInfo("出票最后处理异常", error);
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: `出票最后处理发现异常`,
+        level: "error",
+        info: {
+          error
+        }
+      });
     }
   }
 
@@ -2638,6 +2603,7 @@ class OrderAutoTicketQueue {
     syncQueryLogList
   }) {
     const { conPrefix } = this;
+    let targetLogList = flag === 1 ? this.logList : syncQueryLogList;
     try {
       // 10、提交取票码
       const submitRes = await this.submitTicketCode({
@@ -2651,15 +2617,14 @@ class OrderAutoTicketQueue {
         flag,
         syncQueryLogList
       });
-      let targetLogList = flag === 1 ? this.logList : syncQueryLogList;
-      if (!submitRes) {
+      if (!submitRes || submitRes?.error) {
         console.error(conPrefix + "订单提交取票码失败，单个订单直接出票结束");
         targetLogList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: `提交取票码失败`,
           level: "error"
         });
-        const { errMsg, errInfo } = this;
+        let errInfo = formatErrInfo(submitRes?.error);
         sendWxPusherMessage({
           plat_name,
           order_number,
@@ -2669,7 +2634,7 @@ class OrderAutoTicketQueue {
           show_time: orderInfo?.show_time,
           lockseat,
           transferTip: "提交取票码失败,需手动上传",
-          failReason: `${errMsg}——${errInfo}`
+          failReason: errInfo
         });
         return;
       }
@@ -2702,7 +2667,14 @@ class OrderAutoTicketQueue {
       return submitRes;
     } catch (error) {
       console.warn("提交取票码异常", error);
-      this.setErrInfo("提交取票码异常", error);
+      targetLogList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: `提交取票码异常`,
+        level: "error",
+        info: {
+          error
+        }
+      });
     }
   }
 
@@ -2743,7 +2715,6 @@ class OrderAutoTicketQueue {
       let quanList = quanRes?.data?.quanList || [];
       if (!quanList?.length && asyncFlag != 1) {
         console.error(conPrefix + `数据库${quan_value}面额券不足`);
-        this.setErrInfo(`数据库${quan_value}面额券不足`);
         return;
       }
       // quanList = quanList.map(item => item.coupon_num.trim());
@@ -2758,14 +2729,16 @@ class OrderAutoTicketQueue {
           appFlag
         });
         const coupon_num = couponNumRes?.coupon_num;
-        targetLogList.push({
-          opera_time: getCurrentFormattedDateTime(),
-          des: `${conPrev}绑定券返回`,
-          level: "error",
-          info: {
-            ...couponNumRes
-          }
-        });
+        if (couponNumRes?.errMsg) {
+          targetLogList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: `${conPrev}绑定券异常`,
+            level: "error",
+            info: {
+              ...couponNumRes
+            }
+          });
+        }
         if (coupon_num) {
           bandQuanList.push({ coupon_num, quan_cost: quan.quan_cost });
           svApi.addUseQuanRecord({
@@ -2789,7 +2762,6 @@ class OrderAutoTicketQueue {
           quan_value
         }
       });
-      this.setErrInfo("获取新券异常", error);
     } finally {
       if (asyncFlag) {
         logUpload(
@@ -2847,23 +2819,37 @@ class OrderAutoTicketQueue {
         });
         if (newQuanList?.length) {
           targetQuanList = [...targetQuanList, ...newQuanList];
-        }
-        this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
-          des: `从服务端获取券绑定完成`,
-          level: "info",
-          info: {
-            newQuanList,
-            targetQuanList,
-            ticket_num
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: `从服务端获取券绑定完成`,
+            level: "info",
+            info: {
+              newQuanList,
+              targetQuanList,
+              ticket_num
+            }
+          });
+          if (targetQuanList?.length < ticket_num) {
+            console.error(
+              conPrefix + `从服务端获取并绑定后${quan_value} 面额券仍不足，`,
+              targetQuanList
+            );
+            this.logList.push({
+              opera_time: getCurrentFormattedDateTime(),
+              des: `${quan_value} 面额券从数据库获取后仍不足`,
+              level: "error"
+            });
+            return {
+              profit: 0,
+              useQuans: []
+            };
           }
-        });
-        if (targetQuanList?.length < ticket_num) {
-          console.error(
-            conPrefix + `从服务端获取并绑定后${quan_value} 面额券仍不足，`,
-            targetQuanList
-          );
-          this.setErrInfo(`${quan_value} 面额券从数据库获取后仍不足`);
+        } else {
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: `${quan_value} 面额券从数据库获取异常`,
+            level: "error"
+          });
           return {
             profit: 0,
             useQuans: []
@@ -2908,11 +2894,14 @@ class OrderAutoTicketQueue {
       }
       if (profit < 0 && !TEST_NEW_PLAT_LIST.includes(plat_name)) {
         console.error(conPrefix + "最终利润为负，单个订单直接出票结束");
-        this.setErrInfo(
-          APP_LIST[appFlag] +
-            "最终利润为负，单个订单直接出票结束, 利润：" +
-            profit
-        );
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: "使用优惠券计算价格后最终利润为负",
+          level: "error",
+          info: {
+            error
+          }
+        });
         return {
           profit: 0,
           useQuans: []
@@ -2927,7 +2916,14 @@ class OrderAutoTicketQueue {
       };
     } catch (error) {
       console.error(conPrefix + "使用优惠券异常", error);
-      this.setErrInfo("使用优惠券异常", error);
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "使用优惠券异常",
+        level: "error",
+        info: {
+          error
+        }
+      });
       return {
         profit: 0,
         useQuans: []
@@ -2960,12 +2956,6 @@ class OrderAutoTicketQueue {
       );
       if (!cardFilter?.length) {
         console.error(conPrefix + "使用会员卡失败，会员卡余额不足");
-        this.setErrInfo(APP_LIST[appFlag] + "会员卡余额不足", {
-          cards,
-          member_total_price,
-          session_id,
-          mobile
-        });
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: "会员卡余额不足",
@@ -3011,10 +3001,9 @@ class OrderAutoTicketQueue {
           });
           let price = priceRes?.price;
           if (priceRes?.error) {
-            this.setErrInfo(priceRes?.errMsg, priceRes?.error);
             this.logList.push({
               opera_time: getCurrentFormattedDateTime(),
-              des: priceRes?.errMsg,
+              des: "尝试使用卡时计算价格异常：" + priceRes?.errMsg,
               level: "error",
               info: {
                 error: priceRes?.error
@@ -3030,7 +3019,7 @@ class OrderAutoTicketQueue {
               this.logList.push({
                 opera_time: getCurrentFormattedDateTime(),
                 des: `该会员卡计算后价格-${price.total_price}高于真实会员价-${real_member_price}*座位数-${ticket_num},${isChangeCard ? "准备换卡" : ""};`,
-                level: "error"
+                level: "info"
               });
             } else {
               card_id = card.id;
@@ -3051,9 +3040,6 @@ class OrderAutoTicketQueue {
       const priceInfo = await attemptCardsSequentially();
       if (!priceInfo) {
         console.error(conPrefix + "计算订单价格失败，单个订单直接出票结束");
-        // this.setErrInfo(
-        //   APP_LIST[appFlag] + "计算订单价格失败，单个订单直接出票结束"
-        // );
         return {
           profit: 0,
           card_id: ""
@@ -3083,11 +3069,14 @@ class OrderAutoTicketQueue {
       profit = Number(profit).toFixed(2);
       if (profit < 0 && !TEST_NEW_PLAT_LIST.includes(plat_name)) {
         console.error(conPrefix + "最终利润为负，单个订单直接出票结束");
-        this.setErrInfo(
-          APP_LIST[appFlag] +
-            "最终利润为负，单个订单直接出票结束, 利润：" +
-            profit
-        );
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: `使用会员卡计算价格后最终利润为负`,
+          level: "error",
+          info: {
+            error
+          }
+        });
         // 后续要记录失败列表（订单信息、失败原因、时间戳）
         return {
           profit: 0,
@@ -3101,7 +3090,14 @@ class OrderAutoTicketQueue {
     } catch (error) {
       // 此处异常一定是代码异常无需考虑重试
       console.error(conPrefix + "使用会员卡异常", error);
-      this.setErrInfo("使用会员卡异常", error);
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: `使用会员卡异常`,
+        level: "error",
+        info: {
+          error
+        }
+      });
       return {
         card_id: "",
         profit: 0
@@ -3434,6 +3430,7 @@ const startDeliver = async ({
     return res;
   } catch (error) {
     console.warn("确认接单异常", error);
+    return { error };
   }
 };
 
