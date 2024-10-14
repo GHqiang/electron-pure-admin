@@ -34,6 +34,13 @@
           />
         </el-select>
       </el-form-item>
+      <el-form-item label="影院名称">
+        <el-input
+          v-model="formData.cinema_name"
+          placeholder="请输入影院名称"
+          clearable
+        />
+      </el-form-item>
       <el-form-item label="报价用户">
         <el-select
           v-model="formData.user_id"
@@ -233,6 +240,7 @@ const supplier_end_price_filter = row => {
 const formData = reactive({
   plat_name: "", // 订单来源
   app_name: "", // 影线名称
+  cinema_name: "", // 影院名称
   user_id: "", // 报价用户
   order_status: "", // 状态
   order_number: "", // 报价类型
@@ -322,6 +330,7 @@ loadData();
 const resetForm = () => {
   formData.plat_name = "";
   formData.app_name = ""; // 影线名称
+  formData.cinema_name = ""; // 影院名称
   formData.order_status = ""; // 状态
   formData.user_id = ""; // 报价用户
   formData.order_number = ""; // 报价类型

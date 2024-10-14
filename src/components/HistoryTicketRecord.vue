@@ -34,6 +34,13 @@
           />
         </el-select>
       </el-form-item>
+      <el-form-item label="影院名称">
+        <el-input
+          v-model="formData.cinema_name"
+          placeholder="请输入影院名称"
+          clearable
+        />
+      </el-form-item>
       <el-form-item label="出票用户">
         <el-select
           v-model="formData.user_id"
@@ -254,6 +261,7 @@ const userList = ref([]);
 const formData = reactive({
   plat_name: "", // 订单来源
   app_name: "", // 影线名称
+  cinema_name: "", // 影院名称
   order_status: "", // 状态
   user_id: "", // 出票用户
   order_number: "", // 订单号
@@ -369,6 +377,7 @@ loadData();
 const resetForm = () => {
   formData.plat_name = "";
   formData.app_name = ""; // 影线名称
+  formData.cinema_name = ""; // 影院名称
   formData.order_status = ""; // 状态
   formData.user_id = ""; // 出票用户
   formData.order_number = ""; // 订单号
