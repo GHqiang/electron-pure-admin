@@ -1758,15 +1758,38 @@ class OrderAutoTicketQueue {
         }
       });
       const quanList = quanListRes?.quanList || [];
-      let targetQuanList = quanList
-        .filter(item =>
-          quanFlagList.some(itemA =>
-            couponInfoSpecial(item.coupon_name).includes(
-              couponInfoSpecial(itemA)
-            )
-          )
+      let targetQuanList = quanList.filter(item =>
+        quanFlagList.some(itemA =>
+          couponInfoSpecial(item.coupon_name).includes(couponInfoSpecial(itemA))
         )
-        .slice(0, ticket_num);
+      );
+      // 按照card_num分组
+      const groupedCoupons = targetQuanList.reduce((groups, coupon) => {
+        const key = coupon.card_num;
+        if (!groups[key]) {
+          groups[key] = [];
+        }
+        groups[key].push(coupon);
+        return groups;
+      }, {});
+      let targetQuanGroup = Object.values(groupedCoupons).find(
+        item => item.length >= ticket_num
+      );
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "优先用券时按券标识过滤后按照card_num分组",
+        level: "info",
+        info: {
+          groupedCoupons,
+          targetQuanGroup
+        }
+      });
+      // 如果分组后能匹配到优先用一组的，如果匹配不到随便用
+      if (targetQuanGroup) {
+        targetQuanList = targetQuanGroup.slice(0, ticket_num);
+      } else {
+        targetQuanList = targetQuanList.slice(0, ticket_num);
+      }
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: "优先用券时按券标识过滤后返回",
