@@ -1276,10 +1276,11 @@ class OrderAutoTicketQueue {
       if (priceRes?.error) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: "使用优惠券或会员卡后计算订单价格异常" + priceRes?.errMsg,
+          des: "使用优惠券或会员卡后计算订单价格异常",
           level: "error",
           info: {
-            error: priceRes?.error
+            error: priceRes?.error,
+            params: priceRes?.params
           }
         });
       }
@@ -2998,10 +2999,11 @@ class OrderAutoTicketQueue {
           if (priceRes?.error) {
             this.logList.push({
               opera_time: getCurrentFormattedDateTime(),
-              des: "尝试使用卡时计算价格异常：" + priceRes?.errMsg,
+              des: "尝试使用卡时计算价格异常",
               level: "error",
               info: {
-                error: priceRes?.error
+                error: priceRes?.error,
+                params: priceRes?.params
               }
             });
           }
@@ -3282,23 +3284,23 @@ const priceCalculation = async ({
   coupon_id
 }) => {
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
+  let params = {
+    city_id: city_id,
+    cinema_id: cinema_id,
+    show_id: show_id,
+    seat_ids: seat_ids,
+    quan_code: "",
+    card_id: "",
+    additional_goods_info: "", // 附加商品信息
+    goods_info: "", // 商品信息
+    is_first: "0", // 是否是首次购买 0-不是 1-是
+    option_goods_info: "", // 可选的额外商品信息
+    update_time: getCurrentFormattedDateTime(),
+    session_id
+  };
   try {
     // 模拟延迟调用，因为该接口出现过连续请求报超时的情况，增加请求间隔
     await mockDelay(1);
-    let params = {
-      city_id: city_id,
-      cinema_id: cinema_id,
-      show_id: show_id,
-      seat_ids: seat_ids,
-      quan_code: "",
-      card_id: "",
-      additional_goods_info: "", // 附加商品信息
-      goods_info: "", // 商品信息
-      is_first: "0", // 是否是首次购买 0-不是 1-是
-      option_goods_info: "", // 可选的额外商品信息
-      update_time: getCurrentFormattedDateTime(),
-      session_id
-    };
     if (quan_code) {
       params.quan_code = quan_code; // 优惠券编码
     } else if (card_id) {
@@ -3319,8 +3321,8 @@ const priceCalculation = async ({
   } catch (error) {
     console.error(conPrefix + "计算订单价格异常", error);
     return {
-      error,
-      errMsg: "计算订单价格异常:" + JSON.stringify({ card_id, quan_code })
+      params,
+      error
     };
   }
 };

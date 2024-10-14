@@ -1723,9 +1723,24 @@ class OrderAutoTicketQueue {
     inx = 1
   ) {
     const { conPrefix } = this;
+    const session_id = this.currentParamsList[this.currentParamsInx].session_id;
+    let params = {
+      params: {
+        orderType: "ticket_order",
+        scheduleId,
+        scheduleKey,
+        filmUniqueId,
+        showDate,
+        ticketDetail,
+        showDateTime,
+        channelCode: "QD0000001",
+        sysSourceCode: "YZ001",
+        cinemaCode,
+        cinemaLinkId
+      },
+      session_id
+    };
     try {
-      const session_id =
-        this.currentParamsList[this.currentParamsInx].session_id;
       // 不需要每个都调下，解决锁定座位时没座位返回重进就有座位的问题
       if (inx % 2 === 1) {
         await getSeatLayout({
@@ -1738,22 +1753,7 @@ class OrderAutoTicketQueue {
         });
         await mockDelay(1);
       }
-      let params = {
-        params: {
-          orderType: "ticket_order",
-          scheduleId,
-          scheduleKey,
-          filmUniqueId,
-          showDate,
-          ticketDetail,
-          showDateTime,
-          channelCode: "QD0000001",
-          sysSourceCode: "YZ001",
-          cinemaCode,
-          cinemaLinkId
-        },
-        session_id
-      };
+
       console.log(conPrefix + "锁定座位参数", params);
       const res = await APP_API_OBJ[appFlag].lockSeat(params);
       console.log(conPrefix + "锁定座位返回", res);
@@ -1770,7 +1770,11 @@ class OrderAutoTicketQueue {
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: `第${inx}次锁定座位失败-${JSON.stringify(error)}`,
-        level: "error"
+        level: "error",
+        info: {
+          params,
+          error
+        }
       });
       return Promise.reject(error);
     }
