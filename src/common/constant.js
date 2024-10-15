@@ -922,7 +922,10 @@ const SWXH_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "山文星辉影城莱芜店"
   },
   {
-    order_cinema_name: ["山文星辉影城济南和谐广场店"],
+    order_cinema_name: [
+      "山文星辉影城济南和谐广场店",
+      "山文星辉影城济南和谐店原鲁信影城"
+    ],
     sfc_cinema_name: "山文星辉影城济南和谐店"
   },
   {

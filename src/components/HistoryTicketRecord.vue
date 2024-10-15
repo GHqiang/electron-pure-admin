@@ -180,7 +180,7 @@
       </el-table-column>
       <el-table-column prop="rewards" label="奖励订单" width="90">
         <template #default="scope">
-          <span>{{ scope.row.rewards == 1 ? "是" : "否" }}</span>
+          <span>{{ scope.row.rewards ? "是" : "否" }}</span>
         </template>
       </el-table-column>
       <el-table-column prop="quan_value" label="用券类型" width="90" />
