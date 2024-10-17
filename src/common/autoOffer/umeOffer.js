@@ -454,7 +454,7 @@ class getUmeOfferPrice {
       //     res
       //   }
       // });
-      return res.data?.areaInfoList || [];
+      return res.data;
     } catch (error) {
       console.error(conPrefix + "获取座位布局异常", error);
       this.logList.push({
@@ -739,14 +739,16 @@ class getUmeOfferPrice {
           targetShow
         }
       });
-      const areaInfoList = await this.getSeatLayout({
+      const areaRes = await this.getSeatLayout({
         cinemaCode,
         cinemaLinkId,
         scheduleId: targetShow?.scheduleId,
         scheduleKey: targetShow?.scheduleKey
       });
-      if (areaInfoList?.length) {
-        let maxSeatPrice = areaInfoList
+      let { seatList: seat_data, areaInfoList } = areaRes || {};
+      if (areaInfoList?.length > 1) {
+        // 座位分区从高到低排序
+        let areaList = areaInfoList
           .map(item => {
             if (item.areaMemberPrice?.length) {
               return item.areaMemberPrice.sort(
@@ -756,7 +758,48 @@ class getUmeOfferPrice {
               return { settlePrice: 0 };
             }
           })
-          .sort((a, b) => b.settlePrice - a.settlePrice)[0].settlePrice;
+          .sort((a, b) => b.settlePrice - a.settlePrice);
+        // 默认取最高价
+        let maxSeatPrice = areaList[0].settlePrice;
+        try {
+          // 过滤出来未售座位然后计算分区剩余座位占比，0-未售
+          let seatList = seat_data.filter(item => item.status === 0);
+
+          areaList = areaList.map(item => {
+            return {
+              ...item,
+              numRatio: Math.floor(
+                (seatList.filter(itemA => itemA.areaId == item.areaId).length *
+                  100) /
+                  seatList.length
+              )
+            };
+          });
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: "座位分区剩余座位情况",
+            level: "info",
+            info: {
+              areaList
+            }
+          });
+          // 默认取最高价格，最高座位占比不足百分之3时取次最高价格
+          if (areaList[0].numRatio <= 3 && areaList[1]?.settlePrice) {
+            maxSeatPrice = areaList[1].settlePrice;
+          }
+          if (areaList[1].numRatio <= 3 && areaList[2]?.settlePrice) {
+            maxSeatPrice = areaList[2].settlePrice;
+          }
+        } catch (error) {
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: "座位分区剩余座位占比计算失败",
+            level: "info",
+            info: {
+              error
+            }
+          });
+        }
         return {
           ...targetShow,
           maxSeatPrice

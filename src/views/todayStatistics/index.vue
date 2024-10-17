@@ -23,7 +23,6 @@
           placeholder="用户"
           style="width: 194px"
           clearable
-          :disabled="rule === 3"
         >
           <el-option
             v-for="(item, inx) in userList"
@@ -223,11 +222,7 @@ const formData = reactive({
 });
 const tableData = ref([]);
 
-if (rule === 3) {
-  formData.user_id = user_id;
-} else {
-  formData.rule = rule;
-}
+formData.rule = rule;
 
 const getTodayTime = sjc => {
   const now = new Date(sjc);

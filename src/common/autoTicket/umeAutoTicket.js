@@ -1388,7 +1388,7 @@ class OrderAutoTicketQueue {
         total_price = 0;
         // yaolai绑券逻辑不一样，暂不处理
         let syncBandQuanTypeList = ["zheyingshidai", "renhengmeng", "swxh"];
-        if (tokens.userInfo.rule === 3) {
+        if (tokens.userInfo.rule !== 2) {
           // 过滤掉不让外部用户用的
           syncBandQuanTypeList = syncBandQuanTypeList.filter(
             item => !["renhengmeng"].includes(item)

@@ -571,7 +571,7 @@ class getLmaOfferPrice {
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: "获取座位布局返回",
-        level: "error",
+        level: "info",
         info: {
           res
         }

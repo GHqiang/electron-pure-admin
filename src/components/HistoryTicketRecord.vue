@@ -47,7 +47,6 @@
           placeholder="出票用户"
           style="width: 194px"
           clearable
-          :disabled="rule === 3"
         >
           <el-option
             v-for="(item, inx) in userList"
@@ -272,8 +271,8 @@ const formData = reactive({
   end_time: ""
 });
 
-if (rule === 3) {
-  formData.user_id = user_id;
+if (rule !== 2) {
+  formData.rule = rule;
 }
 const getTodayTime = sjc => {
   const now = new Date(sjc);
