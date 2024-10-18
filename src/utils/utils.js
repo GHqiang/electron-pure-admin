@@ -324,36 +324,8 @@ const getCinemaFlag = item => {
   //   return "lma";
   // }
   if (
-    [
-      "华谊兄弟影院",
-      "华谊兄弟电影",
-      "华谊兄弟燕郊天洋城店",
-      "华谊兄弟4K激光巨幕影院赛格广场店"
-    ].some(
-      itemA =>
-        cinemNameSpecial(cinema_name).includes(itemA) &&
-        [
-          "上海",
-          "北京",
-          "重庆",
-          "哈尔滨",
-          "惠州",
-          "合肥",
-          "晋中",
-          "昆明",
-          "廊坊",
-          "青岛",
-          "上海",
-          "沈阳",
-          "深圳",
-          "郑州",
-          "铜陵",
-          "厦门",
-          "武汉",
-          "许昌",
-          "咸宁"
-        ].includes(city_name)
-    )
+    ["华谊兄弟"].includes(cinema_group) ||
+    (plat_name === "sheng" && cinema_group == "华谊")
   ) {
     return "hbchyxd";
   }
@@ -1347,12 +1319,12 @@ const cinemaMatchHandle = (cinema_name, list, appName) => {
 };
 
 // 影院名称特殊处理（为了特殊匹配,去括号、空格及中间点）
-const cinemNameSpecial = (cinema_name) => {
+const cinemNameSpecial = cinema_name => {
   return cinema_name
     .replace(/[\(\)\（\）\-\/、]/g, "") // 替换括号、破折号、斜杠和顿号
-    .replace(/\s*/g, "")               // 替换所有空白字符
-    .replace(/·/g, "")                 // 替换中间点
-    .replace(/:/g, "");                // 替换冒号
+    .replace(/\s*/g, "") // 替换所有空白字符
+    .replace(/·/g, "") // 替换中间点
+    .replace(/:/g, ""); // 替换冒号
 };
 // 券名称特殊处理（为了特殊匹配,去括号、空格、中间点、中横线及冒号）
 const couponInfoSpecial = coupon_info => {

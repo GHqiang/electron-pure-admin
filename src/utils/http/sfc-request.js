@@ -20,13 +20,14 @@ const createAxios = ({ group, app_name, timeout = 20 }) => {
     baseURL: "",
     timeout: timeout * 1000
   });
-
+  // 启用新版本服务影院列表
+  let newVerAppList = ["hbchyxd"];
   // 公共请求参数对象，包含一些默认的请求头信息，如group、pver、source、ver等
   var i = {
     group: group,
-    pver: "7.0",
+    pver: newVerAppList.includes(app_name) ? "8.0" : "7.0",
     source: "4",
-    ver: "7.7.3",
+    ver: newVerAppList.includes(app_name) ? "7.9.4" : "7.7.3",
     city_id: "",
     cinema_id: "",
     client_id: "",
