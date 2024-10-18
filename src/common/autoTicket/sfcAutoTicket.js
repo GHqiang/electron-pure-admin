@@ -3180,7 +3180,10 @@ const getMoviePlayInfo = async ({ city_id, cinema_id, appFlag }) => {
       width: "500"
     };
     console.log(conPrefix + "获取电影放映列表参数", params);
-    const res = await APP_API_OBJ[appFlag].getMoviePlayInfo(params);
+    const res =
+      await APP_API_OBJ[appFlag][
+        appFlag === "hbchyxd" ? "getMoviePlayInfoByV3" : "getMoviePlayInfo"
+      ](params);
     console.log(conPrefix + "获取电影放映列表返回", res);
     return {
       movieData: res.data?.movie_data || []

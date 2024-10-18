@@ -476,7 +476,8 @@ class getSfcOfferPrice {
       // 手续费
       const shouxufei = (Number(price) * 100) / 10000;
       // 奖励费用
-      let rewardPrice = rewards > 0 ? (Number(price) * 100 * rewards) / 10000 : 0;
+      let rewardPrice =
+        rewards > 0 ? (Number(price) * 100 * rewards) / 10000 : 0;
       // 真实成本（加手续费）
       cost_price = cost_price + shouxufei;
       // 最终成本（减奖励费）
@@ -773,7 +774,7 @@ class getSfcOfferPrice {
 
   // 获取电影信息
   async getMovieInfo(item) {
-    const { conPrefix } = this;
+    const { conPrefix, appFlag } = this;
     try {
       // 1、获取影院列表拿到影院id
       const {
@@ -858,6 +859,9 @@ class getSfcOfferPrice {
           });
           return;
         }
+        if (appFlag === "hbchyxd") {
+          ticketInfo.member_price = ticketInfo.normal_price;
+        }
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: "获取电影放映信息从而获取会员价",
@@ -893,7 +897,7 @@ class getSfcOfferPrice {
 
   // 获取电影放映信息
   async getMoviePlayInfo(data) {
-    const { conPrefix } = this;
+    const { conPrefix, appFlag } = this;
     try {
       let { city_id, cinema_id } = data || {};
       let params = {
@@ -902,7 +906,10 @@ class getSfcOfferPrice {
         width: "500"
       };
       console.log(conPrefix + "获取电影放映信息参数", params);
-      let res = await this.appApi.getMoviePlayInfo(params);
+      let res =
+        await this.appApi[
+          appFlag === "hbchyxd" ? "getMoviePlayInfoByV3" : "getMoviePlayInfo"
+        ](params);
       console.log(conPrefix + "获取电影放映信息返回", res);
       return res.data;
     } catch (error) {

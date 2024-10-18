@@ -33,6 +33,7 @@ const QUAN_TYPE = {
   "yaolai-erxian": "耀莱二线普通",
   "yaolai-yixianbu5": "耀莱一线普通补5",
   "zheying-35": "浙影-35",
+  "ningbo-36": "宁波影都-36",
   jinbaojia: "仅报价券"
 };
 
@@ -49,6 +50,7 @@ const QUAN_TYPE_COST = {
   "yaolai-erxian": 30,
   "yaolai-yixianbu5": 30,
   "zheying-35": 31,
+  "ningbo-36": 36,
   jinbaojia: 0
 };
 
@@ -65,6 +67,7 @@ const QUAN_TYPE_FLAG = {
   "yaolai-erxian": "影票兑换券",
   "yaolai-yixianbu5": "影票兑换券",
   "zheying-35": "全国合作券",
+  "ningbo-36": "JT_电子集团A券36",
   jinbaojia: "" // 仅报价不出无需考虑标识
 };
 

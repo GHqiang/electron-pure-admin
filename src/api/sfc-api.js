@@ -20,10 +20,11 @@ const createApi = ({ group, app_name }) => {
   const logout = params => axios.get("/sfc/user/logout", { params });
 
   // 获取城市列表(可支持自定义控制axios配置，如超时时间、重试次数、重试间隔，配合拦截器使用)
-  const getCityList = (params, config = {}) => axios.get("/sfc/city/list", { params, ...config});
+  const getCityList = (params, config = {}) =>
+    axios.get("/sfc/city/list", { params, ...config });
 
   // 获取影院列表
-  const getCinemaList = params => axios.get("/sfc/cinema/list", { params});
+  const getCinemaList = params => axios.get("/sfc/cinema/list", { params });
 
   // 获取线上电影列表
   const getMovieList = params =>
@@ -32,7 +33,9 @@ const createApi = ({ group, app_name }) => {
   // 获取电影放映信息
   const getMoviePlayInfo = params =>
     axios.get("/sfc/cinema/play-info", { params });
-
+  // 获取电影放映信息
+  const getMoviePlayInfoByV3 = params =>
+    axios.get("/sfc/v3/cinema/play-info", { params });
   // 获取座位布局
   const getMoviePlaySeat = params => axios.get("/sfc/play/seat", { params });
 
@@ -93,6 +96,7 @@ const createApi = ({ group, app_name }) => {
     getCinemaList,
     getMovieList,
     getMoviePlayInfo,
+    getMoviePlayInfoByV3,
     getMoviePlaySeat,
     getSeatLockRecord,
     lockSeat,
