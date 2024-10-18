@@ -477,7 +477,7 @@ class getLmaOfferPrice {
       // 手续费
       const shouxufei = (Number(price) * 100) / 10000;
       // 奖励费用
-      let rewardPrice = rewards ? (Number(price) * 100 * rewards) / 10000 : 0;
+      let rewardPrice = rewards > 0 ? (Number(price) * 100 * rewards) / 10000 : 0;
       // 真实成本（加手续费）
       cost_price = cost_price + shouxufei;
       // 最终成本（减奖励费）
@@ -517,7 +517,7 @@ class getLmaOfferPrice {
           return;
         }
         // 奖励单按真实成本（加手续费），非奖励单报最高限价
-        price = rewards ? cost_price : supplier_max_price;
+        price = rewards > 0 ? cost_price : supplier_max_price;
         // 不重新赋值的话按平台规则会员价四舍五入后+固定加价
         price = Math.round(price);
       }
@@ -643,6 +643,8 @@ class getLmaOfferPrice {
           };
         }
       }
+      // 会员价等于真实会员价加会员服务费
+      member_price = member_price + 3;
       console.log(conPrefix + "获取会员价", member_price);
       if (member_price > 0) {
         const cardRes = await svApi.queryCardList({
