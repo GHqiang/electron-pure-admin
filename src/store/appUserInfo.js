@@ -30,6 +30,7 @@ export const appUserInfo = defineStore("appUserInfo", {
       bjdzlt: null,
       glyc: null,
       lma: null,
+      hbchyxd: null,
       ume: null,
       wanmei: null,
       yinghuang: null,

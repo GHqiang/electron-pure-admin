@@ -93,6 +93,7 @@ const UME_LIST = [
 // 影院列表
 const APP_LIST = {
   lma: "卢米埃",
+  hbchyxd: "HBC华谊兄弟",
   ume: "UME",
   yaolai: "耀莱",
   swxh: "山文星辉",
@@ -293,6 +294,115 @@ const JIUJIN_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: "华夏久金国际影城",
     sfc_cinema_name: "上海华夏久金国际影城"
+  }
+];
+// HBC华谊兄弟特殊影院集合
+const HBCHYXD_SPECIAL_CINEMA_LIST = [
+  // 北京
+  {
+    order_cinema_name: "北京华谊兄弟影院IMAX洋桥店",
+    sfc_cinema_name: "华谊兄弟北京洋桥影院"
+  },
+  {
+    order_cinema_name: "北京华谊兄弟电影汇",
+    sfc_cinema_name: "华谊兄弟电影汇"
+  },
+  {
+    order_cinema_name: "新影联华谊兄弟影院望京店",
+    sfc_cinema_name: "北京新影联华谊兄弟影院望京店"
+  },
+  // 重庆
+  {
+    order_cinema_name: "华谊兄弟影院南坪店",
+    sfc_cinema_name: "重庆南岸区华谊兄弟南坪百联影院"
+  },
+  {
+    order_cinema_name: "华谊兄弟影院袁家岗店",
+    sfc_cinema_name: "重庆九龙坡区华谊兄弟袁家岗影院"
+  },
+  {
+    order_cinema_name: "华谊兄弟影院王府井店",
+    sfc_cinema_name: "哈尔滨华谊兄弟影院"
+  },
+  {
+    order_cinema_name: "华谊兄弟影院免费停车汇励店",
+    sfc_cinema_name: "华谊兄弟影院汇励99城市公园店"
+  },
+  {
+    order_cinema_name: "合肥华谊兄弟影院方圆荟店",
+    sfc_cinema_name: "华谊兄弟合肥金源影院"
+  },
+  {
+    order_cinema_name: "华谊兄弟影院银泰城店",
+    sfc_cinema_name: "华谊兄弟影院合肥银泰城店"
+  },
+  {
+    order_cinema_name: "华谊兄弟影院武里山IMAX店",
+    sfc_cinema_name: "华谊兄弟合肥武里山天街影院"
+  },
+  {
+    order_cinema_name: "华谊兄弟4K激光巨幕影院赛格广场店",
+    sfc_cinema_name: "广东省惠州市华谊兄弟影院"
+  },
+  {
+    order_cinema_name: "华谊兄弟影院免费停车奥莱IMAX店",
+    sfc_cinema_name: "华谊兄弟影院晋中奥莱店"
+  },
+  {
+    order_cinema_name: "华谊兄弟影院廊坊万向城中国巨幕4DX店",
+    sfc_cinema_name: "华谊兄弟影院廊坊万向城中国巨幕4DX店"
+  },
+  {
+    order_cinema_name: "华谊兄弟燕郊天洋城店",
+    sfc_cinema_name: "河北省廊坊市三河燕郊华谊兄弟天洋店"
+  },
+  {
+    order_cinema_name: "华谊兄弟影院青岛东方城店",
+    sfc_cinema_name: "华谊兄弟影城青岛东方城店"
+  },
+  {
+    order_cinema_name: "华谊兄弟电影中心杜比影院4DX",
+    sfc_cinema_name: "华谊兄弟上海长风店"
+  },
+  {
+    order_cinema_name: "华谊兄弟影院免费停车星摩尔店",
+    sfc_cinema_name: "辽宁省沈阳市华谊兄弟影城"
+  },
+  {
+    order_cinema_name: "华谊兄弟影院方大城店",
+    sfc_cinema_name: "华谊兄弟影院深圳方大店"
+  },
+  {
+    order_cinema_name: "华谊兄弟影院宝能4DX店",
+    sfc_cinema_name: "深圳华谊兄弟影院"
+  },
+  {
+    order_cinema_name: "铜陵华谊兄弟影院",
+    sfc_cinema_name: "华谊兄弟铜陵影院"
+  },
+  {
+    order_cinema_name: "华谊兄弟影院光谷IMAX店",
+    sfc_cinema_name: "华谊兄弟影院武汉光谷天地店"
+  },
+  {
+    order_cinema_name: "华谊兄弟影院黄陂店",
+    sfc_cinema_name: "华谊兄弟影院武汉黄陂店"
+  },
+  {
+    order_cinema_name: "厦门华谊兄弟电影中心",
+    sfc_cinema_name: "福建厦门嘉庚华谊兄弟影城"
+  },
+  {
+    order_cinema_name: "华谊兄弟影院咸宁店",
+    sfc_cinema_name: "湖北省华谊兄弟咸宁影院"
+  },
+  {
+    order_cinema_name: "华谊兄弟影院新田360亨源通店",
+    sfc_cinema_name: "华谊兄弟影院许昌店"
+  },
+  {
+    order_cinema_name: "华谊兄弟影院万科美景龙堂店",
+    sfc_cinema_name: "郑州华谊兄弟万科店"
   }
 ];
 // 莱纳龙域特殊影院集合
@@ -1321,6 +1431,7 @@ const ZHEYINGSHIDAI_SPECIAL_CINEMA_LIST = [
 // 特殊的名字匹配集合
 const SPECIAL_CINEMA_OBJ = {
   lma: [],
+  hbchyxd: HBCHYXD_SPECIAL_CINEMA_LIST,
   ume: UME_SPECIAL_CINEMA_LIST,
   yaolai: YAOLAI_SPECIAL_CINEMA_LIST,
   renhengmeng: RENHENGMENG_SPECIAL_CINEMA_LIST,
@@ -1411,6 +1522,7 @@ const SPECIAL_CINEMA_OBJ = {
 // 出票队列打印前缀
 const TICKET_CONPREFIX_OBJ = {
   lma: "【卢米埃自动出票】——",
+  hbchyxd: "【HBC华谊兄弟自动出票】——",
   ume: "【UME自动出票】——",
   yaolai: "【耀莱自动出票】——",
   renhengmeng: "【仁恒梦影廊自动出票】——",
@@ -1508,6 +1620,7 @@ const APP_OPENID_OBJ = {
   bjdzlt: "oIkMV5BkjhLVUj5ws2wPVBYieqJ4",
   glyc: "o5nuI64TLqvAat13QOPN5rlTpwkY",
   jiujin: "o9z475KmUY5DGBCmA8iHonVW4zco",
+  hbchyxd: "0f35YE100ZZg3T1vFx3009dslN15YE1D",
   jinji: "oTJ0a48lR3TPBfblHCqLLn-kdRro",
   ningbo: "o1TM95HQabEWcsC6u2S0XPd4ge5w",
   laina: "oPKih4oNM3oGJGcEItWiN5lJ93oA",
@@ -1579,6 +1692,7 @@ const APP_GROUP_OBJ = {
   bjdzlt: "20615",
   glyc: "20673",
   jiujin: "20253",
+  hbchyxd: "20061",
   jinji: "20047",
   ningbo: "20023",
   laina: "20463",
