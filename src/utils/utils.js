@@ -907,7 +907,7 @@ const sendWxPusherMessage = async ({
   };
   try {
     const response = await axios.post(url, messageData, { headers });
-    console.log("Response:", response.data);
+    // console.log("Response:", response.data);
     return response.data;
   } catch (error) {
     console.error(

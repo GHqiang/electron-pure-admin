@@ -49,6 +49,10 @@ const createApi = ({ group, app_name }) => {
   // 锁定座位
   const lockSeat = params => axios.get("/sfc/user/lock-seat", { params });
 
+  // 获取个人中心卡券信息
+  const getCardAndQuanList = params =>
+    axios.get("/sfc/v3/user/home", { params });
+
   // 获取会员卡列表
   const getCardList = params =>
     axios.get("/sfc/card/get-user-cinema-card", { params });
@@ -109,6 +113,7 @@ const createApi = ({ group, app_name }) => {
     getMoviePlaySeat,
     getSeatLockRecord,
     lockSeat,
+    getCardAndQuanList,
     getCardList,
     getQuanList,
     getQuanListByFirstUseQuan,

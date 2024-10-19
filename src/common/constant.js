@@ -1626,7 +1626,7 @@ const APP_OPENID_OBJ = {
   bjdzlt: "oIkMV5BkjhLVUj5ws2wPVBYieqJ4",
   glyc: "o5nuI64TLqvAat13QOPN5rlTpwkY",
   jiujin: "o9z475KmUY5DGBCmA8iHonVW4zco",
-  hbchyxd: "0f35YE100ZZg3T1vFx3009dslN15YE1D",
+  hbchyxd: "oY_OW5JDOHt6bDtaMpFvnrFcTM64", // 0f35YE100ZZg3T1vFx3009dslN15YE1D   oY_OW5JDOHt6bDtaMpFvnrFcTM64
   jinji: "oTJ0a48lR3TPBfblHCqLLn-kdRro",
   ningbo: "o1TM95HQabEWcsC6u2S0XPd4ge5w",
   laina: "oPKih4oNM3oGJGcEItWiN5lJ93oA",

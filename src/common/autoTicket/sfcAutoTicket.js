@@ -76,25 +76,27 @@ class OrderAutoTicketQueue {
     let newOrder = order || {
       id: 761,
       plat_name: "lieren",
-      app_name: "sfc",
+      app_name: "hbchyxd",
       ticket_num: 1,
       rewards: "0",
-      offer_type: "1",
+      offer_type: "2",
       order_number: "2024071012402352191",
       // cinema_code: '', // 影院id
       // supplierCode: 'ccf7b11cdc944cf1940a149cff4243f9', // 商户号
-      supplier_end_price: 36,
-      quan_value: "35",
+      supplier_end_price: 35.5,
+      // quan_value: "35",
+      member_price: 34.2,
+      real_member_price: 38,
       order_id: "6418878",
       tpp_price: "44.00",
-      city_name: "宁波",
+      city_name: "厦门",
       cinema_addr: "鄞州区中山东路1083号世纪东方广场三楼",
-      cinema_name: "SFC上影影城（宁波店）",
-      hall_name: "7号厅（3小时停车券21点前扫码）",
-      film_name: "云边有个小卖部",
-      lockseat: "10排2座",
-      show_time: "2024-07-10 14:30:00",
-      cinema_group: "上影二线"
+      cinema_name: "厦门华谊兄弟电影中心",
+      hall_name: "1号DTS:X临境音+激光厅",
+      film_name: "志愿军：存亡之战",
+      lockseat: "8排12座",
+      show_time: "2024-10-21 19:00:00",
+      cinema_group: "华谊兄弟"
     };
     // 动态生成事件名称
     const eventName = `newOrder_${appFlag}`;
@@ -393,17 +395,18 @@ class OrderAutoTicketQueue {
         des: `自动转单处于关闭状态`,
         level: "info"
       });
-      sendWxPusherMessage({
-        plat_name,
-        order_number,
-        city_name,
-        cinema_name,
-        film_name,
-        show_time,
-        lockseat,
-        transferTip: "自动转单处于关闭状态,需手动出票或者转单",
-        failReason: `${errMsg}——${errInfo}`
-      });
+      !isTestOrder &&
+        sendWxPusherMessage({
+          plat_name,
+          order_number,
+          city_name,
+          cinema_name,
+          film_name,
+          show_time,
+          lockseat,
+          transferTip: "自动转单处于关闭状态,需手动出票或者转单",
+          failReason: `${errMsg}——${errInfo}`
+        });
       return;
     }
     try {
@@ -578,8 +581,12 @@ class OrderAutoTicketQueue {
     }
     // 测试专用
     if (isTestOrder) {
-      offerRule = { offer_type: "1", quan_value: "35" };
-      // offerRule = { offer_type: "2", member_price: "29.9" };
+      // offerRule = { offer_type: "1", quan_value: "35" };
+      offerRule = {
+        offer_type: "2",
+        member_price: "34.2",
+        real_member_price: 38
+      };
     }
     console.warn(conPrefix + "从该订单的报价记录获取到的报价规则", offerRule);
     if (
@@ -1340,9 +1347,6 @@ class OrderAutoTicketQueue {
         });
         return { offerRule, transferParams };
       }
-      if (isTestOrder) {
-        return { offerRule };
-      }
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: `创建订单前计算订单价格成功`,
@@ -1401,16 +1405,27 @@ class OrderAutoTicketQueue {
         des: `创建订单成功`,
         level: "info"
       });
+      if (isTestOrder) {
+        return { offerRule };
+      }
+      let currentParamsInfo = this.currentParamsList[this.currentParamsInx];
+      // 不知道咋解密的，暂时抓包写死，每个手机号一个
+      let passObj = {
+        13073792313: "5e5d04e81d9394f5b446f4a80782b77f",
+        13937705167: "b6737175e5b56420df0b5b22e3b72c63"
+      };
+      let pay_password = passObj[currentParamsInfo.mobile];
       // 8、购买电影票
       const buyTicketRes = await buyTicket({
         city_id,
         cinema_id,
         order_num,
         pay_money,
-        session_id: this.currentParamsList[this.currentParamsInx].session_id,
+        session_id: currentParamsInfo.session_id,
         appFlag,
         offer_type: offerRule.offer_type,
-        isV3App
+        isV3App,
+        pay_password
       });
       const buyRes = buyTicketRes?.buyRes;
       if (!buyRes) {
@@ -1931,12 +1946,8 @@ class OrderAutoTicketQueue {
         update_time: getCurrentFormattedDateTime(),
         session_id
       };
-      if (isV3App) {
-        params.is_open_svip = "0";
-        params.points_to_cash = "";
-      }
       let order_num, res;
-      if (card_id) {
+      if (card_id && !isV3App) {
         params.card_id = card_id; // 会员卡id
         params.card_password = encode(""); // 会员卡密码
         try {
@@ -1980,11 +1991,16 @@ class OrderAutoTicketQueue {
           console.log(conPrefix + "创建订单返回", res);
           order_num = res.data?.order_num || "";
         }
-      } else if (coupon || member_coupon_id) {
-        if (coupon) {
-          params.coupon = coupon; // 优惠券券码
+      } else if (coupon || member_coupon_id || isV3App) {
+        if (isV3App) {
+          params.is_open_svip = "0";
+          params.points_to_cash = "";
         } else {
-          params.member_coupon_id = member_coupon_id; // 开卡赠送线下券
+          if (coupon) {
+            params.coupon = coupon; // 优惠券券码
+          } else {
+            params.member_coupon_id = member_coupon_id; // 开卡赠送线下券
+          }
         }
         console.log(conPrefix + "创建订单参数", params);
         this.logList.push({
@@ -2981,7 +2997,7 @@ class OrderAutoTicketQueue {
     mobile,
     plat_name
   }) {
-    const { conPrefix, appFlag } = this;
+    const { conPrefix, appFlag, isV3App } = this;
     try {
       let cards = cardList || [];
       let cardFilter = cards.filter(
@@ -3014,79 +3030,84 @@ class OrderAutoTicketQueue {
         return 0;
       });
       let card_id;
-      // 开始尝试使用卡并获取成功使用的卡的结果
-      const attemptCardsSequentially = async () => {
-        for (const card of cardData) {
-          console.log(conPrefix + `正在尝试使用卡 ${card.card_num}...`);
-          this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
-            des: `正在尝试使用卡 ${card.card_num}`,
-            level: "info"
-          });
-          const priceRes = await priceCalculation({
-            city_id,
-            cinema_id,
-            show_id,
-            seat_ids,
-            card_id: card.id,
-            session_id,
-            appFlag
-          });
-          let price = priceRes?.price;
-          if (priceRes?.error) {
+      if (!isV3App) {
+        // 开始尝试使用卡并获取成功使用的卡的结果
+        const attemptCardsSequentially = async () => {
+          for (const card of cardData) {
+            console.log(conPrefix + `正在尝试使用卡 ${card.card_num}...`);
             this.logList.push({
               opera_time: getCurrentFormattedDateTime(),
-              des: "尝试使用卡时计算价格异常",
-              level: "error",
-              info: {
-                error: priceRes?.error,
-                params: priceRes?.params
-              }
+              des: `正在尝试使用卡 ${card.card_num}`,
+              level: "info"
             });
-          }
-          if (price) {
-            let cardCalcFail =
-              Number(price.total_price) >
-              (Number(real_member_price) * 100 * Number(ticket_num)) / 100;
-            if (cardCalcFail) {
-              let isChangeCard = card.id !== cardData[cardData.length - 1].id;
+            const priceRes = await priceCalculation({
+              city_id,
+              cinema_id,
+              show_id,
+              seat_ids,
+              card_id: card.id,
+              session_id,
+              appFlag
+            });
+            let price = priceRes?.price;
+            if (priceRes?.error) {
               this.logList.push({
                 opera_time: getCurrentFormattedDateTime(),
-                des: `该会员卡计算后价格-${price.total_price}高于真实会员价-${real_member_price}*座位数-${ticket_num},${isChangeCard ? "准备换卡" : ""};`,
-                level: "info"
+                des: "尝试使用卡时计算价格异常",
+                level: "error",
+                info: {
+                  error: priceRes?.error,
+                  params: priceRes?.params
+                }
               });
-            } else {
-              card_id = card.id;
-              console.log(conPrefix + "卡使用成功，返回结果并停止尝试。");
-              return price; // 卡使用成功，返回结果并结束函数
+            }
+            if (price) {
+              let cardCalcFail =
+                Number(price.total_price) >
+                (Number(real_member_price) * 100 * Number(ticket_num)) / 100;
+              if (cardCalcFail) {
+                let isChangeCard = card.id !== cardData[cardData.length - 1].id;
+                this.logList.push({
+                  opera_time: getCurrentFormattedDateTime(),
+                  des: `该会员卡计算后价格-${price.total_price}高于真实会员价-${real_member_price}*座位数-${ticket_num},${isChangeCard ? "准备换卡" : ""};`,
+                  level: "info"
+                });
+              } else {
+                card_id = card.id;
+                console.log(conPrefix + "卡使用成功，返回结果并停止尝试。");
+                return price; // 卡使用成功，返回结果并结束函数
+              }
             }
           }
-        }
-        this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
-          des: `所有会员卡尝试均失败`,
-          level: "error"
-        });
-        console.error(conPrefix + "所有卡尝试均失败。");
-        return null; // 所有卡尝试失败后返回null
-      };
-      // 3、计算价格要求最终价格小于中标价
-      const priceInfo = await attemptCardsSequentially();
-      if (!priceInfo) {
-        console.error(conPrefix + "计算订单价格失败，单个订单直接出票结束");
-        return {
-          profit: 0,
-          card_id: ""
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: `所有会员卡尝试均失败`,
+            level: "error"
+          });
+          console.error(conPrefix + "所有卡尝试均失败。");
+          return null; // 所有卡尝试失败后返回null
         };
+        // 3、计算价格要求最终价格小于中标价
+        const priceInfo = await attemptCardsSequentially();
+        if (!priceInfo) {
+          console.error(conPrefix + "计算订单价格失败，单个订单直接出票结束");
+          return {
+            profit: 0,
+            card_id: ""
+          };
+        }
+        console.warn(
+          conPrefix + "会员卡出票最终价格",
+          priceInfo?.total_price,
+          supplier_end_price,
+          ticket_num,
+          "中标价格*座位数：",
+          Number(supplier_end_price) * ticket_num
+        );
+      } else {
+        card_id = cardData[0]?.member_id;
       }
-      console.warn(
-        conPrefix + "会员卡出票最终价格",
-        priceInfo?.total_price,
-        supplier_end_price,
-        ticket_num,
-        "中标价格*座位数：",
-        Number(supplier_end_price) * ticket_num
-      );
+
       // 卡的话 1块钱成本就是一块钱，利润 =  中标价格-会员出票价格 -手续费（中标价格1%）
       let profit =
         supplier_end_price -
@@ -3248,10 +3269,20 @@ const getCardList = async ({ city_id, cinema_id, session_id, appFlag }) => {
       cinema_id,
       session_id
     };
+    let isV3App = sfcV3AppList.includes(appFlag);
     console.log(conPrefix + "获取会员卡列表参数", params);
-    const res = await APP_API_OBJ[appFlag].getCardList(params);
+    const res =
+      await APP_API_OBJ[appFlag][
+        isV3App ? "getCardAndQuanList" : "getCardList"
+      ](params);
     console.log(conPrefix + "获取会员卡列表返回", res);
     let cardList = res.data?.card_data || [];
+    if (isV3App) {
+      let cardInfo = res.data?.member_info;
+      if (cardInfo) {
+        cardList = [cardInfo];
+      }
+    }
     return {
       cardList
     };
@@ -3335,7 +3366,8 @@ const priceCalculation = async ({
     update_time: getCurrentFormattedDateTime(),
     session_id
   };
-  if (sfcV3AppList.includes(appFlag)) {
+  let isV3App = sfcV3AppList.includes(appFlag);
+  if (isV3App) {
     params.is_open_svip = "0";
   }
   try {
@@ -3343,7 +3375,7 @@ const priceCalculation = async ({
     await mockDelay(1);
     if (quan_code) {
       params.quan_code = quan_code; // 优惠券编码
-    } else if (card_id) {
+    } else if (card_id && !isV3App) {
       params.card_id = card_id; // 会员卡id
     } else if (member_coupon_id) {
       params.member_coupon_id = member_coupon_id; // 会员卡赠送线下券id
@@ -3410,11 +3442,10 @@ const buyTicket = async ({
   session_id,
   appFlag,
   offer_type,
-  isV3App
+  isV3App,
+  pay_password
 }) => {
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
-  let currentParams = this.currentParamsList[this.currentParamsInx];
-  const { member_pwd } = currentParams;
   try {
     let params = {
       city_id,
@@ -3427,7 +3458,9 @@ const buyTicket = async ({
     };
     if (isV3App && offer_type !== "1") {
       params.pay_type = "wallet";
-      params.pay_password = encode(member_pwd);
+      params.pay_password = pay_password;
+      // 5e5d04e81d9394f5b446f4a80782b77f
+      // 5e5d04e81d9394f5b446f4a80782b77f
     }
     console.log(conPrefix + "订单购买参数", params);
     const buyRes = await APP_API_OBJ[appFlag].buyTicket(params);
