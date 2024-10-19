@@ -71,6 +71,9 @@ const QUAN_TYPE_FLAG = {
   jinbaojia: "" // 仅报价不出无需考虑标识
 };
 
+// sfc系列v3版本影院
+const sfcV3AppList = ["hbchyxd"];
+
 // ume系统影院
 const UME_LIST = [
   "ume",
@@ -1971,6 +1974,7 @@ export {
   TEST_NEW_PLAT_LIST,
   QUAN_TYPE,
   QUAN_TYPE_COST,
+  sfcV3AppList,
   QUAN_TYPE_FLAG,
   UME_LIST,
   APP_LIST,

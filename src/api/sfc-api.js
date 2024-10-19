@@ -3,7 +3,10 @@
  */
 
 import createAxios from "@/utils/http/sfc-request";
+import { sfcV3AppList } from "@/common/constant";
 const createApi = ({ group, app_name }) => {
+  // 启用新版本服务影院列表
+  let isV3App = sfcV3AppList.includes(app_name);
   let axios = createAxios({
     group: group,
     app_name: app_name
@@ -32,12 +35,12 @@ const createApi = ({ group, app_name }) => {
 
   // 获取电影放映信息
   const getMoviePlayInfo = params =>
-    axios.get("/sfc/cinema/play-info", { params });
-  // 获取电影放映信息
-  const getMoviePlayInfoByV3 = params =>
-    axios.get("/sfc/v3/cinema/play-info", { params });
+    axios.get(isV3App ? "/sfc/v3/cinema/play-info" : "/sfc/cinema/play-info", {
+      params
+    });
   // 获取座位布局
-  const getMoviePlaySeat = params => axios.get("/sfc/play/seat", { params });
+  const getMoviePlaySeat = params =>
+    axios.get(isV3App ? "/sfc/v3/play/seat" : "/sfc/play/seat", { params });
 
   // 获取锁定座位记录
   const getSeatLockRecord = params =>
@@ -53,6 +56,7 @@ const createApi = ({ group, app_name }) => {
   // 获取优惠券列表
   const getQuanList = params =>
     axios.get("/sfc/v2/coupon/get-offline-coupon-list", { params });
+  // v3/coupon/get-list-when-pay 支付那获取的一个券列表
 
   // 个人中心优惠券列表，优先用券时使用
   const getQuanListByFirstUseQuan = params =>
@@ -66,11 +70,17 @@ const createApi = ({ group, app_name }) => {
   const createOrder = params => axios.post("/sfc/v2/order/ng-create", params);
 
   // 电影票购买
-  const buyTicket = params => axios.get("/sfc/ticket/ng-buy", { params });
+  const buyTicket = params =>
+    axios.get(isV3App ? "/sfc/v2/settlement/pay" : "/sfc/ticket/ng-buy", {
+      params
+    });
 
   // 支付订单并返回购票信息
   const payOrder = params =>
-    axios.get("/sfc/order/get-my-order-result", { params });
+    axios.get(
+      isV3App ? "/sfc/v3/order/order-detail" : "/sfc/order/get-my-order-result",
+      { params }
+    );
 
   // 获取最近一次订单信息
   const getLastOrder = params =>
@@ -96,7 +106,6 @@ const createApi = ({ group, app_name }) => {
     getCinemaList,
     getMovieList,
     getMoviePlayInfo,
-    getMoviePlayInfoByV3,
     getMoviePlaySeat,
     getSeatLockRecord,
     lockSeat,

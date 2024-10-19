@@ -897,7 +897,7 @@ class getSfcOfferPrice {
 
   // 获取电影放映信息
   async getMoviePlayInfo(data) {
-    const { conPrefix, appFlag } = this;
+    const { conPrefix } = this;
     try {
       let { city_id, cinema_id } = data || {};
       let params = {
@@ -906,10 +906,7 @@ class getSfcOfferPrice {
         width: "500"
       };
       console.log(conPrefix + "获取电影放映信息参数", params);
-      let res =
-        await this.appApi[
-          appFlag === "hbchyxd" ? "getMoviePlayInfoByV3" : "getMoviePlayInfo"
-        ](params);
+      let res = await this.appApi.getMoviePlayInfo(params);
       console.log(conPrefix + "获取电影放映信息返回", res);
       return res.data;
     } catch (error) {

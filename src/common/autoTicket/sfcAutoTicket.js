@@ -23,7 +23,8 @@ import {
   TICKET_CONPREFIX_OBJ,
   APP_OPENID_OBJ,
   QUAN_TYPE_COST,
-  TEST_NEW_PLAT_LIST
+  TEST_NEW_PLAT_LIST,
+  sfcV3AppList
 } from "@/common/constant";
 import { APP_API_OBJ, PLAT_API_OBJ } from "@/common/index";
 
@@ -43,6 +44,7 @@ class OrderAutoTicketQueue {
     this.prevOrderNumber = ""; // 上个订单号
     this.eventName = `newOrder_${appFlag}`;
     this.handledOrders = new Map(); // 用于存储已处理订单号及其相关信息
+    this.isV3App = sfcV3AppList.includes(appFlag);
   }
 
   // 启动队列
@@ -872,7 +874,7 @@ class OrderAutoTicketQueue {
 
   // 一键买票逻辑
   async oneClickBuyTicket(item) {
-    const { conPrefix, appFlag } = this;
+    const { conPrefix, appFlag, isV3App } = this;
     try {
       console.log(conPrefix + "一键买票待下单信息", item);
       let {
@@ -1406,7 +1408,9 @@ class OrderAutoTicketQueue {
         order_num,
         pay_money,
         session_id: this.currentParamsList[this.currentParamsInx].session_id,
-        appFlag
+        appFlag,
+        offer_type: offerRule.offer_type,
+        isV3App
       });
       const buyRes = buyTicketRes?.buyRes;
       if (!buyRes) {
@@ -1895,7 +1899,7 @@ class OrderAutoTicketQueue {
 
   // 创建订单
   async createOrder(data) {
-    const { conPrefix } = this;
+    const { conPrefix, isV3App } = this;
     let {
       city_id,
       cinema_id,
@@ -1927,6 +1931,10 @@ class OrderAutoTicketQueue {
         update_time: getCurrentFormattedDateTime(),
         session_id
       };
+      if (isV3App) {
+        params.is_open_svip = "0";
+        params.points_to_cash = "";
+      }
       let order_num, res;
       if (card_id) {
         params.card_id = card_id; // 会员卡id
@@ -2052,7 +2060,7 @@ class OrderAutoTicketQueue {
 
   // 获取购票信息
   async payOrder(data) {
-    const { conPrefix } = this;
+    const { conPrefix, isV3App } = this;
     let {
       city_id,
       cinema_id,
@@ -2071,6 +2079,9 @@ class OrderAutoTicketQueue {
         order_type_num: 1, // 订单子类型数量，可能是指购买的该类型票的数量
         session_id
       };
+      if (isV3App) {
+        params.business_type = "1";
+      }
       console.log(conPrefix + "支付订单参数", params);
       if (inx === 1) {
         targetLogList.push({
@@ -2107,53 +2118,56 @@ class OrderAutoTicketQueue {
           error
         }
       });
-      let params = {
-        cinema_id,
-        city_id,
-        order_status: "0",
-        page: "1",
-        session_id,
-        width: "240"
-      };
-      try {
-        const res = await this.sfcApi.getOrderList(params);
-        let list = res.data?.order_data || [];
-        if (list.length) {
-          let targetObj = list.find(item => item.order_num === order_num);
-          if (targetObj) {
-            let qrcode = targetObj.ticket_code?.split(",").join("|");
-            if (qrcode) {
-              targetLogList.push({
-                opera_time: getCurrentFormattedDateTime(),
-                des: `第${inx}次从已完成订单里获取取票码成功`,
-                level: "info",
-                info: {
-                  qrcode
-                }
-              });
-              return qrcode;
-            } else {
-              targetLogList.push({
-                opera_time: getCurrentFormattedDateTime(),
-                des: `第${inx}次从已完成订单里获取取票码失败`,
-                level: "error",
-                info: {
-                  list,
-                  order_num
-                }
-              });
+      // v3版本没这个接口
+      if (!isV3App) {
+        let params = {
+          cinema_id,
+          city_id,
+          order_status: "0",
+          page: "1",
+          session_id,
+          width: "240"
+        };
+        try {
+          const res = await this.sfcApi.getOrderList(params);
+          let list = res.data?.order_data || [];
+          if (list.length) {
+            let targetObj = list.find(item => item.order_num === order_num);
+            if (targetObj) {
+              let qrcode = targetObj.ticket_code?.split(",").join("|");
+              if (qrcode) {
+                targetLogList.push({
+                  opera_time: getCurrentFormattedDateTime(),
+                  des: `第${inx}次从已完成订单里获取取票码成功`,
+                  level: "info",
+                  info: {
+                    qrcode
+                  }
+                });
+                return qrcode;
+              } else {
+                targetLogList.push({
+                  opera_time: getCurrentFormattedDateTime(),
+                  des: `第${inx}次从已完成订单里获取取票码失败`,
+                  level: "error",
+                  info: {
+                    list,
+                    order_num
+                  }
+                });
+              }
             }
           }
+        } catch (error) {
+          targetLogList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: `第${inx}次从已完成订单里获取取票码异常`,
+            level: "error",
+            info: {
+              error
+            }
+          });
         }
-      } catch (error) {
-        targetLogList.push({
-          opera_time: getCurrentFormattedDateTime(),
-          des: `第${inx}次从已完成订单里获取取票码异常`,
-          level: "error",
-          info: {
-            error
-          }
-        });
       }
       return Promise.reject(error);
     }
@@ -3180,10 +3194,7 @@ const getMoviePlayInfo = async ({ city_id, cinema_id, appFlag }) => {
       width: "500"
     };
     console.log(conPrefix + "获取电影放映列表参数", params);
-    const res =
-      await APP_API_OBJ[appFlag][
-        appFlag === "hbchyxd" ? "getMoviePlayInfoByV3" : "getMoviePlayInfo"
-      ](params);
+    const res = await APP_API_OBJ[appFlag].getMoviePlayInfo(params);
     console.log(conPrefix + "获取电影放映列表返回", res);
     return {
       movieData: res.data?.movie_data || []
@@ -3324,6 +3335,9 @@ const priceCalculation = async ({
     update_time: getCurrentFormattedDateTime(),
     session_id
   };
+  if (sfcV3AppList.includes(appFlag)) {
+    params.is_open_svip = "0";
+  }
   try {
     // 模拟延迟调用，因为该接口出现过连续请求报超时的情况，增加请求间隔
     await mockDelay(1);
@@ -3394,9 +3408,13 @@ const buyTicket = async ({
   order_num,
   pay_money,
   session_id,
-  appFlag
+  appFlag,
+  offer_type,
+  isV3App
 }) => {
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
+  let currentParams = this.currentParamsList[this.currentParamsInx];
+  const { member_pwd } = currentParams;
   try {
     let params = {
       city_id,
@@ -3407,6 +3425,10 @@ const buyTicket = async ({
       pay_type: "", // 购买方式 传空意味着用优惠券或者会员卡
       session_id
     };
+    if (isV3App && offer_type !== "1") {
+      params.pay_type = "wallet";
+      params.pay_password = encode(member_pwd);
+    }
     console.log(conPrefix + "订单购买参数", params);
     const buyRes = await APP_API_OBJ[appFlag].buyTicket(params);
     console.log(conPrefix + "订单购买返回", buyRes);

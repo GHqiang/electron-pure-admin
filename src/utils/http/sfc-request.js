@@ -1,7 +1,7 @@
 // sfc请求拦截器封装
 import axios from "axios";
 import { ElMessage } from "element-plus";
-import { APP_LIST } from "@/common/constant";
+import { APP_LIST, sfcV3AppList } from "@/common/constant";
 import md5 from "../md5.js";
 import {
   sendWxPusherMessage,
@@ -21,13 +21,13 @@ const createAxios = ({ group, app_name, timeout = 20 }) => {
     timeout: timeout * 1000
   });
   // 启用新版本服务影院列表
-  let newVerAppList = ["hbchyxd"];
+  let isV3App = sfcV3AppList.includes(app_name);
   // 公共请求参数对象，包含一些默认的请求头信息，如group、pver、source、ver等
   var i = {
     group: group,
-    pver: newVerAppList.includes(app_name) ? "8.0" : "7.0",
+    pver: isV3App ? "8.0" : "7.0",
     source: "4",
-    ver: newVerAppList.includes(app_name) ? "7.9.4" : "7.7.3",
+    ver: isV3App ? "7.9.4" : "7.7.3",
     city_id: "",
     cinema_id: "",
     client_id: "",
