@@ -319,10 +319,10 @@ const getCinemaFlag = item => {
       item => cinemNameSpecial(item) === cinemNameSpecial(cinema_name)
     );
 
-  // let isLmaGroup = ["卢米埃"].includes(cinema_group);
-  // if (isLmaGroup) {
-  //   return "lma";
-  // }
+  let isLmaGroup = ["卢米埃"].includes(cinema_group);
+  if (isLmaGroup) {
+    return "lma";
+  }
   if (
     ["华谊兄弟"].includes(cinema_group) ||
     (plat_name === "sheng" && cinema_group == "华谊")

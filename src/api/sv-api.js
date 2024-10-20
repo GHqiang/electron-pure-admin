@@ -110,6 +110,9 @@ const updateLoginRecord = params =>
 // 上传出票过程操作日志
 const addTicketOperaLog = params =>
   axios.post("/svpi/operaRecord/addList", params);
+// 查询会员卡当天及当月出票量
+const getCardDailyAndMonthlyTicketCount = params =>
+  axios.get("/svpi/cardRecord/cardDailyAndMonthlyTicketCount", { params });
 
 export default {
   login,
@@ -151,5 +154,6 @@ export default {
   batchDeleteLogin,
   addLoginRecord,
   updateLoginRecord,
-  addTicketOperaLog
+  addTicketOperaLog,
+  getCardDailyAndMonthlyTicketCount
 };

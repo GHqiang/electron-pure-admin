@@ -55,6 +55,10 @@ const createApi = ({ app_name }) => {
     axios.get("/lma/mp/iorder/get_order", {
       params
     });
+
+  // 切换卡（可获取卡余额及状态）
+  const changeCard = params => axios.post("/lma/mp/imember/change", params);
+
   // 获取会员卡列表
   const getCardList = params => axios.get("/lma/mp/imember/index", { params });
 
@@ -73,11 +77,11 @@ const createApi = ({ app_name }) => {
   const createOrder = params => axios.post("/sfc/v2/order/ng-create", params);
 
   // 电影票购买
-  const buyTicket = params => axios.get("/sfc/ticket/ng-buy", { params });
+  const buyTicket = params => axios.post("/lma/mp/iorder/complete ", params);
 
-  // 支付订单并返回购票信息
+  // 获取购票信息
   const payOrder = params =>
-    axios.get("/sfc/order/get-my-order-result", { params });
+    axios.get("/lma/mp/ihistory/ticket_info", { params });
 
   // 获取订单列表
   const getOrderList = params =>
@@ -101,6 +105,7 @@ const createApi = ({ app_name }) => {
     getMoviePlayDate, // 获取电影放映场次
     getMoviePlaySeat,
     lockSeat,
+    changeCard,
     getCardList,
     getQuanList,
     getQuanListByFirstUseQuan,

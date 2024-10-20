@@ -477,7 +477,8 @@ class getLmaOfferPrice {
       // 手续费
       const shouxufei = (Number(price) * 100) / 10000;
       // 奖励费用
-      let rewardPrice = rewards > 0 ? (Number(price) * 100 * rewards) / 10000 : 0;
+      let rewardPrice =
+        rewards > 0 ? (Number(price) * 100 * rewards) / 10000 : 0;
       // 真实成本（加手续费）
       cost_price = cost_price + shouxufei;
       // 最终成本（减奖励费）
@@ -643,8 +644,7 @@ class getLmaOfferPrice {
           };
         }
       }
-      // 会员价等于真实会员价加会员服务费
-      member_price = member_price + 3;
+      // 服务费已包含在会员价里面了
       console.log(conPrefix + "获取会员价", member_price);
       if (member_price > 0) {
         const cardRes = await svApi.queryCardList({
@@ -685,9 +685,16 @@ class getLmaOfferPrice {
         // 按最低折扣取值报价
         let discount = cardList[0]?.card_discount;
         let real_member_price = Number(member_price);
+        if (real_member_price >= 30) {
+          member_price = real_member_price - 30;
+        }
         member_price = discount
           ? (Number(member_price) * 100 * discount) / 10000
           : Number(member_price);
+        if (real_member_price >= 30) {
+          // 减5券的成本1.5，不固定
+          member_price = Number(member_price) + 1.5;
+        }
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: "获取会员价相关信息返回",
@@ -699,8 +706,8 @@ class getLmaOfferPrice {
           }
         });
         return {
-          real_member_price,
-          member_price: Number(member_price.toFixed(2))
+          real_member_price, // 真实会员价
+          member_price: Number(member_price.toFixed(2)) // 成本价
         };
       } else {
         console.warn(conPrefix + "会员价未负，非会员价", nonmember_price);
@@ -714,8 +721,8 @@ class getLmaOfferPrice {
             }
           });
           return {
-            member_price: Number(nonmember_price),
-            real_member_price: Number(nonmember_price)
+            member_price: Number(nonmember_price), // 成本价
+            real_member_price: Number(nonmember_price) // 真实会员价
           };
         }
       }
