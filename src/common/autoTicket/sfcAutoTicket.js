@@ -1412,7 +1412,8 @@ class OrderAutoTicketQueue {
       // 不知道咋解密的，暂时抓包写死，每个手机号一个
       let passObj = {
         13073792313: "5e5d04e81d9394f5b446f4a80782b77f",
-        13937705167: "b6737175e5b56420df0b5b22e3b72c63"
+        13937705167: "b6737175e5b56420df0b5b22e3b72c63",
+        13539815664: "562a03e43f82dfe0c9a7a951ea639005"
       };
       let pay_password = passObj[currentParamsInfo.mobile];
       // 8、购买电影票
