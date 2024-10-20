@@ -409,6 +409,21 @@ const HBCHYXD_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: "华谊兄弟影院万科美景龙堂店",
     sfc_cinema_name: "郑州华谊兄弟万科店"
+  },
+  // 昆明
+  {
+    order_cinema_name: "华谊兄弟影院昆明金地店",
+    sfc_cinema_name: "华谊兄弟影城昆明金地店"
+  },
+  // 沈阳
+  {
+    order_cinema_name: "华谊兄弟影院沈阳大悦城店",
+    sfc_cinema_name: "华谊兄弟影城沈阳大悦城店"
+  },
+  // 上海
+  {
+    order_cinema_name: "华谊兄弟影院杜比影院长风店",
+    sfc_cinema_name: "华谊兄弟上海长风店"
   }
 ];
 // 莱纳龙域特殊影院集合
@@ -491,7 +506,8 @@ const QINA_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: [
       "齐纳国际影城宏程OnyxLED&amp;LUXE店",
-      "齐纳国际影城宏程OnyxLED&LUXE店"
+      "齐纳国际影城宏程OnyxLED&LUXE店",
+      "齐纳影城宏程OnyxLED&LUXE店"
     ],
     sfc_cinema_name: "齐纳国际影城宏程店"
   },
@@ -548,6 +564,13 @@ const QINA_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: "齐纳国际影城泰华新天地店",
     sfc_cinema_name: "潍坊齐纳国际影城"
+  },
+  {
+    order_cinema_name: [
+      "齐纳影城鑫马吾悦店原荣盛店",
+      "齐纳影城荣盛店可躺式座椅影城"
+    ],
+    sfc_cinema_name: "齐纳影城鑫马吾悦店可躺式座椅"
   }
 ];
 // 红石影城惠南店特殊影院集合
@@ -1238,6 +1261,10 @@ const BNXM_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: ["金华博纳院线戏幕影城双机CINITY金华之心银泰店"],
     sfc_cinema_name: "金华博纳院线戏幕影城金华之心CINITY巨幕店"
+  },
+  {
+    order_cinema_name: ["青岛博纳院线戏幕影城胶州天街店"],
+    sfc_cinema_name: "青岛博纳院线戏幕影城胶州天街巨幕店"
   }
 ];
 
@@ -1252,7 +1279,9 @@ const TPYYC_CINEMA_NAME_BY_SFC = [
   "太平洋影城（德阳沃尔玛店）",
   "太平洋影城（大丰店）",
   "太平洋影城（和盛店）",
-  "苍溪太平洋影城"
+  "苍溪太平洋影城",
+  "太平洋影城（资中店）",
+  "太平洋影城（阆中店）"
 ];
 
 // 太平洋影城-ume系统
@@ -1431,6 +1460,11 @@ const ZHEYINGSHIDAI_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: ["浙影时代影城玉环店"],
     sfc_cinema_name: "浙影时代玉环店"
+  },
+  // 嘉兴
+  {
+    order_cinema_name: ["浙影时代影城华影星空影城"],
+    sfc_cinema_name: "浙影时代华影星空影城"
   }
 ];
 
