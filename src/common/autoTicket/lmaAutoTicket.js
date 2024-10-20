@@ -1402,6 +1402,13 @@ class OrderAutoTicketQueue {
           (Number(supplier_end_price) * 100) / 10000;
         profit = Number(profit) * Number(ticket_num);
       }
+      if (rewards > 0) {
+        // 特急奖励订单中标价格 * 张数 * 0.04;
+        let rewardPrice =
+          (Number(supplier_end_price) * Number(ticket_num) * 100 * rewards) /
+          10000;
+        profit += rewardPrice;
+      }
       let order_num = order_str;
       if (isTestOrder) {
         return { offerRule };
@@ -2056,8 +2063,6 @@ class OrderAutoTicketQueue {
   }
 
   async lastHandle({
-    city_id,
-    cinema_id,
     order_num,
     order_id,
     app_name,
@@ -2069,7 +2074,7 @@ class OrderAutoTicketQueue {
     orderInfo,
     lockseat
   }) {
-    const { conPrefix, appFlag } = this;
+    const { conPrefix } = this;
     try {
       let qrcode;
       try {
@@ -2451,7 +2456,7 @@ class OrderAutoTicketQueue {
     plat_name,
     order_number
   }) {
-    const { conPrefix, appFlag } = this;
+    const { conPrefix } = this;
     try {
       // 规则如下:
       // 1、成本不能高于中标价，即40券不能出中标价38.8的单
@@ -2593,15 +2598,7 @@ class OrderAutoTicketQueue {
   }
 
   // 使用会员卡
-  async useCard({
-    member_total_price,
-    cardList,
-    supplier_end_price,
-    ticket_num,
-    member_price,
-    real_member_price,
-    lmaToken
-  }) {
+  async useCard({ member_total_price, cardList, lmaToken }) {
     const { conPrefix, appFlag } = this;
     try {
       let cards = cardList || [];
@@ -2684,48 +2681,6 @@ class OrderAutoTicketQueue {
       // 由于锁座前用卡不产生订单无法计算价格，故不计算利润，后面判断
       return {
         card_id
-      };
-      console.warn(
-        conPrefix + "会员卡出票最终价格",
-        priceInfo?.total_price,
-        supplier_end_price,
-        ticket_num,
-        "中标价格*座位数：",
-        Number(supplier_end_price) * ticket_num
-      );
-      // 卡的话 1块钱成本就是一块钱，利润 =  中标价格-会员出票价格 -手续费（中标价格1%）
-      let profit =
-        supplier_end_price -
-        member_price -
-        (Number(supplier_end_price) * 100) / 10000;
-      profit = Number(profit) * Number(ticket_num);
-      if (rewards > 0) {
-        // 特急奖励订单中标价格 * 张数 * 0.04;
-        let rewardPrice =
-          (Number(supplier_end_price) * Number(ticket_num) * 100 * rewards) /
-          10000;
-        profit += rewardPrice;
-      }
-      profit = Number(profit).toFixed(2);
-      if (profit < 0 && !TEST_NEW_PLAT_LIST.includes(plat_name)) {
-        console.error(conPrefix + "最终利润为负，单个订单直接出票结束");
-        this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
-          des: `使用会员卡计算价格后最终利润为负`,
-          level: "error",
-          info: {
-            error
-          }
-        });
-        // 后续要记录失败列表（订单信息、失败原因、时间戳）
-        return {
-          profit: 0,
-          card_id: ""
-        };
-      }
-      return {
-        card_id,
-        profit
       };
     } catch (error) {
       // 此处异常一定是代码异常无需考虑重试
