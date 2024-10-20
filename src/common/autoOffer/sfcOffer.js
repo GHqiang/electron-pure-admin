@@ -634,47 +634,47 @@ class getSfcOfferPrice {
           let areaList = area_price.sort((a, b) => b.price - a.price);
           // 默认取最高价
           let bigPrice = areaList[0].price;
-          try {
-            // 过滤出来未售座位然后计算分区剩余座位占比，0-未售
-            let seatList = seat_data.filter(item => item[2] === "0");
-            // 座位信息最后一位是座位分区id
-            areaList = areaList.map(item => {
-              return {
-                ...item,
-                numRatio: Math.floor(
-                  (seatList.filter(
-                    itemA => itemA[itemA.length - 1] == item.area_id
-                  ).length *
-                    100) /
-                    seatList.length
-                )
-              };
-            });
-            this.logList.push({
-              opera_time: getCurrentFormattedDateTime(),
-              des: "座位分区剩余座位情况",
-              level: "info",
-              info: {
-                areaList
-              }
-            });
-            // 默认取最高价格，最高座位占比不足百分之3时取次最高价格
-            if (areaList[0].numRatio <= 3 && areaList[1]?.price) {
-              bigPrice = areaList[1].price;
-            }
-            if (areaList[1].numRatio <= 3 && areaList[2]?.price) {
-              bigPrice = areaList[2].price;
-            }
-          } catch (error) {
-            this.logList.push({
-              opera_time: getCurrentFormattedDateTime(),
-              des: "座位分区剩余座位占比计算失败",
-              level: "info",
-              info: {
-                error
-              }
-            });
-          }
+          // try {
+          //   // 过滤出来未售座位然后计算分区剩余座位占比，0-未售
+          //   let seatList = seat_data.filter(item => item[2] === "0");
+          //   // 座位信息最后一位是座位分区id
+          //   areaList = areaList.map(item => {
+          //     return {
+          //       ...item,
+          //       numRatio: Math.floor(
+          //         (seatList.filter(
+          //           itemA => itemA[itemA.length - 1] == item.area_id
+          //         ).length *
+          //           100) /
+          //           seatList.length
+          //       )
+          //     };
+          //   });
+          //   this.logList.push({
+          //     opera_time: getCurrentFormattedDateTime(),
+          //     des: "座位分区剩余座位情况",
+          //     level: "info",
+          //     info: {
+          //       areaList
+          //     }
+          //   });
+          //   // 默认取最高价格，最高座位占比不足百分之3时取次最高价格
+          //   if (areaList[0].numRatio <= 3 && areaList[1]?.price) {
+          //     bigPrice = areaList[1].price;
+          //   }
+          //   if (areaList[1].numRatio <= 3 && areaList[2]?.price) {
+          //     bigPrice = areaList[2].price;
+          //   }
+          // } catch (error) {
+          //   this.logList.push({
+          //     opera_time: getCurrentFormattedDateTime(),
+          //     des: "座位分区剩余座位占比计算失败",
+          //     level: "info",
+          //     info: {
+          //       error
+          //     }
+          //   });
+          // }
           console.error(
             conPrefix + "座位类型区分，取最高的价格座位会员价格",
             bigPrice

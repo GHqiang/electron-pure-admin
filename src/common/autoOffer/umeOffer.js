@@ -349,7 +349,8 @@ class getUmeOfferPrice {
       // 手续费
       const shouxufei = (Number(price) * 100) / 10000;
       // 奖励费用
-      let rewardPrice = rewards > 0 ? (Number(price) * 100 * rewards) / 10000 : 0;
+      let rewardPrice =
+        rewards > 0 ? (Number(price) * 100 * rewards) / 10000 : 0;
       // 真实成本（加手续费）
       cost_price = cost_price + shouxufei;
       // 最终成本（减奖励费）
@@ -750,56 +751,61 @@ class getUmeOfferPrice {
         // 座位分区从高到低排序
         let areaList = areaInfoList
           .map(item => {
+            let priceInfo;
             if (item.areaMemberPrice?.length) {
-              return item.areaMemberPrice.sort(
+              priceInfo = item.areaMemberPrice.sort(
                 (a, b) => b.settlePrice - a.settlePrice
               )[0];
             } else {
-              return { settlePrice: 0 };
+              priceInfo = { settlePrice: 0 };
             }
+            return {
+              ...item,
+              ...priceInfo
+            };
           })
           .sort((a, b) => b.settlePrice - a.settlePrice);
         // 默认取最高价
         let maxSeatPrice = areaList[0].settlePrice;
-        try {
-          // 过滤出来未售座位然后计算分区剩余座位占比，0-未售
-          let seatList = seat_data.filter(item => item.status === 0);
+        // try {
+        //   // 过滤出来未售座位然后计算分区剩余座位占比，0-未售
+        //   let seatList = seat_data.filter(item => item.status === 0);
 
-          areaList = areaList.map(item => {
-            return {
-              ...item,
-              numRatio: Math.floor(
-                (seatList.filter(itemA => itemA.areaId == item.areaId).length *
-                  100) /
-                  seatList.length
-              )
-            };
-          });
-          this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
-            des: "座位分区剩余座位情况",
-            level: "info",
-            info: {
-              areaList
-            }
-          });
-          // 默认取最高价格，最高座位占比不足百分之3时取次最高价格
-          if (areaList[0].numRatio <= 3 && areaList[1]?.settlePrice) {
-            maxSeatPrice = areaList[1].settlePrice;
-          }
-          if (areaList[1].numRatio <= 3 && areaList[2]?.settlePrice) {
-            maxSeatPrice = areaList[2].settlePrice;
-          }
-        } catch (error) {
-          this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
-            des: "座位分区剩余座位占比计算失败",
-            level: "info",
-            info: {
-              error
-            }
-          });
-        }
+        //   areaList = areaList.map(item => {
+        //     return {
+        //       ...item,
+        //       numRatio: Math.floor(
+        //         (seatList.filter(itemA => itemA.areaId == item.areaId).length *
+        //           100) /
+        //           seatList.length
+        //       )
+        //     };
+        //   });
+        //   this.logList.push({
+        //     opera_time: getCurrentFormattedDateTime(),
+        //     des: "座位分区剩余座位情况",
+        //     level: "info",
+        //     info: {
+        //       areaList
+        //     }
+        //   });
+        //   // 默认取最高价格，最高座位占比不足百分之3时取次最高价格
+        //   if (areaList[0].numRatio <= 3 && areaList[1]?.settlePrice) {
+        //     maxSeatPrice = areaList[1].settlePrice;
+        //   }
+        //   if (areaList[1].numRatio <= 3 && areaList[2]?.settlePrice) {
+        //     maxSeatPrice = areaList[2].settlePrice;
+        //   }
+        // } catch (error) {
+        //   this.logList.push({
+        //     opera_time: getCurrentFormattedDateTime(),
+        //     des: "座位分区剩余座位占比计算失败",
+        //     level: "info",
+        //     info: {
+        //       error
+        //     }
+        //   });
+        // }
         return {
           ...targetShow,
           maxSeatPrice
