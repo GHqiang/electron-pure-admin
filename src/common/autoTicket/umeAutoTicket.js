@@ -21,7 +21,8 @@ const tokens = platTokens();
 import {
   TICKET_CONPREFIX_OBJ,
   QUAN_TYPE_COST,
-  QUAN_TYPE_FLAG
+  QUAN_TYPE_FLAG,
+  TEST_NEW_PLAT_LIST
 } from "@/common/constant";
 import { APP_API_OBJ, PLAT_API_OBJ } from "@/common/index";
 
@@ -1331,7 +1332,8 @@ class OrderAutoTicketQueue {
         appFlag,
         session_id: this.currentParamsList[this.currentParamsInx].session_id,
         cinemaCode,
-        cinemaLinkId
+        cinemaLinkId,
+        plat_name
       });
       let quan_code = useQuan.map(item => item.couponCode)?.join();
       // 使用优惠券及会员卡
@@ -1521,15 +1523,26 @@ class OrderAutoTicketQueue {
         });
         return { offerRule };
       }
-      if (
+      // 用完券发现支付金额不为0,暂不购买微信通知
+      let isPriceAbnormalByQuan =
         useQuan?.length &&
         offerRule.quan_value !== "yaolai-yixianbu5" &&
-        paymentAmount != 0
-      ) {
+        paymentAmount != 0;
+      let isPriceAbnormalByCard =
+        card_id &&
+        paymentAmount > (offerRule?.real_member_price || 0) * ticket_num;
+      if (isPriceAbnormalByQuan || isPriceAbnormalByCard) {
+        let str = "用完券发现支付金额不为0，暂不购买，需手动出票";
+        if (isPriceAbnormalByCard) {
+          str = "用完卡发现支付金额大于会员价*票数，暂不购买，需手动出票";
+        }
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: `用完券发现支付金额不为0，暂不购买`,
-          level: "error"
+          des: str,
+          level: "error",
+          info: {
+            paymentAmount
+          }
         });
         sendWxPusherMessage({
           plat_name,
@@ -1540,7 +1553,7 @@ class OrderAutoTicketQueue {
           show_time,
           lockseat,
           transferTip: "此处不转单,需手动出票",
-          failReason: `用完券发现支付金额不为0，暂不购买,需手动出票`
+          failReason: str
         });
         return { offerRule };
         // this.logList.push({
@@ -2499,7 +2512,8 @@ class OrderAutoTicketQueue {
     appFlag,
     session_id,
     cinemaCode,
-    cinemaLinkId
+    cinemaLinkId,
+    plat_name
   }) {
     try {
       const { offer_type, member_price, quan_value } = offerRule;
@@ -2529,6 +2543,21 @@ class OrderAutoTicketQueue {
             (Number(supplier_end_price) * Number(ticket_num) * 100 * rewards) /
             10000;
           profit += rewardPrice;
+        }
+        if (profit < 0 && !TEST_NEW_PLAT_LIST.includes(plat_name)) {
+          console.error(conPrefix + "最终利润为负，单个订单直接出票结束");
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: "使用会员卡计算价格后最终利润为负",
+            level: "error",
+            info: {
+              error
+            }
+          });
+          return {
+            profit: 0,
+            card_id: ""
+          };
         }
         profit = Number(profit).toFixed(2);
         return {
@@ -2630,6 +2659,21 @@ class OrderAutoTicketQueue {
           profit += rewardPrice;
         }
         profit = Number(profit).toFixed(2);
+        if (profit < 0 && !TEST_NEW_PLAT_LIST.includes(plat_name)) {
+          console.error(conPrefix + "最终利润为负，单个订单直接出票结束");
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: "使用优惠券计算价格后最终利润为负",
+            level: "error",
+            info: {
+              error
+            }
+          });
+          return {
+            profit: 0,
+            useQuans: []
+          };
+        }
         if (appFlag === "yaolai" && quan_value === "yaolai-yixianbu5") {
           let cardData = cardList.filter(item => item.cardAmount >= 5 * 100);
           if (cardData?.length) {

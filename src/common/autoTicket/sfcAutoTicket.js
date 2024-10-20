@@ -1338,14 +1338,55 @@ class OrderAutoTicketQueue {
           des: `用券计算订单价格后价格不为0`,
           level: "error"
         });
-        const transferParams = await this.transferOrder(item, {
-          city_id,
-          cinema_id,
-          show_id,
-          start_day,
-          start_time
+        sendWxPusherMessage({
+          plat_name,
+          order_number,
+          city_name,
+          cinema_name,
+          film_name,
+          show_time,
+          lockseat,
+          transferTip: "此处不转单,需手动出票",
+          failReason: "用完券发现支付金额不为0，暂不购买，需手动出票"
         });
+        return { offerRule };
+        // const transferParams = await this.transferOrder(item, {
+        //   city_id,
+        //   cinema_id,
+        //   show_id,
+        //   start_day,
+        //   start_time
+        // });
         return { offerRule, transferParams };
+      }
+      let real_member_price = offerRule?.real_member_price || 0;
+      if (
+        offerRule.offer_type !== "1" &&
+        card_id &&
+        pay_money > real_member_price * ticket_num
+      ) {
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: `用卡计算订单价格后价格不为0`,
+          level: "error",
+          info: {
+            pay_money,
+            real_member_price,
+            ticket_num
+          }
+        });
+        sendWxPusherMessage({
+          plat_name,
+          order_number,
+          city_name,
+          cinema_name,
+          film_name,
+          show_time,
+          lockseat,
+          transferTip: "此处不转单,需手动出票",
+          failReason: "用完卡发现支付金额大于会员价*票数，暂不购买，需手动出票"
+        });
+        return { offerRule };
       }
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
