@@ -895,6 +895,13 @@ const sendWxPusherMessage = async ({
     影院：${app_name}; <br/>
     提示：${transferTip};<br/>
     </p>`;
+  } else if (msgType === 2) {
+    summary = "出票队列重复";
+    content = `<p>
+    时间：${getCurrentFormattedDateTime()}; <br/>
+    用户：${userInfo.name}; <br/>
+    提示：${transferTip};<br/>
+    </p>`;
   }
   const messageData = {
     appId: 80173,

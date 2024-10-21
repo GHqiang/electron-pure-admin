@@ -3337,6 +3337,13 @@ const addOrderHandleRecored = async ({
     }
   } catch (error) {
     console.error("添加订单处理记录异常", error);
+    if (error?.code === 0 && error?.msg === "订单重复") {
+      // console.warn("疑似队列重复，请重新登录");
+      sendWxPusherMessage({
+        msgType: 2,
+        transferTip: `疑似队列重复，请重新登录机器`
+      });
+    }
   }
 };
 

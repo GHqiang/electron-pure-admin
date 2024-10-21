@@ -51,27 +51,24 @@ instance.interceptors.response.use(
       isErrorByLieRen &&
       !whitelistSp.some(item => response.config.url.includes(item))
     ) {
-      if (data.code === "205" && data.msg === "登录失效") {
-        // ElMessage.error("sfc登录失效，请重新登录");
-        ElMessageBox.confirm("登录失效，请重新登录", "提示", {
-          confirmButtonText: "我知道了",
-          type: "warning",
-          showCancelButton: false,
-          showClose: false,
-          closeOnClickModal: false,
-          closeOnPressEscape: false
-        })
-          .then(() => {
+      console.warn("接口响应失败", data);
+      if (data.errCode === 401 && data.msg.includes("登录失效")) {
+        ElMessage({
+          type: "error",
+          message: "登录失效，请重新登录",
+          center: true,
+          duration: 5 * 1000,
+          onClose: () => {
+            console.warn("准备清除token刷新页面");
             tokens.removeSelfPlatToken();
             window.localStorage.removeItem("selfToken");
             window.localStorage.removeItem("userInfo");
             window.localStorage.removeItem("user-info");
-            router.push("/login");
             // 刷新页面以确保状态完全重置
             location.reload();
-          })
-          .catch(() => {});
-        return;
+          }
+        });
+        return Promise.reject(data);
       }
       ElMessage.error(data.msg || "请求失败");
       return Promise.reject(data);
