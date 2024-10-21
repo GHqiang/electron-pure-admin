@@ -607,11 +607,11 @@ class getLmaOfferPrice {
       let {
         member_price,
         price: nonmember_price,
-        city_id,
         cinema_id,
-        film_code,
         session_id: show_id
       } = movieInfo;
+      member_price = member_price?.replace("￥", "");
+      nonmember_price = nonmember_price?.replace("￥", "");
       if (show_id) {
         const seatInfo = await this.getSeatLayout({
           cinema_id,

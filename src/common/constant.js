@@ -1468,9 +1468,46 @@ const ZHEYINGSHIDAI_SPECIAL_CINEMA_LIST = [
   }
 ];
 
+// 卢米埃特殊影院集合
+const HMA_SPECIAL_CINEMA_LIST = [
+  // 南京
+  {
+    order_cinema_name: ["卢米埃IMAX影城龙蟠汇店"],
+    sfc_cinema_name: "卢米埃南京龙蟠汇IMAX影城"
+  },
+  {
+    order_cinema_name: ["卢米埃IMAX影城弘阳广场店"],
+    sfc_cinema_name: "卢米埃南京弘阳广场影城"
+  },
+  // 厦门
+  {
+    order_cinema_name: ["卢米埃厦门宝龙一城IMAX影城"],
+    sfc_cinema_name: "卢米埃厦门IMAX影城"
+  },
+  // 扬州
+  {
+    order_cinema_name: ["卢米埃影城金鹰新城市中心店"],
+    sfc_cinema_name: "卢米埃扬州金鹰影城"
+  },
+  // 沈阳
+  {
+    order_cinema_name: ["卢米埃影城沈阳天地店"],
+    sfc_cinema_name: "卢米埃沈阳天地影城"
+  },
+  {
+    order_cinema_name: ["卢米埃影城万象汇店"],
+    sfc_cinema_name: "卢米埃沈阳万象汇影城"
+  },
+  // 上海
+  {
+    order_cinema_name: ["卢米埃影城紫荆广场店"],
+    sfc_cinema_name: "卢米埃上海紫荆影城"
+  }
+];
+
 // 特殊的名字匹配集合
 const SPECIAL_CINEMA_OBJ = {
-  lma: [],
+  lma: HMA_SPECIAL_CINEMA_LIST,
   hbchyxd: HBCHYXD_SPECIAL_CINEMA_LIST,
   ume: UME_SPECIAL_CINEMA_LIST,
   yaolai: YAOLAI_SPECIAL_CINEMA_LIST,
