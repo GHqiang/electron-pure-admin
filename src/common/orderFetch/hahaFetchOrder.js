@@ -6,7 +6,8 @@ import { SFC_CINEMA_NAME } from "@/common/constant";
 import {
   getCinemaFlag,
   logUpload,
-  getCurrentFormattedDateTime
+  getCurrentFormattedDateTime,
+  removeLeadingZeros
 } from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
@@ -67,6 +68,10 @@ class OrderAutoFetchQueue {
             seatInfo,
             b_id // 确认接货id
           } = item;
+          let lockseat = seatInfo
+              .split(",")
+              .map(itemA => removeLeadingZeros(itemA + "座"))
+              .join(" ")
           return {
             id: id,
             tpp_price: maoyan_price,
@@ -86,10 +91,7 @@ class OrderAutoFetchQueue {
               : "其它自动",
             cinema_code: "", // 影院id
             order_number: orderNumber,
-            lockseat: seatInfo
-              .split(",")
-              .map(itemA => itemA + "座")
-              .join(" "),
+            lockseat,
             bid: b_id,
             plat_name: "haha"
           };

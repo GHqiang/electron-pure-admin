@@ -1210,7 +1210,7 @@ const getCinemaIdByLma = (cinema_name, list, appName, city_name) => {
     });
     cinema_id = noSpaceCinemaList.find(
       item => item.cinema_name === cinemaName
-    )?.cinema_name;
+    )?.cinema_id;
     if (cinema_id) {
       return { cinema_id };
     }
@@ -1797,7 +1797,18 @@ const formatTimeStrByLma = timeStr => {
   return formattedDate;
 };
 
+// 转换座位号 如05排05座 去掉0
+const removeLeadingZeros = (lockseat) =>{
+  // 使用正则表达式匹配并替换每部分前面的零
+  const parts = lockseat.split('排');
+  const row = parts[0].replace(/^0+/, ''); // 去掉行号前面的零
+  const seatWithSuffix = parts[1];
+  const seat = seatWithSuffix.replace(/^[0]+/, '').replace('座', ''); // 去掉座位号前面的零并去掉“座”字
+  return `${row}排${seat}座`;
+}
+
 export {
+  removeLeadingZeros,
   getCurrentFormattedDateTime, // 获取当前时间：YYYY-MM-DD HH:MM:SS
   getCurrentDay, // 获取当前天：YYYY-MM-DD
   getCurrentTime, // 获取当前时间：HH:MM:SS
