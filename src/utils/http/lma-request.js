@@ -65,7 +65,8 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           delete params.lmaToken;
         }
         if (token) {
-          Cookies.set("ig_session", token);
+          config.headers["lmatoken"] = "ig_session=" + token;
+          // config.headers["cookie"] = "ig_session=" + token;
           // config.headers["Cookie"] = `ig_session=${token}`;
         }
         if (config.method === "get") {
@@ -75,8 +76,10 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         }
         // 生产环境不会跨域
         config.url = IS_DEV
-          ? config.url
-          : "https://app.lumiai.com" + config.originalUrl.slice(4);
+          ? config.url.replace("lma", "svpi/third-ser")
+          : "http://47.113.191.173:3000" +
+            "/third-ser" +
+            config.originalUrl.slice(4);
       }
       // console.log('请求config', config)
       return config;

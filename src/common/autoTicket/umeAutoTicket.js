@@ -1253,7 +1253,8 @@ class OrderAutoTicketQueue {
       }
       let cardList = cardQuanListRes?.cards || [];
       let quanList = cardQuanListRes?.coupons || [];
-      if (appFlag === "yaolai" && offerRule.offer_type === "1") {
+      // 优先用快过期的券
+      if (offerRule.offer_type === "1") {
         quanList.sort(
           (a, b) => +new Date(a.endDateTime) - new Date(b.endDateTime)
         );
