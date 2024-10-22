@@ -686,7 +686,7 @@ class getLmaOfferPrice {
         let discount = cardList[0]?.card_discount;
         let real_member_price = Number(member_price);
         if (real_member_price >= 30) {
-          member_price = real_member_price - 30;
+          member_price = real_member_price - 5;
         }
         member_price = discount
           ? (Number(member_price) * 100 * discount) / 10000

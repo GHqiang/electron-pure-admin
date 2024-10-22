@@ -1502,6 +1502,15 @@ const HMA_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: ["卢米埃影城紫荆广场店"],
     sfc_cinema_name: "卢米埃上海紫荆影城"
+  },
+  // 北京
+  {
+    order_cinema_name: ["卢米埃影城长楹天街IMAX店"],
+    sfc_cinema_name: "卢米埃北京龙湖IMAX影城"
+  },
+  {
+    order_cinema_name: ["卢米埃影城住总万科店"],
+    sfc_cinema_name: "卢米埃北京住总万科影城"
   }
 ];
 

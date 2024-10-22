@@ -176,6 +176,7 @@
           <span>{{ scope.row.rewards > 0? "是" : "否" }}</span>
         </template>
       </el-table-column>
+      <el-table-column prop="processing_time" label="创建时间" width="160" />
       <el-table-column prop="quan_value" label="用券类型" width="90" />
       <el-table-column prop="err_msg" label="失败原因" width="110" />
     </el-table>
