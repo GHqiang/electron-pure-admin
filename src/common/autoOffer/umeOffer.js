@@ -747,7 +747,7 @@ class getUmeOfferPrice {
         scheduleKey: targetShow?.scheduleKey
       });
       let { seatList: seat_data, areaInfoList } = areaRes || {};
-      if (areaInfoList?.length > 1) {
+      if (areaInfoList?.length) {
         // 座位分区从高到低排序
         let areaList = areaInfoList
           .map(item => {
@@ -757,7 +757,7 @@ class getUmeOfferPrice {
                 (a, b) => b.settlePrice - a.settlePrice
               )[0];
             } else {
-              priceInfo = { settlePrice: 0 };
+              priceInfo = { settlePrice: item.areaSettlePrice || 0 };
             }
             return {
               ...item,

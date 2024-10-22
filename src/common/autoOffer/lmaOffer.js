@@ -560,12 +560,12 @@ class getLmaOfferPrice {
   // 获取座位布局
   async getSeatLayout(data) {
     const { conPrefix } = this;
+    let { cinema_id, show_id } = data || {};
+    let params = {
+      cinema_id,
+      session_id: show_id
+    };
     try {
-      let { cinema_id, show_id } = data || {};
-      let params = {
-        cinema_id,
-        session_id: show_id
-      };
       console.log(conPrefix + "获取座位布局参数", params);
       const res = await this.appApi.getMoviePlaySeat(params);
       console.log(conPrefix + "获取座位布局返回", res);
@@ -585,7 +585,8 @@ class getLmaOfferPrice {
         des: "获取座位布局异常",
         level: "error",
         info: {
-          error
+          error,
+          params
         }
       });
     }

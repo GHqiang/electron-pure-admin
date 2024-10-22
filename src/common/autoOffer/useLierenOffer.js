@@ -289,6 +289,39 @@ class OrderAutoOfferQueue {
     }
   }
 
+  async getMemberPrices(order) {
+    try {
+      order = order || {
+        id: 411603,
+        plat_name: "lieren",
+        app_name: "lma",
+        ticket_num: 1,
+        rewards: "0",
+        order_number: "2024102116275550833",
+        supplier_max_price: 45,
+        order_id: "7939712",
+        tpp_price: "49.00",
+        city_name: "北京",
+        cinema_addr: "大兴区忠凉路1号院1号楼5、6层L5001+L6001号",
+        cinema_code: "11140881",
+        cinema_name: "卢米埃影城（住总万科店）",
+        hall_name: "四号厅",
+        film_name: "志愿军：存亡之战",
+        show_time: "2024-10-22 21:20:00",
+        cinema_group: "卢米埃",
+        sytime: 1710125678
+      };
+      let offerExample = getOfferPriceFun({
+        appFlag: order.app_name,
+        plat_name: "lieren"
+      });
+      const res = await offerExample.getMemberPrice(order);
+      console.warn("模拟获取会员价返回", res);
+    } catch (err) {
+      console.warn("模拟获取会员价异常", err);
+    }
+  }
+
   // 单个报价
   async singleOffer({ order, offerList }) {
     const { conPrefix } = this;
