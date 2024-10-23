@@ -629,7 +629,7 @@ class getSfcOfferPrice {
           });
           return -2;
         }
-        if (area_price?.length > 1) {
+        if (area_price?.length) {
           // 座位分区从高到低排序
           let areaList = area_price.sort((a, b) => b.price - a.price);
           // 默认取最高价
@@ -679,13 +679,30 @@ class getSfcOfferPrice {
             conPrefix + "座位类型区分，取最高的价格座位会员价格",
             bigPrice
           );
-          return {
-            member_price: Number(bigPrice),
-            real_member_price: Number(bigPrice)
-          };
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: "取座位分区最高价和会员价的最大值当会员价",
+            level: "warn",
+            info: {
+              member_price,
+              bigPrice
+            }
+          });
+          member_price = Math.max(member_price, bigPrice);
         }
       }
       console.log(conPrefix + "获取会员价", member_price);
+      if (member_price <= 0 && nonmember_price) {
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: "获取会员价时由于会员价不存在拿非会员价当会员价",
+          level: "warn",
+          info: {
+            nonmember_price
+          }
+        });
+        member_price = Number(nonmember_price);
+      }
       if (member_price > 0) {
         const cardRes = await svApi.queryCardList({
           app_name: app_name,
@@ -742,22 +759,6 @@ class getSfcOfferPrice {
           real_member_price,
           member_price: Number(member_price.toFixed(2))
         };
-      } else {
-        console.warn(conPrefix + "会员价未负，非会员价", nonmember_price);
-        if (nonmember_price) {
-          this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
-            des: "获取会员价时由于会员价不存在返回非会员价",
-            level: "warn",
-            info: {
-              nonmember_price
-            }
-          });
-          return {
-            member_price: Number(nonmember_price),
-            real_member_price: Number(nonmember_price)
-          };
-        }
       }
     } catch (error) {
       console.error(conPrefix + "获取会员价异常", error);
