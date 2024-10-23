@@ -27,6 +27,8 @@
       <el-button type="primary" @click="isAutoTransfer = !isAutoTransfer">{{
         !isAutoTransfer ? "开启自动转单" : "关闭自动转单"
       }}</el-button>
+
+      <el-button type="primary" @click="getQuanInventory">查询券库存</el-button>
     </div>
 
     <el-table :data="platQueueList" border show-overflow-tooltip>
@@ -145,6 +147,18 @@
         </template>
       </el-table-column>
     </el-table>
+
+    <el-dialog v-model="dialogQuanVisible" title="服务器券库存" width="800">
+      <el-table :data="quanData" border>
+        <el-table-column type="index" label="序号" width="120" />
+        <el-table-column property="quan_value" sortable label="券类型">
+          <template #default="{ row }">
+            <span>{{ QUAN_TYPE[row.quan_value] }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column property="remaining_count" sortable label="数量" />
+      </el-table>
+    </el-dialog>
   </div>
 </template>
 
@@ -175,7 +189,7 @@ import hahaFetchOrder from "@/common/orderFetch/hahaFetchOrder";
 
 import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
 import createTucketQueueFun from "@/common/autoTicket/comTicketHandle";
-import { ORDER_FORM, APP_LIST } from "@/common/constant";
+import { ORDER_FORM, APP_LIST, QUAN_TYPE } from "@/common/constant";
 import {
   getCinemaLoginInfoList,
   getCurrentFormattedDateTime,
@@ -221,6 +235,9 @@ watch(isAutoTransfer, (newVal, oldVal) => {
   window.localStorage.setItem("isAutoTransfer", newVal ? "1" : "0");
 });
 
+// 券库存弹框
+const dialogQuanVisible = ref(false);
+const quanData = ref([]); // 券库存列表
 // 平台报价队列集合
 let platOfferQueueObj = {
   lieren: lierenOfferQueue,
@@ -430,6 +447,18 @@ const singleStartOrStop = ({ id, platToken, platName }, flag) => {
   ]);
 };
 
+// 查询券库存
+const getQuanInventory = async () => {
+  try {
+    const res = await svApi.queryQuanInventory();
+    console.warn("查询券库存返回", res);
+    let quanList = res.data?.quanList;
+    dialogQuanVisible.value = true;
+    quanData.value = quanList;
+  } catch (error) {
+    console.warn("查询券库存返回异常", error);
+  }
+};
 // 正在编辑id
 const editingRowId = ref(null);
 // 正在编辑内容

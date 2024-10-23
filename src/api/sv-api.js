@@ -114,6 +114,10 @@ const addTicketOperaLog = params =>
 const getCardDailyAndMonthlyTicketCount = params =>
   axios.get("/svpi/cardRecord/cardDailyAndMonthlyTicketCount", { params });
 
+// 查询券库存
+const queryQuanInventory = params =>
+  axios.get("/svpi/quanRecord/queryQuanInventory", { params });
+
 export default {
   login,
   logout,
@@ -155,5 +159,6 @@ export default {
   addLoginRecord,
   updateLoginRecord,
   addTicketOperaLog,
-  getCardDailyAndMonthlyTicketCount
+  getCardDailyAndMonthlyTicketCount,
+  queryQuanInventory
 };

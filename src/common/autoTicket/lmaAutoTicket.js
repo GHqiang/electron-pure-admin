@@ -1052,6 +1052,8 @@ class OrderAutoTicketQueue {
           const transferParams = await this.transferOrder(item);
           return { transferParams };
         }
+        // 创建订单时的影片编码要用获取座位布局接口返回的
+        short_code = seatDataRes.short_code;
         let seatName = lockseat.replaceAll(" ", ",").replaceAll("座", "号");
         console.log(conPrefix + "seatName", seatName);
         let selectSeatList = seatName.split(",");
@@ -1067,7 +1069,8 @@ class OrderAutoTicketQueue {
               ...otherInfo,
               price: label_arr.find(
                 item => item.price_type === otherInfo.price_type
-              )?.price
+              )?.price,
+              fixIcon: "/images/weixiu.png"
             };
           });
         console.log(conPrefix + "seat_arr", seat_arr);
@@ -1403,6 +1406,7 @@ class OrderAutoTicketQueue {
           offerRule?.member_price -
           (Number(supplier_end_price) * 100) / 10000;
         profit = Number(profit) * Number(ticket_num);
+        profit = profit.toFixed(2);
       }
       if (rewards > 0) {
         // 特急奖励订单中标价格 * 张数 * 0.04;
@@ -2854,7 +2858,8 @@ const getSeatLayout = async ({ cinema_id, show_id, lmaToken, appFlag }) => {
     console.log("seatData", seatData);
     return {
       seatData,
-      label_arr: res.data?.label_arr || []
+      label_arr: res.data?.label_arr || [],
+      short_code: res.data?.short_code
     };
   } catch (error) {
     console.error(conPrefix + "获取座位布局异常", error);
