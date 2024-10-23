@@ -1071,14 +1071,16 @@ class OrderAutoTicketQueue {
             };
           });
         console.log(conPrefix + "seat_arr", seat_arr);
-        if (!seat_arr?.length) {
+        if (seat_arr?.length != ticket_num) {
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
-            des: `影院座位信息匹配订单座位失败`,
+            des: `获取目标座位失败`,
             level: "error",
             info: {
               seatList,
-              seatName
+              seatName,
+              seat_arr,
+              ticket_num
             }
           });
           const transferParams = await this.transferOrder(item);
@@ -1539,15 +1541,15 @@ class OrderAutoTicketQueue {
       }
       const useListRes = await getCardDailyAndMonthlyTicketCount({
         cardIdList: cardList.map(item => item.card_number),
-        appFlag: "ume"
+        appFlag
       });
-      if (!useListRes?.error) {
+      if (useListRes?.error) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: "获取会员卡当天及当月出票量异常",
           level: "error",
           info: {
-            error: useListRes?.error
+            ...useListRes
           }
         });
         return {
@@ -2896,26 +2898,28 @@ const getCardList = async ({ lmaToken, appFlag }) => {
 // 获取会员卡当天及当月出票量
 const getCardDailyAndMonthlyTicketCount = async ({ cardIdList, appFlag }) => {
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
+  let params = {
+    card_list: JSON.stringify(cardIdList),
+    app_name: appFlag
+  };
   try {
-    let params = {
-      card_list: JSON.stringify(cardIdList),
-      app_name: appFlag
-    };
     console.log(conPrefix + "获取会员卡当天及当月出票量参数", params);
     const res = await svApi.getCardDailyAndMonthlyTicketCount(params);
     console.log(conPrefix + "获取会员卡当天及当月出票量返回", res);
     let useList = res.data?.useList || [];
     return {
-      useList
+      useList,
+      params
     };
   } catch (error) {
-    console.error(conPrefix + "获取会员卡当天及当月出票量异常", error);
+    console.warn("获取会员卡当天及当月出票量异常", error);
     return {
-      error
+      error,
+      params
     };
   }
 };
-
+window.getCardDailyAndMonthlyTicketCount = getCardDailyAndMonthlyTicketCount;
 // 获取优惠券列表
 const getQuanList = async ({ lmaToken, appFlag }) => {
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];

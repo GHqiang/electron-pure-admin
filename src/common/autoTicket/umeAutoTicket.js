@@ -1078,7 +1078,7 @@ class OrderAutoTicketQueue {
         });
         console.log(conPrefix + "targeSeatList", targeSeatList);
         let seat_ids = targeSeatList.map(item => item.seatCode);
-        if (!seat_ids?.length) {
+        if (seat_ids?.length != ticket_num) {
           console.error(conPrefix + "获取目标座位失败");
           this.setErrInfo("获取目标座位失败");
           this.logList.push({
@@ -1773,8 +1773,12 @@ class OrderAutoTicketQueue {
       console.log(conPrefix + "锁定座位返回", res);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
-        des: `第${inx}次锁定座位成功-${JSON.stringify(res)}`,
-        level: "info"
+        des: `第${inx}次锁定座位成功`,
+        level: "info",
+        info: {
+          res,
+          params
+        }
       });
       return res?.data;
     } catch (error) {
@@ -1783,7 +1787,7 @@ class OrderAutoTicketQueue {
       this.setErrInfo(`第${inx}次锁定座位异常`, error);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
-        des: `第${inx}次锁定座位失败-${JSON.stringify(error)}`,
+        des: `第${inx}次锁定座位失败`,
         level: "error",
         info: {
           params,

@@ -1082,6 +1082,19 @@ class OrderAutoTicketQueue {
           selectSeatList.includes(item[5])
         );
         console.log(conPrefix + "targetList", targetList);
+        if (targetList?.length != ticket_num) {
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: `获取目标座位失败`,
+            level: "error",
+            info: {
+              targetList,
+              ticket_num
+            }
+          });
+          const transferParams = await this.transferOrder(item);
+          return { transferParams };
+        }
         seat_ids = targetList.map(item => item[0]).join();
       } else {
         const phone = this.currentParamsList[this.currentParamsInx].mobile;

@@ -122,7 +122,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       let whitelistSp = [];
 
       let isError =
-        response.config.url.indexOf("/third-ser/") !== -1 && data.code !== "0";
+        response.config.url.indexOf("/third-ser/") !== -1 && !data.status;
       if (
         isError &&
         !whitelistSp.some(item => response.config.url.includes(item))
