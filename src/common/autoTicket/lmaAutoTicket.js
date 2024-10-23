@@ -1222,38 +1222,38 @@ class OrderAutoTicketQueue {
         console.error(conPrefix + "锁定座位失败准备试错2次，间隔5秒", error);
         // 试错3次，间隔5秒
         // 锁定座位尝试配置
-        let delayConfig = {
-          lieren: [6, 5],
-          mangguo: [6, 5],
-          sheng: [6, 5],
-          mayi: [12, 10],
-          yangcong: [12, 10],
-          haha: [6, 5],
-          yinghuasuan: [6, 5],
-          shangzhan: [6, 5]
-        };
-        lockRes = await trial(
-          inx => this.lockSeatHandle(params, inx),
-          delayConfig[plat_name][0],
-          delayConfig[plat_name][1],
-          conPrefix
-        );
+        // let delayConfig = {
+        //   lieren: [6, 5],
+        //   mangguo: [6, 5],
+        //   sheng: [6, 5],
+        //   mayi: [12, 10],
+        //   yangcong: [12, 10],
+        //   haha: [6, 5],
+        //   yinghuasuan: [6, 5],
+        //   shangzhan: [6, 5]
+        // };
+        // lockRes = await trial(
+        //   inx => this.lockSeatHandle(params, inx),
+        //   delayConfig[plat_name][0],
+        //   delayConfig[plat_name][1],
+        //   conPrefix
+        // );
         if (!lockRes) {
-          console.error(
-            conPrefix + "单个订单试错后仍锁定座位失败",
-            "需要走转单逻辑"
-          );
-          this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
-            des: `首次锁定座位失败轮询尝试后仍失败，走转单`,
-            level: "info"
-          });
+          // console.error(
+          //   conPrefix + "单个订单试错后仍锁定座位失败",
+          //   "需要走转单逻辑"
+          // );
+          // this.logList.push({
+          //   opera_time: getCurrentFormattedDateTime(),
+          //   des: `首次锁定座位失败轮询尝试后仍失败，走转单`,
+          //   level: "info"
+          // });
           const transferParams = await this.transferOrder(item);
           return { offerRule, transferParams };
         }
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: `首次锁定座位失败试错后锁定成功`,
+          des: `锁定座位即创建订单成功`,
           level: "info"
         });
       }
@@ -1530,7 +1530,7 @@ class OrderAutoTicketQueue {
           des: "获取会员卡列表异常",
           level: "error",
           info: {
-            error: cardListRes?.error
+            ...cardListRes
           }
         });
         return {
@@ -1699,19 +1699,30 @@ class OrderAutoTicketQueue {
                 error: quanListRes?.error
               }
             });
+            return { error: "获取优惠券列表异常" };
           }
           quanList = quanList.filter(
             item => item.voucher_name === "5元影票满减券"
           );
           let quan_list =
-            quanList.map(item => ({ code: item.code })).slice(0, 1) || [];
+            quanList.map(item => ({ code: item.code })).slice(0, ticket_num) ||
+            [];
+          if (quan_list.length < ticket_num) {
+            this.logList.push({
+              opera_time: getCurrentFormattedDateTime(),
+              des: "5元影票满减券数量不够",
+              level: "error",
+              info: {
+                quan_list,
+                ticket_num
+              }
+            });
+            return { error: "5元影票满减券数量不够" };
+          }
           return {
             quan_code: quan_list?.length ? JSON.stringify(quan_list) : ""
           };
         }
-        return {
-          quan_code: ""
-        };
       } else {
         console.log(conPrefix + "使用优惠券出票");
         // 1、获取优惠券列表
@@ -1729,6 +1740,7 @@ class OrderAutoTicketQueue {
               error: quanListRes?.error
             }
           });
+          return { error: "获取优惠券列表异常" };
         }
         // 2、使用优惠券
         const { useQuans, profit } = await this.useQuan({
@@ -2851,12 +2863,10 @@ const getSeatLayout = async ({ cinema_id, show_id, lmaToken, appFlag }) => {
 };
 
 // 获取会员卡列表
-const getCardList = async ({ city_id, cinema_id, lmaToken, appFlag }) => {
+const getCardList = async ({ lmaToken, appFlag }) => {
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
   try {
     let params = {
-      city_id,
-      cinema_id,
       lmaToken
     };
     console.log(conPrefix + "获取会员卡列表参数", params);
@@ -2870,9 +2880,10 @@ const getCardList = async ({ city_id, cinema_id, lmaToken, appFlag }) => {
       // member_status: res.data?.member_status
     });
     // 仅返回可用状态的会员卡
-    cardList = cardList.filter(item => item.gold === "0");
+    cardList = cardList.filter(item => item.gold === "1");
     return {
-      cardList
+      cardList,
+      cardRes: res.data
     };
   } catch (error) {
     console.error(conPrefix + "获取会员卡列表异常", error);
