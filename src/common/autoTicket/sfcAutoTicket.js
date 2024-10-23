@@ -203,7 +203,7 @@ class OrderAutoTicketQueue {
           );
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
-            des: `单个订单自动出票结束，状态-${res?.submitRes ? "成功" : "失败"}，赋值上个订单号为当前订单号-${this.prevOrderNumber}`,
+            des: `单个订单自动出票结束，状态-${res?.submitRes ? "成功" : "失败"}`,
             level: "info",
             info: {
               res

@@ -28,7 +28,9 @@
         !isAutoTransfer ? "开启自动转单" : "关闭自动转单"
       }}</el-button>
 
-      <el-button type="primary" @click="getQuanInventory">查询券库存</el-button>
+      <el-button v-if="rule === 2" type="primary" @click="getQuanInventory"
+        >查询券库存</el-button
+      >
     </div>
 
     <el-table :data="platQueueList" border show-overflow-tooltip>
@@ -198,6 +200,9 @@ import {
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
 const tokens = platTokens();
+const {
+  userInfo: { rule, user_id }
+} = tokens;
 const tableDataStore = usePlatTableDataStore();
 const platQueueList = computed(() => tableDataStore.items);
 

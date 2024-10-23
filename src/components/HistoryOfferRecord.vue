@@ -173,12 +173,23 @@
       </el-table-column>
       <el-table-column prop="rewards" label="奖励订单" width="90">
         <template #default="scope">
-          <span>{{ scope.row.rewards > 0? "是" : "否" }}</span>
+          <span>{{ scope.row.rewards > 0 ? "是" : "否" }}</span>
         </template>
       </el-table-column>
       <el-table-column prop="processing_time" label="创建时间" width="160" />
       <el-table-column prop="quan_value" label="用券类型" width="90" />
       <el-table-column prop="err_msg" label="失败原因" width="110" />
+      <el-table-column label="操作" fixed="right" align="center" width="120">
+        <template #default="{ row: { order_number, user_id } }">
+          <el-button
+            v-if="rule == 2"
+            size="small"
+            type="primary"
+            @click="queryLog({ order_number, user_id })"
+            >查询日志</el-button
+          >
+        </template>
+      </el-table-column>
     </el-table>
     <el-pagination
       v-model:current-page="currentPage"
@@ -191,6 +202,24 @@
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
     />
+
+    <el-dialog v-model="dialogLogVisible" title="订单操作日志" width="1000">
+      <el-table :data="logData" border>
+        <el-table-column type="index" label="序号" width="60" />
+        <el-table-column
+          property="opera_time"
+          sortable
+          label="操作时间"
+          width="160"
+        />
+        <el-table-column property="des" width="180" label="操作描述" />
+        <el-table-column
+          property="info"
+          show-overflow-tooltip
+          label="详细信息"
+        />
+      </el-table>
+    </el-dialog>
   </div>
 </template>
 
@@ -223,6 +252,10 @@ const totalNum = ref(0);
 // 用户列表
 const userList = ref([]);
 
+// 操作日志弹框
+const dialogLogVisible = ref(false);
+// 操作日志列表
+const logData = ref([]);
 // 格式化最终价格
 const supplier_end_price_filter = row => {
   let obj = JSON.parse(JSON.stringify(row));
@@ -267,6 +300,23 @@ formData.end_time = getTodayTime(+new Date() + 1 * 24 * 60 * 60 * 1000);
 // 搜索过滤后的数据
 const tableDataFilter = ref([]);
 let timer;
+
+// 查询操作日志
+const queryLog = async ({ order_number, user_id }) => {
+  try {
+    const res = await svApi.queryLogRecord({
+      order_number,
+      user_id,
+      type: 1
+    });
+    console.warn("查询操作日志返回", res);
+    let logList = res.data?.cardList;
+    dialogLogVisible.value = true;
+    logData.value = logList;
+  } catch (error) {
+    console.warn("查询券库存返回异常", error);
+  }
+};
 
 // 搜索数据
 const searchData = async () => {
