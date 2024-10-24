@@ -1475,6 +1475,7 @@ const ZHEYINGSHIDAI_SPECIAL_CINEMA_LIST = [
 ];
 
 // 卢米埃特殊影院集合
+// 卢米埃特殊影院集合
 const HMA_SPECIAL_CINEMA_LIST = [
   // 南京
   {
@@ -1484,6 +1485,113 @@ const HMA_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: ["卢米埃IMAX影城弘阳广场店"],
     sfc_cinema_name: "卢米埃南京弘阳广场影城"
+  },
+  {
+    order_cinema_name: ["卢米埃影城金鹰新街口店"],
+    sfc_cinema_name: "卢米埃南京金鹰新街口影城"
+  },
+  {
+    order_cinema_name: ["卢米埃影城金鹰仙林店"],
+    sfc_cinema_name: "卢米埃南京金鹰仙林影城"
+  },
+  {
+    order_cinema_name: ["卢米埃影城金鹰河西店"],
+    sfc_cinema_name: "卢米埃南京金鹰河西影城"
+  },
+  // 淮安
+  {
+    order_cinema_name: ["卢米埃影城新亚国际广场店"],
+    sfc_cinema_name: "卢米埃淮安新亚影城"
+  },
+  // 杭州
+  {
+    order_cinema_name: ["卢米埃影城新亚国际广场店"],
+    sfc_cinema_name: "卢米埃杭州银泰影城"
+  },
+  {
+    order_cinema_name: ["卢米埃影城杭州西溪天街店"],
+    sfc_cinema_name: "卢米埃杭州西溪天街影城"
+  },
+  // 成都
+  {
+    order_cinema_name: ["卢米埃影城来福士店"],
+    sfc_cinema_name: "卢米埃成都来福士影城"
+  },
+  {
+    order_cinema_name: ["卢米埃影城魅力城店"],
+    sfc_cinema_name: "卢米埃成都魅力城影城"
+  },
+  {
+    order_cinema_name: ["卢米埃影城西宸天街店"],
+    sfc_cinema_name: "卢米埃成都西宸天街影城"
+  },
+  {
+    order_cinema_name: ["卢米埃影城盛泽店"],
+    sfc_cinema_name: "卢米埃盛泽财富中心影城"
+  },
+  // 苏州
+  {
+    order_cinema_name: ["卢米埃影城园区店"],
+    sfc_cinema_name: "卢米埃苏州华润万家影城IMAX影城"
+  },
+  {
+    order_cinema_name: ["卢米埃影城昆山金鹰店"],
+    sfc_cinema_name: "卢米埃昆山金鹰影城"
+  },
+  {
+    order_cinema_name: ["卢米埃影城苏州金鹰店"],
+    sfc_cinema_name: "卢米埃苏州金鹰影城"
+  },
+  // 西安
+  {
+    order_cinema_name: ["卢米埃影城凯德广场店"],
+    sfc_cinema_name: "卢米埃西安凯德影城"
+  },
+  {
+    order_cinema_name: ["卢米埃影城曲江创意谷IMAX店"],
+    sfc_cinema_name: "卢米埃西安曲江IMAX影城"
+  },
+  // 绍兴
+  {
+    order_cinema_name: ["卢米埃影城银泰IMAX店"],
+    sfc_cinema_name: "卢米埃绍兴银泰城IMAX影城"
+  },
+  {
+    order_cinema_name: ["卢米埃影城印象城店"],
+    sfc_cinema_name: "卢米埃顺德影城"
+  },
+  {
+    order_cinema_name: ["卢米埃影城王府井店"],
+    sfc_cinema_name: "卢米埃洛阳王府井影城"
+  },
+  {
+    order_cinema_name: ["卢米埃影城聚龙湖金鹰店"],
+    sfc_cinema_name: "卢米埃盐城聚龙湖金鹰影城"
+  },
+  {
+    order_cinema_name: ["卢米埃影城凯德1818广场店"],
+    sfc_cinema_name: "卢米埃武汉凯德1818影城"
+  },
+
+  {
+    order_cinema_name: ["卢米埃影城河西王府井店", "卢米埃影城长沙王府井店"],
+    sfc_cinema_name: "卢米埃长沙王府井影城"
+  },
+  {
+    order_cinema_name: [
+      "卢米埃影城小河万科大都会店",
+      "卢米埃影城小河万科大都会影城店"
+    ],
+    sfc_cinema_name: "卢米埃贵阳万科大都会影城"
+  },
+  {
+    order_cinema_name: ["卢米埃影城花溪区政府明珠里IMAX店"],
+    sfc_cinema_name: "卢米埃贵阳花溪万科IMAX影城"
+  },
+
+  {
+    order_cinema_name: ["卢米埃影城合生广场IMAX店"],
+    sfc_cinema_name: "卢米埃广州合生IMAX影城"
   },
   // 厦门
   {
@@ -1509,6 +1617,10 @@ const HMA_SPECIAL_CINEMA_LIST = [
     order_cinema_name: ["卢米埃影城紫荆广场店"],
     sfc_cinema_name: "卢米埃上海紫荆影城"
   },
+  {
+    order_cinema_name: ["卢米埃影城大融城店"],
+    sfc_cinema_name: "卢米埃上海大融城影城"
+  },
   // 北京
   {
     order_cinema_name: ["卢米埃影城长楹天街IMAX店"],
@@ -1517,6 +1629,10 @@ const HMA_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: ["卢米埃影城住总万科店"],
     sfc_cinema_name: "卢米埃北京住总万科影城"
+  },
+  {
+    order_cinema_name: ["卢米埃影城侨福芳草地店", "卢米埃影城芳草地店"],
+    sfc_cinema_name: "卢米埃北京芳草地影城"
   }
 ];
 
