@@ -485,7 +485,7 @@ class getUmeOfferPrice {
       let {
         ticketMemberPrice,
         maxSeatPrice = 0,
-        handlingMemberFee,
+        handlingFee,
         ticketMemberServiceFeeMin = 0,
         activityPrices = []
       } = movieInfo;
@@ -496,7 +496,7 @@ class getUmeOfferPrice {
         info: {
           ticketMemberPrice,
           maxSeatPrice,
-          handlingMemberFee,
+          handlingFee,
           ticketMemberServiceFeeMin,
           activityPrices
         }
@@ -518,7 +518,7 @@ class getUmeOfferPrice {
       // 会员价等于真实会员价加手续费加会员服务费
       member_price =
         member_price +
-        (Number(handlingMemberFee) + Number(ticketMemberServiceFeeMin)) / 100;
+        (Number(handlingFee) + Number(ticketMemberServiceFeeMin)) / 100;
       console.log(conPrefix + "获取会员价", member_price);
       // 耀莱暂时不考虑
       if (

@@ -1297,21 +1297,18 @@ class OrderAutoTicketQueue {
         }
       }
       // 7、使用优惠券或者会员卡
-      const {
-        ticketMemberPrice,
-        handlingMemberFee,
-        ticketMemberServiceFeeMin
-      } = targetShow;
+      const { ticketMemberPrice, handlingFee, ticketMemberServiceFeeMin } =
+        targetShow;
       console.warn(
         "ticketMemberPrice",
         ticketMemberPrice,
-        handlingMemberFee,
+        handlingFee,
         ticketMemberServiceFeeMin,
         discountAmount
       );
       let mbmberPrice =
         (Number(ticketMemberPrice) +
-          Number(handlingMemberFee) +
+          Number(handlingFee) +
           Number(ticketMemberServiceFeeMin) -
           Number(discountAmount)) /
         100;
