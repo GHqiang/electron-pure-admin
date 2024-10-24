@@ -34,8 +34,8 @@ const QUAN_TYPE = {
   "yaolai-yixianbu5": "耀莱一线普通补5",
   "zheying-35": "浙影-35",
   "ningbo-36": "宁波影都-36",
-  // "hyxd-25": "华谊兄弟-25",
-  // "hyxd-30": "华谊兄弟-30",
+  "hyxd-25": "华谊兄弟-25",
+  "hyxd-30": "华谊兄弟-30",
   jinbaojia: "仅报价券"
 };
 
@@ -53,8 +53,8 @@ const QUAN_TYPE_COST = {
   "yaolai-yixianbu5": 30,
   "zheying-35": 31,
   "ningbo-36": 36,
-  // "hyxd-25": 25,
-  // "hyxd-30": 30,
+  "hyxd-25": 25.5,
+  "hyxd-30": 30.5,
   jinbaojia: 0
 };
 
@@ -72,8 +72,8 @@ const QUAN_TYPE_FLAG = {
   "yaolai-yixianbu5": "影票兑换券",
   "zheying-35": "全国合作券",
   "ningbo-36": "JT_电子集团A券36",
-  // "hyxd-25": "华谊兄弟影院普通厅兑换券",
-  // "hyxd-30": "全国普通厅+特效厅补差券",
+  "hyxd-25": "华谊兄弟影院普通厅兑换券",
+  "hyxd-30": "全国普通厅+特效厅补差券",
   jinbaojia: "" // 仅报价不出无需考虑标识
 };
 

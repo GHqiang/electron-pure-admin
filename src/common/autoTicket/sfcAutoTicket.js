@@ -3455,12 +3455,20 @@ const priceCalculation = async ({
 };
 
 // 绑定券
-const bandQuan = async ({ coupon_num, session_id, appFlag }) => {
+const bandQuan = async ({
+  city_id,
+  cinema_id,
+  coupon_num,
+  session_id,
+  appFlag
+}) => {
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
   // 由于要用二线城市影院且40券通用，故写死
   let params = {
-    city_id: "304",
-    cinema_id: "33",
+    // city_id: "304",
+    // cinema_id: "33",
+    city_id,
+    cinema_id,
     session_id,
     coupon_code: coupon_num,
     from_goods: "2"

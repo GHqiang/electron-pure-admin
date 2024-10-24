@@ -1170,7 +1170,14 @@ class OrderAutoTicketQueue {
       const useQuanRes = await this.useQuanHandle({
         city_id,
         cinema_id,
-        offerRule
+        ticket_num,
+        offerRule,
+        show_id,
+        seat_arr,
+        supplier_end_price,
+        rewards,
+        plat_name,
+        order_number
       });
       if (useQuanRes?.error) {
         this.logList.push({
