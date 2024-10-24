@@ -297,10 +297,10 @@ class getSfcOfferPrice {
         // 计算会员报价
         let memberPriceRes = await this.getMemberPrice(order);
         // let errMsgStrObj = {
-        //   -1: "获取当前场次电影信息失败,不再进行报价",
-        //   "-2": "获取当前场次电影信息失败,促销票数低于订单票数，不再进行报价",
-        //   "-3": "获取座位布局异常，不再进行报价",
-        //   "-4": "影院单卡出票限制,不再进行报价"
+        //   -1: "获取当前场次电影信息失败",
+        //   "-2": "获取当前场次电影信息失败,促销票数低于订单票数",
+        //   "-3": "获取座位布局异常",
+        //   "-4": "影院单卡出票限制"
         // };
         if (memberPriceRes && [-1].includes(memberPriceRes)) {
           // 返回特殊标识出去
@@ -496,7 +496,7 @@ class getSfcOfferPrice {
       });
       // 最终成本超过平台限价
       if (ensCostPrice >= Number(supplier_max_price)) {
-        let str = `最终成本${ensCostPrice}超过平台限价${supplier_max_price}，不再进行报价`;
+        let str = `最终成本${ensCostPrice}超过平台限价${supplier_max_price}`;
         console.error(conPrefix + str);
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
@@ -511,7 +511,7 @@ class getSfcOfferPrice {
         if (isOverrunOffer !== "1") {
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
-            des: `最终报价${price}超过平台限价${supplier_max_price}，超限报价处于关闭状态，不再进行报价`,
+            des: `最终报价${price}超过平台限价${supplier_max_price}，超限报价处于关闭状态`,
             level: "error"
           });
           return;
@@ -522,7 +522,7 @@ class getSfcOfferPrice {
         price = Math.round(price);
       }
       if (price <= cost_price && !TEST_NEW_PLAT_LIST.includes(plat_name)) {
-        let str = `最终报价${price}小于等于成本价${cost_price}，不再进行报价`;
+        let str = `最终报价${price}小于等于成本价${cost_price}`;
         console.error(conPrefix + str);
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
@@ -532,7 +532,7 @@ class getSfcOfferPrice {
         return;
       }
       if (price > Number(supplier_max_price)) {
-        let str = `最终报价${price}超过平台限价${supplier_max_price}，不再进行报价`;
+        let str = `最终报价${price}超过平台限价${supplier_max_price}`;
         console.error(conPrefix + str);
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
@@ -617,10 +617,10 @@ class getSfcOfferPrice {
         if (!seatInfo) return -3;
         let { promo_num, area_price, seat_data } = seatInfo;
         if (promo_num && promo_num < ticket_num) {
-          console.error(conPrefix + "促销票数低于订单票数，不再进行报价");
+          console.error(conPrefix + "促销票数低于订单票数");
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
-            des: "促销票数低于订单票数，不再进行报价",
+            des: "促销票数低于订单票数",
             level: "error",
             info: {
               promo_num,
@@ -721,10 +721,10 @@ class getSfcOfferPrice {
             : ticket_num <= item.use_limit_day - item.daily_usage
         );
         if (!cardList.length) {
-          console.error(conPrefix + "影院单卡出票限制,不再进行报价");
+          console.error(conPrefix + "影院单卡出票限制");
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
-            des: "影院单卡出票限制，不再进行报价",
+            des: "影院单卡出票限制",
             level: "error",
             info: {
               list,
