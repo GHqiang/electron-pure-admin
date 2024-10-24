@@ -714,8 +714,8 @@ class getLmaOfferPrice {
           ? (Number(member_price) * 100 * discount) / 10000
           : Number(member_price);
         if (real_member_price >= 33) {
-          // 减5券的成本1.5，不固定
-          member_price = Number(member_price) + 1.5;
+          // 减5券的成本1，不固定
+          member_price = Number(member_price) + 1;
         }
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
