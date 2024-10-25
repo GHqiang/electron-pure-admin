@@ -100,6 +100,25 @@
             <span @click="syncBalance">同步余额</span>
           </template>
         </el-button>
+        <!-- 
+        <el-button type="primary" style="padding-left: 0px">
+          <template #default>
+            <el-select
+              v-model="shadowLine"
+              filterable
+              placeholder="影线名称"
+              style="width: 120px; margin-left: -1px"
+            >
+              <el-option
+                v-for="(keyValue, keyName) in APP_LIST"
+                :key="keyName"
+                :label="keyValue"
+                :value="keyName"
+              />
+            </el-select>
+            <span @click="addCard">同步卡信息</span>
+          </template>
+        </el-button> -->
       </el-form-item>
     </el-form>
 

@@ -1698,7 +1698,7 @@ class OrderAutoTicketQueue {
       if (offer_type !== "1") {
         // 只判断价格是否大于30，如果大于就用券
         if (real_member_price >= 30) {
-          let quan_value = 'lma-5'
+          let quan_value = "lma-5";
           const quanListRes = await getQuanList({
             lmaToken,
             appFlag
@@ -1729,7 +1729,9 @@ class OrderAutoTicketQueue {
             });
             if (newQuanList?.length) {
               // 转换为相同格式
-              newQuanList = newQuanList.map(item => ({code: item.coupon_num}))
+              newQuanList = newQuanList.map(item => ({
+                code: item.coupon_num
+              }));
               targetQuanList = [...targetQuanList, ...newQuanList];
               this.logList.push({
                 opera_time: getCurrentFormattedDateTime(),
@@ -1741,20 +1743,20 @@ class OrderAutoTicketQueue {
                   ticket_num
                 }
               });
-              if (targetQuanList?.length < ticket_num) {
-                console.error(
-                  conPrefix + `从服务端获取并绑定后${quan_value} 面额券仍不足，`,
-                  targetQuanList
-                );
-                this.logList.push({
-                  opera_time: getCurrentFormattedDateTime(),
-                  des: `${quan_value} 面额券从数据库获取后仍不足`,
-                  level: "error"
-                });
-                return { error: "5元影票满减券从数据库获取后仍不足" };
-              }
+            }
+            if (targetQuanList?.length < ticket_num) {
+              console.error(
+                conPrefix + `从服务端获取并绑定后${quan_value} 面额券仍不足，`,
+                targetQuanList
+              );
+              this.logList.push({
+                opera_time: getCurrentFormattedDateTime(),
+                des: `${quan_value} 面额券从数据库获取后仍不足`,
+                level: "error"
+              });
+              return { error: "5元影票满减券从数据库获取后仍不足" };
+            }
           }
-
           if (targetQuanList?.length - ticket_num < 10) {
             this.logList.push({
               opera_time: getCurrentFormattedDateTime(),
@@ -1772,7 +1774,9 @@ class OrderAutoTicketQueue {
             });
           }
           return {
-            quan_code: targetQuanList?.length ? JSON.stringify(targetQuanList) : ""
+            quan_code: targetQuanList?.length
+              ? JSON.stringify(targetQuanList)
+              : ""
           };
         }
       } else {
@@ -3043,7 +3047,7 @@ const bandQuan = async ({ coupon_num, lmaToken, appFlag }) => {
     //   "msg":"添加成功!",
     //   "time":"2024-10-24 19:04:44"
     // }
-    if (res.data?.code && res.msg?.includes('添加成功')) {
+    if (res.data?.code && res.msg?.includes("添加成功")) {
       return {
         coupon_num
       };
