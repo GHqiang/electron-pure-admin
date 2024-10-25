@@ -1698,6 +1698,7 @@ class OrderAutoTicketQueue {
       if (offer_type !== "1") {
         // 只判断价格是否大于30，如果大于就用券
         if (real_member_price >= 30) {
+          let quan_value = 'lma-5'
           const quanListRes = await getQuanList({
             lmaToken,
             appFlag
@@ -1717,23 +1718,61 @@ class OrderAutoTicketQueue {
           quanList = quanList.filter(
             item => item.voucher_name === "5元影票满减券"
           );
-          let quan_list =
+          let targetQuanList =
             quanList.map(item => ({ code: item.code })).slice(0, ticket_num) ||
             [];
-          if (quan_list.length < ticket_num) {
+          if (targetQuanList.length < ticket_num) {
+            let newQuanList = await this.getNewQuan({
+              quan_value,
+              lmaToken,
+              quanNum: Number(ticket_num) - targetQuanList.length
+            });
+            if (newQuanList?.length) {
+              // 转换为相同格式
+              newQuanList = newQuanList.map(item => ({code: item.coupon_num}))
+              targetQuanList = [...targetQuanList, ...newQuanList];
+              this.logList.push({
+                opera_time: getCurrentFormattedDateTime(),
+                des: `从服务端获取券绑定完成`,
+                level: "info",
+                info: {
+                  newQuanList,
+                  targetQuanList,
+                  ticket_num
+                }
+              });
+              if (targetQuanList?.length < ticket_num) {
+                console.error(
+                  conPrefix + `从服务端获取并绑定后${quan_value} 面额券仍不足，`,
+                  targetQuanList
+                );
+                this.logList.push({
+                  opera_time: getCurrentFormattedDateTime(),
+                  des: `${quan_value} 面额券从数据库获取后仍不足`,
+                  level: "error"
+                });
+                return { error: "5元影票满减券从数据库获取后仍不足" };
+              }
+          }
+
+          if (targetQuanList?.length - ticket_num < 10) {
             this.logList.push({
               opera_time: getCurrentFormattedDateTime(),
-              des: "5元影票满减券数量不够",
-              level: "error",
-              info: {
-                quan_list,
-                ticket_num
-              }
+              des: `本次出票后券小于10，开始异步绑定券;`,
+              level: "info"
             });
-            return { error: "5元影票满减券数量不够" };
+            this.getNewQuan({
+              quan_value,
+              lmaToken,
+              quanNum: 10 - (targetQuanList.length - Number(ticket_num)),
+              asyncFlag: 1,
+              asyncBandQuanList: [],
+              plat_name,
+              order_number
+            });
           }
           return {
-            quan_code: quan_list?.length ? JSON.stringify(quan_list) : ""
+            quan_code: targetQuanList?.length ? JSON.stringify(targetQuanList) : ""
           };
         }
       } else {
@@ -2373,8 +2412,6 @@ class OrderAutoTicketQueue {
   async getNewQuan({
     quan_value,
     quanNum,
-    city_id,
-    cinema_id,
     lmaToken,
     asyncFlag,
     asyncBandQuanList,
@@ -2413,8 +2450,6 @@ class OrderAutoTicketQueue {
       for (const quan of quanList) {
         console.log(conPrefix + `正在尝试绑定券 ${quan.coupon_num}...`);
         const couponNumRes = await bandQuan({
-          city_id,
-          cinema_id,
           lmaToken,
           coupon_num: quan.coupon_num,
           appFlag
@@ -2502,8 +2537,6 @@ class OrderAutoTicketQueue {
           targetQuanList
         );
         const newQuanList = await this.getNewQuan({
-          city_id,
-          cinema_id,
           quan_value,
           lmaToken,
           quanNum: Number(ticket_num) - targetQuanList.length
@@ -2855,7 +2888,6 @@ const getSeatLayout = async ({ cinema_id, show_id, lmaToken, appFlag }) => {
     seatData = seatData
       .map(item => item.column)
       .flat()
-      .filter(item => item.is_seat === "1")
       .map(item => {
         return {
           ...item,
@@ -2988,17 +3020,30 @@ const bandQuan = async ({ coupon_num, lmaToken, appFlag }) => {
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
   // 由于要用二线城市影院且40券通用，故写死
   let params = {
-    city_id: "304",
-    cinema_id: "33",
     lmaToken,
-    coupon_code: coupon_num,
-    from_goods: "2"
+    code: coupon_num,
+    type: 2
   };
   try {
     await mockDelay(1);
     const res = await APP_API_OBJ[appFlag].bandQuan(params);
     // console.log("res", res);
-    if (res.data?.success === "1") {
+    // {
+    //   "data":{
+    //     "status": "0",
+    //     "color":"6",
+    //     "voucher_name":"5元影慕满减券",
+    //     "code":"9999980193913910",
+    //     "code_title": "NO. 9999 980l 9391 3910",
+    //     "expire time": "有效期至 2024-10-31",
+    //   },
+    //   "status": true,
+    //   "code":"0"
+    //   "alert":{},
+    //   "msg":"添加成功!",
+    //   "time":"2024-10-24 19:04:44"
+    // }
+    if (res.data?.code && res.msg?.includes('添加成功')) {
       return {
         coupon_num
       };

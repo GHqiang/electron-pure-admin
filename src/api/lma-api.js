@@ -95,8 +95,7 @@ const createApi = ({ app_name }) => {
   const cannelOneOrder = params => axios.post("/lma/mp/iorder/cancle", params);
 
   // 绑定优惠券
-  const bandQuan = params =>
-    axios.get("/sfc/v2/coupon/bind-coupon-code", { params });
+  const bandQuan = params => axios.get("/lma/mp/icoupon/add", { params });
 
   return {
     getCityList,
