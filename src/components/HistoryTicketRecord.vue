@@ -368,11 +368,12 @@ const queryLog = async ({ order_number, user_id }) => {
       type: 3
     });
     console.warn("查询操作日志返回", res);
-    let logList = res.data?.cardList;
+    let logList = res.data?.cardList || [];
+    logList.reverse()
     dialogLogVisible.value = true;
     logData.value = logList;
   } catch (error) {
-    console.warn("查询券库存返回异常", error);
+    console.warn("查询操作日志返回异常", error);
   }
 };
 
