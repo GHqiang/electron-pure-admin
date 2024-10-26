@@ -24,7 +24,8 @@ import {
   APP_OPENID_OBJ,
   QUAN_TYPE_COST,
   TEST_NEW_PLAT_LIST,
-  sfcV3AppList
+  sfcV3AppList,
+  QUAN_TYPE_FLAG
 } from "@/common/constant";
 import { APP_API_OBJ, PLAT_API_OBJ } from "@/common/index";
 
