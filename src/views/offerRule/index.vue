@@ -596,24 +596,24 @@ const addRule = () => {
 // 处理状态更改
 const handleStatusChange = async row => {
   // 显示二次确认对话框
-  const confirmResult = await ElMessageBox.confirm(
-    `确定要${row.status === "1" ? "启用" : "禁用"}该报价规则吗?`,
-    "提示",
-    {
-      confirmButtonText: "确定",
-      cancelButtonText: "取消",
-      type: "warning",
-      showClose: false,
-      closeOnClickModal: false,
-      closeOnPressEscape: false
-    }
-  ).catch(err => err);
+  // const confirmResult = await ElMessageBox.confirm(
+  //   `确定要${row.status === "1" ? "启用" : "禁用"}该报价规则吗?`,
+  //   "提示",
+  //   {
+  //     confirmButtonText: "确定",
+  //     cancelButtonText: "取消",
+  //     type: "warning",
+  //     showClose: false,
+  //     closeOnClickModal: false,
+  //     closeOnPressEscape: false
+  //   }
+  // ).catch(err => err);
 
-  if (confirmResult !== "confirm") {
-    // 用户取消了操作，恢复原状态
-    row.status = row.status === "1" ? "2" : "1";
-    return;
-  }
+  // if (confirmResult !== "confirm") {
+  //   // 用户取消了操作，恢复原状态
+  //   row.status = row.status === "1" ? "2" : "1";
+  //   return;
+  // }
 
   // 更新状态
   try {
