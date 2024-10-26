@@ -14,7 +14,7 @@ import { APP_LIST, UME_LIST, APP_GROUP_OBJ } from "@/common/constant";
 const SFC_API_OBJ = {};
 const UME_API_OBJ = {};
 
-let noSfcList = [...UME_LIST];
+let noSfcList = [...UME_LIST, "lma"];
 let sfcList = Object.keys(APP_LIST).filter(item => !noSfcList.includes(item));
 
 sfcList.forEach(item => {

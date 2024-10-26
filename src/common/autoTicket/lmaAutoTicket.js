@@ -1377,7 +1377,8 @@ class OrderAutoTicketQueue {
         offerRule.offer_type === "1" && quan_code && paymentAmount != 0;
       let isPriceAbnormalByCard =
         card_id &&
-        paymentAmount > (offerRule?.real_member_price || 0) * ticket_num;
+        paymentAmount >
+          ((offerRule?.real_member_price || 0) * 100 * ticket_num) / 100;
       if (isPriceAbnormalByQuan || isPriceAbnormalByCard) {
         let str = "用完券发现支付金额不为0，暂不购买，需手动出票";
         if (isPriceAbnormalByCard) {

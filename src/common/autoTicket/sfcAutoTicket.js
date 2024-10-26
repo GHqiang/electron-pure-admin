@@ -1376,7 +1376,7 @@ class OrderAutoTicketQueue {
       if (
         offerRule.offer_type !== "1" &&
         card_id &&
-        pay_money > real_member_price * ticket_num
+        pay_money > (real_member_price * 100 * ticket_num) / 100
       ) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),

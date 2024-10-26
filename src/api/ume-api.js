@@ -146,6 +146,13 @@ const createApi = ({ app_name }) => {
   const getOrderList = params =>
     axios.get(`/sfc/order/movie-ticket-orders`, { params });
 
+  // 获取会员卡列表
+  const getCardList = params =>
+    axios.post(
+      `/${app_name}/api/storeServer/cardYlInstanceService/findCardByMember`,
+      params
+    );
+
   return {
     getCinemaList,
     getMoviePlayInfo,
@@ -166,7 +173,8 @@ const createApi = ({ app_name }) => {
     buyTicket,
     findZoneByChannel,
     findTsgGift,
-    bandQuan
+    bandQuan,
+    getCardList
   };
 };
 export default createApi;
