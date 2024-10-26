@@ -52,6 +52,12 @@
             clearable
           />
         </el-form-item>
+        <el-form-item label="是否优先" prop="first">
+          <el-radio-group v-model="formData.first">
+            <el-radio value="1" size="large">是</el-radio>
+            <el-radio value="2" size="large">否</el-radio>
+          </el-radio-group>
+        </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input
             v-model="formData.remark"
@@ -93,7 +99,8 @@ let formData = reactive({
   session_id: "",
   member_pwd: "",
   mobile: "",
-  remark: ""
+  remark: "",
+  first: "2"
 });
 const validatePhoneNumber = (rule, value, callback) => {
   if (!value) {
@@ -137,6 +144,7 @@ const resetForm = el => {
   formData.member_pwd = "";
   formData.mobile = "";
   formData.remark = "";
+  formData.first = "2";
 };
 
 // 影线改变
@@ -161,6 +169,7 @@ const open = async loginInfo => {
         formData.member_pwd = formInfo.member_pwd;
         formData.mobile = formInfo.mobile;
         formData.remark = formInfo.remark;
+        formData.first = formInfo.first;
       } else {
         // 新增
         formData.app_name = formInfo.app_name;

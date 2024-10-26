@@ -512,11 +512,25 @@ class OrderAutoTicketQueue {
           item.member_pwd
       )
       .sort((a, b) => {
-        // 如果 a.priority 为真，则 a 应该排在 b 之前，因此返回负数
+        // 优先按 first 字段排序
+        if (a.first === "1" && b.first !== "1") return -1;
+        if (a.first !== "1" && b.first === "1") return 1;
+
+        // 如果 first 都是 '1' 或者都不是 '1'，则按 mobile 字段排序
+        if (a.first === "1" && b.first === "1") {
+          // 如果 a.mobile 是当前用户的手机号，则 a 应该排在 b 之前
+          if (a.mobile === tokens.userInfo.phone) return -1;
+          // 如果 b.mobile 是当前用户的手机号，则 b 应该排在 a 之前
+          if (b.mobile === tokens.userInfo.phone) return 1;
+          // 如果两个对象的 mobile 都不是当前用户的手机号，则按默认顺序排列
+          return 0;
+        }
+
+        // 如果 first 都不是 '1'，则按 mobile 字段排序
         if (a.mobile === tokens.userInfo.phone) return -1;
-        // 如果 b.priority 为真，则 b 应该排在 a 之前，因此返回正数
         if (b.mobile === tokens.userInfo.phone) return 1;
-        // 如果两个对象的 priority 属性都相同或都是假，则按默认顺序排列
+
+        // 如果两个对象的 first 和 mobile 都相同，则按默认顺序排列
         return 0;
       });
     this.currentParamsInx = 0;

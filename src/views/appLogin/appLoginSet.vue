@@ -76,12 +76,12 @@
         </template>
       </el-table-column>
       <el-table-column prop="mobile" label="所属账号" min-width="90" />
-      <!-- <el-table-column prop="mobile" label="是否优先" min-width="90">
+      <el-table-column label="是否优先" min-width="90">
         <template #default="{ row: { first } }">
           <span>{{ first == "1" ? "是" : "否" }}</span>
         </template>
-      </el-table-column> -->
-      <el-table-column prop="session_id" label="Session ID" min-width="300" />
+      </el-table-column>
+      <el-table-column prop="session_id" label="Session ID" min-width="200" />
       <el-table-column prop="member_pwd" label="会员卡密码" min-width="70" />
       <el-table-column prop="remark" label="备注" min-width="80" />
       <el-table-column

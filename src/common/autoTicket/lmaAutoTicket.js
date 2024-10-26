@@ -493,11 +493,25 @@ class OrderAutoTicketQueue {
       )
       .map(item => ({ ...item, lmaToken: item.session_id }))
       .sort((a, b) => {
-        // 如果 a.priority 为真，则 a 应该排在 b 之前，因此返回负数
+        // 优先按 first 字段排序
+        if (a.first === "1" && b.first !== "1") return -1;
+        if (a.first !== "1" && b.first === "1") return 1;
+
+        // 如果 first 都是 '1' 或者都不是 '1'，则按 mobile 字段排序
+        if (a.first === "1" && b.first === "1") {
+          // 如果 a.mobile 是当前用户的手机号，则 a 应该排在 b 之前
+          if (a.mobile === tokens.userInfo.phone) return -1;
+          // 如果 b.mobile 是当前用户的手机号，则 b 应该排在 a 之前
+          if (b.mobile === tokens.userInfo.phone) return 1;
+          // 如果两个对象的 mobile 都不是当前用户的手机号，则按默认顺序排列
+          return 0;
+        }
+
+        // 如果 first 都不是 '1'，则按 mobile 字段排序
         if (a.mobile === tokens.userInfo.phone) return -1;
-        // 如果 b.priority 为真，则 b 应该排在 a 之前，因此返回正数
         if (b.mobile === tokens.userInfo.phone) return 1;
-        // 如果两个对象的 priority 属性都相同或都是假，则按默认顺序排列
+
+        // 如果两个对象的 first 和 mobile 都相同，则按默认顺序排列
         return 0;
       });
     this.currentParamsInx = 0;
@@ -1126,9 +1140,11 @@ class OrderAutoTicketQueue {
         const useCardRes = await this.useCardHandle({
           city_id,
           cinema_id,
-          offerRule
+          offerRule,
+          ticket_num,
+          supplier_end_price
         });
-        if (useCardRes?.error) {
+        if (useCardRes?.error || !useCardRes?.card_id) {
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
             des: "锁定座位前用卡异常",
@@ -1571,6 +1587,7 @@ class OrderAutoTicketQueue {
       let useList = useListRes.useList || [];
       console.warn("会员卡当天及当月出票量", useList);
       // 需要查询当前卡的月出票数和天出票数，单卡一月20，一天8张，
+      let activeCard = cardList[0]; //第一个为活跃卡，活跃卡出失败了需要切换并日志记录
       cardList = cardList.filter(item => {
         let useInfo = useList.find(itemA => itemA.card_id === item.card_number);
         return (
@@ -1598,11 +1615,30 @@ class OrderAutoTicketQueue {
           card_id: ""
         };
       }
+      // 判断活跃卡出票量是否达标
+      if (
+        !cardList.find(item => item.card_number === activeCard?.card_number)
+      ) {
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: "当前活跃卡出票量已达标",
+          level: "info",
+          info: {
+            activeCard
+          }
+        });
+        activeCard = null;
+      }
+      // 非活跃卡列表
+      let otherCardList = cardList.filter(
+        item => item.card_number !== activeCard?.card_number
+      );
       // 2、使用会员卡
       let member_total_price = (real_member_price * 100 * ticket_num) / 100;
       const { card_id } = await this.useCard({
         member_total_price,
-        cardList,
+        activeCard,
+        otherCardList,
         supplier_end_price,
         ticket_num,
         member_price,
@@ -2669,11 +2705,9 @@ class OrderAutoTicketQueue {
   }
 
   // 使用会员卡
-  async useCard({ member_total_price, cardList, lmaToken }) {
+  async useCard({ member_total_price, activeCard, otherCardList, lmaToken }) {
     const { conPrefix, appFlag } = this;
     try {
-      let cards = cardList || [];
-      let [activeCard, ...otherCards] = cards;
       if (activeCard.money_str < Number(member_total_price)) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
@@ -2681,16 +2715,28 @@ class OrderAutoTicketQueue {
           level: "info",
           info: {
             activeCard,
-            otherCards,
+            otherCardList,
             member_total_price
           }
         });
+      } else {
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: `当前活跃卡余额足够`,
+          level: "info",
+          info: {
+            ...activeCard
+          }
+        });
+        return {
+          card_id: activeCard.card_number
+        };
       }
 
       let card_id;
       // 开始尝试使用卡并获取成功使用的卡的结果
       const attemptCardsSequentially = async () => {
-        for (const card of otherCards) {
+        for (const card of otherCardList) {
           console.log(conPrefix + `正在尝试使用卡 ${card.card_number}...`);
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
@@ -2726,6 +2772,16 @@ class OrderAutoTicketQueue {
               }
             });
             continue;
+          } else {
+            this.logList.push({
+              opera_time: getCurrentFormattedDateTime(),
+              des: "换卡成功",
+              level: "info",
+              info: {
+                card_number: card.card_number,
+                money_str
+              }
+            });
           }
           card_id = card.card_number;
           console.log(conPrefix + "卡使用成功，返回结果并停止尝试。");
@@ -2741,7 +2797,7 @@ class OrderAutoTicketQueue {
         }
         return card_id; // 所有卡尝试失败后返回null
       };
-      // 3、计算价格要求最终价格小于中标价
+      // 3、进行其它卡余额尝试
       const useCardId = await attemptCardsSequentially();
       if (!useCardId) {
         console.error(conPrefix + "所有卡均尝试失败");
@@ -2932,7 +2988,8 @@ const getCardList = async ({ lmaToken, appFlag }) => {
     const res = await APP_API_OBJ[appFlag].getCardList(params);
     console.log(conPrefix + "获取会员卡列表返回", res);
     let cardList = res.data?.sleep || [];
-    cardList.push({
+    // 头部插入，第一个为活跃卡
+    cardList.unshift({
       card_number: res.data?.card_number,
       gold: res.data?.gold, // 0可用 1-过期不可用
       money_str: res.data?.money_str
