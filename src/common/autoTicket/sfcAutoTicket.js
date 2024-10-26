@@ -1754,6 +1754,14 @@ class OrderAutoTicketQueue {
           session_id,
           appFlag
         });
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: "获取优惠券列表返回",
+          level: "info",
+          info: {
+            ...quanListRes
+          }
+        });
         const quanList = quanListRes?.quanList || [];
         if (quanListRes?.error) {
           this.logList.push({
@@ -3383,7 +3391,8 @@ const getQuanList = async ({
     // 过滤掉不可用券
     // list = list.filter(item => item.coupon_num.indexOf("t") === -1);
     return {
-      quanList
+      quanList,
+      params
     };
   } catch (error) {
     console.error(conPrefix + "获取优惠券列表异常", error);

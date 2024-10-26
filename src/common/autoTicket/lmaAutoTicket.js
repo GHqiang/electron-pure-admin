@@ -1704,6 +1704,14 @@ class OrderAutoTicketQueue {
             lmaToken,
             appFlag
           });
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: "获取优惠券列表返回",
+            level: "info",
+            info: {
+              ...quanListRes
+            }
+          });
           let quanList = quanListRes?.quanList || [];
           if (quanListRes?.error) {
             this.logList.push({

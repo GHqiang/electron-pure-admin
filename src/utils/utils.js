@@ -865,7 +865,8 @@ const sendWxPusherMessage = async ({
   const url = "https://wxpusher.zjiecode.com/api/manager/message/send";
   const headers = {
     "content-type": "application/json;charset=UTF-8",
-    token: "f64b234659d4934b4d1e5501534c6f52"
+    token: "76f88ede45c09566c3144b61a4b13f80"
+    // 需注意一旦token过期就会不发消息，需要重新扫码登录然后发个消息拿network里的token
   };
   let userInfo = window.localStorage.getItem("userInfo");
   if (userInfo) {
@@ -1798,14 +1799,14 @@ const formatTimeStrByLma = timeStr => {
 };
 
 // 转换座位号 如05排05座 去掉0
-const removeLeadingZeros = (lockseat) =>{
+const removeLeadingZeros = lockseat => {
   // 使用正则表达式匹配并替换每部分前面的零
-  const parts = lockseat.split('排');
-  const row = parts[0].replace(/^0+/, ''); // 去掉行号前面的零
+  const parts = lockseat.split("排");
+  const row = parts[0].replace(/^0+/, ""); // 去掉行号前面的零
   const seatWithSuffix = parts[1];
-  const seat = seatWithSuffix.replace(/^[0]+/, '').replace('座', ''); // 去掉座位号前面的零并去掉“座”字
+  const seat = seatWithSuffix.replace(/^[0]+/, "").replace("座", ""); // 去掉座位号前面的零并去掉“座”字
   return `${row}排${seat}座`;
-}
+};
 
 export {
   removeLeadingZeros,
