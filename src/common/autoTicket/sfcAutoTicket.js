@@ -2910,7 +2910,9 @@ class OrderAutoTicketQueue {
       // 3、40出一线，35出二线国内，30出二线外国（暂时无法区分外国）
       let quans = quanList || []; // 优惠券列表
       let targetQuanList = quans
-        .filter(item => item.coupon_info.indexOf(quan_value) !== -1)
+        .filter(
+          item => item.coupon_info.indexOf(QUAN_TYPE_FLAG[quan_value]) !== -1
+        )
         .map(item => {
           return {
             coupon_num: item.coupon_num,
@@ -3366,6 +3368,7 @@ const getQuanList = async ({
   firstFlag
 }) => {
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
+  const isV3App = sfcV3AppList.includes(appFlag);
   try {
     let params = {
       city_id: city_id,
@@ -3375,10 +3378,17 @@ const getQuanList = async ({
     };
     let quanList;
     if (firstFlag !== 1) {
+      if (isV3App) {
+        params.pag = 1;
+        params.status = 4;
+      }
       console.log(conPrefix + "获取优惠券列表参数", params);
       const res = await APP_API_OBJ[appFlag].getQuanList(params);
       console.log(conPrefix + "获取优惠券列表返回", res);
       quanList = res.data?.list || [];
+      if (isV3App) {
+        quanList = res.data?.unused?.lists || [];
+      }
     } else {
       delete params.request_from;
       params.status = "4";
