@@ -1767,6 +1767,8 @@ class OrderAutoTicketQueue {
           city_id,
           cinema_id,
           session_id,
+          quan_value,
+          ticket_num,
           appFlag
         });
         this.logList.push({
@@ -3374,14 +3376,73 @@ const getCardList = async ({ city_id, cinema_id, session_id, appFlag }) => {
   }
 };
 
+// 连续获取目标券
+const continuousGetQuan = async data => {
+  const {
+    city_id,
+    cinema_id,
+    session_id,
+    appFlag,
+    quan_value,
+    ticket_num,
+    page = 2,
+    quanData = []
+  } = data;
+  const params = {
+    city_id,
+    cinema_id,
+    session_id,
+    request_from: "1",
+    page,
+    status: 4
+  };
+  try {
+    const res = await APP_API_OBJ[appFlag].getQuanList(params);
+    let quanList = res.data?.unused?.lists || [];
+
+    // 过滤符合条件的券
+    const filteredQuanList = quanList.filter(item =>
+      item.coupon_info.includes(QUAN_TYPE_FLAG[quan_value])
+    );
+
+    quanData.push(...filteredQuanList);
+
+    if (quanData.length < ticket_num && quanList.length >= 25) {
+      // 如果当前页的券数量达到25条，并且总数量仍小于所需数量，则继续获取下一页
+      return await continuousGetQuan({
+        city_id,
+        cinema_id,
+        session_id,
+        appFlag,
+        quan_value,
+        ticket_num,
+        page: page + 1,
+        quanData
+      });
+    }
+
+    return {
+      list: quanData,
+      params
+    };
+  } catch (error) {
+    console.warn("连续获取券失败", error);
+    return { error, params };
+  }
+};
+
 // 获取优惠券列表
-const getQuanList = async ({
-  city_id,
-  cinema_id,
-  session_id,
-  appFlag,
-  firstFlag
-}) => {
+const getQuanList = async data => {
+  const {
+    city_id,
+    cinema_id,
+    session_id,
+    appFlag,
+    quan_value,
+    ticket_num,
+    firstFlag,
+    page
+  } = data;
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
   const isV3App = sfcV3AppList.includes(appFlag);
   try {
@@ -3394,7 +3455,7 @@ const getQuanList = async ({
     let quanList;
     if (firstFlag !== 1) {
       if (isV3App) {
-        params.page = 1;
+        params.page = page || 1;
         params.status = 4;
       }
       console.log(conPrefix + "获取优惠券列表参数", params);
@@ -3403,11 +3464,34 @@ const getQuanList = async ({
       quanList = res.data?.list || [];
       if (isV3App) {
         quanList = res.data?.unused?.lists || [];
+        if (quanList.length >= 25) {
+          quanList = quanList.filter(item =>
+            item.coupon_info.includes(QUAN_TYPE_FLAG[quan_value])
+          );
+          if (quanList.length < ticket_num) {
+            const quanDataRes = await continuousGetQuan({
+              ...data,
+              page: 2
+            });
+            if (!quanDataRes.error) {
+              return {
+                quanList: quanDataRes.list,
+                params: quanDataRes.params
+              };
+            } else {
+              return {
+                quanList,
+                params: quanDataRes.params,
+                error: quanDataRes.error
+              };
+            }
+          }
+        }
       }
     } else {
       delete params.request_from;
-      params.status = "4";
-      params.page = 1;
+      params.status = 4;
+      params.page = page || 1;
       const res = await APP_API_OBJ[appFlag].getQuanListByFirstUseQuan(params);
       console.log(conPrefix + "获取优惠券列表返回", res);
       quanList = res.data?.unused?.lists || [];
