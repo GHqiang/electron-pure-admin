@@ -19,12 +19,16 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="卡&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ID">
-        <el-input
-          v-model="formData.card_id"
-          placeholder="请输入卡ID"
+      <el-form-item :label="`状&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;态`">
+        <el-select
+          v-model="formData.status"
+          placeholder="卡状态"
+          style="width: 194px"
           clearable
-        />
+        >
+          <el-option label="正常" value="1" />
+          <el-option label="无效" value="2" />
+        </el-select>
       </el-form-item>
       <el-form-item
         label="卡&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;号"
@@ -97,28 +101,9 @@
               clearable
               style="width: 150px; margin-left: -1px"
             />
-            <span @click="syncBalance">同步余额</span>
+            <span @click="syncCardInfo">同步卡信息</span>
           </template>
         </el-button>
-        <!-- 
-        <el-button type="primary" style="padding-left: 0px">
-          <template #default>
-            <el-select
-              v-model="shadowLine"
-              filterable
-              placeholder="影线名称"
-              style="width: 120px; margin-left: -1px"
-            >
-              <el-option
-                v-for="(keyValue, keyName) in APP_LIST"
-                :key="keyName"
-                :label="keyValue"
-                :value="keyName"
-              />
-            </el-select>
-            <span @click="addCard">同步卡信息</span>
-          </template>
-        </el-button> -->
       </el-form-item>
     </el-form>
 
@@ -148,11 +133,20 @@
       </el-table-column>
       <el-table-column prop="cinema_name" label="影院名称" min-width="150" />
       <el-table-column prop="mobile" label="所属账号" min-width="120" />
+      <el-table-column prop="status" label="卡 状态" min-width="80">
+        <template #default="{ row }">
+          <span :class="{ red: row.status != 1 }">{{
+            row.status == "1" ? "正常" : "无效"
+          }}</span>
+        </template>
+      </el-table-column>
+
       <el-table-column prop="balance" label="卡 余额" min-width="80">
         <template #default="{ row }">
           <span :class="{ red: row.balance <= 200 }">{{ row.balance }}</span>
         </template>
       </el-table-column>
+
       <el-table-column prop="card_discount" label="卡 折扣" min-width="80" />
       <el-table-column prop="card_id" label="卡 ID" min-width="80" />
       <el-table-column prop="card_num" label="卡 号" min-width="120" />
@@ -163,7 +157,7 @@
           <span>{{ row.default_card === "1" ? "是" : "否" }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="integral" label="卡 积分" min-width="100" />
+      <!-- <el-table-column prop="integral" label="卡 积分" min-width="100" /> -->
       <el-table-column prop="remark" label="备注" min-width="100" />
 
       <el-table-column
@@ -215,7 +209,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from "vue";
+import { ref, reactive, computed, h } from "vue";
 import svApi from "@/api/sv-api";
 import { platTokens } from "@/store/platTokens";
 const {
@@ -355,8 +349,137 @@ const delay = delayTime => {
     }, delayTime);
   });
 };
+
+// 获取会员卡
+const getCardListByApp = async (app_name, phone, session_id) => {
+  let params = {};
+  let cardList = [];
+  if (!session_id) {
+    // console.log("getCinemaLoginInfoList()", getCinemaLoginInfoList());
+    let loginInfoList = getCinemaLoginInfoList().filter(
+      itemA => itemA.app_name == app_name && itemA.mobile == phone
+    );
+    session_id = loginInfoList[0]?.session_id;
+  }
+  try {
+    if (UME_LIST.includes(app_name)) {
+      params.params = {
+        status: "CAN_USED",
+        channelCode: "QD0000001",
+        sysSourceCode: "YZ001"
+        // cinemaCode: "11015502",
+        // cinemaLinkId: "15953"
+      };
+      params.session_id = session_id;
+    } else if (app_name === "lma") {
+      params.lmaToken = session_id;
+    } else {
+      // params.city_id = "500";
+      // params.cinema_id = "1";
+      params.session_id = session_id;
+    }
+    const res = await APP_API_OBJ[app_name].getCardList(params);
+    console.warn("获取会员卡列表返回", res.data);
+    // 只获取有效卡，无效卡要过滤掉
+    if (UME_LIST.includes(app_name)) {
+      cardList = res.data || [];
+      cardList = cardList.filter(item => item.cardStatus === "ENABLED");
+      cardList = cardList.map(item => ({
+        card_id: item.cardInstanceId + "",
+        card_num: item.cardNo,
+        balance: item.cardAmount / 100 + ""
+      }));
+    } else if (app_name === "lma") {
+      // 卢米埃只获取主卡，其它的出票后更新卡余额
+      cardList = res.data?.sleep || [];
+      cardList = cardList.filter(item => item.gold === "1");
+      cardList.push({
+        card_number: res.data.card_number,
+        balance: res.data.money_str
+      });
+      cardList = cardList.map(item => ({
+        card_id: item.card_number + "",
+        card_num: item.card_number,
+        balance: item.balance ? item.balance + "" : "0"
+      }));
+    } else {
+      // sfc系列
+      cardList = res.data?.card_data || [];
+      cardList = cardList
+        .filter(item => item.card_status === "1")
+        .map(item => {
+          return {
+            card_id: item.id + "", // 卡id
+            card_num: item.card_num, // 卡号
+            balance: item.balance + "", // 卡余额
+            cinema_name: item.cinema_name // 卡关联影院
+          };
+        });
+    }
+    console.warn("获取会员卡列表返回的cardList", cardList);
+    cardList = cardList.map(item => ({
+      ...item,
+      app_name,
+      mobile: phone
+    }));
+    return cardList;
+  } catch (err) {
+    console.warn("获取会员卡列表异常", err, params, app_name);
+    return [];
+  }
+};
+
+window.getCardListByApp = getCardListByApp;
+
+// 同步卡信息时新增卡
+const addCardListHandle = async cardList => {
+  try {
+    let params = {
+      addCardList: cardList.map(item => {
+        let card_discount = "100";
+        let use_limit_day = "";
+        if (UME_LIST.includes(item.app_name)) {
+          card_discount = "78";
+          use_limit_day = "12";
+        } else if (item.app_name === "lma") {
+          card_discount = "78";
+          use_limit_day = "8";
+        }
+        return {
+          ...item,
+          card_discount,
+          use_limit_day,
+          status: "1",
+          rule: rule,
+          update_time: getCurrentFormattedDateTime()
+        };
+      })
+    };
+    console.warn("新增卡列表参数", params);
+    const res = await svApi.batchAddCardRecord(params);
+    console.warn("新增卡列表返回", res);
+  } catch (error) {
+    console.warn("新增卡列表异常", error);
+  }
+};
+
+// 同步卡信息时更新余额
+const updateCardListHandle = async cardList => {
+  try {
+    let params = {
+      updateList: cardList
+    };
+    console.warn("更新卡列表参数", params);
+    const res = await svApi.batchUpdateCardRecord(params);
+    console.warn("更新卡列表返回", res);
+    return true;
+  } catch (error) {
+    console.warn("更新卡列表异常", error);
+  }
+};
+
 // 同步余额
-const syncBalance = async () => {
+const syncCardInfo = async () => {
   let phone = mobile.value;
   if (!phone) {
     ElMessage.warning("请先输入要同步的账号（手机号）");
@@ -370,91 +493,126 @@ const syncBalance = async () => {
     background: "rgba(0, 0, 0, 0.7)"
   });
   try {
+    // 1、拿到该手机号已维护登录信息的影院列表
     let loginInfoList = getCinemaLoginInfoList().filter(
-      item => !UME_LIST.includes(item.app_name)
+      itemA =>
+        itemA.mobile == phone &&
+        (formData.app_name ? itemA.app_name == formData.app_name : true)
     );
-    // 过滤一下已登录的
-    let apiList = Object.entries(APP_API_OBJ).filter(
-      // 如果有值证明就是登录过的
-      item => {
-        let obj = loginInfoList.find(
-          itemA => itemA.app_name === item[0] && itemA.mobile == phone
-        );
-        return !!obj;
-      }
-    );
-    console.log("过滤后的apiList", apiList);
+    console.log("该手机号的loginInfoListt", loginInfoList);
+    // 2、获取服务端已维护的卡列表
     let cardRes = await svApi.queryCardList({
       page_num: 1,
-      page_size: 500,
-      rule
+      page_size: 1000,
+      mobile: phone,
+      app_name: formData.app_name || undefined
     });
-    let serCardList = cardRes.data.cardList || [];
+    let serCardList = cardRes.data?.cardList || [];
+    console.log("该手机号的serCardList", serCardList);
     let memberCardList = [];
-    for (let index = 0; index < apiList.length; index++) {
-      const [appName, api] = apiList[index];
-      await delay(200);
-      let session_id = loginInfoList.find(
-        item => item.app_name === appName && item.mobile === phone
-      )?.session_id;
-      const res = await api.getCardList({
-        city_id: "500",
-        cinema_id: "1",
-        session_id
-      });
-      let cardList = res.data.card_data || [];
-      cardList = cardList.map(item => {
-        return {
-          card_id: item.id,
-          card_num: item.card_num,
-          cinema_id: item.cinema_id,
-          cinema_name: item.cinema_name,
-          card_status: item.card_status,
-          valid_time: item.valid_time,
-          integral: item.integral,
-          balance: item.balance,
-          default_card: item.default_card,
-          level: item.level,
-          mobile: phone,
-          // card_discount: "",
-          // card_pwd: "",
-          // use_limit_day: "",
-          app_name: appName
-        };
-      });
+    for (let index = 0; index < loginInfoList.length; index++) {
+      const { app_name, session_id } = loginInfoList[index];
+      await delay(100);
+      let cardList = await getCardListByApp(app_name, phone, session_id);
       memberCardList.push(...cardList);
     }
     console.log("本次同步会员卡余额拿到的数据信息", memberCardList);
     if (memberCardList.length) {
-      let updateList = memberCardList
-        .map(item => {
-          return {
-            id: serCardList.find(
-              itemA =>
-                itemA.card_id === item.card_id &&
-                itemA.card_num === item.card_num &&
-                itemA.app_name === item.app_name
-            )?.id,
-            balance: item.balance,
-            default_card: item.default_card,
-            card_status: item.card_status,
-            update_time: getCurrentFormattedDateTime()
-          };
+      memberCardList = memberCardList.map(item => {
+        return {
+          id: serCardList.find(
+            itemA =>
+              itemA.card_id === item.card_id &&
+              itemA.card_num === item.card_num &&
+              itemA.app_name === item.app_name
+          )?.id,
+          ...item
+        };
+      });
+      console.warn("memberCardList", memberCardList);
+      let addCardList = memberCardList.filter(item => !item.id);
+      console.warn("addCardList", addCardList);
+      if (addCardList.length) {
+        addCardListHandle(addCardList);
+      }
+      let updateCardList = memberCardList
+        .filter(item => item.id && item.balance !== undefined)
+        .map(item => ({
+          id: item.id,
+          balance: item.balance,
+          update_time: getCurrentFormattedDateTime()
+        }));
+      if (updateCardList?.length) {
+        updateCardListHandle(updateCardList);
+      }
+      let unUseCardList = serCardList.filter(item => {
+        return !memberCardList.some(
+          itemA =>
+            itemA.app_name === item.app_name && itemA.card_num === item.card_num
+        );
+      });
+      console.warn("无效卡列表", unUseCardList);
+      if (unUseCardList.length) {
+        const messageContent = h("div", null, [
+          h("p", null, "以下是查出来的服务端的无效卡"),
+          h(
+            "ul",
+            null,
+            unUseCardList.map(card =>
+              h("li", null, [
+                h("span", { style: "margin-right: 10px;" }, `ID: ${card.id}`),
+                h(
+                  "span",
+                  { style: "margin-right: 10px;" },
+                  `卡号: ${card.card_num}`
+                ),
+                h(
+                  "span",
+                  { style: "margin-right: 10px;" },
+                  `影线: ${card.app_name}`
+                ),
+                h(
+                  "span",
+                  { style: "margin-right: 10px;" },
+                  `影院: ${card.cinema_name}`
+                )
+              ])
+            )
+          )
+        ]);
+        ElMessageBox({
+          title: "确定要将以下无效卡置为无效吗？",
+          message: messageContent,
+          showCancelButton: true,
+          confirmButtonText: "确定",
+          cancelButtonText: "取消",
+          type: "warning"
         })
-        .filter(item => item.id);
-      // 过滤掉未在会员卡列表维护的数据
-      let params = {
-        updateList
-      };
-      console.log("同步余额入参", updateList);
-      // for (let index = 0; index < updateList.length; index++) {
-      //   const item = updateList[index];
-      //   await svApi.updateCardRecord(item);
-      // }
-      await svApi.batchUpdateCardRecord(params);
-      loading.close();
-      ElMessage.success("同步成功！");
-      searchData();
+          .then(async () => {
+            // 用户点击确认按钮后的操作
+            console.log("User confirmed the update.");
+            let updateList = unUseCardList.map(item => ({
+              id: item.id,
+              status: "2",
+              update_time: getCurrentFormattedDateTime()
+            }));
+            const isUpdatePass = await updateCardListHandle(updateList);
+            if (!isUpdatePass) {
+              ElMessage.success("置为无效失败，可考虑手动逐个编辑为无效");
+            }
+            loading.close();
+            searchData();
+          })
+          .catch(() => {
+            loading.close();
+            ElMessage.success("同步余额及新增卡成功！");
+            searchData();
+          });
+      } else {
+        loading.close();
+        ElMessage.success("同步卡信息成功！");
+        searchData();
+      }
     }
   } catch (error) {
     console.warn("同步余额异常", error);

@@ -1386,15 +1386,15 @@ class OrderAutoTicketQueue {
           });
         }
       }
-      let pay_money = Number(priceInfo.price_str?.replace("￥", "") || 0); // 此处是为了将订单价格30.00转为30，将0.00转为0
-      console.log(conPrefix + "订单最后价格", pay_money, priceInfo);
+      let paymentAmount = Number(priceInfo.price_str?.replace("￥", "") || 0); // 此处是为了将订单价格30.00转为30，将0.00转为0
+      console.log(conPrefix + "订单最后价格", paymentAmount, priceInfo);
       // 用完券发现支付金额不为0,暂不购买微信通知
       let isPriceAbnormalByQuan =
         offerRule.offer_type === "1" && quan_code && paymentAmount != 0;
       let isPriceAbnormalByCard =
         card_id &&
         paymentAmount >
-          ((offerRule?.real_member_price || 0) * 100 * ticket_num) / 100;
+          ((offerRule?.real_member_price || 0) * 10000 * ticket_num) / 10000;
       if (isPriceAbnormalByQuan || isPriceAbnormalByCard) {
         let str = "用完券发现支付金额不为0，暂不购买，需手动出票";
         if (isPriceAbnormalByCard) {

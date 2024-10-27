@@ -706,7 +706,8 @@ class getSfcOfferPrice {
       if (member_price > 0) {
         const cardRes = await svApi.queryCardList({
           app_name: app_name,
-          rule: tokens.userInfo.rule
+          rule: tokens.userInfo.rule,
+          status: "1"
         });
         let list = cardRes.data.cardList || [];
         list = list.map(item => ({

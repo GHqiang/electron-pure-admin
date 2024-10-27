@@ -1391,11 +1391,11 @@ class OrderAutoTicketQueue {
       if (
         offerRule.offer_type !== "1" &&
         card_id &&
-        pay_money > (real_member_price * 100 * ticket_num) / 100
+        pay_money > (real_member_price * 10000 * ticket_num) / 10000
       ) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: `用卡计算订单价格后价格不为0`,
+          des: `用完卡发现支付金额大于会员价*票数，暂不购买，需手动出票`,
           level: "error",
           info: {
             pay_money,

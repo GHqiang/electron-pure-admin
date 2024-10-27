@@ -80,6 +80,12 @@
             clearable
           />
         </el-form-item>
+        <el-form-item label="状态" prop="status">
+          <el-radio-group v-model="formData.status">
+            <el-radio value="1" size="large">正常</el-radio>
+            <el-radio value="2" size="large">无效</el-radio>
+          </el-radio-group>
+        </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input
             v-model="formData.remark"
@@ -125,6 +131,7 @@ let formData = reactive({
   balance: "",
   use_limit_day: "",
   mobile: "",
+  status: "",
   remark: ""
 });
 const validatePhoneNumber = (rule, value, callback) => {
@@ -173,6 +180,7 @@ const resetForm = el => {
   formData.balance = "";
   formData.use_limit_day = "";
   formData.mobile = "";
+  formData.status = "1";
   formData.remark = "";
 };
 
@@ -202,6 +210,7 @@ const open = async cardInfo => {
         formData.use_limit_day = formInfo.use_limit_day;
         formData.mobile = formInfo.mobile;
         formData.remark = formInfo.remark;
+        formData.status = formInfo.status;
       } else {
         // 新增
         formData.app_name = formInfo.app_name;
