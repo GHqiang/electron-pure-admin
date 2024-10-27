@@ -1477,7 +1477,7 @@ class OrderAutoTicketQueue {
         level: "info"
       });
       // 更新卡余额
-      this.updateBalance({
+      this.updateCardBalance({
         card_id,
         card_balance: card_balance?.replace("￥", "") || 0,
         paymentAmount
@@ -1528,14 +1528,26 @@ class OrderAutoTicketQueue {
   }
 
   // 更新卡余额
-  async updateBalance(data) {
+  async updateCardBalance(data) {
     const { card_id, card_balance, paymentAmount } = data;
+    const params = {
+      card_id,
+      app_name: "lma",
+      balance: "" + (card_balance - paymentAmount)
+    };
     try {
-      const params = {
-        card_id,
-        app_name: "lma",
-        balance: card_balance - paymentAmount
-      };
+      if (card_id && card_balance && paymentAmount) {
+        const res = await svApi.updateCardBalance(params);
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: "更新卡余额返回",
+          level: "info",
+          info: {
+            res,
+            params
+          }
+        });
+      }
     } catch (error) {
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
@@ -1543,7 +1555,7 @@ class OrderAutoTicketQueue {
         level: "info",
         info: {
           error,
-          data
+          params
         }
       });
     }
