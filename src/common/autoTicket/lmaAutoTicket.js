@@ -1135,6 +1135,7 @@ class OrderAutoTicketQueue {
         });
       }
       let card_id;
+      let card_balance;
       // 如果需要用卡，锁座前就得准备好卡,计算好余额切换好卡
       if (offerRule.offer_type != "1") {
         const useCardRes = await this.useCardHandle({
@@ -1179,9 +1180,10 @@ class OrderAutoTicketQueue {
           }
         }
         card_id = useCardRes.card_id;
+        card_balance = useCardRes.card_balance;
+        console.log("card_balance", card_balance);
         console.warn("锁座前用卡成功", card_id);
       }
-
       // 卢米埃需要锁座前用券，一旦锁座就相当于创建订单不可切换券了
       const useQuanRes = await this.useQuanHandle({
         city_id,
@@ -1474,6 +1476,12 @@ class OrderAutoTicketQueue {
         des: `订单购买成功`,
         level: "info"
       });
+      // 更新卡余额
+      this.updateBalance({
+        card_id,
+        card_balance: card_balance?.replace("￥", "") || 0,
+        paymentAmount
+      });
       // 最后处理：获取支付结果上传取票码
       const lastRes = await this.lastHandle({
         city_id,
@@ -1519,6 +1527,27 @@ class OrderAutoTicketQueue {
     }
   }
 
+  // 更新卡余额
+  async updateBalance(data) {
+    const { card_id, card_balance, paymentAmount } = data;
+    try {
+      const params = {
+        card_id,
+        app_name: "lma",
+        balance: card_balance - paymentAmount
+      };
+    } catch (error) {
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "更新卡余额异常",
+        level: "info",
+        info: {
+          error,
+          data
+        }
+      });
+    }
+  }
   // 用卡处理，只能锁座前用卡
   async useCardHandle(params) {
     const { conPrefix, appFlag } = this;
@@ -1635,7 +1664,7 @@ class OrderAutoTicketQueue {
       );
       // 2、使用会员卡
       let member_total_price = (real_member_price * 100 * ticket_num) / 100;
-      const { card_id } = await this.useCard({
+      const { card_id, card_balance } = await this.useCard({
         member_total_price,
         activeCard,
         otherCardList,
@@ -1646,7 +1675,8 @@ class OrderAutoTicketQueue {
         lmaToken
       });
       return {
-        card_id
+        card_id,
+        card_balance
       };
     } catch (error) {
       console.error("用卡处理异常", error);
@@ -2729,11 +2759,12 @@ class OrderAutoTicketQueue {
           }
         });
         return {
-          card_id: activeCard.card_number
+          card_id: activeCard.card_number,
+          card_balance: activeCard.money_str
         };
       }
 
-      let card_id;
+      let card_id, card_balance;
       // 开始尝试使用卡并获取成功使用的卡的结果
       const attemptCardsSequentially = async () => {
         for (const card of otherCardList) {
@@ -2782,10 +2813,11 @@ class OrderAutoTicketQueue {
                 money_str
               }
             });
+            card_id = card.card_number;
+            card_balance = money_str;
+            console.log(conPrefix + "卡使用成功，返回结果并停止尝试。");
+            break;
           }
-          card_id = card.card_number;
-          console.log(conPrefix + "卡使用成功，返回结果并停止尝试。");
-          break;
         }
         if (!card_id) {
           this.logList.push({
@@ -2795,11 +2827,10 @@ class OrderAutoTicketQueue {
           });
           console.error(conPrefix + "所有卡尝试均失败。");
         }
-        return card_id; // 所有卡尝试失败后返回null
       };
       // 3、进行其它卡余额尝试
-      const useCardId = await attemptCardsSequentially();
-      if (!useCardId) {
+      await attemptCardsSequentially();
+      if (!card_id) {
         console.error(conPrefix + "所有卡均尝试失败");
         return {
           card_id: ""
@@ -2807,7 +2838,8 @@ class OrderAutoTicketQueue {
       }
       // 由于锁座前用卡不产生订单无法计算价格，故不计算利润，后面判断
       return {
-        card_id
+        card_id,
+        card_balance
       };
     } catch (error) {
       // 此处异常一定是代码异常无需考虑重试

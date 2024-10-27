@@ -1700,7 +1700,7 @@ class OrderAutoTicketQueue {
       order_status: "1",
       quan_value,
       app_name,
-      user_id: tokens.userInfo.user_id,
+      rule: tokens.userInfo.rule || 2,
       start_time: getCurrentFormattedDateTime(
         +new Date() - 3 * 24 * 60 * 60 * 1000
       ),
