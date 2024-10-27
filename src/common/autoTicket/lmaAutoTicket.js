@@ -483,37 +483,45 @@ class OrderAutoTicketQueue {
     const { id, plat_name, supplierCode, order_number, bid } = item;
     const { city_name, cinema_name, film_name, show_time, lockseat } = item;
     console.warn(conPrefix + "单个待出票订单信息", item);
-    this.currentParamsList = getCinemaLoginInfoList()
-      .filter(
-        item =>
-          item.app_name === appFlag &&
-          item.mobile &&
-          item.session_id &&
-          item.member_pwd
-      )
-      .map(item => ({ ...item, lmaToken: item.session_id }))
-      .sort((a, b) => {
-        // 优先按 first 字段排序
-        if (a.first === "1" && b.first !== "1") return -1;
-        if (a.first !== "1" && b.first === "1") return 1;
+    let targetLoginList = getCinemaLoginInfoList().filter(
+      item =>
+        item.app_name === appFlag &&
+        item.mobile &&
+        item.session_id &&
+        item.member_pwd
+    );
 
-        // 如果 first 都是 '1' 或者都不是 '1'，则按 mobile 字段排序
-        if (a.first === "1" && b.first === "1") {
-          // 如果 a.mobile 是当前用户的手机号，则 a 应该排在 b 之前
-          if (a.mobile === tokens.userInfo.phone) return -1;
-          // 如果 b.mobile 是当前用户的手机号，则 b 应该排在 a 之前
-          if (b.mobile === tokens.userInfo.phone) return 1;
-          // 如果两个对象的 mobile 都不是当前用户的手机号，则按默认顺序排列
-          return 0;
-        }
+    this.currentParamsList = targetLoginList.sort((a, b) => {
+      // 优先按 first 字段排序
+      if (a.first === "1" && b.first !== "1") return -1;
+      if (a.first !== "1" && b.first === "1") return 1;
 
-        // 如果 first 都不是 '1'，则按 mobile 字段排序
+      // 如果 first 都是 '1' 或者都不是 '1'，则按 mobile 字段排序
+      if (a.first === "1" && b.first === "1") {
+        // 如果 a.mobile 是当前用户的手机号，则 a 应该排在 b 之前
         if (a.mobile === tokens.userInfo.phone) return -1;
+        // 如果 b.mobile 是当前用户的手机号，则 b 应该排在 a 之前
         if (b.mobile === tokens.userInfo.phone) return 1;
-
-        // 如果两个对象的 first 和 mobile 都相同，则按默认顺序排列
+        // 如果两个对象的 mobile 都不是当前用户的手机号，则按默认顺序排列
         return 0;
-      });
+      }
+
+      // 如果 first 都不是 '1'，则按 mobile 字段排序
+      if (a.mobile === tokens.userInfo.phone) return -1;
+      if (b.mobile === tokens.userInfo.phone) return 1;
+
+      // 如果两个对象的 first 和 mobile 都相同，则按默认顺序排列
+      return 0;
+    });
+    this.logList.push({
+      opera_time: getCurrentFormattedDateTime(),
+      des: "获取该影院登录信息返回",
+      level: "info",
+      info: {
+        targetLoginList,
+        currentParamsList: this.currentParamsList
+      }
+    });
     this.currentParamsInx = 0;
     let offerRule;
     try {
@@ -1432,7 +1440,6 @@ class OrderAutoTicketQueue {
           offerRule?.member_price -
           (Number(supplier_end_price) * 100) / 10000;
         profit = Number(profit) * Number(ticket_num);
-        profit = profit.toFixed(2);
       }
       if (rewards > 0) {
         // 特急奖励订单中标价格 * 张数 * 0.04;
@@ -1441,6 +1448,7 @@ class OrderAutoTicketQueue {
           10000;
         profit += rewardPrice;
       }
+      profit = profit.toFixed(2);
       let order_num = order_str;
       if (isTestOrder) {
         return { offerRule };
@@ -1810,7 +1818,7 @@ class OrderAutoTicketQueue {
             [];
           if (targetQuanList.length < ticket_num) {
             let newQuanList = await this.getNewQuan({
-              quan_value,
+              quan_value: "lma-5",
               lmaToken,
               quanNum: Number(ticket_num) - targetQuanList.length
             });
@@ -1851,7 +1859,7 @@ class OrderAutoTicketQueue {
               level: "info"
             });
             this.getNewQuan({
-              quan_value,
+              quan_value: "lma-5",
               lmaToken,
               quanNum: 10 - (targetQuanList.length - Number(ticket_num)),
               asyncFlag: 1,
@@ -2514,8 +2522,8 @@ class OrderAutoTicketQueue {
     let conPrev = asyncFlag === 1 ? "异步绑券_" : "";
     try {
       let quanRes = await svApi.queryQuanList({
-        quan_value: quan_value,
-        app_name: appFlag,
+        quan_value,
+        app_name: "lma",
         quan_status: "1",
         page_num: 1,
         page_size: quanNum

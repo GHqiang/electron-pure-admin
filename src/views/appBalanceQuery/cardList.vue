@@ -148,16 +148,23 @@
       </el-table-column>
 
       <el-table-column prop="card_discount" label="卡 折扣" min-width="80" />
-      <el-table-column prop="card_id" label="卡 ID" min-width="80" />
+      <!-- <el-table-column prop="card_id" label="卡 ID" min-width="80" /> -->
       <el-table-column prop="card_num" label="卡 号" min-width="120" />
       <!-- <el-table-column prop="card_pwd" label="卡 密码" min-width="110" /> -->
       <el-table-column prop="use_limit_day" label="出票限制" min-width="90" />
+      <el-table-column prop="update_time" label="更新时间" min-width="160">
+        <template #default="{ row }">
+          <span>{{
+            getCurrentFormattedDateTime(+new Date(row.update_time))
+          }}</span>
+        </template>
+      </el-table-column>
+
       <el-table-column prop="use_limit_day" label="是否默认卡" min-width="100">
         <template #default="{ row }">
           <span>{{ row.default_card === "1" ? "是" : "否" }}</span>
         </template>
       </el-table-column>
-      <!-- <el-table-column prop="integral" label="卡 积分" min-width="100" /> -->
       <el-table-column prop="remark" label="备注" min-width="100" />
 
       <el-table-column
@@ -439,10 +446,10 @@ const addCardListHandle = async cardList => {
         let card_discount = "100";
         let use_limit_day = "";
         if (UME_LIST.includes(item.app_name)) {
-          card_discount = "78";
+          // card_discount = "78";
           use_limit_day = "12";
         } else if (item.app_name === "lma") {
-          card_discount = "78";
+          // card_discount = "78";
           use_limit_day = "8";
         }
         return {
