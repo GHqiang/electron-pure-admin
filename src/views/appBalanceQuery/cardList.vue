@@ -325,8 +325,8 @@ const getSummaries = param => {
       sums[index] = "合计";
     } else {
       const values = data.map(item => Number(item.balance));
-      if (index === 4) {
-        sums[4] = `${values.reduce((prev, curr) => {
+      if (index === 5) {
+        sums[5] = `${values.reduce((prev, curr) => {
           const value = Number(curr);
           if (!Number.isNaN(value)) {
             return prev + curr;
@@ -334,7 +334,7 @@ const getSummaries = param => {
             return prev;
           }
         }, 0)}`;
-        sums[4] = Math.floor(sums[4]);
+        sums[5] = Math.floor(sums[5]);
       } else {
         sums[index] = "N/A";
       }
@@ -478,14 +478,14 @@ const updateCardListHandle = async cardList => {
   }
 };
 
-// 同步余额
+// 同步卡信息
 const syncCardInfo = async () => {
   let phone = mobile.value;
   if (!phone) {
     ElMessage.warning("请先输入要同步的账号（手机号）");
     return;
   } else {
-    ElMessage.info("本次同步只同步登录过的影院会员卡余额");
+    ElMessage.info("本次同步只同步登录过的影院会员卡信息");
   }
   const loading = ElLoading.service({
     lock: true,
@@ -546,9 +546,12 @@ const syncCardInfo = async () => {
         updateCardListHandle(updateCardList);
       }
       let unUseCardList = serCardList.filter(item => {
-        return !memberCardList.some(
-          itemA =>
-            itemA.app_name === item.app_name && itemA.card_num === item.card_num
+        return (
+          !memberCardList.some(
+            itemA =>
+              itemA.app_name === item.app_name &&
+              itemA.card_num === item.card_num
+          ) && item.status === "1"
         );
       });
       console.warn("无效卡列表", unUseCardList);
