@@ -168,7 +168,8 @@ const setLocalLoginList = async () => {
     app_name: item.app_name,
     mobile: item.mobile,
     session_id: item.session_id,
-    member_pwd: item.member_pwd
+    member_pwd: item.member_pwd,
+    first: item.first
   }));
   userInfoAndTokens.setLoginInfoList(loginRecords);
 };
