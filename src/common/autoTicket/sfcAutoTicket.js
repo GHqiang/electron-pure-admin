@@ -434,8 +434,8 @@ class OrderAutoTicketQueue {
       } else if (plat_name === "sheng") {
         params = {
           orderCode: order.order_number,
-          supplierCode: order.supplierCode
-          // reason: ""
+          supplierCode: order.supplierCode,
+          reason: "价格过低无法出票"
         };
       } else if (plat_name === "mangguo") {
         params = {

@@ -490,14 +490,16 @@ class getLmaOfferPrice {
         info: {
           rule_price: price,
           supplier_max_price,
+          cost_price,
           shouxufei,
           rewardPrice,
           ensCostPrice
         }
       });
       // 最终成本超过平台限价
-      if (ensCostPrice >= Number(supplier_max_price)) {
-        let str = `最终成本${ensCostPrice}超过平台限价${supplier_max_price}`;
+      let costSum = Number(cost_price + rewardPrice).toFixed();
+      if (price <= costSum && !TEST_NEW_PLAT_LIST.includes(plat_name)) {
+        let str = `最终报价${price}小于等于成本价+奖励金额${costSum}`;
         console.error(conPrefix + str);
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
