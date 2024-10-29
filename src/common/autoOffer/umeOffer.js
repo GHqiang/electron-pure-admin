@@ -369,9 +369,8 @@ class getUmeOfferPrice {
         }
       });
       // 最终成本超过平台限价
-      let costSum = Number(cost_price + rewardPrice).toFixed();
-      if (price <= costSum && !TEST_NEW_PLAT_LIST.includes(plat_name)) {
-        let str = `最终报价${price}小于等于成本价+奖励金额${costSum}`;
+      if (ensCostPrice >= Number(supplier_max_price)) {
+        let str = `最终成本${ensCostPrice}超过平台限价${supplier_max_price}`;
         console.error(conPrefix + str);
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
@@ -396,8 +395,9 @@ class getUmeOfferPrice {
         // 不重新赋值的话按平台规则会员价四舍五入后+固定加价
         price = Math.round(price);
       }
-      if (price <= cost_price && !TEST_NEW_PLAT_LIST.includes(plat_name)) {
-        let str = `最终报价${price}小于等于成本价${cost_price}`;
+      let costSum = Number(cost_price + rewardPrice).toFixed();
+      if (price > costSum && !TEST_NEW_PLAT_LIST.includes(plat_name)) {
+        let str = `最终报价${price}大于成本价+奖励金额${costSum}`;
         console.error(conPrefix + str);
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),

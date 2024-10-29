@@ -523,8 +523,8 @@ class getSfcOfferPrice {
         price = Math.round(price);
       }
       let costSum = Number(cost_price + rewardPrice).toFixed();
-      if (price <= costSum && !TEST_NEW_PLAT_LIST.includes(plat_name)) {
-        let str = `最终报价${price}小于等于成本价+奖励金额${costSum}`;
+      if (price > costSum && !TEST_NEW_PLAT_LIST.includes(plat_name)) {
+        let str = `最终报价${price}大于成本价+奖励金额${costSum}`;
         console.error(conPrefix + str);
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
