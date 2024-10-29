@@ -2758,32 +2758,33 @@ class OrderAutoTicketQueue {
   async useCard({ member_total_price, activeCard, otherCardList, lmaToken }) {
     const { conPrefix, appFlag } = this;
     try {
-      if (activeCard.money_str < Number(member_total_price)) {
-        this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
-          des: `当前活跃卡余额不足,准备换卡`,
-          level: "info",
-          info: {
-            activeCard,
-            otherCardList,
-            member_total_price
-          }
-        });
-      } else {
-        this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
-          des: `当前活跃卡余额足够`,
-          level: "info",
-          info: {
-            ...activeCard
-          }
-        });
-        return {
-          card_id: activeCard.card_number,
-          card_balance: activeCard.money_str
-        };
+      if (activeCard) {
+        if (activeCard.money_str < Number(member_total_price)) {
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: `当前活跃卡余额不足,准备换卡`,
+            level: "info",
+            info: {
+              activeCard,
+              otherCardList,
+              member_total_price
+            }
+          });
+        } else {
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: `当前活跃卡余额足够`,
+            level: "info",
+            info: {
+              ...activeCard
+            }
+          });
+          return {
+            card_id: activeCard.card_number,
+            card_balance: activeCard.money_str
+          };
+        }
       }
-
       let card_id, card_balance;
       // 开始尝试使用卡并获取成功使用的卡的结果
       const attemptCardsSequentially = async () => {
@@ -3353,7 +3354,7 @@ const addOrderHandleRecored = async ({
       // console.warn("疑似队列重复，请重新登录");
       sendWxPusherMessage({
         msgType: 2,
-        transferTip: `疑似队列重复，请重新登录机器`
+        transferTip: `疑似队列重复，请重启队列或者重新登录机器`
       });
     }
   }

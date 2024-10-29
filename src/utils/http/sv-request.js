@@ -46,7 +46,8 @@ instance.interceptors.response.use(
     let whitelistSp = [];
 
     let isErrorByLieRen =
-      response.config.url.indexOf("/svpi/") !== -1 && data.code !== 1;
+      (IS_DEV ? response.config.url.indexOf("/svpi/") !== -1 : true) &&
+      data.code !== 1;
     if (
       isErrorByLieRen &&
       !whitelistSp.some(item => response.config.url.includes(item))
