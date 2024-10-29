@@ -142,7 +142,8 @@ class OrderAutoTicketQueue {
         des: "自动出票队列获取到新的待出票订单",
         level: "info",
         info: {
-          newOrders: order
+          newOrders: order,
+          sjc: +new Date()
         }
       }
     ];
