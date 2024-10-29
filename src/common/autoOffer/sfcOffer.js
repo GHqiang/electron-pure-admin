@@ -481,7 +481,7 @@ class getSfcOfferPrice {
       // 真实成本（加手续费）
       cost_price = cost_price + shouxufei;
       // 最终成本（减奖励费）
-      const ensCostPrice = Number(cost_price - rewardPrice).toFixed();
+      const ensCostPrice = Number(cost_price - rewardPrice).toFixed(2);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: "sfc计算报价相关信息",
@@ -522,7 +522,7 @@ class getSfcOfferPrice {
         // 不重新赋值的话按平台规则会员价四舍五入后+固定加价
         price = Math.round(price);
       }
-      let costSum = Number(cost_price + rewardPrice).toFixed();
+      let costSum = Number(cost_price + rewardPrice).toFixed(2);
       if (price > costSum && !TEST_NEW_PLAT_LIST.includes(plat_name)) {
         let str = `最终报价${price}大于成本价+奖励金额${costSum}`;
         console.error(conPrefix + str);

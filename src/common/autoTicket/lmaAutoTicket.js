@@ -1607,6 +1607,21 @@ class OrderAutoTicketQueue {
           card_id: ""
         };
       }
+      // 获取无效卡列表进行过滤
+      const invalidCardRes = await getUnCardList(appFlag);
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取无效会员卡列表返回",
+        level: "info",
+        info: {
+          ...invalidCardRes
+        }
+      });
+      let invalidCardList = invalidCardRes?.list || [];
+      cardList = cardList.filter(
+        item =>
+          !invalidCardList.some(itemA => itemA.card_num === item.card_number)
+      );
       const useListRes = await getCardDailyAndMonthlyTicketCount({
         cardIdList: cardList.map(item => item.card_number),
         appFlag
@@ -3047,6 +3062,26 @@ const getCardList = async ({ lmaToken, appFlag }) => {
     };
   } catch (error) {
     console.error(conPrefix + "获取会员卡列表异常", error);
+    return {
+      error
+    };
+  }
+};
+
+// 获取无效卡列表
+const getUnCardList = async appFlag => {
+  try {
+    const cardRes = await svApi.queryCardList({
+      app_name: appFlag,
+      rule: tokens.userInfo.rule,
+      status: "2"
+    });
+    let list = cardRes?.data?.cardList || [];
+    return {
+      list
+    };
+  } catch (error) {
+    console.warn("获取无效卡列表异常", error);
     return {
       error
     };
