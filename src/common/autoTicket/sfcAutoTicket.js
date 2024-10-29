@@ -468,8 +468,11 @@ class OrderAutoTicketQueue {
       console.warn(conPrefix + "【转单】结果", res);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
-        des: `转单成功-${JSON.stringify(res)}`,
-        level: "info"
+        des: `转单成功`,
+        level: "info",
+        info: {
+          res
+        }
       });
       sendWxPusherMessage({
         plat_name,
