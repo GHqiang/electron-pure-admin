@@ -418,7 +418,7 @@ const singleStartOrStop = ({ id, platToken, platName }, flag) => {
         delete appTicketQueueObj[item];
       }
     });
-    // 其它没有一个启动的再停止
+    // 其它没有一个启动的再启动
     if (!otherPlatQueueList.some(item => item.isEnabled)) {
       Object.keys(appTicketQueueObj).forEach(item => {
         isStartTicket && appTicketQueueObj[item].start();

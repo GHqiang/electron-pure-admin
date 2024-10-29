@@ -44,6 +44,10 @@ class OrderAutoTicketQueue {
     this.prevOrderNumber = ""; // 上个订单号
     this.eventName = `newOrder_${appFlag}`;
     this.handledOrders = new Map(); // 用于存储已处理订单号及其相关信息
+    this.isStart = false; // 是否启动
+
+    // 监听新订单
+    window.addEventListener(this.eventName, this.handleNewOrder.bind(this));
   }
 
   // 启动队列
@@ -53,19 +57,8 @@ class OrderAutoTicketQueue {
     // 由于及时队列停了 this.enqueue方法仍可能运行一次，故在每次启动重置队列
     this.queue = [];
     this.handledOrders = new Map();
+    this.isStart = true; // 是否启动
     console.warn(conPrefix + `队列启动，开始监听是否有新订单`);
-    this.setupListeners();
-  }
-
-  // 监听新订单
-  setupListeners() {
-    // 先移除旧的监听器再注册新的，避免多次监听重复执行
-    if (this.handleNewOrderBound) {
-      window.removeEventListener(this.eventName, this.handleNewOrderBound);
-    }
-
-    this.handleNewOrderBound = this.handleNewOrder.bind(this);
-    window.addEventListener(this.eventName, this.handleNewOrderBound);
   }
 
   // 测试新订单
@@ -106,7 +99,8 @@ class OrderAutoTicketQueue {
 
   // 处理新订单
   handleNewOrder(event) {
-    const { appFlag, conPrefix } = this;
+    const { appFlag, conPrefix, isStart } = this;
+    if (!isStart) return;
     const order = event.detail;
     // 检查是否已经处理过此订单
     if (this.handledOrders.has(order.plat_name + "_" + order.order_number)) {
@@ -286,12 +280,8 @@ class OrderAutoTicketQueue {
   stop() {
     const { conPrefix } = this;
     this.isRunning = false;
+    this.isStart = false;
     console.warn(conPrefix + "自动出票队列停止");
-    // 停止的时候判断是否有事件监听，有就移除
-    if (this.handleNewOrderBound) {
-      window.removeEventListener(this.eventName, this.handleNewOrderBound);
-      this.handleNewOrderBound = null;
-    }
   }
   // 设置错误信息
   setErrInfo(errMsg, errInfo) {
