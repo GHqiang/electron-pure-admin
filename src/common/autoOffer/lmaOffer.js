@@ -115,6 +115,7 @@ class getLmaOfferPrice {
             supplier_max_price,
             price,
             rewards,
+            offerType,
             offerList,
             plat_name
           });
@@ -318,26 +319,28 @@ class getLmaOfferPrice {
         }
         // 真实会员价
         mixAddAmountRule.real_member_price = memberPriceRes.real_member_price;
+        // 最小折扣
+        mixAddAmountRule.member_discount = memberPriceRes.discount;
         // 会员成本价(会员价*折扣价)
         mixAddAmountRule.memberCostPrice = memberPriceRes.member_price;
-        // 会员价*折扣价四舍五入
-        mixAddAmountRule.memberRoundPrice = Math.round(
-          memberPriceRes.member_price
-        );
-        // 会员最终报价
+        // 会员预计报价
         mixAddAmountRule.memberOfferAmount =
-          mixAddAmountRule.memberRoundPrice +
+          +mixAddAmountRule.memberCostPrice +
           Number(mixAddAmountRule.addAmount);
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: "会员最终报价相关信息",
           level: "info",
           info: {
-            real_member_price: mixAddAmountRule.real_member_price,
-            memberCostPrice: mixAddAmountRule.memberCostPrice,
-            memberRoundPrice: mixAddAmountRule.memberRoundPrice,
-            addAmount: mixAddAmountRule.addAmount,
-            memberOfferAmount: mixAddAmountRule.memberOfferAmount
+            real_member_price:
+              "真实会员价：" + mixAddAmountRule.real_member_price,
+            member_discount: "会员最小折扣" + mixAddAmountRule.member_discount,
+            memberCostPrice:
+              "会员成本价（真实会员价*折扣）：" +
+              mixAddAmountRule.memberCostPrice,
+            addAmount: "最小加价金额：" + mixAddAmountRule.addAmount,
+            memberOfferAmount:
+              "会员预计报价：" + mixAddAmountRule.memberOfferAmount
           }
         });
       } else {
@@ -409,6 +412,7 @@ class getLmaOfferPrice {
         supplier_max_price,
         price,
         rewards,
+        offerType,
         offerList,
         plat_name
       } = params || {};
@@ -457,77 +461,72 @@ class getLmaOfferPrice {
           level: "info"
         });
       }
+      // 规则报价
+      let rule_price = +price;
+      // 最终报价：规则报价四舍五入取整
+      price = Math.round(price);
+
+      // 最终报价高于平台限价，卡关闭超限报价直接不报
+      if (price >= Number(supplier_max_price)) {
+        let isOverrunOffer = window.localStorage.getItem("isOverrunOffer");
+        if (isOverrunOffer !== "1" && offerType !== "1") {
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: `用卡报价时，最终报价${price}超过平台限价${supplier_max_price}，超限报价处于关闭状态不进行报价`,
+            level: "error"
+          });
+          return;
+        }
+        // 券或者卡开了超限报价调整规则报价为平台限价
+        price = Number(supplier_max_price);
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: `调整规则报价为平台限价`,
+          level: "info"
+        });
+      }
+
       // 手续费
-      const shouxufei = (Number(price) * 100) / 10000;
+      const shouxufei = (price * 100) / 10000;
+
       // 奖励费用
-      let rewardPrice =
-        rewards > 0 ? (Number(price) * 100 * rewards) / 10000 : 0;
-      // 真实成本（加手续费）
-      cost_price = cost_price + shouxufei;
-      // 最终成本（减奖励费）
-      const ensCostPrice = Number(cost_price - rewardPrice).toFixed(2);
+      const rewardPrice = rewards > 0 ? (price * 100 * rewards) / 10000 : 0;
+      // 卡券成本
+      let cardQuanCost = +cost_price;
+      // 出票成本（加手续费）
+      let pay_cost_price = cardQuanCost + shouxufei;
+      // 真实成本（减奖励费）
+      const real_cost_price = (pay_cost_price - rewardPrice).toFixed(2);
+      // 预计利润（最终报价-真实成本）
+      let expectProfit = price - real_cost_price;
+      if (price <= real_cost_price) {
+        let str = `最终报价${price}低于真实成本${real_cost_price}`;
+        console.error(conPrefix + str);
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: str,
+          level: "error"
+        });
+        return;
+      }
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: "sfc计算报价相关信息",
         level: "info",
         info: {
-          rule_price: price,
-          supplier_max_price,
-          cost_price,
-          shouxufei,
-          rewardPrice,
-          ensCostPrice
+          rule_price: "规则计算报价：" + rule_price,
+          rule_price_round:
+            "最终报价（规则报价四舍五入取整）：" + Math.round(price),
+          supplier_max_price: "平台最高限价：" + supplier_max_price,
+          cardQuanCost: "卡券成本：" + cardQuanCost,
+          shouxufei: "手续费（最终报价*1%）：" + shouxufei,
+          cost_price: "出票成本（卡券成本+手续费）：" + cost_price,
+          rewardPrice:
+            `奖励金额(最终报价*奖励百分比-${rewards})：` + rewardPrice,
+          real_cost_price: "真实成本（出票成本-奖励金额）：" + real_cost_price,
+          expectProfit: "真实成本（最终报价-真实成本）：" + expectProfit
         }
       });
-      // 最终成本超过平台限价
-      if (ensCostPrice >= Number(supplier_max_price)) {
-        let str = `最终成本${ensCostPrice}超过平台限价${supplier_max_price}`;
-        console.error(conPrefix + str);
-        this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
-          des: str,
-          level: "error"
-        });
-        return;
-      }
-      // 最终报价超过平台限价
-      if (price > Number(supplier_max_price)) {
-        let isOverrunOffer = window.localStorage.getItem("isOverrunOffer");
-        if (isOverrunOffer !== "1") {
-          this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
-            des: `最终报价${price}超过平台限价${supplier_max_price}，超限报价处于关闭状态`,
-            level: "error"
-          });
-          return;
-        }
-        // 奖励单按真实成本（加手续费），非奖励单报最高限价
-        price = rewards > 0 ? cost_price : supplier_max_price;
-        // 不重新赋值的话按平台规则会员价四舍五入后+固定加价
-        price = Math.round(price);
-      }
-      let costSum = Number(cost_price + rewardPrice).toFixed(2);
-      if (price > costSum && !TEST_NEW_PLAT_LIST.includes(plat_name)) {
-        let str = `最终报价${price}大于成本价+奖励金额${costSum}`;
-        console.error(conPrefix + str);
-        this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
-          des: str,
-          level: "error"
-        });
-        return;
-      }
-      if (price > Number(supplier_max_price)) {
-        let str = `最终报价${price}超过平台限价${supplier_max_price}`;
-        console.error(conPrefix + str);
-        this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
-          des: str,
-          level: "error"
-        });
-        return;
-      }
-      // 如果报最终报价不小于最高限价返回报价
       return price;
     } catch (error) {
       console.error("获取最终报价异常", error);
@@ -715,7 +714,8 @@ class getLmaOfferPrice {
         });
         return {
           real_member_price, // 真实会员价
-          member_price: Number(member_price.toFixed(2)) // 成本价
+          member_price: Number(member_price.toFixed(2)), // 成本价
+          discount
         };
       }
     } catch (error) {
