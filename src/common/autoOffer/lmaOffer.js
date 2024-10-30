@@ -524,7 +524,7 @@ class getLmaOfferPrice {
           rewardPrice:
             `奖励金额(最终报价*奖励百分比-${rewards})：` + rewardPrice,
           real_cost_price: "真实成本（出票成本-奖励金额）：" + real_cost_price,
-          expectProfit: "真实成本（最终报价-真实成本）：" + expectProfit
+          expectProfit: "预计利润（最终报价-真实成本）：" + expectProfit
         }
       });
       return price;
@@ -704,12 +704,14 @@ class getLmaOfferPrice {
         }
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: "获取会员价相关信息返回",
+          des: "获取会员价相关信息",
           level: "info",
           info: {
-            real_member_price,
-            discount,
-            cost_member_price: Number(member_price.toFixed(2))
+            real_member_price: "真实会员价：" + real_member_price,
+            discount: "最小折扣：" + discount,
+            cost_member_price:
+              "会员成本价（真实会员价>=33?（真实会员价-5）* 折扣 + 1 : 真实会员价*折扣）：" +
+              Number(member_price.toFixed(2))
           }
         });
         return {

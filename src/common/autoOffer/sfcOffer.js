@@ -522,7 +522,7 @@ class getSfcOfferPrice {
           rewardPrice:
             `奖励金额(最终报价*奖励百分比-${rewards})：` + rewardPrice,
           real_cost_price: "真实成本（出票成本-奖励金额）：" + real_cost_price,
-          expectProfit: "真实成本（最终报价-真实成本）：" + expectProfit
+          expectProfit: "预计利润（最终报价-真实成本）：" + expectProfit
         }
       });
       return price;
