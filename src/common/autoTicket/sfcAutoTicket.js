@@ -3031,10 +3031,7 @@ class OrderAutoTicketQueue {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: "使用优惠券计算价格后最终利润为负",
-          level: "error",
-          info: {
-            error
-          }
+          level: "error"
         });
         return {
           profit: 0,
