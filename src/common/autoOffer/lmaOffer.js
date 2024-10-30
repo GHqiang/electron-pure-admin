@@ -286,14 +286,6 @@ class getLmaOfferPrice {
       let mixAddAmountRule = addAmountRuleList.sort(
         (itemA, itemB) => itemA.addAmount - itemB.addAmount
       )?.[0];
-      // 预估利润单张
-      let cardExpectProfit = 0,
-        quanExpectProfit = 0;
-      if (mixFixedAmountRule) {
-        quanExpectProfit =
-          mixFixedAmountRule.offerAmount -
-          QUAN_TYPE_COST[mixFixedAmountRule.quanValue];
-      }
       if (mixAddAmountRule) {
         // 计算会员报价
         let memberPriceRes = await this.getMemberPrice(order);
@@ -319,8 +311,7 @@ class getLmaOfferPrice {
             level: "warn",
             info: {
               memberPriceRes,
-              fixedOfferAmount: mixFixedAmountRule?.offerAmount,
-              quanExpectProfit
+              fixedOfferAmount: mixFixedAmountRule?.offerAmount
             }
           });
           return mixFixedAmountRule;
@@ -337,8 +328,6 @@ class getLmaOfferPrice {
         mixAddAmountRule.memberOfferAmount =
           mixAddAmountRule.memberRoundPrice +
           Number(mixAddAmountRule.addAmount);
-        cardExpectProfit =
-          mixAddAmountRule.memberOfferAmount - mixAddAmountRule.memberCostPrice;
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: "会员最终报价相关信息",
@@ -348,8 +337,7 @@ class getLmaOfferPrice {
             memberCostPrice: mixAddAmountRule.memberCostPrice,
             memberRoundPrice: mixAddAmountRule.memberRoundPrice,
             addAmount: mixAddAmountRule.addAmount,
-            memberOfferAmount: mixAddAmountRule.memberOfferAmount,
-            cardExpectProfit
+            memberOfferAmount: mixAddAmountRule.memberOfferAmount
           }
         });
       } else {
@@ -362,8 +350,7 @@ class getLmaOfferPrice {
           des: "最小加价规则不存在,返回最小固定报价规则",
           level: "info",
           info: {
-            fixedOfferAmount: mixFixedAmountRule?.offerAmount,
-            quanExpectProfit
+            fixedOfferAmount: mixFixedAmountRule?.offerAmount
           }
         });
         return mixFixedAmountRule;
@@ -385,9 +372,7 @@ class getLmaOfferPrice {
           level: "info",
           info: {
             memberOfferAmount: mixAddAmountRule.memberOfferAmount,
-            fixedOfferAmount: mixFixedAmountRule.offerAmount,
-            quanExpectProfit,
-            cardExpectProfit
+            fixedOfferAmount: mixFixedAmountRule.offerAmount
           }
         });
         return mixFixedAmountRule;
@@ -398,9 +383,7 @@ class getLmaOfferPrice {
           level: "info",
           info: {
             memberOfferAmount: mixAddAmountRule.memberOfferAmount,
-            fixedOfferAmount: mixFixedAmountRule.offerAmount,
-            quanExpectProfit,
-            cardExpectProfit
+            fixedOfferAmount: mixFixedAmountRule.offerAmount
           }
         });
         return mixAddAmountRule;
