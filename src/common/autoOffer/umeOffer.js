@@ -584,7 +584,8 @@ class getUmeOfferPrice {
         });
         return {
           real_member_price,
-          member_price: Number(member_price.toFixed(2))
+          member_price: Number(member_price.toFixed(2)),
+          discount
         };
       } else {
         console.warn(conPrefix + "会员价未负，非会员价");

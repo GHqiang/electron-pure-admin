@@ -311,7 +311,6 @@ const queryLog = async ({ order_number, user_id }) => {
     });
     console.warn("查询操作日志返回", res);
     let logList = res.data?.cardList || [];
-    logList.reverse()
     dialogLogVisible.value = true;
     logData.value = logList;
   } catch (error) {
