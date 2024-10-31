@@ -136,7 +136,7 @@
       <el-table-column
         prop="offerExceedLimitedPriceNum"
         sortable
-        label="超过限价"
+        label="超出成本"
         min-width="105"
       />
       <el-table-column
