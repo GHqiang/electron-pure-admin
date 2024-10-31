@@ -337,7 +337,10 @@ const HBCHYXD_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "哈尔滨华谊兄弟影院"
   },
   {
-    order_cinema_name: "华谊兄弟影院免费停车汇励店",
+    order_cinema_name: [
+      "华谊兄弟影院免费停车汇励店",
+      "华谊兄弟影院汇励99城市公园店免费停车2小时"
+    ],
     sfc_cinema_name: "华谊兄弟影院汇励99城市公园店"
   },
   {
@@ -357,7 +360,10 @@ const HBCHYXD_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "广东省惠州市华谊兄弟影院"
   },
   {
-    order_cinema_name: "华谊兄弟影院免费停车奥莱IMAX店",
+    order_cinema_name: [
+      "华谊兄弟影院免费停车奥莱IMAX店",
+      "华谊兄弟影院奥莱IMAX店"
+    ],
     sfc_cinema_name: "华谊兄弟影院晋中奥莱店"
   },
   {
@@ -365,7 +371,7 @@ const HBCHYXD_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "华谊兄弟影院廊坊万向城中国巨幕4DX店"
   },
   {
-    order_cinema_name: "华谊兄弟燕郊天洋城店",
+    order_cinema_name: ["华谊兄弟燕郊天洋城店", "华谊兄弟影院燕郊IMAX店"],
     sfc_cinema_name: "河北省廊坊市三河燕郊华谊兄弟天洋店"
   },
   {
@@ -389,7 +395,7 @@ const HBCHYXD_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "深圳华谊兄弟影院"
   },
   {
-    order_cinema_name: "铜陵华谊兄弟影院",
+    order_cinema_name: ["铜陵华谊兄弟影院", "华谊兄弟影院铜陵店"],
     sfc_cinema_name: "华谊兄弟铜陵影院"
   },
   {
@@ -890,6 +896,10 @@ const DSYC_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: "大商影城千盛店",
     sfc_cinema_name: "沈阳大商影城千盛店"
+  },
+  {
+    order_cinema_name: "大商影城中街新玛特店",
+    sfc_cinema_name: "沈阳大商影城中街店"
   }
 ];
 
@@ -1505,7 +1515,7 @@ const HMA_SPECIAL_CINEMA_LIST = [
   },
   // 杭州
   {
-    order_cinema_name: ["卢米埃影城新亚国际广场店"],
+    order_cinema_name: ["卢米埃影城庆春银泰店"],
     sfc_cinema_name: "卢米埃杭州银泰影城"
   },
   {
@@ -1532,14 +1542,14 @@ const HMA_SPECIAL_CINEMA_LIST = [
   // 苏州
   {
     order_cinema_name: ["卢米埃影城园区店"],
-    sfc_cinema_name: "卢米埃苏州华润万家影城IMAX影城"
+    sfc_cinema_name: "卢米埃苏州华润万家影城"
   },
   {
     order_cinema_name: ["卢米埃影城昆山金鹰店"],
     sfc_cinema_name: "卢米埃昆山金鹰影城"
   },
   {
-    order_cinema_name: ["卢米埃影城苏州金鹰店"],
+    order_cinema_name: ["卢米埃影城苏州金鹰店", "卢米埃影城新区金鹰店"],
     sfc_cinema_name: "卢米埃苏州金鹰影城"
   },
   // 西安
@@ -1553,7 +1563,7 @@ const HMA_SPECIAL_CINEMA_LIST = [
   },
   // 绍兴
   {
-    order_cinema_name: ["卢米埃影城银泰IMAX店"],
+    order_cinema_name: ["卢米埃影城银泰IMAX店", "卢米埃影城绍兴银泰IMAX影城"],
     sfc_cinema_name: "卢米埃绍兴银泰城IMAX影城"
   },
   {
@@ -1561,7 +1571,7 @@ const HMA_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "卢米埃顺德影城"
   },
   {
-    order_cinema_name: ["卢米埃影城王府井店"],
+    order_cinema_name: ["卢米埃影城王府井店", "卢米埃影城洛阳王府井店"],
     sfc_cinema_name: "卢米埃洛阳王府井影城"
   },
   {

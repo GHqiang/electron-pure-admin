@@ -76,7 +76,7 @@ const citys = [
   },
   {
     city_id: "16",
-    city_name: "丹阳",
+    city_name: "丹阳/镇江",
     ver_time: "0"
   },
   {

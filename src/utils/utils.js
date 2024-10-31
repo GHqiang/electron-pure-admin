@@ -1227,6 +1227,7 @@ const getCinemaIdByLma = (cinema_name, list, appName, city_name) => {
     };
   }
 };
+window.getCinemaIdByLma = getCinemaIdByLma;
 // 根据订单name获取目标影院(主要用于ume系统)
 const getTargetCinema = (cinema_name, list, appFlag) => {
   try {
