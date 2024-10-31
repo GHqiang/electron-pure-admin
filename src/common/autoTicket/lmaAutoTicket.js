@@ -3168,7 +3168,7 @@ const bandQuan = async ({ coupon_num, lmaToken, appFlag }) => {
   let params = {
     lmaToken,
     code: coupon_num,
-    type: 2
+    channel_type: 2
   };
   try {
     await mockDelay(1);

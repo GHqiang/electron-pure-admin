@@ -498,7 +498,7 @@ class getLmaOfferPrice {
       // 真实成本（减奖励费）
       const real_cost_price = (pay_cost_price - rewardPrice).toFixed(2);
       // 预计利润（最终报价-真实成本）
-      let expectProfit = price - real_cost_price;
+      let expectProfit = (price - real_cost_price).toFixed(2);
       if (price <= real_cost_price) {
         let str = `最终报价${price}低于真实成本${real_cost_price}`;
         console.error(conPrefix + str);
