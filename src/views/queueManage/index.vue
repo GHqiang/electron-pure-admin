@@ -31,6 +31,10 @@
       <el-button v-if="rule === 2" type="primary" @click="getQuanInventory"
         >查询券库存</el-button
       >
+
+      <!-- <el-button type="primary" @click="syncPriceSwitch">{{
+        !isSyncPrice ? "开启中标价同步" : "关闭中标价同步"
+      }}</el-button> -->
     </div>
 
     <el-table :data="platQueueList" border show-overflow-tooltip>
@@ -243,6 +247,10 @@ watch(isAutoTransfer, (newVal, oldVal) => {
 // 券库存弹框
 const dialogQuanVisible = ref(false);
 const quanData = ref([]); // 券库存列表
+
+// 是否同步价格
+const isSyncPrice = ref(false);
+
 // 平台报价队列集合
 let platOfferQueueObj = {
   lieren: lierenOfferQueue,
@@ -464,6 +472,19 @@ const getQuanInventory = async () => {
     console.warn("查询券库存返回异常", error);
   }
 };
+
+// 中标价同步处理
+const syncPriceSwitch = () => {
+  // 如果导致卡顿可考虑使用Workers线程处理
+  if (isSyncPrice.value) {
+    isSyncPrice.value = false;
+    console.warn("关闭中标价同步");
+  } else {
+    isSyncPrice.value = true;
+    console.warn("开启中标价同步");
+  }
+};
+
 // 正在编辑id
 const editingRowId = ref(null);
 // 正在编辑内容

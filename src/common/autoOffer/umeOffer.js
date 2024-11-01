@@ -242,14 +242,19 @@ class getUmeOfferPrice {
         mixAddAmountRule.real_member_price = memberPriceRes.real_member_price;
         // 最小折扣
         mixAddAmountRule.member_discount = memberPriceRes.discount;
-        // 会员成本价(会员价*折扣价)
+        // 会员成本价(真实会员价*折扣价)
         mixAddAmountRule.memberCostPrice = memberPriceRes.member_price;
+        // 真实会员价+0.5后四舍五入
+        mixAddAmountRule.round_member_price = Math.round(
+          +memberPriceRes.real_member_price + 0.5
+        );
         // 会员预计报价
         mixAddAmountRule.memberOfferAmount =
-          mixAddAmountRule.memberCostPrice + Number(mixAddAmountRule.addAmount);
+          mixAddAmountRule.round_member_price +
+          Number(mixAddAmountRule.addAmount);
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: "会员最终报价相关信息",
+          des: "会员报价相关信息0",
           level: "info",
           info: {
             real_member_price:
@@ -259,6 +264,8 @@ class getUmeOfferPrice {
               "会员成本价（真实会员价*折扣）：" +
               mixAddAmountRule.memberCostPrice,
             addAmount: "最小加价金额：" + mixAddAmountRule.addAmount,
+            round_member_price:
+              "真实会员价+0.5四舍五入：" + mixAddAmountRule.round_member_price,
             memberOfferAmount:
               "会员预计报价：" + mixAddAmountRule.memberOfferAmount
           }
@@ -339,8 +346,6 @@ class getUmeOfferPrice {
       // console.log("获取最终报价相关字段", params);
       // 规则报价
       let rule_price = price;
-      // 最终报价：规则报价四舍五入取整
-      price = Math.round(price);
 
       // 最终报价高于平台限价，卡关闭超限报价直接不报
       if (price >= Number(supplier_max_price)) {
@@ -391,8 +396,6 @@ class getUmeOfferPrice {
         level: "info",
         info: {
           rule_price: "规则计算报价：" + rule_price,
-          rule_price_round:
-            "最终报价（规则报价四舍五入取整）：" + Math.round(price),
           supplier_max_price: "平台最高限价：" + supplier_max_price,
           cardQuanCost: "卡券成本：" + cardQuanCost,
           shouxufei: "手续费（最终报价*1%）：" + shouxufei,
