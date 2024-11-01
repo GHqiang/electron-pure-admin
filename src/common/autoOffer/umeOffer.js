@@ -244,10 +244,13 @@ class getUmeOfferPrice {
         mixAddAmountRule.member_discount = memberPriceRes.discount;
         // 会员成本价(真实会员价*折扣价)
         mixAddAmountRule.memberCostPrice = memberPriceRes.member_price;
-        // 真实会员价+0.5后四舍五入
-        mixAddAmountRule.round_member_price = Math.round(
-          +memberPriceRes.real_member_price + 0.5
-        );
+        // 会员成本价不为0.5的整数倍时+0.5四舍五入
+        let round_member_price = +mixAddAmountRule.memberCostPricee;
+        let xiaoshu = round_member_price - Math.floor(round_member_price);
+        if (xiaoshu != 0 || xiaoshu != 0.5) {
+          round_member_price = round_member_price + 0.5;
+        }
+        mixAddAmountRule.round_member_price = Math.round(round_member_price);
         // 会员预计报价
         mixAddAmountRule.memberOfferAmount =
           mixAddAmountRule.round_member_price +
@@ -265,7 +268,7 @@ class getUmeOfferPrice {
               mixAddAmountRule.memberCostPrice,
             addAmount: "最小加价金额：" + mixAddAmountRule.addAmount,
             round_member_price:
-              "真实会员价+0.5四舍五入：" + mixAddAmountRule.round_member_price,
+              "会员成本价+0.5四舍五入：" + mixAddAmountRule.round_member_price,
             memberOfferAmount:
               "会员预计报价：" + mixAddAmountRule.memberOfferAmount
           }
