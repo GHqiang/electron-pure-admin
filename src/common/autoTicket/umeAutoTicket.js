@@ -3269,6 +3269,7 @@ const addOrderHandleRecored = async ({
       order_number: order.order_number,
       tpp_price: order.tpp_price,
       supplier_end_price: order.supplier_end_price,
+      supplier_max_price: res?.offerRule?.supplier_max_price || "",
       city_name: order.city_name,
       cinema_addr: order.cinema_addr,
       ticket_num: order.ticket_num,

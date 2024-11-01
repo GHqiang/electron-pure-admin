@@ -150,39 +150,51 @@
         align="center"
         width="60"
       />
-      <el-table-column prop="plat_name" fixed label="订单来源" width="110">
+      <el-table-column prop="plat_name" fixed label="订单来源" width="85">
         <template #default="scope">
           <span>{{ orderFormObj[scope.row.plat_name] }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="app_name" fixed label="影线名称" width="110">
+      <el-table-column prop="app_name" fixed label="影线名称" width="100">
         <template #default="scope">
           <span>{{ shadowLineObj[scope.row.app_name] }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="出票状态" fixed width="90">
+      <el-table-column label="出票状态" fixed width="85">
         <template #default="{ row: { order_status } }">
           <span>{{ TICKET_STATUS[order_status] }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="user_name" fixed label="出票人" width="110" />
       <el-table-column prop="order_number" fixed label="订单号" width="110" />
-      <el-table-column prop="cinema_name" label="影院" width="110" />
-      <el-table-column prop="hall_name" label="影厅" width="110" />
+      <el-table-column
+        prop="supplier_max_price"
+        fixed
+        label="平台限价"
+        width="85"
+      />
+      <el-table-column
+        prop="supplier_end_price"
+        fixed
+        label="中标价"
+        width="85"
+      />
+      <el-table-column prop="user_name" label="出票人" width="85" />
+      <el-table-column prop="cinema_name" label="影院" width="240" />
+      <el-table-column prop="hall_name" label="影厅" width="90" />
       <el-table-column prop="film_name" label="片名" width="110" />
-      <el-table-column prop="ticket_num" label="座位数" width="110" />
-      <el-table-column prop="supplier_end_price" label="中标价" width="110" />
-      <el-table-column label="报价类型" width="100">
+      <el-table-column prop="ticket_num" label="座位数" width="85" />
+
+      <el-table-column label="报价类型" width="85">
         <template #default="scope">
           <span>{{ offerTypeObj[scope.row.offer_type] || "" }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="rewards" label="奖励订单" width="90">
+      <el-table-column prop="rewards" label="奖励订单" width="85">
         <template #default="scope">
           <span>{{ scope.row.rewards > 0 ? "是" : "否" }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="quan_value" label="用券类型" width="90" />
+      <el-table-column prop="quan_value" label="用券类型" width="85" />
       <el-table-column prop="quan_code" label="优惠券码" width="90" />
       <el-table-column prop="profit" label="利润" width="80" />
       <el-table-column prop="original_profit" label="原利润" width="80" />

@@ -140,32 +140,44 @@
         align="center"
         width="60"
       />
-      <el-table-column prop="plat_name" fixed label="订单来源" width="110">
+      <el-table-column prop="plat_name" fixed label="订单来源" width="85">
         <template #default="scope">
           <span>{{ orderFormObj[scope.row.plat_name] }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="app_name" fixed label="影线名称" width="110">
+      <el-table-column prop="app_name" fixed label="影线名称" width="100">
         <template #default="scope">
           <span>{{ shadowLineObj[scope.row.app_name] }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="报价状态" fixed width="90">
+      <el-table-column label="报价状态" fixed width="85">
         <template #default="scope">
           <span>{{ scope.row.order_status === "1" ? "成功" : "失败" }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="user_name" fixed label="报价人" width="110" />
       <el-table-column prop="order_number" fixed label="订单号" width="110" />
-      <el-table-column prop="cinema_name" label="影院" width="110" />
-      <el-table-column prop="hall_name" label="影厅" width="110" />
-      <el-table-column prop="film_name" label="片名" width="110" />
-      <el-table-column prop="ticket_num" label="座位数" width="110" />
-      <el-table-column prop="offer_end_amount" label="最终报价" width="110">
+      <el-table-column
+        prop="supplier_max_price"
+        fixed
+        label="平台限价"
+        width="85"
+      />
+      <el-table-column
+        prop="offer_end_amount"
+        fixed
+        label="最终报价"
+        width="85"
+      >
         <template #default="scope">
           <span>{{ supplier_end_price_filter(scope.row) }}</span>
         </template>
       </el-table-column>
+      <el-table-column prop="user_name" label="报价人" width="85" />
+      <el-table-column prop="cinema_name" label="影院" width="245" />
+      <el-table-column prop="hall_name" label="影厅" width="90" />
+      <el-table-column prop="film_name" label="片名" width="110" />
+      <el-table-column prop="ticket_num" label="座位数" width="85" />
+
       <el-table-column label="报价类型" width="100">
         <template #default="scope">
           <span>{{ offerTypeObj[scope.row.offer_type] || "" }}</span>
