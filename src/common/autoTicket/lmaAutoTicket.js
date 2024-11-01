@@ -1717,6 +1717,46 @@ class OrderAutoTicketQueue {
     }
   }
 
+  // 查询最近用券记录返回
+  async queryUsedQuanList({ app_name }) {
+    const params = {
+      order_status: "1",
+      app_name,
+      rule: tokens.userInfo.rule || 2,
+      start_time: getCurrentFormattedDateTime(
+        +new Date() - 3 * 24 * 60 * 60 * 1000
+      ),
+      end_time: getCurrentFormattedDateTime()
+    };
+    try {
+      const res = await svApi.queryUsedQuanList(params);
+      let usedQuanList = res.data?.usedQuanList || [];
+      // 过滤出来确定用券的，因为卡也用券
+      usedQuanList = usedQuanList.filter(item => item.quan_code);
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: `获取最近用券记录入参及返回`,
+        level: "info",
+        info: {
+          params,
+          res
+        }
+      });
+      return usedQuanList;
+    } catch (error) {
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: `获取最近用券记录异常`,
+        level: "info",
+        info: {
+          params,
+          error
+        }
+      });
+      return [];
+    }
+  }
+
   // 锁定座位
   async lockSeatHandle(data, inx = 1) {
     const { conPrefix } = this;
@@ -1816,6 +1856,27 @@ class OrderAutoTicketQueue {
             });
             return { error: "获取优惠券列表异常" };
           }
+          // 查询最近用券记录
+          const usedQuanList = await this.queryUsedQuanList({
+            app_name: appFlag
+          });
+          if (usedQuanList?.length) {
+            quanList = quanList.filter(
+              item =>
+                !usedQuanList.some(itemA =>
+                  itemA.quan_code?.includes(item.code)
+                )
+            );
+          }
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: "根据最近用券记录过滤后的优惠券列表",
+            level: "info",
+            info: {
+              usedQuanList,
+              quanList
+            }
+          });
           quanList = quanList.filter(
             item => item.voucher_name === "5元影票满减券"
           );
