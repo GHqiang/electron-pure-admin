@@ -77,7 +77,7 @@ const createApi = ({ app_name }) => {
   const createOrder = params => axios.post("/sfc/v2/order/ng-create", params);
 
   // 电影票购买
-  const buyTicket = params => axios.post("/lma/mp/iorder/complete ", params);
+  const buyTicket = params => axios.post("/lma/mp/iorder/complete", params);
 
   // 获取购票信息
   const payOrder = params =>
@@ -86,10 +86,6 @@ const createApi = ({ app_name }) => {
   // 获取订单列表
   const getOrderList = params =>
     axios.get("/lma/mp/ihistory/ticket", { params });
-
-  // 获取订单详情
-  const getOrderDetail = params =>
-    axios.get("/lma/mp/ihistory/ticket_info", { params });
 
   // 取消订单
   const cannelOneOrder = params => axios.post("/lma/mp/iorder/cancle", params);
@@ -111,7 +107,6 @@ const createApi = ({ app_name }) => {
     priceCalculation,
     createOrder,
     payOrder,
-    getOrderDetail,
     cannelOneOrder,
     getOrderList,
     buyTicket,

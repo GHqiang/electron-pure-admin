@@ -2,9 +2,7 @@
 
 import axios from "axios";
 import { ElMessage } from "element-plus";
-import Cookies from "js-cookie";
 import {
-  sendWxPusherMessage,
   logUpload,
   getCurrentFormattedDateTime,
   mockDelay
@@ -26,7 +24,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
 
   // 请求拦截器
   instance.interceptors.request.use(
-    config => {
+    async config => {
       if (config.url.indexOf("/lma/") !== -1) {
         config.headers["Content-Type"] === "application/x-www-form-urlencoded;";
         // 猎人平台接口添加token
@@ -73,6 +71,23 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           config.params = params;
         } else {
           config.data = new URLSearchParams(params); // 转换为 URLSearchParams
+        }
+        // 延时白名单
+        let delayUrlList = [
+          "mp/index/film",
+          "mp/index/sell_session",
+          "mp/ibuypro/index",
+          "mp/ibuypro/add_ticket",
+          "mp/imember/change",
+          "mp/imember/index",
+          "mp/icoupon/index",
+          "mp/iorder/get_order",
+          "mp/icoupon/add",
+          "mp/ihistory/ticket_info",
+          "mp/iorder/complete"
+        ];
+        if (delayUrlList.some(item => config.originalUrl.includes(item))) {
+          await mockDelay(100);
         }
         // 生产环境不会跨域
         config.url = IS_DEV
