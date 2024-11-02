@@ -7,7 +7,8 @@ import {
   logUpload,
   formatErrInfo,
   getCinemaId,
-  calcCount
+  calcCount,
+  roundToHalf
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
@@ -322,13 +323,10 @@ class getSfcOfferPrice {
         mixAddAmountRule.member_discount = memberPriceRes.discount;
         // 会员成本价(真实会员价*折扣价)
         mixAddAmountRule.memberCostPrice = memberPriceRes.member_price;
-        // 会员成本价不为0.5的整数倍时+0.5四舍五入
-        let round_member_price = +mixAddAmountRule.memberCostPrice;
-        let xiaoshu = round_member_price - Math.floor(round_member_price);
-        if (xiaoshu != 0 || xiaoshu != 0.5) {
-          round_member_price = round_member_price + 0.5;
-        }
-        mixAddAmountRule.round_member_price = Math.round(round_member_price);
+        // 会员成本价不为0.5的整数倍时进0.5
+        mixAddAmountRule.round_member_price = roundToHalf(
+          mixAddAmountRule.memberCostPrice
+        );
         // 会员预计报价
         mixAddAmountRule.memberOfferAmount =
           mixAddAmountRule.round_member_price +
@@ -346,7 +344,8 @@ class getSfcOfferPrice {
               mixAddAmountRule.memberCostPrice,
             addAmount: "最小加价金额：" + mixAddAmountRule.addAmount,
             round_member_price:
-              "会员成本价+0.5四舍五入：" + mixAddAmountRule.round_member_price,
+              "会员成本价按0.5向上取整数倍：" +
+              mixAddAmountRule.round_member_price,
             memberOfferAmount:
               "会员预计报价：" + mixAddAmountRule.memberOfferAmount
           }
@@ -471,7 +470,15 @@ class getSfcOfferPrice {
       }
       // 规则报价
       let rule_price = price;
-
+      // 省、蚂蚁最后报价要求整数
+      if (["sheng", "mayi", "yangcong"].includes(plat_name)) {
+        price = Math.round(price);
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: `调整最终报价为规则报价四舍五入取整`,
+          level: "info"
+        });
+      }
       // 最终报价高于平台限价，卡关闭超限报价直接不报
       if (price >= Number(supplier_max_price)) {
         let isOverrunOffer = window.localStorage.getItem("isOverrunOffer");
@@ -487,7 +494,7 @@ class getSfcOfferPrice {
         price = Number(supplier_max_price);
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: `调整规则报价为平台限价`,
+          des: `调整最终报价为平台限价`,
           level: "info"
         });
       }
@@ -515,6 +522,7 @@ class getSfcOfferPrice {
         });
         return;
       }
+
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: "sfc计算报价相关信息",
@@ -523,6 +531,7 @@ class getSfcOfferPrice {
           rule_price: "规则计算报价：" + rule_price,
           supplier_max_price: "平台最高限价：" + supplier_max_price,
           cardQuanCost: "卡券成本：" + cardQuanCost,
+          price: "最终报价：" + price,
           shouxufei: "手续费（最终报价*1%）：" + shouxufei,
           cost_price: "出票成本（卡券成本+手续费）：" + cost_price,
           rewardPrice:
@@ -626,7 +635,7 @@ class getSfcOfferPrice {
           // try {
           //   // 过滤出来未售座位然后计算分区剩余座位占比，0-未售
           //   let seatList = seat_data.filter(item => item[2] === "0");
-          //   // 座位信息最后一位是座位分区id
+          //   // 正常座位信息最后一位是座位分区id，相同点都是第9位是id
           //   areaList = areaList.map(item => {
           //     return {
           //       ...item,
@@ -647,13 +656,28 @@ class getSfcOfferPrice {
           //       areaList
           //     }
           //   });
+          //   // 有的座位比较特殊，这样可解决排除特殊座位
+          //   // 正常座位：第9位是座位id
+          //   // ["8544", "1", "0", "10", "35", "8排1号", "", "1210", "1"]
+          //   // 特殊座位：必须连着一起买，且最后一位不是id, 不过第9位和正常座位一样都是id
+          //   // ['8557', '5', '0', '11', '13', '9排8号', 'seats_11_13', '465', '195', '', '8558']
+          //   // ['8558', '5', '0', '11', '14', '9排7号', 'seats_11_13', '400', '195', '8557', '8559']
+          //   // ['8559', '5', '0', '11', '15', '9排6号', 'seats_11_13', '335', '195', '8558', '']
+
+          //   for (let index = 0; index < areaList.length; index++) {
+          //     const item = areaList[index];
+          //     if (item[0].numRatio == 0 && areaList[index + 1]?.price) {
+          //       bigPrice = areaList[index + 1].price;
+          //       break;
+          //     }
+          //   }
           //   // 默认取最高价格，最高座位占比不足百分之3时取次最高价格
-          //   if (areaList[0].numRatio <= 3 && areaList[1]?.price) {
-          //     bigPrice = areaList[1].price;
-          //   }
-          //   if (areaList[1].numRatio <= 3 && areaList[2]?.price) {
-          //     bigPrice = areaList[2].price;
-          //   }
+          //   // if (areaList[0].numRatio <= 3 && areaList[1]?.price) {
+          //   //   bigPrice = areaList[1].price;
+          //   // }
+          //   // if (areaList[1].numRatio <= 3 && areaList[2]?.price) {
+          //   //   bigPrice = areaList[2].price;
+          //   // }
           // } catch (error) {
           //   this.logList.push({
           //     opera_time: getCurrentFormattedDateTime(),

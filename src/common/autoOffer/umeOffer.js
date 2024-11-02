@@ -6,7 +6,8 @@ import {
   offerRuleMatch,
   getTargetCinema,
   logUpload,
-  formatErrInfo
+  formatErrInfo,
+  roundToHalf
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
@@ -244,13 +245,10 @@ class getUmeOfferPrice {
         mixAddAmountRule.member_discount = memberPriceRes.discount;
         // 会员成本价(真实会员价*折扣价)
         mixAddAmountRule.memberCostPrice = memberPriceRes.member_price;
-        // 会员成本价不为0.5的整数倍时+0.5四舍五入
-        let round_member_price = +mixAddAmountRule.memberCostPrice;
-        let xiaoshu = round_member_price - Math.floor(round_member_price);
-        if (xiaoshu != 0 || xiaoshu != 0.5) {
-          round_member_price = round_member_price + 0.5;
-        }
-        mixAddAmountRule.round_member_price = Math.round(round_member_price);
+        // 会员成本价不为0.5的整数倍时进0.5
+        mixAddAmountRule.round_member_price = roundToHalf(
+          mixAddAmountRule.memberCostPrice
+        );
         // 会员预计报价
         mixAddAmountRule.memberOfferAmount =
           mixAddAmountRule.round_member_price +
@@ -268,7 +266,8 @@ class getUmeOfferPrice {
               mixAddAmountRule.memberCostPrice,
             addAmount: "最小加价金额：" + mixAddAmountRule.addAmount,
             round_member_price:
-              "会员成本价+0.5四舍五入：" + mixAddAmountRule.round_member_price,
+              "会员成本价按0.5向上取整数倍：" +
+              mixAddAmountRule.round_member_price,
             memberOfferAmount:
               "会员预计报价：" + mixAddAmountRule.memberOfferAmount
           }
@@ -349,7 +348,15 @@ class getUmeOfferPrice {
       // console.log("获取最终报价相关字段", params);
       // 规则报价
       let rule_price = price;
-
+      // 省、蚂蚁最后报价要求整数
+      if (["sheng", "mayi", "yangcong"].includes(plat_name)) {
+        price = Math.round(price);
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: `调整最终报价为规则报价四舍五入取整`,
+          level: "info"
+        });
+      }
       // 最终报价高于平台限价，卡关闭超限报价直接不报
       if (price >= Number(supplier_max_price)) {
         let isOverrunOffer = window.localStorage.getItem("isOverrunOffer");
@@ -365,7 +372,7 @@ class getUmeOfferPrice {
         price = Number(supplier_max_price);
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: `调整规则报价为平台限价`,
+          des: `调整最终报价为平台限价`,
           level: "info"
         });
       }
@@ -401,6 +408,7 @@ class getUmeOfferPrice {
           rule_price: "规则计算报价：" + rule_price,
           supplier_max_price: "平台最高限价：" + supplier_max_price,
           cardQuanCost: "卡券成本：" + cardQuanCost,
+          price: "最终报价：" + price,
           shouxufei: "手续费（最终报价*1%）：" + shouxufei,
           cost_price: "出票成本（卡券成本+手续费）：" + cost_price,
           rewardPrice:

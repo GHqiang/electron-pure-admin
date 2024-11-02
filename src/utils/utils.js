@@ -1809,7 +1809,17 @@ const removeLeadingZeros = lockseat => {
   return `${row}排${seat}座`;
 };
 
+// 按0.5向上去整，即4.1变为4.5,4.6变为5
+function roundToHalf(num) {
+  // 计算 num 除以 0.5 的商
+  const quotient = +num / 0.5;
+  // 向上取整
+  const roundedQuotient = Math.ceil(quotient);
+  // 返回结果
+  return roundedQuotient * 0.5;
+}
 export {
+  roundToHalf, // 按0.5向上取整
   removeLeadingZeros,
   getCurrentFormattedDateTime, // 获取当前时间：YYYY-MM-DD HH:MM:SS
   getCurrentDay, // 获取当前天：YYYY-MM-DD
