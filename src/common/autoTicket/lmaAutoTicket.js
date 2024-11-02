@@ -1881,8 +1881,7 @@ class OrderAutoTicketQueue {
             item => item.voucher_name === "5元影票满减券"
           );
           let targetQuanList =
-            quanList.map(item => ({ code: item.code })).slice(0, ticket_num) ||
-            [];
+            quanList.map(item => ({ code: item.code })) || [];
           if (targetQuanList.length < ticket_num) {
             let newQuanList = await this.getNewQuan({
               quan_value: "lma-5",
@@ -1935,6 +1934,7 @@ class OrderAutoTicketQueue {
               order_number
             });
           }
+          targetQuanList = targetQuanList.slice(0, ticket_num);
           return {
             quan_code: targetQuanList?.length
               ? JSON.stringify(targetQuanList)
