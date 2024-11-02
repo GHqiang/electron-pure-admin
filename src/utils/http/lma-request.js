@@ -86,8 +86,8 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           "mp/ihistory/ticket_info",
           "mp/iorder/complete"
         ];
-        if (delayUrlList.some(item => config.originalUrl.includes(item))) {
-          await mockDelay(100);
+        if (delayUrlList.some(item => config.originalUrl?.includes(item))) {
+          await mockDelay(0.1);
         }
         // 生产环境不会跨域
         config.url = IS_DEV
