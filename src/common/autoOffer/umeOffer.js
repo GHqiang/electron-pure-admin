@@ -66,11 +66,13 @@ class getUmeOfferPrice {
           });
           console.warn(conPrefix + "最终报价返回", endPrice);
           if (endPrice) {
-            if (offerType === "1") {
-              offerRule.offerAmount = endPrice;
-            } else {
-              offerRule.memberOfferAmount = endPrice;
-            }
+            // if (offerType === "1") {
+            //   offerRule.offerAmount = endPrice;
+            // } else {
+            //   offerRule.memberOfferAmount = endPrice;
+            // }
+            // 最终报价
+            offerRule.offer_end_amount = endPrice;
           } else {
             err_msg = "获取最终报价价格失败";
           }

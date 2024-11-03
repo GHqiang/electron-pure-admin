@@ -122,11 +122,13 @@ class getLmaOfferPrice {
           });
           console.warn(conPrefix + "最终报价返回", endPrice);
           if (endPrice) {
-            if (offerType === "1") {
-              offerRule.offerAmount = endPrice;
-            } else {
-              offerRule.memberOfferAmount = endPrice;
-            }
+            // if (offerType === "1") {
+            //   offerRule.offerAmount = endPrice;
+            // } else {
+            //   offerRule.memberOfferAmount = endPrice;
+            // }
+            // 最终报价
+            offerRule.offer_end_amount = endPrice;
             let isAnomaly = window.localStorage.getItem("isAnomaly");
             if (isAnomaly === "1" && appFlag === "sfc") {
               // sfc需要检查下系统是否异常（连续两个订单创建失败）

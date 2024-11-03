@@ -1918,7 +1918,11 @@ class OrderAutoTicketQueue {
               return { error: "5元影票满减券从数据库获取后仍不足" };
             }
           }
-          if (targetQuanList?.length - ticket_num < 10) {
+          // 1页10条，所以要求查出来的小于10才去补券
+          if (
+            targetQuanList?.length - ticket_num < 10 &&
+            targetQuanList?.length < 10
+          ) {
             this.logList.push({
               opera_time: getCurrentFormattedDateTime(),
               des: `本次出票后券小于10，开始异步绑定券;`,
