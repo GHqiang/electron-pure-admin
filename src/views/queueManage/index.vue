@@ -605,7 +605,7 @@ const syncPriceHandle = async () => {
     console.warn("需同步订单的记录", syncOrderList);
     await svApi.syncDealPrice({
       syncOrders: syncOrderList,
-      user_id: 9
+      user_id: user_id == 1 ? 9 : user_id
     });
     console.warn("同步中标价成功");
   } catch (error) {
