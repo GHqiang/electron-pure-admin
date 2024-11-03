@@ -79,8 +79,8 @@ class OrderAutoTicketQueue {
       // supplierCode: 'ccf7b11cdc944cf1940a149cff4243f9', // 商户号
       supplier_end_price: 35.5,
       // quan_value: "35",
-      member_price: 34.2,
-      real_member_price: 38,
+      member_price: 34.2, // 成本价
+      real_member_price: 38, // 真实会员价
       order_id: "6418878",
       tpp_price: "44.00",
       city_name: "厦门",
@@ -1660,7 +1660,7 @@ class OrderAutoTicketQueue {
       const {
         offer_type,
         quan_value,
-        member_price,
+        member_price, // 成本价
         real_member_price,
         offer_rule_id
       } = offerRule;
@@ -1703,11 +1703,11 @@ class OrderAutoTicketQueue {
           }
         }
         console.log(conPrefix + "使用会员卡出票");
-        console.log(conPrefix + "报价记录里的会员价", member_price);
-        if (!member_price) {
+        console.log(conPrefix + "报价记录里的会员价", real_member_price);
+        if (!real_member_price) {
           console.warn(
             conPrefix + "使用优惠券或者会员卡前获取会员价异常",
-            member_price
+            real_member_price
           );
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
@@ -1752,7 +1752,7 @@ class OrderAutoTicketQueue {
           cinema_id,
           show_id,
           seat_ids,
-          member_price,
+          member_price, // 成本价
           real_member_price,
           rewards,
           session_id,
@@ -3072,7 +3072,7 @@ class OrderAutoTicketQueue {
     cinema_id,
     show_id,
     seat_ids,
-    member_price,
+    member_price, // 成本价
     real_member_price,
     rewards,
     session_id,

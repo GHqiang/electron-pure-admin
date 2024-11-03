@@ -71,8 +71,8 @@ class OrderAutoTicketQueue {
       order_number: "2024071012402352191",
       supplier_end_price: 36,
       // quan_value: "35",
-      member_price: 34.2,
-      real_member_price: 100,
+      member_price: 34.2, // 成本价
+      real_member_price: 100, // 真实会员价
       order_id: "6418878",
       tpp_price: "44.00",
       city_name: "南京",
@@ -541,8 +541,8 @@ class OrderAutoTicketQueue {
       // offerRule = { offer_type: "1", quan_value: "35" };
       offerRule = {
         offer_type: "2",
-        member_price: "29.9",
-        real_member_price: 100
+        member_price: "29.9", // 成本价
+        real_member_price: 100 // 真实会员价
       };
     }
     console.warn(conPrefix + "从该订单的报价记录获取到的报价规则", offerRule);
@@ -1571,11 +1571,11 @@ class OrderAutoTicketQueue {
       const { lmaToken } = currentParams;
       // 拿订单号去匹配报价记录
       console.log(conPrefix + "使用会员卡出票");
-      console.log(conPrefix + "报价记录里的会员价", member_price);
-      if (!member_price) {
+      console.log(conPrefix + "报价记录里的会员价", real_member_price);
+      if (!real_member_price) {
         console.warn(
           conPrefix + "使用优惠券或者会员卡前获取会员价异常",
-          member_price
+          real_member_price
         );
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
@@ -1696,8 +1696,6 @@ class OrderAutoTicketQueue {
         otherCardList,
         supplier_end_price,
         ticket_num,
-        member_price,
-        real_member_price,
         lmaToken
       });
       return {
