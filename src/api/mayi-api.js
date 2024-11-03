@@ -4,6 +4,10 @@
 
 import axios from "@/utils/http/mayi-request";
 
+// 报价记录查询
+const queryOfferRecord = params =>
+  axios.post("/newwww/api/order/jingjiaPageV2", params);
+
 // 待报价列表查询
 const queryStayOfferList = params =>
   axios.post("/newwww/api/order/newOrderListV2", params);
@@ -28,6 +32,7 @@ const transferOrder = params =>
   axios.post("/newwww/api/order/turnOrder", params);
 
 export default {
+  queryOfferRecord, // 查询报价记录
   queryStayOfferList, // 查询待报价列表
   submitOffer, // 提交报价
   unlockSeat, // 解锁座位

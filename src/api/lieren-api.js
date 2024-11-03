@@ -4,6 +4,9 @@
 
 import axios from "@/utils/http/lieren-request";
 
+// 查询报价记录
+const queryOfferRecord = params => axios.post("/sp/order", params);
+
 // 获取待报价/出票列表
 const stayTicketingList = params => axios.post("/sp/order", params);
 
@@ -20,6 +23,7 @@ const submitTicketCode = params => axios.post("/sp/submit", params);
 const transferOrder = params => axios.post("/sp/transfer", params);
 
 export default {
+  queryOfferRecord, // 查询报价记录
   stayTicketingList, // 获取待报价/出票列表
   submitOffer, // 提交报价
   unlockSeat, // 解锁座位

@@ -1,8 +1,14 @@
 /**
  * @description: 省平台api列表
  */
-
+import oldAxios from "axios";
 import axios from "@/utils/http/sheng-request";
+
+// 查询报价记录
+const queryOfferRecord = params =>
+  oldAxios.get("https://supplier.shenga.co/ordergrab/listLostGrabMovie", {
+    params
+  });
 
 // 待报价列表查询
 const queryStayOfferList = params =>
@@ -29,6 +35,7 @@ const stayTicketingList = params =>
   axios.post("/supplier/listGrabOrder", params);
 
 export default {
+  queryOfferRecord, // 查询报价记录
   queryStayOfferList, // 查询待报价列表
   submitOffer, // 提交报价
   unlockSeat, // 解锁座位

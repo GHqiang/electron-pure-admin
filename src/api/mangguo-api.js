@@ -4,6 +4,9 @@
 
 import axios from "@/utils/http/mangguo-request";
 
+// 查询报价记录
+const queryOfferRecord = params => axios.post("/v2/api/62e0941db72c5", params);
+
 // 待报价列表查询
 const queryStayOfferList = params =>
   axios.get("/v2/api/637ca60f4dc12", { params });
@@ -25,6 +28,7 @@ const submitTicketCode = params => axios.post("/v2/api/62e11dd840696", params);
 const transferOrder = params => axios.post("/v2/api/64113ee99fa6e", params);
 
 export default {
+  queryOfferRecord, // 查询报价记录
   queryStayOfferList, // 查询待报价列表
   submitOffer, // 提交报价
   unlockSeat, // 解锁座位

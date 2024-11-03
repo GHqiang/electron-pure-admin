@@ -32,9 +32,9 @@
         >查询券库存</el-button
       >
 
-      <!-- <el-button type="primary" @click="syncPriceSwitch">{{
+      <el-button v-if="rule === 2" type="primary" @click="syncPriceSwitch">{{
         !isSyncPrice ? "开启中标价同步" : "关闭中标价同步"
-      }}</el-button> -->
+      }}</el-button>
     </div>
 
     <el-table :data="platQueueList" border show-overflow-tooltip>
@@ -169,9 +169,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onBeforeMount, watch } from "vue";
+import { ref, computed, onBeforeMount, watch, onBeforeUnmount } from "vue";
 import { ElMessageBox, ElMessage } from "element-plus";
 import svApi from "@/api/sv-api";
+import lierenApi from "@/api/lieren-api";
+import mayiApi from "@/api/mayi-api";
+import shengApi from "@/api/sheng-api";
+import mangguoApi from "@/api/mangguo-api";
 
 // 平台报价执行队列
 import lierenOfferQueue from "@/common/autoOffer/useLierenOffer";
@@ -472,19 +476,142 @@ const getQuanInventory = async () => {
     console.warn("查询券库存返回异常", error);
   }
 };
-
+// 同步中标价定时处理
+let syncInterval;
 // 中标价同步处理
 const syncPriceSwitch = () => {
   // 如果导致卡顿可考虑使用Workers线程处理
-  if (isSyncPrice.value) {
-    isSyncPrice.value = false;
-    console.warn("关闭中标价同步");
-  } else {
-    isSyncPrice.value = true;
-    console.warn("开启中标价同步");
+  try {
+    if (isSyncPrice.value) {
+      isSyncPrice.value = false;
+      console.warn("关闭中标价同步");
+      syncInterval = null;
+      clearInterval(syncInterval);
+    } else {
+      isSyncPrice.value = true;
+      console.warn("开启中标价同步");
+      platQueueList.value.forEach(item => {
+        if (item.platToken) {
+          setPlatFunObj[item.platName](item.platToken);
+        }
+      });
+      syncPriceHandle();
+      // 每隔45请求一次
+      syncInterval = setInterval(syncPriceHandle, 1000 * 45);
+    }
+  } catch (error) {
+    console.warn("中标价同步处理异常", error);
   }
 };
 
+// 同步中标价
+const syncPriceHandle = async () => {
+  try {
+    console.warn("同步中标价", getCurrentFormattedDateTime());
+    // 定义要查询的平台列表
+    const platforms = ["lieren", "mayi"];
+    // const platforms = ["lieren", "mayi", "sheng", "mangguo"];
+    let platApiObj = {
+      lieren: lierenApi,
+      mayi: mayiApi,
+      sheng: shengApi,
+      mangguo: mangguoApi
+    };
+    let paramsObj = {
+      lieren: {
+        // 猎人一页多少条可通过limit参数控制
+        page: 1,
+        limit: 30,
+        cinema_name: "",
+        sort: "id",
+        desc: "desc",
+        type: 1
+      },
+      mayi: {
+        // 蚂蚁一页8条，没有条数参数
+        pageNo: 1
+      },
+      sheng: {
+        status: "2,3,4",
+        deliverMinute: "",
+        cinemaName: "",
+        label: "",
+        TOKEN: "a9e29182c4534a169b89b7129a3849c8",
+        page: "1",
+        time: +new Date() + ""
+      },
+      mangguo: {}
+    };
+    // 并行调用所有平台的接口
+    const promises = platforms.map(platform => {
+      return platApiObj[platform].queryOfferRecord(paramsObj[platform]);
+    });
+
+    // 等待所有接口调用完成
+    const results = await Promise.allSettled(promises);
+    console.warn("所有平台查询报价记录完成", results);
+    const [lierenRes, mayiRes, shengRes, mangguoRes] = results;
+    let lierenList = lierenRes?.value?.data || [];
+    // supplier_end_price为0时代表还在竞价中
+    lierenList = lierenList
+      .filter(
+        item =>
+          item.offer !== item.supplier_end_price && item.supplier_end_price
+      )
+      .map(item => ({
+        order_number: item.order_number,
+        supplier_end_price: item.supplier_end_price,
+        plat_name: "lieren"
+      }));
+    let mayiList = mayiRes?.value?.data?.records || [];
+    mayiList = mayiList
+      .filter(item => item.baojiastatusText === "竞价失败")
+      .map(item => ({
+        order_number: item.tradeno,
+        supplier_end_price: item.chengjiaojia,
+        plat_name: "mayi"
+      }));
+    let shengList = shengRes?.value?.data?.data?.rows || [];
+    // 接口返回区分不了未中标状态及中标价格
+    // shengList = shengList
+    //   .filter(item => item.baojiastatusText === "竞价失败")
+    //   .map(item => ({
+    //     order_number: item.tradeno,
+    //     supplier_end_price: item.chengjiaojia,
+    //     plat_name: "sheng"
+    //   }));
+    let mangguoList = mangguoRes?.value?.data || [];
+    // 接口返回和预计不准
+    // mangguoList = mangguoList
+    //   .filter(item => item.baojiastatusText === "竞价失败")
+    //   .map(item => ({
+    //     order_number: item.tradeno,
+    //     supplier_end_price: item.chengjiaojia,
+    //     plat_name: "mangguo"
+    //   }));
+    console.warn(
+      "未中标的报价记录",
+      lierenList,
+      mayiList,
+      shengList,
+      mangguoList
+    );
+    let syncOrderList = [
+      ...lierenList,
+      ...mayiList,
+      ...shengList,
+      ...mangguoList
+    ];
+    console.warn("需同步订单的记录", syncOrderList);
+    await svApi.syncDealPrice({
+      syncOrders: syncOrderList,
+      user_id: 9
+    });
+    console.warn("同步中标价成功");
+  } catch (error) {
+    console.error("同步中标价异常", error);
+  }
+};
 // 正在编辑id
 const editingRowId = ref(null);
 // 正在编辑内容
@@ -520,5 +647,9 @@ onBeforeMount(() => {
   // socket.addEventListener("message", function (event) {
   //   console.log("Message from server ", event.data);
   // });
+});
+onBeforeUnmount(() => {
+  syncInterval = null;
+  clearInterval(syncInterval);
 });
 </script>

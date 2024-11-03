@@ -163,15 +163,29 @@
         width="85"
       />
       <el-table-column
+        v-if="rule === 2"
+        prop="deal_price"
+        fixed
+        label="中标价"
+        width="85"
+      />
+      <el-table-column
         prop="offer_end_amount"
         fixed
-        label="最终报价"
+        label="我的报价"
         width="85"
       >
         <template #default="scope">
           <span>{{ supplier_end_price_filter(scope.row) }}</span>
         </template>
       </el-table-column>
+      <el-table-column
+        v-if="rule === 2"
+        prop="member_price"
+        fixed
+        label="会员成本价"
+        width="85"
+      />
       <el-table-column prop="user_name" label="报价人" width="85" />
       <el-table-column prop="cinema_name" label="影院" width="245" />
       <el-table-column prop="hall_name" label="影厅" width="90" />

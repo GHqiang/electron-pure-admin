@@ -130,6 +130,10 @@ const queryQuanInventory = params =>
 const queryLogRecord = params =>
   axios.get("/svpi/operaRecord/query", { params });
 
+// 同步中标价
+const syncDealPrice = params =>
+  axios.post("/svpi/offerRecord/syncDealPrice", params);
+
 export default {
   login,
   logout,
@@ -175,5 +179,6 @@ export default {
   addTicketOperaLog,
   getCardDailyAndMonthlyTicketCount,
   queryQuanInventory,
-  queryLogRecord
+  queryLogRecord,
+  syncDealPrice
 };
