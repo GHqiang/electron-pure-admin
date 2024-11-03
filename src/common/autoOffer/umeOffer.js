@@ -73,6 +73,7 @@ class getUmeOfferPrice {
             // }
             // 最终报价
             offerRule.offer_end_amount = endPrice;
+            offerRule.cost_price = cost_price; // 成本价
           } else {
             err_msg = "获取最终报价价格失败";
           }

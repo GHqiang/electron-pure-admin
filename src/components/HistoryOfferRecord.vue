@@ -183,7 +183,7 @@
         v-if="rule === 2"
         prop="member_price"
         fixed
-        label="会员成本价"
+        label="成本价"
         width="85"
       />
       <el-table-column prop="user_name" label="报价人" width="85" />
