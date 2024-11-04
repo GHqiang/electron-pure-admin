@@ -31,10 +31,6 @@
       <el-button v-if="rule === 2" type="primary" @click="getQuanInventory"
         >查询券库存</el-button
       >
-
-      <el-button v-if="rule === 2" type="primary" @click="syncPriceSwitch">{{
-        !isSyncPrice ? "开启中标价同步" : "关闭中标价同步"
-      }}</el-button>
     </div>
 
     <el-table :data="platQueueList" border show-overflow-tooltip>
@@ -73,6 +69,22 @@
           <el-input-number
             v-else
             v-model.number="editingRow.handleInterval"
+            controls-position="right"
+            @blur="saveEdit(row.id)"
+          />
+        </template>
+      </el-table-column>
+      <el-table-column
+        v-if="rule == 2"
+        prop="syncPageSize"
+        width="160"
+        label="同步频率(条数/1分钟)"
+      >
+        <template #default="{ row, $index }">
+          <span v-if="row.id !== editingRowId">{{ row.syncPageSize }}</span>
+          <el-input-number
+            v-else
+            v-model.number="editingRow.syncPageSize"
             controls-position="right"
             @blur="saveEdit(row.id)"
           />
@@ -252,9 +264,6 @@ watch(isAutoTransfer, (newVal, oldVal) => {
 const dialogQuanVisible = ref(false);
 const quanData = ref([]); // 券库存列表
 
-// 是否同步价格
-const isSyncPrice = ref(false);
-
 // 平台报价队列集合
 let platOfferQueueObj = {
   lieren: lierenOfferQueue,
@@ -301,6 +310,20 @@ let setPlatFunObj = {
   sheng: tokens.setShengPlatToken
 };
 
+// 同步中标价定时器
+let syncIntervalObj = {
+  lieren: null,
+  mangguo: null,
+  mayi: null,
+  yangcong: null,
+  yinghuasuan: null,
+  shangzhan: null,
+  haha: null,
+  sheng: null
+};
+// 支持同步中标价的平台集合
+let syncPricePlatList = ["lieren", "mayi"];
+
 // 是否启动队列（该为false可进行测试用户）
 let isStartOffer = true; // 报价队列
 let isStartFetch = true; // 待出票获取队列
@@ -337,6 +360,15 @@ const oneClickStart = () => {
           setPlatFunObj[item.platName](item.platToken);
           isStartOffer && platOfferQueueObj[item.platName].start();
           isStartFetch && platFetchOrderQueueObj[item.platName].start();
+          // 1分钟同步1次中标价
+          const { platName, syncPageSize } = item;
+          if (syncPageSize && syncPricePlatList.includes(platName)) {
+            syncPriceHandle(platName, syncPageSize);
+            syncIntervalObj[platName] = setInterval(
+              () => syncPriceHandle(platName, syncPageSize),
+              1000 * 60
+            );
+          }
         }
       });
 
@@ -382,6 +414,9 @@ const oneClickStop = () => {
         item.isEnabled = false;
         isStartOffer && platOfferQueueObj[item.platName].stop();
         isStartFetch && platFetchOrderQueueObj[item.platName].stop();
+        // 清空同步中标价的定时器
+        clearInterval(syncIntervalObj[item.platName]);
+        syncIntervalObj[item.platName] = null;
       });
 
       Object.keys(appTicketQueueObj).forEach(item => {
@@ -406,7 +441,7 @@ const oneClickStop = () => {
 };
 
 // 单个启动或停止
-const singleStartOrStop = ({ id, platToken, platName }, flag) => {
+const singleStartOrStop = ({ id, platToken, platName, syncPageSize }, flag) => {
   let otherPlatQueueList = tableDataStore.items.filter(
     item => item.platName !== platName
   );
@@ -420,6 +455,14 @@ const singleStartOrStop = ({ id, platToken, platName }, flag) => {
     setPlatFunObj[platName](platToken);
     isStartOffer && platOfferQueueObj[platName].start();
     isStartFetch && platFetchOrderQueueObj[platName].start();
+    // 1分钟同步1次中标价
+    if (syncPageSize && syncPricePlatList.includes(platName)) {
+      syncPriceHandle(platName, syncPageSize);
+      syncIntervalObj[platName] = setInterval(
+        () => syncPriceHandle(platName, syncPageSize),
+        1000 * 60
+      );
+    }
     // 删除没有登录信息的队列
     let loginInfoList = getCinemaLoginInfoList();
     Object.keys(APP_LIST).forEach(item => {
@@ -441,6 +484,9 @@ const singleStartOrStop = ({ id, platToken, platName }, flag) => {
     tableDataStore.toggleEnable(id);
     isStartOffer && platOfferQueueObj[platName].stop();
     isStartFetch && platFetchOrderQueueObj[platName].stop();
+    // 清空同步中标价的定时器
+    clearInterval(syncIntervalObj[platName]);
+    syncIntervalObj[platName] = null;
     // 其它没有一个启动的再停止
     if (!otherPlatQueueList.some(item => item.isEnabled)) {
       Object.keys(appTicketQueueObj).forEach(item => {
@@ -476,138 +522,124 @@ const getQuanInventory = async () => {
     console.warn("查询券库存返回异常", error);
   }
 };
-// 同步中标价定时处理
-let syncInterval;
-// 中标价同步处理
-const syncPriceSwitch = () => {
-  // 如果导致卡顿可考虑使用Workers线程处理
-  try {
-    if (isSyncPrice.value) {
-      isSyncPrice.value = false;
-      console.warn("关闭中标价同步");
-      syncInterval = null;
-      clearInterval(syncInterval);
-    } else {
-      isSyncPrice.value = true;
-      console.warn("开启中标价同步");
-      platQueueList.value.forEach(item => {
-        if (item.platToken) {
-          setPlatFunObj[item.platName](item.platToken);
-        }
-      });
-      syncPriceHandle();
-      // 每隔45请求一次
-      syncInterval = setInterval(syncPriceHandle, 1000 * 45);
-    }
-  } catch (error) {
-    console.warn("中标价同步处理异常", error);
-  }
-};
 
 // 同步中标价
-const syncPriceHandle = async () => {
+const syncPriceHandle = async (plat_name, syncPageSize) => {
   try {
-    console.warn("同步中标价", getCurrentFormattedDateTime());
-    // 定义要查询的平台列表
-    const platforms = ["lieren", "mayi"];
-    // const platforms = ["lieren", "mayi", "sheng", "mangguo"];
-    let platApiObj = {
-      lieren: lierenApi,
-      mayi: mayiApi,
-      sheng: shengApi,
-      mangguo: mangguoApi
-    };
-    let paramsObj = {
-      lieren: {
-        // 猎人一页多少条可通过limit参数控制
-        page: 1,
-        limit: 30,
-        cinema_name: "",
-        sort: "id",
-        desc: "desc",
-        type: 1
-      },
-      mayi: {
-        // 蚂蚁一页8条，没有条数参数
-        pageNo: 1
-      },
-      sheng: {
-        status: "2,3,4",
-        deliverMinute: "",
-        cinemaName: "",
-        label: "",
-        TOKEN: "a9e29182c4534a169b89b7129a3849c8",
-        page: "1",
-        time: +new Date() + ""
-      },
-      mangguo: {}
-    };
-    // 并行调用所有平台的接口
-    const promises = platforms.map(platform => {
-      return platApiObj[platform].queryOfferRecord(paramsObj[platform]);
-    });
-
-    // 等待所有接口调用完成
-    const results = await Promise.allSettled(promises);
-    console.warn("所有平台查询报价记录完成", results);
-    const [lierenRes, mayiRes, shengRes, mangguoRes] = results;
-    let lierenList = lierenRes?.value?.data || [];
-    // supplier_end_price为0时代表还在竞价中
-    lierenList = lierenList
-      .filter(
-        item =>
-          item.offer !== item.supplier_end_price && item.supplier_end_price
-      )
-      .map(item => ({
-        order_number: item.order_number,
-        supplier_end_price: item.supplier_end_price,
-        plat_name: "lieren"
-      }));
-    let mayiList = mayiRes?.value?.data?.records || [];
-    mayiList = mayiList
-      .filter(item => item.baojiastatusText === "竞价失败")
-      .map(item => ({
-        order_number: item.tradeno,
-        supplier_end_price: item.chengjiaojia,
-        plat_name: "mayi"
-      }));
-    let shengList = shengRes?.value?.data?.data?.rows || [];
-    // 接口返回区分不了未中标状态及中标价格
-    // shengList = shengList
-    //   .filter(item => item.baojiastatusText === "竞价失败")
-    //   .map(item => ({
-    //     order_number: item.tradeno,
-    //     supplier_end_price: item.chengjiaojia,
-    //     plat_name: "sheng"
-    //   }));
-    let mangguoList = mangguoRes?.value?.data || [];
-    // 接口返回和预计不准
-    // mangguoList = mangguoList
-    //   .filter(item => item.baojiastatusText === "竞价失败")
-    //   .map(item => ({
-    //     order_number: item.tradeno,
-    //     supplier_end_price: item.chengjiaojia,
-    //     plat_name: "mangguo"
-    //   }));
     console.warn(
-      "未中标的报价记录",
-      lierenList,
-      mayiList,
-      shengList,
-      mangguoList
+      "同步中标价:",
+      plat_name,
+      syncPageSize,
+      getCurrentFormattedDateTime()
     );
-    let syncOrderList = [
-      ...lierenList,
-      ...mayiList,
-      ...shengList,
-      ...mangguoList
-    ];
-    console.warn("需同步订单的记录", syncOrderList);
+
+    let promiseList = [],
+      syncOrderList = [];
+    if (plat_name === "lieren") {
+      promiseList.push(
+        lierenApi.queryOfferRecord({
+          page: 1,
+          limit: syncPageSize,
+          cinema_name: "",
+          sort: "id",
+          desc: "desc",
+          type: 1
+        })
+      );
+      const results = await Promise.allSettled(promiseList);
+      results.forEach(item => {
+        let lierenList = item?.value?.data || [];
+        // supplier_end_price为0时代表还在竞价中
+        lierenList = lierenList
+          .filter(
+            item =>
+              item.offer !== item.supplier_end_price && item.supplier_end_price
+          )
+          .map(item => ({
+            order_number: item.order_number,
+            supplier_end_price: item.supplier_end_price,
+            plat_name: "lieren"
+          }));
+        syncOrderList.push(...lierenList);
+      });
+    } else if (plat_name === "mayi") {
+      // 蚂蚁1页8条，不支持传条数
+      let lengths = Math.ceil(syncPageSize / 8); // 向上取整
+      for (var i = 1; i <= lengths; i++) {
+        promiseList.push(
+          mayiApi.queryOfferRecord({
+            pageNo: i
+          })
+        );
+      }
+      const results = await Promise.allSettled(promiseList);
+      results.forEach(item => {
+        let mayiList = item?.value?.data?.records || [];
+        mayiList = mayiList
+          .filter(item => item.baojiastatusText === "竞价失败")
+          .map(item => ({
+            order_number: item.tradeno,
+            supplier_end_price: item.chengjiaojia,
+            plat_name: "mayi"
+          }));
+        syncOrderList.push(...mayiList);
+      });
+    } else if (plat_name === "sheng") {
+      // 省1页8条，不支持传条数
+      let lengths = Math.ceil(syncPageSize / 8); // 向上取整
+      for (var i = 1; i <= lengths; i++) {
+        promiseList.push(
+          shengApi.queryOfferRecord({
+            status: "2,3,4",
+            deliverMinute: "",
+            cinemaName: "",
+            label: "",
+            TOKEN: "a9e29182c4534a169b89b7129a3849c8",
+            page: "" + i,
+            time: +new Date() + ""
+          })
+        );
+      }
+      const results = await Promise.allSettled(promiseList);
+      results.forEach(item => {
+        let shengList = item?.value?.data?.data?.rows || [];
+        // 接口返回区分不了未中标状态及中标价格
+        // shengList = shengList
+        //   .filter(item => item.baojiastatusText === "竞价失败")
+        //   .map(item => ({
+        //     order_number: item.tradeno,
+        //     supplier_end_price: item.chengjiaojia,
+        //     plat_name: "mayi"
+        //   }));
+        // syncOrderList.push(...shengList);
+      });
+      // 接口返回区分不了未中标状态及中标价格
+    } else if (plat_name === "mangguo") {
+      promiseList.push(mangguoApi.queryOfferRecord({}));
+      const results = await Promise.allSettled(promiseList);
+      results.forEach(item => {
+        // 接口返回和预计不准
+        // let mangguoList = item?.value?.data || [];
+        // mangguoList = mangguoList
+        //   .filter(
+        //     item =>
+        //       item.offer !== item.supplier_end_price &&
+        //       item.supplier_end_price
+        //   )
+        //   .map(item => ({
+        //     order_number: item.order_number,
+        //     supplier_end_price: item.supplier_end_price,
+        //     plat_name: "lieren"
+        //   }));
+        // syncOrderList.push(...mangguoList);
+      });
+    }
+    console.warn("未中标的报价记录", plat_name, syncOrderList);
     await svApi.syncDealPrice({
       syncOrders: syncOrderList,
       user_id: user_id == 1 ? 9 : user_id
     });
-    console.warn("同步中标价成功");
+    console.warn("同步中标价成功", plat_name);
   } catch (error) {
     console.error("同步中标价异常", error);
   }
@@ -647,9 +679,5 @@ onBeforeMount(() => {
   // socket.addEventListener("message", function (event) {
   //   console.log("Message from server ", event.data);
   // });
-});
-onBeforeUnmount(() => {
-  syncInterval = null;
-  clearInterval(syncInterval);
 });
 </script>
