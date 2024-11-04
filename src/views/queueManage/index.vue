@@ -322,12 +322,12 @@ let syncIntervalObj = {
   sheng: null
 };
 // 支持同步中标价的平台集合
-let syncPricePlatList = ["lieren", "mayi"];
+let syncPricePlatList = ["mangguo"];
 
 // 是否启动队列（该为false可进行测试用户）
-let isStartOffer = true; // 报价队列
-let isStartFetch = true; // 待出票获取队列
-let isStartTicket = true; // 自动出票队列
+let isStartOffer = false; // 报价队列
+let isStartFetch = false; // 待出票获取队列
+let isStartTicket = false; // 自动出票队列
 
 // 一键启动
 const oneClickStart = () => {
@@ -628,19 +628,19 @@ const syncPriceHandle = async (plat_name, syncPageSize) => {
       console.warn("芒果获取报价记录返回", results);
       results.forEach(item => {
         // 接口返回和预计不准
-        // let mangguoList = item?.value?.data || [];
-        // mangguoList = mangguoList
-        //   .filter(
-        //     item =>
-        //       item.offer !== item.supplier_end_price &&
-        //       item.supplier_end_price
-        //   )
-        //   .map(item => ({
-        //     order_number: item.order_number,
-        //     supplier_end_price: item.supplier_end_price,
-        //     plat_name: "lieren"
-        //   }));
-        // syncOrderList.push(...mangguoList);
+        let mangguoList = item?.value?.data?.list || [];
+        mangguoList = mangguoList
+          .filter(
+            item =>
+              item.offer_amount !== item.supplier_end_price &&
+              item.supplier_end_price
+          )
+          .map(item => ({
+            order_number: item.order_number,
+            supplier_end_price: item.supplier_end_price,
+            plat_name: "mangguo"
+          }));
+        syncOrderList.push(...mangguoList);
       });
     }
     console.warn("未中标的报价记录", plat_name, syncOrderList);

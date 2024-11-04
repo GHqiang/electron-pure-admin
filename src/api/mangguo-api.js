@@ -6,7 +6,7 @@ import axios from "@/utils/http/mangguo-request";
 
 // 查询报价记录
 const queryOfferRecord = params =>
-  axios.get("/v2/api/62e0941db72c5", { params });
+  axios.get("/v2/api/637ca60f4dc12", { params });
 
 // 待报价列表查询
 const queryStayOfferList = params =>
