@@ -601,6 +601,7 @@ const syncPriceHandle = async (plat_name, syncPageSize) => {
         );
       }
       const results = await Promise.allSettled(promiseList);
+      console.warn("省获取报价记录返回", results);
       results.forEach(item => {
         let shengList = item?.value?.data?.data?.rows || [];
         // 接口返回区分不了未中标状态及中标价格
@@ -617,6 +618,7 @@ const syncPriceHandle = async (plat_name, syncPageSize) => {
     } else if (plat_name === "mangguo") {
       promiseList.push(mangguoApi.queryOfferRecord({}));
       const results = await Promise.allSettled(promiseList);
+      console.warn("芒果获取报价记录返回", results);
       results.forEach(item => {
         // 接口返回和预计不准
         // let mangguoList = item?.value?.data || [];
@@ -635,11 +637,13 @@ const syncPriceHandle = async (plat_name, syncPageSize) => {
       });
     }
     console.warn("未中标的报价记录", plat_name, syncOrderList);
-    await svApi.syncDealPrice({
-      syncOrders: syncOrderList,
-      user_id: user_id == 1 ? 9 : user_id
-    });
-    console.warn("同步中标价成功", plat_name);
+    if (syncOrderList.length) {
+      await svApi.syncDealPrice({
+        syncOrders: syncOrderList,
+        user_id: user_id == 1 ? 9 : user_id
+      });
+      console.warn("同步中标价成功", plat_name);
+    }
   } catch (error) {
     console.error("同步中标价异常", error);
   }
