@@ -196,6 +196,25 @@
         label="成本价"
         width="85"
       />
+      <el-table-column v-if="rule === 2" label="利润空间" width="85">
+        <template #default="{ row: { supplier_max_price, member_price } }">
+          <span>{{
+            supplier_max_price && member_price
+              ? (supplier_max_price - member_price).toFixed(2)
+              : ""
+          }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column
+        v-if="rule === 2"
+        prop="is_deal"
+        label="是否中标"
+        width="85"
+      >
+        <template #default="{ row: { is_deal } }">
+          <span>{{ is_deal == 1 ? "是" : is_deal == 2 ? "否" : "" }}</span>
+        </template>
+      </el-table-column>
       <el-table-column prop="user_name" label="报价人" width="85" />
       <el-table-column prop="cinema_name" label="影院" width="245" />
       <el-table-column prop="hall_name" label="影厅" width="90" />

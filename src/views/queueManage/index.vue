@@ -616,7 +616,14 @@ const syncPriceHandle = async (plat_name, syncPageSize) => {
       });
       // 接口返回区分不了未中标状态及中标价格
     } else if (plat_name === "mangguo") {
-      promiseList.push(mangguoApi.queryOfferRecord({}));
+      promiseList.push(
+        mangguoApi.queryOfferRecord({
+          order_type: 2,
+          page: 1,
+          page_size: syncPageSize,
+          cinema_name: ""
+        })
+      );
       const results = await Promise.allSettled(promiseList);
       console.warn("芒果获取报价记录返回", results);
       results.forEach(item => {

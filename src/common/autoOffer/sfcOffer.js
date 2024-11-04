@@ -109,6 +109,7 @@ class getSfcOfferPrice {
             offerType === "1"
               ? QUAN_TYPE_COST[quanValue]
               : Number(memberCostPrice);
+          offerRule.cost_price = cost_price; // 成本价
           // 获取最终报价
           endPrice = await this.getEndPrice({
             cost_price,
@@ -128,7 +129,6 @@ class getSfcOfferPrice {
             // }
             // 最终报价
             offerRule.offer_end_amount = endPrice;
-            offerRule.cost_price = cost_price; // 成本价
             let isAnomaly = window.localStorage.getItem("isAnomaly");
             if (isAnomaly === "1") {
               // sfc需要检查下系统是否异常（连续两个订单创建失败）
