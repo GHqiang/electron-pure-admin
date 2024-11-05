@@ -1309,6 +1309,7 @@ class OrderAutoTicketQueue {
         card_id,
         quan_code,
         member_coupon_id,
+        coupon_id,
         session_id,
         appFlag
       });
@@ -1859,6 +1860,7 @@ class OrderAutoTicketQueue {
         session_id,
         appFlag,
         firstFlag: 1,
+        quanFlagList,
         logList: getQuanLogList
       });
       // 拿到获取券列表方法内的日志记录
@@ -1871,12 +1873,7 @@ class OrderAutoTicketQueue {
           quanListRes
         }
       });
-      const quanList = quanListRes?.quanList || [];
-      let targetQuanList = quanList.filter(item =>
-        quanFlagList.some(itemA =>
-          couponInfoSpecial(item.coupon_name).includes(couponInfoSpecial(itemA))
-        )
-      );
+      let targetQuanList = quanListRes?.quanList || [];
       // 按照card_num分组
       const groupedCoupons = targetQuanList.reduce((groups, coupon) => {
         const key = coupon.card_num;
@@ -1922,35 +1919,41 @@ class OrderAutoTicketQueue {
         });
         return;
       }
-      let card_id, coupon_id, member_coupon_id;
-      if (targetQuanList[0]?.coupon_type === "1") {
+      let card_id = "",
+        quan_code = "",
+        coupon_id,
+        member_coupon_id;
+      let isOnlineQuan = false;
+      // targetQuanList[0]?.coupon_type === "1";
+      // 这里线上的标准不对，需调整一下按配置分类
+      if (isOnlineQuan) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: "线上券优先用券时暂不处理",
           level: "info"
         });
-        return;
-        // 线上
-        // const cardListRes = await getCardList({
-        //   city_id,
-        //   cinema_id,
-        //   session_id,
-        //   appFlag
-        // });
-        // const cardList = cardListRes?.cardList || [];
-        // if (!cardList?.length) {
-        //   this.logList.push({
-        //     opera_time: getCurrentFormattedDateTime(),
-        //     des: "线上券优先用券时获取会员卡列表异常",
-        //     level: "error",
-        //     info: {
-        //       error: cardListRes?.error
-        //     }
-        //   });
-        //   return;
-        // }
-        // card_id = cardList[0]?.card_num;
-        // coupon_id = targetQuanList.map(item => item.id).join();
+        const cardListRes = await getCardList({
+          city_id,
+          cinema_id,
+          session_id,
+          appFlag
+        });
+        let cardList = cardListRes?.cardList || [];
+        if (!cardList?.length) {
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: "线上券优先用券时获取会员卡列表异常",
+            level: "error",
+            info: {
+              error: cardListRes?.error
+            }
+          });
+          return;
+        }
+        // 按余额倒序取最大余额的卡id
+        let cards = cardList.sort((a, b) => a.balance - b.balance);
+        card_id = cards[0]?.id;
+        coupon_id = targetQuanList.map(item => item.id).join();
       } else {
         // 线下
         member_coupon_id = targetQuanList.map(item => item.id).join();
@@ -1960,8 +1963,9 @@ class OrderAutoTicketQueue {
         cinema_id,
         show_id,
         seat_ids,
-        card_id: "",
-        quan_code: "",
+        card_id,
+        quan_code,
+        coupon_id,
         session_id,
         appFlag,
         member_coupon_id
@@ -3396,8 +3400,9 @@ const continuousGetQuan = async data => {
     session_id,
     appFlag,
     quan_value,
+    quanFlagList,
     ticket_num,
-    page = 2,
+    page,
     quanData = [],
     logList = []
   } = data;
@@ -3405,7 +3410,6 @@ const continuousGetQuan = async data => {
     city_id,
     cinema_id,
     session_id,
-    request_from: "1",
     page,
     status: 4
   };
@@ -3420,24 +3424,33 @@ const continuousGetQuan = async data => {
     });
     const res = await APP_API_OBJ[appFlag].getQuanList(params);
     let quanList = res.data?.unused?.lists || [];
-
-    // 过滤符合条件的券
-    const filteredQuanList = quanList.filter(item =>
-      item.coupon_info.includes(QUAN_TYPE_FLAG[quan_value])
-    );
-
-    quanData.push(...filteredQuanList);
+    let total_num = res.data?.unused?.total_num || [];
+    let targetQuanList = [];
+    if (quan_value) {
+      targetQuanList = quanList.filter(item =>
+        item.coupon_info.includes(QUAN_TYPE_FLAG[quan_value])
+      );
+    }
+    if (quanFlagList?.length) {
+      targetQuanList = quanList.filter(item =>
+        quanFlagList.some(itemA =>
+          couponInfoSpecial(item.coupon_name).includes(couponInfoSpecial(itemA))
+        )
+      );
+    }
+    quanData.push(...targetQuanList);
     logList.push({
       opera_time: getCurrentFormattedDateTime(),
       des: "连续获取目标券返回",
       level: "info",
       info: {
         res,
-        filteredQuanList,
+        quanList,
+        targetQuanList,
         quanData
       }
     });
-    if (quanData.length < ticket_num && quanList.length >= 25) {
+    if (quanData.length < ticket_num && total_num > quanList.length) {
       // 如果当前页的券数量达到25条，并且总数量仍小于所需数量，则继续获取下一页
       return await continuousGetQuan({
         ...data,
@@ -3447,12 +3460,18 @@ const continuousGetQuan = async data => {
     }
 
     return {
-      list: quanData,
-      params
+      list: quanData
     };
   } catch (error) {
     console.warn("连续获取券失败", error);
-    return { error, params };
+    logList.push({
+      opera_time: getCurrentFormattedDateTime(),
+      des: "连续获取目标券异常",
+      level: "error",
+      info: {
+        error
+      }
+    });
   }
 };
 
@@ -3463,97 +3482,79 @@ const getQuanList = async data => {
     cinema_id,
     session_id,
     appFlag,
-    quan_value,
+    quan_value, // 普通券类型
+    quanFlagList, // 优先用券的券标识
     ticket_num,
-    firstFlag,
-    page,
     logList
   } = data;
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
-  const isV3App = sfcV3AppList.includes(appFlag);
   try {
     let params = {
       city_id: city_id,
       cinema_id: cinema_id,
       session_id,
-      request_from: "1"
+      page: 1,
+      status: 4 // 未使用
     };
-    let quanList;
-    if (firstFlag !== 1) {
-      if (isV3App) {
-        params.page = page || 1;
-        params.status = 4;
+    logList.push({
+      opera_time: getCurrentFormattedDateTime(),
+      des: "获取优惠券列表参数",
+      level: "info",
+      info: {
+        params
       }
+    });
+    console.log(conPrefix + "获取优惠券列表参数", params);
+    const res = await APP_API_OBJ[appFlag].getQuanList(params);
+    console.log(conPrefix + "获取优惠券列表返回", res);
+    logList.push({
+      opera_time: getCurrentFormattedDateTime(),
+      des: "获取优惠券列表返回",
+      level: "info",
+      info: {
+        res
+      }
+    });
+    let quanList = res.data?.unused?.lists || [];
+    let total_num = res.data?.unused?.total_num || [];
+    let targetQuanList = [];
+    if (quan_value) {
+      targetQuanList = quanList.filter(item =>
+        item.coupon_info.includes(QUAN_TYPE_FLAG[quan_value])
+      );
+    }
+    if (quanFlagList?.length) {
+      targetQuanList = quanList.filter(item =>
+        quanFlagList.some(itemA =>
+          couponInfoSpecial(item.coupon_name).includes(couponInfoSpecial(itemA))
+        )
+      );
+    }
+    // 证明还有下一页，且第一页目标券不够
+    if (total_num > quanList.length && targetQuanList?.length < ticket_num) {
       logList.push({
         opera_time: getCurrentFormattedDateTime(),
-        des: "获取优惠券列表参数",
+        des: "获取优惠券列表时发现第一页目前券数量不够，开始连续获取目标券",
         level: "info",
         info: {
-          params
+          quanList,
+          quan_value,
+          quanFlagList,
+          ticket_num
         }
       });
-      console.log(conPrefix + "获取优惠券列表参数", params);
-      const res = await APP_API_OBJ[appFlag].getQuanList(params);
-      console.log(conPrefix + "获取优惠券列表返回", res);
-      logList.push({
-        opera_time: getCurrentFormattedDateTime(),
-        des: "获取优惠券列表返回",
-        level: "info",
-        info: {
-          res
-        }
+      const quanDataRes = await continuousGetQuan({
+        ...data,
+        quanData: targetQuanList,
+        page: 2
       });
-      quanList = res.data?.list || [];
-      if (isV3App) {
-        quanList = res.data?.unused?.lists || [];
-        if (quanList.length >= 25) {
-          quanList = quanList.filter(item =>
-            item.coupon_info.includes(QUAN_TYPE_FLAG[quan_value])
-          );
-          logList.push({
-            opera_time: getCurrentFormattedDateTime(),
-            des: "获取优惠券列表时发现第一页目前券数量不够，开始连续获取目标券",
-            level: "info",
-            info: {
-              quanList,
-              quan_value,
-              ticket_num
-            }
-          });
-          if (quanList.length < ticket_num) {
-            const quanDataRes = await continuousGetQuan({
-              ...data,
-              page: 2
-            });
-            if (!quanDataRes.error) {
-              return {
-                quanList: quanDataRes.list,
-                params: quanDataRes.params
-              };
-            } else {
-              return {
-                quanList,
-                params: quanDataRes.params,
-                error: quanDataRes.error
-              };
-            }
-          }
-        }
-      }
-    } else {
-      delete params.request_from;
-      params.status = 4;
-      params.page = page || 1;
-      const res = await APP_API_OBJ[appFlag].getQuanListByFirstUseQuan(params);
-      console.log(conPrefix + "获取优惠券列表返回", res);
-      quanList = res.data?.unused?.lists || [];
+      quanList = quanDataRes?.list || quanList;
     }
     // let noUseLIst = ['1598162363509715', '1055968062906716', '1284460567801315', '1116166666409614']
     // 过滤掉不可用券
     // list = list.filter(item => item.coupon_num.indexOf("t") === -1);
     return {
-      quanList,
-      params
+      quanList
     };
   } catch (error) {
     console.error(conPrefix + "获取优惠券列表异常", error);
@@ -3600,11 +3601,14 @@ const priceCalculation = async ({
     await mockDelay(1);
     if (quan_code) {
       params.quan_code = quan_code; // 优惠券编码
-    } else if (card_id && !isV3App) {
+    }
+    if (card_id && !isV3App) {
       params.card_id = card_id; // 会员卡id
-    } else if (member_coupon_id) {
+    }
+    if (member_coupon_id) {
       params.member_coupon_id = member_coupon_id; // 会员卡赠送线下券id
-    } else if (coupon_id) {
+    }
+    if (coupon_id) {
       // 会员卡赠送线上券id（线上券时还要必传card_id，而且创建订单接口也需要特殊处理）
       params.coupon_id = coupon_id;
     }

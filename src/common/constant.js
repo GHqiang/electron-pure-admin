@@ -80,6 +80,13 @@ const QUAN_TYPE_FLAG = {
 // sfc系列v3版本影院
 const sfcV3AppList = ["hbchyxd"];
 
+// sfc系列影院程序版本
+const SFC_APP_VER_OBJ = {
+  hbchyxd: ["8.0", "7.9.4"],
+  ningbo: ["7.0", "7.9.4"],
+  nanguojgh: ["7.0", "7.9.4"]
+};
+
 // ume系统影院
 const UME_LIST = [
   "ume",
@@ -2188,6 +2195,7 @@ export {
   QUAN_TYPE,
   QUAN_TYPE_COST,
   sfcV3AppList,
+  SFC_APP_VER_OBJ,
   QUAN_TYPE_FLAG,
   UME_LIST,
   APP_LIST,

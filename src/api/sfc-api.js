@@ -58,13 +58,7 @@ const createApi = ({ group, app_name }) => {
     axios.get("/sfc/card/get-user-cinema-card", { params });
 
   // 获取优惠券列表(v3先用个人中心的优惠券列表)
-  const getQuanList = params =>
-    axios.get(
-      isV3App
-        ? "/sfc/coupon/get-list"
-        : "/sfc/v2/coupon/get-offline-coupon-list",
-      { params }
-    );
+  const getQuanList = params => axios.get("/sfc/coupon/get-list", { params });
   // v3/coupon/get-list-when-pay 支付那获取的一个券列表
 
   // 个人中心优惠券列表，优先用券时使用
