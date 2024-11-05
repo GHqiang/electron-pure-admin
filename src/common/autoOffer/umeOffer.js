@@ -373,10 +373,14 @@ class getUmeOfferPrice {
           return;
         }
         // 券或者卡开了超限报价调整规则报价为平台限价
-        price = Number(supplier_max_price);
+        if (["sheng", "mayi", "yangcong"].includes(plat_name)) {
+          price = Math.floor(supplier_max_price);
+        } else {
+          price = roundToHalf(supplier_max_price);
+        }
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: `调整最终报价为平台限价`,
+          des: `调整最终报价为平台限价四舍五入去整`,
           level: "info"
         });
       }
