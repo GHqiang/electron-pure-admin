@@ -1808,8 +1808,16 @@ class OrderAutoTicketQueue {
           plat_name,
           order_number
         });
+        let quan_code, member_coupon_id;
+        // sfc和宁波取券号
+        if (quan_value === "hbcyyxd") {
+          member_coupon_id = useQuans.map(item => item.coupon_id).join();
+        } else if (["ningbo-36", "40", "35", "30"].includes(quan_value)) {
+          quan_code = useQuans.map(item => item.coupon_num).join();
+        }
         return {
-          quan_code: useQuans.join(),
+          quan_code,
+          member_coupon_id,
           profit: profit // 利润
         };
       }
@@ -1844,13 +1852,17 @@ class OrderAutoTicketQueue {
       quanFlagList
     } = params;
     try {
+      let getQuanLogList = [];
       const quanListRes = await getQuanList({
         city_id,
         cinema_id,
         session_id,
         appFlag,
-        firstFlag: 1
+        firstFlag: 1,
+        logList: getQuanLogList
       });
+      // 拿到获取券列表方法内的日志记录
+      this.logList.push(...getQuanLogList);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: "优先用券时-获取优惠券列表返回",
@@ -2935,7 +2947,7 @@ class OrderAutoTicketQueue {
         )
         .map(item => {
           return {
-            coupon_num: item.coupon_num,
+            ...item,
             quan_cost: QUAN_TYPE_COST[quan_value]
           };
         });
@@ -3018,7 +3030,7 @@ class OrderAutoTicketQueue {
           item.quan_cost -
           (Number(supplier_end_price) * 100) / 10000;
       });
-      useQuans = useQuans.map(item => item.coupon_num);
+      // useQuans = useQuans.map(item => item.coupon_num);
       if (rewards > 0) {
         // 特急奖励订单中标价格 * 张数 * 0.04;
         let rewardPrice =
@@ -3378,7 +3390,7 @@ const getCardList = async ({ city_id, cinema_id, session_id, appFlag }) => {
 
 // 连续获取目标券
 const continuousGetQuan = async data => {
-  const {
+  let {
     city_id,
     cinema_id,
     session_id,
@@ -3386,7 +3398,8 @@ const continuousGetQuan = async data => {
     quan_value,
     ticket_num,
     page = 2,
-    quanData = []
+    quanData = [],
+    logList = []
   } = data;
   const params = {
     city_id,
@@ -3397,6 +3410,14 @@ const continuousGetQuan = async data => {
     status: 4
   };
   try {
+    logList.push({
+      opera_time: getCurrentFormattedDateTime(),
+      des: "连续获取目标券参数",
+      level: "info",
+      info: {
+        params
+      }
+    });
     const res = await APP_API_OBJ[appFlag].getQuanList(params);
     let quanList = res.data?.unused?.lists || [];
 
@@ -3406,16 +3427,20 @@ const continuousGetQuan = async data => {
     );
 
     quanData.push(...filteredQuanList);
-
+    logList.push({
+      opera_time: getCurrentFormattedDateTime(),
+      des: "连续获取目标券返回",
+      level: "info",
+      info: {
+        res,
+        filteredQuanList,
+        quanData
+      }
+    });
     if (quanData.length < ticket_num && quanList.length >= 25) {
       // 如果当前页的券数量达到25条，并且总数量仍小于所需数量，则继续获取下一页
       return await continuousGetQuan({
-        city_id,
-        cinema_id,
-        session_id,
-        appFlag,
-        quan_value,
-        ticket_num,
+        ...data,
         page: page + 1,
         quanData
       });
@@ -3433,7 +3458,7 @@ const continuousGetQuan = async data => {
 
 // 获取优惠券列表
 const getQuanList = async data => {
-  const {
+  let {
     city_id,
     cinema_id,
     session_id,
@@ -3441,7 +3466,8 @@ const getQuanList = async data => {
     quan_value,
     ticket_num,
     firstFlag,
-    page
+    page,
+    logList
   } = data;
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
   const isV3App = sfcV3AppList.includes(appFlag);
@@ -3458,9 +3484,25 @@ const getQuanList = async data => {
         params.page = page || 1;
         params.status = 4;
       }
+      logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取优惠券列表参数",
+        level: "info",
+        info: {
+          params
+        }
+      });
       console.log(conPrefix + "获取优惠券列表参数", params);
       const res = await APP_API_OBJ[appFlag].getQuanList(params);
       console.log(conPrefix + "获取优惠券列表返回", res);
+      logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取优惠券列表返回",
+        level: "info",
+        info: {
+          res
+        }
+      });
       quanList = res.data?.list || [];
       if (isV3App) {
         quanList = res.data?.unused?.lists || [];
@@ -3468,6 +3510,16 @@ const getQuanList = async data => {
           quanList = quanList.filter(item =>
             item.coupon_info.includes(QUAN_TYPE_FLAG[quan_value])
           );
+          logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: "获取优惠券列表时发现第一页目前券数量不够，开始连续获取目标券",
+            level: "info",
+            info: {
+              quanList,
+              quan_value,
+              ticket_num
+            }
+          });
           if (quanList.length < ticket_num) {
             const quanDataRes = await continuousGetQuan({
               ...data,
