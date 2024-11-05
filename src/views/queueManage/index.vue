@@ -327,12 +327,12 @@ let syncIntervalObj = {
   sheng: null
 };
 // 支持同步中标价的平台集合
-let syncPricePlatList = ["mangguo"];
+let syncPricePlatList = ["lieren", "mayi", "mangguo"];
 
 // 是否启动队列（该为false可进行测试用户）
-let isStartOffer = false; // 报价队列
-let isStartFetch = false; // 待出票获取队列
-let isStartTicket = false; // 自动出票队列
+let isStartOffer = true; // 报价队列
+let isStartFetch = true; // 待出票获取队列
+let isStartTicket = true; // 自动出票队列
 
 // 一键启动
 const oneClickStart = () => {
