@@ -62,7 +62,8 @@ export default {
       component: () => import("@/views/queueManage/index.vue"),
       meta: {
         title: "队列管理",
-        fixedTag: true
+        fixedTag: true,
+        keepAlive: true
       }
     },
     {
@@ -72,7 +73,7 @@ export default {
       meta: {
         title: "会员卡列表"
       }
-    },
+    }
     // {
     //   path: "/set/test",
     //   name: "test",
@@ -105,6 +106,5 @@ export default {
     //     title: "会员卡密码设置"
     //   }
     // },
-
   ]
 } satisfies RouteConfigsTable;

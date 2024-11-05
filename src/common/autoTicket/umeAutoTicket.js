@@ -3314,7 +3314,7 @@ const addOrderHandleRecored = async ({
       // console.warn("疑似队列重复，请重新登录");
       sendWxPusherMessage({
         msgType: 2,
-        transferTip: `疑似队列重复，请重启队列或者重新登录机器`
+        transferTip: `疑似队列重复，请重新登录机器`
       });
     }
   }

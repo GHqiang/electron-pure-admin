@@ -181,6 +181,10 @@
 </template>
 
 <script setup>
+// keepAlive生效前提：对应页面 name 必须与路由的 name 保持一致
+defineOptions({
+  name: "queueManage"
+});
 import { ref, computed, onBeforeMount, watch, onBeforeUnmount } from "vue";
 import { ElMessageBox, ElMessage } from "element-plus";
 import svApi from "@/api/sv-api";
@@ -290,6 +294,7 @@ let platFetchOrderQueueObj = {
 
 // 平台出票队列集合
 let appTicketQueueObj = {};
+console.warn("appTicketQueueObj", 1);
 Object.keys(APP_LIST).forEach(item => {
   appTicketQueueObj[item] = createTucketQueueFun(item);
 });
