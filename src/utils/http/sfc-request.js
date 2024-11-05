@@ -198,7 +198,8 @@ const createAxios = ({ group, app_name, timeout = 20 }) => {
           // 此处加个消息推送
           return Promise.reject(data);
         }
-        ElMessage.error(data.msg || "请求失败");
+        let errMsg = APP_LIST[app_name] + (data.msg || "请求失败");
+        ElMessage.error(errMsg);
         return Promise.reject(data);
       }
       return data;

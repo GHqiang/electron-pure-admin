@@ -223,6 +223,7 @@ class getSfcOfferPrice {
           des: "最终匹配到的报价规则不存在",
           level: "error"
         });
+        return;
       }
       endRule = JSON.parse(JSON.stringify(endRule));
       this.logList.push({

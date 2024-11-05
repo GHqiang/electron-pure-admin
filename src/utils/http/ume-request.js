@@ -2,6 +2,7 @@
 
 import axios from "axios";
 import { ElMessage } from "element-plus";
+import { APP_LIST } from "@/common/constant";
 import {
   sendWxPusherMessage,
   logUpload,
@@ -137,7 +138,9 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         isErrorByLieRen &&
         !whitelistSp.some(item => response.config.url.includes(item))
       ) {
-        ElMessage.error(data.message || data.msg || "请求失败");
+        let errMsg =
+          APP_LIST[app_name] + (data.message || data.msg || "请求失败");
+        ElMessage.error(errMsg);
         return Promise.reject(data);
       }
       return data;

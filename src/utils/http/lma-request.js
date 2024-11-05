@@ -142,7 +142,18 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         isError &&
         !whitelistSp.some(item => response.config.url.includes(item))
       ) {
-        ElMessage.error(data.message || data.msg || "请求失败");
+        if (data.code == "2" && data.msg === "请先登录") {
+          ElMessage.warning(`卢米埃登录失效，请重新设置登录信息`);
+          sendWxPusherMessage({
+            msgType: 1,
+            app_name: "卢米埃",
+            transferTip: `卢米埃登录失效，请检查登录信息维护`
+          });
+          // 此处加个消息推送
+          return Promise.reject(data);
+        }
+        let errMsg = "卢米埃" + (data.message || data.msg || "请求失败");
+        ElMessage.error(errMsg);
         return Promise.reject(data);
       }
       return data;
