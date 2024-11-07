@@ -1324,6 +1324,14 @@ class OrderAutoTicketQueue {
         session_id,
         appFlag
       });
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "使用优惠券或会员卡后计算订单价格返回",
+        level: "info",
+        info: {
+          priceRes
+        }
+      });
       let priceInfo = priceRes?.price;
       if (priceRes?.error) {
         this.logList.push({
@@ -1825,19 +1833,19 @@ class OrderAutoTicketQueue {
             appFlag
           });
           let cardList = cardListRes?.cardList || [];
-          if (!cardList?.length) {
-            this.logList.push({
-              opera_time: getCurrentFormattedDateTime(),
-              des: "线上券使用前获取会员卡列表异常",
-              level: "error",
-              info: {
-                error: cardListRes?.error
-              }
-            });
-            return {};
-          }
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: "线上券使用前获取会员卡列表返回",
+            level: "error",
+            info: {
+              ...cardListRes
+            }
+          });
           // 按余额倒序取最大余额的卡id
           let cards = cardList.sort((a, b) => b.balance - ba.balance);
+          if (appFlag === "nanugojgh") {
+            cards = cards.filter(item => item.cinema_id === cinema_id);
+          }
           card_id = cards[0]?.id;
         }
         // 2、使用优惠券
@@ -3514,6 +3522,7 @@ const getQuanList = async data => {
     quan_value, // 普通券类型
     quanFlagList, // 优先用券的券标识
     ticket_num,
+    page = 1,
     logList
   } = data;
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
@@ -3522,7 +3531,7 @@ const getQuanList = async data => {
       city_id,
       cinema_id,
       session_id,
-      page: 1,
+      page,
       status: 4 // 未使用
     };
     logList.push({
@@ -3681,7 +3690,9 @@ const priceCalculation = async ({
     console.log(conPrefix + "计算订单价格返回", res);
     let price = res.data?.price;
     return {
-      price
+      price,
+      params,
+      res
     };
   } catch (error) {
     console.error(conPrefix + "计算订单价格异常", error);

@@ -58,7 +58,7 @@
           <el-option label="否" value="2" />
         </el-select>
       </el-form-item>
-      <el-form-item label="是否外部可用">
+      <el-form-item label="外部可用">
         <el-select
           v-model="formData.is_outuse"
           placeholder="是否外部可用"
@@ -120,18 +120,18 @@
           <span>{{ APP_LIST[row.app_name] }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="quan_name" label="券名称" min-width="120" />
-      <el-table-column prop="quan_value" label="券类型" min-width="120" />
-      <el-table-column prop="quan_cost" label="券成本" min-width="120" />
-      <el-table-column prop="quan_flag" label="券标识" min-width="120" />
-      <el-table-column prop="is_store" label="是否入库" min-width="80">
+      <el-table-column prop="quan_name" label="券名称" min-width="100" />
+      <el-table-column prop="quan_value" label="券类型" min-width="100" />
+      <el-table-column prop="quan_cost" label="券成本" min-width="100" />
+      <el-table-column prop="quan_flag" label="券标识" min-width="100" />
+      <el-table-column prop="is_store" label="是否入库" min-width="100">
         <template #default="{ row: { is_store } }">
           <span :class="{ red: is_store == 1 }">{{
             is_store == "1" ? "是 " : "否"
           }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="is_outuse" label="是否外部可用" min-width="80">
+      <el-table-column prop="is_outuse" label="是否外部可用" min-width="110">
         <template #default="{ row: { is_outuse } }">
           <span :class="{ red: is_outuse == 1 }">{{
             is_outuse == "1" ? "是 " : "否"
