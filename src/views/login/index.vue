@@ -105,10 +105,11 @@ const onLogin = async formEl => {
           await svApi.updateUser({
             login_time: getCurrentFormattedDateTime()
           });
-          await setLocalLoginList(loginRes.data?.user.rule);
-          await setLocalRuleList(loginRes.data?.user.rule);
+          let rule = loginRes.data?.user.rule;
+          await setLocalLoginList(rule);
+          await setLocalRuleList(rule);
           // 获取后端路由
-          await initRouter();
+          await initRouter(rule);
           let getTopMenuPath = getTopMenu(true).path;
           console.log("getTopMenuPath", getTopMenuPath);
           router.push(getTopMenuPath).then(() => {

@@ -190,7 +190,7 @@ function handleAsyncRoutes(routeList) {
 }
 
 /** 初始化路由（`new Promise` 写法防止在异步请求中造成无限循环）*/
-function initRouter() {
+function initRouter(rule: any) {
   if (getConfig()?.CachingAsyncRoutes) {
     // 开启动态路由缓存本地localStorage
     const key = "async-routes";
@@ -212,6 +212,16 @@ function initRouter() {
   } else {
     return new Promise(resolve => {
       getAsyncRoutes().then(({ data }) => {
+        console.log("data0", data);
+        if (rule == 2) {
+          data?.[0]?.children.push({
+            path: "/permission/quanTypeManage/index",
+            name: "QuanTypeManage",
+            meta: {
+              title: "券类型列表"
+            }
+          });
+        }
         handleAsyncRoutes(cloneDeep(data));
         resolve(router);
       });
