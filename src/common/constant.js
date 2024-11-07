@@ -80,13 +80,6 @@ const QUAN_TYPE_FLAG = {
   jinbaojia: "" // 仅报价不出无需考虑标识
 };
 
-// 线上券促销活动id(先按照coupon_order_id字段当key匹配)
-const SFC_ONLINE_QUAN_PROMOID = {
-  10: "252", // 金光华券：coupon_info：40元两店通兑券
-  3170: "0", // hyxd-25券：coupon_info：S普通厅免单观影券
-  3447: "0" // hyxd-30券：coupon_info：全国普通厅+特效厅补差券
-};
-
 // sfc系列v3版本影院
 const sfcV3AppList = ["hbchyxd"];
 
@@ -2207,7 +2200,6 @@ export {
   sfcV3AppList,
   SFC_APP_VER_OBJ,
   QUAN_TYPE_FLAG,
-  SFC_ONLINE_QUAN_PROMOID,
   UME_LIST,
   APP_LIST,
   NO_SFC_APP_LIST,

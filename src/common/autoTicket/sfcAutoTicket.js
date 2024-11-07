@@ -25,8 +25,7 @@ import {
   QUAN_TYPE_COST,
   TEST_NEW_PLAT_LIST,
   sfcV3AppList,
-  QUAN_TYPE_FLAG,
-  SFC_ONLINE_QUAN_PROMOID
+  QUAN_TYPE_FLAG
 } from "@/common/constant";
 import { APP_API_OBJ, PLAT_API_OBJ } from "@/common/index";
 
@@ -1236,16 +1235,14 @@ class OrderAutoTicketQueue {
       }
       // 5、使用优惠券或者会员卡
       // 会员卡出票：只传card_id（卡id字段）
-      // 线上券出票：传card_id（卡id字段）和coupon_id（券id字段逗号拼接），创建订单时还需要多传一个促销活动id字段promo_id;
+      // 线上券出票：传card_id（卡id字段）和coupon_id（券id字段逗号拼接）
       // 线下券出票：赠送类(券card_num有值)传member_coupon_id（券id字段逗号拼接），非赠送类传quan_code（券coupon_num字段逗号拼接）
-      // promo_id 促销活动id，线上券会用到
       let {
         card_id,
         quanType,
         quan_code,
         coupon_id,
         member_coupon_id,
-        promo_id,
         profit
       } = await this.useQuanOrCard({
         order_number,
@@ -1381,6 +1378,13 @@ class OrderAutoTicketQueue {
           });
         }
       }
+      // 促销活动id
+      let promo_id = priceInfo?.promo_id || "0";
+      let payType = "online";
+      // 参考源码逻辑，只有计算价格返回的有默认卡时才需要根据cardPay这个标识在创建订单接口传卡号和密码
+      if (priceInfo?.default_card) {
+        payType = "cardPay";
+      }
       let pay_money = Number(priceInfo.total_price); // 此处是为了将订单价格30.00转为30，将0.00转为0
       console.log(conPrefix + "订单最后价格", pay_money, priceInfo);
       if (offerRule.offer_type === "1" && pay_money !== 0) {
@@ -1456,7 +1460,8 @@ class OrderAutoTicketQueue {
         coupon_id,
         promo_id,
         seat_info: lockseat.replaceAll(" ", ",").replaceAll("座", "号"),
-        pay_money
+        pay_money,
+        payType
       });
       if (!order_num) {
         if (this.currentParamsInx === this.currentParamsList.length - 1) {
@@ -1822,9 +1827,7 @@ class OrderAutoTicketQueue {
         // 这里拿到的券列表会比票数多10张
         const quanList = quanListRes?.quanList || [];
         const quanType = quanListRes?.quanType;
-        let card_id, quan_code, coupon_id, promo_id;
-        let coupon_order_id = quanList[0].coupon_order_id;
-        promo_id = SFC_ONLINE_QUAN_PROMOID[coupon_order_id];
+        let card_id, quan_code, coupon_id;
         if (quanType === "online-quan") {
           const cardListRes = await getCardList({
             city_id,
@@ -1873,7 +1876,6 @@ class OrderAutoTicketQueue {
           quan_code,
           card_id,
           coupon_id,
-          promo_id,
           quanType,
           profit // 利润
         };
@@ -1969,12 +1971,7 @@ class OrderAutoTicketQueue {
       let card_id = "",
         quan_code = "",
         coupon_id,
-        member_coupon_id,
-        promo_id;
-      let coupon_order_id = targetQuanList[0]?.coupon_order_id;
-      promo_id = coupon_order_id
-        ? SFC_ONLINE_QUAN_PROMOID[coupon_order_id]
-        : "";
+        member_coupon_id;
       if (quanType === "online_member_quan") {
         const cardListRes = await getCardList({
           city_id,
@@ -2056,7 +2053,6 @@ class OrderAutoTicketQueue {
       return {
         card_id,
         coupon_id,
-        promo_id,
         member_coupon_id,
         quanType
       };
@@ -2087,6 +2083,7 @@ class OrderAutoTicketQueue {
       member_coupon_id,
       coupon_id,
       promo_id,
+      payType,
       isTimeoutRetry = 1 // 默认超时重试
     } = data || {};
     try {
@@ -2104,7 +2101,7 @@ class OrderAutoTicketQueue {
         goods_info: "", // 商品信息
         option_goods_info: "", // 可选的额外商品信息
         pay_money, // 支付金额
-        promo_id: promo_id || "0", // 促销活动ID，这里为0，表示没有参与特定的促销活动
+        promo_id, // 促销活动ID
         update_time: getCurrentFormattedDateTime(),
         session_id
       };
@@ -2116,7 +2113,7 @@ class OrderAutoTicketQueue {
       if (coupon_id) {
         params.coupon_id = coupon_id; // 线上券id
       }
-      if (card_id && !isV3App) {
+      if (card_id && payType === "cardPay") {
         // isV3App版本是只有一个卡，故只用支付的时候输入密码即可
         params.card_id = card_id; // 会员卡id
         params.card_password = encode(member_pwd || ""); // 会员卡密码
