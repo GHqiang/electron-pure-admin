@@ -134,6 +134,21 @@ const queryLogRecord = params =>
 const syncDealPrice = params =>
   axios.post("/svpi/offerRecord/syncDealPrice", params);
 
+// 获取券类型列表
+const getQuanTypeList = params => axios.get("/svpi/quanType", { params });
+// 查询券类型列表
+const queryQuanTypeList = params =>
+  axios.get("/svpi/quanType/query", { params });
+// 删除券类型
+const deleteQuanType = params => axios.get("/svpi/quanType/delete", { params });
+// 批量删除券类型
+const batchDeleteQuanType = params =>
+  axios.post("/svpi/quanType/batchdelete", params);
+// 添加券类型
+const addQuanType = params => axios.post("/svpi/quanType/add", params);
+// 修改券类型
+const updateQuanType = params => axios.post("/svpi/quanType/update", params);
+
 export default {
   login,
   logout,
@@ -180,5 +195,11 @@ export default {
   getCardDailyAndMonthlyTicketCount,
   queryQuanInventory,
   queryLogRecord,
-  syncDealPrice
+  syncDealPrice,
+  getQuanTypeList,
+  queryQuanTypeList,
+  deleteQuanType,
+  batchDeleteQuanType,
+  addQuanType,
+  updateQuanType
 };

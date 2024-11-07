@@ -20,6 +20,7 @@
           <el-select
             v-model="formData.app_name"
             placeholder="请选择影线名称"
+            filterable
             clearable
             @change="shadowLineChange"
           >

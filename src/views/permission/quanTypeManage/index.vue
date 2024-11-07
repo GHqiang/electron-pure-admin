@@ -103,9 +103,7 @@
       :data="tableData"
       border
       stripe
-      show-summary
       max-height="450"
-      :summary-method="getSummaries"
       show-overflow-tooltip
       @selection-change="handleSelectionChange"
     >
@@ -294,16 +292,15 @@ const editQuan = (row, type) => {
 const saveQuan = async cardInfo => {
   try {
     cardInfo.update_time = getCurrentFormattedDateTime();
-    cardInfo.rule = rule;
     if (cardInfo.id) {
       console.log("编辑保存券类型", cardInfo);
-      await svApi.updateQuanTypeRecord(cardInfo);
+      await svApi.updateQuanType(cardInfo);
       sfcDialogRef.value.closeTck();
       ElMessage.success("编辑成功！");
       searchData();
     } else {
       console.log("新增保存券类型", cardInfo);
-      await svApi.addQuanTypeRecord({ ...cardInfo, id: undefined });
+      await svApi.addQuanType({ ...cardInfo, id: undefined });
       sfcDialogRef.value.closeTck();
       ElMessage.success("保存成功！");
       searchData();
@@ -349,7 +346,7 @@ const deleteRow = (index, row) => {
     closeOnPressEscape: false
   })
     .then(async () => {
-      await svApi.deleteCard({ id: row.id });
+      await svApi.deleteQuanType({ id: row.id });
       searchData();
       ElMessage({
         type: "success",
@@ -382,7 +379,7 @@ const batchDelete = () => {
       .then(async () => {
         let ids = multipleSelection.value.map(item => item.id);
         console.log("ids===>", ids);
-        await svApi.batchDeleteCard({ delIds: ids });
+        await svApi.batchDeleteQuanType({ delIds: ids });
         searchData();
         multipleSelection.value = [];
         ElMessage({
