@@ -1323,7 +1323,7 @@ class OrderAutoTicketQueue {
         des: "使用优惠券或会员卡后计算订单价格返回",
         level: "info",
         info: {
-          priceRes
+          ...priceRes
         }
       });
       let priceInfo = priceRes?.price;
@@ -1536,7 +1536,7 @@ class OrderAutoTicketQueue {
           des: `订单购买失败，单个订单直接出票结束`,
           level: "error",
           info: {
-            error: buyTicketRes?.error
+            ...buyTicketRes
           }
         });
         // 后续要记录失败列表（订单信息、失败原因、时间戳）
@@ -1554,7 +1554,7 @@ class OrderAutoTicketQueue {
         des: `订单购买返回`,
         level: "info",
         info: {
-          buyRes
+          ...buyTicketRes
         }
       });
       // 只用卡
@@ -3700,9 +3700,9 @@ const priceCalculation = async ({
     console.log(conPrefix + "计算订单价格返回", res);
     let price = res.data?.price;
     return {
-      price,
       params,
-      res
+      res,
+      price
     };
   } catch (error) {
     console.error(conPrefix + "计算订单价格异常", error);
@@ -3769,16 +3769,16 @@ const buyTicket = async ({
   pay_password
 }) => {
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
+  let params = {
+    city_id,
+    cinema_id,
+    open_id: APP_OPENID_OBJ[appFlag], // 微信openId
+    order_num, // 订单号
+    pay_money, // 支付金额
+    pay_type: "", // 购买方式 传空意味着用优惠券或者会员卡
+    session_id
+  };
   try {
-    let params = {
-      city_id,
-      cinema_id,
-      open_id: APP_OPENID_OBJ[appFlag], // 微信openId
-      order_num, // 订单号
-      pay_money, // 支付金额
-      pay_type: "", // 购买方式 传空意味着用优惠券或者会员卡
-      session_id
-    };
     if (isV3App && card_id) {
       params.pay_type = "wallet";
       params.pay_password = pay_password;
@@ -3789,12 +3789,14 @@ const buyTicket = async ({
     const buyRes = await APP_API_OBJ[appFlag].buyTicket(params);
     console.log(conPrefix + "订单购买返回", buyRes);
     return {
-      buyRes
+      buyRes,
+      params
     };
   } catch (error) {
     console.error(conPrefix + "订单购买异常", error);
     return {
-      error
+      error,
+      params
     };
   }
 };
