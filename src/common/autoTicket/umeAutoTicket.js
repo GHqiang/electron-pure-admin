@@ -1380,33 +1380,24 @@ class OrderAutoTicketQueue {
       if (offerRule.offer_type === "1") {
         total_price = 0;
         // yaolai绑券逻辑不一样，暂不处理
-        let syncBandQuanTypeList = ["zheyingshidai", "renhengmeng", "swxh"];
-        if (tokens.userInfo.rule !== 2) {
-          // 过滤掉不让外部用户用的
-          syncBandQuanTypeList = syncBandQuanTypeList.filter(
-            item => !["renhengmeng"].includes(item)
-          );
-        }
-        if (syncBandQuanTypeList.includes(appFlag)) {
-          if (quanList.length - ticket_num < 15) {
-            this.logList.push({
-              opera_time: getCurrentFormattedDateTime(),
-              des: `本次出票后券小于15，开始异步绑定券;`,
-              level: "info"
-            });
-            this.getNewQuan({
-              cinemaCode,
-              cinemaLinkId,
-              quanValue: offerRule.quan_value,
-              quanNum: 15 - (quanList.length - Number(ticket_num)),
-              session_id:
-                this.currentParamsList[this.currentParamsInx].session_id,
-              asyncFlag: 1,
-              asyncBandQuanList: [],
-              plat_name,
-              order_number
-            });
-          }
+        if (offerRule.is_store == "1" && quanList.length - ticket_num < 15) {
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: `本次出票后券小于15，开始异步绑定券;`,
+            level: "info"
+          });
+          this.getNewQuan({
+            cinemaCode,
+            cinemaLinkId,
+            quanValue: offerRule.quan_value,
+            quanNum: 15 - (quanList.length - Number(ticket_num)),
+            session_id:
+              this.currentParamsList[this.currentParamsInx].session_id,
+            asyncFlag: 1,
+            asyncBandQuanList: [],
+            plat_name,
+            order_number
+          });
         }
       }
 
@@ -2487,8 +2478,14 @@ class OrderAutoTicketQueue {
     plat_name
   }) {
     try {
-      const { offer_type, member_price, quan_value, quan_cost, quan_flag } =
-        offerRule;
+      const {
+        offer_type,
+        member_price,
+        quan_value,
+        quan_cost,
+        quan_flag,
+        is_store
+      } = offerRule;
       let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
       if (offer_type !== "1") {
         console.log(conPrefix + "使用会员卡出票");
@@ -2550,7 +2547,7 @@ class OrderAutoTicketQueue {
             return item.couponName === quan_flag;
           }
         });
-        if (targetQuanList.length < ticket_num) {
+        if (targetQuanList.length < ticket_num && is_store == "1") {
           console.warn(conPrefix + "优惠券不够用");
           console.error(
             conPrefix + `${quan_value} 面额券不足，从服务端获取并绑定`

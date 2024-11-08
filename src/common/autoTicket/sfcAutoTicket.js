@@ -1698,7 +1698,8 @@ class OrderAutoTicketQueue {
         real_member_price,
         offer_rule_id,
         quan_cost,
-        quan_flag
+        quan_flag,
+        is_store
       } = offerRule;
       let currentParams = this.currentParamsList[this.currentParamsInx];
       const { session_id, mobile } = currentParams;
@@ -1717,6 +1718,15 @@ class OrderAutoTicketQueue {
             supplier_end_price > autoUseQuanPrice &&
             quanFlagList?.length
           ) {
+            this.logList.push({
+              opera_time: getCurrentFormattedDateTime(),
+              des: "优先用券功能暂不支持，请调整",
+              level: "info"
+            });
+            return {
+              card_id: "",
+              profit: 0 // 利润
+            };
             const firstUseQuanRes = await this.firstUseQuanHandle({
               city_id,
               cinema_id,
@@ -1865,7 +1875,8 @@ class OrderAutoTicketQueue {
           session_id,
           plat_name,
           order_number,
-          quan_cost
+          quan_cost,
+          is_store
         });
         // 单纯用券场景只支持这两种渠道券，赠券全部走优先用券逻辑
         if (quanType === "offline_quan") {
@@ -2953,7 +2964,8 @@ class OrderAutoTicketQueue {
     session_id,
     plat_name,
     order_number,
-    quan_cost
+    quan_cost,
+    is_store
   }) {
     const { conPrefix, appFlag } = this;
     try {
@@ -2962,7 +2974,7 @@ class OrderAutoTicketQueue {
       // 2、1张票一个券，不能出现2张票用3个券的情况
       // 3、40出一线，35出二线国内，30出二线外国（暂时无法区分外国）
       let targetQuanList = quanList || []; // 优惠券列表
-      if (targetQuanList?.length < ticket_num) {
+      if (targetQuanList?.length < ticket_num && is_store == "1") {
         console.error(
           conPrefix + `${quan_value} 面额券不足，从服务端获取并绑定`,
           targetQuanList
@@ -3013,7 +3025,7 @@ class OrderAutoTicketQueue {
           };
         }
       }
-      if (targetQuanList?.length - ticket_num < 10) {
+      if (targetQuanList?.length - ticket_num < 10 && is_store == "1") {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: `本次出票后券小于10，开始异步绑定券;`,
