@@ -83,10 +83,11 @@ class getSfcOfferPrice {
   }
 
   // 获取券类型信息
-  async getQuanInfo(quan_value) {
+  async getQuanInfo(quan_value, app_name) {
     try {
       const res = await svApi.queryQuanTypeInfo({
-        quan_value
+        quan_value,
+        app_name
       });
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
@@ -131,7 +132,7 @@ class getSfcOfferPrice {
           // 成本价
           let cost_price;
           if (offerType === "1") {
-            const quanInfo = await this.getQuanInfo(quanValue);
+            const quanInfo = await this.getQuanInfo(quanValue, appFlag);
             cost_price = quanInfo?.quan_cost;
           } else {
             cost_price = Number(memberCostPrice);

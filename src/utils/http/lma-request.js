@@ -142,7 +142,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         isError &&
         !whitelistSp.some(item => response.config.url.includes(item))
       ) {
-        if (data.code == "2" && data.msg === "请先登录") {
+        if (data.code == "2" && data.msg?.includes("请先登录")) {
           ElMessage.warning(`卢米埃登录失效，请重新设置登录信息`);
           sendWxPusherMessage({
             msgType: 1,
