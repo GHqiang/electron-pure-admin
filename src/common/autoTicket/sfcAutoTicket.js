@@ -1706,50 +1706,50 @@ class OrderAutoTicketQueue {
       const { session_id, mobile } = currentParams;
       // 拿订单号去匹配报价记录
       if (offer_type !== "1") {
-        const ruleInfo = getOfferRuleById(offer_rule_id);
-        if (ruleInfo) {
-          const { autoUseQuanStatus, autoUseQuanPrice, autoUseQuanFlag } =
-            ruleInfo;
-          let quanFlagList = autoUseQuanFlag
-            ?.replace(/\s*/g, "")
-            ?.replace(/;|；/g, "—")
-            ?.split("—");
-          if (
-            autoUseQuanStatus === "1" &&
-            supplier_end_price > autoUseQuanPrice &&
-            quanFlagList?.length
-          ) {
-            this.logList.push({
-              opera_time: getCurrentFormattedDateTime(),
-              des: "优先用券功能暂不支持，请调整",
-              level: "info"
-            });
-            return {
-              card_id: "",
-              profit: 0 // 利润
-            };
-            const firstUseQuanRes = await this.firstUseQuanHandle({
-              city_id,
-              cinema_id,
-              show_id,
-              seat_ids,
-              session_id,
-              appFlag,
-              ticket_num,
-              quanFlagList
-            });
-            if (firstUseQuanRes) {
-              return {
-                quan_code: "",
-                card_id: firstUseQuanRes.card_id,
-                coupon_id: firstUseQuanRes.coupon_id,
-                member_coupon_id: firstUseQuanRes.member_coupon_id,
-                quanType: firstUseQuanRes.quanType,
-                profit: 0 // 利润
-              };
-            }
-          }
-        }
+        // const ruleInfo = getOfferRuleById(offer_rule_id);
+        // if (ruleInfo) {
+        //   const { autoUseQuanStatus, autoUseQuanPrice, autoUseQuanFlag } =
+        //     ruleInfo;
+        //   let quanFlagList = autoUseQuanFlag
+        //     ?.replace(/\s*/g, "")
+        //     ?.replace(/;|；/g, "—")
+        //     ?.split("—");
+        //   if (
+        //     autoUseQuanStatus === "1" &&
+        //     supplier_end_price > autoUseQuanPrice &&
+        //     quanFlagList?.length
+        //   ) {
+        //     this.logList.push({
+        //       opera_time: getCurrentFormattedDateTime(),
+        //       des: "优先用券功能暂不支持，请调整",
+        //       level: "error"
+        //     });
+        //     return {
+        //       card_id: "",
+        //       profit: 0 // 利润
+        //     };
+        //     const firstUseQuanRes = await this.firstUseQuanHandle({
+        //       city_id,
+        //       cinema_id,
+        //       show_id,
+        //       seat_ids,
+        //       session_id,
+        //       appFlag,
+        //       ticket_num,
+        //       quanFlagList
+        //     });
+        //     if (firstUseQuanRes) {
+        //       return {
+        //         quan_code: "",
+        //         card_id: firstUseQuanRes.card_id,
+        //         coupon_id: firstUseQuanRes.coupon_id,
+        //         member_coupon_id: firstUseQuanRes.member_coupon_id,
+        //         quanType: firstUseQuanRes.quanType,
+        //         profit: 0 // 利润
+        //       };
+        //     }
+        //   }
+        // }
         console.log(conPrefix + "使用会员卡出票");
         console.log(conPrefix + "报价记录里的会员价", real_member_price);
         if (!real_member_price) {

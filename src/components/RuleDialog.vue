@@ -401,7 +401,7 @@
             <el-option label="星期日" value="星期日" />
           </el-select>
         </el-form-item>
-        <el-form-item
+        <!-- <el-form-item
           v-if="
             formData.offerType !== '1' &&
             formData.shadowLineName !== 'sfc' &&
@@ -434,7 +434,7 @@
               />
             </el-col>
           </el-row>
-        </el-form-item>
+        </el-form-item> -->
         <el-form-item label="座位数">
           <el-select v-model="formData.seatNum" placeholder="座位数" clearable>
             <el-option
@@ -560,10 +560,10 @@ let formData = reactive({
       platName: "lieren",
       value: ""
     }
-  ], // 平台报价规则
-  autoUseQuanStatus: "2", // 自动用券状态 1-开启 2-关闭
-  autoUseQuanPrice: "", // 自动用券价格
-  autoUseQuanFlag: "" // 自动用券标识
+  ] // 平台报价规则
+  // autoUseQuanStatus: "2", // 自动用券状态 1-开启 2-关闭
+  // autoUseQuanPrice: "", // 自动用券价格
+  // autoUseQuanFlag: "" // 自动用券标识
 });
 
 let cityList = ref([]); // 城市列表
@@ -642,9 +642,9 @@ const resetForm = el => {
       value: ""
     }
   ]; // 平台报价规则
-  formData.autoUseQuanStatus = "2"; // 自动用券状态 1-开启 2-关闭
-  formData.autoUseQuanPrice = ""; // 自动用券价格
-  formData.autoUseQuanFlag = ""; // 自动用券标识
+  // formData.autoUseQuanStatus = "2"; // 自动用券状态 1-开启 2-关闭
+  // formData.autoUseQuanPrice = ""; // 自动用券价格
+  // formData.autoUseQuanFlag = ""; // 自动用券标识
 };
 
 // 影线改变
@@ -726,9 +726,9 @@ const open = async ruleInfo => {
         formData.includeFilmNames = formInfo.includeFilmNames;
         formData.excludeFilmNames = formInfo.excludeFilmNames;
         formData.platOfferList = formInfo.platOfferList;
-        formData.autoUseQuanStatus = formInfo.autoUseQuanStatus;
-        formData.autoUseQuanPrice = formInfo.autoUseQuanPrice;
-        formData.autoUseQuanFlag = formInfo.autoUseQuanFlag;
+        // formData.autoUseQuanStatus = formInfo.autoUseQuanStatus;
+        // formData.autoUseQuanPrice = formInfo.autoUseQuanPrice;
+        // formData.autoUseQuanFlag = formInfo.autoUseQuanFlag;
       } else {
         // 新增
         formData.shadowLineName = formInfo.shadowLineName;
@@ -760,9 +760,9 @@ const offerTypeChange = val => {
         value: ""
       }
     ]; // 平台报价规则
-    formData.autoUseQuanStatus = "2"; // 自动用券状态 1-开启 2-关闭
-    formData.autoUseQuanPrice = ""; // 自动用券价格
-    formData.autoUseQuanFlag = ""; // 自动用券标识
+    // formData.autoUseQuanStatus = "2"; // 自动用券状态 1-开启 2-关闭
+    // formData.autoUseQuanPrice = ""; // 自动用券价格
+    // formData.autoUseQuanFlag = ""; // 自动用券标识
   } else if (val === "2") {
     // 会员价加价
     formData.memberDay = "";
