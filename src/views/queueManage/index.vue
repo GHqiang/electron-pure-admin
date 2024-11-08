@@ -171,7 +171,7 @@
         <el-table-column type="index" label="序号" width="120" />
         <el-table-column property="quan_value" sortable label="券类型">
           <template #default="{ row }">
-            <span>{{ QUAN_TYPE[row.quan_value] }}</span>
+            <span>{{ formatQuanType(row.quan_value) }}</span>
           </template>
         </el-table-column>
         <el-table-column property="remaining_count" sortable label="数量" />
@@ -215,7 +215,7 @@ import hahaFetchOrder from "@/common/orderFetch/hahaFetchOrder";
 
 import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
 import createTucketQueueFun from "@/common/autoTicket/comTicketHandle";
-import { ORDER_FORM, APP_LIST, QUAN_TYPE } from "@/common/constant";
+import { ORDER_FORM, APP_LIST } from "@/common/constant";
 import {
   getCinemaLoginInfoList,
   getCurrentFormattedDateTime,
@@ -229,6 +229,9 @@ const {
 } = tokens;
 const tableDataStore = usePlatTableDataStore();
 const platQueueList = computed(() => tableDataStore.items);
+
+// 券类型列表
+const quanType = ref([]);
 
 // 是否显示一键启动
 const isActiveOneClickStart = computed(() => {
@@ -690,7 +693,34 @@ const deleteItem = id => {
 const cancelEdit = () => {
   editingRowId.value = null;
 };
-onBeforeMount(() => {
+
+// 格式化券类型展示
+const formatQuanType = quan_value => {
+  return (
+    quanType.value?.find(item => item.quan_value === quan_value)?.quan_name ||
+    quan_value
+  );
+};
+
+// 获取券类型列表
+const getQuanTypeList = async () => {
+  try {
+    const params = {
+      is_outuse: rule != 2 ? "1" : undefined,
+      page_num: 1,
+      page_size: 100
+    };
+    const res = await svApi.queryQuanTypeList(params);
+    let quanTypeList = res.data.quanTypeList || [];
+    // console.log("券类型列表===>", quanTypeList);
+    quanType.value = quanTypeList;
+  } catch (error) {
+    console.err("获取券类型列表异常", error);
+  }
+};
+
+onBeforeMount(async () => {
+  await getQuanTypeList();
   // const socket = new WebSocket("ws://localhost:3000");
   // socket.addEventListener("message", function (event) {
   //   console.log("Message from server ", event.data);

@@ -93,10 +93,10 @@
           clearable
         >
           <el-option
-            v-for="(keyValue, keyName) in QUAN_TYPE"
-            :key="keyName"
-            :label="keyValue"
-            :value="keyName"
+            v-for="(item, index) in quanType"
+            :key="item.id"
+            :label="item.quan_name"
+            :value="item.quan_value"
           />
         </el-select>
       </el-form-item>
@@ -287,7 +287,11 @@ const {
   userInfo: { rule, user_id }
 } = platTokens();
 
-import { ORDER_FORM, APP_LIST, QUAN_TYPE } from "@/common/constant.js";
+import { ORDER_FORM, APP_LIST } from "@/common/constant.js";
+
+// 券类型列表
+const quanType = ref([]);
+
 // 订单来源
 const orderFormObj = ORDER_FORM;
 // 影线列表
@@ -448,7 +452,26 @@ const resetForm = () => {
   currentPage.value = 1;
   pageSize.value = 10;
 };
+
+// 获取券类型列表
+const getQuanTypeList = async () => {
+  try {
+    const params = {
+      is_outuse: rule != 2 ? "1" : undefined,
+      page_num: 1,
+      page_size: 100
+    };
+    const res = await svApi.queryQuanTypeList(params);
+    let quanTypeList = res.data.quanTypeList || [];
+    // console.log("券类型列表===>", quanTypeList);
+    quanType.value = quanTypeList;
+  } catch (error) {
+    console.err("获取券类型列表异常", error);
+  }
+};
+
 onBeforeMount(async () => {
+  await getQuanTypeList();
   const res = await svApi.getUserList();
   // console.log("res", res);
   let list = res.data.userList || [];

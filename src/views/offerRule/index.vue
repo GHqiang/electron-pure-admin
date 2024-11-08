@@ -75,10 +75,10 @@
           clearable
         >
           <el-option
-            v-for="(keyValue, keyName) in QUAN_TYPE"
-            :key="keyName"
-            :label="keyValue"
-            :value="keyName"
+            v-for="(item, index) in quanType"
+            :key="item.id"
+            :label="item.quan_name"
+            :value="item.quan_value"
           />
         </el-select>
       </el-form-item>
@@ -274,7 +274,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, toRaw } from "vue";
+import { ref, reactive, computed, toRaw, onBeforeMount } from "vue";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
 import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
@@ -282,7 +282,6 @@ import RuleDialog from "@/components/RuleDialog.vue";
 import {
   ORDER_FORM,
   APP_LIST,
-  QUAN_TYPE,
   UME_LIST,
   SPECIAL_CINEMA_OBJ
 } from "@/common/constant";
@@ -297,6 +296,9 @@ import { platTokens } from "@/store/platTokens";
 const {
   userInfo: { rule }
 } = platTokens();
+
+// 券类型列表
+const quanType = ref([]);
 
 const tableData = ref([]);
 const currentPage = ref(1);
@@ -810,4 +812,25 @@ const batchDelete = () => {
       });
   }
 };
+
+// 获取券类型列表
+const getQuanTypeList = async () => {
+  try {
+    const params = {
+      is_outuse: rule != 2 ? "1" : undefined,
+      page_num: 1,
+      page_size: 100
+    };
+    const res = await svApi.queryQuanTypeList(params);
+    let quanTypeList = res.data.quanTypeList || [];
+    // console.log("券类型列表===>", quanTypeList);
+    quanType.value = quanTypeList;
+  } catch (error) {
+    console.err("获取券类型列表异常", error);
+  }
+};
+
+onBeforeMount(async () => {
+  await getQuanTypeList();
+});
 </script>
