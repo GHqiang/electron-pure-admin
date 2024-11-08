@@ -22,10 +22,8 @@ const tokens = platTokens();
 import {
   TICKET_CONPREFIX_OBJ,
   APP_OPENID_OBJ,
-  QUAN_TYPE_COST,
   TEST_NEW_PLAT_LIST,
-  sfcV3AppList,
-  QUAN_TYPE_FLAG
+  sfcV3AppList
 } from "@/common/constant";
 import { APP_API_OBJ, PLAT_API_OBJ } from "@/common/index";
 
@@ -578,15 +576,14 @@ class OrderAutoTicketQueue {
     let offerRule;
     try {
       // 1、获取该订单的报价记录，按对应报价规则出票
-      const offerRes = await svApi.queryOfferList({
+      const offerRes = await svApi.queryOfferInfo({
         user_id: tokens.userInfo.user_id,
         order_status: "1",
         app_name: appFlag,
         order_number,
         plat_name
       });
-      let offerRecord = offerRes?.data?.offerList || [];
-      offerRule = offerRecord?.[0];
+      offerRule = offerRes?.data?.offerInfo;
     } catch (error) {
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
@@ -1699,7 +1696,9 @@ class OrderAutoTicketQueue {
         quan_value,
         member_price, // 成本价
         real_member_price,
-        offer_rule_id
+        offer_rule_id,
+        quan_cost,
+        quan_flag
       } = offerRule;
       let currentParams = this.currentParamsList[this.currentParamsInx];
       const { session_id, mobile } = currentParams;
@@ -1812,6 +1811,7 @@ class OrderAutoTicketQueue {
           quan_value,
           ticket_num,
           appFlag,
+          quan_flag,
           logList: getQuanLogList
         });
         // 拿到获取券列表方法内的日志记录
@@ -1844,11 +1844,11 @@ class OrderAutoTicketQueue {
               ...cardListRes
             }
           });
-          // 按余额倒序取最大余额的卡id
+          // 按余额倒序取最大余额的卡id（用券时这个card_id需要再看看是否这样取）
           let cards = cardList.sort((a, b) => b.balance - ba.balance);
-          if (appFlag === "nanugojgh") {
-            cards = cards.filter(item => item.cinema_id === cinema_id);
-          }
+          // if (appFlag === "nanugojgh") {
+          //   cards = cards.filter(item => item.cinema_id === cinema_id);
+          // }
           card_id = cards[0]?.id;
         }
         // 2、使用优惠券
@@ -1864,7 +1864,8 @@ class OrderAutoTicketQueue {
           rewards,
           session_id,
           plat_name,
-          order_number
+          order_number,
+          quan_cost
         });
         // 单纯用券场景只支持这两种渠道券，赠券全部走优先用券逻辑
         if (quanType === "offline_quan") {
@@ -2903,7 +2904,7 @@ class OrderAutoTicketQueue {
           });
         }
         if (coupon_num) {
-          bandQuanList.push({ coupon_num, quan_cost: quan.quan_cost });
+          bandQuanList.push({ coupon_num });
           svApi.addUseQuanRecord({
             coupon_num: coupon_num,
             app_name: appFlag,
@@ -2951,7 +2952,8 @@ class OrderAutoTicketQueue {
     rewards,
     session_id,
     plat_name,
-    order_number
+    order_number,
+    quan_cost
   }) {
     const { conPrefix, appFlag } = this;
     try {
@@ -2959,17 +2961,7 @@ class OrderAutoTicketQueue {
       // 1、成本不能高于中标价，即40券不能出中标价38.8的单
       // 2、1张票一个券，不能出现2张票用3个券的情况
       // 3、40出一线，35出二线国内，30出二线外国（暂时无法区分外国）
-      let quans = quanList || []; // 优惠券列表
-      let targetQuanList = quans
-        .filter(
-          item => item.coupon_info.indexOf(QUAN_TYPE_FLAG[quan_value]) !== -1
-        )
-        .map(item => {
-          return {
-            ...item,
-            quan_cost: QUAN_TYPE_COST[quan_value]
-          };
-        });
+      let targetQuanList = quanList || []; // 优惠券列表
       if (targetQuanList?.length < ticket_num) {
         console.error(
           conPrefix + `${quan_value} 面额券不足，从服务端获取并绑定`,
@@ -3046,7 +3038,7 @@ class OrderAutoTicketQueue {
         profit =
           profit +
           Number(supplier_end_price) -
-          item.quan_cost -
+          quan_cost -
           (Number(supplier_end_price) * 100) / 10000;
       });
       // useQuans = useQuans.map(item => item.coupon_num);
@@ -3415,6 +3407,7 @@ const continuousGetQuan = async data => {
     session_id,
     appFlag,
     quan_value,
+    quan_flag,
     quanFlagList,
     ticket_num,
     targetNum,
@@ -3451,23 +3444,23 @@ const continuousGetQuan = async data => {
     let total_page = res.data?.unused?.total_page || [];
     let targetQuanList = [];
     if (quan_value) {
-      targetQuanList = quanList.filter(item =>
-        item.coupon_info.includes(QUAN_TYPE_FLAG[quan_value])
-      );
+      targetQuanList = quanList.filter(item => item.coupon_info === quan_flag);
     }
-    if (quanFlagList?.length) {
-      targetQuanList = quanList.filter(item =>
-        quanFlagList.some(itemA =>
-          couponInfoSpecial(item.coupon_name).includes(couponInfoSpecial(itemA))
-        )
-      );
-    }
+    // 由于增加券类型管理功能暂时不用优先用券功能
+    // if (quanFlagList?.length) {
+    //   targetQuanList = quanList.filter(item =>
+    //     quanFlagList.some(itemA =>
+    //       couponInfoSpecial(item.coupon_name).includes(couponInfoSpecial(itemA))
+    //     )
+    //   );
+    // }
     logList.push({
       opera_time: getCurrentFormattedDateTime(),
       des: "按照券类型或者券标识匹配目标券列表",
       level: "info",
       info: {
         quan_value,
+        quan_flag,
         quanFlagList,
         targetQuanList
       }
@@ -3516,7 +3509,8 @@ const getQuanList = async data => {
     cinema_id,
     session_id,
     appFlag,
-    quan_value, // 普通券类型
+    quan_value,
+    quan_flag,
     quanFlagList, // 优先用券的券标识
     ticket_num,
     page = 1,
@@ -3557,23 +3551,23 @@ const getQuanList = async data => {
     let targetNum = +ticket_num + 10;
     // 多获取10张1是为了解决异步绑券那判断是否小于10不准确问题，2是为了解决充值赠券需要分组获取的少不是1组的问题
     if (quan_value) {
-      targetQuanList = quanList.filter(item =>
-        item.coupon_info.includes(QUAN_TYPE_FLAG[quan_value])
-      );
+      targetQuanList = quanList.filter(item => item.coupon_info === quan_flag);
     }
-    if (quanFlagList?.length) {
-      targetQuanList = quanList.filter(item =>
-        quanFlagList.some(itemA =>
-          couponInfoSpecial(item.coupon_name).includes(couponInfoSpecial(itemA))
-        )
-      );
-    }
+    // 由于增加券类型管理功能暂时不用优先用券功能
+    // if (quanFlagList?.length) {
+    //   targetQuanList = quanList.filter(item =>
+    //     quanFlagList.some(itemA =>
+    //       couponInfoSpecial(item.coupon_name).includes(couponInfoSpecial(itemA))
+    //     )
+    //   );
+    // }
     logList.push({
       opera_time: getCurrentFormattedDateTime(),
       des: "按照券类型或者券标识匹配目标券列表",
       level: "info",
       info: {
         quan_value,
+        quan_flag,
         quanFlagList,
         targetQuanList
       }

@@ -21,6 +21,11 @@ const getOfferList = params => axios.get("/svpi/offerRecord", { params });
 // 查询报价记录
 const queryOfferList = params =>
   axios.get("/svpi/offerRecord/query", { params, timeout: 60 * 1000 });
+
+// 查询订单报价信息
+const queryOfferInfo = params =>
+  axios.get("/svpi/offerRecord/queryOfferInfo", { params, timeout: 15 * 1000 });
+
 // 添加报价记录
 const addOfferRecord = params => axios.post("/svpi/offerRecord/add", params);
 // 更新报价记录
@@ -139,6 +144,9 @@ const getQuanTypeList = params => axios.get("/svpi/quanType", { params });
 // 查询券类型列表
 const queryQuanTypeList = params =>
   axios.get("/svpi/quanType/query", { params });
+// 查询券类型信息
+const queryQuanTypeInfo = params =>
+  axios.get("/svpi/quanType/queryQuanInfo", { params });
 // 删除券类型
 const deleteQuanType = params => axios.get("/svpi/quanType/delete", { params });
 // 批量删除券类型
@@ -157,6 +165,7 @@ export default {
   queryAnalysis,
   getOfferList,
   queryOfferList,
+  queryOfferInfo,
   addOfferRecord,
   updateOfferRecord,
   getTicketList,
@@ -198,6 +207,7 @@ export default {
   syncDealPrice,
   getQuanTypeList,
   queryQuanTypeList,
+  queryQuanTypeInfo,
   deleteQuanType,
   batchDeleteQuanType,
   addQuanType,

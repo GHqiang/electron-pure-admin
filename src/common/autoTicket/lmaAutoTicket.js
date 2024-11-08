@@ -517,15 +517,14 @@ class OrderAutoTicketQueue {
     let offerRule;
     try {
       // 1、获取该订单的报价记录，按对应报价规则出票
-      const offerRes = await svApi.queryOfferList({
+      const offerRes = await svApi.queryOfferInfo({
         user_id: tokens.userInfo.user_id,
         order_status: "1",
         app_name: appFlag,
         order_number,
         plat_name
       });
-      let offerRecord = offerRes?.data?.offerList || [];
-      offerRule = offerRecord?.[0];
+      offerRule = offerRes?.data?.offerInfo;
     } catch (error) {
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
@@ -1822,7 +1821,13 @@ class OrderAutoTicketQueue {
       order_number
     } = params;
     try {
-      const { offer_type, quan_value, real_member_price } = offerRule;
+      const {
+        offer_type,
+        quan_value,
+        real_member_price,
+        quan_cost,
+        quan_flag
+      } = offerRule;
       let currentParams = this.currentParamsList[this.currentParamsInx];
       const { lmaToken } = currentParams;
       // 拿订单号去匹配报价记录

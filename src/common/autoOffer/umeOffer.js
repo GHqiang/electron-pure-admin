@@ -11,12 +11,7 @@ import {
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
-import {
-  APP_LIST,
-  QUAN_TYPE_COST,
-  TEST_NEW_PLAT_LIST,
-  UME_LIST
-} from "@/common/constant.js";
+import { APP_LIST, UME_LIST } from "@/common/constant.js";
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
 const tokens = platTokens();
@@ -29,6 +24,34 @@ class getUmeOfferPrice {
     this.conPrefix = APP_LIST[appFlag] + "自动报价——"; // 打印前缀
     this.appApi = APP_API_OBJ[appFlag];
     this.logList = []; // 操作运行日志
+  }
+
+  // 获取券类型信息
+  async getQuanInfo(quan_value) {
+    try {
+      const res = await svApi.queryQuanTypeInfo({
+        quan_value
+      });
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取券类型信息返回",
+        level: "info",
+        info: {
+          res
+        }
+      });
+      return res.data.quanInfo || null;
+    } catch (error) {
+      console.error("获取券类型信息异常", error);
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取券类型信息异常",
+        level: "error",
+        info: {
+          error
+        }
+      });
+    }
   }
 
   // 获取最终报价信息（唯一暴漏给外包用的方法）
@@ -50,32 +73,39 @@ class getUmeOfferPrice {
         let price = Number(offerAmount || memberOfferAmount);
         if (price) {
           // 成本价
-          let cost_price =
-            offerType === "1"
-              ? QUAN_TYPE_COST[quanValue]
-              : Number(memberCostPrice);
-          offerRule.cost_price = cost_price; // 成本价
-          // 获取最终报价
-          endPrice = await this.getEndPrice({
-            cost_price,
-            supplier_max_price,
-            price,
-            rewards,
-            offerType,
-            offerList,
-            plat_name
-          });
-          console.warn(conPrefix + "最终报价返回", endPrice);
-          if (endPrice) {
-            // if (offerType === "1") {
-            //   offerRule.offerAmount = endPrice;
-            // } else {
-            //   offerRule.memberOfferAmount = endPrice;
-            // }
-            // 最终报价
-            offerRule.offer_end_amount = endPrice;
+          let cost_price;
+          if (offerType === "1") {
+            const quanInfo = await this.getQuanInfo(quanValue);
+            cost_price = quanInfo?.quan_cost;
           } else {
-            err_msg = "获取最终报价价格失败";
+            cost_price = Number(memberCostPrice);
+          }
+          if (cost_price) {
+            offerRule.cost_price = cost_price; // 成本价
+            // 获取最终报价
+            endPrice = await this.getEndPrice({
+              cost_price,
+              supplier_max_price,
+              price,
+              rewards,
+              offerType,
+              offerList,
+              plat_name
+            });
+            console.warn(conPrefix + "最终报价返回", endPrice);
+            if (endPrice) {
+              // if (offerType === "1") {
+              //   offerRule.offerAmount = endPrice;
+              // } else {
+              //   offerRule.memberOfferAmount = endPrice;
+              // }
+              // 最终报价
+              offerRule.offer_end_amount = endPrice;
+            } else {
+              err_msg = "获取最终报价价格失败";
+            }
+          } else {
+            err_msg = "获取出票成本价格失败";
           }
         } else {
           err_msg = "从最终报价规则里获取报价价格失败";

@@ -16,12 +16,7 @@ import svApi from "@/api/sv-api";
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
 // 影院特殊匹配列表及api
-import {
-  TICKET_CONPREFIX_OBJ,
-  QUAN_TYPE_COST,
-  QUAN_TYPE_FLAG,
-  TEST_NEW_PLAT_LIST
-} from "@/common/constant";
+import { TICKET_CONPREFIX_OBJ, TEST_NEW_PLAT_LIST } from "@/common/constant";
 import { APP_API_OBJ, PLAT_API_OBJ } from "@/common/index";
 
 let isTestOrder = false; //是否是测试订单
@@ -524,15 +519,14 @@ class OrderAutoTicketQueue {
     let offerRule;
     try {
       // 1、获取该订单的报价记录，按对应报价规则出票
-      const offerRes = await svApi.queryOfferList({
+      const offerRes = await svApi.queryOfferInfo({
         user_id: tokens.userInfo.user_id,
         order_status: "1",
         app_name: appFlag,
         order_number,
         plat_name
       });
-      let offerRecord = offerRes?.data?.offerList || [];
-      offerRule = offerRecord?.[0];
+      offerRule = offerRes?.data?.offerInfo;
     } catch (error) {
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
@@ -2493,7 +2487,8 @@ class OrderAutoTicketQueue {
     plat_name
   }) {
     try {
-      const { offer_type, member_price, quan_value } = offerRule;
+      const { offer_type, member_price, quan_value, quan_cost, quan_flag } =
+        offerRule;
       let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
       if (offer_type !== "1") {
         console.log(conPrefix + "使用会员卡出票");
@@ -2544,15 +2539,15 @@ class OrderAutoTicketQueue {
         console.log(conPrefix + "使用优惠券出票");
         let targetQuanList = quanList.filter(item => {
           if (appFlag === "renhengmeng") {
-            return true;
+            return item.couponName === quan_flag;
           } else if (appFlag === "ume") {
-            return item.couponName.includes(QUAN_TYPE_FLAG[quan_value]);
+            return item.couponName === quan_flag;
           } else if (appFlag === "yaolai") {
-            return item.couponName === QUAN_TYPE_FLAG[quan_value];
+            return item.couponName === quan_flag;
           } else if (appFlag === "zheyingshidai") {
-            return item.couponName === QUAN_TYPE_FLAG[quan_value];
+            return item.couponName === quan_flag;
           } else if (appFlag === "swxh") {
-            return item.couponName === QUAN_TYPE_FLAG[quan_value];
+            return item.couponName === quan_flag;
           }
         });
         if (targetQuanList.length < ticket_num) {
@@ -2617,14 +2612,9 @@ class OrderAutoTicketQueue {
               : 0
           };
         });
-        let quanCost = QUAN_TYPE_COST[quan_value];
-        // 兼容仁恒梦券类型为切换为自己类型而是用sfc-40类型的情况
-        if (appFlag === "renhengmeng" && quan_value !== "renhengmeng-40") {
-          quanCost = 40;
-        }
         let profit =
           supplier_end_price -
-          quanCost -
+          quan_cost -
           (Number(supplier_end_price) * 100) / 10000;
         profit = Number(profit) * Number(ticket_num);
         if (rewards > 0) {
@@ -2741,7 +2731,7 @@ class OrderAutoTicketQueue {
           }
         });
         if (coupon_num) {
-          bandQuanList.push({ coupon_num, quan_cost: quan.quan_cost });
+          bandQuanList.push({ coupon_num });
           svApi.addUseQuanRecord({
             coupon_num: coupon_num,
             app_name: appFlag,

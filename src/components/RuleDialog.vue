@@ -378,10 +378,10 @@
             clearable
           >
             <el-option
-              v-for="(keyValue, keyName) in QUAN_TYPE"
-              :key="keyName"
-              :label="keyValue"
-              :value="keyName"
+              v-for="(item, index) in quanType"
+              :key="item.id"
+              :label="item.quan_name"
+              :value="item.quan_value"
             />
           </el-select>
         </el-form-item>
@@ -498,10 +498,14 @@
 
 <script setup>
 import { APP_API_OBJ } from "@/common/index.js";
-
+import svApi from "@/api/sv-api";
+import { platTokens } from "@/store/platTokens";
+const {
+  userInfo: { rule }
+} = platTokens();
 import { ref, reactive, computed, toRaw } from "vue";
 import { ElLoading, ElMessage } from "element-plus";
-import { ORDER_FORM, APP_LIST, UME_LIST, QUAN_TYPE } from "@/common/constant";
+import { ORDER_FORM, APP_LIST, UME_LIST } from "@/common/constant";
 import { useAppBaseData } from "@/store/appBaseData";
 const appBaseDataInfo = useAppBaseData();
 const { appBaseData, setBaseData } = appBaseDataInfo;
@@ -518,7 +522,7 @@ let $emit = defineEmits([`submit`]);
 
 // 是否显示对话框
 const showSfcDialog = ref(false);
-
+const quanType = ref([]);
 const offerTypeObj = {
   1: "报价金额",
   2: "会员加价"
@@ -650,6 +654,25 @@ const shadowLineChange = async val => {
   const cityList = await getCityList();
   const allCinemaList = await getAllCinemaList(cityList);
   await getFilmList(cityList[0], allCinemaList[0]);
+  await getQuanTypeList(val);
+};
+
+// 获取券类型列表
+const getQuanTypeList = async app_name => {
+  try {
+    const params = {
+      app_name,
+      is_outuse: rule != 2 ? "1" : undefined,
+      page_num: 1,
+      page_size: 100
+    };
+    const res = await svApi.queryQuanTypeList(params);
+    let quanTypeList = res.data.quanTypeList || [];
+    // console.log("券类型列表===>", quanTypeList);
+    quanType.value = quanTypeList;
+  } catch (error) {
+    console.err("获取券类型列表异常", error);
+  }
 };
 
 // 删除
@@ -713,6 +736,7 @@ const open = async ruleInfo => {
       const cityList = await getCityList();
       const allCinemaList = await getAllCinemaList(cityList);
       await getFilmList(cityList[0], allCinemaList[0]);
+      await getQuanTypeList(formData.shadowLineName);
     }
     loading.close();
     showSfcDialog.value = true;
