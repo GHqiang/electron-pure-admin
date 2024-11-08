@@ -1289,6 +1289,11 @@ class OrderAutoTicketQueue {
               )
           );
         }
+        if (offerRule.black_quans) {
+          quanList = quanList.filter(
+            item => !offerRule.black_quans?.includes(item.couponCode)
+          );
+        }
       }
       // 7、使用优惠券或者会员卡
       const { ticketMemberPrice, handlingFee, ticketMemberServiceFeeMin } =

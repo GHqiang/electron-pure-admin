@@ -1699,7 +1699,8 @@ class OrderAutoTicketQueue {
         offer_rule_id,
         quan_cost,
         quan_flag,
-        is_store
+        is_store,
+        black_quans
       } = offerRule;
       let currentParams = this.currentParamsList[this.currentParamsInx];
       const { session_id, mobile } = currentParams;
@@ -1822,6 +1823,7 @@ class OrderAutoTicketQueue {
           ticket_num,
           appFlag,
           quan_flag,
+          black_quans,
           logList: getQuanLogList
         });
         // 拿到获取券列表方法内的日志记录
@@ -3523,6 +3525,7 @@ const getQuanList = async data => {
     appFlag,
     quan_value,
     quan_flag,
+    black_quans,
     quanFlagList, // 优先用券的券标识
     ticket_num,
     page = 1,
@@ -3563,7 +3566,11 @@ const getQuanList = async data => {
     let targetNum = +ticket_num + 10;
     // 多获取10张1是为了解决异步绑券那判断是否小于10不准确问题，2是为了解决充值赠券需要分组获取的少不是1组的问题
     if (quan_value) {
-      targetQuanList = quanList.filter(item => item.coupon_info === quan_flag);
+      targetQuanList = quanList.filter(
+        item =>
+          item.coupon_info === quan_flag &&
+          !black_quans?.includes(item.coupon_num)
+      );
     }
     // 由于增加券类型管理功能暂时不用优先用券功能
     // if (quanFlagList?.length) {

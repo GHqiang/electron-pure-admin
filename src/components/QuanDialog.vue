@@ -60,6 +60,15 @@
             clearable
           />
         </el-form-item>
+        <el-form-item label="黑名单券" prop="black_quans">
+          <el-input
+            v-model="formData.black_quans"
+            style="width: 240px"
+            :rows="2"
+            type="textarea"
+            placeholder="请输入不可用券号，若有多个用;分隔"
+          />
+        </el-form-item>
         <el-form-item label="是否入库" prop="is_store">
           <el-radio-group v-model="formData.is_store">
             <el-radio value="1" size="large">是</el-radio>
@@ -114,6 +123,7 @@ let formData = reactive({
   quan_value: "",
   quan_cost: "",
   quan_flag: "",
+  black_quans: "",
   is_store: "2",
   is_outuse: "2",
   remark: ""
@@ -138,6 +148,7 @@ const resetForm = el => {
   formData.quan_value = "";
   formData.quan_cost = "";
   formData.quan_flag = "";
+  formData.black_quans = "";
   formData.is_store = "2";
   formData.is_outuse = "2";
   formData.remark = "";
@@ -165,6 +176,7 @@ const open = async quanInfo => {
         formData.quan_value = formInfo.quan_value;
         formData.quan_cost = formInfo.quan_cost;
         formData.quan_flag = formInfo.quan_flag;
+        formData.black_quans = formInfo.black_quans;
         formData.remark = formInfo.remark;
         formData.is_store = formInfo.is_store;
         formData.is_outuse = formInfo.is_outuse;

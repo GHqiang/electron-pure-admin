@@ -136,6 +136,7 @@
           }}</span>
         </template>
       </el-table-column>
+      <el-table-column prop="black_quans" label="黑名单券" min-width="100" />
       <el-table-column prop="update_time" label="更新时间" min-width="160">
         <template #default="{ row }">
           <span>{{
