@@ -2915,6 +2915,15 @@ class OrderAutoTicketQueue {
               ...couponNumRes
             }
           });
+        } else {
+          targetLogList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: `${conPrev}绑定券返回`,
+            level: "info",
+            info: {
+              ...couponNumRes
+            }
+          });
         }
         if (coupon_num) {
           bandQuanList.push({ coupon_num });
@@ -3724,10 +3733,10 @@ const bandQuan = async ({
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
   // 由于要用二线城市影院且40券通用，故写死
   let params = {
-    // city_id: "304",
-    // cinema_id: "33",
-    city_id,
-    cinema_id,
+    city_id: "499",
+    cinema_id: "3",
+    // city_id,
+    // cinema_id,
     session_id,
     coupon_code: coupon_num,
     from_goods: "2"
@@ -3738,12 +3747,14 @@ const bandQuan = async ({
     // console.log("res", res);
     if (res.data?.success === "1") {
       return {
-        coupon_num
+        coupon_num,
+        params
       };
     } else {
       console.error(conPrefix + "绑定新券异常", res);
       return {
-        errMsg: "绑定新券异常:" + JSON.stringify(res)
+        errMsg: "绑定新券异常:" + JSON.stringify(res),
+        params
       };
     }
   } catch (error) {
