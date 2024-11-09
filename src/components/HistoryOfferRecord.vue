@@ -78,6 +78,17 @@
           <el-option label="否" value="2" />
         </el-select>
       </el-form-item>
+      <el-form-item v-if="rule == 2" label="报价差异">
+        <el-select
+          v-model="formData.is_price_diff"
+          placeholder="报价差异"
+          style="width: 194px"
+          clearable
+        >
+          <el-option label="是" value="1" />
+          <el-option label="否" value="" />
+        </el-select>
+      </el-form-item>
       <el-form-item label="订&nbsp;&nbsp;单&nbsp;&nbsp;号">
         <el-input
           v-model="formData.order_number"
@@ -336,6 +347,7 @@ const formData = reactive({
   user_id: "", // 报价用户
   order_status: "", // 报价状态
   is_deal: "", // 是否中标 1-中标 2-未中标
+  is_price_diff: "", // 报价差异 1-是
   order_number: "", // 报价类型
   err_msg: "", // 失败原因
   quan_value: "", // 用券类型
