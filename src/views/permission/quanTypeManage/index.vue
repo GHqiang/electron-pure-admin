@@ -47,6 +47,13 @@
           clearable
         />
       </el-form-item>
+      <el-form-item label="券手续费">
+        <el-input
+          v-model="formData.quan_fee"
+          placeholder="请输入券手续费"
+          clearable
+        />
+      </el-form-item>
       <el-form-item label="是否入库">
         <el-select
           v-model="formData.is_store"
@@ -122,6 +129,7 @@
       <el-table-column prop="quan_value" label="券类型" min-width="100" />
       <el-table-column prop="quan_cost" label="券成本" min-width="100" />
       <el-table-column prop="quan_flag" label="券标识" min-width="100" />
+      <el-table-column prop="quan_fee" label="券手续费" min-width="100" />
       <el-table-column prop="is_store" label="是否入库" min-width="100">
         <template #default="{ row: { is_store } }">
           <span :class="{ red: is_store == 1 }">{{
@@ -224,6 +232,7 @@ const formData = reactive({
   quan_value: "",
   quan_cost: "",
   quan_flag: "",
+  quan_fee: "",
   is_store: "",
   is_outuse: ""
 });
@@ -323,6 +332,7 @@ const resetForm = () => {
   formData.quan_value = "";
   formData.quan_cost = "";
   formData.quan_flag = "";
+  formData.quan_fee = "";
   formData.is_store = "";
   formData.is_outuse = "";
 

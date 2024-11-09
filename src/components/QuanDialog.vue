@@ -60,6 +60,13 @@
             clearable
           />
         </el-form-item>
+        <el-form-item label="券手续费" prop="quan_fee">
+          <el-input
+            v-model="formData.quan_fee"
+            placeholder="请输入券手续费"
+            clearable
+          />
+        </el-form-item>
         <el-form-item label="黑名单券" prop="black_quans">
           <el-input
             v-model="formData.black_quans"
@@ -123,6 +130,7 @@ let formData = reactive({
   quan_value: "",
   quan_cost: "",
   quan_flag: "",
+  quan_fee: "0",
   black_quans: "",
   is_store: "2",
   is_outuse: "2",
@@ -148,6 +156,7 @@ const resetForm = el => {
   formData.quan_value = "";
   formData.quan_cost = "";
   formData.quan_flag = "";
+  formData.quan_fee = "0";
   formData.black_quans = "";
   formData.is_store = "2";
   formData.is_outuse = "2";
@@ -176,6 +185,7 @@ const open = async quanInfo => {
         formData.quan_value = formInfo.quan_value;
         formData.quan_cost = formInfo.quan_cost;
         formData.quan_flag = formInfo.quan_flag;
+        formData.quan_fee = formInfo.quan_fee;
         formData.black_quans = formInfo.black_quans;
         formData.remark = formInfo.remark;
         formData.is_store = formInfo.is_store;
