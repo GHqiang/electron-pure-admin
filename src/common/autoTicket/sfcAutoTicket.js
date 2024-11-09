@@ -3734,14 +3734,16 @@ const bandQuan = async ({
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
   // 由于要用二线城市影院且40券通用，故写死
   let params = {
-    city_id: "499",
-    cinema_id: "3",
-    // city_id,
-    // cinema_id,
+    city_id,
+    cinema_id,
     session_id,
     coupon_code: coupon_num,
     from_goods: "2"
   };
+  if (appFlag === "sfc") {
+    params.city_id = "499";
+    params.cinema_id = "3";
+  }
   try {
     await mockDelay(1);
     const res = await APP_API_OBJ[appFlag].bandQuan(params);
