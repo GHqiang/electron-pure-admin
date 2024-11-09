@@ -407,7 +407,8 @@ class getUmeOfferPrice {
         if (["sheng", "mayi", "yangcong"].includes(plat_name)) {
           price = Math.floor(supplier_max_price);
         } else {
-          price = roundToHalf(supplier_max_price);
+          // 向下取0.5的倍数
+          price = roundToHalf(supplier_max_price, -1);
         }
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),

@@ -1020,6 +1020,11 @@ const UME_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: ["UME影城上海虹桥天地IMAX店"],
     sfc_cinema_name: "UME影城上海虹桥天地店"
+  },
+  // 衢州
+  {
+    order_cinema_name: ["UME影城衢州恒太城LED巨幕店"],
+    sfc_cinema_name: "UME影城衢州恒太城店"
   }
 ];
 

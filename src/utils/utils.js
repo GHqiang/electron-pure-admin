@@ -1810,11 +1810,12 @@ const removeLeadingZeros = lockseat => {
 };
 
 // 按0.5向上去整，即4.1变为4.5,4.6变为5
-function roundToHalf(num) {
+function roundToHalf(num, flag = 1) {
   // 计算 num 除以 0.5 的商
   const quotient = +num / 0.5;
-  // 向上取整
-  const roundedQuotient = Math.ceil(quotient);
+  // 向上/向下取整
+  const roundedQuotient =
+    flag == 1 ? Math.ceil(quotient) : Math.floor(quotient);
   // 返回结果
   return roundedQuotient * 0.5;
 }
