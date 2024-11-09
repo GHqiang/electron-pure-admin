@@ -1335,10 +1335,14 @@ class OrderAutoTicketQueue {
       let quan_code = useQuan.map(item => item.couponCode)?.join();
       // 使用优惠券及会员卡
       if (!card_id && !useQuan?.length) {
-        console.error(conPrefix + "无可用会员卡及优惠券");
+        let str = "无可用会员卡";
+        if (offerRule.offer_type === "1") {
+          str = "无可用优惠券";
+        }
+        console.error(conPrefix + str);
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: `无可用会员卡及优惠券`,
+          des: str,
           level: "error",
           info: {
             cardList,
@@ -2498,6 +2502,15 @@ class OrderAutoTicketQueue {
           item => item.cardAmount >= total_price * 100
         );
         if (!cardData?.length) {
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: "会员卡余额不足",
+            level: "error",
+            info: {
+              cardList,
+              total_price: total_price * 100
+            }
+          });
           console.warn(conPrefix + "无可用会员卡", member_price);
           return {
             card_id: "",

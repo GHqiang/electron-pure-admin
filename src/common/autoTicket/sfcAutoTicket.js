@@ -1259,14 +1259,15 @@ class OrderAutoTicketQueue {
       if (!card_id && !quan_code && !member_coupon_id && !coupon_id) {
         console.log("this.currentParamsInx", this.currentParamsInx);
         console.log("this.currentParamsList", this.currentParamsList);
+        let str = "无可用会员卡";
+        if (offerRule.offer_type === "1") {
+          str = "无可用优惠券";
+        }
         if (this.currentParamsInx === this.currentParamsList.length - 1) {
-          console.error(
-            conPrefix + "优惠券和会员卡都无法使用，单个订单直接出票结束",
-            "走转单逻辑"
-          );
+          console.error(conPrefix + str, "走转单逻辑");
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
-            des: `优惠券和会员卡都无法使用`,
+            des: str,
             level: "error"
           });
           const transferParams = await this.transferOrder(item, {
