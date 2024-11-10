@@ -1385,11 +1385,19 @@ class OrderAutoTicketQueue {
       }
       let pay_money = Number(priceInfo.total_price); // 此处是为了将订单价格30.00转为30，将0.00转为0
       console.log(conPrefix + "订单最后价格", pay_money, priceInfo);
-      if (offerRule.offer_type === "1" && pay_money !== 0) {
+      let quan_fee = offerRule.quan_fee || 0;
+      let quan_fee_total = quan_fee * ticket_num;
+      if (offerRule.offer_type === "1" && pay_money !== quan_fee_total) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: `用券计算订单价格后价格不为0`,
-          level: "error"
+          des: `用券计算订单价格后支付价格不等于手续费价格*票数`,
+          level: "error",
+          info: {
+            pay_money,
+            quan_fee_total,
+            ticket_num,
+            quan_fee
+          }
         });
         sendWxPusherMessage({
           plat_name,
@@ -1700,6 +1708,7 @@ class OrderAutoTicketQueue {
         offer_rule_id,
         quan_cost,
         quan_flag,
+        quan_fee,
         is_store,
         black_quans
       } = offerRule;
@@ -1841,7 +1850,7 @@ class OrderAutoTicketQueue {
         const quanList = quanListRes?.quanList || [];
         const quanType = quanListRes?.quanType;
         let card_id, quan_code, coupon_id;
-        if (quanType === "online-quan") {
+        if (quanType === "online-quan" || quan_fee) {
           const cardListRes = await getCardList({
             city_id,
             cinema_id,

@@ -5,12 +5,15 @@ import svApi from "@/api/sv-api";
 import {
   getCinemaFlag,
   logUpload,
-  getCurrentFormattedDateTime
+  getCurrentFormattedDateTime,
+  mockDelay
 } from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
 const tokens = platTokens();
-
+const {
+  userInfo: { name }
+} = tokens;
 let conPrefix = "【猎人自动获取订单】——"; // console打印前缀
 const isTestOrder = false;
 
@@ -35,19 +38,10 @@ class OrderAutoFetchQueue {
     }
   }
 
-  // 模拟延时
-  delay(delayTime) {
-    return new Promise(resolve => {
-      setTimeout(() => {
-        resolve();
-      }, delayTime * 1000);
-    });
-  }
-
   // 获取订单
   async fetchOrders(fetchDelay) {
     try {
-      await this.delay(fetchDelay);
+      await mockDelay(fetchDelay);
       let stayList = await lierenOrderFetch();
       if (!stayList?.length) return;
       stayList = stayList.map(item => ({ ...item, plat_name: "lieren" }));
@@ -68,6 +62,25 @@ class OrderAutoFetchQueue {
             itemA.order_number === item.order_number
         );
       });
+      let logList = [
+        {
+          opera_time: getCurrentFormattedDateTime(),
+          des: `${name}：猎人获取待出票列表返回`,
+          level: "info",
+          info: {
+            stayList: stayList
+          }
+        }
+      ];
+      logUpload(
+        {
+          plat_name: "lieren",
+          app_name: "",
+          order_number: "",
+          type: 2
+        },
+        logList
+      );
       // 如果是测试订单就不从远端过滤
       if (stayList?.length && !isTestOrder) {
         const offerList = await getOfferList();

@@ -229,7 +229,8 @@ const createAxios = ({ group, app_name, timeout = 20 }) => {
         "/city/list",
         "/cinema/list",
         "/cinema/play-info",
-        "/play/seat"
+        "/play/seat",
+        "v2/coupon/bind-coupon-code"
       ];
       let isRetry = shouldRetry(error, config, maxRetries, retrieUrls);
       // console.log("isRetry", isRetry, config);

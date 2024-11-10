@@ -5,12 +5,15 @@ import svApi from "@/api/sv-api";
 import {
   getCinemaFlag,
   logUpload,
-  getCurrentFormattedDateTime
+  getCurrentFormattedDateTime,
+  mockDelay
 } from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
 const tokens = platTokens();
-
+const {
+  userInfo: { name }
+} = tokens;
 let conPrefix = "【省自动获取订单】——"; // console打印前缀
 
 // 创建一个订单自动报价队列类
@@ -34,19 +37,10 @@ class OrderAutoFetchQueue {
     }
   }
 
-  // 模拟延时
-  delay(delayTime) {
-    return new Promise(resolve => {
-      setTimeout(() => {
-        resolve();
-      }, delayTime * 1000);
-    });
-  }
-
   // 获取订单
   async fetchOrders(fetchDelay) {
     try {
-      await this.delay(fetchDelay);
+      await mockDelay(fetchDelay);
       let stayList = await orderFetch();
       if (!stayList?.length) return;
       console.warn("省待出票列表返回", stayList);
@@ -145,6 +139,25 @@ class OrderAutoFetchQueue {
             itemA.order_number === item.order_number
         );
       });
+      let logList = [
+        {
+          opera_time: getCurrentFormattedDateTime(),
+          des: `${name}：省获取待出票列表返回`,
+          level: "info",
+          info: {
+            stayList: stayList
+          }
+        }
+      ];
+      logUpload(
+        {
+          plat_name: "lieren",
+          app_name: "",
+          order_number: "",
+          type: 2
+        },
+        logList
+      );
       if (sfcStayOfferlist?.length) {
         const ticketList = await getTicketList();
         sfcStayOfferlist = sfcStayOfferlist.filter(item =>
