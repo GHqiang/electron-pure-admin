@@ -1702,127 +1702,126 @@ class OrderAutoTicketQueue {
       );
       const {
         offer_type,
-        quan_value,
         member_price, // 成本价
         real_member_price,
-        offer_rule_id,
-        quan_cost,
-        quan_flag,
-        quan_fee,
-        is_store,
-        black_quans
+        offer_rule_id
       } = offerRule;
       let currentParams = this.currentParamsList[this.currentParamsInx];
       const { session_id, mobile } = currentParams;
+      let is_auto_use_quan = false; // 是否灵活用券
       // 拿订单号去匹配报价记录
       if (offer_type !== "1") {
-        // const ruleInfo = getOfferRuleById(offer_rule_id);
-        // if (ruleInfo) {
-        //   const { autoUseQuanStatus, autoUseQuanPrice, autoUseQuanFlag } =
-        //     ruleInfo;
-        //   let quanFlagList = autoUseQuanFlag
-        //     ?.replace(/\s*/g, "")
-        //     ?.replace(/;|；/g, "—")
-        //     ?.split("—");
-        //   if (
-        //     autoUseQuanStatus === "1" &&
-        //     supplier_end_price > autoUseQuanPrice &&
-        //     quanFlagList?.length
-        //   ) {
-        //     this.logList.push({
-        //       opera_time: getCurrentFormattedDateTime(),
-        //       des: "优先用券功能暂不支持，请调整",
-        //       level: "error"
-        //     });
-        //     return {
-        //       card_id: "",
-        //       profit: 0 // 利润
-        //     };
-        //     const firstUseQuanRes = await this.firstUseQuanHandle({
-        //       city_id,
-        //       cinema_id,
-        //       show_id,
-        //       seat_ids,
-        //       session_id,
-        //       appFlag,
-        //       ticket_num,
-        //       quanFlagList
-        //     });
-        //     if (firstUseQuanRes) {
-        //       return {
-        //         quan_code: "",
-        //         card_id: firstUseQuanRes.card_id,
-        //         coupon_id: firstUseQuanRes.coupon_id,
-        //         member_coupon_id: firstUseQuanRes.member_coupon_id,
-        //         quanType: firstUseQuanRes.quanType,
-        //         profit: 0 // 利润
-        //       };
-        //     }
-        //   }
-        // }
-        console.log(conPrefix + "使用会员卡出票");
-        console.log(conPrefix + "报价记录里的会员价", real_member_price);
-        if (!real_member_price) {
-          console.warn(
-            conPrefix + "使用优惠券或者会员卡前获取会员价异常",
-            real_member_price
-          );
-          this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
-            des: `使用会员卡前从该订单报价记录里获取会员价异常`,
-            level: "error"
+        const ruleInfo = getOfferRuleById(offer_rule_id);
+        if (ruleInfo) {
+          const { autoUseQuanStatus, autoUseQuanPrice, auto_quan_value } =
+            ruleInfo;
+          if (
+            autoUseQuanStatus === "1" &&
+            supplier_end_price > autoUseQuanPrice &&
+            auto_quan_value
+          ) {
+            is_auto_use_quan = true;
+            offerRule.offer_type = "1";
+            offerRule.quan_value = auto_quan_value;
+            this.logList.push({
+              opera_time: getCurrentFormattedDateTime(),
+              des: "灵活用券条件生效，重置报价规则类型为固定报价",
+              level: "info",
+              info: {
+                autoUseQuanStatus,
+                supplier_end_price,
+                autoUseQuanPrice,
+                auto_quan_value
+              }
+            });
+          }
+        }
+        if (offerRule.offer_type !== "1") {
+          console.log(conPrefix + "使用会员卡出票");
+          console.log(conPrefix + "报价记录里的会员价", real_member_price);
+          if (!real_member_price) {
+            console.warn(
+              conPrefix + "使用优惠券或者会员卡前获取会员价异常",
+              real_member_price
+            );
+            this.logList.push({
+              opera_time: getCurrentFormattedDateTime(),
+              des: `使用会员卡前从该订单报价记录里获取会员价异常`,
+              level: "error"
+            });
+            return {
+              card_id: "",
+              profit: 0 // 利润
+            };
+          }
+          // 1、获取会员卡列表
+          const cardListRes = await getCardList({
+            city_id,
+            cinema_id,
+            session_id,
+            appFlag
+          });
+          const cardList = cardListRes?.cardList || [];
+          if (!cardList?.length) {
+            this.logList.push({
+              opera_time: getCurrentFormattedDateTime(),
+              des: conPrefix + "获取会员卡列表异常",
+              level: "error",
+              info: {
+                error: cardListRes?.error
+              }
+            });
+            return {
+              card_id: "",
+              profit: 0 // 利润
+            };
+          }
+          // 2、使用会员卡
+          let member_total_price = (real_member_price * 100 * ticket_num) / 100;
+          const { card_id, profit } = await this.useCard({
+            member_total_price,
+            cardList,
+            supplier_end_price,
+            ticket_num,
+            city_id,
+            cinema_id,
+            show_id,
+            seat_ids,
+            member_price, // 成本价
+            real_member_price,
+            rewards,
+            session_id,
+            mobile,
+            plat_name
           });
           return {
-            card_id: "",
-            profit: 0 // 利润
+            card_id,
+            profit // 利润
           };
         }
-        // 1、获取会员卡列表
-        const cardListRes = await getCardList({
-          city_id,
-          cinema_id,
-          session_id,
-          appFlag
-        });
-        const cardList = cardListRes?.cardList || [];
-        if (!cardList?.length) {
-          this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
-            des: conPrefix + "获取会员卡列表异常",
-            level: "error",
-            info: {
-              error: cardListRes?.error
-            }
-          });
-          return {
-            card_id: "",
-            profit: 0 // 利润
-          };
-        }
-        // 2、使用会员卡
-        let member_total_price = (real_member_price * 100 * ticket_num) / 100;
-        const { card_id, profit } = await this.useCard({
-          member_total_price,
-          cardList,
-          supplier_end_price,
-          ticket_num,
-          city_id,
-          cinema_id,
-          show_id,
-          seat_ids,
-          member_price, // 成本价
-          real_member_price,
-          rewards,
-          session_id,
-          mobile,
-          plat_name
-        });
-        return {
-          card_id,
-          profit // 利润
-        };
-      } else {
+      }
+
+      if (offerRule.offer_type === "1") {
         console.log(conPrefix + "使用优惠券出票");
+        if (is_auto_use_quan) {
+          const quanInfo = await this.getQuanInfo(
+            offerRule.quan_value,
+            appFlag
+          );
+          offerRule.quan_cost = quanInfo?.quan_cost;
+          offerRule.quan_flag = quanInfo?.quan_flag;
+          offerRule.quan_fee = quanInfo?.quan_fee;
+          offerRule.is_store = quanInfo?.is_store;
+          offerRule.black_quans = quanInfo?.black_quans;
+        }
+        let {
+          quan_value,
+          quan_cost,
+          quan_flag,
+          quan_fee,
+          is_store,
+          black_quans
+        } = offerRule;
         // 1、获取优惠券列表
         let getQuanLogList = [];
         const quanListRes = await getQuanList({
@@ -1919,6 +1918,34 @@ class OrderAutoTicketQueue {
         quan_code: "",
         profit: 0 // 利润
       };
+    }
+  }
+  // 获取券类型信息
+  async getQuanInfo(quan_value, app_name) {
+    try {
+      const res = await svApi.queryQuanTypeInfo({
+        quan_value,
+        app_name
+      });
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取券类型信息返回",
+        level: "info",
+        info: {
+          res
+        }
+      });
+      return res.data.quanInfo || null;
+    } catch (error) {
+      console.error("获取券类型信息异常", error);
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取券类型信息异常",
+        level: "error",
+        info: {
+          error
+        }
+      });
     }
   }
 

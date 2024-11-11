@@ -401,11 +401,10 @@
             <el-option label="星期日" value="星期日" />
           </el-select>
         </el-form-item>
-        <!-- <el-form-item
+        <el-form-item
           v-if="
             formData.offerType !== '1' &&
-            formData.shadowLineName !== 'sfc' &&
-            !UME_LIST.includes(formData.shadowLineName)
+            SFC_APP_LIST.includes(formData.shadowLineName)
           "
           label="灵活用券配置"
         >
@@ -425,16 +424,23 @@
               />&nbsp;&nbsp;用券
             </el-col>
             <el-col :span="14">
-              券标识：<el-input
-                v-model="formData.autoUseQuanFlag"
-                style="width: 240px"
-                :rows="2"
-                type="textarea"
-                placeholder="请输入券标识，不同标识用;分隔"
-              />
+              用券类型：
+              <el-select
+                v-model="formData.auto_quan_value"
+                placeholder="用券类型"
+                style="width: 194px"
+                clearable
+              >
+                <el-option
+                  v-for="(item, index) in quanType"
+                  :key="item.id"
+                  :label="item.quan_name"
+                  :value="item.quan_value"
+                />
+              </el-select>
             </el-col>
           </el-row>
-        </el-form-item> -->
+        </el-form-item>
         <el-form-item label="座位数">
           <el-select v-model="formData.seatNum" placeholder="座位数" clearable>
             <el-option
@@ -480,6 +486,13 @@
             clearable
           />
         </el-form-item>
+        <el-form-item label="备注">
+          <el-input
+            v-model="formData.remark"
+            placeholder="请输入备注"
+            clearable
+          />
+        </el-form-item>
         <el-form-item label="状态">
           <el-radio-group v-model="formData.status">
             <el-radio value="1" size="large">正常</el-radio>
@@ -505,7 +518,12 @@ const {
 } = platTokens();
 import { ref, reactive, computed, toRaw } from "vue";
 import { ElLoading, ElMessage } from "element-plus";
-import { ORDER_FORM, APP_LIST, UME_LIST } from "@/common/constant";
+import {
+  ORDER_FORM,
+  APP_LIST,
+  UME_LIST,
+  SFC_APP_LIST
+} from "@/common/constant";
 import { useAppBaseData } from "@/store/appBaseData";
 const appBaseDataInfo = useAppBaseData();
 const { appBaseData, setBaseData } = appBaseDataInfo;
@@ -554,16 +572,17 @@ let formData = reactive({
   weekDay: [], // 启用星期
   seatNum: "", // 座位数
   memberDay: "", // 会员日
+  remark: "", // 备注
   status: "1", // 状态
   platOfferList: [
     {
       platName: "lieren",
       value: ""
     }
-  ] // 平台报价规则
-  // autoUseQuanStatus: "2", // 自动用券状态 1-开启 2-关闭
-  // autoUseQuanPrice: "", // 自动用券价格
-  // autoUseQuanFlag: "" // 自动用券标识
+  ], // 平台报价规则
+  autoUseQuanStatus: "2", // 自动用券状态 1-开启 2-关闭
+  autoUseQuanPrice: "", // 自动用券价格
+  auto_quan_value: "" // 自动用券类型
 });
 
 let cityList = ref([]); // 城市列表
@@ -635,6 +654,7 @@ const resetForm = el => {
   formData.weekDay = []; // 启用星期
   formData.seatNum = ""; // 座位数
   formData.memberDay = ""; // 会员日
+  formData.remark = ""; // 备注
   formData.status = "1"; // 状态
   formData.platOfferList = [
     {
@@ -642,9 +662,9 @@ const resetForm = el => {
       value: ""
     }
   ]; // 平台报价规则
-  // formData.autoUseQuanStatus = "2"; // 自动用券状态 1-开启 2-关闭
-  // formData.autoUseQuanPrice = ""; // 自动用券价格
-  // formData.autoUseQuanFlag = ""; // 自动用券标识
+  formData.autoUseQuanStatus = "2"; // 自动用券状态 1-开启 2-关闭
+  formData.autoUseQuanPrice = ""; // 自动用券价格
+  formData.auto_quan_value = ""; // 自动用券标识
 };
 
 // 影线改变
@@ -714,6 +734,7 @@ const open = async ruleInfo => {
         formData.weekDay = formInfo.weekDay; // 启用星期
         formData.seatNum = formInfo.seatNum; // 座位数
         formData.memberDay = formInfo.memberDay; // 会员日
+        formData.remark = formInfo.remark;
         formData.status = formInfo.status;
         formData.offerType = formInfo.offerType;
         formData.addAmount = formInfo.addAmount;
@@ -726,9 +747,9 @@ const open = async ruleInfo => {
         formData.includeFilmNames = formInfo.includeFilmNames;
         formData.excludeFilmNames = formInfo.excludeFilmNames;
         formData.platOfferList = formInfo.platOfferList;
-        // formData.autoUseQuanStatus = formInfo.autoUseQuanStatus;
-        // formData.autoUseQuanPrice = formInfo.autoUseQuanPrice;
-        // formData.autoUseQuanFlag = formInfo.autoUseQuanFlag;
+        formData.autoUseQuanStatus = formInfo.autoUseQuanStatus;
+        formData.autoUseQuanPrice = formInfo.autoUseQuanPrice;
+        formData.auto_quan_value = formInfo.auto_quan_value;
       } else {
         // 新增
         formData.shadowLineName = formInfo.shadowLineName;
@@ -760,9 +781,9 @@ const offerTypeChange = val => {
         value: ""
       }
     ]; // 平台报价规则
-    // formData.autoUseQuanStatus = "2"; // 自动用券状态 1-开启 2-关闭
-    // formData.autoUseQuanPrice = ""; // 自动用券价格
-    // formData.autoUseQuanFlag = ""; // 自动用券标识
+    formData.autoUseQuanStatus = "2"; // 自动用券状态 1-开启 2-关闭
+    formData.autoUseQuanPrice = ""; // 自动用券价格
+    formData.auto_quan_value = ""; // 自动用券标识
   } else if (val === "2") {
     // 会员价加价
     formData.memberDay = "";

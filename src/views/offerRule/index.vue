@@ -83,6 +83,13 @@
         </el-select>
       </el-form-item>
 
+      <el-form-item label="规则备注">
+        <el-input
+          v-model="formData.remark"
+          placeholder="请输入备注(支撑模糊匹配)"
+          clearable
+        />
+      </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="searchData">搜索</el-button>
         <el-button @click="resetForm">重置</el-button>
@@ -125,11 +132,6 @@
     >
       <el-table-column type="selection" fixed width="55" />
       <el-table-column prop="ruleName" fixed label="规则名称" width="110" />
-      <el-table-column prop="orderForm" fixed label="订单来源" width="85">
-        <template #default="scope">
-          <span>{{ formatPlatName(scope.row) }}</span>
-        </template>
-      </el-table-column>
       <el-table-column prop="shadowLineName" fixed label="影线名称" width="85">
         <template #default="scope">
           <span>{{ shadowLineObj[scope.row.shadowLineName] }}</span>
@@ -163,6 +165,11 @@
       <el-table-column label="加价金额" prop="addAmount" width="85">
         <template #default="scope">
           <span>{{ formatAddAmount(scope.row) }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column prop="orderForm" fixed label="订单来源" width="85">
+        <template #default="scope">
+          <span>{{ formatPlatName(scope.row) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="会员日" prop="memberDay" width="85" />
@@ -215,6 +222,7 @@
       </el-table-column>
       <el-table-column prop="ruleStartTime" label="开始放映时间" width="110" />
       <el-table-column prop="ruleEndTime" label="结束放映时间" width="110" />
+      <el-table-column prop="remark" label="备注" width="110" />
       <el-table-column label="操作" fixed="right" align="left" width="350">
         <template #default="scope">
           <el-button
@@ -329,7 +337,8 @@ const formData = reactive({
   shadowLineName: "", // 影线名称
   status: "", // 状态
   offerType: "", // 报价类型
-  quanValue: "" // 用券类型
+  quanValue: "", // 用券类型
+  remark: "" // 备注
 });
 
 formData.rule = rule;
@@ -740,6 +749,7 @@ const resetForm = () => {
   formData.ruleName = ""; // 规则名称
   formData.shadowLineName = ""; // 影线名称
   formData.quanValue = ""; // 是否报价
+  formData.remark = ""; // 备注
   formData.status = ""; // 状态
   formData.offerType = ""; // 报价类型
   currentPage.value = 1;

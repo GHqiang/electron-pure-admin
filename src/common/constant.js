@@ -204,7 +204,12 @@ const APP_LIST = {
 };
 
 // 非SFC影院集合列表
-const NO_SFC_APP_LIST = [...UME_LIST];
+const NO_SFC_APP_LIST = [...UME_LIST, "lma"];
+
+// SFC影院集合列表
+const SFC_APP_LIST = Object.keys(APP_LIST).filter(
+  item => !NO_SFC_APP_LIST.includes(item)
+);
 
 // sfc特殊影院集合
 const SFC_SPECIAL_CINEMA_LIST = [
@@ -2208,6 +2213,7 @@ export {
   UME_LIST,
   APP_LIST,
   NO_SFC_APP_LIST,
+  SFC_APP_LIST,
   SFC_SPECIAL_CINEMA_LIST,
   JIUJIN_SPECIAL_CINEMA_LIST,
   LAINA_SPECIAL_CINEMA_LIST,
