@@ -402,10 +402,7 @@
           </el-select>
         </el-form-item>
         <el-form-item
-          v-if="
-            formData.offerType !== '1' &&
-            SFC_APP_LIST.includes(formData.shadowLineName)
-          "
+          v-if="formData.offerType !== '1' && formData.shadowLineName !== 'lma'"
           label="灵活用券配置"
         >
           <el-row :gutter="24" style="width: 100%">

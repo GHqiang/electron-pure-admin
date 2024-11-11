@@ -1849,7 +1849,7 @@ class OrderAutoTicketQueue {
         const quanList = quanListRes?.quanList || [];
         const quanType = quanListRes?.quanType;
         let card_id, quan_code, coupon_id;
-        if (quanType === "online-quan" || quan_fee) {
+        if (quanType === "online-quan" || quan_fee > 0) {
           const cardListRes = await getCardList({
             city_id,
             cinema_id,
