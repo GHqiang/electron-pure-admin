@@ -2552,19 +2552,9 @@ class OrderAutoTicketQueue {
         };
       } else {
         console.log(conPrefix + "使用优惠券出票");
-        let targetQuanList = quanList.filter(item => {
-          if (appFlag === "renhengmeng") {
-            return item.couponName === quan_flag;
-          } else if (appFlag === "ume") {
-            return item.couponName === quan_flag;
-          } else if (appFlag === "yaolai") {
-            return item.couponName === quan_flag;
-          } else if (appFlag === "zheyingshidai") {
-            return item.couponName === quan_flag;
-          } else if (appFlag === "swxh") {
-            return item.couponName === quan_flag;
-          }
-        });
+        let targetQuanList = quanList.filter(
+          item => item.couponName === quan_flag
+        );
         if (targetQuanList.length < ticket_num && is_store == "1") {
           console.warn(conPrefix + "优惠券不够用");
           console.error(
