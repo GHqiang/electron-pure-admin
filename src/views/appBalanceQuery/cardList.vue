@@ -653,6 +653,7 @@ const saveCard = async cardInfo => {
   try {
     cardInfo.update_time = getCurrentFormattedDateTime();
     cardInfo.rule = rule;
+    cardInfo.linkCinemaIds = cardInfo.linkCinemaIds?.join();
     if (cardInfo.id) {
       console.log("编辑保存卡", cardInfo);
       await svApi.updateCardRecord(cardInfo);

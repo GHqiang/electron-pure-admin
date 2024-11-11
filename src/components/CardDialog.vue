@@ -38,6 +38,22 @@
             clearable
           />
         </el-form-item>
+        <el-form-item label="指定影院">
+          <el-select
+            v-model="formData.linkCinemaIds"
+            filterable
+            multiple
+            clearable
+            placeholder="指定影院"
+          >
+            <el-option
+              v-for="item in cinemaAllList"
+              :key="item.id"
+              :label="item.name"
+              :value="item.id"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item label="所属账号" prop="mobile">
           <el-input
             v-model="formData.mobile"
@@ -103,9 +119,14 @@
 </template>
 
 <script setup>
-import { ref, reactive } from "vue";
+import { ref, reactive, toRaw } from "vue";
 import { ElLoading, ElMessage } from "element-plus";
-import { APP_LIST } from "@/common/constant";
+import { APP_API_OBJ } from "@/common/index.js";
+import { APP_LIST, UME_LIST } from "@/common/constant";
+import { useAppBaseData } from "@/store/appBaseData";
+const appBaseDataInfo = useAppBaseData();
+const { appBaseData, setBaseData } = appBaseDataInfo;
+
 const cardFormRef = ref(null);
 // 父传子props
 defineProps({
@@ -125,6 +146,7 @@ let formData = reactive({
   id: "",
   app_name: "",
   cinema_name: "",
+  linkCinemaIds: [],
   card_id: "",
   card_num: "",
   card_discount: "",
@@ -134,6 +156,9 @@ let formData = reactive({
   status: "",
   remark: ""
 });
+let cityCinemaList = []; // 城市影院列表
+// 影线影院列表
+const cinemaAllList = ref([]);
 const validatePhoneNumber = (rule, value, callback) => {
   if (!value) {
     return callback(new Error("请输入手机号"));
@@ -188,6 +213,8 @@ const resetForm = el => {
 const shadowLineChange = async val => {
   console.log("val", val);
   resetForm(1);
+  const cityList = await getCityList();
+  await getAllCinemaList(cityList);
 };
 // 打开弹窗
 const open = async cardInfo => {
@@ -203,6 +230,9 @@ const open = async cardInfo => {
         formData.id = formInfo.id;
         formData.app_name = formInfo.app_name;
         formData.cinema_name = formInfo.cinema_name;
+        formData.linkCinemaIds = formInfo.linkCinemaIds
+          ? formInfo.linkCinemaIds.split(",")
+          : [];
         formData.card_id = formInfo.card_id;
         formData.card_num = formInfo.card_num;
         formData.card_discount = formInfo.card_discount;
@@ -215,6 +245,8 @@ const open = async cardInfo => {
         // 新增
         formData.app_name = formInfo.app_name;
       }
+      const cityList = await getCityList();
+      await getAllCinemaList(cityList);
     }
     loading.close();
     showSfcDialog.value = true;
@@ -251,6 +283,117 @@ const cancel = el => {
   console.log("取消", el);
   showSfcDialog.value = false;
   resetForm();
+};
+
+// 根据城市获取影院列表
+const getCinemaListByCityId = async city_id => {
+  try {
+    let params = {
+      city_id: city_id
+    };
+    console.log("根据城市获取影院列表参数", params);
+    const { app_name } = formData;
+    let cinemaList = [];
+    if (UME_LIST.includes(app_name)) {
+      cinemaList =
+        cityCinemaList.find(item => item.cityCode === city_id)?.cinemaList ||
+        [];
+      cinemaList = cinemaList.map(item => ({
+        ...item,
+        id: item.cinemaCode,
+        name: item.cinemaName
+      }));
+    } else if (app_name === "lma") {
+      const res = await APP_API_OBJ[app_name].getCinemaList(city_id);
+      cinemaList = res.data.list || [];
+      cinemaList = cinemaList.map(item => ({
+        ...item,
+        id: item.cinema_id,
+        name: item.cinema_name
+      }));
+    } else {
+      const res = await APP_API_OBJ[app_name].getCinemaList(params);
+      console.log("根据城市获取影院列表返回", res);
+      cinemaList = res.data?.cinema_data || [];
+    }
+    return cinemaList;
+  } catch (error) {
+    console.warn("根据城市获取影院列表异常", error);
+  }
+};
+
+// 获取全部影院列表
+const getAllCinemaList = async cityList => {
+  try {
+    const { app_name } = formData;
+    let allCinemaList = appBaseData[app_name]?.allCinemaList || [];
+    console.log("获取全部影院列表", app_name, toRaw(allCinemaList));
+    if (!allCinemaList?.length) {
+      for (let index = 0; index < cityList.length; index++) {
+        const item = cityList[index];
+        let list = await getCinemaListByCityId(item.id);
+        list = list.map(itemA => {
+          return {
+            ...itemA,
+            city_name: item.name,
+            city_id: item.id
+          };
+        });
+        if (list.length > 0) {
+          allCinemaList = allCinemaList.concat(list);
+        }
+      }
+      setBaseData({ allCinemaList: allCinemaList }, app_name);
+    }
+    cinemaAllList.value = allCinemaList;
+    console.log("获取全部影院列表返回", toRaw(allCinemaList));
+    return allCinemaList;
+  } catch (error) {
+    console.warn("获取全部影院列表异常", error);
+  }
+};
+
+// 获取城市列表
+const getCityList = async () => {
+  try {
+    let params = {};
+    const { app_name } = formData;
+    let list = appBaseData[app_name]?.cityList;
+    console.log("获取城市列表参数", params, app_name, toRaw(list));
+    if (!list?.length) {
+      if (UME_LIST.includes(app_name)) {
+        let params = {
+          params: {
+            channelCode: "QD0000001",
+            sysSourceCode: "YZ001",
+            cinemaCode: "32012801",
+            cinemaLinkId: "15946"
+          }
+        };
+        const res = await APP_API_OBJ[app_name].getCinemaList(params);
+        cityCinemaList = res.data || [];
+        list = cityCinemaList.map(item => ({
+          name: item.cityName,
+          id: item.cityCode
+        }));
+      } else if (app_name === "lma") {
+        const res = await APP_API_OBJ[app_name].getCityList();
+        list = res.data.list || [];
+        list = list.map(item => ({
+          name: item.city_name,
+          id: item.city_id
+        }));
+      } else {
+        const res = await APP_API_OBJ[app_name].getCityList(params);
+        list = res?.data?.all_city || [];
+      }
+      setBaseData({ cityList: list }, app_name);
+    }
+    console.log("获取城市列表返回", toRaw(list));
+    return toRaw(list);
+  } catch (error) {
+    console.warn("获取城市列表异常", error);
+  }
 };
 
 // 子暴露给父组件的值或方法$refs
