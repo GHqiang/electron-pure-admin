@@ -1410,18 +1410,10 @@ class OrderAutoTicketQueue {
             paymentAmount
           }
         });
-        sendWxPusherMessage({
-          plat_name,
-          order_number,
-          city_name,
-          cinema_name,
-          film_name,
-          show_time,
-          lockseat,
-          transferTip: "此处不转单,需手动出票",
-          failReason: str
+        const transferParams = await this.transferOrder(item, {
+          order_str
         });
-        return { offerRule };
+        return { offerRule, transferParams };
       }
       // 计算利润(奖励未加)
       let profit;
