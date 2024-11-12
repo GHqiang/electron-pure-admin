@@ -1503,18 +1503,12 @@ class OrderAutoTicketQueue {
             paymentAmount
           }
         });
-        sendWxPusherMessage({
-          plat_name,
-          order_number,
-          city_name,
-          cinema_name,
-          film_name,
-          show_time,
-          lockseat,
-          transferTip: "此处不转单,需手动出票",
-          failReason: str
+        const transferParams = await this.transferOrder(item, {
+          cinemaCode,
+          cinemaLinkId,
+          orderHeaderId
         });
-        return { offerRule };
+        return { offerRule, transferParams };
       }
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
