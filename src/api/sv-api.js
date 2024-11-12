@@ -100,7 +100,7 @@ const batchAddCardRecord = params =>
 // 批量修改卡
 const batchUpdateCardRecord = params =>
   axios.post("/svpi/cardRecord/batchUpdate", params);
-// 批量卡当天使用量
+// 更新卡当天及当月使用量
 const updateDayUsage = params =>
   axios.post("/svpi/cardRecord/updateUsage", params);
 

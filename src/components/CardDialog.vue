@@ -89,10 +89,17 @@
             clearable
           />
         </el-form-item>
-        <el-form-item label="出票限制" prop="use_limit_day">
+        <el-form-item label="日出票限制" prop="use_limit_day">
           <el-input
             v-model="formData.use_limit_day"
             placeholder="请输入出票限制（当天）"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="月出票限制" prop="use_limit_month">
+          <el-input
+            v-model="formData.use_limit_month"
+            placeholder="请输入出票限制（当月）"
             clearable
           />
         </el-form-item>
@@ -152,6 +159,7 @@ let formData = reactive({
   card_discount: "",
   balance: "",
   use_limit_day: "",
+  use_limit_month: "",
   mobile: "",
   status: "",
   remark: ""
@@ -204,6 +212,7 @@ const resetForm = el => {
   formData.card_discount = "";
   formData.balance = "";
   formData.use_limit_day = "";
+  formData.use_limit_month = "";
   formData.mobile = "";
   formData.status = "1";
   formData.remark = "";
@@ -238,6 +247,7 @@ const open = async cardInfo => {
         formData.card_discount = formInfo.card_discount;
         formData.balance = formInfo.balance;
         formData.use_limit_day = formInfo.use_limit_day;
+        formData.use_limit_month = formInfo.use_limit_month;
         formData.mobile = formInfo.mobile;
         formData.remark = formInfo.remark;
         formData.status = formInfo.status;

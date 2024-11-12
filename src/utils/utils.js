@@ -36,6 +36,19 @@ function getCurrentFormattedDateTime(sjc) {
   return formattedDateTime;
 }
 
+// 判断某个日期是否在当月内 如：'2024-11-15'
+function isDateInCurrentMonth(date) {
+  // 将传入的日期字符串转换为日期对象
+  const dateToCheck = new Date(date);
+  // 获取当前日期
+  const currentDate = new Date();
+  // 比较年份和月份
+  return (
+    dateToCheck.getFullYear() === currentDate.getFullYear() &&
+    dateToCheck.getMonth() === currentDate.getMonth()
+  );
+}
+
 // YYYY-MM-DD
 function getCurrentDay(sjc) {
   const now = !sjc ? new Date() : new Date(sjc);
@@ -1822,6 +1835,7 @@ function roundToHalf(num, flag = 1) {
 export {
   roundToHalf, // 按0.5向上取整
   removeLeadingZeros,
+  isDateInCurrentMonth, // 判断某个日期是否在当月内：YYYY-MM-DD
   getCurrentFormattedDateTime, // 获取当前时间：YYYY-MM-DD HH:MM:SS
   getCurrentDay, // 获取当前天：YYYY-MM-DD
   getCurrentTime, // 获取当前时间：HH:MM:SS
