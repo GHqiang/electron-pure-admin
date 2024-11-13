@@ -72,7 +72,7 @@
       <el-form-item>
         <el-button @click="resetForm">重置</el-button>
         <el-button type="primary" @click="searchData">搜索</el-button>
-        <el-button type="primary" style="padding-left: 0px">
+        <!-- <el-button type="primary" style="padding-left: 0px">
           <template #default>
             <el-select
               v-model="shadowLine"
@@ -89,7 +89,7 @@
             </el-select>
             <span @click="addCard">新增</span>
           </template>
-        </el-button>
+        </el-button> -->
         <el-button type="danger" :disabled="!hasSelected" @click="batchDelete"
           >批量删除</el-button
         >

@@ -1249,7 +1249,7 @@ class OrderAutoTicketQueue {
       let cardList = cardQuanListRes?.cards || [];
       if (cardList?.length && offerRule.offer_type != "1") {
         // 根据影院id过滤指定卡
-        const usableCarrdList = await this.getUsableCardList(cinema_id);
+        const usableCarrdList = await this.getUsableCardList(cinemaCode);
         if (usableCarrdList?.length) {
           cardList = cardList.filter(item =>
             usableCarrdList.some(itemA => itemA.card_num === item.cardNo)
@@ -2718,7 +2718,7 @@ class OrderAutoTicketQueue {
   }
 
   // 获取影院指定会员卡
-  async getUsableCardList(cinema_id) {
+  async getUsableCardList(cinemaCode) {
     const { appFlag } = this;
     try {
       const res = await svApi.queryCardList({
@@ -2738,7 +2738,7 @@ class OrderAutoTicketQueue {
       cardList = cardList.filter(item => {
         return !item.linkCinemaIds
           ? true
-          : item.linkCinemaIds.split(",").some(itemA => itemA == cinema_id);
+          : item.linkCinemaIds.split(",").some(itemA => itemA == cinemaCode);
       });
       return cardList;
     } catch (error) {

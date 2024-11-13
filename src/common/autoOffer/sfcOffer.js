@@ -656,7 +656,7 @@ class getSfcOfferPrice {
         });
         if (!seatInfo) return -3;
         let { promo_num, area_price, seat_data } = seatInfo;
-        if (promo_num && promo_num < ticket_num) {
+        if (promo_num && promo_num < +ticket_num) {
           console.error(conPrefix + "促销票数低于订单票数");
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
