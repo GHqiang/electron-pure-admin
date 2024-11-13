@@ -1792,17 +1792,51 @@ class OrderAutoTicketQueue {
           }
         });
         // 这里拿到的券列表会比票数多10张
-        const quanList = quanListRes?.quanList || [];
+        let quanList = quanListRes?.quanList || [];
+        let quanType = quanListRes?.quanType;
         if (!quanList?.length) {
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
-            des: "获取目标券列表返回为空",
+            des: "个人中心获取目标券列表返回为空",
+            level: "error"
+          });
+        }
+        if (quanList?.length < ticket_num && is_store == "1") {
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: "用券前个人中心目标券不够，从服务端获取",
+            level: "info"
+          });
+          const newQuanList = await this.getNewQuan({
+            city_id,
+            cinema_id,
+            quan_value: offerRule.quan_value,
+            session_id,
+            quanNum: Number(ticket_num) - quanList.length
+          });
+          if (newQuanList?.length) {
+            quanList = [...quanList, ...newQuanList];
+            this.logList.push({
+              opera_time: getCurrentFormattedDateTime(),
+              des: `从服务端获取券绑定完成`,
+              level: "info",
+              info: {
+                newQuanList,
+                ticket_num
+              }
+            });
+          }
+        }
+        if (quanList?.length < ticket_num) {
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: `目标券${is_store == "1" ? "从服务端获取后" : ""}数量不足`,
             level: "error"
           });
           if (is_auto_use_quan) {
             this.logList.push({
               opera_time: getCurrentFormattedDateTime(),
-              des: "灵活用券时获取目标券为空,转用卡处理",
+              des: "灵活用券时获取目标券不足,转用卡处理",
               level: "info"
             });
             offerRule.quan_value = "";
@@ -1811,7 +1845,12 @@ class OrderAutoTicketQueue {
           }
           return {};
         }
-        const quanType = quanListRes?.quanType;
+        const { coupon_type, card_num } = quanList?.[0] || {};
+        if (coupon_type) {
+          quanType = card_num ? "online_member_quan" : "online_quan";
+        } else {
+          quanType = card_num ? "offline_member_quan" : "offline_quan";
+        }
         let card_id, quan_code, coupon_id, member_coupon_id;
         if (quanType === "online-quan" || quan_fee > 0) {
           const cardList = await this.getCardList({
@@ -3170,57 +3209,7 @@ class OrderAutoTicketQueue {
       // 2、1张票一个券，不能出现2张票用3个券的情况
       // 3、40出一线，35出二线国内，30出二线外国（暂时无法区分外国）
       let targetQuanList = quanList || []; // 优惠券列表
-      if (targetQuanList?.length < ticket_num && is_store == "1") {
-        console.error(
-          conPrefix + `${quan_value} 面额券不足，从服务端获取并绑定`,
-          targetQuanList
-        );
-        const newQuanList = await this.getNewQuan({
-          city_id,
-          cinema_id,
-          quan_value,
-          session_id,
-          quanNum: Number(ticket_num) - targetQuanList.length
-        });
-        if (newQuanList?.length) {
-          targetQuanList = [...targetQuanList, ...newQuanList];
-          this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
-            des: `从服务端获取券绑定完成`,
-            level: "info",
-            info: {
-              newQuanList,
-              targetQuanList,
-              ticket_num
-            }
-          });
-          if (targetQuanList?.length < ticket_num) {
-            console.error(
-              conPrefix + `从服务端获取并绑定后${quan_value} 面额券仍不足，`,
-              targetQuanList
-            );
-            this.logList.push({
-              opera_time: getCurrentFormattedDateTime(),
-              des: `${quan_value} 面额券从数据库获取后仍不足`,
-              level: "error"
-            });
-            return {
-              profit: 0,
-              useQuans: []
-            };
-          }
-        } else {
-          this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
-            des: `${quan_value} 面额券从数据库获取异常`,
-            level: "error"
-          });
-          return {
-            profit: 0,
-            useQuans: []
-          };
-        }
-      }
+
       if (targetQuanList?.length - ticket_num < 10 && is_store == "1") {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
@@ -3242,13 +3231,11 @@ class OrderAutoTicketQueue {
       // 用券列表
       let useQuans = targetQuanList.filter((item, index) => index < ticket_num);
       let profit = 0; // 利润
-      useQuans.forEach(item => {
-        profit =
-          profit +
-          Number(supplier_end_price) -
-          quan_cost -
-          (Number(supplier_end_price) * 100) / 10000;
-      });
+      profit =
+        Number(supplier_end_price) -
+        quan_cost -
+        (Number(supplier_end_price) * 100) / 10000;
+      profit = profit * (useQuans.length || 0);
       // useQuans = useQuans.map(item => item.coupon_num);
       if (rewards > 0) {
         // 特急奖励订单中标价格 * 张数 * 0.04;
