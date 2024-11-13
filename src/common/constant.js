@@ -291,7 +291,10 @@ const SFC_SPECIAL_CINEMA_LIST = [
   },
   // 贵阳
   {
-    order_cinema_name: "SFC上影影城贵阳云上方舟LUXE店",
+    order_cinema_name: [
+      "SFC上影影城云上方舟店",
+      "SFC上影影城贵阳云上方舟LUXE店"
+    ],
     sfc_cinema_name: "SFC上影影城贵阳云上方舟店"
   }
 ];
@@ -382,7 +385,10 @@ const HBCHYXD_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "华谊兄弟影院晋中奥莱店"
   },
   {
-    order_cinema_name: "华谊兄弟影院廊坊万向城中国巨幕4DX店",
+    order_cinema_name: [
+      "华谊兄弟影院万向城中国巨幕4DX店",
+      "华谊兄弟影院廊坊万向城中国巨幕4DX店"
+    ],
     sfc_cinema_name: "华谊兄弟影院廊坊万向城中国巨幕4DX店"
   },
   {
@@ -398,7 +404,7 @@ const HBCHYXD_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "华谊兄弟上海长风店"
   },
   {
-    order_cinema_name: "华谊兄弟影院免费停车星摩尔店",
+    order_cinema_name: ["华谊兄弟影院星摩尔店", "华谊兄弟影院免费停车星摩尔店"],
     sfc_cinema_name: "辽宁省沈阳市华谊兄弟影城"
   },
   {
@@ -444,7 +450,10 @@ const HBCHYXD_SPECIAL_CINEMA_LIST = [
   },
   // 沈阳
   {
-    order_cinema_name: "华谊兄弟影院沈阳大悦城店",
+    order_cinema_name: [
+      "华谊兄弟影院全激光影院大悦城店",
+      "华谊兄弟影院沈阳大悦城店"
+    ],
     sfc_cinema_name: "华谊兄弟影城沈阳大悦城店"
   },
   // 上海
@@ -532,6 +541,7 @@ const QINA_SPECIAL_CINEMA_LIST = [
   },
   {
     order_cinema_name: [
+      "齐纳影城宏程OnyxLED&amp;LUXE店",
       "齐纳国际影城宏程OnyxLED&amp;LUXE店",
       "齐纳国际影城宏程OnyxLED&LUXE店",
       "齐纳影城宏程OnyxLED&LUXE店"
@@ -1615,7 +1625,10 @@ const HMA_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "卢米埃贵阳万科大都会影城"
   },
   {
-    order_cinema_name: ["卢米埃影城花溪区政府明珠里IMAX店"],
+    order_cinema_name: [
+      "卢米埃影城花溪区政府明珠里IMAX店",
+      "卢米埃影城贵阳花溪明珠里IMAX店"
+    ],
     sfc_cinema_name: "卢米埃贵阳花溪万科IMAX影城"
   },
 
