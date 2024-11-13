@@ -151,7 +151,11 @@
       <!-- <el-table-column prop="card_id" label="卡 ID" min-width="80" /> -->
       <el-table-column prop="card_num" label="卡 号" min-width="120" />
       <!-- <el-table-column prop="card_pwd" label="卡 密码" min-width="110" /> -->
-      <el-table-column prop="use_limit_day" label="日出票限制" min-width="90" />
+      <el-table-column
+        prop="use_limit_day"
+        label="日出票限制"
+        min-width="100"
+      />
       <el-table-column prop="use_limit_day" label="日出票量" min-width="90">
         <template #default="{ row: { daily_usage, usage_date } }">
           <span>{{
@@ -162,7 +166,7 @@
       <el-table-column
         prop="use_limit_month"
         label="月出票限制"
-        min-width="90"
+        min-width="100"
       />
       <el-table-column prop="monthly_usage" label="月出票量" min-width="90">
         <template #default="{ row: { monthly_usage, usage_date } }">
