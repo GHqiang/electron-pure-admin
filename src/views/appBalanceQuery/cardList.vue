@@ -152,11 +152,25 @@
       <el-table-column prop="card_num" label="卡 号" min-width="120" />
       <!-- <el-table-column prop="card_pwd" label="卡 密码" min-width="110" /> -->
       <el-table-column prop="use_limit_day" label="日出票限制" min-width="90" />
+      <el-table-column prop="use_limit_day" label="日出票量" min-width="90">
+        <template #default="{ row: { daily_usage, usage_date } }">
+          <span>{{
+            usage_date !== getCurrentDay() ? 0 : daily_usage || 0
+          }}</span>
+        </template>
+      </el-table-column>
       <el-table-column
         prop="use_limit_month"
         label="月出票限制"
         min-width="90"
       />
+      <el-table-column prop="monthly_usage" label="月出票量" min-width="90">
+        <template #default="{ row: { monthly_usage, usage_date } }">
+          <span>{{
+            !isDateInCurrentMonth(usage_date) ? 0 : monthly_usage || 0
+          }}</span>
+        </template>
+      </el-table-column>
       <el-table-column prop="update_time" label="更新时间" min-width="160">
         <template #default="{ row }">
           <span>{{
@@ -234,7 +248,9 @@ import { APP_LIST, UME_LIST } from "@/common/constant";
 import { APP_API_OBJ } from "@/common/index.js";
 import {
   getCurrentFormattedDateTime,
-  getCinemaLoginInfoList
+  getCinemaLoginInfoList,
+  getCurrentDay,
+  isDateInCurrentMonth
 } from "@/utils/utils";
 const tableData = ref([]);
 

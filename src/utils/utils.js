@@ -38,6 +38,7 @@ function getCurrentFormattedDateTime(sjc) {
 
 // 判断某个日期是否在当月内 如：'2024-11-15'
 function isDateInCurrentMonth(date) {
+  if (!date) return false;
   // 将传入的日期字符串转换为日期对象
   const dateToCheck = new Date(date);
   // 获取当前日期

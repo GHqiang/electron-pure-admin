@@ -9,7 +9,8 @@ import {
   getCinemaIdByLma,
   formatTimeStrByLma,
   calcCount,
-  roundToHalf
+  roundToHalf,
+  isDateInCurrentMonth
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
@@ -687,11 +688,9 @@ class getLmaOfferPrice {
           daily_usage:
             item.usage_date !== getCurrentDay() ? 0 : item.daily_usage || 0,
           // 使用日非当月的就是0
-          month_usage: !item.daily_usage
+          month_usage: !isDateInCurrentMonth(item.usage_date)
             ? 0
-            : !isDateInCurrentMonth(item.daily_usage)
-              ? 0
-              : item.monthly_usage || 0
+            : item.monthly_usage || 0
         }));
         // console.log("list", list);
         // 根据当天及当月出票量限制进行过滤
