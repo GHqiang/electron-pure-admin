@@ -1247,6 +1247,15 @@ class OrderAutoTicketQueue {
         return { offerRule, transferParams };
       }
       let cardList = cardQuanListRes?.cards || [];
+      if (cardList?.length && offerRule.offer_type != "1") {
+        // 根据影院id过滤指定卡
+        const usableCarrdList = await this.getUsableCardList(cinema_id);
+        if (usableCarrdList?.length) {
+          cardList = cardList.filter(item =>
+            usableCarrdList.some(itemA => itemA.card_num === item.cardNo)
+          );
+        }
+      }
       let quanList = cardQuanListRes?.coupons || [];
       let activities = cardQuanListRes?.activities || [];
       this.logList.push({
@@ -2440,6 +2449,7 @@ class OrderAutoTicketQueue {
       }
     }
   }
+
   // 使用优惠券或会员卡
   async useQuanOrCard({
     cardList,
@@ -2699,6 +2709,42 @@ class OrderAutoTicketQueue {
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: "获取券类型信息异常",
+        level: "error",
+        info: {
+          error
+        }
+      });
+    }
+  }
+
+  // 获取影院指定会员卡
+  async getUsableCardList(cinema_id) {
+    const { appFlag } = this;
+    try {
+      const res = await svApi.queryCardList({
+        app_name: appFlag,
+        rule: tokens.userInfo.rule,
+        status: "1"
+      });
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取会员卡维护列表返回",
+        level: "info",
+        info: {
+          res
+        }
+      });
+      let cardList = res.data.cardList || [];
+      cardList = cardList.filter(item => {
+        return !item.linkCinemaIds
+          ? true
+          : item.linkCinemaIds.split(",").some(itemA => itemA == cinema_id);
+      });
+      return cardList;
+    } catch (error) {
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取会员卡维护列表异常",
         level: "error",
         info: {
           error

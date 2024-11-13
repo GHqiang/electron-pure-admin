@@ -683,15 +683,37 @@ class getLmaOfferPrice {
         let list = cardRes.data.cardList || [];
         list = list.map(item => ({
           ...item,
+          // 使用日非当天的就是0
           daily_usage:
-            item.usage_date !== getCurrentDay() ? 0 : item.daily_usage || 0
+            item.usage_date !== getCurrentDay() ? 0 : item.daily_usage || 0,
+          // 使用日非当月的就是0
+          month_usage: !item.daily_usage
+            ? 0
+            : !isDateInCurrentMonth(item.daily_usage)
+              ? 0
+              : item.monthly_usage || 0
         }));
         // console.log("list", list);
-        let cardList = list.filter(item =>
-          !item.use_limit_day
+        // 根据当天及当月出票量限制进行过滤
+        let cardList = list.filter(item => {
+          const { use_limit_day, use_limit_month, daily_usage, monthly_usage } =
+            item;
+          if (!use_limit_day && !use_limit_month) return true;
+          return (
+            (use_limit_day
+              ? ticket_num <= use_limit_day - daily_usage
+              : true) &&
+            (use_limit_month
+              ? ticket_num <= use_limit_month - monthly_usage
+              : true)
+          );
+        });
+        // 过滤指定卡
+        cardList = cardList.filter(item => {
+          return !item.linkCinemaIds
             ? true
-            : ticket_num <= item.use_limit_day - item.daily_usage
-        );
+            : item.linkCinemaIds.split(",").some(itemA => itemA == cinema_id);
+        });
         if (!cardList.length) {
           console.error(conPrefix + "影院单卡出票限制");
           this.logList.push({
@@ -700,7 +722,8 @@ class getLmaOfferPrice {
             level: "error",
             info: {
               list,
-              ticket_num
+              ticket_num,
+              cinema_id
             }
           });
           return -4;

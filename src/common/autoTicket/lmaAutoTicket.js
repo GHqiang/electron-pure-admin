@@ -2575,6 +2575,42 @@ class OrderAutoTicketQueue {
     }
   }
 
+  // 获取影院指定会员卡
+  async getUsableCardList(cinema_id) {
+    const { appFlag } = this;
+    try {
+      const res = await svApi.queryCardList({
+        app_name: appFlag,
+        rule: tokens.userInfo.rule,
+        status: "1"
+      });
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取会员卡维护列表返回",
+        level: "info",
+        info: {
+          res
+        }
+      });
+      let cardList = res.data.cardList || [];
+      cardList = cardList.filter(item => {
+        return !item.linkCinemaIds
+          ? true
+          : item.linkCinemaIds.split(",").some(itemA => itemA == cinema_id);
+      });
+      return cardList;
+    } catch (error) {
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取会员卡维护列表异常",
+        level: "error",
+        info: {
+          error
+        }
+      });
+    }
+  }
+
   // 获取新券
   async getNewQuan({
     quan_value,
@@ -3096,7 +3132,7 @@ const getSeatLayout = async ({ cinema_id, show_id, lmaToken, appFlag }) => {
 };
 
 // 获取会员卡列表
-const getCardList = async ({ lmaToken, appFlag }) => {
+const getCardList = async ({ cinema_id, lmaToken, appFlag }) => {
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
   try {
     let params = {
@@ -3115,6 +3151,13 @@ const getCardList = async ({ lmaToken, appFlag }) => {
     });
     // 仅返回可用状态的会员卡
     cardList = cardList.filter(item => item.gold === "1");
+    // 根据影院id过滤指定卡（卢米埃暂时用不到）
+    // const usableCarrdList = await this.getUsableCardList(cinema_id);
+    // if (usableCarrdList?.length) {
+    //   cardList = cardList.filter(item =>
+    //     usableCarrdList.some(itemA => itemA.card_num === item.card_number)
+    //   );
+    // }
     return {
       cardList,
       cardRes: res.data

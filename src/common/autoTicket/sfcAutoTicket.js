@@ -3021,6 +3021,7 @@ class OrderAutoTicketQueue {
       });
       // v3华谊走的是非会员svip+券的形式
       if (!isV3App) {
+        // 根据影院id过滤指定卡
         const usableCarrdList = await this.getUsableCardList(cinema_id);
         if (usableCarrdList?.length) {
           cardList = cardList.filter(item =>
@@ -3055,7 +3056,7 @@ class OrderAutoTicketQueue {
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: "获取会员卡维护列表返回",
-        level: "error",
+        level: "info",
         info: {
           res
         }
