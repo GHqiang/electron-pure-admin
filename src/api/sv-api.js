@@ -131,6 +131,9 @@ const getCardDailyAndMonthlyTicketCount = params =>
 const queryQuanInventory = params =>
   axios.get("/svpi/quanRecord/queryQuanInventory", { params });
 
+// 批量导入券
+const batchAddQuan = params => axios.post("/svpi/quanRecord/batchAdd", params);
+
 // 查询操作日志
 const queryLogRecord = params =>
   axios.get("/svpi/operaRecord/query", { params });
@@ -211,5 +214,6 @@ export default {
   deleteQuanType,
   batchDeleteQuanType,
   addQuanType,
-  updateQuanType
+  updateQuanType,
+  batchAddQuan
 };

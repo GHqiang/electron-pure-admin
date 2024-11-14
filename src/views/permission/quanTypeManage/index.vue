@@ -100,6 +100,32 @@
         <el-button type="danger" :disabled="!hasSelected" @click="batchDelete"
           >批量删除</el-button
         >
+        <el-upload
+          style="margin-left: 15px"
+          class="upload-demo"
+          :limit="1"
+          :on-change="importQuan"
+          :before-upload="beforeUpload"
+          action="#"
+          accept=".xlsx, .xls"
+          :auto-upload="false"
+        >
+          <template #trigger>
+            <el-select
+              v-model="quan_value"
+              placeholder="用券类型"
+              style="width: 194px; vertical-align: middle"
+            >
+              <el-option
+                v-for="(item, index) in quanType"
+                :key="item.id"
+                :label="item.quan_name"
+                :value="item.quan_value"
+              />
+            </el-select>
+            <el-button type="primary">导入券</el-button>
+          </template>
+        </el-upload>
       </el-form-item>
     </el-form>
 
@@ -208,7 +234,7 @@ defineOptions({
   // name 作为一种规范最好必须写上并且和路由的name保持一致
   name: "QuanTypeManage"
 });
-import { ref, reactive, computed, h } from "vue";
+import { ref, reactive, computed, onBeforeMount } from "vue";
 import svApi from "@/api/sv-api";
 import { platTokens } from "@/store/platTokens";
 const {
@@ -218,7 +244,11 @@ const {
 import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import QuanDialog from "@/components/QuanDialog.vue";
 import { APP_LIST } from "@/common/constant";
-import { getCurrentFormattedDateTime } from "@/utils/utils";
+import {
+  getCurrentFormattedDateTime,
+  parseExcel,
+  getCurrentDay
+} from "@/utils/utils";
 const tableData = ref([]);
 
 const currentPage = ref(1);
@@ -406,6 +436,91 @@ const batchDelete = () => {
       });
   }
 };
+
+// 券类型列表
+const quanType = ref([]);
+// 券类型（下载模版使用）
+const quan_value = ref("");
+
+// 上传前钩子
+const beforeUpload = () => {
+  try {
+    console.log("quan_value.value", quan_value.value);
+    if (!quan_value.value) {
+      ElMessage({
+        type: "warn",
+        message: "请先选择要导入的券类型"
+      });
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error("导入券异常", error);
+    return false;
+  }
+};
+
+// 导入券
+const importQuan = async (uploadFile, uploadFiles) => {
+  const loading = ElLoading.service({
+    lock: true,
+    text: "上传中",
+    background: "rgba(0, 0, 0, 0.7)"
+  });
+  try {
+    console.log("uploadFile", uploadFile, uploadFiles);
+    const res = await parseExcel(uploadFile.raw);
+    console.warn("解析表格文件返回", res);
+    if (res) {
+      let tableDate = [...(res.header ?? []), ...res.content];
+      console.warn("表格内容数据", tableDate);
+      let quanTypeInfo = quanType.value.find(
+        item => item.quan_value == quan_value.value
+      );
+      console.warn("要导入的券类型信息", quanTypeInfo);
+      tableDate = tableDate.map(item => {
+        return {
+          app_name: quanTypeInfo.app_name,
+          coupon_num: item[0]?.trim(),
+          quan_value: quanTypeInfo.quan_value,
+          quan_status: "1",
+          create_time: getCurrentDay()
+        };
+      });
+      console.warn("最终组装好要上传的数据", tableDate);
+      await svApi.batchAddQuan({
+        addList: tableDate
+      });
+      loading.close();
+      ElMessage({
+        type: "success",
+        message: "导入成功，请查询券库存检查"
+      });
+    }
+  } catch (error) {
+    console.error("导入券异常", error);
+    loading.close();
+  }
+};
+
+// 获取券类型列表
+const getQuanTypeList = async () => {
+  try {
+    const params = {
+      is_store: "1",
+      page_size: 100
+    };
+    const res = await svApi.queryQuanTypeList(params);
+    let quanTypeList = res.data.quanTypeList || [];
+    // console.log("券类型列表===>", quanTypeList);
+    quanType.value = quanTypeList;
+  } catch (error) {
+    console.err("获取券类型列表异常", error);
+  }
+};
+onBeforeMount(async () => {
+  await getQuanTypeList();
+});
 </script>
 <style scoped>
 .red {

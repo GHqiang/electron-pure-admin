@@ -1,5 +1,6 @@
 // 导入 ExcelJS 库
 import ExcelJS from "exceljs";
+import * as XLSX from "xlsx";
 import axios from "axios";
 import * as CryptoJS from "crypto-js";
 import svApi from "@/api/sv-api";
@@ -99,6 +100,37 @@ function getFormattedDateTime(sjc) {
   const formattedDateTime = `${year}-${month}-${date} ${hours}:${minutes}:${seconds}`;
 
   return formattedDateTime;
+}
+
+/**
+ * 解析 Excel 文件
+ * @param {File} file - 文件对象
+ * @param {boolean} includeHeader - 是否包含表头
+ * @returns {Array|{header: Array, content: Array}} - 包含表头和内容的数组或仅内容数组
+ */
+function parseExcel(file, includeHeader = false) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: "array" });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+      if (includeHeader) {
+        const header = json[0];
+        const content = json.slice(1);
+        resolve({ header, content });
+      } else {
+        resolve({ content: json });
+      }
+    };
+    reader.onerror = error => {
+      reject(error);
+    };
+    reader.readAsArrayBuffer(file);
+  });
 }
 
 // 导出 Excel 文件
@@ -1840,6 +1872,7 @@ export {
   getCurrentFormattedDateTime, // 获取当前时间：YYYY-MM-DD HH:MM:SS
   getCurrentDay, // 获取当前天：YYYY-MM-DD
   getCurrentTime, // 获取当前时间：HH:MM:SS
+  parseExcel, // 解析xlsx文件
   exportExcel, // 导出
   getFormattedDateTime, // 获取当前时间：YYYY-MM-DD HH:MM:SS
   findBestMatchByLevenshtein,
