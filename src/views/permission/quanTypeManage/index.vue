@@ -101,6 +101,7 @@
           >批量删除</el-button
         >
         <el-upload
+          ref="uploadRef"
           style="margin-left: 15px"
           class="upload-demo"
           :limit="1"
@@ -254,7 +255,7 @@ const tableData = ref([]);
 const currentPage = ref(1);
 const pageSize = ref(10);
 const totalNum = ref(0);
-
+const uploadRef = ref(null);
 // 表单查询数据
 const formData = reactive({
   app_name: "",
@@ -478,19 +479,22 @@ const importQuan = async (uploadFile, uploadFiles) => {
         item => item.quan_value == quan_value.value
       );
       console.warn("要导入的券类型信息", quanTypeInfo);
-      tableDate = tableDate.map(item => {
-        return {
-          app_name: quanTypeInfo.app_name,
-          coupon_num: item[0]?.trim(),
-          quan_value: quanTypeInfo.quan_value,
-          quan_status: "1",
-          create_time: getCurrentDay()
-        };
-      });
+      tableDate = tableDate
+        .map(item => {
+          return {
+            app_name: quanTypeInfo.app_name,
+            coupon_num: item[0]?.trim(),
+            quan_value: quanTypeInfo.quan_value,
+            quan_status: "1",
+            create_time: getCurrentDay()
+          };
+        })
+        .filter(item => item.coupon_num);
       console.warn("最终组装好要上传的数据", tableDate);
       await svApi.batchAddQuan({
         addList: tableDate
       });
+      uploadRef.value?.clearFiles();
       loading.close();
       ElMessage({
         type: "success",
@@ -500,6 +504,7 @@ const importQuan = async (uploadFile, uploadFiles) => {
   } catch (error) {
     console.error("导入券异常", error);
     loading.close();
+    uploadRef.value?.clearFiles();
   }
 };
 
