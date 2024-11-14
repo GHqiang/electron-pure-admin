@@ -1383,6 +1383,7 @@ class OrderAutoTicketQueue {
             cinemaCode,
             cinemaLinkId,
             quanValue: offerRule.quan_value,
+            black_quans: offerRule.black_quans,
             quanNum: 15 - (quanList.length - Number(ticket_num)),
             session_id:
               this.currentParamsList[this.currentParamsInx].session_id,
@@ -2589,9 +2590,9 @@ class OrderAutoTicketQueue {
           );
         }
         // 券黑名单过滤
-        if (offerRule.black_quans) {
+        if (black_quans) {
           targetQuanList = targetQuanList.filter(
-            item => !offerRule.black_quans?.includes(item.couponCode)
+            item => !black_quans?.includes(item.couponCode)
           );
         }
         // 优先使用快过期的券
@@ -2758,6 +2759,7 @@ class OrderAutoTicketQueue {
     cinemaCode,
     cinemaLinkId,
     quanValue: quan_value,
+    black_quans,
     quanNum,
     session_id,
     asyncFlag,
@@ -2768,14 +2770,18 @@ class OrderAutoTicketQueue {
     const { conPrefix, appFlag } = this;
     let targetLogList = asyncFlag === 1 ? asyncBandQuanList : this.logList;
     let conPrev = asyncFlag === 1 ? "异步绑券_" : "";
+    let params = {
+      quan_value,
+      app_name: appFlag,
+      quan_status: "1",
+      page_num: 1,
+      page_size: quanNum
+    };
     try {
-      let quanRes = await svApi.queryQuanList({
-        quan_value,
-        app_name: appFlag,
-        quan_status: "1",
-        page_num: 1,
-        page_size: quanNum
-      });
+      if (black_quans) {
+        params.black_quans = black_quans;
+      }
+      let quanRes = await svApi.queryQuanList(params);
       targetLogList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: `${conPrev}从服务端获取券返回`,
@@ -2783,7 +2789,8 @@ class OrderAutoTicketQueue {
         info: {
           quanRes,
           quanNum,
-          quan_value
+          quan_value,
+          params
         }
       });
 
@@ -2830,7 +2837,8 @@ class OrderAutoTicketQueue {
         des: `从服务端获取券异常`,
         level: "error",
         info: {
-          error
+          error,
+          params
         }
       });
     } finally {

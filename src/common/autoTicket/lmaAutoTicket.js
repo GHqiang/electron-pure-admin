@@ -1815,13 +1815,8 @@ class OrderAutoTicketQueue {
       order_number
     } = params;
     try {
-      const {
-        offer_type,
-        quan_value,
-        real_member_price,
-        quan_cost,
-        quan_flag
-      } = offerRule;
+      let { offer_type, quan_value, real_member_price, black_quans } =
+        offerRule;
       let currentParams = this.currentParamsList[this.currentParamsInx];
       const { lmaToken } = currentParams;
       // 拿订单号去匹配报价记录
@@ -1829,6 +1824,8 @@ class OrderAutoTicketQueue {
         // 只判断价格是否大于30，如果大于就用券
         if (real_member_price >= 30) {
           let quan_value = "lma-5";
+          const quanInfo = await this.getQuanInfo("lma-5", appFlag);
+          black_quans = quanInfo?.black_quans;
           const quanListRes = await getQuanList({
             lmaToken,
             appFlag
@@ -1874,8 +1871,11 @@ class OrderAutoTicketQueue {
               quanList
             }
           });
+          // 黑名单过滤
           quanList = quanList.filter(
-            item => item.voucher_name === "5元影票满减券"
+            item =>
+              item.voucher_name === "5元影票满减券" &&
+              !black_quans?.includes(item.code)
           );
           let targetQuanList =
             quanList.map(item => ({ code: item.code })) || [];
@@ -1883,6 +1883,7 @@ class OrderAutoTicketQueue {
             let newQuanList = await this.getNewQuan({
               quan_value: "lma-5",
               lmaToken,
+              black_quans,
               quanNum: Number(ticket_num) - targetQuanList.length
             });
             if (newQuanList?.length) {
@@ -1928,6 +1929,7 @@ class OrderAutoTicketQueue {
             this.getNewQuan({
               quan_value: "lma-5",
               lmaToken,
+              black_quans,
               quanNum: 10 - (targetQuanList.length - Number(ticket_num)),
               asyncFlag: 1,
               asyncBandQuanList: [],
@@ -1971,6 +1973,7 @@ class OrderAutoTicketQueue {
           supplier_end_price,
           quanList,
           quan_value,
+          black_quans,
           rewards,
           lmaToken,
           plat_name,
@@ -2617,6 +2620,7 @@ class OrderAutoTicketQueue {
     quanNum,
     lmaToken,
     asyncFlag,
+    black_quans,
     asyncBandQuanList,
     plat_name,
     order_number
@@ -2624,14 +2628,18 @@ class OrderAutoTicketQueue {
     const { conPrefix, appFlag } = this;
     let targetLogList = asyncFlag === 1 ? asyncBandQuanList : this.logList;
     let conPrev = asyncFlag === 1 ? "异步绑券_" : "";
+    let params = {
+      quan_value,
+      app_name: "lma",
+      quan_status: "1",
+      page_num: 1,
+      page_size: quanNum
+    };
     try {
-      let quanRes = await svApi.queryQuanList({
-        quan_value,
-        app_name: "lma",
-        quan_status: "1",
-        page_num: 1,
-        page_size: quanNum
-      });
+      if (black_quans) {
+        params.black_quans = black_quans;
+      }
+      let quanRes = await svApi.queryQuanList(params);
       targetLogList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: `${conPrev}从服务端获取券返回`,
@@ -2639,7 +2647,8 @@ class OrderAutoTicketQueue {
         info: {
           quanRes,
           quanNum,
-          quan_value
+          quan_value,
+          params
         }
       });
 
@@ -2688,7 +2697,8 @@ class OrderAutoTicketQueue {
         info: {
           error,
           quanNum,
-          quan_value
+          quan_value,
+          params
         }
       });
     } finally {
@@ -2706,6 +2716,35 @@ class OrderAutoTicketQueue {
     }
   }
 
+  // 获取券类型信息
+  async getQuanInfo(quan_value, app_name) {
+    try {
+      const res = await svApi.queryQuanTypeInfo({
+        quan_value,
+        app_name
+      });
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取券类型信息返回",
+        level: "info",
+        info: {
+          res
+        }
+      });
+      return res.data.quanInfo || null;
+    } catch (error) {
+      console.error("获取券类型信息异常", error);
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取券类型信息异常",
+        level: "error",
+        info: {
+          error
+        }
+      });
+    }
+  }
+
   // 使用优惠券
   async useQuan({
     city_id,
@@ -2714,6 +2753,7 @@ class OrderAutoTicketQueue {
     supplier_end_price,
     quanList,
     quan_value,
+    black_quans,
     rewards,
     lmaToken,
     plat_name,
@@ -2742,6 +2782,7 @@ class OrderAutoTicketQueue {
         const newQuanList = await this.getNewQuan({
           quan_value,
           lmaToken,
+          black_quans,
           quanNum: Number(ticket_num) - targetQuanList.length
         });
         if (newQuanList?.length) {
@@ -2793,6 +2834,7 @@ class OrderAutoTicketQueue {
           city_id,
           cinema_id,
           quan_value,
+          black_quans,
           lmaToken,
           quanNum: 10 - (targetQuanList.length - Number(ticket_num)),
           asyncFlag: 1,
