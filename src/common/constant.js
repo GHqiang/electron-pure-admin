@@ -630,7 +630,7 @@ const LIMEIHUA_SPECIAL_CINEMA_LIST = [
 // 恒业电影城特殊影院集合
 const HENGYE_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "恒业国际影城",
+    order_cinema_name: ["恒业国际影城芜湖德盛广场店", "恒业国际影城"],
     sfc_cinema_name: "恒业影城芜湖店"
   },
   {
