@@ -107,7 +107,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
 
   // 响应拦截器
   instance.interceptors.response.use(
-    response => {
+    async response => {
       // 如果是重试后的成功响应，记录日志
       if (response?.config?.retryCount > 0) {
         logUpload(
@@ -152,6 +152,14 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           // 此处加个消息推送
           return Promise.reject(data);
         }
+        let isOften = data?.msg?.includes("操作过于频繁");
+        if (isOften) {
+          // 等待一段时间后重试
+          await mockDelay(3);
+          // 重试请求
+          return instance(response?.config);
+        }
+
         let errMsg = "卢米埃" + (data.message || data.msg || "请求失败");
         ElMessage.error(errMsg);
         return Promise.reject(data);
