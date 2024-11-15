@@ -617,7 +617,9 @@ class getUmeOfferPrice {
         cardList = cardList.filter(item => {
           return !item.linkCinemaIds
             ? true
-            : item.linkCinemaIds.split(",").some(itemA => itemA == cinema_id);
+            : item.linkCinemaIds
+                .split(",")
+                .some(itemA => itemA == movieInfo.cinemaCode);
         });
         if (!cardList.length) {
           console.error(conPrefix + "影院单卡出票限制");
@@ -628,7 +630,7 @@ class getUmeOfferPrice {
             info: {
               list,
               ticket_num,
-              cinema_id
+              cinemaCode: movieInfo.cinemaCode
             }
           });
           return -4;
