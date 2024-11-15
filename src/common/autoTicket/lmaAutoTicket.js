@@ -1963,6 +1963,7 @@ class OrderAutoTicketQueue {
           });
           return { error: "获取优惠券列表异常" };
         }
+        let quan_cost = offerRule.quan_cost;
         // 2、使用优惠券
         const { useQuans, profit } = await this.useQuan({
           city_id,
@@ -1973,6 +1974,7 @@ class OrderAutoTicketQueue {
           supplier_end_price,
           quanList,
           quan_value,
+          quan_cost,
           black_quans,
           rewards,
           lmaToken,
@@ -2678,7 +2680,7 @@ class OrderAutoTicketQueue {
           });
         }
         if (coupon_num) {
-          bandQuanList.push({ coupon_num, quan_cost: quan.quan_cost });
+          bandQuanList.push({ coupon_num });
           svApi.addUseQuanRecord({
             coupon_num: coupon_num,
             app_name: appFlag,
@@ -2753,6 +2755,7 @@ class OrderAutoTicketQueue {
     supplier_end_price,
     quanList,
     quan_value,
+    quan_cost,
     black_quans,
     rewards,
     lmaToken,
@@ -2770,8 +2773,7 @@ class OrderAutoTicketQueue {
         .filter(item => item.coupon_info.indexOf(quan_value) !== -1)
         .map(item => {
           return {
-            coupon_num: item.coupon_num,
-            quan_cost: QUAN_TYPE_COST[quan_value]
+            coupon_num: item.coupon_num
           };
         });
       if (targetQuanList?.length < ticket_num) {
@@ -2850,7 +2852,7 @@ class OrderAutoTicketQueue {
         profit =
           profit +
           Number(supplier_end_price) -
-          item.quan_cost -
+          quan_cost -
           (Number(supplier_end_price) * 100) / 10000;
       });
       useQuans = useQuans.map(item => item.coupon_num);

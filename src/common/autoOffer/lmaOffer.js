@@ -107,10 +107,13 @@ class getLmaOfferPrice {
         let price = Number(offerAmount || memberOfferAmount);
         if (price) {
           // 成本价
-          let cost_price =
-            offerType === "1"
-              ? QUAN_TYPE_COST[quanValue]
-              : Number(memberCostPrice);
+          let cost_price;
+          if (offerType === "1") {
+            const quanInfo = await this.getQuanInfo(quanValue, appFlag);
+            cost_price = quanInfo?.quan_cost;
+          } else {
+            cost_price = Number(memberCostPrice);
+          }
           offerRule.cost_price = cost_price; // 成本价
           // 获取最终报价
           endPrice = await this.getEndPrice({
@@ -416,6 +419,36 @@ class getLmaOfferPrice {
       });
     }
   }
+
+  // 获取券类型信息
+  async getQuanInfo(quan_value, app_name) {
+    try {
+      const res = await svApi.queryQuanTypeInfo({
+        quan_value,
+        app_name
+      });
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取券类型信息返回",
+        level: "info",
+        info: {
+          res
+        }
+      });
+      return res.data.quanInfo || null;
+    } catch (error) {
+      console.error("获取券类型信息异常", error);
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取券类型信息异常",
+        level: "error",
+        info: {
+          error
+        }
+      });
+    }
+  }
+
   // 获取最终报价
   async getEndPrice(params) {
     const { conPrefix } = this;
@@ -604,7 +637,7 @@ class getLmaOfferPrice {
 
   // 获取会员价
   async getMemberPrice(order) {
-    const { conPrefix } = this;
+    const { conPrefix, appFlag } = this;
     try {
       console.log(conPrefix + "准备获取会员价", order);
       const { ticket_num, app_name } = order;
@@ -743,8 +776,10 @@ class getLmaOfferPrice {
           ? (Number(member_price) * 100 * discount) / 10000
           : Number(member_price);
         if (real_member_price >= 33) {
+          const quanInfo = await this.getQuanInfo("lma-5", appFlag);
+          let quan_cost = quanInfo?.quan_cost || 1;
           // 减5券的成本1，不固定
-          member_price = Number(member_price) + 1;
+          member_price = Number(member_price) + quan_cost;
         }
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
