@@ -106,7 +106,6 @@
           class="upload-demo"
           :limit="1"
           :on-change="importQuan"
-          :before-upload="beforeUpload"
           action="#"
           accept=".xlsx, .xls"
           :auto-upload="false"
@@ -114,8 +113,8 @@
           <template #trigger>
             <el-select
               v-model="quan_value"
-              placeholder="用券类型"
-              style="width: 194px; vertical-align: middle"
+              placeholder="券类型"
+              style="width: 150px; vertical-align: middle"
             >
               <el-option
                 v-for="(item, index) in quanType"
@@ -127,6 +126,29 @@
             <el-button type="primary">导入券</el-button>
           </template>
         </el-upload>
+        <el-input
+          v-model="exportQuanNum"
+          style="width: 320px; margin-left: 15px"
+          placeholder="导出数量"
+        >
+          <template #prepend>
+            <el-select
+              v-model="exportQuanValue"
+              style="width: 150px"
+              placeholder="券类型"
+            >
+              <el-option
+                v-for="(item, index) in quanType"
+                :key="item.id"
+                :label="item.quan_name"
+                :value="item.quan_value"
+              />
+            </el-select>
+          </template>
+          <template #append>
+            <el-button type="primary" @click="getQuanHandle">导出券</el-button>
+          </template>
+        </el-input>
       </el-form-item>
     </el-form>
 
@@ -227,6 +249,25 @@
       :dialogTitle="dialogTitle"
       @submit="saveQuan"
     />
+
+    <el-dialog
+      v-model="dialogQuanVisible"
+      title="您确定要导出以下券数据吗"
+      max-width="500"
+    >
+      <el-table :data="exportQuanList" border max-height="400">
+        <el-table-column type="index" label="序号" width="60" />
+        <el-table-column prop="coupon_num" label="券号" min-width="210" />
+        <el-table-column prop="quan_value" min-width="100" label="券类型" />
+        <el-table-column prop="create_time" min-width="100" label="入库时间" />
+      </el-table>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="dialogQuanVisible = false">取消</el-button>
+          <el-button type="primary" @click="exportQuanHandle"> 确定 </el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -235,7 +276,7 @@ defineOptions({
   // name 作为一种规范最好必须写上并且和路由的name保持一致
   name: "QuanTypeManage"
 });
-import { ref, reactive, computed, onBeforeMount } from "vue";
+import { ref, reactive, toRaw, computed, onBeforeMount } from "vue";
 import svApi from "@/api/sv-api";
 import { platTokens } from "@/store/platTokens";
 const {
@@ -248,6 +289,7 @@ import { APP_LIST } from "@/common/constant";
 import {
   getCurrentFormattedDateTime,
   parseExcel,
+  createExcelDown,
   getCurrentDay
 } from "@/utils/utils";
 const tableData = ref([]);
@@ -443,26 +485,15 @@ const quanType = ref([]);
 // 券类型（下载模版使用）
 const quan_value = ref("");
 
-// 上传前钩子
-const beforeUpload = () => {
-  try {
-    console.log("quan_value.value", quan_value.value);
-    if (!quan_value.value) {
-      ElMessage({
-        type: "warn",
-        message: "请先选择要导入的券类型"
-      });
-      return false;
-    }
-    return true;
-  } catch (error) {
-    console.error("导入券异常", error);
-    return false;
-  }
-};
-
 // 导入券
 const importQuan = async (uploadFile, uploadFiles) => {
+  if (!quan_value.value) {
+    ElMessage({
+      type: "warning",
+      message: "请先选择要导入的券类型"
+    });
+    return;
+  }
   const loading = ElLoading.service({
     lock: true,
     text: "上传中",
@@ -505,6 +536,82 @@ const importQuan = async (uploadFile, uploadFiles) => {
     console.error("导入券异常", error);
     loading.close();
     uploadRef.value?.clearFiles();
+  }
+};
+
+// 导出券类型
+const exportQuanNum = ref("");
+// 导出券数量
+const exportQuanValue = ref("");
+// 导出券弹框
+const dialogQuanVisible = ref(false);
+// 导出券弹框展示列表
+const exportQuanList = ref([]);
+// 导出券
+const getQuanHandle = async () => {
+  try {
+    if (!exportQuanNum.value || !exportQuanValue.value) {
+      return ElMessage({
+        type: "warning",
+        message: "请先选择要导出的券类型和券数量"
+      });
+    }
+    let quanTypeInfo = quanType.value.find(
+      item => item.quan_value == exportQuanValue.value
+    );
+    let params = {
+      quan_value: quanTypeInfo.quan_value,
+      app_name: quanTypeInfo.app_name,
+      black_quans: quanTypeInfo.black_quans,
+      quan_status: "1",
+      page_num: 1,
+      page_size: +exportQuanNum.value
+    };
+    let quanRes = await svApi.queryQuanList(params);
+    let quanList = quanRes?.data?.quanList || [];
+    quanList.forEach(item => {
+      item.create_time = getCurrentDay(new Date(item.create_time));
+    });
+    dialogQuanVisible.value = true;
+    exportQuanList.value = quanList;
+  } catch (error) {
+    console.warn("获取券异常", error);
+  }
+};
+
+// 导出券
+const exportQuanHandle = async () => {
+  try {
+    let quanValueStr = exportQuanValue.value;
+    let quanTypeInfo = quanType.value.find(
+      item => item.quan_value == quanValueStr
+    );
+    let tableData = toRaw(exportQuanList.value);
+
+    let params = {
+      quan_value: quanTypeInfo.quan_value,
+      app_name: quanTypeInfo.app_name,
+      coupon_num_list: tableData.map(item => item.coupon_num)
+    };
+    console.warn("导出文件传参", params);
+    // 先调接口更新状态，并更新导出人及使用时间
+    const res = await svApi.exportQuanList(params);
+    tableData = tableData.map(item => [
+      item.coupon_num,
+      item.quan_value,
+      item.create_time
+    ]);
+    tableData.unshift(["券号", "券类型", "入库时间"]);
+    const today = getCurrentDay();
+    let fileName = `${quanValueStr}_${tableData.length - 1}张_${today}.xlsx`;
+    console.warn("tableData", tableData, "fileName", fileName);
+    createExcelDown(tableData, fileName);
+    dialogQuanVisible.value = false;
+    exportQuanList.value = [];
+    exportQuanValue.value = "";
+    exportQuanNum.value = "";
+  } catch (error) {
+    console.warn("获取券异常", error);
   }
 };
 

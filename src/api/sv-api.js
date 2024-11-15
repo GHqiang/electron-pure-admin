@@ -159,6 +159,9 @@ const batchDeleteQuanType = params =>
 const addQuanType = params => axios.post("/svpi/quanType/add", params);
 // 修改券类型
 const updateQuanType = params => axios.post("/svpi/quanType/update", params);
+// 批量更新用券记录（导出券）
+const exportQuanList = params =>
+  axios.post("/svpi/quanRecord/batchUpdate", params);
 
 export default {
   login,
@@ -215,5 +218,6 @@ export default {
   batchDeleteQuanType,
   addQuanType,
   updateQuanType,
-  batchAddQuan
+  batchAddQuan,
+  exportQuanList
 };

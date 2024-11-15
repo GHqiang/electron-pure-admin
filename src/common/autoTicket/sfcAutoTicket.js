@@ -3803,7 +3803,7 @@ const getQuanList = async data => {
       let targetQuanGroup = Object.values(groupedCoupons).find(
         item => item.length >= ticket_num
       );
-      this.logList.push({
+      logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: "会员赠券按照card_num分组",
         level: "info",
@@ -3814,7 +3814,7 @@ const getQuanList = async data => {
       });
       targetQuanList = targetQuanGroup?.slice(0, ticket_num) || [];
       if (!targetQuanList?.length) {
-        this.logList.push({
+        logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: "会员赠券数量不够出票",
           level: "info"

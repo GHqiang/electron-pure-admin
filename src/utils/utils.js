@@ -133,6 +133,23 @@ function parseExcel(file, includeHeader = false) {
   });
 }
 
+// 生成excel文件并下载
+const createExcelDown = (tableData, fileName) => {
+  try {
+    var wb = XLSX.utils.book_new();
+    // 创建一些数据
+    var data = tableData;
+    // 将数据转换为工作表
+    var ws = XLSX.utils.aoa_to_sheet(data);
+    // 将工作表添加到工作簿
+    XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+    // 生成Excel文件并触发下载
+    XLSX.writeFile(wb, fileName);
+  } catch (error) {
+    console.error("生成excel并下载异常", error);
+  }
+};
+
 // 导出 Excel 文件
 async function exportExcel(columns, data) {
   // 准备要导出的数据
@@ -1873,6 +1890,7 @@ export {
   getCurrentDay, // 获取当前天：YYYY-MM-DD
   getCurrentTime, // 获取当前时间：HH:MM:SS
   parseExcel, // 解析xlsx文件
+  createExcelDown, // 生成excel文件并下载
   exportExcel, // 导出
   getFormattedDateTime, // 获取当前时间：YYYY-MM-DD HH:MM:SS
   findBestMatchByLevenshtein,
