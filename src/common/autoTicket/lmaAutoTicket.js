@@ -484,28 +484,30 @@ class OrderAutoTicketQueue {
         item.member_pwd
     );
 
-    this.currentParamsList = targetLoginList.sort((a, b) => {
-      // 优先按 first 字段排序
-      if (a.first === "1" && b.first !== "1") return -1;
-      if (a.first !== "1" && b.first === "1") return 1;
+    this.currentParamsList = targetLoginList
+      .sort((a, b) => {
+        // 优先按 first 字段排序
+        if (a.first === "1" && b.first !== "1") return -1;
+        if (a.first !== "1" && b.first === "1") return 1;
 
-      // 如果 first 都是 '1' 或者都不是 '1'，则按 mobile 字段排序
-      if (a.first === "1" && b.first === "1") {
-        // 如果 a.mobile 是当前用户的手机号，则 a 应该排在 b 之前
+        // 如果 first 都是 '1' 或者都不是 '1'，则按 mobile 字段排序
+        if (a.first === "1" && b.first === "1") {
+          // 如果 a.mobile 是当前用户的手机号，则 a 应该排在 b 之前
+          if (a.mobile === tokens.userInfo.phone) return -1;
+          // 如果 b.mobile 是当前用户的手机号，则 b 应该排在 a 之前
+          if (b.mobile === tokens.userInfo.phone) return 1;
+          // 如果两个对象的 mobile 都不是当前用户的手机号，则按默认顺序排列
+          return 0;
+        }
+
+        // 如果 first 都不是 '1'，则按 mobile 字段排序
         if (a.mobile === tokens.userInfo.phone) return -1;
-        // 如果 b.mobile 是当前用户的手机号，则 b 应该排在 a 之前
         if (b.mobile === tokens.userInfo.phone) return 1;
-        // 如果两个对象的 mobile 都不是当前用户的手机号，则按默认顺序排列
+
+        // 如果两个对象的 first 和 mobile 都相同，则按默认顺序排列
         return 0;
-      }
-
-      // 如果 first 都不是 '1'，则按 mobile 字段排序
-      if (a.mobile === tokens.userInfo.phone) return -1;
-      if (b.mobile === tokens.userInfo.phone) return 1;
-
-      // 如果两个对象的 first 和 mobile 都相同，则按默认顺序排列
-      return 0;
-    });
+      })
+      .map(item => ({ ...item, lmaToken: item.session_id }));
     this.logList.push({
       opera_time: getCurrentFormattedDateTime(),
       des: "获取该影院登录信息返回",
@@ -3204,7 +3206,8 @@ const getCardList = async ({ cinema_id, lmaToken, appFlag }) => {
     // }
     return {
       cardList,
-      cardRes: res.data
+      cardRes: res.data,
+      params
     };
   } catch (error) {
     console.error(conPrefix + "获取会员卡列表异常", error);
