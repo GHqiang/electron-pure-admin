@@ -303,8 +303,8 @@ const SFC_SPECIAL_CINEMA_LIST = [
 // 中影国际特殊影院集合
 const ZHONGYING_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: ["中影国际影城上海合生汇店"],
-    sfc_cinema_name: "上海中影国际影城合生汇CINITY店"
+    order_cinema_name: ["上海中影国际影城合生汇CINITY店"],
+    sfc_cinema_name: "中影国际影城上海合生汇店"
   }
 ];
 // 龙岩中影特殊影院集合
