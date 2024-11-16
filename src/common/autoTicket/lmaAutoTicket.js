@@ -1161,23 +1161,28 @@ class OrderAutoTicketQueue {
             const transferParams = await this.transferOrder(item);
             return { transferParams };
           } else {
+            let otherParams = {
+              offerRule,
+              city_id,
+              cinema_id,
+              show_id,
+              seat_arr,
+              start_day,
+              start_time,
+              short_code
+            };
             this.logList.push({
               opera_time: getCurrentFormattedDateTime(),
               des: `锁定座位前用卡异常，走换号`,
-              level: "info"
+              level: "info",
+              info: {
+                otherParams
+              }
             });
             this.currentParamsInx++;
             return await this.oneClickBuyTicket({
               ...item,
-              otherParams: {
-                offerRule,
-                city_id,
-                cinema_id,
-                show_id,
-                seat_arr,
-                start_day,
-                start_time
-              }
+              otherParams
             });
           }
         }
@@ -1213,24 +1218,28 @@ class OrderAutoTicketQueue {
           const transferParams = await this.transferOrder(item);
           return { transferParams };
         } else {
+          let otherParams = {
+            offerRule,
+            city_id,
+            cinema_id,
+            show_id,
+            seat_arr,
+            start_day,
+            start_time,
+            short_code
+          };
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
             des: `锁定座位前用券异常，走换号`,
-            level: "info"
+            level: "info",
+            info: {
+              otherParams
+            }
           });
           this.currentParamsInx++;
           return await this.oneClickBuyTicket({
             ...item,
-            otherParams: {
-              offerRule,
-              city_id,
-              cinema_id,
-              show_id,
-              seat_arr,
-              start_day,
-              start_time,
-              short_code
-            }
+            otherParams
           });
         }
       }
