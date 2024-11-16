@@ -8,7 +8,8 @@ import {
   logUpload,
   formatErrInfo,
   roundToHalf,
-  isDateInCurrentMonth
+  isDateInCurrentMonth,
+  calculateMarkup
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
@@ -241,10 +242,25 @@ class getUmeOfferPrice {
       let addAmountRuleList = otherRuleList.filter(
         item => item.offerType === "2" && item.addAmount
       );
-      let mixAddAmountRule = addAmountRuleList.sort(
-        (itemA, itemB) => itemA.addAmount - itemB.addAmount
-      )?.[0];
+      let mixAddAmountRule = addAmountRuleList?.[0];
+      // 如果addAmount设置比较特殊，就直接取第一条规则报价,如：30;>=+2;<+1
+      if (
+        addAmountRuleList?.length > 1 &&
+        addAmountRuleList[0].addAmount?.split(";")?.length === 1
+      ) {
+        mixAddAmountRule = addAmountRuleList.sort(
+          (itemA, itemB) => itemA.addAmount - itemB.addAmount
+        )?.[0];
+      }
+
       if (mixAddAmountRule) {
+        let addMountRule = mixAddAmountRule.addAmount?.split(";");
+        if (addMountRule.length === 1) {
+          mixAddAmountRule.realAddMount = addMountRule[0];
+        } else if (addMountRule.length > 1) {
+          mixAddAmountRule.addMountRule = addMountRule.slice();
+        }
+
         // 计算会员报价
         let memberPriceRes = await this.getMemberPrice(order);
         // let errMsgStrObj = {
@@ -277,6 +293,29 @@ class getUmeOfferPrice {
         }
         // 真实会员价
         mixAddAmountRule.real_member_price = memberPriceRes.real_member_price;
+        if (
+          !mixAddAmountRule.realAddMount &&
+          mixAddAmountRule.addMountRule?.length > 1
+        ) {
+          let realAddMount = getRealAddMount({
+            real_member_price: memberPriceRes.real_member_price,
+            addMountRule: mixAddAmountRule.addMountRule
+          });
+          if (!realAddMount) {
+            this.logList.push({
+              opera_time: getCurrentFormattedDateTime(),
+              des: "获取真实加价金额失败,返回最小固定报价规则",
+              level: "warn",
+              info: {
+                real_member_price: memberPriceRes.real_member_price,
+                addMountRule: mixAddAmountRule.addMountRule
+              }
+            });
+            return mixFixedAmountRule;
+          }
+          mixAddAmountRule.realAddMount = realAddMount;
+        }
+
         // 最小折扣
         mixAddAmountRule.member_discount = memberPriceRes.discount;
         // 会员成本价(真实会员价*折扣价)
@@ -288,7 +327,7 @@ class getUmeOfferPrice {
         // 会员预计报价
         mixAddAmountRule.memberOfferAmount =
           mixAddAmountRule.round_member_price +
-          Number(mixAddAmountRule.addAmount);
+          Number(mixAddAmountRule.realAddMount);
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: "会员报价相关信息0",
@@ -300,7 +339,7 @@ class getUmeOfferPrice {
             memberCostPrice:
               "会员成本价（真实会员价*折扣）：" +
               mixAddAmountRule.memberCostPrice,
-            addAmount: "最小加价金额：" + mixAddAmountRule.addAmount,
+            addAmount: "最小加价金额：" + mixAddAmountRule.realAddMount,
             round_member_price:
               "会员成本价按0.5向上取整数倍：" +
               mixAddAmountRule.round_member_price,
@@ -368,7 +407,28 @@ class getUmeOfferPrice {
       });
     }
   }
-
+  // 获取真实加价金额
+  async getRealAddMount({ real_member_price, addMountRule }) {
+    try {
+      let comparePrice = addMountRule[0];
+      let realAddMount = calculateMarkup(
+        comparePrice,
+        real_member_price,
+        addMountRule.slice(1)
+      );
+      console.log("realAddMount", realAddMount);
+      return realAddMount;
+    } catch (error) {
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取真实加价金额异常",
+        level: "error",
+        info: {
+          error
+        }
+      });
+    }
+  }
   // 获取最终报价
   async getEndPrice(params) {
     const { conPrefix } = this;

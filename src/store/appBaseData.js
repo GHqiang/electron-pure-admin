@@ -28,6 +28,7 @@ export const useAppBaseData = defineStore("appBaseData", {
       zheyingshidai: null,
       yaolai: null,
       swxh: null,
+      wanxiang: null,
       renhengmeng: null,
       sfc: null,
       zhongying: null,

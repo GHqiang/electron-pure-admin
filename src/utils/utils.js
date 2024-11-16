@@ -402,7 +402,12 @@ const getCinemaFlag = item => {
   ) {
     return "swxh";
   }
-
+  let isWanXiangGroup = ["万象一线", "万象二线", "万象", "万象影城"].includes(
+    cinema_group
+  );
+  if (isWanXiangGroup) {
+    return "wanxiang";
+  }
   // 后续再补充名字匹配
   if (isWanmeiGroup) {
     return "wanmei";
@@ -1882,7 +1887,55 @@ function roundToHalf(num, flag = 1) {
   // 返回结果
   return roundedQuotient * 0.5;
 }
+
+/**
+ * 根据规则列表计算加价金额
+ * @param {number} comparePrice - 比较价格
+ * @param {number} memberPrice - 会员价格
+ * @param {string[]} ruleList - 规则列表
+ * @returns {number} - 加价金额
+ */
+function calculateMarkup(comparePrice, memberPrice, ruleList) {
+  for (const rule of ruleList) {
+    const [condition, amount] = rule.split("+");
+
+    switch (condition) {
+      case ">=":
+        if (memberPrice >= comparePrice) {
+          return parseFloat(amount);
+        }
+        break;
+      case ">":
+        if (memberPrice > comparePrice) {
+          return parseFloat(amount);
+        }
+        break;
+      case "<=":
+        if (memberPrice <= comparePrice) {
+          return parseFloat(amount);
+        }
+        break;
+      case "<":
+        if (memberPrice < comparePrice) {
+          return parseFloat(amount);
+        }
+        break;
+      case "==":
+        if (memberPrice == comparePrice) {
+          return parseFloat(amount);
+        }
+        break;
+      default:
+        console.error("未知的操作符:", operator);
+        break;
+    }
+  }
+
+  // 如果没有匹配的规则，返回默认值（例如0）
+  return;
+}
 export {
+  calculateMarkup, // 格式化获取真实加价金额
   roundToHalf, // 按0.5向上取整
   removeLeadingZeros,
   isDateInCurrentMonth, // 判断某个日期是否在当月内：YYYY-MM-DD

@@ -514,7 +514,7 @@ const importQuan = async (uploadFile, uploadFiles) => {
         .map(item => {
           return {
             app_name: quanTypeInfo.app_name,
-            coupon_num: item[0]?.trim(),
+            coupon_num: item[0] ? String(item[0]).trim() : "",
             quan_value: quanTypeInfo.quan_value,
             quan_status: "1",
             create_time: getCurrentDay()

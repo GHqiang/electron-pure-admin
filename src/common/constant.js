@@ -109,7 +109,8 @@ const UME_LIST = [
   "xgjyycnjystjd",
   "sjzhlh",
   "zhuying",
-  "zheyingshidai"
+  "zheyingshidai",
+  "wanxiang"
 ];
 
 // 影院列表
@@ -117,6 +118,7 @@ const APP_LIST = {
   lma: "卢米埃",
   hbchyxd: "HBC华谊兄弟",
   ume: "UME",
+  wanxiang: "万象影城",
   yaolai: "耀莱",
   swxh: "山文星辉",
   renhengmeng: "仁恒梦影廊",
@@ -1138,7 +1140,14 @@ const SWXH_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "山东文旅影城寿光店"
   }
 ];
-
+// 万象影城辉特殊影院集合
+const WANXIANG_CINEMA_LIST = [
+  // 济南
+  // {
+  //   order_cinema_name: ["山文星辉影城莱芜银座店"],
+  //   sfc_cinema_name: "山文星辉影城莱芜店"
+  // }
+];
 // 完美特殊影院集合
 const WANMEI_SPECIAL_CINEMA_LIST = [
   // 成都
@@ -1697,6 +1706,7 @@ const SPECIAL_CINEMA_OBJ = {
   yaolai: YAOLAI_SPECIAL_CINEMA_LIST,
   renhengmeng: RENHENGMENG_SPECIAL_CINEMA_LIST,
   swxh: SWXH_SPECIAL_CINEMA_LIST,
+  wanxiang: WANXIANG_CINEMA_LIST,
   wanmei: WANMEI_SPECIAL_CINEMA_LIST,
   yinghuang: YINGHUANG_SPECIAL_CINEMA_LIST,
   jqgw: JQGW_SPECIAL_CINEMA_LIST,
@@ -1788,6 +1798,7 @@ const TICKET_CONPREFIX_OBJ = {
   yaolai: "【耀莱自动出票】——",
   renhengmeng: "【仁恒梦影廊自动出票】——",
   swxh: "【山文星辉自动出票】——",
+  wanxiang: "【万象影城自动出票】——",
   wanmei: "【完美自动出票】——",
   yinghuang: "【英皇自动出票】——",
   jqgw: "【金桥国文自动出票】——",
