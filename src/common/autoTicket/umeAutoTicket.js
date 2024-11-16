@@ -2471,6 +2471,15 @@ class OrderAutoTicketQueue {
       } = offerRule;
       let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
       let is_auto_use_quan = false; // 是否灵活用券
+      let useCardParms = {
+        cardList,
+        member_price, // 成本价
+        total_price,
+        rewards,
+        supplier_end_price,
+        ticket_num,
+        plat_name
+      };
       if (offer_type !== "1") {
         const ruleInfo = getOfferRuleById(offer_rule_id);
         if (ruleInfo) {
@@ -2482,11 +2491,10 @@ class OrderAutoTicketQueue {
             auto_quan_value
           ) {
             is_auto_use_quan = true;
-            offerRule.offer_type = "1";
             offerRule.quan_value = auto_quan_value;
             this.logList.push({
               opera_time: getCurrentFormattedDateTime(),
-              des: "灵活用券条件生效，重置报价规则类型为固定报价",
+              des: "灵活用券条件生效，重置报价规则里的券类型为灵活用券类型",
               level: "info",
               info: {
                 autoUseQuanStatus,
@@ -2497,66 +2505,12 @@ class OrderAutoTicketQueue {
             });
           }
         }
-        if (offerRule.offer_type !== "1") {
+        if (!is_auto_use_quan) {
           console.log(conPrefix + "使用会员卡出票");
-          let cardData = cardList.filter(
-            item => item.cardAmount >= total_price * 100
-          );
-          if (!cardData?.length) {
-            this.logList.push({
-              opera_time: getCurrentFormattedDateTime(),
-              des: "会员卡余额不足",
-              level: "error",
-              info: {
-                cardList,
-                total_price: total_price * 100
-              }
-            });
-            console.warn(conPrefix + "无可用会员卡", member_price);
-            return {
-              card_id: "",
-              profit: 0 // 利润
-            };
-          }
-          // 中标价-会员成本价
-          let profit =
-            supplier_end_price -
-            member_price -
-            (Number(supplier_end_price) * 100) / 10000;
-          profit = Number(profit) * Number(ticket_num);
-          if (rewards > 0) {
-            // 特急奖励订单中标价格 * 张数 * 0.04;
-            let rewardPrice =
-              (Number(supplier_end_price) *
-                Number(ticket_num) *
-                100 *
-                rewards) /
-              10000;
-            profit += rewardPrice;
-          }
-          if (profit < 0 && !TEST_NEW_PLAT_LIST.includes(plat_name)) {
-            console.error(conPrefix + "最终利润为负，单个订单直接出票结束");
-            this.logList.push({
-              opera_time: getCurrentFormattedDateTime(),
-              des: "使用会员卡计算价格后最终利润为负",
-              level: "error",
-              info: {
-                error
-              }
-            });
-            return {
-              profit: 0,
-              card_id: ""
-            };
-          }
-          profit = Number(profit).toFixed(2);
-          return {
-            card_id: cardData?.[0]?.cardNo,
-            profit // 利润
-          };
+          return await this.useCardHandle(useCardParms);
         }
       }
-      if (offerRule.offer_type == "1") {
+      if (offerRule.offer_type == "1" || is_auto_use_quan) {
         console.log(conPrefix + "使用优惠券出票");
         if (is_auto_use_quan) {
           const quanInfo = await this.getQuanInfo(
@@ -2604,6 +2558,15 @@ class OrderAutoTicketQueue {
           console.error(
             conPrefix + `${quan_value} 面额券不足，不支持从服务端同步获取`
           );
+          if (is_auto_use_quan) {
+            this.logList.push({
+              opera_time: getCurrentFormattedDateTime(),
+              des: "灵活用券时获取目标券不足,转用卡处理",
+              level: "info"
+            });
+            offerRule.quan_value = "";
+            return await this.useCardHandle(useCardParms);
+          }
           return {
             profit: 0,
             useQuans: []
@@ -2645,9 +2608,16 @@ class OrderAutoTicketQueue {
           console.error(conPrefix + "最终利润为负，单个订单直接出票结束");
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
-            des: "使用优惠券计算价格后最终利润为负",
-            level: "error"
+            des: `使用优惠券后最终利润为负${is_auto_use_quan ? ",灵活用券转用卡处理" : ""}`,
+            level: "error",
+            info: {
+              profit
+            }
           });
+          if (is_auto_use_quan) {
+            offerRule.quan_value = "";
+            return await this.useCardHandle(useCardParms);
+          }
           return {
             profit: 0,
             useQuans: []
@@ -2657,7 +2627,20 @@ class OrderAutoTicketQueue {
           let cardData = cardList.filter(
             item => item.cardAmount >= quan_fee * 100
           );
-          if (cardData?.length) {
+          if (!cardData?.length) {
+            this.logList.push({
+              opera_time: getCurrentFormattedDateTime(),
+              des: `使用优惠券后发现没有可以支付券手续费的会员卡，${is_auto_use_quan ? ",灵活用券转用卡处理" : ""}`,
+              level: "error",
+              info: {
+                quan_fee,
+                cardList
+              }
+            });
+            if (is_auto_use_quan) {
+              offerRule.quan_value = "";
+              return await this.useCardHandle(useCardParms);
+            }
             return {
               useQuan: [],
               card_id: "",
@@ -2686,6 +2669,86 @@ class OrderAutoTicketQueue {
         }
       });
       // return {}
+    }
+  }
+
+  // 会员用卡处理
+  async useCardHandle(data) {
+    const {
+      cardList,
+      member_price, // 成本价
+      total_price,
+      rewards,
+      supplier_end_price,
+      ticket_num,
+      plat_name
+    } = data;
+    try {
+      let cardData = cardList.filter(
+        item => item.cardAmount >= total_price * 100
+      );
+      if (!cardData?.length) {
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: "会员卡余额不足",
+          level: "error",
+          info: {
+            cardList,
+            total_price: total_price * 100
+          }
+        });
+        console.warn("无可用会员卡", member_price);
+        return {
+          card_id: "",
+          profit: 0 // 利润
+        };
+      }
+      // 中标价-会员成本价
+      let profit =
+        supplier_end_price -
+        member_price -
+        (Number(supplier_end_price) * 100) / 10000;
+      profit = Number(profit) * Number(ticket_num);
+      if (rewards > 0) {
+        // 特急奖励订单中标价格 * 张数 * 0.04;
+        let rewardPrice =
+          (Number(supplier_end_price) * Number(ticket_num) * 100 * rewards) /
+          10000;
+        profit += rewardPrice;
+      }
+      if (profit < 0 && !TEST_NEW_PLAT_LIST.includes(plat_name)) {
+        console.error("最终利润为负，单个订单直接出票结束");
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: "使用会员卡计算价格后最终利润为负",
+          level: "error",
+          info: {
+            profit
+          }
+        });
+        return {
+          profit: 0,
+          card_id: ""
+        };
+      }
+      profit = Number(profit).toFixed(2);
+      return {
+        card_id: cardData?.[0]?.cardNo,
+        profit // 利润
+      };
+    } catch (error) {
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "会员用卡处理异常",
+        level: "error",
+        info: {
+          error
+        }
+      });
+      return {
+        card_id: "",
+        profit: 0 // 利润
+      };
     }
   }
 
