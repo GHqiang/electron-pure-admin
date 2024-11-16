@@ -48,7 +48,7 @@ class OrderAutoOfferQueue {
   }
 
   // 处理新订单
-  handleNewOrder(item) {
+  handleNewOrder(item, oldOrder) {
     console.warn(this.conPrefix + "新的待报价订单", item);
     this.handledOrders.set(item.order_number, 1);
     let logList = [
@@ -57,7 +57,8 @@ class OrderAutoOfferQueue {
         des: "猎人新的待报价订单",
         level: "info",
         info: {
-          newOrder: item
+          newOrder: item,
+          oldOrder
         }
       }
     ];
@@ -136,6 +137,7 @@ class OrderAutoOfferQueue {
             ...item,
             plat_name: "lieren",
             app_name: getCinemaFlag(item),
+            rewards: item.rewards == 1 ? 4 : 0,
             // 转为截止时间戳，原值： 1727009794
             offer_end_time: item.sytime * 1000
           };
@@ -154,7 +156,10 @@ class OrderAutoOfferQueue {
       // );
       if (!newOrders?.length) return [];
       newOrders.forEach(item => {
-        this.handleNewOrder(item);
+        this.handleNewOrder(
+          item,
+          stayList.find(itemA => itemA.order_number === item.order_number)
+        );
       });
     } catch (error) {
       console.error(conPrefix + "获取待报价订单异常", error);
@@ -227,7 +232,7 @@ class OrderAutoOfferQueue {
         err_info:
           offerResult?.err_info ||
           (errInfoObj?.info ? formatErrInfo(errInfoObj?.info) : ""),
-        rewards: order.rewards == 1 ? 4 : 0, // 奖励百分比, 4个点
+        rewards: order.rewards, // 奖励百分比, 4个点
         rule: tokens.userInfo.rule || 2,
         offer_rule_id: offerResult?.offerRule?.id
       };
