@@ -1901,22 +1901,22 @@ function calculateMarkup(comparePrice, memberPrice, ruleList) {
 
     switch (condition) {
       case ">=":
-        if (memberPrice >= comparePrice) {
+        if (+memberPrice >= +comparePrice) {
           return parseFloat(amount);
         }
         break;
       case ">":
-        if (memberPrice > comparePrice) {
+        if (+memberPrice > +comparePrice) {
           return parseFloat(amount);
         }
         break;
       case "<=":
-        if (memberPrice <= comparePrice) {
+        if (+memberPrice <= +comparePrice) {
           return parseFloat(amount);
         }
         break;
       case "<":
-        if (memberPrice < comparePrice) {
+        if (+memberPrice < +comparePrice) {
           return parseFloat(amount);
         }
         break;
