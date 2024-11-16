@@ -297,7 +297,7 @@ class getUmeOfferPrice {
           !mixAddAmountRule.realAddMount &&
           mixAddAmountRule.addMountRule?.length > 1
         ) {
-          let realAddMount = getRealAddMount({
+          let realAddMount = this.getRealAddMount({
             real_member_price: memberPriceRes.real_member_price,
             addMountRule: mixAddAmountRule.addMountRule
           });
@@ -408,7 +408,7 @@ class getUmeOfferPrice {
     }
   }
   // 获取真实加价金额
-  async getRealAddMount({ real_member_price, addMountRule }) {
+  getRealAddMount({ real_member_price, addMountRule }) {
     try {
       let comparePrice = addMountRule[0];
       let realAddMount = calculateMarkup(

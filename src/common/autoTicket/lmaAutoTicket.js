@@ -1228,7 +1228,8 @@ class OrderAutoTicketQueue {
               show_id,
               seat_arr,
               start_day,
-              start_time
+              start_time,
+              short_code
             }
           });
         }
@@ -1328,7 +1329,8 @@ class OrderAutoTicketQueue {
               show_id,
               seat_arr,
               start_day,
-              start_time
+              start_time,
+              short_code
             }
           });
         }
@@ -1385,7 +1387,8 @@ class OrderAutoTicketQueue {
               show_id,
               seat_arr,
               start_day,
-              start_time
+              start_time,
+              short_code
             }
           });
         }

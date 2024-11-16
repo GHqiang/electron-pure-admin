@@ -1249,10 +1249,10 @@ class OrderAutoTicketQueue {
       let cardList = cardQuanListRes?.cards || [];
       if (cardList?.length && offerRule.offer_type != "1") {
         // 根据影院id过滤指定卡
-        const usableCarrdList = await this.getUsableCardList(cinemaCode);
-        if (usableCarrdList?.length) {
+        const usableCardList = await this.getUsableCardList(cinemaCode);
+        if (usableCardList?.length) {
           cardList = cardList.filter(item =>
-            usableCarrdList.some(itemA => itemA.card_num === item.cardNo)
+            usableCardList.some(itemA => itemA.card_num === item.cardNo)
           );
         }
       }
@@ -1264,6 +1264,7 @@ class OrderAutoTicketQueue {
         level: "info",
         info: {
           cardList,
+          oldCardList: cardQuanListRes?.cards,
           quanList: quanList.slice(0, 10),
           activities
         }
@@ -2790,21 +2791,29 @@ class OrderAutoTicketQueue {
         rule: tokens.userInfo.rule,
         status: "1"
       });
+      let cardList = res.data.cardList || [];
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: "获取会员卡维护列表返回",
         level: "info",
         info: {
-          res
+          cardList
         }
       });
-      let cardList = res.data.cardList || [];
-      cardList = cardList.filter(item => {
+      let useCanCardList = cardList.filter(item => {
         return !item.linkCinemaIds
           ? true
           : item.linkCinemaIds.split(",").some(itemA => itemA == cinemaCode);
       });
-      return cardList;
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "根据制定影院过滤后的卡列表",
+        level: "info",
+        info: {
+          useCanCardList
+        }
+      });
+      return useCanCardList;
     } catch (error) {
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
