@@ -300,6 +300,13 @@ const SFC_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "SFC上影影城贵阳云上方舟店"
   }
 ];
+// 中影国际特殊影院集合
+const ZHONGYING_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: ["中影国际影城上海合生汇店"],
+    sfc_cinema_name: "上海中影国际影城合生汇CINITY店"
+  }
+];
 // 龙岩中影特殊影院集合
 const LYZY_SPECIAL_CINEMA_LIST = [
   {
@@ -1723,7 +1730,7 @@ const SPECIAL_CINEMA_OBJ = {
   zheyingshidai: ZHEYINGSHIDAI_SPECIAL_CINEMA_LIST,
   sfc: SFC_SPECIAL_CINEMA_LIST,
   xywdgmyc: [],
-  zhongying: [],
+  zhongying: ZHONGYING_SPECIAL_CINEMA_LIST,
   lyzy: LYZY_SPECIAL_CINEMA_LIST,
   cswyh: CSWYH_SPECIAL_CINEMA_LIST,
   bjdzlt: BJDZLT_SPECIAL_CINEMA_LIST,
