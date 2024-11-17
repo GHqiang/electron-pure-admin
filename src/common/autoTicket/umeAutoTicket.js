@@ -10,7 +10,8 @@ import {
   sendWxPusherMessage,
   getOfferRuleById
 } from "@/utils/utils";
-
+// 帮助锁定座位实例对象
+import assistLockSeatObj from "./lockSeatQueue";
 import svApi from "@/api/sv-api";
 
 // 机器登录用户信息
@@ -825,6 +826,7 @@ class OrderAutoTicketQueue {
       filmUniqueId,
       scheduleId,
       scheduleKey,
+      seatList,
       showDate,
       showDateTime,
       orderCode,
@@ -1053,7 +1055,7 @@ class OrderAutoTicketQueue {
           scheduleKey,
           appFlag
         });
-        const seatList = seatListRes?.seatData || [];
+        seatList = seatListRes?.seatData || [];
         if (!seatList?.length) {
           console.error(conPrefix + "获取座位布局异常");
           this.logList.push({
@@ -1146,48 +1148,62 @@ class OrderAutoTicketQueue {
         showDateTime,
         channelCode: "QD0000001",
         sysSourceCode: "YZ001",
-        appFlag
+        appFlag,
+        seatList,
+        lockseat,
+        plat_name,
+        order_number
       };
       let lockRes;
       try {
         lockRes = await this.lockSeatHandle(params); // 锁定座位
       } catch (error) {
         console.error(conPrefix + "锁定座位失败准备试错2次，间隔5秒", error);
-        // 试错3次，间隔5秒
-        // 锁定座位尝试配置
-        let delayConfig = {
-          lieren: [10, 5],
-          mangguo: [10, 5],
-          sheng: [10, 5],
-          mayi: [12, 10],
-          yangcong: [12, 10],
-          haha: [6, 5],
-          yinghuasuan: [6, 5],
-          shangzhan: [6, 5]
-        };
-        lockRes = await trial(
-          inx => this.lockSeatHandle(params, inx),
-          delayConfig[plat_name][0],
-          delayConfig[plat_name][1]
+        // 非这两种情况才需要走重试，这两种情况已经走帮助锁座逻辑了
+        let isTrial = !["座位旁边不要留空", "座位中间不要留空"].includes(
+          error?.msg
         );
-        if (!lockRes) {
-          console.error(
-            conPrefix + "单个订单试错后仍锁定座位失败",
-            "需要走转单逻辑"
+        if (isTrial) {
+          // 试错3次，间隔5秒
+          // 锁定座位尝试配置
+          let delayConfig = {
+            lieren: [10, 5],
+            mangguo: [10, 5],
+            sheng: [10, 5],
+            mayi: [12, 10],
+            yangcong: [12, 10],
+            haha: [6, 5],
+            yinghuasuan: [6, 5],
+            shangzhan: [6, 5]
+          };
+          lockRes = await trial(
+            inx => this.lockSeatHandle(params, inx),
+            delayConfig[plat_name][0],
+            delayConfig[plat_name][1]
           );
-          this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
-            des: `首次锁定座位失败轮询尝试后仍失败，走转单`,
-            level: "info"
-          });
+        }
+        if (!lockRes) {
+          if (isTrial) {
+            console.error(
+              conPrefix + "单个订单试错后仍锁定座位失败",
+              "需要走转单逻辑"
+            );
+            this.logList.push({
+              opera_time: getCurrentFormattedDateTime(),
+              des: `首次锁定座位失败轮询尝试后仍失败，走转单`,
+              level: "info"
+            });
+          }
           const transferParams = await this.transferOrder(item);
           return { offerRule, transferParams };
         }
-        this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
-          des: `首次锁定座位失败试错后锁定成功`,
-          level: "info"
-        });
+        if (isTrial) {
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: `首次锁定座位失败试错后锁定成功`,
+            level: "info"
+          });
+        }
       }
       // 锁定座位时取消订单无需传订单号（）取消完需要重新锁定座位，只用传当前影院信息如：
       // {"channelCode":"QD0000001","sysSourceCode":"YZ001","cinemaCode":"33047701","cinemaLinkId":"15950"}
@@ -1669,8 +1685,8 @@ class OrderAutoTicketQueue {
   }
 
   // 锁定座位
-  async lockSeatHandle(
-    {
+  async lockSeatHandle(data, inx = 1) {
+    const {
       scheduleId,
       scheduleKey,
       filmUniqueId,
@@ -1679,10 +1695,13 @@ class OrderAutoTicketQueue {
       showDateTime,
       cinemaCode,
       cinemaLinkId,
-      appFlag
-    },
-    inx = 1
-  ) {
+      appFlag,
+      seatList,
+      lockseat,
+      plat_name,
+      order_number,
+      assistFlag // 帮助锁座后重试标识
+    } = data;
     const { conPrefix } = this;
     const session_id = this.currentParamsList[this.currentParamsInx].session_id;
     let params = {
@@ -1739,6 +1758,26 @@ class OrderAutoTicketQueue {
           error
         }
       });
+      // 仅帮助锁座1次，帮助锁座后再锁定座位失败的话就不走帮助锁座逻辑了
+      // if (
+      //   ["座位旁边不要留空", "座位中间不要留空"].includes(error?.msg) &&
+      //   assistFlag != 1
+      // ) {
+      //   // 帮助锁定座位方法
+      //   const res = await assistLockSeatObj.assistLockSeatHandle({
+      //     app_name: appFlag,
+      //     plat_name,
+      //     order_number,
+      //     seatList,
+      //     lockseat,
+      //     lockSeatParams: params
+      //   });
+      //   if (!res) {
+      //     return Promise.reject(error);
+      //   } else {
+      //     return this.lockSeatHandle({ ...data, assistFlag: 1 });
+      //   }
+      // }
       return Promise.reject(error);
     }
   }

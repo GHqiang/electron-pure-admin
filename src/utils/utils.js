@@ -1934,7 +1934,62 @@ function calculateMarkup(comparePrice, memberPrice, ruleList) {
   // 如果没有匹配的规则，返回默认值（例如0）
   return;
 }
+
+/**
+ * 检查目标座位及其周围座位的状态，并调整目标座位列表
+ * @param {Array} lockedSeats - 已锁定的座位数组,如：[6, 7, 11]
+ * @param {Array} targetSeats - 目标座位数组，如：[2, 3]或者 [13]
+ * @param {number} maxSeatNumber - 最大座位数，如：15
+ * @returns {Array} - 调整后的目标座位列表
+ */
+function adjustSeats(lockedSeats, targetSeats, maxSeatNumber, flag) {
+  // 将已锁定座位和目标座位合并并排序
+  const allSeats = [...lockedSeats, ...targetSeats].sort((a, b) => a - b);
+
+  // 使用 Set 来存储调整后的目标座位，确保每个座位只出现一次
+  const adjustedSeats = new Set();
+
+  // 检查每个目标座位及其周围座位
+  targetSeats.forEach(targetSeat => {
+    const leftSeat = targetSeat - 1; // 目标1左边座位;
+    const rightSeat = targetSeat + 1; // 目标1右边座位;
+    // console.log("leftSeat", leftSeat, allSeats, leftSeat - 1);
+    // 检查左边座位是否会导致单个空位(如该座位左边没座位了或者左边座位已锁定了)
+    if (leftSeat > 0 && !allSeats.includes(leftSeat)) {
+      // 检查左边座位是否会导致单个空位(如该座位左边没座位了或者左边座位已锁定了)
+      if (leftSeat - 1 == 0 || allSeats.includes(leftSeat - 1)) {
+        adjustedSeats.add(leftSeat);
+      }
+    }
+    // console.log("rightSeat", rightSeat, allSeats, rightSeat + 1);
+
+    // 检查右边座位
+    if (rightSeat <= maxSeatNumber && !allSeats.includes(rightSeat)) {
+      if (rightSeat == maxSeatNumber || allSeats.includes(rightSeat + 1)) {
+        adjustedSeats.add(rightSeat);
+      }
+    }
+  });
+
+  // 将 Set 转换为数组并排序，返回调整后的目标座位列表
+  let fillSeats = Array.from(adjustedSeats).sort((a, b) => a - b);
+  // console.log("fillSeats", fillSeats, flag);
+  if (fillSeats.length) {
+    if (flag != 1) {
+      let fillSeatList = adjustSeats(lockedSeats, fillSeats, maxSeatNumber, 1);
+      // console.log("fillSeats", fillSeats, flag);
+      // 只有拿着填充座位判断是否还需要填充为否的时候才证明可以填充
+      if (!fillSeatList?.length) {
+        return fillSeats;
+      }
+    } else {
+      return fillSeats;
+    }
+  }
+}
+
 export {
+  adjustSeats, // 获取需要帮助锁定的座位
   calculateMarkup, // 格式化获取真实加价金额
   roundToHalf, // 按0.5向上取整
   removeLeadingZeros,
