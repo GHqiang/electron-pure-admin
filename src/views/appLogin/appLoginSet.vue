@@ -193,13 +193,16 @@ const setLocalLoginList = async () => {
   const loginRes = await svApi.queryLoginList({ rule });
   // console.log("ruleRes", ruleRes);
   let loginRecords = loginRes.data.loginList || [];
-  loginRecords = loginRecords.map(item => ({
-    app_name: item.app_name,
-    mobile: item.mobile,
-    session_id: item.session_id,
-    member_pwd: item.member_pwd,
-    first: item.first
-  }));
+  loginRecords = loginRecords
+    .map(item => ({
+      app_name: item.app_name,
+      mobile: item.mobile,
+      session_id: item.session_id,
+      member_pwd: item.member_pwd,
+      first: item.first,
+      is_xiaohao: item.is_xiaohao
+    }))
+    .filter(item => item.is_xiaohao != 1);
   userInfoAndTokens.setLoginInfoList(loginRecords);
 };
 
