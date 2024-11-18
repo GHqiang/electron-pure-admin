@@ -1297,8 +1297,12 @@ class OrderAutoTicketQueue {
       let discountAmount = activities[0]?.discountAmount || 0; // 活动日优惠金额
       console.warn("获取最优卡券组合列表返回", cardList, quanList, activities);
       // 7、使用优惠券或者会员卡
-      const { ticketMemberPrice, handlingFee, ticketMemberServiceFeeMin } =
-        targetShow;
+      const {
+        ticketMemberPrice,
+        handlingFee,
+        ticketMemberServiceFeeMin,
+        areaSettlePriceMin // 区域最小结算价格
+      } = targetShow;
       console.warn(
         "ticketMemberPrice",
         ticketMemberPrice,
@@ -1334,6 +1338,8 @@ class OrderAutoTicketQueue {
         plat_name
       });
       let quan_code = useQuan.map(item => item.couponCode)?.join();
+      // 券抵扣金额
+      let quanDiscountAmount = useQuan?.[0]?.discountAmount || 0;
       // 使用优惠券及会员卡
       if (!card_id && !useQuan?.length) {
         let str = "无可用会员卡";
@@ -1388,7 +1394,12 @@ class OrderAutoTicketQueue {
       }
       // 用券时总价为0
       if (offerRule.offer_type === "1") {
-        total_price = 0;
+        if (offerRule.quan_fee > 0) {
+          total_price = (areaSettlePriceMin - quanDiscountAmount) / 100 || 0;
+          total_price = (total_price * 1000 * ticket_num) / 1000;
+        } else {
+          total_price = 0;
+        }
         // yaolai绑券逻辑不一样，暂不处理
         if (offerRule.is_store == "1" && quanList.length - ticket_num < 15) {
           this.logList.push({
@@ -1483,6 +1494,31 @@ class OrderAutoTicketQueue {
       let order_num = createOrderRes?.payOrderCode;
       let paymentAmount = createOrderRes?.paymentAmount;
       let quan_fee = offerRule.quan_fee || 0;
+      let cardNo;
+      // 用券不补钱时只会返回一个，补钱时会返回多个，取第一个即可
+      let paymentWay = createOrderRes?.paymentList?.[0]?.paymentMethodCode;
+      if (paymentAmount > 0 && quan_fee > 0 && offerRule.offer_type == 1) {
+        // 支付方式里返回的有会员卡方式和可用列表
+        cardNo = createOrderRes?.paymentList?.find(
+          item => item.memberCardList
+        )?.[0]?.cardNo;
+        if (!cardNo) {
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: "创建订单时发现没有可以补券手续费的卡，走转单",
+            level: "error",
+            info: {
+              paymentList: createOrderRes?.paymentList
+            }
+          });
+          const transferParams = await this.transferOrder(item, {
+            cinemaCode,
+            cinemaLinkId,
+            orderHeaderId
+          });
+          return { offerRule, transferParams };
+        }
+      }
       let quan_fee_total = quan_fee * ticket_num;
       if (!order_num) {
         console.error(
@@ -1537,28 +1573,14 @@ class OrderAutoTicketQueue {
         });
         return { offerRule, transferParams };
       }
-      this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
-        des: `购买电影票参数`,
-        level: "info",
-        info: {
-          params: {
-            cinemaCode,
-            cinemaLinkId,
-            card_id,
-            orderHeaderId,
-            orderCode,
-            orderDate,
-            appFlag
-          }
-        }
-      });
       // 8、购买电影票
       const buyTicketRes = await buyTicket({
         cinemaCode,
         cinemaLinkId,
         card_id,
         useQuan,
+        paymentWay,
+        cardNo,
         orderHeaderId,
         orderCode,
         orderDate,
@@ -2625,7 +2647,7 @@ class OrderAutoTicketQueue {
             couponName: item.couponName,
             templateCode: item.templateCode,
             discountAmount: seatCode
-              ? !["zheyingshidai", "yaolai"].includes(appFlag)
+              ? !["zheyingshidai", "yaolai", "wanxiang"].includes(appFlag)
                 ? item.discountAmountMap?.[seatCode[index]]
                 : item.discountAmountMap?.[seatCode[index]]?.[1]
               : 0
@@ -2689,7 +2711,6 @@ class OrderAutoTicketQueue {
           }
           return {
             useQuan,
-            card_id: cardData?.[0]?.cardNo,
             profit
           };
         }
@@ -3296,6 +3317,8 @@ const buyTicket = async ({
   orderDate,
   card_id,
   useQuan,
+  paymentWay,
+  cardNo,
   orderHeaderId,
   appFlag,
   session_id
@@ -3303,9 +3326,9 @@ const buyTicket = async ({
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
   let params = {
     params: {
-      paymentWay: useQuan?.length ? "Z0010" : "Z0006",
+      paymentWay,
       orderHeaderId: "" + orderHeaderId,
-      cardNo: card_id || "",
+      cardNo: card_id || cardNo || "",
       isMultiplePay: "",
       channelCode: "QD0000001",
       sysSourceCode: "YZ001",
@@ -3363,7 +3386,8 @@ const buyTicket = async ({
   } catch (error) {
     console.error(conPrefix + "订单购买异常", error);
     return {
-      error
+      error,
+      params
     };
   }
 };

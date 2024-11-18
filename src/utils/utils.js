@@ -421,7 +421,10 @@ const getCinemaFlag = item => {
   ) {
     return "tpyyc";
   }
-  if (isZhongyingGroup) {
+  if (
+    isZhongyingGroup ||
+    cinemNameSpecial(cinema_name) == "上海中影国际影城合生汇CINITY店"
+  ) {
     return "zhongying";
   }
   if (isYinghuangiGroup || isYinghuangCinemaName) {

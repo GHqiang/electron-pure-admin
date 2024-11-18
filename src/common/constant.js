@@ -639,7 +639,11 @@ const LIMEIHUA_SPECIAL_CINEMA_LIST = [
 // 恒业电影城特殊影院集合
 const HENGYE_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: ["恒业国际影城芜湖德盛广场店", "恒业国际影城"],
+    order_cinema_name: [
+      "恒业国际影城芜湖德盛广场店",
+      "恒业国际影城",
+      "恒业影城芜湖德盛广场店"
+    ],
     sfc_cinema_name: "恒业影城芜湖店"
   },
   {
@@ -1149,12 +1153,24 @@ const SWXH_SPECIAL_CINEMA_LIST = [
 ];
 // 万象影城辉特殊影院集合
 const WANXIANG_CINEMA_LIST = [
-  // 济南
+  {
+    order_cinema_name: ["万象影城无锡万象汇杜比店"],
+    sfc_cinema_name: "万象影城无锡滨湖万象汇杜比巨幕店"
+  },
+  {
+    order_cinema_name: ["万象影城深圳布吉万象汇IMAX店"],
+    sfc_cinema_name: "万象影城布吉万象汇IMAX店"
+  },
+  {
+    order_cinema_name: ["万象影城皇姑万象汇杜比巨幕店"],
+    sfc_cinema_name: "万象影城沈阳皇姑万象汇杜比巨幕店"
+  }
   // {
-  //   order_cinema_name: ["山文星辉影城莱芜银座店"],
-  //   sfc_cinema_name: "山文星辉影城莱芜店"
-  // }
+  //   order_cinema_name: ["万象影城坪山文化聚落店"],
+  //   sfc_cinema_name: ""
+  // },
 ];
+
 // 完美特殊影院集合
 const WANMEI_SPECIAL_CINEMA_LIST = [
   // 成都
