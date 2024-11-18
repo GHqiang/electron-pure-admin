@@ -52,6 +52,12 @@
             clearable
           />
         </el-form-item>
+        <el-form-item v-if="rule == 2" label="是否小号" prop="is_xiaohao">
+          <el-radio-group v-model="formData.is_xiaohao">
+            <el-radio value="1" size="large">是</el-radio>
+            <el-radio value="2" size="large">否</el-radio>
+          </el-radio-group>
+        </el-form-item>
         <el-form-item label="是否优先" prop="first">
           <el-radio-group v-model="formData.first">
             <el-radio value="1" size="large">是</el-radio>
@@ -78,6 +84,11 @@
 import { ref, reactive } from "vue";
 import { ElLoading, ElMessage } from "element-plus";
 import { APP_LIST } from "@/common/constant";
+import { platTokens } from "@/store/platTokens";
+const {
+  userInfo: { rule, user_id }
+} = platTokens();
+
 const loginFormRef = ref(null);
 // 父传子props
 defineProps({
@@ -100,7 +111,8 @@ let formData = reactive({
   member_pwd: "",
   mobile: "",
   remark: "",
-  first: "2"
+  first: "2",
+  is_xiaohao: "2"
 });
 const validatePhoneNumber = (rule, value, callback) => {
   if (!value) {
@@ -145,6 +157,7 @@ const resetForm = el => {
   formData.mobile = "";
   formData.remark = "";
   formData.first = "2";
+  formData.is_xiaohao = "2";
 };
 
 // 影线改变
@@ -170,6 +183,7 @@ const open = async loginInfo => {
         formData.mobile = formInfo.mobile;
         formData.remark = formInfo.remark;
         formData.first = formInfo.first;
+        formData.is_xiaohao = formInfo.is_xiaohao == 1 ? "1" : "2";
       } else {
         // 新增
         formData.app_name = formInfo.app_name;

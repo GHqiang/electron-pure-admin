@@ -26,6 +26,28 @@
           clearable
         />
       </el-form-item>
+      <el-form-item v-if="rule == 2" label="是否小号">
+        <el-select
+          v-model="formData.is_xiaohao"
+          placeholder="是否小号"
+          style="width: 194px"
+          clearable
+        >
+          <el-option label="是" value="1" />
+          <el-option label="否" value="2" />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="是否优先">
+        <el-select
+          v-model="formData.first"
+          placeholder="是否优先"
+          style="width: 194px"
+          clearable
+        >
+          <el-option label="是" value="1" />
+          <el-option label="否" value="2" />
+        </el-select>
+      </el-form-item>
       <el-form-item>
         <el-button @click="resetForm">重置</el-button>
         <el-button type="primary" @click="searchData">搜索</el-button>
@@ -79,6 +101,11 @@
       <el-table-column label="是否优先" min-width="90">
         <template #default="{ row: { first } }">
           <span>{{ first == "1" ? "是" : "否" }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column v-if="rule == 2" label="是否小号" min-width="90">
+        <template #default="{ row: { is_xiaohao } }">
+          <span>{{ is_xiaohao == "1" ? "是" : "否" }}</span>
         </template>
       </el-table-column>
       <el-table-column prop="session_id" label="Session ID" min-width="200" />
@@ -155,7 +182,9 @@ const totalNum = ref(0);
 // 表单查询数据
 const formData = reactive({
   app_name: "",
-  mobile: ""
+  mobile: "",
+  is_xiaohao: "",
+  first: ""
 });
 
 formData.rule = rule;
