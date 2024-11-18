@@ -144,8 +144,20 @@ class OrderAutoLockSeatQueue {
       }
     });
     params.params.ticketDetail = ticketDetail;
+    const session_id = await this.setLocalLoginList(
+      { rule: "2", app_name },
+      logList
+    );
+    if (!session_id) {
+      logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取目标影院小号session返回空，无法补全座位",
+        level: "info"
+      });
+      return;
+    }
     // 差一个获取对应的session_id;
-    params.session_id = "";
+    params.session_id = session_id;
     try {
       // 不需要每个都调下，解决锁定座位时没座位返回重进就有座位的问题
       // if (inx % 2 === 1) {
@@ -208,6 +220,8 @@ class OrderAutoLockSeatQueue {
       return Promise.reject(error);
     }
   }
+
+  // 取消订单ume
   async cannelOneOrderByUme({
     cinemaCode,
     cinemaLinkId,
@@ -251,6 +265,38 @@ class OrderAutoLockSeatQueue {
       });
     }
   }
+
+  // 获取目标影院小号的登录信息
+  async setLocalLoginList({ rule, app_name }, logList) {
+    try {
+      const loginRes = await svApi.queryLoginList({
+        rule,
+        app_name,
+        is_xiaohao: "1"
+      });
+      // console.log("ruleRes", ruleRes);
+      logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取目标影院小号的登录信息返回",
+        level: "info",
+        info: {
+          loginRes
+        }
+      });
+      let loginRecords = loginRes.data.loginList || [];
+      return loginRecords[0]?.session_id;
+    } catch (error) {
+      logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取目标影院小号的登录信息返回异常",
+        level: "error",
+        info: {
+          error
+        }
+      });
+    }
+  }
+
   // 锁定座位sfc
   async lockSeatHandleBysfc(order, logList, inx = 1) {
     // let { app_name, seatList } = order || {};
