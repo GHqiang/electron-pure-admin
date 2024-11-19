@@ -1781,25 +1781,25 @@ class OrderAutoTicketQueue {
         }
       });
       // 仅帮助锁座1次，帮助锁座后再锁定座位失败的话就不走帮助锁座逻辑了
-      // if (
-      //   ["座位旁边不要留空", "座位中间不要留空"].includes(error?.msg) &&
-      //   assistFlag != 1
-      // ) {
-      //   // 帮助锁定座位方法
-      //   const res = await assistLockSeatObj.assistLockSeatHandle({
-      //     app_name: appFlag,
-      //     plat_name,
-      //     order_number,
-      //     seatList,
-      //     lockseat,
-      //     lockSeatParams: params
-      //   });
-      //   if (!res) {
-      //     return Promise.reject(error);
-      //   } else {
-      //     return this.lockSeatHandle({ ...data, assistFlag: 1 });
-      //   }
-      // }
+      if (
+        ["座位旁边不要留空", "座位中间不要留空"].includes(error?.msg) &&
+        assistFlag != 1
+      ) {
+        // 帮助锁定座位方法
+        const res = await assistLockSeatObj.assistLockSeatHandle({
+          app_name: appFlag,
+          plat_name,
+          order_number,
+          seatList,
+          lockseat,
+          lockSeatParams: params
+        });
+        if (!res) {
+          return Promise.reject(error);
+        } else {
+          return this.lockSeatHandle({ ...data, assistFlag: 1 });
+        }
+      }
       return Promise.reject(error);
     }
   }
