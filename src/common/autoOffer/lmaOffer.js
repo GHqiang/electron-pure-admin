@@ -839,7 +839,7 @@ class getLmaOfferPrice {
         console.error(conPrefix + "获取目标影院失败");
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: conPrefix + "获取目标影院失败",
+          des: "获取目标影院失败",
           level: "error",
           info: {
             error: cinemaIdRes?.error,

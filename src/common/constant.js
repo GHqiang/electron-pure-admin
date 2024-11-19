@@ -1209,6 +1209,10 @@ const WANMEI_SPECIAL_CINEMA_LIST = [
     ],
     sfc_cinema_name: "完美世界影城石家庄方圆荟店"
   },
+  {
+    order_cinema_name: ["完美世界影城万象汇店杜比全景声全沙发影城"],
+    sfc_cinema_name: "完美世界影城石家庄万象汇店"
+  },
   // 北京
   {
     order_cinema_name: ["完美世界影城冬奥村CINITY店"],
@@ -1255,11 +1259,15 @@ const WANMEI_SPECIAL_CINEMA_LIST = [
     order_cinema_name: ["完美世界影城幸福广场店"],
     sfc_cinema_name: "完美世界影城天津大港店"
   },
-
   // 深圳
   {
     order_cinema_name: ["完美世界影城沙井店"],
     sfc_cinema_name: "完美世界影城深圳沙井店"
+  },
+  // 台州
+  {
+    order_cinema_name: ["台州温岭新时代乐购影城"],
+    sfc_cinema_name: "完美世界影城温岭乐购店"
   }
 ];
 
