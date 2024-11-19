@@ -60,77 +60,104 @@ class getUmeOfferPrice {
   // 获取最终报价信息（唯一暴漏给外包用的方法）
   async getEndOfferPrice({ order, offerList }) {
     const { conPrefix, plat_name, appFlag } = this;
-    let err_msg, err_info, endPrice, offerRule;
-    let { supplier_max_price, rewards } = order || {};
+    let { supplier_max_price, rewards, order_number } = order || {};
+    let endPrice, offerRule;
     try {
       // 获取匹配到的最终报价规则
       offerRule = await this.getEndMatchOfferRule(order);
-      if (offerRule) {
-        const {
-          offerAmount,
-          memberOfferAmount,
-          memberCostPrice = 0,
-          quanValue,
-          offerType
-        } = offerRule;
-        let price = Number(offerAmount || memberOfferAmount);
-        if (price) {
-          // 成本价
-          let cost_price;
-          if (offerType === "1") {
-            const quanInfo = await this.getQuanInfo(quanValue, appFlag);
-            cost_price = quanInfo?.quan_cost;
-          } else {
-            cost_price = Number(memberCostPrice);
-          }
-          if (cost_price) {
-            offerRule.cost_price = cost_price; // 成本价
-            // 获取最终报价
-            endPrice = await this.getEndPrice({
-              cost_price,
-              supplier_max_price,
-              price,
-              rewards,
-              offerType,
-              offerList,
-              plat_name
-            });
-            console.warn(conPrefix + "最终报价返回", endPrice);
-            if (endPrice) {
-              // if (offerType === "1") {
-              //   offerRule.offerAmount = endPrice;
-              // } else {
-              //   offerRule.memberOfferAmount = endPrice;
-              // }
-              // 最终报价
-              offerRule.offer_end_amount = endPrice;
-            } else {
-              err_msg = "获取最终报价价格失败";
-            }
-          } else {
-            err_msg = "获取出票成本价格失败";
-          }
-        } else {
-          err_msg = "从最终报价规则里获取报价价格失败";
-        }
-      } else {
-        err_msg = "获取最终报价规则失败";
+      if (!offerRule) {
+        return this.returnResultHandle({ endPrice, offerRule, order_number });
       }
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "最终匹配到的报价规则",
+        level: "info",
+        info: {
+          offerRule
+        }
+      });
+      const {
+        offerAmount,
+        memberOfferAmount,
+        memberCostPrice = 0,
+        quanValue,
+        offerType
+      } = offerRule;
+      let price = Number(offerAmount || memberOfferAmount);
+      if (!price) {
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: "从最终报价规则里获取报价价格失败",
+          level: "error"
+        });
+        return this.returnResultHandle({ endPrice, offerRule, order_number });
+      }
+      // 成本价
+      let cost_price;
+      if (offerType === "1") {
+        const quanInfo = await this.getQuanInfo(quanValue, appFlag);
+        cost_price = quanInfo?.quan_cost;
+      } else {
+        cost_price = Number(memberCostPrice);
+      }
+      if (!cost_price) {
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: "获取出票成本价格失败",
+          level: "error"
+        });
+        return this.returnResultHandle({ endPrice, offerRule, order_number });
+      }
+      offerRule.cost_price = cost_price; // 成本价
+      // 获取最终报价
+      endPrice = await this.getEndPrice({
+        cost_price,
+        supplier_max_price,
+        price,
+        rewards,
+        offerType,
+        offerList,
+        plat_name
+      });
+      console.warn(conPrefix + "最终报价返回", endPrice);
+      if (endPrice) {
+        // 最终报价
+        offerRule.offer_end_amount = endPrice;
+      }
+      return this.returnResultHandle({ endPrice, offerRule, order_number });
     } catch (error) {
-      console.error(conPrefix + "获取最终报价信息方法执行异常", error);
-      err_msg = "获取最终报价信息方法执行异常";
-      err_info = formatErrInfo(error);
-    } finally {
+      console.error("获取最终报价信息方法执行异常", error);
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取最终报价信息方法执行异常",
+        level: "error",
+        info: {
+          error
+        }
+      });
+      return this.returnResultHandle({ endPrice, offerRule, order_number });
+    }
+  }
+
+  // 返回获取最终报价结果
+  returnResultHandle({ endPrice, offerRule, order_number }) {
+    const { plat_name, appFlag } = this;
+    let err_msg, err_info;
+    try {
       const errInfoObj = this.logList
         .filter(item => item.level === "error")
         .reverse()?.[0];
-      err_msg = errInfoObj?.des || err_msg || "";
-      err_info = formatErrInfo(errInfoObj?.info) || err_info || "";
+      err_msg = errInfoObj?.des || "";
+      err_info = formatErrInfo(errInfoObj?.info) || "";
+    } catch (error) {
+      err_msg = "返回报价处理结果异常";
+      err_info = formatErrInfo(error) || "";
+    } finally {
       logUpload(
         {
-          plat_name: plat_name,
+          plat_name,
           app_name: appFlag,
-          order_number: order.order_number,
+          order_number,
           type: 1
         },
         this.logList
@@ -169,25 +196,16 @@ class getUmeOfferPrice {
       // 获取报价最低的报价规则
       let endRule = await this.getMinAmountOfferRule(matchRuleList, order);
       console.warn(conPrefix + "最终匹配到的报价规则", endRule);
-      if ([0, -1, -5, -2, -3, -4].includes(endRule)) return;
       if (!endRule) {
         console.error(conPrefix + "最终匹配到的报价规则不存在");
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: "最终匹配到的报价规则不存在",
-          level: "error"
+          level: "info"
         });
         return;
       }
       endRule = JSON.parse(JSON.stringify(endRule));
-      this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
-        des: "最终匹配到的报价规则",
-        level: "info",
-        info: {
-          endRule
-        }
-      });
       return endRule;
     } catch (error) {
       console.error(conPrefix + "获取最终匹配报价规则异常", error);
@@ -263,19 +281,16 @@ class getUmeOfferPrice {
 
         // 计算会员报价
         let memberPriceRes = await this.getMemberPrice(order);
-        // let errMsgStrObj = {
-        //   -1: "获取当前场次电影信息失败",
-        //   "-2": "获取当前场次电影信息失败,促销票数低于订单票数",
-        //   "-3": "获取座位布局异常",
-        //   "-4": "影院单卡出票限制"
-        //   "-5": "会员价为0"
-        // };
-        if (memberPriceRes && [-1, -5].includes(memberPriceRes)) {
-          // 返回特殊标识出去
-          return memberPriceRes;
+        if (memberPriceRes === -1) {
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: "获取当前场次电影信息失败，直接不报",
+            level: "error"
+          });
+          return;
         }
 
-        if (!memberPriceRes || [-2, -3, -4].includes(memberPriceRes)) {
+        if (!memberPriceRes) {
           console.warn(
             conPrefix + "最小加价规则获取会员价失败,返回最小固定报价规则",
             mixFixedAmountRule
@@ -609,14 +624,14 @@ class getUmeOfferPrice {
       if (member_price === 0) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: "获取会员价为0，不进行报价",
+          des: "获取会员价为0",
           level: "error",
           info: {
             ticketMemberPrice,
             maxSeatPrice
           }
         });
-        return -5;
+        return;
       }
       // 会员价等于真实会员价加手续费加会员服务费
       member_price =
@@ -658,9 +673,17 @@ class getUmeOfferPrice {
             ? 0
             : item.monthly_usage || 0
         }));
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: "获取该影院已维护会员卡列表返回",
+          level: "info",
+          info: {
+            list
+          }
+        });
         // console.log("list", list);
         // 根据当天及当月出票量限制进行过滤
-        let cardList = list.filter(item => {
+        let cardListLimit = list.filter(item => {
           const { use_limit_day, use_limit_month, daily_usage, monthly_usage } =
             item;
           if (!use_limit_day && !use_limit_month) return true;
@@ -673,27 +696,42 @@ class getUmeOfferPrice {
               : true)
           );
         });
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: "根据当天及当月出票量限制过滤后",
+          level: "info",
+          info: {
+            cardListLimit
+          }
+        });
         // 过滤指定卡
-        cardList = cardList.filter(item => {
+        let cardList = cardListLimit.filter(item => {
           return !item.linkCinemaIds
             ? true
             : item.linkCinemaIds
                 .split(",")
                 .some(itemA => itemA == movieInfo.cinemaCode);
         });
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: "根据指定卡过滤后",
+          level: "info",
+          info: {
+            cardList
+          }
+        });
         if (!cardList.length) {
           console.error(conPrefix + "影院单卡出票限制");
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
-            des: "影院单卡出票限制",
+            des: "影院单卡出票限制，无可用卡",
             level: "error",
             info: {
-              list,
               ticket_num,
               cinemaCode: movieInfo.cinemaCode
             }
           });
-          return -4;
+          return;
         }
         cardList = cardList.map(item => ({
           ...item,
@@ -763,6 +801,11 @@ class getUmeOfferPrice {
       // 1、获取城市影院列表
       let allCinemaList = await this.getCityCinemaList();
       if (!allCinemaList) {
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: "获取城市影院列表失败",
+          level: "error"
+        });
         return;
       }
       let cinemaList =
@@ -781,7 +824,7 @@ class getUmeOfferPrice {
         console.error(conPrefix + "获取目标影院失败");
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: conPrefix + "获取目标影院失败",
+          des: "获取目标影院失败",
           level: "error",
           info: {
             cinemaList,
@@ -810,6 +853,7 @@ class getUmeOfferPrice {
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
             des: `获取目标影片信息失败`,
+            level: "error",
             info: {
               movie_data,
               film_name
@@ -832,6 +876,7 @@ class getUmeOfferPrice {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: "匹配影片放映日期失败",
+          level: "error",
           info: {
             playDateList,
             start_day
