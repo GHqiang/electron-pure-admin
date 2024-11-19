@@ -4069,8 +4069,6 @@ const addOrderHandleRecored = async ({
       cinema_group: order.cinema_group,
       offer_type: res?.offerRule?.offer_type || "",
       // cinema_code: order.cinema_code,
-      // offer_amount: res?.offerRule?.offer_amount || "",
-      // member_offer_amount: res?.offerRule?.member_offer_amount || "",
       quan_value: res?.offerRule?.quan_value || "",
       order_status: order_status,
       // remark: '',

@@ -18,7 +18,7 @@ import {
 /**
  * 获取当前日期和时间的格式化字符串
  * 无参数
- * @return {string} 返回格式为 "YYYY-MM-DD HH:MM:SS" 的字符串
+ * @return {string} 返回格式为 "YYYY-MM-DD HH:mm:ss" 的字符串
  */
 function getCurrentFormattedDateTime(sjc) {
   const now = !sjc ? new Date() : new Date(sjc);

@@ -270,43 +270,6 @@
             />
           </el-select>
         </el-form-item>
-        <!-- <el-form-item
-          v-if="formData.offerType !== '2'"
-          label="报价金额"
-          prop="offerAmount"
-          :rules="[
-            {
-              required: true,
-              message: '报价金额不可为空',
-              trigger: 'blur'
-            }
-          ]"
-        >
-          <el-input
-            v-model="formData.offerAmount"
-            placeholder="报价金额"
-            clearable
-          />
-        </el-form-item> -->
-
-        <!-- <el-form-item
-          v-if="formData.offerType === '2'"
-          label="加价金额"
-          prop="addAmount"
-          :rules="[
-            {
-              required: true,
-              message: '加价金额不可为空',
-              trigger: 'blur'
-            }
-          ]"
-        >
-          <el-input
-            v-model="formData.addAmount"
-            placeholder="加价金额"
-            clearable
-          />
-        </el-form-item> -->
         <template v-if="formData.offerType !== '3'">
           <el-form-item
             v-for="(domain, index) in formData.platOfferList"
@@ -560,12 +523,10 @@ let formData = reactive({
   includeFilmNames: [], // 包含影片
   excludeFilmNames: [], // 排除影片
   timeLimit: "", // 开场时间限制
-  offerAmount: "", // 报价金额
   quanValue: "", // 用券类型
   ruleStartTime: "", // 规则启用时间
   ruleEndTime: "", // 规则结束时间
   offerType: "1", // 报价类型, 1-固定价 2-会员价加价 3-会员日报价
-  addAmount: "", // 加价金额
   weekDay: [], // 启用星期
   seatNum: "", // 座位数
   memberDay: "", // 会员日
@@ -642,12 +603,10 @@ const resetForm = el => {
   formData.includeFilmNames = []; // 包含影片
   formData.excludeFilmNames = []; // 排除影片
   formData.timeLimit = ""; // 开场时间限制
-  formData.offerAmount = ""; // 报价金额
   formData.quanValue = ""; // 用券类型
   formData.ruleStartTime = ""; // 规则启用时间
   formData.ruleEndTime = ""; // 规则结束时间
   formData.offerType = "1"; // 报价类型, 1-固定价 2-会员价加价 3-会员日报价
-  formData.addAmount = ""; // 加价金额
   formData.weekDay = []; // 启用星期
   formData.seatNum = ""; // 座位数
   formData.memberDay = ""; // 会员日
@@ -726,7 +685,6 @@ const open = async ruleInfo => {
         formData.ruleStartTime = formInfo.ruleStartTime;
         formData.ruleEndTime = formInfo.ruleEndTime;
         formData.timeLimit = formInfo.timeLimit;
-        formData.offerAmount = formInfo.offerAmount;
         formData.quanValue = formInfo.quanValue;
         formData.weekDay = formInfo.weekDay; // 启用星期
         formData.seatNum = formInfo.seatNum; // 座位数
@@ -734,7 +692,6 @@ const open = async ruleInfo => {
         formData.remark = formInfo.remark;
         formData.status = formInfo.status;
         formData.offerType = formInfo.offerType;
-        formData.addAmount = formInfo.addAmount;
         formData.includeCityNames = formInfo.includeCityNames;
         formData.excludeCityNames = formInfo.excludeCityNames;
         formData.includeCinemaNames = formInfo.includeCinemaNames;
@@ -770,7 +727,6 @@ const offerTypeChange = val => {
   console.log("val", val);
   if (val === "1") {
     // 日常固定价
-    formData.addAmount = "";
     formData.memberDay = "";
     formData.platOfferList = [
       {
@@ -784,7 +740,6 @@ const offerTypeChange = val => {
   } else if (val === "2") {
     // 会员价加价
     formData.memberDay = "";
-    formData.offerAmount = "";
     formData.quanValue = "";
     formData.platOfferList = [
       {
@@ -794,7 +749,6 @@ const offerTypeChange = val => {
     ]; // 平台报价规则
   } else if (val === "3") {
     // 会员日固定价
-    formData.addAmount = "";
     formData.platOfferList = []; // 平台报价规则
   }
 };
