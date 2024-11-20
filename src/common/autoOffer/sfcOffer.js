@@ -348,7 +348,7 @@ class getSfcOfferPrice {
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
             des: "获取当前场次电影信息失败，直接不报",
-            level: "error"
+            level: "info"
           });
           return;
         }
