@@ -1496,8 +1496,8 @@ class OrderAutoTicketQueue {
       let paymentAmount = createOrderRes?.paymentAmount;
       let quan_fee = offerRule.quan_fee || 0;
       let cardNo, paymentWay;
-      // 用券不补钱时只会返回一个，补钱时会返回多个，取第一个即可
-      if (!quan_fee) {
+      // 纯用券不补钱是优惠券，只要补钱或者纯用卡就是会员卡
+      if (!quan_fee && offerRule.offer_type == 1) {
         paymentWay =
           createOrderRes?.paymentList?.find(item => item.paymentWayId == 3)
             ?.paymentMethodCode || "Z0010";
