@@ -620,7 +620,7 @@ class getUmeOfferPrice {
         }
       });
       let member_price = Math.max(ticketMemberPrice, maxSeatPrice) / 100;
-      // 会员价为0时不报
+      // 会员价为0
       if (member_price === 0) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
