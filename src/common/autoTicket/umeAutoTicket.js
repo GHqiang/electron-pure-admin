@@ -1395,7 +1395,8 @@ class OrderAutoTicketQueue {
       // 用券时总价为0
       if (offerRule.offer_type === "1") {
         if (offerRule.quan_fee > 0) {
-          total_price = (areaSettlePriceMin - quanDiscountAmount) / 100 || 0;
+          total_price =
+            (+areaSettlePriceMin + handlingFee - quanDiscountAmount) / 100 || 0;
           total_price = (total_price * 1000 * ticket_num) / 1000;
         } else {
           total_price = 0;
@@ -1494,14 +1495,21 @@ class OrderAutoTicketQueue {
       let order_num = createOrderRes?.payOrderCode;
       let paymentAmount = createOrderRes?.paymentAmount;
       let quan_fee = offerRule.quan_fee || 0;
-      let cardNo;
+      let cardNo, paymentWay;
       // 用券不补钱时只会返回一个，补钱时会返回多个，取第一个即可
-      let paymentWay = createOrderRes?.paymentList?.[0]?.paymentMethodCode;
+      if (!quan_fee) {
+        paymentWay =
+          createOrderRes?.paymentList?.find(item => item.paymentWayId == 3)
+            ?.paymentMethodCode || "Z0010";
+      } else {
+        paymentWay =
+          createOrderRes?.paymentList?.find(item => item.paymentWayId == 2)
+            ?.paymentMethodCode || "Z0006";
+      }
       if (paymentAmount > 0 && quan_fee > 0 && offerRule.offer_type == 1) {
         // 支付方式里返回的有会员卡方式和可用列表
-        cardNo = createOrderRes?.paymentList?.find(
-          item => item.memberCardList
-        )?.[0]?.cardNo;
+        cardNo = createOrderRes?.paymentList?.find(item => item.memberCardList)
+          ?.memberCardList?.[0]?.cardNo;
         if (!cardNo) {
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
