@@ -510,7 +510,7 @@ class getLmaOfferPrice {
         price = Math.round(price);
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: `调整最终报价为规则报价四舍五入取整`,
+          des: "调整最终报价为规则报价四舍五入取整",
           level: "info"
         });
       }
@@ -534,7 +534,7 @@ class getLmaOfferPrice {
         }
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: `调整最终报价为平台限价四舍五入去整`,
+          des: "调整最终报价为平台限价四舍五入去整",
           level: "info"
         });
       }
@@ -639,7 +639,7 @@ class getLmaOfferPrice {
       const { ticket_num, app_name } = order;
       // 获取当前场次电影信息
       let movieInfo = await this.getMovieInfo(order);
-      console.log(conPrefix + `待报价订单当前场次电影相关信息`, movieInfo);
+      console.log(conPrefix + "待报价订单当前场次电影相关信息", movieInfo);
       if (!movieInfo) {
         console.error(conPrefix + "获取当前场次电影信息失败", "不再进行报价");
         return -1;
@@ -889,7 +889,7 @@ class getLmaOfferPrice {
         if (!movieInfo) {
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
-            des: `获取目标影片信息失败`,
+            des: "获取目标影片信息失败",
             info: {
               film,
               film_name
