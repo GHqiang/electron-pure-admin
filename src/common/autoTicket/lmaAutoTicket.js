@@ -3203,12 +3203,10 @@ const getCardList = async ({ cinema_id, lmaToken, appFlag }) => {
     // 头部插入，第一个为活跃卡
     cardList.unshift({
       card_number: res.data?.card_number,
-      gold: res.data?.gold, // 0可用 1-过期不可用
+      gold: res.data?.gold,
       money_str: res.data?.money_str
       // member_status: res.data?.member_status
     });
-    // 仅返回可用状态的会员卡
-    cardList = cardList.filter(item => item.gold === "1");
     // 根据影院id过滤指定卡（卢米埃暂时用不到）
     // const usableCarrdList = await this.getUsableCardList(cinema_id);
     // if (usableCarrdList?.length) {

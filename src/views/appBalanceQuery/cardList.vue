@@ -424,7 +424,6 @@ const getCardListByApp = async (app_name, phone, session_id) => {
     } else if (app_name === "lma") {
       // 卢米埃只获取主卡，其它的出票后更新卡余额
       cardList = res.data?.sleep || [];
-      cardList = cardList.filter(item => item.gold === "1");
       cardList.push({
         card_number: res.data.card_number,
         balance: res.data.money_str
