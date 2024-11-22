@@ -80,143 +80,155 @@ class OrderAutoLockSeatQueue {
 
   // 锁定座位ume
   async lockSeatHandleByUme(order, logList, inx = 1) {
-    // 10排6座 10排8座
-    let { app_name, seatList, lockseat, lockSeatParams } = order || {};
-    let params = lockSeatParams;
-    // 获取目标行行数
-    let targetRowNum = lockseat.slice(0, 1); // 10
-    // 获取目标行座位列表
-    let targetRowList = seatList.filter(item => item.rowName == targetRowNum);
-    // 获取目标行已锁定座位(0是未售)
-    let lockedSeats = targetRowList
-      .filter(item => item.status != 0)
-      .map(item => item.columnName);
-    // 获取目标行目标锁定座位
-    let targetSeats = lockseat
-      .splict(" ")
-      .map(item => item.splict("排")[1].slice(0, 1))
-      .sort((a, b) => +a - b); // ["6", "8"] | ["12"]
-    logList.push({
-      opera_time: getCurrentFormattedDateTime(),
-      des: "帮助锁定座位前判断相关信息",
-      level: "info",
-      info: {
-        targetRow,
-        targetRowList,
-        lockedSeats,
-        targetSeats
-      }
-    });
-    // 需要补全的座位
-    const fillSeat = adjustSeats(
-      lockedSeats,
-      targetSeats,
-      targetRowList.length
-    );
-
-    if (!fillSeat?.length) {
-      logList.push({
-        opera_time: getCurrentFormattedDateTime(),
-        des: "获取补全座位方法返回空，无法补全座位",
-        level: "info"
-      });
-      return;
-    }
-    // 补全座位信息
-    let fillSeatList = targetRowList.filter(item =>
-      fillSeat.includes(item.columnName)
-    );
-    console.log("fillSeatList", fillSeatList);
-    let seat_ids = fillSeatList.map(item => item.seatCode);
-    ticketDetail = seat_ids.map(item => ({
-      seatCode: item,
-      buyerRemark: ""
-    }));
-    logList.push({
-      opera_time: getCurrentFormattedDateTime(),
-      des: "补全座位相关信息",
-      level: "info",
-      info: {
-        fillSeat,
-        fillSeatList,
-        seat_ids,
-        ticketDetail
-      }
-    });
-    params.params.ticketDetail = ticketDetail;
-    const session_id = await this.setLocalLoginList(
-      { rule: "2", app_name },
-      logList
-    );
-    if (!session_id) {
-      logList.push({
-        opera_time: getCurrentFormattedDateTime(),
-        des: "获取目标影院小号session返回空，无法补全座位",
-        level: "info"
-      });
-      return;
-    }
-    // 差一个获取对应的session_id;
-    params.session_id = session_id;
     try {
-      // 不需要每个都调下，解决锁定座位时没座位返回重进就有座位的问题
-      // if (inx % 2 === 1) {
-      //   const { cinemaCode, cinemaLinkId, scheduleId, scheduleKey } =
-      //     params.params;
-      //   await this.getSeatLayoutByUme({
-      //     cinemaCode,
-      //     cinemaLinkId,
-      //     scheduleId,
-      //     scheduleKey,
-      //     session_id: params.session_id,
-      //     app_name
-      //   });
-      //   await mockDelay(1);
-      // }
-
-      console.log("锁定座位参数", params);
-      const res = await APP_API_OBJ[app_name].lockSeat(params);
-      console.log("锁定座位返回", res);
+      // 10排6座 10排8座
+      let { app_name, seatList, lockseat, lockSeatParams } = order || {};
+      let params1 = lockSeatParams;
+      // 获取目标行行数
+      let targetRowNum = lockseat.slice(0, 1); // 10
+      // 获取目标行座位列表
+      let targetRowList = seatList.filter(item => item.rowName == targetRowNum);
+      // 获取目标行已锁定座位(0是未售)
+      let lockedSeats = targetRowList
+        .filter(item => item.status != 0)
+        .map(item => item.columnName);
+      // 获取目标行目标锁定座位
+      let targetSeats = lockseat
+        .split(" ")
+        .map(item => item.split("排")[1].slice(0, 1))
+        .sort((a, b) => +a - b); // ["6", "8"] | ["12"]
       logList.push({
         opera_time: getCurrentFormattedDateTime(),
-        des: `第${inx}次锁定座位返回`,
+        des: "帮助锁定座位前判断相关信息",
         level: "info",
         info: {
-          res,
-          params
+          targetRow,
+          targetRowList,
+          lockedSeats,
+          targetSeats
         }
       });
-      return res?.data;
-    } catch (error) {
-      console.error("锁定座位异常", error);
+      // 需要补全的座位
+      const fillSeat = adjustSeats(
+        lockedSeats,
+        targetSeats,
+        targetRowList.length
+      );
+
+      if (!fillSeat?.length) {
+        logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: "获取补全座位方法返回空，无法补全座位",
+          level: "info"
+        });
+        return;
+      }
+      // 补全座位信息
+      let fillSeatList = targetRowList.filter(item =>
+        fillSeat.includes(item.columnName)
+      );
+      console.log("fillSeatList", fillSeatList);
+      let seat_ids = fillSeatList.map(item => item.seatCode);
+      ticketDetail = seat_ids.map(item => ({
+        seatCode: item,
+        buyerRemark: ""
+      }));
       logList.push({
         opera_time: getCurrentFormattedDateTime(),
-        des: `第${inx}次锁定座位异常`,
+        des: "补全座位相关信息",
+        level: "info",
+        info: {
+          fillSeat,
+          fillSeatList,
+          seat_ids,
+          ticketDetail
+        }
+      });
+      params1.params.ticketDetail = ticketDetail;
+      const session_id = await this.setLocalLoginList(
+        { rule: "2", app_name },
+        logList
+      );
+      if (!session_id) {
+        logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: "获取目标影院小号session返回空，无法补全座位",
+          level: "info"
+        });
+        return;
+      }
+      // 差一个获取对应的session_id;
+      params1.session_id = session_id;
+      try {
+        // 不需要每个都调下，解决锁定座位时没座位返回重进就有座位的问题
+        // if (inx % 2 === 1) {
+        //   const { cinemaCode, cinemaLinkId, scheduleId, scheduleKey } =
+        //     params1.params;
+        //   await this.getSeatLayoutByUme({
+        //     cinemaCode,
+        //     cinemaLinkId,
+        //     scheduleId,
+        //     scheduleKey,
+        //     session_id: params1.session_id,
+        //     app_name
+        //   });
+        //   await mockDelay(1);
+        // }
+
+        console.log("锁定座位参数", params1);
+        const res = await APP_API_OBJ[app_name].lockSeat(params1);
+        console.log("锁定座位返回", res);
+        logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: `第${inx}次锁定座位返回`,
+          level: "info",
+          info: {
+            res,
+            params1
+          }
+        });
+        return res?.data;
+      } catch (error) {
+        console.error("锁定座位异常", error);
+        logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: `第${inx}次锁定座位异常`,
+          level: "error",
+          info: {
+            params1,
+            error
+          }
+        });
+        if (error?.msg === "存在有未支付的订单！") {
+          logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: `第${inx}次锁定座位时发现有未支付的订单，准备先取消订单，再进行锁座`,
+            level: "info"
+          });
+          const { cinemaCode, cinemaLinkId } = params1.params;
+          const cancelRes = await this.cannelOneOrderByUme({
+            cinemaCode,
+            cinemaLinkId,
+            orderHeaderId, // 该字段不传就是取消最近一次的未支付订单
+            app_name,
+            session_id
+          });
+          if (cancelRes) {
+            // 取消完再购买一次
+            return await this.lockSeatHandleByUme(order, logList, inx);
+          }
+        }
+        return Promise.reject(error);
+      }
+    } catch (error) {
+      logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "ume帮助锁座方法执行异常",
         level: "error",
         info: {
-          params,
           error
         }
       });
-      if (error?.msg === "存在有未支付的订单！") {
-        logList.push({
-          opera_time: getCurrentFormattedDateTime(),
-          des: `第${inx}次锁定座位时发现有未支付的订单，准备先取消订单，再进行锁座`,
-          level: "info"
-        });
-        const { cinemaCode, cinemaLinkId } = params.params;
-        const cancelRes = await this.cannelOneOrderByUme({
-          cinemaCode,
-          cinemaLinkId,
-          orderHeaderId, // 该字段不传就是取消最近一次的未支付订单
-          app_name,
-          session_id
-        });
-        if (cancelRes) {
-          // 取消完再购买一次
-          return await this.lockSeatHandleByUme(order, logList, inx);
-        }
-      }
       return Promise.reject(error);
     }
   }
