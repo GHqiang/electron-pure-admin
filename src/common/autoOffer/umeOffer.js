@@ -1068,21 +1068,30 @@ class getUmeOfferPrice {
   // 获取电影放映场次
   async getMoviePlayTime(data) {
     const { conPrefix } = this;
+    let { cinemaCode, cinemaLinkId, filmUniqueId, showDate } = data || {};
+    let params = {
+      params: {
+        cinemaCode: cinemaCode,
+        filmUniqueId: filmUniqueId,
+        showDate: showDate,
+        channelCode: "QD0000001",
+        sysSourceCode: "YZ001",
+        cinemaLinkId: cinemaLinkId
+      }
+    };
     try {
-      let { cinemaCode, cinemaLinkId, filmUniqueId, showDate } = data || {};
-      let params = {
-        params: {
-          cinemaCode: cinemaCode,
-          filmUniqueId: filmUniqueId,
-          showDate: showDate,
-          channelCode: "QD0000001",
-          sysSourceCode: "YZ001",
-          cinemaLinkId: cinemaLinkId
-        }
-      };
       console.log(conPrefix + "获取电影放映场次参数", params);
       const res = await this.appApi.getMoviePlayTime(params);
       console.log(conPrefix + "获取电影放映场次返回", res);
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取电影放映场次返回",
+        level: "info",
+        info: {
+          params,
+          res
+        }
+      });
       return res.data || [];
     } catch (error) {
       console.error(conPrefix + "获取电影放映信息异常", error);
@@ -1091,7 +1100,8 @@ class getUmeOfferPrice {
         des: "获取电影放映信息异常",
         level: "error",
         info: {
-          error
+          error,
+          params
         }
       });
     }

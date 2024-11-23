@@ -989,15 +989,24 @@ class getLmaOfferPrice {
   // 获取电影放映日期
   async getMoviePlayDate(data) {
     const { conPrefix } = this;
+    let { cinema_id, short_code } = data || {};
+    let params = {
+      cinema_id,
+      short_code
+    };
     try {
-      let { cinema_id, short_code } = data || {};
-      let params = {
-        cinema_id,
-        short_code
-      };
       console.log(conPrefix + "获取电影放映日期参数", params);
       const res = await this.appApi.getMoviePlayDate(params);
       console.log(conPrefix + "获取电影放映日期返回", res);
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取电影放映日期返回",
+        level: "info",
+        info: {
+          params,
+          res
+        }
+      });
       return res.data || [];
     } catch (error) {
       console.error(conPrefix + "获取电影放映日期异常", error);
@@ -1006,7 +1015,8 @@ class getLmaOfferPrice {
         des: "获取电影放映日期异常",
         level: "error",
         info: {
-          error
+          error,
+          params
         }
       });
     }
