@@ -26,7 +26,6 @@ const createAxios = ({ app_name, timeout = 20 }) => {
   instance.interceptors.request.use(
     async config => {
       if (config.url.indexOf("/lma/") !== -1) {
-        config.headers["Content-Type"] === "application/x-www-form-urlencoded;";
         // 猎人平台接口添加token
         let loginInfoList = window.localStorage.getItem("loginInfoList");
         if (loginInfoList) {

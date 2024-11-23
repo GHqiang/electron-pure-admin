@@ -9,6 +9,7 @@ import yinghuasuanApi from "@/api/yinghuasuan-api";
 import createSfcApi from "@/api/sfc-api";
 import createUmeApi from "@/api/ume-api";
 import createLmaApi from "@/api/lma-api";
+import createH5UmeApi from "@/api/h5ume-api";
 import { APP_LIST, UME_LIST, APP_GROUP_OBJ } from "@/common/constant";
 
 const SFC_API_OBJ = {};
@@ -34,9 +35,12 @@ const APP_API_OBJ = {
   ...UME_API_OBJ,
   lma: createLmaApi({
     app_name: "lma"
+  }),
+  h5ume: createH5UmeApi({
+    app_name: "h5ume"
   })
 };
-
+window.APP_API_OBJ = APP_API_OBJ;
 const PLAT_API_OBJ = {
   lieren: lierenApi,
   sheng: shengApi,

@@ -1,0 +1,102 @@
+/**
+ * @description: h5ume-api列表(小程序)
+ */
+
+import createAxios from "@/utils/http/h5ume-request";
+
+const createApi = ({ app_name }) => {
+  let axios = createAxios({
+    app_name: app_name
+  });
+  // 获取城市列表
+  const getCityList = params =>
+    axios.post("/h5ume/mtop.alipic.lark.own.cinema.getcinemas", params);
+
+  // 获取影院列表
+  const getCinemaList = params =>
+    axios.post("/h5ume/mtop.alipic.lark.own.cinema.getcinemas", params);
+
+  // 获取城市影院版本信息（用于过滤城市及影院）
+  const getDiffVersion = params =>
+    axios.get("/lma/mp/icity/get_diff_version", {
+      params
+    });
+  // 获取电影放映列表
+  const getMoviePlayInfo = params =>
+    axios.get("/lma/mp/index/film", { params, withCredentials: true });
+
+  // 获取电影放映场次
+  const getMoviePlayDate = params =>
+    axios.get("/lma/mp/index/sell_session", { params });
+
+  // 获取座位布局
+  const getMoviePlaySeat = params =>
+    axios.get("/lma/mp/ibuypro/index", { params });
+
+  // 锁定座位
+  const lockSeat = params => axios.post("/lma/mp/ibuypro/add_ticket", params);
+
+  // 锁座后获取订单信息（可做计算价格）
+  const getOrderInfo = params =>
+    axios.get("/lma/mp/iorder/get_order", {
+      params
+    });
+
+  // 切换卡（可获取卡余额及状态）
+  const changeCard = params => axios.post("/lma/mp/imember/change", params);
+
+  // 获取会员卡列表
+  const getCardList = params => axios.get("/lma/mp/imember/index", { params });
+
+  // 获取优惠券列表
+  const getQuanList = params => axios.get("/lma/mp/icoupon/index", { params });
+
+  // 个人中心优惠券列表，优先用券时使用
+  const getQuanListByFirstUseQuan = params =>
+    axios.get("/lma/mp/icoupon/index", { params });
+
+  // 订单价格计算
+  const priceCalculation = params =>
+    axios.get("/lma/mp/iorder/get_order", { params });
+
+  // 创建订单
+  const createOrder = params => axios.post("/sfc/v2/order/ng-create", params);
+
+  // 电影票购买
+  const buyTicket = params => axios.post("/lma/mp/iorder/complete", params);
+
+  // 获取购票信息
+  const payOrder = params =>
+    axios.get("/lma/mp/ihistory/ticket_info", { params });
+
+  // 获取订单列表
+  const getOrderList = params =>
+    axios.get("/lma/mp/ihistory/ticket", { params });
+
+  // 取消订单
+  const cannelOneOrder = params => axios.post("/lma/mp/iorder/cancle", params);
+
+  // 绑定优惠券
+  const bandQuan = params => axios.post("/lma/mp/icoupon/add", params);
+
+  return {
+    getCityList,
+    getCinemaList,
+    getMoviePlayInfo,
+    getMoviePlayDate, // 获取电影放映场次
+    getMoviePlaySeat,
+    lockSeat,
+    changeCard,
+    getCardList,
+    getQuanList,
+    getQuanListByFirstUseQuan,
+    priceCalculation,
+    createOrder,
+    payOrder,
+    cannelOneOrder,
+    getOrderList,
+    buyTicket,
+    bandQuan
+  };
+};
+export default createApi;
