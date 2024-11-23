@@ -2961,13 +2961,14 @@ class OrderAutoTicketQueue {
         });
         if (coupon_num) {
           bandQuanList.push({ coupon_num });
-          svApi.addUseQuanRecord({
-            coupon_num: coupon_num,
-            app_name: appFlag,
-            quan_status: "2",
-            use_time: getCurrentFormattedDateTime()
-          });
         }
+        svApi.addUseQuanRecord({
+          coupon_num: coupon_num,
+          app_name: appFlag,
+          quan_status: "3",
+          use_time: getCurrentFormattedDateTime(),
+          remark: !coupon_num ? "绑券异常" : ""
+        });
       }
       return bandQuanList;
     } catch (error) {
