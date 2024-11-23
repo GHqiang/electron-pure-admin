@@ -96,12 +96,32 @@
             clearable
           />
         </el-form-item>
+        <el-form-item label="日出票量" prop="daily_usage">
+          <el-input
+            v-model="formData.daily_usage"
+            placeholder="请输入日出票量（当天）"
+            clearable
+          />
+          <span style="color: red"
+            >提示：请不要轻易编辑，用于解决由于手动出票导致机器日出票量限制判断不准确的问题，该值可设置为日出票限制-日剩余可出票数</span
+          >
+        </el-form-item>
         <el-form-item label="月出票限制" prop="use_limit_month">
           <el-input
             v-model="formData.use_limit_month"
             placeholder="请输入出票限制（当月）"
             clearable
           />
+        </el-form-item>
+        <el-form-item label="月出票量" prop="monthly_usage">
+          <el-input
+            v-model="formData.monthly_usage"
+            placeholder="请输入月出票量（当月）"
+            clearable
+          />
+          <span style="color: red"
+            >提示：请不要轻易编辑，用于解决由于手动出票导致机器月出票量限制判断不准确的问题，该值可设置为月出票限制-月剩余可出票数</span
+          >
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="formData.status">
@@ -159,7 +179,9 @@ let formData = reactive({
   card_discount: "",
   balance: "",
   use_limit_day: "",
+  daily_usage: "",
   use_limit_month: "",
+  monthly_usage: "",
   mobile: "",
   status: "",
   remark: ""
@@ -212,7 +234,9 @@ const resetForm = el => {
   formData.card_discount = "";
   formData.balance = "";
   formData.use_limit_day = "";
+  formData.daily_usage = "";
   formData.use_limit_month = "";
+  formData.monthly_usage = "";
   formData.mobile = "";
   formData.status = "1";
   formData.remark = "";
@@ -247,7 +271,9 @@ const open = async cardInfo => {
         formData.card_discount = formInfo.card_discount;
         formData.balance = formInfo.balance;
         formData.use_limit_day = formInfo.use_limit_day;
+        formData.daily_usage = formInfo.daily_usage;
         formData.use_limit_month = formInfo.use_limit_month;
+        formData.monthly_usage = formInfo.monthly_usage;
         formData.mobile = formInfo.mobile;
         formData.remark = formInfo.remark;
         formData.status = formInfo.status;
