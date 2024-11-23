@@ -102,7 +102,6 @@ class OrderAutoLockSeatQueue {
         des: "帮助锁定座位前判断相关信息",
         level: "info",
         info: {
-          targetRow,
           targetRowList,
           lockedSeats,
           targetSeats
