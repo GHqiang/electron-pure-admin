@@ -1893,19 +1893,25 @@ class OrderAutoTicketQueue {
           );
           let targetQuanList =
             quanList.map(item => ({ code: item.code })) || [];
+          let diffNum = Number(ticket_num) - targetQuanList.length;
           if (targetQuanList.length < ticket_num) {
             let newQuanList = await this.getNewQuan({
               quan_value: "lma-5",
               lmaToken,
               black_quans,
-              quanNum: Number(ticket_num) - targetQuanList.length
+              diffNum,
+              quanNum: diffNum + 5
             });
+            // 多查询几张绑定防止有绑券异常导致出票失败情况
             if (newQuanList?.length) {
               // 转换为相同格式
               newQuanList = newQuanList.map(item => ({
                 code: item.coupon_num
               }));
-              targetQuanList = [...targetQuanList, ...newQuanList];
+              targetQuanList = [
+                ...targetQuanList,
+                ...newQuanList.slice(0, diffNum)
+              ];
               this.logList.push({
                 opera_time: getCurrentFormattedDateTime(),
                 des: "从服务端获取券绑定完成",
@@ -2633,7 +2639,8 @@ class OrderAutoTicketQueue {
   // 获取新券
   async getNewQuan({
     quan_value,
-    quanNum,
+    quanNum, // 同步绑券diffNum+5或者是异步绑券券数
+    diffNum = 0, // 距离出票差的券数
     lmaToken,
     asyncFlag,
     black_quans,
@@ -2663,13 +2670,14 @@ class OrderAutoTicketQueue {
         info: {
           quanRes,
           quanNum,
+          diffNum,
           quan_value,
           params
         }
       });
 
       let quanList = quanRes?.data?.quanList || [];
-      if (!quanList?.length && asyncFlag != 1) {
+      if (asyncFlag != 1 && (!quanList?.length || quanList?.length < diffNum)) {
         console.error(conPrefix + `数据库${quan_value}面额券不足`);
         return;
       }
@@ -2695,13 +2703,14 @@ class OrderAutoTicketQueue {
         }
         if (coupon_num) {
           bandQuanList.push({ coupon_num });
-          svApi.addUseQuanRecord({
-            coupon_num: coupon_num,
-            app_name: appFlag,
-            quan_status: "2",
-            use_time: getCurrentFormattedDateTime()
-          });
         }
+        svApi.addUseQuanRecord({
+          coupon_num: coupon_num,
+          app_name: appFlag,
+          quan_status: "3",
+          use_time: getCurrentFormattedDateTime(),
+          remark: !coupon_num ? "绑券异常" : ""
+        });
       }
       return bandQuanList;
     } catch (error) {
@@ -2795,14 +2804,20 @@ class OrderAutoTicketQueue {
           conPrefix + `${quan_value} 面额券不足，从服务端获取并绑定`,
           targetQuanList
         );
+        let diffNum = Number(ticket_num) - targetQuanList.length;
         const newQuanList = await this.getNewQuan({
           quan_value,
           lmaToken,
           black_quans,
-          quanNum: Number(ticket_num) - targetQuanList.length
+          diffNum,
+          quanNum: diffNum + 5
         });
+        // 多查询几张绑定防止有绑券异常导致出票失败情况
         if (newQuanList?.length) {
-          targetQuanList = [...targetQuanList, ...newQuanList];
+          targetQuanList = [
+            ...targetQuanList,
+            ...newQuanList.slice(0, diffNum)
+          ];
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
             des: "从服务端获取券绑定完成",
