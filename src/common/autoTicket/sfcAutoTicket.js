@@ -1807,16 +1807,19 @@ class OrderAutoTicketQueue {
             des: "用券前个人中心目标券不够，从服务端获取",
             level: "info"
           });
+          let diffNum = Number(ticket_num) - quanList.length;
           const newQuanList = await this.getNewQuan({
             city_id,
             cinema_id,
             quan_value: offerRule.quan_value,
             session_id,
             black_quans,
-            quanNum: Number(ticket_num) - quanList.length
+            diffNum,
+            quanNum: diffNum + 5
           });
+          // 多查询几张绑定防止有绑券异常导致出票失败情况
           if (newQuanList?.length) {
-            quanList = [...quanList, ...newQuanList];
+            quanList = [...quanList, ...newQuanList.slice(0, diffNum)];
             this.logList.push({
               opera_time: getCurrentFormattedDateTime(),
               des: "从服务端获取券绑定完成",
@@ -3085,7 +3088,8 @@ class OrderAutoTicketQueue {
   // 获取新券
   async getNewQuan({
     quan_value,
-    quanNum,
+    quanNum, // 同步绑券diffNum+5或者是异步绑券券数
+    diffNum = 0, // 距离出票差的券数
     city_id,
     cinema_id,
     session_id,
@@ -3123,7 +3127,7 @@ class OrderAutoTicketQueue {
       });
 
       let quanList = quanRes?.data?.quanList || [];
-      if (!quanList?.length && asyncFlag != 1) {
+      if (asyncFlag != 1 && (!quanList?.length || quanList?.length < diffNum)) {
         console.error(conPrefix + `数据库${quan_value}面额券不足`);
         return;
       }
@@ -3160,13 +3164,14 @@ class OrderAutoTicketQueue {
         }
         if (coupon_num) {
           bandQuanList.push({ coupon_num });
-          svApi.addUseQuanRecord({
-            coupon_num: coupon_num,
-            app_name: appFlag,
-            quan_status: "2",
-            use_time: getCurrentFormattedDateTime()
-          });
         }
+        svApi.addUseQuanRecord({
+          coupon_num: coupon_num,
+          app_name: appFlag,
+          quan_status: "3",
+          use_time: getCurrentFormattedDateTime(),
+          remark: !coupon_num ? "绑券异常" : ""
+        });
       }
       return bandQuanList;
     } catch (error) {
