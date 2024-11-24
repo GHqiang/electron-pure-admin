@@ -113,8 +113,12 @@ const UME_LIST = [
   "wanxiang"
 ];
 
+// umeh5系列影院集合
+let H5_UME_LIST = ["kmbccf"];
+
 // 影院列表
 const APP_LIST = {
+  kmbccf: "昆明北辰财富",
   lma: "卢米埃",
   hbchyxd: "HBC华谊兄弟",
   ume: "UME",
@@ -206,7 +210,7 @@ const APP_LIST = {
 };
 
 // 非SFC影院集合列表
-const NO_SFC_APP_LIST = [...UME_LIST, "lma"];
+const NO_SFC_APP_LIST = [...UME_LIST, ...H5_UME_LIST, "lma"];
 
 // SFC影院集合列表
 const SFC_APP_LIST = Object.keys(APP_LIST).filter(
@@ -1734,6 +1738,7 @@ const HMA_SPECIAL_CINEMA_LIST = [
 
 // 特殊的名字匹配集合
 const SPECIAL_CINEMA_OBJ = {
+  kmbccf: [],
   lma: HMA_SPECIAL_CINEMA_LIST,
   hbchyxd: HBCHYXD_SPECIAL_CINEMA_LIST,
   ume: UME_SPECIAL_CINEMA_LIST,
@@ -1826,6 +1831,7 @@ const SPECIAL_CINEMA_OBJ = {
 
 // 出票队列打印前缀
 const TICKET_CONPREFIX_OBJ = {
+  kmbccf: "【昆明北辰财富中心自动出票】——",
   lma: "【卢米埃自动出票】——",
   hbchyxd: "【HBC华谊兄弟自动出票】——",
   ume: "【UME自动出票】——",
@@ -1914,6 +1920,12 @@ const TICKET_CONPREFIX_OBJ = {
   cszykd: "【长沙中影凯德自动出票】——",
   cszyyzx: "【长沙中影壹中心自动出票】——",
   qina: "【齐纳国际自动出票】——"
+};
+
+// umeh5系列相关信息
+const H5_UME_CINEMA_OBJ = {
+  // cinemaId、larkSid
+  kmbccf: ["10106", "0fa280a468444a88b0a425da346e7b2d"]
 };
 
 // 微信小程序openid
@@ -2279,6 +2291,8 @@ export {
   SFC_APP_VER_OBJ,
   QUAN_TYPE_FLAG,
   UME_LIST,
+  H5_UME_LIST,
+  H5_UME_CINEMA_OBJ,
   APP_LIST,
   NO_SFC_APP_LIST,
   SFC_APP_LIST,

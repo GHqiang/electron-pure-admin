@@ -2,7 +2,7 @@
 
 import axios from "axios";
 import { ElMessage } from "element-plus";
-import { APP_LIST } from "@/common/constant";
+import { APP_LIST, H5_UME_CINEMA_OBJ } from "@/common/constant";
 import {
   logUpload,
   getCurrentFormattedDateTime,
@@ -328,8 +328,8 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             ...config.params,
             empCode: "",
             leaseCode: "",
-            channelCode: "BEICHEN_H5_PROD_10106_MPS",
-            larkSid: "e783ed22b3944c81bbd55bbe66c606a6",
+            channelCode: `BEICHEN_H5_PROD_${H5_UME_CINEMA_OBJ[app_name][0]}_MPS`,
+            larkSid: H5_UME_CINEMA_OBJ[app_name][1],
             version: "H5",
             appVersion: "H5_5.0"
           };
@@ -339,8 +339,8 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             ...config.data,
             empCode: "",
             leaseCode: "",
-            channelCode: "BEICHEN_H5_PROD_10106_MPS",
-            larkSid: "e783ed22b3944c81bbd55bbe66c606a6",
+            channelCode: `BEICHEN_H5_PROD_${H5_UME_CINEMA_OBJ[app_name][0]}_MPS`,
+            larkSid: H5_UME_CINEMA_OBJ[app_name][1],
             version: "H5",
             appVersion: "H5_5.0"
           };

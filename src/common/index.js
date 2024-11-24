@@ -10,10 +10,16 @@ import createSfcApi from "@/api/sfc-api";
 import createUmeApi from "@/api/ume-api";
 import createLmaApi from "@/api/lma-api";
 import createH5UmeApi from "@/api/h5ume-api";
-import { APP_LIST, UME_LIST, APP_GROUP_OBJ } from "@/common/constant";
+import {
+  APP_LIST,
+  UME_LIST,
+  H5_UME_LIST,
+  APP_GROUP_OBJ
+} from "@/common/constant";
 
 const SFC_API_OBJ = {};
 const UME_API_OBJ = {};
+const H5_UME_API_OBJ = {};
 
 let noSfcList = [...UME_LIST, "lma"];
 let sfcList = Object.keys(APP_LIST).filter(item => !noSfcList.includes(item));
@@ -30,14 +36,19 @@ UME_LIST.forEach(item => {
     app_name: item
   });
 });
+
+H5_UME_LIST.forEach(item => {
+  H5_UME_API_OBJ[item] = createH5UmeApi({
+    app_name: item
+  });
+});
+
 const APP_API_OBJ = {
   ...SFC_API_OBJ,
   ...UME_API_OBJ,
+  ...H5_UME_API_OBJ,
   lma: createLmaApi({
     app_name: "lma"
-  }),
-  h5ume: createH5UmeApi({
-    app_name: "h5ume"
   })
 };
 window.APP_API_OBJ = APP_API_OBJ;
