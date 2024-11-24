@@ -255,6 +255,36 @@ const getSign = t => {
       (y = r(y, h));
   return (a(d) + a(p) + a(m) + a(y)).toLowerCase();
 };
+
+// 正则匹配获取cookie串内的对应key值
+const extractCookieValueByRegex = (cookieString, prefix) => {
+  // 构造正则表达式，其中prefix是我们要匹配的前缀
+  // (?=;)是一个正向前瞻断言，表示匹配后面紧跟分号的位置，但不包括分号在内
+  // |$表示匹配字符串的结尾
+  const regex = new RegExp(`${prefix}([^;]*)(?=;|$)`);
+  const match = cookieString.match(regex);
+
+  // 如果找到匹配项，则返回捕获组（即我们想要的值）
+  // 否则返回undefined
+  return match ? match[1] : undefined;
+};
+
+// 获取url
+const getUrl = (token, url, params) => {
+  // console.log(token, url, params);
+  let signToken = token
+    .split("; ")
+    .map(item => item.split("="))
+    .find(item => item[0] === "_m_h5_tk")?.[1]
+    ?.split("_")?.[0];
+  let t = new Date().getTime();
+  let appKey = "12574478";
+  let signStr =
+    signToken + "&" + t + "&" + appKey + "&" + JSON.stringify(params);
+  let sign = getSign(signStr);
+  let api = url.replace("/h5ume/", "");
+  return `${url}/1.0/?jsv=2.6.0&appKey=${appKey}&t=${t}&sign=${sign}&api=${api}&v=1.0&type=originaljson&timeout=20000&dataType=json`;
+};
 const createAxios = ({ app_name, timeout = 20 }) => {
   // 创建axios实例
   const instance = axios.create({
@@ -322,18 +352,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           delete params.umeToken;
         }
         if (!config.originalUrl) {
-          let signToken = token
-            .split("; ")
-            .map(item => item.split("="))
-            .find(item => item[0] === "_m_h5_tk")?.[1]
-            ?.split("_")?.[0];
-          let t = new Date().getTime();
-          let appKey = "12574478";
-          let signStr =
-            signToken + "&" + t + "&" + appKey + "&" + JSON.stringify(params);
-          let sign = getSign(signStr);
-          let api = config.url.replace("/h5ume/", "");
-          config.url = `${config.url}/1.0/?jsv=2.6.0&appKey=${appKey}&t=${t}&sign=${sign}&api=${api}&v=1.0&type=originaljson&timeout=20000&dataType=json`;
+          config.url = getUrl(token, config.url, params);
           config.originalUrl = config.url;
         }
 
@@ -407,27 +426,64 @@ const createAxios = ({ app_name, timeout = 20 }) => {
 
       // 对响应进行统一处理
       const data = response.data;
+      // console.log("data===>", data);
+      // console.log("response.config", response.config);
       // let whitelistSp = ['/sp/order', '/sp/unlock']
       let whitelistSp = [];
-
+      let config = response.config;
       let isError =
-        response.config.url.indexOf("/h5ume-ser/") !== -1 &&
-        !data?.data?.bizCode !== "0";
+        response.config.url.indexOf("/ume-ser/") !== -1 &&
+        data?.data?.bizCode !== "0";
       if (
         isError &&
         !whitelistSp.some(item => response.config.url.includes(item))
       ) {
         if (data?.ret?.[0] == "FAIL_SYS_TOKEN_EXOIRED::令牌过期") {
-          ElMessage.warning(
-            `${APP_LIST[app_name]}登录失效，请重新设置登录信息`
-          );
-          sendWxPusherMessage({
-            msgType: 1,
-            app_name: APP_LIST[app_name],
-            transferTip: `${APP_LIST[app_name]}登录失效，请检查登录信息维护`
-          });
-          // 此处加个消息推送
-          return Promise.reject(data);
+          if (!config.retryCount) {
+            config.retryCount = 1;
+            config.url = config.originalUrl.split("/1.0/")[0];
+            // console.log("config.url", config.url);
+            let cookieStr = String(data.headers1["set-cookie"]);
+            let _m_h5_tk = extractCookieValueByRegex(cookieStr, "_m_h5_tk=");
+            let _m_h5_tk_enc = extractCookieValueByRegex(
+              cookieStr,
+              "_m_h5_tk_enc="
+            );
+            let token = data.headers1.umetoken;
+            // console.log("oldToken", token);
+            // 接口重试时token续期
+            if (_m_h5_tk) {
+              const regex = new RegExp(`(_m_h5_tk=[^;]+);?`);
+              token = token.replace(regex, `_m_h5_tk=${_m_h5_tk};`);
+            }
+            if (_m_h5_tk_enc) {
+              const regex = new RegExp(`(_m_h5_tk_enc=[^;]+);?`);
+              token = token.replace(regex, `_m_h5_tk_enc=${_m_h5_tk_enc};`);
+            }
+            // console.log("newtoken", token);
+            config.headers["umetoken"] = token;
+            let params =
+              config.method === "get"
+                ? config.originalParams
+                : config.originalData;
+            // console.log("params", params);
+            config.url = getUrl(token, config.url, params);
+            console.log("retryCount-config", config);
+            config.url = config.url.replace("h5ume", "svpi/ume-ser");
+            return instance(config);
+          } else {
+            ElMessage.warning(
+              `${APP_LIST[app_name]}登录失效，请重新设置登录信息`
+            );
+            sendWxPusherMessage({
+              msgType: 1,
+              app_name: APP_LIST[app_name],
+              transferTip: `${APP_LIST[app_name]}登录失效，请检查登录信息维护`
+            });
+
+            // 此处加个消息推送
+            return Promise.reject(data);
+          }
         }
         let isOften = data?.msg?.includes("操作过于频繁");
         if (isOften) {
@@ -442,11 +498,11 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         ElMessage.error(errMsg);
         return Promise.reject(data);
       }
-      return data;
+      return data?.data?.bizValue;
     },
     async error => {
       const { response, config } = error;
-      // console.warn('error-config', config, 'error-response', response)
+      console.warn("error-config", config, "error-response", response);
       // 确保 config 存在
       if (!config) {
         console.warn("请求配置丢失，请稍后再试");
