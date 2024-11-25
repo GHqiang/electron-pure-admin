@@ -546,14 +546,13 @@ class getUmeOfferPrice {
   }
 
   // 获取座位布局
-  async getSeatLayout(data) {
+  async getSeatLayout({ cinemaLinkId, hallId, scheduleId, scheduleKey }) {
     try {
-      let { cinemaLinkId, hallId, scheduleId, scheduleKey } = data || {};
       let params = {
-        cinemaLinkId: cinemaLinkId || "10106",
-        hallId: hallId || "0000000000000006",
-        scheduleId: scheduleId || "1000000834217787",
-        scheduleKey: scheduleKey || "C158AAA6208E699EFDCF2774D3549DDE",
+        cinemaLinkId,
+        hallId,
+        scheduleId,
+        scheduleKey,
         apiVersion: "1.0",
         empCode: "",
         leaseCode: "",
@@ -598,14 +597,11 @@ class getUmeOfferPrice {
         return -1;
       }
       let {
-        displayPrice, // 展示价格
+        displayPrice, // 展示价格(会员价)
         lowestPrice, // 最低价，
         standardPrice, // 标准价格
         originalStandardPrice, // 原始标准价
-        ticketMemberPrice,
-        maxSeatPrice = 0,
-        handlingFee,
-        ticketMemberServiceFeeMin = 0,
+        maxSeatPrice = 0, // 最大座位分区价格
         privilegeTags = [] // 优惠信息
       } = movieInfo;
       this.logList.push({
@@ -613,14 +609,12 @@ class getUmeOfferPrice {
         des: "获取会员价相关信息0",
         level: "info",
         info: {
-          ticketMemberPrice: "会员价：" + ticketMemberPrice,
+          displayPrice: "会员价：" + displayPrice,
           maxSeatPrice: "座位最高价：" + maxSeatPrice,
-          handlingFee: "真实手续费：" + handlingFee,
-          ticketMemberServiceFeeMin: "会员服务费：" + ticketMemberServiceFeeMin,
           privilegeTags
         }
       });
-      let member_price = Math.max(ticketMemberPrice, maxSeatPrice) / 100;
+      let member_price = Math.max(displayPrice, maxSeatPrice) / 100;
       // 会员价为0
       if (member_price === 0) {
         this.logList.push({
@@ -628,16 +622,12 @@ class getUmeOfferPrice {
           des: "获取会员价为0",
           level: "error",
           info: {
-            ticketMemberPrice,
+            displayPrice,
             maxSeatPrice
           }
         });
         return;
       }
-      // 会员价等于真实会员价加手续费加会员服务费
-      member_price =
-        member_price +
-        (Number(handlingFee) + Number(ticketMemberServiceFeeMin)) / 100;
       console.log("获取会员价", member_price);
       if (member_price > 0) {
         const cardRes = await svApi.queryCardList({
@@ -896,9 +886,9 @@ class getUmeOfferPrice {
       const {hallId, scheduleId, scheduleKey} = targetShow
       const areaRes = await this.getSeatLayout({
         cinemaLinkId,
-        hallId, // 待补充取值
-        scheduleId: targetShow?.scheduleId,
-        scheduleKey: targetShow?.scheduleKey
+        hallId,
+        scheduleId,
+        scheduleKey
       });
       let { seatList: seats, areaInfoList: areaInfos } = areaRes || {};
       if (areaInfoList?.length) {
