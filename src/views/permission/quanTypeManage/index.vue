@@ -569,9 +569,6 @@ const getQuanHandle = async () => {
     };
     let quanRes = await svApi.queryQuanList(params);
     let quanList = quanRes?.data?.quanList || [];
-    quanList.forEach(item => {
-      item.create_time = getCurrentDay(new Date(item.create_time));
-    });
     dialogQuanVisible.value = true;
     exportQuanList.value = quanList;
   } catch (error) {

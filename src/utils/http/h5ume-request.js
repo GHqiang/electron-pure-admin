@@ -498,7 +498,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         ElMessage.error(errMsg);
         return Promise.reject(data);
       }
-      return data?.data?.bizValue;
+      return data?.data;
     },
     async error => {
       const { response, config } = error;

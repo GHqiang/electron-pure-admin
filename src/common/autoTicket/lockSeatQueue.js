@@ -124,7 +124,7 @@ class OrderAutoLockSeatQueue {
       }
       // 补全座位信息
       let fillSeatList = targetRowList.filter(item =>
-        fillSeat.includes(item.columnName)
+        fillSeat.includes(+item.columnName)
       );
       console.log("fillSeatList", fillSeatList);
       let seat_ids = fillSeatList.map(item => item.seatCode);

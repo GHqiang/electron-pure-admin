@@ -2,6 +2,8 @@
 import {
   getCurrentFormattedDateTime,
   getCurrentDay,
+  formatTimeOfDay,
+  formatTimeOfTime,
   convertFullwidthToHalfwidth,
   offerRuleMatch,
   getTargetCinema,
@@ -20,10 +22,8 @@ const tokens = platTokens();
 
 class getUmeOfferPrice {
   constructor({ appFlag, plat_name }) {
-    // console.log("APP_API_OBJ", APP_API_OBJ, appFlag, plat_name);
     this.appFlag = appFlag; // 影线标识
     this.plat_name = plat_name; // 平台标识
-    this.conPrefix = APP_LIST[appFlag] + "自动报价——"; // 打印前缀
     this.appApi = APP_API_OBJ[appFlag];
     this.logList = []; // 操作运行日志
   }
@@ -59,7 +59,7 @@ class getUmeOfferPrice {
 
   // 获取最终报价信息（唯一暴漏给外包用的方法）
   async getEndOfferPrice({ order, offerList }) {
-    const { conPrefix, plat_name, appFlag } = this;
+    const { plat_name, appFlag } = this;
     let { supplier_max_price, rewards, order_number } = order || {};
     let endPrice, offerRule;
     try {
@@ -119,7 +119,7 @@ class getUmeOfferPrice {
         offerList,
         plat_name
       });
-      console.warn(conPrefix + "最终报价返回", endPrice);
+      console.warn("最终报价返回", endPrice);
       if (endPrice) {
         // 最终报价
         offerRule.offer_end_amount = endPrice;
@@ -168,7 +168,6 @@ class getUmeOfferPrice {
 
   // 获取最终匹配到的报价规则
   async getEndMatchOfferRule(order) {
-    const { conPrefix } = this;
     try {
       const matchRuleListRes = offerRuleMatch(order);
       let matchRuleList = matchRuleListRes?.matchRuleList || [];
@@ -195,9 +194,9 @@ class getUmeOfferPrice {
       });
       // 获取报价最低的报价规则
       let endRule = await this.getMinAmountOfferRule(matchRuleList, order);
-      console.warn(conPrefix + "最终匹配到的报价规则", endRule);
+      console.warn("最终匹配到的报价规则", endRule);
       if (!endRule) {
-        console.error(conPrefix + "最终匹配到的报价规则不存在");
+        console.error("最终匹配到的报价规则不存在");
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: "最终匹配到的报价规则不存在",
@@ -208,7 +207,7 @@ class getUmeOfferPrice {
       endRule = JSON.parse(JSON.stringify(endRule));
       return endRule;
     } catch (error) {
-      console.error(conPrefix + "获取最终匹配报价规则异常", error);
+      console.error("获取最终匹配报价规则异常", error);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: "获取最终匹配报价规则异常",
@@ -222,7 +221,6 @@ class getUmeOfferPrice {
 
   // 获取报价最低的报价规则
   async getMinAmountOfferRule(ruleList, order) {
-    const { conPrefix } = this;
     try {
       // 1、有会员日报价规则命中优先使用会员日报价规则
       let onlyMemberDayRuleList = ruleList.filter(
@@ -233,7 +231,7 @@ class getUmeOfferPrice {
         (itemA, itemB) => itemA.offerAmount - itemB.offerAmount
       );
       console.log(
-        conPrefix + "命中会员日报价规则从小往大排序",
+        "命中会员日报价规则从小往大排序",
         onlyMemberDayRuleList
       );
       if (onlyMemberDayRuleList.length) {
@@ -248,7 +246,7 @@ class getUmeOfferPrice {
       let otherRuleList = ruleList.filter(
         item => !item.memberDay && item.offerType !== "3"
       );
-      console.warn(conPrefix + "排除会员日后的其它规则", otherRuleList);
+      console.warn("排除会员日后的其它规则", otherRuleList);
       // 日常固定报价规则
       let fixedAmountRuleList = otherRuleList.filter(
         item => item.offerType === "1" && item.offerAmount
@@ -292,7 +290,7 @@ class getUmeOfferPrice {
 
         if (!memberPriceRes) {
           console.warn(
-            conPrefix + "最小加价规则获取会员价失败,返回最小固定报价规则",
+            "最小加价规则获取会员价失败,返回最小固定报价规则",
             mixFixedAmountRule
           );
           this.logList.push({
@@ -364,7 +362,7 @@ class getUmeOfferPrice {
         });
       } else {
         console.warn(
-          conPrefix + "最小加价规则不存在,返回最小固定报价规则",
+          "最小加价规则不存在,返回最小固定报价规则",
           mixFixedAmountRule
         );
         this.logList.push({
@@ -379,7 +377,7 @@ class getUmeOfferPrice {
       }
       if (!mixFixedAmountRule) {
         console.warn(
-          conPrefix + "最小固定报价规则不存在，返回最小加价规则",
+          "最小固定报价规则不存在，返回最小加价规则",
           mixAddAmountRule
         );
         return mixAddAmountRule;
@@ -411,7 +409,7 @@ class getUmeOfferPrice {
         return mixAddAmountRule;
       }
     } catch (error) {
-      console.error(conPrefix + "获取最低报价规则异常", error);
+      console.error("获取最低报价规则异常", error);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: "获取最低报价规则异常",
@@ -422,6 +420,7 @@ class getUmeOfferPrice {
       });
     }
   }
+
   // 获取真实加价金额
   getRealAddMount({ real_member_price, addMountRule }) {
     try {
@@ -446,7 +445,6 @@ class getUmeOfferPrice {
   }
   // 获取最终报价
   async getEndPrice(params) {
-    const { conPrefix } = this;
     try {
       let {
         cost_price,
@@ -508,7 +506,7 @@ class getUmeOfferPrice {
       let expectProfit = (price - real_cost_price).toFixed(2);
       if (price <= real_cost_price) {
         let str = `最终报价${price}低于真实成本${real_cost_price}`;
-        console.error(conPrefix + str);
+        console.error(str);
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: str,
@@ -549,22 +547,21 @@ class getUmeOfferPrice {
 
   // 获取座位布局
   async getSeatLayout(data) {
-    const { conPrefix } = this;
     try {
-      let { cinemaCode, cinemaLinkId, scheduleId, scheduleKey } = data || {};
+      let { cinemaLinkId, hallId, scheduleId, scheduleKey } = data || {};
       let params = {
-        params: {
-          cinemaCode,
-          cinemaLinkId,
-          scheduleId,
-          scheduleKey,
-          channelCode: "QD0000001",
-          sysSourceCode: "YZ001"
-        }
-      };
-      console.log(conPrefix + "获取座位布局参数", params);
+        cinemaLinkId: cinemaLinkId || "10106",
+        hallId: hallId || "0000000000000006",
+        scheduleId: scheduleId || "1000000834217787",
+        scheduleKey: scheduleKey || "C158AAA6208E699EFDCF2774D3549DDE",
+        apiVersion: "1.0",
+        empCode: "",
+        leaseCode: "",
+      }
+      console.log("获取座位布局参数", params);
       const res = await this.appApi.getMoviePlaySeat(params);
-      console.log(conPrefix + "获取座位布局返回", res);
+      let sections = res.bizValue?.sections?.[0] || {}
+      console.log("获取座位布局返回", res);
       // this.logList.push({
       //   opera_time: getCurrentFormattedDateTime(),
       //   des: "获取座位布局返回",
@@ -573,9 +570,9 @@ class getUmeOfferPrice {
       //     res
       //   }
       // });
-      return res.data;
+      return sections;
     } catch (error) {
-      console.error(conPrefix + "获取座位布局异常", error);
+      console.error("获取座位布局异常", error);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: "获取座位布局异常",
@@ -589,23 +586,27 @@ class getUmeOfferPrice {
 
   // 获取会员价
   async getMemberPrice(order) {
-    const { conPrefix, appFlag } = this;
+    const { appFlag } = this;
     try {
-      console.log(conPrefix + "准备获取会员价", order);
+      console.log("准备获取会员价", order);
       const { ticket_num, app_name } = order;
       // 获取当前场次电影信息
       let movieInfo = await this.getMovieInfo(order);
-      console.log(conPrefix + "待报价订单当前场次电影相关信息", movieInfo);
+      console.log("待报价订单当前场次电影相关信息", movieInfo);
       if (!movieInfo) {
-        console.error(conPrefix + "获取当前场次电影信息失败", "不再进行报价");
+        console.error("获取当前场次电影信息失败", "不再进行报价");
         return -1;
       }
       let {
+        displayPrice, // 展示价格
+        lowestPrice, // 最低价，
+        standardPrice, // 标准价格
+        originalStandardPrice, // 原始标准价
         ticketMemberPrice,
         maxSeatPrice = 0,
         handlingFee,
         ticketMemberServiceFeeMin = 0,
-        activityPrices = []
+        privilegeTags = [] // 优惠信息
       } = movieInfo;
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
@@ -616,7 +617,7 @@ class getUmeOfferPrice {
           maxSeatPrice: "座位最高价：" + maxSeatPrice,
           handlingFee: "真实手续费：" + handlingFee,
           ticketMemberServiceFeeMin: "会员服务费：" + ticketMemberServiceFeeMin,
-          activityPrices
+          privilegeTags
         }
       });
       let member_price = Math.max(ticketMemberPrice, maxSeatPrice) / 100;
@@ -637,25 +638,7 @@ class getUmeOfferPrice {
       member_price =
         member_price +
         (Number(handlingFee) + Number(ticketMemberServiceFeeMin)) / 100;
-      console.log(conPrefix + "获取会员价", member_price);
-      // 耀莱暂时不考虑
-      if (
-        appFlag !== "yaolai" &&
-        activityPrices?.length &&
-        UME_LIST.includes(appFlag)
-      ) {
-        // [{
-        //    "activityId": 23,
-        //    "activityCode": "YPHD000000023",
-        //    "filmActivityType": "10",
-        //    "promotionMethod": "UNITY",
-        //    "activityName": "【华中区】周一会员日",
-        //    "amountOrSale": 610.00, // 优惠金额
-        //    "partCardType": "CHOOSE"
-        //  }]
-        // 如果存在会员活动会员价先减1，不减amountOrSale是因为怕把价格压下去
-        // member_price = member_price - 1;
-      }
+      console.log("获取会员价", member_price);
       if (member_price > 0) {
         const cardRes = await svApi.queryCardList({
           app_name: app_name,
@@ -721,7 +704,7 @@ class getUmeOfferPrice {
           }
         });
         if (!cardList.length) {
-          console.error(conPrefix + "影院单卡出票限制");
+          console.error("影院单卡出票限制");
           this.logList.push({
             opera_time: getCurrentFormattedDateTime(),
             des: "影院单卡出票限制，无可用卡",
@@ -764,7 +747,7 @@ class getUmeOfferPrice {
           discount
         };
       } else {
-        console.warn(conPrefix + "会员价未负，非会员价");
+        console.warn("会员价未负，非会员价");
         // if (nonmember_price) {
         //   this.logList.push({
         //     opera_time: getCurrentFormattedDateTime(),
@@ -781,7 +764,7 @@ class getUmeOfferPrice {
         // }
       }
     } catch (error) {
-      console.error(conPrefix + "获取会员价异常", error);
+      console.error("获取会员价异常", error);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: "获取会员价异常",
@@ -793,9 +776,9 @@ class getUmeOfferPrice {
     }
   }
 
-  // 获取电影信息
+  // 获取当前场次电影信息
   async getMovieInfo(order) {
-    const { conPrefix, appFlag } = this;
+    const { appFlag } = this;
     let { city_name, film_name, show_time, cinema_code, cinema_name } = order;
     try {
       // 1、获取城市影院列表
@@ -811,7 +794,7 @@ class getUmeOfferPrice {
       let cinemaList =
         allCinemaList?.find(item => item.cityName.includes(city_name))
           ?.cinemaList || [];
-      console.log(conPrefix + "获取城市影院列表返回", cinemaList);
+      console.log("获取城市影院列表返回", cinemaList);
 
       // 2、获取目标影院
       let targetCinema = cinemaList.find(
@@ -821,7 +804,7 @@ class getUmeOfferPrice {
         targetCinema = getTargetCinema(cinema_name, cinemaList, appFlag);
       }
       if (!targetCinema) {
-        console.error(conPrefix + "获取目标影院失败");
+        console.error("获取目标影院失败");
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
           des: "获取目标影院失败",
@@ -835,9 +818,8 @@ class getUmeOfferPrice {
         return;
       }
       // 3、获取影院放映信息用于拿会员价
-      const { cinemaCode, cinemaLinkId } = targetCinema;
+      const { cinemaLinkId } = targetCinema;
       const movie_data = await this.getMoviePlayInfo({
-        cinemaCode,
         cinemaLinkId
       });
       // 4、获取目标影片信息
@@ -864,14 +846,13 @@ class getUmeOfferPrice {
       }
       console.log("movieInfo", movieInfo, film_name);
       // 5、获取目标影片的放映日期
-      const { filmUniqueId } = movieInfo;
+      const { filmId } = movieInfo;
       const playDateList = await this.getMoviePlayDate({
-        cinemaCode,
         cinemaLinkId,
-        filmUniqueId
+        filmId
       });
       let start_day = show_time.split(" ")[0];
-      let targetDate = playDateList?.find(item => item.showDate === start_day);
+      let targetDate = playDateList?.find(item => formatTimeOfDay(+item.date) === start_day);
       if (!targetDate) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
@@ -885,15 +866,11 @@ class getUmeOfferPrice {
         return;
       }
       // 获取某个放映日期的场次列表
-      const showList = await this.getMoviePlayTime({
-        cinemaCode,
-        cinemaLinkId,
-        filmUniqueId,
-        showDate: targetDate.showDate
-      });
+      const showList = targetDate.schedules || []
+
       let start_time = show_time.split(" ")[1].slice(0, 5);
       let targetShow = showList.find(
-        item => item.showDateTime.split(" ")[1].slice(0, 5) === start_time
+        item => formatTimeOfTime(+item.showTime).split(" ")[1].slice(0, 5) === start_time
       );
       if (!targetShow) {
         console.error("匹配影片放映场次失败", showList, start_time);
@@ -916,24 +893,23 @@ class getUmeOfferPrice {
           targetShow
         }
       });
+      const {hallId, scheduleId, scheduleKey} = targetShow
       const areaRes = await this.getSeatLayout({
-        cinemaCode,
         cinemaLinkId,
+        hallId, // 待补充取值
         scheduleId: targetShow?.scheduleId,
         scheduleKey: targetShow?.scheduleKey
       });
-      let { seatList: seat_data, areaInfoList } = areaRes || {};
+      let { seatList: seats, areaInfoList: areaInfos } = areaRes || {};
       if (areaInfoList?.length) {
         // 座位分区从高到低排序
         let areaList = areaInfoList
           .map(item => {
-            let priceInfo;
+            let priceInfo  ={ settlePrice: item.areaPrice || 0 };
             if (item.areaMemberPrice?.length) {
               priceInfo = item.areaMemberPrice.sort(
                 (a, b) => b.settlePrice - a.settlePrice
               )[0];
-            } else {
-              priceInfo = { settlePrice: item.areaSettlePrice || 0 };
             }
             return {
               ...item,
@@ -989,7 +965,7 @@ class getUmeOfferPrice {
       }
       return targetShow;
     } catch (error) {
-      console.error(conPrefix + "获取当前场次电影信息异常", error);
+      console.error("获取当前场次电影信息异常", error);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: "获取当前场次电影信息异常",
@@ -1001,31 +977,53 @@ class getUmeOfferPrice {
     }
   }
 
-  // 获取电影放映信息
-  async getMoviePlayInfo(data) {
-    const { conPrefix } = this;
+  // 获取影院放映列表
+  async getMoviePlayInfo({cinemaLinkId}) {
     try {
-      let { cinemaCode, cinemaLinkId } = data || {};
       let params = {
-        params: {
-          channelCode: "QD0000001",
-          sysSourceCode: "YZ001",
-          cinemaCode,
-          cinemaLinkId
-        }
+        empCode: "",
+        leaseCode: "",
+        cinemaLinkId,
+        posterSize: "SMALL",
       };
-      console.log(conPrefix + "获取影院放映列表参数", params);
+      console.log("获取影院放映列表参数", params);
       const res = await this.appApi.getMoviePlayInfo(params);
-      console.log(conPrefix + "获取影院放映列表返回", res);
-      // 只获取出售中的列表，即将上映暂不返回
-      return (
-        res.data?.find(item => item.showStatus === "SHOWING")?.fimlList || []
-      );
-    } catch (error) {
-      console.error(conPrefix + "获取电影放映信息异常", error);
+      let fimlList = res?.bizValue || []
+      // [
+
+      //     {
+      //         "actors": "宋佳,钟楚曦,章宇",
+      //         "directors": "邵艺辉",
+      //         "filmId": "001104702024",
+      //         "filmName": "好东西",
+      //         "filmVersion": "2D",
+      //         "introduction": "爱逞强的单亲妈妈王铁梅（宋佳 饰）带小孩王茉莉（曾慕梅 饰）搬到新家，结识了所谓清醒恋爱脑的邻居小叶（钟楚曦 饰）。两位性格迥异的女性，一个坚强，一个柔软，一个擅长给人当妈，一个擅长随时撒谎。面对旧创伤和新挑战，她们彼此温暖互相慰藉。\r\n     而围绕王铁梅的两个男人，前夫（赵又廷 饰）不时“添乱”，女儿的鼓手老师（章宇 饰）似乎充满新的可能。作为已经觉醒的女人们和学习过性别议题的男人们，会遇到什么新问题？会如何看待自己和世界？",
+      //         "poster": "https://gw.alicdn.com/bao/uploaded/i1/O1CN01c2Josl22fq5URZwAm_!!6000000007148-0-alipicbeacon.jpg_300x300.jpg",
+      //         "privilegeTags": [
+      //             {
+      //                 "shortActivityTag": "惠"
+      //             }
+      //         ],
+      //         "rating": "9.7",
+      //         "showDate": "1732204800000",
+      //         "showStatus": "SHOWING"
+      //     },
+      // ]
+      console.log("获取影院放映列表返回", fimlList);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
-        des: "获取电影放映信息异常",
+        des: "获取影院放映列表返回",
+        level: "info",
+        info: {
+          fimlList
+        }
+      });
+      return fimlList
+    } catch (error) {
+      console.error("获取影院放映列表异常", error);
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取影院放映列表异常",
         level: "error",
         info: {
           error
@@ -1033,27 +1031,31 @@ class getUmeOfferPrice {
       });
     }
   }
-  // 获取电影放映日期
-  async getMoviePlayDate(data) {
-    const { conPrefix } = this;
+
+  // 获取电影放映场次
+  async getMoviePlayDate({cinemaLinkId, filmId}) {
     try {
-      let { cinemaCode, cinemaLinkId, filmUniqueId } = data || {};
       let params = {
-        params: {
-          cinemaCode: cinemaCode,
-          filmUniqueId: filmUniqueId,
-          keepLoading: true,
-          channelCode: "QD0000001",
-          sysSourceCode: "YZ001",
-          cinemaLinkId: cinemaLinkId
-        }
+        empCode: "",
+        leaseCode: "",
+        cinemaLinkId,
       };
-      console.log(conPrefix + "获取电影放映日期参数", params);
+      console.log("获取电影放映日期参数", params);
       const res = await this.appApi.getMoviePlayDate(params);
-      console.log(conPrefix + "获取电影放映日期返回", res);
-      return res.data || [];
+      console.log("获取电影放映日期返回", res);
+      let films = res?.bizValue?.films || [];
+      let filmDates = filmId.filter(item => item.filmId === filmId)?.dates || []
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取电影放映日期返回",
+        level: "info",
+        info: {
+          filmDates
+        }
+      });
+      return filmDates
     } catch (error) {
-      console.error(conPrefix + "获取电影放映日期异常", error);
+      console.error("获取电影放映日期异常", error);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: "获取电影放映日期异常",
@@ -1065,67 +1067,40 @@ class getUmeOfferPrice {
     }
   }
 
-  // 获取电影放映场次
-  async getMoviePlayTime(data) {
-    const { conPrefix } = this;
-    let { cinemaCode, cinemaLinkId, filmUniqueId, showDate } = data || {};
-    let params = {
-      params: {
-        cinemaCode: cinemaCode,
-        filmUniqueId: filmUniqueId,
-        showDate: showDate,
-        channelCode: "QD0000001",
-        sysSourceCode: "YZ001",
-        cinemaLinkId: cinemaLinkId
-      }
-    };
-    try {
-      console.log(conPrefix + "获取电影放映场次参数", params);
-      const res = await this.appApi.getMoviePlayTime(params);
-      console.log(conPrefix + "获取电影放映场次返回", res);
-      this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
-        des: "获取电影放映场次返回",
-        level: "info",
-        info: {
-          params,
-          res
-        }
-      });
-      return res.data || [];
-    } catch (error) {
-      console.error(conPrefix + "获取电影放映信息异常", error);
-      this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
-        des: "获取电影放映信息异常",
-        level: "error",
-        info: {
-          error,
-          params
-        }
-      });
-    }
-  }
-
   // 获取城市影院列表
   async getCityCinemaList() {
-    const { conPrefix } = this;
     try {
       let params = {
-        params: {
-          channelCode: "QD0000001",
-          sysSourceCode: "YZ001",
-          cinemaCode: "32012801",
-          cinemaLinkId: "15946"
-        }
+        empCode: "",
+        leaseCode: "",
       };
-      console.log(conPrefix + "获取城市影院列表参数", params);
+      console.log("获取城市影院列表参数", params);
       const res = await this.appApi.getCinemaList(params);
-      console.log(conPrefix + "获取城市影院列表返回", res);
-      let list = res.data || [];
+      console.log("获取城市影院列表返回", res);
+      let list = res.bizValue?.citys || []
+      // 通过排查以往ume系列订单，发现cinemaCode和cinemaLinkId值并不一样，故此处先不赋同值
+      list = list.map(item => ({
+        cityName: item.cityName,
+        cinemaList: item.cinemas.map(itemA => {...itemA, cinemaCode: itemA.cinemaCode}),
+      }))
+      // [
+      //     {
+      //         "alphabet": "KUNMING",
+      //         "cinemas": [
+      //             {
+      //                 "address": "盘龙区北京路延长线北辰财富中心E栋4楼",
+      //                 "cinemaLinkId": "10106",
+      //                 "cinemaName": "昆明北辰财富中心影院（昆明中永影视）"
+      //             }
+      //         ],
+      //         "cityCode": "530100",
+      //         "cityName": "昆明",
+      //         "firstLetter": "K"
+      //     }
+      // ]
       return list;
     } catch (error) {
-      console.error(conPrefix + "获取城市影院列表异常", error);
+      console.error("获取城市影院列表异常", error);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: "获取城市影院列表异常",

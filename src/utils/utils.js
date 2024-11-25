@@ -15,6 +15,64 @@ import {
   ZHEYINGSHIDAI_CINEMA_NAME,
   TPYYC_CINEMA_NAME_BY_SFC
 } from "@/common/constant";
+
+// 格式化时间 YYYY-MM-DD HH:mm:ss
+function formatTimeOfTime(sjc) {
+  try {
+    if (!sjc) return "";
+    const now = new Date(sjc);
+    const year = now.getFullYear();
+    const month = padZero(now.getMonth() + 1);
+    const date = padZero(now.getDate());
+    const hours = padZero(now.getHours());
+    const minutes = padZero(now.getMinutes());
+    const seconds = padZero(now.getSeconds());
+    return `${year}-${month}-${date} ${hours}:${minutes}:${seconds}`;
+  } catch (err) {
+    return sjc;
+  }
+}
+
+// 格式化日期 YYYY-MM-DD
+function formatTimeOfDay(sjc) {
+  try {
+    if (!sjc) return "";
+    const now = new Date(sjc);
+    const year = now.getFullYear();
+    const month = padZero(now.getMonth() + 1);
+    const date = padZero(now.getDate());
+    return `${year}-${month}-${date}`;
+  } catch (err) {
+    return sjc;
+  }
+}
+
+// 获取当前时间 YYYY-MM-DD HH:mm:ss
+function getCurrentTime() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = padZero(now.getMonth() + 1);
+  const date = padZero(now.getDate());
+  const hours = padZero(now.getHours());
+  const minutes = padZero(now.getMinutes());
+  const seconds = padZero(now.getSeconds());
+  return `${year}-${month}-${date} ${hours}:${minutes}:${seconds}`;
+}
+
+// 获取当前日期 YYYY-MM-DD
+function getCurrentDay() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = padZero(now.getMonth() + 1);
+  const date = padZero(now.getDate());
+  return `${year}-${month}-${date}`;
+}
+
+// 辅助函数：补零
+function padZero(num) {
+  return `0${num}`.slice(-2);
+}
+
 /**
  * 获取当前日期和时间的格式化字符串
  * 无参数
@@ -49,40 +107,6 @@ function isDateInCurrentMonth(date) {
     dateToCheck.getFullYear() === currentDate.getFullYear() &&
     dateToCheck.getMonth() === currentDate.getMonth()
   );
-}
-
-// YYYY-MM-DD
-function getCurrentDay(sjc) {
-  const now = !sjc ? new Date() : new Date(sjc);
-
-  // 获取年、月、日、小时、分钟、秒
-  const year = now.getFullYear();
-  const month = ("0" + (now.getMonth() + 1)).slice(-2); // 月份数字是从0开始的，所以需要加1
-  const date = ("0" + now.getDate()).slice(-2);
-
-  // 组合成所需格式
-  const formattedDateTime = `${year}-${month}-${date}`;
-
-  return formattedDateTime;
-}
-
-/**
- * 获取当前时间的格式化字符串
- * 无参数
- * @return {string} 返回格式为 "HH:MM:SS" 的字符串
- */
-function getCurrentTime(sjc) {
-  const now = !sjc ? new Date() : new Date(sjc);
-
-  // 获取小时、分钟、秒
-  const hours = ("0" + now.getHours()).slice(-2);
-  const minutes = ("0" + now.getMinutes()).slice(-2);
-  const seconds = ("0" + now.getSeconds()).slice(-2);
-
-  // 组合成所需格式
-  const formattedDateTime = `${hours}:${minutes}:${seconds}`;
-
-  return formattedDateTime;
 }
 
 function getFormattedDateTime(sjc) {
@@ -1947,7 +1971,9 @@ function calculateMarkup(comparePrice, memberPrice, ruleList) {
  * @param {number} maxSeatNumber - 最大座位数，如：15
  * @returns {Array} - 调整后的目标座位列表
  */
-function adjustSeats(lockedSeats, targetSeats, maxSeatNumber, flag) {
+const adjustSeats = (lockedSeats, targetSeats, maxSeatNumber, flag) => {
+  lockedSeats = lockedSeats.map(item => +item);
+  targetSeats = targetSeats.map(item => +item);
   // 将已锁定座位和目标座位合并并排序
   const allSeats = [...lockedSeats, ...targetSeats].sort((a, b) => a - b);
 
@@ -1991,7 +2017,7 @@ function adjustSeats(lockedSeats, targetSeats, maxSeatNumber, flag) {
       return fillSeats;
     }
   }
-}
+};
 
 export {
   adjustSeats, // 获取需要帮助锁定的座位
@@ -2000,8 +2026,10 @@ export {
   removeLeadingZeros,
   isDateInCurrentMonth, // 判断某个日期是否在当月内：YYYY-MM-DD
   getCurrentFormattedDateTime, // 获取当前时间：YYYY-MM-DD HH:MM:SS
-  getCurrentDay, // 获取当前天：YYYY-MM-DD
-  getCurrentTime, // 获取当前时间：HH:MM:SS
+  formatTimeOfTime, // 格式化时间 YYYY-MM-DD HH:mm:ss
+  formatTimeOfDay, // 格式化日期 YYYY-MM-DD
+  getCurrentDay, // 获取当前天 YYYY-MM-DD
+  getCurrentTime, // 获取当前时间 YYYY-MM-DD HH:mm:ss
   parseExcel, // 解析xlsx文件
   createExcelDown, // 生成excel文件并下载
   exportExcel, // 导出
