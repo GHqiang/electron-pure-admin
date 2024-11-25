@@ -100,6 +100,9 @@
         <el-button type="danger" :disabled="!hasSelected" @click="batchDelete"
           >批量删除</el-button
         >
+        <el-button type="primary" @click="getQuanInventory"
+          >查询券库存</el-button
+        >
         <el-upload
           ref="uploadRef"
           style="margin-left: 15px"
@@ -267,6 +270,22 @@
           <el-button type="primary" @click="exportQuanHandle"> 确定 </el-button>
         </div>
       </template>
+    </el-dialog>
+
+    <el-dialog
+      v-model="dialogQueryQuanVisible"
+      title="服务器券库存"
+      width="800"
+    >
+      <el-table :data="quanData" border>
+        <el-table-column type="index" label="序号" width="120" />
+        <el-table-column property="quan_value" sortable label="券类型">
+          <template #default="{ row }">
+            <span>{{ formatQuanType(row.quan_value) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column property="remaining_count" sortable label="数量" />
+      </el-table>
     </el-dialog>
   </div>
 </template>
@@ -477,6 +496,31 @@ const batchDelete = () => {
           message: "删除取消"
         });
       });
+  }
+};
+
+// 券库存弹框
+const dialogQueryQuanVisible = ref(false);
+const quanData = ref([]); // 券库存列表
+
+// 格式化券类型展示
+const formatQuanType = quan_value => {
+  return (
+    quanType.value?.find(item => item.quan_value === quan_value)?.quan_name ||
+    quan_value
+  );
+};
+
+// 查询券库存
+const getQuanInventory = async () => {
+  try {
+    const res = await svApi.queryQuanInventory();
+    console.warn("查询券库存返回", res);
+    let quanList = res.data?.quanList;
+    dialogQueryQuanVisible.value = true;
+    quanData.value = quanList;
+  } catch (error) {
+    console.warn("查询券库存返回异常", error);
   }
 };
 
