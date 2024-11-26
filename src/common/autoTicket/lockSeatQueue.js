@@ -88,9 +88,11 @@ class OrderAutoLockSeatQueue {
       let targetRowNum = lockseat.slice(0, 1); // 10
       // 获取目标行座位列表
       let targetRowList = seatList.filter(item => item.rowName == targetRowNum);
-      // 获取目标行已锁定座位(0是未售)
+      // 获取目标行已锁定座位(ume0是未售,h5ume1是未售)
       let lockedSeats = targetRowList
-        .filter(item => item.status != 0)
+        .filter(item =>
+          UME_LIST.includes(app_name) ? item.status != 0 : item.status != 1
+        )
         .map(item => item.columnName);
       // 获取目标行目标锁定座位
       let targetSeats = lockseat

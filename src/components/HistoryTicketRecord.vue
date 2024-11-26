@@ -179,6 +179,7 @@
         width="85"
       />
       <el-table-column prop="user_name" label="出票人" width="85" />
+      <el-table-column prop="mobile" label="出票手机号" width="95" />
       <el-table-column prop="cinema_name" label="影院" width="240" />
       <el-table-column prop="hall_name" label="影厅" width="90" />
       <el-table-column prop="film_name" label="片名" width="110" />
