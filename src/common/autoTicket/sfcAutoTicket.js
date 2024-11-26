@@ -925,7 +925,10 @@ class OrderAutoTicketQueue {
         start_day,
         start_time
       } = otherParams || {};
-      rewards = offerRule?.rewards || 0;
+      // 如果待出票订单里没有就去报价记录里拿
+      if (!rewards || Number(rewards) == 0) {
+        rewards = offerRule?.rewards || 0;
+      }
       console.log("this.currentParamsInx开始", this.currentParamsInx);
       if (this.currentParamsInx === 0) {
         const phone = this.currentParamsList[0].mobile;

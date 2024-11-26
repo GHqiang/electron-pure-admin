@@ -195,6 +195,11 @@ async function lierenOrderFetch() {
       time: 1710125670
     };
     let list = res?.data || [];
+    list = list.map(item => ({
+      ...item,
+      // rewards: item.rewards == 1 ? 4 : 0,
+      rewards: [2, 3].includes(item.order_urgent) ? 4 : 0 // 0-普通 1-加急 2-特急 3-vip
+    }));
     if (isTestOrder) {
       list = mockRes?.data || [];
     }

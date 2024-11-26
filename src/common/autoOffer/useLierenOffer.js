@@ -137,7 +137,8 @@ class OrderAutoOfferQueue {
             ...item,
             plat_name: "lieren",
             app_name: getCinemaFlag(item),
-            rewards: item.rewards == 1 ? 4 : 0,
+            // rewards: item.rewards == 1 ? 4 : 0,
+            rewards: [2, 3].includes(item.order_urgent) ? 4 : 0, // 0-普通 1-加急 2-特急 3-vip
             // 转为截止时间戳，原值： 1727009794
             offer_end_time: item.sytime * 1000
           };

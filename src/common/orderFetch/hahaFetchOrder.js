@@ -69,9 +69,9 @@ class OrderAutoFetchQueue {
             b_id // 确认接货id
           } = item;
           let lockseat = seatInfo
-              .split(",")
-              .map(itemA => removeLeadingZeros(itemA + "座"))
-              .join(" ")
+            .split(",")
+            .map(itemA => removeLeadingZeros(itemA + "座"))
+            .join(" ");
           return {
             id: id,
             tpp_price: maoyan_price,

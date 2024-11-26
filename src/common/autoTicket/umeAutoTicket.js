@@ -838,7 +838,10 @@ class OrderAutoTicketQueue {
       offerRule,
       targetShow
     } = otherParams || {};
-    rewards = offerRule?.rewards || 0;
+    // 如果待出票订单里没有就去报价记录里拿
+    if (!rewards || Number(rewards) == 0) {
+      rewards = offerRule?.rewards || 0;
+    }
     try {
       if (this.currentParamsInx === 0) {
         const phone = this.currentParamsList[0].mobile;
