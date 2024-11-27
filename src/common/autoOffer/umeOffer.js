@@ -1028,6 +1028,7 @@ class getUmeOfferPrice {
           fimlList
         }
       });
+      return fimlList;
     } catch (error) {
       console.error(conPrefix + "获取电影放映信息异常", error);
       this.logList.push({
