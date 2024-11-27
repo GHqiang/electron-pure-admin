@@ -41,6 +41,8 @@ H5_UME_LIST.forEach(item => {
   H5_UME_API_OBJ[item] = createH5UmeApi({
     app_name: item
   });
+  // 这里执行一下主要是为了解决上来就请求非getCinemaList接口会报错，这里调一下是为了补充令牌（cookie里的_m_h5_tk）
+  H5_UME_API_OBJ[item].getCinemaList();
 });
 
 const APP_API_OBJ = {

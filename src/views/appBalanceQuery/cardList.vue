@@ -248,7 +248,12 @@ const {
 
 import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import CardDialog from "@/components/CardDialog.vue";
-import { APP_LIST, UME_LIST } from "@/common/constant";
+import {
+  APP_LIST,
+  UME_LIST,
+  H5_UME_LIST,
+  H5_UME_CINEMA_OBJ
+} from "@/common/constant";
 import { APP_API_OBJ } from "@/common/index.js";
 import {
   getCurrentFormattedDateTime,
@@ -403,6 +408,13 @@ const getCardListByApp = async (app_name, phone, session_id) => {
         // cinemaLinkId: "15953"
       };
       params.session_id = session_id;
+    } else if (H5_UME_LIST.includes(app_name)) {
+      params = {
+        cinemaLinkId: H5_UME_CINEMA_OBJ[app_name][0],
+        pageNo: 1,
+        pageSize: 30,
+        umeToken: session_id
+      };
     } else if (app_name === "lma") {
       params.lmaToken = session_id;
     } else {
@@ -420,6 +432,13 @@ const getCardListByApp = async (app_name, phone, session_id) => {
         card_id: item.cardInstanceId + "",
         card_num: item.cardNo,
         balance: item.cardAmount / 100 + ""
+      }));
+    } else if (H5_UME_LIST.includes(app_name)) {
+      cardList = res.bizValue || [];
+      cardList = cardList.map(item => ({
+        card_id: item.cardNumber,
+        card_num: item.cardNumber,
+        balance: (item.balance || 0) / 100 + ""
       }));
     } else if (app_name === "lma") {
       // 卢米埃只获取主卡，其它的出票后更新卡余额
@@ -534,6 +553,13 @@ const syncCardInfo = async () => {
         (formData.app_name ? itemA.app_name == formData.app_name : true)
     );
     console.log("该手机号的loginInfoListt", loginInfoList);
+    if (!loginInfoList?.length) {
+      ElMessage.warning(
+        `该手机号：${APP_LIST[formData.app_name]} 未维护登录信息`
+      );
+      loading.close();
+      return;
+    }
     // 2、获取服务端已维护的卡列表
     let cardRes = await svApi.queryCardList({
       page_num: 1,

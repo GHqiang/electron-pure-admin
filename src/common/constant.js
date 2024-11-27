@@ -114,11 +114,12 @@ const UME_LIST = [
 ];
 
 // umeh5系列影院集合
-let H5_UME_LIST = ["kmbccf"];
+let H5_UME_LIST = ["kmbccf", "shdyc"];
 
 // 影院列表
 const APP_LIST = {
   kmbccf: "昆明北辰财富",
+  shdyc: "上海大悦城H5",
   lma: "卢米埃",
   hbchyxd: "HBC华谊兄弟",
   ume: "UME",
@@ -1739,6 +1740,7 @@ const HMA_SPECIAL_CINEMA_LIST = [
 // 特殊的名字匹配集合
 const SPECIAL_CINEMA_OBJ = {
   kmbccf: [],
+  shdyc: [],
   lma: HMA_SPECIAL_CINEMA_LIST,
   hbchyxd: HBCHYXD_SPECIAL_CINEMA_LIST,
   ume: UME_SPECIAL_CINEMA_LIST,
@@ -1832,6 +1834,7 @@ const SPECIAL_CINEMA_OBJ = {
 // 出票队列打印前缀
 const TICKET_CONPREFIX_OBJ = {
   kmbccf: "【昆明北辰财富中心自动出票】——",
+  shdyc: "【上海大悦城自动出票】——",
   lma: "【卢米埃自动出票】——",
   hbchyxd: "【HBC华谊兄弟自动出票】——",
   ume: "【UME自动出票】——",
@@ -1924,8 +1927,13 @@ const TICKET_CONPREFIX_OBJ = {
 
 // umeh5系列相关信息
 const H5_UME_CINEMA_OBJ = {
-  // cinemaId、larkSid
-  kmbccf: ["10106", "0fa280a468444a88b0a425da346e7b2d"]
+  // cinemaLinkId、channelCode、tid(laskId：即sid可通过tid调接口获取)
+  kmbccf: [
+    "10106",
+    "BEICHEN_H5_PROD_10106_MPS",
+    "3328dbf5c2a54d418bdd515d31ae1844"
+  ],
+  shdyc: ["12654", "XHX_H5_PROD_12654_MPS", "d88aeb5151b84e53a0859f9ce0284dc3"]
 };
 
 // 微信小程序openid

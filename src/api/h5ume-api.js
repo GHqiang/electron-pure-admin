@@ -9,33 +9,61 @@ const createApi = ({ app_name }) => {
     app_name: app_name
   });
 
+  const getsidbytid = params =>
+    // api：对应url最后一个单词驼峰
+    axios.post(
+      "/h5ume/mtop.alipic.lark.own.auth.getsidbytid",
+      params || {
+        empCode: "",
+        leaseCode: "",
+        tid: "d88aeb5151b84e53a0859f9ce0284dc3"
+      }
+    );
+  // tid是固定的（每次登录都会返回相同的tid和不同的sid），可以根据这个获取sid也就是larkSid，只有当接口返回登录超时好像才需要重新获取sid
+  // "data": {
+  //       "bizAlertMsg": "登录超时，请重新登录",
+  //       "bizCode": "20001",
+  //       "bizMsg": "invalid authentication",
+  //       "bizValue": {},
+  //       "traceId": "213e380b17326262799926082e3abd"
+  //   },
+  // "bizValue": {
+  //     "account": {
+  //         "accountId": "1002034000024945",
+  //         "accountName": "m_13073792313TJsU4uMR",
+  //         "gender": 0,
+  //         "idCardNo": "411329199602101018",
+  //         "identificationState": 0,
+  //         "lastLoginTime": "2024-11-26 20:25:57",
+  //         "mobile": "13073792313",
+  //         "mobileBinded": false,
+  //         "mobileCountryCode": "0086",
+  //         "realName": "付勋",
+  //         "temporaryMobile": "13073792313"
+  //     },
+  //     "sid": "bc611b586c3f47a9b8c5a73afe28f449",
+  //     "tid": "d88aeb5151b84e53a0859f9ce0284dc3"
+  // },
+
   // 获取城市及影院列表
   const getCinemaList = params =>
     axios.post(
       "/h5ume/mtop.alipic.lark.own.cinema.getcinemas",
       params || {
         empCode: "",
-        leaseCode: "",
-        channelCode: "BEICHEN_H5_PROD_10106_MPS",
-        larkSid: "0fa280a468444a88b0a425da346e7b2d",
-        version: "H5",
-        appVersion: "H5_5.0"
+        leaseCode: ""
       }
     );
 
   // 获取电影放映列表（热映列表，待映列表用不上）
   const getMoviePlayInfo = params =>
     axios.post(
-      "/h5ume/mtop.alipic.lark.own.film.getHotFilms",
+      "/h5ume/mtop.alipic.lark.own.film.gethotfilms",
       params || {
         empCode: "",
         leaseCode: "",
-        cinemaLinkId: "10106",
-        posterSize: "SMALL",
-        channelCode: "BEICHEN_H5_PROD_10106_MPS",
-        larkSid: "0fa280a468444a88b0a425da346e7b2d",
-        version: "H5",
-        appVersion: "H5_5.0"
+        cinemaLinkId: "12654",
+        posterSize: "SMALL"
       }
     );
 
@@ -46,11 +74,7 @@ const createApi = ({ app_name }) => {
       params || {
         empCode: "",
         leaseCode: "",
-        cinemaLinkId: "10106",
-        channelCode: "BEICHEN_H5_PROD_10106_MPS",
-        larkSid: "0fa280a468444a88b0a425da346e7b2d",
-        version: "H5",
-        appVersion: "H5_5.0"
+        cinemaLinkId: "10106"
       }
     );
 
@@ -65,11 +89,7 @@ const createApi = ({ app_name }) => {
         hallId: "0000000000000006",
         scheduleId: "1000000834217787",
         scheduleKey: "C158AAA6208E699EFDCF2774D3549DDE",
-        apiVersion: "1.0",
-        channelCode: "BEICHEN_H5_PROD_10106_MPS",
-        larkSid: "0fa280a468444a88b0a425da346e7b2d",
-        version: "H5",
-        appVersion: "H5_5.0"
+        apiVersion: "1.0"
       }
     );
 
@@ -78,10 +98,6 @@ const createApi = ({ app_name }) => {
     axios.post(
       "/h5ume/mtop.alipic.lark.own.goods.getNewGoodses",
       params || {
-        channelCode: "BEICHEN_H5_PROD_10106_MPS",
-        larkSid: "0fa280a468444a88b0a425da346e7b2d",
-        version: "H5",
-        appVersion: "H5_5.0",
         cinemaLinkId: "10106",
         scheduleId: "1000000834217787",
         seatIds: "00000017189-6-17"
@@ -99,11 +115,7 @@ const createApi = ({ app_name }) => {
         hallId: "0000000000000006",
         scheduleId: "1000000834217787",
         scheduleKey: "C158AAA6208E699EFDCF2774D3549DDE",
-        seatIds: "00000017189-2-17",
-        channelCode: "BEICHEN_H5_PROD_10106_MPS",
-        larkSid: "0fa280a468444a88b0a425da346e7b2d",
-        version: "H5",
-        appVersion: "H5_5.0"
+        seatIds: "00000017189-2-17"
       }
     );
 
@@ -116,15 +128,7 @@ const createApi = ({ app_name }) => {
 
   // 获取订单列表
   const getOrderList = params =>
-    axios.post(
-      "/h5ume/mtop.alipic.lark.own.order.getOrderList",
-      params || {
-        channelCode: "BEICHEN_H5_PROD_10106_MPS",
-        larkSid: "0fa280a468444a88b0a425da346e7b2d",
-        version: "H5",
-        appVersion: "H5_5.0"
-      }
-    );
+    axios.post("/h5ume/mtop.alipic.lark.own.order.getOrderList", params || {});
 
   // 取消订单
   const cannelOneOrder = params =>
@@ -135,11 +139,7 @@ const createApi = ({ app_name }) => {
         leaseCode: "",
         cinemaLinkId: "10106",
         orderType: "TICKET",
-        orderId: "241124035016X101061195",
-        channelCode: "BEICHEN_H5_PROD_10106_MPS",
-        larkSid: "0fa280a468444a88b0a425da346e7b2d",
-        version: "H5",
-        appVersion: "H5_5.0"
+        orderId: "241124035016X101061195"
       }
     );
 
@@ -153,38 +153,55 @@ const createApi = ({ app_name }) => {
         orderId: "241124035016X101061195",
         orderType: "TICKET",
         cinemaLinkId: "10106",
-        needMatchConsumeGift: false,
-        channelCode: "BEICHEN_H5_PROD_10106_MPS",
-        larkSid: "0fa280a468444a88b0a425da346e7b2d",
-        version: "H5",
-        appVersion: "H5_5.0"
+        needMatchConsumeGift: false
       }
     );
 
   // 获取会员卡列表
   const getCardList = params =>
-    axios.pos(
-      "/h5ume/mtop.alipic.lark.own.card.getCardListByPage",
+    axios.post(
+      "/h5ume/mtop.alipic.lark.own.card.getcardlistbypage",
       params || {
-        channelCode: "BEICHEN_H5_PROD_10106_MPS",
-        larkSid: "0fa280a468444a88b0a425da346e7b2d",
-        version: "H5",
-        appVersion: "H5_5.0",
-        cinemaLinkId: "10106",
+        cinemaLinkId: "12654",
         pageNo: 1,
         pageSize: 30
       }
     );
-
+  // bizValue: [
+  //     {
+  //         "balance": 26395,
+  //         "canChargeFlg": "Y",
+  //         "canRenewFlg": "N",
+  //         "cardAutoRenew": false,
+  //         "cardCost": 0,
+  //         "cardName": "钻石卡",
+  //         "cardNumber": "20001936462X",
+  //         "cardRequireList": [
+  //             "MOBILE",
+  //             "USERNAME",
+  //             "CERTIFICATE",
+  //             "PASSWORDRULE",
+  //             "BIRTHDAY",
+  //             "PHOTO",
+  //             "SMSVERIFY"
+  //         ],
+  //         "cardRuleAutoRenew": false,
+  //         "cardStatus": "N",
+  //         "cardType": "V",
+  //         "cinemaLinkId": "12654",
+  //         "cinemaName": "大悦城新恒星影城(大悦城店)",
+  //         "createAmt": 50000,
+  //         "leaseCode": "xhx",
+  //         "membershipFee": 0,
+  //         "minInAmt": 38000,
+  //         "usePolicyId": 1011527
+  //     }
+  // ]
   // 获取优惠券列表个人中心
   const getQuanList = params =>
     axios.pos(
       "/h5ume/mtop.alipic.lark.own.coupon.getMyOnlineCouponsCount",
       params || {
-        channelCode: "BEICHEN_H5_PROD_10106_MPS",
-        larkSid: "0fa280a468444a88b0a425da346e7b2d",
-        version: "H5",
-        appVersion: "H5_5.0",
         state: "NO_USE"
       }
     );
@@ -197,6 +214,7 @@ const createApi = ({ app_name }) => {
   const bandQuan = params => axios.post("/lma/mp/icoupon/add", params);
 
   return {
+    getsidbytid,
     getCinemaList,
     getMoviePlayInfo,
     getMoviePlayDate, // 获取电影放映场次

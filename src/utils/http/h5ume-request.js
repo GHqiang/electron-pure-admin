@@ -3,6 +3,7 @@
 import axios from "axios";
 import { ElMessage } from "element-plus";
 import { APP_LIST, H5_UME_CINEMA_OBJ } from "@/common/constant";
+import { APP_API_OBJ } from "@/common/index";
 import {
   logUpload,
   getCurrentFormattedDateTime,
@@ -11,6 +12,64 @@ import {
 // 机器登录用户信息
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
+
+// 获取bx-ua及bx-umidtoken
+const getumidToken = () => {
+  return new Promise((resolve, reject) => {
+    const { use: a } = window.AWSC || {};
+    const i = new Promise(e => {
+      if (!a) return e("");
+      try {
+        a("um", (t, n) => {
+          "loaded" === t
+            ? n.init(
+                {
+                  appName: "lark-cinemaprod",
+                  serviceLocation: "cn"
+                },
+                (t, n) => {
+                  e(("success" === t && n.tn) || "");
+                }
+              )
+            : e("");
+        });
+      } catch (t) {
+        e("");
+      }
+    });
+
+    const o = new Promise(e => {
+      if (!a) return e("");
+      try {
+        a("uab", (t, n) => {
+          if ("loaded" === t) {
+            const t = n.getUA();
+            e(t || "");
+          } else {
+            e("");
+          }
+        });
+      } catch (t) {
+        e("");
+      }
+    });
+
+    Promise.all([i, o])
+      .then(e => {
+        let [t, n] = e;
+        resolve({
+          umidToken: t || "",
+          ua: n || ""
+        });
+      })
+      .catch(() => {
+        resolve({
+          umidToken: "",
+          ua: ""
+        });
+      });
+  });
+};
 
 // 签名生成方法
 const getSign = t => {
@@ -269,6 +328,17 @@ const extractCookieValueByRegex = (cookieString, prefix) => {
   return match ? match[1] : undefined;
 };
 
+const urlObj = {
+  "mtop.alipic.lark.own.cinema.getcinemas":
+    "mtop.alipic.lark.own.cinema.getcinemas",
+  "mtop.alipic.lark.own.film.gethotfilms":
+    "mtop.alipic.lark.own.film.getHotFilms",
+  "mtop.alipic.lark.own.auth.getsidbytid":
+    "mtop.alipic.lark.own.auth.getSidByTid",
+  "mtop.alipic.lark.own.card.getcardlistbypage":
+    "mtop.alipic.lark.own.card.getCardListByPage"
+};
+
 // 获取url
 const getUrl = (token, url, params) => {
   // console.log(token, url, params);
@@ -282,9 +352,10 @@ const getUrl = (token, url, params) => {
   let signStr =
     signToken + "&" + t + "&" + appKey + "&" + JSON.stringify(params);
   let sign = getSign(signStr);
-  let api = url.replace("/h5ume/", "");
+  let api = urlObj[url.replace("/h5ume/", "")];
   return `${url}/1.0/?jsv=2.6.0&appKey=${appKey}&t=${t}&sign=${sign}&api=${api}&v=1.0&type=originaljson&timeout=20000&dataType=json`;
 };
+
 const createAxios = ({ app_name, timeout = 20 }) => {
   // 创建axios实例
   const instance = axios.create({
@@ -296,13 +367,17 @@ const createAxios = ({ app_name, timeout = 20 }) => {
 
   const NODE_ENV = process.env.NODE_ENV;
   const IS_DEV = NODE_ENV === "development";
-
+  let newToken = "",
+    ua = "",
+    umidToken = "",
+    larkSid = "",
+    mobile = "",
+    newLarkSidObj = {};
   // 请求拦截器
   instance.interceptors.request.use(
     async config => {
       if (config.url.indexOf("/h5ume/") !== -1) {
         config.headers["Content-Type"] = "application/x-www-form-urlencoded";
-        // 猎人平台接口添加token
         let loginInfoList = window.localStorage.getItem("loginInfoList");
         if (loginInfoList) {
           loginInfoList = JSON.parse(loginInfoList);
@@ -318,47 +393,50 @@ const createAxios = ({ app_name, timeout = 20 }) => {
               : true
           );
         }
-        let token = targetInfo?.session_id || "";
-        token =
-          "cna=YlyXHzyqrzICAQEk9RVF4M27; xlly_s=1; _m_h5_tk=2b6658e6c1e054a8a798429d5b6e95d0_1732372148724; _m_h5_tk_enc=a6a97ba13aa8cac824ae2530d015058a; tfstk=fjFmdh_PU-kX1KJymTlfQ-z-yLB-lEGscldtXfnNU0o7XKrOhASiqrvYHoQf_Cro2SnYkjJGsuZo0rUOfCYZqoRtHlFgFC4Q5SQj6ZGblfGNvMCKsraj1F8L1Ws8zNu1TsWMs6UblU8DbweP9hcW9YyZblkq43uI4noabcJPrVu90dR4ba4rVVL2bqoaz0uE8KlZ_lzPrVGRTto4e8VPD5AlipkjB70m3tzq4Cu7ZqDmYrPD_C8soxmUu0SCRcwqUPMg1FOiBryQf2r20Gm_ZzP4LkSJHmynSyegYNpjyAVjZcPVOemziPVoh8K232cmmvPqneQQlAyuZjFVfpa8rmknw8B5DAh0mJiI3Ts7jzmYbSDymgnTpzFqEkSJZlMgQShzgg5h4T9yL44W1DCu5d9s34govV5Xw66aEItlravn5xuSzZ7lrd9s34govabkKVMqP47V.; isg=BCkpAxWPahkyhlb8Va-ySwZWONWD9h0oClGsiMsepZBPkkmkE0Yt-BeEUDCkCrVg";
-
-        // 保存原始参数和原始URL
-        if (!config.originalParams) {
-          config.originalParams = {
-            ...config.params,
-            empCode: "",
-            leaseCode: "",
-            channelCode: `BEICHEN_H5_PROD_${H5_UME_CINEMA_OBJ[app_name][0]}_MPS`,
-            larkSid: H5_UME_CINEMA_OBJ[app_name][1],
-            version: "H5",
-            appVersion: "H5_5.0"
-          };
+        // 登录标识：larkSid
+        // e6b99a4fe34244d680a8e57ae79eff3b
+        larkSid = targetInfo?.session_id || "";
+        // 先自己匹配登录信息，然后从参数里获取更新
+        if (config.data?.umeToken) {
+          larkSid = config.data.umeToken;
+          delete config.data.umeToken;
         }
+        mobile = targetList.find(itemA => itemA.session_id === larkSid)?.mobile;
+        // 如果对应的手机号的token有新的直接获取新的
+        if (mobile && newLarkSidObj[mobile]) {
+          larkSid = newLarkSidObj[mobile];
+        }
+        config.mobile = mobile;
+        config.oldLarkSid = larkSid;
+        // 保存原始参数和原始URL
         if (!config.originalData) {
           config.originalData = {
             ...config.data,
-            empCode: "",
-            leaseCode: "",
-            channelCode: `BEICHEN_H5_PROD_${H5_UME_CINEMA_OBJ[app_name][0]}_MPS`,
-            larkSid: H5_UME_CINEMA_OBJ[app_name][1],
+            channelCode: H5_UME_CINEMA_OBJ[app_name][1],
+            larkSid,
             version: "H5",
             appVersion: "H5_5.0"
           };
         }
-        let params =
-          config.method === "get" ? config.originalParams : config.originalData;
-        if (params.umeToken) {
-          token = params?.umeToken;
-          delete params.umeToken;
-        }
+        let params = config.originalData;
         if (!config.originalUrl) {
-          config.url = getUrl(token, config.url, params);
+          config.url = getUrl(newToken, config.url, params);
           config.originalUrl = config.url;
         }
-
-        if (token) {
-          config.headers["umetoken"] = token;
-          // config.headers["cookie"] =  token;
+        // if (!ua || !umidToken) {
+        const uidRes = await getumidToken();
+        console.log("uidRes", uidRes);
+        ua = uidRes?.ua;
+        umidToken = uidRes?.umidToken;
+        // }
+        if (newToken) {
+          config.headers["umetoken"] = newToken;
+          config.headers["gray-lease-code"] =
+            H5_UME_CINEMA_OBJ[app_name][1].split("_H5_")[0];
+          config.headers["uaciphe"] = "";
+          config.headers["accesstoken"] = null;
+          config.headers["bx-ua"] = ua;
+          config.headers["bx-umidtoken"] = umidToken;
         }
         if (config.method === "get") {
           config.params = params;
@@ -438,7 +516,14 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         isError &&
         !whitelistSp.some(item => response.config.url.includes(item))
       ) {
-        if (data?.ret?.[0] == "FAIL_SYS_TOKEN_EXOIRED::令牌过期") {
+        let errReason = data?.ret?.[0];
+        // 令牌为空或者过期是cookie里的_m_h5_tk为空或者过期
+        if (
+          [
+            "FAIL_SYS_TOKEN_EXOIRED::令牌过期",
+            "FAIL_SYS_TOKEN_EMPTY::令牌为空"
+          ].includes(errReason)
+        ) {
           if (!config.retryCount) {
             config.retryCount = 1;
             config.url = config.originalUrl.split("/1.0/")[0];
@@ -449,25 +534,30 @@ const createAxios = ({ app_name, timeout = 20 }) => {
               cookieStr,
               "_m_h5_tk_enc="
             );
-            let token = data.headers1.umetoken;
+            let umetoken = data.headers1.umetoken;
             // console.log("oldToken", token);
             // 接口重试时token续期
             if (_m_h5_tk) {
               const regex = new RegExp(`(_m_h5_tk=[^;]+);?`);
-              token = token.replace(regex, `_m_h5_tk=${_m_h5_tk};`);
+              umetoken =
+                umetoken?.indexOf("_m_h5_tk=") > -1
+                  ? umetoken.replace(regex, `_m_h5_tk=${_m_h5_tk};`)
+                  : `_m_h5_tk=${_m_h5_tk};`;
             }
             if (_m_h5_tk_enc) {
               const regex = new RegExp(`(_m_h5_tk_enc=[^;]+);?`);
-              token = token.replace(regex, `_m_h5_tk_enc=${_m_h5_tk_enc};`);
+              umetoken =
+                umetoken?.indexOf("_m_h5_tk_enc=") > -1
+                  ? umetoken.replace(regex, `_m_h5_tk_enc=${_m_h5_tk_enc};`)
+                  : umetoken + ` _m_h5_tk_enc=${_m_h5_tk_enc};`;
+              newToken = umetoken;
             }
-            // console.log("newtoken", token);
-            config.headers["umetoken"] = token;
-            let params =
-              config.method === "get"
-                ? config.originalParams
-                : config.originalData;
+
+            // console.log("newtoken", newToken);
+            config.headers["umetoken"] = umetoken;
+            let params = config.originalData;
             // console.log("params", params);
-            config.url = getUrl(token, config.url, params);
+            config.url = getUrl(newToken, config.url, params);
             console.log("retryCount-config", config);
             config.url = config.url.replace("h5ume", "svpi/ume-ser");
             return instance(config);
@@ -483,6 +573,49 @@ const createAxios = ({ app_name, timeout = 20 }) => {
 
             // 此处加个消息推送
             return Promise.reject(data);
+          }
+        }
+
+        // 登录超时是larkSid过期
+        if (
+          data?.data?.bizCode == "2001" ||
+          data?.data?.bizAlertMsg == "登录超时，请重新登录"
+        ) {
+          // 重新获取laskId,然后再请求
+          // 根据tid重设laskId
+          const sidRes = await APP_API_OBJ[app_name].getsidbytid({
+            empCode: "",
+            leaseCode: "",
+            tid: H5_UME_CINEMA_OBJ[app_name][2]
+          });
+          console.log("sidRes", sidRes);
+          let sid = sidRes?.bizValue?.sid;
+          if (sid) {
+            larkSid = sid;
+            // 更新对应手机号的token
+            if (config.mobile) {
+              newLarkSidObj[config.mobile] = sid;
+            }
+            if (!config.retryCount || config.retryCount < 3) {
+              config.retryCount = (config.retryCount || 0) + 1;
+              // 重新生成参数（含新larkSid）
+              let params = config.originalData;
+              params.larkSid = larkSid;
+              config.originalData = params;
+              config.data = { data: JSON.stringify(params) };
+
+              // 重新生成接口url(主要是sign签名和参数有关)
+              config.url = config.originalUrl.split("/1.0/")[0];
+              config.url = getUrl(newToken, config.url, params);
+              config.url = config.url.replace("h5ume", "svpi/ume-ser");
+              // const uidRes = await getumidToken();
+              // console.log("uidRes-登录超时", uidRes);
+              // config.headers["bx-ua"] = uidRes?.ua;
+              // config.headers["bx-umidtoken"] = uidRes?.umidToken;
+
+              console.log("retryCount-config-登录超时", config);
+              return instance(config);
+            }
           }
         }
         let isOften = data?.msg?.includes("操作过于频繁");
