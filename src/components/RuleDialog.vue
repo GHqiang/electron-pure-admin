@@ -482,6 +482,8 @@ import {
   ORDER_FORM,
   APP_LIST,
   UME_LIST,
+  H5_UME_LIST,
+  H5_UME_CINEMA_OBJ,
   SFC_APP_LIST
 } from "@/common/constant";
 import { useAppBaseData } from "@/store/appBaseData";
@@ -839,6 +841,19 @@ const getCityList = async () => {
           name: item.cityName,
           id: item.cityCode
         }));
+      } else if (H5_UME_LIST.includes(shadowLineName)) {
+        let params = {
+          empCode: "",
+          leaseCode: ""
+        };
+        const res = await APP_API_OBJ[shadowLineName].getCinemaList(params);
+        console.log("res", res);
+        cityCinemaList = res.bizValue?.cities || [];
+        list = cityCinemaList.map(item => ({
+          name: item.cityName,
+          id: item.cityCode
+        }));
+        console.log("list", list);
       } else if (shadowLineName === "lma") {
         const res = await APP_API_OBJ[shadowLineName].getCityList();
         list = res.data.list || [];
@@ -881,6 +896,21 @@ const getFilmList = async (oneCity, oneCinema) => {
       list = list.map(item => ({
         ...item,
         id: item.filmHeadId,
+        movie_name: item.filmName
+      }));
+    } else if (H5_UME_LIST.includes(shadowLineName)) {
+      const params = {
+        empCode: "",
+        leaseCode: "",
+        cinemaLinkId: H5_UME_CINEMA_OBJ[shadowLineName][0],
+        posterSize: "SMALL"
+      };
+      const res = await APP_API_OBJ[shadowLineName].getMoviePlayInfo(params);
+      console.log("获取线上电影列表返回", res);
+      list = res?.bizValue || [];
+      list = list.map(item => ({
+        ...item,
+        id: item.filmId,
         movie_name: item.filmName
       }));
     } else if (shadowLineName === "lma") {
@@ -931,6 +961,14 @@ const getCinemaListByCityId = async city_id => {
       cinemaList = cinemaList.map(item => ({
         ...item,
         id: item.cinemaCode,
+        name: item.cinemaName
+      }));
+    } else if (H5_UME_LIST.includes(shadowLineName)) {
+      cinemaList =
+        cityCinemaList.find(item => item.cityCode === city_id)?.cinemas || [];
+      cinemaList = cinemaList.map(item => ({
+        ...item,
+        id: item.cinemaLinkId,
         name: item.cinemaName
       }));
     } else if (shadowLineName === "lma") {

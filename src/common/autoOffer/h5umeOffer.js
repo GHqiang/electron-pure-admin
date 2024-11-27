@@ -230,10 +230,7 @@ class getUmeOfferPrice {
       onlyMemberDayRuleList.sort(
         (itemA, itemB) => itemA.offerAmount - itemB.offerAmount
       );
-      console.log(
-        "命中会员日报价规则从小往大排序",
-        onlyMemberDayRuleList
-      );
+      console.log("命中会员日报价规则从小往大排序", onlyMemberDayRuleList);
       if (onlyMemberDayRuleList.length) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
@@ -555,11 +552,11 @@ class getUmeOfferPrice {
         scheduleKey,
         apiVersion: "1.0",
         empCode: "",
-        leaseCode: "",
-      }
+        leaseCode: ""
+      };
       console.log("获取座位布局参数", params);
       const res = await this.appApi.getMoviePlaySeat(params);
-      let sections = res.bizValue?.sections?.[0] || {}
+      let sections = res.bizValue?.sections?.[0] || {};
       console.log("获取座位布局返回", res);
       // this.logList.push({
       //   opera_time: getCurrentFormattedDateTime(),
@@ -842,7 +839,9 @@ class getUmeOfferPrice {
         filmId
       });
       let start_day = show_time.split(" ")[0];
-      let targetDate = playDateList?.find(item => formatTimeOfDay(+item.date) === start_day);
+      let targetDate = playDateList?.find(
+        item => formatTimeOfDay(+item.date) === start_day
+      );
       if (!targetDate) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
@@ -856,11 +855,13 @@ class getUmeOfferPrice {
         return;
       }
       // 获取某个放映日期的场次列表
-      const showList = targetDate.schedules || []
+      const showList = targetDate.schedules || [];
 
       let start_time = show_time.split(" ")[1].slice(0, 5);
       let targetShow = showList.find(
-        item => formatTimeOfTime(+item.showTime).split(" ")[1].slice(0, 5) === start_time
+        item =>
+          formatTimeOfTime(+item.showTime).split(" ")[1].slice(0, 5) ===
+          start_time
       );
       if (!targetShow) {
         console.error("匹配影片放映场次失败", showList, start_time);
@@ -883,7 +884,7 @@ class getUmeOfferPrice {
           targetShow
         }
       });
-      const {hallId, scheduleId, scheduleKey} = targetShow
+      const { hallId, scheduleId, scheduleKey } = targetShow;
       const areaRes = await this.getSeatLayout({
         cinemaLinkId,
         hallId,
@@ -895,7 +896,7 @@ class getUmeOfferPrice {
         // 座位分区从高到低排序
         let areaList = areaInfoList
           .map(item => {
-            let priceInfo  ={ settlePrice: item.areaPrice || 0 };
+            let priceInfo = { settlePrice: item.areaPrice || 0 };
             if (item.areaMemberPrice?.length) {
               priceInfo = item.areaMemberPrice.sort(
                 (a, b) => b.settlePrice - a.settlePrice
@@ -968,17 +969,17 @@ class getUmeOfferPrice {
   }
 
   // 获取影院放映列表
-  async getMoviePlayInfo({cinemaLinkId}) {
+  async getMoviePlayInfo({ cinemaLinkId }) {
     try {
       let params = {
         empCode: "",
         leaseCode: "",
         cinemaLinkId,
-        posterSize: "SMALL",
+        posterSize: "SMALL"
       };
       console.log("获取影院放映列表参数", params);
       const res = await this.appApi.getMoviePlayInfo(params);
-      let fimlList = res?.bizValue || []
+      let fimlList = res?.bizValue || [];
       // [
 
       //     {
@@ -1008,7 +1009,7 @@ class getUmeOfferPrice {
           fimlList
         }
       });
-      return fimlList
+      return fimlList;
     } catch (error) {
       console.error("获取影院放映列表异常", error);
       this.logList.push({
@@ -1023,18 +1024,18 @@ class getUmeOfferPrice {
   }
 
   // 获取电影放映场次
-  async getMoviePlayDate({cinemaLinkId, filmId}) {
+  async getMoviePlayDate({ cinemaLinkId, filmId }) {
     try {
       let params = {
         empCode: "",
         leaseCode: "",
-        cinemaLinkId,
+        cinemaLinkId
       };
       console.log("获取电影放映日期参数", params);
       const res = await this.appApi.getMoviePlayDate(params);
       console.log("获取电影放映日期返回", res);
       let films = res?.bizValue?.films || [];
-      let filmDates = filmId.filter(item => item.filmId === filmId)?.dates || []
+      let filmDates = films.filter(item => item.filmId === filmId)?.dates || [];
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: "获取电影放映日期返回",
@@ -1043,7 +1044,7 @@ class getUmeOfferPrice {
           filmDates
         }
       });
-      return filmDates
+      return filmDates;
     } catch (error) {
       console.error("获取电影放映日期异常", error);
       this.logList.push({
@@ -1062,17 +1063,20 @@ class getUmeOfferPrice {
     try {
       let params = {
         empCode: "",
-        leaseCode: "",
+        leaseCode: ""
       };
       console.log("获取城市影院列表参数", params);
       const res = await this.appApi.getCinemaList(params);
       console.log("获取城市影院列表返回", res);
-      let list = res.bizValue?.citys || []
+      let list = res.bizValue?.cities || [];
       // 通过排查以往ume系列订单，发现cinemaCode和cinemaLinkId值并不一样，故此处先不赋同值
       list = list.map(item => ({
         cityName: item.cityName,
-        cinemaList: item.cinemas.map(itemA => {...itemA, cinemaCode: itemA.cinemaCode}),
-      }))
+        cinemaList: item.cinemas.map(itemA => ({
+          ...itemA,
+          cinemaCode: itemA.cinemaCode
+        }))
+      }));
       // [
       //     {
       //         "alphabet": "KUNMING",
