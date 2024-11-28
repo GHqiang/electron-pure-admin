@@ -2340,7 +2340,7 @@ class OrderAutoTicketQueue {
         des: "异步轮询获取取票码并提交方法开始执行",
         level: "error"
       });
-      // 每搁30秒查一次，查10次，5分钟
+      // 每搁20秒查一次，查9次，3分钟
       let qrcode = await trial(
         inx =>
           this.getPayResult({
@@ -2349,13 +2349,13 @@ class OrderAutoTicketQueue {
             inx,
             syncQueryLogList
           }),
-        10,
-        30,
+        9,
+        20,
         conPrefix,
-        5 * 60
+        3 * 60
       );
       if (!qrcode) {
-        // 5分钟后还失败消息推送
+        // 3分钟后还失败消息推送
         sendWxPusherMessage({
           plat_name,
           order_number,
@@ -2365,14 +2365,14 @@ class OrderAutoTicketQueue {
           show_time: orderInfo?.show_time,
           lockseat,
           transferTip: "此处不转单，需关注该订单，适时手动上传取票码",
-          failReason: "系统延迟轮询5分钟后获取取票码仍失败"
+          failReason: "系统延迟轮询3分钟后获取取票码仍失败"
         });
         syncQueryLogList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: "系统延迟轮询5分钟后获取取票码仍失败",
+          des: "系统延迟轮询3分钟后获取取票码仍失败",
           level: "error"
         });
-        // 每搁30秒查一次，查10次，5分钟
+        // 每搁20秒查一次，查9次，3分钟
         qrcode = await trial(
           inx =>
             this.getPayResult({
@@ -2381,16 +2381,16 @@ class OrderAutoTicketQueue {
               inx,
               syncQueryLogList
             }),
-          10,
-          30,
+          9,
+          20,
           conPrefix,
-          5 * 60
+          3 * 60
         );
       }
       if (!qrcode) {
         syncQueryLogList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: "系统延迟轮询10分钟后获取取票码仍失败",
+          des: "系统延迟轮询6分钟后获取取票码仍失败",
           level: "error"
         });
         logUpload(
@@ -2408,7 +2408,7 @@ class OrderAutoTicketQueue {
             plat_name
           },
           updateObj: {
-            err_msg: "系统延迟轮询10分钟后获取取票码仍失败"
+            err_msg: "系统延迟轮询6分钟后获取取票码仍失败"
           }
         });
         return;
