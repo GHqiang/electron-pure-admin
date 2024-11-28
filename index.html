@@ -39,8 +39,8 @@
       class AsyncDelay {
         constructor() {
           // 创建 Worker 实例
-          this.worker = new Worker("/src/worker.js");
-          // console.log('this.worker', this.worker)
+          this.worker = new Worker("./worker.js");
+          console.log('this.worker', this.worker)
           this.callbacks = {};
           this.callbackId = 0;
           this.worker.onmessage = this.handleMessage.bind(this);
@@ -56,7 +56,7 @@
         }
 
         async delay(ms) {
-          
+
           return new Promise(resolve => {
             const callbackId = this.callbackId++;
             // console.log('开始执行延迟: '+ callbackId, getCurrentTime())
