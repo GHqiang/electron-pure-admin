@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -18,6 +18,59 @@
   </head>
 
   <body>
+    <script>
+      // 辅助函数：补零
+      function padZero(num) {
+        return `0${num}`.slice(-2);
+      }
+
+      // 获取当前时间 YYYY-MM-DD HH:mm:ss
+      function getCurrentTime() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = padZero(now.getMonth() + 1);
+        const date = padZero(now.getDate());
+        const hours = padZero(now.getHours());
+        const minutes = padZero(now.getMinutes());
+        const seconds = padZero(now.getSeconds());
+        return `${year}-${month}-${date} ${hours}:${minutes}:${seconds}`;
+      }
+
+      class AsyncDelay {
+        constructor() {
+          // 创建 Worker 实例
+          this.worker = new Worker("/src/worker.js");
+          // console.log('this.worker', this.worker)
+          this.callbacks = {};
+          this.callbackId = 0;
+          this.worker.onmessage = this.handleMessage.bind(this);
+        }
+
+        handleMessage(event) {
+          const { callbackId } = event.data;
+          if (this.callbacks[callbackId]) {
+            this.callbacks[callbackId]();
+            // console.log('延迟结束:' + callbackId, getCurrentTime())
+            delete this.callbacks[callbackId];
+          }
+        }
+
+        async delay(ms) {
+          
+          return new Promise(resolve => {
+            const callbackId = this.callbackId++;
+            // console.log('开始执行延迟: '+ callbackId, getCurrentTime())
+            this.callbacks[callbackId] = resolve;
+            this.worker.postMessage({ delay: ms, callbackId });
+          });
+        }
+      }
+
+      // 使用示例
+      const asyncDelay = new AsyncDelay();
+
+      window.mockDelayHandle = (delayTime) => asyncDelay.delay(delayTime * 1000)
+    </script>
     <div id="app">
       <style>
         html,

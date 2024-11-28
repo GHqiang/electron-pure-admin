@@ -1727,14 +1727,8 @@ const logUpload = async (order, logList) => {
 };
 
 // 模拟延时
-const mockDelay = delayTime => {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve();
-    }, delayTime * 1000);
-  });
-};
-
+const mockDelay = delayTime => window.mockDelayHandle(delayTime);
+window.mockDelay = mockDelay;
 // 对象深拷贝（获取对象源值）
 const getOrginValue = value => JSON.parse(JSON.stringify(value));
 

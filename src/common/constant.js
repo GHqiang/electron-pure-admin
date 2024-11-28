@@ -114,7 +114,9 @@ const UME_LIST = [
 ];
 
 // umeh5系列影院集合
-let H5_UME_LIST = ["kmbccf", "shdyc"];
+let H5_UME_LIST = [
+  // "kmbccf", "shdyc"
+];
 
 // 影院列表
 const APP_LIST = {

@@ -425,7 +425,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         }
         // if (!ua || !umidToken) {
         const uidRes = await getumidToken();
-        console.log("uidRes", uidRes);
+        // console.log("uidRes", uidRes);
         ua = uidRes?.ua;
         umidToken = uidRes?.umidToken;
         // }
@@ -558,7 +558,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             let params = config.originalData;
             // console.log("params", params);
             config.url = getUrl(newToken, config.url, params);
-            console.log("retryCount-config", config);
+            // console.log("retryCount-config", config);
             config.url = config.url.replace("h5ume", "svpi/ume-ser");
             return instance(config);
           } else {
