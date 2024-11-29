@@ -4,7 +4,7 @@ import {
   trial, // 试错重试
   adjustSeats // 获取需要帮助锁定的座位
 } from "@/utils/utils";
-
+import svApi from "@/api/sv-api";
 // 影院特殊匹配列表及api
 import { APP_API_OBJ } from "@/common/index";
 import { UME_LIST } from "@/common/constant";
