@@ -472,7 +472,16 @@ const getCinemaFlag = item => {
     ["深圳"].includes(city_name)
   ) {
     return "renhengmeng";
-  } else if (
+  }
+  // else if (
+  //   cinemNameSpecial(cinema_name).includes(
+  //     "昆明北辰财富中心影院昆明中永影视"
+  //   ) &&
+  //   ["昆明"].includes(city_name)
+  // ) {
+  //   return "kmbccf";
+  // }
+  else if (
     cinemNameSpecial(cinema_name).includes("国文全激光影城金桥精品店") &&
     ["上海"].includes(city_name)
   ) {

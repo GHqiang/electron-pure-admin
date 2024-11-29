@@ -55,6 +55,22 @@ const createApi = ({ app_name }) => {
       }
     );
 
+  const getCinemaDetail = params =>
+    axios.post(
+      "/h5ume/mtop.alipic.lark.own.cinema.getcinemadetail",
+      params || {
+        empCode: "",
+        leaseCode: "",
+        cinemaLinkId: "10106"
+      }
+    );
+  const channelAgreement = params =>
+    axios.post(
+      "/h5ume/mtop.alipic.lark.own.lease.channelagreement",
+      params || {
+        type: "MEMBER"
+      }
+    );
   // 获取电影放映列表（热映列表，待映列表用不上）
   const getMoviePlayInfo = params =>
     axios.post(
@@ -62,7 +78,7 @@ const createApi = ({ app_name }) => {
       params || {
         empCode: "",
         leaseCode: "",
-        cinemaLinkId: "12654",
+        cinemaLinkId: "10106",
         posterSize: "SMALL"
       }
     );
@@ -70,25 +86,29 @@ const createApi = ({ app_name }) => {
   // 获取电影放映场次（返回的是所有电影的场次列表）
   const getMoviePlayDate = params =>
     axios.post(
-      "/h5ume/mtop.alipic.lark.own.schedule.getSchedules",
+      "/h5ume/mtop.alipic.lark.own.schedule.getschedules",
       params || {
         empCode: "",
         leaseCode: "",
-        cinemaLinkId: "10106"
+        cinemaLinkId: "10106",
+        channelCode: "BEICHEN_H5_PROD_10106_MPS",
+        larkSid: "4431a7f9d941485d95b278f5ce91820d",
+        version: "H5",
+        appVersion: "H5_5.0"
       }
     );
 
   // 获取座位布局
   const getMoviePlaySeat = params =>
     axios.post(
-      "/h5ume/mtop.alipic.lark.own.seat.getSeatMap",
+      "/h5ume/mtop.alipic.lark.own.seat.getseatmap",
       params || {
         empCode: "",
         leaseCode: "",
         cinemaLinkId: "10106",
-        hallId: "0000000000000006",
-        scheduleId: "1000000834217787",
-        scheduleKey: "C158AAA6208E699EFDCF2774D3549DDE",
+        hallId: "0000000000000003",
+        scheduleId: "1000000834239641",
+        scheduleKey: "38BB39E91E6107E16E0C2258848D5385",
         apiVersion: "1.0"
       }
     );
@@ -96,7 +116,7 @@ const createApi = ({ app_name }) => {
   // 锁定座位
   const lockSeat = params =>
     axios.post(
-      "/h5ume/mtop.alipic.lark.own.goods.getNewGoodses",
+      "/h5ume/mtop.alipic.lark.own.goods.getnewgoodses",
       params || {
         cinemaLinkId: "10106",
         scheduleId: "1000000834217787",
@@ -107,7 +127,7 @@ const createApi = ({ app_name }) => {
   // 创建订单
   const createOrder = params =>
     axios.post(
-      "/h5ume/mtop.alipic.lark.own.pay.getPayPrivilegeInfo",
+      "/h5ume/mtop.alipic.lark.own.pay.getpayprivilegeinfo",
       params || {
         empCode: "",
         leaseCode: "",
@@ -128,12 +148,12 @@ const createApi = ({ app_name }) => {
 
   // 获取订单列表
   const getOrderList = params =>
-    axios.post("/h5ume/mtop.alipic.lark.own.order.getOrderList", params || {});
+    axios.post("/h5ume/mtop.alipic.lark.own.order.getorderlist", params || {});
 
   // 取消订单
   const cannelOneOrder = params =>
     axios.post(
-      "/lmh5umea/mtop.alipic.lark.own.order.cancelOrder",
+      "/lmh5umea/mtop.alipic.lark.own.order.cancelorder",
       params || {
         empCode: "",
         leaseCode: "",
@@ -146,7 +166,7 @@ const createApi = ({ app_name }) => {
   // 获取订单信息
   const getOrderInfo = params =>
     axios.post(
-      "/h5ume/mtop.alipic.lark.own.order.getOrderDetail",
+      "/h5ume/mtop.alipic.lark.own.order.getorderdetail",
       params || {
         empCode: "",
         leaseCode: "",
@@ -200,7 +220,7 @@ const createApi = ({ app_name }) => {
   // 获取优惠券列表个人中心
   const getQuanList = params =>
     axios.pos(
-      "/h5ume/mtop.alipic.lark.own.coupon.getMyOnlineCouponsCount",
+      "/h5ume/mtop.alipic.lark.own.coupon.getmyonlinecouponscount",
       params || {
         state: "NO_USE"
       }
@@ -216,6 +236,8 @@ const createApi = ({ app_name }) => {
   return {
     getsidbytid,
     getCinemaList,
+    getCinemaDetail,
+    channelAgreement,
     getMoviePlayInfo,
     getMoviePlayDate, // 获取电影放映场次
     getMoviePlaySeat,

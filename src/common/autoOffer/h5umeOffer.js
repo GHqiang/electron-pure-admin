@@ -891,7 +891,7 @@ class getUmeOfferPrice {
         scheduleId,
         scheduleKey
       });
-      let { seatList: seats, areaInfoList: areaInfos } = areaRes || {};
+      let { seats: seatList, areaInfos: areaInfoList } = areaRes || {};
       if (areaInfoList?.length) {
         // 座位分区从高到低排序
         let areaList = areaInfoList
@@ -1031,11 +1031,12 @@ class getUmeOfferPrice {
         leaseCode: "",
         cinemaLinkId
       };
-      console.log("获取电影放映日期参数", params);
+      console.log("获取电影放映日期参数", params, filmId);
       const res = await this.appApi.getMoviePlayDate(params);
       console.log("获取电影放映日期返回", res);
       let films = res?.bizValue?.films || [];
-      let filmDates = films.filter(item => item.filmId === filmId)?.dates || [];
+      let filmDates = films.find(item => item.filmId === filmId)?.dates || [];
+      console.log("filmDates", filmDates);
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: "获取电影放映日期返回",

@@ -336,7 +336,27 @@ const urlObj = {
   "mtop.alipic.lark.own.auth.getsidbytid":
     "mtop.alipic.lark.own.auth.getSidByTid",
   "mtop.alipic.lark.own.card.getcardlistbypage":
-    "mtop.alipic.lark.own.card.getCardListByPage"
+    "mtop.alipic.lark.own.card.getCardListByPage",
+  "mtop.alipic.lark.own.schedule.getschedules":
+    "mtop.alipic.lark.own.schedule.getSchedules",
+  "mtop.alipic.lark.own.seat.getseatmap":
+    "mtop.alipic.lark.own.seat.getSeatMap",
+  "mtop.alipic.lark.own.goods.getnewgoodses":
+    "mtop.alipic.lark.own.goods.getNewGoodses",
+  "mtop.alipic.lark.own.pay.getpayprivilegeinfo":
+    "mtop.alipic.lark.own.pay.getPayPrivilegeInfo",
+  "mtop.alipic.lark.own.order.getorderlist":
+    "mtop.alipic.lark.own.order.getOrderList",
+  "mtop.alipic.lark.own.order.cancelorder":
+    "mtop.alipic.lark.own.order.cancelOrder",
+  "mtop.alipic.lark.own.order.getorderdetail":
+    "mtop.alipic.lark.own.order.getOrderDetail",
+  "mtop.alipic.lark.own.coupon.getmyonlinecouponscount":
+    "mtop.alipic.lark.own.coupon.getMyOnlineCouponsCount",
+  "mtop.alipic.lark.own.lease.channelagreement":
+    "mtop.alipic.lark.own.lease.channelAgreement",
+  "mtop.alipic.lark.own.cinema.getcinemadetail":
+    "mtop.alipic.lark.own.cinema.getCinemaDetail"
 };
 
 // 获取url
@@ -433,7 +453,6 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           config.headers["umetoken"] = newToken;
           config.headers["gray-lease-code"] =
             H5_UME_CINEMA_OBJ[app_name][1].split("_H5_")[0];
-          config.headers["uaciphe"] = "";
           config.headers["accesstoken"] = null;
           config.headers["bx-ua"] = ua;
           config.headers["bx-umidtoken"] = umidToken;

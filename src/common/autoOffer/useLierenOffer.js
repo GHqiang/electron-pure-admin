@@ -299,22 +299,22 @@ class OrderAutoOfferQueue {
       order = order || {
         id: 411603,
         plat_name: "lieren",
-        app_name: "lma",
+        app_name: "kmbccf",
         ticket_num: 1,
         rewards: "0",
         order_number: "2024102116275550833",
         supplier_max_price: 45,
         order_id: "7939712",
         tpp_price: "49.00",
-        city_name: "北京",
+        city_name: "昆明",
         cinema_addr: "大兴区忠凉路1号院1号楼5、6层L5001+L6001号",
         cinema_code: "11140881",
-        cinema_name: "卢米埃影城（住总万科店）",
+        cinema_name: "昆明北辰财富中心影院（昆明中永影视）",
         hall_name: "四号厅",
-        film_name: "志愿军：存亡之战",
-        show_time: "2024-10-22 21:20:00",
-        cinema_group: "卢米埃",
-        sytime: 1710125678
+        film_name: "好东西",
+        show_time: "2024-12-01 23:20:00",
+        cinema_group: "",
+        sytime: 1732773759
       };
       let offerExample = getOfferPriceFun({
         appFlag: order.app_name,
@@ -403,7 +403,7 @@ class OrderAutoOfferQueue {
             hall_name: "四号厅",
             film_name: "志愿军：存亡之战",
             show_time: "2024-10-22 21:50:00",
-            cinema_group: "卢米埃",
+            cinema_group: "",
             sytime: 1710125678
           }
         ],

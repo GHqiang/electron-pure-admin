@@ -129,8 +129,16 @@ class OrderAutoLockSeatQueue {
         fillSeat.includes(+item.columnName)
       );
       console.log("fillSeatList", fillSeatList);
+      logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取补全座位方法返回",
+        level: "info",
+        info: {
+          fillSeatList
+        }
+      });
       let seat_ids = fillSeatList.map(item => item.seatCode);
-      ticketDetail = seat_ids.map(item => ({
+      let ticketDetail = seat_ids.map(item => ({
         seatCode: item,
         buyerRemark: ""
       }));

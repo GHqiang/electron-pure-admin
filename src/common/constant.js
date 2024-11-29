@@ -1653,7 +1653,11 @@ const HMA_SPECIAL_CINEMA_LIST = [
   },
   // 绍兴
   {
-    order_cinema_name: ["卢米埃影城银泰IMAX店", "卢米埃影城绍兴银泰IMAX影城"],
+    order_cinema_name: [
+      "卢米埃影城银泰IMAX店",
+      "卢米埃影城绍兴银泰IMAX影城",
+      "卢米埃影城银泰IMAX影城"
+    ],
     sfc_cinema_name: "卢米埃绍兴银泰城IMAX影城"
   },
   {
