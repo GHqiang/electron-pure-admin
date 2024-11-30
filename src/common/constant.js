@@ -115,13 +115,15 @@ const UME_LIST = [
 
 // umeh5系列影院集合
 let H5_UME_LIST = [
-  // "kmbccf", "shdyc"
+  // "kmbccf", "shdyc", "xmaskdfyc", "shjq"
 ];
 
 // 影院列表
 const APP_LIST = {
   kmbccf: "昆明北辰财富",
   shdyc: "上海大悦城H5",
+  xmaskdfyc: "厦门奥斯卡东方影城",
+  shjq: "上海金球",
   lma: "卢米埃",
   hbchyxd: "HBC华谊兄弟",
   ume: "UME",
@@ -1747,6 +1749,8 @@ const HMA_SPECIAL_CINEMA_LIST = [
 const SPECIAL_CINEMA_OBJ = {
   kmbccf: [],
   shdyc: [],
+  xmaskdfyc: [],
+  shjq: [],
   lma: HMA_SPECIAL_CINEMA_LIST,
   hbchyxd: HBCHYXD_SPECIAL_CINEMA_LIST,
   ume: UME_SPECIAL_CINEMA_LIST,
@@ -1841,6 +1845,8 @@ const SPECIAL_CINEMA_OBJ = {
 const TICKET_CONPREFIX_OBJ = {
   kmbccf: "【昆明北辰财富中心自动出票】——",
   shdyc: "【上海大悦城自动出票】——",
+  xmaskdfyc: "【厦门奥斯卡东方影城自动出票】——",
+  shjq: "【上海金球自动出票】——",
   lma: "【卢米埃自动出票】——",
   hbchyxd: "【HBC华谊兄弟自动出票】——",
   ume: "【UME自动出票】——",
@@ -1938,6 +1944,18 @@ const H5_UME_CINEMA_OBJ = {
     "10106",
     "BEICHEN_H5_PROD_10106_MPS",
     "3328dbf5c2a54d418bdd515d31ae1844"
+  ],
+  xmaskdfyc: [
+    "11769",
+    "XMASK_H5_PROD_11769_MPS",
+    ""
+    // 913b36f02d2b4a0aa6988b19c52d066c：sid
+  ],
+  shjq: [
+    "11713",
+    "JINQIU_H5_PROD_11713_MPS",
+    ""
+    // deffcc9bfa2e44769a1ce0704ce61921：sid
   ],
   shdyc: ["12654", "XHX_H5_PROD_12654_MPS", "d88aeb5151b84e53a0859f9ce0284dc3"]
 };

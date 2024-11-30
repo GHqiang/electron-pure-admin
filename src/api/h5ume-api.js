@@ -85,18 +85,9 @@ const createApi = ({ app_name }) => {
 
   // 获取电影放映场次（返回的是所有电影的场次列表）
   const getMoviePlayDate = params =>
-    axios.post(
-      "/h5ume/mtop.alipic.lark.own.schedule.getschedules",
-      params || {
-        empCode: "",
-        leaseCode: "",
-        cinemaLinkId: "10106",
-        channelCode: "BEICHEN_H5_PROD_10106_MPS",
-        larkSid: "4431a7f9d941485d95b278f5ce91820d",
-        version: "H5",
-        appVersion: "H5_5.0"
-      }
-    );
+    axios.post("/h5ume/mtop.alipic.lark.own.schedule.getschedules", params, {
+      timeout: 30 * 1000
+    });
 
   // 获取座位布局
   const getMoviePlaySeat = params =>
@@ -124,6 +115,9 @@ const createApi = ({ app_name }) => {
       }
     );
 
+  // 获取最优卡券组合
+  const getOptimalCardQuanCompose = params =>
+    axios.post("/h5ume/mtop.alipic.lark.own.pay.getpayprivilegeinfo", params);
   // 创建订单
   const createOrder = params =>
     axios.post(
@@ -245,6 +239,7 @@ const createApi = ({ app_name }) => {
     getCardList,
     getQuanList,
     priceCalculation,
+    getOptimalCardQuanCompose,
     createOrder,
     payOrder,
     cannelOneOrder,

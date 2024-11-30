@@ -471,6 +471,16 @@ const getCinemaFlag = item => {
   //   ["昆明"].includes(city_name)
   // ) {
   //   return "kmbccf";
+  // } else if (
+  //   cinemNameSpecial(cinema_name).includes("福建厦门奥斯卡东方影城") &&
+  //   ["厦门"].includes(city_name)
+  // ) {
+  //   return "xmaskdfyc";
+  // } else if (
+  //   cinemNameSpecial(cinema_name).includes("上海金球影城") &&
+  //   ["上海"].includes(city_name)
+  // ) {
+  //   return "shjq";
   // }
   else if (
     cinemNameSpecial(cinema_name).includes("国文全激光影城金桥精品店") &&
