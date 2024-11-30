@@ -97,7 +97,7 @@ class OrderAutoLockSeatQueue {
       // 获取目标行目标锁定座位
       let targetSeats = lockseat
         .split(" ")
-        .map(item => item.split("排")[1].slice(0, 1))
+        .map(item => item.split("排")[1].replace("座", "号").split("号")[0])
         .sort((a, b) => +a - b); // ["6", "8"] | ["12"]
       logList.push({
         opera_time: getCurrentFormattedDateTime(),
