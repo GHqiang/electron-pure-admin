@@ -357,9 +357,6 @@ const getCinemaFlag = item => {
       item => cinemNameSpecial(item) === cinemNameSpecial(cinema_name)
     );
 
-  let isZhongyingGroup = ["中影", "中影直营", "中影国际", "中影影票"].includes(
-    cinema_group
-  );
   let isUmeGroup = ["UME", "ume一线", "ume二线", "c_ume"].includes(
     cinema_group
   );
@@ -444,12 +441,6 @@ const getCinemaFlag = item => {
     )
   ) {
     return "tpyyc";
-  }
-  if (
-    isZhongyingGroup ||
-    cinemNameSpecial(cinema_name) == "上海中影国际影城合生汇CINITY店"
-  ) {
-    return "zhongying";
   }
   if (isYinghuangiGroup || isYinghuangCinemaName) {
     return "yinghuang";
@@ -908,6 +899,16 @@ const getCinemaFlag = item => {
     ["长沙"].includes(city_name)
   ) {
     return "cszyyzx";
+  }
+  // 中影比较特殊，放最后面
+  let isZhongyingGroup = ["中影", "中影直营", "中影国际", "中影影票"].includes(
+    cinema_group
+  );
+  if (
+    isZhongyingGroup ||
+    cinemNameSpecial(cinema_name) == "上海中影国际影城合生汇CINITY店"
+  ) {
+    return "zhongying";
   }
 };
 window.getCinemaFlag = getCinemaFlag;
