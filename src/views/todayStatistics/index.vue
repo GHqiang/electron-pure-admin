@@ -146,11 +146,11 @@
         min-width="95"
       />
       <el-table-column label="中标率%" width="90">
-        <template #default="{ row: { ticketTotalNum, offerTotalNum } }">
+        <template #default="{ row: { offerSuccessNum, ticketTotalNum } }">
           <span
             >{{
               ticketTotalNum
-                ? Math.floor((ticketTotalNum / offerTotalNum) * 100)
+                ? Math.floor((ticketTotalNum / offerSuccessNum) * 100)
                 : 0
             }}
             %</span
