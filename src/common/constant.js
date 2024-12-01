@@ -1954,8 +1954,7 @@ const H5_UME_CINEMA_OBJ = {
   shjq: [
     "11713",
     "JINQIU_H5_PROD_11713_MPS",
-    ""
-    // deffcc9bfa2e44769a1ce0704ce61921：sid
+    "cc27e29dee4c4e3e91fb345cc431f423"
   ],
   shdyc: ["12654", "XHX_H5_PROD_12654_MPS", "d88aeb5151b84e53a0859f9ce0284dc3"]
 };

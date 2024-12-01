@@ -341,8 +341,7 @@ const urlObj = {
     "mtop.alipic.lark.own.schedule.getSchedules",
   "mtop.alipic.lark.own.seat.getseatmap":
     "mtop.alipic.lark.own.seat.getSeatMap",
-  "mtop.alipic.lark.own.goods.getnewgoodses":
-    "mtop.alipic.lark.own.goods.getNewGoodses",
+  "mtop.alipic.lark.own.seat.lockseats": "mtop.alipic.lark.own.seat.lockSeats",
   "mtop.alipic.lark.own.pay.getpayprivilegeinfo":
     "mtop.alipic.lark.own.pay.getPayPrivilegeInfo",
   "mtop.alipic.lark.own.order.getorderlist":
@@ -535,7 +534,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         isError &&
         !whitelistSp.some(item => response.config.url.includes(item))
       ) {
-        let errReason = data?.ret?.[0];
+        let errReason = data?.data?.bizMsg || data?.ret?.[0];
         // 令牌为空或者过期是cookie里的_m_h5_tk为空或者过期
         if (
           [
