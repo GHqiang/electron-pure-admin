@@ -23,7 +23,7 @@ const tokens = platTokens();
 import { TEST_NEW_PLAT_LIST } from "@/common/constant";
 import { APP_API_OBJ, PLAT_API_OBJ } from "@/common/index";
 
-let isTestOrder = true; //是否是测试订单
+let isTestOrder = false; //是否是测试订单
 // 创建一个订单自动出票队列类
 class OrderAutoTicketQueue {
   constructor(appFlag) {
@@ -1355,7 +1355,8 @@ class OrderAutoTicketQueue {
         cardNo,
         orderId,
         appFlag,
-        session_id: this.currentParamsList[this.currentParamsInx].session_id
+        session_id: this.currentParamsList[this.currentParamsInx].session_id,
+        member_pwd: this.currentParamsList[this.currentParamsInx].member_pwd
       });
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
@@ -1363,8 +1364,6 @@ class OrderAutoTicketQueue {
         level: "info",
         info: buyTicketRes
       });
-      return;
-
       const buyRes = buyTicketRes?.buyRes;
       if (!buyRes) {
         console.error("订单购买失败，单个订单直接出票结束", "走转单逻辑");
@@ -1388,6 +1387,7 @@ class OrderAutoTicketQueue {
         des: "订单购买成功",
         level: "info"
       });
+      return { offerRule };
       // 最后处理：获取支付结果上传取票码
       const lastRes = await this.lastHandle({
         orderId,
@@ -2975,7 +2975,8 @@ const buyTicket = async ({
   cardNo,
   orderId,
   appFlag,
-  session_id
+  session_id,
+  member_pwd
 }) => {
   let params = {
     cinemaLinkId,
@@ -2985,7 +2986,7 @@ const buyTicket = async ({
   };
   if (cardNo) {
     params.cardNumber = cardNo;
-    params.cardPassword = "";
+    params.cardPassword = member_pwd;
     params.cardCinemaLinkId = cinemaLinkId;
   }
   try {
