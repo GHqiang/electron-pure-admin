@@ -483,7 +483,6 @@ import {
   APP_LIST,
   UME_LIST,
   H5_UME_LIST,
-  H5_UME_CINEMA_OBJ,
   SFC_APP_LIST
 } from "@/common/constant";
 import { useAppBaseData } from "@/store/appBaseData";
@@ -902,7 +901,7 @@ const getFilmList = async (oneCity, oneCinema) => {
       const params = {
         empCode: "",
         leaseCode: "",
-        cinemaLinkId: H5_UME_CINEMA_OBJ[shadowLineName][0],
+        cinemaLinkId: oneCinema.cinemaLinkId,
         posterSize: "SMALL"
       };
       const res = await APP_API_OBJ[shadowLineName].getMoviePlayInfo(params);

@@ -116,6 +116,8 @@ const UME_LIST = [
 // umeh5系列影院集合
 let H5_UME_LIST = [
   // "kmbccf", "shdyc", "xmaskdfyc", "shjq"
+  // "fyyc",
+  "hsmzyc"
 ];
 
 // 影院列表
@@ -124,6 +126,8 @@ const APP_LIST = {
   shdyc: "上海大悦城H5",
   xmaskdfyc: "厦门奥斯卡东方影城",
   shjq: "上海金球",
+  hsmzyc: "海上明珠影城",
+  fyyc: "广州飞扬影城",
   lma: "卢米埃",
   hbchyxd: "HBC华谊兄弟",
   ume: "UME",
@@ -1751,6 +1755,8 @@ const SPECIAL_CINEMA_OBJ = {
   shdyc: [],
   xmaskdfyc: [],
   shjq: [],
+  fyyc: [],
+  hsmzyc: [],
   lma: HMA_SPECIAL_CINEMA_LIST,
   hbchyxd: HBCHYXD_SPECIAL_CINEMA_LIST,
   ume: UME_SPECIAL_CINEMA_LIST,
@@ -1847,6 +1853,8 @@ const TICKET_CONPREFIX_OBJ = {
   shdyc: "【上海大悦城自动出票】——",
   xmaskdfyc: "【厦门奥斯卡东方影城自动出票】——",
   shjq: "【上海金球自动出票】——",
+  hsmzyc: "【海上明珠影城自动出票】——",
+  fyyc: "【广州飞扬影城自动出票】——",
   lma: "【卢米埃自动出票】——",
   hbchyxd: "【HBC华谊兄弟自动出票】——",
   ume: "【UME自动出票】——",
@@ -1956,6 +1964,12 @@ const H5_UME_CINEMA_OBJ = {
     "JINQIU_H5_PROD_11713_MPS",
     "cc27e29dee4c4e3e91fb345cc431f423"
   ],
+  hsmzyc: [
+    "16014", // 多个影院时随便填个就行，主要用户会员卡同步
+    "HSMZYC_H5_PROD_S_MPS",
+    "f819f7de4e97466da20d0cef88f6b1de"
+  ],
+  fyyc: ["", "FYYC_H5_PROD_S_MPS", "528782235f6b4f7fb1d271433efb15cb"],
   shdyc: ["12654", "XHX_H5_PROD_12654_MPS", "d88aeb5151b84e53a0859f9ce0284dc3"]
 };
 

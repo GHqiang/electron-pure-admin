@@ -480,7 +480,7 @@ const getCardListByApp = async (app_name, phone, session_id) => {
 };
 
 window.getCardListByApp = getCardListByApp;
-
+// window.getCardListByApp("hsmzyc", "13073792313")
 // 同步卡信息时新增卡
 const addCardListHandle = async cardList => {
   try {

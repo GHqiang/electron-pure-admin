@@ -442,6 +442,16 @@ const getCinemaFlag = item => {
   ) {
     return "tpyyc";
   }
+
+  let isHaiShangMingZhuGroup = [
+    "AMG",
+    "AMG海上明珠",
+    "上海海上明珠",
+    "其他海上明珠"
+  ].includes(cinema_group);
+  if (isHaiShangMingZhuGroup) {
+    return "hsmzyc";
+  }
   if (isYinghuangiGroup || isYinghuangCinemaName) {
     return "yinghuang";
   }
