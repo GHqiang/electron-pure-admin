@@ -1749,6 +1749,25 @@ const HMA_SPECIAL_CINEMA_LIST = [
   }
 ];
 
+// 海上明珠特殊影院
+const HSMZYC_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: ["AMG海上明珠影城杭州西湖银泰城店"],
+    sfc_cinema_name: "AMG海上明珠影城杭州西湖银泰店"
+  },
+  {
+    order_cinema_name: ["AMG海上明珠影城上海大宁音乐广场IMAX店"],
+    sfc_cinema_name: "AMG海上明珠影城上海大宁音乐广场店"
+  },
+  {
+    order_cinema_name: ["AMG海上明珠影城南京雨花客厅IMAX店"],
+    sfc_cinema_name: "AMG海上明珠影城南京雨花客厅店"
+  },
+  {
+    order_cinema_name: ["AMG海上明珠影城上海环球港RealDCinema店"],
+    sfc_cinema_name: "AMG海上明珠影城上海环球港店"
+  }
+];
 // 特殊的名字匹配集合
 const SPECIAL_CINEMA_OBJ = {
   kmbccf: [],
@@ -1756,7 +1775,7 @@ const SPECIAL_CINEMA_OBJ = {
   xmaskdfyc: [],
   shjq: [],
   fyyc: [],
-  hsmzyc: [],
+  hsmzyc: HSMZYC_SPECIAL_CINEMA_LIST,
   lma: HMA_SPECIAL_CINEMA_LIST,
   hbchyxd: HBCHYXD_SPECIAL_CINEMA_LIST,
   ume: UME_SPECIAL_CINEMA_LIST,
