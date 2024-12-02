@@ -1231,9 +1231,6 @@ const getCinemaId = (cinema_name, list, appName, city_name) => {
           item.order_cinema_name.includes(cinemaName)
       ) || [];
     // console.log("specialCinemaList", specialCinemaList);
-    specialCinemaList = specialCinemaList.filter(item =>
-      list.some(itemA => cinemNameSpecial(itemA.name) === item.sfc_cinema_name)
-    );
     // const CQHX_SPECIAL_CINEMA_LIST = [
     //   {
     //     order_cinema_name: "华熙国际影城",
@@ -1246,6 +1243,11 @@ const getCinemaId = (cinema_name, list, appName, city_name) => {
     // ];
     // 存在以上情况故需要做特殊处理
     if (specialCinemaList.length > 1 && city_name) {
+      specialCinemaList = specialCinemaList.filter(item =>
+        list.some(
+          itemA => cinemNameSpecial(itemA.name) === item.sfc_cinema_name
+        )
+      );
       specialCinemaList = specialCinemaList.filter(item =>
         item.sfc_cinema_name.includes(city_name)
       );
@@ -1318,6 +1320,11 @@ const getCinemaIdByLma = (cinema_name, list, appName, city_name) => {
     // ];
     // 存在以上情况故需要做特殊处理
     if (specialCinemaList.length > 1 && city_name) {
+      specialCinemaList = specialCinemaList.filter(item =>
+        list.some(
+          itemA => cinemNameSpecial(itemA.cinema_name) === item.sfc_cinema_name
+        )
+      );
       specialCinemaList = specialCinemaList.filter(item =>
         item.sfc_cinema_name.includes(city_name)
       );

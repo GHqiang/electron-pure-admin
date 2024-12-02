@@ -11,14 +11,13 @@ const createApi = ({ app_name }) => {
 
   const getsidbytid = params =>
     // api：对应url最后一个单词驼峰
-    axios.post(
-      "/h5ume/mtop.alipic.lark.own.auth.getsidbytid",
-      params || {
-        empCode: "",
-        leaseCode: "",
-        tid: "d88aeb5151b84e53a0859f9ce0284dc3"
-      }
-    );
+    axios.post("/h5ume/mtop.alipic.lark.own.auth.getsidbytid", params);
+  // {
+  //   empCode: "",
+  //   leaseCode: "",
+  //   tid: "d88aeb5151b84e53a0859f9ce0284dc3"
+  // }
+
   // tid是固定的（每次登录都会返回相同的tid和不同的sid），可以根据这个获取sid也就是larkSid，只有当接口返回登录超时好像才需要重新获取sid
   // "data": {
   //       "bizAlertMsg": "登录超时，请重新登录",
@@ -47,23 +46,16 @@ const createApi = ({ app_name }) => {
 
   // 获取城市及影院列表
   const getCinemaList = params =>
-    axios.post(
-      "/h5ume/mtop.alipic.lark.own.cinema.getcinemas",
-      params || {
-        empCode: "",
-        leaseCode: ""
-      }
-    );
+    axios.post("/h5ume/mtop.alipic.lark.own.cinema.getcinemas", params);
 
   const getCinemaDetail = params =>
-    axios.post(
-      "/h5ume/mtop.alipic.lark.own.cinema.getcinemadetail",
-      params || {
-        empCode: "",
-        leaseCode: "",
-        cinemaLinkId: "10106"
-      }
-    );
+    axios.post("/h5ume/mtop.alipic.lark.own.cinema.getcinemadetail", params);
+  // {
+  //   empCode: "",
+  //   leaseCode: "",
+  //   cinemaLinkId: "10106"
+  // }
+
   const channelAgreement = params =>
     axios.post(
       "/h5ume/mtop.alipic.lark.own.lease.channelagreement",
@@ -73,15 +65,7 @@ const createApi = ({ app_name }) => {
     );
   // 获取电影放映列表（热映列表，待映列表用不上）
   const getMoviePlayInfo = params =>
-    axios.post(
-      "/h5ume/mtop.alipic.lark.own.film.gethotfilms",
-      params || {
-        empCode: "",
-        leaseCode: "",
-        cinemaLinkId: "10106",
-        posterSize: "SMALL"
-      }
-    );
+    axios.post("/h5ume/mtop.alipic.lark.own.film.gethotfilms", params);
 
   // 获取电影放映场次（返回的是所有电影的场次列表）
   const getMoviePlayDate = params =>
@@ -91,32 +75,11 @@ const createApi = ({ app_name }) => {
 
   // 获取座位布局
   const getMoviePlaySeat = params =>
-    axios.post(
-      "/h5ume/mtop.alipic.lark.own.seat.getseatmap",
-      params || {
-        empCode: "",
-        leaseCode: "",
-        cinemaLinkId: "10106",
-        hallId: "0000000000000003",
-        scheduleId: "1000000834239641",
-        scheduleKey: "38BB39E91E6107E16E0C2258848D5385",
-        apiVersion: "1.0"
-      }
-    );
+    axios.post("/h5ume/mtop.alipic.lark.own.seat.getseatmap", params);
 
   // 锁定座位
   const lockSeat = params =>
-    axios.post(
-      "/h5ume/mtop.alipic.lark.own.seat.lockseats",
-      params || {
-        empCode: "",
-        leaseCode: "",
-        cinemaLinkId: "11713",
-        seatIds: "00000021373-1-18",
-        scheduleId: "1000000837610162",
-        scheduleKey: "048C626826D528C7499400531B39D7C9"
-      }
-    );
+    axios.post("/h5ume/mtop.alipic.lark.own.seat.lockseats", params);
 
   // 获取最优卡券组合
   const getCardQuanList = params =>
@@ -247,24 +210,7 @@ const createApi = ({ app_name }) => {
 
   // 创建订单
   const createOrder = params =>
-    axios.post(
-      "/h5ume/mtop.alipic.lark.own.order.createticketorder",
-      params || {
-        // channelCode: "JINQIU_H5_PROD_11713_MPS",
-        // larkSid: "9424183dd6be47e8a34673ce2cf77fe0",
-        // version: "H5",
-        // appVersion: "H5_5.0",
-        mobile: "13073792313",
-        cinemaLinkId: "11713",
-        totalPrice: "3800",
-        payAmount: "3500",
-        payments: '[{"payMethod":"CARD","payCardNumber":"20001158294X"}]',
-        tickets: '[{"seatId":"00000021373-1-18"}]',
-        scheduleId: "1000000837610162",
-        scheduleKey: "048C626826D528C7499400531B39D7C9",
-        lockOrderId: "2678011713208435457"
-      }
-    );
+    axios.post("/h5ume/mtop.alipic.lark.own.order.createticketorder", params);
   // {
   //     "cardCinemaLinkId": "11713",
   //     "cardNumber": "20001158294X",
@@ -304,21 +250,19 @@ const createApi = ({ app_name }) => {
 
   // 电影票购买
   const buyTicket = params =>
-    axios.post(
-      "/h5ume/mtop.alipic.lark.own.card.payorderwithcard",
-      params || {
-        channelCode: "JINQIU_H5_PROD_11713_MPS",
-        larkSid: "9424183dd6be47e8a34673ce2cf77fe0",
-        version: "H5",
-        appVersion: "H5_5.0",
-        cinemaLinkId: "11713",
-        orderId: "241130027004X117131162",
-        orderType: "TICKET",
-        cardNumber: "20001158294X",
-        cardPassword: "213214",
-        cardCinemaLinkId: "11713"
-      }
-    );
+    axios.post("/h5ume/mtop.alipic.lark.own.card.payorderwithcard", params);
+  // {
+  //   channelCode: "JINQIU_H5_PROD_11713_MPS",
+  //   larkSid: "9424183dd6be47e8a34673ce2cf77fe0",
+  //   version: "H5",
+  //   appVersion: "H5_5.0",
+  //   cinemaLinkId: "11713",
+  //   orderId: "241130027004X117131162",
+  //   orderType: "TICKET",
+  //   cardNumber: "20001158294X",
+  //   cardPassword: "213214",
+  //   cardCinemaLinkId: "11713"
+  // }
 
   // 获取购票信息
   const payOrder = params =>
@@ -330,41 +274,32 @@ const createApi = ({ app_name }) => {
 
   // 取消订单
   const cannelOneOrder = params =>
-    axios.post(
-      "/lmh5umea/mtop.alipic.lark.own.order.cancelorder",
-      params || {
-        empCode: "",
-        leaseCode: "",
-        cinemaLinkId: "10106",
-        orderType: "TICKET",
-        orderId: "241124035016X101061195"
-      }
-    );
+    axios.post("/lmh5umea/mtop.alipic.lark.own.order.cancelorder", params);
+
+  // {
+  //   empCode: "",
+  //   leaseCode: "",
+  //   cinemaLinkId: "10106",
+  //   orderType: "TICKET",
+  //   orderId: "241124035016X101061195"
+  // }
 
   // 获取订单信息
   const getOrderInfo = params =>
-    axios.post(
-      "/h5ume/mtop.alipic.lark.own.order.getorderdetail",
-      params || {
-        empCode: "",
-        leaseCode: "",
-        orderId: "241124035016X101061195",
-        orderType: "TICKET",
-        cinemaLinkId: "10106",
-        needMatchConsumeGift: false
-      }
-    );
+    axios.post("/h5ume/mtop.alipic.lark.own.order.getorderdetail", params);
+
+  // {
+  //   empCode: "",
+  //   leaseCode: "",
+  //   orderId: "241124035016X101061195",
+  //   orderType: "TICKET",
+  //   cinemaLinkId: "10106",
+  //   needMatchConsumeGift: false
+  // }
 
   // 获取会员卡列表
   const getCardList = params =>
-    axios.post(
-      "/h5ume/mtop.alipic.lark.own.card.getcardlistbypage",
-      params || {
-        cinemaLinkId: "12654",
-        pageNo: 1,
-        pageSize: 30
-      }
-    );
+    axios.post("/h5ume/mtop.alipic.lark.own.card.getcardlistbypage", params);
   // bizValue: [
   //     {
   //         "balance": 26395,
