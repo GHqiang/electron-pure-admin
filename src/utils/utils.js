@@ -1230,6 +1230,10 @@ const getCinemaId = (cinema_name, list, appName, city_name) => {
           item.order_cinema_name === cinemaName ||
           item.order_cinema_name.includes(cinemaName)
       ) || [];
+    // console.log("specialCinemaList", specialCinemaList);
+    specialCinemaList = specialCinemaList.filter(item =>
+      list.some(itemA => cinemNameSpecial(itemA.name) === item.sfc_cinema_name)
+    );
     // const CQHX_SPECIAL_CINEMA_LIST = [
     //   {
     //     order_cinema_name: "华熙国际影城",
@@ -1282,6 +1286,7 @@ const getCinemaId = (cinema_name, list, appName, city_name) => {
   }
 };
 
+window.getCinemaId = getCinemaId;
 // 根据订单name获取影院id(主要用于lma系统)
 const getCinemaIdByLma = (cinema_name, list, appName, city_name) => {
   try {
