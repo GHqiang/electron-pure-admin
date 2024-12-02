@@ -577,7 +577,13 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             // console.log("params", params);
             config.url = getUrl(newToken, config.url, params);
             // console.log("retryCount-config", config);
-            config.url = config.url.replace("h5ume", "svpi/ume-ser");
+            if (IS_DEV) {
+              config.url = config.url.replace("h5ume", "svpi/ume-ser");
+            } else {
+              config.url =
+                "http://47.113.191.173:3000" +
+                config.url.replace("h5ume", "ume-ser");
+            }
             return instance(config);
           } else {
             ElMessage.warning(
@@ -625,7 +631,13 @@ const createAxios = ({ app_name, timeout = 20 }) => {
               // 重新生成接口url(主要是sign签名和参数有关)
               config.url = config.originalUrl.split("/1.0/")[0];
               config.url = getUrl(newToken, config.url, params);
-              config.url = config.url.replace("h5ume", "svpi/ume-ser");
+              if (IS_DEV) {
+                config.url = config.url.replace("h5ume", "svpi/ume-ser");
+              } else {
+                config.url =
+                  "http://47.113.191.173:3000" +
+                  config.url.replace("h5ume", "ume-ser");
+              }
               // const uidRes = await getumidToken();
               // console.log("uidRes-登录超时", uidRes);
               // config.headers["bx-ua"] = uidRes?.ua;

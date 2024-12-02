@@ -15,7 +15,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
   const instance = axios.create({
     //   baseURL: process.env.VITE_API_BASE_URL,
     baseURL: "",
-    timeout: 15 * 1000,
+    timeout: timeout * 1000,
     withCredentials: true
   });
 
