@@ -146,6 +146,14 @@ class OrderAutoOfferQueue {
       if (!newOrders?.length) return [];
       newOrders.forEach(item => {
         this.handledOrders.set(item.order_number, 1);
+
+        // 如果 handledOrders 的大小超过了100，则移除最早添加的条目
+        if (this.handledOrders.size > 100) {
+          const firstKey = this.handledOrders.keys().next().value;
+          if (firstKey !== undefined) {
+            this.handledOrders.delete(firstKey);
+          }
+        }
         let logList = [
           {
             opera_time: getCurrentFormattedDateTime(),
