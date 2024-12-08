@@ -892,69 +892,94 @@ class getUmeOfferPrice {
         scheduleKey
       });
       let { seats: seatList, areaInfos: areaInfoList } = areaRes || {};
-      if (areaInfoList?.length) {
-        // 座位分区从高到低排序
-        let areaList = areaInfoList
-          .map(item => {
-            let priceInfo = { settlePrice: item.areaPrice || 0 };
-            if (item.areaMemberPrice?.length) {
-              priceInfo = item.areaMemberPrice.sort(
-                (a, b) => b.settlePrice - a.settlePrice
-              )[0];
-            }
-            return {
-              ...item,
-              ...priceInfo
-            };
-          })
-          .sort((a, b) => b.settlePrice - a.settlePrice);
-        // 默认取最高价
-        let maxSeatPrice = areaList[0].settlePrice;
-        // try {
-        //   // 过滤出来未售座位然后计算分区剩余座位占比，0-未售
-        //   let seatList = seat_data.filter(item => item.status === 0);
-
-        //   areaList = areaList.map(item => {
-        //     return {
-        //       ...item,
-        //       numRatio: Math.floor(
-        //         (seatList.filter(itemA => itemA.areaId == item.areaId).length *
-        //           100) /
-        //           seatList.length
-        //       )
-        //     };
-        //   });
-        //   this.logList.push({
-        //     opera_time: getCurrentFormattedDateTime(),
-        //     des: "座位分区剩余座位情况",
-        //     level: "info",
-        //     info: {
-        //       areaList
-        //     }
-        //   });
-        //   // 默认取最高价格，最高座位占比不足百分之3时取次最高价格
-        //   if (areaList[0].numRatio <= 3 && areaList[1]?.settlePrice) {
-        //     maxSeatPrice = areaList[1].settlePrice;
-        //   }
-        //   if (areaList[1].numRatio <= 3 && areaList[2]?.settlePrice) {
-        //     maxSeatPrice = areaList[2].settlePrice;
-        //   }
-        // } catch (error) {
-        //   this.logList.push({
-        //     opera_time: getCurrentFormattedDateTime(),
-        //     des: "座位分区剩余座位占比计算失败",
-        //     level: "info",
-        //     info: {
-        //       error
-        //     }
-        //   });
-        // }
-        return {
-          ...targetShow,
-          maxSeatPrice
-        };
+      if (!areaInfoList?.length || !seatList.length) {
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: "获取座位布局信息异常",
+          level: "error"
+        });
+        return;
       }
-      return targetShow;
+      // 座位分区从高到低排序
+      let areaList = areaInfoList
+        .map(item => {
+          let priceInfo = { settlePrice: item.areaPrice || 0 };
+          if (item.areaMemberPrice?.length) {
+            priceInfo = item.areaMemberPrice.sort(
+              (a, b) => b.settlePrice - a.settlePrice
+            )[0];
+          }
+          return {
+            ...item,
+            ...priceInfo
+          };
+        })
+        .sort((a, b) => b.settlePrice - a.settlePrice);
+      // 默认取最高价
+      let maxSeatPrice = areaList[0].settlePrice;
+      let maxSeatPriceAreaId = areaList[0].areaId;
+      let maxAreaList = seatList.filter(
+        item => item.status == "1" && item.areaId == maxSeatPriceAreaId
+      );
+      let seatId = maxAreaList[0]?.seatId;
+      // try {
+      //   // 过滤出来未售座位然后计算分区剩余座位占比，1-未售
+      //   let seatList = seat_data.filter(item => item.status === 1);
+
+      //   areaList = areaList.map(item => {
+      //     return {
+      //       ...item,
+      //       numRatio: Math.floor(
+      //         (seatList.filter(itemA => itemA.areaId == item.areaId).length *
+      //           100) /
+      //           seatList.length
+      //       )
+      //     };
+      //   });
+      //   this.logList.push({
+      //     opera_time: getCurrentFormattedDateTime(),
+      //     des: "座位分区剩余座位情况",
+      //     level: "info",
+      //     info: {
+      //       areaList
+      //     }
+      //   });
+      //   // 默认取最高价格，最高座位占比不足百分之3时取次最高价格
+      //   if (areaList[0].numRatio <= 3 && areaList[1]?.settlePrice) {
+      //     maxSeatPrice = areaList[1].settlePrice;
+      //   }
+      //   if (areaList[1].numRatio <= 3 && areaList[2]?.settlePrice) {
+      //     maxSeatPrice = areaList[2].settlePrice;
+      //   }
+      // } catch (error) {
+      //   this.logList.push({
+      //     opera_time: getCurrentFormattedDateTime(),
+      //     des: "座位分区剩余座位占比计算失败",
+      //     level: "info",
+      //     info: {
+      //       error
+      //     }
+      //   });
+      // }
+      // 从这里获取真实会员价
+      const orderInfoRes = await this.getOptimalCardQuanCompose({
+        cinemaLinkId,
+        hallId,
+        scheduleId,
+        scheduleKey,
+        seatIds: seatId
+      });
+      let activities = orderInfoRes?.privileges || [];
+      let member_total_price = activities.find(
+        item => item.payMethod === "CARD"
+      )?.privilegeTotalPrice;
+      if (member_total_price) {
+        maxSeatPrice = member_total_price;
+      }
+      return {
+        ...targetShow,
+        maxSeatPrice
+      };
     } catch (error) {
       console.error("获取当前场次电影信息异常", error);
       this.logList.push({
@@ -967,7 +992,50 @@ class getUmeOfferPrice {
       });
     }
   }
-
+  // 获取用卡购票价格信息
+  async getOptimalCardQuanCompose({
+    cinemaLinkId,
+    hallId,
+    scheduleId,
+    scheduleKey,
+    seatIds
+  }) {
+    let params = {
+      empCode: "",
+      leaseCode: "",
+      cinemaLinkId,
+      hallId,
+      scheduleId,
+      scheduleKey,
+      seatIds
+    };
+    try {
+      console.log("获取用卡购票价格信息参数", params);
+      const res = await this.appApi.getCardQuanList(params);
+      console.log("获取用卡购票价格信息返回", res);
+      let orderInfo = res.bizValue;
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取用卡购票价格信息返回",
+        level: "info",
+        info: {
+          orderInfo,
+          params
+        }
+      });
+      return orderInfo;
+    } catch (error) {
+      console.error("获取用卡购票价格信息返回异常", error);
+      this.logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: "获取用卡购票价格信息返回异常",
+        level: "error",
+        info: {
+          error
+        }
+      });
+    }
+  }
   // 获取影院放映列表
   async getMoviePlayInfo({ cinemaLinkId }) {
     try {

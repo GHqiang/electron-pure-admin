@@ -60,21 +60,21 @@ class OrderAutoLockSeatQueue {
       console.error("锁定座位失败准备试错2次，间隔5秒", error);
       // 试错3次，间隔5秒
       // 锁定座位尝试配置
-      let delayConfig = {
-        lieren: [3, 5],
-        mangguo: [3, 5],
-        sheng: [3, 5],
-        mayi: [3, 10],
-        yangcong: [3, 10],
-        haha: [3, 5],
-        yinghuasuan: [3, 5],
-        shangzhan: [3, 5]
-      };
-      return await trial(
-        inx => this[funName](order, logList, inx),
-        delayConfig[plat_name][0],
-        delayConfig[plat_name][1]
-      );
+      // let delayConfig = {
+      //   lieren: [3, 5],
+      //   mangguo: [3, 5],
+      //   sheng: [3, 5],
+      //   mayi: [3, 10],
+      //   yangcong: [3, 10],
+      //   haha: [3, 5],
+      //   yinghuasuan: [3, 5],
+      //   shangzhan: [3, 5]
+      // };
+      // return await trial(
+      //   inx => this[funName](order, logList, inx),
+      //   delayConfig[plat_name][0],
+      //   delayConfig[plat_name][1]
+      // );
     }
   }
 
