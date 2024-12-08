@@ -28,20 +28,19 @@ class OrderAutoFetchQueue {
     console.log(conPrefix + "队列启动");
     // 设置队列为运行状态
     this.isRunning = true;
-    this.orderRecord = []; // 订单记录
+    this.platOrderList = []; // 平台查询订单记录
     // 循环直到队列停止
     while (this.isRunning) {
       // 获取订单列表(支持时间间隔)
-      let fetchDelay = 2;
-      await this.fetchOrders(fetchDelay);
+      await mockDelay(5);
+      this.fetchOrders();
     }
   }
 
   // 获取订单
-  async fetchOrders(fetchDelay) {
+  async fetchOrders() {
     try {
-      await mockDelay(fetchDelay);
-      let stayList = await orderFetch();
+      let stayList = await this.orderFetch();
       if (!stayList?.length) return;
       let sfcStayOfferlist = stayList
         .map(item => {
@@ -154,8 +153,13 @@ class OrderAutoFetchQueue {
         const eventName = `newOrder_${item.appName}`;
         // 创建一个事件对象
         const newOrderEvent = new CustomEvent(eventName, { detail: item });
-        this.orderRecord.push(item);
         window.dispatchEvent(newOrderEvent);
+        this.orderRecord.push(item);
+        // 如果 orderRecord 数组没有被适当清理或管理，随着程序运行时间的增长，可能会导致内存占用增加，进而影响性能。
+        // 清理过期的订单记录，例如只保留最近的50条(防止数据太大)
+        if (this.orderRecord.length > 50) {
+          this.orderRecord.shift();
+        }
       });
     } catch (error) {
       console.error(conPrefix + "获取订单列表异常", error);
@@ -166,6 +170,31 @@ class OrderAutoFetchQueue {
   stop() {
     this.isRunning = false;
     console.warn(conPrefix + "主动停止订单自动获取队列");
+  }
+
+  // 获取待出票订单列表
+  async orderFetch() {
+    try {
+      // console.log(conPrefix + "获取蚂蚁待出票订单列表参数", params);
+      const res = await mayiApi.stayTicketingList({});
+      let list = res?.data.records || [];
+      list = list.filter(
+        item =>
+          !this.platOrderList.some(itemA => itemA.tradeno === item.tradeno)
+      );
+      if (list.length) {
+        this.platOrderList.push(...list);
+        let ln = this.platOrderList.length;
+        if (ln > 100) {
+          this.platOrderList = this.platOrderList.slice(-100);
+        }
+      }
+      // console.log("获取蚂蚁待出票列表返回", list);
+      return list;
+    } catch (error) {
+      console.error("获取蚂蚁待出票列表异常", error);
+      return [];
+    }
   }
 }
 // 报价队列实例
@@ -193,27 +222,15 @@ const judgeHandle = (item, app_name, offerList, ticketList) => {
   }
 };
 
-// 获取待出票订单列表
-async function orderFetch() {
-  try {
-    // console.log(conPrefix + "获取蚂蚁待出票订单列表参数", params);
-    const res = await mayiApi.stayTicketingList({});
-    let list = res?.data.records || [];
-    // console.log(conPrefix + "获取蚂蚁待出票列表返回", list);
-    return list;
-  } catch (error) {
-    console.error(conPrefix + "获取蚂蚁待出票列表异常", error);
-    return [];
-  }
-}
-
 // 获取报价记录
 const getOfferList = async () => {
   try {
     const res = await svApi.queryOfferList({
       user_id: tokens.userInfo.user_id,
       plat_name: "mayi",
-      start_time: getCurrentFormattedDateTime(+new Date() - 1 * 60 * 60 * 1000),
+      start_time: getCurrentFormattedDateTime(
+        +new Date() - 0.5 * 60 * 60 * 1000
+      ),
       end_time: getCurrentFormattedDateTime()
     });
     return res.data.offerList || [];
@@ -230,7 +247,7 @@ const getTicketList = async () => {
       user_id: tokens.userInfo?.user_id,
       plat_name: "mayi",
       page_num: 1,
-      page_size: 50
+      page_size: 30
     });
     return ticketRes.data.ticketList || [];
   } catch (error) {

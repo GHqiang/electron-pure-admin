@@ -30,19 +30,19 @@ class OrderAutoFetchQueue {
     // 设置队列为运行状态
     this.isRunning = true;
     this.orderRecord = []; // 订单记录
+    this.platOrderList = []; // 平台查询订单记录
     // 循环直到队列停止
     while (this.isRunning) {
       // 获取订单列表(支持时间间隔)
-      let fetchDelay = 2;
-      await this.fetchOrders(fetchDelay);
+      await mockDelay(5);
+      this.fetchOrders();
     }
   }
 
   // 获取订单
-  async fetchOrders(fetchDelay) {
+  async fetchOrders() {
     try {
-      await mockDelay(fetchDelay);
-      let stayList = await lierenOrderFetch();
+      let stayList = await this.lierenOrderFetch();
       if (!stayList?.length) return;
       stayList = stayList.map(item => ({ ...item, plat_name: "lieren" }));
       // 先过滤出来目前已上架影院的，然后添加影院标识，最后从历史记录过滤
@@ -116,8 +116,13 @@ class OrderAutoFetchQueue {
         const eventName = `newOrder_${item.appName}`;
         // 创建一个事件对象
         const newOrderEvent = new CustomEvent(eventName, { detail: item });
-        this.orderRecord.push(item);
         window.dispatchEvent(newOrderEvent);
+        this.orderRecord.push(item);
+        // 如果 orderRecord 数组没有被适当清理或管理，随着程序运行时间的增长，可能会导致内存占用增加，进而影响性能。
+        // 清理过期的订单记录，例如只保留最近的50条(防止数据太大)
+        if (this.orderRecord.length > 50) {
+          this.orderRecord.shift();
+        }
       });
     } catch (error) {
       console.error(conPrefix + "获取订单列表异常", error);
@@ -128,6 +133,75 @@ class OrderAutoFetchQueue {
   stop() {
     this.isRunning = false;
     console.warn(conPrefix + "主动停止订单自动获取队列");
+  }
+
+  // 获取猎人待出票订单列表
+  async lierenOrderFetch() {
+    try {
+      let params = {
+        page: 1,
+        limit: 100,
+        sort: "id",
+        desc: "desc",
+        type: 2
+      };
+      // console.log(conPrefix + "获取猎人待出票订单列表参数", params);
+      const res = await lierenApi.stayTicketingList(params);
+      let mockRes = {
+        success: true,
+        code: 1,
+        message: "成功！",
+        total: 1,
+        data: [
+          {
+            id: 7787887,
+            supplier_id: 714632,
+            order_number: "2024100520441715153",
+            tpp_price: "79.00",
+            ticket_num: 2,
+            city_name: "北京",
+            cinema_addr:
+              "徐汇区凯滨路218号绿地缤纷城中庭3楼（近东安路、龙华中路）",
+            cinema_name: "卢米埃北京芳草地影城",
+            hall_name: "7号厅",
+            film_name: "浴火之路",
+            show_time: "2024-10-06 21:40:00",
+            lockseat: "5排8座 5排9座",
+            cinema_code: "31074201",
+            supplier_end_price: 39.5,
+            cinema_group: "卢米埃"
+          }
+        ],
+        time: 1710125670
+      };
+      let list = res?.data || [];
+      list = list.filter(
+        item =>
+          !this.platOrderList.some(
+            itemA => itemA.order_number === item.order_number
+          )
+      );
+      list = list.map(item => ({
+        ...item,
+        // rewards: item.rewards == 1 ? 4 : 0,
+        rewards: [2, 3].includes(item.order_urgent) ? 4 : 0 // 0-普通 1-加急 2-特急 3-vip
+      }));
+      if (isTestOrder) {
+        list = mockRes?.data || [];
+      }
+      if (list.length) {
+        this.platOrderList.push(...list);
+        let ln = this.platOrderList.length;
+        if (ln > 100) {
+          this.platOrderList = this.platOrderList.slice(-100);
+        }
+      }
+      // console.log(conPrefix + "获取猎人待出票列表返回", list);
+      return list;
+    } catch (error) {
+      console.error(conPrefix + "获取猎人待出票列表异常", error);
+      return [];
+    }
   }
 }
 // 报价队列实例
@@ -151,65 +225,9 @@ const judgeHandle = (item, app_name, offerList, ticketList) => {
     // 报过价没出过票就是新订单
     return isOffer && !isTicket;
   } catch (error) {
-    console.error(conPrefix + "判断该订单是否是新订单异常", error);
+    console.error("判断该订单是否是新订单异常", error);
   }
 };
-
-// 获取猎人待出票订单列表
-async function lierenOrderFetch() {
-  try {
-    let params = {
-      page: 1,
-      limit: 100,
-      sort: "id",
-      desc: "desc",
-      type: 2
-    };
-    // console.log(conPrefix + "获取猎人待出票订单列表参数", params);
-    const res = await lierenApi.stayTicketingList(params);
-    let mockRes = {
-      success: true,
-      code: 1,
-      message: "成功！",
-      total: 1,
-      data: [
-        {
-          id: 7787887,
-          supplier_id: 714632,
-          order_number: "2024100520441715153",
-          tpp_price: "79.00",
-          ticket_num: 2,
-          city_name: "北京",
-          cinema_addr:
-            "徐汇区凯滨路218号绿地缤纷城中庭3楼（近东安路、龙华中路）",
-          cinema_name: "卢米埃北京芳草地影城",
-          hall_name: "7号厅",
-          film_name: "浴火之路",
-          show_time: "2024-10-06 21:40:00",
-          lockseat: "5排8座 5排9座",
-          cinema_code: "31074201",
-          supplier_end_price: 39.5,
-          cinema_group: "卢米埃"
-        }
-      ],
-      time: 1710125670
-    };
-    let list = res?.data || [];
-    list = list.map(item => ({
-      ...item,
-      // rewards: item.rewards == 1 ? 4 : 0,
-      rewards: [2, 3].includes(item.order_urgent) ? 4 : 0 // 0-普通 1-加急 2-特急 3-vip
-    }));
-    if (isTestOrder) {
-      list = mockRes?.data || [];
-    }
-    // console.log(conPrefix + "获取猎人待出票列表返回", list);
-    return list;
-  } catch (error) {
-    console.error(conPrefix + "获取猎人待出票列表异常", error);
-    return [];
-  }
-}
 
 // 获取报价记录
 const getOfferList = async () => {
@@ -217,7 +235,10 @@ const getOfferList = async () => {
     const res = await svApi.queryOfferList({
       user_id: tokens.userInfo.user_id,
       plat_name: "lieren",
-      start_time: getCurrentFormattedDateTime(+new Date() - 1 * 60 * 60 * 1000),
+      // order_status: "1",
+      start_time: getCurrentFormattedDateTime(
+        +new Date() - 0.5 * 60 * 60 * 1000
+      ),
       end_time: getCurrentFormattedDateTime()
     });
     return res.data.offerList || [];
@@ -234,7 +255,7 @@ const getTicketList = async () => {
       user_id: tokens.userInfo?.user_id,
       plat_name: "lieren",
       page_num: 1,
-      page_size: 50
+      page_size: 30
     });
     return ticketRes.data.ticketList || [];
   } catch (error) {
