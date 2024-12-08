@@ -29,19 +29,19 @@ class OrderAutoFetchQueue {
     // 设置队列为运行状态
     this.isRunning = true;
     this.orderRecord = []; // 订单记录
+    this.platOrderList = []; // 平台查询订单记录
     // 循环直到队列停止
     while (this.isRunning) {
       // 获取订单列表(支持时间间隔)
-      let fetchDelay = 2;
-      await this.fetchOrders(fetchDelay);
+      await mockDelay(5);
+      this.fetchOrders();
     }
   }
 
   // 获取订单
-  async fetchOrders(fetchDelay) {
+  async fetchOrders() {
     try {
-      await mockDelay(fetchDelay);
-      let stayList = await orderFetch();
+      let stayList = await this.orderFetch();
       if (!stayList?.length) return;
       console.warn("省待出票列表返回", stayList);
       // let logList = [
@@ -213,6 +213,56 @@ class OrderAutoFetchQueue {
     this.isRunning = false;
     console.warn(conPrefix + "主动停止订单自动获取队列");
   }
+
+  // 获取待出票订单列表
+  async orderFetch() {
+    try {
+      let params1 = {
+        page: 1, // （一页20条）
+        status: "2", // 查询状态，只能查询2和5，2表示未接单的订单，5表示已接单的订单
+        // supplierCode: "ccf7b11cdc944cf1940a149cff4243f9", // 供应商号-付勋
+        // supplierCode: "2820ad3f7b644ad898771deee7c324a1" // 供应商号-兜
+        supplierCode: tokens.shengToken
+      };
+      let params2 = {
+        page: 1,
+        status: "5",
+        supplierCode: tokens.shengToken
+      };
+
+      const [res1, res2] = await Promise.allSettled([
+        shengApi.stayTicketingList(params1),
+        shengApi.stayTicketingList(params2)
+      ]);
+
+      let list1 = res1.status === "fulfilled" ? res1.value.data.rows : [];
+      let list2 = res2.status === "fulfilled" ? res2.value.data.rows : [];
+
+      // 合并两个列表
+      let combinedList = [...list1, ...list2];
+
+      // 去重
+      let list = combinedList.filter((item, index, self) => {
+        return index === self.findIndex(t => t.code === item.code);
+      });
+
+      if (list.length) {
+        list = list.filter(
+          item => !this.platOrderList.some(itemA => itemA.code === item.code)
+        );
+        this.platOrderList.push(...list);
+        let ln = this.platOrderList.length;
+        if (ln > 100) {
+          this.platOrderList = this.platOrderList.slice(-100);
+        }
+      }
+      return list;
+      // console.log(conPrefix + "获取省待出票列表返回", list);
+    } catch (error) {
+      console.error(conPrefix + "获取省待出票列表异常", error);
+      return [];
+    }
+  }
 }
 // 报价队列实例
 const orderFetchQueue = new OrderAutoFetchQueue();
@@ -239,53 +289,15 @@ const judgeHandle = (item, app_name, offerList, ticketList) => {
   }
 };
 
-// 获取待出票订单列表
-async function orderFetch() {
-  try {
-    let params1 = {
-      page: 1, // （一页20条）
-      status: "2", // 查询状态，只能查询2和5，2表示未接单的订单，5表示已接单的订单
-      // supplierCode: "ccf7b11cdc944cf1940a149cff4243f9", // 供应商号-付勋
-      // supplierCode: "2820ad3f7b644ad898771deee7c324a1" // 供应商号-兜
-      supplierCode: tokens.shengToken
-    };
-    let params2 = {
-      page: 1,
-      status: "5",
-      supplierCode: tokens.shengToken
-    };
-
-    const [res1, res2] = await Promise.allSettled([
-      shengApi.stayTicketingList(params1),
-      shengApi.stayTicketingList(params2)
-    ]);
-
-    let list1 = res1.status === "fulfilled" ? res1.value.data.rows : [];
-    let list2 = res2.status === "fulfilled" ? res2.value.data.rows : [];
-
-    // 合并两个列表
-    let combinedList = [...list1, ...list2];
-
-    // 去重
-    let uniqueList = combinedList.filter((item, index, self) => {
-      return index === self.findIndex(t => t.code === item.code);
-    });
-
-    return uniqueList;
-    // console.log(conPrefix + "获取省待出票列表返回", list);
-  } catch (error) {
-    console.error(conPrefix + "获取省待出票列表异常", error);
-    return [];
-  }
-}
-
 // 获取报价记录
 const getOfferList = async () => {
   try {
     const res = await svApi.queryOfferList({
       user_id: tokens.userInfo.user_id,
       plat_name: "sheng",
-      start_time: getCurrentFormattedDateTime(+new Date() - 1 * 60 * 60 * 1000),
+      start_time: getCurrentFormattedDateTime(
+        +new Date() - 0.5 * 60 * 60 * 1000
+      ),
       end_time: getCurrentFormattedDateTime()
     });
     return res.data.offerList || [];
@@ -302,7 +314,7 @@ const getTicketList = async () => {
       user_id: tokens.userInfo?.user_id,
       plat_name: "sheng",
       page_num: 1,
-      page_size: 50
+      page_size: 30
     });
     return ticketRes.data.ticketList || [];
   } catch (error) {
