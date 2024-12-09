@@ -561,34 +561,34 @@ const syncPriceHandle = async (plat_name, syncPageSize) => {
       });
     } else if (plat_name === "sheng") {
       // 省1页8条，不支持传条数
-      let lengths = Math.ceil(syncPageSize / 8); // 向上取整
-      for (var i = 1; i <= lengths; i++) {
-        promiseList.push(
-          shengApi.queryOfferRecord({
-            status: "2,3,4",
-            deliverMinute: "",
-            cinemaName: "",
-            label: "",
-            TOKEN: "a9e29182c4534a169b89b7129a3849c8",
-            page: "" + i,
-            time: +new Date() + ""
-          })
-        );
-      }
-      const results = await Promise.allSettled(promiseList);
-      console.warn("省获取报价记录返回", results);
-      results.forEach(item => {
-        let shengList = item?.value?.data?.data?.rows || [];
-        // 接口返回区分不了未中标状态及中标价格
-        // shengList = shengList
-        //   .filter(item => item.baojiastatusText === "竞价失败")
-        //   .map(item => ({
-        //     order_number: item.tradeno,
-        //     supplier_end_price: item.chengjiaojia,
-        //     plat_name: "mayi"
-        //   }));
-        // syncOrderList.push(...shengList);
-      });
+      // let lengths = Math.ceil(syncPageSize / 8); // 向上取整
+      // for (var i = 1; i <= lengths; i++) {
+      //   promiseList.push(
+      //     shengApi.queryOfferRecord({
+      //       status: "2,3,4",
+      //       deliverMinute: "",
+      //       cinemaName: "",
+      //       label: "",
+      //       TOKEN: "a9e29182c4534a169b89b7129a3849c8",
+      //       page: "" + i,
+      //       time: +new Date() + ""
+      //     })
+      //   );
+      // }
+      // const results = await Promise.allSettled(promiseList);
+      // console.warn("省获取报价记录返回", results);
+      // results.forEach(item => {
+      //   let shengList = item?.value?.data?.data?.rows || [];
+      //   // 接口返回区分不了未中标状态及中标价格
+      //   // shengList = shengList
+      //   //   .filter(item => item.baojiastatusText === "竞价失败")
+      //   //   .map(item => ({
+      //   //     order_number: item.tradeno,
+      //   //     supplier_end_price: item.chengjiaojia,
+      //   //     plat_name: "mayi"
+      //   //   }));
+      //   // syncOrderList.push(...shengList);
+      // });
       // 接口返回区分不了未中标状态及中标价格
     } else if (plat_name === "mangguo") {
       promiseList.push(

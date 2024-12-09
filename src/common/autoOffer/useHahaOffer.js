@@ -265,6 +265,7 @@ class OrderAutoOfferQueue {
         offer_end_amount: offerResult?.offerRule?.offer_end_amount,
         member_price: offerResult?.offerRule?.cost_price,
         real_member_price: offerResult?.offerRule?.real_member_price,
+        member_discount: offerResult?.offerRule?.member_discount,
         quan_value: offerResult?.offerRule?.quanValue,
         order_status: offerResult?.res ? "1" : "2",
         processing_time: getCurrentFormattedDateTime(),

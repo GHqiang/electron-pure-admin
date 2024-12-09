@@ -333,10 +333,6 @@ const supplier_end_price_filter = row => {
   if (obj.offer_end_amount) {
     return obj.offer_end_amount;
   }
-  if (obj.offer_type === "1" || obj.offer_type === "3") {
-    return obj.offer_amount;
-  }
-  return obj.member_offer_amount;
 };
 
 // 表单查询数据
