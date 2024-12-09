@@ -1557,21 +1557,15 @@ class OrderAutoTicketQueue {
         });
         return { offerRule };
       }
-      // 用完券发现支付金额不为0,暂不购买微信通知
-      let isPriceAbnormalByQuan =
-        useQuan?.length && paymentAmount != quan_fee_total;
-      let isPriceAbnormalByCard =
-        card_id &&
-        paymentAmount >
-          ((offerRule?.real_member_price || 0) * 10000 * ticket_num) / 10000;
-      if (isPriceAbnormalByQuan || isPriceAbnormalByCard) {
-        let str = "用完券发现支付金额不为券手续费*票数，暂不购买，需手动出票";
-        if (isPriceAbnormalByCard) {
-          str = "用完卡发现支付金额大于会员价*票数，暂不购买，需手动出票";
-        }
+      // 支付前校验用券价格
+      if (
+        offerRule.offer_type === "1" &&
+        useQuan?.length &&
+        paymentAmount !== quan_fee_total
+      ) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: str,
+          des: "用完券发现支付金额不为券手续费*票数，走转单",
           level: "error",
           info: {
             paymentAmount
@@ -1583,6 +1577,36 @@ class OrderAutoTicketQueue {
           orderHeaderId
         });
         return { offerRule, transferParams };
+      }
+      // 支付前校验用卡价格
+      let real_member_price = offerRule?.real_member_price || 0;
+      if (offerRule.offer_type !== "1" && card_id) {
+        real_member_price = (real_member_price * 10000 * ticket_num) / 10000;
+        if (paymentAmount > real_member_price) {
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: "用完卡发现支付金额大于会员价*票数，走转单",
+            level: "error",
+            info: {
+              paymentAmount,
+              real_member_price,
+              ticket_num
+            }
+          });
+          const transferParams = await this.transferOrder(item, {
+            cinemaCode,
+            cinemaLinkId,
+            orderHeaderId
+          });
+          return { offerRule, transferParams };
+        } else if (paymentAmount < real_member_price) {
+          let member_discount = offerRule?.member_discount || 100;
+          profit =
+            profit +
+            ((real_member_price * 1000 - paymentAmount * 1000) *
+              member_discount) /
+              (1000 * 100);
+        }
       }
       // 8、购买电影票
       const buyTicketRes = await buyTicket({
@@ -2720,10 +2744,9 @@ class OrderAutoTicketQueue {
               profit: 0 // 利润
             };
           }
-          return {
-            useQuan,
-            profit
-          };
+        }
+        if (is_auto_use_quan) {
+          offerRule.offer_type = "1";
         }
         return {
           useQuan,

@@ -1393,7 +1393,7 @@ class OrderAutoTicketQueue {
       if (offerRule.offer_type === "1" && pay_money !== quan_fee_total) {
         this.logList.push({
           opera_time: getCurrentFormattedDateTime(),
-          des: "用券计算订单价格后支付价格不等于手续费价格*票数",
+          des: "用完券发现支付金额不为券手续费*票数，走转单",
           level: "error",
           info: {
             pay_money,
@@ -1412,29 +1412,34 @@ class OrderAutoTicketQueue {
         return { offerRule, transferParams };
       }
       let real_member_price = offerRule?.real_member_price || 0;
-      if (
-        offerRule.offer_type !== "1" &&
-        card_id &&
-        pay_money > (real_member_price * 10000 * ticket_num) / 10000
-      ) {
-        this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
-          des: "用完卡发现支付金额大于会员价*票数，暂不购买，需手动出票",
-          level: "error",
-          info: {
-            pay_money,
-            real_member_price,
-            ticket_num
-          }
-        });
-        const transferParams = await this.transferOrder(item, {
-          city_id,
-          cinema_id,
-          show_id,
-          start_day,
-          start_time
-        });
-        return { offerRule, transferParams };
+      if (offerRule.offer_type !== "1" && card_id) {
+        real_member_price = (real_member_price * 10000 * ticket_num) / 10000;
+        if (pay_money > real_member_price) {
+          this.logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: "用完卡发现支付金额大于会员价*票数，走转单",
+            level: "error",
+            info: {
+              pay_money,
+              real_member_price,
+              ticket_num
+            }
+          });
+          const transferParams = await this.transferOrder(item, {
+            city_id,
+            cinema_id,
+            show_id,
+            start_day,
+            start_time
+          });
+          return { offerRule, transferParams };
+        } else if (pay_money < real_member_price) {
+          let member_discount = offerRule?.member_discount || 100;
+          profit =
+            profit +
+            ((real_member_price * 1000 - pay_money * 1000) * member_discount) /
+              (1000 * 100);
+        }
       }
       this.logList.push({
         opera_time: getCurrentFormattedDateTime(),
