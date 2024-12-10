@@ -244,7 +244,10 @@ const SFC_SPECIAL_CINEMA_LIST = [
   },
   // 北京
   {
-    order_cinema_name: "SFC上影影城房山绿地缤纷店",
+    order_cinema_name: [
+      "SFC上影影城房山绿地缤纷店",
+      "SFC上影影城房山绿地缤纷城店"
+    ],
     sfc_cinema_name: "SFC上影影城北京房山店"
   },
   {
@@ -580,7 +583,7 @@ const QINA_SPECIAL_CINEMA_LIST = [
   },
   {
     order_cinema_name: [
-      "齐纳影城荣盛店全可躺式座椅影城",
+      // "齐纳影城荣盛店全可躺式座椅影城",
       "齐纳影城荣盛店可躺式座椅影城"
     ],
     sfc_cinema_name: "齐纳影城荣盛店"
@@ -1764,7 +1767,14 @@ const HSMZYC_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "AMG海上明珠影城南京雨花客厅店"
   },
   {
-    order_cinema_name: ["AMG海上明珠影城上海环球港RealDCinema店"],
+    order_cinema_name: ["AMG海上明珠影城南京虹悦城RealDCinema店"],
+    sfc_cinema_name: "AMG海上明珠影城南京虹悦城店"
+  },
+  {
+    order_cinema_name: [
+      "AMG海上明珠影城上海环球港RealDCinema店",
+      "AMG海上明珠影城环球港店"
+    ],
     sfc_cinema_name: "AMG海上明珠影城上海环球港店"
   }
 ];
