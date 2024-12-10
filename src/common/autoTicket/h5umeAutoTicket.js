@@ -1409,10 +1409,10 @@ class OrderAutoTicketQueue {
         des: "订单购买成功",
         level: "info"
       });
-      return { offerRule };
       // 最后处理：获取支付结果上传取票码
       const lastRes = await this.lastHandle({
         orderId,
+        cinemaLinkId,
         order_id,
         app_name: appFlag,
         card_id,
@@ -1605,7 +1605,7 @@ class OrderAutoTicketQueue {
         tickets,
         totalPrice,
         payAmount,
-        payments,
+        payments: JSON.stringify(payments),
         mobile,
         umeToken: session_id
       };
@@ -1675,19 +1675,24 @@ class OrderAutoTicketQueue {
 
   // 获取购票信息
   async getPayResult(data) {
-    let { orderId, session_id, syncQueryLogList, inx = 1 } = data || {};
+    let {
+      orderId,
+      cinemaLinkId,
+      session_id,
+      syncQueryLogList,
+      inx = 1
+    } = data || {};
     let qrcode;
     let targetLogList = syncQueryLogList || this.logList;
     try {
       let params = {
-        params: {
-          orderType: "ticket_order",
-          isDetail: "Y",
-          orderId,
-          keepLoading: true,
-          channelCode: "QD0000001"
-        },
-        session_id
+        empCode: "",
+        leaseCode: "",
+        orderId,
+        orderType: "TICKET",
+        cinemaLinkId,
+        needMatchConsumeGift: false,
+        umeToken: session_id
       };
       console.log("获取支付结果参数", params);
       if (inx == 1) {
@@ -1700,7 +1705,7 @@ class OrderAutoTicketQueue {
           }
         });
       }
-      const res = await this.umeApi.getPayResult(params);
+      const res = await this.umeApi.getOrderInfo(params);
       console.log("获取支付结果返回", res);
       targetLogList.push({
         opera_time: getCurrentFormattedDateTime(),
@@ -1710,8 +1715,8 @@ class OrderAutoTicketQueue {
           res
         }
       });
-      let list = res.data || [];
-      qrcode = list[0]?.ticketCode?.split(",").join("|") || "";
+      qrcode =
+        res?.bizValue?.ticketInfo?.confirmationId?.split(",").join("|") || "";
     } catch (error) {
       console.error("获取订单支付结果异常", error);
       targetLogList.push({
@@ -1725,27 +1730,20 @@ class OrderAutoTicketQueue {
     }
     // 获取失败后从已完成订单里匹配获取
     try {
-      const listRes = await this.umeApi.findStoreTkOrderInfoApp({
-        params: {
-          orderType: "ticket_order",
-          isDetail: "Y",
-          channelCode: "QD0000001"
-        },
-        pageIndex: 1,
-        pageRow: 5,
-        session_id
+      const listRes = await this.umeApi.getOrderList({
+        umeToken: session_id
       });
       targetLogList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: `第${inx}次获取已完成订单列表返回`,
         level: "error",
         info: {
-          listRes: listRes?.data?.slice(0, 3)
+          listRes: listRes?.bizValue?.slice(0, 2)
         }
       });
-      let payList = listRes.data || [];
+      let payList = listRes.bizValue || [];
       let targetObj = payList.find(item => item.orderId == orderId);
-      qrcode = targetObj?.ticketCode?.split(",").join("|");
+      qrcode = targetObj?.ticketInfo?.confirmationId?.split(",").join("|");
       targetLogList.push({
         opera_time: getCurrentFormattedDateTime(),
         des: `第${inx}次从已完成订单里获取取票码${qrcode ? "成功" : "失败"}`,
@@ -1987,6 +1985,7 @@ class OrderAutoTicketQueue {
 
   async lastHandle({
     orderId,
+    cinemaLinkId,
     order_id,
     app_name,
     card_id,
@@ -2005,6 +2004,7 @@ class OrderAutoTicketQueue {
         // 9、获取订单结果
         qrcode = await this.getPayResult({
           orderId,
+          cinemaLinkId,
           session_id
         });
       } catch (error) {}
@@ -2085,6 +2085,7 @@ class OrderAutoTicketQueue {
         inx =>
           this.getPayResult({
             orderId,
+            cinemaLinkId,
             session_id,
             inx,
             syncQueryLogList
@@ -2116,6 +2117,7 @@ class OrderAutoTicketQueue {
           inx =>
             this.getPayResult({
               orderId,
+              cinemaLinkId,
               session_id,
               inx,
               syncQueryLogList

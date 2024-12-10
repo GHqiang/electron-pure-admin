@@ -264,10 +264,6 @@ const createApi = ({ app_name }) => {
   //   cardCinemaLinkId: "11713"
   // }
 
-  // 获取购票信息
-  const payOrder = params =>
-    axios.get("/lma/mp/ihistory/ticket_info", { params });
-
   // 获取订单列表
   const getOrderList = params =>
     axios.post("/h5ume/mtop.alipic.lark.own.order.getorderlist", params || {});
@@ -360,7 +356,6 @@ const createApi = ({ app_name }) => {
     priceCalculation,
     getCardQuanList,
     createOrder,
-    payOrder,
     cannelOneOrder,
     getOrderList,
     getOrderInfo,
