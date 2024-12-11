@@ -212,12 +212,16 @@ const createApi = ({ app_name }) => {
   const createOrder = params =>
     axios.post("/h5ume/mtop.alipic.lark.own.order.createticketorder", params);
   // {
-  //     "cardCinemaLinkId": "11713",
-  //     "cardNumber": "20001158294X",
-  //     "orderId": "241130027004X117131162",
-  //     "orderType": "TICKET",
-  //     "payMethod": "CARD"
-  // }
+  //   mobile: "13073792313",
+  //   cinemaLinkId: "11713",
+  //   totalPrice: "3800",
+  //   payAmount: "3500",
+  //   payments: '[{"payMethod":"CARD","payCardNumber":"20001158294X"}]',
+  //   tickets: '[{"seatId":"00000021373-1-18"}]',
+  //   scheduleId: "1000000837610162",
+  //   scheduleKey: "048C626826D528C7499400531B39D7C9",
+  //   lockOrderId: "2678011713208435457"
+  // };
   // 上述参数可取privileges
   // {
   //         canSupplement: false,

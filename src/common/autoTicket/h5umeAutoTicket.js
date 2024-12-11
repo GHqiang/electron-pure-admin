@@ -818,6 +818,7 @@ class OrderAutoTicketQueue {
       scheduleId,
       scheduleKey,
       seatIds, // 锁定座位id
+      areaTotalPrice = 0,
       seatList,
       lockOrderId, // 锁座返回订单id，用于创建订单
       orderId, // 创建订单返回订单id
@@ -977,6 +978,14 @@ class OrderAutoTicketQueue {
           const transferParams = await this.transferOrder(item);
           return { transferParams };
         }
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: "获取电影放映信息",
+          level: "info",
+          info: {
+            targetShow
+          }
+        });
         console.log("targetShow===>", targetShow);
         // 8、获取座位布局
         hallId = targetShow.hallId;
@@ -1015,6 +1024,16 @@ class OrderAutoTicketQueue {
         });
         console.log("targeSeatList", targeSeatList);
         seatIds = targeSeatList.map(item => ({ seatId: item.seatId }));
+        // 座位价格信息
+        let areaPrices = targetShow.areaPrices || [];
+        targeSeatList.forEach(item => {
+          let targetItem = areaPrices.find(
+            itemA => itemA.areaId === item.areaId
+          );
+          if (targetItem) {
+            areaTotalPrice += item.areaSettlePrice + item.areaServiceFee || 0;
+          }
+        });
         if (seatIds?.length != ticket_num) {
           console.error("获取目标座位失败");
           this.logList.push({
@@ -1223,8 +1242,12 @@ class OrderAutoTicketQueue {
             ...item,
             otherParams: {
               cinemaLinkId,
+              hallId,
               scheduleId,
               scheduleKey,
+              seatIds,
+              areaTotalPrice,
+              seatList,
               offerRule,
               targetShow
             }
@@ -1269,7 +1292,7 @@ class OrderAutoTicketQueue {
         scheduleKey,
         lockOrderId,
         tickets: JSON.stringify(seatIds),
-        totalPrice: total_price,
+        totalPrice: areaTotalPrice || total_price,
         payAmount,
         payments
       });
