@@ -1436,9 +1436,10 @@ class OrderAutoTicketQueue {
         } else if (pay_money < real_member_price) {
           let member_discount = offerRule?.member_discount || 100;
           profit =
-            profit +
+            Number(profit) +
             ((real_member_price * 1000 - pay_money * 1000) * member_discount) /
               (1000 * 100);
+          profit = Number(profit).toFixed(2);
         }
       }
       this.logList.push({

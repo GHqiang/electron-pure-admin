@@ -1389,9 +1389,10 @@ class OrderAutoTicketQueue {
         } else if (payAmount < real_member_price) {
           let member_discount = offerRule?.member_discount || 100;
           profit =
-            profit +
+            Number(profit) +
             ((real_member_price * 1000 - payAmount * 1000) * member_discount) /
               (1000 * 100);
+          profit = Number(profit).toFixed(2);
         }
       }
       // 8、购买电影票
