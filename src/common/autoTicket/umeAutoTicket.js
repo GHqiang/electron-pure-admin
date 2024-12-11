@@ -1173,8 +1173,8 @@ class OrderAutoTicketQueue {
             lieren: [10, 5],
             mangguo: [10, 5],
             sheng: [10, 5],
-            mayi: [12, 10],
-            yangcong: [12, 10],
+            mayi: [10, 5],
+            yangcong: [10, 5],
             haha: [6, 5],
             yinghuasuan: [6, 5],
             shangzhan: [6, 5]
