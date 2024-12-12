@@ -1034,6 +1034,16 @@ class OrderAutoTicketQueue {
             areaTotalPrice += item.areaSettlePrice + item.areaServiceFee || 0;
           }
         });
+        this.logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: "目标座位相关信息",
+          level: "info",
+          info: {
+            targeSeatList,
+            areaPrices,
+            areaTotalPrice
+          }
+        });
         if (seatIds?.length != ticket_num) {
           console.error("获取目标座位失败");
           this.logList.push({
@@ -1285,21 +1295,31 @@ class OrderAutoTicketQueue {
       }
 
       console.warn("payAmount", payAmount, "payments", payments);
+      let card_id = payments.find(
+        item => item.payMethod === "CARD"
+      )?.payCardNumber;
+      let tickets;
+      if (offerRule.offer_type !== "1" && card_id) {
+        tickets = activities
+          .find(item => item.payMethod === "CARD")
+          ?.ticketInfos?.map(item => ({
+            seatId: item.seatId,
+            activityId: item.activityId
+          }));
+        tickets = JSON.stringify(tickets);
+      }
       // 7、创建订单
       const createOrderRes = await this.createOrder({
         cinemaLinkId,
         scheduleId,
         scheduleKey,
         lockOrderId,
-        tickets: JSON.stringify(seatIds),
+        tickets,
         totalPrice: areaTotalPrice || total_price,
         payAmount,
         payments
       });
       orderId = createOrderRes?.orderId;
-      let card_id = payments.find(
-        item => item.payMethod === "CARD"
-      )?.payCardNumber;
       let quan_fee = offerRule.quan_fee || 0;
       // let cardNo;
       // if (payAmount > 0 && quan_fee > 0 && offerRule.offer_type == 1) {
@@ -1620,8 +1640,6 @@ class OrderAutoTicketQueue {
       this.currentParamsList[this.currentParamsInx];
     try {
       let params = {
-        empCode: "",
-        leaseCode: "",
         cinemaLinkId,
         scheduleId,
         scheduleKey,
