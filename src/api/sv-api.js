@@ -78,7 +78,8 @@ const updateRuleRecord = params =>
 // 获取卡列表
 const getCardList = params => axios.get("/svpi/cardRecord", { params });
 // 查询卡列表
-const queryCardList = params => axios.get("/svpi/cardRecord/query", { params });
+const queryCardList = params =>
+  axios.get("/svpi/cardRecord/query", { params, timeout: 30 * 1000 });
 // 删除卡
 const deleteCard = params => axios.get("/svpi/cardRecord/delete", { params });
 // 批量删除卡

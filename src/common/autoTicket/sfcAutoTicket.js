@@ -3455,7 +3455,7 @@ class OrderAutoTicketQueue {
           des: "使用会员卡计算价格后最终利润为负",
           level: "error",
           info: {
-            error
+            profit
           }
         });
         // 后续要记录失败列表（订单信息、失败原因、时间戳）

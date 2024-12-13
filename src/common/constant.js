@@ -578,7 +578,7 @@ const QINA_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "桓台齐纳影城马桥店"
   },
   {
-    order_cinema_name: "齐纳影城吾悦广场店",
+    order_cinema_name: ["齐纳影城吾悦广场店", "齐纳影城世纪路吾悦广场店"],
     sfc_cinema_name: "齐纳影城吾悦店"
   },
   {

@@ -1606,12 +1606,20 @@ class OrderAutoTicketQueue {
         ["座位旁边不要留空", "座位中间不要留空"].includes(error?.msg) &&
         assistFlag != 1
       ) {
+        const areaRes = await this.getSeatLayout({
+          cinemaLinkId,
+          hallId,
+          scheduleId,
+          scheduleKey,
+          session_id
+        });
+        let newSeatList = areaRes?.seats || [];
         // 帮助锁定座位方法
         const res = await assistLockSeatObj.assistLockSeatHandle({
           app_name: appFlag,
           plat_name,
           order_number,
-          seatList,
+          seatList: newSeatList,
           lockseat,
           lockSeatParams: params
         });
