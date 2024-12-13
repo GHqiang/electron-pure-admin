@@ -1295,6 +1295,7 @@ class OrderAutoTicketQueue {
       }
 
       console.warn("payAmount", payAmount, "payments", payments);
+      let quan_code;
       let card_id = payments.find(
         item => item.payMethod === "CARD"
       )?.payCardNumber;
@@ -1771,40 +1772,40 @@ class OrderAutoTicketQueue {
           error
         }
       });
-    }
-    // 获取失败后从已完成订单里匹配获取
-    try {
-      const listRes = await this.umeApi.getOrderList({
-        umeToken: session_id
-      });
-      targetLogList.push({
-        opera_time: getCurrentFormattedDateTime(),
-        des: `第${inx}次获取已完成订单列表返回`,
-        level: "error",
-        info: {
-          listRes: listRes?.bizValue?.slice(0, 2)
-        }
-      });
-      let payList = listRes.bizValue || [];
-      let targetObj = payList.find(item => item.orderId == orderId);
-      qrcode = targetObj?.ticketInfo?.confirmationId?.split(",").join("|");
-      targetLogList.push({
-        opera_time: getCurrentFormattedDateTime(),
-        des: `第${inx}次从已完成订单里获取取票码${qrcode ? "成功" : "失败"}`,
-        level: "error",
-        info: {
-          qrcode
-        }
-      });
-    } catch (error) {
-      targetLogList.push({
-        opera_time: getCurrentFormattedDateTime(),
-        des: `第${inx}次获取已完成订单列表异常`,
-        level: "error",
-        info: {
-          error
-        }
-      });
+      // 获取失败后从已完成订单里匹配获取
+      try {
+        const listRes = await this.umeApi.getOrderList({
+          umeToken: session_id
+        });
+        targetLogList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: `第${inx}次获取已完成订单列表返回`,
+          level: "error",
+          info: {
+            listRes: listRes?.bizValue?.slice(0, 2)
+          }
+        });
+        let payList = listRes.bizValue || [];
+        let targetObj = payList.find(item => item.orderId == orderId);
+        qrcode = targetObj?.ticketInfo?.confirmationId?.split(",").join("|");
+        targetLogList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: `第${inx}次从已完成订单里获取取票码${qrcode ? "成功" : "失败"}`,
+          level: "error",
+          info: {
+            qrcode
+          }
+        });
+      } catch (error) {
+        targetLogList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: `第${inx}次获取已完成订单列表异常`,
+          level: "error",
+          info: {
+            error
+          }
+        });
+      }
     }
     if (qrcode) {
       return qrcode;

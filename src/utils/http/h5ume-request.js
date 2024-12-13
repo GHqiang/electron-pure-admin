@@ -680,11 +680,11 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       const retryDelay = config.retryDelay || 1; // 1 second
       // 重试接口名单
       let retrieUrls = [
-        "/index/film",
-        "/index/sell_session",
-        "/ibuypro/index",
-        "/imember/index",
-        "/icoupon/index"
+        "cinema.getcinemas",
+        "film.gethotfilms",
+        "schedule.getschedules",
+        "seat.getseatmap",
+        "pay.getpayprivilegeinfo"
       ];
       let isRetry = shouldRetry(error, config, maxRetries, retrieUrls);
       // console.log("isRetry", isRetry, config);
