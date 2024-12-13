@@ -13,7 +13,7 @@ import {
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
-import { APP_LIST } from "@/common/constant.js";
+import { APP_LIST, NO_SFC_APP_LIST } from "@/common/constant.js";
 import lierenApi from "@/api/lieren-api";
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
