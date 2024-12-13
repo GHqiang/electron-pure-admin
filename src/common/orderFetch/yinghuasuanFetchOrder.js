@@ -5,13 +5,14 @@ import svApi from "@/api/sv-api";
 import {
   getCinemaFlag,
   logUpload,
+  mockDelay, // 模拟延时
   getCurrentFormattedDateTime
 } from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
 const tokens = platTokens();
 
-let conPrefix = "【影划算自动获取订单】——"; // console打印前缀
+let conPrefix = "【影划算】——"; // console打印前缀
 
 // 创建一个订单自动报价队列类
 class OrderAutoFetchQueue {
@@ -19,43 +20,31 @@ class OrderAutoFetchQueue {
     this.isRunning = false; // 初始化时队列未运行
     this.confimrOrderList = []; // 已接单列表（用于匹配过滤待出票订单）
     this.orderRecord = []; // 订单记录
-    this.logList = [];
   }
 
   // 启动队列（fetchDelay获取订单列表间隔，processDelay处理订单间隔）
   async start() {
-    console.log(conPrefix + "队列启动");
+    console.log("队列启动");
     // 设置队列为运行状态
     this.isRunning = true;
     this.confimrOrderList = [];
     this.orderRecord = []; // 订单记录
-    this.logList = [];
     // 循环直到队列停止
     while (this.isRunning) {
       // 获取订单列表(支持时间间隔)
-      let fetchDelay = 2;
-      await this.fetchOrders(fetchDelay);
+      await mockDelay(3);
+      this.fetchOrders();
     }
   }
 
-  // 模拟延时
-  delay(delayTime) {
-    return new Promise(resolve => {
-      setTimeout(() => {
-        resolve();
-      }, delayTime * 1000);
-    });
-  }
-
   // 获取订单
-  async fetchOrders(fetchDelay) {
+  async fetchOrders() {
     try {
-      this.logList = [];
-      await this.delay(fetchDelay);
+      let logList = [];
       // 获取待确认列表并确认接单
-      await getStayConfirmOrderAndSure(this.confimrOrderList, this.logList);
-      await this.delay(1);
-      let stayList = await orderFetch();
+      await this.getStayConfirmOrderAndSure(logList);
+      await mockDelay(1);
+      let stayList = await this.orderFetch(logList);
       if (!stayList?.length) return;
       let sfcStayOfferlist = stayList
         .map(item => {
@@ -129,6 +118,14 @@ class OrderAutoFetchQueue {
           );
           if (res?.isNewOrder) {
             let offerRecord = res.offerRecord;
+            logList.push({
+              opera_time: getCurrentFormattedDateTime(),
+              des: conPrefix + "判断是否是新订单返回",
+              level: "info",
+              info: {
+                ...res
+              }
+            });
             if (offerRecord?.order_id) {
               // 更新报价记录的order_number后再添加，否则出票那匹配不到报价规则
               const updateRes = await updateOfferReocrd({
@@ -140,6 +137,15 @@ class OrderAutoFetchQueue {
                   order_number: item.order_number
                 }
               });
+              console.log("更新报价记录订单号返回", updateRes);
+              logList.push({
+                opera_time: getCurrentFormattedDateTime(),
+                des: conPrefix + "更新报价记录订单号返回",
+                level: "info",
+                info: {
+                  ...updateRes
+                }
+              });
               if (updateRes?.upRes) {
                 targetList.push(item);
               }
@@ -147,17 +153,17 @@ class OrderAutoFetchQueue {
           }
         }
         // console.warn(
-        //   conPrefix + "影划算待出票列表从远端过滤后",
+        //   "影划算待出票列表从远端过滤后",
         //   targetList
         // );
       }
       if (!targetList?.length) return;
-      console.warn(conPrefix + "待出票列表新订单", targetList);
+      console.warn("待出票列表新订单", targetList);
       targetList.forEach(item => {
         let logList = [
           {
             opera_time: getCurrentFormattedDateTime(),
-            des: "影划算新的待出票订单",
+            des: conPrefix + "影划算新的待出票订单",
             level: "info",
             info: {
               newOrder: item
@@ -181,14 +187,165 @@ class OrderAutoFetchQueue {
         window.dispatchEvent(newOrderEvent);
       });
     } catch (error) {
-      console.error(conPrefix + "获取订单列表异常", error);
+      console.error("获取订单列表异常", error);
     }
   }
 
   // 停止队列运行
   stop() {
     this.isRunning = false;
-    console.warn(conPrefix + "主动停止订单自动获取队列");
+    console.warn("主动停止订单自动获取队列");
+  }
+
+  // 获取待确认订单并接单
+  async getStayConfirmOrderAndSure(logList) {
+    try {
+      let list = await this.stayConfirmOrderFetch(logList);
+      // 从已接单列表里过滤
+      list = list.filter(
+        item => !this.confimrOrderList.some(itemA => itemA.id === item.id)
+      );
+      list = list.map(item => ({
+        ...item.demands,
+        id: item.id,
+        inv_id: item.inv_id,
+        quote_price: item.quote_price
+      }));
+      console.log("从已接单列表里过滤后", logList);
+      logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: conPrefix + "从已接单列表里过滤后",
+        level: "info",
+        info: {
+          list
+        }
+      });
+      if (list?.length) {
+        const offerList = await getOfferList();
+        logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: conPrefix + "获取最近报价记录",
+          level: "info",
+          info: {
+            offerList
+          }
+        });
+        // 匹配报价记录
+        list = list.filter(item =>
+          offerList.some(itemA => itemA.order_id === item.inv_id)
+        );
+        console.log("最近报价记录过滤后", list, offerList);
+        logList.push({
+          opera_time: getCurrentFormattedDateTime(),
+          des: conPrefix + "最近报价记录过滤后",
+          level: "info",
+          info: {
+            list
+          }
+        });
+        // 和报价记录匹配上了再接单
+        for (var i = 0; i < list.length; i++) {
+          const item = list[i];
+          const res = await startDeliver(item);
+          if (res && !res.error) {
+            this.confimrOrderList.push(order);
+          }
+          console.log("确认接单返回", res, item);
+          logList.push({
+            opera_time: getCurrentFormattedDateTime(),
+            des: conPrefix + "确认接单返回",
+            level: "info",
+            info: {
+              res
+            }
+          });
+        }
+      }
+    } catch (error) {
+      logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: conPrefix + "获取待确认订单并接单异常",
+        level: "info",
+        info: {
+          error
+        }
+      });
+      console.error("获取待确认订单并接单异常", error);
+      return [];
+    }
+  }
+
+  // 获取待确认订单列表
+  async stayConfirmOrderFetch(logList) {
+    try {
+      let params = {
+        status: "0%2C1", // 0:竞价中 1-竞价成功
+        page: 1
+      };
+      // console.log("获取影划算待出票订单列表参数", params);
+      const res = await yinghuasuanApi.queryStayConfirmList(params);
+
+      let list = res?.data?.data || [];
+      list = list.filter(item => item.status === "1");
+      console.log("获取影划算待确认列表返回", list);
+      logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: conPrefix + "获取待确认列表返回",
+        level: "info",
+        info: {
+          res,
+          list
+        }
+      });
+      return list;
+    } catch (error) {
+      console.error("获取影划算待确认列表异常", error);
+      logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: conPrefix + "获取影划算待确认列表异常",
+        level: "info",
+        info: {
+          error
+        }
+      });
+      return [];
+    }
+  }
+
+  // 获取待出票订单列表
+  async orderFetch() {
+    try {
+      let params = {
+        status: "1",
+        page: 1,
+        keywords: "",
+        old: "0"
+      };
+      // console.log("获取影划算待出票订单列表参数", params);
+      const res = await yinghuasuanApi.stayTicketingList(params);
+      let list = res?.data?.data || [];
+      logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: conPrefix + "获取待出票列表返回",
+        level: "info",
+        info: {
+          res
+        }
+      });
+      console.log("获取影划算待出票列表返回", list);
+      return list;
+    } catch (error) {
+      console.error("获取待出票列表异常", error);
+      logList.push({
+        opera_time: getCurrentFormattedDateTime(),
+        des: conPrefix + "获取待出票列表异常",
+        level: "info",
+        info: {
+          error
+        }
+      });
+      return [];
+    }
   }
 }
 // 报价队列实例
@@ -214,7 +371,12 @@ const updateOfferReocrd = async params => {
 const judgeHandle = (item, app_name, offerList, ticketList) => {
   try {
     let targetOfferList = offerList.filter(
-      itemA => itemA.app_name === app_name && itemA.order_status === "1"
+      itemA =>
+        itemA.app_name === app_name &&
+        itemA.order_status === "1" &&
+        itemA.cinema_name == item.cinema_name &&
+        itemA.show_time == item.show_time &&
+        itemA.lockseat == item.lockseat
     );
     let targetTicketList = ticketList.filter(
       itemA => itemA.app_name === app_name
@@ -234,61 +396,7 @@ const judgeHandle = (item, app_name, offerList, ticketList) => {
       offerRecord: targetOfferList?.[0]
     };
   } catch (error) {
-    console.error(conPrefix + "判断该订单是否是新订单异常", error);
-  }
-};
-
-// 获取待确认订单并接单
-const getStayConfirmOrderAndSure = async confimrOrderList => {
-  try {
-    let list = await stayConfirmOrderFetch();
-    // 从已接单列表里过滤
-    list = list.filter(
-      item => !confimrOrderList.some(itemA => itemA.id === item.id)
-    );
-    list = list.map(item => ({
-      ...item.demands,
-      id: item.id,
-      inv_id: item.inv_id,
-      quote_price: item.quote_price
-    }));
-    if (list?.length) {
-      const offerList = await getOfferList();
-      // 匹配报价记录
-      list = list.filter(item => {
-        return !offerList.some(itemA => itemA.order_id === item.inv_id);
-      });
-      // 和报价记录匹配上了再接单
-      for (var i = 0; i < list.length; i++) {
-        const item = list[i];
-        const res = await startDeliver(item);
-        if (res) {
-          confimrOrderList.push(order);
-        }
-      }
-    }
-  } catch (error) {
-    console.error(conPrefix + "获取影划算待确认列表异常", error);
-    return [];
-  }
-};
-
-// 获取待确认订单列表
-const stayConfirmOrderFetch = async () => {
-  try {
-    let params = {
-      status: "0%2C1", // 0:竞价中 1-竞价成功
-      page: 1
-    };
-    // console.log(conPrefix + "获取影划算待出票订单列表参数", params);
-    const res = await yinghuasuanApi.queryStayConfirmList(params);
-    let list = res?.data.data || [];
-    list = list.filter(item => item.status === "1");
-    // console.log(conPrefix + "获取影划算待确认列表返回", list);
-    return list;
-  } catch (error) {
-    console.error(conPrefix + "获取影划算待确认列表异常", error);
-    return [];
+    console.error("判断该订单是否是新订单异常", error);
   }
 };
 
@@ -304,26 +412,7 @@ const startDeliver = async order => {
     return res;
   } catch (error) {
     console.warn("确认接单异常", error);
-  }
-};
-
-// 获取待出票订单列表
-const orderFetch = async () => {
-  try {
-    let params = {
-      status: "1",
-      page: 1,
-      keywords: "",
-      old: "0"
-    };
-    // console.log(conPrefix + "获取影划算待出票订单列表参数", params);
-    const res = await yinghuasuanApi.stayTicketingList(params);
-    let list = res?.data?.data || [];
-    // console.log(conPrefix + "获取影划算待出票列表返回", list);
-    return list;
-  } catch (error) {
-    console.error(conPrefix + "获取待出票列表异常", error);
-    return [];
+    return { error };
   }
 };
 
@@ -333,12 +422,16 @@ const getOfferList = async () => {
     const res = await svApi.queryOfferList({
       user_id: tokens.userInfo.user_id,
       plat_name: "yinghuasuan",
-      start_time: getCurrentFormattedDateTime(+new Date() - 1 * 60 * 60 * 1000),
+      start_time: getCurrentFormattedDateTime(
+        +new Date() - 0.2 * 60 * 60 * 1000
+      ),
       end_time: getCurrentFormattedDateTime()
     });
-    return res.data.offerList || [];
+    let list = res.data.offerList || [];
+    console.error("获取历史报价记录返回", error);
+    return list;
   } catch (error) {
-    console.error(conPrefix + "获取历史报价记录异常", error);
+    console.error("获取历史报价记录异常", error);
     return [];
   }
 };
@@ -352,9 +445,11 @@ const getTicketList = async () => {
       page_num: 1,
       page_size: 50
     });
-    return ticketRes.data.ticketList || [];
+    let list = ticketRes.data.ticketList || [];
+    console.error("获取历史出票记录返回", error);
+    return list;
   } catch (error) {
-    console.error(conPrefix + "获取历史出票记录异常", error);
+    console.error("获取历史出票记录异常", error);
     return [];
   }
 };

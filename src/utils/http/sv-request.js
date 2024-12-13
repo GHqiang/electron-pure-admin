@@ -53,7 +53,7 @@ instance.interceptors.response.use(
       !whitelistSp.some(item => response.config.url.includes(item))
     ) {
       console.warn("接口响应失败", data);
-      if (data.errCode === 401 && data.msg.includes("登录失效")) {
+      if (data.errCode === 401) {
         ElMessage({
           type: "error",
           message: "登录失效，请重新登录",
