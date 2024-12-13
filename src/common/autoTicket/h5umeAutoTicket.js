@@ -1321,7 +1321,7 @@ class OrderAutoTicketQueue {
       });
       orderId = createOrderRes?.orderId;
       let quan_fee = offerRule.quan_fee || 0;
-      // let cardNo;
+      let cardNo;
       // if (payAmount > 0 && quan_fee > 0 && offerRule.offer_type == 1) {
       //   // 支付方式里返回的有会员卡方式和可用列表
       //   cardNo = createOrderRes?.paymentList?.find(item => item.memberCardList)
@@ -1366,6 +1366,7 @@ class OrderAutoTicketQueue {
         return { offerRule };
       }
       let useQuan = [];
+      payAmount = Number(payAmount) / 100;
       // 支付前校验用券价格
       if (
         offerRule.offer_type == "1" &&
@@ -1414,6 +1415,7 @@ class OrderAutoTicketQueue {
               (1000 * 100);
           profit = Number(profit).toFixed(2);
         }
+        cardNo = card_id;
       }
       // 8、购买电影票
       const buyTicketRes = await buyTicket({
