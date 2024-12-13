@@ -3058,10 +3058,8 @@ const buyTicket = async ({
   }
   try {
     console.log("订单购买参数", params);
-    return {};
     const buyRes = await APP_API_OBJ[appFlag].buyTicket(params);
     console.log("订单购买返回", buyRes);
-
     return {
       params,
       buyRes
