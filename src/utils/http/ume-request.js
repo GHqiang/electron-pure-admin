@@ -6,7 +6,7 @@ import { APP_LIST } from "@/common/constant";
 import {
   sendWxPusherMessage,
   logUpload,
-  getCurrentFormattedDateTime,
+  getCurrentTime,
   mockDelay
 } from "@/utils/utils";
 // 机器登录用户信息
@@ -112,7 +112,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           },
           [
             {
-              opera_time: getCurrentFormattedDateTime(),
+              opera_time: getCurrentTime(),
               des: "接口重试成功",
               level: "info",
               info: {
@@ -193,7 +193,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           },
           [
             {
-              opera_time: getCurrentFormattedDateTime(),
+              opera_time: getCurrentTime(),
               des: "接口重试到最后还是失败",
               level: "info",
               info: {

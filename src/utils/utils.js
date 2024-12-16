@@ -1007,7 +1007,7 @@ const sendWxPusherMessage = async ({
 
   let summary = plat_name + "平台出票失败";
   let content = `<p>
-  时间：${getCurrentFormattedDateTime()}; <br/>
+  时间：${getCurrentTime()}; <br/>
   用户：${userInfo.name}; <br/>
   平台：${plat_name}; <br/>
   单号：${order_number}; <br/>
@@ -1023,7 +1023,7 @@ const sendWxPusherMessage = async ({
   if (msgType === 1) {
     summary = app_name + "影院登录失效";
     content = `<p>
-    时间：${getCurrentFormattedDateTime()}; <br/>
+    时间：${getCurrentTime()}; <br/>
     用户：${userInfo.name}; <br/>
     影院：${app_name}; <br/>
     提示：${transferTip};<br/>
@@ -1031,7 +1031,7 @@ const sendWxPusherMessage = async ({
   } else if (msgType === 2) {
     summary = "出票队列重复";
     content = `<p>
-    时间：${getCurrentFormattedDateTime()}; <br/>
+    时间：${getCurrentTime()}; <br/>
     用户：${userInfo.name}; <br/>
     提示：${transferTip};<br/>
     </p>`;

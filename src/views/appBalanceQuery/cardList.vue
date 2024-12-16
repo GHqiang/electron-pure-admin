@@ -177,9 +177,7 @@
       </el-table-column>
       <el-table-column prop="update_time" label="更新时间" min-width="160">
         <template #default="{ row }">
-          <span>{{
-            getCurrentFormattedDateTime(+new Date(row.update_time))
-          }}</span>
+          <span>{{ getCurrentTime(+new Date(row.update_time)) }}</span>
         </template>
       </el-table-column>
 
@@ -256,7 +254,7 @@ import {
 } from "@/common/constant";
 import { APP_API_OBJ } from "@/common/index.js";
 import {
-  getCurrentFormattedDateTime,
+  getCurrentTime,
   getCinemaLoginInfoList,
   getCurrentDay,
   isDateInCurrentMonth
@@ -504,7 +502,7 @@ const addCardListHandle = async cardList => {
           use_limit_month,
           status: "1",
           rule: rule,
-          update_time: getCurrentFormattedDateTime()
+          update_time: getCurrentTime()
         };
       })
     };
@@ -600,7 +598,7 @@ const syncCardInfo = async () => {
         .map(item => ({
           id: item.id,
           balance: item.balance,
-          update_time: getCurrentFormattedDateTime()
+          update_time: getCurrentTime()
         }));
       if (updateCardList?.length) {
         updateCardListHandle(updateCardList);
@@ -657,7 +655,7 @@ const syncCardInfo = async () => {
             let updateList = unUseCardList.map(item => ({
               id: item.id,
               status: "2",
-              update_time: getCurrentFormattedDateTime()
+              update_time: getCurrentTime()
             }));
             const isUpdatePass = await updateCardListHandle(updateList);
             if (!isUpdatePass) {
@@ -704,7 +702,7 @@ const editCard = (row, type) => {
 // 保存卡
 const saveCard = async cardInfo => {
   try {
-    cardInfo.update_time = getCurrentFormattedDateTime();
+    cardInfo.update_time = getCurrentTime();
     cardInfo.rule = rule;
     cardInfo.linkCinemaIds = cardInfo.linkCinemaIds?.join();
     if (cardInfo.id) {

@@ -2,11 +2,7 @@
 
 import axios from "axios";
 import { ElMessage } from "element-plus";
-import {
-  logUpload,
-  getCurrentFormattedDateTime,
-  mockDelay
-} from "@/utils/utils";
+import { logUpload, getCurrentTime, mockDelay } from "@/utils/utils";
 // 机器登录用户信息
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
@@ -118,7 +114,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           },
           [
             {
-              opera_time: getCurrentFormattedDateTime(),
+              opera_time: getCurrentTime(),
               des: "接口重试成功",
               level: "info",
               info: {
@@ -212,7 +208,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           },
           [
             {
-              opera_time: getCurrentFormattedDateTime(),
+              opera_time: getCurrentTime(),
               des: "接口重试到最后还是失败",
               level: "info",
               info: {

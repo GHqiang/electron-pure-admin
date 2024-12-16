@@ -1,6 +1,6 @@
 // sfc报价逻辑
 import {
-  getCurrentFormattedDateTime,
+  getCurrentTime,
   getCurrentDay,
   convertFullwidthToHalfwidth,
   offerRuleMatch,
@@ -44,7 +44,7 @@ class getSfcOfferPrice {
     } catch (error) {
       console.error("获取猎人已报价列表异常", error);
       this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "获取猎人已报价列表异常",
         level: "error",
         info: {
@@ -63,16 +63,14 @@ class getSfcOfferPrice {
         user_id: tokens.userInfo.user_id,
         // user_id: "9",
         plat_name: this.plat_name,
-        start_time: getCurrentFormattedDateTime(
-          +new Date() - 0.5 * 60 * 60 * 1000
-        ),
-        end_time: getCurrentFormattedDateTime()
+        start_time: getCurrentTime(+new Date() - 0.5 * 60 * 60 * 1000),
+        end_time: getCurrentTime()
       });
       return res.data.offerList || [];
     } catch (error) {
       console.error(conPrefix + "获取历史报价记录异常", error);
       this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "获取历史报价记录异常",
         level: "error",
         info: {
@@ -91,7 +89,7 @@ class getSfcOfferPrice {
         app_name
       });
       this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "获取券类型信息返回",
         level: "info",
         info: {
@@ -102,7 +100,7 @@ class getSfcOfferPrice {
     } catch (error) {
       console.error("获取券类型信息异常", error);
       this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "获取券类型信息异常",
         level: "error",
         info: {
@@ -124,7 +122,7 @@ class getSfcOfferPrice {
         return this.returnResultHandle({ endPrice, offerRule, order_number });
       }
       this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "最终匹配到的报价规则",
         level: "info",
         info: {
@@ -141,7 +139,7 @@ class getSfcOfferPrice {
       let price = Number(offerAmount || memberOfferAmount);
       if (!price) {
         this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
+          opera_time: getCurrentTime(),
           des: "从最终报价规则里获取报价价格失败",
           level: "error"
         });
@@ -157,7 +155,7 @@ class getSfcOfferPrice {
       }
       if (!cost_price) {
         this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
+          opera_time: getCurrentTime(),
           des: "获取出票成本价格失败",
           level: "error"
         });
@@ -191,7 +189,7 @@ class getSfcOfferPrice {
           ticketList?.length >= 2 ? checkConsecutiveErrors(ticketList) : false;
         if (isAbnormal) {
           this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
+            opera_time: getCurrentTime(),
             des: "sfc疑似故障，暂不报价",
             level: "error",
             info: {
@@ -206,7 +204,7 @@ class getSfcOfferPrice {
     } catch (error) {
       console.error("获取最终报价信息方法执行异常", error);
       this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "获取最终报价信息方法执行异常",
         level: "error",
         info: {
@@ -252,7 +250,7 @@ class getSfcOfferPrice {
       let matchRuleList = matchRuleListRes?.matchRuleList || [];
       if (!matchRuleList?.length) {
         this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
+          opera_time: getCurrentTime(),
           des: "报价规则匹配后为空",
           level: "error",
           info: {
@@ -264,7 +262,7 @@ class getSfcOfferPrice {
       }
       matchRuleList = JSON.parse(JSON.stringify(matchRuleList));
       this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "报价规则匹配列表",
         level: "info",
         info: {
@@ -277,7 +275,7 @@ class getSfcOfferPrice {
       if (!endRule) {
         console.error(conPrefix + "最终匹配到的报价规则不存在");
         this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
+          opera_time: getCurrentTime(),
           des: "最终匹配到的报价规则不存在",
           level: "info"
         });
@@ -288,7 +286,7 @@ class getSfcOfferPrice {
     } catch (error) {
       console.error(conPrefix + "获取最终匹配报价规则异常", error);
       this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "获取最终匹配报价规则异常",
         level: "error",
         info: {
@@ -316,7 +314,7 @@ class getSfcOfferPrice {
       );
       if (onlyMemberDayRuleList.length) {
         this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
+          opera_time: getCurrentTime(),
           des: "命中会员日报价规则",
           level: "info"
         });
@@ -346,7 +344,7 @@ class getSfcOfferPrice {
         let memberPriceRes = await this.getMemberPrice(order);
         if (memberPriceRes === -1) {
           this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
+            opera_time: getCurrentTime(),
             des: "获取当前场次电影信息失败，直接不报",
             level: "info"
           });
@@ -358,7 +356,7 @@ class getSfcOfferPrice {
             mixFixedAmountRule
           );
           this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
+            opera_time: getCurrentTime(),
             des: "最小加价规则获取会员价失败,返回最小固定报价规则",
             level: "warn",
             info: {
@@ -383,7 +381,7 @@ class getSfcOfferPrice {
           mixAddAmountRule.round_member_price +
           Number(mixAddAmountRule.addAmount);
         this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
+          opera_time: getCurrentTime(),
           des: "会员报价相关信息0",
           level: "info",
           info: {
@@ -407,7 +405,7 @@ class getSfcOfferPrice {
           mixFixedAmountRule
         );
         this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
+          opera_time: getCurrentTime(),
           des: "最小加价规则不存在,返回最小固定报价规则",
           level: "info",
           info: {
@@ -428,7 +426,7 @@ class getSfcOfferPrice {
         Number(mixFixedAmountRule.offerAmount)
       ) {
         this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
+          opera_time: getCurrentTime(),
           des: "会员报价高于固定报价，返回最小固定报价规则",
           level: "info",
           info: {
@@ -439,7 +437,7 @@ class getSfcOfferPrice {
         return mixFixedAmountRule;
       } else {
         this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
+          opera_time: getCurrentTime(),
           des: "会员报价低于固定报价，返回最小加价报价规则",
           level: "info",
           info: {
@@ -452,7 +450,7 @@ class getSfcOfferPrice {
     } catch (error) {
       console.error(conPrefix + "获取最低报价规则异常", error);
       this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "获取最低报价规则异常",
         level: "error",
         info: {
@@ -514,7 +512,7 @@ class getSfcOfferPrice {
           console.warn(str);
         }
         this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
+          opera_time: getCurrentTime(),
           des: "动态调价生效:" + str,
           level: "info"
         });
@@ -525,7 +523,7 @@ class getSfcOfferPrice {
       if (["sheng", "mayi", "yangcong"].includes(plat_name)) {
         price = Math.round(price);
         this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
+          opera_time: getCurrentTime(),
           des: "调整最终报价为规则报价四舍五入取整",
           level: "info"
         });
@@ -535,7 +533,7 @@ class getSfcOfferPrice {
         let isOverrunOffer = window.localStorage.getItem("isOverrunOffer");
         if (isOverrunOffer !== "1" && offerType !== "1") {
           this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
+            opera_time: getCurrentTime(),
             des: `用卡报价时，最终报价${price}超过平台限价${supplier_max_price}，超限报价处于关闭状态不进行报价`,
             level: "error"
           });
@@ -549,7 +547,7 @@ class getSfcOfferPrice {
           price = roundToHalf(supplier_max_price, -1);
         }
         this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
+          opera_time: getCurrentTime(),
           des: "调整最终报价为平台限价四舍五入去整",
           level: "info"
         });
@@ -572,7 +570,7 @@ class getSfcOfferPrice {
         let str = `最终报价${price}低于真实成本${real_cost_price}`;
         console.error(conPrefix + str);
         this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
+          opera_time: getCurrentTime(),
           des: str,
           level: "error"
         });
@@ -580,7 +578,7 @@ class getSfcOfferPrice {
       }
 
       this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "sfc计算报价相关信息",
         level: "info",
         info: {
@@ -600,7 +598,7 @@ class getSfcOfferPrice {
     } catch (error) {
       console.error("获取最终报价异常", error);
       this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "获取最终报价异常",
         level: "error",
         info: {
@@ -625,7 +623,7 @@ class getSfcOfferPrice {
       const res = await this.appApi.getMoviePlaySeat(params);
       console.log(conPrefix + "获取座位布局返回", res);
       this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "获取座位布局返回",
         level: "info",
         info: {
@@ -636,7 +634,7 @@ class getSfcOfferPrice {
     } catch (error) {
       console.error(conPrefix + "获取座位布局异常", error);
       this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "获取座位布局异常",
         level: "error",
         info: {
@@ -673,7 +671,7 @@ class getSfcOfferPrice {
         if (promo_num && promo_num < +ticket_num) {
           console.error(conPrefix + "促销票数低于订单票数");
           this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
+            opera_time: getCurrentTime(),
             des: "促销票数低于订单票数",
             level: "error",
             info: {
@@ -705,7 +703,7 @@ class getSfcOfferPrice {
           //     };
           //   });
           //   this.logList.push({
-          //     opera_time: getCurrentFormattedDateTime(),
+          //     opera_time: getCurrentTime(),
           //     des: "座位分区剩余座位情况",
           //     level: "info",
           //     info: {
@@ -736,7 +734,7 @@ class getSfcOfferPrice {
           //   // }
           // } catch (error) {
           //   this.logList.push({
-          //     opera_time: getCurrentFormattedDateTime(),
+          //     opera_time: getCurrentTime(),
           //     des: "座位分区剩余座位占比计算失败",
           //     level: "info",
           //     info: {
@@ -749,7 +747,7 @@ class getSfcOfferPrice {
             bigPrice
           );
           this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
+            opera_time: getCurrentTime(),
             des: "取座位分区最高价和会员价的最大值当会员价",
             level: "info",
             info: {
@@ -763,7 +761,7 @@ class getSfcOfferPrice {
       console.log(conPrefix + "获取会员价", member_price);
       if (member_price <= 0 && nonmember_price) {
         this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
+          opera_time: getCurrentTime(),
           des: "获取会员价时由于会员价不存在拿非会员价当会员价",
           level: "warn",
           info: {
@@ -774,7 +772,7 @@ class getSfcOfferPrice {
       }
       if (member_price === 0) {
         this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
+          opera_time: getCurrentTime(),
           des: "获取会员价为0",
           level: "error",
           info: {
@@ -803,7 +801,7 @@ class getSfcOfferPrice {
         }));
         // console.log("list", list);
         this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
+          opera_time: getCurrentTime(),
           des: "获取该影院已维护会员卡列表返回",
           level: "info",
           info: {
@@ -825,7 +823,7 @@ class getSfcOfferPrice {
           );
         });
         this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
+          opera_time: getCurrentTime(),
           des: "根据当天及当月出票量限制过滤后",
           level: "info",
           info: {
@@ -839,7 +837,7 @@ class getSfcOfferPrice {
             : item.linkCinemaIds.split(",").some(itemA => itemA == cinema_id);
         });
         this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
+          opera_time: getCurrentTime(),
           des: "根据指定卡过滤后",
           level: "info",
           info: {
@@ -849,7 +847,7 @@ class getSfcOfferPrice {
         if (!cardList.length) {
           console.error(conPrefix + "影院单卡出票限制");
           this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
+            opera_time: getCurrentTime(),
             des: "影院单卡出票限制，无可用卡",
             level: "error",
             info: {
@@ -872,7 +870,7 @@ class getSfcOfferPrice {
           ? (Number(member_price) * 100 * discount) / 10000
           : Number(member_price);
         this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
+          opera_time: getCurrentTime(),
           des: "获取会员价相关信息返回",
           level: "info",
           info: {
@@ -890,7 +888,7 @@ class getSfcOfferPrice {
     } catch (error) {
       console.error(conPrefix + "获取会员价异常", error);
       this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "获取会员价异常",
         level: "error",
         info: {
@@ -937,7 +935,7 @@ class getSfcOfferPrice {
       if (!cinema_id) {
         console.error(conPrefix + "获取目标影院失败");
         this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
+          opera_time: getCurrentTime(),
           des: "获取目标影院失败",
           level: "error",
           info: {
@@ -977,7 +975,7 @@ class getSfcOfferPrice {
         let ticketInfo = showList.find(item => item.start_time === showTime);
         if (!ticketInfo) {
           this.logList.push({
-            opera_time: getCurrentFormattedDateTime(),
+            opera_time: getCurrentTime(),
             des: "获取电影放映信息后匹配订单场次失败",
             level: "error",
             info: {
@@ -991,7 +989,7 @@ class getSfcOfferPrice {
           ticketInfo.member_price = ticketInfo.normal_price;
         }
         this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
+          opera_time: getCurrentTime(),
           des: "获取电影放映信息从而获取会员价",
           level: "info",
           info: {
@@ -1001,7 +999,7 @@ class getSfcOfferPrice {
         return { ...ticketInfo, city_id, cinema_id };
       } else {
         this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
+          opera_time: getCurrentTime(),
           des: "获取电影放映信息后匹配订单影片名失败",
           level: "error",
           info: {
@@ -1013,7 +1011,7 @@ class getSfcOfferPrice {
     } catch (error) {
       console.error(conPrefix + "获取当前场次电影信息异常", error);
       this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "获取当前场次电影信息异常",
         level: "error",
         info: {
@@ -1040,7 +1038,7 @@ class getSfcOfferPrice {
     } catch (error) {
       console.error(conPrefix + "获取电影放映信息异常", error);
       this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "获取电影放映信息异常",
         level: "error",
         info: {
@@ -1061,7 +1059,7 @@ class getSfcOfferPrice {
     } catch (error) {
       console.error(conPrefix + "获取城市列表异常", error);
       this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "获取城市列表异常",
         level: "error",
         info: {
@@ -1083,7 +1081,7 @@ class getSfcOfferPrice {
     } catch (error) {
       console.error("获取最新50条出票记录异常", error);
       this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "获取最新50条出票记录异常",
         level: "error",
         info: {

@@ -1,6 +1,6 @@
 import {
   getCinemaFlag, // 获取影院标识
-  getCurrentFormattedDateTime, // 格式化当前日期时间
+  getCurrentTime, // 格式化当前日期时间
   logUpload, // 日志上传
   mockDelay, // 模拟延时
   formatErrInfo, // 格式化errInfo
@@ -64,7 +64,7 @@ class OrderAutoOfferQueue {
     }
     let logList = [
       {
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "影划算新的待报价订单",
         level: "info",
         info: {
@@ -279,7 +279,7 @@ class OrderAutoOfferQueue {
         member_discount: offerResult?.offerRule?.member_discount,
         quan_value: offerResult?.offerRule?.quanValue,
         order_status: offerResult?.res ? "1" : "2",
-        processing_time: getCurrentFormattedDateTime(),
+        processing_time: getCurrentTime(),
         err_msg: offerResult?.err_msg || errInfoObj?.des || "",
         err_info:
           offerResult?.err_info ||
@@ -315,7 +315,7 @@ class OrderAutoOfferQueue {
       console.log(conPrefix + "提交报价参数", params);
       if (isTestOrder) {
         this.logList.push({
-          opera_time: getCurrentFormattedDateTime(),
+          opera_time: getCurrentTime(),
           des: "测试单暂不进行报价",
           level: "info",
           info: { params }
@@ -325,7 +325,7 @@ class OrderAutoOfferQueue {
       const res = await yinghuasuanApi.submitOffer(params);
       console.log(conPrefix + "提交报价返回", res);
       this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "提交报价入参和返回",
         level: "info",
         info: {
@@ -337,7 +337,7 @@ class OrderAutoOfferQueue {
     } catch (error) {
       console.error(conPrefix + "提交报价异常", error);
       this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "提交报价异常",
         level: "error",
         info: { error, params }
@@ -378,7 +378,7 @@ class OrderAutoOfferQueue {
     } catch (error) {
       console.error(conPrefix + "单个报价异常", error);
       this.logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "单个报价异常",
         level: "error",
         info: { error }
@@ -415,7 +415,7 @@ class OrderAutoOfferQueue {
         },
         [
           {
-            opera_time: getCurrentFormattedDateTime(),
+            opera_time: getCurrentTime(),
             des: "获取待报价列表异常",
             level: "error",
             info: {

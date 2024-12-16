@@ -6,7 +6,7 @@ import {
   getCinemaFlag,
   logUpload,
   mockDelay, // 模拟延时
-  getCurrentFormattedDateTime
+  getCurrentTime
 } from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
@@ -119,7 +119,7 @@ class OrderAutoFetchQueue {
           if (res?.isNewOrder) {
             let offerRecord = res.offerRecord;
             logList.push({
-              opera_time: getCurrentFormattedDateTime(),
+              opera_time: getCurrentTime(),
               des: conPrefix + "判断是否是新订单返回",
               level: "info",
               info: {
@@ -139,7 +139,7 @@ class OrderAutoFetchQueue {
               });
               console.log("更新报价记录订单号返回", updateRes);
               logList.push({
-                opera_time: getCurrentFormattedDateTime(),
+                opera_time: getCurrentTime(),
                 des: conPrefix + "更新报价记录订单号返回",
                 level: "info",
                 info: {
@@ -162,7 +162,7 @@ class OrderAutoFetchQueue {
       targetList.forEach(item => {
         let logList = [
           {
-            opera_time: getCurrentFormattedDateTime(),
+            opera_time: getCurrentTime(),
             des: conPrefix + "影划算新的待出票订单",
             level: "info",
             info: {
@@ -213,7 +213,7 @@ class OrderAutoFetchQueue {
       }));
       console.log("从已接单列表里过滤后", logList);
       logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: conPrefix + "从已接单列表里过滤后",
         level: "info",
         info: {
@@ -223,7 +223,7 @@ class OrderAutoFetchQueue {
       if (list?.length) {
         const offerList = await getOfferList();
         logList.push({
-          opera_time: getCurrentFormattedDateTime(),
+          opera_time: getCurrentTime(),
           des: conPrefix + "获取最近报价记录",
           level: "info",
           info: {
@@ -236,7 +236,7 @@ class OrderAutoFetchQueue {
         );
         console.log("最近报价记录过滤后", list, offerList);
         logList.push({
-          opera_time: getCurrentFormattedDateTime(),
+          opera_time: getCurrentTime(),
           des: conPrefix + "最近报价记录过滤后",
           level: "info",
           info: {
@@ -252,7 +252,7 @@ class OrderAutoFetchQueue {
           }
           console.log("确认接单返回", res, item);
           logList.push({
-            opera_time: getCurrentFormattedDateTime(),
+            opera_time: getCurrentTime(),
             des: conPrefix + "确认接单返回",
             level: "info",
             info: {
@@ -263,7 +263,7 @@ class OrderAutoFetchQueue {
       }
     } catch (error) {
       logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: conPrefix + "获取待确认订单并接单异常",
         level: "info",
         info: {
@@ -289,7 +289,7 @@ class OrderAutoFetchQueue {
       list = list.filter(item => item.status === "1");
       console.log("获取影划算待确认列表返回", list);
       logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: conPrefix + "获取待确认列表返回",
         level: "info",
         info: {
@@ -301,7 +301,7 @@ class OrderAutoFetchQueue {
     } catch (error) {
       console.error("获取影划算待确认列表异常", error);
       logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: conPrefix + "获取影划算待确认列表异常",
         level: "info",
         info: {
@@ -325,7 +325,7 @@ class OrderAutoFetchQueue {
       const res = await yinghuasuanApi.stayTicketingList(params);
       let list = res?.data?.data || [];
       logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: conPrefix + "获取待出票列表返回",
         level: "info",
         info: {
@@ -337,7 +337,7 @@ class OrderAutoFetchQueue {
     } catch (error) {
       console.error("获取待出票列表异常", error);
       logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: conPrefix + "获取待出票列表异常",
         level: "info",
         info: {
@@ -422,10 +422,8 @@ const getOfferList = async () => {
     const res = await svApi.queryOfferList({
       user_id: tokens.userInfo.user_id,
       plat_name: "yinghuasuan",
-      start_time: getCurrentFormattedDateTime(
-        +new Date() - 0.2 * 60 * 60 * 1000
-      ),
-      end_time: getCurrentFormattedDateTime()
+      start_time: getCurrentTime(+new Date() - 0.2 * 60 * 60 * 1000),
+      end_time: getCurrentTime()
     });
     let list = res.data.offerList || [];
     console.error("获取历史报价记录返回", error);

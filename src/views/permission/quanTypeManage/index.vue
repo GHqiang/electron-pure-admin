@@ -199,9 +199,7 @@
       <el-table-column prop="black_quans" label="黑名单券" min-width="100" />
       <el-table-column prop="update_time" label="更新时间" min-width="160">
         <template #default="{ row }">
-          <span>{{
-            getCurrentFormattedDateTime(+new Date(row.update_time))
-          }}</span>
+          <span>{{ getCurrentTime(+new Date(row.update_time)) }}</span>
         </template>
       </el-table-column>
 
@@ -306,7 +304,7 @@ import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import QuanDialog from "@/components/QuanDialog.vue";
 import { APP_LIST } from "@/common/constant";
 import {
-  getCurrentFormattedDateTime,
+  getCurrentTime,
   parseExcel,
   createExcelDown,
   getCurrentDay
@@ -393,7 +391,7 @@ const editQuan = (row, type) => {
 // 保存券类型
 const saveQuan = async cardInfo => {
   try {
-    cardInfo.update_time = getCurrentFormattedDateTime();
+    cardInfo.update_time = getCurrentTime();
     if (cardInfo.id) {
       console.log("编辑保存券类型", cardInfo);
       await svApi.updateQuanType(cardInfo);

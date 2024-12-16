@@ -202,7 +202,7 @@ import createTucketQueueFun from "@/common/autoTicket/comTicketHandle";
 import { ORDER_FORM, APP_LIST } from "@/common/constant";
 import {
   getCinemaLoginInfoList,
-  getCurrentFormattedDateTime,
+  getCurrentTime,
   logUpload
 } from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
@@ -367,11 +367,11 @@ const oneClickStart = () => {
         console.warn("一键启动自动出票队列");
         svApi.updateUser({
           plat_offer_queue: JSON.stringify(tableDataStore.items),
-          offer_queue_time: getCurrentFormattedDateTime()
+          offer_queue_time: getCurrentTime()
         });
         logUpload({ plat_name: "", type: 1 }, [
           {
-            opera_time: getCurrentFormattedDateTime(),
+            opera_time: getCurrentTime(),
             des: "一键启动队列",
             level: "info",
             info: {
@@ -412,11 +412,11 @@ const oneClickStop = () => {
       });
       svApi.updateUser({
         plat_offer_queue: JSON.stringify(tableDataStore.items),
-        offer_queue_time: getCurrentFormattedDateTime()
+        offer_queue_time: getCurrentTime()
       });
       logUpload({ plat_name: "", type: 1 }, [
         {
-          opera_time: getCurrentFormattedDateTime(),
+          opera_time: getCurrentTime(),
           des: "一键停止队列",
           level: "info",
           info: {
@@ -484,11 +484,11 @@ const singleStartOrStop = ({ id, platToken, platName, syncPageSize }, flag) => {
   }
   svApi.updateUser({
     plat_offer_queue: JSON.stringify(tableDataStore.items),
-    offer_queue_time: getCurrentFormattedDateTime()
+    offer_queue_time: getCurrentTime()
   });
   logUpload({ plat_name: platName, type: 1 }, [
     {
-      opera_time: getCurrentFormattedDateTime(),
+      opera_time: getCurrentTime(),
       des: `单个${flag !== 1 ? "停止" : "启动"}队列`,
       level: "info",
       info: {
@@ -501,12 +501,7 @@ const singleStartOrStop = ({ id, platToken, platName, syncPageSize }, flag) => {
 // 同步中标价
 const syncPriceHandle = async (plat_name, syncPageSize) => {
   try {
-    console.warn(
-      "同步中标价:",
-      plat_name,
-      syncPageSize,
-      getCurrentFormattedDateTime()
-    );
+    console.warn("同步中标价:", plat_name, syncPageSize, getCurrentTime());
 
     let promiseList = [],
       syncOrderList = [];

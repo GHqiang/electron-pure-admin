@@ -242,7 +242,7 @@
 import { ref, onMounted, computed } from "vue";
 import { storeToRefs } from "pinia";
 import {
-  getCurrentFormattedDateTime,
+  getCurrentTime,
   convertFullwidthToHalfwidth,
   cinemNameSpecial,
   getCinemaLoginInfoList
@@ -973,7 +973,7 @@ async function priceCalculation(data) {
       card_id: member_coupon_id || "", // 会员卡id
       option_goods_info: "", // 可选的额外商品信息
       quan_code: quan_code || "", // 优惠券券码
-      update_time: getCurrentFormattedDateTime()
+      update_time: getCurrentTime()
     };
     console.log("【自动出票】计算订单价格参数", params);
     const res = await sfcApi.priceCalculation(params);
@@ -1031,7 +1031,7 @@ async function createOrder(data) {
       promo_id: "0", // 促销活动ID，这里为0，表示没有参与特定的促销活动
       member_coupon_id: member_coupon_id || "", // 会员卡id
       coupon, // 优惠券券码
-      update_time: getCurrentFormattedDateTime()
+      update_time: getCurrentTime()
     };
     console.log("【自动出票】创建订单参数", params);
     const res = await sfcApi.createOrder(params);

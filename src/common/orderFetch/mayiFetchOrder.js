@@ -5,7 +5,7 @@ import svApi from "@/api/sv-api";
 import {
   getCinemaFlag,
   logUpload,
-  getCurrentFormattedDateTime,
+  getCurrentTime,
   mockDelay
 } from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
@@ -99,7 +99,7 @@ class OrderAutoFetchQueue {
       });
       let logList = [
         {
-          opera_time: getCurrentFormattedDateTime(),
+          opera_time: getCurrentTime(),
           des: `${name}：蚂蚁获取待出票列表返回`,
           level: "info",
           info: {
@@ -132,7 +132,7 @@ class OrderAutoFetchQueue {
       sfcStayOfferlist.forEach(item => {
         let logList = [
           {
-            opera_time: getCurrentFormattedDateTime(),
+            opera_time: getCurrentTime(),
             des: "蚂蚁新的待出票订单",
             level: "info",
             info: {
@@ -228,10 +228,8 @@ const getOfferList = async () => {
     const res = await svApi.queryOfferList({
       user_id: tokens.userInfo.user_id,
       plat_name: "mayi",
-      start_time: getCurrentFormattedDateTime(
-        +new Date() - 0.5 * 60 * 60 * 1000
-      ),
-      end_time: getCurrentFormattedDateTime()
+      start_time: getCurrentTime(+new Date() - 0.5 * 60 * 60 * 1000),
+      end_time: getCurrentTime()
     });
     return res.data.offerList || [];
   } catch (error) {

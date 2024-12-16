@@ -17,7 +17,7 @@ import darkIcon from "@/assets/svg/dark.svg?component";
 import Lock from "@iconify-icons/ri/lock-fill";
 import User from "@iconify-icons/ri/user-3-fill";
 
-import { getCurrentFormattedDateTime } from "@/utils/utils";
+import { getCurrentTime } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
@@ -107,7 +107,7 @@ const onLogin = async formEl => {
           console.log("loginRes", loginRes);
           tokens.setSelfPlatToken(loginRes.data);
           await svApi.updateUser({
-            login_time: getCurrentFormattedDateTime()
+            login_time: getCurrentTime()
           });
           let rule = loginRes.data?.user.rule;
           await setLocalLoginList(rule);

@@ -166,7 +166,7 @@ import svApi from "@/api/sv-api";
 import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import LoginDialog from "@/components/LoginDialog.vue";
 import { APP_LIST } from "@/common/constant";
-import { getCurrentFormattedDateTime } from "@/utils/utils";
+import { getCurrentTime } from "@/utils/utils";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
 import { platTokens } from "@/store/platTokens";
@@ -274,7 +274,7 @@ const editCard = (row, type) => {
 // 保存登录信息
 const saveCard = async cardInfo => {
   try {
-    cardInfo.update_time = getCurrentFormattedDateTime();
+    cardInfo.update_time = getCurrentTime();
     cardInfo.rule = rule;
     if (cardInfo.id) {
       console.log("编辑保存登录信息", cardInfo);

@@ -294,7 +294,7 @@ import {
   SPECIAL_CINEMA_OBJ
 } from "@/common/constant";
 import {
-  getCurrentFormattedDateTime,
+  getCurrentTime,
   getCinemaLoginInfoList,
   cinemNameSpecial
 } from "@/utils/utils";
@@ -719,7 +719,7 @@ const saveRule = async ruleInfo => {
       .join();
     ruleInfo.platOfferList = JSON.stringify(ruleInfo.platOfferList || []);
     ruleInfo.weekDay = JSON.stringify(ruleInfo.weekDay);
-    ruleInfo.update_time = getCurrentFormattedDateTime();
+    ruleInfo.update_time = getCurrentTime();
     ruleInfo.rule = rule;
     if (ruleInfo.id) {
       console.log("编辑保存规则", ruleInfo);

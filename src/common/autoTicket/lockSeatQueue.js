@@ -1,5 +1,5 @@
 import {
-  getCurrentFormattedDateTime,
+  getCurrentTime,
   logUpload, // 日志上传
   trial, // 试错重试
   adjustSeats // 获取需要帮助锁定的座位
@@ -21,7 +21,7 @@ class OrderAutoLockSeatQueue {
   async assistLockSeatHandle(order) {
     let logList = [
       {
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "帮助锁座方法接收到的参数",
         level: "info",
         info: {
@@ -32,7 +32,7 @@ class OrderAutoLockSeatQueue {
     try {
       const res = await this.lockSeatCommonHandle(order, logList);
       logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "帮助锁座结果返回",
         level: "info",
         info: {
@@ -105,7 +105,7 @@ class OrderAutoLockSeatQueue {
         .map(item => item.split("排")[1].replace("座", "号").split("号")[0])
         .sort((a, b) => +a - b); // ["6", "8"] | ["12"]
       logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "帮助锁定座位前判断相关信息",
         level: "info",
         info: {
@@ -123,7 +123,7 @@ class OrderAutoLockSeatQueue {
 
       if (!fillSeat?.length) {
         logList.push({
-          opera_time: getCurrentFormattedDateTime(),
+          opera_time: getCurrentTime(),
           des: "获取补全座位方法返回空，无法补全座位",
           level: "info"
         });
@@ -135,7 +135,7 @@ class OrderAutoLockSeatQueue {
       );
       console.log("fillSeatList", fillSeatList);
       logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "获取补全座位方法返回",
         level: "info",
         info: {
@@ -148,7 +148,7 @@ class OrderAutoLockSeatQueue {
         buyerRemark: ""
       }));
       logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "补全座位相关信息",
         level: "info",
         info: {
@@ -165,7 +165,7 @@ class OrderAutoLockSeatQueue {
       );
       if (!session_id) {
         logList.push({
-          opera_time: getCurrentFormattedDateTime(),
+          opera_time: getCurrentTime(),
           des: "获取目标影院小号session返回空，无法补全座位",
           level: "info"
         });
@@ -193,7 +193,7 @@ class OrderAutoLockSeatQueue {
         const res = await APP_API_OBJ[app_name].lockSeat(params1);
         console.log("锁定座位返回", res);
         logList.push({
-          opera_time: getCurrentFormattedDateTime(),
+          opera_time: getCurrentTime(),
           des: `第${inx}次锁定座位返回`,
           level: "info",
           info: {
@@ -205,7 +205,7 @@ class OrderAutoLockSeatQueue {
       } catch (error) {
         console.error("锁定座位异常", error);
         logList.push({
-          opera_time: getCurrentFormattedDateTime(),
+          opera_time: getCurrentTime(),
           des: `第${inx}次锁定座位异常`,
           level: "error",
           info: {
@@ -215,7 +215,7 @@ class OrderAutoLockSeatQueue {
         });
         if (error?.msg === "存在有未支付的订单！") {
           logList.push({
-            opera_time: getCurrentFormattedDateTime(),
+            opera_time: getCurrentTime(),
             des: `第${inx}次锁定座位时发现有未支付的订单，准备先取消订单，再进行锁座`,
             level: "info"
           });
@@ -236,7 +236,7 @@ class OrderAutoLockSeatQueue {
       }
     } catch (error) {
       logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "ume帮助锁座方法执行异常",
         level: "error",
         info: {
@@ -270,7 +270,7 @@ class OrderAutoLockSeatQueue {
       const res = await APP_API_OBJ[app_name].cannelOneOrder(params);
       console.log("取消订单返回", res);
       logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "取消订单返回",
         level: "info",
         info: {
@@ -281,7 +281,7 @@ class OrderAutoLockSeatQueue {
     } catch (error) {
       console.error("取消订单异常", error);
       logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "取消订单异常",
         level: "error",
         info: {
@@ -302,7 +302,7 @@ class OrderAutoLockSeatQueue {
       });
       // console.log("ruleRes", ruleRes);
       logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "获取目标影院小号的登录信息返回",
         level: "info",
         info: {
@@ -313,7 +313,7 @@ class OrderAutoLockSeatQueue {
       return loginRecords[0]?.session_id;
     } catch (error) {
       logList.push({
-        opera_time: getCurrentFormattedDateTime(),
+        opera_time: getCurrentTime(),
         des: "获取目标影院小号的登录信息返回异常",
         level: "error",
         info: {
@@ -332,7 +332,7 @@ class OrderAutoLockSeatQueue {
     //   const res = await APP_API_OBJ[app_name].lockSeat(params);
     //   console.log("锁定座位返回", res);
     //   logList.push({
-    //     opera_time: getCurrentFormattedDateTime(),
+    //     opera_time: getCurrentTime(),
     //     des: `第${inx}次锁定座位返回`,
     //     level: "info",
     //     info: {
@@ -344,7 +344,7 @@ class OrderAutoLockSeatQueue {
     // } catch (error) {
     //   console.error("锁定座位异常", error);
     //   logList.push({
-    //     opera_time: getCurrentFormattedDateTime(),
+    //     opera_time: getCurrentTime(),
     //     des: `第${inx}次锁定座位失败`,
     //     level: "error",
     //     info: {
