@@ -52,11 +52,14 @@
             clearable
           />
         </el-form-item>
-        <el-form-item v-if="rule == 2" label="是否小号" prop="is_xiaohao">
+        <el-form-item label="是否小号" prop="is_xiaohao">
           <el-radio-group v-model="formData.is_xiaohao">
             <el-radio value="1" size="large">是</el-radio>
             <el-radio value="2" size="large">否</el-radio>
           </el-radio-group>
+          <span style="color: red"
+            >注意：小号仅用于帮助大号锁座（解决座位旁边、座位中间不允许为空问题），无法用小号出票</span
+          >
         </el-form-item>
         <el-form-item label="是否优先" prop="first">
           <el-radio-group v-model="formData.first">

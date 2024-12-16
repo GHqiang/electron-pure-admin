@@ -8,6 +8,11 @@ import svApi from "@/api/sv-api";
 // 影院特殊匹配列表及api
 import { APP_API_OBJ } from "@/common/index";
 import { UME_LIST } from "@/common/constant";
+import { platTokens } from "@/store/platTokens";
+const {
+  userInfo: { rule, user_id }
+} = platTokens();
+
 // 创建一个订单自动锁座队列类
 class OrderAutoLockSeatQueue {
   constructor() {}
@@ -155,7 +160,7 @@ class OrderAutoLockSeatQueue {
       });
       params1.params.ticketDetail = ticketDetail;
       const session_id = await this.setLocalLoginList(
-        { rule: "2", app_name },
+        { rule, app_name },
         logList
       );
       if (!session_id) {
