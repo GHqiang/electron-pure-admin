@@ -824,8 +824,8 @@ class getUmeOfferPrice {
             des: "获取目标影片信息失败",
             level: "error",
             info: {
-              movie_data,
-              film_name
+              film_name,
+              movie_data
             }
           });
           return;

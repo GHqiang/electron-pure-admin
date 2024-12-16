@@ -1005,8 +1005,8 @@ class getSfcOfferPrice {
           des: "获取电影放映信息后匹配订单影片名失败",
           level: "error",
           info: {
-            movie_data,
-            film_name
+            film_name,
+            movie_data
           }
         });
       }

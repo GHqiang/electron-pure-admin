@@ -891,8 +891,8 @@ class getLmaOfferPrice {
             opera_time: getCurrentFormattedDateTime(),
             des: "获取目标影片信息失败",
             info: {
-              film,
-              film_name
+              film_name,
+              film
             }
           });
           return;

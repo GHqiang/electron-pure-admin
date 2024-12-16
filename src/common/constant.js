@@ -1371,6 +1371,18 @@ const BNXM_SPECIAL_CINEMA_LIST = [
   }
 ];
 
+// 排除影院集合（用于utils获取影院标识处理）
+const EXCLUDE_CINEMA_LIST_BY_CINEMA_FLAG = [
+  "万象影城（坪山文化聚落店）",
+  "南部太平洋电影城",
+  "卢米埃影城(印象城店)",
+  "峨影1958电影城",
+  "杭州中影国际影城（钱塘永旺梦乐城CINITY LED店）",
+  "杭州中影国际影城（钱塘永旺梦乐城CINTY LED店）",
+  "徐氏杜比MAX影城",
+  "保利万和国际影城（奥园广场店）"
+];
+
 // 太平洋影城sfc影院名
 const TPYYC_CINEMA_NAME_BY_SFC = [
   "太平洋影城（深圳喜荟城店）",
@@ -1396,7 +1408,8 @@ const TPYYC_CINEMA_NAME_BY_SFC = [
   "太平洋电影城（都江堰店）",
   "太平洋影城（东站中环壹号店）",
   "太平洋电影城（资阳沱东店）",
-  "太平洋影城（双流香楠店）"
+  "太平洋影城（双流香楠店）",
+  "峨影1958电影城"
 ];
 
 // 太平洋影城-ume系统
@@ -2386,5 +2399,6 @@ export {
   WANMEI_CINEMA_NAME,
   YINGHUANG_CINEMA_NAME,
   ZHEYINGSHIDAI_CINEMA_NAME,
-  TPYYC_CINEMA_NAME_BY_SFC
+  TPYYC_CINEMA_NAME_BY_SFC,
+  EXCLUDE_CINEMA_LIST_BY_CINEMA_FLAG
 };

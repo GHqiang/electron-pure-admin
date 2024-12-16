@@ -10,10 +10,10 @@ import {
   SFC_CINEMA_NAME,
   YAOLAI_CINEMA_NAME,
   UME_CINEMA_NAME,
-  WANMEI_CINEMA_NAME,
   YINGHUANG_CINEMA_NAME,
   ZHEYINGSHIDAI_CINEMA_NAME,
-  TPYYC_CINEMA_NAME_BY_SFC
+  TPYYC_CINEMA_NAME_BY_SFC,
+  EXCLUDE_CINEMA_LIST_BY_CINEMA_FLAG
 } from "@/common/constant";
 
 // 格式化时间 YYYY-MM-DD HH:mm:ss
@@ -345,6 +345,11 @@ const colorObj = {
 // 获取影院标识
 const getCinemaFlag = item => {
   const { cinema_group, cinema_name, city_name, plat_name } = item;
+  // 是否是排除影院
+  const is_exclude_cinema = EXCLUDE_CINEMA_LIST_BY_CINEMA_FLAG.some(
+    itemA => cinemNameSpecial(itemA) === cinemNameSpecial(cinema_name)
+  );
+  if (is_exclude_cinema) return;
   let noGroupPlatList = ["yinghuasuan", "shangzhan", "haha"];
   let isNoGroup = noGroupPlatList.includes(plat_name);
 
