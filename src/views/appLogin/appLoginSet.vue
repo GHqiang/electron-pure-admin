@@ -109,7 +109,8 @@
         </template>
       </el-table-column>
       <el-table-column prop="session_id" label="Session ID" min-width="200" />
-      <el-table-column prop="member_pwd" label="会员卡密码" min-width="70" />
+      <el-table-column prop="tid" label="续期tid" min-width="120" />
+      <el-table-column prop="member_pwd" label="会员卡密码" min-width="80" />
       <el-table-column prop="remark" label="备注" min-width="80" />
       <el-table-column
         label="操作"
@@ -198,6 +199,7 @@ const setLocalLoginList = async () => {
       app_name: item.app_name,
       mobile: item.mobile,
       session_id: item.session_id,
+      tid: item.tid,
       member_pwd: item.member_pwd,
       first: item.first,
       is_xiaohao: item.is_xiaohao

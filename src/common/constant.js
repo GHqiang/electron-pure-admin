@@ -1990,29 +1990,24 @@ const TICKET_CONPREFIX_OBJ = {
 // umeh5系列相关信息
 const H5_UME_CINEMA_OBJ = {
   // cinemaLinkId、channelCode、tid(laskId：即sid可通过tid调接口获取)
-  kmbccf: [
-    "10106",
-    "BEICHEN_H5_PROD_10106_MPS",
-    "3328dbf5c2a54d418bdd515d31ae1844"
-  ],
-  xmaskdfyc: [
-    "11769",
-    "XMASK_H5_PROD_11769_MPS",
-    ""
-    // 913b36f02d2b4a0aa6988b19c52d066c：sid
-  ],
-  shjq: [
-    "11713",
-    "JINQIU_H5_PROD_11713_MPS",
-    "cc27e29dee4c4e3e91fb345cc431f423"
-  ],
+  kmbccf: ["10106", "BEICHEN_H5_PROD_10106_MPS"],
+  xmaskdfyc: ["11769", "XMASK_H5_PROD_11769_MPS"],
+  shjq: ["11713", "JINQIU_H5_PROD_11713_MPS"],
   hsmzyc: [
     "16014", // 多个影院时随便填个就行，主要用户会员卡同步
-    "HSMZYC_H5_PROD_S_MPS",
-    "f819f7de4e97466da20d0cef88f6b1de"
+    "HSMZYC_H5_PROD_S_MPS"
+    // 勋哥
+    // f1b2fbce125e4d298b785694a987694c-sid
+    // "f819f7de4e97466da20d0cef88f6b1de" -tid
+    // 兜哥
+    // sid=6b0de23ce1764548b77a0d412df96aa4
+    // tid=dac7b05c6eea4153abf68f1d8a18e8f6
+    // 婷婷
+    // sid=a3f2c3dff6bd4028813bf64e1a7ef9e4
+    // tid=d39b64e43c1b45249ab0b1a249a544f5
   ],
-  fyyc: ["", "FYYC_H5_PROD_S_MPS", "528782235f6b4f7fb1d271433efb15cb"],
-  shdyc: ["12654", "XHX_H5_PROD_12654_MPS", "d88aeb5151b84e53a0859f9ce0284dc3"]
+  fyyc: ["", "FYYC_H5_PROD_S_MPS"],
+  shdyc: ["12654", "XHX_H5_PROD_12654_MPS"]
 };
 
 // 微信小程序openid

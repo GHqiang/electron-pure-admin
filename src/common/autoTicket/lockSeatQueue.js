@@ -159,7 +159,7 @@ class OrderAutoLockSeatQueue {
         }
       });
       params1.params.ticketDetail = ticketDetail;
-      const session_id = await this.setLocalLoginList(
+      const session_id = await this.getLocalLoginList(
         { rule, app_name },
         logList
       );
@@ -293,7 +293,7 @@ class OrderAutoLockSeatQueue {
   }
 
   // 获取目标影院小号的登录信息
-  async setLocalLoginList({ rule, app_name }, logList) {
+  async getLocalLoginList({ rule, app_name }, logList) {
     try {
       const loginRes = await svApi.queryLoginList({
         rule,

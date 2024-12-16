@@ -81,6 +81,7 @@ const setLocalLoginList = async rule => {
       app_name: item.app_name,
       mobile: item.mobile,
       session_id: item.session_id,
+      tid: item.tid,
       member_pwd: item.member_pwd,
       first: item.first,
       is_xiaohao: item.is_xiaohao

@@ -390,6 +390,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
     ua = "",
     umidToken = "",
     larkSid = "",
+    tid = "",
     mobile = "",
     newLarkSidObj = {};
   // 请求拦截器
@@ -415,9 +416,13 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         // 登录标识：larkSid
         // e6b99a4fe34244d680a8e57ae79eff3b
         larkSid = targetInfo?.session_id || "";
+        tid = targetInfo?.session_id || "";
         // 先自己匹配登录信息，然后从参数里获取更新
         if (config.data?.umeToken) {
           larkSid = config.data.umeToken;
+          tid = loginInfoList.find(
+            itemA => itemA.app_name === app_name && itemA.session_id === larkSid
+          )?.tid;
           delete config.data.umeToken;
         }
         mobile = targetList.find(itemA => itemA.session_id === larkSid)?.mobile;
@@ -610,7 +615,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           const sidRes = await APP_API_OBJ[app_name].getsidbytid({
             empCode: "",
             leaseCode: "",
-            tid: H5_UME_CINEMA_OBJ[app_name][2]
+            tid: tid
           });
           console.log("sidRes", sidRes);
           let sid = sidRes?.bizValue?.sid;

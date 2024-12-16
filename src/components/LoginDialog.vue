@@ -45,6 +45,19 @@
             clearable
           />
         </el-form-item>
+        <el-form-item
+          v-if="H5_UME_CINEMA_OBJ[formData.app_name]"
+          label="续期tid"
+          prop="tid"
+        >
+          <el-input
+            v-model="formData.tid"
+            placeholder="请输入续期tid"
+            clearable
+          >
+            <template #append>注意：仅凤凰云智h5系列需要维护</template>
+          </el-input>
+        </el-form-item>
         <el-form-item label="会员卡密码" prop="member_pwd">
           <el-input
             v-model="formData.member_pwd"
@@ -86,7 +99,7 @@
 <script setup>
 import { ref, reactive } from "vue";
 import { ElLoading, ElMessage } from "element-plus";
-import { APP_LIST } from "@/common/constant";
+import { APP_LIST, H5_UME_CINEMA_OBJ } from "@/common/constant";
 import { platTokens } from "@/store/platTokens";
 const {
   userInfo: { rule, user_id }
@@ -111,6 +124,7 @@ let formData = reactive({
   id: "",
   app_name: "",
   session_id: "",
+  tid: "",
   member_pwd: "",
   mobile: "",
   remark: "",
@@ -129,12 +143,31 @@ const validatePhoneNumber = (rule, value, callback) => {
   }
 };
 
+const validateTidPass = (rule, value, callback) => {
+  console.log("formData.app_name", formData.app_name);
+  if (!formData.app_name) {
+    callback();
+  } else if (!formData.tid) {
+    callback(new Error("续期tid不能为空"));
+  } else {
+    callback();
+  }
+};
+
 const rules = {
   app_name: [
     { required: true, message: "影线名称不能为空", trigger: ["change", "blur"] }
   ],
   session_id: [
     { required: true, message: "Session ID不能为空", trigger: "blur" }
+  ],
+  tid: [
+    {
+      required: true,
+      validator: validateTidPass,
+      message: "续期tid不能为空",
+      trigger: "blur"
+    }
   ],
   member_pwd: [
     { required: true, message: "会员卡密码不能为空", trigger: "blur" }
@@ -156,6 +189,7 @@ const resetForm = el => {
     formData.app_name = "";
   }
   formData.session_id = "";
+  formData.tid = "";
   formData.member_pwd = "";
   formData.mobile = "";
   formData.remark = "";
@@ -182,6 +216,7 @@ const open = async loginInfo => {
         formData.id = formInfo.id;
         formData.app_name = formInfo.app_name;
         formData.session_id = formInfo.session_id;
+        formData.tid = formInfo.tid;
         formData.member_pwd = formInfo.member_pwd;
         formData.mobile = formInfo.mobile;
         formData.remark = formInfo.remark;
