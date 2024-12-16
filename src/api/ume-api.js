@@ -59,7 +59,10 @@ const createApi = ({ app_name }) => {
   const getCardQuanList = params =>
     axios.post(
       `/${app_name}/api/storeServer/optimalCombinatService/getOptimalCombination`,
-      params
+      params,
+      {
+        timeout: 30 * 1000
+      }
     );
 
   // 订单价格计算
