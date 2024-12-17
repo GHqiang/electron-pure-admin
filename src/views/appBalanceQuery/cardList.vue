@@ -175,11 +175,7 @@
           }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="update_time" label="更新时间" min-width="160">
-        <template #default="{ row }">
-          <span>{{ formatTimeOfTime(+new Date(row.update_time)) }}</span>
-        </template>
-      </el-table-column>
+      <el-table-column prop="update_time" label="更新时间" min-width="160" />
 
       <el-table-column label="是否默认卡" min-width="100">
         <template #default="{ row }">

@@ -110,7 +110,7 @@
       </el-table-column>
       <el-table-column prop="session_id" label="Session ID" min-width="200" />
       <el-table-column prop="tid" label="续期tid" min-width="120" />
-      <el-table-column prop="member_pwd" label="会员卡密码" min-width="80" />
+      <el-table-column prop="member_pwd" label="会员卡密码" min-width="90" />
       <el-table-column prop="remark" label="备注" min-width="80" />
       <el-table-column
         label="操作"
