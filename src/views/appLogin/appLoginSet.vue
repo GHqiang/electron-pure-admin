@@ -26,7 +26,7 @@
           clearable
         />
       </el-form-item>
-      <el-form-item v-if="rule == 2" label="是否小号">
+      <el-form-item label="是否小号">
         <el-select
           v-model="formData.is_xiaohao"
           placeholder="是否小号"
@@ -103,7 +103,7 @@
           <span>{{ first == "1" ? "是" : "否" }}</span>
         </template>
       </el-table-column>
-      <el-table-column v-if="rule == 2" label="是否小号" min-width="90">
+      <el-table-column label="是否小号" min-width="90">
         <template #default="{ row: { is_xiaohao } }">
           <span>{{ is_xiaohao == "1" ? "是" : "否" }}</span>
         </template>

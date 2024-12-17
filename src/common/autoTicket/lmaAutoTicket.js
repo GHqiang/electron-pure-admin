@@ -1731,7 +1731,7 @@ class OrderAutoTicketQueue {
     const params = {
       order_status: "1",
       app_name,
-      rule: tokens.userInfo.rule || 2,
+      rule: tokens.userInfo.rule,
       start_time: formatTimeOfTime(+new Date() - 3 * 24 * 60 * 60 * 1000),
       end_time: getCurrentTime()
     };
@@ -3537,7 +3537,7 @@ const addOrderHandleRecored = async ({
       rewards: res?.offerRule?.rewards || 0, // 奖励百分比
       transfer_fee: res?.transferParams?.transfer_fee || "", // 转单手续费
       mobile: mobile || "", // 出票手机号
-      rule: tokens.userInfo.rule || 2
+      rule: tokens.userInfo.rule
     };
 
     await svApi.addTicketRecord(serOrderInfo);

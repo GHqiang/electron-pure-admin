@@ -285,7 +285,7 @@ class OrderAutoOfferQueue {
           offerResult?.err_info ||
           (errInfoObj?.info ? formatErrInfo(errInfoObj?.info) : ""),
         rewards: order.rewards, // 是否是奖励订单 1是 0否
-        rule: tokens.userInfo.rule || 2,
+        rule: tokens.userInfo.rule,
         offer_rule_id: offerResult?.offerRule?.id
       };
       // 上传该订单的运行日志

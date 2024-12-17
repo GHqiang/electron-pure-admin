@@ -243,7 +243,7 @@ class OrderAutoOfferQueue {
           offerResult?.err_info ||
           (errInfoObj?.info ? formatErrInfo(errInfoObj?.info) : ""),
         rewards: order.rewards, // 奖励百分比, 4个点
-        rule: tokens.userInfo.rule || 2,
+        rule: tokens.userInfo.rule,
         offer_rule_id: offerResult?.offerRule?.id
       };
       // 上传该订单的运行日志

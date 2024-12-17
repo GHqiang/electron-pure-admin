@@ -4097,7 +4097,7 @@ const addOrderHandleRecored = async ({
       rewards: res?.offerRule?.rewards || 0, // 奖励百分比
       transfer_fee: res?.transferParams?.transfer_fee || "", // 转单手续费
       mobile: mobile || "", // 出票手机号
-      rule: tokens.userInfo.rule || 2
+      rule: tokens.userInfo.rule
     };
 
     await svApi.addTicketRecord(serOrderInfo);
