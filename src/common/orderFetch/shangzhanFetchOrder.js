@@ -6,6 +6,7 @@ import {
   getCinemaFlag,
   logUpload,
   getCurrentTime,
+  formatTimeOfTime,
   parseTimeStr
 } from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
@@ -199,7 +200,7 @@ const getOfferList = async () => {
     const res = await svApi.queryOfferList({
       user_id: tokens.userInfo.user_id,
       plat_name: "shangzhan",
-      start_time: getCurrentTime(+new Date() - 1 * 60 * 60 * 1000),
+      start_time: formatTimeOfTime(+new Date() - 1 * 60 * 60 * 1000),
       end_time: getCurrentTime()
     });
     return res.data.offerList || [];

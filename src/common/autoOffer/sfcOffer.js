@@ -1,6 +1,7 @@
 // sfc报价逻辑
 import {
   getCurrentTime,
+  formatTimeOfTime,
   getCurrentDay,
   convertFullwidthToHalfwidth,
   offerRuleMatch,
@@ -63,7 +64,7 @@ class getSfcOfferPrice {
         user_id: tokens.userInfo.user_id,
         // user_id: "9",
         plat_name: this.plat_name,
-        start_time: getCurrentTime(+new Date() - 0.5 * 60 * 60 * 1000),
+        start_time: formatTimeOfTime(+new Date() - 0.5 * 60 * 60 * 1000),
         end_time: getCurrentTime()
       });
       return res.data.offerList || [];

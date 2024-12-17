@@ -1506,7 +1506,7 @@ class OrderAutoTicketQueue {
       quan_value,
       app_name,
       rule: tokens.userInfo.rule || 2,
-      start_time: getCurrentTime(+new Date() - 3 * 24 * 60 * 60 * 1000),
+      start_time: formatTimeOfTime(+new Date() - 3 * 24 * 60 * 60 * 1000),
       end_time: getCurrentTime()
     };
     try {

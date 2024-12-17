@@ -6,7 +6,8 @@ import {
   getCinemaFlag,
   logUpload,
   mockDelay, // 模拟延时
-  getCurrentTime
+  getCurrentTime,
+  formatTimeOfTime
 } from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
@@ -422,7 +423,7 @@ const getOfferList = async () => {
     const res = await svApi.queryOfferList({
       user_id: tokens.userInfo.user_id,
       plat_name: "yinghuasuan",
-      start_time: getCurrentTime(+new Date() - 0.2 * 60 * 60 * 1000),
+      start_time: formatTimeOfTime(+new Date() - 0.2 * 60 * 60 * 1000),
       end_time: getCurrentTime()
     });
     let list = res.data.offerList || [];

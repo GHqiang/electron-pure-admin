@@ -1,5 +1,6 @@
 import {
   getCurrentTime,
+  formatTimeOfTime,
   convertFullwidthToHalfwidth,
   getCinemaId, // 根据影院名称获取影院id
   mockDelay, // 模拟延时
@@ -1731,7 +1732,7 @@ class OrderAutoTicketQueue {
       order_status: "1",
       app_name,
       rule: tokens.userInfo.rule || 2,
-      start_time: getCurrentTime(+new Date() - 3 * 24 * 60 * 60 * 1000),
+      start_time: formatTimeOfTime(+new Date() - 3 * 24 * 60 * 60 * 1000),
       end_time: getCurrentTime()
     };
     try {

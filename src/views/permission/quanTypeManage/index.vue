@@ -199,7 +199,7 @@
       <el-table-column prop="black_quans" label="黑名单券" min-width="100" />
       <el-table-column prop="update_time" label="更新时间" min-width="160">
         <template #default="{ row }">
-          <span>{{ getCurrentTime(+new Date(row.update_time)) }}</span>
+          <span>{{ formatTimeOfTime(+new Date(row.update_time)) }}</span>
         </template>
       </el-table-column>
 
@@ -305,6 +305,7 @@ import QuanDialog from "@/components/QuanDialog.vue";
 import { APP_LIST } from "@/common/constant";
 import {
   getCurrentTime,
+  formatTimeOfTime,
   parseExcel,
   createExcelDown,
   getCurrentDay
