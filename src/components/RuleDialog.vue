@@ -864,7 +864,7 @@ const getCityList = async () => {
         const res = await APP_API_OBJ[shadowLineName].getCityList(params);
         list = res?.data?.all_city || [];
       }
-      setBaseData({ cityList: list }, shadowLineName);
+      // setBaseData({ cityList: list }, shadowLineName);
     }
     console.log("获取城市列表返回", toRaw(list));
     cityList.value = list;
@@ -1011,7 +1011,7 @@ const getAllCinemaList = async cityList => {
           allCinemaList = allCinemaList.concat(list);
         }
       }
-      setBaseData({ allCinemaList: allCinemaList }, shadowLineName);
+      // setBaseData({ allCinemaList: allCinemaList }, shadowLineName);
     }
     cinemaList.value = allCinemaList;
     return allCinemaList;
