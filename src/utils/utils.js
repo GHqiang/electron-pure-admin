@@ -639,7 +639,9 @@ const getCinemaFlag = item => {
   ) {
     return "jqx";
   } else if (
-    cinemNameSpecial(cinema_name).includes("佛山中影国际影城桂城万达广场店") &&
+    ["佛山中影国际影城桂城万达广场店", "中影国际影城桂城万达广场店"].some(
+      itemA => cinemNameSpecial(cinema_name).includes(itemA)
+    ) &&
     ["佛山"].includes(city_name)
   ) {
     return "fszy";
@@ -659,7 +661,12 @@ const getCinemaFlag = item => {
   ) {
     return "whyx";
   } else if (
-    ["杭州中影国际影城", "中影国际影城杭州星光大道店"].some(
+    [
+      "杭州中影国际影城",
+      "中影国际影城杭州星光大道店",
+      "中影国际影城星光大道店",
+      "中影国际影城星光二期CINITY店"
+    ].some(
       itemA =>
         cinemNameSpecial(cinema_name).includes(itemA) &&
         ["杭州"].includes(city_name)
@@ -671,7 +678,9 @@ const getCinemaFlag = item => {
   ) {
     return "hzzy";
   } else if (
-    cinemNameSpecial(cinema_name).includes("上海中影国际影城嘉定菊园新e街店") &&
+    ["中影国际影城嘉定菊园店", "上海中影国际影城嘉定菊园新e街店"].some(itemA =>
+      cinemNameSpecial(cinema_name).includes(itemA)
+    ) &&
     ["上海"].includes(city_name)
   ) {
     return "shzy";
@@ -763,17 +772,23 @@ const getCinemaFlag = item => {
   ) {
     return "chaohuzhongying";
   } else if (
-    cinemNameSpecial(cinema_name).includes("合肥中影国际影城百大心悦城店") &&
+    ["合肥中影国际影城百大心悦城店", "中影国际影城百大心悦城店"].some(itemA =>
+      cinemNameSpecial(cinema_name).includes(itemA)
+    ) &&
     ["合肥"].includes(city_name)
   ) {
     return "hfzybdd";
   } else if (
-    cinemNameSpecial(cinema_name).includes("合肥中影国际影城万派城店") &&
+    ["合肥中影国际影城万派城店", "中影国际影城肥西万派城店"].some(itemA =>
+      cinemNameSpecial(cinema_name).includes(itemA)
+    ) &&
     ["合肥"].includes(city_name)
   ) {
     return "hfzywpcd";
   } else if (
-    cinemNameSpecial(cinema_name).includes("合肥中影国际影城正大广场店") &&
+    ["中影国际影城合肥正大广场店", "合肥中影国际影城正大广场店"].some(itemA =>
+      cinemNameSpecial(cinema_name).includes(itemA)
+    ) &&
     ["合肥"].includes(city_name)
   ) {
     return "hfzyzdgcd";
@@ -785,7 +800,9 @@ const getCinemaFlag = item => {
   ) {
     return "hfzydxjd";
   } else if (
-    cinemNameSpecial(cinema_name).includes("合肥中影国际影城中环购物中心店") &&
+    ["合肥中影国际影城中环购物中心店", "中影国际影城中环店中环店"].some(itemA =>
+      cinemNameSpecial(cinema_name).includes(itemA)
+    ) &&
     ["合肥"].includes(city_name)
   ) {
     return "hfzyzhd";
@@ -795,7 +812,9 @@ const getCinemaFlag = item => {
   ) {
     return "wfzyyxhd";
   } else if (
-    cinemNameSpecial(cinema_name).includes("潍坊中影国际影城歌尔生活广场店") &&
+    ["潍坊中影国际影城歌尔生活广场店", "中影国际影城歌尔生活广场店"].some(
+      itemA => cinemNameSpecial(cinema_name).includes(itemA)
+    ) &&
     ["潍坊"].includes(city_name)
   ) {
     return "wfzygeshgcd";
@@ -1446,6 +1465,7 @@ const cinemaMatchHandle = (cinema_name, list, appName) => {
         item.order_cinema_name === cinemaName ||
         item.order_cinema_name.includes(cinemaName)
     );
+    console.log("specialCinemaInfo", specialCinemaInfo, cinema_name);
     if (specialCinemaInfo) {
       cinemaName = specialCinemaInfo.sfc_cinema_name;
     } else {
@@ -1458,6 +1478,7 @@ const cinemaMatchHandle = (cinema_name, list, appName) => {
     // 3、去掉空格及换行符后全字匹配
     const noSpaceList = list.map(item => cinemNameSpecial(item));
     isHasMatch = noSpaceList.some(item => item === cinemaName);
+    console.log("isHasMatch", isHasMatch, noSpaceList);
     if (isHasMatch) {
       return true;
     }
@@ -1515,6 +1536,7 @@ const getOfferRuleById = id => {
 
 // 报价规则匹配
 const offerRuleMatch = order => {
+  // order = order || window.order;
   try {
     console.warn("匹配报价规则开始", order);
     const {

@@ -319,7 +319,10 @@ const SFC_SPECIAL_CINEMA_LIST = [
 // 中影国际特殊影院集合
 const ZHONGYING_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: ["上海中影国际影城合生汇CINITY店"],
+    order_cinema_name: [
+      "上海中影国际影城合生汇CINITY店",
+      "中影国际影城合生汇CINITY店"
+    ],
     sfc_cinema_name: "中影国际影城上海合生汇店"
   }
 ];
@@ -778,6 +781,33 @@ const CHAOHUZHONGYING_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "安徽巢湖中影影城"
   }
 ];
+// 合肥中影百大店特殊影院集合
+const HFZYBDD_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: [
+      "合肥中影国际影城百大心悦城店",
+      "中影国际影城百大心悦城店"
+    ],
+    sfc_cinema_name: "合肥中影国际影城百大心悦城店"
+  }
+];
+// 合肥中影万派城店特殊影院集合
+const HFZYWPCD_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: ["合肥中影国际影城万派城店", "中影国际影城肥西万派城店"],
+    sfc_cinema_name: "合肥中影国际影城万派城店"
+  }
+];
+// 合肥中影正大广场店特殊影院集合
+const HFZYZDGCD_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: [
+      "中影国际影城合肥正大广场店",
+      "合肥中影国际影城正大广场店"
+    ],
+    sfc_cinema_name: "合肥中影国际影城正大广场店"
+  }
+];
 // 合肥中影东西街特殊影院集合
 const HFZYDXJD_SPECIAL_CINEMA_LIST = [
   {
@@ -788,10 +818,24 @@ const HFZYDXJD_SPECIAL_CINEMA_LIST = [
 // 合肥中影中环店特殊影院集合
 const HFZYZHD_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "合肥中影国际影城中环购物中心店",
+    order_cinema_name: [
+      "合肥中影国际影城中环购物中心店",
+      "中影国际影城中环店中环店"
+    ],
     sfc_cinema_name: "合肥中影国际影城中环店"
   }
 ];
+// 潍坊中影歌尔生活广场店特殊影院集合
+const WFZYGESHGCD_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: [
+      "潍坊中影国际影城歌尔生活广场店",
+      "中影国际影城歌尔生活广场店"
+    ],
+    sfc_cinema_name: "潍坊中影国际影城歌尔生活广场店"
+  }
+];
+
 // 天通苑乐娃特殊影院集合
 const TTYLW_SPECIAL_CINEMA_LIST = [
   {
@@ -877,6 +921,17 @@ const XXFSY_SPECIAL_CINEMA_LIST = [
     sfc_cinema_name: "SFC上影国际影城新业坊店"
   }
 ];
+// 长沙中影凯德特殊影院集合
+const CSZYKD_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: [
+      "长沙中影国际影城凯德广场店",
+      "中影国际影城雨花凯德广场店"
+    ],
+    sfc_cinema_name: "长沙中影国际影城凯德广场店"
+  }
+];
+
 // 长沙中影壹中心特殊影院集合
 const CSZYYZX_SPECIAL_CINEMA_LIST = [
   {
@@ -887,18 +942,24 @@ const CSZYYZX_SPECIAL_CINEMA_LIST = [
 // 上海中影特殊影院集合
 const SHZY_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "上海中影国际影城嘉定菊园新e街店",
+    order_cinema_name: [
+      "中影国际影城嘉定菊园店",
+      "上海中影国际影城嘉定菊园新e街店"
+    ],
     sfc_cinema_name: "中影国际影城上海嘉定菊园店"
   }
 ];
 // 杭州中影特殊影院集合
 const HZZY_SPECIAL_CINEMA_LIST = [
   {
-    order_cinema_name: "中影国际影城杭州星光大道店",
+    order_cinema_name: ["中影国际影城杭州星光大道店", "中影国际影城星光大道店"],
     sfc_cinema_name: "杭州中影国际影城星光大道店"
   },
   {
-    order_cinema_name: "杭州中影国际影城星光二期CINITY店",
+    order_cinema_name: [
+      "杭州中影国际影城星光二期CINITY店",
+      "中影国际影城星光二期CINITY店"
+    ],
     sfc_cinema_name: "杭州中影国际影城星光大道二期CINITY店"
   }
   // {
@@ -919,6 +980,16 @@ const JQX_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: "北京金泉港IMAX国际影城",
     sfc_cinema_name: "金泉港IMAX国际影城"
+  }
+];
+// 佛山中影特殊影院集合
+const FSZY_SPECIAL_CINEMA_LIST = [
+  {
+    order_cinema_name: [
+      "佛山中影国际影城桂城万达广场店",
+      "中影国际影城桂城万达广场店"
+    ],
+    sfc_cinema_name: "佛山中影国际影城桂城万达广场店"
   }
 ];
 
@@ -1835,7 +1906,7 @@ const SPECIAL_CINEMA_OBJ = {
   dsyc: DSYC_SPECIAL_CINEMA_LIST,
   cqhx: CQHX_SPECIAL_CINEMA_LIST,
   jqx: JQX_SPECIAL_CINEMA_LIST,
-  fszy: [],
+  fszy: FSZY_SPECIAL_CINEMA_LIST,
   xywszy: [],
   jjzy: JJZY_SPECIAL_CINEMA_LIST,
   whyx: [],
@@ -1856,13 +1927,13 @@ const SPECIAL_CINEMA_OBJ = {
   baoneng: [],
   hefeidianying: HEFEIDIANYING_SPECIAL_CINEMA_LIST,
   chaohuzhongying: CHAOHUZHONGYING_SPECIAL_CINEMA_LIST,
-  hfzybdd: [],
-  hfzywpcd: [],
-  hfzyzdgcd: [],
+  hfzybdd: HFZYBDD_SPECIAL_CINEMA_LIST,
+  hfzywpcd: HFZYWPCD_SPECIAL_CINEMA_LIST,
+  hfzyzdgcd: HFZYZDGCD_SPECIAL_CINEMA_LIST,
   hfzydxjd: HFZYDXJD_SPECIAL_CINEMA_LIST,
   hfzyzhd: HFZYZHD_SPECIAL_CINEMA_LIST,
   wfzyyxhd: [],
-  wfzygeshgcd: [],
+  wfzygeshgcd: WFZYGESHGCD_SPECIAL_CINEMA_LIST,
   nchgtdd: [],
   hfbddd: HFBDDD_SPECIAL_CINEMA_LIST,
   hflkldd: [],
@@ -1884,7 +1955,7 @@ const SPECIAL_CINEMA_OBJ = {
   shth: SHTH_SPECIAL_CINEMA_LIST,
   szyl: SZYL_SPECIAL_CINEMA_LIST,
   xyfsy: XXFSY_SPECIAL_CINEMA_LIST,
-  cszykd: [],
+  cszykd: CSZYKD_SPECIAL_CINEMA_LIST,
   cszyyzx: CSZYYZX_SPECIAL_CINEMA_LIST,
   qina: QINA_SPECIAL_CINEMA_LIST
 };
