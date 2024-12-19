@@ -2755,7 +2755,7 @@ class OrderAutoTicketQueue {
         svApi.addUseQuanRecord({
           coupon_num: coupon_num,
           app_name: appFlag,
-          quan_status: "3",
+          quan_status: !coupon_num ? "3" : "2",
           use_time: getCurrentTime(),
           remark: !coupon_num ? "绑券异常" : ""
         });
