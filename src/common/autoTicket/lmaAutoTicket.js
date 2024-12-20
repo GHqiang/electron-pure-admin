@@ -2690,14 +2690,14 @@ class OrderAutoTicketQueue {
           bandQuanList.push({ coupon_num });
         }
         svApi.addUseQuanRecord({
-          coupon_num: coupon_num,
+          coupon_num: quan.coupon_num,
           app_name: appFlag,
           quan_status: !coupon_num ? "3" : "2",
           use_time: getCurrentTime(),
           remark: !coupon_num ? "绑券异常" : ""
         });
         // 绑券数量达标跳出循环
-        if (bandQuanList.length >= diffNum) {
+        if (diffNum && bandQuanList.length >= diffNum) {
           break;
         }
       }

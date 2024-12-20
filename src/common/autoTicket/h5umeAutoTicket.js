@@ -2753,7 +2753,7 @@ class OrderAutoTicketQueue {
           bandQuanList.push({ coupon_num });
         }
         svApi.addUseQuanRecord({
-          coupon_num: coupon_num,
+          coupon_num: quan.coupon_num,
           app_name: appFlag,
           quan_status: !coupon_num ? "3" : "2",
           use_time: getCurrentTime(),
