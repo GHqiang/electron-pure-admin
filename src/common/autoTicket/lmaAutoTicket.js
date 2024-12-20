@@ -1613,13 +1613,13 @@ class OrderAutoTicketQueue {
     try {
       let { city_id, cinema_id, ticket_num, supplier_end_price, offerRule } =
         params;
-      const { real_member_price, quan_fee } = offerRule;
+      const { real_member_price, quan_fee, offer_type } = offerRule;
       let currentParams = this.currentParamsList[this.currentParamsInx];
       const { lmaToken } = currentParams;
       // 拿订单号去匹配报价记录
       console.log(conPrefix + "使用会员卡出票");
       console.log(conPrefix + "报价记录里的会员价", real_member_price);
-      if (!real_member_price) {
+      if (!real_member_price && offer_type != "1") {
         console.warn(
           conPrefix + "使用优惠券或者会员卡前获取会员价异常",
           real_member_price
