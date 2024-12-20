@@ -164,6 +164,25 @@ const updateQuanType = params => axios.post("/svpi/quanType/update", params);
 const exportQuanList = params =>
   axios.post("/svpi/quanRecord/batchUpdate", params);
 
+// 获取特殊匹配列表
+const getSpecialNameList = params =>
+  axios.get("/svpi/specialNameRecord", { params });
+// 查询特殊匹配规则列表
+const querySpecialNameList = params =>
+  axios.get("/svpi/specialNameRecord/query", { params });
+// 删除特殊匹配
+const deleteSpecialName = params =>
+  axios.get("/svpi/specialNameRecord/delete", { params });
+// 批量删除特殊匹配
+const batchDeleteSpecialName = params =>
+  axios.post("/svpi/specialNameRecord/batchdelete", params);
+// 添加特殊匹配
+const addSpecialNameRecord = params =>
+  axios.post("/svpi/specialNameRecord/add", params);
+// 修改特殊匹配
+const updateSpecialNameRecord = params =>
+  axios.post("/svpi/specialNameRecord/update", params);
+
 export default {
   login,
   logout,
@@ -220,5 +239,11 @@ export default {
   addQuanType,
   updateQuanType,
   batchAddQuan,
-  exportQuanList
+  exportQuanList,
+  getSpecialNameList,
+  querySpecialNameList,
+  deleteSpecialName,
+  batchDeleteSpecialName,
+  addSpecialNameRecord,
+  updateSpecialNameRecord
 };

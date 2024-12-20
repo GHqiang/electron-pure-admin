@@ -214,13 +214,24 @@ function initRouter(rule: any) {
       getAsyncRoutes().then(({ data }) => {
         console.log("data0", data);
         if (rule == 2) {
-          data?.[0]?.children.push({
-            path: "/permission/quanTypeManage/index",
-            name: "QuanTypeManage",
-            meta: {
-              title: "券类型列表"
-            }
-          });
+          data?.[0]?.children.push(
+            ...[
+              {
+                path: "/permission/quanTypeManage/index",
+                name: "QuanTypeManage",
+                meta: {
+                  title: "券类型列表"
+                }
+              },
+              {
+                path: "/permission/cinemaNameManage/index",
+                name: "CinemaNameManage",
+                meta: {
+                  title: "特殊匹配列表"
+                }
+              }
+            ]
+          );
         }
         handleAsyncRoutes(cloneDeep(data));
         resolve(router);
