@@ -1259,7 +1259,10 @@ const getCinemaId = (cinema_name, list, appName, city_name) => {
       .filter(item => item.app_name == appName)
       .map(item => ({
         sfc_cinema_name: item.cinema_name,
-        order_cinema_name: item.special_name?.replace(/[；;]/g, "-").split("-")
+        order_cinema_name: item.special_name
+          ?.replace(/[；;]/g, "-")
+          .split("-")
+          ?.map(itemName => cinemNameSpecial(itemName))
       }));
     let specialCinemaList =
       specialList.filter(
@@ -1320,8 +1323,8 @@ const getCinemaId = (cinema_name, list, appName, city_name) => {
     };
   }
 };
+window.getCinemaIdBySfc = getCinemaId;
 
-window.getCinemaId = getCinemaId;
 // 根据订单name获取影院id(主要用于lma系统)
 const getCinemaIdByLma = (cinema_name, list, appName, city_name) => {
   try {
@@ -1339,7 +1342,10 @@ const getCinemaIdByLma = (cinema_name, list, appName, city_name) => {
       .filter(item => item.app_name == appName)
       .map(item => ({
         sfc_cinema_name: item.cinema_name,
-        order_cinema_name: item.special_name?.replace(/[；;]/g, "-").split("-")
+        order_cinema_name: item.special_name
+          ?.replace(/[；;]/g, "-")
+          .split("-")
+          ?.map(itemName => cinemNameSpecial(itemName))
       }));
     let specialCinemaList =
       specialList.filter(
@@ -1402,6 +1408,7 @@ const getCinemaIdByLma = (cinema_name, list, appName, city_name) => {
   }
 };
 window.getCinemaIdByLma = getCinemaIdByLma;
+
 // 根据订单name获取目标影院(主要用于ume系统)
 const getTargetCinema = (cinema_name, list, appFlag) => {
   try {
@@ -1421,7 +1428,10 @@ const getTargetCinema = (cinema_name, list, appFlag) => {
       .filter(item => item.app_name == appFlag)
       .map(item => ({
         sfc_cinema_name: item.cinema_name,
-        order_cinema_name: item.special_name?.replace(/[；;]/g, "-").split("-")
+        order_cinema_name: item.special_name
+          ?.replace(/[；;]/g, "-")
+          .split("-")
+          ?.map(itemName => cinemNameSpecial(itemName))
       }));
     if (specialList?.length) {
       let specialCinemaInfo = specialList.find(
@@ -1460,6 +1470,7 @@ const getTargetCinema = (cinema_name, list, appFlag) => {
     console.error("根据订单name获取目标影院失败", error);
   }
 };
+window.getTargetCinemaByUme = getTargetCinema;
 
 // 影院名称匹配（匹配报价规则时使用）
 const cinemaMatchHandle = (cinema_name, list, appName) => {
@@ -1477,7 +1488,10 @@ const cinemaMatchHandle = (cinema_name, list, appName) => {
       .filter(item => item.app_name == appName)
       .map(item => ({
         sfc_cinema_name: item.cinema_name,
-        order_cinema_name: item.special_name?.replace(/[；;]/g, "-").split("-")
+        order_cinema_name: item.special_name
+          ?.replace(/[；;]/g, "-")
+          .split("-")
+          ?.map(itemName => cinemNameSpecial(itemName))
       }));
     let specialCinemaInfo = specialList.find(
       item =>
