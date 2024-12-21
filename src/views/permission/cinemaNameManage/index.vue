@@ -91,18 +91,18 @@
         label="影院名称"
         prop="cinema_name"
         fixed
-        min-width="120"
+        min-width="150"
       />
       <!-- 做个换行展示 -->
-      <el-table-column label="特殊匹配名称" prop="special_name" min-width="160">
+      <el-table-column label="特殊匹配名称" prop="special_name" min-width="180">
         <template #default="scope">
           <span>{{ scope.row.special_name }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="user_name" label="更新人" min-width="80" />
-      <el-table-column prop="update_time" label="更新时间" min-width="130" />
-      <el-table-column prop="remark" label="备注" min-width="120" />
-      <el-table-column label="操作" fixed="right" align="left" min-width="160">
+      <el-table-column prop="update_time" label="更新时间" min-width="135" />
+      <!-- <el-table-column prop="user_name" label="更新人" min-width="80" /> -->
+      <el-table-column prop="remark" label="备注" min-width="100" />
+      <el-table-column label="操作" fixed="right" align="left" min-width="180">
         <template #default="scope">
           <el-button
             size="small"
@@ -129,7 +129,7 @@
       v-model:current-page="currentPage"
       v-model:page-size="pageSize"
       style="margin-top: 10px; display: flex; justify-content: flex-end"
-      :page-sizes="[10, 20, 30, 50]"
+      :page-sizes="[10, 30, 50, 100]"
       :background="true"
       layout="total, sizes, prev, pager, next, jumper"
       :total="totalNum"
@@ -152,8 +152,8 @@ import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import SpecialNameDialog from "@/components/SpecialNameDialog.vue";
 import { APP_LIST } from "@/common/constant";
 import { getCurrentTime } from "@/utils/utils";
-import { useDataTableStore } from "@/store/specialNameRule";
-const rules = useDataTableStore();
+import { useDataTableStoreBySpecialName } from "@/store/specialNameRule";
+const specialRules = useDataTableStoreBySpecialName();
 
 const tableData = ref([]);
 const currentPage = ref(1);
@@ -174,7 +174,7 @@ const setLocalSpecialMatchList = async () => {
     const ruleRes = await svApi.querySpecialNameList();
     // console.log("ruleRes", ruleRes);
     let ruleRecords = ruleRes.data.list || [];
-    rules.setRuleList(ruleRecords);
+    specialRules.setRuleList(ruleRecords);
   } catch (error) {
     console.warn("查询规则列表时设置本地规则数据异常", error);
   }

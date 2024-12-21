@@ -6,7 +6,6 @@ import * as CryptoJS from "crypto-js";
 import svApi from "@/api/sv-api";
 import {
   WX_MSG_UID,
-  SPECIAL_CINEMA_OBJ,
   SFC_CINEMA_NAME,
   YAOLAI_CINEMA_NAME,
   UME_CINEMA_NAME,
@@ -15,6 +14,14 @@ import {
   TPYYC_CINEMA_NAME_BY_SFC,
   EXCLUDE_CINEMA_LIST_BY_CINEMA_FLAG
 } from "@/common/constant";
+import { toRaw } from "vue";
+import { useDataTableStoreBySpecialName } from "@/store/specialNameRule";
+const specialRules = useDataTableStoreBySpecialName();
+
+const specialNameList = specialRules.items;
+
+console.log("specialNameList", specialNameList, toRaw(specialNameList));
+// window.specialNameList = specialNameList;
 
 // 格式化时间 YYYY-MM-DD HH:mm:ss
 function formatTimeOfTime(sjc) {
@@ -1248,8 +1255,11 @@ const getCinemaId = (cinema_name, list, appName, city_name) => {
     // 2、匹配不到的如果满足条件就走特殊匹配
     console.warn("全字匹配影院名称失败", cinema_name, list);
     let cinemaName = cinemNameSpecial(cinema_name);
+    let specialList = toRaw(specialNameList).filter(
+      item => item.name == appName
+    );
     let specialCinemaList =
-      SPECIAL_CINEMA_OBJ[appName]?.filter(
+      specialList.filter(
         item =>
           item.order_cinema_name === cinemaName ||
           item.order_cinema_name.includes(cinemaName)
@@ -1281,11 +1291,7 @@ const getCinemaId = (cinema_name, list, appName, city_name) => {
       cinemaName = specialCinemaInfo.sfc_cinema_name;
       console.warn("特殊匹配影院名称成功", cinemaName);
     } else {
-      console.warn(
-        "特殊匹配影院名称失败",
-        cinemaName,
-        SPECIAL_CINEMA_OBJ[appName]
-      );
+      console.warn("特殊匹配影院名称失败", cinemaName, specialList);
     }
     // 3、去掉空格及换行符后全字匹配
     // 去除空格及括号后的影院列表
@@ -1326,8 +1332,11 @@ const getCinemaIdByLma = (cinema_name, list, appName, city_name) => {
     // 2、匹配不到的如果满足条件就走特殊匹配
     console.warn("全字匹配影院名称失败", cinema_name, list);
     let cinemaName = cinemNameSpecial(cinema_name);
+    let specialList = toRaw(specialNameList).filter(
+      item => item.name == appName
+    );
     let specialCinemaList =
-      SPECIAL_CINEMA_OBJ[appName]?.filter(
+      specialList.filter(
         item =>
           item.order_cinema_name === cinemaName ||
           item.order_cinema_name.includes(cinemaName)
@@ -1358,11 +1367,7 @@ const getCinemaIdByLma = (cinema_name, list, appName, city_name) => {
       cinemaName = specialCinemaInfo.sfc_cinema_name;
       console.warn("特殊匹配影院名称成功", cinemaName);
     } else {
-      console.warn(
-        "特殊匹配影院名称失败",
-        cinemaName,
-        SPECIAL_CINEMA_OBJ[appName]
-      );
+      console.warn("特殊匹配影院名称失败", cinemaName, specialList);
     }
     // 3、去掉空格及换行符后全字匹配
     // 去除空格及括号后的影院列表
@@ -1406,8 +1411,11 @@ const getTargetCinema = (cinema_name, list, appFlag) => {
     // 2、匹配不到的如果满足条件就走特殊匹配
     console.warn("全字匹配影院名称失败", cinema_name, list, appFlag);
     let cinemaName = cinemNameSpecial(cinema_name);
-    if (SPECIAL_CINEMA_OBJ[appFlag]?.length) {
-      let specialCinemaInfo = SPECIAL_CINEMA_OBJ[appFlag]?.find(
+    let specialList = toRaw(specialNameList).filter(
+      item => item.name == appFlag
+    );
+    if (specialList?.length) {
+      let specialCinemaInfo = specialList.find(
         item =>
           item.order_cinema_name === cinemaName ||
           item.order_cinema_name.includes(cinemaName)
@@ -1416,11 +1424,7 @@ const getTargetCinema = (cinema_name, list, appFlag) => {
         cinemaName = specialCinemaInfo.sfc_cinema_name;
         console.warn("特殊匹配影院名称成功", cinemaName);
       } else {
-        console.warn(
-          "特殊匹配影院名称失败",
-          cinemaName,
-          SPECIAL_CINEMA_OBJ[appFlag]
-        );
+        console.warn("特殊匹配影院名称失败", cinemaName, specialList);
       }
     }
     // 3、去掉空格及换行符后全字匹配
@@ -1460,7 +1464,10 @@ const cinemaMatchHandle = (cinema_name, list, appName) => {
     // 去括号、空格及中间点
     let cinemaName = cinemNameSpecial(cinema_name);
     // 2、特殊匹配
-    let specialCinemaInfo = SPECIAL_CINEMA_OBJ[appName]?.find(
+    let specialList = toRaw(specialNameList).filter(
+      item => item.name == appName
+    );
+    let specialCinemaInfo = specialList.find(
       item =>
         item.order_cinema_name === cinemaName ||
         item.order_cinema_name.includes(cinemaName)
@@ -1469,11 +1476,7 @@ const cinemaMatchHandle = (cinema_name, list, appName) => {
     if (specialCinemaInfo) {
       cinemaName = specialCinemaInfo.sfc_cinema_name;
     } else {
-      console.warn(
-        "特殊匹配影院名称失败",
-        cinemaName,
-        SPECIAL_CINEMA_OBJ[appName]
-      );
+      console.warn("特殊匹配影院名称失败", cinemaName, specialList);
     }
     // 3、去掉空格及换行符后全字匹配
     const noSpaceList = list.map(item => cinemNameSpecial(item));

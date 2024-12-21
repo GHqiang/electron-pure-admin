@@ -26,6 +26,10 @@ import { useDataTableStore } from "@/store/offerRule";
 const rules = useDataTableStore();
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
+
+import { useDataTableStoreBySpecialName } from "@/store/specialNameRule";
+const specialRules = useDataTableStoreBySpecialName();
+
 defineOptions({
   name: "Login"
 });
@@ -44,6 +48,19 @@ const ruleForm = reactive({
   username: "",
   password: ""
 });
+
+// 设置本地的特殊匹配列表
+const setLocalSpecialMatchList = async () => {
+  try {
+    const ruleRes = await svApi.querySpecialNameList();
+    // console.log("ruleRes", ruleRes);
+    let ruleRecords = ruleRes.data.list || [];
+    specialRules.setRuleList(ruleRecords);
+  } catch (error) {
+    console.warn("查询规则列表时设置本地规则数据异常", error);
+  }
+};
+
 // 设置本地的规则列表
 const setLocalRuleList = async rule => {
   try {
@@ -110,6 +127,7 @@ const onLogin = async formEl => {
             login_time: getCurrentTime()
           });
           let rule = loginRes.data?.user.rule;
+          await setLocalSpecialMatchList();
           await setLocalLoginList(rule);
           await setLocalRuleList(rule);
           // 获取后端路由
