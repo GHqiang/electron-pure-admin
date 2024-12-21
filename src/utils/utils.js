@@ -1255,9 +1255,12 @@ const getCinemaId = (cinema_name, list, appName, city_name) => {
     // 2、匹配不到的如果满足条件就走特殊匹配
     console.warn("全字匹配影院名称失败", cinema_name, list);
     let cinemaName = cinemNameSpecial(cinema_name);
-    let specialList = toRaw(specialNameList).filter(
-      item => item.name == appName
-    );
+    let specialList = toRaw(specialNameList)
+      .filter(item => item.app_name == appName)
+      .map(item => ({
+        sfc_cinema_name: item.cinema_name,
+        order_cinema_name: item.special_name?.replace(/[；;]/g, "-").split("-")
+      }));
     let specialCinemaList =
       specialList.filter(
         item =>
@@ -1332,9 +1335,12 @@ const getCinemaIdByLma = (cinema_name, list, appName, city_name) => {
     // 2、匹配不到的如果满足条件就走特殊匹配
     console.warn("全字匹配影院名称失败", cinema_name, list);
     let cinemaName = cinemNameSpecial(cinema_name);
-    let specialList = toRaw(specialNameList).filter(
-      item => item.name == appName
-    );
+    let specialList = toRaw(specialNameList)
+      .filter(item => item.app_name == appName)
+      .map(item => ({
+        sfc_cinema_name: item.cinema_name,
+        order_cinema_name: item.special_name?.replace(/[；;]/g, "-").split("-")
+      }));
     let specialCinemaList =
       specialList.filter(
         item =>
@@ -1411,9 +1417,12 @@ const getTargetCinema = (cinema_name, list, appFlag) => {
     // 2、匹配不到的如果满足条件就走特殊匹配
     console.warn("全字匹配影院名称失败", cinema_name, list, appFlag);
     let cinemaName = cinemNameSpecial(cinema_name);
-    let specialList = toRaw(specialNameList).filter(
-      item => item.name == appFlag
-    );
+    let specialList = toRaw(specialNameList)
+      .filter(item => item.app_name == appFlag)
+      .map(item => ({
+        sfc_cinema_name: item.cinema_name,
+        order_cinema_name: item.special_name?.replace(/[；;]/g, "-").split("-")
+      }));
     if (specialList?.length) {
       let specialCinemaInfo = specialList.find(
         item =>
@@ -1464,9 +1473,12 @@ const cinemaMatchHandle = (cinema_name, list, appName) => {
     // 去括号、空格及中间点
     let cinemaName = cinemNameSpecial(cinema_name);
     // 2、特殊匹配
-    let specialList = toRaw(specialNameList).filter(
-      item => item.name == appName
-    );
+    let specialList = toRaw(specialNameList)
+      .filter(item => item.app_name == appName)
+      .map(item => ({
+        sfc_cinema_name: item.cinema_name,
+        order_cinema_name: item.special_name?.replace(/[；;]/g, "-").split("-")
+      }));
     let specialCinemaInfo = specialList.find(
       item =>
         item.order_cinema_name === cinemaName ||
