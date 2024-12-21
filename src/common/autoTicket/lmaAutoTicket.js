@@ -1897,6 +1897,7 @@ class OrderAutoTicketQueue {
         black_quans,
         usedQuanList,
         ticket_num,
+        target_num: ticket_num + 10, // 票数+10，用于后面异步绑券判断
         logList: getQuanLogList
       });
       // 拿到获取券列表方法内的日志记录
@@ -3129,6 +3130,7 @@ const continuousGetQuan = async data => {
     black_quans,
     usedQuanList,
     ticket_num,
+    target_num, // 目标数ticket_num + 10
     quanData = [],
     logList
   } = data;
@@ -3175,7 +3177,7 @@ const continuousGetQuan = async data => {
     });
     quanData.push(...targetQuanList);
     // 1页10条
-    if (quanList.length == 10 && quanData.length < ticket_num) {
+    if (quanList.length == 10 && quanData.length < target_num) {
       let currentQuanNum = quanData?.length;
       logList.push({
         opera_time: getCurrentTime(),
@@ -3183,6 +3185,7 @@ const continuousGetQuan = async data => {
         level: "info",
         info: {
           ticket_num,
+          target_num,
           currentQuanNum
         }
       });
@@ -3195,7 +3198,7 @@ const continuousGetQuan = async data => {
     }
     // 先控制只返回目标券数量
     return {
-      quanList: quanData?.slice(0, ticket_num)
+      quanList: quanData?.slice(0, target_num)
     };
   } catch (error) {
     console.warn("连续获取券失败", error);
