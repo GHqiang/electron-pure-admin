@@ -133,6 +133,8 @@ const resetForm = el => {
 const shadowLineChange = async val => {
   console.log("影线改变val", val);
   resetForm(1);
+  const cityList = await getCityList();
+  await getAllCinemaList(cityList);
 };
 
 // 影院改变
