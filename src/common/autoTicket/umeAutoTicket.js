@@ -1894,7 +1894,7 @@ class OrderAutoTicketQueue {
           ticketMobile: mobile,
           inviteCode: "",
           channelCode: "QD0000001",
-          ...(["ume", "renhengmeng"].includes(appFlag) && {
+          ...(["ume", "renhengmeng", "tpyyc"].includes(appFlag) && {
             fulfillPlace: "影院柜台",
             fulfillTime: "",
             fulfillType: ""
@@ -2700,7 +2700,9 @@ class OrderAutoTicketQueue {
             couponName: item.couponName,
             templateCode: item.templateCode,
             discountAmount: seatCode
-              ? !["zheyingshidai", "yaolai", "wanxiang"].includes(appFlag)
+              ? !["zheyingshidai", "yaolai", "wanxiang", "tpyyc"].includes(
+                  appFlag
+                )
                 ? item.discountAmountMap?.[seatCode[index]]
                 : item.discountAmountMap?.[seatCode[index]]?.[1]
               : 0
