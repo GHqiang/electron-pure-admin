@@ -412,7 +412,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         // 登录标识：larkSid
         // e6b99a4fe34244d680a8e57ae79eff3b
         larkSid = targetInfo?.session_id || "";
-        tid = targetInfo?.session_id || "";
+        tid = targetInfo?.tid || "";
         // 先自己匹配登录信息，然后从参数里获取更新
         if (config.data?.umeToken) {
           larkSid = config.data.umeToken;
