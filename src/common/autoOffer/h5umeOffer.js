@@ -766,7 +766,14 @@ class getUmeOfferPrice {
   // 获取当前场次电影信息
   async getMovieInfo(order) {
     const { appFlag } = this;
-    let { city_name, film_name, show_time, cinema_code, cinema_name } = order;
+    let {
+      city_name,
+      film_name,
+      hall_name,
+      show_time,
+      cinema_code,
+      cinema_name
+    } = order;
     try {
       // 1、获取城市影院列表
       let allCinemaList = await this.getCityCinemaList();
@@ -858,11 +865,19 @@ class getUmeOfferPrice {
       const showList = targetDate.schedules || [];
 
       let start_time = show_time.split(" ")[1].slice(0, 5);
-      let targetShow = showList.find(
+      // 解决同一时间多场次问题
+      let targetShowList = showList.filter(
         item =>
           formatTimeOfTime(+item.showTime).split(" ")[1].slice(0, 5) ===
           start_time
       );
+      let targetShow = targetShowList[0];
+      if (targetShowList.length > 1) {
+        let targetShowInfo = targetShowList.find(
+          item => item.hallName === hall_name
+        );
+        targetShow = targetShowInfo ? targetShowInfo : targetShow;
+      }
       if (!targetShow) {
         console.error("匹配影片放映场次失败", showList, start_time);
         this.logList.push({

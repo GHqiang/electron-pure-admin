@@ -811,6 +811,7 @@ class OrderAutoTicketQueue {
       cinema_name,
       cinema_code,
       film_name,
+      hall_name,
       show_time,
       lockseat,
       ticket_num,
@@ -1025,9 +1026,17 @@ class OrderAutoTicketQueue {
           return { transferParams };
         }
         let start_time = show_time.split(" ")[1].slice(0, 5);
-        targetShow = showList.find(
+        // 解决同一时间多场次问题
+        let targetShowList = showList.filter(
           item => item.showDateTime.split(" ")[1].slice(0, 5) === start_time
         );
+        targetShow = targetShowList[0];
+        if (targetShowList.length > 1) {
+          let targetShowInfo = targetShowList.find(
+            item => item.hallName === hall_name
+          );
+          targetShow = targetShowInfo ? targetShowInfo : targetShow;
+        }
         if (!targetShow) {
           console.warn("匹配影片放映日期失败", showList, start_time);
           this.logList.push({
@@ -2405,7 +2414,7 @@ class OrderAutoTicketQueue {
           des: "系统延迟轮询3分钟后获取取票码仍失败",
           level: "error"
         });
-        // 每搁20秒查一次，查9次，3分钟
+        // 每搁20秒查一次，查21次，7分钟
         qrcode = await trial(
           inx =>
             this.getPayResult({
@@ -2414,16 +2423,16 @@ class OrderAutoTicketQueue {
               inx,
               syncQueryLogList
             }),
-          9,
+          21,
           20,
           conPrefix,
-          3 * 60
+          7 * 60
         );
       }
       if (!qrcode) {
         syncQueryLogList.push({
           opera_time: getCurrentTime(),
-          des: "系统延迟轮询6分钟后获取取票码仍失败",
+          des: "系统延迟轮询10分钟后获取取票码仍失败",
           level: "error"
         });
         logUpload(
@@ -2441,7 +2450,7 @@ class OrderAutoTicketQueue {
             plat_name
           },
           updateObj: {
-            err_msg: "系统延迟轮询6分钟后获取取票码仍失败"
+            err_msg: "系统延迟轮询10分钟后获取取票码仍失败"
           }
         });
         return;
