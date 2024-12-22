@@ -2833,7 +2833,7 @@ class OrderAutoTicketQueue {
           transferTip: "此处不转单，需关注该订单，适时手动上传取票码",
           failReason: "系统延迟轮询3分钟后获取取票码仍失败"
         });
-        // 每搁20秒查一次，查9次，3分钟
+        // 每搁20秒查一次，查21次，7分钟
         qrcode = await trial(
           inx =>
             this.payOrder({
@@ -2844,16 +2844,16 @@ class OrderAutoTicketQueue {
               inx,
               syncQueryLogList
             }),
-          9,
+          21,
           20,
           conPrefix,
-          3 * 60
+          7 * 60
         );
       }
       if (!qrcode) {
         syncQueryLogList.push({
           opera_time: getCurrentTime(),
-          des: "系统延迟轮询6分钟后获取取票码仍失败",
+          des: "系统延迟轮询10分钟后获取取票码仍失败",
           level: "error"
         });
         logUpload(
@@ -2871,7 +2871,7 @@ class OrderAutoTicketQueue {
             plat_name
           },
           updateObj: {
-            err_msg: "系统延迟轮询6分钟后获取取票码仍失败"
+            err_msg: "系统延迟轮询10分钟后获取取票码仍失败"
           }
         });
         return;
