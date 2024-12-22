@@ -1064,7 +1064,7 @@ class OrderAutoTicketQueue {
           );
           targetShow = targetShowInfo ? targetShowInfo : targetShow;
         }
-        if (!show_id) {
+        if (!targetShow) {
           this.logList.push({
             opera_time: getCurrentTime(),
             des: "匹配影片放映场次失败",

@@ -2853,6 +2853,14 @@ class OrderAutoTicketQueue {
         cityName: item.cityName,
         cinemaList: item.cinemas
       }));
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "获取城市影院列表返回",
+        level: "info",
+        info: {
+          list
+        }
+      });
       return list;
     } catch (error) {
       console.error("获取城市影院异常", error);

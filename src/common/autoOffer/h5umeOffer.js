@@ -1168,6 +1168,14 @@ class getUmeOfferPrice {
           cinemaCode: itemA.cinemaCode
         }))
       }));
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "获取城市影院列表返回",
+        level: "info",
+        info: {
+          list
+        }
+      });
       // [
       //     {
       //         "alphabet": "KUNMING",
