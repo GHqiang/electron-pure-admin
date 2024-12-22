@@ -834,7 +834,14 @@ class getLmaOfferPrice {
     const { conPrefix } = this;
     try {
       // 1、获取影院列表拿到影院id
-      const { city_name, cinema_name, film_name, show_time, app_name } = item;
+      const {
+        city_name,
+        cinema_name,
+        film_name,
+        hall_name,
+        show_time,
+        app_name
+      } = item;
       const cityList = await this.getCityList();
       if (!cityList?.length) {
         return;
@@ -921,7 +928,17 @@ class getLmaOfferPrice {
       }
       let showList = targetDate?.session || [];
       let start_time = show_time.split(" ")[1].slice(0, 5);
-      let targetShow = showList.find(item => item.start_time === start_time);
+      // 解决同一时间多场次问题
+      let targetShowList = showList.filter(
+        item => item.start_time === start_time
+      );
+      let targetShow = targetShowList[0];
+      if (targetShowList.length > 1) {
+        let targetShowInfo = targetShowList.find(
+          item => item.screen_name === hall_name
+        );
+        targetShow = targetShowInfo ? targetShowInfo : targetShow;
+      }
       if (!targetShow) {
         console.error("匹配影片放映场次失败", showList, start_time);
         this.logList.push({

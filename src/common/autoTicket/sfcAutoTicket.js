@@ -1053,12 +1053,21 @@ class OrderAutoTicketQueue {
         );
         let showList = movieObj?.shows[start_day] || [];
         console.log(conPrefix + "showList===>", showList);
-        show_id =
-          showList.find(item => item.start_time === start_time)?.show_id || "";
+        // 解决同一时间多场次问题
+        let targetShowList = showList.filter(
+          item => item.start_time === start_time
+        );
+        let targetShow = targetShowList[0];
+        if (targetShowList.length > 1) {
+          let targetShowInfo = targetShowList.find(
+            item => item.hall_name === hall_name
+          );
+          targetShow = targetShowInfo ? targetShowInfo : targetShow;
+        }
         if (!show_id) {
           this.logList.push({
             opera_time: getCurrentTime(),
-            des: "影院放映信息匹配订单放映时间失败",
+            des: "匹配影片放映场次失败",
             level: "error",
             info: {
               showList,
@@ -1068,6 +1077,7 @@ class OrderAutoTicketQueue {
           const transferParams = await this.transferOrder(item);
           return { transferParams };
         }
+        show_id = targetShow.show_id;
         let sessionId =
           this.currentParamsList[this.currentParamsInx].session_id;
         // 3、获取座位布局
@@ -1246,9 +1256,6 @@ class OrderAutoTicketQueue {
         profit
       } = await this.useQuanOrCard({
         order_number,
-        city_name,
-        cinema_name,
-        hall_name,
         city_id,
         cinema_id,
         show_id,
@@ -1674,9 +1681,6 @@ class OrderAutoTicketQueue {
   async useQuanOrCard(params) {
     const { conPrefix, appFlag } = this;
     let {
-      city_name,
-      cinema_name,
-      hall_name,
       city_id,
       cinema_id,
       show_id,

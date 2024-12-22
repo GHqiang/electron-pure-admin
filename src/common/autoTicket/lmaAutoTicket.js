@@ -849,6 +849,7 @@ class OrderAutoTicketQueue {
       city_name,
       cinema_name,
       film_name,
+      hall_name,
       show_time,
       lockseat,
       ticket_num,
@@ -1034,13 +1035,21 @@ class OrderAutoTicketQueue {
         }
         let showList = targetDate?.session || [];
         console.log(conPrefix + "showList===>", showList);
-        show_id =
-          showList.find(item => item.start_time === start_time)?.session_id ||
-          "";
-        if (!show_id) {
+        // 解决同一时间多场次问题
+        let targetShowList = showList.filter(
+          item => item.start_time === start_time
+        );
+        let targetShow = targetShowList[0];
+        if (targetShowList.length > 1) {
+          let targetShowInfo = targetShowList.find(
+            item => item.screen_name === hall_name
+          );
+          targetShow = targetShowInfo ? targetShowInfo : targetShow;
+        }
+        if (!targetShow) {
           this.logList.push({
             opera_time: getCurrentTime(),
-            des: "影院放映信息匹配订单放映时间失败",
+            des: "匹配影片放映场次失败",
             level: "error",
             info: {
               showList,
@@ -1050,6 +1059,7 @@ class OrderAutoTicketQueue {
           const transferParams = await this.transferOrder(item);
           return { transferParams };
         }
+        show_id = targetShow.session_id;
         let lmaToken = this.currentParamsList[this.currentParamsInx].lmaToken;
         // 3、获取座位布局
         const seatDataRes = await getSeatLayout({

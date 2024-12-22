@@ -908,6 +908,7 @@ class getSfcOfferPrice {
         city_name,
         cinema_name,
         film_name,
+        hall_name,
         show_time,
         cinema_group,
         app_name
@@ -973,11 +974,21 @@ class getSfcOfferPrice {
         let showDay = show_time.split(" ")[0];
         let showList = shows[showDay] || [];
         let showTime = show_time.split(" ")[1].slice(0, 5);
-        let ticketInfo = showList.find(item => item.start_time === showTime);
-        if (!ticketInfo) {
+        // 解决同一时间多场次问题
+        let targetShowList = showList.filter(
+          item => item.start_time === showTime
+        );
+        let targetShow = targetShowList[0];
+        if (targetShowList.length > 1) {
+          let targetShowInfo = targetShowList.find(
+            item => item.hall_name === hall_name
+          );
+          targetShow = targetShowInfo ? targetShowInfo : targetShow;
+        }
+        if (!targetShow) {
           this.logList.push({
             opera_time: getCurrentTime(),
-            des: "获取电影放映信息后匹配订单场次失败",
+            des: "匹配影片放映场次失败",
             level: "error",
             info: {
               movieInfo,
@@ -987,17 +998,17 @@ class getSfcOfferPrice {
           return;
         }
         if (appFlag === "hbchyxd") {
-          ticketInfo.member_price = ticketInfo.normal_price;
+          targetShow.member_price = targetShow.normal_price;
         }
         this.logList.push({
           opera_time: getCurrentTime(),
           des: "获取电影放映信息从而获取会员价",
           level: "info",
           info: {
-            ticketInfo
+            targetShow
           }
         });
-        return { ...ticketInfo, city_id, cinema_id };
+        return { ...targetShow, city_id, cinema_id };
       } else {
         this.logList.push({
           opera_time: getCurrentTime(),
