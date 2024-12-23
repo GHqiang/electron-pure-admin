@@ -1268,8 +1268,7 @@ const getCinemaId = (cinema_name, list, appName, city_name) => {
       .map(item => ({
         sfc_cinema_name: item.cinema_name,
         order_cinema_name: item.special_name
-          ?.replace(/[；;]/g, "-")
-          .split("-")
+          ?.split("**")
           ?.map(itemName => cinemNameSpecial(itemName))
       }));
     let specialCinemaList =
@@ -1350,8 +1349,7 @@ const getCinemaIdByLma = (cinema_name, list, appName, city_name) => {
       .map(item => ({
         sfc_cinema_name: item.cinema_name,
         order_cinema_name: item.special_name
-          ?.replace(/[；;]/g, "-")
-          .split("-")
+          ?.split("**")
           ?.map(itemName => cinemNameSpecial(itemName))
       }));
     let specialCinemaList =
@@ -1435,8 +1433,7 @@ const getTargetCinema = (cinema_name, list, appName) => {
       .map(item => ({
         sfc_cinema_name: item.cinema_name,
         order_cinema_name: item.special_name
-          ?.replace(/[；;]/g, "-")
-          .split("-")
+          ?.split("**")
           ?.map(itemName => cinemNameSpecial(itemName))
       }));
     if (specialList?.length) {
@@ -1507,8 +1504,7 @@ const cinemaMatchHandle = (cinema_name, list, appName) => {
       .map(item => ({
         sfc_cinema_name: item.cinema_name,
         order_cinema_name: item.special_name
-          ?.replace(/[；;]/g, "-")
-          .split("-")
+          ?.split("**")
           ?.map(itemName => cinemNameSpecial(itemName))
       }));
     let specialCinemaInfo = specialList.find(

@@ -50,7 +50,7 @@
         <el-form-item label="特殊匹配名称" prop="special_name">
           <el-input
             v-model="formData.special_name"
-            placeholder="请输入特殊匹配名称，多个之间用分号;分隔"
+            placeholder="请输入特殊匹配名称，多个之间用双星**分隔"
             clearable
           />
         </el-form-item>
