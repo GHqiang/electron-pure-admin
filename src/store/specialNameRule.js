@@ -21,6 +21,9 @@ export const useDataTableStoreBySpecialName = defineStore(
     },
     getters: {
       // 可以添加getters以方便在组件中使用过滤、排序等逻辑
+      specialNameList(state) {
+        return state.items;
+      }
     }
   }
 );

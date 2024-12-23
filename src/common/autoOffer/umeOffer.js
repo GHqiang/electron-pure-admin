@@ -836,7 +836,8 @@ class getUmeOfferPrice {
           info: {
             cinemaList,
             cinema_code,
-            cinema_name
+            cinema_name,
+            app_name: appFlag
           }
         });
         return;

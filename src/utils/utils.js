@@ -12,15 +12,23 @@ import {
   YINGHUANG_CINEMA_NAME,
   ZHEYINGSHIDAI_CINEMA_NAME,
   TPYYC_CINEMA_NAME_BY_SFC,
-  EXCLUDE_CINEMA_LIST_BY_CINEMA_FLAG
+  EXCLUDE_CINEMA_LIST_BY_CINEMA_FLAG,
+  UME_LIST,
+  H5_UME_LIST,
+  SFC_APP_LIST
 } from "@/common/constant";
 import { toRaw } from "vue";
+import { storeToRefs } from "pinia";
 import { useDataTableStoreBySpecialName } from "@/store/specialNameRule";
 const specialRules = useDataTableStoreBySpecialName();
+const { specialNameList } = storeToRefs(specialRules);
+// console.log(
+//   "specialNameList0",
+//   specialNameList.value,
+//   specialNameList.value.filter(item => item.app_name == "hbchyxd")
+// );
 
-const specialNameList = specialRules.items;
-
-console.log("specialNameList", specialNameList, toRaw(specialNameList));
+console.log("specialNameList123", toRaw(specialNameList.value));
 // window.specialNameList = specialNameList;
 
 // 格式化时间 YYYY-MM-DD HH:mm:ss
@@ -1255,7 +1263,7 @@ const getCinemaId = (cinema_name, list, appName, city_name) => {
     // 2、匹配不到的如果满足条件就走特殊匹配
     console.warn("全字匹配影院名称失败", cinema_name, list);
     let cinemaName = cinemNameSpecial(cinema_name);
-    let specialList = toRaw(specialNameList)
+    let specialList = toRaw(specialNameList.value)
       .filter(item => item.app_name == appName)
       .map(item => ({
         sfc_cinema_name: item.cinema_name,
@@ -1295,7 +1303,7 @@ const getCinemaId = (cinema_name, list, appName, city_name) => {
     let specialCinemaInfo = specialCinemaList[0];
     if (specialCinemaInfo) {
       cinemaName = specialCinemaInfo.sfc_cinema_name;
-      console.warn("特殊匹配影院名称成功", cinemaName);
+      console.warn("特殊匹配影院名称成功", cinemaName, cinema_name);
     } else {
       console.warn("特殊匹配影院名称失败", cinemaName, specialList);
     }
@@ -1323,7 +1331,6 @@ const getCinemaId = (cinema_name, list, appName, city_name) => {
     };
   }
 };
-window.getCinemaIdBySfc = getCinemaId;
 
 // 根据订单name获取影院id(主要用于lma系统)
 const getCinemaIdByLma = (cinema_name, list, appName, city_name) => {
@@ -1338,7 +1345,7 @@ const getCinemaIdByLma = (cinema_name, list, appName, city_name) => {
     // 2、匹配不到的如果满足条件就走特殊匹配
     console.warn("全字匹配影院名称失败", cinema_name, list);
     let cinemaName = cinemNameSpecial(cinema_name);
-    let specialList = toRaw(specialNameList)
+    let specialList = toRaw(specialNameList.value)
       .filter(item => item.app_name == appName)
       .map(item => ({
         sfc_cinema_name: item.cinema_name,
@@ -1377,7 +1384,7 @@ const getCinemaIdByLma = (cinema_name, list, appName, city_name) => {
     let specialCinemaInfo = specialCinemaList[0];
     if (specialCinemaInfo) {
       cinemaName = specialCinemaInfo.sfc_cinema_name;
-      console.warn("特殊匹配影院名称成功", cinemaName);
+      console.warn("特殊匹配影院名称成功", cinemaName, cinema_name);
     } else {
       console.warn("特殊匹配影院名称失败", cinemaName, specialList);
     }
@@ -1407,10 +1414,9 @@ const getCinemaIdByLma = (cinema_name, list, appName, city_name) => {
     };
   }
 };
-window.getCinemaIdByLma = getCinemaIdByLma;
 
 // 根据订单name获取目标影院(主要用于ume系统)
-const getTargetCinema = (cinema_name, list, appFlag) => {
+const getTargetCinema = (cinema_name, list, appName) => {
   try {
     // 1、先全字匹配，匹配到就直接返回
     let targetCinema = list.find(
@@ -1422,10 +1428,10 @@ const getTargetCinema = (cinema_name, list, appFlag) => {
       return targetCinema;
     }
     // 2、匹配不到的如果满足条件就走特殊匹配
-    console.warn("全字匹配影院名称失败", cinema_name, list, appFlag);
+    console.warn("全字匹配影院名称失败", cinema_name, list, appName);
     let cinemaName = cinemNameSpecial(cinema_name);
-    let specialList = toRaw(specialNameList)
-      .filter(item => item.app_name == appFlag)
+    let specialList = toRaw(specialNameList.value)
+      .filter(item => item.app_name == appName)
       .map(item => ({
         sfc_cinema_name: item.cinema_name,
         order_cinema_name: item.special_name
@@ -1441,7 +1447,7 @@ const getTargetCinema = (cinema_name, list, appFlag) => {
       );
       if (specialCinemaInfo) {
         cinemaName = specialCinemaInfo.sfc_cinema_name;
-        console.warn("特殊匹配影院名称成功", cinemaName);
+        console.warn("特殊匹配影院名称成功", cinemaName, cinema_name);
       } else {
         console.warn("特殊匹配影院名称失败", cinemaName, specialList);
       }
@@ -1470,7 +1476,19 @@ const getTargetCinema = (cinema_name, list, appFlag) => {
     console.error("根据订单name获取目标影院失败", error);
   }
 };
-window.getTargetCinemaByUme = getTargetCinema;
+
+// 获取目标影院特殊匹配测试方法
+window.getTargetCinema = ({ app_name, cinema_name, cinemaList, city_name }) => {
+  if (UME_LIST.includes(app_name)) {
+    getTargetCinema(cinema_name, cinemaList, app_name);
+  } else if (H5_UME_LIST.includes(app_name)) {
+    getTargetCinema(cinema_name, cinemaList, app_name);
+  } else if (SFC_APP_LIST.includes(app_name)) {
+    getCinemaId(cinema_name, cinemaList, app_name, city_name);
+  } else if (app_name === "lma") {
+    getCinemaIdByLma(cinema_name, cinemaList, app_name, city_name);
+  }
+};
 
 // 影院名称匹配（匹配报价规则时使用）
 const cinemaMatchHandle = (cinema_name, list, appName) => {
@@ -1484,7 +1502,7 @@ const cinemaMatchHandle = (cinema_name, list, appName) => {
     // 去括号、空格及中间点
     let cinemaName = cinemNameSpecial(cinema_name);
     // 2、特殊匹配
-    let specialList = toRaw(specialNameList)
+    let specialList = toRaw(specialNameList.value)
       .filter(item => item.app_name == appName)
       .map(item => ({
         sfc_cinema_name: item.cinema_name,
@@ -1787,7 +1805,7 @@ const offerRuleMatch = order => {
     };
   }
 };
-
+// 测试报价规则匹配
 window.offerRuleMatch = offerRuleMatch;
 // 日志上传
 const logUpload = async (order, logList) => {
