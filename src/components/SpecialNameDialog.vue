@@ -14,12 +14,13 @@
         ref="ruleFormRef"
         :model="formData"
         :rules="rules"
-        label-width="120px"
+        label-width="160px"
       >
         <el-form-item label="影线名称" prop="app_name">
           <el-select
             v-model="formData.app_name"
             placeholder="请选择影线名称"
+            filterable
             clearable
             @change="shadowLineChange"
           >
@@ -47,7 +48,7 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="特殊匹配名称" prop="special_name">
+        <el-form-item label="特殊匹配名称(**分割)" prop="special_name">
           <el-input
             v-model="formData.special_name"
             placeholder="请输入特殊匹配名称，多个之间用双星**分隔"
