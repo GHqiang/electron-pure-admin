@@ -16,7 +16,7 @@ import {
   H5_UME_LIST,
   APP_GROUP_OBJ
 } from "@/common/constant";
-
+import { getCinemaLoginInfoList } from "@/utils/utils";
 const SFC_API_OBJ = {};
 const UME_API_OBJ = {};
 const H5_UME_API_OBJ = {};
@@ -41,8 +41,14 @@ H5_UME_LIST.forEach(item => {
   H5_UME_API_OBJ[item] = createH5UmeApi({
     app_name: item
   });
-  // 这里执行一下主要是为了解决上来就请求非getCinemaList接口会报错，这里调一下是为了补充令牌（cookie里的_m_h5_tk）
-  H5_UME_API_OBJ[item].getCinemaList();
+  let loginInfoList = getCinemaLoginInfoList();
+  let isLogin = loginInfoList.find(
+    itemA => itemA.app_name === item && itemA.session_id
+  );
+  if (isLogin) {
+    // 这里执行一下主要是为了解决上来就请求非getCinemaList接口会报错，这里调一下是为了补充令牌（cookie里的_m_h5_tk）
+    H5_UME_API_OBJ[item].getCinemaList();
+  }
 });
 
 const APP_API_OBJ = {
