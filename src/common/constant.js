@@ -114,12 +114,79 @@ const UME_LIST = [
 ];
 
 // umeh5系列影院集合
-let H5_UME_LIST = ["gzfyyc", "hsmzyc"];
+let H5_UME_LIST = [
+  "hsmzyc",
+  "gzfyyc",
+  "szxtyy",
+  "cqshyc",
+  "hxwmgjyc",
+  "szhayc",
+  "szhxxggjyc",
+  "bjyjgj",
+  "zyhygj",
+  "tygcthdyc",
+  "wsmsdmeyc",
+  "wsmegjdyc",
+  "szgjyc",
+  "hfslaxjyc",
+  "jhgjyc",
+  "jxhygjyc",
+  "hzsdlhyc",
+  "xygjyc",
+  "yjdhyc",
+  "gzhyqgdyc",
+  "zsimdyc",
+  "jsdyy",
+  "yjxyyc",
+  "hxthyc",
+  "wszymeyc",
+  "sfcsygjyc",
+  "nmgjyc",
+  "blwhgjyc",
+  "sjyyyc",
+  "bjwhtcyy",
+  "zynfhqgcd",
+  "whycgtcfgcd",
+  "bj365yy",
+  "zyucgjyc"
+];
 
 // 影院列表
 const APP_LIST = {
   hsmzyc: "海上明珠影城",
   gzfyyc: "广州飞扬影城",
+  szxtyy: "深圳新天影院",
+  cqshyc: "传奇奢华影城中国巨幕店",
+  hxwmgjyc: "华夏万幕国际影城（成山路巴黎春天店）",
+  szhayc: "深圳海岸影城",
+  szhxxggjyc: "深圳华夏星光国际影城",
+  bjyjgj: "北京英嘉国际",
+  zyhygj: "中影华宇国际",
+  tygcthdyc: "天娱广场天河电影城",
+  wsmsdmeyc: "武商梦时代摩尔影城",
+  wsmegjdyc: "武商摩尔国际电影城",
+  szgjyc: "深影国际影城（学院南路CGS中国巨幕店）",
+  hfslaxjyc: "合肥三里庵星爵影城",
+  jhgjyc: "嘉华国际影城（学清路店）",
+  jxhygjyc: "江西华影国际影城（中山天虹店）",
+  hzsdlhyc: "杭州时代联合影城",
+  xygjyc: "上海轩影国际影城",
+  yjdhyc: "阳江东汇影城",
+  gzhyqgdyc: "广州华影青宫电影城",
+  zsimdyc: "中山IM电影城（南朗巨幕店）",
+  jsdyy: "北京劲松电影院",
+  yjxyyc: "杭州悦江新远影院",
+  hxthyc: "华夏天合影城（次渠新城商厦店）",
+  wszymeyc: "武商众圆摩尔影城",
+  sfcsygjyc: "SFC上影国际影城高德置地广场店",
+  nmgjyc: "纳美国际影城",
+  blwhgjyc: "保利万和国际影城三利爱琴海店",
+  sjyyyc: "上海世纪友谊影城LUXE南方商城店",
+  bjwhtcyy: "北京万画田村影院",
+  zynfhqgcd: "中影南方CINITYLED华强广场店",
+  whycgtcfgcd: "万画影城国投财富广场店",
+  bj365yy: "365影院（天通苑文化艺术中心）",
+  zyucgjyc: "中影UC国际影城（锦泰城店）",
   lma: "卢米埃",
   hbchyxd: "HBC华谊兄弟",
   ume: "UME",
@@ -2048,70 +2115,71 @@ const H5_UME_CINEMA_OBJ = {
   hsmzyc: ["16014", "HSMZYC_H5_PROD_S_MPS"],
   // 广州飞扬影城
   gzfyyc: ["69695", "FYYC_H5_PROD_S_MPS"],
-  // 新天
-  gzfyyc: ["10666", "SJXT_H5_PROD_S_MPS"],
-  // 传奇奢华影城
-  cqshyc: ["12954", "TANGGE_H5_PROD_S_MPS"],
+  // 深圳新天影院
+  szxtyy: ["15730", "SJXT_H5_PROD_10666_MPS"],
+  // 传奇奢华影城中国巨幕店
+  cqshyc: ["12939", "TANGGE_H5_PROD_S_MPS"],
   // 华夏万幕国际影城（成山路巴黎春天店）
-  hxwmgjyc: ["12680", "TANGGE_H5_PROD_S_MPS"],
-  // 海岸影城（万丰CINITY LED店）
-  hayc: ["15383", "TANGGE_H5_PROD_S_MPS"],
-  // 华夏星光国际影城
-  hxxggjyc: ["", "SZHXXG_H5_PROD_S_MPS"], //少个id需补充
+  hxwmgjyc: ["12680", "WMGJ_H5_PROD_12679_MPS"],
+  // 深圳海岸影城
+  szhayc: ["15383", "HAC_H5_PROD_15383_MPS"],
+  // 深圳华夏星光国际影城
+  szhxxggjyc: ["10240", "SZHXXG_H5_PROD_S_MPS"],
+
   // 北京英嘉国际
-  bjyjgj: ["", "YJXM_H5_PROD_11751_MPSUB"],
+  bjyjgj: ["11751", "YJXM_H5_PROD_11751_MPSUB"],
   // 中影华宇国际
-  zyhygj: ["", "ZYSZHY_H5_PROD_13462_MPS"],
+  zyhygj: ["13462", "ZYSZHY_H5_PROD_13462_MPS"],
   // 天娱广场天河电影城
-  tygcthdyc: ["", "TIANYU_H5_PROD_16610_MPS"],
+  tygcthdyc: ["16610", "TIANYU_H5_PROD_16610_MPS"],
   // 武商梦时代摩尔影城
-  wsmsdmeyc: ["", "WSME_H5_PROD_16066_MPS"],
+  wsmsdmeyc: ["16066", "WSME_H5_PROD_16066_MPS"],
   // 武商摩尔国际电影城
-  wsmegjdyc: ["", "WSME_H5_PROD_12885_MPS"],
+  wsmegjdyc: ["12885", "WSME_H5_PROD_12885_MPS"],
   // 深影国际影城（学院南路CGS中国巨幕店）
-  sygjyc: ["", "XINGJUE_H5_PROD_69402_MPS"],
+  szgjyc: ["11758", "SYGJ_H5_PROD_11758_MPS"],
   // 合肥三里庵星爵影城
-  hfslaxjyc: ["", "SYGJ_H5_PROD_11758_MPS"],
+  hfslaxjyc: ["69402", "XINGJUE_H5_PROD_69402_MPS"],
   // 嘉华国际影城（学清路店）
-  jhgjyc: ["", "JIAHUA_H5_PROD_16074_MPS"],
+  jhgjyc: ["16074", "JIAHUA_H5_PROD_16074_MPS"],
   // 江西华影国际影城（中山天虹店）
-  jxhygjyc: ["", "PENGYU_H5_PROD_10823_MPS"],
+  jxhygjyc: ["10823", "PENGYU_H5_PROD_10823_MPS"],
   // 杭州时代联合影城
-  hzsdlh: ["", "HZSDLH_H5_PROD_13108_MPS"],
-  // 轩影国际影城
-  xygjyc: ["", "SHXY_H5_PROD_69711_MPS"],
+  hzsdlhyc: ["13108", "HZSDLH_H5_PROD_13108_MPS"],
+  // 上海轩影国际影城
+  xygjyc: ["69711", "SHXY_H5_PROD_69711_MPS"],
   // 阳江东汇影城
-  yjdhyc: ["", "YJDHYC_H5_PROD_69067_MPS"],
-  // 青宫电影城（CINITY店）
-  qgdyc: ["", "ZYYG_H5_PROD_10745_MPS"],
+  yjdhyc: ["69067", "YJDHYC_H5_PROD_69067_MPS"],
+  // 广州华影青宫电影城（CINITY店）
+  gzhyqgdyc: ["10745", "ZYYG_H5_PROD_10745_MPS"],
   // 中山IM电影城（南朗巨幕店）
-  zsimdyc: ["", "ZSWS_H5_PROD_10689_MPSUB"],
-  // 劲松电影院
-  jsdyy: ["", "JINSONG_H5_PROD_13173_MPS"],
-  // 悦江新远影城IMAX
-  yjxyyc: ["", "SDYX_H5_PROD_13458_MPSUB"],
+  zsimdyc: ["10689", "ZSWS_H5_PROD_10689_MPSUB"],
+  // 北京劲松电影院
+  jsdyy: ["13173", "JINSONG_H5_PROD_13173_MPS"],
+  // 杭州悦江新远影院
+  yjxyyc: ["13458", "SDYX_H5_PROD_13458_MPSUB"],
   // 华夏天合影城（次渠新城商厦店）
-  hxthyc: ["", "THGJ_H5_PROD_11478_MPS"],
+  hxthyc: ["11478", "THGJ_H5_PROD_11478_MPS"],
   // 武商众圆摩尔影城
-  wszymeyc: ["", "WSME_H5_PROD_12887_MPS"],
-  // SFC上影国际影城（高德置地广场店）
-  wszymeyc: ["", "WSME_H5_PROD_12887_MPS"],
+  wszymeyc: ["12887", "WSME_H5_PROD_12887_MPS"],
+  // SFC上影国际影城高德置地广场店
+  sfcsygjyc: ["16463", "CFR_H5_PROD_16463_MPS"],
   // 纳美国际影城（全新光峰激光放映技术）
-  wszymeyc: ["", "NAMEI_H5_PROD_13165_MPS"],
-  // 保利万和国际影城（三利爱琴海店）
-  blwhgjyc: ["", "BLSLAQH_H5_PROD_16206_MPS"],
-  // 世纪友谊影城（LUXE南方商城店）
-  sjyyyc: ["", "SJHQYX_H5_PROD_11788_MPS"],
+  nmgjyc: ["13165", "NAMEI_H5_PROD_13165_MPS"],
+  // 保利万和国际影城三利爱琴海店
+  blwhgjyc: ["16206", "BLSLAQH_H5_PROD_16206_MPS"],
+  // 上海世纪友谊影城LUXE南方商城店
+  sjyyyc: ["11788", "SJHQYX_H5_PROD_11788_MPS"],
   // 北京万画田村影院
-  bjwhtcyy: ["", "WANHUA_H5_PROD_11489_MPS"],
-  // 中影南方CINITY LED影城（宝安华强广场店)
-  zynf: ["", "TWZYNF_H5_PROD_15260_MPS"],
-  // 万画影城（国投财富广场店）
-  whyc: ["", "WANHUA_H5_PROD_12430_MPS"],
+  bjwhtcyy: ["11489", "WANHUA_H5_PROD_11489_MPS"],
+  // 中影南方CINITYLED华强广场店
+  zynfhqgcd: ["15260", "TWZYNF_H5_PROD_15260_MPS"],
+  // 万画影城国投财富广场店
+  whycgtcfgcd: ["12430", "WANHUA_H5_PROD_12430_MPS"],
   // 365影院（天通苑文化艺术中心）
-  "365yy": ["", "CPSLW_H5_PROD_16840_MPS"],
-  // 中影UC国际影城4K MAX（锦泰城店）
-  zyucgjyc: ["", "ZYUC_H5_PROD_69192_MPS"]
+  bj365yy: ["16840", "CPSLW_H5_PROD_16840_MPS"],
+  // 中影UC国际影城（锦泰城店）
+  zyucgjyc: ["69192", "ZYUC_H5_PROD_69192_MPS"]
 };
 
 // 微信小程序openid
