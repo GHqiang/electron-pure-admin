@@ -493,15 +493,15 @@ const getCinemaFlag = item => {
     ["深圳"].includes(city_name)
   ) {
     return "renhengmeng";
+  } else if (
+    ["广州飞扬影城", "飞扬影城"].some(itemA =>
+      cinemNameSpecial(cinema_name).includes(itemA)
+    ) &&
+    ["广州"].includes(city_name)
+  ) {
+    return "gzfyyc";
   }
   // else if (
-  //   cinemNameSpecial(cinema_name).includes(
-  //     "昆明北辰财富中心影院昆明中永影视"
-  //   ) &&
-  //   ["昆明"].includes(city_name)
-  // ) {
-  //   return "kmbccf";
-  // } else if (
   //   cinemNameSpecial(cinema_name).includes("福建厦门奥斯卡东方影城") &&
   //   ["厦门"].includes(city_name)
   // ) {

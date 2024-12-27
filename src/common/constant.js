@@ -114,20 +114,12 @@ const UME_LIST = [
 ];
 
 // umeh5系列影院集合
-let H5_UME_LIST = [
-  // "kmbccf", "shdyc", "xmaskdfyc", "shjq"
-  // "fyyc",
-  "hsmzyc"
-];
+let H5_UME_LIST = ["gzfyyc", "hsmzyc"];
 
 // 影院列表
 const APP_LIST = {
-  kmbccf: "昆明北辰财富",
-  shdyc: "上海大悦城H5",
-  xmaskdfyc: "厦门奥斯卡东方影城",
-  shjq: "上海金球",
   hsmzyc: "海上明珠影城",
-  fyyc: "广州飞扬影城",
+  gzfyyc: "广州飞扬影城",
   lma: "卢米埃",
   hbchyxd: "HBC华谊兄弟",
   ume: "UME",
@@ -1669,7 +1661,6 @@ const ZHEYINGSHIDAI_SPECIAL_CINEMA_LIST = [
 ];
 
 // 卢米埃特殊影院集合
-// 卢米埃特殊影院集合
 const HMA_SPECIAL_CINEMA_LIST = [
   // 南京
   {
@@ -1865,11 +1856,6 @@ const HSMZYC_SPECIAL_CINEMA_LIST = [
 ];
 // 特殊的名字匹配集合
 const SPECIAL_CINEMA_OBJ = {
-  kmbccf: [],
-  shdyc: [],
-  xmaskdfyc: [],
-  shjq: [],
-  fyyc: [],
   hsmzyc: HSMZYC_SPECIAL_CINEMA_LIST,
   lma: HMA_SPECIAL_CINEMA_LIST,
   hbchyxd: HBCHYXD_SPECIAL_CINEMA_LIST,
@@ -1963,12 +1949,8 @@ const SPECIAL_CINEMA_OBJ = {
 
 // 出票队列打印前缀
 const TICKET_CONPREFIX_OBJ = {
-  kmbccf: "【昆明北辰财富中心自动出票】——",
-  shdyc: "【上海大悦城自动出票】——",
-  xmaskdfyc: "【厦门奥斯卡东方影城自动出票】——",
-  shjq: "【上海金球自动出票】——",
   hsmzyc: "【海上明珠影城自动出票】——",
-  fyyc: "【广州飞扬影城自动出票】——",
+  gzfyyc: "【广州飞扬影城自动出票】——",
   lma: "【卢米埃自动出票】——",
   hbchyxd: "【HBC华谊兄弟自动出票】——",
   ume: "【UME自动出票】——",
@@ -2062,24 +2044,74 @@ const TICKET_CONPREFIX_OBJ = {
 // umeh5系列相关信息
 const H5_UME_CINEMA_OBJ = {
   // cinemaLinkId、channelCode、tid(laskId：即sid可通过tid调接口获取)
-  kmbccf: ["10106", "BEICHEN_H5_PROD_10106_MPS"],
-  xmaskdfyc: ["11769", "XMASK_H5_PROD_11769_MPS"],
-  shjq: ["11713", "JINQIU_H5_PROD_11713_MPS"],
-  hsmzyc: [
-    "16014", // 多个影院时随便填个就行，主要用户会员卡同步
-    "HSMZYC_H5_PROD_S_MPS"
-    // 勋哥
-    // f1b2fbce125e4d298b785694a987694c-sid
-    // "f819f7de4e97466da20d0cef88f6b1de" -tid
-    // 兜哥
-    // sid=6b0de23ce1764548b77a0d412df96aa4
-    // tid=dac7b05c6eea4153abf68f1d8a18e8f6
-    // 婷婷
-    // sid=a3f2c3dff6bd4028813bf64e1a7ef9e4
-    // tid=d39b64e43c1b45249ab0b1a249a544f5
-  ],
-  fyyc: ["", "FYYC_H5_PROD_S_MPS"],
-  shdyc: ["12654", "XHX_H5_PROD_12654_MPS"]
+  // 海上明珠
+  hsmzyc: ["16014", "HSMZYC_H5_PROD_S_MPS"],
+  // 广州飞扬影城
+  gzfyyc: ["69695", "FYYC_H5_PROD_S_MPS"],
+  // 新天
+  gzfyyc: ["10666", "SJXT_H5_PROD_S_MPS"],
+  // 传奇奢华影城
+  cqshyc: ["12954", "TANGGE_H5_PROD_S_MPS"],
+  // 华夏万幕国际影城（成山路巴黎春天店）
+  hxwmgjyc: ["12680", "TANGGE_H5_PROD_S_MPS"],
+  // 海岸影城（万丰CINITY LED店）
+  hayc: ["15383", "TANGGE_H5_PROD_S_MPS"],
+  // 华夏星光国际影城
+  hxxggjyc: ["", "SZHXXG_H5_PROD_S_MPS"], //少个id需补充
+  // 北京英嘉国际
+  bjyjgj: ["", "YJXM_H5_PROD_11751_MPSUB"],
+  // 中影华宇国际
+  zyhygj: ["", "ZYSZHY_H5_PROD_13462_MPS"],
+  // 天娱广场天河电影城
+  tygcthdyc: ["", "TIANYU_H5_PROD_16610_MPS"],
+  // 武商梦时代摩尔影城
+  wsmsdmeyc: ["", "WSME_H5_PROD_16066_MPS"],
+  // 武商摩尔国际电影城
+  wsmegjdyc: ["", "WSME_H5_PROD_12885_MPS"],
+  // 深影国际影城（学院南路CGS中国巨幕店）
+  sygjyc: ["", "XINGJUE_H5_PROD_69402_MPS"],
+  // 合肥三里庵星爵影城
+  hfslaxjyc: ["", "SYGJ_H5_PROD_11758_MPS"],
+  // 嘉华国际影城（学清路店）
+  jhgjyc: ["", "JIAHUA_H5_PROD_16074_MPS"],
+  // 江西华影国际影城（中山天虹店）
+  jxhygjyc: ["", "PENGYU_H5_PROD_10823_MPS"],
+  // 杭州时代联合影城
+  hzsdlh: ["", "HZSDLH_H5_PROD_13108_MPS"],
+  // 轩影国际影城
+  xygjyc: ["", "SHXY_H5_PROD_69711_MPS"],
+  // 阳江东汇影城
+  yjdhyc: ["", "YJDHYC_H5_PROD_69067_MPS"],
+  // 青宫电影城（CINITY店）
+  qgdyc: ["", "ZYYG_H5_PROD_10745_MPS"],
+  // 中山IM电影城（南朗巨幕店）
+  zsimdyc: ["", "ZSWS_H5_PROD_10689_MPSUB"],
+  // 劲松电影院
+  jsdyy: ["", "JINSONG_H5_PROD_13173_MPS"],
+  // 悦江新远影城IMAX
+  yjxyyc: ["", "SDYX_H5_PROD_13458_MPSUB"],
+  // 华夏天合影城（次渠新城商厦店）
+  hxthyc: ["", "THGJ_H5_PROD_11478_MPS"],
+  // 武商众圆摩尔影城
+  wszymeyc: ["", "WSME_H5_PROD_12887_MPS"],
+  // SFC上影国际影城（高德置地广场店）
+  wszymeyc: ["", "WSME_H5_PROD_12887_MPS"],
+  // 纳美国际影城（全新光峰激光放映技术）
+  wszymeyc: ["", "NAMEI_H5_PROD_13165_MPS"],
+  // 保利万和国际影城（三利爱琴海店）
+  blwhgjyc: ["", "BLSLAQH_H5_PROD_16206_MPS"],
+  // 世纪友谊影城（LUXE南方商城店）
+  sjyyyc: ["", "SJHQYX_H5_PROD_11788_MPS"],
+  // 北京万画田村影院
+  bjwhtcyy: ["", "WANHUA_H5_PROD_11489_MPS"],
+  // 中影南方CINITY LED影城（宝安华强广场店)
+  zynf: ["", "TWZYNF_H5_PROD_15260_MPS"],
+  // 万画影城（国投财富广场店）
+  whyc: ["", "WANHUA_H5_PROD_12430_MPS"],
+  // 365影院（天通苑文化艺术中心）
+  "365yy": ["", "CPSLW_H5_PROD_16840_MPS"],
+  // 中影UC国际影城4K MAX（锦泰城店）
+  zyucgjyc: ["", "ZYUC_H5_PROD_69192_MPS"]
 };
 
 // 微信小程序openid
