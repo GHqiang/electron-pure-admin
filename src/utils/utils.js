@@ -501,19 +501,16 @@ const getCinemaFlag = item => {
   ) {
     return "gzfyyc";
   } else if (
-    ["CINESKY新天影院双IMAX"].some(itemA =>
+    ["CINESKY新天影院"].some(itemA =>
       cinemNameSpecial(cinema_name).includes(itemA)
     ) &&
     ["深圳"].includes(city_name)
   ) {
     return "szxtyy";
   } else if (
-    [
-      "唐阁影城",
-      "唐阁DMG影城",
-      "传奇奢华影城中国巨幕店",
-      "杭州传奇奢华影城城西银泰店"
-    ].some(itemA => cinemNameSpecial(cinema_name).includes(itemA)) &&
+    ["唐阁影城", "传奇奢华影城"].some(itemA =>
+      cinemNameSpecial(cinema_name).includes(itemA)
+    ) &&
     ["北京", "宿迁", "杭州", "新乡", "武汉"].includes(city_name)
   ) {
     return "cqshyc";
