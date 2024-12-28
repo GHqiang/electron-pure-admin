@@ -423,8 +423,8 @@ const getOfferList = async () => {
     const res = await svApi.queryOfferList({
       user_id: tokens.userInfo.user_id,
       plat_name: "yinghuasuan",
-      start_time: formatTimeOfTime(+new Date() - 0.2 * 60 * 60 * 1000),
-      end_time: getCurrentTime()
+      page_num: 1,
+      page_size: 50
     });
     let list = res.data.offerList || [];
     console.error("获取历史报价记录返回", error);
