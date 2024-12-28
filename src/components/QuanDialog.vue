@@ -70,8 +70,8 @@
         <el-form-item label="黑名单券" prop="black_quans">
           <el-input
             v-model="formData.black_quans"
-            style="width: 240px"
-            :rows="2"
+            style="width: 500px"
+            :rows="3"
             type="textarea"
             placeholder="请输入不可用券号，若有多个用;分隔"
           />

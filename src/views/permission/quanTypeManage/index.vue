@@ -19,17 +19,26 @@
           />
         </el-select>
       </el-form-item>
+      <el-form-item label="券&nbsp;&nbsp;&nbsp;&nbsp;类型">
+        <el-select
+          v-model="formData.quan_value"
+          clearable
+          filterable
+          placeholder="券类型"
+          style="width: 194px"
+        >
+          <el-option
+            v-for="(item, index) in quanType"
+            :key="item.id"
+            :label="item.quan_name"
+            :value="item.quan_value"
+          />
+        </el-select>
+      </el-form-item>
       <el-form-item label="券&nbsp;&nbsp;&nbsp;&nbsp;名称">
         <el-input
           v-model="formData.quan_name"
           placeholder="请输入券名称"
-          clearable
-        />
-      </el-form-item>
-      <el-form-item label="券&nbsp;&nbsp;&nbsp;&nbsp;类型">
-        <el-input
-          v-model="formData.quan_value"
-          placeholder="请输入券类型"
           clearable
         />
       </el-form-item>
