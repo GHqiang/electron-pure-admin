@@ -102,6 +102,7 @@ let formData = reactive({
   app_name: "", // 影线名称
   cinema_name: "", // 影院名称
   cinema_id: "", // 影院id
+  city_name: "", // 影院所属城市
   special_name: "", // 特殊匹配
   remark: "" // 备注
 });
@@ -126,6 +127,7 @@ const resetForm = el => {
   }
   formData.cinema_name = "";
   formData.cinema_id = "";
+  formData.city_name = "";
   formData.special_name = "";
   formData.remark = "";
 };
@@ -135,13 +137,16 @@ const shadowLineChange = async val => {
   console.log("影线改变val", val);
   resetForm(1);
   const cityList = await getCityList();
-  await getAllCinemaList(cityList);
+  const allCinemaList = await getAllCinemaList(cityList);
+  console.log("allCinemaList", allCinemaList);
 };
 
 // 影院改变
 const cinemaChange = async val => {
-  formData.cinema_id = cinemaList.value.find(item => item.name == val)?.id;
-  console.log("影院改变val", val, formData.cinema_id);
+  let targetCinema = cinemaList.value.find(item => item.name == val);
+  formData.cinema_id = targetCinema?.id;
+  formData.city_name = targetCinema?.city_name;
+  console.log("影院改变val", val, formData.cinema_id, formData.city_name);
   formData.special_name = "";
   formData.remark = "";
 };
@@ -160,6 +165,7 @@ const open = async ruleInfo => {
         formData.app_name = formInfo.app_name;
         formData.cinema_name = formInfo.cinema_name;
         formData.cinema_id = formInfo.cinema_id;
+        formData.city_name = formInfo.city_name;
         formData.special_name = formInfo.special_name;
         formData.remark = formInfo.remark;
       } else {
@@ -173,6 +179,11 @@ const open = async ruleInfo => {
         formData.cinema_id = allCinemaList.find(
           item => item.name == formData.cinema_name
         )?.id;
+      }
+      if (!formData.city_name) {
+        formData.city_name = allCinemaList.find(
+          item => item.name == formData.cinema_name
+        )?.city_name;
       }
     }
     loading.close();
@@ -281,7 +292,8 @@ const getCinemaListByCityId = async city_id => {
       cinemaList = cinemaList.map(item => ({
         ...item,
         id: item.cinemaCode,
-        name: item.cinemaName
+        name: item.cinemaName,
+        city_name: item.cityName
       }));
     } else if (H5_UME_LIST.includes(app_name)) {
       cinemaList =
@@ -289,7 +301,8 @@ const getCinemaListByCityId = async city_id => {
       cinemaList = cinemaList.map(item => ({
         ...item,
         id: item.cinemaLinkId,
-        name: item.cinemaName
+        name: item.cinemaName,
+        city_name: item.cityName
       }));
     } else if (app_name === "lma") {
       const res = await APP_API_OBJ[app_name].getCinemaList(city_id);
@@ -297,7 +310,8 @@ const getCinemaListByCityId = async city_id => {
       cinemaList = cinemaList.map(item => ({
         ...item,
         id: item.cinema_id,
-        name: item.cinema_name
+        name: item.cinema_name,
+        city_name: item.city_name
       }));
     } else {
       const res = await APP_API_OBJ[app_name].getCinemaList(params);

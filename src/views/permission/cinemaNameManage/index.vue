@@ -99,10 +99,10 @@
           <span>{{ scope.row.special_name }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="update_time" label="更新时间" min-width="125" />
-      <!-- <el-table-column prop="user_name" label="更新人" min-width="80" /> -->
-      <el-table-column prop="remark" label="备注" min-width="80" />
-      <el-table-column label="操作" fixed="right" align="left" min-width="160">
+      <el-table-column prop="update_time" label="更新时间" min-width="135" />
+      <el-table-column prop="city_name" label="城市" min-width="80" />
+      <el-table-column prop="remark" label="备注" min-width="70" />
+      <el-table-column label="操作" fixed="right" align="left" min-width="170">
         <template #default="scope">
           <el-button
             size="small"
