@@ -84,11 +84,18 @@ class OrderAutoFetchQueue {
       );
       // 如果是测试订单就不从远端过滤
       if (stayList?.length && !isTestOrder) {
-        const offerList = await getOfferList();
+        // const offerList = await getOfferList();
+        // const ticketList = await getTicketList();
+        // stayList = stayList.filter(item =>
+        //   judgeHandle(item, item.appName, offerList, ticketList)
+        // );
         const ticketList = await getTicketList();
-        stayList = stayList.filter(item =>
-          judgeHandle(item, item.appName, offerList, ticketList)
-        );
+        stayList = stayList.filter(item => {
+          let isTicket = ticketList
+            .filter(itemA => itemA.app_name === item.appName)
+            .some(itemA => itemA.order_number === item.order_number);
+          return !isTicket;
+        });
         // console.warn(conPrefix + "猎人待出票列表从远端过滤后", stayList);
       }
       if (!stayList?.length) return;

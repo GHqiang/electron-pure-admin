@@ -118,11 +118,18 @@ class OrderAutoFetchQueue {
         logList
       );
       if (sfcStayOfferlist?.length) {
-        const offerList = await getOfferList();
+        // const offerList = await getOfferList();
+        // const ticketList = await getTicketList();
+        // sfcStayOfferlist = sfcStayOfferlist.filter(item =>
+        //   judgeHandle(item, item.appName, offerList, ticketList)
+        // );
         const ticketList = await getTicketList();
-        sfcStayOfferlist = sfcStayOfferlist.filter(item =>
-          judgeHandle(item, item.appName, offerList, ticketList)
-        );
+        sfcStayOfferlist = sfcStayOfferlist.filter(item => {
+          let isTicket = ticketList
+            .filter(itemA => itemA.app_name === item.appName)
+            .some(itemA => itemA.order_number === item.order_number);
+          return !isTicket;
+        });
         // console.warn(
         //   conPrefix + "洋葱待出票列表从远端过滤后",
         //   sfcStayOfferlist
