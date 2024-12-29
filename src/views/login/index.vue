@@ -81,6 +81,7 @@ const setLocalRuleList = async rule => {
       item.excludeFilmNames = JSON.parse(item.excludeFilmNames);
       item.platOfferList = JSON.parse(item.platOfferList || "[]");
       item.weekDay = JSON.parse(item.weekDay);
+      item.film_type = item.film_type ? item.film_type?.split(",") : [];
     });
     rules.setRuleList(ruleRecords);
   } catch (error) {

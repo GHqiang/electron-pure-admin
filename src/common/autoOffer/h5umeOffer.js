@@ -184,6 +184,44 @@ class getUmeOfferPrice {
         return;
       }
       matchRuleList = JSON.parse(JSON.stringify(matchRuleList));
+      // 判断规则里是否有指定电影格式的（2D/3D）
+      let filmTypeFlag = matchRuleList.find(
+        item => item?.film_type?.length == 1
+      );
+      let movieInfo, filmType; // 电影放映信息
+      if (filmTypeFlag) {
+        // 获取电影放映信息以匹配电影格式
+        movieInfo = await this.getMovieInfo(order);
+        if (!movieInfo) {
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: "报价规则匹配电影格式时获取当前场次电影信息失败，直接不报",
+            level: "info"
+          });
+          return;
+        }
+        // 当前场次电影格式
+        filmType = movieInfo.filmVersion;
+        if (filmType) {
+          filmType = filmType.toUpperCase();
+          matchRuleList = matchRuleList.filter(
+            item => item.film_type[0] === filmType
+          );
+        }
+      }
+      if (!matchRuleList?.length) {
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "过滤完电影格式后匹配报价规则为空",
+          level: "error",
+          info: {
+            filmTypeFlag,
+            filmType,
+            movieInfo
+          }
+        });
+        return;
+      }
       this.logList.push({
         opera_time: getCurrentTime(),
         des: "报价规则匹配列表",
@@ -193,7 +231,11 @@ class getUmeOfferPrice {
         }
       });
       // 获取报价最低的报价规则
-      let endRule = await this.getMinAmountOfferRule(matchRuleList, order);
+      let endRule = await this.getMinAmountOfferRule(
+        matchRuleList,
+        order,
+        movieInfo
+      );
       console.warn("最终匹配到的报价规则", endRule);
       if (!endRule) {
         console.error("最终匹配到的报价规则不存在");
@@ -220,7 +262,7 @@ class getUmeOfferPrice {
   }
 
   // 获取报价最低的报价规则
-  async getMinAmountOfferRule(ruleList, order) {
+  async getMinAmountOfferRule(ruleList, order, movieInfo) {
     try {
       // 1、有会员日报价规则命中优先使用会员日报价规则
       let onlyMemberDayRuleList = ruleList.filter(
@@ -275,7 +317,7 @@ class getUmeOfferPrice {
         }
 
         // 计算会员报价
-        let memberPriceRes = await this.getMemberPrice(order);
+        let memberPriceRes = await this.getMemberPrice(order, movieInfo);
         if (memberPriceRes === -1) {
           this.logList.push({
             opera_time: getCurrentTime(),
@@ -581,13 +623,16 @@ class getUmeOfferPrice {
   }
 
   // 获取会员价
-  async getMemberPrice(order) {
+  async getMemberPrice(order, movieData) {
     const { appFlag } = this;
     try {
       console.log("准备获取会员价", order);
       const { ticket_num, app_name } = order;
-      // 获取当前场次电影信息
-      let movieInfo = await this.getMovieInfo(order);
+      // 获取当前场次电影信息，防止接口重复掉
+      let movieInfo = movieData;
+      if (!movieData) {
+        movieInfo = await this.getMovieInfo(order);
+      }
       console.log("待报价订单当前场次电影相关信息", movieInfo);
       if (!movieInfo) {
         console.error("获取当前场次电影信息失败", "不再进行报价");
