@@ -235,6 +235,18 @@
             >可自定义影片名称，输入所需名称并点击选择</span
           >
         </el-form-item>
+        <el-form-item label="电影格式">
+          <el-select
+            v-model="formData.film_type"
+            multiple
+            clearable
+            placeholder="电影格式"
+          >
+            <el-option label="2D" value="2D" />
+            <el-option label="3D" value="3D" />
+          </el-select>
+          <span style="color: red">注意：如果不区分电影格式请不要选择</span>
+        </el-form-item>
         <el-form-item label="报价类型">
           <el-radio-group
             v-model="formData.offerType"
@@ -531,6 +543,7 @@ let formData = reactive({
   weekDay: [], // 启用星期
   seatNum: "", // 座位数
   memberDay: "", // 会员日
+  film_type: [], // 电影格式
   remark: "", // 备注
   status: "1", // 状态
   platOfferList: [
@@ -611,6 +624,7 @@ const resetForm = el => {
   formData.weekDay = []; // 启用星期
   formData.seatNum = ""; // 座位数
   formData.memberDay = ""; // 会员日
+  formData.film_type = [];
   formData.remark = ""; // 备注
   formData.status = "1"; // 状态
   formData.platOfferList = [
@@ -679,6 +693,7 @@ const open = async ruleInfo => {
     if (ruleInfo) {
       let formInfo = JSON.parse(JSON.stringify(ruleInfo));
       if (formInfo.id !== undefined) {
+        console.log("编辑", formInfo);
         formData.id = formInfo.id;
         formData.ruleName = formInfo.ruleName;
         formData.orderForm = formInfo.orderForm.split(",");
@@ -690,6 +705,7 @@ const open = async ruleInfo => {
         formData.weekDay = formInfo.weekDay; // 启用星期
         formData.seatNum = formInfo.seatNum; // 座位数
         formData.memberDay = formInfo.memberDay; // 会员日
+        formData.film_type = formInfo.film_type;
         formData.remark = formInfo.remark;
         formData.status = formInfo.status;
         formData.offerType = formInfo.offerType;

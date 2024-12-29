@@ -173,6 +173,7 @@
         </template>
       </el-table-column>
       <el-table-column label="会员日" prop="memberDay" width="85" />
+      <el-table-column label="电影格式" prop="film_type" width="85" />
       <el-table-column label="开场时间限制" prop="timeLimit" width="110" />
       <el-table-column label="包含城市" width="110">
         <template #default="scope">
@@ -494,6 +495,7 @@ const setLocalRuleList = async () => {
       item.excludeFilmNames = JSON.parse(item.excludeFilmNames);
       item.platOfferList = JSON.parse(item.platOfferList || "[]");
       item.weekDay = JSON.parse(item.weekDay);
+      item.film_type = item.film_type ? item.film_type?.split(",") : [];
     });
     rules.setRuleList(ruleRecords);
   } catch (error) {
@@ -572,8 +574,9 @@ const searchData = async () => {
       item.excludeFilmNames = JSON.parse(item.excludeFilmNames);
       item.platOfferList = JSON.parse(item.platOfferList || "[]");
       item.weekDay = JSON.parse(item.weekDay);
+      item.film_type = item.film_type ? item.film_type.split(",") : [];
     });
-    // console.log("规则列表===>", ruleRecords);
+    console.log("规则列表===>", ruleRecords);
     tableData.value = ruleRecords;
     totalNum.value = res.data.totalNum || 0;
     loading.close();
@@ -714,6 +717,7 @@ const saveRule = async ruleInfo => {
     ruleInfo.excludeHallNames = JSON.stringify(ruleInfo.excludeHallNames);
     ruleInfo.includeFilmNames = JSON.stringify(ruleInfo.includeFilmNames);
     ruleInfo.excludeFilmNames = JSON.stringify(ruleInfo.excludeFilmNames);
+    ruleInfo.film_type = ruleInfo.film_type?.join(",");
     ruleInfo.orderForm = (ruleInfo.platOfferList || [])
       .map(item => item.platName)
       .join();
