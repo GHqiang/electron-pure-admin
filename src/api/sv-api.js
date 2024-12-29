@@ -24,7 +24,7 @@ const queryOfferList = params =>
 
 // 查询订单报价信息
 const queryOfferInfo = params =>
-  axios.get("/svpi/offerRecord/queryOfferInfo", { params, timeout: 15 * 1000 });
+  axios.get("/svpi/offerRecord/queryOfferInfo", { params, timeout: 30 * 1000 });
 
 // 添加报价记录
 const addOfferRecord = params => axios.post("/svpi/offerRecord/add", params);
@@ -40,7 +40,7 @@ const queryTicketList = params =>
 
 // 查询最近出票用券记录
 const queryUsedQuanList = params =>
-  axios.get("/svpi/ticketRecord/queryUsedQuan", { params, timeout: 20 * 1000 });
+  axios.get("/svpi/ticketRecord/queryUsedQuan", { params, timeout: 30 * 1000 });
 // 添加出票记录
 const addTicketRecord = params => axios.post("/svpi/ticketRecord/add", params);
 // 更新出票记录
