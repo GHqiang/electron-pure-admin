@@ -1323,12 +1323,19 @@ class OrderAutoTicketQueue {
         ticketMemberServiceFeeMin,
         discountAmount
       );
-      let mbmberPrice =
-        (Number(ticketMemberPrice) +
-          Number(handlingFee) +
-          Number(ticketMemberServiceFeeMin) -
-          Number(discountAmount)) /
-        100;
+      let mbmberPrice;
+      // 如果会员价为0时，按照非会员价出票（需看此价格是否为非会员价，同时需注意非会员价出票时的支付价格比对会员价*座位数）
+      if (ticketMemberPrice == 0) {
+        mbmberPrice = (Number(areaSettlePriceMin) + Number(handlingFee)) / 100;
+      } else {
+        mbmberPrice =
+          (Number(ticketMemberPrice) +
+            Number(handlingFee) +
+            Number(ticketMemberServiceFeeMin) -
+            Number(discountAmount)) /
+          100;
+      }
+
       total_price = mbmberPrice * ticket_num;
       let activityId = activities[0]?.activityId || null; // 活动id
       let {
