@@ -566,6 +566,17 @@ class getSfcOfferPrice {
         profitAddPrice = profitAddPrice ? Number(profitAddPrice) : 0;
         price = price + profitAddPrice;
       }
+      let isOpenisNightMaxPrice =
+        localStorage.getItem("isOpenisNightMaxPrice") == 1;
+      let currentHour = new Date().getHours();
+      if (isOpenisNightMaxPrice && currentHour >= 1 && currentHour <= 6) {
+        price = Number(supplier_max_price);
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "开启夜间顶价",
+          level: "info"
+        });
+      }
       // 规则报价
       let rule_price = price;
       // 省、蚂蚁最后报价要求整数

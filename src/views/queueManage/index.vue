@@ -20,6 +20,10 @@
         !isOverrunOffer ? "开启超限报价" : "关闭超限报价"
       }}</el-button>
 
+      <el-button type="primary" @click="isNightMaxPrice = !isNightMaxPrice">{{
+        !isNightMaxPrice ? "开启夜间顶价" : "关闭夜间顶价"
+      }}</el-button>
+
       <el-button type="primary" @click="isAnomaly = !isAnomaly">{{
         !isAnomaly ? "开启sfc故障检测" : "关闭sfc故障检测"
       }}</el-button>
@@ -233,6 +237,13 @@ const isOverrunOffer = ref(isOpenOverrunOffer ? true : false);
 watch(isOverrunOffer, (newVal, oldVal) => {
   console.log(`isOverrunOffer 的值从 '${oldVal}' 变为 '${newVal}'`);
   window.localStorage.setItem("isOverrunOffer", newVal ? "1" : "0");
+});
+
+let isOpenisNightMaxPrice = localStorage.getItem("isOpenisNightMaxPrice") == 1;
+const isNightMaxPrice = ref(isOpenisNightMaxPrice ? true : false);
+watch(isNightMaxPrice, (newVal, oldVal) => {
+  console.log(`isOpenisNightMaxPrice 的值从 '${oldVal}' 变为 '${newVal}'`);
+  window.localStorage.setItem("isOpenisNightMaxPrice", newVal ? "1" : "0");
 });
 
 // 是否sfc故障检测
