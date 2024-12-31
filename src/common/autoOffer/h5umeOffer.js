@@ -15,7 +15,7 @@ import {
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
-import { APP_LIST, UME_LIST } from "@/common/constant.js";
+import { APP_LIST, UME_LIST, GROUP_LIST } from "@/common/constant.js";
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
 const tokens = platTokens();
@@ -494,6 +494,12 @@ class getUmeOfferPrice {
         plat_name
       } = params || {};
       // console.log("获取最终报价相关字段", params);
+      let profitAddPrice = 0;
+      if (!GROUP_LIST.includes(this.appFlag)) {
+        profitAddPrice = window.localStorage.getItem("profitAddPrice");
+        profitAddPrice = profitAddPrice ? Number(profitAddPrice) : 0;
+        price = price + profitAddPrice;
+      }
       // 规则报价
       let rule_price = price;
       // 省、蚂蚁最后报价要求整数
@@ -559,6 +565,7 @@ class getUmeOfferPrice {
         level: "info",
         info: {
           rule_price: "规则计算报价：" + rule_price,
+          profitAddPrice: "单店加价金额：" + profitAddPrice,
           supplier_max_price: "平台最高限价：" + supplier_max_price,
           cardQuanCost: "卡券成本：" + cardQuanCost,
           price: "最终报价：" + price,

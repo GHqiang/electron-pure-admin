@@ -151,6 +151,21 @@ let H5_UME_LIST = [
   "zyucgjyc"
 ];
 
+// 含有影院标识的影院列表
+const GROUP_LIST = [
+  "sfc",
+  "lma",
+  "ume",
+  "yaolai",
+  "wanmei",
+  "tpyyc",
+  "zheyingshidai",
+  "hbchyxd",
+  "wanxiang",
+  "hsmzyc",
+  "yinghuang",
+  "zhongying"
+];
 // 影院列表
 const APP_LIST = {
   hsmzyc: "海上明珠影城",
@@ -2550,6 +2565,7 @@ export {
   UME_LIST,
   H5_UME_LIST,
   H5_UME_CINEMA_OBJ,
+  GROUP_LIST,
   APP_LIST,
   NO_SFC_APP_LIST,
   SFC_APP_LIST,

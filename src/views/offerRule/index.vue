@@ -91,6 +91,16 @@
         />
       </el-form-item>
       <el-form-item>
+        <el-input
+          v-model="profitAddPrice"
+          type="number"
+          clearable
+          style="max-width: 280px; margin-right: 15px"
+          placeholder="请输入单店加价金额"
+          @blur="setProfitAddPrice"
+        >
+          <template #prepend>单店利润加价</template>
+        </el-input>
         <el-button type="primary" @click="searchData">搜索</el-button>
         <el-button @click="resetForm">重置</el-button>
         <el-button type="primary" style="padding-left: 0px" @click="addRule">
@@ -331,6 +341,13 @@ const statusObj = {
   // 4: "删除"
 };
 
+// 单店加价金额
+const profitAddPrice = ref("");
+
+const setProfitAddPrice = event => {
+  console.log("val", event.target.value);
+  window.localStorage.setItem("profitAddPrice", event.target.value);
+};
 // 表单查询数据
 const formData = reactive({
   orderForm: "", // 订单来源

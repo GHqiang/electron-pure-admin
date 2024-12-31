@@ -14,7 +14,7 @@ import {
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
-import { APP_LIST, NO_SFC_APP_LIST } from "@/common/constant.js";
+import { APP_LIST, NO_SFC_APP_LIST, GROUP_LIST } from "@/common/constant.js";
 import lierenApi from "@/api/lieren-api";
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
@@ -560,6 +560,12 @@ class getSfcOfferPrice {
           level: "info"
         });
       }
+      let profitAddPrice = 0;
+      if (!GROUP_LIST.includes(this.appFlag)) {
+        profitAddPrice = window.localStorage.getItem("profitAddPrice");
+        profitAddPrice = profitAddPrice ? Number(profitAddPrice) : 0;
+        price = price + profitAddPrice;
+      }
       // 规则报价
       let rule_price = price;
       // 省、蚂蚁最后报价要求整数
@@ -626,6 +632,7 @@ class getSfcOfferPrice {
         level: "info",
         info: {
           rule_price: "规则计算报价：" + rule_price,
+          profitAddPrice: "单店加价金额：" + profitAddPrice,
           supplier_max_price: "平台最高限价：" + supplier_max_price,
           cardQuanCost: "卡券成本：" + cardQuanCost,
           price: "最终报价：" + price,
