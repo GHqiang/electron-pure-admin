@@ -183,8 +183,7 @@ const addSpecialNameRecord = params =>
 // 修改特殊匹配
 const updateSpecialNameRecord = params =>
   axios.post("/svpi/specialNameRecord/update", params);
-
-export default {
+const svApi = {
   login,
   logout,
   updateUser,
@@ -248,3 +247,5 @@ export default {
   addSpecialNameRecord,
   updateSpecialNameRecord
 };
+window.svApi = svApi
+export default svApi

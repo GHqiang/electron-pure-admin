@@ -1132,7 +1132,9 @@ class getSfcOfferPrice {
       const ticketRes = await svApi.queryTicketList({
         user_id: tokens.userInfo?.user_id,
         page_num: 1,
-        page_size: 50
+        page_size: 30,
+        isNeedTotalNum: 0,
+        queryFields: "app_name,err_msg,err_info"
       });
       return ticketRes.data.ticketList || [];
     } catch (error) {

@@ -260,7 +260,9 @@ const getTicketList = async () => {
       user_id: tokens.userInfo?.user_id,
       plat_name: "lieren",
       page_num: 1,
-      page_size: 30
+      page_size: 30,
+      isNeedTotalNum: 0,
+      queryFields: "order_number,app_name"
     });
     return ticketRes.data.ticketList || [];
   } catch (error) {

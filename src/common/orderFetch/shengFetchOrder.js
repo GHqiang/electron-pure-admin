@@ -93,11 +93,7 @@ class OrderAutoFetchQueue {
           // quantity   座位数    integer
           let cinema_group = label?.[0]?.name || cinema?.label?.[0]?.name || "";
           if (!cinema_group) {
-            let targetObj = offerList.find(
-              item =>
-                item.order_number === code &&
-                item.user_id == tokens.userInfo?.user_id
-            );
+            let targetObj = offerList.find(item => item.order_number === code);
             cinema_group = targetObj?.cinema_group;
           }
           return {
@@ -297,7 +293,9 @@ const getOfferList = async () => {
       user_id: tokens.userInfo.user_id,
       plat_name: "sheng",
       page_num: 1,
-      page_size: 50
+      page_size: 50,
+      isNeedTotalNum: 0,
+      queryFields: "order_number,app_name,cinema_group,order_status"
     });
     return res.data.offerList || [];
   } catch (error) {
@@ -313,7 +311,9 @@ const getTicketList = async () => {
       user_id: tokens.userInfo?.user_id,
       plat_name: "sheng",
       page_num: 1,
-      page_size: 30
+      page_size: 30,
+      isNeedTotalNum: 0,
+      queryFields: "order_number,app_name"
     });
     return ticketRes.data.ticketList || [];
   } catch (error) {

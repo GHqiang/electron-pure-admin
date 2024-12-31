@@ -424,7 +424,10 @@ const getOfferList = async () => {
       user_id: tokens.userInfo.user_id,
       plat_name: "yinghuasuan",
       page_num: 1,
-      page_size: 50
+      page_size: 50,
+      isNeedTotalNum: 0,
+      queryFields:
+        "order_id,order_number,app_name,order_status,cinema_group,cinema_name,show_time,lockseat"
     });
     let list = res.data.offerList || [];
     console.error("获取历史报价记录返回", error);
@@ -442,7 +445,9 @@ const getTicketList = async () => {
       user_id: tokens.userInfo?.user_id,
       plat_name: "yinghuasuan",
       page_num: 1,
-      page_size: 50
+      page_size: 50,
+      isNeedTotalNum: 0,
+      queryFields: "order_number,app_name"
     });
     let list = ticketRes.data.ticketList || [];
     console.error("获取历史出票记录返回", error);
