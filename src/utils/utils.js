@@ -1511,7 +1511,7 @@ const getCinemaId = (cinema_name, list, appName, city_name) => {
     }
     let specialCinemaInfo = specialCinemaList[0];
     if (specialCinemaInfo) {
-      cinemaName = specialCinemaInfo.sfc_cinema_name;
+      cinemaName = cinemNameSpecial(specialCinemaInfo.sfc_cinema_name);
       console.warn("特殊匹配影院名称成功", cinemaName, cinema_name);
     } else {
       console.warn("特殊匹配影院名称失败", cinemaName, specialList);
@@ -1591,7 +1591,7 @@ const getCinemaIdByLma = (cinema_name, list, appName, city_name) => {
     }
     let specialCinemaInfo = specialCinemaList[0];
     if (specialCinemaInfo) {
-      cinemaName = specialCinemaInfo.sfc_cinema_name;
+      cinemaName = cinemNameSpecial(specialCinemaInfo.sfc_cinema_name);
       console.warn("特殊匹配影院名称成功", cinemaName, cinema_name);
     } else {
       console.warn("特殊匹配影院名称失败", cinemaName, specialList);
@@ -1646,6 +1646,7 @@ const getTargetCinema = (cinema_name, list, appName) => {
           ?.split("**")
           ?.map(itemName => cinemNameSpecial(itemName))
       }));
+    console.log("specialList", specialList);
     if (specialList?.length) {
       let specialCinemaInfo = specialList.find(
         item =>
@@ -1653,7 +1654,7 @@ const getTargetCinema = (cinema_name, list, appName) => {
           item.order_cinema_name.includes(cinemaName)
       );
       if (specialCinemaInfo) {
-        cinemaName = specialCinemaInfo.sfc_cinema_name;
+        cinemaName = cinemNameSpecial(specialCinemaInfo.sfc_cinema_name);
         console.warn("特殊匹配影院名称成功", cinemaName, cinema_name);
       } else {
         console.warn("特殊匹配影院名称失败", cinemaName, specialList);
@@ -1724,7 +1725,7 @@ const cinemaMatchHandle = (cinema_name, list, appName) => {
     );
     console.log("specialCinemaInfo", specialCinemaInfo, cinema_name);
     if (specialCinemaInfo) {
-      cinemaName = specialCinemaInfo.sfc_cinema_name;
+      cinemaName = cinemNameSpecial(specialCinemaInfo.sfc_cinema_name);
     } else {
       console.warn("特殊匹配影院名称失败", cinemaName, specialList);
     }
