@@ -485,6 +485,18 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           : "http://47.113.191.173:3000" +
             "/ume-ser" +
             config.originalUrl.slice(6);
+
+        if (
+          [
+            "film.gethotfilms",
+            "schedule.getschedules",
+            "seat.getSeatMap",
+            "order.getorderlist",
+            "pay.getpayprivilegeinfo"
+          ].some(item => config.url.includes(item))
+        ) {
+          config.responseType = "arraybuffer";
+        }
       }
       // console.log('请求config', config)
       return config;
@@ -522,8 +534,23 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       }
 
       // 对响应进行统一处理
-      const data = response.data;
+      const headers1 = response.headers; // 响应头
+      let data = response.data;
       // console.log("data===>", data);
+      // console.log("headers1===>", headers1);
+      // if (headers1.is_zstd == 1 && !data?.bizValue) {
+      //   data = await decompress(data);
+      //   console.log("解压后的数据:", data);
+      // }
+      if (headers1.is_buffer == 1) {
+        const decoder = new TextDecoder("utf-8");
+        const jsonStr = decoder.decode(data);
+        // data = data.toString("utf-8");
+        // console.log("data===>1", jsonStr);
+        data = JSON.parse(jsonStr);
+      }
+
+      // console.log("headers1===>", headers1);
       // console.log("response.config", response.config);
       // let whitelistSp = ['/sp/order', '/sp/unlock']
       let whitelistSp = [];
@@ -547,13 +574,13 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             config.retryCount = 1;
             config.url = config.originalUrl.split("/1.0/")[0];
             // console.log("config.url", config.url);
-            let cookieStr = String(data.headers1["set-cookie"]);
+            let cookieStr = String(headers1["set_cookie"]);
             let _m_h5_tk = extractCookieValueByRegex(cookieStr, "_m_h5_tk=");
             let _m_h5_tk_enc = extractCookieValueByRegex(
               cookieStr,
               "_m_h5_tk_enc="
             );
-            let umetoken = data.headers1.umetoken;
+            let umetoken = headers1.umetoken;
             // console.log("oldToken", token);
             // 接口重试时token续期
             if (_m_h5_tk) {

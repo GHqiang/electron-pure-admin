@@ -983,6 +983,14 @@ class getUmeOfferPrice {
         item => item.status == "1" && item.areaId == maxSeatPriceAreaId
       );
       let seatId = maxAreaList[0]?.seatId;
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "获取座位布局成功",
+        level: "info",
+        info: {
+          seatId
+        }
+      });
       // try {
       //   // 过滤出来未售座位然后计算分区剩余座位占比，1-未售
       //   let seatList = seat_data.filter(item => item.status === 1);
@@ -1031,12 +1039,14 @@ class getUmeOfferPrice {
         seatIds: seatId
       });
       let activities = orderInfoRes?.privileges || [];
+      console.warn("activities", activities);
       let member_total_price = activities.find(
         item => item.payMethod === "CARD"
       )?.privilegeTotalPrice;
       if (member_total_price) {
         maxSeatPrice = member_total_price;
       } else {
+        console.warn("获取真实会员价异常");
         this.logList.push({
           opera_time: getCurrentTime(),
           des: "获取真实会员价异常",
