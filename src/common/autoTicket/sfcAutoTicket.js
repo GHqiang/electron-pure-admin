@@ -3404,7 +3404,10 @@ class OrderAutoTicketQueue {
                 this.logList.push({
                   opera_time: getCurrentTime(),
                   des: `该会员卡计算后价格-${price.total_price}高于真实会员价-${real_member_price}*座位数-${ticket_num},${isChangeCard ? "准备换卡" : ""};`,
-                  level: "info"
+                  level: "info",
+                  info: {
+                    price
+                  }
                 });
               } else {
                 card_id = card.id;

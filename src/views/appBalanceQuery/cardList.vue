@@ -440,12 +440,14 @@ const getCardListByApp = async (app_name, phone, session_id) => {
       cardList = res.data?.sleep || [];
       cardList.push({
         card_number: res.data.card_number,
-        balance: res.data.money_str
+        balance: res.data.money_str,
+        is_main_card: 1
       });
       cardList = cardList.map(item => ({
         card_id: item.card_number + "",
         card_num: item.card_number,
-        balance: item.balance ? item.balance + "" : "0"
+        balance: item.balance ? item.balance + "" : "0",
+        is_main_card: item.is_main_card
       }));
     } else {
       // sfc系列
@@ -591,7 +593,12 @@ const syncCardInfo = async () => {
         addCardListHandle(addCardList);
       }
       let updateCardList = memberCardList
-        .filter(item => item.id && item.balance !== undefined)
+        .filter(item => {
+          if (item.app_name == "lma") {
+            return item.id && item.is_main_card == 1;
+          }
+          return item.id && item.balance !== undefined;
+        })
         .map(item => ({
           id: item.id,
           balance: item.balance,
