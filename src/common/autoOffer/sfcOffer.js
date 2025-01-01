@@ -561,7 +561,7 @@ class getSfcOfferPrice {
         });
       }
       let profitAddPrice = 0;
-      if (!GROUP_LIST.includes(this.appFlag)) {
+      if (offerType !== "1" && !GROUP_LIST.includes(this.appFlag)) {
         profitAddPrice = window.localStorage.getItem("profitAddPrice");
         profitAddPrice = profitAddPrice ? Number(profitAddPrice) : 0;
         price = price + profitAddPrice;
