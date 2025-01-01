@@ -105,25 +105,25 @@ const createAxios = ({ app_name, timeout = 20 }) => {
     async response => {
       // 如果是重试后的成功响应，记录日志
       if (response?.config?.retryCount > 0) {
-        logUpload(
-          {
-            plat_name: "",
-            app_name: app_name,
-            order_number: "",
-            type: ""
-          },
-          [
-            {
-              opera_time: getCurrentTime(),
-              des: "接口重试成功",
-              level: "info",
-              info: {
-                retryCount: response?.config?.retryCount,
-                originalUrl: response?.config?.originalUrl
-              }
-            }
-          ]
-        );
+        // logUpload(
+        //   {
+        //     plat_name: "",
+        //     app_name: app_name,
+        //     order_number: "",
+        //     type: ""
+        //   },
+        //   [
+        //     {
+        //       opera_time: getCurrentTime(),
+        //       des: "接口重试成功",
+        //       level: "info",
+        //       info: {
+        //         retryCount: response?.config?.retryCount,
+        //         originalUrl: response?.config?.originalUrl
+        //       }
+        //     }
+        //   ]
+        // );
       }
 
       // 对响应进行统一处理
@@ -199,27 +199,27 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       }
       // 仍旧重试失败增加日志上送
       if (config.retryCount) {
-        logUpload(
-          {
-            plat_name: "",
-            app_name: app_name,
-            order_number: "",
-            type: ""
-          },
-          [
-            {
-              opera_time: getCurrentTime(),
-              des: "接口重试到最后还是失败",
-              level: "info",
-              info: {
-                originalUrl: config.originalUrl,
-                retryCount: config.retryCount,
-                params: config.params,
-                data: config.data
-              }
-            }
-          ]
-        );
+        // logUpload(
+        //   {
+        //     plat_name: "",
+        //     app_name: app_name,
+        //     order_number: "",
+        //     type: ""
+        //   },
+        //   [
+        //     {
+        //       opera_time: getCurrentTime(),
+        //       des: "接口重试到最后还是失败",
+        //       level: "info",
+        //       info: {
+        //         originalUrl: config.originalUrl,
+        //         retryCount: config.retryCount,
+        //         params: config.params,
+        //         data: config.data
+        //       }
+        //     }
+        //   ]
+        // );
       }
       // 对HTTP错误码进行处理
       if (response && response.status) {
