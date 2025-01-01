@@ -2604,7 +2604,10 @@ class OrderAutoTicketQueue {
       const res = await svApi.queryCardList({
         app_name: appFlag,
         rule: tokens.userInfo.rule,
-        status: "1"
+        status: "1",
+        isNeedTotalNum: 0,
+        queryFields:
+          "card_num,card_id,balance,mobile,card_discount,linkCinemaIds,use_limit_day,use_limit_month,daily_usage,monthly_usage,usage_date"
       });
       this.logList.push({
         opera_time: getCurrentTime(),
@@ -3090,7 +3093,10 @@ const getUnCardList = async appFlag => {
     const cardRes = await svApi.queryCardList({
       app_name: appFlag,
       rule: tokens.userInfo.rule,
-      status: "2"
+      status: "2",
+      isNeedTotalNum: 0,
+      queryFields:
+        "card_num,card_id,balance,mobile,card_discount,linkCinemaIds,use_limit_day,use_limit_month,daily_usage,monthly_usage,usage_date"
     });
     let list = cardRes?.data?.cardList || [];
     return {

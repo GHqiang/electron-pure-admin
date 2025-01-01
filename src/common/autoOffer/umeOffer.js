@@ -723,7 +723,10 @@ class getUmeOfferPrice {
         const cardRes = await svApi.queryCardList({
           app_name: app_name,
           rule: tokens.userInfo.rule,
-          status: "1"
+          status: "1",
+          isNeedTotalNum: 0,
+          queryFields:
+            "card_num,card_discount,linkCinemaIds,use_limit_day,use_limit_month,daily_usage,monthly_usage,usage_date"
         });
         let list = cardRes.data.cardList || [];
         list = list.map(item => ({
