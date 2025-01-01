@@ -97,9 +97,11 @@
           clearable
           style="max-width: 280px; margin-right: 15px"
           placeholder="请输入单店加价金额"
-          @blur="setProfitAddPrice"
         >
           <template #prepend>单店利润加价</template>
+          <template #append>
+            <el-button text @click="setProfitAddPrice"> 保存 </el-button>
+          </template>
         </el-input>
         <el-button type="primary" @click="searchData">搜索</el-button>
         <el-button @click="resetForm">重置</el-button>
@@ -342,11 +344,11 @@ const statusObj = {
 };
 
 // 单店加价金额
-const profitAddPrice = ref("");
-
-const setProfitAddPrice = event => {
-  console.log("val", event.target.value);
-  window.localStorage.setItem("profitAddPrice", event.target.value);
+let profitAddPriceValue = window.localStorage.getItem("profitAddPrice");
+const profitAddPrice = ref(profitAddPriceValue || "");
+const setProfitAddPrice = () => {
+  console.log("val", profitAddPrice.value);
+  window.localStorage.setItem("profitAddPrice", profitAddPrice.value);
 };
 // 表单查询数据
 const formData = reactive({
