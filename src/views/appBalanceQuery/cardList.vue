@@ -531,12 +531,45 @@ const updateCardListHandle = async cardList => {
 // 同步卡信息
 const syncCardInfo = async () => {
   let phone = mobile.value;
+  let appName = formData.app_name;
+  console.log("appName", appName);
+  let pro1;
   if (!phone) {
     ElMessage.warning("请先输入要同步的账号（手机号）");
     return;
   } else {
     ElMessage.info("本次同步只同步登录过的影院会员卡信息");
+    let tips = "本次同步只同步登录过的影院会员卡信息，不包含凤凰云智h5系列";
+    if (appName) {
+      tips = "本次同步只同步" + APP_LIST[appName];
+    }
+    if (appName === "lma") {
+      tips =
+        tips +
+        "，卢米埃只同步主卡，其余卡充值后请设为主卡再同步，或者手动编辑维护余额";
+    }
+    let confirmResolve;
+    pro1 = () =>
+      new Promise(resolve => {
+        confirmResolve = resolve;
+      });
+    ElMessageBox.confirm(tips, "提示", {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning"
+    })
+      .then(() => {
+        confirmResolve();
+      })
+      .catch(() => {
+        ElMessage({
+          type: "info",
+          message: "取消同步"
+        });
+      });
   }
+  await pro1();
+  console.warn("开始同步");
   const loading = ElLoading.service({
     lock: true,
     text: "同步中",
@@ -547,7 +580,9 @@ const syncCardInfo = async () => {
     let loginInfoList = getCinemaLoginInfoList().filter(
       itemA =>
         itemA.mobile == phone &&
-        (formData.app_name ? itemA.app_name == formData.app_name : true)
+        (formData.app_name
+          ? itemA.app_name == formData.app_name
+          : !H5_UME_LIST.includes(itemA.app_name))
     );
     console.log("该手机号的loginInfoListt", loginInfoList);
     if (!loginInfoList?.length) {
