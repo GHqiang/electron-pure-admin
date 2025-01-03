@@ -109,12 +109,12 @@ const UME_LIST = [
   "xgjyycnjystjd",
   "sjzhlh",
   "zhuying",
-  "zheyingshidai",
-  "wanxiang"
+  "zheyingshidai"
 ];
 
 // umeh5系列影院集合
 let H5_UME_LIST = [
+  "wanxiang",
   "hsmzyc",
   "gzfyyc",
   "szxtyy",
@@ -2137,6 +2137,8 @@ const TICKET_CONPREFIX_OBJ = {
 // umeh5系列相关信息
 const H5_UME_CINEMA_OBJ = {
   // cinemaLinkId、channelCode、tid(laskId：即sid可通过tid调接口获取)
+  // 万象影城
+  wanxiang: ["10273", "HUARUN_H5_PROD_10273_MPS"],
   // 海上明珠
   hsmzyc: ["16014", "HSMZYC_H5_PROD_S_MPS"],
   // 广州飞扬影城
