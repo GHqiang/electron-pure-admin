@@ -151,6 +151,14 @@ let H5_UME_LIST = [
   "zyucgjyc"
 ];
 
+// 猎人订单类型奖励金额
+const LIERENR_REWARDS = {
+  0: 0, // 普通
+  1: 1.5, // 加急
+  2: 2.5, // 特急
+  3: 4 // vip
+};
+
 // 含有影院标识的影院列表
 const GROUP_LIST = [
   "sfc",
@@ -2565,6 +2573,7 @@ export {
   UME_LIST,
   H5_UME_LIST,
   H5_UME_CINEMA_OBJ,
+  LIERENR_REWARDS,
   GROUP_LIST,
   APP_LIST,
   NO_SFC_APP_LIST,

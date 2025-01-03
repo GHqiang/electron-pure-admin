@@ -8,6 +8,7 @@ import {
 } from "@/utils/utils";
 import svApi from "@/api/sv-api"; // 机器api
 import lierenApi from "@/api/lieren-api"; // 猎人平台api
+import { LIERENR_REWARDS } from "@/common/constant.js";
 // 获取最终报价信息实体类
 import getOfferPriceFun from "./commonOfferHandle.js";
 // 平台toke列表
@@ -146,7 +147,7 @@ class OrderAutoOfferQueue {
             plat_name: "lieren",
             app_name: getCinemaFlag(item),
             // rewards: item.rewards == 1 ? 4 : 0,
-            rewards: [2, 3].includes(item.order_urgent) ? 4 : 0, // 0-普通 1-加急 2-特急 3-vip
+            rewards: LIERENR_REWARDS[item.order_urgent] || 0, // 0-普通 1-加急 2-特急 3-vip
             // 转为截止时间戳，原值： 1727009794
             offer_end_time: item.sytime * 1000
           };

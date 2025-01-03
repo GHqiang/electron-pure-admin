@@ -428,14 +428,17 @@ class OrderAutoTicketQueue {
         failReason: `${errMsg}——${errInfo}`
       });
       let { supplier_end_price, tpp_price, ticket_num } = order;
-      // 蚂蚁、洋葱转单是原价的百分之三
-      if (["mayi", "yangcong"].includes(plat_name) && tpp_price) {
+      // 洋葱转单是原价的百分之三
+      if (["yangcong"].includes(plat_name) && tpp_price) {
         supplier_end_price = tpp_price;
       }
-      let transfer_fee = (
-        (Number(ticket_num) * Number(supplier_end_price) * 100 * 3) /
-        10000
-      ).toFixed(2);
+      let transfer_fee = 0; // 蚂蚁转单扣积分
+      if (plat_name != "mayi") {
+        transfer_fee = (
+          (Number(ticket_num) * Number(supplier_end_price) * 100 * 3) /
+          10000
+        ).toFixed(2);
+      }
       let transferParams = {
         transfer_fee // 转单手续费
       };

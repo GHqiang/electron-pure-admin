@@ -1,7 +1,7 @@
 // 平台获取订单队列
 import lierenApi from "@/api/lieren-api";
 import svApi from "@/api/sv-api";
-
+import { LIERENR_REWARDS } from "@/common/constant.js";
 import {
   getCinemaFlag,
   logUpload,
@@ -192,7 +192,7 @@ class OrderAutoFetchQueue {
       list = list.map(item => ({
         ...item,
         // rewards: item.rewards == 1 ? 4 : 0,
-        rewards: [2, 3].includes(item.order_urgent) ? 4 : 0 // 0-普通 1-加急 2-特急 3-vip
+        rewards: LIERENR_REWARDS[item.order_urgent] || 0 // 0-普通 1-加急 2-特急 3-vip
       }));
       if (isTestOrder) {
         list = mockRes?.data || [];
