@@ -418,7 +418,7 @@ const getCardListByApp = async (app_name, phone, session_id) => {
       params.session_id = session_id;
     }
     const res = await APP_API_OBJ[app_name].getCardList(params);
-    console.warn("获取会员卡列表返回", res.data);
+    console.warn("获取会员卡列表返回", res);
     // 只获取有效卡，无效卡要过滤掉
     if (UME_LIST.includes(app_name)) {
       cardList = res.data || [];

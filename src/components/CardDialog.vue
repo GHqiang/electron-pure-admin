@@ -149,7 +149,7 @@
 import { ref, reactive, toRaw } from "vue";
 import { ElLoading, ElMessage } from "element-plus";
 import { APP_API_OBJ } from "@/common/index.js";
-import { APP_LIST, UME_LIST } from "@/common/constant";
+import { APP_LIST, UME_LIST, H5_UME_LIST } from "@/common/constant";
 import { useAppBaseData } from "@/store/appBaseData";
 const appBaseDataInfo = useAppBaseData();
 const { appBaseData, setBaseData } = appBaseDataInfo;
@@ -339,6 +339,14 @@ const getCinemaListByCityId = async city_id => {
         id: item.cinemaCode,
         name: item.cinemaName
       }));
+    } else if (H5_UME_LIST.includes(app_name)) {
+      cinemaList =
+        cityCinemaList.find(item => item.cityCode === city_id)?.cinemas || [];
+      cinemaList = cinemaList.map(item => ({
+        ...item,
+        id: item.cinemaLinkId,
+        name: item.cinemaName
+      }));
     } else if (app_name === "lma") {
       const res = await APP_API_OBJ[app_name].getCinemaList(city_id);
       cinemaList = res.data.list || [];
@@ -362,24 +370,22 @@ const getCinemaListByCityId = async city_id => {
 const getAllCinemaList = async cityList => {
   try {
     const { app_name } = formData;
-    let allCinemaList = appBaseData[app_name]?.allCinemaList || [];
+    let allCinemaList = [];
     console.log("获取全部影院列表", app_name, toRaw(allCinemaList));
-    if (!allCinemaList?.length) {
-      for (let index = 0; index < cityList.length; index++) {
-        const item = cityList[index];
-        let list = await getCinemaListByCityId(item.id);
-        list = list.map(itemA => {
-          return {
-            ...itemA,
-            city_name: item.name,
-            city_id: item.id
-          };
-        });
-        if (list.length > 0) {
-          allCinemaList = allCinemaList.concat(list);
-        }
+
+    for (let index = 0; index < cityList.length; index++) {
+      const item = cityList[index];
+      let list = await getCinemaListByCityId(item.id);
+      list = list.map(itemA => {
+        return {
+          ...itemA,
+          city_name: item.name,
+          city_id: item.id
+        };
+      });
+      if (list.length > 0) {
+        allCinemaList = allCinemaList.concat(list);
       }
-      setBaseData({ allCinemaList: allCinemaList }, app_name);
     }
     cinemaAllList.value = allCinemaList;
     console.log("获取全部影院列表返回", toRaw(allCinemaList));
@@ -394,36 +400,46 @@ const getCityList = async () => {
   try {
     let params = {};
     const { app_name } = formData;
-    let list = appBaseData[app_name]?.cityList;
+    let list;
     console.log("获取城市列表参数", params, app_name, toRaw(list));
-    if (!list?.length) {
-      if (UME_LIST.includes(app_name)) {
-        let params = {
-          params: {
-            channelCode: "QD0000001",
-            sysSourceCode: "YZ001",
-            cinemaCode: "32012801",
-            cinemaLinkId: "15946"
-          }
-        };
-        const res = await APP_API_OBJ[app_name].getCinemaList(params);
-        cityCinemaList = res.data || [];
-        list = cityCinemaList.map(item => ({
-          name: item.cityName,
-          id: item.cityCode
-        }));
-      } else if (app_name === "lma") {
-        const res = await APP_API_OBJ[app_name].getCityList();
-        list = res.data.list || [];
-        list = list.map(item => ({
-          name: item.city_name,
-          id: item.city_id
-        }));
-      } else {
-        const res = await APP_API_OBJ[app_name].getCityList(params);
-        list = res?.data?.all_city || [];
-      }
-      setBaseData({ cityList: list }, app_name);
+    if (UME_LIST.includes(app_name)) {
+      let params = {
+        params: {
+          channelCode: "QD0000001",
+          sysSourceCode: "YZ001",
+          cinemaCode: "32012801",
+          cinemaLinkId: "15946"
+        }
+      };
+      const res = await APP_API_OBJ[app_name].getCinemaList(params);
+      cityCinemaList = res.data || [];
+      list = cityCinemaList.map(item => ({
+        name: item.cityName,
+        id: item.cityCode
+      }));
+    } else if (H5_UME_LIST.includes(app_name)) {
+      let params = {
+        empCode: "",
+        leaseCode: ""
+      };
+      const res = await APP_API_OBJ[app_name].getCinemaList(params);
+      console.log("res", res);
+      cityCinemaList = res.bizValue?.cities || [];
+      list = cityCinemaList.map(item => ({
+        name: item.cityName,
+        id: item.cityCode
+      }));
+      console.log("list", list);
+    } else if (app_name === "lma") {
+      const res = await APP_API_OBJ[app_name].getCityList();
+      list = res.data.list || [];
+      list = list.map(item => ({
+        name: item.city_name,
+        id: item.city_id
+      }));
+    } else {
+      const res = await APP_API_OBJ[app_name].getCityList(params);
+      list = res?.data?.all_city || [];
     }
     console.log("获取城市列表返回", toRaw(list));
     return toRaw(list);
