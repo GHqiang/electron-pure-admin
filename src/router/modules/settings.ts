@@ -41,19 +41,21 @@ export default {
       }
     },
     {
-      path: "/set/offerRecord",
-      name: "offerRecord",
-      component: () => import("@/views/offerRecord/index.vue"),
+      path: "/set/cardList",
+      name: "cardList",
+      component: () => import("@/views/appBalanceQuery/cardList.vue"),
       meta: {
-        title: "报价记录"
+        title: "会员卡列表"
       }
     },
     {
-      path: "/set/ticketRecord",
-      name: "ticketRecord",
-      component: () => import("@/views/ticketRecord/index.vue"),
+      path: "/set/ruleConfig",
+      name: "ruleConfig",
+      component: () => import("@/views/ruleConfig/index.vue"),
       meta: {
-        title: "出票记录"
+        title: "规则设置",
+        fixedTag: true,
+        keepAlive: true
       }
     },
     {
@@ -67,11 +69,19 @@ export default {
       }
     },
     {
-      path: "/set/cardList",
-      name: "cardList",
-      component: () => import("@/views/appBalanceQuery/cardList.vue"),
+      path: "/set/offerRecord",
+      name: "offerRecord",
+      component: () => import("@/views/offerRecord/index.vue"),
       meta: {
-        title: "会员卡列表"
+        title: "报价记录"
+      }
+    },
+    {
+      path: "/set/ticketRecord",
+      name: "ticketRecord",
+      component: () => import("@/views/ticketRecord/index.vue"),
+      meta: {
+        title: "出票记录"
       }
     }
     // {

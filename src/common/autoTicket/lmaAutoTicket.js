@@ -1878,8 +1878,10 @@ class OrderAutoTicketQueue {
       const { lmaToken } = currentParams;
       // 拿订单号去匹配报价记录
       if (offer_type !== "1") {
-        if (real_member_price < 30) return;
-        // 只判断价格是否大于30，如果大于就用券
+        let lmaIsUseQuanValue = window.localStorage.getItem("lmaIsUseQuan");
+        let lmaIsUseQuan = lmaIsUseQuanValue == 1 && real_member_price >= 33;
+        if (!lmaIsUseQuan) return;
+        // 只判断价格是否大于33，如果大于就用券
         quan_value = "lma-5";
       }
       const quanInfo = await this.getQuanInfo(quan_value, appFlag);

@@ -1070,10 +1070,10 @@ class getUmeOfferPrice {
         console.warn("获取真实会员价异常");
         this.logList.push({
           opera_time: getCurrentTime(),
-          des: "获取真实会员价异常",
-          level: "error"
+          des: "获取真实会员价不存在",
+          level: "info"
         });
-        return;
+        maxSeatPrice = 0;
       }
       return {
         ...targetShow,

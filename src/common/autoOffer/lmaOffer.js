@@ -845,13 +845,15 @@ class getLmaOfferPrice {
         // 按最低折扣取值报价
         let discount = cardList[0]?.card_discount;
         let real_member_price = Number(member_price);
-        if (real_member_price >= 33) {
+        let lmaIsUseQuanValue = window.localStorage.getItem("lmaIsUseQuan");
+        let lmaIsUseQuan = lmaIsUseQuanValue == 1 && real_member_price >= 33;
+        if (lmaIsUseQuan) {
           member_price = real_member_price - 5;
         }
         member_price = discount
           ? (Number(member_price) * 100 * discount) / 10000
           : Number(member_price);
-        if (real_member_price >= 33) {
+        if (lmaIsUseQuan) {
           const quanInfo = await this.getQuanInfo("lma-5", appFlag);
           let quan_cost = quanInfo?.quan_cost || 1;
           // 减5券的成本1，不固定
@@ -865,7 +867,7 @@ class getLmaOfferPrice {
             real_member_price: "真实会员价：" + real_member_price,
             discount: "最小折扣：" + discount,
             cost_member_price:
-              "会员成本价（真实会员价>=33?（真实会员价-5）* 折扣 + 1 : 真实会员价*折扣）：" +
+              `会员成本价：${lmaIsUseQuan ? "(真实会员价-5）* 折扣 + 1" : "真实会员价*折扣"} :` +
               Number(member_price.toFixed(2))
           }
         });
