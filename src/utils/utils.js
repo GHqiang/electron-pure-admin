@@ -1231,6 +1231,8 @@ const sendWxPusherMessage = async ({
   city_name,
   cinema_name,
   film_name,
+  hall_name,
+  supplier_end_price,
   show_time,
   lockseat,
   transferTip,
@@ -1257,9 +1259,11 @@ const sendWxPusherMessage = async ({
   单号：${order_number}; <br/>
   城市：${city_name}; <br/>
   影院：${cinema_name}; <br/>
+  影厅：${hall_name}; <br/>
   片名：${film_name}; <br/>
   场次：${show_time}; <br/>
   座位：${lockseat}; <br/>
+  中标价：${supplier_end_price}; <br/>
   原因：${failReason};<br/>
   提示：${transferTip};<br/>
   </p>`;

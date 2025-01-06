@@ -309,6 +309,8 @@ class OrderAutoTicketQueue {
         film_name,
         show_time,
         lockseat,
+        hall_name: order.hall_name,
+        supplier_end_price: order.supplier_end_price,
         transferTip: "自动转单处于关闭状态,需手动出票或者转单",
         failReason: `${errMsg}——${errInfo}`
       });
@@ -335,6 +337,8 @@ class OrderAutoTicketQueue {
             film_name,
             show_time,
             lockseat,
+            hall_name: order.hall_name,
+            supplier_end_price: order.supplier_end_price,
             transferTip:
               "转单前取消订单失败，建议手动取消订单，以便后续订单正常出票",
             failReason: `${JSON.stringify(cancelRes.error)}`
@@ -415,6 +419,8 @@ class OrderAutoTicketQueue {
         film_name,
         show_time,
         lockseat,
+        hall_name: order.hall_name,
+        supplier_end_price: order.supplier_end_price,
         transferTip: "自动转单处于开启状态,已转单无需处理",
         failReason: `${errMsg}——${errInfo}`
       });
@@ -462,6 +468,8 @@ class OrderAutoTicketQueue {
         film_name,
         show_time,
         lockseat,
+        hall_name: order.hall_name,
+        supplier_end_price: order.supplier_end_price,
         transferTip: "自动转单开启，转单失败，需手动出票或者转单",
         failReason: `${errMsg}——${errInfo}`
       });
@@ -570,6 +578,8 @@ class OrderAutoTicketQueue {
         film_name,
         show_time,
         lockseat,
+        hall_name: item.hall_name,
+        supplier_end_price: item.supplier_end_price,
         transferTip: "此处不转单，直接跳过，需手动出票",
         failReason: str
       });
@@ -1939,6 +1949,8 @@ class OrderAutoTicketQueue {
         film_name: orderInfo?.film_name,
         show_time: orderInfo?.show_time,
         lockseat,
+        hall_name: orderInfo.hall_name,
+        supplier_end_price: orderInfo.supplier_end_price,
         transferTip: "哈哈暂不上传取票码,需手动上传",
         failReason: "哈哈暂不上传取票码,需手动上传"
       });
@@ -2168,6 +2180,8 @@ class OrderAutoTicketQueue {
           film_name: orderInfo.film_name,
           show_time: orderInfo?.show_time,
           lockseat,
+          hall_name: orderInfo.hall_name,
+          supplier_end_price: orderInfo.supplier_end_price,
           transferTip: "此处不转单，需关注该订单，适时手动上传取票码",
           failReason: "系统延迟轮询3分钟后获取取票码仍失败"
         });
@@ -2287,6 +2301,8 @@ class OrderAutoTicketQueue {
           film_name: orderInfo?.film_name,
           show_time: orderInfo?.show_time,
           lockseat,
+          hall_name: orderInfo.hall_name,
+          supplier_end_price: orderInfo.supplier_end_price,
           transferTip: "提交取票码失败,需手动上传",
           failReason: errInfo
         });
