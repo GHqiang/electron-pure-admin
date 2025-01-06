@@ -1334,6 +1334,7 @@ class OrderAutoTicketQueue {
       });
       orderId = createOrderRes?.orderId;
       let quan_fee = offerRule.quan_fee || 0;
+      quan_fee = Number(quan_fee);
       let cardNo;
       // if (payAmount > 0 && quan_fee > 0 && offerRule.offer_type == 1) {
       //   // 支付方式里返回的有会员卡方式和可用列表

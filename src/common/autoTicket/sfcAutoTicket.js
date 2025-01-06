@@ -1399,6 +1399,7 @@ class OrderAutoTicketQueue {
       let pay_money = Number(priceInfo.total_price); // 此处是为了将订单价格30.00转为30，将0.00转为0
       console.log(conPrefix + "订单最后价格", pay_money, priceInfo);
       let quan_fee = offerRule.quan_fee || 0;
+      quan_fee = Number(quan_fee);
       let quan_fee_total = quan_fee * ticket_num;
       if (offerRule.offer_type === "1" && pay_money !== quan_fee_total) {
         this.logList.push({
@@ -1880,7 +1881,7 @@ class OrderAutoTicketQueue {
           });
           if (cardList?.length) {
             // 按余额倒序取最大余额的卡id（用券时这个card_id需要再看看是否这样取）
-            let cards = cardList.sort((a, b) => b.balance - ba.balance);
+            let cards = cardList.sort((a, b) => b.balance - a.balance);
             // if (appFlag === "nanugojgh") {
             //   cards = cards.filter(item => item.cinema_id === cinema_id);
             // }

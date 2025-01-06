@@ -1518,6 +1518,7 @@ class OrderAutoTicketQueue {
       let order_num = createOrderRes?.payOrderCode;
       let paymentAmount = createOrderRes?.paymentAmount;
       let quan_fee = offerRule.quan_fee || 0;
+      quan_fee = Number(quan_fee);
       let cardNo, paymentWay;
       // 纯用券不补钱是优惠券，只要补钱或者纯用卡就是会员卡
       if (!quan_fee && offerRule.offer_type == 1) {
