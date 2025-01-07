@@ -56,7 +56,6 @@ export const appUserInfo = defineStore("appUserInfo", {
       ningbo: null,
       hema: null,
       dsyc: null,
-      cqhx: null,
       jqx: null,
       fszy: null,
       xywszy: null,

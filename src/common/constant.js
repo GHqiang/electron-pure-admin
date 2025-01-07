@@ -244,7 +244,6 @@ const APP_LIST = {
   laina: "莱纳龙域",
   hema: "河马国际",
   dsyc: "大商影城",
-  cqhx: "华熙国际",
   jqx: "金泉港",
   fszy: "佛山中影",
   xywszy: "襄阳武商中影",
@@ -1111,18 +1110,6 @@ const DSYC_SPECIAL_CINEMA_LIST = [
   }
 ];
 
-// 华熙国际特殊影院集合
-const CQHX_SPECIAL_CINEMA_LIST = [
-  {
-    order_cinema_name: ["华熙国际影城", "华熙LIVE鱼洞华熙国际影城"],
-    sfc_cinema_name: "重庆华熙国际影城"
-  },
-  {
-    order_cinema_name: "华熙国际影城",
-    sfc_cinema_name: "成都华熙国际影城"
-  }
-];
-
 // UME特殊影院集合(芒果平台cinemaCode不对，需要用名字匹配)
 const UME_SPECIAL_CINEMA_LIST = [
   // 泸州
@@ -1984,7 +1971,6 @@ const SPECIAL_CINEMA_OBJ = {
   laina: LAINA_SPECIAL_CINEMA_LIST,
   hema: [],
   dsyc: DSYC_SPECIAL_CINEMA_LIST,
-  cqhx: CQHX_SPECIAL_CINEMA_LIST,
   jqx: JQX_SPECIAL_CINEMA_LIST,
   fszy: FSZY_SPECIAL_CINEMA_LIST,
   xywszy: [],
@@ -2078,7 +2064,6 @@ const TICKET_CONPREFIX_OBJ = {
   laina: "【莱纳龙域自动出票】——",
   hema: "【河马国际自动出票】——",
   dsyc: "【大商影城自动出票】——",
-  cqhx: "【华熙国际自动出票】——",
   jqx: "【金泉港自动出票】——",
   fszy: "【佛山中影自动出票】——",
   xywszy: "【襄阳武商中影自动出票】——",
@@ -2226,7 +2211,6 @@ const APP_OPENID_OBJ = {
   laina: "oPKih4oNM3oGJGcEItWiN5lJ93oA",
   hema: "oD3rN4ge-6H9Q4mYVBBJcsMFoRkc",
   dsyc: "0e3M6p200SW2CS1VcJ100oErLd0M6p2y",
-  cqhx: "0c3Jfd0006WfDS1F4T300zV4v81Jfd0N",
   jqx: "0c3dq2nl2aYFVd4B7Yll2FTobD1dq2n8",
   fszy: "0c34Cu000WxYCS10LS1002gyW824Cu0v",
   xywszy: "0d3eLY0w3BFPi33zlU3w3G2Jmy3eLY02",
@@ -2298,7 +2282,6 @@ const APP_GROUP_OBJ = {
   laina: "20463",
   hema: "20064",
   dsyc: "20659",
-  cqhx: "20142",
   jqx: "20664",
   fszy: "20121",
   xywszy: "20011",

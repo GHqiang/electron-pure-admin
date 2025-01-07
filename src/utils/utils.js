@@ -847,11 +847,6 @@ const getCinemaFlag = item => {
   } else if (cinema_name.includes("河马国际") && ["上海"].includes(city_name)) {
     return "hema";
   } else if (
-    cinema_name.includes("华熙国际影城") &&
-    ["重庆", "成都"].includes(city_name)
-  ) {
-    return "cqhx";
-  } else if (
     cinema_name.includes("大商影城") &&
     ["邹平", "大连", "大庆", "漯河", "盘锦", "青岛", "沈阳", "淄博"].includes(
       city_name
@@ -1492,16 +1487,6 @@ const getCinemaId = (cinema_name, list, appName, city_name) => {
           item.order_cinema_name.includes(cinemaName)
       ) || [];
     // console.log("specialCinemaList", specialCinemaList);
-    // const CQHX_SPECIAL_CINEMA_LIST = [
-    //   {
-    //     order_cinema_name: "华熙国际影城",
-    //     sfc_cinema_name: "重庆华熙国际影城"
-    //   },
-    //   {
-    //     order_cinema_name: "华熙国际影城",
-    //     sfc_cinema_name: "成都华熙国际影城"
-    //   }
-    // ];
     // 存在以上情况故需要做特殊处理
     if (specialCinemaList.length > 1 && city_name) {
       specialCinemaList = specialCinemaList.filter(item =>
@@ -1572,16 +1557,6 @@ const getCinemaIdByLma = (cinema_name, list, appName, city_name) => {
           item.order_cinema_name === cinemaName ||
           item.order_cinema_name.includes(cinemaName)
       ) || [];
-    // const CQHX_SPECIAL_CINEMA_LIST = [
-    //   {
-    //     order_cinema_name: "华熙国际影城",
-    //     sfc_cinema_name: "重庆华熙国际影城"
-    //   },
-    //   {
-    //     order_cinema_name: "华熙国际影城",
-    //     sfc_cinema_name: "成都华熙国际影城"
-    //   }
-    // ];
     // 存在以上情况故需要做特殊处理
     if (specialCinemaList.length > 1 && city_name) {
       specialCinemaList = specialCinemaList.filter(item =>
