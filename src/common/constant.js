@@ -101,7 +101,6 @@ const UME_LIST = [
   "jqgw",
   "hfhlxh",
   "hsd",
-  "zyxmccone",
   "bnxm",
   "tpyyc",
   "hzxhyd",
@@ -2263,7 +2262,8 @@ const APP_OPENID_OBJ = {
   xyfsy: "okyGN62IVGBQpvqa4beaCs302oUE",
   cszykd: "oK5yB5LS6D9H1pvdO6P8aSP0_ijQ",
   cszyyzx: "o1ps25Y8zsCfmbp3etbugsnDaU_I",
-  qina: "ouKdc5bCNh_0ygvtmniED-u9kIbA"
+  qina: "ouKdc5bCNh_0ygvtmniED-u9kIbA",
+  zyxmccone: "oxLZg45UxLU-3Qz4sAWO5pU86k2k"
 };
 
 // 影院group组别标识
@@ -2334,7 +2334,8 @@ const APP_GROUP_OBJ = {
   xyfsy: "20674",
   cszykd: "20679",
   cszyyzx: "20681",
-  qina: "20004"
+  qina: "20004",
+  zyxmccone: "20738"
 };
 
 // 微信消息推送id
