@@ -105,7 +105,6 @@ const UME_LIST = [
   "tpyyc",
   "hzxhyd",
   "ywycssd",
-  "xgjyycnjystjd",
   "sjzhlh",
   "zhuying",
   "zheyingshidai"
@@ -113,6 +112,7 @@ const UME_LIST = [
 
 // umeh5系列影院集合
 let H5_UME_LIST = [
+  "xgjyycnjystjd",
   "wanxiang",
   "hsmzyc",
   "gzfyyc",
@@ -2138,6 +2138,8 @@ const H5_UME_CINEMA_OBJ = {
   // 深圳华夏星光国际影城
   szhxxggjyc: ["10240", "SZHXXG_H5_PROD_S_MPS"],
 
+  // 星光嘉映影城（南京雨山天街店）
+  xgjyycnjystjd: ["15372", "XGJY_H5_PROD_15372_MPS"],
   // 北京英嘉国际
   bjyjgj: ["11751", "YJXM_H5_PROD_11751_MPSUB"],
   // 中影华宇国际
