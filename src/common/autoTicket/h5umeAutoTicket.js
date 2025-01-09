@@ -1221,6 +1221,11 @@ class OrderAutoTicketQueue {
       let member_total_price = activities.find(
         item => item.payMethod === "CARD"
       )?.privilegeTotalPrice;
+      // 如果会员价为0时，取报价记录里的真实会员价
+      if (member_total_price === undefined && offerRule.offer_type != "1") {
+        member_total_price =
+          (offerRule.real_member_price * 1000 * ticket_num) / 1000;
+      }
       let {
         payAmount,
         payments,
