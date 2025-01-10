@@ -611,13 +611,6 @@ const getCinemaFlag = item => {
   ) {
     return "xygjyc";
   } else if (
-    ["阳江东汇影城", "东汇影城阳江店"].some(itemA =>
-      cinemNameSpecial(cinema_name).includes(itemA)
-    ) &&
-    ["阳江"].includes(city_name)
-  ) {
-    return "yjdhyc";
-  } else if (
     ["青宫电影城CINITY店"].some(itemA =>
       cinemNameSpecial(cinema_name).includes(itemA)
     ) &&
@@ -922,11 +915,6 @@ const getCinemaFlag = item => {
     ["南昌"].includes(city_name)
   ) {
     return "yinxingnc";
-  } else if (
-    cinema_name.includes("长江银兴影城") &&
-    ["武汉"].includes(city_name)
-  ) {
-    return "yinxingws";
   } else if (cinema_name === "乐娃影院" && ["北京"].includes(city_name)) {
     return "liangchen";
   } else if (cinema_name.includes("全美影院") && ["太原"].includes(city_name)) {
@@ -1090,11 +1078,6 @@ const getCinemaFlag = item => {
     ["上海"].includes(city_name)
   ) {
     return "jsdgm";
-  } else if (
-    cinemNameSpecial(cinema_name).includes("天津中影国际影城津湾CINITY店") &&
-    ["天津"].includes(city_name)
-  ) {
-    return "jwzy";
   } else if (
     cinemNameSpecial(cinema_name).includes("SFC上影国际影城新达汇三林店") &&
     ["上海"].includes(city_name)

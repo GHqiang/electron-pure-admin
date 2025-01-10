@@ -132,7 +132,6 @@ let H5_UME_LIST = [
   "jxhygjyc",
   "hzsdlhyc",
   "xygjyc",
-  "yjdhyc",
   "gzhyqgdyc",
   "zsimdyc",
   "jsdyy",
@@ -193,7 +192,6 @@ const APP_LIST = {
   jxhygjyc: "江西华影国际影城（中山天虹店）",
   hzsdlhyc: "杭州时代联合影城",
   xygjyc: "上海轩影国际影城",
-  yjdhyc: "阳江东汇影城",
   gzhyqgdyc: "广州华影青宫电影城",
   zsimdyc: "中山IM电影城（南朗巨幕店）",
   jsdyy: "北京劲松电影院",
@@ -254,7 +252,6 @@ const APP_LIST = {
   limeihua: "利美华胤",
   hengye: "恒业电影城",
   minzu: "民族影城",
-  yinxingws: "银兴武商",
   yinxingnc: "银兴南昌",
   yinxingxy: "银兴襄阳",
   liangchen: "良辰乐娃",
@@ -281,7 +278,6 @@ const APP_LIST = {
   bjlnx: "北京莱纳星",
   cdlnx: "成都莱纳星",
   jsdgm: "金山大光明",
-  jwzy: "津湾中影",
   slsy: "三林上影",
   gbsy: "古北上影",
   jyhx: "金谊华夏",
@@ -772,14 +768,6 @@ const YINXINGXY_SPECIAL_CINEMA_LIST = [
   }
 ];
 
-// 银兴影城武商店特殊影院集合
-const YINXINGWS_SPECIAL_CINEMA_LIST = [
-  {
-    order_cinema_name: ["长江银兴影城武商MALL世贸店"],
-    sfc_cinema_name: "长江银兴影城武商世贸广场店"
-  }
-];
-
 // 良辰乐娃特殊影院集合
 const LIANGCHEN_SPECIAL_CINEMA_LIST = [
   {
@@ -943,13 +931,6 @@ const JSDGM_SPECIAL_CINEMA_LIST = [
   {
     order_cinema_name: "大光明影城金山百联店",
     sfc_cinema_name: "大光明金山百联影城"
-  }
-];
-// 津湾中影特殊影院集合
-const JWZY_SPECIAL_CINEMA_LIST = [
-  {
-    order_cinema_name: "天津中影国际影城津湾CINITY店",
-    sfc_cinema_name: "中影国际影城津湾CINITY店"
   }
 ];
 // 金谊华夏特殊影院集合
@@ -1981,7 +1962,6 @@ const SPECIAL_CINEMA_OBJ = {
   limeihua: LIMEIHUA_SPECIAL_CINEMA_LIST,
   hengye: HENGYE_SPECIAL_CINEMA_LIST,
   minzu: [],
-  yinxingws: YINXINGWS_SPECIAL_CINEMA_LIST,
   yinxingnc: YINXINGNC_SPECIAL_CINEMA_LIST,
   yinxingxy: YINXINGXY_SPECIAL_CINEMA_LIST,
   liangchen: LIANGCHEN_SPECIAL_CINEMA_LIST,
@@ -2009,7 +1989,6 @@ const SPECIAL_CINEMA_OBJ = {
   bjlnx: [],
   cdlnx: [],
   jsdgm: JSDGM_SPECIAL_CINEMA_LIST,
-  jwzy: JWZY_SPECIAL_CINEMA_LIST,
   slsy: [],
   gbsy: [],
   jyhx: JYHX_SPECIAL_CINEMA_LIST,
@@ -2074,7 +2053,6 @@ const TICKET_CONPREFIX_OBJ = {
   limeihua: "【利美华胤自动出票】——",
   hengye: "【恒业电影城自动出票】——",
   minzu: "【民族影城自动出票】——",
-  yinxingws: "【银兴武商自动出票】——",
   yinxingnc: "【银兴南昌自动出票】——",
   yinxingxy: "【银兴襄阳自动出票】——",
   liangchen: "【良辰乐娃自动出票】——",
@@ -2102,7 +2080,6 @@ const TICKET_CONPREFIX_OBJ = {
   bjlnx: "【北京莱纳星自动出票】——",
   cdlnx: "【成都莱纳星自动出票】——",
   jsdgm: "【金山大光明自动出票】——",
-  jwzy: "【津湾中影自动出票】——",
   slsy: "【三林上影自动出票】——",
   gbsy: "【古北上影自动出票】——",
   jyhx: "【金谊华夏自动出票】——",
@@ -2162,8 +2139,6 @@ const H5_UME_CINEMA_OBJ = {
   hzsdlhyc: ["13108", "HZSDLH_H5_PROD_13108_MPS"],
   // 上海轩影国际影城
   xygjyc: ["69711", "SHXY_H5_PROD_69711_MPS"],
-  // 阳江东汇影城
-  yjdhyc: ["69067", "YJDHYC_H5_PROD_69067_MPS"],
   // 广州华影青宫电影城（CINITY店）
   gzhyqgdyc: ["10745", "ZYYG_H5_PROD_10745_MPS"],
   // 中山IM电影城（南朗巨幕店）
@@ -2223,7 +2198,6 @@ const APP_OPENID_OBJ = {
   limeihua: "ok7FI49HybuSq5RNx49q6eNnzof4",
   hengye: "okxaO68YGIDHtSOfKw4UOCv-_4Co",
   minzu: "o6jsm440WovuVPr1tSNm21xqj_nQ",
-  yinxingws: "oUBmX5OrQYOUcEPHN6LIb8yOGSLQ",
   yinxingnc: "ohRBp5CS0H0jThxNFBnLVaBK2ROQ",
   yinxingxy: "oqlIF5uEe7ueJzkhAHvPEsW4cwgw",
   liangchen: "oFSv95QrvI3_5mUEAWBG_JrseZ-s",
@@ -2251,7 +2225,6 @@ const APP_OPENID_OBJ = {
   bjlnx: "oGOc_4y5CLlhc59W1esyqNLC1_sg",
   cdlnx: "oitaV4qv9zQRcpnVIW0e6y3VEjrA",
   jsdgm: "oBxHf5duN7bMnsd3T7-X9csx3x2A",
-  jwzy: "otKpg5bfva9MMcawS-0ysU249eNI",
   slsy: "oL5Gw6-Pyale_B2-sOWXKJ6cqVJk",
   gbsy: "oZJsH5c9cYGXSaUkZ9ta6ZJ8vb9o",
   jyhx: "oALrE5Ph3Zir_aHYlzMIlln8k7tY",
@@ -2295,7 +2268,6 @@ const APP_GROUP_OBJ = {
   limeihua: "20496",
   hengye: "20669",
   minzu: "20039",
-  yinxingws: "20325",
   yinxingnc: "20087",
   yinxingxy: "20320",
   liangchen: "20604",
@@ -2323,7 +2295,6 @@ const APP_GROUP_OBJ = {
   bjlnx: "20622",
   cdlnx: "20579",
   jsdgm: "20618",
-  jwzy: "20642",
   slsy: "20698",
   gbsy: "20582",
   jyhx: "20293",
