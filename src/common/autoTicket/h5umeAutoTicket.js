@@ -1871,7 +1871,11 @@ class OrderAutoTicketQueue {
             result: qrcode.split("|")[0],
             yzm: qrcode.split("|")?.[1] || ""
           }
-        ])
+        ]),
+        ticket_type: 2 // 取票方式
+        // 1，猫眼淘票票取票机取票。
+        // 2，影院专用取票机或前台取票。
+        // 3，直接在入闸处扫码入闸进场观影。
       };
     } else if (plat_name === "sheng") {
       params = {
