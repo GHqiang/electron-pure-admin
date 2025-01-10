@@ -1837,6 +1837,7 @@ class OrderAutoTicketQueue {
             city_id,
             cinema_id,
             quan_value: offerRule.quan_value,
+            quan_flag: offerRule.quan_flag,
             session_id,
             black_quans,
             diffNum,
@@ -1906,6 +1907,7 @@ class OrderAutoTicketQueue {
           supplier_end_price,
           quanList,
           quan_value,
+          quan_flag,
           rewards,
           session_id,
           black_quans,
@@ -3126,6 +3128,7 @@ class OrderAutoTicketQueue {
   // 获取新券
   async getNewQuan({
     quan_value,
+    quan_flag,
     quanNum, // 同步绑券diffNum+5或者是异步绑券券数
     diffNum = 0, // 距离出票差的券数
     city_id,
@@ -3140,6 +3143,37 @@ class OrderAutoTicketQueue {
     const { conPrefix, appFlag } = this;
     let targetLogList = asyncFlag === 1 ? asyncBandQuanList : this.logList;
     let conPrev = asyncFlag === 1 ? "异步绑券_" : "";
+    try {
+      const quanTypeParams = {
+        app_name: appFlag,
+        quan_flag,
+        isNeedTotalNum: 0,
+        queryFields: "quan_value,app_name"
+      };
+      let quanTypeRes = await svApi.queryQuanTypeList(quanTypeParams);
+      let quanTypeList = quanTypeRes?.data?.quanTypeList || [];
+      quanTypeList = quanTypeList.map(item => item.quan_value);
+      if (quanTypeList > 1) {
+        quan_value = quanTypeList.join(";");
+      }
+      targetLogList.push({
+        opera_time: getCurrentTime(),
+        des: `${conPrev}根据券标识获取券类型返回`,
+        level: "info",
+        info: {
+          quanTypeList
+        }
+      });
+    } catch (err) {
+      targetLogList.push({
+        opera_time: getCurrentTime(),
+        des: `${conPrev}根据券标识获取券类型返回异常`,
+        level: "info",
+        info: {
+          err
+        }
+      });
+    }
     let params = {
       quan_value: quan_value,
       app_name: appFlag,
@@ -3252,6 +3286,7 @@ class OrderAutoTicketQueue {
     supplier_end_price,
     quanList,
     quan_value,
+    quan_flag,
     rewards,
     session_id,
     black_quans,
@@ -3278,6 +3313,7 @@ class OrderAutoTicketQueue {
           city_id,
           cinema_id,
           quan_value,
+          quan_flag,
           session_id,
           black_quans,
           quanNum: 10 - (targetQuanList.length - Number(ticket_num)),
