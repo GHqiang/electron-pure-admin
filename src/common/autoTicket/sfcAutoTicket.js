@@ -1323,7 +1323,15 @@ class OrderAutoTicketQueue {
       this.logList.push({
         opera_time: getCurrentTime(),
         des: "使用优惠券或者会员卡成功",
-        level: "info"
+        level: "info",
+        info: {
+          card_id,
+          quanType,
+          quan_code,
+          coupon_id,
+          member_coupon_id,
+          profit
+        }
       });
       // 6计算订单价格
       let currentParams = this.currentParamsList[this.currentParamsInx];
@@ -1691,7 +1699,7 @@ class OrderAutoTicketQueue {
 
   // 使用优惠券或者会员卡
   async useQuanOrCard(params) {
-    const { conPrefix, appFlag } = this;
+    const { conPrefix, appFlag, isV3App } = this;
     let {
       city_id,
       cinema_id,
@@ -1894,7 +1902,7 @@ class OrderAutoTicketQueue {
             // if (appFlag === "nanugojgh") {
             //   cards = cards.filter(item => item.cinema_id === cinema_id);
             // }
-            card_id = cards[0]?.id;
+            card_id = !isV3App ? cards[0]?.id : cards[0]?.member_id;
           }
         }
         // 2、使用优惠券
@@ -3153,7 +3161,7 @@ class OrderAutoTicketQueue {
       let quanTypeRes = await svApi.queryQuanTypeList(quanTypeParams);
       let quanTypeList = quanTypeRes?.data?.quanTypeList || [];
       quanTypeList = quanTypeList.map(item => item.quan_value);
-      if (quanTypeList > 1) {
+      if (quanTypeList.length > 1) {
         quan_value = quanTypeList.join(";");
       }
       targetLogList.push({
@@ -4036,7 +4044,7 @@ const bandQuan = async ({
   }
 };
 
-// 订单购买
+// 购买订单
 const buyTicket = async ({
   city_id,
   cinema_id,
