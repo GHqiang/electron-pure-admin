@@ -1346,7 +1346,7 @@ class OrderAutoTicketQueue {
             activityId: item.activityId
           }));
         tickets = JSON.stringify(tickets);
-        payments = [{ payMethod, payCardNumber: card_id }];
+        payments = [{ payMethod: "CARD", payCardNumber: card_id }];
       }
       // 7、创建订单
       const createOrderRes = await this.createOrder({
