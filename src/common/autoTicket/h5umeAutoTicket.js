@@ -1228,7 +1228,7 @@ class OrderAutoTicketQueue {
       }
       let {
         payAmount,
-        payments,
+        card_id,
         profit = 0
       } = await this.useQuanOrCard({
         cardList,
@@ -1243,14 +1243,24 @@ class OrderAutoTicketQueue {
         cinemaLinkId,
         plat_name
       });
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "使用会员卡或优惠券返回",
+        level: "info",
+        info: {
+          payAmount,
+          card_id,
+          profit
+        }
+      });
       // 券抵扣金额
       let quanDiscountAmount = 0;
       // 使用优惠券及会员卡
-      if (!payments) {
+      if (!card_id) {
         let str = "无可用会员卡";
-        if (offerRule.offer_type === "1") {
-          str = "无可用优惠券";
-        }
+        // if (offerRule.offer_type === "1") {
+        //   str = "无可用优惠券";
+        // }
         console.error(str);
         this.logList.push({
           opera_time: getCurrentTime(),
@@ -1321,20 +1331,22 @@ class OrderAutoTicketQueue {
         }
       }
 
-      console.warn("payAmount", payAmount, "payments", payments);
+      console.warn("payAmount", payAmount, "card_id", card_id);
       let quan_code;
-      let card_id = payments.find(
-        item => item.payMethod === "CARD"
-      )?.payCardNumber;
-      let tickets;
+      let payMethod = "";
+      if (card_id && activities.find(item => item.payMethod === "CARD")) {
+        payMethod = "CARD";
+      }
+      let tickets, payments;
       if (offerRule.offer_type !== "1" && card_id) {
         tickets = activities
-          .find(item => item.payMethod === "CARD")
+          .find(item => item.payMethod === payMethod)
           ?.ticketInfos?.map(item => ({
             seatId: item.seatId,
             activityId: item.activityId
           }));
         tickets = JSON.stringify(tickets);
+        payments = [{ payMethod, payCardNumber: card_id }];
       }
       // 7、创建订单
       const createOrderRes = await this.createOrder({
@@ -2468,7 +2480,7 @@ class OrderAutoTicketQueue {
           }
           return {
             profit: 0,
-            payments: ""
+            card_id: ""
           };
         }
 
@@ -2519,7 +2531,7 @@ class OrderAutoTicketQueue {
           }
           return {
             profit: 0,
-            payments: ""
+            card_id: ""
           };
         }
         if (quan_fee > 0) {
@@ -2541,7 +2553,7 @@ class OrderAutoTicketQueue {
               return await this.useCardHandle(useCardParms);
             }
             return {
-              payments: "",
+              card_id: "",
               profit: 0 // 利润
             };
           }
@@ -2550,7 +2562,6 @@ class OrderAutoTicketQueue {
           offerRule.offer_type = "1";
         }
         return {
-          payments,
           profit
         };
       }
@@ -2595,7 +2606,7 @@ class OrderAutoTicketQueue {
         });
         console.warn("无可用会员卡", member_price);
         return {
-          payments: "",
+          card_id: "",
           profit: 0 // 利润
         };
       }
@@ -2624,14 +2635,12 @@ class OrderAutoTicketQueue {
         });
         return {
           profit: 0,
-          payments: ""
+          card_id: ""
         };
       }
       profit = Number(profit).toFixed(2);
       return {
-        payments: [
-          { payMethod: "CARD", payCardNumber: cardData?.[0]?.cardNumber }
-        ],
+        card_id: cardData?.[0]?.cardNumber,
         payAmount: member_total_price,
         profit // 利润
       };
@@ -2645,7 +2654,7 @@ class OrderAutoTicketQueue {
         }
       });
       return {
-        payments: "",
+        card_id: "",
         profit: 0 // 利润
       };
     }
