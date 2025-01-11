@@ -112,6 +112,9 @@
         <el-button type="primary" @click="getQuanInventory"
           >查询券库存</el-button
         >
+        <el-button type="warning" @click="getUnUseQuanHandle"
+          >导出不可用券</el-button
+        >
         <el-upload
           ref="uploadRef"
           style="margin-left: 15px"
@@ -257,13 +260,19 @@
 
     <el-dialog
       v-model="dialogQuanVisible"
-      title="您确定要导出以下券数据吗"
+      :title="`您确定要导出以下${exportQuanFlag == 1 ? '' : '不可用'}券数据吗`"
       max-width="500"
     >
       <el-table :data="exportQuanList" border max-height="400">
         <el-table-column type="index" label="序号" width="60" />
-        <el-table-column prop="coupon_num" label="券号" min-width="210" />
+        <el-table-column prop="coupon_num" label="券号" min-width="180" />
         <el-table-column prop="quan_value" min-width="100" label="券类型" />
+        <el-table-column
+          v-if="exportQuanFlag == 2"
+          prop="app_name"
+          min-width="100"
+          label="用券影院"
+        />
         <el-table-column prop="create_time" min-width="100" label="入库时间" />
       </el-table>
       <template #footer>
@@ -584,6 +593,8 @@ const importQuan = async (uploadFile, uploadFiles) => {
     uploadRef.value?.clearFiles();
   }
 };
+// 导出券标识
+const exportQuanFlag = ref("1"); // 1-可用券 2不可用券
 
 // 导出券类型
 const exportQuanNum = ref("");
@@ -615,6 +626,7 @@ const getQuanHandle = async () => {
     };
     let quanRes = await svApi.queryQuanList(params);
     let quanList = quanRes?.data?.quanList || [];
+    exportQuanFlag.value = 1;
     dialogQuanVisible.value = true;
     exportQuanList.value = quanList;
   } catch (error) {
@@ -625,17 +637,23 @@ const getQuanHandle = async () => {
 // 导出券
 const exportQuanHandle = async () => {
   try {
-    let quanValueStr = exportQuanValue.value;
-    let quanTypeInfo = quanType.value.find(
-      item => item.quan_value == quanValueStr
-    );
+    let exportQuanFlagValue = exportQuanFlag.value;
     let tableData = toRaw(exportQuanList.value);
 
     let params = {
-      quan_value: quanTypeInfo.quan_value,
-      app_name: quanTypeInfo.app_name,
       coupon_num_list: tableData.map(item => item.coupon_num)
     };
+    let quanValueStr = exportQuanValue.value;
+    if (exportQuanFlagValue == 1) {
+      let quanTypeInfo = quanType.value.find(
+        item => item.quan_value == quanValueStr
+      );
+      params.quan_value = quanTypeInfo.quan_value;
+      params.app_name = quanTypeInfo.app_name;
+      params.quan_status = 4;
+    } else if (exportQuanFlagValue == 2) {
+      params.quan_status = 5;
+    }
     console.warn("导出文件传参", params);
     // 先调接口更新状态，并更新导出人及使用时间
     const res = await svApi.exportQuanList(params);
@@ -646,7 +664,7 @@ const exportQuanHandle = async () => {
     ]);
     tableData.unshift(["券号", "券类型", "入库时间"]);
     const today = getCurrentDay();
-    let fileName = `${quanValueStr}_${tableData.length - 1}张_${today}.xlsx`;
+    let fileName = `${quanValueStr || "不可用券"}_${tableData.length - 1}张_${today}.xlsx`;
     console.warn("tableData", tableData, "fileName", fileName);
     createExcelDown(tableData, fileName);
     dialogQuanVisible.value = false;
@@ -655,6 +673,23 @@ const exportQuanHandle = async () => {
     exportQuanNum.value = "";
   } catch (error) {
     console.warn("获取券异常", error);
+  }
+};
+
+// 导出不可用券
+const getUnUseQuanHandle = async () => {
+  try {
+    let params = {
+      quan_status: "3",
+      queryFields: "app_name,coupon_num,quan_value,create_time"
+    };
+    let quanRes = await svApi.queryQuanList(params);
+    let quanList = quanRes?.data?.quanList || [];
+    exportQuanFlag.value = 2;
+    dialogQuanVisible.value = true;
+    exportQuanList.value = quanList;
+  } catch (error) {
+    console.warn("获取不可用券异常", error);
   }
 };
 
