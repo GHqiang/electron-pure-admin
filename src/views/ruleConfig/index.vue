@@ -46,6 +46,30 @@
         </el-radio-group>
       </div>
     </div>
+
+    <div style="margin-top: 80px">
+      <el-divider class="tips">提示：</el-divider>
+      <ul>
+        <li>
+          1、超限报价：
+          <br />
+          &nbsp;&nbsp;&nbsp;&nbsp;
+          该功能启用后仅针对会员卡报价规则生效，如果规则计算报价超过平台限价，开启后会按照平台限价进行报价，关闭则不进行报价;（用券报价规则不受影响，有利润就报）
+        </li>
+        <li>
+          2、夜间顶价：
+          <br />
+          &nbsp;&nbsp;&nbsp;&nbsp;
+          该功能启用后，凌晨1点到6点时间范围内，无论是用卡还是用券规则，都会按照平台限价进行报价;
+        </li>
+        <li>
+          3、卢米埃是否用券：
+          <br />
+          &nbsp;&nbsp;&nbsp;&nbsp;
+          该功能主要用于市场上没有-5券时，可选择否来实现只用会员卡进行出票；
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
 
@@ -116,5 +140,10 @@ const lmaIsUseQuanChange = val => {
 }
 .m-t-10 {
   margin-top: 10px;
+}
+.tips .el-divider__text {
+  background: transparent;
+  color: red;
+  font-size: 24px;
 }
 </style>
