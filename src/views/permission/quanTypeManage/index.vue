@@ -577,18 +577,44 @@ const importQuan = async (uploadFile, uploadFiles) => {
         })
         .filter(item => item.coupon_num);
       console.warn("最终组装好要上传的数据", tableDate);
-      await svApi.batchAddQuan({
-        addList: tableDate
-      });
+      // 先查一下库里面的券过滤一下，如果存在该券已使用就不执行导入了
+      let params = {
+        quan_value: quanTypeInfo.quan_value,
+        app_name: quanTypeInfo.app_name,
+        haveQuans: tableDate.map(item => item.coupon_num).join(",")
+      };
+      let quanRes = await svApi.queryQuanList(params);
+      let quanList = quanRes?.data?.quanList || [];
+      // 1-未使用 2-已绑定 3-绑定异常 4-正常券导出 5-不可用券导出
+      quanList = quanList
+        .filter(item => ["1", "2", "3"].includes(item.quan_status))
+        .map(item => item.coupon_num);
+      console.log("quanList", quanList);
+      tableDate = tableDate.filter(item => !quanList.includes(item.coupon_num));
+      console.log("tableDate", tableDate);
+      if (!tableDate.length) {
+        ElMessage({
+          type: "warning",
+          message: "导入失败，根据库里去重后没有可以导入的券"
+        });
+      } else {
+        await svApi.batchAddQuan({
+          addList: tableDate
+        });
+        ElMessage({
+          type: "success",
+          message: "导入成功，请查询券库存检查"
+        });
+      }
       uploadRef.value?.clearFiles();
       loading.close();
-      ElMessage({
-        type: "success",
-        message: "导入成功，请查询券库存检查"
-      });
     }
   } catch (error) {
     console.error("导入券异常", error);
+    ElMessage({
+      type: "warning",
+      message: "导入失败，请联系技术解决"
+    });
     loading.close();
     uploadRef.value?.clearFiles();
   }
