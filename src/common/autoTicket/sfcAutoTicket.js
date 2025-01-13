@@ -17,7 +17,9 @@ import { encode } from "@/utils/sfc-member-password";
 
 // 机器登录用户信息
 import { platTokens } from "@/store/platTokens";
-const tokens = platTokens();
+const {
+  userInfo: { rule, user_id, phone }
+} = platTokens();
 // 影院特殊匹配列表及api
 import {
   TICKET_CONPREFIX_OBJ,
@@ -558,16 +560,16 @@ class OrderAutoTicketQueue {
       // 如果 first 都是 '1' 或者都不是 '1'，则按 mobile 字段排序
       if (a.first === "1" && b.first === "1") {
         // 如果 a.mobile 是当前用户的手机号，则 a 应该排在 b 之前
-        if (a.mobile === tokens.userInfo.phone) return -1;
+        if (a.mobile === phone) return -1;
         // 如果 b.mobile 是当前用户的手机号，则 b 应该排在 a 之前
-        if (b.mobile === tokens.userInfo.phone) return 1;
+        if (b.mobile === phone) return 1;
         // 如果两个对象的 mobile 都不是当前用户的手机号，则按默认顺序排列
         return 0;
       }
 
       // 如果 first 都不是 '1'，则按 mobile 字段排序
-      if (a.mobile === tokens.userInfo.phone) return -1;
-      if (b.mobile === tokens.userInfo.phone) return 1;
+      if (a.mobile === phone) return -1;
+      if (b.mobile === phone) return 1;
 
       // 如果两个对象的 first 和 mobile 都相同，则按默认顺序排列
       return 0;
@@ -586,7 +588,7 @@ class OrderAutoTicketQueue {
     try {
       // 1、获取该订单的报价记录，按对应报价规则出票
       const offerRes = await svApi.queryOfferInfo({
-        user_id: tokens.userInfo.user_id,
+        user_id: user_id,
         order_status: "1",
         app_name: appFlag,
         order_number,
@@ -1264,7 +1266,8 @@ class OrderAutoTicketQueue {
         quan_code,
         coupon_id,
         member_coupon_id,
-        profit
+        profit,
+        quanStock
       } = await this.useQuanOrCard({
         order_number,
         city_id,
@@ -1588,6 +1591,26 @@ class OrderAutoTicketQueue {
       });
       // 只用卡
       let isOnlyUseCard = card_id && !quanType;
+      if (offerRule.offer_type !== "1" && isOnlyUseCard && rule == 2) {
+        // 更新卡使用量
+        updateCardDayUse({
+          app_name: appFlag,
+          card_id,
+          plat_name,
+          order_number
+        });
+      }
+      if (offerRule.offer_type === "1" && rule == 2) {
+        // 更新券库存
+        this.updateQuanStock({
+          quan_stock: quanStock - ticket_num,
+          quan_value: offerRule.quan_value,
+          quan_id: offerRule.quan_id,
+          app_name: appFlag,
+          isPay: 1
+        });
+      }
+
       // 最后处理：获取支付结果上传取票码
       const lastRes = await this.lastHandle({
         city_id,
@@ -1730,6 +1753,7 @@ class OrderAutoTicketQueue {
         mobile
       };
       let is_auto_use_quan = false; // 是否灵活用券
+      let quanStock; // 券库存数
       // 拿订单号去匹配报价记录
       if (offer_type !== "1") {
         const ruleInfo = getOfferRuleById(offer_rule_id);
@@ -1787,6 +1811,7 @@ class OrderAutoTicketQueue {
             offerRule.quan_value,
             appFlag
           );
+          offerRule.quan_id = quanInfo?.id;
           offerRule.quan_cost = quanInfo?.quan_cost;
           offerRule.quan_flag = quanInfo?.quan_flag;
           offerRule.quan_fee = quanInfo?.quan_fee;
@@ -1827,6 +1852,7 @@ class OrderAutoTicketQueue {
         // 这里拿到的券列表会比票数多10张
         let quanList = quanListRes?.quanList || [];
         let quanType = quanListRes?.quanType;
+        quanStock = quanListRes?.quanStock;
         if (!quanList?.length) {
           this.logList.push({
             opera_time: getCurrentTime(),
@@ -1841,7 +1867,7 @@ class OrderAutoTicketQueue {
             level: "info"
           });
           let diffNum = Number(ticket_num) - quanList.length;
-          const newQuanList = await this.getNewQuan({
+          const newQuanRes = await this.getNewQuan({
             city_id,
             cinema_id,
             quan_value: offerRule.quan_value,
@@ -1849,8 +1875,13 @@ class OrderAutoTicketQueue {
             session_id,
             black_quans,
             diffNum,
-            quanNum: diffNum + 5
+            quanNum: diffNum + 10
           });
+          // 新绑定的权属：diffNum
+          const newQuanList = newQuanRes?.bandQuanList || [];
+          // 从服务端查出来的券数，<= diffNum + 10
+          const newQuanNums = newQuanRes?.newQuanNums;
+          quanStock = quanStock + newQuanNums;
           // 多查询几张绑定防止有绑券异常导致出票失败情况
           if (newQuanList?.length) {
             quanList = [...quanList, ...newQuanList.slice(0, diffNum)];
@@ -1881,7 +1912,27 @@ class OrderAutoTicketQueue {
             // 返回用卡结果
             return await this.useCardHandle(useCardParams);
           }
+          // 更新券库存(目标券数量不足时)
+          if (rule == 2) {
+            this.updateQuanStock({
+              quan_stock: quanList.length,
+              quan_value: offerRule.quan_value,
+              quan_id: offerRule.quan_id,
+              app_name: appFlag,
+              is_little: 1 // 不足的
+            });
+          }
           return {};
+        }
+        // 更新券库存(目标券数量足够时)
+        if (rule == 2) {
+          this.updateQuanStock({
+            quan_stock: quanStock,
+            quan_value: offerRule.quan_value,
+            quan_id: offerRule.quan_id,
+            app_name: appFlag,
+            is_more: 1 // 足够的
+          });
         }
         const { coupon_type, card_num } = quanList?.[0] || {};
         if (coupon_type) {
@@ -1947,6 +1998,7 @@ class OrderAutoTicketQueue {
           offerRule.offer_type = "1";
         }
         return {
+          quanStock,
           quan_code,
           card_id,
           coupon_id,
@@ -2070,6 +2122,33 @@ class OrderAutoTicketQueue {
         level: "error",
         info: {
           error
+        }
+      });
+    }
+  }
+
+  // 更新券库存
+  async updateQuanStock(params) {
+    const { quan_stock, quan_id } = params;
+    try {
+      const res = await svApi.updateQuanType({ quan_stock, id: quan_id });
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "更新券库存返回",
+        level: "info",
+        info: {
+          res,
+          params
+        }
+      });
+    } catch (error) {
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "更新券库存异常",
+        level: "error",
+        info: {
+          error,
+          params
         }
       });
     }
@@ -2994,13 +3073,6 @@ class OrderAutoTicketQueue {
         level: "info"
       });
       if (flag !== 1) {
-        if (card_id) {
-          // 更新单卡使用量
-          svApi.updateDayUsage({
-            app_name,
-            card_id
-          });
-        }
         // 更新出票结果
         svApi.updateTicketRecord({
           whereObj: {
@@ -3100,7 +3172,7 @@ class OrderAutoTicketQueue {
     try {
       const res = await svApi.queryCardList({
         app_name: appFlag,
-        rule: tokens.userInfo.rule,
+        rule: rule,
         status: "1",
         isNeedTotalNum: 0,
         queryFields:
@@ -3137,7 +3209,7 @@ class OrderAutoTicketQueue {
   async getNewQuan({
     quan_value,
     quan_flag,
-    quanNum, // 同步绑券diffNum+5或者是异步绑券券数
+    quanNum, // 同步绑券diffNum+10或者是异步绑券券数
     diffNum = 0, // 距离出票差的券数
     city_id,
     cinema_id,
@@ -3257,7 +3329,10 @@ class OrderAutoTicketQueue {
           break;
         }
       }
-      return bandQuanList;
+      return {
+        bandQuanList,
+        newQuanNums: quanList.length
+      };
     } catch (error) {
       console.error(conPrefix + "获取新券异常", error);
       targetLogList.push({
@@ -3873,6 +3948,7 @@ const getQuanList = async data => {
       let list = quanDataRes?.list || [];
       targetQuanList.push(...list);
     }
+    let quanStock = targetQuanList.length;
     // let noUseLIst = ['1598162363509715', '1055968062906716', '1284460567801315', '1116166666409614']
     // 过滤掉不可用券
     // list = list.filter(item => item.coupon_num.indexOf("t") === -1);
@@ -3894,9 +3970,17 @@ const getQuanList = async data => {
         groups[key].push(coupon);
         return groups;
       }, {});
-      let targetQuanGroup = Object.values(groupedCoupons).find(
-        item => item.length >= ticket_num
-      );
+      let groupList = Object.values(groupedCoupons);
+      let targetQuanGroup = groupList.find(item => item.length >= ticket_num);
+
+      // 获取分组后最多出票量当做库存
+      let maxLength = groupList[0]?.length || 0; // 初始化为数组的第一个元素
+      for (let i = 1; i < groupList.length; i++) {
+        if (groupList[i]?.length > maxLength) {
+          maxLength = groupList[i].length;
+        }
+      }
+      quanStock = maxLength;
       logList.push({
         opera_time: getCurrentTime(),
         des: "会员赠券按照card_num分组",
@@ -3916,6 +4000,7 @@ const getQuanList = async data => {
       }
     }
     return {
+      quanStock,
       quanList: targetQuanList,
       quanType
     };
@@ -4177,22 +4262,10 @@ const addOrderHandleRecored = async ({
       rewards: res?.offerRule?.rewards || 0, // 奖励百分比
       transfer_fee: res?.transferParams?.transfer_fee || "", // 转单手续费
       mobile: mobile || "", // 出票手机号
-      rule: tokens.userInfo.rule
+      rule: rule
     };
 
     await svApi.addTicketRecord(serOrderInfo);
-    if (
-      serOrderInfo.card_id &&
-      serOrderInfo.order_status === "1" &&
-      !serOrderInfo.quan_type
-    ) {
-      updateCardDayUse({
-        app_name: serOrderInfo.app_name,
-        card_id: serOrderInfo.card_id,
-        plat_name: serOrderInfo.plat_name,
-        order_number: serOrderInfo.order_number
-      });
-    }
   } catch (error) {
     console.error("添加订单处理记录异常", error);
     if (error?.code === 0 && error?.msg === "订单重复") {
@@ -4220,7 +4293,7 @@ const updateCardDayUse = ({ app_name, card_id, plat_name, order_number }) => {
   let log_list = [
     {
       opera_time: getCurrentTime(),
-      des: "订单用卡出票成功后更新当天使用量",
+      des: "订单用卡购买成功后更新当天使用量",
       level: "info",
       info: {
         app_name,
