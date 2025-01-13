@@ -209,6 +209,7 @@
         </template>
       </el-table-column>
       <el-table-column prop="black_quans" label="黑名单券" min-width="100" />
+      <el-table-column prop="quan_stock" label="券库存" min-width="100" />
       <el-table-column prop="update_time" label="更新时间" min-width="160" />
       <el-table-column prop="remark" label="备注" min-width="100" />
 
