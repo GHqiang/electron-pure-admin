@@ -1542,15 +1542,21 @@ class OrderAutoTicketQueue {
       }
       if (paymentAmount > 0 && quan_fee > 0 && offerRule.offer_type == 1) {
         // 支付方式里返回的有会员卡方式和可用列表
-        cardNo = createOrderRes?.paymentList?.find(item => item.memberCardList)
-          ?.memberCardList?.[0]?.cardNo;
+        let memberCardList =
+          createOrderRes?.paymentList?.find(item => item.memberCardList)
+            ?.memberCardList || [];
+        memberCardList = memberCardList.filter(
+          item => item.cardAmount >= quan_fee * 100
+        );
+        cardNo = memberCardList[0]?.cardNo;
         if (!cardNo) {
           this.logList.push({
             opera_time: getCurrentTime(),
             des: "创建订单时发现没有可以补券手续费的卡，走转单",
             level: "error",
             info: {
-              paymentList: createOrderRes?.paymentList
+              paymentList: createOrderRes?.paymentList,
+              quan_fee
             }
           });
           const transferParams = await this.transferOrder(item, {
