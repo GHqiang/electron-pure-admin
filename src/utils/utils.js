@@ -402,8 +402,8 @@ const getCinemaFlag = item => {
       )) ||
     (plat_name === "yangcong" && cinema_name.includes("耀莱成龙"));
 
-  let isWanmeiGroup = ["完美世界"].includes(cinema_group);
-  let isTpyycGroup = ["太平洋"].includes(cinema_group);
+  let isWanmeiGroup = ["完美世界", "c_perfect"].includes(cinema_group);
+  let isTpyycGroup = ["太平洋", "c_pacifica"].includes(cinema_group);
   let isYinghuangiGroup = ["英皇电影城", "英皇UA影城", "英皇"].includes(
     cinema_group
   );
@@ -414,7 +414,7 @@ const getCinemaFlag = item => {
     );
 
   let isZheyingshidaiGroup =
-    ["浙影时代"].includes(cinema_group) ||
+    ["浙影时代", "c_zjsd"].includes(cinema_group) ||
     (cinema_group === "浙江时代" && cinema_name.includes("浙影时代"));
 
   let isZheyingshidaiCinemaName =
@@ -423,12 +423,12 @@ const getCinemaFlag = item => {
       item => cinemNameSpecial(item) === cinemNameSpecial(cinema_name)
     );
 
-  let isLmaGroup = ["卢米埃"].includes(cinema_group);
+  let isLmaGroup = ["卢米埃", "c_lumiai"].includes(cinema_group);
   if (isLmaGroup) {
     return "lma";
   }
   if (
-    ["华谊兄弟"].includes(cinema_group) ||
+    ["华谊兄弟", "c_hybrothers"].includes(cinema_group) ||
     (plat_name === "sheng" && cinema_group == "华谊")
   ) {
     return "hbchyxd";
@@ -443,9 +443,13 @@ const getCinemaFlag = item => {
   ) {
     return "swxh";
   }
-  let isWanXiangGroup = ["万象一线", "万象二线", "万象", "万象影城"].includes(
-    cinema_group
-  );
+  let isWanXiangGroup = [
+    "万象一线",
+    "万象二线",
+    "万象",
+    "万象影城",
+    "c_mixc"
+  ].includes(cinema_group);
   if (isWanXiangGroup) {
     return "wanxiang";
   }
@@ -467,7 +471,8 @@ const getCinemaFlag = item => {
     "AMG",
     "AMG海上明珠",
     "上海海上明珠",
-    "其他海上明珠"
+    "其他海上明珠",
+    "c_amghsmz"
   ].includes(cinema_group);
   if (isHaiShangMingZhuGroup) {
     return "hsmzyc";
@@ -494,9 +499,10 @@ const getCinemaFlag = item => {
   ) {
     return "renhengmeng";
   } else if (
-    ["飞扬影城", "飞扬影城IMAX激光乐峰店"].some(itemA =>
+    (["飞扬影城", "飞扬影城IMAX激光乐峰店"].some(itemA =>
       cinemNameSpecial(cinema_name).includes(itemA)
-    ) &&
+    ) ||
+      ["c_guangzhoufeiyang"].includes(cinema_group)) &&
     ["广州"].includes(city_name)
   ) {
     return "gzfyyc";
@@ -1148,9 +1154,13 @@ const getCinemaFlag = item => {
     return "cszyyzx";
   }
   // 中影比较特殊，放最后面
-  let isZhongyingGroup = ["中影", "中影直营", "中影国际", "中影影票"].includes(
-    cinema_group
-  );
+  let isZhongyingGroup = [
+    "中影",
+    "中影直营",
+    "中影国际",
+    "中影影票",
+    "c_xacinema"
+  ].includes(cinema_group);
   if (
     isZhongyingGroup ||
     cinemNameSpecial(cinema_name) == "上海中影国际影城合生汇CINITY店"
