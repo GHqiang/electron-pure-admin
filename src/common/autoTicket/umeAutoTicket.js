@@ -9,7 +9,9 @@ import {
   formatErrInfo, // 格式化错误信息
   getCinemaLoginInfoList,
   sendWxPusherMessage,
-  getOfferRuleById
+  getOfferRuleById,
+  getCurrentDay,
+  isDateInCurrentMonth
 } from "@/utils/utils";
 // 帮助锁定座位实例对象
 import assistLockSeatObj from "./lockSeatQueue";
@@ -41,6 +43,7 @@ class OrderAutoTicketQueue {
     this.eventName = `newOrder_${appFlag}`;
     this.handledOrders = new Map(); // 用于存储已处理订单号及其相关信息
     this.isStart = false; // 是否启动
+    this.usableCardList = []; // 会员可用卡列表（库里维护的）
 
     // 监听新订单
     window.addEventListener(this.eventName, this.handleNewOrder.bind(this));
@@ -861,15 +864,6 @@ class OrderAutoTicketQueue {
     }
     try {
       if (this.currentParamsInx === 0) {
-        const phone = this.currentParamsList[0].mobile;
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: `首次出票手机号-${phone}`,
-          level: "info",
-          info: {
-            currentParamsList: this.currentParamsList
-          }
-        });
         // 2、获取目标城市影院列表
         let cityCinemaListRes = await getCityCinemaList({ appFlag });
         const cityCinemaList = cityCinemaListRes?.cityCinemaList || [];
@@ -931,9 +925,51 @@ class OrderAutoTicketQueue {
           const transferParams = await this.transferOrder(item);
           return { transferParams };
         }
-        // 4、获取目标影院放映列表
         cinemaLinkId = targetCinema.cinemaLinkId;
         cinemaCode = targetCinema.cinemaCode;
+        if (cinemaCode && offerRule.offer_type != 1) {
+          const usableCards = await this.getUsableCardList(
+            cinemaCode,
+            ticket_num
+          );
+          if (usableCards?.length) {
+            this.usableCardList = usableCards;
+            let cardLinkMobile = usableCards.map(item => item.mobile);
+            this.currentParamsList = this.currentParamsList.sort((a, b) => {
+              if (
+                cardLinkMobile.includes(a.mobile) &&
+                !cardLinkMobile.includes(b.mobile)
+              ) {
+                return -1; // a靠前
+              }
+              if (
+                !cardLinkMobile.includes(a.mobile) &&
+                cardLinkMobile.includes(b.mobile)
+              ) {
+                return 1;
+              }
+              return 0;
+            });
+          }
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: "登录信息按照可用卡列表排序后",
+            level: "info",
+            info: {
+              currentParamsList: this.currentParamsList
+            }
+          });
+        }
+        const phone = this.currentParamsList[0].mobile;
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: `首次出票手机号-${phone}`,
+          level: "info",
+          info: {
+            currentParamsList: this.currentParamsList
+          }
+        });
+        // 4、获取目标影院放映列表
         const movieDataRes = await getMoviePlayInfo({
           cinemaCode,
           cinemaLinkId,
@@ -1292,11 +1328,10 @@ class OrderAutoTicketQueue {
       }
       let cardList = cardQuanListRes?.cards || [];
       if (cardList?.length && offerRule.offer_type != "1") {
-        // 根据影院id过滤指定卡
-        const usableCardList = await this.getUsableCardList(cinemaCode);
-        if (usableCardList?.length) {
+        // 过滤出来维护在可用卡里面里面的卡
+        if (this.usableCardList?.length) {
           cardList = cardList.filter(item =>
-            usableCardList.some(itemA => itemA.card_num === item.cardNo)
+            this.usableCardList.some(itemA => itemA.card_num === item.cardNo)
           );
         }
       }
@@ -1307,7 +1342,7 @@ class OrderAutoTicketQueue {
         des: "获取最优卡券组合返回",
         level: "info",
         info: {
-          cardList,
+          "cardList(从可用卡列表过滤后的卡:)": cardList,
           oldCardList: cardQuanListRes?.cards,
           quanList: quanList.slice(0, 10),
           activities
@@ -2965,7 +3000,7 @@ class OrderAutoTicketQueue {
   }
 
   // 获取影院指定会员卡
-  async getUsableCardList(cinemaCode) {
+  async getUsableCardList(cinemaCode, ticket_num) {
     const { appFlag } = this;
     try {
       const res = await svApi.queryCardList({
@@ -2976,16 +3011,49 @@ class OrderAutoTicketQueue {
         queryFields:
           "card_num,card_id,balance,mobile,card_discount,linkCinemaIds,use_limit_day,use_limit_month,daily_usage,monthly_usage,usage_date"
       });
-      let cardList = res.data.cardList || [];
+      let list = res.data.cardList || [];
+
+      list = list.map(item => ({
+        ...item,
+        // 使用日非当天的就是0
+        daily_usage:
+          item.usage_date !== getCurrentDay() ? 0 : item.daily_usage || 0,
+        // 使用日非当月的就是0
+        month_usage: !isDateInCurrentMonth(item.usage_date)
+          ? 0
+          : item.monthly_usage || 0
+      }));
       this.logList.push({
         opera_time: getCurrentTime(),
-        des: "获取会员卡维护列表返回",
+        des: "获取该影院已维护会员卡列表返回",
         level: "info",
         info: {
-          cardList
+          list
         }
       });
-      let useCanCardList = cardList.filter(item => {
+      // console.log("list", list);
+      // 根据当天及当月出票量限制进行过滤
+      let cardListLimit = list.filter(item => {
+        const { use_limit_day, use_limit_month, daily_usage, monthly_usage } =
+          item;
+        if (!use_limit_day && !use_limit_month) return true;
+        return (
+          (use_limit_day ? ticket_num <= use_limit_day - daily_usage : true) &&
+          (use_limit_month
+            ? ticket_num <= use_limit_month - monthly_usage
+            : true)
+        );
+      });
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "根据当天及当月出票量限制过滤后",
+        level: "info",
+        info: {
+          cardListLimit
+        }
+      });
+
+      let useCanCardList = cardListLimit.filter(item => {
         return !item.linkCinemaIds
           ? true
           : item.linkCinemaIds.split(",").some(itemA => itemA == cinemaCode);

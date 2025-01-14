@@ -411,7 +411,7 @@ class getSfcOfferPrice {
         if (appQuanTypeList?.length) {
           fixedAmountRuleList = fixedAmountRuleList.filter(item => {
             let targetQuanInfo = appQuanTypeList.find(
-              itemA => itemA.quan_value == item.quan_value
+              itemA => itemA.quan_value == item.quanValue
             );
             let quan_stock = targetQuanInfo?.quan_stock;
             return quan_stock
@@ -419,6 +419,14 @@ class getSfcOfferPrice {
               : quan_stock == 0
                 ? false
                 : true;
+          });
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: "根据券库存过滤后的固定报价规则列表",
+            level: "info",
+            info: {
+              fixedAmountRuleList
+            }
           });
         } else {
           fixedAmountRuleList = [];
