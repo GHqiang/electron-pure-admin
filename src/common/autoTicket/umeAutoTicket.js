@@ -2751,6 +2751,18 @@ class OrderAutoTicketQueue {
 
         let useQuan = targetQuanList.slice(0, ticket_num).map((item, index) => {
           let seatCode = Object.keys(item.discountAmountMap);
+          let discountAmount = 0;
+          if (seatCode) {
+            discountAmount = item.discountAmountMap?.[seatCode[index]];
+            if (
+              discountAmount &&
+              Object.prototype.toString.call(discountAmount) ===
+                "[object Object]" &&
+              discountAmount[1]
+            ) {
+              discountAmount = discountAmount[1];
+            }
+          }
           return {
             couponInstanceId: item.couponInstanceId,
             couponType: item.templateType,
@@ -2760,13 +2772,7 @@ class OrderAutoTicketQueue {
             couponCode: item.couponCode,
             couponName: item.couponName,
             templateCode: item.templateCode,
-            discountAmount: seatCode
-              ? !["zheyingshidai", "yaolai", "wanxiang", "tpyyc"].includes(
-                  appFlag
-                )
-                ? item.discountAmountMap?.[seatCode[index]]
-                : item.discountAmountMap?.[seatCode[index]]?.[1]
-              : 0
+            discountAmount
           };
         });
         let profit =
