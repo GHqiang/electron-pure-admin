@@ -455,7 +455,7 @@ class getUmeOfferPrice {
           Number(mixAddAmountRule.realAddMount);
         this.logList.push({
           opera_time: getCurrentTime(),
-          des: "会员报价相关信息0",
+          des: "会员报价最终信息",
           level: "info",
           info: {
             real_member_price:
