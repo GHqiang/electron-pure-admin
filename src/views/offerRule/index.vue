@@ -643,7 +643,8 @@ const editStatus = async row => {
   try {
     await svApi.updateRuleRecord({
       id: row.id,
-      status: row.status
+      status: row.status,
+      update_time: getCurrentTime()
     });
     searchData();
     ElMessage.success("状态更新成功");
@@ -657,7 +658,8 @@ const switchOnlyOffer = async (row, type) => {
   try {
     await svApi.updateRuleRecord({
       id: row.id,
-      status: type === "3" ? "3" : "1"
+      status: type === "3" ? "3" : "1",
+      update_time: getCurrentTime()
     });
     searchData();
     ElMessage({
@@ -680,7 +682,8 @@ const switchOnlyOffer = async (row, type) => {
       .then(async () => {
         await svApi.updateRuleRecord({
           id: row.id,
-          status: type === "3" ? "3" : "1"
+          status: type === "3" ? "3" : "1",
+          update_time: getCurrentTime()
         });
         searchData();
         ElMessage({
