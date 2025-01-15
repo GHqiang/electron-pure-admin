@@ -81,6 +81,10 @@ const createApi = ({ app_name }) => {
   const lockSeat = params =>
     axios.post("/h5ume/mtop.alipic.lark.own.seat.lockseats", params);
 
+  // 解锁座位
+  const unlockSeat = params =>
+    axios.post("/h5ume/mtop.alipic.lark.own.seat.unlockseats", params);
+
   // 获取最优卡券组合
   const getCardQuanList = params =>
     axios.post("/h5ume/mtop.alipic.lark.own.pay.getpayprivilegeinfo", params);
@@ -355,6 +359,7 @@ const createApi = ({ app_name }) => {
     getMoviePlayDate, // 获取电影放映场次
     getMoviePlaySeat,
     lockSeat,
+    unlockSeat,
     getCardList,
     getQuanList,
     priceCalculation,

@@ -338,6 +338,8 @@ const urlObj = {
   "mtop.alipic.lark.own.seat.getseatmap":
     "mtop.alipic.lark.own.seat.getSeatMap",
   "mtop.alipic.lark.own.seat.lockseats": "mtop.alipic.lark.own.seat.lockSeats",
+  "mtop.alipic.lark.own.seat.unlockseats":
+    "mtop.alipic.lark.own.seat.unlockSeats",
   "mtop.alipic.lark.own.pay.getpayprivilegeinfo":
     "mtop.alipic.lark.own.pay.getPayPrivilegeInfo",
   "mtop.alipic.lark.own.order.getorderlist":

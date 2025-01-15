@@ -275,6 +275,43 @@ class OrderAutoTicketQueue {
     console.warn("自动出票队列停止");
   }
 
+  // 解锁座位
+  async unlockSeat({ cinemaLinkId, lockOrderId, session_id }) {
+    // const session_id = this.currentParamsList[this.currentParamsInx].session_id;
+    let params = {
+      empCode: "",
+      leaseCode: "",
+      cinemaLinkId,
+      lockOrderId,
+      umeToken: session_id
+    };
+    try {
+      console.log("解锁座位参数", params);
+      const res = await this.umeApi.unlockSeat(params);
+      console.log("解锁座位返回", res);
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "解锁座位入参及返回",
+        level: "info",
+        info: {
+          params,
+          res
+        }
+      });
+      return res;
+    } catch (error) {
+      console.error("解锁座位异常", error);
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "解锁座位异常",
+        level: "error",
+        info: {
+          error,
+          params
+        }
+      });
+    }
+  }
   // 转单
   async transferOrder(order, unlockSeatInfo) {
     const errInfoObj = this.logList
@@ -322,35 +359,52 @@ class OrderAutoTicketQueue {
       if (unlockSeatInfo) {
         const session_id =
           this.currentParamsList[this.currentParamsInx].session_id;
-        const { cinemaLinkId, orderId } = unlockSeatInfo;
-        const cancelRes = await this.cannelOneOrder({
-          cinemaLinkId,
-          orderId,
-          session_id
-        });
-        if (!cancelRes.error) {
-          sendWxPusherMessage({
-            plat_name,
-            order_number,
-            city_name,
-            cinema_name,
-            film_name,
-            show_time,
-            lockseat,
-            hall_name: order.hall_name,
-            supplier_end_price: order.supplier_end_price,
-            transferTip:
-              "转单前取消订单失败，建议手动取消订单，以便后续订单正常出票",
-            failReason: `${JSON.stringify(cancelRes.error)}`
+        const { cinemaLinkId, lockOrderId, orderId } = unlockSeatInfo;
+        let operaDes = "释放座位",
+          operaRes = 0;
+        // 有创建订单号就取消订单
+        if (orderId) {
+          operaDes = "取消订单";
+          const cancelRes = await this.cannelOneOrder({
+            cinemaLinkId,
+            orderId,
+            session_id
           });
+          if (cancelRes.error) {
+            sendWxPusherMessage({
+              plat_name,
+              order_number,
+              city_name,
+              cinema_name,
+              film_name,
+              show_time,
+              lockseat,
+              hall_name: order.hall_name,
+              supplier_end_price: order.supplier_end_price,
+              transferTip:
+                "转单前取消订单失败，建议手动取消订单，以便后续订单正常出票",
+              failReason: `${JSON.stringify(cancelRes.error)}`
+            });
+          } else {
+            operaRes = 1;
+          }
         }
+        // 有锁座订单号就解锁座位
+        if (!orderId && lockOrderId) {
+          const unlockRes = await this.unlockSeat({
+            cinemaLinkId,
+            lockOrderId,
+            session_id
+          });
+          if (unlockRes) {
+            operaRes = 1;
+          }
+        }
+
         this.logList.push({
           opera_time: getCurrentTime(),
-          des: `转单前释放座位${!cancelRes.error ? "成功" : "失败"}`,
-          level: "info",
-          info: {
-            cancelRes
-          }
+          des: `转单前${operaDes}-${operaRes ? "成功" : "失败"}`,
+          level: "info"
         });
       }
       let params;
@@ -1081,6 +1135,7 @@ class OrderAutoTicketQueue {
           return { transferParams };
         }
       } else {
+        // 有创建订单号就取消订单
         if (orderId) {
           // 先用上个号的token取消订单，然后再重新出票
           const cancelRes = await this.cannelOneOrder({
@@ -1101,6 +1156,22 @@ class OrderAutoTicketQueue {
             console.warn("上个号取消订单失败,微信发送消息通知并直接走转单");
             const transferParams = await this.transferOrder(item);
             return { transferParams };
+          }
+        }
+        // 有锁座订单号就解锁座位
+        if (!orderId && lockOrderId) {
+          const unlockRes = await this.unlockSeat({
+            cinemaLinkId,
+            lockOrderId,
+            session_id:
+              this.currentParamsList[this.currentParamsInx - 1].session_id
+          });
+          if (!unlockRes) {
+            this.logList.push({
+              opera_time: getCurrentTime(),
+              des: "上个号释放座位失败",
+              level: "info"
+            });
           }
         }
         const phone = this.currentParamsList[this.currentParamsInx].mobile;
@@ -1186,7 +1257,10 @@ class OrderAutoTicketQueue {
       });
       if (!orderInfoRes) {
         console.error("获取最优卡券组合失败");
-        const transferParams = await this.transferOrder(item);
+        const transferParams = await this.transferOrder(item, {
+          cinemaLinkId,
+          lockOrderId
+        });
         return { offerRule, transferParams };
       }
       let cardList = orderInfoRes?.cards || [];
@@ -1276,7 +1350,10 @@ class OrderAutoTicketQueue {
           }
         });
         if (this.currentParamsInx === this.currentParamsList.length - 1) {
-          const transferParams = await this.transferOrder(item);
+          const transferParams = await this.transferOrder(item, {
+            cinemaLinkId,
+            lockOrderId
+          });
           return { offerRule, transferParams };
         } else {
           this.logList.push({
