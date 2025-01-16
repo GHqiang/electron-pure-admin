@@ -1126,6 +1126,14 @@ class OrderAutoTicketQueue {
           const transferParams = await this.transferOrder(item);
           return { transferParams };
         }
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "出票时获取电影放映信息",
+          level: "info",
+          info: {
+            targetShow
+          }
+        });
         show_id = targetShow.show_id;
         let sessionId =
           this.currentParamsList[this.currentParamsInx].session_id;

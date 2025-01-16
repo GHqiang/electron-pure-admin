@@ -1102,6 +1102,14 @@ class OrderAutoTicketQueue {
           const transferParams = await this.transferOrder(item);
           return { transferParams };
         }
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "出票时获取电影放映信息",
+          level: "info",
+          info: {
+            targetShow
+          }
+        });
         showDateTime = targetShow.showDateTime;
         console.log(
           conPrefix + "targetShow===>",
@@ -1387,6 +1395,29 @@ class OrderAutoTicketQueue {
       }
 
       total_price = mbmberPrice * ticket_num;
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "会员总价计算相关信息",
+        level: "info",
+        info: {
+          total_price,
+          mbmberPrice,
+          ticket_num,
+          ticketMemberPrice,
+          计算相关字段:
+            ticketMemberPrice == 0
+              ? {
+                  areaSettlePriceMin,
+                  handlingFee
+                }
+              : {
+                  ticketMemberPrice,
+                  handlingFee,
+                  ticketMemberServiceFeeMin,
+                  discountAmount
+                }
+        }
+      });
       let activityId = activities[0]?.activityId || null; // 活动id
       let {
         card_id = "",
@@ -1469,6 +1500,19 @@ class OrderAutoTicketQueue {
           total_price =
             (+areaSettlePriceMin + handlingFee - quanDiscountAmount) / 100 || 0;
           total_price = (total_price * 1000 * ticket_num) / 1000;
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: "券补钱总价计算相关信息",
+            level: "info",
+            info: {
+              total_price,
+              quan_fee: offerRule.quan_fee,
+              areaSettlePriceMin,
+              handlingFee,
+              quanDiscountAmount,
+              ticket_num
+            }
+          });
         } else {
           total_price = 0;
         }
@@ -1643,7 +1687,9 @@ class OrderAutoTicketQueue {
           des: "用完券发现支付金额不为券手续费*票数，走转单",
           level: "error",
           info: {
-            paymentAmount
+            paymentAmount,
+            quan_fee,
+            ticket_num
           }
         });
         const transferParams = await this.transferOrder(item, {

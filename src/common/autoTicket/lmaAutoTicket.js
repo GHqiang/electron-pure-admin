@@ -1072,6 +1072,14 @@ class OrderAutoTicketQueue {
           const transferParams = await this.transferOrder(item);
           return { transferParams };
         }
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "出票时获取电影放映信息",
+          level: "info",
+          info: {
+            targetShow
+          }
+        });
         show_id = targetShow.session_id;
         let lmaToken = this.currentParamsList[this.currentParamsInx].lmaToken;
         // 3、获取座位布局

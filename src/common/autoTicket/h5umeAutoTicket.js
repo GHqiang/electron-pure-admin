@@ -1056,7 +1056,7 @@ class OrderAutoTicketQueue {
         }
         this.logList.push({
           opera_time: getCurrentTime(),
-          des: "获取电影放映信息",
+          des: "出票时获取电影放映信息",
           level: "info",
           info: {
             targetShow
@@ -1295,11 +1295,26 @@ class OrderAutoTicketQueue {
       let member_total_price = activities.find(
         item => item.payMethod === "CARD"
       )?.privilegeTotalPrice;
+      let originalTicketTotalPrice = total_price,
+        privilegeTotalPrice = member_total_price;
       // 如果会员价为0时，取报价记录里的真实会员价
       if (member_total_price === undefined && offerRule.offer_type != "1") {
         member_total_price =
           (offerRule.real_member_price * 1000 * ticket_num) / 1000;
       }
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "会员总价计算相关信息",
+        level: "info",
+        info: {
+          total_price,
+          originalTicketTotalPrice,
+          privilegeTotalPrice,
+          member_total_price,
+          ticket_num,
+          real_member_price: offerRule.real_member_price
+        }
+      });
       let {
         payAmount,
         card_id,
@@ -1384,6 +1399,19 @@ class OrderAutoTicketQueue {
           total_price =
             (+areaSettlePriceMin + handlingFee - quanDiscountAmount) / 100 || 0;
           total_price = (total_price * 1000 * ticket_num) / 1000;
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: "券补钱总价计算相关信息",
+            level: "info",
+            info: {
+              total_price,
+              quan_fee: offerRule.quan_fee,
+              areaSettlePriceMin,
+              handlingFee,
+              quanDiscountAmount,
+              ticket_num
+            }
+          });
         } else {
           total_price = 0;
         }
@@ -1496,7 +1524,10 @@ class OrderAutoTicketQueue {
           des: "用完券发现支付金额不为券手续费*票数，走转单",
           level: "error",
           info: {
-            payAmount
+            payAmount,
+            quan_fee_total,
+            quan_fee,
+            ticket_num
           }
         });
         const transferParams = await this.transferOrder(item, {
