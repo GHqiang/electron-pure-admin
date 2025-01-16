@@ -276,7 +276,7 @@ class OrderAutoTicketQueue {
   }
 
   // 解锁座位
-  async unlockSeat({ cinemaLinkId, lockOrderId, session_id }) {
+  async unlockSeatByApp({ cinemaLinkId, lockOrderId, session_id }) {
     // const session_id = this.currentParamsList[this.currentParamsInx].session_id;
     let params = {
       empCode: "",
@@ -391,7 +391,7 @@ class OrderAutoTicketQueue {
         }
         // 有锁座订单号就解锁座位
         if (!orderId && lockOrderId) {
-          const unlockRes = await this.unlockSeat({
+          const unlockRes = await this.unlockSeatByApp({
             cinemaLinkId,
             lockOrderId,
             session_id
@@ -1160,7 +1160,7 @@ class OrderAutoTicketQueue {
         }
         // 有锁座订单号就解锁座位
         if (!orderId && lockOrderId) {
-          const unlockRes = await this.unlockSeat({
+          const unlockRes = await this.unlockSeatByApp({
             cinemaLinkId,
             lockOrderId,
             session_id:
