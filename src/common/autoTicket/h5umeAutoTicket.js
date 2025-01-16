@@ -1273,7 +1273,11 @@ class OrderAutoTicketQueue {
           );
         }
       }
-      let quanList = orderInfoRes?.preferCouponInfo?.preferCoupons || [];
+      const { canUseCoupon, preferCoupons } =
+        orderInfoRes?.preferCouponInfo || {};
+      let quanList = canUseCoupon ? preferCoupons || [] : [];
+      // USEFUL 表示优惠券有效且可用，CANCEL 表示优惠券已被取消或不可用
+      quanList = quanList.filter(item => item.state == "USEFUL");
       let activities = orderInfoRes?.privileges || [];
       this.logList.push({
         opera_time: getCurrentTime(),
@@ -1295,8 +1299,8 @@ class OrderAutoTicketQueue {
       let member_total_price = activities.find(
         item => item.payMethod === "CARD"
       )?.privilegeTotalPrice;
-      let originalTicketTotalPrice = total_price,
-        privilegeTotalPrice = member_total_price;
+      let originalTicketTotalPrice = total_price, // 原总价
+        privilegeTotalPrice = member_total_price; // 会员价
       // 如果会员价为0时，取报价记录里的真实会员价
       if (member_total_price === undefined && offerRule.offer_type != "1") {
         member_total_price =
@@ -1316,9 +1320,9 @@ class OrderAutoTicketQueue {
         }
       });
       let {
-        payAmount,
         card_id,
-        profit = 0
+        profit = 0,
+        useQuan = []
       } = await this.useQuanOrCard({
         cardList,
         quanList,
@@ -1337,23 +1341,30 @@ class OrderAutoTicketQueue {
         des: "使用会员卡或优惠券返回",
         level: "info",
         info: {
-          payAmount,
           card_id,
+          useQuan,
           profit
         }
       });
-      // 券抵扣金额
-      let quanDiscountAmount = 0;
+      let failMsg;
+      if (offerRule.offer_type === "1") {
+        if (!useQuan?.length) {
+          failMsg = "无可用优惠券";
+        }
+        if (offerRule.quan_fee > 0 && !card_id) {
+          failMsg = "无可补券手续费的会员卡";
+        }
+      } else {
+        if (!card_id) {
+          failMsg = "无可用会员卡";
+        }
+      }
       // 使用优惠券及会员卡
-      if (!card_id) {
-        let str = "无可用会员卡";
-        // if (offerRule.offer_type === "1") {
-        //   str = "无可用优惠券";
-        // }
-        console.error(str);
+      if (failMsg) {
+        console.error(failMsg);
         this.logList.push({
           opera_time: getCurrentTime(),
-          des: str,
+          des: failMsg,
           level: "error",
           info: {
             cardList,
@@ -1393,12 +1404,14 @@ class OrderAutoTicketQueue {
           });
         }
       }
+      let payAmount = member_total_price; // 会员支付价
+      // 券抵扣金额
+      let quanDiscountAmount = useQuan?.[0]?.discountAmount || 0;
       // 用券时总价为0
       if (offerRule.offer_type === "1") {
         if (offerRule.quan_fee > 0) {
-          total_price =
-            (+areaSettlePriceMin + handlingFee - quanDiscountAmount) / 100 || 0;
-          total_price = (total_price * 1000 * ticket_num) / 1000;
+          payAmount =
+            (+total_price - quanDiscountAmount * ticket_num) / 100 || 0;
           this.logList.push({
             opera_time: getCurrentTime(),
             des: "券补钱总价计算相关信息",
@@ -1406,14 +1419,12 @@ class OrderAutoTicketQueue {
             info: {
               total_price,
               quan_fee: offerRule.quan_fee,
-              areaSettlePriceMin,
-              handlingFee,
               quanDiscountAmount,
               ticket_num
             }
           });
         } else {
-          total_price = 0;
+          payAmount = 0;
         }
         if (offerRule.is_store == "1" && quanList.length - ticket_num < 15) {
           this.logList.push({
@@ -1437,22 +1448,37 @@ class OrderAutoTicketQueue {
       }
 
       console.warn("payAmount", payAmount, "card_id", card_id);
-      let quan_code;
+      let quan_code = useQuan.map(item => item.couponCode)?.join();
       let payMethod = "";
       if (card_id && activities.find(item => item.payMethod === "CARD")) {
         payMethod = "CARD";
       }
       let tickets, payments;
       if (offerRule.offer_type !== "1" && card_id) {
+        payments = [{ payMethod: "CARD", payCardNumber: card_id }];
         tickets = activities
           .find(item => item.payMethod === payMethod)
           ?.ticketInfos?.map(item => ({
             seatId: item.seatId,
             activityId: item.activityId
           }));
-        tickets = JSON.stringify(tickets);
-        payments = [{ payMethod: "CARD", payCardNumber: card_id }];
+      } else if (offerRule.offer_type == "1" && quan_code) {
+        payments = useQuan.map(item => ({
+          payMethod: "COUPON",
+          couponCodeParams: item.couponCode + "-" + item.couponType
+        }));
+        if (offerRule.quan_fee > 0 && card_id) {
+          payments.push({ payMethod: "CARD", payCardNumber: card_id });
+        }
+        tickets = activities
+          .find(item => item.payMethod === "")
+          ?.ticketInfos?.map(item => ({
+            seatId: item.seatId,
+            activityId: item.activityId
+          }));
       }
+      tickets = JSON.stringify(tickets);
+      payments = JSON.stringify(payments);
       // 7、创建订单
       const createOrderRes = await this.createOrder({
         cinemaLinkId,
@@ -1464,30 +1490,18 @@ class OrderAutoTicketQueue {
         payAmount,
         payments
       });
+      // 用券补钱场景接口返回
+      // "bizValue": {
+      //     "cardCinemaLinkId": "16015",
+      //     "cardNumber": "20004515324X",
+      //     "orderId": "250116003002X160191174",
+      //     "orderType": "TICKET",
+      //     "payMethod": "CARD"
+      // },
       orderId = createOrderRes?.orderId;
       let quan_fee = offerRule.quan_fee || 0;
       quan_fee = Number(quan_fee);
-      let cardNo;
-      // if (payAmount > 0 && quan_fee > 0 && offerRule.offer_type == 1) {
-      //   // 支付方式里返回的有会员卡方式和可用列表
-      //   cardNo = createOrderRes?.paymentList?.find(item => item.memberCardList)
-      //     ?.memberCardList?.[0]?.cardNo;
-      //   if (!cardNo) {
-      //     this.logList.push({
-      //       opera_time: getCurrentTime(),
-      //       des: "创建订单时发现没有可以补券手续费的卡，走转单",
-      //       level: "error",
-      //       info: {
-      //         paymentList: createOrderRes?.paymentList
-      //       }
-      //     });
-      //     const transferParams = await this.transferOrder(item, {
-      //       cinemaLinkId,
-      //       orderId
-      //     });
-      //     return { offerRule, transferParams };
-      //   }
-      // }
+      let cardNo = card_id;
       let quan_fee_total = quan_fee * ticket_num;
       if (!orderId) {
         console.error("创建订单失败，单个订单直接出票结束", "走转单逻辑");
@@ -1511,7 +1525,6 @@ class OrderAutoTicketQueue {
         });
         return { offerRule };
       }
-      let useQuan = [];
       payAmount = Number(payAmount) / 100;
       // 支付前校验用券价格
       if (
@@ -1804,7 +1817,7 @@ class OrderAutoTicketQueue {
         tickets,
         totalPrice,
         payAmount,
-        payments: JSON.stringify(payments),
+        payments,
         mobile,
         umeToken: session_id
       };
@@ -2547,9 +2560,7 @@ class OrderAutoTicketQueue {
         let { quan_value, quan_cost, quan_flag, quan_fee, black_quans } =
           offerRule;
         // 根据券标识获取目标券
-        let targetQuanList = quanList.filter(
-          item => item.couponName === quan_flag
-        );
+        let targetQuanList = quanList.filter(item => item.name === quan_flag);
         // 增加已用完过滤，防止核销延迟导致用券失败
         const usedQuanList = await this.queryUsedQuanList({
           quan_value: offerRule.quan_value,
@@ -2572,9 +2583,18 @@ class OrderAutoTicketQueue {
         }
         // 优先使用快过期的券
         targetQuanList = targetQuanList.sort(
-          (a, b) => +new Date(a.endDateTime) - new Date(b.endDateTime)
+          (a, b) => +new Date(a.expireTime) - new Date(b.expireTime)
         );
         if (targetQuanList.length < ticket_num) {
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: "目标券不足",
+            level: "info",
+            info: {
+              targetQuanList,
+              ticket_num
+            }
+          });
           console.warn("优惠券不够用");
           console.error(`${quan_value} 面额券不足，不支持从服务端同步获取`);
           if (is_auto_use_quan) {
@@ -2593,21 +2613,11 @@ class OrderAutoTicketQueue {
         }
 
         let useQuan = targetQuanList.slice(0, ticket_num).map((item, index) => {
-          let seatCode = Object.keys(item.discountAmountMap);
           return {
-            couponInstanceId: item.couponInstanceId,
-            couponType: item.templateType,
-            // 以下两个值一样
-            seatCode: seatCode[index],
-            salesKeySku: seatCode[index],
+            couponType: item.couponType,
             couponCode: item.couponCode,
             couponName: item.couponName,
-            templateCode: item.templateCode,
-            discountAmount: seatCode
-              ? !["zheyingshidai", "yaolai", "wanxiang"].includes(appFlag)
-                ? item.discountAmountMap?.[seatCode[index]]
-                : item.discountAmountMap?.[seatCode[index]]?.[1]
-              : 0
+            discountAmount: item.discountValue
           };
         });
         let profit =
@@ -2670,7 +2680,8 @@ class OrderAutoTicketQueue {
           offerRule.offer_type = "1";
         }
         return {
-          profit
+          profit,
+          useQuan
         };
       }
     } catch (error) {
@@ -2749,7 +2760,6 @@ class OrderAutoTicketQueue {
       profit = Number(profit).toFixed(2);
       return {
         card_id: cardData?.[0]?.cardNumber,
-        payAmount: member_total_price,
         profit // 利润
       };
     } catch (error) {
