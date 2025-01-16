@@ -261,6 +261,39 @@ class getUmeOfferPrice {
     }
   }
 
+  // 获取影院券类型列表
+  async getQuanTypeListByApp(app_name) {
+    const params = {
+      app_name,
+      isNeedTotalNum: 0,
+      queryFields: "quan_value,app_name,quan_stock"
+    };
+    try {
+      let quanTypeRes = await svApi.queryQuanTypeList(params);
+      let quanTypeList = quanTypeRes?.data?.quanTypeList || [];
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "根据影院获取券类型列表返回",
+        level: "info",
+        info: {
+          quanTypeList,
+          params
+        }
+      });
+      return quanTypeList;
+    } catch (error) {
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "根据影院获取券类型列表返回异常",
+        level: "error",
+        info: {
+          error,
+          params
+        }
+      });
+    }
+  }
+
   // 获取报价最低的报价规则
   async getMinAmountOfferRule(ruleList, order, movieInfo) {
     try {
@@ -290,6 +323,41 @@ class getUmeOfferPrice {
       let fixedAmountRuleList = otherRuleList.filter(
         item => item.offerType === "1" && item.offerAmount
       );
+      if (fixedAmountRuleList.length) {
+        // 校验其库存，进行过滤
+        const appQuanTypeList = await this.getQuanTypeListByApp(order.app_name);
+        if (appQuanTypeList?.length) {
+          fixedAmountRuleList = fixedAmountRuleList.filter(item => {
+            let targetQuanInfo = appQuanTypeList.find(
+              itemA => itemA.quan_value == item.quanValue
+            );
+            let quan_stock = targetQuanInfo?.quan_stock;
+            return quan_stock
+              ? quan_stock >= order.ticket_num
+              : quan_stock == 0
+                ? false
+                : true;
+          });
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: "根据券库存过滤后的固定报价规则列表",
+            level: "info",
+            info: {
+              fixedAmountRuleList
+            }
+          });
+        } else {
+          fixedAmountRuleList = [];
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: "根据影院获取券类型列表为空，固定报价规则列表进行置空处理",
+            level: "info",
+            info: {
+              appQuanTypeList
+            }
+          });
+        }
+      }
       let mixFixedAmountRule = fixedAmountRuleList.sort(
         (itemA, itemB) => itemA.offerAmount - itemB.offerAmount
       )?.[0];
