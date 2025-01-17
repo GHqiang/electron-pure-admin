@@ -1940,6 +1940,15 @@ class OrderAutoTicketQueue {
             });
           }
         }
+        // 更新券库存
+        if (rule == 2) {
+          this.updateQuanStock({
+            quan_stock: quanList.length,
+            quan_value: offerRule.quan_value,
+            quan_id: offerRule.quan_id,
+            app_name: appFlag
+          });
+        }
         if (quanList?.length < ticket_num) {
           this.logList.push({
             opera_time: getCurrentTime(),
@@ -1956,27 +1965,7 @@ class OrderAutoTicketQueue {
             // 返回用卡结果
             return await this.useCardHandle(useCardParams);
           }
-          // 更新券库存(目标券数量不足时)
-          if (rule == 2) {
-            this.updateQuanStock({
-              quan_stock: quanList.length,
-              quan_value: offerRule.quan_value,
-              quan_id: offerRule.quan_id,
-              app_name: appFlag,
-              is_little: 1 // 不足的
-            });
-          }
           return {};
-        }
-        // 更新券库存(目标券数量足够时)
-        if (rule == 2) {
-          this.updateQuanStock({
-            quan_stock: quanStock,
-            quan_value: offerRule.quan_value,
-            quan_id: offerRule.quan_id,
-            app_name: appFlag,
-            is_more: 1 // 足够的
-          });
         }
         const { coupon_type, card_num } = quanList?.[0] || {};
         if (coupon_type) {

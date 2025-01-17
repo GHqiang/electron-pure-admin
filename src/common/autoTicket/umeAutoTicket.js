@@ -2800,6 +2800,15 @@ class OrderAutoTicketQueue {
         targetQuanList = targetQuanList.sort(
           (a, b) => +new Date(a.endDateTime) - new Date(b.endDateTime)
         );
+        // 更新券库存
+        if (rule == 2) {
+          this.updateQuanStock({
+            quan_stock: targetQuanList.length,
+            quan_value: offerRule.quan_value,
+            quan_id: offerRule.quan_id,
+            app_name: appFlag
+          });
+        }
         if (targetQuanList.length < ticket_num) {
           console.warn(conPrefix + "优惠券不够用");
           console.error(
@@ -2818,16 +2827,6 @@ class OrderAutoTicketQueue {
             profit: 0,
             useQuans: []
           };
-        }
-
-        // 更新券库存
-        if (rule == 2) {
-          this.updateQuanStock({
-            quan_stock: targetQuanList.length,
-            quan_value: offerRule.quan_value,
-            quan_id: offerRule.quan_id,
-            app_name: appFlag
-          });
         }
 
         let useQuan = targetQuanList.slice(0, ticket_num).map((item, index) => {

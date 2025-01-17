@@ -2641,6 +2641,15 @@ class OrderAutoTicketQueue {
         targetQuanList = targetQuanList.sort(
           (a, b) => +new Date(a.expireTime) - new Date(b.expireTime)
         );
+        // 更新券库存
+        if (rule == 2) {
+          this.updateQuanStock({
+            quan_stock: targetQuanList.length,
+            quan_value: offerRule.quan_value,
+            quan_id: offerRule.quan_id,
+            app_name: appFlag
+          });
+        }
         if (targetQuanList.length < ticket_num) {
           this.logList.push({
             opera_time: getCurrentTime(),
@@ -2666,15 +2675,6 @@ class OrderAutoTicketQueue {
             profit: 0,
             card_id: ""
           };
-        }
-        // 更新券库存
-        if (rule == 2) {
-          this.updateQuanStock({
-            quan_stock: targetQuanList.length,
-            quan_value: offerRule.quan_value,
-            quan_id: offerRule.quan_id,
-            app_name: appFlag
-          });
         }
 
         let useQuan = targetQuanList.slice(0, ticket_num).map((item, index) => {
