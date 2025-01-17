@@ -500,7 +500,7 @@ class OrderAutoTicketQueue {
       let transfer_fee = 0; // 蚂蚁转单扣积分
       if (plat_name != "mayi") {
         transfer_fee = (
-          (Number(ticket_num) * Number(supplier_end_price) * 100 * 3) /
+          (Number(supplier_end_price) * 100 * Number(ticket_num) * 3) /
           10000
         ).toFixed(2);
       }
@@ -3508,7 +3508,7 @@ class OrderAutoTicketQueue {
       if (rewards > 0) {
         // 特急奖励订单中标价格 * 张数 * 0.04;
         let rewardPrice =
-          (Number(supplier_end_price) * Number(ticket_num) * 100 * rewards) /
+          (Number(supplier_end_price) * 100 * Number(ticket_num) * rewards) /
           10000;
         profit += rewardPrice;
       }
@@ -3632,7 +3632,7 @@ class OrderAutoTicketQueue {
             if (price) {
               let cardCalcFail =
                 Number(price.total_price) >
-                (Number(real_member_price) * 100 * Number(ticket_num)) / 100;
+                (Number(real_member_price) * 1000 * Number(ticket_num)) / 1000;
               if (cardCalcFail) {
                 let isChangeCard = card.id !== cardData[cardData.length - 1].id;
                 this.logList.push({
@@ -3688,7 +3688,7 @@ class OrderAutoTicketQueue {
       if (rewards > 0) {
         // 特急奖励订单中标价格 * 张数 * 0.04;
         let rewardPrice =
-          (Number(supplier_end_price) * Number(ticket_num) * 100 * rewards) /
+          (Number(supplier_end_price) * 100 * Number(ticket_num) * rewards) /
           10000;
         profit += rewardPrice;
       }

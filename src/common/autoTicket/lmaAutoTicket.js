@@ -441,7 +441,7 @@ class OrderAutoTicketQueue {
       let transfer_fee = 0; // 蚂蚁转单扣积分
       if (plat_name != "mayi") {
         transfer_fee = (
-          (Number(ticket_num) * Number(supplier_end_price) * 100 * 3) /
+          (Number(supplier_end_price) * 100 * Number(ticket_num) * 3) /
           10000
         ).toFixed(2);
       }
