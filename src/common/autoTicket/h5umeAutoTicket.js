@@ -1435,6 +1435,7 @@ class OrderAutoTicketQueue {
               cinemaLinkId,
               hallId,
               scheduleId,
+              lockOrderId,
               scheduleKey,
               seatIds,
               areaTotalPrice,
@@ -2558,6 +2559,7 @@ class OrderAutoTicketQueue {
         offer_rule_id
       } = offerRule;
       let is_auto_use_quan = false; // 是否灵活用券
+      let card_id = "";
       let useCardParms = {
         cardList,
         member_price, // 成本价
@@ -2738,12 +2740,14 @@ class OrderAutoTicketQueue {
               profit: 0 // 利润
             };
           }
+          card_id = cardData?.[0]?.cardNumber;
         }
         if (is_auto_use_quan) {
           offerRule.offer_type = "1";
         }
         return {
           profit,
+          card_id,
           useQuan,
           quanStock: targetQuanList.length
         };
