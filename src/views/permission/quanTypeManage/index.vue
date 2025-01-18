@@ -209,7 +209,11 @@
         </template>
       </el-table-column>
       <el-table-column prop="black_quans" label="黑名单券" min-width="100" />
-      <el-table-column prop="quan_stock" label="券库存" min-width="100" />
+      <el-table-column label="券库存" min-width="100">
+        <template #default="{ row: { quan_stock, quanStockList } }">
+          <span>{{ quanStockFormat({ quan_stock, quanStockList }) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column prop="update_time" label="更新时间" min-width="160" />
       <el-table-column prop="remark" label="备注" min-width="100" />
 
@@ -364,6 +368,11 @@ const searchData = async () => {
       page_size
     });
     let quanTypeList = res.data.quanTypeList || [];
+    quanTypeList.forEach(item => {
+      item.quanStockList = item.quanStockList
+        ? JSON.parse(item.quanStockList)
+        : [];
+    });
     // console.log("券类型列表===>", quanTypeList);
     tableData.value = quanTypeList;
     totalNum.value = res.data.totalNum || 0;
@@ -398,22 +407,38 @@ const addQuan = () => {
 
 // 编辑券类型
 const editQuan = (row, type) => {
+  console.log("row", row);
   dialogTitle.value = type === "1" ? "编辑" : "复制新增";
   sfcDialogRef.value.open(type === "1" ? row : { ...row, id: "" });
 };
 
+// 格式化券库存
+const quanStockFormat = ({ quan_stock, quanStockList }) => {
+  if (quanStockList?.length && quanStockList[0]?.quan_stock) {
+    // 最大数当做券库存
+    let maxNum = 0;
+    quanStockList.forEach(item => {
+      if (+item.quan_stock > maxNum) {
+        maxNum = +item.quan_stock;
+      }
+    });
+    return maxNum;
+  } else {
+    return quan_stock;
+  }
+};
 // 保存券类型
 const saveQuan = async cardInfo => {
   try {
     cardInfo.update_time = getCurrentTime();
+    cardInfo.quanStockList = JSON.stringify(cardInfo.quanStockList);
+    console.log("新增/编辑保存券类型", JSON.parse(JSON.stringify(cardInfo)));
     if (cardInfo.id) {
-      console.log("编辑保存券类型", cardInfo);
       await svApi.updateQuanType(cardInfo);
       sfcDialogRef.value.closeTck();
       ElMessage.success("编辑成功！");
       searchData();
     } else {
-      console.log("新增保存券类型", cardInfo);
       await svApi.addQuanType({ ...cardInfo, id: undefined });
       sfcDialogRef.value.closeTck();
       ElMessage.success("保存成功！");

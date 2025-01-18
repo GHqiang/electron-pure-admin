@@ -345,16 +345,33 @@ class getSfcOfferPrice {
     const params = {
       app_name,
       isNeedTotalNum: 0,
-      queryFields: "quan_value,app_name,quan_stock"
+      queryFields: "quan_value,app_name,quan_stock,quanStockList"
     };
     try {
       let quanTypeRes = await svApi.queryQuanTypeList(params);
       let quanTypeList = quanTypeRes?.data?.quanTypeList || [];
+      quanTypeList.forEach(item => {
+        let quanStockList = item.quanStockList;
+        if (item.quanStockList) {
+          quanStockList = JSON.parse(quanStockList);
+        }
+        if (quanStockList?.length) {
+          // 最大数当做券库存
+          let maxNum = 0;
+          quanStockList.forEach(itemA => {
+            if (+itemA.quan_stock > maxNum) {
+              maxNum = +itemA.quan_stock;
+            }
+          });
+          item.quan_stock = maxNum;
+        }
+      });
       this.logList.push({
         opera_time: getCurrentTime(),
         des: "根据影院获取券类型列表返回",
         level: "info",
         info: {
+          quanTypeRes,
           quanTypeList,
           params
         }

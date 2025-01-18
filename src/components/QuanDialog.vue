@@ -7,7 +7,7 @@
       :close-on-click-modal="false"
       :close-on-press-escape="false"
       :title="dialogTitle"
-      width="50%"
+      width="60%"
       @close="resetForm(cardFormRef)"
     >
       <el-form
@@ -67,12 +67,66 @@
             clearable
           />
         </el-form-item>
-        <el-form-item label="券库存" prop="quan_stock">
+        <!-- <el-form-item label="券库存" prop="quan_stock">
           <el-input
             v-model="formData.quan_stock"
             placeholder="请输入券库存"
             clearable
           />
+        </el-form-item> -->
+        <el-form-item label="券库存列表">
+          <el-table
+            border
+            :data="formData.quanStockList"
+            style="width: 100%; margin-top: 10px"
+          >
+            <el-table-column prop="phone" label="手机号" min-width="160">
+              <template #default="scope">
+                <el-input
+                  v-model="scope.row.phone"
+                  clearable
+                  placeholder="手机号"
+                />
+              </template>
+            </el-table-column>
+            <el-table-column prop="quan_stock" label="券库存" min-width="120">
+              <template #default="scope">
+                <el-input
+                  v-model="scope.row.quan_stock"
+                  clearable
+                  placeholder="券库存"
+                />
+              </template>
+            </el-table-column>
+            <el-table-column
+              prop="update_time"
+              label="更新时间"
+              min-width="230"
+            >
+              <template #default="scope">
+                <el-date-picker
+                  v-model="scope.row.update_time"
+                  value-format="YYYY-MM-DD HH:mm:ss"
+                  type="datetime"
+                  clearable
+                  placeholder="请选择更新时间"
+                />
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" min-width="100">
+              <template #default="{ $index }">
+                <el-button
+                  v-if="$index > 0"
+                  type="warning"
+                  @click="handleDelete($index)"
+                  >删除</el-button
+                >
+                <el-button v-if="$index == 0" type="primary" @click="addRow()"
+                  >新增</el-button
+                >
+              </template>
+            </el-table-column>
+          </el-table>
         </el-form-item>
         <el-form-item label="黑名单券" prop="black_quans">
           <el-input
@@ -138,7 +192,14 @@ let formData = reactive({
   quan_cost: "",
   quan_flag: "",
   quan_fee: "0",
-  quan_stock: "",
+  // quan_stock: "",
+  quanStockList: [
+    {
+      phone: "",
+      quan_stock: "",
+      update_time: ""
+    }
+  ],
   black_quans: "",
   is_store: "2",
   is_outuse: "2",
@@ -153,6 +214,23 @@ const rules = {
   quan_flag: [{ required: true, message: "券标识不能为空", trigger: "blur" }]
 };
 
+// 新增行的默认值
+const newRow = () => ({
+  phone: "",
+  quan_stock: "",
+  update_time: ""
+});
+
+// 新增行
+const addRow = () => {
+  formData.quanStockList.push(newRow());
+};
+
+// 删除行
+const handleDelete = index => {
+  formData.quanStockList.splice(index, 1);
+  ElMessage.success("删除成功");
+};
 // 重置表单
 const resetForm = el => {
   console.log("重置表单", el);
@@ -166,6 +244,13 @@ const resetForm = el => {
   formData.quan_flag = "";
   formData.quan_fee = "0";
   formData.quan_stock = "";
+  formData.quanStockList = [
+    {
+      phone: "",
+      quan_stock: "",
+      update_time: ""
+    }
+  ];
   formData.black_quans = "";
   formData.is_store = "2";
   formData.is_outuse = "2";
@@ -196,6 +281,7 @@ const open = async quanInfo => {
         formData.quan_flag = formInfo.quan_flag;
         formData.quan_fee = formInfo.quan_fee;
         formData.quan_stock = formInfo.quan_stock;
+        formData.quanStockList = formInfo.quanStockList;
         formData.black_quans = formInfo.black_quans;
         formData.remark = formInfo.remark;
         formData.is_store = formInfo.is_store;
@@ -203,6 +289,15 @@ const open = async quanInfo => {
       } else {
         // 新增
         formData.app_name = formInfo.app_name;
+      }
+      if (!formData.quanStockList?.length) {
+        formData.quanStockList = [
+          {
+            phone: "",
+            quan_stock: "",
+            update_time: ""
+          }
+        ];
       }
     }
     loading.close();

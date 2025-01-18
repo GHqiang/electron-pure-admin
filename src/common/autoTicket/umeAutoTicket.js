@@ -969,6 +969,7 @@ class OrderAutoTicketQueue {
             currentParamsList: this.currentParamsList
           }
         });
+        this.curPhone = phone;
         // 4、获取目标影院放映列表
         const movieDataRes = await getMoviePlayInfo({
           cinemaCode,
@@ -1205,6 +1206,7 @@ class OrderAutoTicketQueue {
             currentParamsList: this.currentParamsList
           }
         });
+        this.curPhone = phone;
       }
       // 锁定座位前延迟一秒
       // await mockDelay(1);
@@ -1793,9 +1795,9 @@ class OrderAutoTicketQueue {
         // 更新券库存
         this.updateQuanStock({
           quan_stock: quanStock - ticket_num,
-          quan_value: offerRule.quan_value,
-          quan_id: offerRule.quan_id,
+          quan_flag: offerRule.quan_flag,
           app_name: appFlag,
+          phone: this.curPhone,
           isPay: 1
         });
       }
@@ -2804,9 +2806,9 @@ class OrderAutoTicketQueue {
         if (rule == 2) {
           this.updateQuanStock({
             quan_stock: targetQuanList.length,
-            quan_value: offerRule.quan_value,
-            quan_id: offerRule.quan_id,
-            app_name: appFlag
+            quan_flag: offerRule.quan_flag,
+            app_name: appFlag,
+            phone: this.curPhone
           });
         }
         if (targetQuanList.length < ticket_num) {
@@ -3227,12 +3229,73 @@ class OrderAutoTicketQueue {
 
   // 更新券库存
   async updateQuanStock(params) {
-    const { quan_stock, quan_id, quan_value, app_name } = params;
+    const { quan_stock, quan_flag, phone, app_name } = params;
+    let targetQuanList = [];
+    const quanTypeParams = {
+      app_name,
+      isNeedTotalNum: 0,
+      queryFields: "id,quan_flag,app_name,quan_value,quanStockList"
+    };
     try {
-      const res = await svApi.updateQuanType({ quan_stock, id: quan_id });
+      let quanTypeRes = await svApi.queryQuanTypeList(quanTypeParams);
+      let quanTypeList = quanTypeRes?.data?.quanTypeList || [];
+      targetQuanList = quanTypeList.filter(item => item.quan_flag == quan_flag);
       this.logList.push({
         opera_time: getCurrentTime(),
-        des: "更新券库存返回",
+        des: "更新券库存前获取同类目标券返回",
+        level: "info",
+        info: {
+          params,
+          quanTypeParams,
+          targetQuanList
+        }
+      });
+    } catch (error) {
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "更新券库存前获取同类目标券异常",
+        level: "error",
+        info: {
+          error,
+          quanTypeParams
+        }
+      });
+    }
+
+    // 同类目标券更新处理
+    targetQuanList.forEach(item => {
+      let quanStockList = item.quanStockList || [];
+      if (quanStockList?.length) {
+        quanStockList = JSON.parse(quanStockList);
+        let inx = quanStockList.findIndex(itemA => itemA.phone === phone);
+        if (inx != -1) {
+          quanStockList[inx].quan_stock = quan_stock;
+          quanStockList[inx].update_time = getCurrentTime();
+        } else {
+          quanStockList.push({
+            phone,
+            quan_stock,
+            update_time: getCurrentTime()
+          });
+        }
+      } else {
+        quanStockList = [{ phone, quan_stock, update_time: getCurrentTime() }];
+      }
+      // 单个更新
+      this.singleUpdateQuanStock({
+        id: item.id,
+        quanStockList: JSON.stringify(quanStockList)
+      });
+    });
+  }
+
+  // 单个更新券库存
+  async singleUpdateQuanStock(params) {
+    try {
+      const res = await svApi.updateQuanType(params);
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "单个更新券库存返回",
         level: "info",
         info: {
           res,
@@ -3242,7 +3305,7 @@ class OrderAutoTicketQueue {
     } catch (error) {
       this.logList.push({
         opera_time: getCurrentTime(),
-        des: "更新券库存异常",
+        des: "单个更新券库存异常",
         level: "error",
         info: {
           error,
