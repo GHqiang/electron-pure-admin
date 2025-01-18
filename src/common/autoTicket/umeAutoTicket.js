@@ -3284,7 +3284,8 @@ class OrderAutoTicketQueue {
       // 单个更新
       this.singleUpdateQuanStock({
         id: item.id,
-        quanStockList: JSON.stringify(quanStockList)
+        quanStockList: JSON.stringify(quanStockList),
+        update_time: getCurrentTime()
       });
     });
   }
