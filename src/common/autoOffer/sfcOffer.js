@@ -17,8 +17,9 @@ import { APP_API_OBJ } from "@/common/index.js";
 import { APP_LIST, NO_SFC_APP_LIST, GROUP_LIST } from "@/common/constant.js";
 import lierenApi from "@/api/lieren-api";
 import { platTokens } from "@/store/platTokens";
-// 平台toke列表
-const tokens = platTokens();
+const {
+  userInfo: { rule, user_id }
+} = platTokens();
 
 class getSfcOfferPrice {
   constructor({ appFlag, plat_name }) {
@@ -61,7 +62,7 @@ class getSfcOfferPrice {
     const { conPrefix } = this;
     try {
       const res = await svApi.queryOfferList({
-        user_id: tokens.userInfo.user_id,
+        user_id: user_id,
         // user_id: "9",
         plat_name: this.plat_name,
         start_time: formatTimeOfTime(+new Date() - 0.5 * 60 * 60 * 1000),
@@ -405,7 +406,7 @@ class getSfcOfferPrice {
       let fixedAmountRuleList = otherRuleList.filter(
         item => item.offerType === "1" && item.offerAmount
       );
-      if (fixedAmountRuleList.length) {
+      if (fixedAmountRuleList.length && rule == 2) {
         // 校验其库存，进行过滤
         const appQuanTypeList = await this.getQuanTypeListByApp(order.app_name);
         if (appQuanTypeList?.length) {
@@ -917,7 +918,7 @@ class getSfcOfferPrice {
       if (member_price > 0) {
         const cardRes = await svApi.queryCardList({
           app_name: app_name,
-          rule: tokens.userInfo.rule,
+          rule: rule,
           status: "1",
           isNeedTotalNum: 0,
           queryFields:
@@ -1219,7 +1220,7 @@ class getSfcOfferPrice {
   async getTicketList() {
     try {
       const ticketRes = await svApi.queryTicketList({
-        user_id: tokens.userInfo?.user_id,
+        user_id: user_id,
         page_num: 1,
         page_size: 30,
         isNeedTotalNum: 0,

@@ -15,8 +15,9 @@ import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
 import { APP_LIST, UME_LIST, GROUP_LIST } from "@/common/constant.js";
 import { platTokens } from "@/store/platTokens";
-// 平台toke列表
-const tokens = platTokens();
+const {
+  userInfo: { rule, user_id }
+} = platTokens();
 
 class getUmeOfferPrice {
   constructor({ appFlag, plat_name }) {
@@ -328,7 +329,7 @@ class getUmeOfferPrice {
       let fixedAmountRuleList = otherRuleList.filter(
         item => item.offerType === "1" && item.offerAmount
       );
-      if (fixedAmountRuleList.length) {
+      if (fixedAmountRuleList.length && rule == 2) {
         // 校验其库存，进行过滤
         const appQuanTypeList = await this.getQuanTypeListByApp(order.app_name);
         if (appQuanTypeList?.length) {
@@ -790,7 +791,7 @@ class getUmeOfferPrice {
       if (member_price > 0) {
         const cardRes = await svApi.queryCardList({
           app_name: app_name,
-          rule: tokens.userInfo.rule,
+          rule: rule,
           status: "1",
           isNeedTotalNum: 0,
           queryFields:
