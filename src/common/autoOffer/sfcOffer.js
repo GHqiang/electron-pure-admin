@@ -268,17 +268,17 @@ class getSfcOfferPrice {
         item => item?.film_type?.length == 1
       );
       let movieInfo, filmType; // 电影放映信息
+      // 获取电影放映信息以匹配电影格式
+      movieInfo = await this.getMovieInfo(order);
+      if (!movieInfo) {
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "报价规则匹配时获取当前场次电影信息失败，直接不报",
+          level: "info"
+        });
+        return;
+      }
       if (filmTypeFlag) {
-        // 获取电影放映信息以匹配电影格式
-        movieInfo = await this.getMovieInfo(order);
-        if (!movieInfo) {
-          this.logList.push({
-            opera_time: getCurrentTime(),
-            des: "报价规则匹配电影格式时获取当前场次电影信息失败，直接不报",
-            level: "info"
-          });
-          return;
-        }
         // 当前场次电影格式
         filmType = movieInfo.media;
         if (filmType) {
