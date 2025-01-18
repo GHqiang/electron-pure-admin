@@ -208,12 +208,12 @@
           }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="black_quans" label="黑名单券" min-width="100" />
       <el-table-column label="券库存" min-width="100">
         <template #default="{ row: { quan_stock, quanStockList } }">
           <span>{{ quanStockFormat({ quan_stock, quanStockList }) }}</span>
         </template>
       </el-table-column>
+      <el-table-column prop="black_quans" label="黑名单券" min-width="100" />
       <el-table-column prop="update_time" label="更新时间" min-width="160" />
       <el-table-column prop="remark" label="备注" min-width="100" />
 
@@ -414,7 +414,7 @@ const editQuan = (row, type) => {
 
 // 格式化券库存
 const quanStockFormat = ({ quan_stock, quanStockList }) => {
-  if (quanStockList?.length && quanStockList[0]?.quan_stock) {
+  if (quanStockList?.length) {
     // 最大数当做券库存
     let maxNum = 0;
     quanStockList.forEach(item => {
