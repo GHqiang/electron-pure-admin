@@ -3425,9 +3425,10 @@ const buyTicket = async ({
   };
   if (cardNo) {
     params.cardNumber = cardNo;
-    params.cardPassword = member_pwd;
     params.cardCinemaLinkId = cinemaLinkId;
   }
+  params.cardPassword = member_pwd;
+
   try {
     console.log("订单购买参数", params);
     const buyRes = await APP_API_OBJ[appFlag].buyTicket(params);
