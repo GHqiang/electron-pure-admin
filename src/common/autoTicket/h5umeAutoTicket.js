@@ -1346,7 +1346,7 @@ class OrderAutoTicketQueue {
       // 如果会员价为0时，取报价记录里的真实会员价
       if (member_total_price === undefined && offerRule.offer_type != "1") {
         member_total_price =
-          (offerRule.real_member_price * 1000 * ticket_num) / 1000;
+          (offerRule.real_member_price * 1000 * ticket_num * 100) / 1000;
       }
       this.logList.push({
         opera_time: getCurrentTime(),
