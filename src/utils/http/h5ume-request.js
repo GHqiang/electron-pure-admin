@@ -348,8 +348,8 @@ const urlObj = {
     "mtop.alipic.lark.own.order.cancelOrder",
   "mtop.alipic.lark.own.order.getorderdetail":
     "mtop.alipic.lark.own.order.getOrderDetail",
-  "mtop.alipic.lark.own.coupon.getmyonlinecouponscount":
-    "mtop.alipic.lark.own.coupon.getMyOnlineCouponsCount",
+  "mtop.alipic.lark.own.coupon.getmyonlinecoupons":
+    "mtop.alipic.lark.own.coupon.getMyOnlineCoupons",
   "mtop.alipic.lark.own.lease.channelagreement":
     "mtop.alipic.lark.own.lease.channelAgreement",
   "mtop.alipic.lark.own.cinema.getcinemadetail":

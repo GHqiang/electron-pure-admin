@@ -336,12 +336,7 @@ const createApi = ({ app_name }) => {
   // ]
   // 获取优惠券列表个人中心
   const getQuanList = params =>
-    axios.pos(
-      "/h5ume/mtop.alipic.lark.own.coupon.getmyonlinecouponscount",
-      params || {
-        state: "NO_USE"
-      }
-    );
+    axios.post("/h5ume/mtop.alipic.lark.own.coupon.getmyonlinecoupons", params);
 
   // 订单价格计算
   const priceCalculation = params =>
