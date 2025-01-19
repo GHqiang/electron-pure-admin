@@ -345,6 +345,7 @@ class getSfcOfferPrice {
   async singleUpdateQuanStock(params) {
     try {
       const res = await svApi.updateQuanType(params);
+      console.log("单个更新券库存返回", res);
       this.logList.push({
         opera_time: getCurrentTime(),
         des: "单个更新券库存返回",
@@ -355,6 +356,7 @@ class getSfcOfferPrice {
         }
       });
     } catch (error) {
+      console.log("单个更新券库存异常", error);
       this.logList.push({
         opera_time: getCurrentTime(),
         des: "单个更新券库存异常",
