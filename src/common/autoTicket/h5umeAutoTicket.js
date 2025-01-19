@@ -1675,6 +1675,7 @@ class OrderAutoTicketQueue {
         this.updateQuanStock({
           quan_stock: quanStock - ticket_num,
           quan_flag: offerRule.quan_flag,
+          quan_value: offerRule.quan_value,
           app_name: appFlag,
           phone: this.curPhone,
           isPay: 1
@@ -3319,7 +3320,7 @@ class OrderAutoTicketQueue {
 
   // 更新券库存
   async updateQuanStock(params) {
-    const { quan_stock, quan_flag, phone, app_name } = params;
+    const { quan_stock, quan_flag, phone, app_name, quan_value } = params;
     let targetQuanList = [];
     const quanTypeParams = {
       app_name,
@@ -3371,12 +3372,17 @@ class OrderAutoTicketQueue {
       } else {
         quanStockList = [{ phone, quan_stock, update_time: getCurrentTime() }];
       }
-      // 单个更新
-      this.singleUpdateQuanStock({
+      let updateParams = {
         id: item.id,
         quanStockList: JSON.stringify(quanStockList),
         update_time: getCurrentTime()
-      });
+      };
+      // 增加最后使用时间更新（方便看是否压价）
+      if (quan_value && quan_value === item.quan_value) {
+        updateParams.end_use_time = getCurrentTime();
+      }
+      // 单个更新
+      this.singleUpdateQuanStock(updateParams);
     });
   }
 

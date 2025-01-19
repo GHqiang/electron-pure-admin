@@ -213,6 +213,11 @@
           <span>{{ quanStockFormat({ quan_stock, quanStockList }) }}</span>
         </template>
       </el-table-column>
+      <el-table-column
+        prop="end_use_time"
+        label="最后使用时间"
+        min-width="160"
+      />
       <el-table-column prop="black_quans" label="黑名单券" min-width="100" />
       <el-table-column prop="update_time" label="更新时间" min-width="160" />
       <el-table-column prop="remark" label="备注" min-width="100" />
