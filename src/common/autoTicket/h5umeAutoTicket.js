@@ -3432,8 +3432,8 @@ const buyTicket = async ({
   };
   if (cardNo) {
     params.cardNumber = cardNo;
-    params.cardCinemaLinkId = cinemaLinkId;
   }
+  params.cardCinemaLinkId = cinemaLinkId;
   params.cardPassword = member_pwd;
 
   try {

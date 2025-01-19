@@ -16,6 +16,7 @@ defineOptions({
   name: "Welcome"
 });
 import svApi from "@/api/sv-api";
+import { APP_API_OBJ, PLAT_API_OBJ } from "@/common/index";
 // 查询操作日志
 const queryLog = async (order_number, user_id, type) => {
   try {
