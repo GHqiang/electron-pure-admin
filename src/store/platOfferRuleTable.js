@@ -18,7 +18,6 @@ export const usePlatTableDataStore = defineStore("platforms", {
         id: 1,
         platName: "lieren",
         getInterval: 2, // 订单获取间隔
-        handleInterval: 2, // 订单执行间隔
         platToken: "",
         isEnabled: false
       }
@@ -26,7 +25,6 @@ export const usePlatTableDataStore = defineStore("platforms", {
     newItem: {
       platName: "",
       getInterval: 2,
-      handleInterval: 1,
       platToken: "",
       isEnabled: false
     } // 初始化表单状态
@@ -51,7 +49,6 @@ export const usePlatTableDataStore = defineStore("platforms", {
       this.newItem = {
         platName: "",
         getInterval: 2,
-        handleInterval: 1,
         platToken: "",
         isEnabled: false
       }; // 重置表单

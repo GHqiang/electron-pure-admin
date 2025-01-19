@@ -48,17 +48,6 @@
           />
         </template>
       </el-table-column>
-      <el-table-column prop="handleInterval" label="订单执行间隔">
-        <template #default="{ row, $index }">
-          <span v-if="row.id !== editingRowId">{{ row.handleInterval }}</span>
-          <el-input-number
-            v-else
-            v-model.number="editingRow.handleInterval"
-            controls-position="right"
-            @blur="saveEdit(row.id)"
-          />
-        </template>
-      </el-table-column>
       <el-table-column
         v-if="rule == 2"
         prop="syncPageSize"

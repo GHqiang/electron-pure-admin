@@ -44,9 +44,9 @@ class OrderAutoOfferQueue {
       platQueueRule = JSON.parse(platQueueRule).filter(
         item => item.platName === "shangzhan"
       );
-      const { getInterval, handleInterval } = platQueueRule[0];
+      const { getInterval } = platQueueRule[0];
       let fetchDelay = getInterval;
-      let processDelay = handleInterval;
+      let processDelay = 5;
       let orders = await this.fetchOrders(fetchDelay);
       // 将订单加入队列
       this.queue.push(...orders);

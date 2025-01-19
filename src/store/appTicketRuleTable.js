@@ -16,28 +16,24 @@ export const useAppRuleListStore = defineStore("appRuleList", {
         id: 1,
         appName: "sfc",
         getInterval: 2, // 订单获取间隔
-        handleInterval: 1, // 订单执行间隔
         isEnabled: false
       },
       {
         id: 2,
         appName: "jiujin",
         getInterval: 2, // 订单获取间隔
-        handleInterval: 1, // 订单执行间隔
         isEnabled: false
       },
       {
         id: 3,
         appName: "jinji",
         getInterval: 2, // 订单获取间隔
-        handleInterval: 1, // 订单执行间隔
         isEnabled: false
       }
     ],
     newItem: {
       appName: "",
       getInterval: 2,
-      handleInterval: 1,
       isEnabled: false
     } // 初始化表单状态
   }),
@@ -61,7 +57,6 @@ export const useAppRuleListStore = defineStore("appRuleList", {
       this.newItem = {
         appName: "",
         getInterval: 2,
-        handleInterval: 1,
         isEnabled: false
       }; // 重置表单
       window.localStorage.setItem("appQueueRule", JSON.stringify(this.items));
