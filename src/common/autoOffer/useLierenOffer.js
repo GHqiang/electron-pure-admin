@@ -28,7 +28,8 @@ class OrderAutoOfferQueue {
   }
 
   // 启动队列（fetchDelay获取订单列表间隔，processDelay处理订单间隔）
-  async start() {
+  async start(is_test) {
+    isTestOrder = is_test;
     const { conPrefix } = this;
     console.log(conPrefix + "开始执行");
     // 设置队列为运行状态
