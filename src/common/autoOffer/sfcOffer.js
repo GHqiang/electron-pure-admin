@@ -394,12 +394,18 @@ class getSfcOfferPrice {
         }
         return false;
       });
-      // 只要有一个需要更新，就全部更新，因为会获取该号全部的券
-      if (isNeedUpdate) {
-        needUpdateQuanTypeList = quanTypeList;
+      if (!isNeedUpdate) {
+        console.warn("不满足更新条件");
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "不满足更新条件",
+          level: "info"
+        });
+        return;
       }
+      // 只要有一个需要更新，就全部更新，因为会获取该号全部的券
+      needUpdateQuanTypeList = quanTypeList;
       console.log("needUpdateQuanTypeList", needUpdateQuanTypeList);
-
       this.logList.push({
         opera_time: getCurrentTime(),
         des: "需要更新的券类型列表",
@@ -489,14 +495,14 @@ class getSfcOfferPrice {
           updateTypeList
         }
       });
-      // updateTypeList.forEach(item => {
-      //   // 单个更新
-      //   this.singleUpdateQuanStock({
-      //     id: item.id,
-      //     quanStockList: JSON.stringify(item.quanStockList),
-      //     update_time: item.update_time
-      //   });
-      // });
+      updateTypeList.forEach(item => {
+        // 单个更新
+        this.singleUpdateQuanStock({
+          id: item.id,
+          quanStockList: JSON.stringify(item.quanStockList),
+          update_time: item.update_time
+        });
+      });
     } catch (error) {
       console.error("异步更新券库存异常", error);
       this.logList.push({

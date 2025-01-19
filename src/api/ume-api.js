@@ -131,6 +131,13 @@ const createApi = ({ app_name }) => {
       params
     );
 
+  // 获取优惠券信息（个人中心）
+  const findCouponByMember = params =>
+    axios.post(
+      `/${app_name}/api/storeServer/couponYlInstanceService/findCouponByMember`,
+      params
+    );
+
   // 获取购票信息
   const getPayResult = params =>
     axios.post(
@@ -175,6 +182,7 @@ const createApi = ({ app_name }) => {
     findStoreTkOrderInfoApp,
     buyTicket,
     findZoneByChannel,
+    findCouponByMember,
     findTsgGift,
     bandQuan,
     getCardList
