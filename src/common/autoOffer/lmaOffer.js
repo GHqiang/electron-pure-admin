@@ -791,6 +791,15 @@ class getLmaOfferPrice {
         });
         if (!seatInfo) return;
         const { promo_num, label_arr: area_price } = seatInfo;
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "获取座位布局相关信息",
+          level: "info",
+          info: {
+            area_price,
+            promo_num
+          }
+        });
         if (area_price?.length) {
           let bigPrice = area_price.sort((a, b) => b.price - a.price)[0].price;
           console.error(

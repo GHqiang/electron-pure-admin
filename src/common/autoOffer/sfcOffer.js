@@ -1128,6 +1128,15 @@ class getSfcOfferPrice {
         });
         if (!seatInfo) return -3;
         let { promo_num, area_price, seat_data } = seatInfo;
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "获取座位布局相关信息",
+          level: "info",
+          info: {
+            area_price,
+            promo_num
+          }
+        });
         if (promo_num && promo_num < +ticket_num) {
           console.error(conPrefix + "促销票数低于订单票数");
           this.logList.push({

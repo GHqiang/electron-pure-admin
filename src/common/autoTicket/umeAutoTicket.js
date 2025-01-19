@@ -1153,6 +1153,14 @@ class OrderAutoTicketQueue {
           let seat2 = rowName + "排" + columnName + "号";
           return selectSeatList.includes(seat2);
         });
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "目标座位相关信息",
+          level: "info",
+          info: {
+            targeSeatList
+          }
+        });
         console.log(conPrefix + "targeSeatList", targeSeatList);
         let seat_ids = targeSeatList.map(item => item.seatCode);
         if (seat_ids?.length != ticket_num) {

@@ -1167,6 +1167,14 @@ class OrderAutoTicketQueue {
         let targetList = seatList.filter(item =>
           selectSeatList.includes(item[5])
         );
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "目标座位相关信息",
+          level: "info",
+          info: {
+            targetList
+          }
+        });
         console.log(conPrefix + "targetList", targetList);
         if (targetList?.length != ticket_num) {
           this.logList.push({

@@ -1403,6 +1403,14 @@ class getUmeOfferPrice {
         scheduleKey: targetShow?.scheduleKey
       });
       let { seatList: seat_data, areaInfoList } = areaRes || {};
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "获取座位布局相关信息",
+        level: "info",
+        info: {
+          areaInfoList
+        }
+      });
       if (areaInfoList?.length) {
         // 座位分区从高到低排序
         let areaList = areaInfoList

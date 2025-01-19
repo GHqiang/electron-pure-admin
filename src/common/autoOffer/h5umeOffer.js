@@ -1343,6 +1343,14 @@ class getUmeOfferPrice {
         });
         return;
       }
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "获取座位布局相关信息",
+        level: "info",
+        info: {
+          areaInfoList
+        }
+      });
       // 座位分区从高到低排序
       let areaList = areaInfoList
         .map(item => {
@@ -1367,7 +1375,7 @@ class getUmeOfferPrice {
       let seatId = maxAreaList[0]?.seatId;
       this.logList.push({
         opera_time: getCurrentTime(),
-        des: "获取座位布局成功",
+        des: "获取座最贵座位id",
         level: "info",
         info: {
           seatId
