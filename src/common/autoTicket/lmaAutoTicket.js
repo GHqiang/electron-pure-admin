@@ -1110,20 +1110,31 @@ class OrderAutoTicketQueue {
         let selectSeatList = seatName.split(",");
         console.log(conPrefix + "selectSeatList", selectSeatList);
         let label_arr = seatDataRes?.label_arr || [];
+        let targetSeatList = seatList.filter(item =>
+          selectSeatList.includes(item.seat_info)
+        );
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "目标座位相关信息",
+          level: "info",
+          info: {
+            targetSeatList,
+            label_arr
+          }
+        });
 
-        seat_arr = seatList
-          .filter(item => selectSeatList.includes(item.seat_info))
-          .map(item => {
-            // 去除自填充值
-            const { seat_info, ...otherInfo } = item;
-            return {
-              ...otherInfo,
-              price: label_arr.find(
-                item => item.price_type === otherInfo.price_type
-              )?.price,
-              fixIcon: "/images/weixiu.png"
-            };
-          });
+        seat_arr = targetSeatList.map(item => {
+          // 去除自填充值
+          const { seat_info, ...otherInfo } = item;
+          return {
+            ...otherInfo,
+            price_type: "1",
+            price: label_arr.find(
+              item => item.price_type === otherInfo.price_type
+            )?.price,
+            fixIcon: "/images/weixiu.png"
+          };
+        });
         console.log(conPrefix + "seat_arr", seat_arr);
         if (seat_arr?.length != ticket_num) {
           this.logList.push({
