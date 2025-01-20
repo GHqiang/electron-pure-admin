@@ -1368,9 +1368,13 @@ class getUmeOfferPrice {
         .sort((a, b) => b.settlePrice - a.settlePrice);
       // 默认取最高价
       let maxSeatPrice = areaList[0].settlePrice;
-      let maxSeatPriceAreaId = areaList[0].areaId;
+      let maxSeatPriceAreaIdList = areaList
+        .filter(item => item.settlePrice === maxSeatPrice)
+        .map(item => item.areaId);
       let maxAreaList = seatList.filter(
-        item => item.status == "1" && item.areaId == maxSeatPriceAreaId
+        item =>
+          item.status == "1" &&
+          maxSeatPriceAreaIdList.includes("" + item.areaId)
       );
       let seatId = maxAreaList[0]?.seatId;
       this.logList.push({
@@ -1378,6 +1382,8 @@ class getUmeOfferPrice {
         des: "获取座最贵座位id",
         level: "info",
         info: {
+          maxSeatPrice,
+          maxSeatPriceAreaIdList,
           seatId
         }
       });
