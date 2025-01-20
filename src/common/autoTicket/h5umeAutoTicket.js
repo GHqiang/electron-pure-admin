@@ -1624,44 +1624,45 @@ class OrderAutoTicketQueue {
         cardNo = card_id;
       }
       // 8、购买电影票
-      const buyTicketRes = await buyTicket({
-        cinemaLinkId,
-        cardNo,
-        orderId,
-        appFlag,
-        session_id: this.currentParamsList[this.currentParamsInx].session_id,
-        member_pwd: this.currentParamsList[this.currentParamsInx].member_pwd
-      });
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "订单购买返回",
-        level: "info",
-        info: buyTicketRes
-      });
-      const buyRes = buyTicketRes?.buyRes;
-      if (!buyRes) {
-        console.error("订单购买失败，单个订单直接出票结束", "走转单逻辑");
+      let buyTicketRes;
+      if (card_id) {
+        buyTicketRes = await buyTicket({
+          cinemaLinkId,
+          cardNo,
+          orderId,
+          appFlag,
+          session_id: this.currentParamsList[this.currentParamsInx].session_id,
+          member_pwd: this.currentParamsList[this.currentParamsInx].member_pwd
+        });
         this.logList.push({
           opera_time: getCurrentTime(),
-          des: "订单购买失败",
-          level: "error",
-          info: {
-            error: buyTicketRes?.error
-          }
+          des: "订单购买返回",
+          level: "info",
+          info: buyTicketRes
         });
-        // 后续要记录失败列表（订单信息、失败原因、时间戳）
-        const transferParams = await this.transferOrder(item, {
-          cinemaLinkId,
-          orderId
+        const buyRes = buyTicketRes?.buyRes;
+        if (!buyRes) {
+          console.error("订单购买失败，单个订单直接出票结束", "走转单逻辑");
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: "订单购买失败",
+            level: "error",
+            info: {
+              error: buyTicketRes?.error
+            }
+          });
+          // 后续要记录失败列表（订单信息、失败原因、时间戳）
+          const transferParams = await this.transferOrder(item, {
+            cinemaLinkId,
+            orderId
+          });
+          return { offerRule, transferParams };
+        }
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "订单购买成功",
+          level: "info"
         });
-        return { offerRule, transferParams };
-      }
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "订单购买成功",
-        level: "info"
-      });
-      if (card_id) {
         // 更新卡使用量
         updateCardDayUse({
           app_name: appFlag,
@@ -1669,6 +1670,11 @@ class OrderAutoTicketQueue {
           plat_name,
           order_number
         });
+      } else {
+        buyTicketRes = {
+          code: 1,
+          msg: "纯用券时不需要购买"
+        };
       }
       if (offerRule.offer_type === "1" && useQuan?.length && rule == 2) {
         // 更新券库存
@@ -1692,7 +1698,8 @@ class OrderAutoTicketQueue {
         supplierCode,
         plat_name,
         orderInfo: item,
-        lockseat
+        lockseat,
+        isUseQuan: useQuan?.length
       });
       if (lastRes?.qrcode && lastRes?.submitRes) {
         this.logList.push({
@@ -1956,6 +1963,7 @@ class OrderAutoTicketQueue {
       cinemaLinkId,
       session_id,
       syncQueryLogList,
+      isUseQuan,
       inx = 1
     } = data || {};
     let qrcode;
@@ -1967,7 +1975,7 @@ class OrderAutoTicketQueue {
         orderId,
         orderType: "TICKET",
         cinemaLinkId,
-        needMatchConsumeGift: false,
+        needMatchConsumeGift: !!isUseQuan,
         umeToken: session_id
       };
       console.log("获取支付结果参数", params);
@@ -2275,7 +2283,8 @@ class OrderAutoTicketQueue {
     supplierCode,
     plat_name,
     orderInfo,
-    lockseat
+    lockseat,
+    isUseQuan
   }) {
     const { appFlag } = this;
     try {
@@ -2287,7 +2296,8 @@ class OrderAutoTicketQueue {
         qrcode = await this.getPayResult({
           orderId,
           cinemaLinkId,
-          session_id
+          session_id,
+          isUseQuan
         });
       } catch (error) {}
       if (!qrcode) {
@@ -2307,7 +2317,8 @@ class OrderAutoTicketQueue {
           supplierCode,
           orderInfo,
           lockseat,
-          session_id
+          session_id,
+          isUseQuan
         });
         return;
       }
@@ -2353,7 +2364,8 @@ class OrderAutoTicketQueue {
     supplierCode,
     orderInfo,
     lockseat,
-    session_id
+    session_id,
+    isUseQuan
   }) {
     let syncQueryLogList = []; // 异步运行日志
     try {
@@ -2370,7 +2382,8 @@ class OrderAutoTicketQueue {
             cinemaLinkId,
             session_id,
             inx,
-            syncQueryLogList
+            syncQueryLogList,
+            isUseQuan
           }),
         9,
         20,
@@ -2404,7 +2417,8 @@ class OrderAutoTicketQueue {
               cinemaLinkId,
               session_id,
               inx,
-              syncQueryLogList
+              syncQueryLogList,
+              isUseQuan
             }),
           21,
           20,
