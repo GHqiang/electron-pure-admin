@@ -1128,7 +1128,6 @@ class OrderAutoTicketQueue {
           const { seat_info, ...otherInfo } = item;
           return {
             ...otherInfo,
-            price_type: "1",
             price: label_arr.find(
               item => item.price_type === otherInfo.price_type
             )?.price,

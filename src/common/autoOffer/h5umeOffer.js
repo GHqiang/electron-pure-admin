@@ -1461,13 +1461,20 @@ class getUmeOfferPrice {
     }
   }
   // 获取用卡购票价格信息
-  async getOptimalCardQuanCompose({
-    cinemaLinkId,
-    hallId,
-    scheduleId,
-    scheduleKey,
-    seatIds
-  }) {
+  async getOptimalCardQuanCompose(data) {
+    const { appFlag } = this;
+    let { cinemaLinkId, hallId, scheduleId, scheduleKey, seatIds, session_id } =
+      data;
+    let targetLoginList = getCinemaLoginInfoList().filter(
+      item =>
+        item.app_name === appFlag &&
+        item.mobile &&
+        item.session_id &&
+        item.member_pwd
+    );
+    if (!session_id) {
+      session_id = targetLoginList[0].session_id;
+    }
     let params = {
       empCode: "",
       leaseCode: "",
@@ -1475,7 +1482,8 @@ class getUmeOfferPrice {
       hallId,
       scheduleId,
       scheduleKey,
-      seatIds
+      seatIds,
+      umeToken: session_id
     };
     try {
       console.log("获取用卡购票价格信息参数", params);
@@ -1491,6 +1499,28 @@ class getUmeOfferPrice {
           params
         }
       });
+      let activities = orderInfo?.privileges || [];
+      let member_total_price = activities.find(
+        item => item.payMethod === "CARD"
+      )?.privilegeTotalPrice;
+      let inx = targetLoginList.findIndex(
+        item => item.session_id == session_id
+      );
+      if (!member_total_price && inx != targetLoginList.length - 1) {
+        session_id = targetLoginList[inx + 1].session_id;
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "根据用卡购票价格信息获取真实会员价返回空，换号重新获取",
+          level: "info",
+          info: {
+            session_id
+          }
+        });
+        return await this.getOptimalCardQuanCompose({
+          ...data,
+          session_id
+        });
+      }
       return orderInfo;
     } catch (error) {
       console.error("获取用卡购票价格信息返回异常", error);
