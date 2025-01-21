@@ -334,6 +334,8 @@ class OrderAutoTicketQueue {
       show_time,
       lockseat
     } = order;
+    const { cinemaLinkId, lockOrderId, orderId } = unlockSeatInfo || {};
+    const session_id = this.currentParamsList[this.currentParamsInx].session_id;
     // 关闭自动转单只针对座位异常生效
     // if (isTestOrder || (isAutoTransfer !== "1" && errMsg === "锁定座位异常")) {
     if (isTestOrder || isAutoTransfer !== "1") {
@@ -341,8 +343,27 @@ class OrderAutoTicketQueue {
       this.logList.push({
         opera_time: getCurrentTime(),
         des: "自动转单处于关闭状态",
-        level: "info"
+        level: "info",
+        info: {
+          unlockSeatInfo
+        }
       });
+      // 有锁座订单号就解锁座位
+      if (!orderId && lockOrderId) {
+        const unlockRes = await this.unlockSeatByApp({
+          cinemaLinkId,
+          lockOrderId,
+          session_id
+        });
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "释放座位返回",
+          level: "info",
+          info: {
+            unlockRes
+          }
+        });
+      }
       sendWxPusherMessage({
         plat_name,
         order_number,
@@ -358,13 +379,18 @@ class OrderAutoTicketQueue {
       });
       return;
     }
+    this.logList.push({
+      opera_time: getCurrentTime(),
+      des: "自动转单方法传参",
+      level: "info",
+      info: {
+        unlockSeatInfo
+      }
+    });
     try {
       // 先解锁座位再转单，负责转出去座位被占平台会处罚
       // 3、获取座位布局
       if (unlockSeatInfo) {
-        const session_id =
-          this.currentParamsList[this.currentParamsInx].session_id;
-        const { cinemaLinkId, lockOrderId, orderId } = unlockSeatInfo;
         let operaDes = "释放座位",
           operaRes = 0;
         // 有创建订单号就取消订单
