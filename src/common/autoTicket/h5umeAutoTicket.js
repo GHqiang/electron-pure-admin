@@ -1500,12 +1500,17 @@ class OrderAutoTicketQueue {
       let tickets, payments;
       if (offerRule.offer_type !== "1" && card_id) {
         payments = [{ payMethod: "CARD", payCardNumber: card_id }];
-        tickets = activities
-          .find(item => item.payMethod === payMethod)
-          ?.ticketInfos?.map(item => ({
-            seatId: item.seatId,
-            activityId: item.activityId
-          }));
+        const minItem = activities.reduce((min, current) => {
+          const currentPrivilegeTotalPrice = +current.privilegeTotalPrice;
+          const minPrivilegeTotalPrice = +min.privilegeTotalPrice;
+          return currentPrivilegeTotalPrice < minPrivilegeTotalPrice
+            ? current
+            : min;
+        }, activities[0]); // 初始值为数组的第一个元素
+        tickets = minItem?.ticketInfos?.map(item => ({
+          seatId: item.seatId,
+          activityId: item.activityId
+        }));
       } else if (offerRule.offer_type == "1" && quan_code) {
         payments = useQuan.map(item => ({
           payMethod: "COUPON",
