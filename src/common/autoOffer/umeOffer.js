@@ -279,11 +279,12 @@ class getUmeOfferPrice {
   }
 
   // 单个更新券库存
-  async singleUpdateQuanStock(params) {
+  async singleUpdateQuanStock(obj) {
+    const { logList, params } = obj;
     try {
       const res = await svApi.updateQuanType(params);
       console.log("单个更新券库存返回", res);
-      this.logList.push({
+      logList.push({
         opera_time: getCurrentTime(),
         des: "单个更新券库存返回",
         level: "info",
@@ -294,7 +295,7 @@ class getUmeOfferPrice {
       });
     } catch (error) {
       console.log("单个更新券库存异常", error);
-      this.logList.push({
+      logList.push({
         opera_time: getCurrentTime(),
         des: "单个更新券库存异常",
         level: "error",
@@ -307,12 +308,9 @@ class getUmeOfferPrice {
   }
 
   // 异步更新券库存
-  async syncUpdateQuanStock({
-    app_name,
-    cinemaCode,
-    cinemaLinkId,
-    quanTypeList
-  }) {
+  async syncUpdateQuanStock({ order, cinemaCode, cinemaLinkId, quanTypeList }) {
+    const { app_name, plat_name, order_number } = order;
+    let logList = [];
     let targetLoginList = getCinemaLoginInfoList().filter(
       item => item.app_name === app_name && item.mobile && item.session_id
     );
@@ -341,96 +339,102 @@ class getUmeOfferPrice {
       });
       if (!isNeedUpdate) {
         console.warn("不满足更新条件");
-        this.logList.push({
+        logList.push({
           opera_time: getCurrentTime(),
           des: "不满足更新条件",
-          level: "info"
-        });
-        return;
-      }
-      // 只要有一个需要更新，就全部更新，因为会获取该号全部的券
-      needUpdateQuanTypeList = quanTypeList;
-      console.log("needUpdateQuanTypeList", needUpdateQuanTypeList);
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "需要更新的券类型列表",
-        level: "info",
-        info: {
-          needUpdateQuanTypeList,
-          targetLoginList
-        }
-      });
-
-      let quanTypeListParams = needUpdateQuanTypeList.map(item => {
-        return {
-          id: item.id,
-          quan_flag: item.quan_flag,
-          black_quans: item.black_quans,
-          quanStockList: targetLoginList.map(itemA => ({
-            phone: itemA.mobile,
-            quan_stock: 0
-          }))
-        };
-      });
-      // 获取每个号的优惠券列表
-      for (let i = 0; i < targetLoginList.length; i++) {
-        const { session_id, mobile } = targetLoginList[i];
-        const quanListAll = await this.getQuanListByPhone({
-          session_id,
-          cinemaCode,
-          cinemaLinkId
-        });
-
-        quanTypeListParams.forEach(item => {
-          let targetQuanList = quanListAll.filter(
-            itemA =>
-              item.quan_flag === itemA.coupon_info &&
-              !item.black_quans?.includes(itemA.coupon_num)
-          );
-          console.log(item.quan_flag, "targetQuanList", targetQuanList);
-          let quanStock = targetQuanList.length;
-          let quanStockList = item.quanStockList;
-          console.log("quanStockList", quanStockList);
-          let inx = quanStockList.findIndex(itemB => itemB.phone === mobile);
-          if (inx != -1) {
-            quanStockList[inx].quan_stock = quanStock;
-          } else {
-            quanStockList.push({
-              phone: mobile,
-              quan_stock: quanStock
-            });
+          level: "info",
+          info: {
+            quanTypeList
           }
         });
-      }
-      console.log("quanTypeListParams", quanTypeListParams);
-      let updateTypeList = quanTypeListParams.map(item => ({
-        id: item.id,
-        quanStockList: item.quanStockList.map(itemA => ({
-          ...itemA,
-          update_time: getCurrentTime()
-        })),
-        update_time: getCurrentTime()
-      }));
-      console.log("updateTypeList", updateTypeList);
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "最终要更新的券类型列表",
-        level: "info",
-        info: {
-          updateTypeList
-        }
-      });
-      updateTypeList.forEach(item => {
-        // 单个更新
-        this.singleUpdateQuanStock({
-          id: item.id,
-          quanStockList: JSON.stringify(item.quanStockList),
-          update_time: item.update_time
+      } else {
+        // 只要有一个需要更新，就全部更新，因为会获取该号全部的券
+        needUpdateQuanTypeList = quanTypeList;
+        console.log("needUpdateQuanTypeList", needUpdateQuanTypeList);
+        logList.push({
+          opera_time: getCurrentTime(),
+          des: "需要更新的券类型列表",
+          level: "info",
+          info: {
+            quanTypeList,
+            targetLoginList
+          }
         });
-      });
+
+        let quanTypeListParams = needUpdateQuanTypeList.map(item => {
+          return {
+            id: item.id,
+            quan_flag: item.quan_flag,
+            black_quans: item.black_quans,
+            quanStockList: targetLoginList.map(itemA => ({
+              phone: itemA.mobile,
+              quan_stock: 0
+            }))
+          };
+        });
+        // 获取每个号的优惠券列表
+        for (let i = 0; i < targetLoginList.length; i++) {
+          const { session_id, mobile } = targetLoginList[i];
+          const quanListAll = await this.getQuanListByPhone({
+            session_id,
+            cinemaCode,
+            cinemaLinkId,
+            logList
+          });
+
+          quanTypeListParams.forEach(item => {
+            let targetQuanList = quanListAll.filter(
+              itemA =>
+                item.quan_flag === itemA.coupon_info &&
+                !item.black_quans?.includes(itemA.coupon_num)
+            );
+            console.log(item.quan_flag, "targetQuanList", targetQuanList);
+            let quanStock = targetQuanList.length;
+            let quanStockList = item.quanStockList;
+            console.log("quanStockList", quanStockList);
+            let inx = quanStockList.findIndex(itemB => itemB.phone === mobile);
+            if (inx != -1) {
+              quanStockList[inx].quan_stock = quanStock;
+            } else {
+              quanStockList.push({
+                phone: mobile,
+                quan_stock: quanStock
+              });
+            }
+          });
+        }
+        console.log("quanTypeListParams", quanTypeListParams);
+        let updateTypeList = quanTypeListParams.map(item => ({
+          id: item.id,
+          quanStockList: item.quanStockList.map(itemA => ({
+            ...itemA,
+            update_time: getCurrentTime()
+          })),
+          update_time: getCurrentTime()
+        }));
+        console.log("updateTypeList", updateTypeList);
+        logList.push({
+          opera_time: getCurrentTime(),
+          des: "最终要更新的券类型列表",
+          level: "info",
+          info: {
+            updateTypeList
+          }
+        });
+        for (let index = 0; index < updateTypeList.length; index++) {
+          const item = updateTypeList[index];
+          // 单个更新
+          await this.singleUpdateQuanStock({
+            id: item.id,
+            quanStockList: JSON.stringify(item.quanStockList),
+            update_time: item.update_time,
+            logList
+          });
+        }
+      }
     } catch (error) {
       console.error("异步更新券库存异常", error);
-      this.logList.push({
+      logList.push({
         opera_time: getCurrentTime(),
         des: "异步更新券库存返回异常",
         level: "error",
@@ -438,11 +442,22 @@ class getUmeOfferPrice {
           error
         }
       });
+    } finally {
+      logUpload(
+        {
+          plat_name,
+          app_name,
+          order_number,
+          type: 1
+        },
+        logList
+      );
     }
   }
 
   // 获取影院券类型列表
-  async getQuanTypeListByApp({ app_name, cinemaCode, cinemaLinkId }) {
+  async getQuanTypeListByApp({ order, cinemaCode, cinemaLinkId }) {
+    const { app_name } = order;
     const params = {
       app_name,
       isNeedTotalNum: 0,
@@ -480,7 +495,7 @@ class getUmeOfferPrice {
       });
       // 异步更新券库存
       this.syncUpdateQuanStock({
-        app_name,
+        order,
         cinemaCode,
         cinemaLinkId,
         quanTypeList
@@ -502,7 +517,14 @@ class getUmeOfferPrice {
 
   // 连续获取券
   async continuousGetQuan(data) {
-    let { cinemaCode, cinemaLinkId, session_id, page, quanData = [] } = data;
+    let {
+      cinemaCode,
+      cinemaLinkId,
+      session_id,
+      page,
+      quanData = [],
+      logList
+    } = data;
     let params = {
       params: {
         status: "UN_USED",
@@ -521,7 +543,7 @@ class getUmeOfferPrice {
       let quanList = res.data || [];
       let total_page = res.pagesCount;
       if (page == 2) {
-        this.logList.push({
+        logList.push({
           opera_time: getCurrentTime(),
           des: "获取券返回",
           level: "info",
@@ -546,7 +568,7 @@ class getUmeOfferPrice {
       }));
     } catch (error) {
       console.warn("连续获取券失败", error);
-      this.logList.push({
+      logList.push({
         opera_time: getCurrentTime(),
         des: "连续获取券异常",
         level: "error",
@@ -559,7 +581,13 @@ class getUmeOfferPrice {
   }
 
   // 获取优惠券列表
-  async getQuanListByPhone({ cinemaCode, cinemaLinkId, session_id, page = 1 }) {
+  async getQuanListByPhone({
+    cinemaCode,
+    cinemaLinkId,
+    session_id,
+    page = 1,
+    logList
+  }) {
     try {
       let params = {
         params: {
@@ -573,7 +601,7 @@ class getUmeOfferPrice {
         pageRows: 50, // 支持修改
         session_id
       };
-      this.logList.push({
+      logList.push({
         opera_time: getCurrentTime(),
         des: "获取优惠券列表参数",
         level: "info",
@@ -586,7 +614,7 @@ class getUmeOfferPrice {
       console.log("获取优惠券列表返回", res);
       let quanList = res.data || [];
       let total_page = res.pagesCount;
-      this.logList.push({
+      logList.push({
         opera_time: getCurrentTime(),
         des: "获取优惠券列表返回",
         level: "info",
@@ -605,10 +633,11 @@ class getUmeOfferPrice {
           cinemaCode,
           cinemaLinkId,
           session_id,
-          page: 2
+          page: 2,
+          logList
         });
         console.log("quanData", quanData);
-        this.logList.push({
+        logList.push({
           opera_time: getCurrentTime(),
           des: "连续获取券最终返回",
           level: "info",
@@ -623,7 +652,7 @@ class getUmeOfferPrice {
       return quanListAll;
     } catch (error) {
       console.error("获取优惠券列表异常", error);
-      this.logList.push({
+      logList.push({
         opera_time: getCurrentTime(),
         des: "获取优惠券列表异常",
         level: "error",
@@ -669,7 +698,7 @@ class getUmeOfferPrice {
       if (fixedAmountRuleList.length && rule == 2) {
         // 校验其库存，进行过滤
         const appQuanTypeList = await this.getQuanTypeListByApp({
-          app_name: order.app_name,
+          order,
           cinemaCode: movieInfo.cinemaCode,
           cinemaLinkId: movieInfo.cinemaLinkId
         });

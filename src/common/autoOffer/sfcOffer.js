@@ -356,11 +356,12 @@ class getSfcOfferPrice {
   }
 
   // 单个更新券库存
-  async singleUpdateQuanStock(params) {
+  async singleUpdateQuanStock(obj) {
+    const { logList, params } = obj;
     try {
       const res = await svApi.updateQuanType(params);
       console.log("单个更新券库存返回", res);
-      this.logList.push({
+      logList.push({
         opera_time: getCurrentTime(),
         des: "单个更新券库存返回",
         level: "info",
@@ -371,7 +372,7 @@ class getSfcOfferPrice {
       });
     } catch (error) {
       console.log("单个更新券库存异常", error);
-      this.logList.push({
+      logList.push({
         opera_time: getCurrentTime(),
         des: "单个更新券库存异常",
         level: "error",
@@ -383,7 +384,9 @@ class getSfcOfferPrice {
     }
   }
   // 异步更新券库存
-  async syncUpdateQuanStock({ app_name, city_id, cinema_id, quanTypeList }) {
+  async syncUpdateQuanStock({ order, city_id, cinema_id, quanTypeList }) {
+    const { app_name, plat_name, order_number } = order;
+    let logList = [];
     let targetLoginList = getCinemaLoginInfoList().filter(
       item => item.app_name === app_name && item.mobile && item.session_id
     );
@@ -412,116 +415,122 @@ class getSfcOfferPrice {
       });
       if (!isNeedUpdate) {
         console.warn("不满足更新条件");
-        this.logList.push({
+        logList.push({
           opera_time: getCurrentTime(),
           des: "不满足更新条件",
-          level: "info"
+          level: "info",
+          info: {
+            quanTypeList
+          }
         });
-        return;
-      }
-      // 只要有一个需要更新，就全部更新，因为会获取该号全部的券
-      needUpdateQuanTypeList = quanTypeList;
-      console.log("needUpdateQuanTypeList", needUpdateQuanTypeList);
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "需要更新的券类型列表",
-        level: "info",
-        info: {
-          needUpdateQuanTypeList,
-          targetLoginList
-        }
-      });
-
-      let quanTypeListParams = needUpdateQuanTypeList.map(item => {
-        return {
-          id: item.id,
-          quan_flag: item.quan_flag,
-          black_quans: item.black_quans,
-          quanStockList: targetLoginList.map(itemA => ({
-            phone: itemA.mobile,
-            quan_stock: 0
-          }))
-        };
-      });
-      // 获取每个号的优惠券列表
-      for (let i = 0; i < targetLoginList.length; i++) {
-        const { session_id, mobile } = targetLoginList[i];
-        const quanListAll = await this.getQuanListByPhone({
-          session_id,
-          city_id,
-          cinema_id
+      } else {
+        // 只要有一个需要更新，就全部更新，因为会获取该号全部的券
+        needUpdateQuanTypeList = quanTypeList;
+        console.log("needUpdateQuanTypeList", needUpdateQuanTypeList);
+        logList.push({
+          opera_time: getCurrentTime(),
+          des: "需要更新的券类型列表",
+          level: "info",
+          info: {
+            quanTypeList,
+            targetLoginList
+          }
         });
 
-        quanTypeListParams.forEach(item => {
-          let targetQuanList = quanListAll.filter(
-            itemA =>
-              item.quan_flag === itemA.coupon_info &&
-              !item.black_quans?.includes(itemA.coupon_num)
-          );
-          console.log(item.quan_flag, "targetQuanList", targetQuanList);
-          const { card_num } = targetQuanList?.[0] || {};
-          let quanStock = targetQuanList.length;
-          if (card_num) {
-            const groupedCoupons = targetQuanList.reduce((groups, coupon) => {
-              const key = coupon.card_num;
-              if (!groups[key]) {
-                groups[key] = [];
+        let quanTypeListParams = needUpdateQuanTypeList.map(item => {
+          return {
+            id: item.id,
+            quan_flag: item.quan_flag,
+            black_quans: item.black_quans,
+            quanStockList: targetLoginList.map(itemA => ({
+              phone: itemA.mobile,
+              quan_stock: 0
+            }))
+          };
+        });
+        // 获取每个号的优惠券列表
+        for (let i = 0; i < targetLoginList.length; i++) {
+          const { session_id, mobile } = targetLoginList[i];
+          const quanListAll = await this.getQuanListByPhone({
+            session_id,
+            city_id,
+            cinema_id,
+            logList
+          });
+
+          quanTypeListParams.forEach(item => {
+            let targetQuanList = quanListAll.filter(
+              itemA =>
+                item.quan_flag === itemA.coupon_info &&
+                !item.black_quans?.includes(itemA.coupon_num)
+            );
+            console.log(item.quan_flag, "targetQuanList", targetQuanList);
+            const { card_num } = targetQuanList?.[0] || {};
+            let quanStock = targetQuanList.length;
+            if (card_num) {
+              const groupedCoupons = targetQuanList.reduce((groups, coupon) => {
+                const key = coupon.card_num;
+                if (!groups[key]) {
+                  groups[key] = [];
+                }
+                groups[key].push(coupon);
+                return groups;
+              }, {});
+              let groupList = Object.values(groupedCoupons);
+              // 获取分组后最多出票量当做库存
+              let maxLength = groupList[0]?.length || 0; // 初始化为数组的第一个元素
+              for (let i = 1; i < groupList.length; i++) {
+                if (groupList[i]?.length > maxLength) {
+                  maxLength = groupList[i].length;
+                }
               }
-              groups[key].push(coupon);
-              return groups;
-            }, {});
-            let groupList = Object.values(groupedCoupons);
-            // 获取分组后最多出票量当做库存
-            let maxLength = groupList[0]?.length || 0; // 初始化为数组的第一个元素
-            for (let i = 1; i < groupList.length; i++) {
-              if (groupList[i]?.length > maxLength) {
-                maxLength = groupList[i].length;
-              }
+              quanStock = maxLength;
             }
-            quanStock = maxLength;
-          }
-          let quanStockList = item.quanStockList;
-          console.log("quanStockList", quanStockList);
-          let inx = quanStockList.findIndex(itemB => itemB.phone === mobile);
-          if (inx != -1) {
-            quanStockList[inx].quan_stock = quanStock;
-          } else {
-            quanStockList.push({
-              phone: mobile,
-              quan_stock: quanStock
-            });
-          }
-        });
-      }
-      console.log("quanTypeListParams", quanTypeListParams);
-      let updateTypeList = quanTypeListParams.map(item => ({
-        id: item.id,
-        quanStockList: item.quanStockList.map(itemA => ({
-          ...itemA,
-          update_time: getCurrentTime()
-        })),
-        update_time: getCurrentTime()
-      }));
-      console.log("updateTypeList", updateTypeList);
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "最终要更新的券类型列表",
-        level: "info",
-        info: {
-          updateTypeList
+            let quanStockList = item.quanStockList;
+            console.log("quanStockList", quanStockList);
+            let inx = quanStockList.findIndex(itemB => itemB.phone === mobile);
+            if (inx != -1) {
+              quanStockList[inx].quan_stock = quanStock;
+            } else {
+              quanStockList.push({
+                phone: mobile,
+                quan_stock: quanStock
+              });
+            }
+          });
         }
-      });
-      updateTypeList.forEach(item => {
-        // 单个更新
-        this.singleUpdateQuanStock({
+        console.log("quanTypeListParams", quanTypeListParams);
+        let updateTypeList = quanTypeListParams.map(item => ({
           id: item.id,
-          quanStockList: JSON.stringify(item.quanStockList),
-          update_time: item.update_time
+          quanStockList: item.quanStockList.map(itemA => ({
+            ...itemA,
+            update_time: getCurrentTime()
+          })),
+          update_time: getCurrentTime()
+        }));
+        console.log("updateTypeList", updateTypeList);
+        logList.push({
+          opera_time: getCurrentTime(),
+          des: "最终要更新的券类型列表",
+          level: "info",
+          info: {
+            updateTypeList
+          }
         });
-      });
+        for (let index = 0; index < updateTypeList.length; index++) {
+          const item = updateTypeList[index];
+          // 单个更新
+          await this.singleUpdateQuanStock({
+            id: item.id,
+            quanStockList: JSON.stringify(item.quanStockList),
+            update_time: item.update_time,
+            logList
+          });
+        }
+      }
     } catch (error) {
       console.error("异步更新券库存异常", error);
-      this.logList.push({
+      logList.push({
         opera_time: getCurrentTime(),
         des: "异步更新券库存返回异常",
         level: "error",
@@ -529,11 +538,22 @@ class getSfcOfferPrice {
           error
         }
       });
+    } finally {
+      logUpload(
+        {
+          plat_name,
+          app_name,
+          order_number,
+          type: 1
+        },
+        logList
+      );
     }
   }
 
   // 获取影院券类型列表
-  async getQuanTypeListByApp({ app_name, city_id, cinema_id }) {
+  async getQuanTypeListByApp({ order, city_id, cinema_id }) {
+    const { app_name } = order;
     const params = {
       app_name,
       isNeedTotalNum: 0,
@@ -570,7 +590,7 @@ class getSfcOfferPrice {
         }
       });
       // 异步更新券库存
-      this.syncUpdateQuanStock({ app_name, city_id, cinema_id, quanTypeList });
+      this.syncUpdateQuanStock({ order, city_id, cinema_id, quanTypeList });
       return quanTypeList;
     } catch (error) {
       console.error("根据影院获取券类型列表返回异常", error);
@@ -588,7 +608,7 @@ class getSfcOfferPrice {
 
   // 连续获取券
   async continuousGetQuan(data) {
-    let { city_id, cinema_id, session_id, page, quanData = [] } = data;
+    let { city_id, cinema_id, session_id, page, quanData = [], logList } = data;
     const params = {
       city_id,
       cinema_id,
@@ -601,7 +621,7 @@ class getSfcOfferPrice {
       let quanList = res.data?.unused?.lists || [];
       let total_page = res.data?.unused?.total_page || [];
       if (page == 2) {
-        this.logList.push({
+        logList.push({
           opera_time: getCurrentTime(),
           des: "获取券返回",
           level: "info",
@@ -627,7 +647,7 @@ class getSfcOfferPrice {
       }));
     } catch (error) {
       console.warn("连续获取券失败", error);
-      this.logList.push({
+      logList.push({
         opera_time: getCurrentTime(),
         des: "连续获取券异常",
         level: "error",
@@ -640,7 +660,13 @@ class getSfcOfferPrice {
   }
 
   // 获取优惠券列表
-  async getQuanListByPhone({ city_id, cinema_id, session_id, page = 1 }) {
+  async getQuanListByPhone({
+    city_id,
+    cinema_id,
+    session_id,
+    page = 1,
+    logList
+  }) {
     try {
       let params = {
         city_id,
@@ -649,7 +675,7 @@ class getSfcOfferPrice {
         page,
         status: 4 // 未使用
       };
-      this.logList.push({
+      logList.push({
         opera_time: getCurrentTime(),
         des: "获取优惠券列表参数",
         level: "info",
@@ -662,7 +688,7 @@ class getSfcOfferPrice {
       console.log("获取优惠券列表返回", res);
       let quanList = res.data?.unused?.lists || [];
       let total_page = res.data?.unused?.total_page || [];
-      this.logList.push({
+      logList.push({
         opera_time: getCurrentTime(),
         des: "获取优惠券列表返回",
         level: "info",
@@ -682,10 +708,11 @@ class getSfcOfferPrice {
           city_id,
           cinema_id,
           session_id,
-          page: 2
+          page: 2,
+          logList
         });
         console.log("quanData", quanData);
-        this.logList.push({
+        logList.push({
           opera_time: getCurrentTime(),
           des: "连续获取券最终返回",
           level: "info",
@@ -700,7 +727,7 @@ class getSfcOfferPrice {
       return quanListAll;
     } catch (error) {
       console.error("获取优惠券列表异常", error);
-      this.logList.push({
+      logList.push({
         opera_time: getCurrentTime(),
         des: "获取优惠券列表异常",
         level: "error",
@@ -746,7 +773,7 @@ class getSfcOfferPrice {
       if (fixedAmountRuleList.length && rule == 2) {
         // 校验其库存，进行过滤
         const appQuanTypeList = await this.getQuanTypeListByApp({
-          app_name: order.app_name,
+          order,
           city_id: movieInfo.city_id,
           cinema_id: movieInfo.cinema_id
         });
