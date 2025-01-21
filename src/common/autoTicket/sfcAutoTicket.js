@@ -3657,12 +3657,17 @@ class OrderAutoTicketQueue {
         };
       }
       let cardData = cardFilter.sort((a, b) => {
-        // 如果a是默认卡且b不是，默认卡排前面
-        if (a.default_card === "1" && b.default_card !== "1") return -1;
-        // 如果b是默认卡且a不是，默认卡排前面
-        if (a.default_card !== "1" && b.default_card === "1") return 1;
-        // 如果两者都是默认卡或都不是，默认维持原有顺序
-        return 0;
+        // 检查是否为默认卡，确保默认卡优先级最高
+        if (a.default_card === "1" && b.default_card !== "1") return -1; // a 在前
+        if (a.default_card !== "1" && b.default_card === "1") return 1; // b 在前
+
+        // 如果两者都是默认卡或都不是，默认卡维持原有顺序，并按余额排序
+        // 转换 balance 为数字类型以正确比较数值
+        const balanceA = Number(a.balance);
+        const balanceB = Number(b.balance);
+
+        // 对非默认卡或当两个都是默认卡时，根据余额进行倒序排序
+        return balanceB - balanceA;
       });
       let card_id;
       if (!isV3App) {

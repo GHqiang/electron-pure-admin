@@ -2762,6 +2762,8 @@ class OrderAutoTicketQueue {
               profit: 0 // 利润
             };
           }
+          // 取最大余额
+          cardData = cardData.sort((a, b) => b.balance - a.balance);
           card_id = cardData?.[0]?.cardNumber;
         }
         if (is_auto_use_quan) {

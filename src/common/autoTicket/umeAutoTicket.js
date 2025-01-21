@@ -3006,6 +3006,8 @@ class OrderAutoTicketQueue {
         };
       }
       profit = Number(profit).toFixed(2);
+      // 取最大余额
+      cardData = cardData.sort((a, b) => b.cardAmount - a.cardAmount);
       return {
         card_id: cardData?.[0]?.cardNo,
         profit // 利润
