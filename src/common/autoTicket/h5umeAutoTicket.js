@@ -1449,13 +1449,13 @@ class OrderAutoTicketQueue {
         }
       }
       let payAmount = member_total_price; // 会员支付价
-      // 券抵扣金额
-      let quanDiscountAmount = useQuan?.[0]?.discountAmount || 0;
+      // 券抵扣金额（这种券比较少，且没法算成本，暂时不考虑）
+      // let quanDiscountAmount = +(useQuan?.[0]?.discountAmount || 0);
       // 用券时总价为0
       if (offerRule.offer_type === "1") {
         if (offerRule.quan_fee > 0) {
-          payAmount =
-            (+total_price - quanDiscountAmount * ticket_num) / 100 || 0;
+          // 支付价格要乘以100
+          payAmount = (+offerRule.quan_fee * 1000 * ticket_num) / 10 || 0;
           this.logList.push({
             opera_time: getCurrentTime(),
             des: "券补钱总价计算相关信息",
@@ -1535,7 +1535,7 @@ class OrderAutoTicketQueue {
         scheduleKey,
         lockOrderId,
         tickets,
-        totalPrice: areaTotalPrice || total_price,
+        totalPrice: total_price || areaTotalPrice,
         payAmount,
         payments
       });
