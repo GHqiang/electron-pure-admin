@@ -239,6 +239,20 @@ class getUmeOfferPrice {
       );
       console.warn("最终匹配到的报价规则", endRule);
       if (!endRule) {
+        // 日常固定报价规则
+        let fixedAmountRuleList = matchRuleList.filter(
+          item => item.offerType === "1" && item.offerAmount
+        );
+        if (fixedAmountRuleList.length && rule == 2) {
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: "根据券库存过滤后固定报价规则为空",
+            level: "error",
+            info: {
+              fixedAmountRuleList
+            }
+          });
+        }
         console.error("最终匹配到的报价规则不存在");
         this.logList.push({
           opera_time: getCurrentTime(),
