@@ -1483,7 +1483,6 @@ class getUmeOfferPrice {
           des: "获取真实会员价不存在",
           level: "info"
         });
-        maxSeatPrice = 0;
       }
       return {
         ...targetShow,
