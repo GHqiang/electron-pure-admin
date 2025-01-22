@@ -1365,7 +1365,7 @@ class OrderAutoTicketQueue {
       console.warn("获取最优卡券组合列表返回", cardList, quanList, activities);
       // 7、使用优惠券或者会员卡
       let member_total_price = activities.find(
-        item => item.payMethod === "CARD"
+        item => item.payMethod === "CARD" && item.privilegeTypes?.[0] == "卡"
       )?.privilegeTotalPrice;
       let originalTicketTotalPrice = total_price, // 原总价
         privilegeTotalPrice = member_total_price; // 会员价
@@ -1519,10 +1519,6 @@ class OrderAutoTicketQueue {
 
       console.warn("payAmount", payAmount, "card_id", card_id);
       let quan_code = useQuan.map(item => item.couponCode)?.join();
-      let payMethod = "";
-      if (card_id && activities.find(item => item.payMethod === "CARD")) {
-        payMethod = "CARD";
-      }
       let tickets, payments;
       if (offerRule.offer_type !== "1" && card_id) {
         payments = [{ payMethod: "CARD", payCardNumber: card_id }];

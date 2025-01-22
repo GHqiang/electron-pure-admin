@@ -1472,7 +1472,7 @@ class getUmeOfferPrice {
       let activities = orderInfoRes?.privileges || [];
       console.warn("activities", activities);
       let member_total_price = activities.find(
-        item => item.payMethod === "CARD"
+        item => item.payMethod === "CARD" && item.privilegeTypes?.[0] == "卡"
       )?.privilegeTotalPrice;
       if (member_total_price) {
         maxSeatPrice = member_total_price;
