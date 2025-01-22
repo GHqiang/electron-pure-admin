@@ -1489,7 +1489,6 @@ class OrderAutoTicketQueue {
             info: {
               total_price,
               quan_fee: offerRule.quan_fee,
-              quanDiscountAmount,
               ticket_num
             }
           });
