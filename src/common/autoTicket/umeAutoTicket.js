@@ -1640,6 +1640,10 @@ class OrderAutoTicketQueue {
         memberCardList = memberCardList.filter(
           item => item.cardAmount >= quan_fee * 100
         );
+        // 取最大余额
+        memberCardList = memberCardList.sort(
+          (a, b) => b.cardAmount - a.cardAmount
+        );
         cardNo = memberCardList[0]?.cardNo;
         if (!cardNo) {
           this.logList.push({
