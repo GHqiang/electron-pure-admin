@@ -1690,11 +1690,11 @@ class OrderAutoTicketQueue {
       if (
         offerRule.offer_type === "1" &&
         useQuan?.length &&
-        paymentAmount !== quan_fee_total
+        paymentAmount > quan_fee_total
       ) {
         this.logList.push({
           opera_time: getCurrentTime(),
-          des: "用完券发现支付金额不为券手续费*票数，走转单",
+          des: "用完券发现支付金额大于券手续费*票数，走转单",
           level: "error",
           info: {
             paymentAmount,

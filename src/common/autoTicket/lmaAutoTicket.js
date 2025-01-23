@@ -1455,10 +1455,10 @@ class OrderAutoTicketQueue {
       let quan_fee = offerRule.quan_fee || 0;
       quan_fee = Number(quan_fee);
       let quan_fee_total = quan_fee * ticket_num;
-      if (offerRule.offer_type === "1" && paymentAmount !== quan_fee_total) {
+      if (offerRule.offer_type === "1" && paymentAmount > quan_fee_total) {
         this.logList.push({
           opera_time: getCurrentTime(),
-          des: "用完券发现支付金额不为券手续费*票数，走转单",
+          des: "用完券发现支付金额大于券手续费*票数，走转单",
           level: "error",
           info: {
             paymentAmount,
