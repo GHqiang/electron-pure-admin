@@ -2762,7 +2762,7 @@ class OrderAutoTicketQueue {
         }
         if (quan_fee > 0) {
           let cardData = cardList.filter(
-            item => item.balance >= quan_fee * 100
+            item => item.balance >= quan_fee * 100 * ticket_num
           );
           if (!cardData?.length) {
             this.logList.push({

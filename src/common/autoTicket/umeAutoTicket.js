@@ -1638,7 +1638,7 @@ class OrderAutoTicketQueue {
           createOrderRes?.paymentList?.find(item => item.memberCardList)
             ?.memberCardList || [];
         memberCardList = memberCardList.filter(
-          item => item.cardAmount >= quan_fee * 100
+          item => item.cardAmount >= quan_fee * 100 * ticket_num
         );
         // 取最大余额
         memberCardList = memberCardList.sort(
@@ -2904,7 +2904,7 @@ class OrderAutoTicketQueue {
         }
         if (quan_fee > 0) {
           let cardData = cardList.filter(
-            item => item.cardAmount >= quan_fee * 100
+            item => item.cardAmount >= quan_fee * 100 * ticket_num
           );
           if (!cardData?.length) {
             this.logList.push({
