@@ -112,6 +112,16 @@ const UME_LIST = [
 
 // umeh5系列影院集合
 let H5_UME_LIST = [
+  "shjq",
+  "shzyhy",
+  "szjt",
+  "gzqyt",
+  "youdu",
+  "shxq",
+  "zygxsy",
+  "hkgjyc",
+  "sgjmycfsd",
+
   "xgjyycnjystjd",
   "wanxiang",
   "hsmzyc",
@@ -121,6 +131,9 @@ let H5_UME_LIST = [
   "hxwmgjyc",
   "szhayc",
   "szhxxggjyc",
+  "miruiku",
+  "suning",
+  "shoudu",
   "bjyjgj",
   "zyhygj",
   "tygcthdyc",
@@ -177,10 +190,14 @@ const APP_LIST = {
   hsmzyc: "海上明珠影城",
   gzfyyc: "广州飞扬影城",
   szxtyy: "深圳新天影院",
-  cqshyc: "传奇奢华影城中国巨幕店",
+  cqshyc: "唐阁影城",
   hxwmgjyc: "华夏万幕国际影城（成山路巴黎春天店）",
   szhayc: "深圳海岸影城",
   szhxxggjyc: "深圳华夏星光国际影城",
+  miruiku: "米瑞酷影城",
+  suning: "苏宁影城",
+  shoudu: "首都影城",
+
   bjyjgj: "北京英嘉国际",
   zyhygj: "中影华宇国际",
   tygcthdyc: "天娱广场天河电影城",
@@ -225,6 +242,15 @@ const APP_LIST = {
   hzxhyd: "杭州新华影都",
   ywycssd: "悦惟影城佘山店",
   xgjyycnjystjd: "星光嘉映影城南京雨山天街店",
+  shjq: "上海金球",
+  shzyhy: "上海珠影沪亚",
+  szjt: "深圳金田",
+  gzqyt: "广州期遇逸",
+  youdu: "悠渡",
+  shxq: "上海馨乔",
+  zygxsy: "中影国线石岩",
+  hkgjyc: "华凯国际影城",
+  sgjmycfsd: "时光巨幕影城房山店",
   sjzhlh: "石家庄欢乐汇",
   zhuying: "珠影",
   zheyingshidai: "浙影时代",
@@ -2108,14 +2134,39 @@ const H5_UME_CINEMA_OBJ = {
   gzfyyc: ["69695", "FYYC_H5_PROD_S_MPS"],
   // 深圳新天影院
   szxtyy: ["15730", "SJXT_H5_PROD_10666_MPS"],
-  // 传奇奢华影城中国巨幕店
-  cqshyc: ["12939", "TANGGE_H5_PROD_S_MPS"],
+  // 唐阁影城
+  tangge: ["12909", "TANGGE_H5_PROD_S_MPS"],
   // 华夏万幕国际影城（成山路巴黎春天店）
   hxwmgjyc: ["12680", "WMGJ_H5_PROD_12679_MPS"],
   // 深圳海岸影城
   szhayc: ["15383", "HAC_H5_PROD_15383_MPS"],
   // 深圳华夏星光国际影城
   szhxxggjyc: ["10240", "SZHXXG_H5_PROD_S_MPS"],
+  // 米瑞酷影城
+  miruiku: ["16564", "MRK_H5_PROD_S_MPS"],
+  // 苏宁影城
+  suning: ["10534", "SN_H5_PROD_S_MPS"],
+  // 首都影城
+  shoudu: ["12070", "SHOUDU_H5_PROD_S_MPS"],
+
+  // 上海金球
+  shjq: ["11713", "JINQIU_H5_PROD_11713_MPS"],
+  // 上海珠影沪亚
+  shzyhy: ["69688", "ZYHYYD_H5_PROD_69688_MPSUB"],
+  // 深圳金田
+  szjt: ["12892", "XJYH_H5_PROD_12892_MPS"],
+  // 广州期遇逸
+  gzqyt: ["12593", "QYYD_H5_PROD_12593_MPS"],
+  // 悠渡
+  youdu: ["13101", "YD_H5_PROD_13101_MPS"],
+  // 上海馨乔
+  shxq: ["11891", "SHXQ_H5_PROD_11891_MPSUB"],
+  // 中影国线石岩
+  zygxsy: ["10876", "ZYGX_H5_PROD_10876_MPS"],
+  // 华凯国际影城
+  hkgjyc: ["12590", "TONGMEI_H5_PROD_12590_MPS"],
+  // 时光巨幕影城房山店
+  sgjmycfsd: ["16130", "FSSGJM_H5_PROD_16130_MPS"],
 
   // 星光嘉映影城（南京雨山天街店）
   xgjyycnjystjd: ["15372", "XGJY_H5_PROD_15372_MPS"],

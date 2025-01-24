@@ -474,6 +474,39 @@ const getCinemaFlag = item => {
     "其他海上明珠",
     "c_amghsmz"
   ].includes(cinema_group);
+  let isMiRuiKuGroup = ["北京米瑞库", "c_miruiku", "米瑞库"].includes(
+    cinema_group
+  );
+  if (
+    isMiRuiKuGroup ||
+    (["米瑞酷影城", "奋逗影剧院", "米瑞酷激光影城"].some(itemA =>
+      cinemNameSpecial(cinema_name).includes(itemA)
+    ) &&
+      ["北京", "保定"].includes(city_name))
+  ) {
+    return "miruiku";
+  }
+  let isSuNingKuGroup = ["苏宁", "c_suning", "苏宁院线"].includes(cinema_group);
+  if (
+    isSuNingKuGroup ||
+    [
+      "苏宁影城",
+      "苏宁鞍山影院",
+      "南京苏宁尊享影城",
+      "渭南苏宁影城信达广场店"
+    ].some(itemA => cinemNameSpecial(cinema_name).includes(itemA))
+  ) {
+    return "suning";
+  }
+  let isShouDuKuGroup = ["首都"].includes(cinema_group);
+  if (
+    isShouDuKuGroup ||
+    ["首都电影院", "大观楼影城", "广安门电影院"].some(itemA =>
+      cinemNameSpecial(cinema_name).includes(itemA)
+    )
+  ) {
+    return "shoudu";
+  }
   if (isHaiShangMingZhuGroup) {
     return "hsmzyc";
   }
@@ -514,10 +547,11 @@ const getCinemaFlag = item => {
   ) {
     return "szxtyy";
   } else if (
-    ["唐阁影城", "传奇奢华影城"].some(itemA =>
+    ["唐阁"].includes(cinema_group) ||
+    ([("唐阁影城", "传奇奢华影城")].some(itemA =>
       cinemNameSpecial(cinema_name).includes(itemA)
     ) &&
-    ["北京", "宿迁", "杭州", "新乡", "武汉"].includes(city_name)
+      ["北京", "宿迁", "杭州", "新乡", "武汉"].includes(city_name))
   ) {
     return "cqshyc";
   } else if (
@@ -546,6 +580,69 @@ const getCinemaFlag = item => {
     ["北京"].includes(city_name)
   ) {
     return "bjyjgj";
+  } else if (
+    ["金球国际影城上丰路店"].some(itemA =>
+      cinemNameSpecial(cinema_name).includes(itemA)
+    ) &&
+    ["上海"].includes(city_name)
+  ) {
+    return "shjq";
+  } else if (
+    ["珠影沪亚国际影城永德店"].some(itemA =>
+      cinemNameSpecial(cinema_name).includes(itemA)
+    ) &&
+    ["上海"].includes(city_name)
+  ) {
+    return "shzyhy";
+  } else if (
+    ["金田影城麦当劳2楼"].some(itemA =>
+      cinemNameSpecial(cinema_name).includes(itemA)
+    ) &&
+    ["深圳"].includes(city_name)
+  ) {
+    return "szjt";
+  } else if (
+    ["期遇逸电影城易发街新大新QMAX店"].some(itemA =>
+      cinemNameSpecial(cinema_name).includes(itemA)
+    ) &&
+    ["广州"].includes(city_name)
+  ) {
+    return "gzqyt";
+  } else if (
+    ["YOODOO悠渡影城都江堰店"].some(itemA =>
+      cinemNameSpecial(cinema_name).includes(itemA)
+    ) &&
+    ["成都"].includes(city_name)
+  ) {
+    return "youdu";
+  } else if (
+    ["馨乔环球国际影城明中广场店"].some(itemA =>
+      cinemNameSpecial(cinema_name).includes(itemA)
+    ) &&
+    ["上海"].includes(city_name)
+  ) {
+    return "shxq";
+  } else if (
+    ["中影国线影城石岩店"].some(itemA =>
+      cinemNameSpecial(cinema_name).includes(itemA)
+    ) &&
+    ["深圳"].includes(city_name)
+  ) {
+    return "zygxsy";
+  } else if (
+    ["华凯国际影城万全时代广场店"].some(itemA =>
+      cinemNameSpecial(cinema_name).includes(itemA)
+    ) &&
+    ["张家口"].includes(city_name)
+  ) {
+    return "hkgjyc";
+  } else if (
+    ["时光巨幕影城房山店"].some(itemA =>
+      cinemNameSpecial(cinema_name).includes(itemA)
+    ) &&
+    ["北京"].includes(city_name)
+  ) {
+    return "sgjmycfsd";
   } else if (
     ["中影华宇国际影城"].some(itemA =>
       cinemNameSpecial(cinema_name).includes(itemA)
