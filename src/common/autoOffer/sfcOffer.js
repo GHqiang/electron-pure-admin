@@ -357,7 +357,7 @@ class getSfcOfferPrice {
 
   // 单个更新券库存
   async singleUpdateQuanStock(obj) {
-    const { logList, params } = obj;
+    const { logList, ...params } = obj;
     try {
       const res = await svApi.updateQuanType(params);
       console.log("单个更新券库存返回", res);

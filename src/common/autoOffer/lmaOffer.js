@@ -311,7 +311,7 @@ class getLmaOfferPrice {
     const params = {
       app_name,
       isNeedTotalNum: 0,
-      queryFields: "quan_value,app_name,quan_stock,quanStockList"
+      queryFields: "id,quan_value,app_name,quan_stock,quanStockList"
     };
     try {
       let quanTypeRes = await svApi.queryQuanTypeList(params);

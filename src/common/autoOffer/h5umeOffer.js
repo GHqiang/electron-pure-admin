@@ -278,7 +278,7 @@ class getUmeOfferPrice {
 
   // 单个更新券库存
   async singleUpdateQuanStock(obj) {
-    const { params, logList } = obj;
+    const { logList, ...params } = obj;
     try {
       const res = await svApi.updateQuanType(params);
       console.log("单个更新券库存返回", res);
@@ -452,7 +452,7 @@ class getUmeOfferPrice {
   }
 
   // 获取影院券类型列表
-  async getQuanTypeListByApp(order) {
+  async getQuanTypeLisgetQuanTypeListByApptByApp(order) {
     const { app_name } = order;
     const params = {
       app_name,
