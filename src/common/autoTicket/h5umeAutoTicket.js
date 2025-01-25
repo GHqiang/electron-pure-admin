@@ -1577,7 +1577,7 @@ class OrderAutoTicketQueue {
         console.error("创建订单失败，单个订单直接出票结束", "走转单逻辑");
         const transferParams = await this.transferOrder(item, {
           cinemaLinkId,
-          orderId
+          lockOrderId
         });
         return { offerRule, transferParams };
       }
