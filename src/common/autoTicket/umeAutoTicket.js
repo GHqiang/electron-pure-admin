@@ -1363,7 +1363,8 @@ class OrderAutoTicketQueue {
           "cardList(从可用卡列表过滤后的卡:)": cardList,
           oldCardList: cardQuanListRes?.cards,
           quanList: quanList.slice(0, 10),
-          activities
+          activities,
+          usableCardList: this.usableCardList
         }
       });
       // [{
@@ -1770,21 +1771,31 @@ class OrderAutoTicketQueue {
           conPrefix + "订单购买失败，单个订单直接出票结束",
           "走转单逻辑"
         );
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "订单购买失败",
-          level: "error",
-          info: {
-            error: buyTicketRes?.error
-          }
-        });
-        // 后续要记录失败列表（订单信息、失败原因、时间戳）
-        const transferParams = await this.transferOrder(item, {
-          cinemaCode,
-          cinemaLinkId,
-          orderHeaderId
-        });
-        return { offerRule, transferParams };
+
+        if (buyTicketRes?.error?.indexOf("timeout") != -1) {
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: "订单购买返回超时当成功处理",
+            level: "info",
+            info: buyTicketRes
+          });
+        } else {
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: "订单购买失败",
+            level: "error",
+            info: {
+              error: buyTicketRes?.error
+            }
+          });
+          // 后续要记录失败列表（订单信息、失败原因、时间戳）
+          const transferParams = await this.transferOrder(item, {
+            cinemaCode,
+            cinemaLinkId,
+            orderHeaderId
+          });
+          return { offerRule, transferParams };
+        }
       }
       this.logList.push({
         opera_time: getCurrentTime(),
