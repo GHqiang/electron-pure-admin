@@ -1771,8 +1771,7 @@ class OrderAutoTicketQueue {
           conPrefix + "订单购买失败，单个订单直接出票结束",
           "走转单逻辑"
         );
-
-        if (buyTicketRes?.error?.indexOf("timeout") != -1) {
+        if (JSON.stringify(buyTicketRes?.error)?.indexOf("timeout") != -1) {
           this.logList.push({
             opera_time: getCurrentTime(),
             des: "订单购买返回超时当成功处理",
