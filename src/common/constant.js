@@ -172,18 +172,26 @@ const LIERENR_REWARDS = {
 
 // 含有影院标识的影院列表
 const GROUP_LIST = [
-  "sfc",
-  "lma",
-  "ume",
-  "yaolai",
-  "wanmei",
-  "tpyyc",
-  "zheyingshidai",
-  "hbchyxd",
-  "wanxiang",
-  "hsmzyc",
-  "yinghuang",
-  "zhongying"
+  "sfc", // 上影
+  "hbchyxd", // hbc华谊兄弟
+  "zhongying", // 中影
+
+  "lma", // 卢米埃
+
+  "ume", // UME
+  "yaolai", // 耀莱
+  "wanmei", // 完美
+  "tpyyc", // 太平洋影城
+  "zheyingshidai", // 浙影时代
+  "yinghuang", // 英皇
+
+  "hsmzyc", // 海上明珠
+  "wanxiang", // 万象
+  "gzfyyc", // 广州飞扬影城
+  "cqshyc", // 唐阁
+  "miruiku", // 米瑞酷影城
+  "suning", // 苏宁影城
+  "shoudu" // 首都影城
 ];
 // 影院列表
 const APP_LIST = {
@@ -2135,7 +2143,7 @@ const H5_UME_CINEMA_OBJ = {
   // 深圳新天影院
   szxtyy: ["15730", "SJXT_H5_PROD_10666_MPS"],
   // 唐阁影城
-  tangge: ["12909", "TANGGE_H5_PROD_S_MPS"],
+  cqshyc: ["12909", "TANGGE_H5_PROD_S_MPS"],
   // 华夏万幕国际影城（成山路巴黎春天店）
   hxwmgjyc: ["12680", "WMGJ_H5_PROD_12679_MPS"],
   // 深圳海岸影城
