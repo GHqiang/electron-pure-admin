@@ -472,9 +472,10 @@ const getCinemaFlag = item => {
     "AMG海上明珠",
     "上海海上明珠",
     "其他海上明珠",
+    "其它海上明珠",
     "c_amghsmz"
   ].includes(cinema_group);
-  let isMiRuiKuGroup = ["北京米瑞库", "c_miruiku", "米瑞库"].includes(
+  let isMiRuiKuGroup = ["北京米瑞酷", "c_miruiku", "米瑞酷"].includes(
     cinema_group
   );
   if (
