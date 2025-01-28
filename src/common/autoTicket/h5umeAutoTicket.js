@@ -1521,7 +1521,7 @@ class OrderAutoTicketQueue {
       let tickets, payments;
       if (offerRule.offer_type !== "1" && card_id) {
         if (privilegeTotalPrice) {
-          let member_discount_list = activities.find(
+          let member_discount_list = activities.filter(
             item =>
               item.payMethod === "CARD" && item.privilegeTypes?.[0] == "卡"
           );
