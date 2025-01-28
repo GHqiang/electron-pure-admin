@@ -81,7 +81,7 @@ class OrderAutoOfferQueue {
       logList
     );
     this.insertOrderIntoQueue(item);
-    if (!this.isOfferRunning) {
+    if (!this.isOfferRunning && this.isRunning) {
       this.startProcessingQueue();
     }
   }
@@ -110,14 +110,13 @@ class OrderAutoOfferQueue {
       const order = this.queue.shift(); // 取出队列首部订单并从队列里去掉
       if (order) {
         // 处理订单
-        const offerResult = await this.orderHandle(order);
+        this.orderHandle(order);
         // offerResult：{ res, offerRule } || { offerRule, err_msg, err_info } || undefined
         // 添加订单处理记录
-        await this.addOrderHandleRecored(order, offerResult);
-        console.warn(
-          conPrefix + `单个订单自动报价${offerResult?.res ? "成功" : "失败"}`,
-          order
-        );
+        // console.warn(
+        //   conPrefix + `单个订单自动报价${offerResult?.res ? "成功" : "失败"}`,
+        //   order
+        // );
       }
     }
     this.isOfferRunning = false;
@@ -246,6 +245,7 @@ class OrderAutoOfferQueue {
           offerList: [] // 动态调价暂时不用先传空
         });
         // { res, offerRule } || { offerRule, err_msg, err_info } || undefined
+        await this.addOrderHandleRecored(order, offerResult);
         return offerResult;
       } else {
         console.warn(conPrefix + "订单报价队列已停止");
