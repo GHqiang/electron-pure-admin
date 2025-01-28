@@ -1520,6 +1520,19 @@ class OrderAutoTicketQueue {
       let quan_code = useQuan.map(item => item.couponCode)?.join();
       let tickets, payments;
       if (offerRule.offer_type !== "1" && card_id) {
+        if (privilegeTotalPrice) {
+          let member_discount_list = activities.find(
+            item =>
+              item.payMethod === "CARD" && item.privilegeTypes?.[0] == "卡"
+          );
+          let target_card_info = member_discount_list.find(
+            item => item.privilegeTotalPrice === privilegeTotalPrice
+          );
+          if (target_card_info) {
+            card_id = target_card_info.cardInfos?.[0]?.cardNumber;
+            total_price = target_card_info.originalTicketTotalPrice;
+          }
+        }
         payments = [{ payMethod: "CARD", payCardNumber: card_id }];
         const minItem = activities.reduce((min, current) => {
           const currentPrivilegeTotalPrice = +current.privilegeTotalPrice;
