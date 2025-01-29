@@ -1455,10 +1455,15 @@ class OrderAutoTicketQueue {
       let quanDiscountAmount = useQuan?.[0]?.discountAmount || 0;
       // 使用优惠券及会员卡
       if (!card_id && !useQuan?.length) {
+        const errInfoObj = this.logList
+          .filter(item => item.level === "error")
+          .reverse()?.[0];
+        const errMsg = errInfoObj?.des || "";
         let str = "无可用会员卡";
         if (offerRule.offer_type === "1") {
           str = "无可用优惠券";
         }
+        str += errMsg;
         console.error(conPrefix + str);
         this.logList.push({
           opera_time: getCurrentTime(),

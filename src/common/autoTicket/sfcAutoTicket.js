@@ -1337,10 +1337,15 @@ class OrderAutoTicketQueue {
       if (!card_id && !quan_code && !member_coupon_id && !coupon_id) {
         console.log("this.currentParamsInx", this.currentParamsInx);
         console.log("this.currentParamsList", this.currentParamsList);
+        const errInfoObj = this.logList
+          .filter(item => item.level === "error")
+          .reverse()?.[0];
+        const errMsg = errInfoObj?.des || "";
         let str = "无可用会员卡";
         if (offerRule.offer_type === "1") {
           str = "无可用优惠券";
         }
+        str += errMsg;
         if (this.currentParamsInx === this.currentParamsList.length - 1) {
           console.error(conPrefix + str, "走转单逻辑");
           this.logList.push({
@@ -2097,7 +2102,7 @@ class OrderAutoTicketQueue {
         this.logList.push({
           opera_time: getCurrentTime(),
           des: "获取会员卡列表为空",
-          level: "info"
+          level: "error"
         });
         return {
           card_id: "",
