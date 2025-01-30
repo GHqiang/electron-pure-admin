@@ -1450,6 +1450,14 @@ class OrderAutoTicketQueue {
           });
         }
       }
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "计算订单价格返回",
+        level: "info",
+        info: {
+          priceRes
+        }
+      });
       let paymentAmount = Number(priceInfo.price_str?.replace("￥", "") || 0); // 此处是为了将订单价格30.00转为30，将0.00转为0
       console.log(conPrefix + "订单最后价格", paymentAmount, priceInfo);
       let quan_fee = offerRule.quan_fee || 0;
