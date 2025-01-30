@@ -828,6 +828,22 @@ class OrderAutoTicketQueue {
         });
         return;
       }
+      // 芒果座位会未锁从而无需解锁
+      if (
+        (error?.msg || error?.message || "").includes(
+          "该座位未锁座成功，故无法解锁"
+        )
+      ) {
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: `第${inx}次解锁座位发现座位无需解锁`,
+          level: "info",
+          info: {
+            error
+          }
+        });
+        return;
+      }
       // 哈哈偶尔会这样
       if (error?.msg === "当前订单座位没有被锁") {
         this.logList.push({
