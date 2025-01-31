@@ -175,6 +175,7 @@ const GROUP_LIST = [
   "sfc", // 上影
   "hbchyxd", // hbc华谊兄弟
   "zhongying", // 中影
+  "bailaohui", // 百老汇
 
   "lma", // 卢米埃
 
@@ -195,6 +196,7 @@ const GROUP_LIST = [
 ];
 // 影院列表
 const APP_LIST = {
+  bailaohui: "百老汇影城",
   hsmzyc: "海上明珠影城",
   gzfyyc: "广州飞扬影城",
   szxtyy: "深圳新天影院",
@@ -2068,6 +2070,7 @@ const TICKET_CONPREFIX_OBJ = {
   sfc: "【上影自动出票】——",
   xywdgmyc: "【新杨湾大光明影城自动出票】——",
   zhongying: "【中影自动出票】——",
+  bailaohui: "【百老汇自动出票】——",
   lyzy: "【龙岩中影自动出票】——",
   cswyh: "【长沙万影汇自动出票】——",
   bjdzlt: "【北京地质礼堂自动出票】——",
@@ -2237,6 +2240,7 @@ const APP_OPENID_OBJ = {
   sfc: "otEMo42FC38PgJiYDvu6HrGjrwQY",
   xywdgmyc: "oOiC55RPsQs1XZLzM_cklZ2pbvnk",
   zhongying: "oZQEA7Xzuot6Gb4Xj9ELwRlYEri0",
+  bailaohui: "oBOi46wSC0VFZVHREN_1Qrr_o2Sc",
   lyzy: "oekH_4_xX7k0hZwTopPN_CDpWNdo",
   cswyh: "oKLyP4hIUw8CggpTmS3P5zcU9FXQ",
   bjdzlt: "oIkMV5BkjhLVUj5ws2wPVBYieqJ4",
@@ -2307,6 +2311,7 @@ const APP_GROUP_OBJ = {
   sfc: "20045",
   xywdgmyc: "20371",
   zhongying: "20020",
+  bailaohui: "10000",
   lyzy: "20482",
   cswyh: "20328",
   bjdzlt: "20615",

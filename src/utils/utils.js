@@ -433,7 +433,18 @@ const getCinemaFlag = item => {
   ) {
     return "hbchyxd";
   }
-
+  const isBailaohuiGroup = [
+    "百丽宫一线",
+    "百丽宫二线",
+    "c_boardway",
+    "百老汇",
+    "百美汇",
+    "百方汇",
+    "百丽宫"
+  ].includes(cinema_group);
+  if (isBailaohuiGroup) {
+    return "bailaohui";
+  }
   if (
     ["山文星辉影城", "鲁信影城潍坊寿光店"].some(
       itemA =>
