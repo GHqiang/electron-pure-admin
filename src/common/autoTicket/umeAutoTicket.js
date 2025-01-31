@@ -1479,7 +1479,9 @@ class OrderAutoTicketQueue {
         if (offerRule.offer_type === "1") {
           str = "无可用优惠券";
         }
-        str += errMsg;
+        if (errMsg) {
+          str = str + "-" + errMsg;
+        }
         console.error(conPrefix + str);
         this.logList.push({
           opera_time: getCurrentTime(),

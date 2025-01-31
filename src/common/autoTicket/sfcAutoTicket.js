@@ -1361,7 +1361,9 @@ class OrderAutoTicketQueue {
         if (offerRule.offer_type === "1") {
           str = "无可用优惠券";
         }
-        str += errMsg;
+        if (errMsg) {
+          str = str + "-" + errMsg;
+        }
         if (this.currentParamsInx === this.currentParamsList.length - 1) {
           console.error(conPrefix + str, "走转单逻辑");
           this.logList.push({
