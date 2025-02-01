@@ -1705,7 +1705,7 @@ const getCinemaIdByLma = (cinema_name, list, appName, city_name) => {
 };
 
 // 根据订单name获取目标影院(主要用于ume系统)
-const getTargetCinema = (cinema_name, list, appName) => {
+const getTargetCinema = (cinema_name, list, appName, city_name) => {
   try {
     // 1、先全字匹配，匹配到就直接返回
     let targetCinema = list.find(
@@ -1722,6 +1722,7 @@ const getTargetCinema = (cinema_name, list, appName) => {
     let specialList = toRaw(specialNameList.value)
       .filter(item => item.app_name == appName)
       .map(item => ({
+        city_name: item.city_name,
         sfc_cinema_name: item.cinema_name,
         order_cinema_name: item.special_name
           ?.split("**")
@@ -1731,8 +1732,9 @@ const getTargetCinema = (cinema_name, list, appName) => {
     if (specialList?.length) {
       let specialCinemaInfo = specialList.find(
         item =>
-          item.order_cinema_name === cinemaName ||
-          item.order_cinema_name.includes(cinemaName)
+          (item.order_cinema_name === cinemaName ||
+            item.order_cinema_name.includes(cinemaName)) &&
+          (item.city_name ? item.city_name === city_name : true)
       );
       if (specialCinemaInfo) {
         cinemaName = cinemNameSpecial(specialCinemaInfo.sfc_cinema_name);
@@ -1769,9 +1771,9 @@ const getTargetCinema = (cinema_name, list, appName) => {
 // 获取目标影院特殊匹配测试方法
 window.getTargetCinema = ({ app_name, cinema_name, cinemaList, city_name }) => {
   if (UME_LIST.includes(app_name)) {
-    getTargetCinema(cinema_name, cinemaList, app_name);
+    getTargetCinema(cinema_name, cinemaList, app_name, city_name);
   } else if (H5_UME_LIST.includes(app_name)) {
-    getTargetCinema(cinema_name, cinemaList, app_name);
+    getTargetCinema(cinema_name, cinemaList, app_name, city_name);
   } else if (SFC_APP_LIST.includes(app_name)) {
     getCinemaId(cinema_name, cinemaList, app_name, city_name);
   } else if (app_name === "lma") {
@@ -1780,7 +1782,7 @@ window.getTargetCinema = ({ app_name, cinema_name, cinemaList, city_name }) => {
 };
 
 // 影院名称匹配（匹配报价规则时使用）
-const cinemaMatchHandle = (cinema_name, list, appName) => {
+const cinemaMatchHandle = (cinema_name, list, appName, city_name) => {
   try {
     // 1、全字匹配
     let isHasMatch = list.some(item => item === cinema_name);
@@ -1801,8 +1803,9 @@ const cinemaMatchHandle = (cinema_name, list, appName) => {
       }));
     let specialCinemaInfo = specialList.find(
       item =>
-        item.order_cinema_name === cinemaName ||
-        item.order_cinema_name.includes(cinemaName)
+        (item.order_cinema_name === cinemaName ||
+          item.order_cinema_name.includes(cinemaName)) &&
+        (item.city_name ? item.city_name === city_name : true)
     );
     console.log("specialCinemaInfo", specialCinemaInfo, cinema_name);
     if (specialCinemaInfo) {
@@ -1955,14 +1958,16 @@ const offerRuleMatch = order => {
         return cinemaMatchHandle(
           cinema_name,
           item.includeCinemaNames,
-          shadowLineName
+          shadowLineName,
+          city_name
         );
       }
       if (item.excludeCinemaNames.length) {
         return !cinemaMatchHandle(
           cinema_name,
           item.excludeCinemaNames,
-          shadowLineName
+          shadowLineName,
+          city_name
         );
       }
     });

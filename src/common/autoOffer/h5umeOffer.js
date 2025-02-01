@@ -1257,7 +1257,12 @@ class getUmeOfferPrice {
         item => item.cinemaCode === cinema_code
       );
       if (!targetCinema) {
-        targetCinema = getTargetCinema(cinema_name, cinemaList, appFlag);
+        targetCinema = getTargetCinema(
+          cinema_name,
+          cinemaList,
+          appFlag,
+          city_name
+        );
       }
       if (!targetCinema) {
         console.error("获取目标影院失败");
@@ -1474,6 +1479,11 @@ class getUmeOfferPrice {
       let member_total_price = activities.find(
         item => item.payMethod === "CARD" && item.privilegeTypes?.[0] == "卡"
       )?.privilegeTotalPrice;
+      if (!member_total_price) {
+        member_total_price = activities.find(
+          item => item.payMethod === "CARD" && item.privilegeTypes?.[0] == "惠"
+        )?.privilegeTotalPrice;
+      }
       if (member_total_price) {
         maxSeatPrice = member_total_price;
       } else {

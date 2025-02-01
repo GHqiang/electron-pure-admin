@@ -975,7 +975,12 @@ class OrderAutoTicketQueue {
           item => item.cinemaLinkId === cinemaCode
         );
         if (!targetCinema) {
-          targetCinema = getTargetCinema(cinema_name, cinemaList, appFlag);
+          targetCinema = getTargetCinema(
+            cinema_name,
+            cinemaList,
+            appFlag,
+            city_name
+          );
         }
         if (!targetCinema) {
           console.error(
@@ -1383,6 +1388,11 @@ class OrderAutoTicketQueue {
       let member_total_price = activities.find(
         item => item.payMethod === "CARD" && item.privilegeTypes?.[0] == "卡"
       )?.privilegeTotalPrice;
+      if (!member_total_price) {
+        member_total_price = activities.find(
+          item => item.payMethod === "CARD" && item.privilegeTypes?.[0] == "惠"
+        )?.privilegeTotalPrice;
+      }
       let originalTicketTotalPrice = total_price, // 原总价
         privilegeTotalPrice = member_total_price; // 会员价
       // 如果会员价为0时，取报价记录里的真实会员价
@@ -1541,6 +1551,12 @@ class OrderAutoTicketQueue {
             item =>
               item.payMethod === "CARD" && item.privilegeTypes?.[0] == "卡"
           );
+          if (!privilegeTotalPrice.length) {
+            member_discount_list = activities.filter(
+              item =>
+                item.payMethod === "CARD" && item.privilegeTypes?.[0] == "惠"
+            );
+          }
           let target_card_info = member_discount_list.find(
             item => item.privilegeTotalPrice === privilegeTotalPrice
           );
