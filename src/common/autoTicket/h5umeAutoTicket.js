@@ -993,8 +993,10 @@ class OrderAutoTicketQueue {
             des: "根据订单中的影院名称获取目标影院失败",
             level: "error",
             info: {
+              cinema_name,
               cinemaList,
-              cinema_name
+              appFlag,
+              city_name
             }
           });
           const transferParams = await this.transferOrder(item);

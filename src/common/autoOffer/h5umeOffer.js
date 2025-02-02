@@ -1274,7 +1274,8 @@ class getUmeOfferPrice {
             cinemaList,
             cinema_code,
             cinema_name,
-            app_name: appFlag
+            app_name: appFlag,
+            city_name
           }
         });
         return;
