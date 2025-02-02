@@ -1387,16 +1387,23 @@ class OrderAutoTicketQueue {
       )?.originalTicketTotalPrice;
       console.warn("获取最优卡券组合列表返回", cardList, quanList, activities);
       // 7、使用优惠券或者会员卡
-      let member_total_price = activities.find(
-        item => item.payMethod === "CARD" && item.privilegeTypes?.[0] == "卡"
-      )?.privilegeTotalPrice;
-      if (!member_total_price) {
-        member_total_price = activities.find(
-          item => item.payMethod === "CARD" && item.privilegeTypes?.[0] == "惠"
-        )?.privilegeTotalPrice;
+      let member_discount_list = activities.filter(
+        item =>
+          item.payMethod === "CARD" &&
+          ["卡", "惠"].includes(item.privilegeTypes?.[0])
+      );
+      if (member_discount_list.length) {
+        // 从小到大排序
+        member_discount_list = member_discount_list.sort(
+          (a, b) => a.privilegeTotalPrice - b.privilegeTotalPrice
+        );
       }
-      let originalTicketTotalPrice = total_price, // 原总价
-        privilegeTotalPrice = member_total_price; // 会员价
+      let target_card_info = member_discount_list[0];
+      let member_total_price;
+      if (target_card_info) {
+        total_price = target_card_info.originalTicketTotalPrice;
+        member_total_price = target_card_info.privilegeTotalPrice;
+      }
       // 如果会员价为0时，取报价记录里的真实会员价
       if (member_total_price === undefined && offerRule.offer_type != "1") {
         member_total_price =
@@ -1408,8 +1415,6 @@ class OrderAutoTicketQueue {
         level: "info",
         info: {
           total_price,
-          originalTicketTotalPrice,
-          privilegeTotalPrice,
           member_total_price,
           ticket_num,
           real_member_price: offerRule.real_member_price
@@ -1548,24 +1553,8 @@ class OrderAutoTicketQueue {
       let quan_code = useQuan.map(item => item.couponCode)?.join();
       let tickets, payments;
       if (offerRule.offer_type !== "1" && card_id) {
-        if (privilegeTotalPrice) {
-          let member_discount_list = activities.filter(
-            item =>
-              item.payMethod === "CARD" && item.privilegeTypes?.[0] == "卡"
-          );
-          if (!privilegeTotalPrice.length) {
-            member_discount_list = activities.filter(
-              item =>
-                item.payMethod === "CARD" && item.privilegeTypes?.[0] == "惠"
-            );
-          }
-          let target_card_info = member_discount_list.find(
-            item => item.privilegeTotalPrice === privilegeTotalPrice
-          );
-          if (target_card_info) {
-            card_id = target_card_info.cardInfos?.[0]?.cardNumber;
-            total_price = target_card_info.originalTicketTotalPrice;
-          }
+        if (target_card_info) {
+          card_id = target_card_info.cardInfos?.[0]?.cardNumber;
         }
         payments = [{ payMethod: "CARD", payCardNumber: card_id }];
         const minItem = activities.reduce((min, current) => {
