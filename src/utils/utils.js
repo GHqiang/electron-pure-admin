@@ -1577,30 +1577,18 @@ const getCinemaId = (cinema_name, list, appName, city_name) => {
     let specialList = toRaw(specialNameList.value)
       .filter(item => item.app_name == appName)
       .map(item => ({
+        city_name: item.city_name,
         sfc_cinema_name: item.cinema_name,
         order_cinema_name: item.special_name
           ?.split("**")
           ?.map(itemName => cinemNameSpecial(itemName))
       }));
-    let specialCinemaList =
-      specialList.filter(
-        item =>
-          item.order_cinema_name === cinemaName ||
-          item.order_cinema_name.includes(cinemaName)
-      ) || [];
-    // console.log("specialCinemaList", specialCinemaList);
-    // 存在以上情况故需要做特殊处理
-    if (specialCinemaList.length > 1 && city_name) {
-      specialCinemaList = specialCinemaList.filter(item =>
-        list.some(
-          itemA => cinemNameSpecial(itemA.name) === item.sfc_cinema_name
-        )
-      );
-      specialCinemaList = specialCinemaList.filter(item =>
-        item.sfc_cinema_name.includes(city_name)
-      );
-    }
-    let specialCinemaInfo = specialCinemaList[0];
+    let specialCinemaInfo = specialList.find(
+      item =>
+        (item.order_cinema_name === cinemaName ||
+          item.order_cinema_name.includes(cinemaName)) &&
+        (item.city_name ? item.city_name.includes(city_name) : true)
+    );
     if (specialCinemaInfo) {
       cinemaName = cinemNameSpecial(specialCinemaInfo.sfc_cinema_name);
       console.warn("特殊匹配影院名称成功", cinemaName, cinema_name);
@@ -1648,29 +1636,18 @@ const getCinemaIdByLma = (cinema_name, list, appName, city_name) => {
     let specialList = toRaw(specialNameList.value)
       .filter(item => item.app_name == appName)
       .map(item => ({
+        city_name: item.city_name,
         sfc_cinema_name: item.cinema_name,
         order_cinema_name: item.special_name
           ?.split("**")
           ?.map(itemName => cinemNameSpecial(itemName))
       }));
-    let specialCinemaList =
-      specialList.filter(
-        item =>
-          item.order_cinema_name === cinemaName ||
-          item.order_cinema_name.includes(cinemaName)
-      ) || [];
-    // 存在以上情况故需要做特殊处理
-    if (specialCinemaList.length > 1 && city_name) {
-      specialCinemaList = specialCinemaList.filter(item =>
-        list.some(
-          itemA => cinemNameSpecial(itemA.cinema_name) === item.sfc_cinema_name
-        )
-      );
-      specialCinemaList = specialCinemaList.filter(item =>
-        item.sfc_cinema_name.includes(city_name)
-      );
-    }
-    let specialCinemaInfo = specialCinemaList[0];
+    let specialCinemaInfo = specialList.find(
+      item =>
+        (item.order_cinema_name === cinemaName ||
+          item.order_cinema_name.includes(cinemaName)) &&
+        (item.city_name ? item.city_name.includes(city_name) : true)
+    );
     if (specialCinemaInfo) {
       cinemaName = cinemNameSpecial(specialCinemaInfo.sfc_cinema_name);
       console.warn("特殊匹配影院名称成功", cinemaName, cinema_name);
@@ -1796,6 +1773,7 @@ const cinemaMatchHandle = (cinema_name, list, appName, city_name) => {
     let specialList = toRaw(specialNameList.value)
       .filter(item => item.app_name == appName)
       .map(item => ({
+        city_name: item.city_name,
         sfc_cinema_name: item.cinema_name,
         order_cinema_name: item.special_name
           ?.split("**")
