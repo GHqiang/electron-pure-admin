@@ -82,6 +82,7 @@ import {
   H5_UME_LIST,
   SFC_APP_LIST
 } from "@/common/constant";
+import { cinemNameSpecial } from "@/utils/utils";
 const ruleFormRef = ref(null);
 // 父传子props
 defineProps({
@@ -147,8 +148,8 @@ const cinemaChange = async val => {
   formData.cinema_id = targetCinema?.id;
   formData.city_name = targetCinema?.city_name;
   console.log("影院改变val", val, formData.cinema_id, formData.city_name);
-  formData.special_name = "";
-  formData.remark = "";
+  // formData.special_name = "";
+  // formData.remark = "";
 };
 // 打开弹窗
 const open = async ruleInfo => {
@@ -174,16 +175,23 @@ const open = async ruleInfo => {
       }
       const cityList = await getCityList();
       const allCinemaList = await getAllCinemaList(cityList);
-      console.log("allCinemaList", allCinemaList);
+      console.log("allCinemaList", allCinemaList, formData.cinema_name);
       if (!formData.cinema_id) {
         formData.cinema_id = allCinemaList.find(
-          item => item.name == formData.cinema_name
+          item =>
+            item.name == formData.cinema_name ||
+            cinemNameSpecial(item.name) ==
+              cinemNameSpecial(formData.cinema_name)
         )?.id;
       }
       if (!formData.city_name) {
         formData.city_name = allCinemaList.find(
-          item => item.name == formData.cinema_name
+          item =>
+            item.name == formData.cinema_name ||
+            cinemNameSpecial(item.name) ==
+              cinemNameSpecial(formData.cinema_name)
         )?.city_name;
+        console.log("formData.city_name", formData.city_name);
       }
     }
     loading.close();

@@ -1734,7 +1734,7 @@ const getTargetCinema = (cinema_name, list, appName, city_name) => {
         item =>
           (item.order_cinema_name === cinemaName ||
             item.order_cinema_name.includes(cinemaName)) &&
-          (item.city_name ? item.city_name === city_name : true)
+          (item.city_name ? item.city_name.includes(city_name) : true)
       );
       if (specialCinemaInfo) {
         cinemaName = cinemNameSpecial(specialCinemaInfo.sfc_cinema_name);
@@ -1805,7 +1805,7 @@ const cinemaMatchHandle = (cinema_name, list, appName, city_name) => {
       item =>
         (item.order_cinema_name === cinemaName ||
           item.order_cinema_name.includes(cinemaName)) &&
-        (item.city_name ? item.city_name === city_name : true)
+        (item.city_name ? item.city_name.includes(city_name) : true)
     );
     console.log("specialCinemaInfo", specialCinemaInfo, cinema_name);
     if (specialCinemaInfo) {
