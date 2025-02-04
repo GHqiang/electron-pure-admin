@@ -559,7 +559,7 @@ const getCinemaFlag = item => {
   ) {
     return "szxtyy";
   } else if (
-    ["华艺", "利群"].some(itemA =>
+    ["利群华艺", "华艺影院平度国贸"].some(itemA =>
       cinemNameSpecial(cinema_name).includes(itemA)
     ) &&
     ["连云港", "青岛", "烟台"].includes(city_name)
