@@ -559,6 +559,13 @@ const getCinemaFlag = item => {
   ) {
     return "szxtyy";
   } else if (
+    ["华艺", "利群"].some(itemA =>
+      cinemNameSpecial(cinema_name).includes(itemA)
+    ) &&
+    ["连云港", "青岛", "烟台"].includes(city_name)
+  ) {
+    return "liqunhuayi";
+  } else if (
     ["唐阁"].includes(cinema_group) ||
     ([("唐阁影城", "传奇奢华影城")].some(itemA =>
       cinemNameSpecial(cinema_name).includes(itemA)

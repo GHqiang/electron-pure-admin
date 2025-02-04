@@ -134,6 +134,7 @@ let H5_UME_LIST = [
   "miruiku",
   "suning",
   "shoudu",
+  "liqunhuayi",
   "bjyjgj",
   "zyhygj",
   "tygcthdyc",
@@ -207,6 +208,7 @@ const APP_LIST = {
   miruiku: "米瑞酷影城",
   suning: "苏宁影城",
   shoudu: "首都影城",
+  liqunhuayi: "利群华艺影城",
 
   bjyjgj: "北京英嘉国际",
   zyhygj: "中影华宇国际",
@@ -2159,7 +2161,8 @@ const H5_UME_CINEMA_OBJ = {
   suning: ["10534", "SN_H5_PROD_S_MPS"],
   // 首都影城
   shoudu: ["12070", "SHOUDU_H5_PROD_S_MPS"],
-
+  // 利群华艺影城
+  liqunhuayi: ["11696", "LIQUN_H5_PROD_S_MPS"],
   // 上海金球
   shjq: ["11713", "JINQIU_H5_PROD_11713_MPS"],
   // 上海珠影沪亚
