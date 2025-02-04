@@ -382,7 +382,7 @@ class OrderAutoOfferQueue {
   async getStayOfferList() {
     const { conPrefix } = this;
     try {
-      let start_time = +new Date();
+      // let start_time = +new Date();
       const res = await mayiApi.queryStayOfferList({
         specialHall: "",
         minPrice: "",
@@ -390,22 +390,22 @@ class OrderAutoOfferQueue {
       });
       let list = res.data || [];
       // console.log(conPrefix + "获取待报价列表返回", list);
-      logUpload(
-        {
-          plat_name: "mayi",
-          type: 1
-        },
-        [
-          {
-            opera_time: getCurrentTime(),
-            des: "获取待报价列表响应时长",
-            level: "info",
-            info: {
-              resTime: +new Date() - start_time
-            }
-          }
-        ]
-      );
+      // logUpload(
+      //   {
+      //     plat_name: "mayi",
+      //     type: 1
+      //   },
+      //   [
+      //     {
+      //       opera_time: getCurrentTime(),
+      //       des: "获取待报价列表响应时长",
+      //       level: "info",
+      //       info: {
+      //         resTime: +new Date() - start_time
+      //       }
+      //     }
+      //   ]
+      // );
       return list;
     } catch (error) {
       console.error(conPrefix + "获取待报价列表异常", error);
