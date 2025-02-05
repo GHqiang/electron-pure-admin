@@ -649,7 +649,7 @@ const getCinemaFlag = item => {
   ) {
     return "zygxsy";
   } else if (
-    ["华凯国际影城万全时代广场店"].some(itemA =>
+    ["华凯国际影城"].some(itemA =>
       cinemNameSpecial(cinema_name).includes(itemA)
     ) &&
     ["张家口"].includes(city_name)

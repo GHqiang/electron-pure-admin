@@ -1028,8 +1028,8 @@ class getLmaOfferPrice {
           level: "error",
           info: {
             error: cinemaIdRes?.error,
-            cinema_name,
             cinemaList,
+            cinema_name,
             app_name,
             city_name
           }
