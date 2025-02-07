@@ -1468,7 +1468,7 @@ class OrderAutoTicketQueue {
       // 6计算订单价格
       let currentParams = this.currentParamsList[this.currentParamsInx];
       const { session_id } = currentParams;
-      const priceRes = await priceCalculation({
+      const priceRes = await this.priceCalculation({
         city_id,
         cinema_id,
         show_id,
@@ -1495,8 +1495,7 @@ class OrderAutoTicketQueue {
           des: "使用优惠券或会员卡后计算订单价格异常",
           level: "error",
           info: {
-            error: priceRes?.error,
-            params: priceRes?.params
+            error: priceRes?.error
           }
         });
       }
@@ -2510,6 +2509,105 @@ class OrderAutoTicketQueue {
   //     });
   //   }
   // }
+  // 计算订单价格
+  async priceCalculation(data) {
+    const {
+      city_id,
+      cinema_id,
+      show_id,
+      seat_ids,
+      card_id,
+      quan_code,
+      session_id,
+      appFlag,
+      member_coupon_id,
+      coupon_id,
+      retryTimes = 0 // 默认重试次数
+    } = data;
+    const MAX_RETRY_TIMES = 2; // 定义最大重试次数
+    let params = {
+      city_id: city_id,
+      cinema_id: cinema_id,
+      show_id: show_id,
+      seat_ids: seat_ids,
+      quan_code: "",
+      card_id: "",
+      additional_goods_info: "", // 附加商品信息
+      goods_info: "", // 商品信息
+      is_first: "0", // 是否是首次购买 0-不是 1-是
+      option_goods_info: "", // 可选的额外商品信息
+      update_time: getCurrentTime(),
+      session_id
+    };
+    let isV3App = sfcV3AppList.includes(appFlag);
+    if (isV3App) {
+      params.is_open_svip = "0";
+    }
+    try {
+      // 模拟延迟调用，因为该接口出现过连续请求报超时的情况，增加请求间隔
+      await mockDelay(0.5);
+      if (quan_code) {
+        params.quan_code = quan_code; // 优惠券编码
+      }
+      if (card_id && !isV3App) {
+        params.card_id = card_id; // 会员卡id
+      }
+      if (member_coupon_id) {
+        params.member_coupon_id = member_coupon_id; // 会员卡赠送线下券id
+      }
+      if (coupon_id) {
+        // 会员卡赠送线上券id（线上券时还要必传card_id，而且创建订单接口也需要特殊处理）
+        params.coupon_id = coupon_id;
+      }
+      console.log("计算订单价格参数", params);
+      if (retryTimes == 0) {
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "计算订单价格参数",
+          level: "info",
+          info: {
+            params
+          }
+        });
+      }
+      const res = await APP_API_OBJ[appFlag].priceCalculation(params);
+      console.log("计算订单价格返回", res);
+      let price = res.data?.price;
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "计算订单价格返回" + retryTimes,
+        level: "info",
+        info: {
+          res
+        }
+      });
+      return {
+        price
+      };
+    } catch (error) {
+      console.error("计算订单价格异常", error);
+      if (error.msg === "锁定座位失败" && retryTimes < MAX_RETRY_TIMES) {
+        console.warn(
+          `计算订单价格异常，将在3秒后重试(${retryTimes + 1}/${MAX_RETRY_TIMES})`,
+          error
+        );
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "计算订单价格返回:锁定座位失败,准备隔3秒重试",
+          level: "info",
+          info: {
+            error
+          }
+        });
+        await mockDelay(3);
+        return this.priceCalculation({
+          ...data,
+          retryTimes: retryTimes + 1
+        });
+      }
+      return { error };
+    }
+  }
 
   // 创建订单
   async createOrder(data) {
@@ -3756,7 +3854,7 @@ class OrderAutoTicketQueue {
               des: `正在尝试使用卡 ${card.card_num}`,
               level: "info"
             });
-            const priceRes = await priceCalculation({
+            const priceRes = await this.priceCalculation({
               city_id,
               cinema_id,
               show_id,
@@ -3772,8 +3870,7 @@ class OrderAutoTicketQueue {
                 des: "尝试使用卡时计算价格异常",
                 level: "error",
                 info: {
-                  error: priceRes?.error,
-                  params: priceRes?.params
+                  error: priceRes?.error
                 }
               });
             }
@@ -4252,72 +4349,6 @@ const getQuanList = async data => {
         error
       }
     });
-  }
-};
-
-// 计算订单价格
-const priceCalculation = async ({
-  city_id,
-  cinema_id,
-  show_id,
-  seat_ids,
-  card_id,
-  quan_code,
-  session_id,
-  appFlag,
-  member_coupon_id,
-  coupon_id
-}) => {
-  let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
-  let params = {
-    city_id: city_id,
-    cinema_id: cinema_id,
-    show_id: show_id,
-    seat_ids: seat_ids,
-    quan_code: "",
-    card_id: "",
-    additional_goods_info: "", // 附加商品信息
-    goods_info: "", // 商品信息
-    is_first: "0", // 是否是首次购买 0-不是 1-是
-    option_goods_info: "", // 可选的额外商品信息
-    update_time: getCurrentTime(),
-    session_id
-  };
-  let isV3App = sfcV3AppList.includes(appFlag);
-  if (isV3App) {
-    params.is_open_svip = "0";
-  }
-  try {
-    // 模拟延迟调用，因为该接口出现过连续请求报超时的情况，增加请求间隔
-    await mockDelay(1);
-    if (quan_code) {
-      params.quan_code = quan_code; // 优惠券编码
-    }
-    if (card_id && !isV3App) {
-      params.card_id = card_id; // 会员卡id
-    }
-    if (member_coupon_id) {
-      params.member_coupon_id = member_coupon_id; // 会员卡赠送线下券id
-    }
-    if (coupon_id) {
-      // 会员卡赠送线上券id（线上券时还要必传card_id，而且创建订单接口也需要特殊处理）
-      params.coupon_id = coupon_id;
-    }
-    console.log(conPrefix + "计算订单价格参数", params);
-    const res = await APP_API_OBJ[appFlag].priceCalculation(params);
-    console.log(conPrefix + "计算订单价格返回", res);
-    let price = res.data?.price;
-    return {
-      params,
-      res,
-      price
-    };
-  } catch (error) {
-    console.error(conPrefix + "计算订单价格异常", error);
-    return {
-      params,
-      error
-    };
   }
 };
 
