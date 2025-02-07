@@ -298,56 +298,71 @@ class OrderAutoTicketQueue {
   // 释放座位 flag: 1-转单，2换号
   async releaseSeat(unlockSeatInfo, flag) {
     const { conPrefix, appFlag } = this;
-    const { city_id, cinema_id, show_id, start_day, start_time, session_id } =
-      unlockSeatInfo;
+    const {
+      city_id,
+      cinema_id,
+      show_id,
+      start_day,
+      start_time,
+      session_id,
+      order_num
+    } = unlockSeatInfo;
     try {
-      const seatDataRes = await getSeatLayout({
-        city_id,
-        cinema_id,
-        show_id,
-        session_id,
-        appFlag
-      });
-      let errFlag = ["正常出票", "转单释放座位时", "换号出票释放座位时"][flag];
-      let seatList = seatDataRes?.seatData || [];
-      if (!seatList?.length) {
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: `${errFlag}-获取座位布局异常`,
-          level: "error",
-          info: {
-            error: seatDataRes?.error
-          }
+      if (!order_num) {
+        const seatDataRes = await getSeatLayout({
+          city_id,
+          cinema_id,
+          show_id,
+          session_id,
+          appFlag
         });
-        return false;
+        let errFlag = ["正常出票", "转单释放座位时", "换号出票释放座位时"][
+          flag
+        ];
+        let seatList = seatDataRes?.seatData || [];
+        if (!seatList?.length) {
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: `${errFlag}-获取座位布局异常`,
+            level: "error",
+            info: {
+              error: seatDataRes?.error
+            }
+          });
+          return false;
+        }
+        let availableSeatList = seatList.filter(item => item[2] === "0"); // 1表示已售
+        let seat_ids = availableSeatList.map(item => item[0])?.[0]; // 第0个代表座位id
+        if (!seat_ids) {
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: `${errFlag}-获取未售座位为空`,
+            level: "error",
+            info: {
+              seatList
+            }
+          });
+          return false;
+        }
+        // // 4、锁定座位
+        let lockParams = {
+          city_id,
+          cinema_id,
+          show_id,
+          seat_ids,
+          start_day,
+          start_time,
+          session_id
+        };
+        console.warn(conPrefix + "转单时释放座位传参", lockParams);
+        await this.lockSeatHandle(lockParams); // 锁定座位
+        // this.currentParamsList[this.currentParamsInx].releaseStatus = 1;
+        return true;
+      } else {
+        // 取消订单
+        await this.cancelOrder(unlockSeatInfo);
+        return true;
       }
-      let availableSeatList = seatList.filter(item => item[2] === "0"); // 1表示已售
-      let seat_ids = availableSeatList.map(item => item[0])?.[0]; // 第0个代表座位id
-      if (!seat_ids) {
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: `${errFlag}-获取未售座位为空`,
-          level: "error",
-          info: {
-            seatList
-          }
-        });
-        return false;
-      }
-      // // 4、锁定座位
-      let lockParams = {
-        city_id,
-        cinema_id,
-        show_id,
-        seat_ids,
-        start_day,
-        start_time,
-        session_id
-      };
-      console.warn(conPrefix + "转单时释放座位传参", lockParams);
-      await this.lockSeatHandle(lockParams); // 锁定座位
-      // this.currentParamsList[this.currentParamsInx].releaseStatus = 1;
-      return true;
     } catch (error) {
       console.warn("释放座位失败", error);
       let errFlag = ["正常出票", "转单", "换号出票"][flag];
@@ -362,7 +377,44 @@ class OrderAutoTicketQueue {
       return false;
     }
   }
-
+  // 取消订单
+  async cancelOrder(unlockSeatInfo) {
+    let { city_id, cinema_id, order_num, session_id } = unlockSeatInfo || {};
+    let params = {
+      cinema_id,
+      city_id,
+      client_id: "",
+      id: order_num,
+      session_id
+    };
+    try {
+      console.log("取消订单参数", params);
+      const res = await this.sfcApi.lockSeat(params);
+      console.log("取消订单返回", res);
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "取消订单返回",
+        level: "info",
+        info: {
+          res,
+          params
+        }
+      });
+      return res;
+    } catch (error) {
+      console.error("取消订单返回异常", error);
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "取消订单返回异常",
+        level: "error",
+        info: {
+          error,
+          params
+        }
+      });
+      return Promise.reject(error);
+    }
+  }
   // 转单
   async transferOrder(order, unlockSeatInfo) {
     const { conPrefix } = this;
@@ -1654,7 +1706,8 @@ class OrderAutoTicketQueue {
           cinema_id,
           show_id,
           start_day,
-          start_time
+          start_time,
+          order_num
         });
         return { offerRule, transferParams };
       }
