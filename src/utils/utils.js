@@ -22,6 +22,10 @@ import { storeToRefs } from "pinia";
 import { useDataTableStoreBySpecialName } from "@/store/specialNameRule";
 const specialRules = useDataTableStoreBySpecialName();
 const { specialNameList } = storeToRefs(specialRules);
+
+import { platTokens } from "@/store/platTokens";
+const tokens = platTokens();
+// console.log("user_id", user_id);
 // console.log(
 //   "specialNameList0",
 //   specialNameList.value,
@@ -1320,14 +1324,25 @@ function convertFullwidthToHalfwidth(str) {
 }
 
 // 获取影院登录信息列表
-const getCinemaLoginInfoList = () => {
+const getCinemaLoginInfoList = userId => {
+  let user_id = userId || tokens?.userInfo?.user_id;
+  if (user_id == 1) {
+    user_id = 9;
+  }
+  // console.log("user_id1", user_id);
   let loginInfoList = window.localStorage.getItem("loginInfoList");
   if (loginInfoList) {
     loginInfoList = JSON.parse(loginInfoList);
+    if ([9, 10, 11, 15].includes(user_id)) {
+      loginInfoList = loginInfoList.filter(item =>
+        !item.link_user_id ? true : item.link_user_id == user_id
+      );
+    }
   }
   return loginInfoList || [];
 };
 
+// window.getCinemaLoginInfoList = getCinemaLoginInfoList;
 // 发送微信消息
 const sendWxPusherMessage = async ({
   plat_name,
