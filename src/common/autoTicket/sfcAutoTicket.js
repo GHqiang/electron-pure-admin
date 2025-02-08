@@ -2586,25 +2586,25 @@ class OrderAutoTicketQueue {
       };
     } catch (error) {
       console.error("计算订单价格异常", error);
-      if (error.msg === "锁定座位失败" && retryTimes < MAX_RETRY_TIMES) {
-        console.warn(
-          `计算订单价格异常，将在3秒后重试(${retryTimes + 1}/${MAX_RETRY_TIMES})`,
-          error
-        );
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "计算订单价格返回:锁定座位失败,准备隔3秒重试",
-          level: "info",
-          info: {
-            error
-          }
-        });
-        await mockDelay(3);
-        return this.priceCalculation({
-          ...data,
-          retryTimes: retryTimes + 1
-        });
-      }
+      // if (error.msg === "锁定座位失败" && retryTimes < MAX_RETRY_TIMES) {
+      //   console.warn(
+      //     `计算订单价格异常，将在3秒后重试(${retryTimes + 1}/${MAX_RETRY_TIMES})`,
+      //     error
+      //   );
+      //   this.logList.push({
+      //     opera_time: getCurrentTime(),
+      //     des: "计算订单价格返回:锁定座位失败,准备隔3秒重试",
+      //     level: "info",
+      //     info: {
+      //       error
+      //     }
+      //   });
+      //   await mockDelay(3);
+      //   return this.priceCalculation({
+      //     ...data,
+      //     retryTimes: retryTimes + 1
+      //   });
+      // }
       return { error };
     }
   }
