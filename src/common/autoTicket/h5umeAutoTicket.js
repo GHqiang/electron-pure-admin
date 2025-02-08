@@ -1393,6 +1393,28 @@ class OrderAutoTicketQueue {
           ["卡", "惠"].includes(item.privilegeTypes?.[0])
       );
       if (member_discount_list.length) {
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "会员卡支付-优惠活动列表",
+          level: "info",
+          info: {
+            member_discount_list: JSON.parse(JSON.stringify(member_discount_list))
+          }
+        });
+        member_discount_list = member_discount_list.filter(item => {
+          let privilegeTotalPrice = item.privilegeTotalPrice;
+          let cardNumber = item?.cardInfos?.[0]?.cardNumber
+          let cardBalance = cardList.find(itemC => itemC.cardNumber == cardNumber)?.balance;
+          return cardBalance >= privilegeTotalPrice
+        })
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "会员卡支付-优惠活动列表（根据卡余额过滤后）",
+          level: "info",
+          info: {
+            member_discount_list: JSON.parse(JSON.stringify(member_discount_list))
+          }
+        });
         // 从小到大排序
         member_discount_list = member_discount_list.sort(
           (a, b) => a.privilegeTotalPrice - b.privilegeTotalPrice
