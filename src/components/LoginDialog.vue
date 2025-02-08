@@ -38,6 +38,20 @@
             clearable
           />
         </el-form-item>
+        <el-form-item label="支持用户">
+          <el-select
+            v-model="formData.link_user_id"
+            placeholder="支持用户"
+            clearable
+          >
+            <el-option
+              v-for="(item, inx) in userList"
+              :key="inx"
+              :label="item.name"
+              :value="item.id"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item label="Session ID" prop="session_id">
           <el-input
             v-model="formData.session_id"
@@ -108,7 +122,8 @@ const {
 const loginFormRef = ref(null);
 // 父传子props
 defineProps({
-  dialogTitle: String
+  dialogTitle: String,
+  userList: Array
 });
 
 //defineEmits接受一个数组，元素为自定义事件名
@@ -124,6 +139,7 @@ let formData = reactive({
   id: "",
   app_name: "",
   session_id: "",
+  link_user_id: "",
   tid: "",
   member_pwd: "",
   mobile: "",
@@ -189,6 +205,7 @@ const resetForm = el => {
     formData.app_name = "";
   }
   formData.session_id = "";
+  formData.link_user_id = "";
   formData.tid = "";
   formData.member_pwd = "";
   formData.mobile = "";
@@ -216,6 +233,7 @@ const open = async loginInfo => {
         formData.id = formInfo.id;
         formData.app_name = formInfo.app_name;
         formData.session_id = formInfo.session_id;
+        formData.link_user_id = formInfo.link_user_id;
         formData.tid = formInfo.tid;
         formData.member_pwd = formInfo.member_pwd;
         formData.mobile = formInfo.mobile;

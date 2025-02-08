@@ -26,6 +26,21 @@
           clearable
         />
       </el-form-item>
+      <el-form-item label="支持用户">
+        <el-select
+          v-model="formData.link_user_id"
+          placeholder="支持用户"
+          style="width: 194px"
+          clearable
+        >
+          <el-option
+            v-for="(item, inx) in userList"
+            :key="inx"
+            :label="item.name"
+            :value="item.id"
+          />
+        </el-select>
+      </el-form-item>
       <el-form-item label="是否小号">
         <el-select
           v-model="formData.is_xiaohao"
@@ -91,16 +106,21 @@
         prop="app_name"
         label="影线名称"
         sortable
-        min-width="100"
+        min-width="110"
       >
         <template #default="{ row }">
           <span>{{ APP_LIST[row.app_name] }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="mobile" label="所属账号" min-width="90" />
+      <el-table-column prop="mobile" label="所属账号" min-width="120" />
       <el-table-column label="是否优先" min-width="90">
         <template #default="{ row: { first } }">
           <span>{{ first == "1" ? "是" : "否" }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="支持用户" min-width="85">
+        <template #default="{ row: { link_user_id } }">
+          <span>{{ formatUserName(link_user_id) }}</span>
         </template>
       </el-table-column>
       <el-table-column label="是否小号" min-width="90">
@@ -110,13 +130,13 @@
       </el-table-column>
       <el-table-column prop="session_id" label="Session ID" min-width="200" />
       <el-table-column prop="tid" label="续期tid" min-width="120" />
-      <el-table-column prop="member_pwd" label="会员卡密码" min-width="90" />
+      <el-table-column prop="member_pwd" label="会员卡密码" min-width="95" />
       <el-table-column prop="remark" label="备注" min-width="80" />
       <el-table-column
         label="操作"
         fixed="right"
         align="center"
-        min-width="150"
+        min-width="210"
       >
         <template #default="scope">
           <el-button
@@ -155,13 +175,14 @@
     <LoginDialog
       ref="sfcDialogRef"
       :dialogTitle="dialogTitle"
+      :userList="userList"
       @submit="saveCard"
     />
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed } from "vue";
+import { ref, reactive, computed, onBeforeMount } from "vue";
 import svApi from "@/api/sv-api";
 import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import LoginDialog from "@/components/LoginDialog.vue";
@@ -174,6 +195,9 @@ const {
   userInfo: { rule }
 } = platTokens();
 
+// 用户列表
+const userList = ref([]);
+
 const tableData = ref([]);
 
 const currentPage = ref(1);
@@ -183,6 +207,7 @@ const totalNum = ref(0);
 // 表单查询数据
 const formData = reactive({
   app_name: "",
+  link_user_id: "",
   mobile: "",
   is_xiaohao: "",
   first: ""
@@ -208,6 +233,11 @@ const setLocalLoginList = async () => {
   userInfoAndTokens.setLoginInfoList(loginRecords);
 };
 
+// 格式化支持用户
+const formatUserName = link_user_id => {
+  if (!link_user_id) return "全部";
+  return userList.value.find(item => item.id == link_user_id)?.name;
+};
 // 搜索数据
 const searchData = async () => {
   const loading = ElLoading.service({
@@ -374,4 +404,11 @@ const batchDelete = () => {
       });
   }
 };
+onBeforeMount(async () => {
+  const res = await svApi.getUserList();
+  // console.log("res", res);
+  let list = res.data.userList || [];
+  // console.log("list", list);
+  userList.value = list.filter(item => [9, 10].includes(item.id));
+});
 </script>
