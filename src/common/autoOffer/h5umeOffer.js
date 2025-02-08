@@ -1092,7 +1092,7 @@ class getUmeOfferPrice {
           status: "1",
           isNeedTotalNum: 0,
           queryFields:
-            "card_num,card_discount,linkCinemaIds,use_limit_day,use_limit_month,daily_usage,monthly_usage,usage_date"
+            "mobile,card_num,card_discount,linkCinemaIds,use_limit_day,use_limit_month,daily_usage,monthly_usage,usage_date"
         });
         let list = cardRes.data.cardList || [];
         list = list.map(item => ({
@@ -1113,9 +1113,26 @@ class getUmeOfferPrice {
             list
           }
         });
+        let useMobileList = getCinemaLoginInfoList()
+          .filter(
+            item => item.app_name === app_name && item.mobile && item.session_id
+          )
+          .map(item => item.mobile);
+        let cardListByMobile = list.filter(item =>
+          useMobileList.includes(item.mobile)
+        );
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "根据该用户关联手机号对卡列表进行过滤",
+          level: "info",
+          info: {
+            useMobileList,
+            cardListByMobile
+          }
+        });
         // console.log("list", list);
         // 根据当天及当月出票量限制进行过滤
-        let cardListLimit = list.filter(item => {
+        let cardListLimit = cardListByMobile.filter(item => {
           const { use_limit_day, use_limit_month, daily_usage, month_usage } =
             item;
           if (!use_limit_day && !use_limit_month) return true;

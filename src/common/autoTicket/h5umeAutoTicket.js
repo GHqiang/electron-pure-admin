@@ -1398,21 +1398,27 @@ class OrderAutoTicketQueue {
           des: "会员卡支付-优惠活动列表",
           level: "info",
           info: {
-            member_discount_list: JSON.parse(JSON.stringify(member_discount_list))
+            member_discount_list: JSON.parse(
+              JSON.stringify(member_discount_list)
+            )
           }
         });
         member_discount_list = member_discount_list.filter(item => {
           let privilegeTotalPrice = item.privilegeTotalPrice;
-          let cardNumber = item?.cardInfos?.[0]?.cardNumber
-          let cardBalance = cardList.find(itemC => itemC.cardNumber == cardNumber)?.balance;
-          return cardBalance >= privilegeTotalPrice
-        })
+          let cardNumber = item?.cardInfos?.[0]?.cardNumber;
+          let cardBalance = cardList.find(
+            itemC => itemC.cardNumber == cardNumber
+          )?.balance;
+          return cardBalance >= privilegeTotalPrice;
+        });
         this.logList.push({
           opera_time: getCurrentTime(),
           des: "会员卡支付-优惠活动列表（根据卡余额过滤后）",
           level: "info",
           info: {
-            member_discount_list: JSON.parse(JSON.stringify(member_discount_list))
+            member_discount_list: JSON.parse(
+              JSON.stringify(member_discount_list)
+            )
           }
         });
         // 从小到大排序
@@ -3010,9 +3016,26 @@ class OrderAutoTicketQueue {
           list
         }
       });
+      let useMobileList = getCinemaLoginInfoList()
+        .filter(
+          item => item.app_name === appFlag && item.mobile && item.session_id
+        )
+        .map(item => item.mobile);
+      let cardListByMobile = list.filter(item =>
+        useMobileList.includes(item.mobile)
+      );
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "根据该用户关联手机号对卡列表进行过滤",
+        level: "info",
+        info: {
+          useMobileList,
+          cardListByMobile
+        }
+      });
       // console.log("list", list);
       // 根据当天及当月出票量限制进行过滤
-      let cardListLimit = list.filter(item => {
+      let cardListLimit = cardListByMobile.filter(item => {
         const { use_limit_day, use_limit_month, daily_usage, month_usage } =
           item;
         if (!use_limit_day && !use_limit_month) return true;

@@ -2686,7 +2686,24 @@ class OrderAutoTicketQueue {
         }
       });
       let cardList = res.data.cardList || [];
-      cardList = cardList.filter(item => {
+      let useMobileList = getCinemaLoginInfoList()
+        .filter(
+          item => item.app_name === appFlag && item.mobile && item.session_id
+        )
+        .map(item => item.mobile);
+      let cardListByMobile = cardList.filter(item =>
+        useMobileList.includes(item.mobile)
+      );
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "根据该用户关联手机号对卡列表进行过滤",
+        level: "info",
+        info: {
+          useMobileList,
+          cardListByMobile
+        }
+      });
+      cardList = cardListByMobile.filter(item => {
         return !item.linkCinemaIds
           ? true
           : item.linkCinemaIds.split(",").some(itemA => itemA == cinema_id);
