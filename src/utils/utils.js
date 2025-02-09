@@ -1357,7 +1357,9 @@ const sendWxPusherMessage = async ({
   transferTip,
   failReason,
   app_name,
-  msgType // 消息类型 1-登录失效
+  msgType, // 消息类型 1-登录失效
+  quan_flag,
+  black_quans
 }) => {
   const url = "https://wxpusher.zjiecode.com/api/manager/message/send";
   const headers = {
@@ -1401,6 +1403,17 @@ const sendWxPusherMessage = async ({
     时间：${getCurrentTime()}; <br/>
     用户：${userInfo.name}; <br/>
     提示：${transferTip};<br/>
+    </p>`;
+  } else if (msgType === 3) {
+    summary = "黑名单券更新请检查";
+    content = `<p>
+    时间：${getCurrentTime()}; <br/>
+    用户：${userInfo.name}; <br/>
+    平台：${plat_name}; <br/>
+    单号：${order_number}; <br/>
+    提示：${transferTip};<br/>
+    券标识：${quan_flag};<br/>
+    黑名单券：${black_quans};<br/>
     </p>`;
   }
   const messageData = {

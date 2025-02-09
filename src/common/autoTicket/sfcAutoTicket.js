@@ -1613,6 +1613,9 @@ class OrderAutoTicketQueue {
         seat_ids,
         card_id,
         coupon: quan_code,
+        quan_flag: offerRule.quan_flag,
+        plat_name,
+        order_number,
         member_coupon_id,
         coupon_id,
         promo_id,
@@ -2245,7 +2248,73 @@ class OrderAutoTicketQueue {
       });
     }
   }
-
+  // 更新券黑名单信息
+  async updateQuanBlackInfo(params) {
+    const { appFlag } = this;
+    const { quan_flag, coupon, plat_name, order_number } = params;
+    if (!coupon || !quan_flag) return;
+    let black_quan_list = coupon.split(",");
+    const quanTypeParams = {
+      app_name: appFlag,
+      isNeedTotalNum: 0,
+      queryFields: "id,quan_flag,app_name,quan_value,black_quans"
+    };
+    let targetQuanList = [];
+    try {
+      let quanTypeRes = await svApi.queryQuanTypeList(quanTypeParams);
+      let quanTypeList = quanTypeRes?.data?.quanTypeList || [];
+      targetQuanList = quanTypeList.filter(item => item.quan_flag == quan_flag);
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "更新券黑名单信息前获取同类目标券返回",
+        level: "info",
+        info: {
+          params,
+          quanTypeParams,
+          quanTypeList
+        }
+      });
+    } catch (error) {
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "更新券黑名单信息前获取同类目标券异常",
+        level: "error",
+        info: {
+          error,
+          quanTypeParams
+        }
+      });
+    }
+    // 更新其黑名单信息
+    for (let index = 0; index < targetQuanList.length; index++) {
+      const item = targetQuanList[index];
+      let params = {
+        id: item.id,
+        black_quans: item.black_quans + ";" + black_quan_list.join(";"),
+        update_time: getCurrentTime()
+      };
+      console.log("params", params);
+      const res = await svApi.updateQuanType(params);
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "单个更新券黑名单信息返回",
+        level: "info",
+        info: {
+          res,
+          params
+        }
+      });
+    }
+    sendWxPusherMessage({
+      msgType: 3,
+      quan_flag,
+      plat_name,
+      order_number,
+      black_quans: black_quan_list.join(";"),
+      transferTip:
+        "创建订单时发现券不可用，请去券维护列表搜索以下券标识并检查以下黑名单券是否准确，不准确请手动修改维护（可能会有可用的券，需从黑名单券里移除）"
+    });
+  }
   // 更新券库存
   async updateQuanStock(params) {
     const { quan_stock, quan_flag, phone, app_name, quan_value } = params;
@@ -2621,6 +2690,9 @@ class OrderAutoTicketQueue {
       pay_money,
       card_id,
       coupon,
+      quan_flag,
+      plat_name,
+      order_number,
       member_coupon_id,
       coupon_id,
       promo_id,
@@ -2692,6 +2764,24 @@ class OrderAutoTicketQueue {
           error
         }
       });
+      // 只有内部用户支持该功能，外部用户待券维护分开后再放开该功能
+      if (
+        error?.msg?.includes("请联系影院将使用该券的原订单后台退款后") &&
+        isTimeoutRetry === 1 &&
+        rule == 2
+      ) {
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "创建订单时发现券不可用，进行更新黑名单处理",
+          level: "info"
+        });
+        this.updateQuanBlackInfo({
+          coupon,
+          quan_flag,
+          plat_name,
+          order_number
+        });
+      }
       if (error?.msg === "请求接口超时,请重试" && isTimeoutRetry === 1) {
         this.logList.push({
           opera_time: getCurrentTime(),
