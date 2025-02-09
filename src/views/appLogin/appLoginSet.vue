@@ -307,6 +307,7 @@ const saveCard = async cardInfo => {
   try {
     cardInfo.update_time = getCurrentTime();
     cardInfo.rule = rule;
+    cardInfo.link_user_id = cardInfo.link_user_id || null;
     if (cardInfo.id) {
       console.log("编辑保存登录信息", cardInfo);
       await svApi.updateLoginRecord(cardInfo);
