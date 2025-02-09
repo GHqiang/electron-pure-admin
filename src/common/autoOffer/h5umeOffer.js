@@ -1341,31 +1341,18 @@ class getUmeOfferPrice {
         cinemaLinkId,
         filmId
       });
-      let start_day = show_time.split(" ")[0];
-      let targetDate = playDateList?.find(
-        item => formatTimeOfDay(+item.date) === start_day
+      let targetShowInfo = playDateList?.find(item =>
+        item.schedules?.some(
+          itemA => formatTimeOfTime(+itemA.showTime) === show_time
+        )
       );
-      if (!targetDate) {
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "匹配影片放映日期失败",
-          level: "error",
-          info: {
-            playDateList,
-            start_day
-          }
-        });
-        return;
-      }
-      // 获取某个放映日期的场次列表
-      const showList = targetDate.schedules || [];
 
+      // 获取某个放映日期的场次列表
+      const showList = targetShowInfo?.schedules || [];
       let start_time = show_time.split(" ")[1].slice(0, 5);
       // 解决同一时间多场次问题
       let targetShowList = showList.filter(
-        item =>
-          formatTimeOfTime(+item.showTime).split(" ")[1].slice(0, 5) ===
-          start_time
+        item => formatTimeOfTime(+item.showTime) === show_time
       );
       let targetShow = targetShowList[0];
       if (targetShowList.length > 1) {
