@@ -330,7 +330,8 @@ import {
   getCurrentTime,
   parseExcel,
   createExcelDown,
-  getCurrentDay
+  getCurrentDay,
+  formatTimeOfTime
 } from "@/utils/utils";
 const tableData = ref([]);
 
@@ -377,6 +378,9 @@ const searchData = async () => {
       item.quanStockList = item.quanStockList
         ? JSON.parse(item.quanStockList)
         : [];
+      item.end_use_time = item.end_use_time
+        ? formatTimeOfTime(+new Date(item.end_use_time))
+        : "";
     });
     // console.log("券类型列表===>", quanTypeList);
     tableData.value = quanTypeList;

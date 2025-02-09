@@ -84,7 +84,7 @@ import { ref, reactive } from "vue";
 import { APP_LIST, UME_LIST } from "@/common/constant.js";
 import { APP_API_OBJ } from "@/common/index.js";
 import { ElLoading } from "element-plus";
-import { getCinemaLoginInfoList } from "@/utils/utils";
+import { getCinemaLoginInfoList, mockDelay } from "@/utils/utils";
 // 影线列表
 const shadowLineObj = APP_LIST;
 
@@ -96,13 +96,6 @@ const formData = reactive({
 
 // 搜索过滤后的数据
 const tableDataFilter = ref([]);
-const delay = delayTime => {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve();
-    }, delayTime);
-  });
-};
 // 搜索数据
 const searchData = async () => {
   const loading = ElLoading.service({
@@ -118,7 +111,7 @@ const searchData = async () => {
     let tableList = [];
     for (let index = 0; index < loginInfoList.length; index++) {
       const { app_name, session_id } = loginInfoList[index];
-      await delay(200);
+      await mockDelay(0.2);
       const res = await APP_API_OBJ[app_name].getQuanList({
         city_id: "500",
         cinema_id: "1",

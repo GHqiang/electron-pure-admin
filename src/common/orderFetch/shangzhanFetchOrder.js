@@ -7,7 +7,8 @@ import {
   logUpload,
   getCurrentTime,
   formatTimeOfTime,
-  parseTimeStr
+  parseTimeStr,
+  mockDelay
 } from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
@@ -36,19 +37,10 @@ class OrderAutoFetchQueue {
     }
   }
 
-  // 模拟延时
-  delay(delayTime) {
-    return new Promise(resolve => {
-      setTimeout(() => {
-        resolve();
-      }, delayTime * 1000);
-    });
-  }
-
   // 获取订单
   async fetchOrders(fetchDelay) {
     try {
-      await this.delay(fetchDelay);
+      await mockDelay(fetchDelay);
       let stayList = await orderFetch();
       if (!stayList?.length) return;
       let sfcStayOfferlist = stayList

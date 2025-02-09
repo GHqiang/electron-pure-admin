@@ -99,8 +99,19 @@
               v-model="mobile"
               placeholder="所属账号(手机号)"
               clearable
-              style="width: 150px; margin-left: -1px"
-            />
+              style="width: 350px; margin-left: -1px"
+            >
+              <template #prepend>
+                <el-select
+                  v-model="syncType"
+                  placeholder="Select"
+                  style="width: 150px"
+                >
+                  <el-option label="除凤凰云智外" value="1" />
+                  <el-option label="仅同步凤凰云智" value="2" />
+                </el-select>
+              </template>
+            </el-input>
             <span @click="syncCardInfo">同步卡信息</span>
           </template>
         </el-button>
@@ -254,7 +265,8 @@ import {
   formatTimeOfTime,
   getCinemaLoginInfoList,
   getCurrentDay,
-  isDateInCurrentMonth
+  isDateInCurrentMonth,
+  mockDelay
 } from "@/utils/utils";
 const tableData = ref([]);
 
@@ -374,16 +386,9 @@ const getSummaries = param => {
   });
   return sums;
 };
-const delay = delayTime => {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve();
-    }, delayTime);
-  });
-};
 
 // 获取会员卡
-const getCardListByApp = async (app_name, phone, session_id) => {
+const getCardListByApp = async (app_name, phone, session_id, index) => {
   let params = {};
   let cardList = [];
   if (!session_id) {
@@ -416,6 +421,10 @@ const getCardListByApp = async (app_name, phone, session_id) => {
       // params.city_id = "500";
       // params.cinema_id = "1";
       params.session_id = session_id;
+    }
+    await mockDelay(H5_UME_LIST.includes(app_name) ? 0.5 : 0.1);
+    if (index % 5) {
+      await mockDelay(1);
     }
     const res = await APP_API_OBJ[app_name].getCardList(params);
     console.warn("获取会员卡列表返回", res);
@@ -531,6 +540,7 @@ const updateCardListHandle = async cardList => {
 // 同步卡信息
 const syncCardInfo = async () => {
   let phone = mobile.value;
+  let syncFlag = syncType.value;
   let appName = formData.app_name;
   console.log("appName", appName);
   let pro1;
@@ -539,9 +549,11 @@ const syncCardInfo = async () => {
     return;
   } else {
     ElMessage.info("本次同步只同步登录过的影院会员卡信息");
-    let tips = "本次同步只同步登录过的影院会员卡信息，不包含凤凰云智h5系列";
+    let tips = "本次同步只同步登录过的影院会员卡信息，";
     if (appName) {
       tips = "本次同步只同步" + APP_LIST[appName];
+    } else {
+      tips += syncFlag == 1 ? "不包含凤凰云智h5系列" : "仅同步凤凰云智h5系列";
     }
     if (appName === "lma") {
       tips =
@@ -582,12 +594,14 @@ const syncCardInfo = async () => {
         itemA.mobile == phone &&
         (formData.app_name
           ? itemA.app_name == formData.app_name
-          : !H5_UME_LIST.includes(itemA.app_name))
+          : syncFlag == 1
+            ? !H5_UME_LIST.includes(itemA.app_name)
+            : H5_UME_LIST.includes(itemA.app_name))
     );
     console.log("该手机号的loginInfoListt", loginInfoList);
     if (!loginInfoList?.length) {
       ElMessage.warning(
-        `该手机号：${APP_LIST[formData.app_name]} 未维护登录信息`
+        `该手机号：${formData.app_name ? APP_LIST[formData.app_name] : "该系列"} 未维护登录信息`
       );
       loading.close();
       return;
@@ -600,12 +614,19 @@ const syncCardInfo = async () => {
       app_name: formData.app_name || undefined
     });
     let serCardList = cardRes.data?.cardList || [];
+    serCardList = serCardList.filter(item => {
+      if (!formData.app_name) {
+        return syncFlag == 1
+          ? !H5_UME_LIST.includes(item.app_name)
+          : H5_UME_LIST.includes(item.app_name);
+      }
+      return true;
+    });
     console.log("该手机号的serCardList", serCardList);
     let memberCardList = [];
     for (let index = 0; index < loginInfoList.length; index++) {
       const { app_name, session_id } = loginInfoList[index];
-      await delay(100);
-      let cardList = await getCardListByApp(app_name, phone, session_id);
+      let cardList = await getCardListByApp(app_name, phone, session_id, index);
       memberCardList.push(...cardList);
     }
     console.log("本次同步会员卡余额拿到的数据信息", memberCardList);
@@ -640,6 +661,7 @@ const syncCardInfo = async () => {
           update_time: getCurrentTime()
         }));
       if (updateCardList?.length) {
+        console.log("updateCardList", updateCardList);
         updateCardListHandle(updateCardList);
       }
       let unUseCardList = serCardList.filter(item => {
@@ -725,6 +747,7 @@ const sfcDialogRef = ref(null);
 const dialogTitle = ref("新增");
 const shadowLine = ref("");
 const mobile = ref("");
+const syncType = ref("1");
 
 // 新增卡
 const addCard = () => {
