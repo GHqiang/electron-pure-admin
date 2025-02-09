@@ -1434,24 +1434,26 @@ class getUmeOfferPrice {
           };
         })
         .sort((a, b) => b.settlePrice - a.settlePrice);
-      // 默认取最高价
-      let maxSeatPrice = areaList[0].settlePrice;
-      let maxSeatPriceAreaIdList = areaList
-        .filter(item => item.settlePrice === maxSeatPrice)
-        .map(item => item.areaId);
-      let maxAreaList = seatList.filter(
-        item =>
-          item.status == "1" &&
-          maxSeatPriceAreaIdList.includes("" + item.areaId)
-      );
-      let seatId = maxAreaList[0]?.seatId;
+      let maxSeatPrice, seatId;
+      for (let index = 0; index < areaList.length; index++) {
+        const item = areaList[index];
+        let curAreaId = item.areaId;
+        // 判断当前座位id是否还有空余座位
+        let targetSeatInfo = areaList.find(
+          itemA => itemA.areaId == curAreaId && itemA.status == "1"
+        );
+        if (targetSeatInfo) {
+          maxSeatPrice = item.settlePrice;
+          seatId = targetSeatInfo.seatId;
+          break;
+        }
+      }
       this.logList.push({
         opera_time: getCurrentTime(),
         des: "获取座最贵座位id",
         level: "info",
         info: {
           maxSeatPrice,
-          maxSeatPriceAreaIdList,
           seatId
         }
       });
