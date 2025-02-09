@@ -1557,7 +1557,8 @@ class getSfcOfferPrice {
           level: "error",
           info: {
             film_name,
-            movie_data
+            movie_data,
+            moviePlayInfo: !movie_data?.length ? moviePlayInfo : undefined
           }
         });
       }
