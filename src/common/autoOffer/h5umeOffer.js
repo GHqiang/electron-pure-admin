@@ -315,15 +315,15 @@ class getUmeOfferPrice {
     console.log("targetLoginList", targetLoginList, app_name);
     try {
       let needUpdateQuanTypeList = [];
-      // 拿着处理过的最大券库存（几个号之间）+对应的更新时间去判断是否要更新
+      // 拿着处理过的最大券库存（几个号之间）+对应的更新时间去判断是否要更新（只判断自己号上的）
       let isNeedUpdate = quanTypeList.some(item => {
         if (item.quan_stock < 5) {
-          let inx = item.quanStockList.findIndex(
+          let inx = item.quanStockListByPhone.findIndex(
             itemA => itemA.quan_stock === item.quan_stock
           );
           console.log("inx", inx);
           if (inx != -1) {
-            let update_time = item.quanStockList[inx].update_time;
+            let update_time = item.quanStockListByPhone[inx].update_time;
             console.log("update_time", update_time);
 
             return !update_time
@@ -364,13 +364,13 @@ class getUmeOfferPrice {
             id: item.id,
             quan_flag: item.quan_flag,
             black_quans: item.black_quans,
-            quanStockList: targetLoginList.map(itemA => ({
-              phone: itemA.mobile,
+            quanStockList: item.quanStockList.map(itemA => ({
+              phone: itemA.phone,
               quan_stock: 0
             }))
           };
         });
-        // 获取每个号的优惠券列表
+        // 获取关联账号每个号的优惠券列表
         for (let i = 0; i < targetLoginList.length; i++) {
           const { session_id, mobile } = targetLoginList[i];
           const quanListAll = await this.getQuanListByPhone({
@@ -452,8 +452,13 @@ class getUmeOfferPrice {
   }
 
   // 获取影院券类型列表
-  async getQuanTypeLisgetQuanTypeListByApptByApp(order) {
+  async getQuanTypeListByApp(order) {
     const { app_name } = order;
+    let useMobileList = getCinemaLoginInfoList()
+      .filter(
+        item => item.app_name === app_name && item.mobile && item.session_id
+      )
+      .map(item => item.mobile);
     const params = {
       app_name,
       isNeedTotalNum: 0,
@@ -466,11 +471,15 @@ class getUmeOfferPrice {
         item.quanStockList = item.quanStockList
           ? JSON.parse(item.quanStockList)
           : [];
+        // 只拿关联账号的券库存信息进行判断
+        item.quanStockListByPhone = item.quanStockList.filter(itemA =>
+          useMobileList.includes(itemA.phone)
+        );
         item.quan_stock = item.quan_stock || 0;
-        if (item.quanStockList?.length) {
+        if (item.quanStockListByPhone?.length) {
           // 最大数当做券库存
           let maxNum = 0;
-          item.quanStockList.forEach(itemA => {
+          item.quanStockListByPhone.forEach(itemA => {
             if (+itemA.quan_stock > maxNum) {
               maxNum = +itemA.quan_stock;
             }
@@ -486,7 +495,8 @@ class getUmeOfferPrice {
         info: {
           quanTypeRes,
           quanTypeList,
-          params
+          params,
+          useMobileList
         }
       });
       // 异步更新券库存
