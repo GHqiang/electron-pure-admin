@@ -1372,9 +1372,7 @@ class OrderAutoTicketQueue {
       console.warn("获取最优卡券组合列表返回", cardList, quanList, activities);
       // 7、使用优惠券或者会员卡
       let member_discount_list = activities.filter(
-        item =>
-          item.payMethod === "CARD" &&
-          ["卡", "惠"].includes(item.privilegeTypes?.[0])
+        item => item.cardInfos?.length
       );
       if (member_discount_list.length) {
         this.logList.push({
@@ -1389,11 +1387,14 @@ class OrderAutoTicketQueue {
         });
         member_discount_list = member_discount_list.filter(item => {
           let privilegeTotalPrice = item.privilegeTotalPrice;
-          let cardNumber = item?.cardInfos?.[0]?.cardNumber;
-          let cardBalance = cardList.find(
-            itemC => itemC.cardNumber == cardNumber
-          )?.balance;
-          return cardBalance >= privilegeTotalPrice;
+          // cardInfos里面可能有多个卡号，要保证有卡余额大于活动时的支付价格
+          let cardInfos = item.cardInfos.map(itemC => ({
+            ...itemC,
+            balance: cardList.find(
+              itemA => itemA.cardNumber == itemC.cardNumber
+            )?.balance
+          }));
+          return cardInfos.some(item => item.balance >= privilegeTotalPrice);
         });
         this.logList.push({
           opera_time: getCurrentTime(),
@@ -1411,10 +1412,17 @@ class OrderAutoTicketQueue {
         );
       }
       let target_card_info = member_discount_list[0];
-      let member_total_price;
+      let member_total_price, cardInfos;
       if (target_card_info) {
         total_price = target_card_info.originalTicketTotalPrice;
         member_total_price = target_card_info.privilegeTotalPrice;
+        cardInfos = target_card_info.cardInfos;
+        cardInfos = cardInfos.map(itemC => ({
+          ...itemC,
+          balance: cardList.find(itemA => itemA.cardNumber == itemC.cardNumber)
+            ?.balance
+        }));
+        cardInfos = cardInfos.sort((a, b) => a.balance - b.balance);
       }
       // 如果会员价为0时，取报价记录里的真实会员价
       if (member_total_price === undefined && offerRule.offer_type != "1") {
@@ -1429,7 +1437,8 @@ class OrderAutoTicketQueue {
           total_price,
           member_total_price,
           ticket_num,
-          real_member_price: offerRule.real_member_price
+          real_member_price: offerRule.real_member_price,
+          cardInfos
         }
       });
       let {
@@ -1566,7 +1575,7 @@ class OrderAutoTicketQueue {
       let tickets, payments;
       if (offerRule.offer_type !== "1" && card_id) {
         if (target_card_info) {
-          card_id = target_card_info.cardInfos?.[0]?.cardNumber;
+          card_id = cardInfos?.[0]?.cardNumber;
         }
         payments = [{ payMethod: "CARD", payCardNumber: card_id }];
         const minItem = activities.reduce((min, current) => {

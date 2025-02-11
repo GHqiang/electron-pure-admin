@@ -1426,7 +1426,7 @@ class getUmeOfferPrice {
         const item = areaList[index];
         let curAreaId = item.areaId;
         // 判断当前座位id是否还有空余座位
-        let targetSeatInfo = areaList.find(
+        let targetSeatInfo = seatList.find(
           itemA => itemA.areaId == curAreaId && itemA.status == "1"
         );
         if (targetSeatInfo) {
@@ -1493,16 +1493,25 @@ class getUmeOfferPrice {
       });
       let activities = orderInfoRes?.privileges || [];
       console.warn("activities", activities);
-      let member_total_price = activities.find(
-        item => item.payMethod === "CARD" && item.privilegeTypes?.[0] == "卡"
-      )?.privilegeTotalPrice;
-      if (!member_total_price) {
-        member_total_price = activities.find(
-          item => item.payMethod === "CARD" && item.privilegeTypes?.[0] == "惠"
-        )?.privilegeTotalPrice;
-      }
+      let member_discount_list = activities.filter(
+        item => item.cardInfos?.length
+      );
+      // 从小到大排序
+      member_discount_list = member_discount_list.sort(
+        (a, b) => a.privilegeTotalPrice - b.privilegeTotalPrice
+      );
+      let member_total_price = member_discount_list[1]?.privilegeTotalPrice || member_discount_list[0]?.privilegeTotalPrice
       if (member_total_price) {
         maxSeatPrice = member_total_price;
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "从优惠活动获取真实会员价",
+          level: "info",
+          info: {
+            member_total_price,
+            member_discount_list
+          }
+        });
       } else {
         console.warn("获取真实会员价异常");
         this.logList.push({
@@ -1559,7 +1568,7 @@ class getUmeOfferPrice {
       let orderInfo = res.bizValue;
       this.logList.push({
         opera_time: getCurrentTime(),
-        des: "获取用卡购票价格信息返回",
+        des: "报价前获取用卡购票价格信息返回",
         level: "info",
         info: {
           orderInfo,
@@ -1567,13 +1576,10 @@ class getUmeOfferPrice {
         }
       });
       let activities = orderInfo?.privileges || [];
-      let member_total_price = activities.find(
-        item => item.payMethod === "CARD"
-      )?.privilegeTotalPrice;
-      let inx = targetLoginList.findIndex(
-        item => item.session_id == session_id
+      let member_discount_list = activities.filter(
+        item => item.cardInfos?.length
       );
-      if (!member_total_price && inx != targetLoginList.length - 1) {
+      if (!member_discount_list.length && inx != targetLoginList.length - 1) {
         session_id = targetLoginList[inx + 1].session_id;
         this.logList.push({
           opera_time: getCurrentTime(),
