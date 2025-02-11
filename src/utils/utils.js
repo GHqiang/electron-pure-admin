@@ -37,19 +37,19 @@ console.log("specialNameList123", toRaw(specialNameList.value));
 
 // 获取上一天
 function getPreviousDay(dateString) {
-    // 将日期字符串转换为Date对象
-    const date = new Date(dateString);
-    // 检查日期是否有效
-    if (isNaN(date.getTime())) {
-        throw new Error('Invalid date string');
-    }
-    // 获取上一天的日期
-    date.setDate(date.getDate() - 1);
-    // 将日期格式化为 'YYYY-MM-DD' 字符串
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // 月份从0开始，需要加1
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+  // 将日期字符串转换为Date对象
+  const date = new Date(dateString);
+  // 检查日期是否有效
+  if (isNaN(date.getTime())) {
+    throw new Error("Invalid date string");
+  }
+  // 获取上一天的日期
+  date.setDate(date.getDate() - 1);
+  // 将日期格式化为 'YYYY-MM-DD' 字符串
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0"); // 月份从0开始，需要加1
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 // 格式化时间 YYYY-MM-DD HH:mm:ss
@@ -1011,12 +1011,15 @@ const getCinemaFlag = item => {
     ["九江"].includes(city_name)
   ) {
     return "jjzy";
-  } else if (
-    cinema_name.includes("银兴国际影城M+店") &&
-    ["武汉"].includes(city_name)
-  ) {
-    return "whyx";
-  } else if (
+  }
+  // 倒闭
+  // else if (
+  //   cinema_name.includes("银兴国际影城M+店") &&
+  //   ["武汉"].includes(city_name)
+  // ) {
+  //   return "whyx";
+  // }
+  else if (
     [
       "杭州中影国际影城",
       "中影国际影城杭州星光大道店",
@@ -1053,12 +1056,15 @@ const getCinemaFlag = item => {
     ["襄阳"].includes(city_name)
   ) {
     return "yinxingxy";
-  } else if (
-    cinema_name.includes("长江银兴影城") &&
-    ["南昌"].includes(city_name)
-  ) {
-    return "yinxingnc";
-  } else if (cinema_name === "乐娃影院" && ["北京"].includes(city_name)) {
+  }
+  // 倒闭
+  // else if (
+  //   cinema_name.includes("长江银兴影城") &&
+  //   ["南昌"].includes(city_name)
+  // ) {
+  //   return "yinxingnc";
+  // }
+  else if (cinema_name === "乐娃影院" && ["北京"].includes(city_name)) {
     return "liangchen";
   } else if (cinema_name.includes("全美影院") && ["太原"].includes(city_name)) {
     return "quanmei";
@@ -1267,12 +1273,15 @@ const getCinemaFlag = item => {
     ["上海"].includes(city_name)
   ) {
     return "shth";
-  } else if (
-    cinemNameSpecial(cinema_name).includes("永乐国际影城") &&
-    ["苏州"].includes(city_name)
-  ) {
-    return "szyl";
-  } else if (
+  }
+  // 倒闭
+  // else if (
+  //   cinemNameSpecial(cinema_name).includes("永乐国际影城") &&
+  //   ["苏州"].includes(city_name)
+  // ) {
+  //   return "szyl";
+  // }
+  else if (
     cinemNameSpecial(cinema_name).includes("SFC上影国际影城新业坊店") &&
     ["上海"].includes(city_name)
   ) {
