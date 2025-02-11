@@ -1045,6 +1045,7 @@ class OrderAutoTicketQueue {
         // 6、获取目标影片的放映日期
         filmUniqueId = movieInfo.filmUniqueId;
         let start_day = show_time.split(" ")[0];
+        showDate = start_day;
         // 7、获取某个放映日期的场次列表
         const showListRes = await getMoviePlayTime({
           cinemaCode,
