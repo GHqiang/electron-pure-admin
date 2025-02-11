@@ -10,7 +10,8 @@ import {
   roundToHalf,
   isDateInCurrentMonth,
   calculateMarkup,
-  getCinemaLoginInfoList
+  getCinemaLoginInfoList,
+  getPreviousDay
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
@@ -1411,36 +1412,17 @@ class getUmeOfferPrice {
       console.log("movieInfo", movieInfo, film_name);
       // 5、获取目标影片的放映日期
       const { filmUniqueId } = movieInfo;
-      const playDateList = await this.getMoviePlayDate({
-        cinemaCode,
-        cinemaLinkId,
-        filmUniqueId
-      });
       let start_day = show_time.split(" ")[0];
-      let targetDate = playDateList?.find(item => item.showDate === start_day);
-      if (!targetDate) {
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "匹配影片放映日期失败",
-          level: "error",
-          info: {
-            playDateList,
-            start_day
-          }
-        });
-        return;
-      }
       // 获取某个放映日期的场次列表
       const showList = await this.getMoviePlayTime({
         cinemaCode,
         cinemaLinkId,
         filmUniqueId,
-        showDate: targetDate.showDate
+        showDate: start_day
       });
-      let start_time = show_time.split(" ")[1].slice(0, 5);
       // 解决同一时间多场次问题
       let targetShowList = showList.filter(
-        item => item.showDateTime.split(" ")[1].slice(0, 5) === start_time
+        item => item.showDateTime == show_time
       );
       let targetShow = targetShowList[0];
       if (targetShowList.length > 1) {
@@ -1450,17 +1432,46 @@ class getUmeOfferPrice {
         targetShow = targetShowInfo ? targetShowInfo : targetShow;
       }
       if (!targetShow) {
-        console.error("匹配影片放映场次失败", showList, start_time);
+        console.error("匹配影片放映场次失败", showList, show_time);
         this.logList.push({
           opera_time: getCurrentTime(),
-          des: "匹配影片放映场次失败",
-          level: "error",
+          des: "准备根据放映日期上一天来回去放映场次列表(次日)",
+          level: "info",
           info: {
             showList,
-            start_time
+            show_time
           }
         });
-        return;
+        const showList = await this.getMoviePlayTime({
+          cinemaCode,
+          cinemaLinkId,
+          filmUniqueId,
+          showDate: getPreviousDay(start_day)
+        });
+        // 解决同一时间多场次问题
+        let targetShowList = showList.filter(
+          item => item.showDateTime == show_time
+        );
+        targetShow = targetShowList[0];
+        if (targetShowList.length > 1) {
+          let targetShowInfo = targetShowList.find(
+            item => item.hallName === hall_name
+          );
+          targetShow = targetShowInfo ? targetShowInfo : targetShow;
+        }
+        if (!targetShow) {
+          console.error("匹配影片放映场次失败", showList, show_time);
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: "匹配影片放映场次失败",
+            level: "error",
+            info: {
+              showList,
+              show_time
+            }
+          });
+          return;
+        }
       }
       this.logList.push({
         opera_time: getCurrentTime(),

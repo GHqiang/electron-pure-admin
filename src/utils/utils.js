@@ -35,6 +35,23 @@ const tokens = platTokens();
 console.log("specialNameList123", toRaw(specialNameList.value));
 // window.specialNameList = specialNameList;
 
+// 获取上一天
+function getPreviousDay(dateString) {
+    // 将日期字符串转换为Date对象
+    const date = new Date(dateString);
+    // 检查日期是否有效
+    if (isNaN(date.getTime())) {
+        throw new Error('Invalid date string');
+    }
+    // 获取上一天的日期
+    date.setDate(date.getDate() - 1);
+    // 将日期格式化为 'YYYY-MM-DD' 字符串
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // 月份从0开始，需要加1
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 // 格式化时间 YYYY-MM-DD HH:mm:ss
 function formatTimeOfTime(sjc) {
   try {
@@ -2442,6 +2459,7 @@ export {
   removeLeadingZeros,
   isDateInCurrentMonth, // 判断某个日期是否在当月内：YYYY-MM-DD
   getCurrentFormattedDateTime, // 获取当前时间：YYYY-MM-DD HH:MM:SS
+  getPreviousDay, // 获取上一天
   formatTimeOfTime, // 格式化时间 YYYY-MM-DD HH:mm:ss
   formatTimeOfDay, // 格式化日期 YYYY-MM-DD
   getCurrentDay, // 获取当前天 YYYY-MM-DD

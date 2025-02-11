@@ -11,7 +11,8 @@ import {
   sendWxPusherMessage,
   getOfferRuleById,
   getCurrentDay,
-  isDateInCurrentMonth
+  isDateInCurrentMonth,
+  getPreviousDay
 } from "@/utils/utils";
 // 帮助锁定座位实例对象
 import assistLockSeatObj from "./lockSeatQueue";
@@ -1043,67 +1044,19 @@ class OrderAutoTicketQueue {
         }
         // 6、获取目标影片的放映日期
         filmUniqueId = movieInfo.filmUniqueId;
-        const moviePlayDataRes = await getMoviePlayDate({
-          cinemaCode,
-          cinemaLinkId,
-          filmUniqueId,
-          appFlag
-        });
-        const playDateList = moviePlayDataRes?.moviePlayData || [];
-        if (!playDateList?.length) {
-          this.logList.push({
-            opera_time: getCurrentTime(),
-            des: "获取目标影片放映日期异常",
-            level: "error",
-            info: {
-              error: moviePlayDataRes?.error
-            }
-          });
-          const transferParams = await this.transferOrder(item);
-          return { transferParams };
-        }
         let start_day = show_time.split(" ")[0];
-        let targetDate = playDateList.find(item => item.showDate === start_day);
-        if (!targetDate) {
-          console.warn("匹配影片放映日期失败", playDateList, start_day);
-          this.logList.push({
-            opera_time: getCurrentTime(),
-            des: "匹配影片放映日期失败",
-            level: "error",
-            info: {
-              playDateList,
-              start_day
-            }
-          });
-          const transferParams = await this.transferOrder(item);
-          return { transferParams };
-        }
-        showDate = targetDate.showDate;
         // 7、获取某个放映日期的场次列表
         const showListRes = await getMoviePlayTime({
           cinemaCode,
           cinemaLinkId,
           filmUniqueId,
-          showDate,
+          showDate: start_day,
           appFlag
         });
         const showList = showListRes?.moviePlayTime || [];
-        if (!showList?.length) {
-          this.logList.push({
-            opera_time: getCurrentTime(),
-            des: "获取某个放映日期的场次列表异常",
-            level: "error",
-            info: {
-              error: showListRes?.error
-            }
-          });
-          const transferParams = await this.transferOrder(item);
-          return { transferParams };
-        }
-        let start_time = show_time.split(" ")[1].slice(0, 5);
         // 解决同一时间多场次问题
         let targetShowList = showList.filter(
-          item => item.showDateTime.split(" ")[1].slice(0, 5) === start_time
+          item => item.showDateTime === show_time
         );
         targetShow = targetShowList[0];
         if (targetShowList.length > 1) {
@@ -1113,18 +1066,49 @@ class OrderAutoTicketQueue {
           targetShow = targetShowInfo ? targetShowInfo : targetShow;
         }
         if (!targetShow) {
-          console.warn("匹配影片放映日期失败", showList, start_time);
+          console.warn("匹配影片放映场次失败", showList, show_time);
           this.logList.push({
             opera_time: getCurrentTime(),
-            des: "匹配影片放映场次失败",
-            level: "error",
+            des: "准备根据放映日期上一天来获取放映场次列表(次日)",
+            level: "info",
             info: {
-              showList,
-              start_time
+              showListRes,
+              show_time
             }
           });
-          const transferParams = await this.transferOrder(item);
-          return { transferParams };
+          const showListRes = await getMoviePlayTime({
+            cinemaCode,
+            cinemaLinkId,
+            filmUniqueId,
+            showDate: getPreviousDay(start_day),
+            appFlag
+          });
+          const showList = showListRes?.moviePlayTime || [];
+          // 解决同一时间多场次问题
+          let targetShowList = showList.filter(
+            item => item.showDateTime === show_time
+          );
+          targetShow = targetShowList[0];
+          if (targetShowList.length > 1) {
+            let targetShowInfo = targetShowList.find(
+              item => item.hallName === hall_name
+            );
+            targetShow = targetShowInfo ? targetShowInfo : targetShow;
+          }
+          if (!targetShow) {
+            console.warn("匹配影片放映日期失败", showList, show_time);
+            this.logList.push({
+              opera_time: getCurrentTime(),
+              des: "匹配影片放映场次失败",
+              level: "error",
+              info: {
+                showListRes,
+                show_time
+              }
+            });
+            const transferParams = await this.transferOrder(item);
+            return { transferParams };
+          }
         }
         this.logList.push({
           opera_time: getCurrentTime(),
