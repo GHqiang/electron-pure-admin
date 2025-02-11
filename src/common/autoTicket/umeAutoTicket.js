@@ -2987,13 +2987,17 @@ class OrderAutoTicketQueue {
       plat_name
     } = data;
     try {
+      let str;
+      if (!cardList.length) {
+        str = "无可用会员卡（疑似出满）";
+      }
       let cardData = cardList.filter(
         item => item.cardAmount >= total_price * 100
       );
-      if (!cardData?.length) {
+      if (!cardList.length || !cardData?.length) {
         this.logList.push({
           opera_time: getCurrentTime(),
-          des: "会员卡余额不足",
+          des: str || "会员卡余额不足",
           level: "error",
           info: {
             cardList,
