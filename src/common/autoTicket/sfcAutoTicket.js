@@ -440,7 +440,10 @@ class OrderAutoTicketQueue {
       this.logList.push({
         opera_time: getCurrentTime(),
         des: "自动转单处于关闭状态",
-        level: "info"
+        level: "info",
+        info: {
+          unlockSeatInfo
+        }
       });
       !isTestOrder &&
         sendWxPusherMessage({
@@ -1389,7 +1392,8 @@ class OrderAutoTicketQueue {
         coupon_id,
         member_coupon_id,
         profit,
-        quanStock
+        quanStock,
+        priceInfo
       } = await this.useQuanOrCard({
         order_number,
         city_id,
@@ -1468,36 +1472,39 @@ class OrderAutoTicketQueue {
       // 6计算订单价格
       let currentParams = this.currentParamsList[this.currentParamsInx];
       const { session_id } = currentParams;
-      const priceRes = await this.priceCalculation({
-        city_id,
-        cinema_id,
-        show_id,
-        seat_ids,
-        card_id,
-        quan_code,
-        member_coupon_id,
-        coupon_id,
-        session_id,
-        appFlag
-      });
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "使用优惠券或会员卡后计算订单价格返回",
-        level: "info",
-        info: {
-          ...priceRes
-        }
-      });
-      let priceInfo = priceRes?.price;
-      if (priceRes?.error) {
+      // 如果使用会员卡计算时已经拿到价格信息，就不再重复获取（解决间隔短调用频繁有时直接返回本卡不可用或者其它问题）
+      if (!priceInfo) {
+        const priceRes = await this.priceCalculation({
+          city_id,
+          cinema_id,
+          show_id,
+          seat_ids,
+          card_id,
+          quan_code,
+          member_coupon_id,
+          coupon_id,
+          session_id,
+          appFlag
+        });
         this.logList.push({
           opera_time: getCurrentTime(),
-          des: "使用优惠券或会员卡后计算订单价格异常",
-          level: "error",
+          des: "使用优惠券或会员卡后计算订单价格返回",
+          level: "info",
           info: {
-            error: priceRes?.error
+            ...priceRes
           }
         });
+        priceInfo = priceRes?.price;
+        if (priceRes?.error) {
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: "使用优惠券或会员卡后计算订单价格异常",
+            level: "error",
+            info: {
+              error: priceRes?.error
+            }
+          });
+        }
       }
       if (!priceInfo) {
         if (this.currentParamsInx === this.currentParamsList.length - 1) {
@@ -2184,7 +2191,7 @@ class OrderAutoTicketQueue {
       }
       // 2、使用会员卡
       let member_total_price = (real_member_price * 100 * ticket_num) / 100;
-      const { card_id, profit } = await this.useCard({
+      const { card_id, profit, priceInfo } = await this.useCard({
         member_total_price,
         cardList,
         supplier_end_price,
@@ -2202,7 +2209,8 @@ class OrderAutoTicketQueue {
       });
       return {
         card_id,
-        profit // 利润
+        profit, // 利润
+        priceInfo
       };
     } catch (error) {
       this.logList.push({
@@ -3950,7 +3958,7 @@ class OrderAutoTicketQueue {
         // 对非默认卡或当两个都是默认卡时，根据余额进行倒序排序
         return balanceB - balanceA;
       });
-      let card_id;
+      let card_id, priceInfo;
       if (!isV3App) {
         // 开始尝试使用卡并获取成功使用的卡的结果
         const attemptCardsSequentially = async () => {
@@ -4011,7 +4019,7 @@ class OrderAutoTicketQueue {
           return null; // 所有卡尝试失败后返回null
         };
         // 3、计算价格要求最终价格小于中标价
-        const priceInfo = await attemptCardsSequentially();
+        priceInfo = await attemptCardsSequentially();
         if (!priceInfo) {
           console.error(conPrefix + "计算订单价格失败，单个订单直接出票结束");
           return {
@@ -4063,7 +4071,8 @@ class OrderAutoTicketQueue {
       }
       return {
         card_id,
-        profit
+        profit,
+        priceInfo
       };
     } catch (error) {
       // 此处异常一定是代码异常无需考虑重试
