@@ -55,6 +55,9 @@ const refundTicketRecord = params =>
 const getQuanList = params => axios.get("/svpi/quanRecord", { params });
 // 查询优惠券列表
 const queryQuanList = params => axios.get("/svpi/quanRecord/query", { params });
+// 查询某些券列表
+const queryQuanRecordList = params =>
+  axios.post("/svpi/quanRecord/queryList", params);
 // 添加优惠券
 const addQuanRecord = params => axios.post("/svpi/quanRecord/add", params);
 // 添加用券记录
@@ -202,6 +205,7 @@ const svApi = {
   refundTicketRecord,
   getQuanList,
   queryQuanList,
+  queryQuanRecordList,
   addQuanRecord,
   addUseQuanRecord,
   getRuleList,
@@ -247,5 +251,5 @@ const svApi = {
   addSpecialNameRecord,
   updateSpecialNameRecord
 };
-window.svApi = svApi
-export default svApi
+window.svApi = svApi;
+export default svApi;

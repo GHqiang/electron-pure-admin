@@ -618,7 +618,7 @@ const importQuan = async (uploadFile, uploadFiles) => {
         app_name: quanTypeInfo.app_name,
         haveQuans: tableDate.map(item => item.coupon_num).join(",")
       };
-      let quanRes = await svApi.queryQuanList(params);
+      let quanRes = await svApi.queryQuanRecordList(params);
       let quanList = quanRes?.data?.quanList || [];
       // 1-未使用 2-已绑定 3-绑定异常 4-正常券导出 5-不可用券导出
       quanList = quanList
