@@ -1349,7 +1349,6 @@ class getUmeOfferPrice {
 
       // 获取某个放映日期的场次列表
       const showList = targetShowInfo?.schedules || [];
-      let start_time = show_time.split(" ")[1].slice(0, 5);
       // 解决同一时间多场次问题
       let targetShowList = showList.filter(
         item => formatTimeOfTime(+item.showTime) === show_time
@@ -1362,14 +1361,14 @@ class getUmeOfferPrice {
         targetShow = targetShowInfo ? targetShowInfo : targetShow;
       }
       if (!targetShow) {
-        console.error("匹配影片放映场次失败", showList, start_time);
+        console.error("匹配影片放映场次失败", showList, show_time);
         this.logList.push({
           opera_time: getCurrentTime(),
           des: "匹配影片放映场次失败",
           level: "error",
           info: {
             showList,
-            start_time
+            show_time,
           }
         });
         return;
