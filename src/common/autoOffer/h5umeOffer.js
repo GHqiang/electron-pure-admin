@@ -1530,7 +1530,7 @@ class getUmeOfferPrice {
         des: "获取当前场次电影信息异常",
         level: "error",
         info: {
-          error
+          error: JSON.stringify(error)
         }
       });
     }
