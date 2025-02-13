@@ -126,6 +126,20 @@
           clearable
         />
       </el-form-item>
+      <el-form-item label="影片名称">
+        <el-input
+          v-model="formData.film_name"
+          placeholder="请输入影片名称"
+          clearable
+        />
+      </el-form-item>
+      <el-form-item label="座位">
+        <el-input
+          v-model="formData.lockseat"
+          placeholder="请输入座位,多个用空号分割"
+          clearable
+        />
+      </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="searchData">搜索</el-button>
         <el-button @click="resetForm">重置</el-button>
@@ -183,7 +197,7 @@
       <el-table-column prop="cinema_name" label="影院" width="240" />
       <el-table-column prop="hall_name" label="影厅" width="90" />
       <el-table-column prop="film_name" label="片名" width="110" />
-      <el-table-column prop="ticket_num" label="座位数" width="85" />
+      <el-table-column prop="lockseat" label="座位" width="110" />
 
       <el-table-column label="报价类型" width="85">
         <template #default="scope">
@@ -314,6 +328,8 @@ const formData = reactive({
   quan_code: "", // 优惠券
   quan_value: "", // 用券类型
   err_msg: "",
+  film_name: "",
+  lockseat: "",
   start_time: "",
   end_time: ""
 });
