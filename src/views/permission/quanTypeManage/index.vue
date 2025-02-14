@@ -283,6 +283,12 @@
           min-width="100"
           label="用券影院"
         />
+        <el-table-column
+          v-if="exportQuanFlag == 2"
+          prop="use_time"
+          min-width="120"
+          label="绑券异常时间"
+        />
         <el-table-column prop="create_time" min-width="100" label="入库时间" />
       </el-table>
       <template #footer>
@@ -698,6 +704,7 @@ const getQuanHandle = async () => {
 // 导出券
 const exportQuanHandle = async () => {
   try {
+    // 1-可用券 2不可用券
     let exportQuanFlagValue = exportQuanFlag.value;
     let tableData = toRaw(exportQuanList.value);
 
@@ -721,9 +728,10 @@ const exportQuanHandle = async () => {
     tableData = tableData.map(item => [
       item.coupon_num,
       item.quan_value,
-      item.create_time
+      item.create_time,
+      item.use_time
     ]);
-    tableData.unshift(["券号", "券类型", "入库时间"]);
+    tableData.unshift(["券号", "券类型", "入库时间", "绑定异常时间"]);
     const today = getCurrentDay();
     let fileName = `${quanValueStr || "不可用券"}_${tableData.length - 1}张_${today}.xlsx`;
     console.warn("tableData", tableData, "fileName", fileName);
@@ -742,7 +750,7 @@ const getUnUseQuanHandle = async () => {
   try {
     let params = {
       quan_status: "3",
-      queryFields: "app_name,coupon_num,quan_value,create_time"
+      queryFields: "app_name,coupon_num,quan_value,create_time,use_time"
     };
     let quanRes = await svApi.queryQuanList(params);
     let quanList = quanRes?.data?.quanList || [];
