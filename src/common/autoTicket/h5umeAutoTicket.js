@@ -303,7 +303,7 @@ class OrderAutoTicketQueue {
           res
         }
       });
-      return res;
+      return { isSuccess: true };
     } catch (error) {
       console.error("解锁座位异常", error);
       this.logList.push({
@@ -315,6 +315,9 @@ class OrderAutoTicketQueue {
           params
         }
       });
+      return {
+        error
+      };
     }
   }
   // 转单
@@ -338,46 +341,15 @@ class OrderAutoTicketQueue {
     const session_id = this.currentParamsList[this.currentParamsInx].session_id;
     // 关闭自动转单只针对座位异常生效
     // if (isTestOrder || (isAutoTransfer !== "1" && errMsg === "锁定座位异常")) {
+    let isTransferOrder = true;
     if (isTestOrder || isAutoTransfer !== "1") {
       console.warn("自动转单处于关闭状态");
       this.logList.push({
         opera_time: getCurrentTime(),
-        des: "自动转单处于关闭状态",
-        level: "info",
-        info: {
-          unlockSeatInfo
-        }
+        des: "自动转单处于关闭状态，只取消订单释放座位",
+        level: "info"
       });
-      // 有锁座订单号就解锁座位
-      if (!orderId && lockOrderId) {
-        const unlockRes = await this.unlockSeatByApp({
-          cinemaLinkId,
-          lockOrderId,
-          session_id
-        });
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "释放座位返回",
-          level: "info",
-          info: {
-            unlockRes
-          }
-        });
-      }
-      sendWxPusherMessage({
-        plat_name,
-        order_number,
-        city_name,
-        cinema_name,
-        film_name,
-        show_time,
-        lockseat,
-        hall_name: order.hall_name,
-        supplier_end_price: order.supplier_end_price,
-        transferTip: "自动转单处于关闭状态,需手动出票或者转单",
-        failReason: `${errMsg}——${errInfo}`
-      });
-      return;
+      isTransferOrder = false;
     }
     this.logList.push({
       opera_time: getCurrentTime(),
@@ -392,7 +364,8 @@ class OrderAutoTicketQueue {
       // 3、获取座位布局
       if (unlockSeatInfo) {
         let operaDes = "释放座位",
-          operaRes = 0;
+          operaRes = 0,
+          cancelError;
         // 有创建订单号就取消订单
         if (orderId) {
           operaDes = "取消订单";
@@ -402,20 +375,7 @@ class OrderAutoTicketQueue {
             session_id
           });
           if (cancelRes.error) {
-            sendWxPusherMessage({
-              plat_name,
-              order_number,
-              city_name,
-              cinema_name,
-              film_name,
-              show_time,
-              lockseat,
-              hall_name: order.hall_name,
-              supplier_end_price: order.supplier_end_price,
-              transferTip:
-                "转单前取消订单失败，建议手动取消订单，以便后续订单正常出票",
-              failReason: `${JSON.stringify(cancelRes.error)}`
-            });
+            cancelError = cancelRes.error;
           } else {
             operaRes = 1;
           }
@@ -427,7 +387,9 @@ class OrderAutoTicketQueue {
             lockOrderId,
             session_id
           });
-          if (unlockRes) {
+          if (!unlockRes.isSuccess) {
+            cancelError = unlockRes.error;
+          } else {
             operaRes = 1;
           }
         }
@@ -437,6 +399,39 @@ class OrderAutoTicketQueue {
           des: `转单前${operaDes}-${operaRes ? "成功" : "失败"}`,
           level: "info"
         });
+        if (operaRes == 0) {
+          sendWxPusherMessage({
+            plat_name,
+            order_number,
+            city_name,
+            cinema_name,
+            film_name,
+            show_time,
+            lockseat,
+            hall_name: order.hall_name,
+            supplier_end_price: order.supplier_end_price,
+            transferTip:
+              "取消订单释放座位失败，建议先手动取消订单，以便后续订单正常出票",
+            failReason: `${JSON.stringify(cancelError)}`
+          });
+        }
+      }
+      if (!isTransferOrder) {
+        sendWxPusherMessage({
+          plat_name,
+          order_number,
+          city_name,
+          cinema_name,
+          film_name,
+          show_time,
+          lockseat,
+          hall_name: order.hall_name,
+          supplier_end_price: order.supplier_end_price,
+          transferTip:
+            "自动转单处于关闭状态,仅取消订单释放座位,需适时手动出票或者转单",
+          failReason: `${errMsg}——${errInfo}`
+        });
+        return;
       }
       let params;
       if (plat_name === "lieren") {
@@ -1239,11 +1234,14 @@ class OrderAutoTicketQueue {
             session_id:
               this.currentParamsList[this.currentParamsInx - 1].session_id
           });
-          if (!unlockRes) {
+          if (!unlockRes.isSuccess) {
             this.logList.push({
               opera_time: getCurrentTime(),
               des: "上个号释放座位失败",
-              level: "info"
+              level: "info",
+              info: {
+                error: unlockRes.error
+              }
             });
           }
         }

@@ -329,7 +329,10 @@ class OrderAutoTicketQueue {
               error: seatDataRes?.error
             }
           });
-          return false;
+          return {
+            isSuccess: false,
+            error: seatDataRes?.error
+          };
         }
         let availableSeatList = seatList.filter(item => item[2] === "0"); // 1表示已售
         let seat_ids = availableSeatList.map(item => item[0])?.[0]; // 第0个代表座位id
@@ -342,7 +345,10 @@ class OrderAutoTicketQueue {
               seatList
             }
           });
-          return false;
+          return {
+            isSuccess: false,
+            error: "获取未售座位为空"
+          };
         }
         // // 4、锁定座位
         let lockParams = {
@@ -357,24 +363,31 @@ class OrderAutoTicketQueue {
         console.warn(conPrefix + "转单时释放座位传参", lockParams);
         await this.lockSeatHandle(lockParams); // 锁定座位
         // this.currentParamsList[this.currentParamsInx].releaseStatus = 1;
-        return true;
+        return {
+          isSuccess: true
+        };
       } else {
         // 取消订单
         await this.cancelOrder(unlockSeatInfo);
-        return true;
+        return {
+          isSuccess: true
+        };
       }
     } catch (error) {
       console.warn("释放座位失败", error);
       let errFlag = ["正常出票", "转单", "换号出票"][flag];
       this.logList.push({
         opera_time: getCurrentTime(),
-        des: `${errFlag}-释放座位异常`,
+        des: `${errFlag}-取消订单释放座位异常`,
         level: "error",
         info: {
           error
         }
       });
-      return false;
+      return {
+        isSuccess: false,
+        error
+      };
     }
   }
   // 取消订单
@@ -435,17 +448,48 @@ class OrderAutoTicketQueue {
     } = order;
     // 关闭自动转单只针对座位异常生效
     // if (isTestOrder || (isAutoTransfer !== "1" && errMsg === "锁定座位异常")) {
+    let isTransferOrder = true;
     if (isTestOrder || isAutoTransfer !== "1") {
-      console.warn("锁定座位异常关闭自动转单");
+      console.warn("自动转单处于关闭状态");
       this.logList.push({
         opera_time: getCurrentTime(),
-        des: "自动转单处于关闭状态",
-        level: "info",
-        info: {
-          unlockSeatInfo
-        }
+        des: "自动转单处于关闭状态，只取消订单释放座位",
+        level: "info"
       });
-      !isTestOrder &&
+      isTransferOrder = false;
+    }
+    try {
+      // 先解锁座位再转单，负责转出去座位被占平台会处罚
+      let session_id = this.currentParamsList[this.currentParamsInx].session_id;
+      // 3、获取座位布局
+      if (unlockSeatInfo) {
+        const { isSuccess, error } = await this.releaseSeat(
+          { ...unlockSeatInfo, session_id },
+          1
+        );
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: `转单前释放座位${isSuccess ? "成功" : "失败"}`,
+          level: "info"
+        });
+        if (!isSuccess) {
+          sendWxPusherMessage({
+            plat_name,
+            order_number,
+            city_name,
+            cinema_name,
+            film_name,
+            show_time,
+            lockseat,
+            hall_name: order.hall_name,
+            supplier_end_price: order.supplier_end_price,
+            transferTip:
+              "取消订单释放座位失败，建议先手动取消订单，以便后续订单正常出票",
+            failReason: `${JSON.stringify(error)}`
+          });
+        }
+      }
+      if (!isTransferOrder) {
         sendWxPusherMessage({
           plat_name,
           order_number,
@@ -456,25 +500,11 @@ class OrderAutoTicketQueue {
           lockseat,
           hall_name: order.hall_name,
           supplier_end_price: order.supplier_end_price,
-          transferTip: "自动转单处于关闭状态,需手动出票或者转单",
+          transferTip:
+            "自动转单处于关闭状态,仅取消订单释放座位,需适时手动出票或者转单",
           failReason: `${errMsg}——${errInfo}`
         });
-      return;
-    }
-    try {
-      // 先解锁座位再转单，负责转出去座位被占平台会处罚
-      let session_id = this.currentParamsList[this.currentParamsInx].session_id;
-      // 3、获取座位布局
-      if (unlockSeatInfo) {
-        const isPass = await this.releaseSeat(
-          { ...unlockSeatInfo, session_id },
-          1
-        );
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: `转单前释放座位${isPass ? "成功" : "失败"}`,
-          level: "info"
-        });
+        return;
       }
       let params;
       if (plat_name === "lieren") {
@@ -1289,14 +1319,17 @@ class OrderAutoTicketQueue {
           des: `上个号准备释放座位token-${currentParams.session_id}`,
           level: "info"
         });
-        const isPass = await this.releaseSeat(unlockSeatInfo, 2);
-        if (!isPass) {
+        const { isSuccess, error } = await this.releaseSeat(unlockSeatInfo, 2);
+        if (!isSuccess) {
           if (this.currentParamsInx === this.currentParamsList.length - 1) {
             console.error(conPrefix + "换号结束还是失败", "走转单逻辑");
             this.logList.push({
               opera_time: getCurrentTime(),
               des: "换号结束还是失败，走转单",
-              level: "info"
+              level: "info",
+              info: {
+                error
+              }
             });
             const transferParams = await this.transferOrder(item, {
               city_id,
