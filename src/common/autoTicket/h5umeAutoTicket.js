@@ -1425,8 +1425,7 @@ class OrderAutoTicketQueue {
       }
       // 如果会员价为0时，取报价记录里的真实会员价
       if (member_total_price === undefined && offerRule.offer_type != "1") {
-        member_total_price =
-          (offerRule.real_member_price * 1000 * ticket_num * 100) / 1000;
+        member_total_price = (offerRule.real_member_price * 1000 * 100) / 1000;
       }
       this.logList.push({
         opera_time: getCurrentTime(),
@@ -1436,7 +1435,7 @@ class OrderAutoTicketQueue {
           total_price,
           member_total_price,
           ticket_num,
-          real_member_price: offerRule.real_member_price,
+          real_member_total_price: offerRule.real_member_price,
           cardInfos
         }
       });
@@ -1676,17 +1675,16 @@ class OrderAutoTicketQueue {
         return { offerRule, transferParams };
       }
       // 支付前校验用卡价格
-      let real_member_price = offerRule?.real_member_price || 0;
+      let real_member_total_price = offerRule?.real_member_price || 0;
       if (offerRule.offer_type !== "1" && card_id) {
-        real_member_price = (real_member_price * 10000 * ticket_num) / 10000;
-        if (payAmount > real_member_price) {
+        if (payAmount > real_member_total_price) {
           this.logList.push({
             opera_time: getCurrentTime(),
-            des: "用完卡发现支付金额大于会员价*票数，走转单",
+            des: "用完卡发现支付金额大于真实会员总价，走转单",
             level: "error",
             info: {
               payAmount,
-              real_member_price,
+              real_member_total_price,
               ticket_num
             }
           });
@@ -1695,11 +1693,12 @@ class OrderAutoTicketQueue {
             orderId
           });
           return { offerRule, transferParams };
-        } else if (payAmount < real_member_price) {
+        } else if (payAmount < real_member_total_price) {
           let member_discount = offerRule?.member_discount || 100;
           profit =
             Number(profit) +
-            ((real_member_price * 1000 - payAmount * 1000) * member_discount) /
+            ((real_member_total_price * 1000 - payAmount * 1000) *
+              member_discount) /
               (1000 * 100);
           profit = Number(profit).toFixed(2);
         }

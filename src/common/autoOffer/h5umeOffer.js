@@ -777,7 +777,7 @@ class getUmeOfferPrice {
         // 最小折扣
         mixAddAmountRule.member_discount = memberPriceRes.discount;
         // 会员成本价(真实会员价*折扣价)
-        mixAddAmountRule.memberCostPrice = memberPriceRes.member_price;
+        mixAddAmountRule.memberCostPrice = memberPriceRes.member_cost_price;
         // 会员成本价不为0.5的整数倍时进0.5
         mixAddAmountRule.round_member_price = roundToHalf(
           mixAddAmountRule.memberCostPrice
@@ -792,7 +792,7 @@ class getUmeOfferPrice {
           level: "info",
           info: {
             real_member_price:
-              "真实会员价：" + mixAddAmountRule.real_member_price,
+              "真实会员总价：" + mixAddAmountRule.real_member_price,
             member_discount: "会员最小折扣" + mixAddAmountRule.member_discount,
             memberCostPrice:
               "会员成本价（真实会员价*折扣）：" +
@@ -1076,16 +1076,18 @@ class getUmeOfferPrice {
         level: "info",
         info: {
           displayPrice: "会员价：" + displayPrice,
-          maxSeatPrice: "座位最高价：" + maxSeatPrice,
+          maxSeatPrice: "座位最高总价：" + maxSeatPrice,
           privilegeTags
         }
       });
-      let member_price = Math.max(displayPrice, maxSeatPrice) / 100;
-      // 会员价为0
-      if (member_price === 0) {
+      // maxSeatPrice: 最高座位价*座位数 || 优惠后真实支付总价
+      let member_total_price =
+        Math.max(displayPrice * ticket_num, maxSeatPrice) / 100;
+      // 会员总价为0
+      if (member_total_price === 0) {
         this.logList.push({
           opera_time: getCurrentTime(),
-          des: "获取会员价为0",
+          des: "获取会员总价为0",
           level: "error",
           info: {
             displayPrice,
@@ -1094,8 +1096,8 @@ class getUmeOfferPrice {
         });
         return;
       }
-      console.log("获取会员价", member_price);
-      if (member_price > 0) {
+      console.log("获取会员总价", member_total_price);
+      if (member_total_price > 0) {
         const cardRes = await svApi.queryCardList({
           app_name: app_name,
           rule: rule,
@@ -1200,10 +1202,11 @@ class getUmeOfferPrice {
         cardList.sort((a, b) => a.card_discount - b.card_discount);
         // 按最低折扣取值报价
         let discount = cardList[0]?.card_discount;
-        let real_member_price = Number(member_price);
-        member_price = discount
-          ? (Number(member_price) * 100 * discount) / 10000
-          : Number(member_price);
+        let real_member_price = Number(member_total_price);
+        let member_cost_price = discount
+          ? (Number(member_total_price) * 100 * discount) / 10000
+          : Number(member_total_price);
+        member_cost_price = Number(member_cost_price / ticket_num.toFixed(2));
         this.logList.push({
           opera_time: getCurrentTime(),
           des: "获取会员价相关信息1",
@@ -1213,31 +1216,16 @@ class getUmeOfferPrice {
               "真实会员价（会员价+手续费+服务费）：" + real_member_price,
             discount: "最小折扣：" + discount,
             cost_member_price:
-              "会员成本价（真实会员价*折扣）：" +
-              Number(member_price.toFixed(2))
+              "会员成本价（真实会员总价/票数*折扣）：" + member_cost_price
           }
         });
         return {
           real_member_price,
-          member_price: Number(member_price.toFixed(2)),
+          member_cost_price,
           discount
         };
       } else {
         console.warn("会员价未负，非会员价");
-        // if (nonmember_price) {
-        //   this.logList.push({
-        //     opera_time: getCurrentTime(),
-        //     des: "获取会员价时由于会员价不存在返回非会员价",
-        //     level: "warn",
-        //     info: {
-        //       nonmember_price
-        //     }
-        //   });
-        //   return {
-        //     member_price: Number(nonmember_price),
-        //     real_member_price: Number(nonmember_price)
-        //   };
-        // }
       }
     } catch (error) {
       console.error("获取会员价异常", error);
@@ -1261,7 +1249,8 @@ class getUmeOfferPrice {
       hall_name,
       show_time,
       cinema_code,
-      cinema_name
+      cinema_name,
+      ticket_num
     } = order;
     try {
       // 1、获取城市影院列表
@@ -1368,7 +1357,7 @@ class getUmeOfferPrice {
           level: "error",
           info: {
             showList,
-            show_time,
+            show_time
           }
         });
         return;
@@ -1420,17 +1409,25 @@ class getUmeOfferPrice {
           };
         })
         .sort((a, b) => b.settlePrice - a.settlePrice);
-      let maxSeatPrice, seatId;
+      let maxSeatPrice,
+        seatIds = [];
       for (let index = 0; index < areaList.length; index++) {
         const item = areaList[index];
         let curAreaId = item.areaId;
         // 判断当前座位id是否还有空余座位
-        let targetSeatInfo = seatList.find(
+        let targetSeatList = seatList.filter(
           itemA => itemA.areaId == curAreaId && itemA.status == "1"
         );
-        if (targetSeatInfo) {
-          maxSeatPrice = item.settlePrice;
-          seatId = targetSeatInfo.seatId;
+        if (targetSeatList.length) {
+          maxSeatPrice ||= item.settlePrice;
+          seatIds = [
+            ...seatIds,
+            ...targetSeatList
+              .slice(0, ticket_num - seatIds.length)
+              .map(item => item.seatId)
+          ];
+        }
+        if (seatIds.length == ticket_num) {
           break;
         }
       }
@@ -1440,7 +1437,7 @@ class getUmeOfferPrice {
         level: "info",
         info: {
           maxSeatPrice,
-          seatId
+          seatIds
         }
       });
       // try {
@@ -1488,7 +1485,7 @@ class getUmeOfferPrice {
         hallId,
         scheduleId,
         scheduleKey,
-        seatIds: seatId
+        seatIds: seatIds.join("|")
       });
       let activities = orderInfoRes?.privileges || [];
       console.warn("activities", activities);
@@ -1499,7 +1496,10 @@ class getUmeOfferPrice {
       member_discount_list = member_discount_list.sort(
         (a, b) => a.privilegeTotalPrice - b.privilegeTotalPrice
       );
-      let member_total_price = member_discount_list[1]?.privilegeTotalPrice || member_discount_list[0]?.privilegeTotalPrice
+      let member_total_price = member_discount_list[0]?.privilegeTotalPrice;
+      if (maxSeatPrice) {
+        maxSeatPrice = maxSeatPrice * ticket_num;
+      }
       if (member_total_price) {
         maxSeatPrice = member_total_price;
         this.logList.push({
