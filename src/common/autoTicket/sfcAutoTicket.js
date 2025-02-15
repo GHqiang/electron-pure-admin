@@ -2286,16 +2286,17 @@ class OrderAutoTicketQueue {
     let targetQuanList = [];
     try {
       let quanTypeRes = await svApi.queryQuanTypeList(quanTypeParams);
-      let quanTypeList = quanTypeRes?.data?.quanTypeList || [];
-      targetQuanList = quanTypeList.filter(item => item.quan_flag == quan_flag);
+      targetQuanList =
+        quanTypeRes?.data?.quanTypeList?.filter(
+          item => item.quan_flag == quan_flag
+        ) || [];
       this.logList.push({
         opera_time: getCurrentTime(),
         des: "更新券黑名单信息前获取同类目标券返回",
         level: "info",
         info: {
           params,
-          quanTypeParams,
-          quanTypeList
+          quanTypeParams
         }
       });
     } catch (error) {
@@ -2308,36 +2309,65 @@ class OrderAutoTicketQueue {
           quanTypeParams
         }
       });
+      return;
     }
-    // 更新其黑名单信息
-    for (let index = 0; index < targetQuanList.length; index++) {
-      const item = targetQuanList[index];
-      let params = {
-        id: item.id,
-        black_quans: item.black_quans + ";" + black_quan_list.join(";"),
-        update_time: getCurrentTime()
-      };
-      console.log("params", params);
-      const res = await svApi.updateQuanType(params);
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "单个更新券黑名单信息返回",
-        level: "info",
-        info: {
-          res,
-          params
-        }
+
+    let updateQuanList = []; // 收集需要更新的券
+    let updatePromises = targetQuanList.map(async item => {
+      try {
+        let existingBlackQuans = item.black_quans
+          ? item.black_quans.split(";")
+          : [];
+        let newBlackQuans = black_quan_list.filter(
+          quan => !existingBlackQuans.includes(quan)
+        );
+        if (newBlackQuans.length === 0) return;
+
+        // 收集需要更新的券
+        updateQuanList = [...new Set([...updateQuanList, ...newBlackQuans])];
+
+        let updateParams = {
+          id: item.id,
+          black_quans: item.black_quans + ";" + newBlackQuans.join(";"),
+          update_time: getCurrentTime()
+        };
+        const res = await svApi.updateQuanType(updateParams);
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "单个更新券黑名单信息返回",
+          level: "info",
+          info: {
+            res,
+            updateParams
+          }
+        });
+      } catch (error) {
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "单个更新券黑名单信息异常",
+          level: "error",
+          info: {
+            error
+          }
+        });
+      }
+    });
+
+    // 等待所有更新任务完成
+    await Promise.all(updatePromises);
+
+    // 如果有需要更新的券，发送消息
+    if (updateQuanList.length > 0) {
+      sendWxPusherMessage({
+        msgType: 3,
+        quan_flag,
+        plat_name,
+        order_number,
+        black_quans: updateQuanList.join(";"),
+        transferTip:
+          "创建订单时发现券不可用，请去券维护列表搜索以下券标识并检查以下黑名单券是否准确，不准确请手动修改维护（可能会有可用的券，需从黑名单券里移除）"
       });
     }
-    sendWxPusherMessage({
-      msgType: 3,
-      quan_flag,
-      plat_name,
-      order_number,
-      black_quans: black_quan_list.join(";"),
-      transferTip:
-        "创建订单时发现券不可用，请去券维护列表搜索以下券标识并检查以下黑名单券是否准确，不准确请手动修改维护（可能会有可用的券，需从黑名单券里移除）"
-    });
   }
   // 更新券库存
   async updateQuanStock(params) {
@@ -2797,7 +2827,11 @@ class OrderAutoTicketQueue {
         this.logList.push({
           opera_time: getCurrentTime(),
           des: "创建订单时发现券不可用，进行更新黑名单处理",
-          level: "info"
+          level: "info",
+          info: {
+            quan_flag,
+            coupon
+          }
         });
         this.updateQuanBlackInfo({
           coupon,
@@ -4217,6 +4251,7 @@ const continuousGetQuan = async data => {
     appFlag,
     quan_value,
     quan_flag,
+    black_quans,
     quanFlagList,
     ticket_num,
     targetNum,
@@ -4253,7 +4288,11 @@ const continuousGetQuan = async data => {
     let total_page = res.data?.unused?.total_page || [];
     let targetQuanList = [];
     if (quan_value) {
-      targetQuanList = quanList.filter(item => item.coupon_info === quan_flag);
+      targetQuanList = quanList.filter(
+        item =>
+          item.coupon_info === quan_flag &&
+          !black_quans?.includes(item.coupon_num)
+      );
     }
     // 由于增加券类型管理功能暂时不用优先用券功能
     // if (quanFlagList?.length) {

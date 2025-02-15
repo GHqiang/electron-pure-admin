@@ -2679,6 +2679,7 @@ class OrderAutoTicketQueue {
     syncQueryLogList
   }) {
     const { conPrefix } = this;
+    let targetLogList = flag === 1 ? this.logList : syncQueryLogList;
     try {
       // 10、提交取票码
       const submitRes = await this.submitTicketCode({
@@ -2692,7 +2693,6 @@ class OrderAutoTicketQueue {
         flag,
         syncQueryLogList
       });
-      let targetLogList = flag === 1 ? this.logList : syncQueryLogList;
       if (!submitRes || submitRes?.error) {
         console.error(conPrefix + "订单提交取票码失败，单个订单直接出票结束");
         targetLogList.push({
@@ -2738,9 +2738,14 @@ class OrderAutoTicketQueue {
       return submitRes;
     } catch (error) {
       console.warn("提交取票码异常", error);
-      if (flag === 1) {
-        this.setErrInfo("提交取票码异常", error);
-      }
+      targetLogList.push({
+        opera_time: getCurrentTime(),
+        des: "提交取票码异常",
+        level: "info",
+        info: {
+          error
+        }
+      });
     }
   }
 
