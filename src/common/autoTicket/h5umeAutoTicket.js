@@ -2404,6 +2404,19 @@ class OrderAutoTicketQueue {
           des: "获取订单支付结果，取票码不存在，暂时返回异步获取",
           level: "error"
         });
+        sendWxPusherMessage({
+          plat_name,
+          order_number,
+          city_name: orderInfo.city_name,
+          cinema_name: orderInfo.cinema_name,
+          film_name: orderInfo.film_name,
+          show_time: orderInfo?.show_time,
+          lockseat,
+          hall_name: orderInfo.hall_name,
+          supplier_end_price: orderInfo.supplier_end_price,
+          transferTip: "此处不转单，需关注该订单，适时手动上传取票码",
+          failReason: "获取订单支付结果，取票码不存在，准备开始异步轮询获取"
+        });
         this.asyncFetchQrcodeSubmit({
           orderId,
           order_id,
