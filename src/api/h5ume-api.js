@@ -278,7 +278,7 @@ const createApi = ({ app_name }) => {
 
   // 取消订单
   const cannelOneOrder = params =>
-    axios.post("/lmh5umea/mtop.alipic.lark.own.order.cancelorder", params);
+    axios.post("/h5ume/mtop.alipic.lark.own.order.cancelorder", params);
 
   // {
   //   empCode: "",
