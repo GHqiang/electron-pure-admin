@@ -3005,8 +3005,7 @@ class OrderAutoTicketQueue {
       }
       let cardData = cardList.filter(
         item =>
-          item.cardAmount >=
-          item.resultAmount + (handlingFee || 0) * 100 * ticket_num
+          item.cardAmount >= item.resultAmount + (handlingFee || 0) * ticket_num
         // 需大于实际价格+手续费*ticket
       );
       if (!cardList.length || !cardData?.length) {
