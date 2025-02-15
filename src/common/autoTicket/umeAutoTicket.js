@@ -864,6 +864,8 @@ class OrderAutoTicketQueue {
       scheduleId,
       scheduleKey,
       seatList,
+      areaInfoList,
+      targeSeatList,
       showDate,
       showDateTime,
       orderCode,
@@ -1137,6 +1139,7 @@ class OrderAutoTicketQueue {
           appFlag
         });
         seatList = seatListRes?.seatData || [];
+        areaInfoList = seatListRes?.areaInfoList || [];
         if (!seatList?.length) {
           console.error(conPrefix + "获取座位布局异常");
           this.logList.push({
@@ -1155,7 +1158,7 @@ class OrderAutoTicketQueue {
         console.log(conPrefix + "seatName", seatName);
         let selectSeatList = seatName.split(",");
         console.log(conPrefix + "selectSeatList", selectSeatList);
-        let targeSeatList = seatList.filter(item => {
+        targeSeatList = seatList.filter(item => {
           const { yCoord, rowName, columnName } = item;
           // let seat1 = yCoord + "排" + columnName + "号";
           let seat2 = rowName + "排" + columnName + "号";
@@ -1314,8 +1317,6 @@ class OrderAutoTicketQueue {
       orderDate = orderInfo.creationDate;
       // 这个时间戳需要和创建订单提交接口传参一致
       let timestamp = +new Date();
-      // total_price =
-      //   (orderPriceInfo?.scheduleInfo?.areaSettlePriceMin + 100) / 100;
       const cardQuanListRes = await getOptimalCardQuanCompose({
         orderCode,
         orderHeaderId,
@@ -1400,41 +1401,26 @@ class OrderAutoTicketQueue {
         ticketMemberServiceFeeMin,
         discountAmount
       );
-      let mbmberPrice;
-      // 如果会员价为0时，按照非会员价出票（需看此价格是否为非会员价，同时需注意非会员价出票时的支付价格比对会员价*座位数）
-      if (ticketMemberPrice == 0) {
-        mbmberPrice = (Number(areaSettlePriceMin) + Number(handlingFee)) / 100;
-      } else {
-        mbmberPrice =
-          (Number(ticketMemberPrice) +
-            Number(handlingFee) +
-            Number(ticketMemberServiceFeeMin) -
-            Number(discountAmount)) /
-          100;
-      }
-
-      total_price = mbmberPrice * ticket_num;
+      // 原价格（座位价格）
+      let originalAmount = targeSeatList.map(item => {
+        let areaSettlePrice = areaInfoList.find(
+          itemA => itemA.areaId === item.areaId
+        )?.areaSettlePrice;
+        return areaSettlePrice ? +areaSettlePrice + Number(handlingFee) : 0;
+      });
+      originalAmount =
+        originalAmount.reduce((acc, curr) => acc + curr, 0) / 100;
       this.logList.push({
         opera_time: getCurrentTime(),
         des: "会员总价计算相关信息",
         level: "info",
         info: {
-          total_price,
-          mbmberPrice,
+          "originalAmount(座位价格)": originalAmount,
           ticket_num,
+          handlingFee,
           ticketMemberPrice,
-          计算相关字段:
-            ticketMemberPrice == 0
-              ? {
-                  areaSettlePriceMin,
-                  handlingFee
-                }
-              : {
-                  ticketMemberPrice,
-                  handlingFee,
-                  ticketMemberServiceFeeMin,
-                  discountAmount
-                }
+          areaInfoList,
+          targeSeatList
         }
       });
       let activityId = activities[0]?.activityId || null; // 活动id
@@ -1449,8 +1435,7 @@ class OrderAutoTicketQueue {
         supplier_end_price,
         ticket_num,
         offerRule,
-        mbmberPrice,
-        total_price,
+        handlingFee, // 手续费
         rewards,
         appFlag,
         session_id: this.currentParamsList[this.currentParamsInx].session_id,
@@ -1484,7 +1469,6 @@ class OrderAutoTicketQueue {
             quanList: quanList.slice(0, 10),
             supplier_end_price,
             ticket_num,
-            total_price,
             activities
           }
         });
@@ -1515,7 +1499,9 @@ class OrderAutoTicketQueue {
               showDateTime,
               ticketDetail,
               offerRule,
-              targetShow
+              targetShow,
+              areaInfoList,
+              targeSeatList
             }
           });
         }
@@ -1563,6 +1549,12 @@ class OrderAutoTicketQueue {
             order_number
           });
         }
+      } else {
+        // 座位价格-卡优惠价格
+        let card_discount_price =
+          cardList.find(item => item.cardNo == card_id)?.discountAmount || 0;
+        card_discount_price = card_discount_price / 100;
+        total_price = originalAmount - card_discount_price;
       }
 
       // 7、耀莱需要获取观影人列表添加观影人
@@ -1877,6 +1869,21 @@ class OrderAutoTicketQueue {
           error
         }
       });
+      try {
+        sendWxPusherMessage({
+          plat_name,
+          order_number,
+          city_name,
+          cinema_name,
+          film_name,
+          show_time,
+          lockseat,
+          hall_name: item.hall_name,
+          supplier_end_price: item.supplier_end_price,
+          transferTip: "一键买票异常，请及时联系技术",
+          failReason: JSON.stringify(error)
+        });
+      } catch (error) {}
       return { offerRule };
     }
   }
@@ -2744,7 +2751,7 @@ class OrderAutoTicketQueue {
     supplier_end_price,
     ticket_num,
     offerRule,
-    total_price,
+    handlingFee,
     rewards,
     appFlag,
     plat_name
@@ -2760,7 +2767,7 @@ class OrderAutoTicketQueue {
       let useCardParms = {
         cardList,
         member_price, // 成本价
-        total_price,
+        handlingFee,
         rewards,
         supplier_end_price,
         ticket_num,
@@ -2980,7 +2987,7 @@ class OrderAutoTicketQueue {
     const {
       cardList,
       member_price, // 成本价
-      total_price,
+      handlingFee,
       rewards,
       supplier_end_price,
       ticket_num,
@@ -2992,7 +2999,10 @@ class OrderAutoTicketQueue {
         str = "无可用会员卡（疑似出满）";
       }
       let cardData = cardList.filter(
-        item => item.cardAmount >= total_price * 100
+        item =>
+          item.cardAmount >=
+          item.resultAmount + (handlingFee || 0) * 100 * ticket_num
+        // 需大于实际价格+手续费*ticket
       );
       if (!cardList.length || !cardData?.length) {
         this.logList.push({
@@ -3001,7 +3011,7 @@ class OrderAutoTicketQueue {
           level: "error",
           info: {
             cardList,
-            total_price: total_price * 100
+            handlingFee
           }
         });
         console.warn("无可用会员卡", member_price);
@@ -3534,8 +3544,10 @@ const getSeatLayout = async ({
     const res = await APP_API_OBJ[appFlag].getMoviePlaySeat(params);
     console.log(conPrefix + "获取座位布局返回", res);
     let seatData = res.data?.seatList || [];
+    let areaInfoList = res.data?.areaInfoList || [];
     return {
-      seatData
+      seatData,
+      areaInfoList
     };
   } catch (error) {
     console.error(conPrefix + "获取座位布局异常", error);

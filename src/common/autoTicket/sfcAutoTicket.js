@@ -1796,6 +1796,22 @@ class OrderAutoTicketQueue {
           error
         }
       });
+      try {
+        sendWxPusherMessage({
+          plat_name,
+          order_number,
+          city_name,
+          cinema_name,
+          film_name,
+          show_time,
+          lockseat,
+          hall_name: item.hall_name,
+          supplier_end_price: item.supplier_end_price,
+          transferTip: "一键买票异常，请及时联系技术",
+          failReason: JSON.stringify(error)
+        });
+      } catch (error) {}
+
       return { offerRule };
     }
   }
