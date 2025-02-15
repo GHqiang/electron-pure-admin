@@ -1420,7 +1420,8 @@ class OrderAutoTicketQueue {
           balance: cardList.find(itemA => itemA.cardNumber == itemC.cardNumber)
             ?.balance
         }));
-        cardInfos = cardInfos.sort((a, b) => a.balance - b.balance);
+        // 从大到小排序
+        cardInfos = cardInfos.sort((a, b) => b.balance - a.balance);
       }
       // 如果会员价为0时，取报价记录里的真实会员价
       if (member_total_price === undefined && offerRule.offer_type != "1") {
