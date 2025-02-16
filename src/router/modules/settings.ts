@@ -49,6 +49,14 @@ export default {
       }
     },
     {
+      path: "/permission/quanTypeManage/index",
+      name: "QuanTypeManage",
+      component: () => import("@/views/permission/quanTypeManage/index.vue"),
+      meta: {
+        title: "券类型列表"
+      }
+    },
+    {
       path: "/set/ruleConfig",
       name: "ruleConfig",
       component: () => import("@/views/ruleConfig/index.vue"),

@@ -217,13 +217,6 @@ function initRouter(rule: any) {
           data?.[0]?.children.push(
             ...[
               {
-                path: "/permission/quanTypeManage/index",
-                name: "QuanTypeManage",
-                meta: {
-                  title: "券类型列表"
-                }
-              },
-              {
                 path: "/permission/cinemaNameManage/index",
                 name: "CinemaNameManage",
                 meta: {
