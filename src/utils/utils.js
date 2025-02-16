@@ -2461,7 +2461,60 @@ const adjustSeats = (lockedSeats, targetSeats, maxSeatNumber, flag) => {
   }
 };
 
+// 找出重复字符及数量
+function findMostRepeatedChars(str1, str2) {
+  try {
+    // 将字符串转换为小写，以便不区分大小写
+    str1 = str1.toLowerCase();
+    str2 = str2.toLowerCase();
+
+    // 统计 str1 中每个字符的出现次数
+    const charCount1 = {};
+    for (const char of str1) {
+      if (/[a-zA-Z0-9\u4e00-\u9fa5]/.test(char)) {
+        // 只统计英文、数字、汉字
+        charCount1[char] = (charCount1[char] || 0) + 1;
+      }
+    }
+
+    // 统计 str2 中每个字符的出现次数
+    const charCount2 = {};
+    for (const char of str2) {
+      if (/[a-zA-Z0-9\u4e00-\u9fa5]/.test(char)) {
+        // 只统计英文、数字、汉字
+        charCount2[char] = (charCount2[char] || 0) + 1;
+      }
+    }
+
+    // 找出在两个字符串中都出现的字符，并计算重复次数
+    const repeatedChars = {};
+    for (const char in charCount1) {
+      if (charCount2[char]) {
+        repeatedChars[char] = Math.min(charCount1[char], charCount2[char]);
+      }
+    }
+
+    // 找出重复次数最多的字符
+    let maxCount = 0;
+    let mostRepeatedChars = [];
+    for (const char in repeatedChars) {
+      if (repeatedChars[char] > maxCount) {
+        maxCount = repeatedChars[char];
+        mostRepeatedChars = [char];
+      } else if (repeatedChars[char] === maxCount) {
+        mostRepeatedChars.push(char);
+      }
+    }
+
+    return {
+      chars: mostRepeatedChars,
+      count: maxCount
+    };
+  } catch (error) {}
+}
+
 export {
+  findMostRepeatedChars, // 找出重复字符及数量
   adjustSeats, // 获取需要帮助锁定的座位
   calculateMarkup, // 格式化获取真实加价金额
   roundToHalf, // 按0.5向上取整

@@ -12,7 +12,8 @@ import {
   getOfferRuleById,
   getCurrentDay,
   isDateInCurrentMonth,
-  getPreviousDay
+  getPreviousDay,
+  findMostRepeatedChars
 } from "@/utils/utils";
 // 帮助锁定座位实例对象
 import assistLockSeatObj from "./lockSeatQueue";
@@ -1068,10 +1069,25 @@ class OrderAutoTicketQueue {
         );
         targetShow = targetShowList[0];
         if (targetShowList.length > 1) {
-          let targetShowInfo = targetShowList.find(
-            item => item.hallName === hall_name
-          );
-          targetShow = targetShowInfo ? targetShowInfo : targetShow;
+          const defaultResult = { chars: [], count: 0 };
+          targetShowList = targetShowList.map(item => {
+            const repeatedCharsResult =
+              findMostRepeatedChars(item.hallName, hall_name) || defaultResult;
+            return {
+              ...item,
+              ...repeatedCharsResult
+            };
+          });
+          targetShowList = targetShowList.sort((a, b) => b.count - a.count);
+          targetShow = targetShowList[0];
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: "同一时间多场次0",
+            level: "info",
+            info: {
+              targetShowList
+            }
+          });
         }
         if (!targetShow) {
           console.warn("匹配影片放映场次失败", showList, show_time);
@@ -1098,10 +1114,26 @@ class OrderAutoTicketQueue {
           );
           targetShow = targetShowList[0];
           if (targetShowList.length > 1) {
-            let targetShowInfo = targetShowList.find(
-              item => item.hallName === hall_name
-            );
-            targetShow = targetShowInfo ? targetShowInfo : targetShow;
+            const defaultResult = { chars: [], count: 0 };
+            targetShowList = targetShowList.map(item => {
+              const repeatedCharsResult =
+                findMostRepeatedChars(item.hallName, hall_name) ||
+                defaultResult;
+              return {
+                ...item,
+                ...repeatedCharsResult
+              };
+            });
+            targetShowList = targetShowList.sort((a, b) => b.count - a.count);
+            targetShow = targetShowList[0];
+            this.logList.push({
+              opera_time: getCurrentTime(),
+              des: "同一时间多场次1",
+              level: "info",
+              info: {
+                targetShowList
+              }
+            });
           }
           if (!targetShow) {
             console.warn("匹配影片放映日期失败", showList, show_time);
@@ -2502,19 +2534,20 @@ class OrderAutoTicketQueue {
           des: "获取订单支付结果，取票码不存在，暂时返回异步获取",
           level: "error"
         });
-        sendWxPusherMessage({
-          plat_name,
-          order_number,
-          city_name: orderInfo.city_name,
-          cinema_name: orderInfo.cinema_name,
-          film_name: orderInfo.film_name,
-          show_time: orderInfo?.show_time,
-          lockseat,
-          hall_name: orderInfo.hall_name,
-          supplier_end_price: orderInfo.supplier_end_price,
-          transferTip: "此处不转单，需关注该订单，适时手动上传取票码",
-          failReason: "获取订单支付结果，取票码不存在，准备开始异步轮询获取"
-        });
+        // 考虑耀莱延迟多暂时去掉
+        // sendWxPusherMessage({
+        //   plat_name,
+        //   order_number,
+        //   city_name: orderInfo.city_name,
+        //   cinema_name: orderInfo.cinema_name,
+        //   film_name: orderInfo.film_name,
+        //   show_time: orderInfo?.show_time,
+        //   lockseat,
+        //   hall_name: orderInfo.hall_name,
+        //   supplier_end_price: orderInfo.supplier_end_price,
+        //   transferTip: "此处不转单，需关注该订单，适时手动上传取票码",
+        //   failReason: "获取订单支付结果，取票码不存在，准备开始异步轮询获取"
+        // });
         this.asyncFetchQrcodeSubmit({
           orderHeaderId,
           order_id,

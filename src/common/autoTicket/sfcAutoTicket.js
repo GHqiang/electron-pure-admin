@@ -11,7 +11,8 @@ import {
   getOfferRuleById, // 根据报价规则id获取详细内容
   couponInfoSpecial,
   getCurrentDay,
-  isDateInCurrentMonth
+  isDateInCurrentMonth,
+  findMostRepeatedChars
 } from "@/utils/utils";
 
 import svApi from "@/api/sv-api";
@@ -1210,10 +1211,25 @@ class OrderAutoTicketQueue {
         );
         let targetShow = targetShowList[0];
         if (targetShowList.length > 1) {
-          let targetShowInfo = targetShowList.find(
-            item => item.hall_name === hall_name
-          );
-          targetShow = targetShowInfo ? targetShowInfo : targetShow;
+          const defaultResult = { chars: [], count: 0 };
+          targetShowList = targetShowList.map(item => {
+            const repeatedCharsResult =
+              findMostRepeatedChars(item.hall_name, hall_name) || defaultResult;
+            return {
+              ...item,
+              ...repeatedCharsResult
+            };
+          });
+          targetShowList = targetShowList.sort((a, b) => b.count - a.count);
+          targetShow = targetShowList[0];
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: "同一时间多场次",
+            level: "info",
+            info: {
+              targetShowList
+            }
+          });
         }
         if (!targetShow) {
           this.logList.push({

@@ -12,7 +12,8 @@ import {
   roundToHalf,
   isDateInCurrentMonth,
   calculateMarkup,
-  getCinemaLoginInfoList
+  getCinemaLoginInfoList,
+  findMostRepeatedChars
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
@@ -1344,10 +1345,25 @@ class getUmeOfferPrice {
       );
       let targetShow = targetShowList[0];
       if (targetShowList.length > 1) {
-        let targetShowInfo = targetShowList.find(
-          item => item.hallName === hall_name
-        );
-        targetShow = targetShowInfo ? targetShowInfo : targetShow;
+        const defaultResult = { chars: [], count: 0 };
+        targetShowList = targetShowList.map(item => {
+          const repeatedCharsResult =
+            findMostRepeatedChars(item.hallName, hall_name) || defaultResult;
+          return {
+            ...item,
+            ...repeatedCharsResult
+          };
+        });
+        targetShowList = targetShowList.sort((a, b) => b.count - a.count);
+        targetShow = targetShowList[0];
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "同一时间多场次",
+          level: "info",
+          info: {
+            targetShowList
+          }
+        });
       }
       if (!targetShow) {
         console.error("匹配影片放映场次失败", showList, show_time);
