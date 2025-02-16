@@ -4054,7 +4054,7 @@ class OrderAutoTicketQueue {
         // 对非默认卡或当两个都是默认卡时，根据余额进行倒序排序
         return balanceB - balanceA;
       });
-      let card_id, priceInfo;
+      let card_id, priceInfo, errReason;
       if (!isV3App) {
         // 开始尝试使用卡并获取成功使用的卡的结果
         const attemptCardsSequentially = async () => {
@@ -4084,6 +4084,7 @@ class OrderAutoTicketQueue {
                   error: priceRes?.error
                 }
               });
+              errReason = priceRes?.error?.msg || "尝试使用卡时计算价格异常";
             }
             if (price) {
               let cardCalcFail =
@@ -4091,14 +4092,16 @@ class OrderAutoTicketQueue {
                 (Number(real_member_price) * 1000 * Number(ticket_num)) / 1000;
               if (cardCalcFail) {
                 let isChangeCard = card.id !== cardData[cardData.length - 1].id;
+                let str = `该会员卡计算后价格-${price.total_price}高于真实会员价-${real_member_price}*座位数-${ticket_num}`;
                 this.logList.push({
                   opera_time: getCurrentTime(),
-                  des: `该会员卡计算后价格-${price.total_price}高于真实会员价-${real_member_price}*座位数-${ticket_num},${isChangeCard ? "准备换卡" : ""};`,
+                  des: str + `,${isChangeCard ? "准备换卡" : ""};`,
                   level: "info",
                   info: {
                     price
                   }
                 });
+                errReason = str || "计算价格高于真实会员价*座位数";
               } else {
                 card_id = card.id;
                 console.log(conPrefix + "卡使用成功，返回结果并停止尝试。");
@@ -4108,7 +4111,7 @@ class OrderAutoTicketQueue {
           }
           this.logList.push({
             opera_time: getCurrentTime(),
-            des: "所有会员卡尝试均失败",
+            des: "所有会员卡尝试均失败：" + errReason,
             level: "error"
           });
           console.error(conPrefix + "所有卡尝试均失败。");
