@@ -323,7 +323,7 @@ class getSfcOfferPrice {
         let fixedAmountRuleList = matchRuleList.filter(
           item => item.offerType === "1" && item.offerAmount
         );
-        if (fixedAmountRuleList.length && rule == 2) {
+        if (fixedAmountRuleList.length) {
           this.logList.push({
             opera_time: getCurrentTime(),
             des: "根据券库存过滤后固定报价规则为空",
@@ -781,7 +781,7 @@ class getSfcOfferPrice {
       let fixedAmountRuleList = otherRuleList.filter(
         item => item.offerType === "1" && item.offerAmount
       );
-      if (fixedAmountRuleList.length && rule == 2) {
+      if (fixedAmountRuleList.length) {
         // 校验其库存，进行过滤
         const appQuanTypeList = await this.getQuanTypeListByApp({
           order,

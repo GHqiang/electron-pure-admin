@@ -1787,7 +1787,7 @@ class OrderAutoTicketQueue {
           msg: "纯用券时不需要购买"
         };
       }
-      if (offerRule.offer_type === "1" && useQuan?.length && rule == 2) {
+      if (offerRule.offer_type === "1" && useQuan?.length) {
         // 更新券库存
         this.updateQuanStock({
           quan_stock: quanStock - ticket_num,
@@ -2803,14 +2803,12 @@ class OrderAutoTicketQueue {
           (a, b) => +new Date(a.expireTime) - new Date(b.expireTime)
         );
         // 更新券库存
-        if (rule == 2) {
-          this.updateQuanStock({
-            quan_stock: targetQuanList.length,
-            quan_flag: offerRule.quan_flag,
-            app_name: appFlag,
-            phone: this.curPhone
-          });
-        }
+        this.updateQuanStock({
+          quan_stock: targetQuanList.length,
+          quan_flag: offerRule.quan_flag,
+          app_name: appFlag,
+          phone: this.curPhone
+        });
         if (targetQuanList.length < ticket_num) {
           this.logList.push({
             opera_time: getCurrentTime(),

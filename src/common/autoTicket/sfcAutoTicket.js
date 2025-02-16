@@ -1779,7 +1779,7 @@ class OrderAutoTicketQueue {
       });
       // 只用卡
       let isOnlyUseCard = card_id && !quanType;
-      if (offerRule.offer_type !== "1" && isOnlyUseCard && rule == 2) {
+      if (offerRule.offer_type !== "1" && isOnlyUseCard) {
         // 更新卡使用量
         updateCardDayUse({
           app_name: appFlag,
@@ -1788,7 +1788,7 @@ class OrderAutoTicketQueue {
           order_number
         });
       }
-      if (offerRule.offer_type === "1" && rule == 2) {
+      if (offerRule.offer_type === "1") {
         // 更新券库存
         this.updateQuanStock({
           quan_stock: quanStock - ticket_num,
@@ -2102,14 +2102,12 @@ class OrderAutoTicketQueue {
           }
         }
         // 更新券库存
-        if (rule == 2) {
-          this.updateQuanStock({
-            quan_stock: quanList.length,
-            quan_flag: offerRule.quan_flag,
-            app_name: appFlag,
-            phone: this.curPhone
-          });
-        }
+        this.updateQuanStock({
+          quan_stock: quanList.length,
+          quan_flag: offerRule.quan_flag,
+          app_name: appFlag,
+          phone: this.curPhone
+        });
         if (quanList?.length < ticket_num) {
           this.logList.push({
             opera_time: getCurrentTime(),
@@ -2870,8 +2868,7 @@ class OrderAutoTicketQueue {
       // 只有内部用户支持该功能，外部用户待券维护分开后再放开该功能
       if (
         error?.msg?.includes("请联系影院将使用该券的原订单后台退款后") &&
-        isTimeoutRetry === 1 &&
-        rule == 2
+        isTimeoutRetry === 1
       ) {
         this.logList.push({
           opera_time: getCurrentTime(),

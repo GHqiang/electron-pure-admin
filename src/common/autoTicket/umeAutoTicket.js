@@ -1857,7 +1857,7 @@ class OrderAutoTicketQueue {
           order_number
         });
       }
-      if (offerRule.offer_type === "1" && useQuan?.length && rule == 2) {
+      if (offerRule.offer_type === "1" && useQuan?.length) {
         // 更新券库存
         this.updateQuanStock({
           quan_stock: quanStock - ticket_num,
@@ -2904,14 +2904,12 @@ class OrderAutoTicketQueue {
           (a, b) => +new Date(a.endDateTime) - new Date(b.endDateTime)
         );
         // 更新券库存
-        if (rule == 2) {
-          this.updateQuanStock({
-            quan_stock: targetQuanList.length,
-            quan_flag: offerRule.quan_flag,
-            app_name: appFlag,
-            phone: this.curPhone
-          });
-        }
+        this.updateQuanStock({
+          quan_stock: targetQuanList.length,
+          quan_flag: offerRule.quan_flag,
+          app_name: appFlag,
+          phone: this.curPhone
+        });
         if (targetQuanList.length < ticket_num) {
           console.warn(conPrefix + "优惠券不够用");
           console.error(
