@@ -74,17 +74,6 @@
           <el-option label="否" value="2" />
         </el-select>
       </el-form-item>
-      <el-form-item label="外部可用">
-        <el-select
-          v-model="formData.is_outuse"
-          placeholder="是否外部可用"
-          style="width: 194px"
-          clearable
-        >
-          <el-option label="是" value="1" />
-          <el-option label="否" value="2" />
-        </el-select>
-      </el-form-item>
       <el-form-item>
         <el-button @click="resetForm">重置</el-button>
         <el-button type="primary" @click="searchData">搜索</el-button>
@@ -198,13 +187,6 @@
         <template #default="{ row: { is_store } }">
           <span :class="{ red: is_store == 1 }">{{
             is_store == "1" ? "是 " : "否"
-          }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column prop="is_outuse" label="是否外部可用" min-width="110">
-        <template #default="{ row: { is_outuse } }">
-          <span :class="{ red: is_outuse == 1 }">{{
-            is_outuse == "1" ? "是 " : "否"
           }}</span>
         </template>
       </el-table-column>
@@ -353,8 +335,7 @@ const formData = reactive({
   quan_cost: "",
   quan_flag: "",
   quan_fee: "",
-  is_store: "",
-  is_outuse: ""
+  is_store: ""
 });
 
 // 搜索数据
@@ -478,7 +459,6 @@ const resetForm = () => {
   formData.quan_flag = "";
   formData.quan_fee = "";
   formData.is_store = "";
-  formData.is_outuse = "";
 
   currentPage.value = 1;
   pageSize.value = 10;

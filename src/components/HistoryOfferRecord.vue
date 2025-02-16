@@ -465,7 +465,6 @@ const resetForm = () => {
 const getQuanTypeList = async () => {
   try {
     const params = {
-      is_outuse: rule != 2 ? "1" : undefined,
       page_num: 1,
       page_size: 100
     };

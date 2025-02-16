@@ -653,7 +653,6 @@ const getQuanTypeList = async app_name => {
   try {
     const params = {
       app_name,
-      is_outuse: rule != 2 ? "1" : undefined,
       page_num: 1,
       page_size: 100
     };

@@ -143,12 +143,6 @@
             <el-radio value="2" size="large">否</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="是否外部可用" prop="is_outuse">
-          <el-radio-group v-model="formData.is_outuse">
-            <el-radio value="1" size="large">是</el-radio>
-            <el-radio value="2" size="large">否</el-radio>
-          </el-radio-group>
-        </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input
             v-model="formData.remark"
@@ -202,7 +196,6 @@ let formData = reactive({
   ],
   black_quans: "",
   is_store: "2",
-  is_outuse: "2",
   remark: ""
 });
 
@@ -253,7 +246,6 @@ const resetForm = el => {
   ];
   formData.black_quans = "";
   formData.is_store = "2";
-  formData.is_outuse = "2";
   formData.remark = "";
 };
 
@@ -285,7 +277,6 @@ const open = async quanInfo => {
         formData.black_quans = formInfo.black_quans;
         formData.remark = formInfo.remark;
         formData.is_store = formInfo.is_store;
-        formData.is_outuse = formInfo.is_outuse;
       } else {
         // 新增
         formData.app_name = formInfo.app_name;
