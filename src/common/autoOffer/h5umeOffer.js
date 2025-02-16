@@ -1411,20 +1411,10 @@ class getUmeOfferPrice {
         }
       });
       // 座位分区从高到低排序
-      let areaList = areaInfoList
-        .map(item => {
-          let priceInfo = { settlePrice: item.areaPrice || 0 };
-          if (item.areaMemberPrice?.length) {
-            priceInfo = item.areaMemberPrice.sort(
-              (a, b) => b.settlePrice - a.settlePrice
-            )[0];
-          }
-          return {
-            ...item,
-            ...priceInfo
-          };
-        })
-        .sort((a, b) => b.settlePrice - a.settlePrice);
+      let areaList = areaInfoList.sort(
+        (a, b) =>
+          b.settlePrice + b.areaServiceFee - (a.settlePrice + a.areaServiceFee)
+      );
       let maxSeatPrice,
         seatIds = [];
       for (let index = 0; index < areaList.length; index++) {
