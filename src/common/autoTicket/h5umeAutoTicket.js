@@ -1158,6 +1158,14 @@ class OrderAutoTicketQueue {
           scheduleKey
         });
         seatList = areaRes?.seats || [];
+        let areaInfoList = areaRes?.areaInfos || [];
+        areaInfoList = areaInfoList.map(item => {
+          let settlePrice = item.areaPrice || 0 + (item.sareaServiceFee || 0);
+          return {
+            ...item,
+            settlePrice
+          };
+        });
         if (!seatList?.length) {
           console.error("获取座位布局异常");
           this.logList.push({
@@ -1185,13 +1193,12 @@ class OrderAutoTicketQueue {
         console.log("targeSeatList", targeSeatList);
         seatIds = targeSeatList.map(item => ({ seatId: item.seatId }));
         // 座位价格信息
-        let areaPrices = targetShow.areaPrices || [];
         targeSeatList.forEach(item => {
-          let targetItem = areaPrices.find(
+          let targetItem = areaInfoList.find(
             itemA => itemA.areaId === item.areaId
           );
           if (targetItem) {
-            areaTotalPrice += item.areaSettlePrice + item.areaServiceFee || 0;
+            areaTotalPrice += targetItem.areaSettlePrice;
           }
         });
         this.logList.push({
@@ -1200,7 +1207,7 @@ class OrderAutoTicketQueue {
           level: "info",
           info: {
             targeSeatList,
-            areaPrices,
+            areaInfoList,
             areaTotalPrice
           }
         });

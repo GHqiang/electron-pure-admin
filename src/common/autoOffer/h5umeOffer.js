@@ -1411,10 +1411,15 @@ class getUmeOfferPrice {
         }
       });
       // 座位分区从高到低排序
-      let areaList = areaInfoList.sort(
-        (a, b) =>
-          b.settlePrice + b.areaServiceFee - (a.settlePrice + a.areaServiceFee)
-      );
+      let areaList = areaInfoList
+        .map(item => {
+          let settlePrice = item.areaPrice || 0 + (item.sareaServiceFee || 0);
+          return {
+            ...item,
+            settlePrice
+          };
+        })
+        .sort((a, b) => b.settlePrice - a.settlePrice);
       let maxSeatPrice,
         seatIds = [];
       for (let index = 0; index < areaList.length; index++) {
@@ -1428,9 +1433,7 @@ class getUmeOfferPrice {
           maxSeatPrice ||= item.settlePrice;
           seatIds = [
             ...seatIds,
-            ...targetSeatList
-              .slice(0, ticket_num - seatIds.length)
-              .map(item => item.seatId)
+            ...targetSeatList.slice(0, ticket_num - seatIds.length)
           ];
         }
         if (seatIds.length == ticket_num) {
@@ -1443,9 +1446,10 @@ class getUmeOfferPrice {
         level: "info",
         info: {
           maxSeatPrice,
-          seatIds
+          seatIds: JSON.parse(JSON.stringify(seatIds))
         }
       });
+      seatIds = seatIds.map(item => item.seatId);
       // try {
       //   // 过滤出来未售座位然后计算分区剩余座位占比，1-未售
       //   let seatList = seat_data.filter(item => item.status === 1);
