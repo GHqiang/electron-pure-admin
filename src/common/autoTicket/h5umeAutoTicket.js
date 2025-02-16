@@ -1498,6 +1498,13 @@ class OrderAutoTicketQueue {
       }
       // 使用优惠券及会员卡
       if (failMsg) {
+        const errInfoObj = this.logList
+          .filter(item => item.level === "error")
+          .reverse()?.[0];
+        const errMsg = errInfoObj?.des || "";
+        if (errMsg) {
+          failMsg = failMsg + "-" + errMsg;
+        }
         console.error(failMsg);
         this.logList.push({
           opera_time: getCurrentTime(),
