@@ -213,7 +213,7 @@ function initRouter(rule: any) {
     return new Promise(resolve => {
       getAsyncRoutes().then(({ data }) => {
         console.log("data0", data);
-        if (![3].includes(rule)) {
+        if (![3, 6].includes(rule)) {
           data?.[0]?.children.push(
             ...[
               {
