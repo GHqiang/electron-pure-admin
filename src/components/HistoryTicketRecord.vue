@@ -237,7 +237,7 @@
           >
 
           <el-button
-            v-if="rule == 2 && order_status === '2'"
+            v-if="![3].includes(rule) && order_status === '2'"
             size="small"
             type="primary"
             @click="queryLog({ order_number, user_id })"
@@ -364,18 +364,13 @@ const searchData = async () => {
     // 使用Object.fromEntries将过滤后的键值对数组转换回对象
     let queryParams = Object.fromEntries(filteredEntries);
     // console.log("queryParams", queryParams);
-    let res;
     let page_num = currentPage.value;
     let page_size = pageSize.value;
-    if (JSON.stringify(queryParams) === "{}") {
-      res = await svApi.getTicketList({ page_num, page_size });
-    } else {
-      res = await svApi.queryTicketList({
-        ...queryParams,
-        page_num,
-        page_size
-      });
-    }
+    let res = await svApi.queryTicketList({
+      ...queryParams,
+      page_num,
+      page_size
+    });
     let offerRecords = res.data.ticketList || [];
     // console.log("历史出票记录===>", offerRecords);
     tableData.value = offerRecords;

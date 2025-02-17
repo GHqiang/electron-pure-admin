@@ -49,7 +49,7 @@
         </template>
       </el-table-column>
       <el-table-column
-        v-if="rule == 2"
+        v-if="![3].includes(rule)"
         prop="syncPageSize"
         width="160"
         label="同步频率(条数/1分钟)"

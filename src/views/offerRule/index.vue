@@ -245,14 +245,14 @@
             >删除</el-button
           >
           <el-button
-            v-if="scope.row.status === '1' && rule == 2"
+            v-if="scope.row.status === '1' && ![3].includes(rule)"
             size="small"
             type="primary"
             @click="switchOnlyOffer(scope.row, '3')"
             >开启仅报价</el-button
           >
           <el-button
-            v-if="scope.row.status === '3' && rule == 2"
+            v-if="scope.row.status === '3' && ![3].includes(rule)"
             size="small"
             type="primary"
             @click="switchOnlyOffer(scope.row, '1')"

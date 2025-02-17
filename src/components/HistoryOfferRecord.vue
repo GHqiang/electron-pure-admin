@@ -78,7 +78,7 @@
           <el-option label="否" value="2" />
         </el-select>
       </el-form-item>
-      <el-form-item v-if="rule == 2" label="报价差异">
+      <el-form-item v-if="![3].includes(rule)" label="报价差异">
         <el-select
           v-model="formData.is_price_diff"
           placeholder="报价差异"
@@ -184,7 +184,7 @@
         width="85"
       />
       <el-table-column
-        v-if="rule === 2"
+        v-if="![3].includes(rule)"
         prop="deal_price"
         fixed
         label="中标价"
@@ -201,13 +201,13 @@
         </template>
       </el-table-column>
       <el-table-column
-        v-if="rule === 2"
+        v-if="![3].includes(rule)"
         prop="member_price"
         fixed
         label="成本价"
         width="85"
       />
-      <el-table-column v-if="rule === 2" label="利润空间" width="85">
+      <el-table-column v-if="![3].includes(rule)" label="利润空间" width="85">
         <template #default="{ row: { supplier_max_price, member_price } }">
           <span>{{
             supplier_max_price && member_price
@@ -217,7 +217,7 @@
         </template>
       </el-table-column>
       <el-table-column
-        v-if="rule === 2"
+        v-if="![3].includes(rule)"
         prop="is_deal"
         label="是否中标"
         width="85"
@@ -248,7 +248,7 @@
       <el-table-column label="操作" fixed="right" align="center" width="120">
         <template #default="{ row: { order_number, user_id } }">
           <el-button
-            v-if="rule == 2"
+            v-if="![3].includes(rule)"
             size="small"
             type="primary"
             @click="queryLog({ order_number, user_id })"
@@ -401,18 +401,13 @@ const searchData = async () => {
     // 使用Object.fromEntries将过滤后的键值对数组转换回对象
     let queryParams = Object.fromEntries(filteredEntries);
     // console.log("queryParams", queryParams);
-    let res;
     let page_num = currentPage.value;
     let page_size = pageSize.value;
-    if (JSON.stringify(queryParams) === "{}") {
-      res = await svApi.getOfferList({ page_num, page_size });
-    } else {
-      res = await svApi.queryOfferList({
-        ...queryParams,
-        page_num,
-        page_size
-      });
-    }
+    let res = await svApi.queryOfferList({
+      ...queryParams,
+      page_num,
+      page_size
+    });
     let offerRecords = res.data.offerList || [];
     // console.log("历史报价记录===>", offerRecords);
     tableData.value = offerRecords;

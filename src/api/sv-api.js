@@ -16,8 +16,6 @@ const getUserList = params => axios.get("/svpi/users", { params });
 //查询统计分析
 const queryAnalysis = params =>
   axios.get("/svpi/statisticalAnalysis/query", { params, timeout: 60 * 1000 });
-// 获取报价列表
-const getOfferList = params => axios.get("/svpi/offerRecord", { params });
 // 查询报价记录
 const queryOfferList = params =>
   axios.get("/svpi/offerRecord/query", { params, timeout: 60 * 1000 });
@@ -31,9 +29,6 @@ const addOfferRecord = params => axios.post("/svpi/offerRecord/add", params);
 // 更新报价记录
 const updateOfferRecord = params =>
   axios.post("/svpi/offerRecord/update", params);
-
-// 获取出票列表
-const getTicketList = params => axios.get("/svpi/ticketRecord", { params });
 // 查询出票记录
 const queryTicketList = params =>
   axios.get("/svpi/ticketRecord/query", { params, timeout: 60 * 1000 });
@@ -192,12 +187,10 @@ const svApi = {
   updateUser,
   getUserList,
   queryAnalysis,
-  getOfferList,
   queryOfferList,
   queryOfferInfo,
   addOfferRecord,
   updateOfferRecord,
-  getTicketList,
   queryTicketList,
   queryUsedQuanList,
   addTicketRecord,
