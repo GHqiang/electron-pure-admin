@@ -343,7 +343,8 @@ const createApi = ({ app_name }) => {
     axios.get("/lma/mp/iorder/get_order", { params });
 
   // 绑定优惠券
-  const bandQuan = params => axios.post("/lma/mp/icoupon/add", params);
+  const bandQuan = params =>
+    axios.post("/h5ume/mtop.alipic.lark.own.coupon.bindcoupon", params);
 
   return {
     getsidbytid,

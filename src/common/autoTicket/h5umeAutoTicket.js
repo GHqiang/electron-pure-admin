@@ -3669,13 +3669,10 @@ const startDeliver = async ({
 const bandQuan = async ({ cinemaLinkId, coupon_num, session_id, appFlag }) => {
   // 由于要用二线城市影院且40券通用，故写死
   let params = {
-    params: {
-      couponCode: coupon_num,
-      cinemaLinkId,
-      sysSourceCode: "YZ001",
-      channelCode: "QD0000001"
-    },
-    session_id
+    couponCode: coupon_num,
+    pinCode: "",
+    cinemaLinkId,
+    umeToken: session_id
   };
   try {
     await mockDelay(1);

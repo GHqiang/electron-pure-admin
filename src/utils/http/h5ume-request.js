@@ -353,7 +353,9 @@ const urlObj = {
   "mtop.alipic.lark.own.lease.channelagreement":
     "mtop.alipic.lark.own.lease.channelAgreement",
   "mtop.alipic.lark.own.cinema.getcinemadetail":
-    "mtop.alipic.lark.own.cinema.getCinemaDetail"
+    "mtop.alipic.lark.own.cinema.getCinemaDetail",
+  "mtop.alipic.lark.own.coupon.bindcoupon":
+    "mtop.alipic.lark.own.coupon.bindCoupon"
 };
 
 // 获取url
