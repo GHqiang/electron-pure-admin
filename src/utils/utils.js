@@ -2461,12 +2461,17 @@ const adjustSeats = (lockedSeats, targetSeats, maxSeatNumber, flag) => {
   }
 };
 
+// 清理字符串，移除所有非字母数字及汉字的字符
+function cleanString(str) {
+  return str.replace(/[^\w\u4e00-\u9fa5]/g, "");
+}
+
 // 找出重复字符及数量
 function findMostRepeatedChars(str1, str2) {
   try {
-    // 将字符串转换为小写，以便不区分大小写
-    str1 = str1.toLowerCase();
-    str2 = str2.toLowerCase();
+    // 将字符串转换为小写，并清理掉特殊字符
+    str1 = cleanString(str1.toLowerCase());
+    str2 = cleanString(str2.toLowerCase());
 
     // 统计 str1 中每个字符的出现次数
     const charCount1 = {};
@@ -2488,9 +2493,13 @@ function findMostRepeatedChars(str1, str2) {
 
     // 找出在两个字符串中都出现的字符，并计算重复次数
     const repeatedChars = {};
+    let totalRepeatedCount = 0; // 记录所有重复字符的总重复次数，用于计算相似度
+
     for (const char in charCount1) {
       if (charCount2[char]) {
-        repeatedChars[char] = Math.min(charCount1[char], charCount2[char]);
+        const minCount = Math.min(charCount1[char], charCount2[char]);
+        repeatedChars[char] = minCount;
+        totalRepeatedCount += minCount;
       }
     }
 
@@ -2506,11 +2515,27 @@ function findMostRepeatedChars(str1, str2) {
       }
     }
 
+    // 计算相似度，分母改为两个字符串中较长的那个字符串的长度
+    const maxLength = Math.max(str1.length, str2.length);
+    const similarity = totalRepeatedCount / maxLength;
+
     return {
-      chars: mostRepeatedChars,
-      count: maxCount
+      chars1: mostRepeatedChars,
+      count1: maxCount,
+      totalRepeated: totalRepeatedCount,
+      maxLength,
+      similarity: similarity.toFixed(4) * 10000
     };
-  } catch (error) {}
+  } catch (error) {
+    console.error("An error occurred:", error);
+    return {
+      chars1: [],
+      count1: 0,
+      totalRepeated: 0,
+      maxLength: 0,
+      similarity: 0
+    };
+  }
 }
 
 export {

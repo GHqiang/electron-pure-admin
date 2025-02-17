@@ -1069,16 +1069,19 @@ class OrderAutoTicketQueue {
         );
         targetShow = targetShowList[0];
         if (targetShowList.length > 1) {
-          const defaultResult = { chars: [], count: 0 };
           targetShowList = targetShowList.map(item => {
-            const repeatedCharsResult =
-              findMostRepeatedChars(item.hallName, hall_name) || defaultResult;
+            const repeatedCharsResult = findMostRepeatedChars(
+              item.hallName,
+              hall_name
+            );
             return {
               ...item,
               ...repeatedCharsResult
             };
           });
-          targetShowList = targetShowList.sort((a, b) => b.count - a.count);
+          targetShowList = targetShowList.sort(
+            (a, b) => b.similarity - a.similarity
+          );
           targetShow = targetShowList[0];
           this.logList.push({
             opera_time: getCurrentTime(),
@@ -1114,17 +1117,19 @@ class OrderAutoTicketQueue {
           );
           targetShow = targetShowList[0];
           if (targetShowList.length > 1) {
-            const defaultResult = { chars: [], count: 0 };
             targetShowList = targetShowList.map(item => {
-              const repeatedCharsResult =
-                findMostRepeatedChars(item.hallName, hall_name) ||
-                defaultResult;
+              const repeatedCharsResult = findMostRepeatedChars(
+                item.hallName,
+                hall_name
+              );
               return {
                 ...item,
                 ...repeatedCharsResult
               };
             });
-            targetShowList = targetShowList.sort((a, b) => b.count - a.count);
+            targetShowList = targetShowList.sort(
+              (a, b) => b.similarity - a.similarity
+            );
             targetShow = targetShowList[0];
             this.logList.push({
               opera_time: getCurrentTime(),
