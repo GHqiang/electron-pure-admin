@@ -1,6 +1,7 @@
 // src/utils/axiosInstance.js
 
 import axios from "axios";
+import axiosRetry from "axios-retry";
 import { ElMessage } from "element-plus";
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
@@ -13,6 +14,19 @@ const instance = axios.create({
 
 const NODE_ENV = process.env.NODE_ENV;
 const IS_DEV = NODE_ENV === "development";
+
+// 配置axios-retry
+axiosRetry(instance, {
+  retries: 3, // 最大重试次数
+  retryDelay: retryCount => {
+    return retryCount * 1000; // 每次重试的延迟时间，这里设置为1秒、2秒、3秒
+  },
+  retryCondition: error => {
+    // 仅在网络错误或5xx错误时重试
+    return axiosRetry.isNetworkError(error);
+    // || (error.response && error.response.status >= 500)
+  }
+});
 
 // 请求拦截器
 instance.interceptors.request.use(
