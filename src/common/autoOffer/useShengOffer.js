@@ -132,8 +132,8 @@ class OrderAutoOfferQueue {
       // 奖励百分比枚举
       const rewardsTypeObj = {
         0: 0,
-        1: 3,
-        2: 4,
+        1: 2.5,
+        2: 3,
         3: 0
       };
       let sfcStayOfferlist = stayList.map(item => {
