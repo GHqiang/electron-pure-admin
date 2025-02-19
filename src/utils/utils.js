@@ -2113,7 +2113,7 @@ const offerRuleMatch = order => {
       const today = new Date(show_time).getDay();
       const dayOfWeek = weekdays[today];
       if (item.weekDay?.length) {
-        return item.ruleWeek.includes(dayOfWeek);
+        return item.weekDay.includes(dayOfWeek);
       }
       return true;
     });

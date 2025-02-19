@@ -107,8 +107,9 @@
                   placeholder="Select"
                   style="width: 150px"
                 >
-                  <el-option label="除凤凰云智外" value="1" />
+                  <el-option label="凤凰云智、卢米埃除外" value="1" />
                   <el-option label="仅同步凤凰云智" value="2" />
+                  <el-option label="仅同步卢米埃" value="3" />
                 </el-select>
               </template>
             </el-input>
@@ -447,7 +448,7 @@ const getCardListByApp = async (app_name, phone, session_id, index) => {
     } else if (app_name === "lma") {
       // 卢米埃只获取主卡，其它的出票后更新卡余额
       cardList = res.data?.sleep || [];
-      cardList.push({
+      cardList.unshift({
         card_number: res.data.card_number,
         balance: res.data.money_str,
         is_main_card: 1
@@ -455,9 +456,11 @@ const getCardListByApp = async (app_name, phone, session_id, index) => {
       cardList = cardList.map(item => ({
         card_id: item.card_number + "",
         card_num: item.card_number,
-        balance: item.balance ? item.balance + "" : "0",
+        balance: item.balance,
         is_main_card: item.is_main_card
       }));
+      const card_list = await getLmaOtherCardBalance(cardList, session_id);
+      cardList = card_list;
     } else {
       // sfc系列
       cardList = res.data?.card_data || [];
@@ -485,6 +488,44 @@ const getCardListByApp = async (app_name, phone, session_id, index) => {
   }
 };
 
+// 卢米埃获取其它卡余额
+const getLmaOtherCardBalance = async (cardList, session_id) => {
+  let card_list = JSON.parse(JSON.stringify(cardList));
+  for (let index = 1; index < card_list.length; index++) {
+    const item = card_list[index];
+    const changeCardRes = await changeCardHandle({
+      card_number: item.card_num,
+      lmaToken: session_id
+    });
+    if (!changeCardRes?.error) {
+      item.balance = changeCardRes?.data?.money_str || "0";
+    }
+  }
+  // 再切换为主卡
+  await changeCardHandle({
+    card_number: card_list[0].card_num,
+    lmaToken: session_id
+  });
+  return card_list;
+};
+// 卢米埃切换卡
+const changeCardHandle = async ({ card_number, lmaToken }) => {
+  try {
+    let params = {
+      card_number,
+      lmaToken
+    };
+    console.log("切换卡参数", params);
+    const res = await APP_API_OBJ["lma"].changeCard(params);
+    console.log("切换卡返回", res);
+    return res;
+  } catch (error) {
+    console.error("切换卡异常", error);
+    return {
+      error
+    };
+  }
+};
 window.getCardListByApp = getCardListByApp;
 // window.getCardListByApp("hsmzyc", "13073792313")
 // 同步卡信息时新增卡
@@ -553,12 +594,17 @@ const syncCardInfo = async () => {
     if (appName) {
       tips = "本次同步只同步" + APP_LIST[appName];
     } else {
-      tips += syncFlag == 1 ? "不包含凤凰云智h5系列" : "仅同步凤凰云智h5系列";
+      tips +=
+        syncFlag == 1
+          ? "不包含凤凰云智h5、卢米埃系列"
+          : syncFlag == 2
+            ? "仅同步凤凰云智h5系列"
+            : "仅同步卢米埃系列";
     }
-    if (appName === "lma") {
+    if (appName === "lma" || syncFlag == 3) {
       tips =
         tips +
-        "，卢米埃只同步主卡，其余卡充值后请设为主卡再同步，或者手动编辑维护余额";
+        "，卢米埃同步时请先暂停队列或者关闭卢米埃报价规则，否则会造成卢米埃出票异常";
     }
     let confirmResolve;
     pro1 = () =>
@@ -595,8 +641,10 @@ const syncCardInfo = async () => {
         (formData.app_name
           ? itemA.app_name == formData.app_name
           : syncFlag == 1
-            ? !H5_UME_LIST.includes(itemA.app_name)
-            : H5_UME_LIST.includes(itemA.app_name))
+            ? ![...H5_UME_LIST, "lma"].includes(itemA.app_name)
+            : syncFlag == 2
+              ? H5_UME_LIST.includes(itemA.app_name)
+              : itemA.app_name == "lma")
     );
     console.log("该手机号的loginInfoListt", loginInfoList);
     if (!loginInfoList?.length) {
@@ -611,14 +659,16 @@ const syncCardInfo = async () => {
       page_num: 1,
       page_size: 1000,
       mobile: phone,
-      app_name: formData.app_name || undefined
+      app_name: formData.app_name || (syncFlag == 3 ? "lma" : undefined)
     });
     let serCardList = cardRes.data?.cardList || [];
     serCardList = serCardList.filter(item => {
       if (!formData.app_name) {
         return syncFlag == 1
-          ? !H5_UME_LIST.includes(item.app_name)
-          : H5_UME_LIST.includes(item.app_name);
+          ? ![...H5_UME_LIST, "lma"].includes(item.app_name)
+          : syncFlag == 2
+            ? H5_UME_LIST.includes(item.app_name)
+            : item.app_name == "lma";
       }
       return true;
     });
