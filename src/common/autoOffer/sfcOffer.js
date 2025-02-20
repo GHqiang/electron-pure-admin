@@ -445,7 +445,7 @@ class getSfcOfferPrice {
             black_quans: item.black_quans,
             quanStockList: item.quanStockList.map(itemA => ({
               phone: itemA.phone,
-              quan_stock: 0
+              quan_stock: itemA.quan_stock || 0
             }))
           };
         });
