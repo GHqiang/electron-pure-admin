@@ -700,9 +700,6 @@ const syncCardInfo = async () => {
       }
       let updateCardList = memberCardList
         .filter(item => {
-          if (item.app_name == "lma") {
-            return item.id && item.is_main_card == 1;
-          }
           return item.id && item.balance !== undefined;
         })
         .map(item => ({
