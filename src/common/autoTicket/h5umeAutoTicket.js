@@ -1564,14 +1564,14 @@ class OrderAutoTicketQueue {
       // let quanDiscountAmount = +(useQuan?.[0]?.discountAmount || 0);
       // 用券时总价为0
       if (offerRule.offer_type === "1") {
-        total_price = orderInfoRes?.preferCouponInfo?.totalTicketPrivilegePrice;
+        // total_price = orderInfoRes?.preferCouponInfo?.totalTicketPrivilegePrice;
         if (offerRule.quan_fee > 0) {
           // 支付价格要乘以100
           payAmount = (+offerRule.quan_fee * 1000 * ticket_num) / 10 || 0;
           // 这里本身单位就乘过100了，故不用再乘100
           let realPayAmount =
             (quanList[0].discountValue * 1000 * ticket_num) / 1000;
-          payAmount = realPayAmount;
+          // payAmount = realPayAmount;
           this.logList.push({
             opera_time: getCurrentTime(),
             des: "券补钱总价计算相关信息",
