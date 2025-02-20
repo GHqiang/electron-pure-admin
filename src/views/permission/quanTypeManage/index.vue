@@ -153,6 +153,29 @@
             <el-button type="primary" @click="getQuanHandle">导出券</el-button>
           </template>
         </el-input>
+        <!-- 同步券库存 -->
+        <el-button type="primary" style="padding-left: 0px; margin-left: 15px">
+          <template #default>
+            <el-input
+              v-model="mobile"
+              placeholder="所属账号(手机号)"
+              clearable
+              style="width: 350px; margin-left: -1px"
+            >
+              <template #prepend>
+                <el-select
+                  v-model="syncType"
+                  placeholder="Select"
+                  style="width: 150px"
+                >
+                  <el-option label="凤凰云智除外" value="1" />
+                  <el-option label="仅同步凤凰云智" value="2" />
+                </el-select>
+              </template>
+            </el-input>
+            <span @click="syncQuanInfo">同步券库存</span>
+          </template>
+        </el-button>
       </el-form-item>
     </el-form>
 
@@ -388,6 +411,17 @@ const handleSizeChange = val => {
 const handleCurrentChange = val => {
   console.log(`current page: ${val}`);
   searchData();
+};
+
+// 同步券信息
+const mobile = ref("");
+const syncType = ref("1");
+
+const syncQuanInfo = async () => {
+  try {
+  } catch (error) {
+    console.error("同步券信息异常", error);
+  }
 };
 
 // 弹框实例

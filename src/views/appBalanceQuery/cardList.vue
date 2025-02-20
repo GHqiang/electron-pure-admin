@@ -116,6 +116,12 @@
             <span @click="syncCardInfo">同步卡信息</span>
           </template>
         </el-button>
+        <!-- <el-button
+          style="margin-left: 10px"
+          type="primary"
+          @click="queryCardBalanceTotal"
+          >查看卡余额</el-button
+        > -->
       </el-form-item>
     </el-form>
 
@@ -575,6 +581,32 @@ const updateCardListHandle = async cardList => {
     return true;
   } catch (error) {
     console.warn("更新卡列表异常", error);
+  }
+};
+
+// 查看卡余额
+const queryCardBalanceTotal = async () => {
+  try {
+    const cardRes = await svApi.queryCardList({
+      rule: rule,
+      status: "1",
+      isNeedTotalNum: 0,
+      queryFields:
+        "mobile,card_num,card_discount,linkCinemaIds,use_limit_day,use_limit_month,daily_usage,monthly_usage,usage_date"
+    });
+    let list = cardRes.data.cardList || [];
+    list = list.map(item => ({
+      ...item,
+      // 使用日非当天的就是0
+      daily_usage:
+        item.usage_date !== getCurrentDay() ? 0 : item.daily_usage || 0,
+      // 使用日非当月的就是0
+      month_usage: !isDateInCurrentMonth(item.usage_date)
+        ? 0
+        : item.monthly_usage || 0
+    }));
+  } catch (err) {
+    console.warn("查看卡余额异常", err);
   }
 };
 
