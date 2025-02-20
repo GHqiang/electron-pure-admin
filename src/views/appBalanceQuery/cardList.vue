@@ -611,7 +611,6 @@ const queryCardBalanceTotal = async () => {
     // 假设这里是您之前定义的获取数据的方法
     const cardRes = await svApi.queryCardList({
       rule: rule,
-      status: "1",
       isNeedTotalNum: 0,
       queryFields: "app_name,status,mobile,card_num,card_discount,balance"
     });
