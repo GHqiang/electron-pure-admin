@@ -12,7 +12,8 @@ import {
   calculateMarkup,
   getCinemaLoginInfoList,
   getPreviousDay,
-  findMostRepeatedChars
+  findMostRepeatedChars,
+  couponInfoSpecial
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
@@ -387,7 +388,8 @@ class getUmeOfferPrice {
           quanTypeListParams.forEach(item => {
             let targetQuanList = quanListAll.filter(
               itemA =>
-                item.quan_flag === itemA.coupon_info &&
+                couponInfoSpecial(item.quan_fla) ===
+                  couponInfoSpecial(itemA.coupon_info) &&
                 !item.black_quans?.includes(itemA.coupon_num)
             );
             console.log(item.quan_flag, "targetQuanList", targetQuanList);

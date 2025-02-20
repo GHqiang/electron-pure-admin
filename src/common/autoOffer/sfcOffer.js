@@ -12,7 +12,8 @@ import {
   roundToHalf,
   isDateInCurrentMonth,
   getCinemaLoginInfoList,
-  findMostRepeatedChars
+  findMostRepeatedChars,
+  couponInfoSpecial
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
@@ -446,7 +447,7 @@ class getSfcOfferPrice {
             quanStockList: item.quanStockList.map(itemA => ({
               phone: itemA.phone,
               quan_stock: itemA.quan_stock || 0,
-              update_time: itemA.update_time,
+              update_time: itemA.update_time
             }))
           };
         });
@@ -463,7 +464,8 @@ class getSfcOfferPrice {
           quanTypeListParams.forEach(item => {
             let targetQuanList = quanListAll.filter(
               itemA =>
-                item.quan_flag === itemA.coupon_info &&
+                couponInfoSpecial(item.quan_flag) ===
+                  couponInfoSpecial(itemA.coupon_info) &&
                 !item.black_quans?.includes(itemA.coupon_num)
             );
             console.log(item.quan_flag, "targetQuanList", targetQuanList);
