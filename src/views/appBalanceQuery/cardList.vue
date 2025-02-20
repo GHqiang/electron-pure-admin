@@ -116,12 +116,12 @@
             <span @click="syncCardInfo">同步卡信息</span>
           </template>
         </el-button>
-        <!-- <el-button
+        <el-button
           style="margin-left: 10px"
           type="primary"
           @click="queryCardBalanceTotal"
           >查看卡余额</el-button
-        > -->
+        >
       </el-form-item>
     </el-form>
 
@@ -247,6 +247,25 @@
       :dialogTitle="dialogTitle"
       @submit="saveCard"
     />
+
+    <el-dialog v-model="cardBalanceVisible" title="卡余额汇总结果">
+      <el-table :data="summaryData" border style="width: 100%">
+        <el-table-column prop="appName" label="应用名称" width="180" />
+        <el-table-column prop="totalBalance" sortable label="总余额" />
+        <el-table-column
+          prop="status1Balance"
+          label="有效卡总余额"
+          sortable
+          width="180"
+        />
+        <el-table-column
+          prop="notStatus1Balance"
+          label="无效卡总余额"
+          sortable
+          width="180"
+        />
+      </el-table>
+    </el-dialog>
   </div>
 </template>
 
@@ -584,27 +603,72 @@ const updateCardListHandle = async cardList => {
   }
 };
 
+const cardBalanceVisible = ref(false);
+const summaryData = ref([]);
 // 查看卡余额
 const queryCardBalanceTotal = async () => {
   try {
+    // 假设这里是您之前定义的获取数据的方法
     const cardRes = await svApi.queryCardList({
       rule: rule,
       status: "1",
       isNeedTotalNum: 0,
-      queryFields:
-        "mobile,card_num,card_discount,linkCinemaIds,use_limit_day,use_limit_month,daily_usage,monthly_usage,usage_date"
+      queryFields: "app_name,status,mobile,card_num,card_discount,balance"
     });
     let list = cardRes.data.cardList || [];
-    list = list.map(item => ({
+
+    const uniqueMap = new Map();
+    list.forEach(item => {
+      const key = `${item.mobile}-${item.card_num}`;
+      if (!uniqueMap.has(key) && APP_LIST[item.app_name]) {
+        uniqueMap.set(key, item);
+      }
+    });
+
+    list = Array.from(uniqueMap.values());
+
+    const summary = {};
+    let useBalance = 0,
+      noUseBalance = 0,
+      totalBalance = 0;
+    list.forEach(item => {
+      const appName = APP_LIST[item.app_name];
+      const balance = parseFloat(item.balance);
+
+      if (!summary[appName]) {
+        summary[appName] = {
+          appName,
+          status1Balance: 0,
+          notStatus1Balance: 0,
+          totalBalance: 0
+        };
+      }
+
+      if (item.status == "1") {
+        summary[appName].status1Balance += balance;
+        useBalance += balance;
+      } else {
+        summary[appName].notStatus1Balance += balance;
+        noUseBalance += balance;
+      }
+
+      summary[appName].totalBalance += balance;
+      totalBalance += balance;
+    });
+    let balance_list = Object.values(summary);
+    balance_list.unshift({
+      appName: "总余额",
+      status1Balance: useBalance,
+      notStatus1Balance: noUseBalance,
+      totalBalance: totalBalance
+    });
+    summaryData.value = balance_list.map(item => ({
       ...item,
-      // 使用日非当天的就是0
-      daily_usage:
-        item.usage_date !== getCurrentDay() ? 0 : item.daily_usage || 0,
-      // 使用日非当月的就是0
-      month_usage: !isDateInCurrentMonth(item.usage_date)
-        ? 0
-        : item.monthly_usage || 0
+      status1Balance: +item.status1Balance.toFixed(),
+      notStatus1Balance: +item.notStatus1Balance.toFixed(),
+      totalBalance: +item.totalBalance.toFixed()
     }));
+    cardBalanceVisible.value = true;
   } catch (err) {
     console.warn("查看卡余额异常", err);
   }
