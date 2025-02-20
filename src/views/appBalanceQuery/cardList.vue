@@ -248,10 +248,15 @@
       @submit="saveCard"
     />
 
-    <el-dialog v-model="cardBalanceVisible" title="卡余额汇总结果">
+    <el-dialog v-model="cardBalanceVisible" width="60%" title="卡余额汇总结果">
       <el-table :data="summaryData" border style="width: 100%">
         <el-table-column prop="appName" label="应用名称" width="180" />
         <el-table-column prop="totalBalance" sortable label="总余额" />
+        <el-table-column
+          prop="discountTotalBalance"
+          sortable
+          label="实际总余额"
+        />
         <el-table-column
           prop="status1Balance"
           label="有效卡总余额"
@@ -629,17 +634,21 @@ const queryCardBalanceTotal = async () => {
     const summary = {};
     let useBalance = 0,
       noUseBalance = 0,
-      totalBalance = 0;
+      totalBalance = 0,
+      discountTotalBalance = 0;
     list.forEach(item => {
       const appName = APP_LIST[item.app_name];
-      const balance = parseFloat(item.balance);
+      const balance = parseFloat(item.balance) || 0;
+      const discountBalance =
+        (balance * 1000 * (item.card_discount || 100)) / 1000 / 100 || 0;
 
       if (!summary[appName]) {
         summary[appName] = {
           appName,
           status1Balance: 0,
           notStatus1Balance: 0,
-          totalBalance: 0
+          totalBalance: 0,
+          discountTotalBalance: 0
         };
       }
 
@@ -652,20 +661,25 @@ const queryCardBalanceTotal = async () => {
       }
 
       summary[appName].totalBalance += balance;
+      summary[appName].discountTotalBalance += discountBalance;
       totalBalance += balance;
+      discountTotalBalance += discountBalance || 0;
     });
     let balance_list = Object.values(summary);
+    console.log("discountTotalBalance", discountTotalBalance);
     balance_list.unshift({
       appName: "总余额",
       status1Balance: useBalance,
       notStatus1Balance: noUseBalance,
-      totalBalance: totalBalance
+      totalBalance: totalBalance,
+      discountTotalBalance
     });
     summaryData.value = balance_list.map(item => ({
       ...item,
       status1Balance: +item.status1Balance.toFixed(),
       notStatus1Balance: +item.notStatus1Balance.toFixed(),
-      totalBalance: +item.totalBalance.toFixed()
+      totalBalance: +item.totalBalance.toFixed(),
+      discountTotalBalance: +item.discountTotalBalance.toFixed()
     }));
     cardBalanceVisible.value = true;
   } catch (err) {
