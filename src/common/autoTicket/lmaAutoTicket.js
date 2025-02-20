@@ -10,7 +10,8 @@ import {
   getCinemaLoginInfoList,
   sendWxPusherMessage,
   formatTimeStrByLma,
-  findMostRepeatedChars
+  findMostRepeatedChars,
+  couponInfoSpecial
 } from "@/utils/utils";
 
 import svApi from "@/api/sv-api";
@@ -3313,7 +3314,7 @@ const continuousGetQuan = async data => {
     let quanList = res.data || [];
     let targetQuanList = quanList.filter(
       item =>
-        item.voucher_name === quan_flag &&
+        couponInfoSpecial(item.voucher_name) === couponInfoSpecial(quan_flag) &&
         !black_quans?.includes(item.code) &&
         !usedQuanList.some(itemA => itemA.quan_code?.includes(item.code))
     );

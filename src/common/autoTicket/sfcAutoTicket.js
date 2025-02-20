@@ -4355,7 +4355,8 @@ const continuousGetQuan = async data => {
     if (quan_value) {
       targetQuanList = quanList.filter(
         item =>
-          item.coupon_info === quan_flag &&
+          couponInfoSpecial(item.coupon_info) ===
+            couponInfoSpecial(quan_flag) &&
           !black_quans?.includes(item.coupon_num)
       );
     }
@@ -4467,7 +4468,8 @@ const getQuanList = async data => {
     if (quan_value) {
       targetQuanList = quanList.filter(
         item =>
-          item.coupon_info === quan_flag &&
+          couponInfoSpecial(item.coupon_info) ===
+            couponInfoSpecial(quan_flag) &&
           !black_quans?.includes(item.coupon_num)
       );
     }

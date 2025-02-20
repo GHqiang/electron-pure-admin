@@ -13,7 +13,8 @@ import {
   formatTimeOfTime,
   getCurrentDay,
   isDateInCurrentMonth,
-  findMostRepeatedChars
+  findMostRepeatedChars,
+  couponInfoSpecial
 } from "@/utils/utils";
 // 帮助锁定座位实例对象
 import assistLockSeatObj from "./lockSeatQueue";
@@ -2787,7 +2788,9 @@ class OrderAutoTicketQueue {
         let { quan_value, quan_cost, quan_flag, quan_fee, black_quans } =
           offerRule;
         // 根据券标识获取目标券
-        let targetQuanList = quanList.filter(item => item.name === quan_flag);
+        let targetQuanList = quanList.filter(
+          item => couponInfoSpecial(item.name) === couponInfoSpecial(quan_flag)
+        );
         // 增加已用完过滤，防止核销延迟导致用券失败
         const usedQuanList = await this.queryUsedQuanList({
           quan_value: offerRule.quan_value,
