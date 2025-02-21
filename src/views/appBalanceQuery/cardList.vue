@@ -453,9 +453,9 @@ const getCardListByApp = async (app_name, phone, session_id, index) => {
       // params.cinema_id = "1";
       params.session_id = session_id;
     }
-    await mockDelay(H5_UME_LIST.includes(app_name) ? 0.5 : 0.1);
-    if (index % 5) {
-      await mockDelay(1);
+    await mockDelay(H5_UME_LIST.includes(app_name) ? 1 : 0.1);
+    if (index % 8) {
+      await mockDelay(1.5);
     }
     const res = await APP_API_OBJ[app_name].getCardList(params);
     console.warn("获取会员卡列表返回", res);
