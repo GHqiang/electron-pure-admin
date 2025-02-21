@@ -154,7 +154,7 @@
           </template>
         </el-input>
         <!-- 同步券库存 -->
-        <el-button type="primary" style="padding-left: 0px; margin-left: 15px">
+        <!-- <el-button type="primary" style="padding-left: 0px; margin-left: 15px">
           <template #default>
             <el-input
               v-model="mobile"
@@ -175,7 +175,13 @@
             </el-input>
             <span @click="syncQuanInfo">同步券库存</span>
           </template>
-        </el-button>
+        </el-button> -->
+        <el-button
+          style="margin-left: 10px"
+          type="primary"
+          @click="queryQuanBalanceTotal"
+          >查看券余额</el-button
+        >
       </el-form-item>
     </el-form>
 
@@ -319,6 +325,18 @@
         <el-table-column property="remaining_count" sortable label="数量" />
       </el-table>
     </el-dialog>
+
+    <el-dialog v-model="quanBalanceVisible" width="50%" title="券余额汇总结果">
+      <el-table :data="summaryData" border style="width: 100%">
+        <el-table-column prop="appName" label="应用名称" width="180" />
+        <el-table-column prop="totalBalance" sortable label="总余额" />
+        <el-table-column
+          prop="discountTotalBalance"
+          sortable
+          label="实际总余额"
+        />
+      </el-table>
+    </el-dialog>
   </div>
 </template>
 
@@ -417,8 +435,82 @@ const handleCurrentChange = val => {
 const mobile = ref("");
 const syncType = ref("1");
 
+// 同步券信息
 const syncQuanInfo = async () => {
   try {
+    const params = {
+      isNeedTotalNum: 0,
+      queryFields:
+        "id,app_name,quan_value,quan_flag,quan_cost,quan_fee,quanStockList"
+    };
+    let res = await svApi.queryQuanTypeList(params);
+    let quanTypeList = res.data.quanTypeList || [];
+    quanTypeList = quanTypeList.map(item => {
+      item.quanStockList = item.quanStockList
+        ? JSON.parse(item.quanStockList)
+        : [];
+      return item;
+    });
+  } catch (error) {
+    console.error("同步券信息异常", error);
+  }
+};
+
+const quanBalanceVisible = ref(false);
+const summaryData = ref([]);
+// 查看券余额
+const queryQuanBalanceTotal = async () => {
+  try {
+    const params = {
+      isNeedTotalNum: 0,
+      queryFields:
+        "id,app_name,quan_value,quan_flag,quan_cost,quan_fee,quanStockList"
+    };
+    let res = await svApi.queryQuanTypeList(params);
+    let quanTypeList = res.data.quanTypeList || [];
+    quanTypeList = quanTypeList
+      .map(item => {
+        item.quanStockList = item.quanStockList
+          ? JSON.parse(item.quanStockList)
+          : [];
+        return item;
+      })
+      .filter(item => item.quanStockList.length);
+    const summary = {};
+    let totalBalance = 0,
+      discountTotalBalance = 0;
+    quanTypeList.forEach(item => {
+      const appName = APP_LIST[item.app_name];
+      const quan_cost_real = parseFloat(item.quan_cost) - (item.quan_fee || 0);
+      const quan_num = item.quanStockList
+        .map(item => +item.quan_stock)
+        .reduce((prev, item) => prev + item, 0);
+      const quan_balance = (+item.quan_cost * 1000 * quan_num) / 1000;
+      const quan_balance_real = (quan_cost_real * 1000 * quan_num) / 1000;
+      if (!summary[appName]) {
+        summary[appName] = {
+          appName,
+          totalBalance: 0,
+          discountTotalBalance: 0
+        };
+      }
+      summary[appName].totalBalance += quan_balance;
+      summary[appName].discountTotalBalance += quan_balance_real;
+      totalBalance += quan_balance;
+      discountTotalBalance += quan_balance_real || 0;
+    });
+    let balance_list = Object.values(summary);
+    balance_list.unshift({
+      appName: "总余额",
+      totalBalance: totalBalance,
+      discountTotalBalance
+    });
+    summaryData.value = balance_list.map(item => ({
+      ...item,
+      totalBalance: +item.totalBalance.toFixed(),
+      discountTotalBalance: +item.discountTotalBalance.toFixed()
+    }));
+    quanBalanceVisible.value = true;
   } catch (error) {
     console.error("同步券信息异常", error);
   }
@@ -780,8 +872,8 @@ const getUnUseQuanHandle = async () => {
 const getQuanTypeList = async () => {
   try {
     const params = {
-      is_store: "1",
-      page_size: 100
+      page_num: 1,
+      page_size: 200
     };
     const res = await svApi.queryQuanTypeList(params);
     let quanTypeList = res.data.quanTypeList || [];
