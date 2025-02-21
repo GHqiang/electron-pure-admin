@@ -98,9 +98,6 @@
         <el-button type="danger" :disabled="!hasSelected" @click="batchDelete"
           >批量删除</el-button
         >
-        <el-button type="primary" @click="getQuanInventory"
-          >查询券库存</el-button
-        >
         <el-button type="warning" @click="getUnUseQuanHandle"
           >导出不可用券</el-button
         >
@@ -177,7 +174,13 @@
           </template>
         </el-button> -->
         <el-button
-          style="margin-left: 10px"
+          type="primary"
+          style="margin-left: 15px"
+          @click="getQuanInventory"
+          >查询券库存</el-button
+        >
+        <el-button
+          style="margin-left: 15px"
           type="primary"
           @click="queryQuanBalanceTotal"
           >查看券余额</el-button
@@ -323,6 +326,11 @@
           </template>
         </el-table-column>
         <el-table-column property="remaining_count" sortable label="数量" />
+        <el-table-column
+          property="real_total_price"
+          sortable
+          label="实际价值"
+        />
       </el-table>
     </el-dialog>
 
@@ -672,9 +680,42 @@ const formatQuanType = quan_value => {
 // 查询券库存
 const getQuanInventory = async () => {
   try {
+    const params = {
+      isNeedTotalNum: 0,
+      queryFields: "id,app_name,quan_value,quan_flag,quan_cost,quan_fee"
+    };
+    let quanTypeRes = await svApi.queryQuanTypeList(params);
+    let quanTypeList = quanTypeRes.data.quanTypeList || [];
+    console.warn("quanTypeList", quanTypeList);
+
     const res = await svApi.queryQuanInventory();
     console.warn("查询券库存返回", res);
     let quanList = res.data?.quanList;
+    let total_num = 0,
+      total_price = 0;
+    quanList = quanList.map(item => {
+      let real_total_price = 0;
+      let quanInfo = quanTypeList.find(
+        itemA => itemA.quan_value == item.quan_value
+      );
+      if (quanInfo) {
+        const quan_cost_real =
+          parseFloat(quanInfo.quan_cost) - (quanInfo.quan_fee || 0);
+        real_total_price =
+          (quan_cost_real * 1000 * item.remaining_count) / 1000;
+      }
+      total_num += item.remaining_count;
+      total_price += real_total_price;
+      return {
+        ...item,
+        real_total_price
+      };
+    });
+    quanList.unshift({
+      quan_value: "总余额",
+      remaining_count: total_num,
+      real_total_price: total_price
+    });
     dialogQueryQuanVisible.value = true;
     quanData.value = quanList;
   } catch (error) {
@@ -873,7 +914,7 @@ const getQuanTypeList = async () => {
   try {
     const params = {
       page_num: 1,
-      page_size: 200
+      page_size: 500
     };
     const res = await svApi.queryQuanTypeList(params);
     let quanTypeList = res.data.quanTypeList || [];
