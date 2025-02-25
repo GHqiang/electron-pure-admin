@@ -388,7 +388,7 @@ class getUmeOfferPrice {
           quanTypeListParams.forEach(item => {
             let targetQuanList = quanListAll.filter(
               itemA =>
-                couponInfoSpecial(item.quan_fla) ===
+                couponInfoSpecial(item.quan_flag) ===
                   couponInfoSpecial(itemA.coupon_info) &&
                 !item.black_quans?.includes(itemA.coupon_num)
             );
