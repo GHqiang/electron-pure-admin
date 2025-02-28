@@ -1668,7 +1668,7 @@ class OrderAutoTicketQueue {
       let quan_fee = offerRule.quan_fee || 0;
       quan_fee = Number(quan_fee);
       let cardNo = card_id;
-      let quan_fee_total = quan_fee * ticket_num;
+      let quan_fee_total = (quan_fee * 1000 * ticket_num) / 1000;
       if (!orderId) {
         console.error("创建订单失败，单个订单直接出票结束", "走转单逻辑");
         const transferParams = await this.transferOrder(item, {

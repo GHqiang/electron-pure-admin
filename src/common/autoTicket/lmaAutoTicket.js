@@ -1503,7 +1503,7 @@ class OrderAutoTicketQueue {
       console.log(conPrefix + "订单最后价格", paymentAmount, priceInfo);
       let quan_fee = offerRule.quan_fee || 0;
       quan_fee = Number(quan_fee);
-      let quan_fee_total = quan_fee * ticket_num;
+      let quan_fee_total = (quan_fee * 1000 * ticket_num) / 1000;
       if (offerRule.offer_type === "1" && paymentAmount > quan_fee_total) {
         this.logList.push({
           opera_time: getCurrentTime(),

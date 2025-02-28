@@ -1714,7 +1714,7 @@ class OrderAutoTicketQueue {
           return { offerRule, transferParams };
         }
       }
-      let quan_fee_total = quan_fee * ticket_num;
+      let quan_fee_total = (quan_fee * 1000 * ticket_num) / 1000;
       if (!order_num) {
         console.error(
           conPrefix + "创建订单失败，单个订单直接出票结束",
