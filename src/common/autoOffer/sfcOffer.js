@@ -397,7 +397,7 @@ class getSfcOfferPrice {
       let needUpdateQuanTypeList = [];
       // 拿着处理过的最大券库存（几个号之间）+对应的更新时间去判断是否要更新（只判断自己号上的）
       let isNeedUpdate = quanTypeList.some(item => {
-        if (item.quan_stock < 5) {
+        // if (item.quan_stock < 5) {
           let inx = item.quanStockListByPhone.findIndex(
             itemA => itemA.quan_stock === item.quan_stock
           );
@@ -412,7 +412,7 @@ class getSfcOfferPrice {
           } else {
             return true;
           }
-        }
+        // }
         return false;
       });
       if (!isNeedUpdate) {
