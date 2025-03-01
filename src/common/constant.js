@@ -123,7 +123,7 @@ let H5_UME_LIST = [
   "sgjmycfsd",
 
   "xgjyycnjystjd",
-  "wanxiang",
+  // "wanxiang",
   "hsmzyc",
   "gzfyyc",
   "szxtyy",
