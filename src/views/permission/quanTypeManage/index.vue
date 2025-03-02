@@ -484,10 +484,26 @@ const queryQuanBalanceTotal = async () => {
         return item;
       })
       .filter(item => item.quanStockList.length);
+    // 做去重处理
+    let filterQuanList = [];
+    quanTypeList.forEach(item => {
+      let quanInfo = filterQuanList.find(
+        itemA => itemA.quan_flag == item.quan_flag
+      );
+      if (!quanInfo) {
+        let targetQuanList = quanTypeList.filter(
+          itemA => itemA.quan_flag == item.quan_flag
+        );
+        targetQuanList = targetQuanList.sort((a, b) => a.quan_fee - b.quan_fee);
+        let quanInfo = targetQuanList[0];
+        filterQuanList.push(quanInfo);
+      }
+    });
+    console.log("filterQuanList", filterQuanList);
     const summary = {};
     let totalBalance = 0,
       discountTotalBalance = 0;
-    quanTypeList.forEach(item => {
+    filterQuanList.forEach(item => {
       const appName = APP_LIST[item.app_name];
       const quan_cost_real = parseFloat(item.quan_cost) - (item.quan_fee || 0);
       const quan_num = item.quanStockList
@@ -695,9 +711,15 @@ const getQuanInventory = async () => {
       total_price = 0;
     quanList = quanList.map(item => {
       let real_total_price = 0;
-      let quanInfo = quanTypeList.find(
+      let targetQuanInfo = quanTypeList.find(
         itemA => itemA.quan_value == item.quan_value
       );
+      let quan_flag = targetQuanInfo?.quan_flag;
+      let targetQuanList = quanTypeList.filter(
+        itemA => itemA.quan_flag == quan_flag
+      );
+      targetQuanList = targetQuanList.sort((a, b) => a.quan_fee - b.quan_fee);
+      let quanInfo = targetQuanList[0];
       if (quanInfo) {
         const quan_cost_real =
           parseFloat(quanInfo.quan_cost) - (quanInfo.quan_fee || 0);
