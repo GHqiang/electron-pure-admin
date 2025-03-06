@@ -1444,7 +1444,6 @@ class OrderAutoTicketQueue {
         coupon_id,
         member_coupon_id,
         profit,
-        quanStock,
         priceInfo
       } = await this.useQuanOrCard({
         order_number,
@@ -1791,10 +1790,10 @@ class OrderAutoTicketQueue {
           order_number
         });
       }
-      if (offerRule.offer_type === "1") {
-        // 更新券库存
+      // 更新非入库券的券库存
+      if (offerRule.offer_type === "1" && offerRule.is_store != 1) {
         this.updateQuanStock({
-          quan_stock: quanStock - ticket_num,
+          ticket_num,
           quan_flag: offerRule.quan_flag,
           quan_value: offerRule.quan_value,
           app_name: appFlag,
@@ -2014,18 +2013,14 @@ class OrderAutoTicketQueue {
 
       if (offerRule.offer_type === "1" || is_auto_use_quan) {
         console.log(conPrefix + "使用优惠券出票");
-        if (is_auto_use_quan) {
-          const quanInfo = await this.getQuanInfo(
-            offerRule.quan_value,
-            appFlag
-          );
-          offerRule.quan_id = quanInfo?.id;
-          offerRule.quan_cost = quanInfo?.quan_cost;
-          offerRule.quan_flag = quanInfo?.quan_flag;
-          offerRule.quan_fee = quanInfo?.quan_fee;
-          offerRule.is_store = quanInfo?.is_store;
-          offerRule.black_quans = quanInfo?.black_quans;
-        }
+        const quanInfo = await this.getQuanInfo(offerRule.quan_value, appFlag);
+        offerRule.quan_id = quanInfo?.id;
+        offerRule.quan_cost = quanInfo?.quan_cost;
+        offerRule.quan_flag = quanInfo?.quan_flag;
+        offerRule.quan_fee = quanInfo?.quan_fee;
+        offerRule.is_store = quanInfo?.is_store;
+        offerRule.black_quans = quanInfo?.black_quans;
+        offerRule.quanStockList = quanInfo?.quanStockList;
         let {
           quan_value,
           quan_cost,
@@ -2060,7 +2055,7 @@ class OrderAutoTicketQueue {
         // 这里拿到的券列表会比票数多10张
         let quanList = quanListRes?.quanList || [];
         let quanType = quanListRes?.quanType;
-        quanStock = quanListRes?.quanStock;
+        quanStock = quanList.length || 0; // 默认用查出来的券库存（可能会比实际的少）
         if (!quanList?.length) {
           this.logList.push({
             opera_time: getCurrentTime(),
@@ -2068,49 +2063,60 @@ class OrderAutoTicketQueue {
             level: "error"
           });
         }
-        if (quanList?.length < ticket_num && is_store == "1") {
-          this.logList.push({
-            opera_time: getCurrentTime(),
-            des: "用券前个人中心目标券不够，从服务端获取",
-            level: "info"
-          });
-          let diffNum = Number(ticket_num) - quanList.length;
-          const newQuanRes = await this.getNewQuan({
-            city_id,
-            cinema_id,
-            quan_value: offerRule.quan_value,
-            quan_flag: offerRule.quan_flag,
-            session_id,
-            black_quans,
-            diffNum,
-            quanNum: diffNum + 10
-          });
-          // 新绑定的权属：diffNum
-          const newQuanList = newQuanRes?.bandQuanList || [];
-          // 从服务端查出来的券数，<= diffNum + 10
-          const newQuanNums = newQuanRes?.newQuanNums;
-          quanStock = quanStock + newQuanNums;
-          // 多查询几张绑定防止有绑券异常导致出票失败情况
-          if (newQuanList?.length) {
-            quanList = [...quanList, ...newQuanList.slice(0, diffNum)];
+        if (is_store == "1") {
+          if (quanList?.length < ticket_num) {
+            this.logList.push({
+              opera_time: getCurrentTime(),
+              des: "用券前个人中心目标券不够，从服务端获取",
+              level: "info"
+            });
+            let diffNum = Number(ticket_num) - quanList.length;
+            const newQuanRes = await this.getNewQuan({
+              city_id,
+              cinema_id,
+              quan_value: offerRule.quan_value,
+              quan_flag: offerRule.quan_flag,
+              session_id,
+              black_quans,
+              diffNum,
+              quanNum: diffNum + 10
+            });
+            // 新绑定的权属：diffNum
+            const newQuanList = newQuanRes?.bandQuanList || [];
+            // 从服务端查出来的券数，<= diffNum + 10
+            quanList = [...quanList, ...newQuanList];
+            quanStock = quanList.length;
+            // 多查询几张绑定防止有绑券异常导致出票失败情况
             this.logList.push({
               opera_time: getCurrentTime(),
               des: "从服务端获取券绑定完成",
               level: "info",
               info: {
                 newQuanList,
+                quanStock,
                 ticket_num
               }
             });
+          } else {
+            let quanStockList = offerRule.quanStockList
+              ? JSON.parse(quanStockList)
+              : [];
+            let targetInfo = quanStockList.find(
+              itemA => itemA.phone === this.curPhone
+            );
+            // 由于上面一开始拿到的quanStock可能比实际的少，所以优先用库里面的值
+            quanStock = targetInfo?.quan_stock || quanStock;
           }
+          // 更新入库券的本地已绑定的券库存
+          this.updateQuanStock({
+            quan_stock:
+              quanStock < ticket_num ? quanStock : quanStock - ticket_num, // 直接传过去券库存
+            quan_value: offerRule.quan_value,
+            quan_flag: offerRule.quan_flag,
+            app_name: appFlag,
+            phone: this.curPhone
+          });
         }
-        // 更新券库存
-        this.updateQuanStock({
-          quan_stock: quanList.length,
-          quan_flag: offerRule.quan_flag,
-          app_name: appFlag,
-          phone: this.curPhone
-        });
         if (quanList?.length < ticket_num) {
           this.logList.push({
             opera_time: getCurrentTime(),
@@ -2168,6 +2174,7 @@ class OrderAutoTicketQueue {
           plat_name,
           order_number,
           quan_cost,
+          quanStock,
           is_store
         });
         if (!useQuans.length && is_auto_use_quan) {
@@ -2193,7 +2200,6 @@ class OrderAutoTicketQueue {
           offerRule.offer_type = "1";
         }
         return {
-          quanStock,
           quan_code,
           card_id,
           coupon_id,
@@ -2421,7 +2427,9 @@ class OrderAutoTicketQueue {
   }
   // 更新券库存
   async updateQuanStock(params) {
-    const { quan_stock, quan_flag, phone, app_name, quan_value } = params;
+    const { ticket_num, quan_stock, quan_flag, phone, app_name, quan_value } =
+      params;
+    // quan_stock：入库券的本地库存
     let targetQuanList = [];
     const quanTypeParams = {
       app_name,
@@ -2461,26 +2469,21 @@ class OrderAutoTicketQueue {
         quanStockList = JSON.parse(quanStockList);
         let inx = quanStockList.findIndex(itemA => itemA.phone === phone);
         if (inx != -1) {
-          quanStockList[inx].quan_stock = quan_stock;
-          quanStockList[inx].real_quan_stock = quan_stock;
+          let info = quanStockList[inx];
+          quanStockList[inx].quan_stock =
+            quan_stock !== undefined
+              ? quan_stock
+              : info.quan_stock - ticket_num;
+          quanStockList[inx].real_quan_stock =
+            quan_stock !== undefined
+              ? quan_stock
+              : info.real_quan_stock - ticket_num;
           quanStockList[inx].update_time = getCurrentTime();
         } else {
-          quanStockList.push({
-            phone,
-            quan_stock,
-            real_quan_stock: quan_stock,
-            update_time: getCurrentTime()
-          });
+          return;
         }
       } else {
-        quanStockList = [
-          {
-            phone,
-            quan_stock,
-            real_quan_stock: quan_stock,
-            update_time: getCurrentTime()
-          }
-        ];
+        return;
       }
       let updateParams = {
         id: item.id,
@@ -3785,7 +3788,8 @@ class OrderAutoTicketQueue {
     asyncFlag,
     asyncBandQuanList,
     plat_name,
-    order_number
+    order_number,
+    quanStock
   }) {
     const { conPrefix, appFlag } = this;
     let targetLogList = asyncFlag === 1 ? asyncBandQuanList : this.logList;
@@ -3896,6 +3900,16 @@ class OrderAutoTicketQueue {
           break;
         }
       }
+      // 异步绑券更新券库存
+      if (asyncFlag === 1) {
+        this.updateQuanStock({
+          quan_stock: quanStock - ticket_num + bandQuanList.length, // 直接传过去券库存
+          quan_value,
+          quan_flag,
+          app_name: appFlag,
+          phone: this.curPhone
+        });
+      }
       return {
         bandQuanList,
         newQuanNums: quanList.length
@@ -3943,6 +3957,7 @@ class OrderAutoTicketQueue {
     plat_name,
     order_number,
     quan_cost,
+    quanStock, // 入库券的本地库存
     is_store
   }) {
     const { conPrefix, appFlag } = this;
@@ -3970,7 +3985,8 @@ class OrderAutoTicketQueue {
           asyncFlag: 1,
           asyncBandQuanList: [],
           plat_name,
-          order_number
+          order_number,
+          quanStock
         });
       }
       // 用券列表
@@ -4530,7 +4546,6 @@ const getQuanList = async data => {
       let list = quanDataRes?.list || [];
       targetQuanList.push(...list);
     }
-    let quanStock = targetQuanList.length;
     // let noUseLIst = ['1598162363509715', '1055968062906716', '1284460567801315', '1116166666409614']
     // 过滤掉不可用券
     // list = list.filter(item => item.coupon_num.indexOf("t") === -1);
@@ -4555,14 +4570,6 @@ const getQuanList = async data => {
       let groupList = Object.values(groupedCoupons);
       let targetQuanGroup = groupList.find(item => item.length >= ticket_num);
 
-      // 获取分组后最多出票量当做库存
-      let maxLength = groupList[0]?.length || 0; // 初始化为数组的第一个元素
-      for (let i = 1; i < groupList.length; i++) {
-        if (groupList[i]?.length > maxLength) {
-          maxLength = groupList[i].length;
-        }
-      }
-      quanStock = maxLength;
       logList.push({
         opera_time: getCurrentTime(),
         des: "会员赠券按照card_num分组",
@@ -4582,7 +4589,6 @@ const getQuanList = async data => {
       }
     }
     return {
-      quanStock,
       quanList: targetQuanList,
       quanType
     };
