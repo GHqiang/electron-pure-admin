@@ -447,6 +447,7 @@ class getSfcOfferPrice {
             quanStockList: item.quanStockList.map(itemA => ({
               phone: itemA.phone,
               quan_stock: itemA.quan_stock || 0,
+              real_quan_stock: itemA.real_quan_stock || 0,
               update_time: itemA.update_time
             }))
           };
@@ -495,11 +496,13 @@ class getSfcOfferPrice {
             let inx = quanStockList.findIndex(itemB => itemB.phone === mobile);
             if (inx != -1) {
               quanStockList[inx].quan_stock = quanStock;
+              quanStockList[inx].real_quan_stock = targetQuanList.length;
               quanStockList[inx].update_time = getCurrentTime();
             } else {
               quanStockList.push({
                 phone: mobile,
                 quan_stock: quanStock,
+                real_quan_stock: targetQuanList.length,
                 update_time: getCurrentTime()
               });
             }

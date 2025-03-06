@@ -9,6 +9,7 @@ import {
   formatErrInfo,
   getCinemaIdByLma,
   formatTimeStrByLma,
+  getCinemaLoginInfoList,
   calcCount,
   roundToHalf,
   isDateInCurrentMonth,

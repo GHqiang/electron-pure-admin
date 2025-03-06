@@ -2462,16 +2462,25 @@ class OrderAutoTicketQueue {
         let inx = quanStockList.findIndex(itemA => itemA.phone === phone);
         if (inx != -1) {
           quanStockList[inx].quan_stock = quan_stock;
+          quanStockList[inx].real_quan_stock = quan_stock;
           quanStockList[inx].update_time = getCurrentTime();
         } else {
           quanStockList.push({
             phone,
             quan_stock,
+            real_quan_stock: quan_stock,
             update_time: getCurrentTime()
           });
         }
       } else {
-        quanStockList = [{ phone, quan_stock, update_time: getCurrentTime() }];
+        quanStockList = [
+          {
+            phone,
+            quan_stock,
+            real_quan_stock: quan_stock,
+            update_time: getCurrentTime()
+          }
+        ];
       }
       let updateParams = {
         id: item.id,

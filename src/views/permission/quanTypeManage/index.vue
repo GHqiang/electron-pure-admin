@@ -507,7 +507,7 @@ const queryQuanBalanceTotal = async () => {
       const appName = APP_LIST[item.app_name];
       const quan_cost_real = parseFloat(item.quan_cost) - (item.quan_fee || 0);
       const quan_num = item.quanStockList
-        .map(item => +item.quan_stock)
+        .map(item => +(item.real_quan_stock || item.quan_stock || 0))
         .reduce((prev, item) => prev + item, 0);
       const quan_balance = (+item.quan_cost * 1000 * quan_num) / 1000;
       const quan_balance_real = (quan_cost_real * 1000 * quan_num) / 1000;

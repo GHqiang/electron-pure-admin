@@ -80,7 +80,7 @@
             :data="formData.quanStockList"
             style="width: 100%; margin-top: 10px"
           >
-            <el-table-column prop="phone" label="手机号" min-width="160">
+            <el-table-column prop="phone" label="手机号" min-width="150">
               <template #default="scope">
                 <el-input
                   v-model="scope.row.phone"
@@ -89,7 +89,11 @@
                 />
               </template>
             </el-table-column>
-            <el-table-column prop="quan_stock" label="券库存" min-width="120">
+            <el-table-column
+              prop="quan_stock"
+              label="券库存(线下券卡号分组最大组数量)"
+              min-width="120"
+            >
               <template #default="scope">
                 <el-input
                   v-model="scope.row.quan_stock"
@@ -99,9 +103,22 @@
               </template>
             </el-table-column>
             <el-table-column
+              prop="real_quan_stock"
+              label="真实券库存(线下券卡号分组总数)"
+              min-width="120"
+            >
+              <template #default="scope">
+                <el-input
+                  v-model="scope.row.real_quan_stock"
+                  clearable
+                  placeholder="真实券库存"
+                />
+              </template>
+            </el-table-column>
+            <el-table-column
               prop="update_time"
               label="更新时间"
-              min-width="230"
+              min-width="200"
             >
               <template #default="scope">
                 <el-date-picker
@@ -191,6 +208,7 @@ let formData = reactive({
     {
       phone: "",
       quan_stock: "",
+      real_quan_stock: "",
       update_time: ""
     }
   ],
@@ -211,6 +229,7 @@ const rules = {
 const newRow = () => ({
   phone: "",
   quan_stock: "",
+  real_quan_stock: "",
   update_time: ""
 });
 
@@ -236,11 +255,12 @@ const resetForm = el => {
   formData.quan_cost = "";
   formData.quan_flag = "";
   formData.quan_fee = "0";
-  formData.quan_stock = "";
+  // formData.quan_stock = "";
   formData.quanStockList = [
     {
       phone: "",
       quan_stock: "",
+      real_quan_stock: "",
       update_time: ""
     }
   ];
@@ -272,7 +292,7 @@ const open = async quanInfo => {
         formData.quan_cost = formInfo.quan_cost;
         formData.quan_flag = formInfo.quan_flag;
         formData.quan_fee = formInfo.quan_fee;
-        formData.quan_stock = formInfo.quan_stock;
+        // formData.quan_stock = formInfo.quan_stock;
         formData.quanStockList = formInfo.quanStockList;
         formData.black_quans = formInfo.black_quans;
         formData.remark = formInfo.remark;
@@ -286,6 +306,7 @@ const open = async quanInfo => {
           {
             phone: "",
             quan_stock: "",
+            real_quan_stock: "",
             update_time: ""
           }
         ];
