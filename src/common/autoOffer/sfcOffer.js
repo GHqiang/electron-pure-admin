@@ -783,13 +783,13 @@ class getSfcOfferPrice {
       let fixedAmountRuleList = otherRuleList.filter(
         item => item.offerType === "1" && item.offerAmount
       );
+      const appQuanTypeList = await this.getQuanTypeListByApp({
+        order,
+        city_id: movieInfo.city_id,
+        cinema_id: movieInfo.cinema_id
+      });
       if (fixedAmountRuleList.length) {
         // 校验其库存，进行过滤
-        const appQuanTypeList = await this.getQuanTypeListByApp({
-          order,
-          city_id: movieInfo.city_id,
-          cinema_id: movieInfo.cinema_id
-        });
         if (appQuanTypeList?.length) {
           fixedAmountRuleList = fixedAmountRuleList.filter(item => {
             let targetQuanInfo = appQuanTypeList.find(
