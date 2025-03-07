@@ -2079,7 +2079,8 @@ class OrderAutoTicketQueue {
               session_id,
               black_quans,
               diffNum,
-              quanNum: diffNum + 10
+              quanNum: diffNum + 10,
+              ticket_num
             });
             // 新绑定的权属：diffNum
             const newQuanList = newQuanRes?.bandQuanList || [];
@@ -3789,7 +3790,8 @@ class OrderAutoTicketQueue {
     asyncBandQuanList,
     plat_name,
     order_number,
-    quanStock
+    quanStock,
+    ticket_num
   }) {
     const { conPrefix, appFlag } = this;
     let targetLogList = asyncFlag === 1 ? asyncBandQuanList : this.logList;
@@ -3863,6 +3865,7 @@ class OrderAutoTicketQueue {
           cinema_id,
           session_id,
           coupon_num: quan.coupon_num,
+          quan_value,
           appFlag
         });
         const coupon_num = couponNumRes?.coupon_num;
@@ -3901,7 +3904,7 @@ class OrderAutoTicketQueue {
         }
       }
       // 异步绑券更新券库存
-      if (asyncFlag === 1) {
+      if (asyncFlag === 1 && ticket_num) {
         this.updateQuanStock({
           quan_stock: quanStock - ticket_num + bandQuanList.length, // 直接传过去券库存
           quan_value,
@@ -3986,7 +3989,8 @@ class OrderAutoTicketQueue {
           asyncBandQuanList: [],
           plat_name,
           order_number,
-          quanStock
+          quanStock,
+          ticket_num
         });
       }
       // 用券列表
@@ -4611,6 +4615,7 @@ const bandQuan = async ({
   cinema_id,
   coupon_num,
   session_id,
+  quan_value,
   appFlag
 }) => {
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
@@ -4625,6 +4630,10 @@ const bandQuan = async ({
   if (appFlag === "sfc") {
     params.city_id = "499";
     params.cinema_id = "3";
+    if (quan_value == "sfctianjin") {
+      params.city_id = "501";
+      params.cinema_id = "50";
+    }
   }
   try {
     await mockDelay(1);
