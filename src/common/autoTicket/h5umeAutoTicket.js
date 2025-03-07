@@ -1637,7 +1637,11 @@ class OrderAutoTicketQueue {
           payments.push({ payMethod: "CARD", payCardNumber: card_id });
         }
         tickets = activities
-          .find(item => item.payMethod === "")
+          .find(
+            item =>
+              item.payMethod === "" &&
+              item.privilegeTypes?.[0] == "ORIGINAL_PRICE"
+          )
           ?.ticketInfos?.map(item => ({
             seatId: item.seatId,
             activityId: item.activityId

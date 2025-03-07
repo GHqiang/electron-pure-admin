@@ -2099,7 +2099,7 @@ class OrderAutoTicketQueue {
             });
           } else {
             let quanStockList = offerRule.quanStockList
-              ? JSON.parse(quanStockList)
+              ? JSON.parse(offerRule.quanStockList)
               : [];
             let targetInfo = quanStockList.find(
               itemA => itemA.phone === this.curPhone
