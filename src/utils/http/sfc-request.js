@@ -4,6 +4,8 @@ import { ElMessage } from "element-plus";
 import { APP_LIST, SFC_APP_VER_OBJ } from "@/common/constant";
 import md5 from "../md5.js";
 import {
+  logUpload,
+  getCurrentTime,
   sendWxPusherMessage,
   getCinemaLoginInfoList,
   mockDelay
