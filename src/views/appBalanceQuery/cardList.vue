@@ -891,6 +891,8 @@ const syncCardInfo = async () => {
         ElMessage.success("同步卡信息成功！");
         searchData();
       }
+    } else {
+      loading.close();
     }
   } catch (error) {
     console.warn("同步余额异常", error);

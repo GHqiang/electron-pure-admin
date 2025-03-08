@@ -187,7 +187,7 @@ class OrderAutoTicketQueue {
           // 处理订单
           const res = await this.orderHandle(order);
           this.prevOrderNumber = order.order_number;
-          // res: { profit, submitRes, qrcode, quan_code, card_id, offerRule } || undefined
+          // res: { profit, submitRes, qrcode, quan_code, card_id, cardNum, offerRule } || undefined
           console.warn(
             conPrefix + `单个订单自动出票${res?.submitRes ? "成功" : "失败"}`,
             order,
@@ -269,7 +269,7 @@ class OrderAutoTicketQueue {
       console.log(conPrefix + `订单处理 ${order.id}`);
       if (this.isRunning) {
         const res = await this.singleTicket(order);
-        // result: { profit, submitRes, transferParams, qrcode, quan_code, card_id, offerRule }
+        // result: { profit, submitRes, transferParams, qrcode, quan_code, card_id, cardNum, quanType, offerRule }
         return res;
       } else {
         console.warn(conPrefix + "订单出票队列已停止");
@@ -1469,6 +1469,7 @@ class OrderAutoTicketQueue {
       let activityId = activities[0]?.activityId || null; // 活动id
       let {
         card_id = "",
+        cardNum,
         useQuan = [],
         profit = 0,
         quanStock
@@ -1900,6 +1901,7 @@ class OrderAutoTicketQueue {
         submitRes: lastRes?.submitRes,
         quan_code,
         card_id,
+        cardNum,
         offerRule
       };
     } catch (error) {
@@ -3113,6 +3115,7 @@ class OrderAutoTicketQueue {
       cardData = cardData.sort((a, b) => b.cardAmount - a.cardAmount);
       return {
         card_id: cardData?.[0]?.cardNo,
+        cardNum: cardData?.[0]?.cardNo,
         profit // 利润
       };
     } catch (error) {
@@ -3979,6 +3982,7 @@ const addOrderHandleRecored = async ({
       qrcode: res?.qrcode || "",
       quan_code: res?.quan_code || "",
       card_id: res?.card_id || "",
+      card_num: res?.cardNum || "",
       err_msg: res?.submitRes ? "" : errMsg || "",
       err_info: res?.submitRes ? "" : errInfo || "",
       rewards: res?.offerRule?.rewards || 0, // 奖励百分比

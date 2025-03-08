@@ -195,7 +195,7 @@ class OrderAutoTicketQueue {
           // 处理订单
           const res = await this.orderHandle(order);
           this.prevOrderNumber = order.order_number;
-          // res: { profit, submitRes, qrcode, quan_code, card_id, offerRule } || undefined
+          // res: { profit, submitRes, qrcode, quan_code, card_id, cardNum, offerRule } || undefined
           console.warn(
             conPrefix + `单个订单自动出票${res?.submitRes ? "成功" : "失败"}`,
             order,
@@ -278,7 +278,7 @@ class OrderAutoTicketQueue {
       console.log(conPrefix + `订单处理 ${order.id}`);
       if (this.isRunning) {
         const res = await this.singleTicket(order);
-        // result: { profit, submitRes, transferParams, qrcode, quan_code, card_id, quanType, offerRule }
+        // result: { profit, submitRes, transferParams, qrcode, quan_code, card_id, cardNum, quanType, offerRule }
         return res;
       } else {
         console.warn(conPrefix + "订单出票队列已停止");
@@ -1439,6 +1439,7 @@ class OrderAutoTicketQueue {
       // 线下券出票：赠送类(券card_num有值)传member_coupon_id（券id字段逗号拼接），非赠送类传quan_code（券coupon_num字段逗号拼接）
       let {
         card_id,
+        cardNum,
         quanType,
         quan_code,
         coupon_id,
@@ -1834,6 +1835,7 @@ class OrderAutoTicketQueue {
         submitRes: lastRes?.submitRes,
         quan_code,
         card_id,
+        cardNum,
         quanType,
         offerRule
       };
@@ -2264,7 +2266,7 @@ class OrderAutoTicketQueue {
       }
       // 2、使用会员卡
       let member_total_price = (real_member_price * 100 * ticket_num) / 100;
-      const { card_id, profit, priceInfo } = await this.useCard({
+      const { card_id, cardNum, profit, priceInfo } = await this.useCard({
         member_total_price,
         cardList,
         supplier_end_price,
@@ -2282,6 +2284,7 @@ class OrderAutoTicketQueue {
       });
       return {
         card_id,
+        cardNum,
         profit, // 利润
         priceInfo
       };
@@ -4099,7 +4102,7 @@ class OrderAutoTicketQueue {
         // 对非默认卡或当两个都是默认卡时，根据余额进行倒序排序
         return balanceB - balanceA;
       });
-      let card_id, priceInfo, errReason;
+      let card_id, cardNum, priceInfo, errReason;
       if (!isV3App) {
         // 开始尝试使用卡并获取成功使用的卡的结果
         const attemptCardsSequentially = async () => {
@@ -4149,6 +4152,7 @@ class OrderAutoTicketQueue {
                 errReason = str || "计算价格高于真实会员价*座位数";
               } else {
                 card_id = card.id;
+                cardNum = card.card_num;
                 console.log(conPrefix + "卡使用成功，返回结果并停止尝试。");
                 return price; // 卡使用成功，返回结果并结束函数
               }
@@ -4181,6 +4185,7 @@ class OrderAutoTicketQueue {
         );
       } else {
         card_id = cardData[0]?.member_id;
+        cardNum = cardData[0]?.member_id;
       }
 
       // 卡的话 1块钱成本就是一块钱，利润 =  中标价格-会员出票价格 -手续费（中标价格1%）
@@ -4215,6 +4220,7 @@ class OrderAutoTicketQueue {
       }
       return {
         card_id,
+        cardNum,
         profit,
         priceInfo
       };
@@ -4788,6 +4794,7 @@ const addOrderHandleRecored = async ({
       quan_type: res?.quanType || "",
       quan_code: res?.quan_code || "",
       card_id: res?.card_id || "",
+      card_num: res?.cardNum || "",
       err_msg: res?.submitRes ? "" : errMsg || "",
       err_info: res?.submitRes ? "" : errInfo || "",
       rewards: res?.offerRule?.rewards || 0, // 奖励百分比

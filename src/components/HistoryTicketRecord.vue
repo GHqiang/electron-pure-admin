@@ -211,6 +211,7 @@
       </el-table-column>
       <el-table-column prop="quan_value" label="用券类型" width="85" />
       <el-table-column prop="quan_code" label="优惠券码" width="90" />
+      <el-table-column prop="card_num" label="支付卡号" width="90" />
       <el-table-column prop="profit" label="利润" width="80" />
       <el-table-column prop="original_profit" label="原利润" width="80" />
       <el-table-column prop="transfer_fee" label="转单手续费" width="100" />
