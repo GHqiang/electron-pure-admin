@@ -1359,11 +1359,9 @@ const getCinemaLoginInfoList = userId => {
   let loginInfoList = window.localStorage.getItem("loginInfoList");
   if (loginInfoList) {
     loginInfoList = JSON.parse(loginInfoList);
-    if ([9, 10, 11, 15].includes(user_id)) {
-      loginInfoList = loginInfoList.filter(item =>
-        !item.link_user_id ? true : item.link_user_id == user_id
-      );
-    }
+    loginInfoList = loginInfoList.filter(item =>
+      !item.link_user_id ? true : item.link_user_id == user_id
+    );
   }
   const phone = tokens?.userInfo?.phone;
   if (phone) {
@@ -1409,6 +1407,7 @@ const sendWxPusherMessage = async ({
   failReason,
   app_name,
   msgType, // 消息类型 1-登录失效
+  expirePhone, // 失效手机号
   quan_flag,
   black_quans
 }) => {
@@ -1445,6 +1444,7 @@ const sendWxPusherMessage = async ({
     content = `<p>
     时间：${getCurrentTime()}; <br/>
     用户：${userInfo.name}; <br/>
+    失效手机号：${expirePhone}; <br/>
     影院：${app_name}; <br/>
     提示：${transferTip};<br/>
     </p>`;

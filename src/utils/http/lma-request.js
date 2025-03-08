@@ -2,10 +2,12 @@
 
 import axios from "axios";
 import { ElMessage } from "element-plus";
-import { logUpload, getCurrentTime, mockDelay } from "@/utils/utils";
-// 机器登录用户信息
-import { platTokens } from "@/store/platTokens";
-const tokens = platTokens();
+import {
+  logUpload,
+  getCurrentTime,
+  mockDelay,
+  getCinemaLoginInfoList
+} from "@/utils/utils";
 const createAxios = ({ app_name, timeout = 20 }) => {
   // 创建axios实例
   const instance = axios.create({
@@ -23,22 +25,10 @@ const createAxios = ({ app_name, timeout = 20 }) => {
     async config => {
       if (config.url.indexOf("/lma/") !== -1) {
         // 猎人平台接口添加token
-        let loginInfoList = window.localStorage.getItem("loginInfoList");
-        if (loginInfoList) {
-          loginInfoList = JSON.parse(loginInfoList);
-        }
-        let targetList = loginInfoList.filter(
-          itemA => itemA.app_name === app_name && itemA.session_id
+        let targetLoginList = getCinemaLoginInfoList().filter(
+          item => item.app_name === app_name && item.mobile && item.session_id
         );
-        let targetInfo = targetList?.[0] || "";
-        if (targetList?.length > 1) {
-          targetInfo = targetList.find(itemA =>
-            tokens.userInfo.user_id != 1
-              ? itemA.mobile === tokens.userInfo.phone
-              : true
-          );
-        }
-        let token = targetInfo?.session_id || "";
+        let token = targetLoginList?.[0]?.session_id || "";
 
         // 保存原始参数和原始URL
         if (!config.originalParams) {
@@ -61,6 +51,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           config.headers["lmatoken"] = "ig_session=" + token;
           // config.headers["cookie"] = "ig_session=" + token;
           // config.headers["Cookie"] = `ig_session=${token}`;
+          config.session_id = token;
         }
         if (config.method === "get") {
           config.params = params;
@@ -130,7 +121,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       const data = response.data;
       // let whitelistSp = ['/sp/order', '/sp/unlock']
       let whitelistSp = [];
-
+      // console.log("response?.config", response?.config?.session_id);
       let isError =
         response.config.url.indexOf("/third-ser/") !== -1 && !data.status;
       if (
@@ -139,10 +130,18 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       ) {
         if (data.code == "2" && data.msg?.includes("请先登录")) {
           ElMessage.warning(`卢米埃登录失效，请重新设置登录信息`);
+          let session_id = response?.config?.session_id;
+          let targetLoginList = getCinemaLoginInfoList().filter(
+            item => item.app_name === app_name && item.mobile && item.session_id
+          );
+          let phone = targetLoginList.find(
+            item => item.session_id == session_id
+          )?.mobile;
           sendWxPusherMessage({
             msgType: 1,
-            app_name: "卢米埃",
-            transferTip: `卢米埃登录失效，请检查登录信息维护`
+            app_name: APP_LIST[app_name],
+            expirePhone: phone,
+            transferTip: `${APP_LIST[app_name]}登录失效，请检查登录信息维护`
           });
           // 此处加个消息推送
           return Promise.reject(data);

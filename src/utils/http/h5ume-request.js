@@ -4,10 +4,14 @@ import axios from "axios";
 import { ElMessage } from "element-plus";
 import { APP_LIST, H5_UME_CINEMA_OBJ } from "@/common/constant";
 import { APP_API_OBJ } from "@/common/index";
-import { logUpload, getCurrentTime, mockDelay } from "@/utils/utils";
+import {
+  logUpload,
+  getCurrentTime,
+  getCinemaLoginInfoList,
+  sendWxPusherMessage,
+  mockDelay
+} from "@/utils/utils";
 // 机器登录用户信息
-import { platTokens } from "@/store/platTokens";
-const tokens = platTokens();
 
 // 获取bx-ua及bx-umidtoken
 const getumidToken = () => {
@@ -398,34 +402,24 @@ const createAxios = ({ app_name, timeout = 20 }) => {
     async config => {
       if (config.url.indexOf("/h5ume/") !== -1) {
         config.headers["Content-Type"] = "application/x-www-form-urlencoded";
-        let loginInfoList = window.localStorage.getItem("loginInfoList");
-        if (loginInfoList) {
-          loginInfoList = JSON.parse(loginInfoList);
-        }
-        let targetList = loginInfoList.filter(
-          itemA => itemA.app_name === app_name && itemA.session_id
+        let targetLoginList = getCinemaLoginInfoList().filter(
+          item => item.app_name === app_name && item.mobile && item.session_id
         );
-        let targetInfo = targetList?.[0] || "";
-        if (targetList?.length > 1) {
-          targetInfo = targetList.find(itemA =>
-            tokens.userInfo.user_id != 1
-              ? itemA.mobile === tokens.userInfo.phone
-              : true
-          );
-        }
         // 登录标识：larkSid
         // e6b99a4fe34244d680a8e57ae79eff3b
-        larkSid = targetInfo?.session_id || "";
-        tid = targetInfo?.tid || "";
+        larkSid = targetLoginList?.[0]?.session_id || "";
+        tid = targetLoginList?.[0]?.tid || "";
         // 先自己匹配登录信息，然后从参数里获取更新
         if (config.data?.umeToken) {
           larkSid = config.data.umeToken;
-          tid = loginInfoList.find(
-            itemA => itemA.app_name === app_name && itemA.session_id === larkSid
+          tid = targetLoginList.find(
+            itemA => itemA.session_id === larkSid
           )?.tid;
           delete config.data.umeToken;
         }
-        mobile = targetList.find(itemA => itemA.session_id === larkSid)?.mobile;
+        mobile = targetLoginList.find(
+          itemA => itemA.session_id === larkSid
+        )?.mobile;
         // 如果对应的手机号的token有新的直接获取新的
         if (mobile && newLarkSidObj[mobile]) {
           larkSid = newLarkSidObj[mobile];
@@ -559,6 +553,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       // let whitelistSp = ['/sp/order', '/sp/unlock']
       let whitelistSp = [];
       let config = response.config;
+      // console.log("config", config.mobile);
       let isError =
         response.config.url.indexOf("/ume-ser/") !== -1 &&
         data?.data?.bizCode !== "0";
@@ -624,6 +619,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             sendWxPusherMessage({
               msgType: 1,
               app_name: APP_LIST[app_name],
+              expirePhone: config.mobile,
               transferTip: `${APP_LIST[app_name]}登录失效，请检查登录信息维护`
             });
 

@@ -5,13 +5,10 @@ import { APP_LIST, SFC_APP_VER_OBJ } from "@/common/constant";
 import md5 from "../md5.js";
 import {
   sendWxPusherMessage,
-  logUpload,
-  getCurrentTime,
+  getCinemaLoginInfoList,
   mockDelay
 } from "@/utils/utils";
 // 机器登录用户信息
-import { platTokens } from "@/store/platTokens";
-const tokens = platTokens();
 
 const createAxios = ({ group, app_name, timeout = 20 }) => {
   // 创建axios实例
@@ -53,25 +50,10 @@ const createAxios = ({ group, app_name, timeout = 20 }) => {
     // e.city_id = '500'
     // e.cinema_id = '19'
 
-    let loginInfoList = window.localStorage.getItem("loginInfoList");
-    if (loginInfoList) {
-      loginInfoList = JSON.parse(loginInfoList);
-    }
-    // console.log("loginInfoList", loginInfoList);
-    // 优先用自己账号token
-
-    let targetList = loginInfoList.filter(
-      itemA => itemA.app_name === app_name && itemA.session_id
+    let targetLoginList = getCinemaLoginInfoList().filter(
+      item => item.app_name === app_name && item.mobile && item.session_id
     );
-    let targetInfo = targetList?.[0] || "";
-    if (targetList?.length > 1) {
-      targetInfo = targetList.find(itemA =>
-        tokens.userInfo.user_id != 1
-          ? itemA.mobile === tokens.userInfo.phone
-          : true
-      );
-    }
-    e.session_id = targetInfo?.session_id || "";
+    e.session_id = targetLoginList?.[0]?.session_id || "";
     // console.log("sfcRequest===>", e);
   };
 
@@ -134,8 +116,10 @@ const createAxios = ({ group, app_name, timeout = 20 }) => {
         }
         if (config.method === "get") {
           config.params = paramsHandle(config.originalParams);
+          config.session_id = config.params.session_id;
         } else {
           config.data = paramsHandle(config.originalData);
+          config.session_id = config.data.session_id;
         }
 
         // 重试时使用原始url进行截取
@@ -186,6 +170,7 @@ const createAxios = ({ group, app_name, timeout = 20 }) => {
       let isErrorBySFC =
         (!IS_DEV ? true : response.config.url.indexOf("/sfc/") !== -1) &&
         data.status === 0;
+      // console.log("response?.config", response?.config?.session_id);
       if (
         isErrorBySFC &&
         !whitelistSfc.some(item => response.config.url.includes(item))
@@ -194,9 +179,17 @@ const createAxios = ({ group, app_name, timeout = 20 }) => {
           ElMessage.warning(
             `${APP_LIST[app_name]}登录失效，请重新设置登录信息`
           );
+          let session_id = response?.config?.session_id;
+          let targetLoginList = getCinemaLoginInfoList().filter(
+            item => item.app_name === app_name && item.mobile && item.session_id
+          );
+          let phone = targetLoginList.find(
+            item => item.session_id == session_id
+          )?.mobile;
           sendWxPusherMessage({
             msgType: 1,
             app_name: APP_LIST[app_name],
+            expirePhone: phone,
             transferTip: `${APP_LIST[app_name]}登录失效，请检查登录信息维护`
           });
           // 此处加个消息推送
