@@ -7,6 +7,7 @@ import {
   logUpload,
   getCurrentTime,
   formatTimeOfTime,
+  sendWxPusherMessage,
   mockDelay
 } from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
@@ -120,11 +121,7 @@ class OrderAutoFetchQueue {
           },
           logList
         );
-        // 动态生成事件名称
-        const eventName = `newOrder_${item.appName}`;
-        // 创建一个事件对象
-        const newOrderEvent = new CustomEvent(eventName, { detail: item });
-        window.dispatchEvent(newOrderEvent);
+        this.sendNeworderMsg(item);
         this.orderRecord.push(item);
         // 如果 orderRecord 数组没有被适当清理或管理，随着程序运行时间的增长，可能会导致内存占用增加，进而影响性能。
         // 清理过期的订单记录，例如只保留最近的50条(防止数据太大)
@@ -136,7 +133,63 @@ class OrderAutoFetchQueue {
       console.error(conPrefix + "获取订单列表异常", error);
     }
   }
-
+  // 发送新订单消息
+  async sendNeworderMsg(item) {
+    let order = JSON.parse(JSON.stringify(item));
+    try {
+      if (order.appName === "wanxiang") {
+        // 调一个报价记录查看接口，判断用哪个出票
+        const res = await svApi.queryOfferList({
+          user_id: tokens.userInfo.user_id,
+          plat_name: order.plat_name,
+          order_number: order.order_number,
+          order_status: "1",
+          isNeedTotalNum: 0,
+          queryFields: "plat_name,order_number,app_name,order_status"
+        });
+        let list = res.data.offerList || [];
+        const offerRecord = list[0];
+        // 两个队列根据报价记录里的app_name去选择用哪个出
+        if (offerRecord?.app_name) {
+          order.appName = offerRecord.app_name;
+          window.dispatchEvent(
+            new CustomEvent(`newOrder_wanxiangh5`, {
+              detail: { ...item, appName: "wanxiangh5" }
+            })
+          );
+        } else {
+          this.sendNeworderMsg(
+            order,
+            "报价记录里app_name不存在,机器无法判断用小程序还是凤凰云智出票，需手动出票"
+          );
+          return;
+        }
+      }
+      // 动态生成事件名称
+      const eventName = `newOrder_${order.appName}`;
+      // 创建一个事件对象
+      const newOrderEvent = new CustomEvent(eventName, { detail: order });
+      window.dispatchEvent(newOrderEvent);
+    } catch (error) {
+      this.sendNeworderMsg(order, JSON.stringify(error));
+    }
+  }
+  // 发送微信消息
+  sendWxMsgByOrder(order, errMsg) {
+    sendWxPusherMessage({
+      plat_name: order.plat_name,
+      order_number: order.order_number,
+      city_name: order.city_name,
+      cinema_name: order.cinema_name,
+      film_name: order.film_name,
+      show_time: order.show_time,
+      lockseat: order.lockseat,
+      hall_name: order.hall_name,
+      supplier_end_price: order.supplier_end_price,
+      transferTip: "此处不转单，直接跳过，需手动出票",
+      failReason: errMsg
+    });
+  }
   // 停止队列运行
   stop() {
     this.isRunning = false;

@@ -124,7 +124,7 @@ let H5_UME_LIST = [
   "sgjmycfsd",
 
   "xgjyycnjystjd",
-  // "wanxiang",
+  "wanxiangh5",
   "hsmzyc",
   "gzfyyc",
   "szxtyy",
@@ -190,6 +190,7 @@ const GROUP_LIST = [
 
   "hsmzyc", // 海上明珠
   "wanxiang", // 万象
+  "wanxiangh5", // 万象h5
   "gzfyyc", // 广州飞扬影城
   "cqshyc", // 唐阁
   "miruiku", // 米瑞酷影城
@@ -241,6 +242,7 @@ const APP_LIST = {
   hbchyxd: "HBC华谊兄弟",
   ume: "UME",
   wanxiang: "万象影城",
+  wanxiangh5: "万象影城(H5)",
   yaolai: "耀莱",
   swxh: "山文星辉",
   renhengmeng: "仁恒梦影廊",
@@ -2056,6 +2058,7 @@ const TICKET_CONPREFIX_OBJ = {
   renhengmeng: "【仁恒梦影廊自动出票】——",
   swxh: "【山文星辉自动出票】——",
   wanxiang: "【万象影城自动出票】——",
+  wanxiangh5: "【万象影城H5自动出票】——",
   wanmei: "【完美自动出票】——",
   yinghuang: "【英皇自动出票】——",
   jqgw: "【金桥国文自动出票】——",
@@ -2141,7 +2144,7 @@ const TICKET_CONPREFIX_OBJ = {
 const H5_UME_CINEMA_OBJ = {
   // cinemaLinkId、channelCode、tid(laskId：即sid可通过tid调接口获取)
   // 万象影城
-  // wanxiang: ["10273", "HUARUN_H5_PROD_10273_MPS"],
+  wanxiangh5: ["10273", "HUARUN_H5_PROD_10273_MPS"],
   // 海上明珠
   hsmzyc: ["16014", "HSMZYC_H5_PROD_S_MPS"],
   // 广州飞扬影城

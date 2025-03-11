@@ -18,6 +18,8 @@ import {
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
 import { APP_LIST, UME_LIST, GROUP_LIST } from "@/common/constant.js";
+// 获取最终报价信息实体类
+import getOfferPriceFun from "./commonOfferHandle.js";
 import { platTokens } from "@/store/platTokens";
 const {
   userInfo: { rule, user_id }
@@ -72,6 +74,16 @@ class getUmeOfferPrice {
       offerRule = await this.getEndMatchOfferRule(order);
       if (!offerRule) {
         return this.returnResultHandle({ endPrice, offerRule, order_number });
+      } else if (offerRule == "wanxiangh5") {
+        let offerExample = getOfferPriceFun({
+          appFlag: "wanxiangh5",
+          plat_name
+        });
+        const result = await offerExample.getEndOfferPrice({
+          order: { ...order, app_name: "wanxiangh5" },
+          offerList
+        });
+        return result;
       }
       this.logList.push({
         opera_time: getCurrentTime(),
@@ -190,6 +202,15 @@ class getUmeOfferPrice {
         return;
       }
       matchRuleList = JSON.parse(JSON.stringify(matchRuleList));
+      let fixedAmountRuleList = matchRuleList.filter(
+        item =>
+          item.offerType === "1" &&
+          item.offerAmount &&
+          item.shadowLineName === "wanxiangh5"
+      );
+      if (fixedAmountRuleList.length) {
+        return "wanxiangh5";
+      }
       // 判断规则里是否有指定电影格式的（2D/3D）
       let filmTypeFlag = matchRuleList.find(
         item => item?.film_type?.length == 1

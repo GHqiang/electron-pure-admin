@@ -1954,7 +1954,7 @@ const offerRuleMatch = order => {
     } = order;
     let shadowLineName = appName || app_name;
     console.log("报价订单影线", shadowLineName, plat_name);
-
+    // 这里后面需要从接口里读取，数据太大了本地缓存不够放
     let appOfferRuleList = window.localStorage.getItem("offerRuleList");
     if (appOfferRuleList) {
       appOfferRuleList = JSON.parse(appOfferRuleList);
@@ -1990,9 +1990,14 @@ const offerRuleMatch = order => {
     );
     console.log("启用的规则列表", useRuleList);
     // 2、获取某个影线的规则列表
-    let shadowLineRuleList = useRuleList.filter(
-      item => item.shadowLineName === shadowLineName
-    );
+    let shadowLineRuleList = useRuleList.filter(item => {
+      // 万象ume和h5ume都需要用
+      if (shadowLineName != "wanxiang") {
+        return item.shadowLineName === shadowLineName;
+      } else {
+        return ["wanxiang", "wanxiangh5"].includes(item.shadowLineName);
+      }
+    });
     console.log("影线的规则列表", shadowLineRuleList);
     // 3、匹配城市
     let cityRuleList = shadowLineRuleList.filter(item => {
