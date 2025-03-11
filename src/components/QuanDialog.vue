@@ -272,7 +272,7 @@ const resetForm = el => {
 // 影线改变
 const shadowLineChange = async val => {
   console.log("val", val);
-  resetForm(1);
+  // resetForm(1);
 };
 // 打开弹窗
 const open = async quanInfo => {
