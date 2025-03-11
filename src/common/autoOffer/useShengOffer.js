@@ -383,10 +383,13 @@ class OrderAutoOfferQueue {
         console.error(conPrefix + "获取最终报价返回空");
         return;
       }
-      const { endPrice, offerRule, err_msg, err_info } = result || {};
+      const { endPrice, offerRule, err_msg, err_info, app_name } = result || {};
       console.warn(conPrefix + "获取最终报价返回", endPrice);
       if (!endPrice) {
         return { offerRule, err_msg, err_info };
+      }
+      if (app_name === "wanxiangh5") {
+        order.app_name = app_name;
       }
       const res = await this.submitOffer({
         // supplierCode: "ccf7b11cdc944cf1940a149cff4243f9", // 供应商号-付勋

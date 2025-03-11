@@ -83,7 +83,7 @@ class getUmeOfferPrice {
           order: { ...order, app_name: "wanxiangh5" },
           offerList
         });
-        return result;
+        return { ...result, app_name: "wanxiangh5" };
       }
       this.logList.push({
         opera_time: getCurrentTime(),
