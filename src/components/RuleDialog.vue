@@ -641,7 +641,7 @@ const resetForm = el => {
 // 影线改变
 const shadowLineChange = async val => {
   console.log("val", val);
-  resetForm(1);
+  // resetForm(1);
   const cityList = await getCityList();
   const allCinemaList = await getAllCinemaList(cityList);
   await getFilmList(cityList[0], allCinemaList[0]);
