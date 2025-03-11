@@ -139,7 +139,6 @@ class OrderAutoFetchQueue {
         );
         this.sendNeworderMsg(item);
         this.orderRecord.push(item);
-        window.dispatchEvent(newOrderEvent);
       });
     } catch (error) {
       console.error(conPrefix + "获取订单列表异常", error);
