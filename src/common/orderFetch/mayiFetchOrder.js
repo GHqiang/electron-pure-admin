@@ -190,11 +190,6 @@ class OrderAutoFetchQueue {
         // 两个队列根据报价记录里的app_name去选择用哪个出
         if (offerRecord?.app_name) {
           order.appName = offerRecord.app_name;
-          window.dispatchEvent(
-            new CustomEvent(`newOrder_wanxiangh5`, {
-              detail: { ...item, appName: "wanxiangh5" }
-            })
-          );
         } else {
           this.sendNeworderMsg(
             order,
