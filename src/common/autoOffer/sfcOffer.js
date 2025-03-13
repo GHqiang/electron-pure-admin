@@ -398,20 +398,20 @@ class getSfcOfferPrice {
       // 拿着处理过的最大券库存（几个号之间）+对应的更新时间去判断是否要更新（只判断自己号上的）
       let isNeedUpdate = quanTypeList.some(item => {
         // if (item.quan_stock < 5) {
-          let inx = item.quanStockListByPhone.findIndex(
-            itemA => itemA.quan_stock === item.quan_stock
-          );
-          console.log("inx", inx);
-          if (inx != -1) {
-            let update_time = item.quanStockListByPhone[inx].update_time;
-            console.log("update_time", update_time);
+        let inx = item.quanStockListByPhone.findIndex(
+          itemA => itemA.quan_stock === item.quan_stock
+        );
+        console.log("inx", inx);
+        if (inx != -1) {
+          let update_time = item.quanStockListByPhone[inx].update_time;
+          console.log("update_time", update_time);
 
-            return !update_time
-              ? true
-              : +new Date() - +new Date(update_time) > 1000 * 60 * 60; // 超过1小时未更新
-          } else {
-            return true;
-          }
+          return !update_time
+            ? true
+            : +new Date() - +new Date(update_time) > 1000 * 60 * 60; // 超过1小时未更新
+        } else {
+          return true;
+        }
         // }
         return false;
       });
@@ -1521,7 +1521,7 @@ class getSfcOfferPrice {
         let showTime = show_time.split(" ")[1].slice(0, 5);
         // 解决同一时间多场次问题
         let targetShowList = showList.filter(
-          item => item.start_time === showTime
+          item => +new Date(item.start_time) === +new Date(showTime)
         );
         let targetShow = targetShowList[0];
         if (targetShowList.length > 1) {

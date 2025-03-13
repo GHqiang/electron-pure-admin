@@ -1066,7 +1066,7 @@ class OrderAutoTicketQueue {
         const showList = showListRes?.moviePlayTime || [];
         // 解决同一时间多场次问题
         let targetShowList = showList.filter(
-          item => item.showDateTime === show_time
+          item => +new Date(item.showDateTime) == +new Date(show_time)
         );
         targetShow = targetShowList[0];
         if (targetShowList.length > 1) {
@@ -1114,7 +1114,7 @@ class OrderAutoTicketQueue {
           const showList = showListRes?.moviePlayTime || [];
           // 解决同一时间多场次问题
           let targetShowList = showList.filter(
-            item => item.showDateTime === show_time
+            item => +new Date(item.showDateTime) == +new Date(show_time)
           );
           targetShow = targetShowList[0];
           if (targetShowList.length > 1) {
