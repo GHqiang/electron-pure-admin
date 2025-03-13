@@ -1093,7 +1093,7 @@ class OrderAutoTicketQueue {
         }
         let targetShowInfo = playDateList?.find(item =>
           item.schedules?.some(
-            itemA => formatTimeOfTime(+itemA.showTime) === show_time
+            itemA => +new Date(+itemA.showTime) === +new Date(show_time)
           )
         );
         // 获取某个放映日期的场次列表
@@ -1101,7 +1101,7 @@ class OrderAutoTicketQueue {
         let start_time = show_time.split(" ")[1].slice(0, 5);
         // 解决同一时间多场次问题
         let targetShowList = showList.filter(
-          item => formatTimeOfTime(+item.showTime) === show_time
+          itemA => +new Date(+itemA.showTime) === +new Date(show_time)
         );
         let targetShow = targetShowList[0];
         if (targetShowList.length > 1) {

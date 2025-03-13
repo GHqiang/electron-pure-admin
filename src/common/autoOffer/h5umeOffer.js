@@ -1338,7 +1338,7 @@ class getUmeOfferPrice {
       });
       let targetShowInfo = playDateList?.find(item =>
         item.schedules?.some(
-          itemA => formatTimeOfTime(+itemA.showTime) === show_time
+          itemA => +new Date(+itemA.showTime) === +new Date(show_time)
         )
       );
 
@@ -1346,7 +1346,7 @@ class getUmeOfferPrice {
       const showList = targetShowInfo?.schedules || [];
       // 解决同一时间多场次问题
       let targetShowList = showList.filter(
-        item => formatTimeOfTime(+item.showTime) === show_time
+        itemA => +new Date(+itemA.showTime) === +new Date(show_time)
       );
       let targetShow = targetShowList[0];
       if (targetShowList.length > 1) {
