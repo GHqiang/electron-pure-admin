@@ -137,25 +137,25 @@ class OrderAutoFetchQueue {
             itemA.order_number === item.order_number
         );
       });
-      let logList = [
-        {
-          opera_time: getCurrentTime(),
-          des: `${name}：省获取待出票列表返回`,
-          level: "info",
-          info: {
-            stayList: stayList
-          }
-        }
-      ];
-      logUpload(
-        {
-          plat_name: "lieren",
-          app_name: "",
-          order_number: "",
-          type: 2
-        },
-        logList
-      );
+      // let logList = [
+      //   {
+      //     opera_time: getCurrentTime(),
+      //     des: `省获取待出票列表返回`,
+      //     level: "info",
+      //     info: {
+      //       stayList: stayList
+      //     }
+      //   }
+      // ];
+      // logUpload(
+      //   {
+      //     plat_name: "sheng",
+      //     app_name: "",
+      //     order_number: "",
+      //     type: 2
+      //   },
+      //   logList
+      // );
       if (sfcStayOfferlist?.length) {
         const ticketList = await getTicketList();
         sfcStayOfferlist = sfcStayOfferlist.filter(item =>
@@ -316,12 +316,23 @@ const orderFetchQueue = new OrderAutoFetchQueue();
 // 判断该订单是否是新订单
 const judgeHandle = (item, app_name, offerList, ticketList) => {
   try {
-    let targetOfferList = offerList.filter(
-      itemA => itemA.app_name === app_name && itemA.order_status === "1"
-    );
-    let targetTicketList = ticketList.filter(
-      itemA => itemA.app_name === app_name
-    );
+    let targetOfferList = offerList.filter(itemA => {
+      if (app_name !== "wanxiang") {
+        return itemA.app_name === app_name && itemA.order_status === "1";
+      } else {
+        return (
+          ["wanxiang", "wanxiangh5"].includes(itemA.app_name) &&
+          itemA.order_status === "1"
+        );
+      }
+    });
+    let targetTicketList = ticketList.filter(itemA => {
+      if (app_name !== "wanxiang") {
+        return itemA.app_name === app_name;
+      } else {
+        return ["wanxiang", "wanxiangh5"].includes(itemA.app_name);
+      }
+    });
     let isOffer = targetOfferList.some(
       itemA => itemA.order_number === item.order_number
     );
