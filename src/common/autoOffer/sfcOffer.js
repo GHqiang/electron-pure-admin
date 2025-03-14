@@ -1521,7 +1521,7 @@ class getSfcOfferPrice {
         let showTime = show_time.split(" ")[1].slice(0, 5);
         // 解决同一时间多场次问题
         let targetShowList = showList.filter(
-          item => +new Date(item.start_time) === +new Date(showTime)
+          item => item.start_time === showTime
         );
         let targetShow = targetShowList[0];
         if (targetShowList.length > 1) {

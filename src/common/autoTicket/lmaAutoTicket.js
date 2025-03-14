@@ -1073,7 +1073,7 @@ class OrderAutoTicketQueue {
         console.log(conPrefix + "showList===>", showList);
         // 解决同一时间多场次问题
         let targetShowList = showList.filter(
-          item => +new Date(item.start_time) === +new Date(start_time)
+          item => item.start_time === start_time
         );
         let targetShow = targetShowList[0];
         if (targetShowList.length > 1) {
