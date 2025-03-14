@@ -1659,7 +1659,12 @@ class getUmeOfferPrice {
       console.log(conPrefix + "获取影院放映列表返回", res);
       // 只获取出售中的列表，即将上映暂不返回
       let fimlList =
-        res.data?.find(item => item.showStatus === "SHOWING")?.fimlList || [];
+        res.data
+          ?.map(item => item.fimlList)
+          .flat()
+          .filter(item =>
+            ["SHOWING", "SOON_SHOW_TICKET"].includes(item.showStatus)
+          ) || [];
       this.logList.push({
         opera_time: getCurrentTime(),
         des: "获取影院放映列表返回",

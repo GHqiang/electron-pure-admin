@@ -3511,7 +3511,12 @@ const getMoviePlayInfo = async ({ cinemaCode, cinemaLinkId, appFlag }) => {
     console.log(conPrefix + "获取影院放映列表返回", res);
     // 只获取出售中的列表，即将上映暂不返回
     let movieData =
-      res.data?.find(item => item.showStatus === "SHOWING")?.fimlList || [];
+      res.data
+        ?.map(item => item.fimlList)
+        .flat()
+        .filter(item =>
+          ["SHOWING", "SOON_SHOW_TICKET"].includes(item.showStatus)
+        ) || [];
     return {
       movieData
     };
