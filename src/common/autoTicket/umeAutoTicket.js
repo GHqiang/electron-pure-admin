@@ -1397,6 +1397,7 @@ class OrderAutoTicketQueue {
         return { offerRule, transferParams };
       }
       let cardList = cardQuanListRes?.cards || [];
+      cardList = JSON.parse(JSON.stringify(cardList));
       if (cardList?.length && offerRule.offer_type != "1") {
         // 过滤出来维护在可用卡里面里面的卡
         if (this.usableCardList?.length) {
