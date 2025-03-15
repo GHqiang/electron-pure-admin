@@ -23,7 +23,8 @@ const tokens = platTokens();
 import {
   TICKET_CONPREFIX_OBJ,
   QUAN_TYPE_COST,
-  TEST_NEW_PLAT_LIST
+  TEST_NEW_PLAT_LIST,
+  APP_TYPE_LIST
 } from "@/common/constant";
 import { APP_API_OBJ, PLAT_API_OBJ } from "@/common/index";
 
@@ -3596,7 +3597,12 @@ const addOrderHandleRecored = async ({
       mobile: mobile || "", // 出票手机号
       rule: tokens.userInfo.rule
     };
-
+    let targetInfo = APP_TYPE_LIST.find(item =>
+      item.app_name_list.includes(serOrderInfo.app_name)
+    );
+    if (targetInfo) {
+      serOrderInfo.app_type = targetInfo.app_type_code;
+    }
     await svApi.addTicketRecord(serOrderInfo);
     if (serOrderInfo.card_id && serOrderInfo.order_status === "1") {
       updateCardDayUse({

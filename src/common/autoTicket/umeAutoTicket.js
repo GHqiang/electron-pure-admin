@@ -26,7 +26,11 @@ const {
   userInfo: { rule, user_id, phone }
 } = platTokens();
 // 影院特殊匹配列表及api
-import { TICKET_CONPREFIX_OBJ, TEST_NEW_PLAT_LIST } from "@/common/constant";
+import {
+  TICKET_CONPREFIX_OBJ,
+  TEST_NEW_PLAT_LIST,
+  APP_TYPE_LIST
+} from "@/common/constant";
 import { APP_API_OBJ, PLAT_API_OBJ } from "@/common/index";
 
 let isTestOrder = false; //是否是测试订单
@@ -3996,7 +4000,12 @@ const addOrderHandleRecored = async ({
       mobile: mobile || "", // 出票手机号
       rule: rule
     };
-
+    let targetInfo = APP_TYPE_LIST.find(item =>
+      item.app_name_list.includes(serOrderInfo.app_name)
+    );
+    if (targetInfo) {
+      serOrderInfo.app_type = targetInfo.app_type_code;
+    }
     await svApi.addTicketRecord(serOrderInfo);
   } catch (error) {
     console.error("添加订单处理记录异常", error);
