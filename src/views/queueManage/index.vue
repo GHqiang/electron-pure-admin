@@ -21,7 +21,9 @@
     <el-table :data="platQueueList" border show-overflow-tooltip>
       <el-table-column prop="platName" label="平台名称">
         <template #default="{ row, $index }">
-          <span v-if="row.id !== editingRowId">{{ row.platName }}</span>
+          <span v-if="row.id !== editingRowId">{{
+            ORDER_FORM[row.platName]
+          }}</span>
           <el-select
             v-else
             v-model="editingRow.platName"
