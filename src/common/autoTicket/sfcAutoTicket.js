@@ -2152,6 +2152,29 @@ class OrderAutoTicketQueue {
             session_id
           });
           if (cardList?.length) {
+            let cardData = cardList.filter(
+              item => item.balance * 100 >= quan_fee * 100 * ticket_num
+            );
+            if (!cardData?.length) {
+              this.logList.push({
+                opera_time: getCurrentTime(),
+                des: `使用优惠券前发现没有可以支付券手续费的会员卡，${is_auto_use_quan ? ",灵活用券转用卡处理" : ""}`,
+                level: "error",
+                info: {
+                  quan_fee,
+                  ticket_num,
+                  cardList
+                }
+              });
+              if (is_auto_use_quan) {
+                offerRule.quan_value = "";
+                return await this.useCardHandle(useCardParms);
+              }
+              return {
+                card_id: "",
+                profit: 0 // 利润
+              };
+            }
             // 按余额倒序取最大余额的卡id（用券时这个card_id需要再看看是否这样取）
             let cards = cardList.sort((a, b) => b.balance - a.balance);
             // if (appFlag === "nanugojgh") {
