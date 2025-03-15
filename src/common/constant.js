@@ -346,22 +346,22 @@ const SFC_APP_LIST = Object.keys(APP_LIST).filter(
 // 影线类型
 const APP_TYPE_LIST = [
   {
-    app_type_coe: "ume_applet",
+    app_type_code: "ume_applet",
     app_type_name: "凤凰云智小程序",
     app_name_list: UME_LIST
   },
   {
-    app_type_coe: "ume_h5",
+    app_type_code: "ume_h5",
     app_type_name: "凤凰云智H5",
     app_name_list: H5_UME_LIST
   },
   {
-    app_type_coe: "lma_applet",
+    app_type_code: "lma_applet",
     app_type_name: "卢米埃",
     app_name_list: ["lma"]
   },
   {
-    app_type_coe: "sfc_applet",
+    app_type_code: "sfc_applet",
     app_type_name: "乐影",
     app_name_list: SFC_APP_LIST
   }

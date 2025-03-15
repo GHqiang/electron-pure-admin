@@ -192,10 +192,10 @@ class OrderAutoOfferQueue {
             app_name: getCinemaFlag(item)
           };
         });
-      // console.warn(
-      //   conPrefix + "匹配已上架影院后的的待报价订单",
-      //   sfcStayOfferlist
-      // );
+      console.warn(
+        conPrefix + "匹配已上架影院后的的待报价订单",
+        sfcStayOfferlist
+      );
       if (!sfcStayOfferlist?.length) return [];
       let newOrders = sfcStayOfferlist.filter(
         item => !this.handledOrders.has(item.order_number)

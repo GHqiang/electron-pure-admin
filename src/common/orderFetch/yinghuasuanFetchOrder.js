@@ -14,8 +14,6 @@ import { platTokens } from "@/store/platTokens";
 // 平台toke列表
 const tokens = platTokens();
 
-let conPrefix = "【影划算】——"; // console打印前缀
-
 // 创建一个订单自动报价队列类
 class OrderAutoFetchQueue {
   constructor() {
@@ -34,7 +32,7 @@ class OrderAutoFetchQueue {
     // 循环直到队列停止
     while (this.isRunning) {
       // 获取订单列表(支持时间间隔)
-      await mockDelay(3);
+      await mockDelay(5);
       this.fetchOrders();
     }
   }
@@ -122,7 +120,7 @@ class OrderAutoFetchQueue {
             let offerRecord = res.offerRecord;
             logList.push({
               opera_time: getCurrentTime(),
-              des: conPrefix + "判断是否是新订单返回",
+              des: "判断是否是新订单返回",
               level: "info",
               info: {
                 ...res
@@ -142,7 +140,7 @@ class OrderAutoFetchQueue {
               console.log("更新报价记录订单号返回", updateRes);
               logList.push({
                 opera_time: getCurrentTime(),
-                des: conPrefix + "更新报价记录订单号返回",
+                des: "更新报价记录订单号返回",
                 level: "info",
                 info: {
                   ...updateRes
@@ -165,7 +163,7 @@ class OrderAutoFetchQueue {
         let logList = [
           {
             opera_time: getCurrentTime(),
-            des: conPrefix + "影划算新的待出票订单",
+            des: "影划算新的待出票订单",
             level: "info",
             info: {
               newOrder: item
@@ -255,26 +253,26 @@ class OrderAutoFetchQueue {
       list = list.filter(
         item => !this.confimrOrderList.some(itemA => itemA.id === item.id)
       );
-      list = list.map(item => ({
-        ...item.demands,
-        id: item.id,
-        inv_id: item.inv_id,
-        quote_price: item.quote_price
-      }));
-      console.log("从已接单列表里过滤后", logList);
-      logList.push({
-        opera_time: getCurrentTime(),
-        des: conPrefix + "从已接单列表里过滤后",
-        level: "info",
-        info: {
-          list
-        }
-      });
       if (list?.length) {
+        list = list.map(item => ({
+          ...item.demands,
+          id: item.id,
+          inv_id: item.inv_id,
+          quote_price: item.quote_price
+        }));
+        console.log("从已接单列表里过滤后", logList);
+        logList.push({
+          opera_time: getCurrentTime(),
+          des: "从已接单列表里过滤后",
+          level: "info",
+          info: {
+            list
+          }
+        });
         const offerList = await getOfferList();
         logList.push({
           opera_time: getCurrentTime(),
-          des: conPrefix + "获取最近报价记录",
+          des: "获取最近报价记录",
           level: "info",
           info: {
             offerList
@@ -287,7 +285,7 @@ class OrderAutoFetchQueue {
         console.log("最近报价记录过滤后", list, offerList);
         logList.push({
           opera_time: getCurrentTime(),
-          des: conPrefix + "最近报价记录过滤后",
+          des: "最近报价记录过滤后",
           level: "info",
           info: {
             list
@@ -303,7 +301,7 @@ class OrderAutoFetchQueue {
           console.log("确认接单返回", res, item);
           logList.push({
             opera_time: getCurrentTime(),
-            des: conPrefix + "确认接单返回",
+            des: "确认接单返回",
             level: "info",
             info: {
               res
@@ -314,7 +312,7 @@ class OrderAutoFetchQueue {
     } catch (error) {
       logList.push({
         opera_time: getCurrentTime(),
-        des: conPrefix + "获取待确认订单并接单异常",
+        des: "获取待确认订单并接单异常",
         level: "info",
         info: {
           error
@@ -340,7 +338,7 @@ class OrderAutoFetchQueue {
       console.log("获取影划算待确认列表返回", list);
       logList.push({
         opera_time: getCurrentTime(),
-        des: conPrefix + "获取待确认列表返回",
+        des: "获取待确认列表返回",
         level: "info",
         info: {
           res,
@@ -352,7 +350,7 @@ class OrderAutoFetchQueue {
       console.error("获取影划算待确认列表异常", error);
       logList.push({
         opera_time: getCurrentTime(),
-        des: conPrefix + "获取影划算待确认列表异常",
+        des: "获取影划算待确认列表异常",
         level: "info",
         info: {
           error
@@ -363,7 +361,7 @@ class OrderAutoFetchQueue {
   }
 
   // 获取待出票订单列表
-  async orderFetch() {
+  async orderFetch(logList) {
     try {
       let params = {
         status: "1",
@@ -376,7 +374,7 @@ class OrderAutoFetchQueue {
       let list = res?.data?.data || [];
       logList.push({
         opera_time: getCurrentTime(),
-        des: conPrefix + "获取待出票列表返回",
+        des: "获取待出票列表返回",
         level: "info",
         info: {
           res
@@ -388,7 +386,7 @@ class OrderAutoFetchQueue {
       console.error("获取待出票列表异常", error);
       logList.push({
         opera_time: getCurrentTime(),
-        des: conPrefix + "获取待出票列表异常",
+        des: "获取待出票列表异常",
         level: "info",
         info: {
           error
