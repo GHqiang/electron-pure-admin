@@ -613,14 +613,16 @@ const getCinemaFlag = item => {
     ["深圳"].includes(city_name)
   ) {
     return "szhxxggjyc";
-  } else if (
-    ["北京英嘉国际影城金源CINITY店"].some(itemA =>
-      cinemNameSpecial(cinema_name).includes(itemA)
-    ) &&
-    ["北京"].includes(city_name)
-  ) {
-    return "bjyjgj";
-  } else if (
+  }
+  // else if (
+  //   ["北京英嘉国际影城金源CINITY店"].some(itemA =>
+  //     cinemNameSpecial(cinema_name).includes(itemA)
+  //   ) &&
+  //   ["北京"].includes(city_name)
+  // ) {
+  //   return "bjyjgj";
+  // }
+  else if (
     ["金球国际影城上丰路店"].some(itemA =>
       cinemNameSpecial(cinema_name).includes(itemA)
     ) &&

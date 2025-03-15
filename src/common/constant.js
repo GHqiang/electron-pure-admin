@@ -136,7 +136,7 @@ let H5_UME_LIST = [
   "suning",
   "shoudu",
   "liqunhuayi",
-  "bjyjgj",
+  // "bjyjgj",
   "zyhygj",
   "tygcthdyc",
   "wsmsdmeyc",
@@ -212,7 +212,7 @@ const APP_LIST = {
   shoudu: "首都影城",
   liqunhuayi: "利群华艺影城",
 
-  bjyjgj: "北京英嘉国际",
+  // bjyjgj: "北京英嘉国际",
   zyhygj: "中影华宇国际",
   tygcthdyc: "天娱广场天河电影城",
   wsmsdmeyc: "武商梦时代摩尔影城",
@@ -2220,7 +2220,7 @@ const H5_UME_CINEMA_OBJ = {
   // 星光嘉映影城（南京雨山天街店）
   xgjyycnjystjd: ["15372", "XGJY_H5_PROD_15372_MPS"],
   // 北京英嘉国际
-  bjyjgj: ["11751", "YJXM_H5_PROD_11751_MPSUB"],
+  // bjyjgj: ["11751", "YJXM_H5_PROD_11751_MPSUB"],
   // 中影华宇国际
   zyhygj: ["13462", "ZYSZHY_H5_PROD_13462_MPS"],
   // 天娱广场天河电影城
