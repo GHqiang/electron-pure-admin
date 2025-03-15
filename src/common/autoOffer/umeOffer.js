@@ -1054,7 +1054,7 @@ class getUmeOfferPrice {
       }
       this.logList.push({
         opera_time: getCurrentTime(),
-        des: "sfc计算报价相关信息",
+        des: "ume计算报价相关信息",
         level: "info",
         info: {
           rule_price: "规则计算报价：" + rule_price,
