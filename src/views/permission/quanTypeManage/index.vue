@@ -3,6 +3,22 @@
   <div>
     <!-- 查询表单 -->
     <el-form :inline="true" class="demo-form-inline">
+      <el-form-item label="影线类型">
+        <el-select
+          v-model="formData.app_type"
+          placeholder="影线类型"
+          style="width: 194px"
+          clearable
+          filterable
+        >
+          <el-option
+            v-for="(keyValue, keyName) in APP_TYPE_OBJ"
+            :key="keyName"
+            :label="keyValue"
+            :value="keyName"
+          />
+        </el-select>
+      </el-form-item>
       <el-form-item label="影线名称">
         <el-select
           v-model="formData.app_name"
@@ -362,7 +378,7 @@ const {
 
 import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import QuanDialog from "@/components/QuanDialog.vue";
-import { APP_LIST } from "@/common/constant";
+import { APP_LIST, APP_TYPE_OBJ, APP_TYPE_LIST } from "@/common/constant";
 import {
   getCurrentTime,
   parseExcel,
@@ -378,6 +394,7 @@ const totalNum = ref(0);
 const uploadRef = ref(null);
 // 表单查询数据
 const formData = reactive({
+  app_type: "",
   app_name: "",
   quan_name: "",
   quan_value: "",
@@ -578,6 +595,12 @@ const saveQuan = async cardInfo => {
   try {
     cardInfo.update_time = getCurrentTime();
     cardInfo.quanStockList = JSON.stringify(cardInfo.quanStockList);
+    let targetInfo = APP_TYPE_LIST.find(item =>
+      item.app_name_list.includes(cardInfo.app_name)
+    );
+    if (targetInfo) {
+      cardInfo.app_type = targetInfo.app_type_coe;
+    }
     console.log("新增/编辑保存券类型", JSON.parse(JSON.stringify(cardInfo)));
     if (cardInfo.id) {
       await svApi.updateQuanType(cardInfo);

@@ -3,6 +3,22 @@
   <div>
     <!-- 查询表单 -->
     <el-form :inline="true" class="demo-form-inline">
+      <el-form-item label="影线类型">
+        <el-select
+          v-model="formData.app_type"
+          placeholder="影线类型"
+          style="width: 194px"
+          clearable
+          filterable
+        >
+          <el-option
+            v-for="(keyValue, keyName) in APP_TYPE_OBJ"
+            :key="keyName"
+            :label="keyValue"
+            :value="keyName"
+          />
+        </el-select>
+      </el-form-item>
       <el-form-item label="影线名称">
         <el-select
           v-model="formData.app_name"
@@ -288,7 +304,9 @@ import {
   APP_LIST,
   UME_LIST,
   H5_UME_LIST,
-  H5_UME_CINEMA_OBJ
+  H5_UME_CINEMA_OBJ,
+  APP_TYPE_OBJ,
+  APP_TYPE_LIST
 } from "@/common/constant";
 import { APP_API_OBJ } from "@/common/index.js";
 import {
@@ -307,6 +325,7 @@ const totalNum = ref(0);
 
 // 表单查询数据
 const formData = reactive({
+  app_type: "",
   app_name: "",
   card_id: "",
   card_num: "",
@@ -574,8 +593,16 @@ const addCardListHandle = async cardList => {
           use_limit_day = "8";
           use_limit_month = "20";
         }
+        let targetInfo = APP_TYPE_LIST.find(itemA =>
+          itemA.app_name_list.includes(item.app_name)
+        );
+        let app_type;
+        if (targetInfo) {
+          app_type = targetInfo.app_type_coe;
+        }
         return {
           ...item,
+          app_type,
           card_discount,
           use_limit_day,
           use_limit_month,
@@ -925,6 +952,12 @@ const saveCard = async cardInfo => {
     cardInfo.update_time = getCurrentTime();
     cardInfo.rule = rule;
     cardInfo.linkCinemaIds = cardInfo.linkCinemaIds?.join();
+    let targetInfo = APP_TYPE_LIST.find(item =>
+      item.app_name_list.includes(cardInfo.app_name)
+    );
+    if (targetInfo) {
+      cardInfo.app_type = targetInfo.app_type_coe;
+    }
     if (cardInfo.id) {
       console.log("编辑保存卡", cardInfo);
       await svApi.updateCardRecord(cardInfo);

@@ -343,6 +343,40 @@ const SFC_APP_LIST = Object.keys(APP_LIST).filter(
   item => !NO_SFC_APP_LIST.includes(item)
 );
 
+// 影线类型
+const APP_TYPE_LIST = [
+  {
+    app_type_coe: "ume_applet",
+    app_type_name: "凤凰云智小程序",
+    app_name_list: UME_LIST
+  },
+  {
+    app_type_coe: "ume_h5",
+    app_type_name: "凤凰云智H5",
+    app_name_list: H5_UME_LIST
+  },
+  {
+    app_type_coe: "lma_applet",
+    app_type_name: "卢米埃",
+    app_name_list: ["lma"]
+  },
+  {
+    app_type_coe: "sfc_applet",
+    app_type_name: "乐影",
+    app_name_list: SFC_APP_LIST
+  }
+];
+
+// 影线类型集合
+const APP_TYPE_OBJ = {
+  ume_applet: "凤凰云智小程序",
+  ume_h5: "凤凰云智H5",
+  sfc_applet: "乐影",
+  lma_applet: "卢米埃"
+};
+
+window.APP_TYPE_LIST = APP_TYPE_LIST;
+
 // sfc特殊影院集合
 const SFC_SPECIAL_CINEMA_LIST = [
   // 无锡
@@ -2602,6 +2636,8 @@ export {
   QUAN_TYPE_FLAG,
   UME_LIST,
   H5_UME_LIST,
+  APP_TYPE_LIST,
+  APP_TYPE_OBJ,
   H5_UME_CINEMA_OBJ,
   LIERENR_REWARDS,
   GROUP_LIST,

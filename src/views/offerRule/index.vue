@@ -24,6 +24,22 @@
           clearable
         />
       </el-form-item>
+      <el-form-item label="影线类型">
+        <el-select
+          v-model="formData.app_type"
+          placeholder="影线类型"
+          style="width: 194px"
+          clearable
+          filterable
+        >
+          <el-option
+            v-for="(keyValue, keyName) in APP_TYPE_OBJ"
+            :key="keyName"
+            :label="keyValue"
+            :value="keyName"
+          />
+        </el-select>
+      </el-form-item>
       <el-form-item label="影线名称">
         <el-select
           v-model="formData.shadowLineName"
@@ -292,7 +308,9 @@ import {
   ORDER_FORM,
   APP_LIST,
   UME_LIST,
-  SPECIAL_CINEMA_OBJ
+  SPECIAL_CINEMA_OBJ,
+  APP_TYPE_OBJ,
+  APP_TYPE_LIST
 } from "@/common/constant";
 import {
   getCurrentTime,
@@ -335,6 +353,7 @@ const statusObj = {
 const formData = reactive({
   orderForm: "", // 订单来源
   ruleName: "", // 规则名称
+  app_type: "", // 影线名称
   shadowLineName: "", // 影线名称
   status: "", // 状态
   offerType: "", // 报价类型
@@ -728,6 +747,12 @@ const saveRule = async ruleInfo => {
     ruleInfo.weekDay = JSON.stringify(ruleInfo.weekDay);
     ruleInfo.update_time = getCurrentTime();
     ruleInfo.rule = rule;
+    let targetInfo = APP_TYPE_LIST.find(item =>
+      item.app_name_list.includes(ruleInfo.shadowLineName)
+    );
+    if (targetInfo) {
+      ruleInfo.app_type = targetInfo.app_type_coe;
+    }
     if (ruleInfo.id) {
       console.log("编辑保存规则", ruleInfo);
       await svApi.updateRuleRecord(ruleInfo);

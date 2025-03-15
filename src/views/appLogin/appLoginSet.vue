@@ -3,6 +3,22 @@
   <div>
     <!-- 查询表单 -->
     <el-form :inline="true" class="demo-form-inline">
+      <el-form-item label="影线类型">
+        <el-select
+          v-model="formData.app_type"
+          placeholder="影线类型"
+          style="width: 194px"
+          clearable
+          filterable
+        >
+          <el-option
+            v-for="(keyValue, keyName) in APP_TYPE_OBJ"
+            :key="keyName"
+            :label="keyValue"
+            :value="keyName"
+          />
+        </el-select>
+      </el-form-item>
       <el-form-item label="影线名称">
         <el-select
           v-model="formData.app_name"
@@ -186,7 +202,7 @@ import { ref, reactive, computed, onBeforeMount } from "vue";
 import svApi from "@/api/sv-api";
 import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import LoginDialog from "@/components/LoginDialog.vue";
-import { APP_LIST } from "@/common/constant";
+import { APP_LIST, APP_TYPE_OBJ, APP_TYPE_LIST } from "@/common/constant";
 import { getCurrentTime } from "@/utils/utils";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
@@ -206,6 +222,7 @@ const totalNum = ref(0);
 
 // 表单查询数据
 const formData = reactive({
+  app_type: "",
   app_name: "",
   link_user_id: "",
   mobile: "",
@@ -308,6 +325,12 @@ const saveCard = async cardInfo => {
     cardInfo.update_time = getCurrentTime();
     cardInfo.rule = rule;
     cardInfo.link_user_id = cardInfo.link_user_id || null;
+    let targetInfo = APP_TYPE_LIST.find(item =>
+      item.app_name_list.includes(cardInfo.app_name)
+    );
+    if (targetInfo) {
+      cardInfo.app_type = targetInfo.app_type_coe;
+    }
     if (cardInfo.id) {
       console.log("编辑保存登录信息", cardInfo);
       await svApi.updateLoginRecord(cardInfo);

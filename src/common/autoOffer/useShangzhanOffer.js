@@ -343,7 +343,7 @@ class OrderAutoOfferQueue {
         order_sn: order.order_number,
         seat_data: {
           area_id: area_id,
-          quoted: endPrice.tofixed()
+          quoted: endPrice.toFixed()
         },
         bidd_notify: ""
       });
