@@ -1,94 +1,87 @@
 <!-- 会员卡列表 -->
 <template>
   <div>
-    <!-- 查询表单 -->
-    <el-form :inline="true" class="demo-form-inline">
-      <el-form-item label="影线类型">
-        <el-select
-          v-model="formData.app_type"
-          placeholder="影线类型"
-          style="width: 194px"
-          clearable
-          filterable
-        >
-          <el-option
-            v-for="(keyValue, keyName) in APP_TYPE_OBJ"
-            :key="keyName"
-            :label="keyValue"
-            :value="keyName"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="影线名称">
-        <el-select
-          v-model="formData.app_name"
-          placeholder="影线名称"
-          style="width: 194px"
-          clearable
-          filterable
-        >
-          <el-option
-            v-for="(keyValue, keyName) in APP_LIST"
-            :key="keyName"
-            :label="keyValue"
-            :value="keyName"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item :label="`状&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;态`">
-        <el-select
-          v-model="formData.status"
-          placeholder="卡状态"
-          style="width: 194px"
-          clearable
-        >
-          <el-option label="正常" value="1" />
-          <el-option label="无效" value="2" />
-        </el-select>
-      </el-form-item>
-      <el-form-item
-        label="卡&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;号"
-      >
+    <el-container>
+      <el-aside width="200px">
         <el-input
-          v-model="formData.card_num"
-          placeholder="请输入卡号"
-          clearable
+          v-model="filterText"
+          class="w-60 mb-2"
+          placeholder="可输入影院过滤"
         />
-      </el-form-item>
-      <el-form-item label="目标余额">
-        <el-input
-          v-model="formData.balance"
-          placeholder="请输入目标余额"
-          clearable
+        <!-- 左侧树 -->
+        <el-tree
+          ref="treeRef"
+          class="tree-list"
+          :data="treeData"
+          node-key="id"
+          highlight-current
+          style="max-height: 650px; overflow-y: auto"
+          :default-expanded-keys="[1, 2]"
+          :default-checked-keys="[101]"
+          :props="defaultProps"
+          :filter-node-method="filterNode"
+          @node-click="nodeClick"
         />
-      </el-form-item>
-      <el-form-item label="所属账号">
-        <el-input
-          v-model="formData.mobile"
-          placeholder="请输入所属账号(手机号)"
-          clearable
-        />
-      </el-form-item>
-      <el-form-item label="日出票限制">
-        <el-select
-          v-model="formData.use_limit_day"
-          placeholder="出票限制（当天）"
-          clearable
-          style="width: 194px"
-        >
-          <el-option
-            v-for="(item, index) in 10"
-            :key="index"
-            :label="item"
-            :value="item"
-          />
-        </el-select>
-      </el-form-item>
+      </el-aside>
+      <el-main style="margin-left: 15px; padding: 0">
+        <!-- 查询表单 -->
+        <el-form :inline="true" class="demo-form-inline">
+          <el-form-item
+            :label="`状&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;态`"
+          >
+            <el-select
+              v-model="formData.status"
+              placeholder="卡状态"
+              style="width: 194px"
+              clearable
+            >
+              <el-option label="正常" value="1" />
+              <el-option label="无效" value="2" />
+            </el-select>
+          </el-form-item>
+          <el-form-item
+            label="卡&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;号"
+          >
+            <el-input
+              v-model="formData.card_num"
+              placeholder="请输入卡号"
+              clearable
+            />
+          </el-form-item>
+          <el-form-item label="目标余额">
+            <el-input
+              v-model="formData.balance"
+              placeholder="请输入目标余额"
+              clearable
+            />
+          </el-form-item>
+          <el-form-item label="所属账号">
+            <el-input
+              v-model="formData.mobile"
+              placeholder="请输入所属账号(手机号)"
+              clearable
+            />
+          </el-form-item>
+          <el-form-item label="日出票限制">
+            <el-select
+              v-model="formData.use_limit_day"
+              placeholder="出票限制（当天）"
+              clearable
+              style="width: 194px"
+            >
+              <el-option
+                v-for="(item, index) in 10"
+                :key="index"
+                :label="item"
+                :value="item"
+              />
+            </el-select>
+          </el-form-item>
 
-      <el-form-item>
-        <el-button @click="resetForm">重置</el-button>
-        <el-button type="primary" @click="searchData">搜索</el-button>
-        <!-- <el-button type="primary" style="padding-left: 0px">
+          <el-form-item>
+            <el-button @click="resetForm">重置</el-button>
+            <el-button type="primary" @click="searchData">搜索</el-button>
+            <!-- <el-button type="primary" style="padding-left: 0px">
           <template #default>
             <el-select
               v-model="shadowLine"
@@ -106,157 +99,176 @@
             <span @click="addCard">新增</span>
           </template>
         </el-button> -->
-        <el-button type="danger" :disabled="!hasSelected" @click="batchDelete"
-          >批量删除</el-button
-        >
-        <el-button type="primary" style="padding-left: 0px">
-          <template #default>
-            <el-input
-              v-model="mobile"
-              placeholder="所属账号(手机号)"
-              clearable
-              style="width: 350px; margin-left: -1px"
+            <el-button
+              type="danger"
+              :disabled="!hasSelected"
+              @click="batchDelete"
+              >批量删除</el-button
             >
-              <template #prepend>
-                <el-select
-                  v-model="syncType"
-                  placeholder="Select"
-                  style="width: 150px"
+            <el-button type="primary" style="padding-left: 0px">
+              <template #default>
+                <el-input
+                  v-model="mobile"
+                  placeholder="所属账号(手机号)"
+                  clearable
+                  style="width: 350px; margin-left: -1px"
                 >
-                  <el-option label="凤凰云智、卢米埃除外" value="1" />
-                  <el-option label="仅同步凤凰云智" value="2" />
-                  <el-option label="仅同步卢米埃" value="3" />
-                </el-select>
+                  <template #prepend>
+                    <el-select
+                      v-model="syncType"
+                      placeholder="Select"
+                      style="width: 150px"
+                    >
+                      <el-option label="凤凰云智、卢米埃除外" value="1" />
+                      <el-option label="仅同步凤凰云智" value="2" />
+                      <el-option label="仅同步卢米埃" value="3" />
+                    </el-select>
+                  </template>
+                </el-input>
+                <span @click="syncCardInfo">同步卡信息</span>
               </template>
-            </el-input>
-            <span @click="syncCardInfo">同步卡信息</span>
-          </template>
-        </el-button>
-        <el-button
-          style="margin-left: 10px"
-          type="primary"
-          @click="queryCardBalanceTotal"
-          >查看卡余额</el-button
+            </el-button>
+            <el-button
+              style="margin-left: 10px"
+              type="primary"
+              @click="queryCardBalanceTotal"
+              >查看卡余额</el-button
+            >
+          </el-form-item>
+        </el-form>
+        <!-- 表格 -->
+        <el-table
+          ref="multipleTable"
+          style="width: 100%"
+          :data="tableData"
+          border
+          stripe
+          show-summary
+          max-height="450"
+          :summary-method="getSummaries"
+          show-overflow-tooltip
+          @selection-change="handleSelectionChange"
         >
-      </el-form-item>
-    </el-form>
-
-    <!-- 表格 -->
-    <el-table
-      ref="multipleTable"
-      style="width: 100%"
-      :data="tableData"
-      border
-      stripe
-      show-summary
-      max-height="450"
-      :summary-method="getSummaries"
-      show-overflow-tooltip
-      @selection-change="handleSelectionChange"
-    >
-      <el-table-column type="selection" min-width="55" />
-      <el-table-column
-        prop="app_name"
-        label="影线名称"
-        sortable
-        min-width="110"
-      >
-        <template #default="{ row }">
-          <span>{{ APP_LIST[row.app_name] }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column prop="cinema_name" label="影院名称" min-width="150" />
-      <el-table-column prop="mobile" label="所属账号" min-width="120" />
-      <el-table-column prop="status" label="卡 状态" min-width="80">
-        <template #default="{ row }">
-          <span :class="{ red: row.status != 1 }">{{
-            row.status == "1" ? "正常" : "无效"
-          }}</span>
-        </template>
-      </el-table-column>
-
-      <el-table-column prop="balance" label="卡 余额" min-width="80">
-        <template #default="{ row }">
-          <span :class="{ red: row.balance <= 200 }">{{ row.balance }}</span>
-        </template>
-      </el-table-column>
-
-      <el-table-column prop="card_discount" label="卡 折扣" min-width="80" />
-      <!-- <el-table-column prop="card_id" label="卡 ID" min-width="80" /> -->
-      <el-table-column prop="card_num" label="卡 号" min-width="120" />
-      <!-- <el-table-column prop="card_pwd" label="卡 密码" min-width="110" /> -->
-      <el-table-column
-        prop="use_limit_day"
-        label="日出票限制"
-        min-width="100"
-      />
-      <el-table-column prop="use_limit_day" label="日出票量" min-width="90">
-        <template #default="{ row: { daily_usage, usage_date } }">
-          <span>{{
-            usage_date !== getCurrentDay() ? 0 : daily_usage || 0
-          }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column
-        prop="use_limit_month"
-        label="月出票限制"
-        min-width="100"
-      />
-      <el-table-column prop="monthly_usage" label="月出票量" min-width="90">
-        <template #default="{ row: { monthly_usage, usage_date } }">
-          <span>{{
-            !isDateInCurrentMonth(usage_date) ? 0 : monthly_usage || 0
-          }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column prop="update_time" label="更新时间" min-width="160" />
-
-      <el-table-column label="是否默认卡" min-width="100">
-        <template #default="{ row }">
-          <span>{{ row.default_card === "1" ? "是" : "否" }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column prop="remark" label="备注" min-width="100" />
-
-      <el-table-column
-        label="操作"
-        fixed="right"
-        align="center"
-        min-width="200"
-      >
-        <template #default="scope">
-          <el-button
-            size="small"
-            type="primary"
-            @click="editCard(scope.row, '1')"
-            >编辑</el-button
+          <el-table-column type="selection" min-width="55" />
+          <el-table-column
+            prop="app_name"
+            label="影线名称"
+            sortable
+            min-width="110"
           >
-          <el-button
-            size="small"
-            type="success"
-            @click="editCard(scope.row, '2')"
-            >复制</el-button
+            <template #default="{ row }">
+              <span>{{ APP_LIST[row.app_name] }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="cinema_name"
+            label="影院名称"
+            min-width="150"
+          />
+          <el-table-column prop="mobile" label="所属账号" min-width="120" />
+          <el-table-column prop="status" label="卡 状态" min-width="80">
+            <template #default="{ row }">
+              <span :class="{ red: row.status != 1 }">{{
+                row.status == "1" ? "正常" : "无效"
+              }}</span>
+            </template>
+          </el-table-column>
+
+          <el-table-column prop="balance" label="卡 余额" min-width="80">
+            <template #default="{ row }">
+              <span :class="{ red: row.balance <= 200 }">{{
+                row.balance
+              }}</span>
+            </template>
+          </el-table-column>
+
+          <el-table-column
+            prop="card_discount"
+            label="卡 折扣"
+            min-width="80"
+          />
+          <!-- <el-table-column prop="card_id" label="卡 ID" min-width="80" /> -->
+          <el-table-column prop="card_num" label="卡 号" min-width="120" />
+          <!-- <el-table-column prop="card_pwd" label="卡 密码" min-width="110" /> -->
+          <el-table-column
+            prop="use_limit_day"
+            label="日出票限制"
+            min-width="100"
+          />
+          <el-table-column prop="use_limit_day" label="日出票量" min-width="90">
+            <template #default="{ row: { daily_usage, usage_date } }">
+              <span>{{
+                usage_date !== getCurrentDay() ? 0 : daily_usage || 0
+              }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="use_limit_month"
+            label="月出票限制"
+            min-width="100"
+          />
+          <el-table-column prop="monthly_usage" label="月出票量" min-width="90">
+            <template #default="{ row: { monthly_usage, usage_date } }">
+              <span>{{
+                !isDateInCurrentMonth(usage_date) ? 0 : monthly_usage || 0
+              }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="update_time"
+            label="更新时间"
+            min-width="160"
+          />
+
+          <el-table-column label="是否默认卡" min-width="100">
+            <template #default="{ row }">
+              <span>{{ row.default_card === "1" ? "是" : "否" }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="remark" label="备注" min-width="100" />
+
+          <el-table-column
+            label="操作"
+            fixed="right"
+            align="center"
+            min-width="200"
           >
-          <el-button
-            size="small"
-            type="danger"
-            @click="deleteRow(scope.$index, scope.row)"
-            >删除</el-button
-          >
-        </template>
-      </el-table-column>
-    </el-table>
-    <el-pagination
-      v-model:current-page="currentPage"
-      v-model:page-size="pageSize"
-      style="margin-top: 10px; display: flex; justify-content: flex-end"
-      :page-sizes="[10, 20, 50, 100]"
-      :background="true"
-      layout="total, sizes, prev, pager, next, jumper"
-      :total="totalNum"
-      @size-change="handleSizeChange"
-      @current-change="handleCurrentChange"
-    />
+            <template #default="scope">
+              <el-button
+                size="small"
+                type="primary"
+                @click="editCard(scope.row, '1')"
+                >编辑</el-button
+              >
+              <el-button
+                size="small"
+                type="success"
+                @click="editCard(scope.row, '2')"
+                >复制</el-button
+              >
+              <el-button
+                size="small"
+                type="danger"
+                @click="deleteRow(scope.$index, scope.row)"
+                >删除</el-button
+              >
+            </template>
+          </el-table-column>
+        </el-table>
+        <!-- 分页 -->
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          style="margin-top: 10px; display: flex; justify-content: flex-end"
+          :page-sizes="[10, 20, 50, 100]"
+          :background="true"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="totalNum"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </el-main>
+    </el-container>
 
     <CardDialog
       ref="sfcDialogRef"
@@ -291,7 +303,15 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, h } from "vue";
+import {
+  ref,
+  reactive,
+  computed,
+  h,
+  onBeforeMount,
+  nextTick,
+  watch
+} from "vue";
 import svApi from "@/api/sv-api";
 import { platTokens } from "@/store/platTokens";
 const {
@@ -317,6 +337,38 @@ import {
   isDateInCurrentMonth,
   mockDelay
 } from "@/utils/utils";
+
+// 树节点属性映射
+const defaultProps = {
+  children: "children",
+  label: "label"
+};
+// 定义树形结构数据
+const treeData = APP_TYPE_LIST.map((item, inx) => {
+  return {
+    id: inx + 1,
+    label: item.app_type_name,
+    value: item.app_type_code,
+    children: item.app_name_list.map((itemA, index) => ({
+      id: index + 1 + (inx + 1) * 100,
+      label: APP_LIST[itemA],
+      value: itemA
+    }))
+  };
+});
+// 树过滤
+const filterText = ref("");
+const filterNode = (value, data) => {
+  if (!value) return true;
+  return data.label.includes(value);
+};
+
+// 树组件的引用
+const treeRef = ref(null);
+watch(filterText, val => {
+  treeRef.value.filter(val);
+});
+
 const tableData = ref([]);
 
 const currentPage = ref(1);
@@ -333,6 +385,20 @@ const formData = reactive({
   use_limit_day: "",
   mobile: ""
 });
+
+// 树节点点击
+const nodeClick = nodeData => {
+  console.log("nodeData", nodeData);
+  if (nodeData.id < 100) {
+    formData.app_type = nodeData.value;
+    formData.app_name = "";
+  } else {
+    formData.app_name = nodeData.value;
+    formData.app_type = "";
+  }
+  searchData();
+};
+
 // window.testUpdateCardUse = () =>
 //   svApi.updateDayUsage({
 //     app_name: "sfc",
@@ -399,7 +465,6 @@ const searchData = async () => {
     console.warn("获取卡列表失败", error);
   }
 };
-searchData();
 
 const handleSizeChange = val => {
   console.log(`${val} items per page`);
@@ -1060,10 +1125,22 @@ const batchDelete = () => {
       });
   }
 };
+onBeforeMount(async () => {
+  nextTick(() => {
+    if (treeRef.value) {
+      treeRef.value.setCurrentKey(1);
+      formData.app_type = "ume_applet";
+      searchData();
+    }
+  });
+});
 </script>
 <style scoped>
 .red {
   color: red;
   font-weight: bold;
+}
+.tree-list :deep(.el-tree-node.is-current > .el-tree-node__content) {
+  background-color: #5fe3de;
 }
 </style>
