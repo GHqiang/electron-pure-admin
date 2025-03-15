@@ -655,7 +655,7 @@ const saveQuan = async cardInfo => {
       item.app_name_list.includes(cardInfo.app_name)
     );
     if (targetInfo) {
-      cardInfo.app_type = targetInfo.app_type_coe;
+      cardInfo.app_type = targetInfo.app_type_code;
     }
     console.log("新增/编辑保存券类型", JSON.parse(JSON.stringify(cardInfo)));
     if (cardInfo.id) {

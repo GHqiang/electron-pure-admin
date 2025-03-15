@@ -376,7 +376,7 @@ const saveCard = async cardInfo => {
       item.app_name_list.includes(cardInfo.app_name)
     );
     if (targetInfo) {
-      cardInfo.app_type = targetInfo.app_type_coe;
+      cardInfo.app_type = targetInfo.app_type_code;
     }
     if (cardInfo.id) {
       console.log("编辑保存登录信息", cardInfo);

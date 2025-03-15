@@ -821,7 +821,7 @@ const saveRule = async ruleInfo => {
       item.app_name_list.includes(ruleInfo.shadowLineName)
     );
     if (targetInfo) {
-      ruleInfo.app_type = targetInfo.app_type_coe;
+      ruleInfo.app_type = targetInfo.app_type_code;
     }
     if (ruleInfo.id) {
       console.log("编辑保存规则", ruleInfo);

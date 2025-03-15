@@ -663,7 +663,7 @@ const addCardListHandle = async cardList => {
         );
         let app_type;
         if (targetInfo) {
-          app_type = targetInfo.app_type_coe;
+          app_type = targetInfo.app_type_code;
         }
         return {
           ...item,
@@ -1021,7 +1021,7 @@ const saveCard = async cardInfo => {
       item.app_name_list.includes(cardInfo.app_name)
     );
     if (targetInfo) {
-      cardInfo.app_type = targetInfo.app_type_coe;
+      cardInfo.app_type = targetInfo.app_type_code;
     }
     if (cardInfo.id) {
       console.log("编辑保存卡", cardInfo);

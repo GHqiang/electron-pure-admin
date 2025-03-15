@@ -6,7 +6,7 @@ import {
   formatErrInfo, // 格式化errInfo
   getCinemaLoginInfoList
 } from "@/utils/utils";
-import { TEST_NEW_PLAT_LIST } from "@/common/constant.js";
+import { TEST_NEW_PLAT_LIST, APP_TYPE_LIST } from "@/common/constant.js";
 
 import svApi from "@/api/sv-api"; // 机器api
 import yinghuasuanApi from "@/api/yinghuasuan-api"; // 影划算平台api
@@ -289,6 +289,12 @@ class OrderAutoOfferQueue {
         rule: tokens.userInfo.rule,
         offer_rule_id: offerResult?.offerRule?.id
       };
+      let targetInfo = APP_TYPE_LIST.find(item =>
+        item.app_name_list.includes(serOrderInfo.app_name)
+      );
+      if (targetInfo) {
+        serOrderInfo.app_type = targetInfo.app_type_code;
+      }
       // 上传该订单的运行日志
       logUpload(
         {
