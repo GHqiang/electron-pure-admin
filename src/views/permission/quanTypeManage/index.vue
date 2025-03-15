@@ -1,137 +1,38 @@
 <!-- 券类型列表 -->
 <template>
   <div>
-    <!-- 查询表单 -->
-    <el-form :inline="true" class="demo-form-inline">
-      <el-form-item label="影线类型">
-        <el-select
-          v-model="formData.app_type"
-          placeholder="影线类型"
-          style="width: 194px"
-          clearable
-          filterable
-        >
-          <el-option
-            v-for="(keyValue, keyName) in APP_TYPE_OBJ"
-            :key="keyName"
-            :label="keyValue"
-            :value="keyName"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="影线名称">
-        <el-select
-          v-model="formData.app_name"
-          placeholder="影线名称"
-          style="width: 194px"
-          clearable
-          filterable
-        >
-          <el-option
-            v-for="(keyValue, keyName) in APP_LIST"
-            :key="keyName"
-            :label="keyValue"
-            :value="keyName"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="券&nbsp;&nbsp;&nbsp;&nbsp;类型">
-        <el-select
-          v-model="formData.quan_value"
-          clearable
-          filterable
-          placeholder="券类型"
-          style="width: 194px"
-        >
-          <el-option
-            v-for="(item, index) in quanType"
-            :key="item.id"
-            :label="item.quan_name"
-            :value="item.quan_value"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="券&nbsp;&nbsp;&nbsp;&nbsp;名称">
+    <el-container>
+      <el-aside width="200px">
         <el-input
-          v-model="formData.quan_name"
-          placeholder="请输入券名称"
-          clearable
+          v-model="filterText"
+          class="w-60 mb-2"
+          placeholder="可输入影院过滤"
         />
-      </el-form-item>
-      <el-form-item label="券&nbsp;&nbsp;&nbsp;&nbsp;成本">
-        <el-input
-          v-model="formData.quan_cost"
-          placeholder="请输入券成本"
-          clearable
+        <!-- 左侧树 -->
+        <el-tree
+          ref="treeRef"
+          class="tree-list"
+          :data="treeData"
+          node-key="id"
+          highlight-current
+          style="max-height: 650px; overflow-y: auto"
+          :default-expanded-keys="[1, 2]"
+          :default-checked-keys="[101]"
+          :props="defaultProps"
+          :filter-node-method="filterNode"
+          @node-click="nodeClick"
         />
-      </el-form-item>
-      <el-form-item label="券&nbsp;&nbsp;&nbsp;&nbsp;标识">
-        <el-input
-          v-model="formData.quan_flag"
-          placeholder="请输入券标识"
-          clearable
-        />
-      </el-form-item>
-      <el-form-item label="券手续费">
-        <el-input
-          v-model="formData.quan_fee"
-          placeholder="请输入券手续费"
-          clearable
-        />
-      </el-form-item>
-      <el-form-item label="是否入库">
-        <el-select
-          v-model="formData.is_store"
-          placeholder="是否入库"
-          style="width: 194px"
-          clearable
-        >
-          <el-option label="是" value="1" />
-          <el-option label="否" value="2" />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
-        <el-button @click="resetForm">重置</el-button>
-        <el-button type="primary" @click="searchData">搜索</el-button>
-        <el-button type="primary" style="padding-left: 0px">
-          <template #default>
+      </el-aside>
+      <el-main style="margin-left: 15px; padding: 0">
+        <!-- 查询表单 -->
+        <el-form :inline="true" class="demo-form-inline">
+          <el-form-item label="券&nbsp;&nbsp;&nbsp;&nbsp;类型">
             <el-select
-              v-model="shadowLine"
+              v-model="formData.quan_value"
+              clearable
               filterable
-              placeholder="影线名称"
-              style="width: 120px; margin-left: -1px"
-            >
-              <el-option
-                v-for="(keyValue, keyName) in APP_LIST"
-                :key="keyName"
-                :label="keyValue"
-                :value="keyName"
-              />
-            </el-select>
-            <span @click="addQuan">新增</span>
-          </template>
-        </el-button>
-        <el-button type="danger" :disabled="!hasSelected" @click="batchDelete"
-          >批量删除</el-button
-        >
-        <el-button type="warning" @click="getUnUseQuanHandle"
-          >导出不可用券</el-button
-        >
-        <el-upload
-          ref="uploadRef"
-          style="margin-left: 15px"
-          class="upload-demo"
-          :limit="1"
-          :on-change="importQuan"
-          action="#"
-          accept=".xlsx, .xls"
-          :auto-upload="false"
-        >
-          <template #trigger>
-            <el-select
-              v-model="quan_value"
               placeholder="券类型"
-              style="width: 150px; vertical-align: middle"
+              style="width: 194px"
             >
               <el-option
                 v-for="(item, index) in quanType"
@@ -140,34 +41,129 @@
                 :value="item.quan_value"
               />
             </el-select>
-            <el-button type="primary">导入券</el-button>
-          </template>
-        </el-upload>
-        <el-input
-          v-model="exportQuanNum"
-          style="width: 320px; margin-left: 15px"
-          placeholder="导出数量"
-        >
-          <template #prepend>
+          </el-form-item>
+          <el-form-item label="券&nbsp;&nbsp;&nbsp;&nbsp;名称">
+            <el-input
+              v-model="formData.quan_name"
+              placeholder="请输入券名称"
+              clearable
+            />
+          </el-form-item>
+          <el-form-item label="券&nbsp;&nbsp;&nbsp;&nbsp;成本">
+            <el-input
+              v-model="formData.quan_cost"
+              placeholder="请输入券成本"
+              clearable
+            />
+          </el-form-item>
+          <el-form-item label="券&nbsp;&nbsp;&nbsp;&nbsp;标识">
+            <el-input
+              v-model="formData.quan_flag"
+              placeholder="请输入券标识"
+              clearable
+            />
+          </el-form-item>
+          <el-form-item label="券手续费">
+            <el-input
+              v-model="formData.quan_fee"
+              placeholder="请输入券手续费"
+              clearable
+            />
+          </el-form-item>
+          <el-form-item label="是否入库">
             <el-select
-              v-model="exportQuanValue"
-              style="width: 150px"
-              placeholder="券类型"
+              v-model="formData.is_store"
+              placeholder="是否入库"
+              style="width: 194px"
+              clearable
             >
-              <el-option
-                v-for="(item, index) in quanType"
-                :key="item.id"
-                :label="item.quan_name"
-                :value="item.quan_value"
-              />
+              <el-option label="是" value="1" />
+              <el-option label="否" value="2" />
             </el-select>
-          </template>
-          <template #append>
-            <el-button type="primary" @click="getQuanHandle">导出券</el-button>
-          </template>
-        </el-input>
-        <!-- 同步券库存 -->
-        <!-- <el-button type="primary" style="padding-left: 0px; margin-left: 15px">
+          </el-form-item>
+          <el-form-item>
+            <el-button @click="resetForm">重置</el-button>
+            <el-button type="primary" @click="searchData">搜索</el-button>
+            <el-button type="primary" style="padding-left: 0px">
+              <template #default>
+                <el-select
+                  v-model="shadowLine"
+                  filterable
+                  placeholder="影线名称"
+                  style="width: 120px; margin-left: -1px"
+                >
+                  <el-option
+                    v-for="(keyValue, keyName) in APP_LIST"
+                    :key="keyName"
+                    :label="keyValue"
+                    :value="keyName"
+                  />
+                </el-select>
+                <span @click="addQuan">新增</span>
+              </template>
+            </el-button>
+            <el-button
+              type="danger"
+              :disabled="!hasSelected"
+              @click="batchDelete"
+              >批量删除</el-button
+            >
+            <el-button type="warning" @click="getUnUseQuanHandle"
+              >导出不可用券</el-button
+            >
+            <el-upload
+              ref="uploadRef"
+              style="margin-left: 15px"
+              class="upload-demo"
+              :limit="1"
+              :on-change="importQuan"
+              action="#"
+              accept=".xlsx, .xls"
+              :auto-upload="false"
+            >
+              <template #trigger>
+                <el-select
+                  v-model="quan_value"
+                  placeholder="券类型"
+                  style="width: 150px; vertical-align: middle"
+                >
+                  <el-option
+                    v-for="(item, index) in quanType"
+                    :key="item.id"
+                    :label="item.quan_name"
+                    :value="item.quan_value"
+                  />
+                </el-select>
+                <el-button type="primary">导入券</el-button>
+              </template>
+            </el-upload>
+            <el-input
+              v-model="exportQuanNum"
+              style="width: 320px; margin-left: 15px"
+              placeholder="导出数量"
+            >
+              <template #prepend>
+                <el-select
+                  v-model="exportQuanValue"
+                  style="width: 150px"
+                  placeholder="券类型"
+                >
+                  <el-option
+                    v-for="(item, index) in quanType"
+                    :key="item.id"
+                    :label="item.quan_name"
+                    :value="item.quan_value"
+                  />
+                </el-select>
+              </template>
+              <template #append>
+                <el-button type="primary" @click="getQuanHandle"
+                  >导出券</el-button
+                >
+              </template>
+            </el-input>
+            <!-- 同步券库存 -->
+            <!-- <el-button type="primary" style="padding-left: 0px; margin-left: 15px">
           <template #default>
             <el-input
               v-model="mobile"
@@ -189,108 +185,118 @@
             <span @click="syncQuanInfo">同步券库存</span>
           </template>
         </el-button> -->
-        <el-button
-          type="primary"
-          style="margin-left: 15px"
-          @click="getQuanInventory"
-          >查询券库存</el-button
+            <el-button
+              type="primary"
+              style="margin-left: 15px"
+              @click="getQuanInventory"
+              >查询券库存</el-button
+            >
+            <el-button
+              style="margin-left: 15px"
+              type="primary"
+              @click="queryQuanBalanceTotal"
+              >查看券余额</el-button
+            >
+          </el-form-item>
+        </el-form>
+        <!-- 表格 -->
+        <el-table
+          ref="multipleTable"
+          style="width: 100%"
+          :data="tableData"
+          border
+          stripe
+          max-height="450"
+          show-overflow-tooltip
+          @selection-change="handleSelectionChange"
         >
-        <el-button
-          style="margin-left: 15px"
-          type="primary"
-          @click="queryQuanBalanceTotal"
-          >查看券余额</el-button
-        >
-      </el-form-item>
-    </el-form>
+          <el-table-column type="selection" min-width="55" />
+          <el-table-column
+            prop="app_name"
+            label="影线名称"
+            sortable
+            min-width="110"
+          >
+            <template #default="{ row }">
+              <span>{{ APP_LIST[row.app_name] }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="quan_name" label="券名称" min-width="100" />
+          <el-table-column prop="quan_value" label="券类型" min-width="100" />
+          <el-table-column prop="quan_cost" label="券成本" min-width="100" />
+          <el-table-column prop="quan_flag" label="券标识" min-width="100" />
+          <el-table-column prop="quan_fee" label="券手续费" min-width="100" />
+          <el-table-column prop="is_store" label="是否入库" min-width="100">
+            <template #default="{ row: { is_store } }">
+              <span :class="{ red: is_store == 1 }">{{
+                is_store == "1" ? "是 " : "否"
+              }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="券库存" min-width="100">
+            <template #default="{ row: { quan_stock, quanStockList } }">
+              <span>{{ quanStockFormat({ quan_stock, quanStockList }) }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="end_use_time"
+            label="最后使用时间"
+            min-width="160"
+          />
+          <el-table-column
+            prop="black_quans"
+            label="黑名单券"
+            min-width="100"
+          />
+          <el-table-column
+            prop="update_time"
+            label="更新时间"
+            min-width="160"
+          />
+          <el-table-column prop="remark" label="备注" min-width="100" />
 
-    <!-- 表格 -->
-    <el-table
-      ref="multipleTable"
-      style="width: 100%"
-      :data="tableData"
-      border
-      stripe
-      max-height="450"
-      show-overflow-tooltip
-      @selection-change="handleSelectionChange"
-    >
-      <el-table-column type="selection" min-width="55" />
-      <el-table-column
-        prop="app_name"
-        label="影线名称"
-        sortable
-        min-width="110"
-      >
-        <template #default="{ row }">
-          <span>{{ APP_LIST[row.app_name] }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column prop="quan_name" label="券名称" min-width="100" />
-      <el-table-column prop="quan_value" label="券类型" min-width="100" />
-      <el-table-column prop="quan_cost" label="券成本" min-width="100" />
-      <el-table-column prop="quan_flag" label="券标识" min-width="100" />
-      <el-table-column prop="quan_fee" label="券手续费" min-width="100" />
-      <el-table-column prop="is_store" label="是否入库" min-width="100">
-        <template #default="{ row: { is_store } }">
-          <span :class="{ red: is_store == 1 }">{{
-            is_store == "1" ? "是 " : "否"
-          }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column label="券库存" min-width="100">
-        <template #default="{ row: { quan_stock, quanStockList } }">
-          <span>{{ quanStockFormat({ quan_stock, quanStockList }) }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column
-        prop="end_use_time"
-        label="最后使用时间"
-        min-width="160"
-      />
-      <el-table-column prop="black_quans" label="黑名单券" min-width="100" />
-      <el-table-column prop="update_time" label="更新时间" min-width="160" />
-      <el-table-column prop="remark" label="备注" min-width="100" />
-
-      <el-table-column
-        label="操作"
-        fixed="right"
-        align="center"
-        min-width="200"
-      >
-        <template #default="scope">
-          <el-button
-            size="small"
-            type="primary"
-            @click="editQuan(scope.row, '1')"
-            >编辑</el-button
+          <el-table-column
+            label="操作"
+            fixed="right"
+            align="center"
+            min-width="200"
           >
-          <el-button
-            size="small"
-            type="success"
-            @click="editQuan(scope.row, '2')"
-            >复制</el-button
-          >
-          <el-button
-            size="small"
-            type="danger"
-            @click="deleteRow(scope.$index, scope.row)"
-            >删除</el-button
-          >
-        </template>
-      </el-table-column>
-    </el-table>
-    <el-pagination
-      v-model:current-page="currentPage"
-      v-model:page-size="pageSize"
-      style="margin-top: 10px; display: flex; justify-content: flex-end"
-      :page-sizes="[10, 20, 50, 100]"
-      :background="true"
-      layout="total, sizes, prev, pager, next, jumper"
-      :total="totalNum"
-      @size-change="handleSizeChange"
-      @current-change="handleCurrentChange"
-    />
+            <template #default="scope">
+              <el-button
+                size="small"
+                type="primary"
+                @click="editQuan(scope.row, '1')"
+                >编辑</el-button
+              >
+              <el-button
+                size="small"
+                type="success"
+                @click="editQuan(scope.row, '2')"
+                >复制</el-button
+              >
+              <el-button
+                size="small"
+                type="danger"
+                @click="deleteRow(scope.$index, scope.row)"
+                >删除</el-button
+              >
+            </template>
+          </el-table-column>
+        </el-table>
+        <!-- 分页 -->
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          style="margin-top: 10px; display: flex; justify-content: flex-end"
+          :page-sizes="[10, 20, 50, 100]"
+          :background="true"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="totalNum"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </el-main>
+    </el-container>
 
     <QuanDialog
       ref="sfcDialogRef"
@@ -369,7 +375,15 @@ defineOptions({
   // name 作为一种规范最好必须写上并且和路由的name保持一致
   name: "QuanTypeManage"
 });
-import { ref, reactive, toRaw, computed, onBeforeMount } from "vue";
+import {
+  ref,
+  reactive,
+  toRaw,
+  computed,
+  onBeforeMount,
+  nextTick,
+  watch
+} from "vue";
 import svApi from "@/api/sv-api";
 import { platTokens } from "@/store/platTokens";
 const {
@@ -386,6 +400,37 @@ import {
   getCurrentDay,
   formatTimeOfTime
 } from "@/utils/utils";
+// 树节点属性映射
+const defaultProps = {
+  children: "children",
+  label: "label"
+};
+// 定义树形结构数据
+const treeData = APP_TYPE_LIST.map((item, inx) => {
+  return {
+    id: inx + 1,
+    label: item.app_type_name,
+    value: item.app_type_code,
+    children: item.app_name_list.map((itemA, index) => ({
+      id: index + 1 + (inx + 1) * 100,
+      label: APP_LIST[itemA],
+      value: itemA
+    }))
+  };
+});
+// 树过滤
+const filterText = ref("");
+const filterNode = (value, data) => {
+  if (!value) return true;
+  return data.label.includes(value);
+};
+
+// 树组件的引用
+const treeRef = ref(null);
+watch(filterText, val => {
+  treeRef.value.filter(val);
+});
+
 const tableData = ref([]);
 
 const currentPage = ref(1);
@@ -404,6 +449,18 @@ const formData = reactive({
   is_store: ""
 });
 
+// 树节点点击
+const nodeClick = nodeData => {
+  console.log("nodeData", nodeData);
+  if (nodeData.id < 100) {
+    formData.app_type = nodeData.value;
+    formData.app_name = "";
+  } else {
+    formData.app_name = nodeData.value;
+    formData.app_type = "";
+  }
+  searchData();
+};
 // 搜索数据
 const searchData = async () => {
   const loading = ElLoading.service({
@@ -444,7 +501,6 @@ const searchData = async () => {
     console.warn("获取卡列表失败", error);
   }
 };
-searchData();
 
 const handleSizeChange = val => {
   console.log(`${val} items per page`);
@@ -971,11 +1027,21 @@ const getQuanTypeList = async () => {
 };
 onBeforeMount(async () => {
   await getQuanTypeList();
+  nextTick(() => {
+    if (treeRef.value) {
+      treeRef.value.setCurrentKey(1);
+      formData.app_type = "ume_applet";
+      searchData();
+    }
+  });
 });
 </script>
 <style scoped>
 .red {
   color: red;
   font-weight: bold;
+}
+.tree-list :deep(.el-tree-node.is-current > .el-tree-node__content) {
+  background-color: #5fe3de;
 }
 </style>
