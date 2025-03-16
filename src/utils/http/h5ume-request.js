@@ -2,7 +2,7 @@
 
 import axios from "axios";
 import { ElMessage } from "element-plus";
-import { APP_LIST, H5_UME_CINEMA_OBJ } from "@/common/constant";
+import { GET_APP_LIST, H5_UME_CINEMA_OBJ } from "@/common/constant";
 import { APP_API_OBJ } from "@/common/index";
 import {
   logUpload,
@@ -614,13 +614,13 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             return instance(config);
           } else {
             ElMessage.warning(
-              `${APP_LIST[app_name]}登录失效，请重新设置登录信息`
+              `${GET_APP_LIST()[app_name]}登录失效，请重新设置登录信息`
             );
             sendWxPusherMessage({
               msgType: 1,
-              app_name: APP_LIST[app_name],
+              app_name: GET_APP_LIST()[app_name],
               expirePhone: config.mobile,
-              transferTip: `${APP_LIST[app_name]}登录失效，请检查登录信息维护`
+              transferTip: `${GET_APP_LIST()[app_name]}登录失效，请检查登录信息维护`
             });
 
             // 此处加个消息推送
@@ -685,7 +685,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         }
 
         let errMsg =
-          APP_LIST[app_name] + (data?.ret?.[0] || data.msg || "请求失败");
+          GET_APP_LIST()[app_name] + (data?.ret?.[0] || data.msg || "请求失败");
         ElMessage.error(errMsg);
         return Promise.reject(data);
       }

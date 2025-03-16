@@ -7,7 +7,7 @@ import {
 import svApi from "@/api/sv-api";
 // 影院特殊匹配列表及api
 import { APP_API_OBJ } from "@/common/index";
-import { UME_LIST } from "@/common/constant";
+import { GET_UME_LIST } from "@/common/constant";
 import { platTokens } from "@/store/platTokens";
 const {
   userInfo: { rule, user_id }
@@ -57,7 +57,7 @@ class OrderAutoLockSeatQueue {
   // 帮助锁座统一处理
   async lockSeatCommonHandle(order, logList) {
     const { app_name, plat_name } = order;
-    let isUme = UME_LIST.includes(app_name);
+    let isUme = GET_UME_LIST().includes(app_name);
     let funName = isUme ? "lockSeatHandleByUme" : "lockSeatHandleBySfc";
     try {
       return await this[funName](order, logList); // 锁定座位
@@ -96,7 +96,9 @@ class OrderAutoLockSeatQueue {
       // 获取目标行已锁定座位(ume0是未售,h5ume1是未售)
       let lockedSeats = targetRowList
         .filter(item =>
-          UME_LIST.includes(app_name) ? item.status != 0 : item.status != 1
+          GET_UME_LIST().includes(app_name)
+            ? item.status != 0
+            : item.status != 1
         )
         .map(item => item.columnName);
       // 获取目标行目标锁定座位

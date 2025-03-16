@@ -179,7 +179,8 @@
 <script setup>
 import { ref, reactive } from "vue";
 import { ElLoading, ElMessage } from "element-plus";
-import { APP_LIST } from "@/common/constant";
+import { GET_APP_LIST } from "@/common/constant";
+const APP_LIST = computed(() => GET_APP_LIST());
 const cardFormRef = ref(null);
 // 父传子props
 defineProps({

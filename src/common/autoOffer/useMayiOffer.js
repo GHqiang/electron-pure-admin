@@ -8,7 +8,7 @@ import {
 } from "@/utils/utils";
 import svApi from "@/api/sv-api"; // 机器api
 import mayiApi from "@/api/mayi-api"; // 蚂蚁平台api
-import { APP_TYPE_LIST } from "@/common/constant.js";
+import { GET_APP_TYPE_LIST } from "@/common/constant.js";
 // 获取最终报价信息实体类
 import getOfferPriceFun from "./commonOfferHandle.js";
 // 平台toke列表
@@ -279,7 +279,7 @@ class OrderAutoOfferQueue {
         rule: tokens.userInfo.rule,
         offer_rule_id: offerResult?.offerRule?.id
       };
-      let targetInfo = APP_TYPE_LIST.find(item =>
+      let targetInfo = GET_APP_TYPE_LIST().find(item =>
         item.app_name_list.includes(serOrderInfo.app_name)
       );
       if (targetInfo) {

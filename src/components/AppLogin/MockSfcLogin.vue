@@ -40,7 +40,9 @@
 <script setup>
 import { reactive, ref, defineExpose, watch } from "vue";
 import { ElMessage } from "element-plus";
-import { APP_LIST } from "@/common/constant";
+import { GET_APP_LIST } from "@/common/constant";
+const APP_LIST = computed(() => GET_APP_LIST());
+
 let $emit = defineEmits([`loginSuccess`]);
 // 父传子props
 const props = defineProps({

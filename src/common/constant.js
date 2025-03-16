@@ -42,19 +42,10 @@ const SFC_APP_VER_OBJ = {
 };
 
 // ume系统影院
-const UME_LIST = {
-  get value() {
-    return cinemaStore.getUmeList; // 从 Pinia Store 中获取数据
-  }
-};
-console.log("UME_LIST", UME_LIST);
+const GET_UME_LIST = () => cinemaStore.getUmeList;
+
 // umeh5系列影院集合
-let H5_UME_LIST = {
-  get value() {
-    return cinemaStore.getH5UmeList; // 从 Pinia Store 中获取数据
-  }
-};
-console.log("H5_UME_LIST", H5_UME_LIST);
+const GET_H5_UME_LIST = () => cinemaStore.getH5UmeList;
 
 // 猎人订单类型奖励金额
 const LIERENR_REWARDS = {
@@ -91,28 +82,13 @@ const GROUP_LIST = [
 ];
 
 // 影院列表
-const APP_LIST = {
-  get value() {
-    return cinemaStore.getAppList; // 从 Pinia Store 中获取数据
-  }
-};
-
-// 非SFC影院集合列表
-const NO_SFC_APP_LIST = [...UME_LIST, ...H5_UME_LIST, "lma"];
+const GET_APP_LIST = () => cinemaStore.getAppList;
 
 // SFC影院集合列表
-const SFC_APP_LIST = {
-  get value() {
-    return cinemaStore.getSfcList; // 从 Pinia Store 中获取数据
-  }
-};
+const GET_SFC_APP_LIST = () => cinemaStore.getSfcList;
 
 // 影线类型
-const APP_TYPE_LIST = {
-  get value() {
-    return cinemaStore.getAppTypeList; // 从 Pinia Store 中获取数据
-  }
-};
+const GET_APP_TYPE_LIST = () => cinemaStore.getAppTypeList;
 
 // 影线类型集合
 const APP_TYPE_OBJ = {
@@ -122,7 +98,7 @@ const APP_TYPE_OBJ = {
   lma_applet: "卢米埃"
 };
 
-window.APP_TYPE_LIST = APP_TYPE_LIST;
+window.APP_TYPE_LIST = GET_APP_TYPE_LIST();
 
 // 排除影院集合（用于utils获取影院标识处理）
 const EXCLUDE_CINEMA_LIST_BY_CINEMA_FLAG = [
@@ -724,16 +700,15 @@ export {
   TEST_NEW_PLAT_LIST,
   sfcV3AppList,
   SFC_APP_VER_OBJ,
-  UME_LIST,
-  H5_UME_LIST,
-  APP_TYPE_LIST,
+  GET_UME_LIST,
+  GET_H5_UME_LIST,
+  GET_SFC_APP_LIST,
+  GET_APP_LIST,
+  GET_APP_TYPE_LIST,
   APP_TYPE_OBJ,
   H5_UME_CINEMA_OBJ,
   LIERENR_REWARDS,
   GROUP_LIST,
-  APP_LIST,
-  NO_SFC_APP_LIST,
-  SFC_APP_LIST,
   TICKET_CONPREFIX_OBJ,
   APP_OPENID_OBJ,
   APP_GROUP_OBJ,

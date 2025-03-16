@@ -11,7 +11,7 @@
           style="width: 194px"
         >
           <el-option
-            v-for="(keyValue, keyName) in shadowLineObj"
+            v-for="(keyValue, keyName) in APP_LIST"
             :key="keyName"
             :label="keyValue"
             :value="keyName"
@@ -68,7 +68,7 @@
       </el-table-column>
       <el-table-column prop="appName" label="影线名称">
         <template #default="scope">
-          <span>{{ shadowLineObj[scope.row.appName] }}</span>
+          <span>{{ APP_LIST[scope.row.appName] }}</span>
         </template>
       </el-table-column>
       <el-table-column prop="quan_40_num" label="40券数量" />
@@ -81,13 +81,13 @@
 
 <script setup>
 import { ref, reactive } from "vue";
-import { APP_LIST, UME_LIST } from "@/common/constant.js";
+import { GET_APP_LIST, GET_UME_LIST } from "@/common/constant.js";
 import { APP_API_OBJ } from "@/common/index.js";
 import { ElLoading } from "element-plus";
 import { getCinemaLoginInfoList, mockDelay } from "@/utils/utils";
 // 影线列表
-const shadowLineObj = APP_LIST;
-
+const APP_LIST = computed(() => GET_APP_LIST());
+const UME_LIST = computed(() => GET_UME_LIST());
 // 表单查询数据
 const formData = reactive({
   appName: "", // 影线名称
@@ -105,7 +105,7 @@ const searchData = async () => {
   });
   try {
     let loginInfoList = getCinemaLoginInfoList().filter(
-      item => !UME_LIST.includes(item.app_name)
+      item => !UME_LIST.value.includes(item.app_name)
     );
     // 过滤一下已登录的
     let tableList = [];

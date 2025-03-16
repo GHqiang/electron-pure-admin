@@ -150,7 +150,9 @@ import { ref, reactive, computed, toRaw, onBeforeMount } from "vue";
 import svApi from "@/api/sv-api";
 import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import SpecialNameDialog from "@/components/SpecialNameDialog.vue";
-import { APP_LIST } from "@/common/constant";
+import { GET_APP_LIST } from "@/common/constant";
+const APP_LIST = computed(() => GET_APP_LIST());
+
 import { getCurrentTime } from "@/utils/utils";
 import { useDataTableStoreBySpecialName } from "@/store/specialNameRule";
 const specialRules = useDataTableStoreBySpecialName();

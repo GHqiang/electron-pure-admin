@@ -1,7 +1,7 @@
 // sfc请求拦截器封装
 import axios from "axios";
 import { ElMessage } from "element-plus";
-import { APP_LIST, SFC_APP_VER_OBJ } from "@/common/constant";
+import { GET_APP_LIST, SFC_APP_VER_OBJ } from "@/common/constant";
 import md5 from "../md5.js";
 import {
   logUpload,
@@ -179,7 +179,7 @@ const createAxios = ({ group, app_name, timeout = 20 }) => {
       ) {
         if (data.errcode === "205" && data.msg === "登录失效") {
           ElMessage.warning(
-            `${APP_LIST[app_name]}登录失效，请重新设置登录信息`
+            `${GET_APP_LIST()[app_name]}登录失效，请重新设置登录信息`
           );
           let session_id = response?.config?.session_id;
           let targetLoginList = getCinemaLoginInfoList().filter(
@@ -190,14 +190,14 @@ const createAxios = ({ group, app_name, timeout = 20 }) => {
           )?.mobile;
           sendWxPusherMessage({
             msgType: 1,
-            app_name: APP_LIST[app_name],
+            app_name: GET_APP_LIST()[app_name],
             expirePhone: phone,
-            transferTip: `${APP_LIST[app_name]}登录失效，请检查登录信息维护`
+            transferTip: `${GET_APP_LIST()[app_name]}登录失效，请检查登录信息维护`
           });
           // 此处加个消息推送
           return Promise.reject(data);
         }
-        let errMsg = APP_LIST[app_name] + (data.msg || "请求失败");
+        let errMsg = GET_APP_LIST()[app_name] + (data.msg || "请求失败");
         ElMessage.error(errMsg);
         return Promise.reject(data);
       }

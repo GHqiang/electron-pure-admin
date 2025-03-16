@@ -179,7 +179,9 @@ import hahaFetchOrder from "@/common/orderFetch/hahaFetchOrder";
 
 import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
 import createTucketQueueFun from "@/common/autoTicket/comTicketHandle";
-import { ORDER_FORM, APP_LIST } from "@/common/constant";
+import { ORDER_FORM, GET_APP_LIST } from "@/common/constant";
+const APP_LIST = computed(() => GET_APP_LIST());
+
 import {
   getCinemaLoginInfoList,
   getCurrentTime,
@@ -234,7 +236,7 @@ let platFetchOrderQueueObj = {
 // 平台出票队列集合
 let appTicketQueueObj = {};
 console.warn("appTicketQueueObj", 1);
-Object.keys(APP_LIST).forEach(item => {
+Object.keys(APP_LIST.value).forEach(item => {
   appTicketQueueObj[item] = createTucketQueueFun(item);
 });
 window.appTicketQueueObj = appTicketQueueObj;
@@ -277,7 +279,7 @@ let isStartTicket = true; // 自动出票队列
 const oneClickStart = () => {
   // 删除没有登录信息的队列
   let loginInfoList = getCinemaLoginInfoList();
-  Object.keys(APP_LIST).forEach(item => {
+  Object.keys(APP_LIST.value).forEach(item => {
     let obj = loginInfoList.find(
       itemA => itemA.app_name === item && itemA.session_id
     );
@@ -409,7 +411,7 @@ const singleStartOrStop = ({ id, platToken, platName, syncPageSize }, flag) => {
     }
     // 删除没有登录信息的队列
     let loginInfoList = getCinemaLoginInfoList();
-    Object.keys(APP_LIST).forEach(item => {
+    Object.keys(APP_LIST.value).forEach(item => {
       let obj = loginInfoList.find(
         itemA => itemA.app_name === item && itemA.session_id
       );

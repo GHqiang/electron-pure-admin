@@ -41,7 +41,7 @@
           filterable
         >
           <el-option
-            v-for="(keyValue, keyName) in shadowLineObj"
+            v-for="(keyValue, keyName) in APP_LIST"
             :key="keyName"
             :label="keyValue"
             :value="keyName"
@@ -95,7 +95,7 @@
       />
       <el-table-column prop="app_name" label="影线名称" min-width="100">
         <template #default="scope">
-          <span>{{ shadowLineObj[scope.row.app_name] }}</span>
+          <span>{{ APP_LIST[scope.row.app_name] }}</span>
         </template>
       </el-table-column>
       <el-table-column
@@ -205,13 +205,14 @@ const {
   userInfo: { rule, user_id }
 } = platTokens();
 
-import { ORDER_FORM, APP_LIST } from "@/common/constant.js";
+import { ORDER_FORM, GET_APP_LIST } from "@/common/constant.js";
 // 用户列表
 const userList = ref([]);
 // 订单来源
 const orderFormObj = ORDER_FORM;
 // 影线列表
-const shadowLineObj = APP_LIST;
+const APP_LIST = computed(() => GET_APP_LIST());
+
 // 表单查询数据
 const formData = reactive({
   plat_name: "", // 订单来源
@@ -288,7 +289,7 @@ const loadData = async () => {
     });
     // 使用Object.fromEntries将过滤后的键值对数组转换回对象
     let queryParams = Object.fromEntries(filteredEntries);
-    queryParams.appList = JSON.stringify(APP_LIST);
+    queryParams.appList = JSON.stringify(APP_LIST.value);
     console.log("queryParams", queryParams);
     const res = await svApi.queryAnalysis(queryParams);
     // console.log("res", res);

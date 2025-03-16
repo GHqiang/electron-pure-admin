@@ -1,9 +1,13 @@
 import { defineStore } from "pinia";
 import { APP_TYPE_OBJ } from "@/common/constant";
+let allCinemaList = window.localStorage.getItem("allCinemaList");
+if (allCinemaList) {
+  allCinemaList = JSON.parse(allCinemaList);
+}
 export const useCinemaList = defineStore("cinemaDataTable", {
   state: () => {
     return {
-      allAppList: []
+      allAppList: allCinemaList || []
     };
   },
   actions: {
@@ -11,7 +15,7 @@ export const useCinemaList = defineStore("cinemaDataTable", {
     setCinemaInfoList(list) {
       console.warn(`设置影院列表信息`, list);
       this.allAppList = list;
-      // window.localStorage.setItem("allCinemaList", JSON.stringify(list));
+      window.localStorage.setItem("allCinemaList", JSON.stringify(list));
     }
   },
   getters: {

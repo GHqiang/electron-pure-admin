@@ -17,7 +17,7 @@ import {
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
-import { APP_LIST, UME_LIST, GROUP_LIST } from "@/common/constant.js";
+import { GET_APP_LIST, GET_UME_LIST, GROUP_LIST } from "@/common/constant.js";
 // 获取最终报价信息实体类
 import getOfferPriceFun from "./commonOfferHandle.js";
 import { platTokens } from "@/store/platTokens";
@@ -30,7 +30,7 @@ class getUmeOfferPrice {
     // console.log("APP_API_OBJ", APP_API_OBJ, appFlag, plat_name);
     this.appFlag = appFlag; // 影线标识
     this.plat_name = plat_name; // 平台标识
-    this.conPrefix = APP_LIST[appFlag] + "自动报价——"; // 打印前缀
+    this.conPrefix = GET_APP_LIST()[appFlag] + "自动报价——"; // 打印前缀
     this.appApi = APP_API_OBJ[appFlag];
     this.logList = []; // 操作运行日志
   }
@@ -1182,7 +1182,7 @@ class getUmeOfferPrice {
       if (
         appFlag !== "yaolai" &&
         activityPrices?.length &&
-        UME_LIST.includes(appFlag)
+        GET_UME_LIST().includes(appFlag)
       ) {
         // [{
         //    "activityId": 23,

@@ -42,11 +42,12 @@ const { loginInfoList } = userInfoAndTokens;
 // const loginInfoList = computed(() => userInfoAndTokens.loginInfoList)
 
 const { setSfcUserInfo, removeSfcUserInfo } = userInfoAndTokens;
-import { APP_LIST } from "@/common/constant";
+import { GET_APP_LIST } from "@/common/constant";
+const APP_LIST = computed(() => GET_APP_LIST());
 const childRef = ref(null);
 
 const appList = ref([]);
-Object.keys(APP_LIST).forEach(item => {
+Object.keys(APP_LIST.value).forEach(item => {
   let obj = loginInfoList.find(itemA => itemA.app_name === item);
   appList.value.push({
     appName: item,

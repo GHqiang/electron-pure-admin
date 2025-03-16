@@ -17,7 +17,7 @@ import {
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
-import { APP_LIST, TEST_NEW_PLAT_LIST } from "@/common/constant.js";
+import { GET_APP_LIST, TEST_NEW_PLAT_LIST } from "@/common/constant.js";
 import lierenApi from "@/api/lieren-api";
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
@@ -28,7 +28,7 @@ class getLmaOfferPrice {
     // console.log("APP_API_OBJ", APP_API_OBJ, appFlag, plat_name);
     this.appFlag = appFlag; // 影线标识
     this.plat_name = plat_name; // 平台标识
-    this.conPrefix = APP_LIST[appFlag] + "自动报价——"; // 打印前缀
+    this.conPrefix = GET_APP_LIST()[appFlag] + "自动报价——"; // 打印前缀
     this.appApi = APP_API_OBJ[appFlag];
     this.logList = []; // 操作运行日志
   }

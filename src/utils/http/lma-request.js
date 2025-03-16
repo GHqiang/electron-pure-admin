@@ -8,6 +8,8 @@ import {
   mockDelay,
   getCinemaLoginInfoList
 } from "@/utils/utils";
+import { GET_APP_LIST } from "@/common/constant";
+
 const createAxios = ({ app_name, timeout = 20 }) => {
   // 创建axios实例
   const instance = axios.create({
@@ -139,9 +141,9 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           )?.mobile;
           sendWxPusherMessage({
             msgType: 1,
-            app_name: APP_LIST[app_name],
+            app_name: GET_APP_LIST()[app_name],
             expirePhone: phone,
-            transferTip: `${APP_LIST[app_name]}登录失效，请检查登录信息维护`
+            transferTip: `${GET_APP_LIST()[app_name]}登录失效，请检查登录信息维护`
           });
           // 此处加个消息推送
           return Promise.reject(data);

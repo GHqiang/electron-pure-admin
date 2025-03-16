@@ -11,9 +11,9 @@ import createUmeApi from "@/api/ume-api";
 import createLmaApi from "@/api/lma-api";
 import createH5UmeApi from "@/api/h5ume-api";
 import {
-  APP_LIST,
-  UME_LIST,
-  H5_UME_LIST,
+  GET_UME_LIST,
+  GET_H5_UME_LIST,
+  GET_SFC_APP_LIST,
   APP_GROUP_OBJ
 } from "@/common/constant";
 import { getCinemaLoginInfoList } from "@/utils/utils";
@@ -21,23 +21,20 @@ const SFC_API_OBJ = {};
 const UME_API_OBJ = {};
 const H5_UME_API_OBJ = {};
 
-let noSfcList = [...UME_LIST, "lma"];
-let sfcList = Object.keys(APP_LIST).filter(item => !noSfcList.includes(item));
-
-sfcList.forEach(item => {
+GET_SFC_APP_LIST().forEach(item => {
   SFC_API_OBJ[item] = createSfcApi({
     group: APP_GROUP_OBJ[item],
     app_name: item
   });
 });
 
-UME_LIST.forEach(item => {
+GET_UME_LIST().forEach(item => {
   UME_API_OBJ[item] = createUmeApi({
     app_name: item
   });
 });
 
-H5_UME_LIST.forEach(item => {
+GET_H5_UME_LIST().forEach(item => {
   H5_UME_API_OBJ[item] = createH5UmeApi({
     app_name: item
   });

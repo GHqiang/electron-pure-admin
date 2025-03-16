@@ -18,7 +18,7 @@ import {
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
-import { APP_LIST, UME_LIST, GROUP_LIST } from "@/common/constant.js";
+import { GROUP_LIST } from "@/common/constant.js";
 import { platTokens } from "@/store/platTokens";
 const {
   userInfo: { rule, user_id }

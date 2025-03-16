@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { APP_LIST } from "@/common/constant";
+import { GET_APP_LIST } from "@/common/constant";
 // 优先从本地缓存里面取
 let allUserInfo = window.localStorage.getItem("allUserInfo");
 if (allUserInfo) {
@@ -126,7 +126,7 @@ export const appUserInfo = defineStore("appUserInfo", {
     },
     // 设置sfc用户信息
     setSfcUserInfo({ appName, userInfo }) {
-      console.warn(`设置${APP_LIST[appName]}-用户信息及token`, userInfo);
+      console.warn(`设置${GET_APP_LIST()[appName]}-用户信息及token`, userInfo);
       this.allUserInfo[appName] = userInfo;
       window.localStorage.setItem(
         "allUserInfo",
@@ -135,7 +135,7 @@ export const appUserInfo = defineStore("appUserInfo", {
     },
     // 删除sfc用户信息
     removeSfcUserInfo(appName) {
-      console.warn(`删除${APP_LIST[appName]}-用户信息及token`);
+      console.warn(`删除${GET_APP_LIST()[appName]}-用户信息及token`);
       this.allUserInfo[appName] = null;
       window.localStorage.setItem(
         "allUserInfo",

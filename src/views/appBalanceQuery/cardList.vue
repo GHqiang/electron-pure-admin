@@ -321,13 +321,18 @@ const {
 import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import CardDialog from "@/components/CardDialog.vue";
 import {
-  APP_LIST,
-  UME_LIST,
-  H5_UME_LIST,
+  GET_APP_LIST,
+  GET_UME_LIST,
+  GET_H5_UME_LIST,
   H5_UME_CINEMA_OBJ,
   APP_TYPE_OBJ,
-  APP_TYPE_LIST
+  GET_APP_TYPE_LIST
 } from "@/common/constant";
+const APP_LIST = computed(() => GET_APP_LIST());
+const UME_LIST = computed(() => GET_UME_LIST());
+const H5_UME_LIST = computed(() => GET_H5_UME_LIST());
+const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
+
 import { APP_API_OBJ } from "@/common/index.js";
 import {
   getCurrentTime,
@@ -344,14 +349,14 @@ const defaultProps = {
   label: "label"
 };
 // 定义树形结构数据
-const treeData = APP_TYPE_LIST.map((item, inx) => {
+const treeData = APP_TYPE_LIST.value.map((item, inx) => {
   return {
     id: inx + 1,
     label: item.app_type_name,
     value: item.app_type_code,
     children: item.app_name_list.map((itemA, index) => ({
       id: index + 1 + (inx + 1) * 100,
-      label: APP_LIST[itemA],
+      label: APP_LIST.value[itemA],
       value: itemA
     }))
   };
@@ -514,7 +519,7 @@ const getCardListByApp = async (app_name, phone, session_id, index) => {
     session_id = loginInfoList[0]?.session_id;
   }
   try {
-    if (UME_LIST.includes(app_name)) {
+    if (UME_LIST.value.includes(app_name)) {
       params.params = {
         status: "CAN_USED",
         channelCode: "QD0000001",
@@ -523,7 +528,7 @@ const getCardListByApp = async (app_name, phone, session_id, index) => {
         // cinemaLinkId: "15953"
       };
       params.session_id = session_id;
-    } else if (H5_UME_LIST.includes(app_name)) {
+    } else if (H5_UME_LIST.value.includes(app_name)) {
       params = {
         cinemaLinkId: H5_UME_CINEMA_OBJ[app_name][0],
         pageNo: 1,
@@ -537,14 +542,14 @@ const getCardListByApp = async (app_name, phone, session_id, index) => {
       // params.cinema_id = "1";
       params.session_id = session_id;
     }
-    await mockDelay(H5_UME_LIST.includes(app_name) ? 1 : 0.1);
+    await mockDelay(H5_UME_LIST.value.includes(app_name) ? 1 : 0.1);
     if (index % 8) {
       await mockDelay(1.5);
     }
     const res = await APP_API_OBJ[app_name].getCardList(params);
     console.warn("获取会员卡列表返回", res);
     // 只获取有效卡，无效卡要过滤掉
-    if (UME_LIST.includes(app_name)) {
+    if (UME_LIST.value.includes(app_name)) {
       cardList = res.data || [];
       cardList = cardList.filter(item => item.cardStatus === "ENABLED");
       cardList = cardList.map(item => ({
@@ -552,7 +557,7 @@ const getCardListByApp = async (app_name, phone, session_id, index) => {
         card_num: item.cardNo,
         balance: item.cardAmount / 100 + ""
       }));
-    } else if (H5_UME_LIST.includes(app_name)) {
+    } else if (UME_LIST.value.includes(app_name)) {
       cardList = res.bizValue || [];
       cardList = cardList.map(item => ({
         card_id: item.cardNumber,
@@ -650,7 +655,7 @@ const addCardListHandle = async cardList => {
         let card_discount = "100";
         let use_limit_day = "";
         let use_limit_month;
-        if (UME_LIST.includes(item.app_name)) {
+        if (UME_LIST.value.includes(item.app_name)) {
           // card_discount = "78";
           use_limit_day = "12";
         } else if (item.app_name === "lma") {
@@ -658,7 +663,7 @@ const addCardListHandle = async cardList => {
           use_limit_day = "8";
           use_limit_month = "20";
         }
-        let targetInfo = APP_TYPE_LIST.find(itemA =>
+        let targetInfo = APP_TYPE_LIST.value.find(itemA =>
           itemA.app_name_list.includes(item.app_name)
         );
         let app_type;
@@ -716,7 +721,7 @@ const queryCardBalanceTotal = async () => {
     const uniqueMap = new Map();
     list.forEach(item => {
       const key = `${item.mobile}-${item.card_num}`;
-      if (!uniqueMap.has(key) && APP_LIST[item.app_name]) {
+      if (!uniqueMap.has(key) && APP_LIST.value[item.app_name]) {
         uniqueMap.set(key, item);
       }
     });
@@ -729,7 +734,7 @@ const queryCardBalanceTotal = async () => {
       totalBalance = 0,
       discountTotalBalance = 0;
     list.forEach(item => {
-      const appName = APP_LIST[item.app_name];
+      const appName = APP_LIST.value[item.app_name];
       const balance = parseFloat(item.balance) || 0;
       const discountBalance =
         (balance * 1000 * (item.card_discount || 100)) / 1000 / 100 || 0;
@@ -793,7 +798,7 @@ const syncCardInfo = async () => {
     ElMessage.info("本次同步只同步登录过的影院会员卡信息");
     let tips = "本次同步只同步登录过的影院会员卡信息，";
     if (appName) {
-      tips = "本次同步只同步" + APP_LIST[appName];
+      tips = "本次同步只同步" + APP_LIST.value[appName];
     } else {
       tips +=
         syncFlag == 1
@@ -842,15 +847,15 @@ const syncCardInfo = async () => {
         (formData.app_name
           ? itemA.app_name == formData.app_name
           : syncFlag == 1
-            ? ![...H5_UME_LIST, "lma"].includes(itemA.app_name)
+            ? ![...H5_UME_LIST.value, "lma"].includes(itemA.app_name)
             : syncFlag == 2
-              ? H5_UME_LIST.includes(itemA.app_name)
+              ? H5_UME_LIST.value.includes(itemA.app_name)
               : itemA.app_name == "lma")
     );
     console.log("该手机号的loginInfoListt", loginInfoList);
     if (!loginInfoList?.length) {
       ElMessage.warning(
-        `该手机号：${formData.app_name ? APP_LIST[formData.app_name] : "该系列"} 未维护登录信息`
+        `该手机号：${formData.app_name ? APP_LIST.value[formData.app_name] : "该系列"} 未维护登录信息`
       );
       loading.close();
       return;
@@ -866,9 +871,9 @@ const syncCardInfo = async () => {
     serCardList = serCardList.filter(item => {
       if (!formData.app_name) {
         return syncFlag == 1
-          ? ![...H5_UME_LIST, "lma"].includes(item.app_name)
+          ? ![...H5_UME_LIST.value, "lma"].includes(item.app_name)
           : syncFlag == 2
-            ? H5_UME_LIST.includes(item.app_name)
+            ? H5_UME_LIST.value.includes(item.app_name)
             : item.app_name == "lma";
       }
       return true;
@@ -1017,7 +1022,7 @@ const saveCard = async cardInfo => {
     cardInfo.update_time = getCurrentTime();
     cardInfo.rule = rule;
     cardInfo.linkCinemaIds = cardInfo.linkCinemaIds?.join();
-    let targetInfo = APP_TYPE_LIST.find(item =>
+    let targetInfo = APP_TYPE_LIST.value.find(item =>
       item.app_name_list.includes(cardInfo.app_name)
     );
     if (targetInfo) {

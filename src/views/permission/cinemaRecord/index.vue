@@ -166,7 +166,14 @@ import { ref, reactive, computed, onBeforeMount, nextTick, watch } from "vue";
 import svApi from "@/api/sv-api";
 import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import CinemaDialog from "@/components/CinemaDialog.vue";
-import { APP_LIST, APP_TYPE_LIST, CINEMA_STATUS_OBJ } from "@/common/constant";
+import {
+  GET_APP_LIST,
+  GET_APP_TYPE_LIST,
+  CINEMA_STATUS_OBJ
+} from "@/common/constant";
+const APP_LIST = computed(() => GET_APP_LIST());
+const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
+
 import { getCurrentTime, mockDelay } from "@/utils/utils";
 import { useCinemaList } from "@/store/cinemaList";
 const useCinemaListObj = useCinemaList();
@@ -181,14 +188,14 @@ const defaultProps = {
   label: "label"
 };
 // 定义树形结构数据
-const treeData = APP_TYPE_LIST.map((item, inx) => {
+const treeData = APP_TYPE_LIST.value.map((item, inx) => {
   return {
     id: inx + 1,
     label: item.app_type_name,
     value: item.app_type_code,
     children: item.app_name_list.map((itemA, index) => ({
       id: index + 1 + (inx + 1) * 100,
-      label: APP_LIST[itemA],
+      label: APP_LIST.value[itemA],
       value: itemA
     }))
   };

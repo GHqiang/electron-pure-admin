@@ -115,7 +115,7 @@
                   style="width: 120px; margin-left: -1px"
                 >
                   <el-option
-                    v-for="(keyValue, keyName) in shadowLineObj"
+                    v-for="(keyValue, keyName) in APP_LIST"
                     :key="keyName"
                     :label="keyValue"
                     :value="keyName"
@@ -151,7 +151,7 @@
             width="85"
           >
             <template #default="scope">
-              <span>{{ shadowLineObj[scope.row.shadowLineName] }}</span>
+              <span>{{ APP_LIST[scope.row.shadowLineName] }}</span>
             </template>
           </el-table-column>
           <el-table-column label="状态" fixed width="100">
@@ -334,11 +334,15 @@ import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import RuleDialog from "@/components/RuleDialog.vue";
 import {
   ORDER_FORM,
-  APP_LIST,
-  UME_LIST,
+  GET_APP_LIST,
+  GET_UME_LIST,
   APP_TYPE_OBJ,
-  APP_TYPE_LIST
+  GET_APP_TYPE_LIST
 } from "@/common/constant";
+const APP_LIST = computed(() => GET_APP_LIST());
+const UME_LIST = computed(() => GET_UME_LIST());
+const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
+
 import {
   getCurrentTime,
   getCinemaLoginInfoList,
@@ -356,14 +360,14 @@ const defaultProps = {
   label: "label"
 };
 // 定义树形结构数据
-const treeData = APP_TYPE_LIST.map((item, inx) => {
+const treeData = APP_TYPE_LIST.value.map((item, inx) => {
   return {
     id: inx + 1,
     label: item.app_type_name,
     value: item.app_type_code,
     children: item.app_name_list.map((itemA, index) => ({
       id: index + 1 + (inx + 1) * 100,
-      label: APP_LIST[itemA],
+      label: APP_LIST.value[itemA],
       value: itemA
     }))
   };
@@ -391,7 +395,6 @@ const totalNum = ref(0);
 // 订单来源枚举
 // 订单来源
 const orderFormObj = ref(ORDER_FORM);
-const shadowLineObj = APP_LIST;
 // 报价类型枚举
 const offerTypeObj = {
   1: "日常固定价",
@@ -437,7 +440,7 @@ const getAllCinemaList = async () => {
   try {
     let appList = [];
     let loginInfoList = getCinemaLoginInfoList();
-    Object.keys(APP_LIST).forEach(item => {
+    Object.keys(APP_LIST.value).forEach(item => {
       let obj = loginInfoList.find(
         itemA => itemA.app_name === item && itemA.session_id
       );
@@ -516,7 +519,7 @@ window.tongjiOfferInfo = tongjiOfferInfo;
 const getCinemaList = async appName => {
   try {
     let list = [];
-    if (UME_LIST.includes(appName)) {
+    if (UME_LIST.value.includes(appName)) {
       let params = {
         params: {
           channelCode: "QD0000001",
@@ -816,7 +819,7 @@ const saveRule = async ruleInfo => {
     ruleInfo.weekDay = JSON.stringify(ruleInfo.weekDay);
     ruleInfo.update_time = getCurrentTime();
     ruleInfo.rule = rule;
-    let targetInfo = APP_TYPE_LIST.find(item =>
+    let targetInfo = APP_TYPE_LIST.value.find(item =>
       item.app_name_list.includes(ruleInfo.shadowLineName)
     );
     if (targetInfo) {

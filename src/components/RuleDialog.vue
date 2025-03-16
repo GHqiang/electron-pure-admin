@@ -40,7 +40,7 @@
             @change="shadowLineChange"
           >
             <el-option
-              v-for="(keyValue, keyName) in shadowLineObj"
+              v-for="(keyValue, keyName) in APP_LIST"
               :key="keyName"
               :label="keyValue"
               :value="keyName"
@@ -492,11 +492,14 @@ import { ref, reactive, computed, toRaw } from "vue";
 import { ElLoading, ElMessage } from "element-plus";
 import {
   ORDER_FORM,
-  APP_LIST,
-  UME_LIST,
-  H5_UME_LIST,
-  SFC_APP_LIST
+  GET_APP_LIST,
+  GET_UME_LIST,
+  GET_H5_UME_LIST
 } from "@/common/constant";
+const APP_LIST = computed(() => GET_APP_LIST());
+const UME_LIST = computed(() => GET_UME_LIST());
+const H5_UME_LIST = computed(() => GET_H5_UME_LIST());
+
 import { useAppBaseData } from "@/store/appBaseData";
 const appBaseDataInfo = useAppBaseData();
 const { appBaseData, setBaseData } = appBaseDataInfo;
@@ -520,7 +523,6 @@ const offerTypeObj = {
 };
 // 订单来源
 const orderFormObj = ref(ORDER_FORM);
-const shadowLineObj = APP_LIST;
 // 表单数据
 let formData = reactive({
   id: "",
@@ -840,7 +842,7 @@ const getCityList = async () => {
     let list = appBaseData[shadowLineName]?.cityList;
     console.log("获取城市列表参数", params, shadowLineName, toRaw(list));
     if (!list?.length) {
-      if (UME_LIST.includes(shadowLineName)) {
+      if (UME_LIST.value.includes(shadowLineName)) {
         let params = {
           params: {
             channelCode: "QD0000001",
@@ -855,7 +857,7 @@ const getCityList = async () => {
           name: item.cityName,
           id: item.cityCode
         }));
-      } else if (H5_UME_LIST.includes(shadowLineName)) {
+      } else if (H5_UME_LIST.value.includes(shadowLineName)) {
         let params = {
           empCode: "",
           leaseCode: ""
@@ -894,7 +896,7 @@ const getFilmList = async (oneCity, oneCinema) => {
   try {
     const { shadowLineName } = formData;
     let list = [];
-    if (UME_LIST.includes(shadowLineName)) {
+    if (UME_LIST.value.includes(shadowLineName)) {
       const params = {
         params: {
           channelCode: "QD0000001",
@@ -912,7 +914,7 @@ const getFilmList = async (oneCity, oneCinema) => {
         id: item.filmHeadId,
         movie_name: item.filmName
       }));
-    } else if (H5_UME_LIST.includes(shadowLineName)) {
+    } else if (H5_UME_LIST.value.includes(shadowLineName)) {
       const params = {
         empCode: "",
         leaseCode: "",
@@ -968,7 +970,7 @@ const getCinemaListByCityId = async city_id => {
     console.log("根据城市获取影院列表参数", params);
     const { shadowLineName } = formData;
     let cinemaList = [];
-    if (UME_LIST.includes(shadowLineName)) {
+    if (UME_LIST.value.includes(shadowLineName)) {
       cinemaList =
         cityCinemaList.find(item => item.cityCode === city_id)?.cinemaList ||
         [];
@@ -977,7 +979,7 @@ const getCinemaListByCityId = async city_id => {
         id: item.cinemaCode,
         name: item.cinemaName
       }));
-    } else if (H5_UME_LIST.includes(shadowLineName)) {
+    } else if (H5_UME_LIST.value.includes(shadowLineName)) {
       cinemaList =
         cityCinemaList.find(item => item.cityCode === city_id)?.cinemas || [];
       cinemaList = cinemaList.map(item => ({

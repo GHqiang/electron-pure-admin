@@ -392,7 +392,14 @@ const {
 
 import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import QuanDialog from "@/components/QuanDialog.vue";
-import { APP_LIST, APP_TYPE_OBJ, APP_TYPE_LIST } from "@/common/constant";
+import {
+  GET_APP_LIST,
+  APP_TYPE_OBJ,
+  GET_APP_TYPE_LIST
+} from "@/common/constant";
+const APP_LIST = computed(() => GET_APP_LIST());
+const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
+
 import {
   getCurrentTime,
   parseExcel,
@@ -406,14 +413,14 @@ const defaultProps = {
   label: "label"
 };
 // 定义树形结构数据
-const treeData = APP_TYPE_LIST.map((item, inx) => {
+const treeData = APP_TYPE_LIST.value.map((item, inx) => {
   return {
     id: inx + 1,
     label: item.app_type_name,
     value: item.app_type_code,
     children: item.app_name_list.map((itemA, index) => ({
       id: index + 1 + (inx + 1) * 100,
-      label: APP_LIST[itemA],
+      label: APP_LIST.value[itemA],
       value: itemA
     }))
   };
@@ -577,7 +584,7 @@ const queryQuanBalanceTotal = async () => {
     let totalBalance = 0,
       discountTotalBalance = 0;
     filterQuanList.forEach(item => {
-      const appName = APP_LIST[item.app_name];
+      const appName = APP_LIST.value[item.app_name];
       const quan_cost_real = parseFloat(item.quan_cost) - (item.quan_fee || 0);
       const quan_num = item.quanStockList
         .map(item => +(item.real_quan_stock || item.quan_stock || 0))
@@ -651,7 +658,7 @@ const saveQuan = async cardInfo => {
   try {
     cardInfo.update_time = getCurrentTime();
     cardInfo.quanStockList = JSON.stringify(cardInfo.quanStockList);
-    let targetInfo = APP_TYPE_LIST.find(item =>
+    let targetInfo = APP_TYPE_LIST.value.find(item =>
       item.app_name_list.includes(cardInfo.app_name)
     );
     if (targetInfo) {

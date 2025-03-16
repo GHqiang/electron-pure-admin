@@ -114,7 +114,7 @@
 <script setup>
 import { ref, reactive } from "vue";
 import { ElLoading, ElMessage } from "element-plus";
-import { APP_LIST, APP_TYPE_OBJ } from "@/common/constant";
+import { APP_TYPE_OBJ } from "@/common/constant";
 import { platTokens } from "@/store/platTokens";
 const {
   userInfo: { rule, user_id }

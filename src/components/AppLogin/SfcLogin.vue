@@ -69,7 +69,9 @@ import {
   ElCol
 } from "element-plus";
 import { APP_API_OBJ } from "@/common/index.js";
-import { APP_LIST } from "@/common/constant";
+import { GET_APP_LIST } from "@/common/constant";
+const APP_LIST = computed(() => GET_APP_LIST());
+
 let $emit = defineEmits([`loginSuccess`]);
 // 父传子props
 const props = defineProps({

@@ -149,10 +149,13 @@
 import { ref, reactive, toRaw } from "vue";
 import { ElLoading, ElMessage } from "element-plus";
 import { APP_API_OBJ } from "@/common/index.js";
-import { APP_LIST, UME_LIST, H5_UME_LIST } from "@/common/constant";
+import { GET_APP_LIST, GET_UME_LIST, GET_H5_UME_LIST } from "@/common/constant";
 import { useAppBaseData } from "@/store/appBaseData";
 const appBaseDataInfo = useAppBaseData();
 const { appBaseData, setBaseData } = appBaseDataInfo;
+const APP_LIST = computed(() => GET_APP_LIST());
+const UME_LIST = computed(() => GET_UME_LIST());
+const H5_UME_LIST = computed(() => GET_H5_UME_LIST());
 
 const cardFormRef = ref(null);
 // 父传子props
@@ -330,7 +333,7 @@ const getCinemaListByCityId = async city_id => {
     console.log("根据城市获取影院列表参数", params);
     const { app_name } = formData;
     let cinemaList = [];
-    if (UME_LIST.includes(app_name)) {
+    if (UME_LIST.value.includes(app_name)) {
       cinemaList =
         cityCinemaList.find(item => item.cityCode === city_id)?.cinemaList ||
         [];
@@ -339,7 +342,7 @@ const getCinemaListByCityId = async city_id => {
         id: item.cinemaCode,
         name: item.cinemaName
       }));
-    } else if (H5_UME_LIST.includes(app_name)) {
+    } else if (H5_UME_LIST.value.includes(app_name)) {
       cinemaList =
         cityCinemaList.find(item => item.cityCode === city_id)?.cinemas || [];
       cinemaList = cinemaList.map(item => ({
@@ -402,7 +405,7 @@ const getCityList = async () => {
     const { app_name } = formData;
     let list;
     console.log("获取城市列表参数", params, app_name, toRaw(list));
-    if (UME_LIST.includes(app_name)) {
+    if (UME_LIST.value.includes(app_name)) {
       let params = {
         params: {
           channelCode: "QD0000001",
@@ -417,7 +420,7 @@ const getCityList = async () => {
         name: item.cityName,
         id: item.cityCode
       }));
-    } else if (H5_UME_LIST.includes(app_name)) {
+    } else if (H5_UME_LIST.value.includes(app_name)) {
       let params = {
         empCode: "",
         leaseCode: ""

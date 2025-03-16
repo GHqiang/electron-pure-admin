@@ -13,9 +13,9 @@ import {
   ZHEYINGSHIDAI_CINEMA_NAME,
   TPYYC_CINEMA_NAME_BY_SFC,
   EXCLUDE_CINEMA_LIST_BY_CINEMA_FLAG,
-  UME_LIST,
-  H5_UME_LIST,
-  SFC_APP_LIST
+  GET_UME_LIST,
+  GET_H5_UME_LIST,
+  GET_SFC_APP_LIST
 } from "@/common/constant";
 import { toRaw } from "vue";
 import { storeToRefs } from "pinia";
@@ -1840,11 +1840,11 @@ const getTargetCinema = (cinema_name, list, appName, city_name) => {
 
 // 获取目标影院特殊匹配测试方法
 window.getTargetCinema = ({ app_name, cinema_name, cinemaList, city_name }) => {
-  if (UME_LIST.includes(app_name)) {
+  if (GET_UME_LIST().includes(app_name)) {
     getTargetCinema(cinema_name, cinemaList, app_name, city_name);
-  } else if (H5_UME_LIST.includes(app_name)) {
+  } else if (GET_H5_UME_LIST().includes(app_name)) {
     getTargetCinema(cinema_name, cinemaList, app_name, city_name);
-  } else if (SFC_APP_LIST.includes(app_name)) {
+  } else if (GET_SFC_APP_LIST().includes(app_name)) {
     getCinemaId(cinema_name, cinemaList, app_name, city_name);
   } else if (app_name === "lma") {
     getCinemaIdByLma(cinema_name, cinemaList, app_name, city_name);

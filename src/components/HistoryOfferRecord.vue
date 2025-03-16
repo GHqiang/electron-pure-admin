@@ -27,7 +27,7 @@
           filterable
         >
           <el-option
-            v-for="(keyValue, keyName) in shadowLineObj"
+            v-for="(keyValue, keyName) in APP_LIST"
             :key="keyName"
             :label="keyValue"
             :value="keyName"
@@ -168,7 +168,7 @@
       </el-table-column>
       <el-table-column prop="app_name" fixed label="影线名称" width="100">
         <template #default="scope">
-          <span>{{ shadowLineObj[scope.row.app_name] }}</span>
+          <span>{{ APP_LIST[scope.row.app_name] }}</span>
         </template>
       </el-table-column>
       <el-table-column label="报价状态" fixed width="85">
@@ -298,7 +298,7 @@ const {
   userInfo: { rule, user_id }
 } = platTokens();
 
-import { ORDER_FORM, APP_LIST } from "@/common/constant.js";
+import { ORDER_FORM, GET_APP_LIST } from "@/common/constant.js";
 
 // 券类型列表
 const quanType = ref([]);
@@ -306,7 +306,7 @@ const quanType = ref([]);
 // 订单来源
 const orderFormObj = ORDER_FORM;
 // 影线列表
-const shadowLineObj = APP_LIST;
+const APP_LIST = computed(() => GET_APP_LIST());
 // 报价类型枚举
 const offerTypeObj = {
   1: "日常固定价",

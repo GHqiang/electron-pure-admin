@@ -113,12 +113,12 @@
 <script setup>
 import { ref, reactive } from "vue";
 import { ElLoading, ElMessage } from "element-plus";
-import { APP_LIST, H5_UME_CINEMA_OBJ } from "@/common/constant";
+import { GET_APP_LIST, H5_UME_CINEMA_OBJ } from "@/common/constant";
 import { platTokens } from "@/store/platTokens";
 const {
   userInfo: { rule, user_id }
 } = platTokens();
-
+const APP_LIST = computed(() => GET_APP_LIST());
 const loginFormRef = ref(null);
 // 父传子props
 defineProps({
