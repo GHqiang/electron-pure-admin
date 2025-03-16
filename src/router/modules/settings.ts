@@ -58,7 +58,7 @@ export default {
     },
     {
       path: "/permission/cinemaRecord/index",
-      name: "QuanTypeManage",
+      name: "CinemaRecord",
       component: () => import("@/views/permission/cinemaRecord/index.vue"),
       meta: {
         title: "影院列表"
@@ -100,14 +100,6 @@ export default {
         title: "出票记录"
       }
     }
-    // {
-    //   path: "/set/test",
-    //   name: "test",
-    //   component: () => import("@/views/testFlow/index.vue"),
-    //   meta: {
-    //     title: "测试流程"
-    //   }
-    // }
     // {
     //   path: "/set/balanceQuery",
     //   name: "balanceQuery",

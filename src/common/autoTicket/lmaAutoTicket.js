@@ -22,7 +22,6 @@ const tokens = platTokens();
 // 影院特殊匹配列表及api
 import {
   TICKET_CONPREFIX_OBJ,
-  QUAN_TYPE_COST,
   TEST_NEW_PLAT_LIST,
   APP_TYPE_LIST
 } from "@/common/constant";

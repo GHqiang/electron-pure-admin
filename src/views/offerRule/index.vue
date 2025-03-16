@@ -336,7 +336,6 @@ import {
   ORDER_FORM,
   APP_LIST,
   UME_LIST,
-  SPECIAL_CINEMA_OBJ,
   APP_TYPE_OBJ,
   APP_TYPE_LIST
 } from "@/common/constant";
@@ -473,15 +472,15 @@ const tongjiOfferInfo = async offerCinemaList => {
     if (isPass) {
       return true;
     }
-    let specialCinemaList = SPECIAL_CINEMA_OBJ[app_name]?.filter(
-      item =>
-        item.order_cinema_name === cinemaName ||
-        item.order_cinema_name.includes(cinemaName)
-    );
-    // console.log("specialCinemaList", specialCinemaList?.[0]);
-    return (
-      specialCinemaList?.[0]?.sfc_cinema_name === cinemNameSpecial(cinema_name)
-    );
+    // let specialCinemaList = SPECIAL_CINEMA_OBJ[app_name]?.filter(
+    //   item =>
+    //     item.order_cinema_name === cinemaName ||
+    //     item.order_cinema_name.includes(cinemaName)
+    // );
+    // // console.log("specialCinemaList", specialCinemaList?.[0]);
+    // return (
+    //   specialCinemaList?.[0]?.sfc_cinema_name === cinemNameSpecial(cinema_name)
+    // );
   };
   if (!appCinemaNameList?.length) {
     appCinemaNameList = await getAllCinemaList();

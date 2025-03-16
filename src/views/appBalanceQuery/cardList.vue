@@ -1126,6 +1126,7 @@ const batchDelete = () => {
   }
 };
 onBeforeMount(async () => {
+  await mockDelay(0.1);
   nextTick(() => {
     if (treeRef.value) {
       treeRef.value.setCurrentKey(1);

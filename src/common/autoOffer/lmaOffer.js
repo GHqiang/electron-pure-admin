@@ -17,11 +17,7 @@ import {
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
-import {
-  APP_LIST,
-  QUAN_TYPE_COST,
-  TEST_NEW_PLAT_LIST
-} from "@/common/constant.js";
+import { APP_LIST, TEST_NEW_PLAT_LIST } from "@/common/constant.js";
 import lierenApi from "@/api/lieren-api";
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表

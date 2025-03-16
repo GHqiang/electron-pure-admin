@@ -29,7 +29,8 @@ const userInfoAndTokens = appUserInfo();
 
 import { useDataTableStoreBySpecialName } from "@/store/specialNameRule";
 const specialRules = useDataTableStoreBySpecialName();
-
+import { useCinemaList } from "@/store/cinemaList.js";
+const useCinemaListObj = useCinemaList();
 defineOptions({
   name: "Login"
 });
@@ -49,6 +50,13 @@ const ruleForm = reactive({
   password: ""
 });
 
+// 设置本地的影院信息列表
+const setLocalCinemaList = async () => {
+  const res = await svApi.queryCinemaList({ status: "1" });
+  let cinemaList = res.data.cinemaList || [];
+  // console.log("cinemaList", cinemaList);
+  useCinemaListObj.setCinemaInfoList(cinemaList);
+};
 // 设置本地的特殊匹配列表
 const setLocalSpecialMatchList = async () => {
   try {
@@ -129,6 +137,7 @@ const onLogin = async formEl => {
             login_time: getCurrentTime()
           });
           let rule = loginRes.data?.user.rule;
+          await setLocalCinemaList();
           await setLocalSpecialMatchList();
           await setLocalLoginList(rule);
           await setLocalRuleList(rule);

@@ -17,6 +17,7 @@
           highlight-current
           style="max-height: 650px; overflow-y: auto"
           :default-expanded-keys="[1, 2]"
+          :default-checked-keys="[101]"
           :props="defaultProps"
           :filter-node-method="filterNode"
           @node-click="nodeClick"
@@ -166,9 +167,9 @@ import svApi from "@/api/sv-api";
 import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import CinemaDialog from "@/components/CinemaDialog.vue";
 import { APP_LIST, APP_TYPE_LIST, CINEMA_STATUS_OBJ } from "@/common/constant";
-import { getCurrentTime } from "@/utils/utils";
-import { appUserInfo } from "@/store/appUserInfo";
-const userInfoAndTokens = appUserInfo();
+import { getCurrentTime, mockDelay } from "@/utils/utils";
+import { useCinemaList } from "@/store/cinemaList";
+const useCinemaListObj = useCinemaList();
 import { platTokens } from "@/store/platTokens";
 const {
   userInfo: { rule }
@@ -235,11 +236,9 @@ const nodeClick = nodeData => {
 };
 // 设置本地的影院信息列表
 const setLocalCinemaList = async () => {
-  const loginRes = await svApi.queryCinemaList({});
-  // console.log("ruleRes", ruleRes);
-  let cinemaList = loginRes.data.cinemaList || [];
-  cinemaList = cinemaList.filter(item => item.status == 1);
-  userInfoAndTokens.setLoginInfoList(cinemaList);
+  const res = await svApi.queryCinemaList({ status: 1 });
+  let cinemaList = res.data.cinemaList || [];
+  useCinemaListObj.setCinemaInfoList(cinemaList);
 };
 
 // 搜索数据
@@ -405,6 +404,7 @@ const batchDelete = () => {
   }
 };
 onBeforeMount(async () => {
+  await mockDelay(0.1);
   nextTick(() => {
     if (treeRef.value) {
       treeRef.value.setCurrentKey(1);
