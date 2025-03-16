@@ -13,6 +13,13 @@ const ORDER_FORM = {
 // 测试新平台列表
 const TEST_NEW_PLAT_LIST = ["yinghuasuan", "shangzhan"];
 
+// 影线状态枚举
+const CINEMA_STATUS_OBJ = {
+  1: "正常",
+  2: "禁用",
+  3: "已删除"
+};
+
 // 出票状态
 const TICKET_STATUS = {
   1: "成功",
@@ -2661,5 +2668,6 @@ export {
   YINGHUANG_CINEMA_NAME,
   ZHEYINGSHIDAI_CINEMA_NAME,
   TPYYC_CINEMA_NAME_BY_SFC,
-  EXCLUDE_CINEMA_LIST_BY_CINEMA_FLAG
+  EXCLUDE_CINEMA_LIST_BY_CINEMA_FLAG,
+  CINEMA_STATUS_OBJ
 };

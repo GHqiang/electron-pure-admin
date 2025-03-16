@@ -120,6 +120,23 @@ const addLoginRecord = params => axios.post("/svpi/loginRecord/add", params);
 const updateLoginRecord = params =>
   axios.post("/svpi/loginRecord/update", params);
 
+// 获取影院信息列表
+const getCinemaList = params => axios.get("/svpi/cinemaRecord", { params });
+// 查询影院信息列表
+const queryCinemaList = params =>
+  axios.get("/svpi/cinemaRecord/query", { params });
+// 删除影院信息
+const deleteCinema = params =>
+  axios.get("/svpi/cinemaRecord/delete", { params });
+// 批量删除影院信息
+const batchDeleteCinema = params =>
+  axios.post("/svpi/cinemaRecord/batchdelete", params);
+// 添加影院信息
+const addCinemaRecord = params => axios.post("/svpi/cinemaRecord/add", params);
+// 修改影院信息
+const updateCinemaRecord = params =>
+  axios.post("/svpi/cinemaRecord/update", params);
+
 // 上传出票过程操作日志
 const addTicketOperaLog = params =>
   axios.post("/svpi/operaRecord/addList", params);
@@ -242,7 +259,13 @@ const svApi = {
   deleteSpecialName,
   batchDeleteSpecialName,
   addSpecialNameRecord,
-  updateSpecialNameRecord
+  updateSpecialNameRecord,
+  getCinemaList,
+  queryCinemaList,
+  deleteCinema,
+  batchDeleteCinema,
+  addCinemaRecord,
+  updateCinemaRecord
 };
 window.svApi = svApi;
 export default svApi;

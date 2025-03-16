@@ -57,6 +57,14 @@ export default {
       }
     },
     {
+      path: "/permission/cinemaRecord/index",
+      name: "QuanTypeManage",
+      component: () => import("@/views/permission/cinemaRecord/index.vue"),
+      meta: {
+        title: "影院列表"
+      }
+    },
+    {
       path: "/set/ruleConfig",
       name: "ruleConfig",
       component: () => import("@/views/ruleConfig/index.vue"),
