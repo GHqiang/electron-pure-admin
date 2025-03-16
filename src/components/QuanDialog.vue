@@ -177,7 +177,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from "vue";
+import { ref, reactive, computed } from "vue";
 import { ElLoading, ElMessage } from "element-plus";
 import { GET_APP_LIST } from "@/common/constant";
 const APP_LIST = computed(() => GET_APP_LIST());

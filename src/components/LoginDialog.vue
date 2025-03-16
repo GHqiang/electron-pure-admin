@@ -111,7 +111,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from "vue";
+import { ref, reactive, computed } from "vue";
 import { ElLoading, ElMessage } from "element-plus";
 import { GET_APP_LIST, H5_UME_CINEMA_OBJ } from "@/common/constant";
 import { platTokens } from "@/store/platTokens";

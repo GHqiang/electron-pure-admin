@@ -280,7 +280,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onBeforeUnmount, onBeforeMount } from "vue";
+import { ref, reactive, onBeforeUnmount, onBeforeMount, computed } from "vue";
 import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import svApi from "@/api/sv-api";
 import { platTokens } from "@/store/platTokens";

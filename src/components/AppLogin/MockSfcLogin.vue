@@ -38,7 +38,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, defineExpose, watch } from "vue";
+import { reactive, ref, defineExpose, watch, computed } from "vue";
 import { ElMessage } from "element-plus";
 import { GET_APP_LIST } from "@/common/constant";
 const APP_LIST = computed(() => GET_APP_LIST());
