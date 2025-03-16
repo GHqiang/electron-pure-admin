@@ -63,7 +63,6 @@ export const useCinemaList = defineStore("cinemaDataTable", {
           appList[item.app_name] = item.app_label;
         }
       });
-      console.log("appList", appList);
       return appList;
     }
   }

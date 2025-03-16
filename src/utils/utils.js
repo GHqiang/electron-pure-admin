@@ -1325,7 +1325,6 @@ const getCinemaFlagFun = item => {
 };
 const getCinemaFlag = item => {
   const app_name = getCinemaFlagFun(item);
-  console.log("app_name", app_name, GET_USABLE_APP_LIST());
   let rule = tokens?.userInfo?.rule;
   // 只针对内部角色，主要是控制影院是否进行报价
   if (app_name && rule == 2 && GET_USABLE_APP_LIST()?.["" + app_name]) {
