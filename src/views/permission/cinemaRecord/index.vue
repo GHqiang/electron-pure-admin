@@ -16,8 +16,7 @@
           node-key="id"
           highlight-current
           style="max-height: 650px; overflow-y: auto"
-          :default-expanded-keys="[1, 2]"
-          :default-checked-keys="[101]"
+          :default-expanded-keys="[1]"
           :props="defaultProps"
           :filter-node-method="filterNode"
           @node-click="nodeClick"
@@ -66,15 +65,11 @@
         >
           <el-table-column type="selection" width="55" />
           <el-table-column
-            prop="app_name"
+            prop="app_label"
             label="影线名称"
             sortable
             min-width="150"
-          >
-            <template #default="{ row }">
-              <span>{{ APP_LIST[row.app_name] }}</span>
-            </template>
-          </el-table-column>
+          />
           <el-table-column label="状态" min-width="90">
             <template #default="{ row: { status } }">
               <span>{{ CINEMA_STATUS_OBJ[status] }}</span>
@@ -243,7 +238,7 @@ const nodeClick = nodeData => {
 };
 // 设置本地的影院信息列表
 const setLocalCinemaList = async () => {
-  const res = await svApi.queryCinemaList({ status: 1 });
+  const res = await svApi.queryCinemaList({});
   let cinemaList = res.data.cinemaList || [];
   useCinemaListObj.setCinemaInfoList(cinemaList);
 };

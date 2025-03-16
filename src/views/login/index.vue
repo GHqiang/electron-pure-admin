@@ -52,7 +52,7 @@ const ruleForm = reactive({
 
 // 设置本地的影院信息列表
 const setLocalCinemaList = async () => {
-  const res = await svApi.queryCinemaList({ status: "1" });
+  const res = await svApi.queryCinemaList({});
   let cinemaList = res.data.cinemaList || [];
   // console.log("cinemaList", cinemaList);
   useCinemaListObj.setCinemaInfoList(cinemaList);

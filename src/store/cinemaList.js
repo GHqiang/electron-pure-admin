@@ -43,15 +43,17 @@ export const useCinemaList = defineStore("cinemaDataTable", {
       return Object.keys(APP_TYPE_OBJ).map(item => ({
         app_type_code: item,
         app_type_name: APP_TYPE_OBJ[item],
-        app_name_list: state.allAppList.filter(
-          item => item.app_type_code === item
-        )
+        app_name_list: state.allAppList
+          .filter(itemA => itemA.app_type_code === item)
+          .map(itemA => itemA.app_name)
       }));
     },
     getAppList: state => {
-      return state.allAppList.map(item => ({
-        [item.app_name]: item.app_label
-      }));
+      let appList = {};
+      state.allAppList.forEach(item => {
+        appList[item.app_name] = item.app_label;
+      });
+      return appList;
     }
   }
 });

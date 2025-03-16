@@ -16,8 +16,7 @@
           node-key="id"
           highlight-current
           style="max-height: 650px; overflow-y: auto"
-          :default-expanded-keys="[1, 2]"
-          :default-checked-keys="[101]"
+          :default-expanded-keys="[1]"
           :props="defaultProps"
           :filter-node-method="filterNode"
           @node-click="nodeClick"
