@@ -84,6 +84,8 @@ const GROUP_LIST = [
 // 影院列表
 const GET_APP_LIST = () => cinemaStore.getAppList;
 
+// 可用影院列表
+const GET_USABLE_APP_LIST = () => cinemaStore.getUsableAppList;
 // SFC影院集合列表
 const GET_SFC_APP_LIST = () => cinemaStore.getSfcList;
 
@@ -704,6 +706,7 @@ export {
   GET_H5_UME_LIST,
   GET_SFC_APP_LIST,
   GET_APP_LIST,
+  GET_USABLE_APP_LIST,
   GET_APP_TYPE_LIST,
   APP_TYPE_OBJ,
   H5_UME_CINEMA_OBJ,

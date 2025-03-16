@@ -56,14 +56,14 @@ export default {
         title: "券类型列表"
       }
     },
-    {
-      path: "/permission/cinemaRecord/index",
-      name: "CinemaRecord",
-      component: () => import("@/views/permission/cinemaRecord/index.vue"),
-      meta: {
-        title: "影院列表"
-      }
-    },
+    // {
+    //   path: "/permission/cinemaRecord/index",
+    //   name: "CinemaRecord",
+    //   component: () => import("@/views/permission/cinemaRecord/index.vue"),
+    //   meta: {
+    //     title: "影院列表"
+    //   }
+    // },
     {
       path: "/set/ruleConfig",
       name: "ruleConfig",

@@ -217,6 +217,13 @@ function initRouter(rule: any) {
           data?.[0]?.children.push(
             ...[
               {
+                path: "/permission/cinemaRecord/index",
+                name: "CinemaRecord",
+                meta: {
+                  title: "影院列表"
+                }
+              },
+              {
                 path: "/permission/cinemaNameManage/index",
                 name: "CinemaNameManage",
                 meta: {

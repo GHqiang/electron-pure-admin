@@ -14,6 +14,7 @@ import {
   TPYYC_CINEMA_NAME_BY_SFC,
   EXCLUDE_CINEMA_LIST_BY_CINEMA_FLAG,
   GET_UME_LIST,
+  GET_USABLE_APP_LIST,
   GET_H5_UME_LIST,
   GET_SFC_APP_LIST
 } from "@/common/constant";
@@ -378,8 +379,9 @@ const colorObj = {
   lieren: "#660033",
   lumiai: "#33CCCC"
 };
+
 // 获取影院标识
-const getCinemaFlag = item => {
+const getCinemaFlagFun = item => {
   const { cinema_group, cinema_name, city_name, plat_name } = item;
   // 是否是排除影院
   const is_exclude_cinema = EXCLUDE_CINEMA_LIST_BY_CINEMA_FLAG.some(
@@ -1319,6 +1321,15 @@ const getCinemaFlag = item => {
     cinemNameSpecial(cinema_name) == "上海中影国际影城合生汇CINITY店"
   ) {
     return "zhongying";
+  }
+};
+const getCinemaFlag = item => {
+  const app_name = getCinemaFlagFun(item);
+  console.log("app_name", app_name, GET_USABLE_APP_LIST());
+  let rule = tokens?.userInfo?.rule;
+  // 只针对内部角色，主要是控制影院是否进行报价
+  if (app_name && rule == 2 && GET_USABLE_APP_LIST()?.["" + app_name]) {
+    return app_name;
   }
 };
 window.getCinemaFlag = getCinemaFlag;

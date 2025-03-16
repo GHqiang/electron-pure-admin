@@ -54,6 +54,17 @@ export const useCinemaList = defineStore("cinemaDataTable", {
         appList[item.app_name] = item.app_label;
       });
       return appList;
+    },
+    // 获取可用app列表
+    getUsableAppList: state => {
+      let appList = {};
+      state.allAppList.forEach(item => {
+        if (item.status == 1) {
+          appList[item.app_name] = item.app_label;
+        }
+      });
+      console.log("appList", appList);
+      return appList;
     }
   }
 });
