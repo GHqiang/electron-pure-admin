@@ -548,7 +548,7 @@ const getCardListByApp = async (app_name, phone, session_id, index) => {
     const res = await APP_API_OBJ[app_name].getCardList(params);
     console.warn("获取会员卡列表返回", res);
     // 只获取有效卡，无效卡要过滤掉
-    if (UME_LIST.value.includes(app_name)) {
+    if (H5_UME_LIST.value.includes(app_name)) {
       cardList = res.data || [];
       cardList = cardList.filter(item => item.cardStatus === "ENABLED");
       cardList = cardList.map(item => ({
