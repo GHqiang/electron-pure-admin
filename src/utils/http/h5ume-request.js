@@ -2,7 +2,7 @@
 
 import axios from "axios";
 import { ElMessage } from "element-plus";
-import { GET_APP_LIST, H5_UME_CINEMA_OBJ } from "@/common/constant";
+import { GET_APP_LIST, GE_APP_INFO } from "@/common/constant";
 import { APP_API_OBJ } from "@/common/index";
 import {
   logUpload,
@@ -430,7 +430,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         if (!config.originalData) {
           config.originalData = {
             ...config.data,
-            channelCode: H5_UME_CINEMA_OBJ[app_name][1],
+            channelCode: GE_APP_INFO(app_name)?.channelCode,
             larkSid,
             version: "H5",
             appVersion: "H5_5.0"
@@ -450,7 +450,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         if (newToken) {
           config.headers["umetoken"] = newToken;
           config.headers["gray-lease-code"] =
-            H5_UME_CINEMA_OBJ[app_name][1].split("_H5_")[0];
+            GE_APP_INFO(app_name)?.channelCode?.split("_H5_")[0];
           config.headers["accesstoken"] = null;
           config.headers["bx-ua"] = ua;
           config.headers["bx-umidtoken"] = umidToken;

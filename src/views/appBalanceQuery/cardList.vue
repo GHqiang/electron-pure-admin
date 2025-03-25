@@ -323,7 +323,7 @@ import {
   GET_APP_LIST,
   GET_UME_LIST,
   GET_H5_UME_LIST,
-  H5_UME_CINEMA_OBJ,
+  GE_APP_INFO,
   APP_TYPE_OBJ,
   GET_APP_TYPE_LIST
 } from "@/common/constant";
@@ -529,7 +529,7 @@ const getCardListByApp = async (app_name, phone, session_id, index) => {
       params.session_id = session_id;
     } else if (H5_UME_LIST.value.includes(app_name)) {
       params = {
-        cinemaLinkId: H5_UME_CINEMA_OBJ[app_name][0],
+        cinemaLinkId: GE_APP_INFO(app_name)?.cinemaLinkId,
         pageNo: 1,
         pageSize: 30,
         umeToken: session_id

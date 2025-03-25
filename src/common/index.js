@@ -14,7 +14,7 @@ import {
   GET_UME_LIST,
   GET_H5_UME_LIST,
   GET_SFC_APP_LIST,
-  APP_GROUP_OBJ
+  GE_APP_INFO
 } from "@/common/constant";
 import { getCinemaLoginInfoList } from "@/utils/utils";
 const SFC_API_OBJ = {};
@@ -23,7 +23,7 @@ const H5_UME_API_OBJ = {};
 
 GET_SFC_APP_LIST().forEach(item => {
   SFC_API_OBJ[item] = createSfcApi({
-    group: APP_GROUP_OBJ[item],
+    group: GE_APP_INFO(item)?.sfc_group_id,
     app_name: item
   });
 });

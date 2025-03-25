@@ -89,6 +89,9 @@ const GET_USABLE_APP_LIST = () => cinemaStore.getUsableAppList;
 // SFC影院集合列表
 const GET_SFC_APP_LIST = () => cinemaStore.getSfcList;
 
+// 获取某个影线配置信息
+const GE_APP_INFO = app_name =>
+  cinemaStore.getAllAppList.find(item => item.app_name === app_name);
 // 影线类型
 const GET_APP_TYPE_LIST = () => cinemaStore.getAppTypeList;
 
@@ -112,41 +115,6 @@ const EXCLUDE_CINEMA_LIST_BY_CINEMA_FLAG = [
   "杭州中影国际影城（钱塘永旺梦乐城CINTY LED店）",
   "徐氏杜比MAX影城",
   "保利万和国际影城（奥园广场店）"
-];
-
-// 太平洋影城sfc影院名
-const TPYYC_CINEMA_NAME_BY_SFC = [
-  "太平洋影城（深圳喜荟城店）",
-  "名山太平洋院线盛世影城",
-  "太平洋影城（简阳德盛店）",
-  "太平洋影城（高县店）",
-  "太平洋影城（泸县店）",
-  "太平洋影城（内江店）",
-  "太平洋影城（德阳沃尔玛店）",
-  "太平洋影城（大丰店）",
-  "太平洋影城（和盛店）",
-  "苍溪太平洋影城",
-  "太平洋影城（资中店）",
-  "太平洋影城（阆中店）",
-  "太平洋影城（昭通店）",
-  "太平洋院线蓬安影城（金街店）",
-  "太平洋影城（阳光城店）",
-  "太平洋影城（西昌店）",
-  "太平洋影城（深圳八号仓店）",
-  "太平洋影城（彭山逸都城店）",
-  "太平洋影城（汉源店）",
-  "太平洋影城（都江堰店）",
-  "太平洋电影城（都江堰店）",
-  "太平洋影城（东站中环壹号店）",
-  "太平洋电影城（资阳沱东店）",
-  "太平洋影城（双流香楠店）",
-  "峨影1958电影城",
-  "太平洋电影城井研店",
-  "太平洋影城（洪雅店）",
-  "太平洋影城（叙永店）",
-  "太平洋影城（九襄店）",
-  "广影·嘉陵影城",
-  "成都海滨城激光4DMX影院"
 ];
 
 // 出票队列打印前缀
@@ -240,250 +208,6 @@ const TICKET_CONPREFIX_OBJ = {
   cszykd: "【长沙中影凯德自动出票】——",
   cszyyzx: "【长沙中影壹中心自动出票】——",
   qina: "【齐纳国际自动出票】——"
-};
-
-// umeh5系列相关信息
-const H5_UME_CINEMA_OBJ = {
-  // cinemaLinkId、channelCode、tid(laskId：即sid可通过tid调接口获取)
-  // 万象影城
-  wanxiangh5: ["10273", "HUARUN_H5_PROD_10273_MPS"],
-  // 海上明珠
-  hsmzyc: ["16014", "HSMZYC_H5_PROD_S_MPS"],
-  // 广州飞扬影城
-  gzfyyc: ["69695", "FYYC_H5_PROD_S_MPS"],
-  // 深圳新天影院
-  szxtyy: ["15730", "SJXT_H5_PROD_10666_MPS"],
-  // 唐阁影城
-  cqshyc: ["12909", "TANGGE_H5_PROD_S_MPS"],
-  // 华夏万幕国际影城（成山路巴黎春天店）
-  hxwmgjyc: ["12680", "WMGJ_H5_PROD_12679_MPS"],
-  // 深圳海岸影城
-  szhayc: ["15383", "HAC_H5_PROD_15383_MPS"],
-  // 深圳华夏星光国际影城
-  szhxxggjyc: ["10240", "SZHXXG_H5_PROD_S_MPS"],
-  // 米瑞酷影城
-  miruiku: ["16564", "MRK_H5_PROD_S_MPS"],
-  // 苏宁影城
-  suning: ["10534", "SN_H5_PROD_S_MPS"],
-  // 首都影城
-  shoudu: ["12070", "SHOUDU_H5_PROD_S_MPS"],
-  // 利群华艺影城
-  liqunhuayi: ["11696", "LIQUN_H5_PROD_S_MPS"],
-  // 上海金球
-  shjq: ["11713", "JINQIU_H5_PROD_11713_MPS"],
-  // 上海珠影沪亚
-  shzyhy: ["69688", "ZYHYYD_H5_PROD_69688_MPSUB"],
-  // 深圳金田
-  szjt: ["12892", "XJYH_H5_PROD_12892_MPS"],
-  // 广州期遇逸
-  gzqyt: ["12593", "QYYD_H5_PROD_12593_MPS"],
-  // 悠渡
-  youdu: ["13101", "YD_H5_PROD_13101_MPS"],
-  // 上海馨乔
-  shxq: ["11891", "SHXQ_H5_PROD_11891_MPSUB"],
-  // 中影国线石岩
-  zygxsy: ["10876", "ZYGX_H5_PROD_10876_MPS"],
-  // 华凯国际影城
-  hkgjyc: ["12590", "TONGMEI_H5_PROD_12590_MPS"],
-  // 时光巨幕影城房山店
-  sgjmycfsd: ["16130", "FSSGJM_H5_PROD_16130_MPS"],
-
-  // 星光嘉映影城（南京雨山天街店）
-  xgjyycnjystjd: ["15372", "XGJY_H5_PROD_15372_MPS"],
-  // 北京英嘉国际
-  // bjyjgj: ["11751", "YJXM_H5_PROD_11751_MPSUB"],
-  // 中影华宇国际
-  zyhygj: ["13462", "ZYSZHY_H5_PROD_13462_MPS"],
-  // 天娱广场天河电影城
-  tygcthdyc: ["16610", "TIANYU_H5_PROD_16610_MPS"],
-  // 武商梦时代摩尔影城
-  wsmsdmeyc: ["16066", "WSME_H5_PROD_16066_MPS"],
-  // 武商摩尔国际电影城
-  wsmegjdyc: ["12885", "WSME_H5_PROD_12885_MPS"],
-  // 深影国际影城（学院南路CGS中国巨幕店）
-  szgjyc: ["11758", "SYGJ_H5_PROD_11758_MPS"],
-  // 合肥三里庵星爵影城
-  hfslaxjyc: ["69402", "XINGJUE_H5_PROD_69402_MPS"],
-  // 嘉华国际影城（学清路店）
-  jhgjyc: ["16074", "JIAHUA_H5_PROD_16074_MPS"],
-  // 江西华影国际影城（中山天虹店）
-  jxhygjyc: ["10823", "PENGYU_H5_PROD_10823_MPS"],
-  // 杭州时代联合影城
-  hzsdlhyc: ["13108", "HZSDLH_H5_PROD_13108_MPS"],
-  // 上海轩影国际影城
-  xygjyc: ["69711", "SHXY_H5_PROD_69711_MPS"],
-  // 广州华影青宫电影城（CINITY店）
-  gzhyqgdyc: ["10745", "ZYYG_H5_PROD_10745_MPS"],
-  // 中山IM电影城（南朗巨幕店）
-  zsimdyc: ["10689", "ZSWS_H5_PROD_10689_MPSUB"],
-  // 北京劲松电影院
-  jsdyy: ["13173", "JINSONG_H5_PROD_13173_MPS"],
-  // 杭州悦江新远影院
-  yjxyyc: ["13458", "SDYX_H5_PROD_13458_MPSUB"],
-  // 华夏天合影城（次渠新城商厦店）
-  hxthyc: ["11478", "THGJ_H5_PROD_11478_MPS"],
-  // 武商众圆摩尔影城
-  wszymeyc: ["12887", "WSME_H5_PROD_12887_MPS"],
-  // SFC上影国际影城高德置地广场店
-  sfcsygjyc: ["16463", "CFR_H5_PROD_16463_MPS"],
-  // 纳美国际影城（全新光峰激光放映技术）
-  nmgjyc: ["13165", "NAMEI_H5_PROD_13165_MPS"],
-  // 保利万和国际影城三利爱琴海店
-  blwhgjyc: ["16206", "BLSLAQH_H5_PROD_16206_MPS"],
-  // 上海世纪友谊影城LUXE南方商城店
-  sjyyyc: ["11788", "SJHQYX_H5_PROD_11788_MPS"],
-  // 北京万画田村影院
-  bjwhtcyy: ["11489", "WANHUA_H5_PROD_11489_MPS"],
-  // 中影南方CINITYLED华强广场店
-  zynfhqgcd: ["15260", "TWZYNF_H5_PROD_15260_MPS"],
-  // 万画影城国投财富广场店
-  whycgtcfgcd: ["12430", "WANHUA_H5_PROD_12430_MPS"],
-  // 365影院（天通苑文化艺术中心）
-  bj365yy: ["16840", "CPSLW_H5_PROD_16840_MPS"],
-  // 中影UC国际影城（锦泰城店）
-  zyucgjyc: ["69192", "ZYUC_H5_PROD_69192_MPS"]
-};
-
-// 微信小程序openid
-const APP_OPENID_OBJ = {
-  sfc: "otEMo42FC38PgJiYDvu6HrGjrwQY",
-  xywdgmyc: "oOiC55RPsQs1XZLzM_cklZ2pbvnk",
-  zhongying: "oZQEA7Xzuot6Gb4Xj9ELwRlYEri0",
-  bailaohui: "oBOi46wSC0VFZVHREN_1Qrr_o2Sc",
-  lyzy: "oekH_4_xX7k0hZwTopPN_CDpWNdo",
-  cswyh: "oKLyP4hIUw8CggpTmS3P5zcU9FXQ",
-  bjdzlt: "oIkMV5BkjhLVUj5ws2wPVBYieqJ4",
-  glyc: "o5nuI64TLqvAat13QOPN5rlTpwkY",
-  jiujin: "o9z475KmUY5DGBCmA8iHonVW4zco",
-  hbchyxd: "oY_OW5JDOHt6bDtaMpFvnrFcTM64", // 0f35YE100ZZg3T1vFx3009dslN15YE1D   oY_OW5JDOHt6bDtaMpFvnrFcTM64
-  jinji: "oTJ0a48lR3TPBfblHCqLLn-kdRro",
-  ningbo: "o1TM95HQabEWcsC6u2S0XPd4ge5w",
-  laina: "oPKih4oNM3oGJGcEItWiN5lJ93oA",
-  hema: "oD3rN4ge-6H9Q4mYVBBJcsMFoRkc",
-  dsyc: "0e3M6p200SW2CS1VcJ100oErLd0M6p2y",
-  jqx: "0c3dq2nl2aYFVd4B7Yll2FTobD1dq2n8",
-  fszy: "0c34Cu000WxYCS10LS1002gyW824Cu0v",
-  xywszy: "0d3eLY0w3BFPi33zlU3w3G2Jmy3eLY02",
-  jjzy: "0a3qMuml26eyZd4MdKkl2IS2kX3qMumV",
-  whyx: "0d3L6v000AqYCS1cDv200Nk1Rj1L6v0P",
-  hzzy: "0b3kzk100aSlES1Z4Y300MotTC3kzk1s",
-  shzy: "0f35vI0w3ir7j33lkh3w39K8cv15vI0O",
-  hongshi: "owgjs4gKzy5Q5dz6eTqR-hMFHy0M",
-  limeihua: "ok7FI49HybuSq5RNx49q6eNnzof4",
-  hengye: "okxaO68YGIDHtSOfKw4UOCv-_4Co",
-  minzu: "o6jsm440WovuVPr1tSNm21xqj_nQ",
-  yinxingnc: "ohRBp5CS0H0jThxNFBnLVaBK2ROQ",
-  yinxingxy: "oqlIF5uEe7ueJzkhAHvPEsW4cwgw",
-  liangchen: "oFSv95QrvI3_5mUEAWBG_JrseZ-s",
-  suzhou: "o1pgA7dSvGDpwzo5qLgL0163Ibxo",
-  quanmei: "oQlN65N9QJFlABGHVcK1KFuwM-LY",
-  yongheng: "oyJTi5Ji8B2DoiiRmjWv4eakE684",
-  nanguojgh: "osJTy5IDMVmwodwKlj_uoHkyR3s0",
-  baoneng: "oLPNc5YNrh5RFNfY-xCco1S5Cn-w",
-  hefeidianying: "oKYoo47HgpOfxBppN7iLt2ZUeCQI",
-  chaohuzhongying: "orMoC5MEcNYCRanvng3Jecq1O_eo",
-  hfzybdd: "oqu7r5QjhpZMU3pNUtdsaldYijd0",
-  hfzywpcd: "odZ1O5cB97ux2MWnhL0pA3ry_QkQ",
-  hfzyzdgcd: "oo9wS5PcefuVMi0W8dnvoUuClCJc",
-  hfzydxjd: "oIexg5L8JNyDhr0NSW6lD_t8U3lA",
-  hfzyzhd: "oFFe55S5HS4CFhmud2OKB5uBVd1k",
-  wfzyyxhd: "oQosr43DGV1bf-x6dVHOj6TOppwc",
-  wfzygeshgcd: "oC9Mu5B9W5Hvbi1OYcULLKonlfLE",
-  nchgtdd: "oVMDU5J_aur4-Uw3ahi5HZ6gbNi8",
-  hfbddd: "oCFwp43wXjAuzH64FqgCs5Onkcjw",
-  hflkldd: "oPA485J9bAFDb1Cy1dmszU2YaENE",
-  ttylw: "os2pL5WIRCF9j_BUNXd5kpgrMEO0",
-  ytgjyc: "oCoKA4m0U6JA1gOax7NVjNpNI_js",
-  dghs: "oeeJH430q6SuIDVrUWXHHJ2Arn2U",
-  // tjlnx: "o7R2D4rA_SO8aVRORMcIN9CKE8YY",
-  // bjlnx: "oGOc_4y5CLlhc59W1esyqNLC1_sg",
-  // cdlnx: "oitaV4qv9zQRcpnVIW0e6y3VEjrA",
-  jsdgm: "oBxHf5duN7bMnsd3T7-X9csx3x2A",
-  slsy: "oL5Gw6-Pyale_B2-sOWXKJ6cqVJk",
-  gbsy: "oZJsH5c9cYGXSaUkZ9ta6ZJ8vb9o",
-  jyhx: "oALrE5Ph3Zir_aHYlzMIlln8k7tY",
-  hkzy: "oqVjm5c4Q6lIu_a41-9K-R6YLN90",
-  hgwz: "oHK364jCg5RHMK3k56CNQ8n-1glo",
-  shjy: "oME2H5IYbp1zs5Vu_ySCoWA4w-MA",
-  tjlq: "o3Eav4jNPOqQF9UAfd83UXgMnwxE",
-  shth: "os4vr4k5lf2ZumgE-YcDACUVF3mY",
-  szyl: "on0L74gstiyCUfnWgwNt5NsCvjYE",
-  xyfsy: "okyGN62IVGBQpvqa4beaCs302oUE",
-  cszykd: "oK5yB5LS6D9H1pvdO6P8aSP0_ijQ",
-  cszyyzx: "o1ps25Y8zsCfmbp3etbugsnDaU_I",
-  qina: "ouKdc5bCNh_0ygvtmniED-u9kIbA",
-  zyxmccone: "oxLZg45UxLU-3Qz4sAWO5pU86k2k"
-};
-
-// 影院group组别标识
-const APP_GROUP_OBJ = {
-  sfc: "20045",
-  xywdgmyc: "20371",
-  zhongying: "20020",
-  bailaohui: "10000",
-  lyzy: "20482",
-  cswyh: "20328",
-  bjdzlt: "20615",
-  glyc: "20673",
-  jiujin: "20253",
-  hbchyxd: "20061",
-  jinji: "20047",
-  ningbo: "20023",
-  laina: "20463",
-  hema: "20064",
-  dsyc: "20659",
-  jqx: "20664",
-  fszy: "20121",
-  xywszy: "20011",
-  jjzy: "20703",
-  whyx: "20717",
-  hzzy: "20637",
-  shzy: "20677",
-  hongshi: "20120",
-  limeihua: "20496",
-  hengye: "20669",
-  minzu: "20039",
-  yinxingnc: "20087",
-  yinxingxy: "20320",
-  liangchen: "20604",
-  suzhou: "20710",
-  quanmei: "20529",
-  yongheng: "20012",
-  nanguojgh: "20288",
-  baoneng: "20151",
-  hefeidianying: "20025",
-  chaohuzhongying: "20568",
-  hfzybdd: "20670",
-  hfzywpcd: "20392",
-  hfzyzdgcd: "20667",
-  hfzydxjd: "20665",
-  hfzyzhd: "20270",
-  wfzyyxhd: "20684",
-  wfzygeshgcd: "20685",
-  nchgtdd: "20499",
-  hfbddd: "20407",
-  hflkldd: "20453",
-  ttylw: "20648",
-  ytgjyc: "20176",
-  dghs: "20416",
-  // tjlnx: "20523",
-  // bjlnx: "20622",
-  // cdlnx: "20579",
-  jsdgm: "20618",
-  slsy: "20698",
-  gbsy: "20582",
-  jyhx: "20293",
-  hkzy: "20156",
-  hgwz: "20191",
-  shjy: "20190",
-  tjlq: "20400",
-  shth: "20074",
-  szyl: "20333",
-  xyfsy: "20674",
-  cszykd: "20679",
-  cszyyzx: "20681",
-  qina: "20004",
-  zyxmccone: "20738"
 };
 
 // 微信消息推送id
@@ -708,13 +432,11 @@ export {
   GET_APP_LIST,
   GET_USABLE_APP_LIST,
   GET_APP_TYPE_LIST,
+  GE_APP_INFO,
   APP_TYPE_OBJ,
-  H5_UME_CINEMA_OBJ,
   LIERENR_REWARDS,
   GROUP_LIST,
   TICKET_CONPREFIX_OBJ,
-  APP_OPENID_OBJ,
-  APP_GROUP_OBJ,
   WX_MSG_UID,
   SFC_CINEMA_NAME,
   YAOLAI_CINEMA_NAME,
@@ -722,7 +444,6 @@ export {
   WANMEI_CINEMA_NAME,
   YINGHUANG_CINEMA_NAME,
   ZHEYINGSHIDAI_CINEMA_NAME,
-  TPYYC_CINEMA_NAME_BY_SFC,
   EXCLUDE_CINEMA_LIST_BY_CINEMA_FLAG,
   CINEMA_STATUS_OBJ
 };

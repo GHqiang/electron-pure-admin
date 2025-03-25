@@ -60,7 +60,7 @@
           />
         </el-form-item>
         <el-form-item
-          v-if="H5_UME_CINEMA_OBJ[formData.app_name]"
+          v-if="H5_UME_LIST[formData.app_name]"
           label="续期tid"
           prop="tid"
         >
@@ -113,12 +113,13 @@
 <script setup>
 import { ref, reactive, computed } from "vue";
 import { ElLoading, ElMessage } from "element-plus";
-import { GET_APP_LIST, H5_UME_CINEMA_OBJ } from "@/common/constant";
+import { GET_APP_LIST, GET_H5_UME_LIST } from "@/common/constant";
 import { platTokens } from "@/store/platTokens";
 const {
   userInfo: { rule, user_id }
 } = platTokens();
 const APP_LIST = computed(() => GET_APP_LIST());
+const H5_UME_LIST = computed(() => GET_H5_UME_LIST());
 const loginFormRef = ref(null);
 // 父传子props
 defineProps({

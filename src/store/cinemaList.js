@@ -71,6 +71,11 @@ export const useCinemaList = defineStore("cinemaDataTable", {
         }
       });
       return appList;
-    }
+    },
+    // 获取所有影院信息
+    getAllAppList: state =>
+      state.allAppList.filter(item =>
+        tokens?.userInfo?.rule == 2 ? item.status == 1 : true
+      )
   }
 });
