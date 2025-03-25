@@ -44,6 +44,53 @@
             clearable
           />
         </el-form-item>
+        <el-form-item label="影线标识集合" prop="flag_list">
+          <el-input
+            v-model="formData.flag_list"
+            style="width: 500px"
+            maxlength="255"
+            show-word-limit
+            :autosize="{ minRows: 2, maxRows: 5 }"
+            type="textarea"
+            placeholder="请输入影线标识集合，若有多个用;分隔"
+          />
+        </el-form-item>
+        <el-form-item label="平台影线组别" prop="group_list">
+          <el-input
+            v-model="formData.group_list"
+            style="width: 500px"
+            maxlength="100"
+            show-word-limit
+            :autosize="{ minRows: 2, maxRows: 3 }"
+            type="textarea"
+            placeholder="请输入平台影线组别，若有多个用;分隔"
+          />
+        </el-form-item>
+        <el-form-item label="影线包含城市" prop="city_list">
+          <el-input
+            v-model="formData.city_list"
+            style="width: 500px"
+            maxlength="100"
+            show-word-limit
+            :autosize="{ minRows: 2, maxRows: 3 }"
+            type="textarea"
+            placeholder="请输入影线包含城市，若有多个用;分隔"
+          />
+          <span style="color: red"
+            >注意：没有影线标识的影院尽量都填写上，匹配影线标识更精准，一单写了就要求该影院所有城市都写死</span
+          >
+        </el-form-item>
+        <el-form-item label="影线黑名单影院" prop="black_list">
+          <el-input
+            v-model="formData.black_list"
+            style="width: 500px"
+            maxlength="500"
+            show-word-limit
+            :autosize="{ minRows: 2, maxRows: 5 }"
+            type="textarea"
+            placeholder="请输入黑名单影院，若有多个用;分隔"
+          />
+        </el-form-item>
         <el-form-item
           v-if="formData.app_type_code === 'sfc_applet'"
           label="乐影影院groupID"
@@ -147,7 +194,11 @@ let formData = reactive({
   cinemaLinkId: "",
   channelCode: "",
   status: "1",
-  remark: ""
+  remark: "",
+  group_list: "",
+  flag_list: "",
+  black_list: "",
+  city_list: ""
 });
 
 const rules = {
@@ -188,6 +239,10 @@ const resetForm = el => {
   formData.cinemaLinkId = "";
   formData.channelCode = "";
   formData.remark = "";
+  formData.group_list = "";
+  formData.flag_list = "";
+  formData.black_list = "";
+  formData.city_list = "";
 };
 
 // 影线类型改变
@@ -224,6 +279,10 @@ const open = async cinemaInfo => {
         formData.channelCode = formInfo.channelCode;
         formData.status = formInfo.status;
         formData.remark = formInfo.remark;
+        formData.group_list = formInfo.group_list;
+        formData.flag_list = formInfo.flag_list;
+        formData.black_list = formInfo.black_list;
+        formData.city_list = formInfo.city_list;
       } else {
         // 新增
         formData.app_type_code = formInfo.app_type_code;

@@ -1,5 +1,7 @@
 import { defineStore } from "pinia";
 import { APP_TYPE_OBJ } from "@/common/constant";
+import { platTokens } from "@/store/platTokens";
+const tokens = platTokens();
 let allCinemaList = window.localStorage.getItem("allCinemaList");
 if (allCinemaList) {
   allCinemaList = JSON.parse(allCinemaList);
@@ -59,7 +61,12 @@ export const useCinemaList = defineStore("cinemaDataTable", {
     getUsableAppList: state => {
       let appList = {};
       state.allAppList.forEach(item => {
-        if (item.status == 1) {
+        // 只有内容角色才允许设置状态，且状态只对内部角色生效
+        if (tokens?.userInfo?.rule == 2) {
+          if (item.status == 1) {
+            appList[item.app_name] = item.app_label;
+          }
+        } else {
           appList[item.app_name] = item.app_label;
         }
       });
