@@ -401,6 +401,7 @@ const getCinemaFlagFun = item => {
   let target = allCinemaList.find(itemA => {
     let isGroup = false,
       isCinema = false,
+      isBlackCinema = false,
       isCity = true;
     if (itemA.group_list && cinema_group) {
       isGroup = itemA.group_list.includes(cinema_group);
@@ -410,10 +411,15 @@ const getCinemaFlagFun = item => {
         .split("；")
         .some(itemB => cinemNameSpecial(cinema_name).includes(itemB));
     }
+    if (itemA.black_list && cinema_name) {
+      isBlackCinema = itemA.black_list
+        .split("；")
+        .some(itemB => cinemNameSpecial(cinema_name).includes(itemB));
+    }
     if (itemA.city_list && city_name) {
       isCity = itemA.city_list.includes(city_name);
     }
-    return (isGroup || isCinema) && isCity;
+    return (isGroup || isCinema) && isCity && !isBlackCinema;
   });
   if (target) {
     return target.app_name;

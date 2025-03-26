@@ -77,7 +77,7 @@
             placeholder="请输入影线包含城市，若有多个用;分隔"
           />
           <span style="color: red"
-            >注意：没有影线标识的影院尽量都填写上，匹配影线标识更精准，一单写了就要求该影院所有城市都写死</span
+            >注意：没有平台影线组别的影院尽量都填写上，这样匹配影线标识更精准，一单写了就要求该影院所有城市都写上</span
           >
         </el-form-item>
         <el-form-item label="影线黑名单影院" prop="black_list">
