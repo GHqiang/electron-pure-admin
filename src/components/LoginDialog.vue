@@ -60,7 +60,7 @@
           />
         </el-form-item>
         <el-form-item
-          v-if="H5_UME_LIST[formData.app_name]"
+          v-if="H5_UME_LIST.includes(formData.app_name)"
           label="续期tid"
           prop="tid"
         >
@@ -120,6 +120,7 @@ const {
 } = platTokens();
 const APP_LIST = computed(() => GET_APP_LIST());
 const H5_UME_LIST = computed(() => GET_H5_UME_LIST());
+// console.log("H5_UME_LIST", H5_UME_LIST);
 const loginFormRef = ref(null);
 // 父传子props
 defineProps({
