@@ -404,24 +404,33 @@ const getCinemaFlagFun = item => {
       isBlackCinema = false,
       isCity = true;
     if (itemA.group_list && cinema_group) {
-      isGroup = itemA.group_list.includes(cinema_group);
+      isGroup = itemA.group_list
+        .replace(/[;；]/g, "-")
+        .split("-")
+        .some(itemB => cinemNameSpecial(cinema_group).includes(itemB));
     }
     if (itemA.flag_list && cinema_name) {
       isCinema = itemA.flag_list
-        .split("；")
+        .replace(/[;；]/g, "-")
+        .split("-")
         .some(itemB => cinemNameSpecial(cinema_name).includes(itemB));
     }
     if (itemA.black_list && cinema_name) {
       isBlackCinema = itemA.black_list
-        .split("；")
+        .replace(/[;；]/g, "-")
+        .split("-")
         .some(itemB => cinemNameSpecial(cinema_name).includes(itemB));
     }
     if (itemA.city_list && city_name) {
-      isCity = itemA.city_list.includes(city_name);
+      isCity = itemA.city_list
+        .replace(/[;；]/g, "-")
+        .split("-")
+        .some(itemB => city_name.includes(itemB));
     }
     return (isGroup || isCinema) && isCity && !isBlackCinema;
   });
   if (target) {
+    console.log("target", target);
     return target.app_name;
   }
 
@@ -436,25 +445,19 @@ const getCinemaFlagFun = item => {
   );
 
   // 耀莱
-  let isYaolaiCinemaName =
-    isNoGroup &&
-    YAOLAI_CINEMA_NAME.some(
-      item => cinemNameSpecial(item) === cinemNameSpecial(cinema_name)
-    );
+  let isYaolaiCinemaName = YAOLAI_CINEMA_NAME.some(
+    item => cinemNameSpecial(item) === cinemNameSpecial(cinema_name)
+  );
 
   // 英皇
-  let isYinghuangCinemaName =
-    isNoGroup &&
-    YINGHUANG_CINEMA_NAME.some(
-      item => cinemNameSpecial(item) === cinemNameSpecial(cinema_name)
-    );
+  let isYinghuangCinemaName = YINGHUANG_CINEMA_NAME.some(
+    item => cinemNameSpecial(item) === cinemNameSpecial(cinema_name)
+  );
 
   // 浙影时代
-  let isZheyingshidaiCinemaName =
-    isNoGroup &&
-    ZHEYINGSHIDAI_CINEMA_NAME.some(
-      item => cinemNameSpecial(item) === cinemNameSpecial(cinema_name)
-    );
+  let isZheyingshidaiCinemaName = ZHEYINGSHIDAI_CINEMA_NAME.some(
+    item => cinemNameSpecial(item) === cinemNameSpecial(cinema_name)
+  );
 
   if (isYinghuangCinemaName) {
     return "yinghuang";
