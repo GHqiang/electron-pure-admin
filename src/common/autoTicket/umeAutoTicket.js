@@ -1042,17 +1042,35 @@ class OrderAutoTicketQueue {
           );
           if (!movieInfo) {
             console.warn("获取目标影片信息失败", movie_data, film_name);
-            this.logList.push({
-              opera_time: getCurrentTime(),
-              des: "获取目标影片信息失败",
-              level: "error",
-              info: {
-                film_name,
-                movie_data
-              }
+            let targetFilmList = movie_data.map(item => {
+              const repeatedCharsResult = findMostRepeatedChars(
+                item.filmName,
+                film_name
+              );
+              return {
+                ...item,
+                ...repeatedCharsResult
+              };
             });
-            const transferParams = await this.transferOrder(item);
-            return { transferParams };
+            targetFilmList = targetFilmList.sort(
+              (a, b) => b.similarity - a.similarity
+            );
+            // 必须有4个重复字符才采用模糊匹配结果
+            if (targetFilmList[0].totalRepeated >= 4) {
+              movieInfo = targetFilmList[0];
+            } else {
+              this.logList.push({
+                opera_time: getCurrentTime(),
+                des: "获取目标影片信息失败",
+                level: "error",
+                info: {
+                  film_name,
+                  movie_data
+                }
+              });
+              const transferParams = await this.transferOrder(item);
+              return { transferParams };
+            }
           }
         }
         // 6、获取目标影片的放映日期

@@ -1169,30 +1169,48 @@ class OrderAutoTicketQueue {
           const transferParams = await this.transferOrder(item);
           return { transferParams };
         }
-        let movieObj = movie_data.find(item => item.movie_name === film_name);
-        if (!movieObj) {
+        let movieInfo = movie_data.find(item => item.movie_name === film_name);
+        if (!movieInfo) {
           console.warn(
             "影院放映信息匹配订单影片名称失败",
             movie_data,
             film_name
           );
-          movieObj = movie_data.find(
+          movieInfo = movie_data.find(
             item =>
               convertFullwidthToHalfwidth(item.movie_name) ===
               convertFullwidthToHalfwidth(film_name)
           );
-          if (!movieObj) {
-            this.logList.push({
-              opera_time: getCurrentTime(),
-              des: "影院放映信息匹配订单影片名称失败",
-              level: "error",
-              info: {
-                movie_data,
+          if (!movieInfo) {
+            let targetFilmList = movie_data.map(item => {
+              const repeatedCharsResult = findMostRepeatedChars(
+                item.movie_name,
                 film_name
-              }
+              );
+              return {
+                ...item,
+                ...repeatedCharsResult
+              };
             });
-            const transferParams = await this.transferOrder(item);
-            return { transferParams };
+            targetFilmList = targetFilmList.sort(
+              (a, b) => b.similarity - a.similarity
+            );
+            // 必须有4个重复字符才采用模糊匹配结果
+            if (targetFilmList[0].totalRepeated >= 4) {
+              movieInfo = targetFilmList[0];
+            } else {
+              this.logList.push({
+                opera_time: getCurrentTime(),
+                des: "获取目标影片信息失败",
+                level: "error",
+                info: {
+                  film_name,
+                  movie_data
+                }
+              });
+              const transferParams = await this.transferOrder(item);
+              return { transferParams };
+            }
           }
         }
         // let movie_id = movieObj?.movie_id || ''
