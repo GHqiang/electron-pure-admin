@@ -1518,78 +1518,95 @@ class getSfcOfferPrice {
           convertFullwidthToHalfwidth(film_name)
       );
       console.log("movieInfo", movieInfo, film_name);
-      if (movieInfo) {
-        let { shows } = movieInfo;
-        let showDay = show_time.split(" ")[0];
-        let showList = shows[showDay] || [];
-        let showTime = show_time.split(" ")[1].slice(0, 5);
-        // 解决同一时间多场次问题
-        let targetShowList = showList.filter(
-          item => item.start_time === showTime
-        );
-        let targetShow = targetShowList[0];
-        if (targetShowList.length > 1) {
-          targetShowList = targetShowList.map(item => {
-            const repeatedCharsResult = findMostRepeatedChars(
-              item.hall_name,
-              hall_name
-            );
-            return {
-              ...item,
-              ...repeatedCharsResult
-            };
-          });
-          targetShowList = targetShowList.sort(
-            (a, b) => b.similarity - a.similarity
+      if (!movieInfo) {
+        let targetFilmList = movie_data.map(item => {
+          const repeatedCharsResult = findMostRepeatedChars(
+            item.movie_name,
+            film_name
           );
-          targetShow = targetShowList[0];
+          return {
+            ...item,
+            ...repeatedCharsResult
+          };
+        });
+        targetFilmList = targetFilmList.sort(
+          (a, b) => b.similarity - a.similarity
+        );
+        // 必须有4个重复字符才采用模糊匹配结果
+        if (targetFilmList[0].totalRepeated >= 4) {
+          movieInfo = targetFilmList[0];
+        } else {
           this.logList.push({
             opera_time: getCurrentTime(),
-            des: "同一时间多场次",
-            level: "info",
-            info: {
-              targetShowList
-            }
-          });
-        }
-        if (!targetShow) {
-          this.logList.push({
-            opera_time: getCurrentTime(),
-            des: "匹配影片放映场次失败",
+            des: "获取目标影片信息失败",
             level: "error",
             info: {
-              movieInfo,
-              show_time
+              film_name,
+              movie_data
             }
           });
           return;
         }
-        if (appFlag === "hbchyxd") {
-          targetShow.member_price = targetShow.normal_price;
-        }
+      }
+      let { shows } = movieInfo;
+      let showDay = show_time.split(" ")[0];
+      let showList = shows[showDay] || [];
+      let showTime = show_time.split(" ")[1].slice(0, 5);
+      // 解决同一时间多场次问题
+      let targetShowList = showList.filter(
+        item => item.start_time === showTime
+      );
+      let targetShow = targetShowList[0];
+      if (targetShowList.length > 1) {
+        targetShowList = targetShowList.map(item => {
+          const repeatedCharsResult = findMostRepeatedChars(
+            item.hall_name,
+            hall_name
+          );
+          return {
+            ...item,
+            ...repeatedCharsResult
+          };
+        });
+        targetShowList = targetShowList.sort(
+          (a, b) => b.similarity - a.similarity
+        );
+        targetShow = targetShowList[0];
         this.logList.push({
           opera_time: getCurrentTime(),
-          des: "获取电影放映信息从而获取会员价",
+          des: "同一时间多场次",
           level: "info",
           info: {
-            targetShow,
-            city_id,
-            cinema_id
-          }
-        });
-        return { ...targetShow, city_id, cinema_id };
-      } else {
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "获取电影放映信息后匹配订单影片名失败",
-          level: "error",
-          info: {
-            film_name,
-            movie_data,
-            moviePlayInfo: !movie_data?.length ? moviePlayInfo : undefined
+            targetShowList
           }
         });
       }
+      if (!targetShow) {
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "匹配影片放映场次失败",
+          level: "error",
+          info: {
+            movieInfo,
+            show_time
+          }
+        });
+        return;
+      }
+      if (appFlag === "hbchyxd") {
+        targetShow.member_price = targetShow.normal_price;
+      }
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "获取电影放映信息从而获取会员价",
+        level: "info",
+        info: {
+          targetShow,
+          city_id,
+          cinema_id
+        }
+      });
+      return { ...targetShow, city_id, cinema_id };
     } catch (error) {
       console.error(conPrefix + "获取当前场次电影信息异常", error);
       this.logList.push({

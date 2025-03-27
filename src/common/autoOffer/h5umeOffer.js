@@ -1317,16 +1317,34 @@ class getUmeOfferPrice {
             convertFullwidthToHalfwidth(film_name)
         );
         if (!movieInfo) {
-          this.logList.push({
-            opera_time: getCurrentTime(),
-            des: "获取目标影片信息失败",
-            level: "error",
-            info: {
-              film_name,
-              movie_data
-            }
+          let targetFilmList = movie_data.map(item => {
+            const repeatedCharsResult = findMostRepeatedChars(
+              item.filmName,
+              film_name
+            );
+            return {
+              ...item,
+              ...repeatedCharsResult
+            };
           });
-          return;
+          targetFilmList = targetFilmList.sort(
+            (a, b) => b.similarity - a.similarity
+          );
+          // 必须有4个重复字符才采用模糊匹配结果
+          if (targetFilmList[0].totalRepeated >= 4) {
+            movieInfo = targetFilmList[0];
+          } else {
+            this.logList.push({
+              opera_time: getCurrentTime(),
+              des: "获取目标影片信息失败",
+              level: "error",
+              info: {
+                film_name,
+                movie_data
+              }
+            });
+            return;
+          }
         }
       }
       console.log("movieInfo", movieInfo, film_name);
