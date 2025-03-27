@@ -51,8 +51,12 @@ const ruleForm = reactive({
 });
 
 // 设置本地的影院信息列表
-const setLocalCinemaList = async () => {
-  const res = await svApi.queryCinemaList({});
+const setLocalCinemaList = async rule => {
+  let params = {};
+  if (rule != 2) {
+    params.is_out_use = 1;
+  }
+  const res = await svApi.queryCinemaList(params);
   let cinemaList = res.data.cinemaList || [];
   // console.log("cinemaList", cinemaList);
   useCinemaListObj.setCinemaInfoList(cinemaList);
@@ -137,7 +141,7 @@ const onLogin = async formEl => {
             login_time: getCurrentTime()
           });
           let rule = loginRes.data?.user.rule;
-          await setLocalCinemaList();
+          await setLocalCinemaList(rule);
           await setLocalSpecialMatchList();
           await setLocalLoginList(rule);
           await setLocalRuleList(rule);

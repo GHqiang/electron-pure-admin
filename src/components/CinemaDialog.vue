@@ -142,6 +142,12 @@
             <el-radio value="3" size="large">已删除</el-radio>
           </el-radio-group>
         </el-form-item>
+        <el-form-item label="是否外部可用" prop="is_out_use">
+          <el-radio-group v-model="formData.is_out_use">
+            <el-radio value="1" size="large">是</el-radio>
+            <el-radio value="2" size="large">否</el-radio>
+          </el-radio-group>
+        </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input
             v-model="formData.remark"
@@ -194,6 +200,7 @@ let formData = reactive({
   cinemaLinkId: "",
   channelCode: "",
   status: "1",
+  is_out_use: "1",
   remark: "",
   group_list: "",
   flag_list: "",
@@ -234,6 +241,7 @@ const resetForm = el => {
   formData.app_name = "";
   formData.app_label = "";
   formData.status = "1";
+  formData.is_out_use = "1";
   formData.sfc_group_id = "";
   formData.sfc_open_id = "";
   formData.cinemaLinkId = "";
@@ -277,7 +285,8 @@ const open = async cinemaInfo => {
         formData.sfc_open_id = formInfo.sfc_open_id;
         formData.cinemaLinkId = formInfo.cinemaLinkId;
         formData.channelCode = formInfo.channelCode;
-        formData.status = formInfo.status;
+        formData.status = formInfo.status || "1";
+        formData.is_out_use = formInfo.is_out_use || "1";
         formData.remark = formInfo.remark;
         formData.group_list = formInfo.group_list;
         formData.flag_list = formInfo.flag_list;

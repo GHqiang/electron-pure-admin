@@ -75,6 +75,11 @@
               <span>{{ CINEMA_STATUS_OBJ[status] }}</span>
             </template>
           </el-table-column>
+          <el-table-column label="是否外用" min-width="90">
+            <template #default="{ row: { is_out_use } }">
+              <span>{{ is_out_use == 2 ? "否" : "是" }}</span>
+            </template>
+          </el-table-column>
           <el-table-column prop="group_list" label="影线组别" min-width="150" />
           <el-table-column prop="flag_list" label="影线标识" min-width="180" />
           <el-table-column
