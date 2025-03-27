@@ -1213,16 +1213,16 @@ class OrderAutoTicketQueue {
             }
           }
         }
-        // let movie_id = movieObj?.movie_id || ''
+        // let movie_id = movieInfo?.movie_id || ''
         start_day = show_time.split(" ")[0];
         start_time = show_time.split(" ")[1].slice(0, 5);
         console.log(
-          conPrefix + "movieObj===>",
-          movieObj,
+          conPrefix + "movieInfo===>",
+          movieInfo,
           start_day,
           start_time
         );
-        let showList = movieObj?.shows[start_day] || [];
+        let showList = movieInfo?.shows[start_day] || [];
         console.log(conPrefix + "showList===>", showList);
         // 解决同一时间多场次问题
         let targetShowList = showList.filter(
