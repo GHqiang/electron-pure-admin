@@ -335,7 +335,6 @@ import {
   ORDER_FORM,
   GET_APP_LIST,
   GET_UME_LIST,
-  APP_TYPE_OBJ,
   GET_APP_TYPE_LIST
 } from "@/common/constant";
 const APP_LIST = computed(() => GET_APP_LIST());

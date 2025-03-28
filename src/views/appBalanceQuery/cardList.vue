@@ -324,7 +324,6 @@ import {
   GET_UME_LIST,
   GET_H5_UME_LIST,
   GE_APP_INFO,
-  APP_TYPE_OBJ,
   GET_APP_TYPE_LIST
 } from "@/common/constant";
 const APP_LIST = computed(() => GET_APP_LIST());

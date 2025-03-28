@@ -391,11 +391,7 @@ const {
 
 import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import QuanDialog from "@/components/QuanDialog.vue";
-import {
-  GET_APP_LIST,
-  APP_TYPE_OBJ,
-  GET_APP_TYPE_LIST
-} from "@/common/constant";
+import { GET_APP_LIST, GET_APP_TYPE_LIST } from "@/common/constant";
 const APP_LIST = computed(() => GET_APP_LIST());
 const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
 

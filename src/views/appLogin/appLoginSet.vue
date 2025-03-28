@@ -205,11 +205,7 @@ import { ref, reactive, computed, onBeforeMount, nextTick, watch } from "vue";
 import svApi from "@/api/sv-api";
 import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import LoginDialog from "@/components/LoginDialog.vue";
-import {
-  GET_APP_LIST,
-  APP_TYPE_OBJ,
-  GET_APP_TYPE_LIST
-} from "@/common/constant";
+import { GET_APP_LIST, GET_APP_TYPE_LIST } from "@/common/constant";
 const APP_LIST = computed(() => GET_APP_LIST());
 const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
 import { getCurrentTime } from "@/utils/utils";
