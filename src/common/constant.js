@@ -41,12 +41,6 @@ const SFC_APP_VER_OBJ = {
   nanguojgh: ["7.0", "7.9.4"]
 };
 
-// ume系统影院
-const GET_UME_LIST = () => cinemaStore.getUmeList;
-
-// umeh5系列影院集合
-const GET_H5_UME_LIST = () => cinemaStore.getH5UmeList;
-
 // 猎人订单类型奖励金额
 const LIERENR_REWARDS = {
   0: 0, // 普通
@@ -83,12 +77,17 @@ const GROUP_LIST = [
 
 // 影院列表
 const GET_APP_LIST = () => cinemaStore.getAppList;
-
 // 可用影院列表
 const GET_USABLE_APP_LIST = () => cinemaStore.getUsableAppList;
 // SFC影院集合列表
 const GET_SFC_APP_LIST = () => cinemaStore.getSfcList;
+// ume系统影院
+const GET_UME_LIST = () => cinemaStore.getUmeList;
 
+// umeh5系列影院集合
+const GET_H5_UME_LIST = () => cinemaStore.getH5UmeList;
+// 辰星系列影院集合
+const GET_CHENXING_LIST = () => cinemaStore.getChenxingList;
 // 获取某个影线配置信息
 const GE_APP_INFO = app_name =>
   cinemaStore.getAllAppList.find(item => item.app_name === app_name);
@@ -100,7 +99,8 @@ const APP_TYPE_OBJ = {
   ume_applet: "凤凰云智小程序",
   ume_h5: "凤凰云智H5",
   sfc_applet: "乐影",
-  lma_applet: "卢米埃"
+  lma_applet: "卢米埃",
+  chenxing_applet: "辰星小程序"
 };
 
 window.APP_TYPE_LIST = GET_APP_TYPE_LIST();
@@ -428,6 +428,7 @@ export {
   SFC_APP_VER_OBJ,
   GET_UME_LIST,
   GET_H5_UME_LIST,
+  GET_CHENXING_LIST,
   GET_SFC_APP_LIST,
   GET_APP_LIST,
   GET_USABLE_APP_LIST,

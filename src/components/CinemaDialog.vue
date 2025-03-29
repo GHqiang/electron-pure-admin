@@ -135,6 +135,13 @@
             clearable
           />
         </el-form-item>
+        <el-form-item label="影院code" prop="cinemaCode">
+          <el-input
+            v-model="formData.cinemaCode"
+            placeholder="请输入影院code(选填)"
+            clearable
+          />
+        </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="formData.status">
             <el-radio value="1" size="large">正常</el-radio>
@@ -256,7 +263,7 @@ const resetForm = el => {
 // 影线类型改变
 const appTypeChange = val => {
   if (val) {
-    formData.app_name_name = APP_TYPE_OBJ[val];
+    formData.app_type_name = APP_TYPE_OBJ[val];
   }
   formData.sfc_group_id = "";
   formData.sfc_open_id = "";

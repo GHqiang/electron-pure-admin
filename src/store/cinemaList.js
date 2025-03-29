@@ -41,6 +41,11 @@ export const useCinemaList = defineStore("cinemaDataTable", {
         .filter(item => item.app_type_code === "lma_applet")
         .map(item => item.app_name);
     },
+    getChenxingList: state => {
+      return state.allAppList
+        .filter(item => item.app_type_code === "chenxing_applet")
+        .map(item => item.app_name);
+    },
     getAppTypeList: state => {
       return Object.keys(APP_TYPE_OBJ).map(item => ({
         app_type_code: item,

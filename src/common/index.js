@@ -10,16 +10,19 @@ import createSfcApi from "@/api/sfc-api";
 import createUmeApi from "@/api/ume-api";
 import createLmaApi from "@/api/lma-api";
 import createH5UmeApi from "@/api/h5ume-api";
+import createChenxingApi from "@/api/chenxing-api";
 import {
   GET_UME_LIST,
   GET_H5_UME_LIST,
   GET_SFC_APP_LIST,
+  GET_CHENXING_LIST,
   GE_APP_INFO
 } from "@/common/constant";
 import { getCinemaLoginInfoList } from "@/utils/utils";
 const SFC_API_OBJ = {};
 const UME_API_OBJ = {};
 const H5_UME_API_OBJ = {};
+const CHENXING_API_OBJ = {};
 
 GET_SFC_APP_LIST().forEach(item => {
   SFC_API_OBJ[item] = createSfcApi({
@@ -27,7 +30,11 @@ GET_SFC_APP_LIST().forEach(item => {
     app_name: item
   });
 });
-
+GET_CHENXING_LIST().forEach(item => {
+  CHENXING_API_OBJ[item] = createChenxingApi({
+    app_name: item
+  });
+});
 GET_UME_LIST().forEach(item => {
   UME_API_OBJ[item] = createUmeApi({
     app_name: item
@@ -52,6 +59,7 @@ const APP_API_OBJ = {
   ...SFC_API_OBJ,
   ...UME_API_OBJ,
   ...H5_UME_API_OBJ,
+  ...CHENXING_API_OBJ,
   lma: createLmaApi({
     app_name: "lma"
   })

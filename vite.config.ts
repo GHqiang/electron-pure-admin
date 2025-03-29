@@ -85,6 +85,13 @@ export default ({ command, mode }: ConfigEnv): UserConfigExport => {
           changeOrigin: true, // 是否允许跨域
           rewrite: path => path.replace(/^\/api/, "api") // 重写路径，去除/api前缀
         },
+
+        // 辰星
+        "/selfSupport": {
+          target: "https://capi.oristarcloud.com", // 后端API的真实地址
+          changeOrigin: true, // 是否允许跨域
+          rewrite: path => path.replace(/^\/selfSupport/, "selfSupport") // 重写路径，去除/api前缀
+        },
         // sfc乐影
         "/sfc": {
           target: "https://group.leying.com", // 后端API的真实地址

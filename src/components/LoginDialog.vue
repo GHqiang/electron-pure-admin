@@ -21,6 +21,7 @@
             v-model="formData.app_name"
             placeholder="请选择影线名称"
             clearable
+            filterable
             @change="shadowLineChange"
           >
             <el-option
@@ -56,6 +57,17 @@
           <el-input
             v-model="formData.session_id"
             placeholder="请输入Session ID"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item
+          v-if="CHENXING_LIST.includes(formData.app_name)"
+          label="tenantId"
+          prop="tid"
+        >
+          <el-input
+            v-model="formData.tid"
+            placeholder="请输入tenantId"
             clearable
           />
         </el-form-item>
@@ -113,13 +125,18 @@
 <script setup>
 import { ref, reactive, computed } from "vue";
 import { ElLoading, ElMessage } from "element-plus";
-import { GET_APP_LIST, GET_H5_UME_LIST } from "@/common/constant";
+import {
+  GET_APP_LIST,
+  GET_H5_UME_LIST,
+  GET_CHENXING_LIST
+} from "@/common/constant";
 import { platTokens } from "@/store/platTokens";
 const {
   userInfo: { rule, user_id }
 } = platTokens();
 const APP_LIST = computed(() => GET_APP_LIST());
 const H5_UME_LIST = computed(() => GET_H5_UME_LIST());
+const CHENXING_LIST = computed(() => GET_CHENXING_LIST());
 // console.log("H5_UME_LIST", H5_UME_LIST);
 const loginFormRef = ref(null);
 // 父传子props
