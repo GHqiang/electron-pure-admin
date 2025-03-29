@@ -843,8 +843,7 @@ const getCinemaId = (cinema_name, list, appName, city_name) => {
       }));
     let specialCinemaInfo = specialList.find(
       item =>
-        (item.order_cinema_name === cinemaName ||
-          item.order_cinema_name.includes(cinemaName)) &&
+        item.order_cinema_name.includes(cinemaName) &&
         (item.city_name ? item.city_name.includes(city_name) : true)
     );
     if (specialCinemaInfo) {
@@ -902,8 +901,7 @@ const getCinemaIdByLma = (cinema_name, list, appName, city_name) => {
       }));
     let specialCinemaInfo = specialList.find(
       item =>
-        (item.order_cinema_name === cinemaName ||
-          item.order_cinema_name.includes(cinemaName)) &&
+        item.order_cinema_name.includes(cinemaName) &&
         (item.city_name ? item.city_name.includes(city_name) : true)
     );
     if (specialCinemaInfo) {
@@ -967,8 +965,7 @@ const getTargetCinema = (cinema_name, list, appName, city_name) => {
     if (specialList?.length) {
       let specialCinemaInfo = specialList.find(
         item =>
-          (item.order_cinema_name === cinemaName ||
-            item.order_cinema_name.includes(cinemaName)) &&
+          item.order_cinema_name.includes(cinemaName) &&
           (item.city_name ? item.city_name.includes(city_name) : true)
       );
       if (specialCinemaInfo) {
@@ -1039,8 +1036,7 @@ const cinemaMatchHandle = (cinema_name, list, appName, city_name) => {
       }));
     let specialCinemaInfo = specialList.find(
       item =>
-        (item.order_cinema_name === cinemaName ||
-          item.order_cinema_name.includes(cinemaName)) &&
+        item.order_cinema_name.includes(cinemaName) &&
         (item.city_name ? item.city_name.includes(city_name) : true)
     );
     console.log("specialCinemaInfo", specialCinemaInfo, cinema_name);
