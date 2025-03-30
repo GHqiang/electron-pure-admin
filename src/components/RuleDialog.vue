@@ -494,11 +494,13 @@ import {
   ORDER_FORM,
   GET_APP_LIST,
   GET_UME_LIST,
-  GET_H5_UME_LIST
+  GET_H5_UME_LIST,
+  GET_CHENXING_LIST
 } from "@/common/constant";
 const APP_LIST = computed(() => GET_APP_LIST());
 const UME_LIST = computed(() => GET_UME_LIST());
 const H5_UME_LIST = computed(() => GET_H5_UME_LIST());
+const CHENXING_LIST = computed(() => GET_CHENXING_LIST());
 
 import { useAppBaseData } from "@/store/appBaseData";
 const appBaseDataInfo = useAppBaseData();
@@ -870,6 +872,16 @@ const getCityList = async () => {
           id: item.cityCode
         }));
         console.log("list", list);
+      } else if (CHENXING_LIST.value.includes(shadowLineName)) {
+        let params = {};
+        const res = await APP_API_OBJ[shadowLineName].getCinemaList(params);
+        console.log("res", res);
+        cityCinemaList = res.data || [];
+        list = cityCinemaList.map(item => ({
+          name: item.cityInfoDTO.cityName,
+          id: item.cityInfoDTO.cityCode
+        }));
+        console.log("list", list);
       } else if (shadowLineName === "lma") {
         const res = await APP_API_OBJ[shadowLineName].getCityList();
         list = res.data.list || [];
@@ -929,6 +941,23 @@ const getFilmList = async (oneCity, oneCinema) => {
         id: item.filmId,
         movie_name: item.filmName
       }));
+    } else if (CHENXING_LIST.value.includes(shadowLineName)) {
+      const params = {
+        cinemaCode: oneCinema.cinemaCode,
+        cinemaId: oneCinema.cinemaId,
+        unifiedCode: oneCinema.cinemaCode,
+        pageNo: 1,
+        pageSize: 1000,
+        platForm: 5
+      };
+      const res = await APP_API_OBJ[shadowLineName].getMoviePlayInfo(params);
+      console.log("获取线上电影列表返回", res);
+      list = res?.data?.items || [];
+      list = list.map(item => ({
+        ...item,
+        id: item.id,
+        movie_name: item.filmName
+      }));
     } else if (shadowLineName === "lma") {
       const res = await APP_API_OBJ[shadowLineName].getMoviePlayInfo({
         cinema_id: oneCinema.id
@@ -985,6 +1014,15 @@ const getCinemaListByCityId = async city_id => {
       cinemaList = cinemaList.map(item => ({
         ...item,
         id: item.cinemaLinkId,
+        name: item.cinemaName
+      }));
+    } else if (CHENXING_LIST.value.includes(shadowLineName)) {
+      cinemaList =
+        cityCinemaList.find(item => item.cityInfoDTO.cityCode === city_id)
+          ?.cinemaResultDTOList || [];
+      cinemaList = cinemaList.map(item => ({
+        ...item,
+        id: item.cinemaId,
         name: item.cinemaName
       }));
     } else if (shadowLineName === "lma") {
