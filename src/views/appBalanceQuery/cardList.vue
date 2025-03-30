@@ -329,6 +329,7 @@ import {
 const APP_LIST = computed(() => GET_APP_LIST());
 const UME_LIST = computed(() => GET_UME_LIST());
 const H5_UME_LIST = computed(() => GET_H5_UME_LIST());
+const CHENXING_LIST = computed(() => GET_CHENXING_LIST());
 const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
 
 import { APP_API_OBJ } from "@/common/index.js";
@@ -533,6 +534,10 @@ const getCardListByApp = async (app_name, phone, session_id, index) => {
         pageSize: 30,
         umeToken: session_id
       };
+    } else if (CHENXING_LIST.value.includes(app_name)) {
+      params = {
+        session_id
+      };
     } else if (app_name === "lma") {
       params.lmaToken = session_id;
     } else {
@@ -562,6 +567,14 @@ const getCardListByApp = async (app_name, phone, session_id, index) => {
         card_num: item.cardNumber,
         balance: (item.balance || 0) / 100 + ""
       }));
+    } else if (CHENXING_LIST.value.includes(app_name)) {
+      // cardList = res.data || [];
+      // // 以下需调整
+      // cardList = cardList.map(item => ({
+      //   card_id: item.cardNumber,
+      //   card_num: item.cardNumber,
+      //   balance: (item.balance || 0) / 100 + ""
+      // }));
     } else if (app_name === "lma") {
       // 卢米埃只获取主卡，其它的出票后更新卡余额
       cardList = res.data?.sleep || [];

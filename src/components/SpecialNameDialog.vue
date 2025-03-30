@@ -76,11 +76,17 @@
 import { APP_API_OBJ } from "@/common/index.js";
 import { ref, reactive, computed, toRaw } from "vue";
 import { ElLoading, ElMessage } from "element-plus";
-import { GET_APP_LIST, GET_UME_LIST, GET_H5_UME_LIST } from "@/common/constant";
+import {
+  GET_APP_LIST,
+  GET_UME_LIST,
+  GET_H5_UME_LIST,
+  GET_CHENXING_LIST
+} from "@/common/constant";
 import { cinemNameSpecial } from "@/utils/utils";
 const APP_LIST = computed(() => GET_APP_LIST());
 const UME_LIST = computed(() => GET_UME_LIST());
 const H5_UME_LIST = computed(() => GET_H5_UME_LIST());
+const CHENXING_LIST = computed(() => GET_CHENXING_LIST());
 
 const ruleFormRef = ref(null);
 // 父传子props
@@ -265,6 +271,16 @@ const getCityList = async () => {
         id: item.cityCode
       }));
       console.log("list", list);
+    } else if (CHENXING_LIST.value.includes(app_name)) {
+      let params = {};
+      const res = await APP_API_OBJ[app_name].getCinemaList(params);
+      console.log("res", res);
+      cityCinemaList = res.data || [];
+      list = cityCinemaList.map(item => ({
+        name: item.cityInfoDTO.cityName,
+        id: item.cityInfoDTO.cityCode
+      }));
+      console.log("list", list);
     } else if (app_name === "lma") {
       const res = await APP_API_OBJ[app_name].getCityList();
       list = res.data.list || [];
@@ -310,6 +326,15 @@ const getCinemaListByCityId = async city_id => {
         id: item.cinemaLinkId,
         name: item.cinemaName,
         city_name: item.cityName
+      }));
+    } else if (CHENXING_LIST.value.includes(app_name)) {
+      cinemaList =
+        cityCinemaList.find(item => item.cityInfoDTO.cityCode === city_id)
+          ?.cinemaResultDTOList || [];
+      cinemaList = cinemaList.map(item => ({
+        ...item,
+        id: item.cinemaId,
+        name: item.cinemaName
       }));
     } else if (app_name === "lma") {
       const res = await APP_API_OBJ[app_name].getCinemaList(city_id);
