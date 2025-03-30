@@ -1164,7 +1164,7 @@ class OrderAutoTicketQueue {
             });
           }
           if (!targetShow) {
-            console.warn("匹配影片放映日期失败", showList, show_time);
+            console.warn("匹配影片放映日期失败", showList1, show_time);
             this.logList.push({
               opera_time: getCurrentTime(),
               des: "匹配影片放映场次失败",
