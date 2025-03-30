@@ -1056,7 +1056,7 @@ class OrderAutoTicketQueue {
               (a, b) => b.similarity - a.similarity
             );
             // 必须有4个重复字符才采用模糊匹配结果
-            if (targetFilmList[0].totalRepeated >= 4) {
+            if (targetFilmList[0]?.totalRepeated >= 4) {
               movieInfo = targetFilmList[0];
             } else {
               this.logList.push({
@@ -1126,16 +1126,16 @@ class OrderAutoTicketQueue {
               show_time
             }
           });
-          const showListRes = await getMoviePlayTime({
+          const showListRes1 = await getMoviePlayTime({
             cinemaCode,
             cinemaLinkId,
             filmUniqueId,
             showDate: getPreviousDay(start_day),
             appFlag
           });
-          const showList = showListRes?.moviePlayTime || [];
+          const showList1 = showListRes1?.moviePlayTime || [];
           // 解决同一时间多场次问题
-          let targetShowList = showList.filter(
+          let targetShowList = showList1.filter(
             item => +new Date(item.showDateTime) == +new Date(show_time)
           );
           targetShow = targetShowList[0];
@@ -1170,7 +1170,7 @@ class OrderAutoTicketQueue {
               des: "匹配影片放映场次失败",
               level: "error",
               info: {
-                showListRes,
+                showListRes1,
                 show_time
               }
             });

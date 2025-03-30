@@ -1083,7 +1083,7 @@ class getLmaOfferPrice {
             (a, b) => b.similarity - a.similarity
           );
           // 必须有4个重复字符才采用模糊匹配结果
-          if (targetFilmList[0].totalRepeated >= 4) {
+          if (targetFilmList[0]?.totalRepeated >= 4) {
             movieInfo = targetFilmList[0];
           } else {
             this.logList.push({
