@@ -4,6 +4,8 @@ import axios from "axios";
 import axiosRetry from "axios-retry";
 import { ElMessage } from "element-plus";
 import { platTokens } from "@/store/platTokens";
+import { GE_APP_INFO } from "@/common/constant";
+
 import {
   logUpload,
   getCurrentTime,
@@ -26,8 +28,8 @@ const paramsHandle = (params, app_name) => {
     s: "Windows 11 x64",
     i: "00000000-0000-0000-0000-000000000000",
     d: "microsoft",
-    // channelNo: "ZYJH-ZY",
-    // channelCode: "ZYJH-ZY",
+    channelNo: GE_APP_INFO(app_name)?.channelCode,
+    channelCode: GE_APP_INFO(app_name)?.channelCode,
     // channelName: "中影嘉华-自营",
     tenantId: targetLoginList?.[0]?.tid || "" // 登录接口返回
     // unifiedCode: "33018961",
@@ -39,6 +41,7 @@ const paramsHandle = (params, app_name) => {
     // defaultCardNo: "",
     // crmGroup: "CRM001"
   };
+  // console.log("config", config);
   return {
     ...params,
     ...config

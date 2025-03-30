@@ -24,18 +24,9 @@ const createApi = ({ app_name }) => {
   // 获取座位布局
   const getMoviePlaySeat = params =>
     axios.post("/selfSupport/front/cticket/loadWxPlanSite", params);
-
-  // 获取锁定座位记录
-  const getSeatLockRecord = params =>
-    axios.get("/sfc/user/get-lock-seat-log", { params });
-
   // 锁定座位
   const lockSeat = params =>
     axios.post("/selfSupport/trade/front/advanceOrder/lockSeat", params);
-
-  // 获取个人中心卡券信息
-  const getCardAndQuanList = params =>
-    axios.get("/sfc/v3/user/home", { params });
 
   // 获取会员卡列表
   const getCardList = params =>
@@ -44,11 +35,6 @@ const createApi = ({ app_name }) => {
   // 支付时获取优惠券列表
   const getQuanList = params =>
     axios.post("/selfSupport/trade/front/orders/coupon/list", params);
-  // v3/coupon/get-list-when-pay 支付那获取的一个券列表
-
-  // 个人中心优惠券列表，优先用券时使用
-  const getQuanListByFirstUseQuan = params =>
-    axios.get("/sfc/coupon/get-list", { params });
 
   // 订单价格计算
   const priceCalculation = params =>
@@ -76,7 +62,17 @@ const createApi = ({ app_name }) => {
 
   // 获取订单列表
   const getOrderList = params =>
-    axios.post("/selfSupport/trade/front/orders/queryOrderList", params);
+    axios.post(
+      "/selfSupport/trade/front/orders/queryOrderList",
+      params ||
+        {
+          // pageNo=1
+          // pageSize=10
+          // isEquityOrder=0
+          // cinemaCode=33018961
+          // cinemaId=405384
+        }
+    );
 
   // 取消订单
   const cancelOrder = params =>
@@ -84,20 +80,26 @@ const createApi = ({ app_name }) => {
 
   // 绑定优惠券
   const bandQuan = params =>
-    axios.post("/selfSupport/front/consumerEquityBag/bindRedeemCode", params);
+    axios.post(
+      "/selfSupport/trade/front/orders/coupon/bind",
+      params ||
+        {
+          // couponCode=123456, // 优惠券号
+          // c=123456, // 优惠券号
+          // cinemaCode=33018961
+          // cinemaId=405384
+        }
+    );
 
   return {
     getCinemaList,
     getMoviePlayInfo,
     getMoviePlayTime,
     getMoviePlaySeat,
-    getSeatLockRecord,
     lockSeat,
-    getCardAndQuanList,
     getCardList,
     getQuanList,
     queryPayWayParam,
-    getQuanListByFirstUseQuan,
     priceCalculation,
     createOrder,
     payOrder,

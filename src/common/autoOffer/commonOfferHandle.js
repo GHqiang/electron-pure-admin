@@ -1,11 +1,13 @@
 import getSfcOfferPrice from "./sfcOffer";
+import getChenxingOfferPrice from "./chenxingOffer";
 import getUmeOfferPrice from "./umeOffer";
 import getH5UmeOfferPrice from "./h5umeOffer.js";
 import getLmaOfferPrice from "./lmaOffer";
 import {
   GET_UME_LIST,
   GET_H5_UME_LIST,
-  GET_SFC_APP_LIST
+  GET_SFC_APP_LIST,
+  GET_CHENXING_LIST
 } from "@/common/constant";
 
 // 生成获取报价价格实体类
@@ -19,6 +21,8 @@ const getOfferPriceFun = params => {
     return new getLmaOfferPrice(params);
   } else if (GET_SFC_APP_LIST().includes(appFlag)) {
     return new getSfcOfferPrice(params);
+  } else if (GET_CHENXING_LIST().includes(appFlag)) {
+    return new getChenxingOfferPrice(params);
   }
 };
 

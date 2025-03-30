@@ -135,6 +135,17 @@
             clearable
           />
         </el-form-item>
+        <el-form-item
+          v-if="formData.app_type_code === 'chenxing_applet'"
+          label="辰星影院标识"
+          prop="channelCode"
+        >
+          <el-input
+            v-model="formData.channelCode"
+            placeholder="请输入辰星影院标识"
+            clearable
+          />
+        </el-form-item>
         <el-form-item label="影院code" prop="cinemaCode">
           <el-input
             v-model="formData.cinemaCode"
