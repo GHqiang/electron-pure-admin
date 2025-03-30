@@ -1802,7 +1802,7 @@ class getUmeOfferPrice {
         des: "获取城市影院列表异常",
         level: "error",
         info: {
-          error
+          error: formatErrInfo(error)
         }
       });
     }
