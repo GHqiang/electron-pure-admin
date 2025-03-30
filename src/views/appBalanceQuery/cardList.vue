@@ -568,13 +568,12 @@ const getCardListByApp = async (app_name, phone, session_id, index) => {
         balance: (item.balance || 0) / 100 + ""
       }));
     } else if (CHENXING_LIST.value.includes(app_name)) {
-      // cardList = res.data || [];
-      // // 以下需调整
-      // cardList = cardList.map(item => ({
-      //   card_id: item.cardNumber,
-      //   card_num: item.cardNumber,
-      //   balance: (item.balance || 0) / 100 + ""
-      // }));
+      cardList = res.data || [];
+      cardList = cardList.map(item => ({
+        card_id: item.cardNo,
+        card_num: item.cardNo,
+        balance: (item.amount || 0) + ""
+      }));
     } else if (app_name === "lma") {
       // 卢米埃只获取主卡，其它的出票后更新卡余额
       cardList = res.data?.sleep || [];

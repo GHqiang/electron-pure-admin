@@ -34,7 +34,16 @@ const createApi = ({ app_name }) => {
 
   // 支付时获取优惠券列表
   const getQuanList = params =>
-    axios.post("/selfSupport/trade/front/orders/coupon/list", params);
+    axios.post(
+      "/selfSupport/front/coupon/list",
+      params ||
+        {
+          // couponStatus=1
+          // cardNo=20001976924X
+          // cinemaCode=33018961
+          // cinemaId=405384
+        }
+    );
 
   // 订单价格计算
   const priceCalculation = params =>

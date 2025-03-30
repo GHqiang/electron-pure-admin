@@ -31,8 +31,8 @@ const paramsHandle = (params, app_name) => {
     channelNo: GE_APP_INFO(app_name)?.channelCode,
     channelCode: GE_APP_INFO(app_name)?.channelCode,
     // channelName: "中影嘉华-自营",
-    tenantId: targetLoginList?.[0]?.tid || "" // 登录接口返回
-    // unifiedCode: "33018961",
+    tenantId: targetLoginList?.[0]?.tid || "", // 登录接口返回
+    unifiedCode: params?.cinemaCode || undefined
     // cinemaCode: "33018961"
     // cinemaId: 405384
     // cinemaName: "中影嘉华国际影城（拱墅全景声巨幕店）"
