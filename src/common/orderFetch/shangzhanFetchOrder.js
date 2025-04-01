@@ -165,7 +165,7 @@ class OrderAutoFetchQueue {
         if (offerRecord?.app_name) {
           order.appName = offerRecord.app_name;
         } else {
-          this.sendNeworderMsg(
+          this.sendWxMsgByOrder(
             order,
             "报价记录里app_name不存在,机器无法判断用小程序还是凤凰云智出票，需手动出票"
           );
@@ -178,7 +178,7 @@ class OrderAutoFetchQueue {
       const newOrderEvent = new CustomEvent(eventName, { detail: order });
       window.dispatchEvent(newOrderEvent);
     } catch (error) {
-      this.sendNeworderMsg(order, JSON.stringify(error));
+      this.sendWxMsgByOrder(order, JSON.stringify(error));
     }
   }
   // 发送微信消息
