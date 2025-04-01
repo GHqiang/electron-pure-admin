@@ -14,7 +14,7 @@
         ref="loginFormRef"
         :model="formData"
         :rules="rules"
-        label-width="120px"
+        label-width="140px"
       >
         <el-form-item label="影线类型" prop="app_type_code">
           <el-select
