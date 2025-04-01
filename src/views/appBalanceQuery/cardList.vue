@@ -913,7 +913,7 @@ const syncCardInfo = async () => {
       let addCardList = memberCardList.filter(item => !item.id);
       console.warn("addCardList", addCardList);
       if (addCardList.length) {
-        addCardListHandle(addCardList);
+        await addCardListHandle(addCardList);
       }
       let updateCardList = memberCardList
         .filter(item => {
