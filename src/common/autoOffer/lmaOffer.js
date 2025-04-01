@@ -1114,6 +1114,7 @@ class getLmaOfferPrice {
         this.logList.push({
           opera_time: getCurrentTime(),
           des: "匹配影片放映日期失败",
+          level: "error",
           info: {
             playDateList,
             start_day
