@@ -8,6 +8,7 @@ import {
   sendWxPusherMessage,
   logUpload,
   getCurrentTime,
+  getCinemaLoginInfoList,
   mockDelay
 } from "@/utils/utils";
 // 机器登录用户信息
@@ -34,21 +35,10 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       if (config.url.indexOf(`/${proxyStr}/`) !== -1) {
         config.headers["Content-Type"] === "application/x-www-form-urlencoded;";
         // 猎人平台接口添加token
-        let loginInfoList = window.localStorage.getItem("loginInfoList");
-        if (loginInfoList) {
-          loginInfoList = JSON.parse(loginInfoList);
-        }
-        let targetList = loginInfoList.filter(
-          itemA => itemA.app_name === app_name && itemA.session_id
+        let targetLoginList = getCinemaLoginInfoList().filter(
+          item => item.app_name === app_name && item.mobile && item.session_id
         );
-        let targetInfo = targetList?.[0] || "";
-        if (targetList?.length > 1) {
-          targetInfo = targetList.find(itemA =>
-            tokens.userInfo.user_id != 1
-              ? itemA.mobile === tokens.userInfo.phone
-              : true
-          );
-        }
+        let targetInfo = targetLoginList?.[0] || "";
         let token = targetInfo?.session_id || "";
         // 保存原始参数和原始URL
         if (!config.originalParams) {
