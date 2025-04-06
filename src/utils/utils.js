@@ -407,7 +407,7 @@ const getCinemaFlagFun = item => {
       isGroup = itemA.group_list
         .replace(/[;；]/g, "-")
         .split("-")
-        .some(itemB => cinemNameSpecial(cinema_group).includes(itemB));
+        .some(itemB => cinemNameSpecial(cinema_group) === itemB);
     }
     if (itemA.flag_list && cinema_name) {
       isCinema = itemA.flag_list
