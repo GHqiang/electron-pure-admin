@@ -1212,7 +1212,7 @@ class getUmeOfferPrice {
         let member_cost_price = discount
           ? (Number(member_total_price) * 100 * discount) / 10000
           : Number(member_total_price);
-        member_cost_price = Number(member_cost_price / ticket_num.toFixed(2));
+        member_cost_price = Number((member_cost_price / ticket_num).toFixed(2));
         this.logList.push({
           opera_time: getCurrentTime(),
           des: "获取会员价相关信息1",
