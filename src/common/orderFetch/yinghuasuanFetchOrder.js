@@ -327,7 +327,7 @@ class OrderAutoFetchQueue {
   async stayConfirmOrderFetch(logList) {
     try {
       let params = {
-        status: "0%2C1", // 0:竞价中 1-竞价成功
+        // status: "0%2C1", // 0:竞价中 1-竞价成功
         page: 1
       };
       // console.log("获取影划算待出票订单列表参数", params);
