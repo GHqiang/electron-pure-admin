@@ -397,7 +397,7 @@ const getCinemaFlagFun = item => {
       if (a.app_name !== "zhongying" && b.first === "zhongying") return -1;
     });
   }
-  console.log("allCinemaList", allCinemaList);
+  // console.log("allCinemaList", allCinemaList);
   let target = allCinemaList.find(itemA => {
     let isGroup = false,
       isCinema = false,

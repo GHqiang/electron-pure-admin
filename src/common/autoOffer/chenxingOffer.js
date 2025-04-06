@@ -17,7 +17,11 @@ import {
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
-import { GET_APP_LIST, GROUP_LIST } from "@/common/constant.js";
+import {
+  GET_APP_LIST,
+  GROUP_LIST,
+  TEST_NEW_PLAT_LIST
+} from "@/common/constant.js";
 import lierenApi from "@/api/lieren-api";
 import { platTokens } from "@/store/platTokens";
 const {
@@ -1058,7 +1062,7 @@ class getChenxingOfferPrice {
       const real_cost_price = (pay_cost_price - rewardPrice).toFixed(2);
       // 预计利润（最终报价-真实成本）
       let expectProfit = (price - real_cost_price).toFixed(2);
-      if (price <= real_cost_price) {
+      if (price <= real_cost_price && !TEST_NEW_PLAT_LIST.includes(plat_name)) {
         let str = `最终报价${price}低于真实成本${real_cost_price}`;
         console.error(conPrefix + str);
         this.logList.push({
