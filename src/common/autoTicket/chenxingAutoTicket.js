@@ -71,6 +71,7 @@ class OrderAutoTicketQueue {
   testSendNewOrder(order) {
     const { appFlag } = this;
     isTestOrder = true;
+    this.start();
     let newOrder = order || {
       id: 7177,
       plat_name: "lieren",
@@ -327,10 +328,12 @@ class OrderAutoTicketQueue {
       if (unlockSeatInfo) {
         const session_id =
           this.currentParamsList[this.currentParamsInx].session_id;
-        const { cinemaCode, cinemaLinkId, orderHeaderId } = unlockSeatInfo;
+        const { cinemaCode, cinemaId, lockOrderId, orderHeaderId } =
+          unlockSeatInfo;
         const cancelRes = await cannelOneOrder({
           cinemaCode,
-          cinemaLinkId,
+          cinemaId,
+          lockOrderId,
           orderHeaderId,
           appFlag,
           session_id
@@ -570,8 +573,8 @@ class OrderAutoTicketQueue {
     }
     // 测试专用
     if (isTestOrder) {
-      offerRule = { offer_type: "1", quan_value: "35" };
-      // offerRule = { offer_type: "2", member_price: "29.9" };
+      // offerRule = { offer_type: "1", quan_value: "35" };
+      offerRule = { offer_type: "2", member_price: "29.9" };
     }
     console.warn(conPrefix + "从该订单的报价记录获取到的报价规则", offerRule);
     if (
@@ -870,20 +873,23 @@ class OrderAutoTicketQueue {
     // otherParams主要是为了换号出票时不用再走之前流程
     let {
       cinemaLinkId,
+      cinemaId,
       cinemaCode,
+      filmId,
       filmUniqueId,
       scheduleId,
+      featureAppNo,
       scheduleKey,
       seatList,
       areaInfoList,
       targeSeatList,
       showDate,
-      showDateTime,
       orderCode,
       orderDate,
       orderHeaderId,
       lockOrderId,
       total_price,
+      seatCodes,
       ticketDetail,
       offerRule,
       targetShow
@@ -910,8 +916,9 @@ class OrderAutoTicketQueue {
           return { transferParams };
         }
         let cinemaList =
-          cityCinemaList?.find(item => item.cityName.includes(city_name))
-            ?.cinemaList || [];
+          cityCinemaList?.find(item =>
+            item.cityInfoDTO?.cityName.includes(city_name)
+          )?.cinemaResultDTOList || [];
         if (!cinemaList?.length) {
           console.error(
             conPrefix + "获取目标城市影院列表失败",
@@ -962,11 +969,11 @@ class OrderAutoTicketQueue {
           const transferParams = await this.transferOrder(item);
           return { transferParams };
         }
-        cinemaLinkId = targetCinema.cinemaLinkId;
+        cinemaId = targetCinema.cinemaId;
         cinemaCode = targetCinema.cinemaCode;
         if (cinemaCode && offerRule.offer_type != 1) {
           const usableCards = await this.getUsableCardList(
-            cinemaCode,
+            cinemaId,
             ticket_num
           );
           if (usableCards?.length) {
@@ -1010,7 +1017,7 @@ class OrderAutoTicketQueue {
         // 4、获取目标影院放映列表
         const movieDataRes = await getMoviePlayInfo({
           cinemaCode,
-          cinemaLinkId,
+          cinemaId,
           appFlag
         });
         const movie_data = movieDataRes?.movieData || [];
@@ -1056,7 +1063,7 @@ class OrderAutoTicketQueue {
               (a, b) => b.similarity - a.similarity
             );
             // 必须有4个重复字符才采用模糊匹配结果
-            if (targetFilmList[0].totalRepeated >= 4) {
+            if (targetFilmList[0]?.totalRepeated >= 4) {
               movieInfo = targetFilmList[0];
             } else {
               this.logList.push({
@@ -1074,21 +1081,20 @@ class OrderAutoTicketQueue {
           }
         }
         // 6、获取目标影片的放映日期
-        filmUniqueId = movieInfo.filmUniqueId;
-        let start_day = show_time.split(" ")[0];
-        showDate = start_day;
+        filmId = movieInfo.id;
+        showDate = show_time.split(" ")[0];
         // 7、获取某个放映日期的场次列表
         const showListRes = await getMoviePlayTime({
           cinemaCode,
-          cinemaLinkId,
-          filmUniqueId,
-          showDate: start_day,
+          cinemaId,
+          filmId,
+          featureDate: showDate,
           appFlag
         });
         const showList = showListRes?.moviePlayTime || [];
         // 解决同一时间多场次问题
         let targetShowList = showList.filter(
-          item => +new Date(item.showDateTime) == +new Date(show_time)
+          item => item.startTime == show_time
         );
         targetShow = targetShowList[0];
         if (targetShowList.length > 1) {
@@ -1126,17 +1132,17 @@ class OrderAutoTicketQueue {
               show_time
             }
           });
-          const showListRes = await getMoviePlayTime({
+          const showListRes1 = await getMoviePlayTime({
             cinemaCode,
-            cinemaLinkId,
-            filmUniqueId,
-            showDate: getPreviousDay(start_day),
+            cinemaId,
+            filmId,
+            featureDate: getPreviousDay(showDate),
             appFlag
           });
-          const showList = showListRes?.moviePlayTime || [];
+          const showList1 = showListRes1?.moviePlayTime || [];
           // 解决同一时间多场次问题
-          let targetShowList = showList.filter(
-            item => +new Date(item.showDateTime) == +new Date(show_time)
+          let targetShowList = showList1.filter(
+            item => item.startTime == show_time
           );
           targetShow = targetShowList[0];
           if (targetShowList.length > 1) {
@@ -1164,7 +1170,7 @@ class OrderAutoTicketQueue {
             });
           }
           if (!targetShow) {
-            console.warn("匹配影片放映日期失败", showList, show_time);
+            console.warn("匹配影片放映日期失败", showList1, show_time);
             this.logList.push({
               opera_time: getCurrentTime(),
               des: "匹配影片放映场次失败",
@@ -1186,21 +1192,14 @@ class OrderAutoTicketQueue {
             targetShow
           }
         });
-        showDateTime = targetShow.showDateTime;
-        console.log(
-          conPrefix + "targetShow===>",
-          targetShow,
-          showDate,
-          showDateTime
-        );
+        console.log(conPrefix + "targetShow===>", targetShow, showDate);
         // 8、获取座位布局
-        scheduleId = targetShow.scheduleId;
-        scheduleKey = targetShow.scheduleKey;
+        featureAppNo = targetShow.featureAppNo;
         const seatListRes = await getSeatLayout({
           cinemaCode,
-          cinemaLinkId,
-          scheduleId,
-          scheduleKey,
+          cinemaId,
+          filmId,
+          featureAppNo,
           appFlag
         });
         seatList = seatListRes?.seatData || [];
@@ -1224,10 +1223,9 @@ class OrderAutoTicketQueue {
         let selectSeatList = seatName.split(",");
         console.log(conPrefix + "selectSeatList", selectSeatList);
         targeSeatList = seatList.filter(item => {
-          const { yCoord, rowName, columnName } = item;
-          // let seat1 = yCoord + "排" + columnName + "号";
-          let seat2 = rowName + "排" + columnName + "号";
-          return selectSeatList.includes(seat2);
+          const { rowNum, columnNum } = item;
+          let seat2 = rowNum + "排" + columnNum + "号";
+          return selectSeatList.includes(seat2) && item.status == "N";
         });
         this.logList.push({
           opera_time: getCurrentTime(),
@@ -1238,8 +1236,8 @@ class OrderAutoTicketQueue {
           }
         });
         console.log(conPrefix + "targeSeatList", targeSeatList);
-        let seat_ids = targeSeatList.map(item => item.seatCode);
-        if (seat_ids?.length != ticket_num) {
+        seatCodes = targeSeatList.map(item => item.seatCode);
+        if (seatCodes?.length != ticket_num) {
           console.error(conPrefix + "获取目标座位失败");
           this.logList.push({
             opera_time: getCurrentTime(),
@@ -1253,15 +1251,12 @@ class OrderAutoTicketQueue {
           const transferParams = await this.transferOrder(item);
           return { transferParams };
         }
-        ticketDetail = seat_ids.map(item => ({
-          seatCode: item,
-          buyerRemark: ""
-        }));
       } else {
         // 先用上个号的token取消订单，然后再重新出票
         const cancelRes = await cannelOneOrder({
           cinemaCode,
-          cinemaLinkId,
+          cinemaId,
+          lockOrderId,
           orderHeaderId,
           appFlag,
           session_id:
@@ -1297,15 +1292,10 @@ class OrderAutoTicketQueue {
       // 4、锁定座位
       let params = {
         cinemaCode,
-        cinemaLinkId,
-        filmUniqueId,
-        scheduleId,
-        scheduleKey,
-        showDate,
-        ticketDetail,
-        showDateTime,
-        channelCode: "QD0000001",
-        sysSourceCode: "YZ001",
+        cinemaId,
+        filmId,
+        featureAppNo,
+        seatCodes,
         appFlag,
         seatList,
         lockseat,
@@ -1363,133 +1353,27 @@ class OrderAutoTicketQueue {
           });
         }
       }
-      // 锁定座位时取消订单无需传订单号（）取消完需要重新锁定座位，只用传当前影院信息如：
-      // {"channelCode":"QD0000001","sysSourceCode":"YZ001","cinemaCode":"33047701","cinemaLinkId":"15950"}
-      // await this.umeApi.getOrderTime({
-      //   params: {
-      //     keepLoading: true,
-      //     channelCode: "QD0000001",
-      //     sysSourceCode: "YZ001",
-      //     cinemaCode,
-      //     cinemaLinkId
-      //   }
-      // });
-      // 获取最优卡券组合
-      const { orderInfo, orderPriceInfo } = lockRes;
-      orderCode = orderInfo.orderCode;
-      orderHeaderId = orderInfo.orderHeaderId;
-      lockOrderId = orderInfo.lockOrderId;
-      orderDate = orderInfo.creationDate;
-      // 这个时间戳需要和创建订单提交接口传参一致
-      let timestamp = +new Date();
-      const cardQuanListRes = await getOptimalCardQuanCompose({
-        orderCode,
-        orderHeaderId,
-        lockOrderId,
+      console.warn("座位锁定结果", lockRes);
+      lockOrderId = lockRes.lockOrderId;
+      // orderDate = lockRes.autoUnlockDatetime;
+      const cardList = await this.getCardList({
         cinemaCode,
-        cinemaLinkId,
-        scheduleId,
-        scheduleKey,
-        filmUniqueId,
-        showDate,
-        ticketDetail,
-        showDateTime,
-        timestamp,
-        appFlag,
+        cinemaId,
         session_id: this.currentParamsList[this.currentParamsInx].session_id
       });
-      if (cardQuanListRes?.error) {
-        console.error(
-          conPrefix + "获取最优卡券组合失败",
-          cardQuanListRes?.error
-        );
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "获取最优卡券组合失败",
-          level: "error",
-          info: {
-            error: cardQuanListRes?.error
-          }
-        });
-        const transferParams = await this.transferOrder(item, {
-          cinemaCode,
-          cinemaLinkId,
-          orderHeaderId
-        });
-        return { offerRule, transferParams };
-      }
-      let cardList = cardQuanListRes?.cards || [];
-      cardList = JSON.parse(JSON.stringify(cardList));
-      if (cardList?.length && offerRule.offer_type != "1") {
-        // 过滤出来维护在可用卡里面里面的卡
-        if (this.usableCardList?.length) {
-          cardList = cardList.filter(item =>
-            this.usableCardList.some(itemA => itemA.card_num === item.cardNo)
-          );
-        }
-      }
-      let quanList = cardQuanListRes?.coupons || [];
-      let activities = cardQuanListRes?.activities || [];
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "获取最优卡券组合返回",
-        level: "info",
-        info: {
-          "cardList(从可用卡列表过滤后的卡:)": cardList,
-          oldCardList: cardQuanListRes?.cards,
-          quanList: quanList.slice(0, 10),
-          activities,
-          usableCardList: this.usableCardList
-        }
+      const defaultCardNo = cardList?.find(
+        item => item.defaultCard == 1
+      )?.cardNo;
+      const quanList = await this.getQuanList({
+        cinemaCode,
+        cinemaId,
+        defaultCardNo,
+        session_id: this.currentParamsList[this.currentParamsInx].session_id
       });
-      // [{
-      //    "activityId": 23,
-      //    "activityCode": "YPHD000000023",
-      //    "filmActivityType": "10",
-      //    "promotionMethod": "UNITY",
-      //    "activityName": "【华中区】周一会员日",
-      //    "amountOrSale": 610.00, // 优惠金额
-      //    "partCardType": "CHOOSE"
-      //  }]
-      let discountAmount = activities[0]?.discountAmount || 0; // 活动日优惠金额
-      console.warn("获取最优卡券组合列表返回", cardList, quanList, activities);
+      console.warn("cardList, quanList", cardList, quanList);
       // 7、使用优惠券或者会员卡
-      const {
-        ticketMemberPrice,
-        handlingFee,
-        ticketMemberServiceFeeMin,
-        areaSettlePriceMin // 区域最小结算价格
-      } = targetShow;
-      console.warn(
-        "ticketMemberPrice",
-        ticketMemberPrice,
-        handlingFee,
-        ticketMemberServiceFeeMin,
-        discountAmount
-      );
-      // 原价格（座位价格）
-      let originalAmount = targeSeatList.map(item => {
-        let areaSettlePrice = areaInfoList.find(
-          itemA => itemA.areaId === item.areaId
-        )?.areaSettlePrice;
-        return areaSettlePrice ? +areaSettlePrice + Number(handlingFee) : 0;
-      });
-      originalAmount =
-        originalAmount.reduce((acc, curr) => acc + curr, 0) / 100;
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "会员总价计算相关信息",
-        level: "info",
-        info: {
-          "originalAmount(座位价格)": originalAmount,
-          ticket_num,
-          handlingFee,
-          ticketMemberPrice,
-          areaInfoList,
-          targeSeatList
-        }
-      });
-      let activityId = activities[0]?.activityId || null; // 活动id
+      const { standardPrice, serviceAddFee } = targetShow;
+      console.warn("standardPrice", standardPrice);
       let {
         card_id = "",
         cardNum,
@@ -1502,7 +1386,7 @@ class OrderAutoTicketQueue {
         supplier_end_price,
         ticket_num,
         offerRule,
-        handlingFee, // 手续费
+        handlingFee: serviceAddFee, // 手续费
         rewards,
         appFlag,
         session_id: this.currentParamsList[this.currentParamsInx].session_id,
@@ -1535,15 +1419,14 @@ class OrderAutoTicketQueue {
             cardList,
             quanList: quanList.slice(0, 10),
             supplier_end_price,
-            ticket_num,
-            activities
+            ticket_num
           }
         });
         if (this.currentParamsInx === this.currentParamsList.length - 1) {
           const transferParams = await this.transferOrder(item, {
             cinemaCode,
-            cinemaLinkId,
-            orderHeaderId
+            cinemaId,
+            lockOrderId
           });
           return { offerRule, transferParams };
         } else {
@@ -1563,7 +1446,6 @@ class OrderAutoTicketQueue {
               scheduleId,
               scheduleKey,
               showDate,
-              showDateTime,
               ticketDetail,
               offerRule,
               targetShow,
@@ -1624,62 +1506,6 @@ class OrderAutoTicketQueue {
         total_price = originalAmount - card_discount_price;
       }
 
-      // 7、耀莱需要获取观影人列表添加观影人
-      if (appFlag === "yaolai") {
-        const moviegoersListRes = await findStoreMemberMoviegoersByMemberId({
-          cinemaCode,
-          cinemaLinkId,
-          appFlag,
-          session_id: this.currentParamsList[this.currentParamsInx].session_id
-        });
-        if (moviegoersListRes?.error) {
-          console.error(
-            conPrefix + "获取观影人列表失败",
-            moviegoersListRes?.error
-          );
-          this.logList.push({
-            opera_time: getCurrentTime(),
-            des: "获取观影人列表失败",
-            level: "error",
-            info: {
-              error: moviegoersListRes?.error
-            }
-          });
-          const transferParams = await this.transferOrder(item, {
-            cinemaCode,
-            cinemaLinkId,
-            orderHeaderId
-          });
-          return { offerRule, transferParams };
-        }
-        const moviegoersList = moviegoersListRes.moviegoersList;
-        const orderMoviegoers = [moviegoersList[0]];
-        const addMoviegoersRes = await updateStoreOrderMoviegoers({
-          cinemaCode,
-          cinemaLinkId,
-          orderHeaderId,
-          orderMoviegoers,
-          appFlag,
-          session_id: this.currentParamsList[this.currentParamsInx].session_id
-        });
-        if (addMoviegoersRes?.error) {
-          console.error(conPrefix + "添加观影人失败", addMoviegoersRes?.error);
-          this.logList.push({
-            opera_time: getCurrentTime(),
-            des: "添加观影人失败",
-            level: "error",
-            info: {
-              error: addMoviegoersRes?.error
-            }
-          });
-          const transferParams = await this.transferOrder(item, {
-            cinemaCode,
-            cinemaLinkId,
-            orderHeaderId
-          });
-          return { offerRule, transferParams };
-        }
-      }
       // 7、创建订单
       const createOrderRes = await this.createOrder({
         cinemaCode,
@@ -1746,8 +1572,8 @@ class OrderAutoTicketQueue {
         );
         const transferParams = await this.transferOrder(item, {
           cinemaCode,
-          cinemaLinkId,
-          orderHeaderId
+          cinemaId,
+          lockOrderId
         });
         return { offerRule, transferParams };
       }
@@ -1928,7 +1754,7 @@ class OrderAutoTicketQueue {
         offerRule
       };
     } catch (error) {
-      console.error(conPrefix + "一键买票异常", error);
+      console.error(conPrefix + "一键买票异常", error, this.logList);
       this.logList.push({
         opera_time: getCurrentTime(),
         des: "一键买票异常",
@@ -1953,7 +1779,76 @@ class OrderAutoTicketQueue {
       return { offerRule };
     }
   }
-
+  // 获取会员卡列表
+  async getCardList({ cinemaCode, cinemaId, session_id }) {
+    const params = {
+      cinemaCode,
+      cinemaId,
+      session_id
+    };
+    try {
+      const res = await this.umeApi.getCardList(params);
+      const cardList = res.data || [];
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "获取会员卡列表入参及返回",
+        level: "info",
+        info: {
+          params,
+          res
+        }
+      });
+      return cardList;
+    } catch (error) {
+      console.warn("获取会员卡列表失败", error);
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "获取会员卡列表失败",
+        level: "error",
+        info: {
+          params,
+          error
+        }
+      });
+      return [];
+    }
+  }
+  // 获取优惠券列表
+  async getQuanList({ cinemaCode, cinemaId, defaultCardNo, session_id }) {
+    const params = {
+      cinemaCode,
+      cinemaId,
+      defaultCardNo,
+      couponStatus: 1,
+      session_id
+    };
+    try {
+      const res = await this.umeApi.getQuanList(params);
+      const quanList = res.data || [];
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "获取优惠券列表入参及返回",
+        level: "info",
+        info: {
+          params,
+          res
+        }
+      });
+      return quanList;
+    } catch (error) {
+      console.warn("获取优惠券列表失败", error);
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "获取优惠券列表失败",
+        level: "error",
+        info: {
+          params,
+          error
+        }
+      });
+      return [];
+    }
+  }
   // 查询最近用券记录返回
   async queryUsedQuanList({ quan_value, app_name }) {
     const params = {
@@ -1994,14 +1889,11 @@ class OrderAutoTicketQueue {
   // 锁定座位
   async lockSeatHandle(data, inx = 1) {
     const {
-      scheduleId,
-      scheduleKey,
-      filmUniqueId,
-      showDate,
-      ticketDetail,
-      showDateTime,
       cinemaCode,
-      cinemaLinkId,
+      cinemaId,
+      filmId,
+      featureAppNo,
+      seatCodes,
       appFlag,
       seatList,
       lockseat,
@@ -2012,19 +1904,13 @@ class OrderAutoTicketQueue {
     const { conPrefix } = this;
     const session_id = this.currentParamsList[this.currentParamsInx].session_id;
     let params = {
-      params: {
-        orderType: "ticket_order",
-        scheduleId,
-        scheduleKey,
-        filmUniqueId,
-        showDate,
-        ticketDetail,
-        showDateTime,
-        channelCode: "QD0000001",
-        sysSourceCode: "YZ001",
-        cinemaCode,
-        cinemaLinkId
-      },
+      cinemaId,
+      cinemaCode,
+      unifiedCode: cinemaCode,
+      filmId,
+      featureAppNo,
+      seatCodes,
+      seatInfos: seatCodes,
       session_id
     };
     try {
@@ -2032,9 +1918,9 @@ class OrderAutoTicketQueue {
       if (inx % 2 === 1) {
         await getSeatLayout({
           cinemaCode,
-          cinemaLinkId,
-          scheduleId,
-          scheduleKey,
+          cinemaId,
+          filmId,
+          featureAppNo,
           appFlag,
           session_id
         });
@@ -2072,9 +1958,9 @@ class OrderAutoTicketQueue {
       ) {
         const seatListRes = await getSeatLayout({
           cinemaCode,
-          cinemaLinkId,
-          scheduleId,
-          scheduleKey,
+          cinemaId,
+          filmId,
+          featureAppNo,
           appFlag,
           session_id
         });
@@ -3185,7 +3071,7 @@ class OrderAutoTicketQueue {
   }
 
   // 获取影院指定会员卡
-  async getUsableCardList(cinemaCode, ticket_num) {
+  async getUsableCardList(cinemaId, ticket_num) {
     const { appFlag } = this;
     try {
       const res = await svApi.queryCardList({
@@ -3256,7 +3142,7 @@ class OrderAutoTicketQueue {
       let useCanCardList = cardListLimit.filter(item => {
         return !item.linkCinemaIds
           ? true
-          : item.linkCinemaIds.split(",").some(itemA => itemA == cinemaCode);
+          : item.linkCinemaIds.split(",").some(itemA => itemA == cinemaId);
       });
       this.logList.push({
         opera_time: getCurrentTime(),
@@ -3492,17 +3378,10 @@ const createTicketQueue = appFlag => new OrderAutoTicketQueue(appFlag);
 const getCityCinemaList = async ({ appFlag }) => {
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
   try {
-    let params = {
-      params: {
-        channelCode: "QD0000001",
-        sysSourceCode: "YZ001",
-        cinemaCode: "32012801",
-        cinemaLinkId: "15946"
-      }
-    };
-    console.log(conPrefix + "获取城市影院列表参数", params);
+    let params = {};
+    console.log("获取城市影院列表参数", params);
     const res = await APP_API_OBJ[appFlag].getCinemaList(params);
-    console.log(conPrefix + "获取城市影院列表返回", res);
+    console.log("获取城市影院列表返回", res);
     let cityCinemaList = res.data || [];
     return {
       cityCinemaList
@@ -3516,28 +3395,21 @@ const getCityCinemaList = async ({ appFlag }) => {
 };
 
 // 获取电影放映列表
-const getMoviePlayInfo = async ({ cinemaCode, cinemaLinkId, appFlag }) => {
+const getMoviePlayInfo = async ({ cinemaCode, cinemaId, appFlag }) => {
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
   try {
     let params = {
-      params: {
-        channelCode: "QD0000001",
-        sysSourceCode: "YZ001",
-        cinemaCode,
-        cinemaLinkId
-      }
+      cinemaCode,
+      cinemaId,
+      unifiedCode: cinemaCode,
+      pageNo: 1,
+      pageSize: 1000,
+      platForm: 5
     };
-    console.log(conPrefix + "获取影院放映列表参数", params);
-    const res = await APP_API_OBJ[appFlag].getMoviePlayInfo(params);
-    console.log(conPrefix + "获取影院放映列表返回", res);
-    // 只获取出售中的列表，即将上映暂不返回
-    let movieData =
-      res.data
-        ?.map(item => item.fimlList)
-        .flat()
-        .filter(item =>
-          ["SHOWING", "SOON_SHOW_TICKET"].includes(item.showStatus)
-        ) || [];
+    console.log("获取电影放映信息参数", params);
+    let res = await APP_API_OBJ[appFlag].getMoviePlayInfo(params);
+    console.log("获取电影放映信息返回", res);
+    let movieData = res.data?.items || [];
     return {
       movieData
     };
@@ -3549,64 +3421,28 @@ const getMoviePlayInfo = async ({ cinemaCode, cinemaLinkId, appFlag }) => {
   }
 };
 
-// 获取电影放映日期
-const getMoviePlayDate = async ({
-  cinemaCode,
-  cinemaLinkId,
-  filmUniqueId,
-  appFlag
-}) => {
-  let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
-  try {
-    let params = {
-      params: {
-        cinemaCode: cinemaCode,
-        filmUniqueId: filmUniqueId,
-        keepLoading: true,
-        channelCode: "QD0000001",
-        sysSourceCode: "YZ001",
-        cinemaLinkId: cinemaLinkId
-      }
-    };
-    console.log(conPrefix + "获取电影放映日期参数", params);
-    const res = await APP_API_OBJ[appFlag].getMoviePlayDate(params);
-    console.log(conPrefix + "获取电影放映日期返回", res);
-    return {
-      moviePlayData: res.data || []
-    };
-  } catch (error) {
-    console.error(conPrefix + "获取电影放映日期异常", error);
-    return {
-      error
-    };
-  }
-};
-
 // 获取电影放映场次
 const getMoviePlayTime = async ({
   cinemaCode,
-  cinemaLinkId,
-  filmUniqueId,
-  showDate,
+  cinemaId,
+  filmId,
+  featureDate,
   appFlag
 }) => {
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
   try {
     let params = {
-      params: {
-        cinemaCode: cinemaCode,
-        filmUniqueId: filmUniqueId,
-        showDate: showDate,
-        channelCode: "QD0000001",
-        sysSourceCode: "YZ001",
-        cinemaLinkId: cinemaLinkId
-      }
+      cinemaCode,
+      cinemaId,
+      filmId,
+      featureDate,
+      updateNode: "date"
     };
     console.log(conPrefix + "获取电影放映场次参数", params);
     const res = await APP_API_OBJ[appFlag].getMoviePlayTime(params);
     console.log(conPrefix + "获取电影放映场次返回", res);
     return {
-      moviePlayTime: res.data || []
+      moviePlayTime: res.data?.planList || []
     };
   } catch (error) {
     console.error(conPrefix + "获取电影放映信息异常", error);
@@ -3618,31 +3454,27 @@ const getMoviePlayTime = async ({
 
 // 获取座位布局
 const getSeatLayout = async ({
+  cinemaId,
+  filmId,
   cinemaCode,
-  cinemaLinkId,
-  scheduleId,
-  scheduleKey,
+  featureAppNo,
   appFlag,
   session_id
 }) => {
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
   try {
     let params = {
-      params: {
-        cinemaCode,
-        cinemaLinkId,
-        scheduleId,
-        scheduleKey,
-        channelCode: "QD0000001",
-        sysSourceCode: "YZ001"
-      },
+      cinemaId,
+      filmId,
+      cinemaCode,
+      featureAppNo,
       ...(session_id && { session_id })
     };
     console.log(conPrefix + "获取座位布局参数", params);
     const res = await APP_API_OBJ[appFlag].getMoviePlaySeat(params);
     console.log(conPrefix + "获取座位布局返回", res);
-    let seatData = res.data?.seatList || [];
-    let areaInfoList = res.data?.areaInfoList || [];
+    let seatData = res.data?.planSiteState || [];
+    let areaInfoList = [];
     return {
       seatData,
       areaInfoList
@@ -3666,7 +3498,6 @@ const getOptimalCardQuanCompose = async ({
   filmUniqueId,
   showDate,
   ticketDetail,
-  showDateTime,
   lockOrderId,
   timestamp,
   appFlag,
@@ -3689,7 +3520,6 @@ const getOptimalCardQuanCompose = async ({
         filmUniqueId,
         showDate,
         ticketDetail,
-        showDateTime,
         channelCode: "QD0000001",
         lockFlag: lockOrderId
       },
@@ -3711,78 +3541,11 @@ const getOptimalCardQuanCompose = async ({
   }
 };
 
-// 获取观影人列表
-const findStoreMemberMoviegoersByMemberId = async ({
-  cinemaCode,
-  cinemaLinkId,
-  appFlag,
-  session_id
-}) => {
-  let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
-  try {
-    let params = {
-      params: {
-        channelCode: "QD0000001",
-        sysSourceCode: "YZ001",
-        cinemaCode,
-        cinemaLinkId
-      },
-      session_id
-    };
-    console.log(conPrefix + "获取观影人列表参数", params);
-    const res =
-      await APP_API_OBJ[appFlag].findStoreMemberMoviegoersByMemberId(params);
-    console.log(conPrefix + "获取观影人列表返回", res);
-    let moviegoersList = res.data || [];
-    return {
-      moviegoersList
-    };
-  } catch (error) {
-    console.error(conPrefix + "获取观影人列表异常", error);
-    return {
-      error
-    };
-  }
-};
-
-// 添加观影人
-const updateStoreOrderMoviegoers = async ({
-  cinemaCode,
-  cinemaLinkId,
-  orderHeaderId,
-  orderMoviegoers,
-  appFlag,
-  session_id
-}) => {
-  let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
-  try {
-    let params = {
-      params: {
-        orderHeaderId,
-        orderMoviegoers,
-        keepLoading: true,
-        channelCode: "QD0000001",
-        sysSourceCode: "YZ001",
-        cinemaCode,
-        cinemaLinkId
-      },
-      session_id
-    };
-    console.log(conPrefix + "添加观影人参数", params);
-    const res = await APP_API_OBJ[appFlag].updateStoreOrderMoviegoers(params);
-    console.log(conPrefix + "添加观影人返回", res);
-  } catch (error) {
-    console.error(conPrefix + "添加观影人异常", error);
-    return {
-      error
-    };
-  }
-};
-
 // 取消订单
 const cannelOneOrder = async ({
   cinemaCode,
-  cinemaLinkId,
+  cinemaId,
+  lockOrderId,
   orderHeaderId,
   appFlag,
   session_id
@@ -3790,17 +3553,17 @@ const cannelOneOrder = async ({
   let conPrefix = TICKET_CONPREFIX_OBJ[appFlag];
   try {
     let params = {
-      params: {
-        channelCode: "QD0000001",
-        sysSourceCode: "YZ001",
-        orderHeaderId,
-        cinemaCode,
-        cinemaLinkId
-      },
+      cinemaCode,
+      cinemaId,
+      lockOrderId,
+      orderHeaderId,
       ...(session_id && { session_id })
     };
     console.log(conPrefix + "取消订单参数", params);
-    const res = await APP_API_OBJ[appFlag].cannelOneOrder(params);
+    const res =
+      await APP_API_OBJ[appFlag][orderHeaderId ? "cancelOrder" : "releaseSeat"](
+        params
+      );
     console.log(conPrefix + "取消订单返回", res);
     return {
       cancelRes: res

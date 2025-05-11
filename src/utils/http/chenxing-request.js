@@ -19,7 +19,7 @@ const paramsHandle = (params, app_name) => {
     item => item.app_name === app_name && item.mobile && item.session_id
   );
   let token = targetLoginList?.[0]?.session_id || "";
-  console.log("targetLoginList", targetLoginList);
+  // console.log("targetLoginList", targetLoginList);
   let config = {
     k: params?.session_id || token, // 登录接口返回token
     t: 5,

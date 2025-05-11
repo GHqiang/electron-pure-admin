@@ -87,6 +87,9 @@ const createApi = ({ app_name }) => {
   const cancelOrder = params =>
     axios.post("/selfSupport/trade/front/orders/cancelOrder", params);
 
+  // 释放座位
+  const releaseSeat = params =>
+    axios.post("/selfSupport/trade/front/advanceOrder/releaseSeat", params);
   // 绑定优惠券
   const bandQuan = params =>
     axios.post(
@@ -113,6 +116,7 @@ const createApi = ({ app_name }) => {
     createOrder,
     payOrder,
     cancelOrder,
+    releaseSeat,
     getOrderList,
     queryOrderDetail,
     buyTicket,
