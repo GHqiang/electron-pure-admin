@@ -586,7 +586,7 @@ const sendWxPusherMessage = async ({
   const url = "https://wxpusher.zjiecode.com/api/manager/message/send";
   const headers = {
     "content-type": "application/json;charset=UTF-8",
-    token: "76f88ede45c09566c3144b61a4b13f80"
+    token: "06e3656983338d5d3b333ab2cfbd54d0"
     // 需注意一旦token过期就会不发消息，需要重新扫码登录然后发个消息拿network里的token
   };
   let userInfo = window.localStorage.getItem("userInfo");
