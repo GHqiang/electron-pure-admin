@@ -221,6 +221,9 @@ const WX_MSG_UID = {
   21: "UID_r5wopdceRTbC56iJ3WcIQMvqUCM2" // coco
 };
 
+// 外部角色列表
+const OUT_RULE_LIST = [3, 6, 5];
+
 // sfc上影影院名称(小程序名称)
 const SFC_CINEMA_NAME = [
   "SFC上影影城（黄山店）",
@@ -440,6 +443,7 @@ export {
   GROUP_LIST,
   TICKET_CONPREFIX_OBJ,
   WX_MSG_UID,
+  OUT_RULE_LIST,
   SFC_CINEMA_NAME,
   YAOLAI_CINEMA_NAME,
   UME_CINEMA_NAME,

@@ -213,7 +213,9 @@ function initRouter(rule: any) {
     return new Promise(resolve => {
       getAsyncRoutes().then(({ data }) => {
         console.log("data0", data);
-        if (![3, 6].includes(rule)) {
+        // 外部角色列表
+        const OUT_RULE_LIST = [3, 6, 5];
+        if (!OUT_RULE_LIST.includes(rule)) {
           data?.[0]?.children.push(
             ...[
               {
