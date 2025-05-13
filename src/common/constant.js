@@ -217,7 +217,8 @@ const WX_MSG_UID = {
   10: "UID_NnfJzb7r8pPyfhuq89OOrzr216Ba", // 兜儿
   11: "UID_aN8haBm8iKK2rlufRiBqNVL0pCen", // 婷婷
   15: "UID_Wp4B8hCtrhCmHtM1S6MlgCWJlz7O", // 婷婷小号
-  20: "UID_XBUYeeRmX0Y9DzPp3pFp1rxP4mzN" // 令狐冲
+  20: "UID_XBUYeeRmX0Y9DzPp3pFp1rxP4mzN", // 令狐冲
+  21: "UID_r5wopdceRTbC56iJ3WcIQMvqUCM2" // coco
 };
 
 // sfc上影影院名称(小程序名称)
