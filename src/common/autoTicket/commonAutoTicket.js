@@ -1,3 +1,4 @@
+// 统一出票队列（适配所有）
 import {
   getCurrentTime,
   formatErrInfo, // 格式化错误信息
@@ -13,10 +14,9 @@ const {
 
 import { GET_APP_TYPE_LIST } from "@/common/constant";
 // 统一日志类
-import Logger from "@/common/autoTicket/ticket/logger";
-// 购票核心模块
-import BuyTicket from "@/common/autoTicket/ticket/buyTicket";
-
+import Logger from "@/common/logger";
+// 统一购票模块
+import StrategyFactory from "@/common/autoTicket/buyTicket/index";
 //是否是测试订单
 let isTestOrder = true;
 
@@ -51,24 +51,28 @@ class OrderAutoTicketQueue {
     isTestOrder = true;
     this.start();
     let newOrder = order || {
-      id: 7177,
-      plat_name: "lieren",
-      app_name: "ume",
-      ticket_num: 1,
-      rewards: "0",
-      order_number: "2024081810003958318",
-      supplier_end_price: 32.5,
-      order_id: "7195870",
-      tpp_price: "49.90",
+      plat_name: "mayi",
+      id: "12412221440316515",
+      tpp_price: 42,
+      supplier_max_price: 39,
       city_name: "杭州",
-      cinema_addr:
-        "西湖区古墩路1009号龙湖紫荆天街5楼（晚10点后观影请从紫荆花北路停车场入口对面商场3号门进入）",
-      cinema_name: "UME影城(紫荆天街店)",
-      hall_name: "5号激光厅--部分按摩椅",
-      film_name: "名侦探柯南：百万美元的五棱星",
-      lockseat: "7排1座",
-      show_time: "2024-08-18 15:10:00",
-      cinema_group: "ume二线"
+      cinema_addr: "雨花台区软件大道109号雨花客厅E-PARK北区3层",
+      ticket_num: 1,
+      cinema_name: "中影嘉华国际影城（拱墅全景声巨幕店）",
+      hall_name: "6号激光厅",
+      film_name: "人生开门红",
+      film_img:
+        "https://gw.alicdn.com/tfscom/i4/O1CN01e8PcvF1NESAgdEsnM_!!6000000001538-0-alipicbeacon.jpg_120x120.jpg",
+      show_time: "2025-05-15 17:10:00",
+      rewards: 0,
+      is_urgent: false,
+      cinema_group: "",
+      cinema_code: 33018961,
+      order_number: "12412221440316515",
+      offer_end_time: 1734849690000,
+      app_name: "jiashanghui",
+      appName: "jiashanghui",
+      lockseat: "1排10座"
     };
 
     // 动态生成事件名称
@@ -169,7 +173,11 @@ class OrderAutoTicketQueue {
       // await mockDelay(delayTime);
       this.logger.info(`订单处理 ${order.id}`);
       if (this.isRunning) {
-        const buyTicket = new BuyTicket(order, this.logger, this.isTestOrder);
+        const buyTicket = StrategyFactory.createSeatStrategy(
+          order,
+          this.logger,
+          isTestOrder
+        );
         const res = await buyTicket.singleTicket();
         // result: { profit, submitRes, transferParams, qrcode, quan_code, card_id, cardNum, quanType, offerRule, mobile }
         return res;
@@ -283,6 +291,6 @@ class OrderAutoTicketQueue {
     }
   }
 }
-// 生成出票队列实例
-const createTicketQueue = appFlag => new OrderAutoTicketQueue(appFlag);
-export default createTicketQueue;
+// // 生成出票队列实例
+// const createTicketQueue = appFlag => new OrderAutoTicketQueue(appFlag);
+export default OrderAutoTicketQueue;
