@@ -1,224 +1,22 @@
 // 统一座位管理
-import { APP_API_OBJ, PLAT_API_OBJ } from "@/common/index";
+import { APP_API_OBJ } from "@/common/index";
 // 订单管理模块
 import {
   formatErrInfo, // 格式化错误信息
-  trial, // 重试方法
-  sendWxPusherMessage
+  trial // 重试方法
 } from "@/utils/utils";
 export default class SeatManage {
-  constructor(order, logger, isTestOrder) {
+  constructor(order, logger) {
     this.order = order;
     this.appFlag = order.app_name;
     this.logger = logger; // 日志模块
   }
 
-  // 平台解锁座位
-  async unlockSeatByPlat() {
-    const { plat_name, id, bid, order_number, supplierCode } = order;
-    let unlockRes;
-    try {
-      // 1、解锁座位
-      if (plat_name === "lieren") {
-        unlockRes = await this.unlockSeat({ plat_name, order_id: id, inx: 1 });
-      } else if (plat_name === "sheng") {
-        const deliverRes = await startDeliver({
-          plat_name,
-          order_number,
-          supplierCode
-        });
-        this.logger.infoSave("确认接单返回", { deliverRes });
-        await mockDelay(2);
-        unlockRes = await this.unlockSeat({
-          plat_name,
-          order_number,
-          supplierCode,
-          inx: 1
-        });
-      } else if (plat_name === "mangguo") {
-        unlockRes = await this.unlockSeat({ plat_name, order_id: id, inx: 1 });
-      } else if (plat_name === "mayi") {
-        unlockRes = await this.unlockSeat({ plat_name, order_id: id, inx: 1 });
-      } else if (plat_name === "yangcong") {
-        unlockRes = await this.unlockSeat({ plat_name, order_id: id, inx: 1 });
-      } else if (plat_name === "haha") {
-        const deliverRes = await startDeliver({ plat_name, bid });
-        this.logger.infoSave("确认接单返回", { deliverRes });
-        await mockDelay(2);
-        unlockRes = await this.unlockSeat({
-          plat_name,
-          order_id: id,
-          inx: 1
-        });
-      } else if (plat_name === "yinghuasuan") {
-        unlockRes = await this.unlockSeat({
-          plat_name,
-          order_number,
-          inx: 1
-        });
-      }
-      this.logger.infoSave("订单首次解锁座位完成");
-      return unlockRes;
-    } catch (error) {
-      this.logger.error("解锁座位失败准备试错", error);
-      // 试错3次，间隔3秒
-      let params = {
-        order_id: id,
-        order_number,
-        supplierCode,
-        plat_name
-      };
-      let delayConfig = {
-        lieren: [3, 3],
-        mangguo: [3, 3],
-        sheng: [3, 3],
-        mayi: [60, 1],
-        yangcong: [3, 3],
-        haha: [3, 3],
-        yinghuasuan: [3, 3]
-      };
-      unlockRes = await trial(
-        inx => this.unlockSeat({ ...params, inx }),
-        delayConfig[plat_name][0],
-        delayConfig[plat_name][1]
-      );
-      if (unlockRes) {
-        this.logger.infoSave("订单首次解锁失败,试错后解锁成功");
-      }
-      return unlockRes;
-    }
-  }
-
-  // 平台确认接单
-  async startDeliver({ order_number, supplierCode, plat_name, bid, quote_id }) {
-    try {
-      let params;
-      if (plat_name === "sheng") {
-        params = {
-          orderCode: order_number,
-          supplierCode
-        };
-      } else if (plat_name === "haha") {
-        params = {
-          bid
-        };
-      } else if (plat_name === "yinghuasuan") {
-        params = {
-          quote_id
-        };
-      }
-      this.logger.info("确认接单参数", params);
-      const res = await PLAT_API_OBJ[plat_name].confirmOrder(params);
-      this.logger.info("确认接单返回", res);
-      return res;
-    } catch (error) {
-      this.logger.warn("确认接单异常", error);
-    }
-  }
-
-  // 解锁座位-平台
-  async unlockSeat({
-    plat_name,
-    order_id,
-    inx = 1,
-    order_number: orderCode,
-    supplierCode
-  }) {
-    try {
-      let params;
-      if (plat_name === "lieren") {
-        params = {
-          order_id
-        };
-      } else if (plat_name === "sheng") {
-        params = {
-          orderCode,
-          supplierCode
-        };
-      } else if (plat_name === "mangguo") {
-        params = {
-          order_id
-        };
-      } else if (plat_name === "mayi") {
-        params = {
-          tradeno: order_id
-        };
-      } else if (plat_name === "yangcong") {
-        params = {
-          tradeno: order_id
-        };
-      } else if (plat_name === "haha") {
-        params = {
-          id: order_id
-        };
-      } else if (plat_name === "yinghuasuan") {
-        params = {
-          order_sn: orderCode
-        };
-      }
-      this.logger.info("解锁座位入参", params);
-      const res = await PLAT_API_OBJ[plat_name].unlockSeat(params);
-      this.logger.infoSave(`第${inx}次解锁座位成功`, res);
-      return res;
-    } catch (error) {
-      // 芒果偶尔会这样
-      if ((error?.msg || error?.message || "").includes("已经解锁")) {
-        this.logger.infoSave(`第${inx}次解锁座位发现已解锁`, error);
-        return;
-      }
-      // 芒果座位会未锁从而无需解锁
-      if (
-        (error?.msg || error?.message || "").includes(
-          "该座位未锁座成功，故无法解锁"
-        )
-      ) {
-        this.logger.infoSave(`第${inx}次解锁座位发现座位无需解锁`, error);
-        return;
-      }
-      // 哈哈偶尔会这样
-      if (error?.msg === "当前订单座位没有被锁") {
-        this.logger.infoSave(`第${inx}次解锁座位发现座位没有被锁`, error);
-        return;
-      }
-      this.logger.errorSave(`第${inx}次解锁座位失败`, error);
-      return Promise.reject(error);
-    }
-  }
-
-  // 影院释放座位
-  async releaseSeatByApp() {
-    // sfc-先获取座位布局，然后锁定一个其它座位来进行释放；其它直接跳座位释放方法
-  }
-
-  // 获取座位布局
-  async getSeatLayout(params) {
-    const { appFlag } = this;
-    try {
-      this.logger.info("获取座位布局参数", params);
-      const res = await APP_API_OBJ[appFlag].getMoviePlaySeat(params);
-      this.logger.info("获取座位布局返回", res);
-      let seatData = res.data?.planSiteState || []; // 座位列表
-      let areaInfoList = []; // 座位分区列表
-      if (!seatData?.length) {
-        this.logger.errorSave("获取座位布局为空");
-      }
-      return {
-        seatData,
-        areaInfoList
-      };
-    } catch (error) {
-      this.logger.errorSave("获取座位布局异常", formatErrInfo(error));
-    }
-  }
-
-  // 获取目标座位
+  // 获取目标座位(主要暴漏方法)
   async getTargetSeat(buyTicketInfo) {
     const { lockseat, ticket_num } = this.order;
-    const { appFlag } = this;
     try {
-      let params;
-      // 辰星入参
-      params = {
+      let params = {
         cinemaCode: buyTicketInfo.cinemaCode,
         cinemaId: buyTicketInfo.cinemaId,
         filmId: buyTicketInfo.filmId,
@@ -249,6 +47,32 @@ export default class SeatManage {
       return seatCodes;
     } catch (error) {
       this.logger.errorSave("获取目标座位异常", formatErrInfo(error));
+    }
+  }
+
+  // 影院释放座位
+  async releaseSeatByApp() {
+    // sfc-先获取座位布局，然后锁定一个其它座位来进行释放；其它直接跳座位释放方法
+  }
+
+  // 获取座位布局
+  async getSeatLayout(params) {
+    const { appFlag } = this;
+    try {
+      this.logger.info("获取座位布局参数", params);
+      const res = await APP_API_OBJ[appFlag].getMoviePlaySeat(params);
+      this.logger.info("获取座位布局返回", res);
+      let seatData = res.data?.planSiteState || []; // 座位列表
+      let areaInfoList = []; // 座位分区列表
+      if (!seatData?.length) {
+        this.logger.errorSave("获取座位布局为空");
+      }
+      return {
+        seatData,
+        areaInfoList
+      };
+    } catch (error) {
+      this.logger.errorSave("获取座位布局异常", formatErrInfo(error));
     }
   }
 

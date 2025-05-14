@@ -1,29 +1,21 @@
 import {
-  getCurrentTime,
-  formatTimeOfTime,
   convertFullwidthToHalfwidth,
   getTargetCinema,
-  mockDelay, // 模拟延时
-  logUpload, // 日志上传
-  trial, // 试错重试
   formatErrInfo, // 格式化错误信息
   getCinemaLoginInfoList,
-  sendWxPusherMessage,
-  getOfferRuleById,
   getCurrentDay,
   isDateInCurrentMonth,
   getPreviousDay,
-  findMostRepeatedChars,
-  couponInfoSpecial
+  findMostRepeatedChars
 } from "@/utils/utils";
-import { APP_API_OBJ, PLAT_API_OBJ } from "@/common/index";
+import { APP_API_OBJ } from "@/common/index";
 // 机器登录用户信息
 import { platTokens } from "@/store/platTokens";
 const {
   userInfo: { rule, user_id, phone }
 } = platTokens();
-export default class CinemaInfo {
-  constructor(order, logger, isTestOrder, offerRule, currentParamsList) {
+export default class CinemaManage {
+  constructor(order, logger, offerRule, currentParamsList) {
     this.order = order;
     this.appFlag = order.app_name;
     this.offerRule = offerRule;
@@ -55,6 +47,7 @@ export default class CinemaInfo {
       let targetCinema = cinemaList.find(
         item => item.cinemaCode === cinema_code
       );
+      // 优先影院code匹配
       if (!targetCinema) {
         targetCinema = getTargetCinema(
           cinema_name,
@@ -75,6 +68,7 @@ export default class CinemaInfo {
       cinemaInfo.cinemaCode = targetCinema.cinemaCode; // 赋值影院code
       // 4、拿到影院code进行影院指定卡相关处理(获取可用卡列表，根据可用卡调整登录信息顺序)
       await this.cinemaLinkCardHandle(cinemaInfo);
+      cinemaInfo.currentParamsList = this.currentParamsList;
       // 5、获取目标影院放映列表
       const movie_data = await this.getMoviePlayInfo(cinemaInfo);
       if (!movie_data?.length) {
@@ -91,13 +85,9 @@ export default class CinemaInfo {
         if (!movieInfo) {
           this.logger.warn("获取目标影片信息失败", { movie_data, film_name });
           let targetFilmList = movie_data.map(item => {
-            const repeatedCharsResult = findMostRepeatedChars(
-              item.filmName,
-              film_name
-            );
             return {
               ...item,
-              ...repeatedCharsResult
+              ...findMostRepeatedChars(item.filmName, film_name)
             };
           });
           targetFilmList = targetFilmList.sort(
@@ -118,67 +108,9 @@ export default class CinemaInfo {
       // 7、获取影片放映场次
       cinemaInfo.filmId = movieInfo.id;
       cinemaInfo.showDate = show_time.split(" ")[0];
-      // 获取某个放映日期的场次列表
-      const showList = await this.getMoviePlayTime(cinemaInfo);
-      // 解决同一时间多场次问题
-      let targetShowList = showList.filter(item => item.startTime == show_time);
-      let targetShow = targetShowList[0];
-      if (targetShowList.length > 1) {
-        targetShowList = targetShowList.map(item => {
-          const repeatedCharsResult = findMostRepeatedChars(
-            item.hallName,
-            hall_name
-          );
-          return {
-            ...item,
-            ...repeatedCharsResult
-          };
-        });
-        targetShowList = targetShowList.sort(
-          (a, b) => b.similarity - a.similarity
-        );
-        targetShow = targetShowList[0];
-        this.logger.infoSave("同一时间多场次0", { targetShowList });
-      }
+      const targetShow = await this.getTargetShow(cinemaInfo);
       if (!targetShow) {
-        this.logger.warn("匹配影片放映场次失败", { showList, show_time });
-        this.logger.infoSave("匹配影片放映场次失败,准备获取次日放映场次列表", {
-          showList,
-          show_time
-        });
-
-        const showList1 = await getMoviePlayTime({
-          ...cinemaInfo,
-          showDate: getPreviousDay(cinemaInfo.showDate)
-        });
-        // 解决同一时间多场次问题
-        let targetShowList = showList1.filter(
-          item => item.startTime == show_time
-        );
-        targetShow = targetShowList[0];
-        if (targetShowList.length > 1) {
-          targetShowList = targetShowList.map(item => {
-            const repeatedCharsResult = findMostRepeatedChars(
-              item.hallName,
-              hall_name
-            );
-            return {
-              ...item,
-              ...repeatedCharsResult
-            };
-          });
-          targetShowList = targetShowList.sort(
-            (a, b) => b.similarity - a.similarity
-          );
-          targetShow = targetShowList[0];
-          this.logger.infoSave("同一时间多场次1", { targetShowList });
-        }
-        if (!targetShow) {
-          return this.logger.errorSave("匹配影片放映场次失败", {
-            showList1,
-            show_time
-          });
-        }
+        return;
       }
       this.logger.infoSave("出票前获取电影放映信息", { targetShow });
       cinemaInfo.targetShow = targetShow;
@@ -372,5 +304,57 @@ export default class CinemaInfo {
     }
   }
 
-  
+  // 获取目标场次
+  async getTargetShow(cinemaInfo, retryNextDay = true) {
+    try {
+      const showList = await this.getMoviePlayTime(cinemaInfo);
+      const targetShow = this._findTargetShow(showList);
+
+      if (targetShow) {
+        this.logger.infoSave("场次匹配成功", { targetShow });
+        return targetShow;
+      }
+
+      if (retryNextDay) {
+        this.logger.warn("当日场次未匹配，尝试次日场次", { cinemaInfo });
+        return this.getTargetShow(
+          {
+            ...cinemaInfo,
+            showDate: getPreviousDay(cinemaInfo.showDate)
+          },
+          false
+        );
+      }
+      this.logger.errorSave("未找到匹配场次", { cinemaInfo, showList });
+    } catch (error) {
+      this.logger.errorSave("场次匹配异常", formatErrInfo(error));
+    }
+  }
+
+  // 匹配目标场次
+  _findTargetShow(showList) {
+    const { hall_name, show_time } = this.order;
+
+    const MIN_SIMILARITY_THRESHOLD = 3;
+    let targetShowList = showList.filter(item => item.startTime === show_time);
+
+    if (targetShowList.length === 0) return;
+    if (targetShowList.length === 1) return targetShowList[0];
+
+    // 多场次按厅名相似度排序
+    targetShowList = targetShowList.map(item => ({
+      ...item,
+      ...findMostRepeatedChars(item.hallName, hall_name)
+    }));
+
+    targetShowList.sort((a, b) => (b.similarity || 0) - (a.similarity || 0));
+
+    this.logger.infoSave("多场次匹配结果", {
+      bestMatch: targetShowList[0],
+      similarityThreshold: MIN_SIMILARITY_THRESHOLD
+    });
+    if (targetShowList[0]?.totalRepeated >= MIN_SIMILARITY_THRESHOLD) {
+      return targetShowList[0];
+    }
+  }
 }

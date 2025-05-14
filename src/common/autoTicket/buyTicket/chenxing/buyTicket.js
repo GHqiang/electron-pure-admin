@@ -26,7 +26,8 @@ const {
 } = platTokens();
 import SeatManage from "./seatManage";
 import OrderManage from "./orderManage";
-import CinemaInfo from "./cinemaInfo";
+import CinemaManage from "./cinemaManage";
+import PlatManage from "./platManage";
 export default class BuyTicket {
   constructor(order, logger, isTestOrder, offerRule) {
     this.appFlag = order.app_name; // 影线标识
@@ -37,8 +38,15 @@ export default class BuyTicket {
     this.currentParamsInx = 0;
     this.currentSessionId = "";
     this.logger = logger; // 日志模块
+    this.platManage = new PlatManage(order, logger, isTestOrder); // 平台管理模块
+
     this.seatManage = new SeatManage(order, logger, isTestOrder); // 座位管理模块
-    this.orderManage = new OrderManage(order, logger, isTestOrder); // 订单管理模块
+    this.orderManage = new OrderManage(
+      order,
+      logger,
+      this.platManage,
+      isTestOrder
+    ); // 订单管理模块
   }
   // 单个订单出票（向外暴漏的唯一方法）
   async singleTicket() {
@@ -59,7 +67,7 @@ export default class BuyTicket {
     }
     // 4、平台解锁座位（测试单无需解锁）
     if (!this.isTestOrder) {
-      const unlockRes = await this.seatManage.unlockSeatByPlat(order);
+      const unlockRes = await this.platManage.unlockSeatByPlat(order);
       if (!unlockRes) {
         this.logger.error("平台解锁失败走转单逻辑");
         // 转单逻辑待补充
@@ -190,29 +198,25 @@ export default class BuyTicket {
     try {
       if (this.currentParamsInx === 0) {
         // 影院信息模块（获取购票前相关信息）
-        this.cinemaInfo = new CinemaInfo(
+        this.cinemaManage = new CinemaManage(
           this.order,
           this.logger,
-          this.isTestOrder,
           this.offerRule,
           this.currentParamsList
         );
 
         // 1、获取购票前的影院信息
-        buyTicketInfo = await this.cinemaInfo.getBuyPrevCinemaInfo();
+        buyTicketInfo = await this.cinemaManage.getBuyPrevCinemaInfo();
         if (!buyTicketInfo) {
           this.logger.infoSave("获取购票前的影院信息失败");
           return await this.orderManage.transferOrder();
         }
         this.logger.infoSave("获取购票前的影院信息返回", buyTicketInfo);
         this.logger.info("targetShow===>", buyTicketInfo.targetShow);
+        // 由于登录信息顺序会被cinemaManage.js调整，故需要重新赋值
+        this.currentParamsList = buyTicketInfo.currentParamsList;
+        this.currentSessionId = this.currentParamsList[this.currentParamsInx];
         // 2、获取购票座位信息
-        let seatParams = {
-          cinemaCode: buyTicketInfo.cinemaCode,
-          cinemaId: buyTicketInfo.cinemaId,
-          filmId: buyTicketInfo.filmId,
-          featureAppNo: buyTicketInfo.targetShow.featureAppNo
-        };
         const targetSeatCodes =
           await this.seatManage.getTargetSeat(buyTicketInfo);
         buyTicketInfo.targetSeatCodes = targetSeatCodes;
