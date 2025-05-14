@@ -18,35 +18,56 @@ import {
   couponInfoSpecial
 } from "@/utils/utils";
 import { APP_API_OBJ, PLAT_API_OBJ } from "@/common/index";
+import svApi from "@/api/sv-api";
 // 机器登录用户信息
 import { platTokens } from "@/store/platTokens";
 const {
   userInfo: { rule, user_id, phone }
 } = platTokens();
-export default class CardQuan {
-  constructor(order, logger, isTestOrder, offerRule, currentParamsList) {
+export default class CardQuanManage {
+  constructor(order, logger) {
     this.order = order;
     this.appFlag = order.app_name;
-    this.offerRule = offerRule;
     this.logger = logger;
-    this.currentParamsList = currentParamsList;
     this.appApi = APP_API_OBJ[order.app_name];
   }
 
   // 使用优惠券或会员卡（核心方法）
-  async useQuanOrCard({ offerRule, handlingFee, rewards, appFlag, plat_name }) {
+  async useQuanOrCard({
+    buyTicketInfo,
+    offerRule,
+    handlingFee,
+    rewards,
+    currentPhone,
+    session_id
+  }) {
     try {
+      const { appFlag } = this;
       const { supplier_end_price, ticket_num, plat_name } = this.order;
-      
+      const { cinemaCode, cinemaId } = buyTicketInfo;
+      const cardParams = {
+        cinemaCode,
+        cinemaId,
+        session_id
+      };
       // 1、获取卡券列表
       let cardList = await this.getCardList(cardParams);
+      if (!cardList?.length) return {};
+      const defaultCardNo = cardList?.find(
+        item => item.defaultCard == 1
+      )?.cardNo;
+      const quanParams = {
+        cinemaCode,
+        cinemaId,
+        defaultCardNo,
+        couponStatus: 1,
+        session_id
+      };
       let quanList = await this.getQuanList(quanParams);
+      if (!quanList?.length) return {};
       // 2、按报价规则用卡用券
-      const {
-        offer_type,
-        member_price, // 成本价
-        offer_rule_id
-      } = this.offerRule;
+      const { offer_type, member_price, offer_rule_id } = offerRule;
+
       let is_auto_use_quan = false; // 是否灵活用券
       let useCardParms = {
         cardList,
@@ -59,6 +80,7 @@ export default class CardQuan {
       };
       if (offer_type !== "1") {
         const ruleInfo = getOfferRuleById(offer_rule_id);
+        this.logger.info("根据报价规则id获取报价规则明细", ruleInfo);
         if (ruleInfo) {
           const { autoUseQuanStatus, autoUseQuanPrice, auto_quan_value } =
             ruleInfo;
@@ -69,26 +91,24 @@ export default class CardQuan {
           ) {
             is_auto_use_quan = true;
             offerRule.quan_value = auto_quan_value;
-            this.logList.push({
-              opera_time: getCurrentTime(),
-              des: "灵活用券条件生效，重置报价规则里的券类型为灵活用券类型",
-              level: "info",
-              info: {
+            this.logger.infoSave(
+              "灵活用券条件生效，重置报价规则里的券类型为灵活用券类型",
+              {
                 autoUseQuanStatus,
                 supplier_end_price,
                 autoUseQuanPrice,
                 auto_quan_value
               }
-            });
+            );
           }
         }
         if (!is_auto_use_quan) {
-          console.log(conPrefix + "使用会员卡出票");
+          this.logger.info("使用会员卡出票");
           return await this.useCardHandle(useCardParms);
         }
       }
-      if (offerRule.offer_type == "1" || is_auto_use_quan) {
-        console.log(conPrefix + "使用优惠券出票");
+      if (offer_type == "1" || is_auto_use_quan) {
+        this.logger.info("使用优惠券出票");
         if (is_auto_use_quan) {
           const quanInfo = await this.getQuanInfo(
             offerRule.quan_value,
@@ -137,7 +157,7 @@ export default class CardQuan {
           quan_stock: targetQuanList.length,
           quan_flag: offerRule.quan_flag,
           app_name: appFlag,
-          phone: this.curPhone
+          phone: currentPhone
         });
         if (targetQuanList.length < ticket_num) {
           console.warn(conPrefix + "优惠券不够用");
@@ -271,6 +291,9 @@ export default class CardQuan {
       const res = await this.appApi.getCardList(params);
       this.logger.infoSave("获取会员卡列表返回", res);
       const cardList = res.data || [];
+      if (!cardList.length) {
+        this.logger.errorSave("获取会员卡列表为空");
+      }
       return cardList;
     } catch (error) {
       this.logger.errorSave("获取会员卡列表异常", error);
@@ -280,22 +303,134 @@ export default class CardQuan {
 
   // 获取优惠券列表
   async getQuanList(params) {
-    // const params = {
-    //   cinemaCode,
-    //   cinemaId,
-    //   defaultCardNo,
-    //   couponStatus: 1,
-    //   session_id
-    // };
     try {
       this.logger.infoSave("获取优惠券列表入参", params);
       const res = await this.appApi.getQuanList(params);
       this.logger.infoSave("获取优惠券列表返回", res);
-      const quanList = res.data || [];
-      return quanList;
+      let quanList = res.data || [];
+      if (!quanList.length) {
+        this.logger.errorSave("获取优惠券列表为空");
+      }
+      return quanList.map(item => ({
+        ...item,
+        couponCode: item.ticketNum
+      }));
     } catch (error) {
       this.logger.infoSave("获取优惠券列表异常", error);
       return [];
     }
+  }
+
+  // 获取券类型信息
+  async getQuanInfo(quan_value, app_name) {
+    try {
+      const res = await svApi.queryQuanTypeInfo({
+        quan_value,
+        app_name
+      });
+      this.logger.infoSave("获取券类型信息返回", res);
+      return res.data.quanInfo || null;
+    } catch (error) {
+      console.error("获取券类型信息异常", error);
+      this.logger.errorSave("获取券类型信息异常", formatErrInfo(error));
+    }
+  }
+  // 查询最近用券记录返回
+  async queryUsedQuanList({ quan_value, app_name }) {
+    const params = {
+      order_status: "1",
+      quan_value,
+      app_name,
+      rule: rule,
+      start_time: formatTimeOfTime(+new Date() - 3 * 24 * 60 * 60 * 1000),
+      end_time: getCurrentTime()
+    };
+    try {
+      this.logger.infoSave("获取最近用券记录入参", params);
+      const res = await svApi.queryUsedQuanList(params);
+      const usedQuanList = res.data?.usedQuanList || [];
+      this.logger.infoSave("获取最近用券记录返回", res);
+      return usedQuanList;
+    } catch (error) {
+      this.logger.infoSave("获取最近用券记录异常", formatErrInfo(error));
+      return [];
+    }
+  }
+
+  // 更新券库存
+  async updateQuanStock(params) {
+    const { quan_stock, quan_flag, phone, app_name, quan_value } = params;
+    let targetQuanList = [];
+    const quanTypeParams = {
+      app_name,
+      isNeedTotalNum: 0,
+      queryFields: "id,quan_flag,app_name,quan_value,quanStockList"
+    };
+    try {
+      let quanTypeRes = await svApi.queryQuanTypeList(quanTypeParams);
+      let quanTypeList = quanTypeRes?.data?.quanTypeList || [];
+      targetQuanList = quanTypeList.filter(item => item.quan_flag == quan_flag);
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "更新券库存前获取同类目标券返回",
+        level: "info",
+        info: {
+          params,
+          quanTypeParams,
+          targetQuanList
+        }
+      });
+    } catch (error) {
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "更新券库存前获取同类目标券异常",
+        level: "error",
+        info: {
+          error,
+          quanTypeParams
+        }
+      });
+    }
+
+    // 同类目标券更新处理
+    targetQuanList.forEach(item => {
+      let quanStockList = item.quanStockList || [];
+      if (quanStockList?.length) {
+        quanStockList = JSON.parse(quanStockList);
+        let inx = quanStockList.findIndex(itemA => itemA.phone === phone);
+        if (inx != -1) {
+          quanStockList[inx].quan_stock = quan_stock;
+          quanStockList[inx].real_quan_stock = quan_stock;
+          quanStockList[inx].update_time = getCurrentTime();
+        } else {
+          quanStockList.push({
+            phone,
+            quan_stock,
+            real_quan_stock: quan_stock,
+            update_time: getCurrentTime()
+          });
+        }
+      } else {
+        quanStockList = [
+          {
+            phone,
+            quan_stock,
+            real_quan_stock: quan_stock,
+            update_time: getCurrentTime()
+          }
+        ];
+      }
+      let updateParams = {
+        id: item.id,
+        quanStockList: JSON.stringify(quanStockList),
+        update_time: getCurrentTime()
+      };
+      // 增加最后使用时间更新（方便看是否压价）
+      if (quan_value && quan_value === item.quan_value) {
+        updateParams.end_use_time = getCurrentTime();
+      }
+      // 单个更新
+      this.singleUpdateQuanStock(updateParams);
+    });
   }
 }

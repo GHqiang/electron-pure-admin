@@ -27,7 +27,8 @@ const {
 import SeatManage from "./seatManage";
 import OrderManage from "./orderManage";
 import CinemaManage from "./cinemaManage";
-import PlatManage from "./platManage";
+import CardQuanManage from "./cardQuanManage";
+import PlatManage from "../platManage";
 export default class BuyTicket {
   constructor(order, logger, isTestOrder, offerRule) {
     this.appFlag = order.app_name; // 影线标识
@@ -39,7 +40,6 @@ export default class BuyTicket {
     this.currentSessionId = "";
     this.logger = logger; // 日志模块
     this.platManage = new PlatManage(order, logger, isTestOrder); // 平台管理模块
-
     this.seatManage = new SeatManage(order, logger, isTestOrder); // 座位管理模块
     this.orderManage = new OrderManage(
       order,
@@ -216,6 +216,8 @@ export default class BuyTicket {
         // 由于登录信息顺序会被cinemaManage.js调整，故需要重新赋值
         this.currentParamsList = buyTicketInfo.currentParamsList;
         this.currentSessionId = this.currentParamsList[this.currentParamsInx];
+        // 库里维护的可用会员卡列表
+        this.usableCardList = buyTicketInfo.usableCardList;
         // 2、获取购票座位信息
         const targetSeatCodes =
           await this.seatManage.getTargetSeat(buyTicketInfo);
@@ -281,27 +283,23 @@ export default class BuyTicket {
       buyTicketInfo.lockOrderId = lockRes.lockOrderId;
       // orderDate = lockRes.autoUnlockDatetime;
       // 4、使用优惠券或者会员卡
+      this.cardQuanManage = new CardQuanManage(this.order, this.logger); // 卡券管理模块
+
       const { standardPrice, serviceAddFee } = targetShow;
-      console.warn("standardPrice", standardPrice);
+      this.logger.warn("会员价及手续费", standardPrice, serviceAddFee || 0);
       let {
         card_id = "",
         cardNum,
         useQuan = [],
         profit = 0,
         quanStock
-      } = await this.useQuanOrCard({
-        cardList,
-        quanList,
-        supplier_end_price,
-        ticket_num,
-        offerRule,
+      } = await this.cardQuanManage.useQuanOrCard({
+        buyTicketInfo,
+        offerRule: this.offerRule,
         handlingFee: serviceAddFee, // 手续费
         rewards,
-        appFlag,
-        session_id: this.currentParamsList[this.currentParamsInx].session_id,
-        cinemaCode,
-        cinemaLinkId,
-        plat_name
+        session_id: this.currentSessionId,
+        currentPhone: this.currentParamsList[this.currentParamsInx].mobile
       });
       let quan_code = useQuan.map(item => item.couponCode)?.join();
       // 券抵扣金额
