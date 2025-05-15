@@ -486,6 +486,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
 
         if (
           [
+            "cinema.getcinemas",
             "film.gethotfilms",
             "schedule.getschedules",
             "seat.getSeatMap",
