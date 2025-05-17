@@ -1651,7 +1651,11 @@ class OrderAutoTicketQueue {
       } else if (offerRule.offer_type == "1" && quan_code) {
         payments = useQuan.map(item => ({
           payMethod: "COUPON",
-          couponCodeParams: item.couponCode + "-" + item.couponType
+          couponCodeParams:
+            item.couponCode +
+            "-" +
+            item.couponType +
+            (item.concreteProductType == "COMMON" ? "-TICKET" : "")
         }));
         if (offerRule.quan_fee > 0 && card_id) {
           payments.push({ payMethod: "CARD", payCardNumber: card_id });
@@ -1669,6 +1673,23 @@ class OrderAutoTicketQueue {
       }
       tickets = JSON.stringify(tickets);
       payments = JSON.stringify(payments);
+      // 特殊券
+      if (useQuan?.[0]?.concreteProductType == "COMMON") {
+        // 支付前核销查询优惠券信息
+        await this.checkQuan({
+          couponCodes: useQuan.map(item => item.couponCode).join(),
+          cinemaLinkId,
+          scheduleId,
+          scheduleKey,
+          seatIds: seatIds.map(item => item.seatId).join("|"),
+          commonCouponJson: JSON.stringify(
+            useQuan.map(item => ({
+              couponCode: item.couponCode,
+              concreteProductType: "TICKET"
+            }))
+          )
+        });
+      }
       // 7、创建订单
       const createOrderRes = await this.createOrder({
         cinemaLinkId,
@@ -2023,6 +2044,40 @@ class OrderAutoTicketQueue {
     }
   }
 
+  // 核销券
+  async checkQuan(data) {
+    try {
+      const { session_id } = this.currentParamsList[this.currentParamsInx];
+      let params = {
+        ...data,
+        umeToken: session_id
+      };
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "核销券参数",
+        level: "info",
+        info: { params }
+      });
+      const res = await this.umeApi.checkQuan(params);
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "核销券返回",
+        level: "info",
+        info: {
+          res
+        }
+      });
+    } catch (error) {
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "核销券异常",
+        level: "error",
+        info: {
+          error
+        }
+      });
+    }
+  }
   // 创建订单
   async createOrder(data) {
     let {
@@ -2875,6 +2930,8 @@ class OrderAutoTicketQueue {
         let useQuan = targetQuanList.slice(0, ticket_num).map((item, index) => {
           return {
             couponType: item.couponType,
+            concreteProductType: item.concreteProductType,
+            compensatePrice: item.compensatePrice,
             couponCode: item.couponCode,
             couponName: item.couponName,
             discountAmount: item.discountValue

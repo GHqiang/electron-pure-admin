@@ -212,6 +212,10 @@ const createApi = ({ app_name }) => {
   //       "1、欢迎选择上海金球影城，很高兴为您服务！\n2、影院有免费WIFI；\n3、凭影票票根至票台敲章可享广场地下车库免停车1小时；\n4、观看4D电影，儿童也需购票；\n5、有疑问可前台或电话咨询！’"
   // }
 
+  // 核销券
+  const checkQuan = params =>
+    axios.post("/h5ume/mtop.alipic.lark.own.pay.getpaydiscountprice", params);
+
   // 创建订单
   const createOrder = params =>
     axios.post("/h5ume/mtop.alipic.lark.own.order.createticketorder", params);
@@ -360,6 +364,7 @@ const createApi = ({ app_name }) => {
     getQuanList,
     priceCalculation,
     getCardQuanList,
+    checkQuan,
     createOrder,
     cannelOneOrder,
     getOrderList,

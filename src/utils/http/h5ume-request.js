@@ -359,7 +359,9 @@ const urlObj = {
   "mtop.alipic.lark.own.cinema.getcinemadetail":
     "mtop.alipic.lark.own.cinema.getCinemaDetail",
   "mtop.alipic.lark.own.coupon.bindcoupon":
-    "mtop.alipic.lark.own.coupon.bindCoupon"
+    "mtop.alipic.lark.own.coupon.bindCoupon",
+  "mtop.alipic.lark.own.pay.getpaydiscountprice":
+    "mtop.alipic.lark.own.pay.getPayDiscountPrice"
 };
 
 // 获取url
