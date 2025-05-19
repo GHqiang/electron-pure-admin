@@ -15,7 +15,7 @@ export default class Logger {
     this.order_number = order_number;
     this.app_name = app_name;
   }
-  log(level, message, isSave, meta = {}) {
+  log(level, message, isSave, meta) {
     const timestamp = new Date().toLocaleString().replaceAll("/", "-");
     if (this.isPrint) {
       // console[level](`[${timestamp}] ${message}`, meta);
@@ -68,5 +68,12 @@ export default class Logger {
         logList
       );
     }
+  }
+
+  getLastErrMsg() {
+    const errInfoObj = this.logList
+      .filter(item => item.level === "error")
+      .reverse()?.[0];
+    return errInfoObj?.des || "";
   }
 }

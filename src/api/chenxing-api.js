@@ -47,19 +47,89 @@ const createApi = ({ app_name }) => {
 
   // 订单价格计算
   const priceCalculation = params =>
-    axios.post("/selfSupport/trade/front/orders/calculatePrice", params);
+    axios.post(
+      "/selfSupport/trade/front/orders/calculatePrice",
+      params ||
+        {
+          // unifiedCode: "33018961",
+          // cinemaCode: "33018961",
+          // cinemaId: 405384,
+          // defaultCardNo: "20001976924X",
+          // firstCalc: true,
+          // lockOrderId: "33018961202505150000154",
+          // addRetailGoods: [],
+          // addEquityGoods: [],
+          // orderGoodsType: 1,
+          // 用券额外增加参数如下：
+          // activityKey: "",
+          // ticketCouponCode: "SSKK3HV6",
+          // optType: 0
+        }
+    );
 
   // 创建订单
   const createOrder = params =>
-    axios.post("/selfSupport/trade/front/orders/submitOrder", params);
+    axios.post(
+      "/selfSupport/trade/front/orders/submitOrder",
+      params ||
+        {
+          // unifiedCode: "14014771",
+          // cinemaCode: "14014771",
+          // cinemaId: 729925,
+          // defaultCardNo: "20001941293X",
+          // lockOrderId: "14014771202505190000690",
+          // shareCode: ""
+        }
+    );
+  // 接口返回
+  // "lockOrderId": "14014771202505190000698",
+  // 	"notPayAmount": 25.00,
+  // 	"autoUnlockDatetime": "2025-05-19 17:20:48",
+  // 	"orderNumber": "202505198923000470"
 
   // 查询订单支付参数
   const queryPayWayParam = params =>
-    axios.post("/selfSupport/trade/front/order/queryPayWayParam", params);
+    axios.post(
+      "/selfSupport/trade/front/order/queryPayWayParam",
+      params ||
+        {
+          // unifiedCode: "14014771",
+          // cinemaCode: "14014771",
+          // cinemaId: 729925,
+          // defaultCardNo: "20001941293X",
+          // orderNumber: "202505198369000467"
+        }
+    );
 
   // 电影票购买
   const buyTicket = params =>
-    axios.post("/selfSupport/trade/front/order/onlinePay", params);
+    axios.post(
+      "/selfSupport/trade/front/order/onlinePay",
+      params ||
+        {
+          // unifiedCode: "14014771",
+          // cinemaCode: "14014771",
+          // cinemaId: 729925,
+          // defaultCardNo: "20001941293X",
+          // amount: "25.00",
+          // orderNo: "202505198923000470",
+          // businessSystemFlowNumber: "51747646051072",
+          // businessSystemName: "C_TRADE",
+          // payTerminal: "APPLET",
+          // payTerminalType: "Applet",
+          // payChannel: "TYSDYC-ZY",
+          // payChannelName: "太原时代影城-自营",
+          // goodBody: "影票",
+          // openId: "ouYyg5Yzzmuiy_FgbgQR0eZAJ1to",
+          // openID: "ouYyg5Yzzmuiy_FgbgQR0eZAJ1to", // 小程序openid
+          // ipAddress: "127.0.0.1",
+          // payWay: "MEMBER_CARD_PAY",
+          // cardNumber: "20001941293X",
+          // orderType: 1,
+          // password: "150920ccedc34d24031cdd3711e43310",
+          // orderNumber: "202505198923000470"
+        }
+    );
 
   // 支付订单并返回购票信息
   const payOrder = params =>
@@ -67,8 +137,91 @@ const createApi = ({ app_name }) => {
 
   // 获取订单信息
   const queryOrderDetail = params =>
-    axios.post("/selfSupport/trade/front/orders/queryOrderDetail", params);
-
+    axios.post(
+      "/selfSupport/trade/front/orders/queryOrderDetail",
+      params ||
+        {
+          // cinemaCode: "14014771",
+          // cinemaId: 729925,
+          // defaultCardNo: "20001941293X",
+          // orderCode: "202503063864001185",
+          // orderNumber: "202503063864001185"
+        }
+    );
+  // 订单详情返回
+  // {
+  //   "code": 200,
+  //   "timestamp": "1747646282627",
+  //   "msg": "操作成功",
+  //   "data": {
+  //     "tenantId": "446926",
+  //     "cinemaId": "729925",
+  //     "cinemaCode": "14014771",
+  //     "cinemaName": "山西省太原市时代影城IMAX华景天地店",
+  //     "orderNumber": "202503063864001185",
+  //     "autoUnlockDatetime": "2025-03-06 18:51:05",
+  //     "mobilePhone": "13073792313",
+  //     "cardNo": "20001941293X",
+  //     "activityFlag": 1,
+  //     "orderStatus": 4,
+  //     "printNo": "1401477162693900", //取票码 后8位：62693900
+  //     "printStatus": 1,
+  //     "printTime": "2025-03-06 19:37:50",
+  //     "deliveryStatus": 0,
+  //     "deliveryTime": null,
+  //     "orderTypeId": 1,
+  //     "refundStatus": 0,
+  //     "canRefundFlag": 0,
+  //     "refundOrderNumber": null,
+  //     "marketingCode": "CRM001",
+  //     "moviePlanInfo": {
+  //       "featureAppNo": "3088202503060029",
+  //       "movieName": "哪吒之魔童闹海2D",
+  //       "hallName": "5号激光厅丨建议3D眼镜自备或购买停车免费2小时",
+  //       "version": "普通",
+  //       "language": "国语",
+  //       "showTime": "2025-03-06 19:30:00",
+  //       "showTimeEnd": "2025-03-06 21:54:00",
+  //       "filmPostURL": "http://dadi-prod-public.oss-cn-beijing.aliyuncs.com/movie/poster/movie_poster_20250120190741.jpg"
+  //     },
+  //     "createTime": "2025-03-06 18:42:56",
+  //     "retailGoodsList": null,
+  //     "movieGoodsList": [{
+  //       "seatCode": "1401477105#07#12",
+  //       "seatCol": "12",
+  //       "seatRow": "07",
+  //       "filmName": null,
+  //       "cinemaTicketCode": "140147710Ob001f",
+  //       "saleNum": 1,
+  //       "rejectNum": 0
+  //     }],
+  //     "equityGoodsList": null,
+  //     "priceDetail": {
+  //       "activityDiscountAmount": null,
+  //       "couponsDiscountAmount": null,
+  //       "equityGoodsOriginAmount": 0.00,
+  //       "equityGoodsRealPayAmount": 0.00,
+  //       "movieGoodsDiscountAmount": 10.90,
+  //       "movieGoodsOriginAmount": 35.90,
+  //       "movieGoodsRealPayAmount": 25.00,
+  //       "retailGoodsDiscountAmount": 0.00,
+  //       "retailGoodsOriginAmount": 0.00,
+  //       "retailGoodsRealPayAmount": 0.00,
+  //       "serviceFee": 0.00,
+  //       "serviceAddFee": 0.00,
+  //       "totalGoodsDiscountPrice": 10.90,
+  //       "totalRealPayAmount": 25.00,
+  //       "notPayAmount": null,
+  //       "rejectAmount": 0.00,
+  //       "ticketTotalServiceRealPayPrice": 0.00
+  //     },
+  //     "isEquityOrder": 0,
+  //     "ticketCount": 1,
+  //     "merCount": 0,
+  //     "featureAppNo": "3088202503060029",
+  //     "memberId": "1805450389995130882"
+  //   }
+  // }
   // 获取订单列表
   const getOrderList = params =>
     axios.post(
@@ -85,7 +238,18 @@ const createApi = ({ app_name }) => {
 
   // 取消订单
   const cancelOrder = params =>
-    axios.post("/selfSupport/trade/front/orders/cancelOrder", params);
+    axios.post(
+      "/selfSupport/trade/front/orders/cancelOrder",
+      params ||
+        {
+          // unifiedCode: "14014771",
+          // cinemaCode: "14014771",
+          // cinemaId: 729925,
+          // defaultCardNo: "20001941293X",
+          // orderCode: "202505198369000467",
+          // orderNumber: "202505198369000467"
+        }
+    );
 
   // 释放座位
   const releaseSeat = params =>

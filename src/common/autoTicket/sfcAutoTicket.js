@@ -17,7 +17,7 @@ import {
 
 import svApi from "@/api/sv-api";
 import { encode } from "@/utils/sfc-member-password";
-
+window.encode = encode;
 // 机器登录用户信息
 import { platTokens } from "@/store/platTokens";
 const {

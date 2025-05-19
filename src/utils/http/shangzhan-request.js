@@ -2,6 +2,7 @@
 
 import axios from "axios";
 import md5 from "../md5.js";
+window.md5 = md5;
 import { ElMessage } from "element-plus";
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
