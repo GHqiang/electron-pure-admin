@@ -59,11 +59,11 @@ class OrderAutoTicketQueue {
       cinema_addr: "雨花台区软件大道109号雨花客厅E-PARK北区3层",
       ticket_num: 1,
       cinema_name: "太原时代影城华景天地IMAX店",
-      hall_name: "5号激光厅",
+      hall_name: "7号激光厅",
       film_name: "人生开门红",
       film_img:
         "https://gw.alicdn.com/tfscom/i4/O1CN01e8PcvF1NESAgdEsnM_!!6000000001538-0-alipicbeacon.jpg_120x120.jpg",
-      show_time: "2025-05-22 21:20:00",
+      show_time: "2025-05-22 22:00:00",
       rewards: 0,
       is_urgent: false,
       cinema_group: "",
