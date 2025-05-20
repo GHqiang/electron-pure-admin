@@ -224,6 +224,7 @@ export default class CinemaManage {
   async getUsableCardList(cinemaId, ticket_num) {
     const { appFlag } = this;
     try {
+      // 获取已维护的卡列表
       const res = await svApi.queryCardList({
         app_name: appFlag,
         rule: rule,
@@ -233,62 +234,65 @@ export default class CinemaManage {
           "card_num,card_id,balance,mobile,card_discount,linkCinemaIds,use_limit_day,use_limit_month,daily_usage,monthly_usage,usage_date"
       });
       let list = res.data.cardList || [];
-
-      list = list.map(item => ({
-        ...item,
-        // 使用日非当天的就是0
-        daily_usage:
-          item.usage_date !== getCurrentDay() ? 0 : item.daily_usage || 0,
-        // 使用日非当月的就是0
-        month_usage: !isDateInCurrentMonth(item.usage_date)
-          ? 0
-          : item.monthly_usage || 0
-      }));
-      this.logger.infoSave("获取该影院已维护会员卡列表返回", { list });
-      // 获取该影院的可用手机号列表
-      let useMobileList = getCinemaLoginInfoList()
-        .filter(
-          item => item.app_name === appFlag && item.mobile && item.session_id
-        )
-        .map(item => item.mobile);
-      // 根据可用手机号对卡列表进行过滤
-      let cardListByMobile = list.filter(item =>
-        useMobileList.includes(item.mobile)
-      );
-      this.logger.infoSave("根据可用手机号对卡列表进行过滤", {
-        useMobileList,
-        cardListByMobile
-      });
-
-      // 根据当天及当月出票量限制进行过滤
-      let cardListLimit = cardListByMobile.filter(item => {
-        const { use_limit_day, use_limit_month, daily_usage, month_usage } =
-          item;
-        if (!use_limit_day && !use_limit_month) return true;
-        return (
-          (use_limit_day ? ticket_num <= use_limit_day - daily_usage : true) &&
-          (use_limit_month ? ticket_num <= use_limit_month - month_usage : true)
-        );
-      });
-      this.logger.infoSave("根据当天及当月出票量限制对卡列表进行过滤", {
-        cardListLimit
-      });
-
-      // 根据影院指定卡进行过滤
-      let useCanCardList = cardListLimit.filter(item => {
-        return !item.linkCinemaIds
-          ? true
-          : item.linkCinemaIds.split(",").some(itemA => itemA == cinemaId);
-      });
-      this.logger.infoSave("根据制定影院对卡列表进行过滤", {
-        useCanCardList
-      });
-      return useCanCardList;
+      // 对卡列表进行可用过滤处理
+      return this.filterUsableCardList(list, ticket_num);
     } catch (error) {
       this.logger.errorSave("获取会员卡维护列表异常", formatErrInfo(error));
     }
   }
+  // 过滤可用卡
+  filterUsableCardList(list, ticket_num) {
+    list = list.map(item => ({
+      ...item,
+      // 使用日非当天的就是0
+      daily_usage:
+        item.usage_date !== getCurrentDay() ? 0 : item.daily_usage || 0,
+      // 使用日非当月的就是0
+      month_usage: !isDateInCurrentMonth(item.usage_date)
+        ? 0
+        : item.monthly_usage || 0
+    }));
+    this.logger.infoSave("获取该影院已维护会员卡列表返回", { list });
 
+    // 获取该影院的可用手机号列表
+    let useMobileList = getCinemaLoginInfoList()
+      .filter(
+        item => item.app_name === this.appFlag && item.mobile && item.session_id
+      )
+      .map(item => item.mobile);
+    // 根据可用手机号对卡列表进行过滤
+    let cardListByMobile = list.filter(item =>
+      useMobileList.includes(item.mobile)
+    );
+    this.logger.infoSave("根据可用手机号对卡列表进行过滤", {
+      useMobileList,
+      cardListByMobile
+    });
+
+    // 根据当天及当月出票量限制进行过滤
+    let cardListLimit = cardListByMobile.filter(item => {
+      const { use_limit_day, use_limit_month, daily_usage, month_usage } = item;
+      if (!use_limit_day && !use_limit_month) return true;
+      return (
+        (use_limit_day ? ticket_num <= use_limit_day - daily_usage : true) &&
+        (use_limit_month ? ticket_num <= use_limit_month - month_usage : true)
+      );
+    });
+    this.logger.infoSave("根据当天及当月出票量限制对卡列表进行过滤", {
+      cardListLimit
+    });
+
+    // 根据影院指定卡进行过滤
+    let useCanCardList = cardListLimit.filter(item => {
+      return !item.linkCinemaIds
+        ? true
+        : item.linkCinemaIds.split(",").some(itemA => itemA == cinemaId);
+    });
+    this.logger.infoSave("根据制定影院对卡列表进行过滤", {
+      useCanCardList
+    });
+    return useCanCardList;
+  }
   // 获取影院放映信息
   async getMoviePlayInfo({ cinemaCode, cinemaId }) {
     const { appFlag } = this;
