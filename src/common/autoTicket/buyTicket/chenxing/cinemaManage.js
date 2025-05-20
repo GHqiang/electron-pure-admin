@@ -12,7 +12,7 @@ import { APP_API_OBJ } from "@/common/index";
 // 机器登录用户信息
 import { platTokens } from "@/store/platTokens";
 const {
-  userInfo: { rule, user_id, phone }
+  userInfo: { rule }
 } = platTokens();
 export default class CinemaManage {
   constructor(order, logger, offerRule, currentParamsList) {
@@ -30,12 +30,19 @@ export default class CinemaManage {
       const { city_name, cinema_code, cinema_name, film_name, show_time } =
         this.order;
       let cinemaInfo = {};
+
       // 1、获取全部城市及影院列表
       let cityCinemaList = await this.getCityCinemaList();
+      if (!cityCinemaList?.length) {
+        this.logger.errorSave("获取目标城市影院列表失败", {
+          city_name,
+          cityCinemaList
+        });
+        return;
+      }
+
       // 2、获取目标城市影院列表
-      let cinemaList =
-        cityCinemaList?.find(item => item.cityName.includes(city_name))
-          ?.cinemaList || [];
+      let cinemaList = this.getTargetCityCinemas(cityCinemaList, city_name);
       if (!cinemaList?.length) {
         this.logger.errorSave("获取目标城市影院列表失败", {
           city_name,
@@ -43,29 +50,26 @@ export default class CinemaManage {
         });
         return;
       }
+
       // 3、获取目标影院
-      let targetCinema = cinemaList.find(
-        item => item.cinemaCode === cinema_code
+      let targetCinema = this.getTargetCinemaInfo(
+        city_name,
+        cinemaList,
+        cinema_name,
+        cinema_code
       );
-      // 优先影院code匹配
       if (!targetCinema) {
-        targetCinema = getTargetCinema(
-          cinema_name,
-          cinemaList,
-          appFlag,
-          city_name
-        );
-      }
-      if (!targetCinema) {
-        return this.logger.errorSave("根据订单中的影院名称获取目标影院失败", {
+        this.logger.errorSave("根据订单中的影院名称获取目标影院失败", {
           cinema_name,
           cinemaList,
           appFlag,
           city_name
         });
+        return;
       }
-      cinemaInfo.cinemaId = targetCinema.cinemaId; // 赋值影院id
-      cinemaInfo.cinemaCode = targetCinema.cinemaCode; // 赋值影院code
+      cinemaInfo.cinemaId = targetCinema.cinemaId;
+      cinemaInfo.cinemaCode = targetCinema.cinemaCode;
+
       // 4、拿到影院code进行影院指定卡相关处理(获取可用卡列表，根据可用卡调整登录信息顺序)
       await this.cinemaLinkCardHandle(cinemaInfo);
       cinemaInfo.currentParamsList = this.currentParamsList;
@@ -74,39 +78,19 @@ export default class CinemaManage {
       if (!movie_data?.length) {
         return;
       }
+
       // 6、获取目标影片信息
-      let movieInfo = movie_data.find(item => item.filmName === film_name);
+      let movieInfo = this.getTargetMovie(movie_data, film_name);
       if (!movieInfo) {
-        movieInfo = movie_data.find(
-          item =>
-            convertFullwidthToHalfwidth(item.filmName) ===
-            convertFullwidthToHalfwidth(film_name)
-        );
-        if (!movieInfo) {
-          this.logger.warn("获取目标影片信息失败", { movie_data, film_name });
-          let targetFilmList = movie_data.map(item => {
-            return {
-              ...item,
-              ...findMostRepeatedChars(item.filmName, film_name)
-            };
-          });
-          targetFilmList = targetFilmList.sort(
-            (a, b) => b.similarity - a.similarity
-          );
-          // 必须有4个重复字符才采用模糊匹配结果
-          if (targetFilmList[0]?.totalRepeated >= 4) {
-            movieInfo = targetFilmList[0];
-          } else {
-            this.logger.errorSave("获取目标影片信息失败", {
-              movie_data,
-              film_name
-            });
-            return;
-          }
-        }
+        this.logger.errorSave("获取目标影片信息失败", {
+          movie_data,
+          film_name
+        });
+        return;
       }
-      // 7、获取影片放映场次
       cinemaInfo.filmId = movieInfo.id;
+
+      // 7、获取影片放映场次
       cinemaInfo.showDate = show_time.split(" ")[0];
       const targetShow = await this.getTargetShow(cinemaInfo);
       if (!targetShow) {
@@ -114,11 +98,13 @@ export default class CinemaManage {
       }
       this.logger.infoSave("出票前获取电影放映信息", { targetShow });
       cinemaInfo.targetShow = targetShow;
+
       return cinemaInfo;
     } catch (error) {
       this.logger.errorSave("获取购票前的影院信息异常", formatErrInfo(error));
     }
   }
+
   // 获取城市影院列表
   async getCityCinemaList() {
     const { appFlag } = this;
@@ -132,15 +118,68 @@ export default class CinemaManage {
         this.logger.errorSave("获取城市影院列表为空");
         return;
       }
-      cityCinemaList = cityCinemaList.map(item => ({
+      return cityCinemaList.map(item => ({
         ...item,
         cityName: item.cityInfoDTO?.cityName,
         cinemaList: item.cinemaResultDTOList
       }));
-      return cityCinemaList;
     } catch (error) {
       this.logger.errorSave("获取城市影院列表异常", formatErrInfo(error));
     }
+  }
+
+  // 获取目标城市影院列表
+  getTargetCityCinemas(cityCinemaList, cityName) {
+    return (
+      cityCinemaList.find(item => item.cityName.includes(cityName))
+        ?.cinemaList || []
+    );
+  }
+
+  // 获取目标影院
+  getTargetCinemaInfo(cityName, cinemaList, cinemaName, cinemaCode) {
+    let targetCinema = cinemaList.find(item => item.cinemaCode === cinemaCode);
+    if (!targetCinema) {
+      targetCinema = getTargetCinema(
+        cinemaName,
+        cinemaList,
+        this.appFlag,
+        cityName
+      );
+    }
+    return targetCinema;
+  }
+
+  // 获取目标影片信息
+  getTargetMovie(movieData, filmName) {
+    // 全字匹配
+    let movieInfo = movieData.find(item => item.filmName === filmName);
+    if (!movieInfo) {
+      // 特殊处理后匹配
+      movieInfo = movieData.find(
+        item =>
+          convertFullwidthToHalfwidth(item.filmName) ===
+          convertFullwidthToHalfwidth(filmName)
+      );
+      if (!movieInfo) {
+        // 模糊匹配
+        this.logger.warn("获取目标影片信息失败", { movieData, filmName });
+        let targetFilmList = movieData.map(item => {
+          return {
+            ...item,
+            ...findMostRepeatedChars(item.filmName, filmName)
+          };
+        });
+        targetFilmList = targetFilmList.sort(
+          (a, b) => b.similarity - a.similarity
+        );
+        // 必须有4个重复字符才采用模糊匹配结果
+        if (targetFilmList[0]?.totalRepeated >= 4) {
+          movieInfo = targetFilmList[0];
+        }
+      }
+    }
+    return movieInfo;
   }
 
   // 影院指定卡相关处理(根据可用卡调整登录信息顺序)
@@ -176,8 +215,6 @@ export default class CinemaManage {
           currentParamsList: this.currentParamsList
         });
       }
-      const phone = this.currentParamsList[0].mobile;
-      this.logger.infoSave(`首次出票手机号-${phone}`);
     } catch (error) {
       this.logger.errorSave("影院指定卡相关处理异常", formatErrInfo(error));
     }
@@ -334,7 +371,6 @@ export default class CinemaManage {
   // 匹配目标场次
   _findTargetShow(showList) {
     const { hall_name, show_time } = this.order;
-
     const MIN_SIMILARITY_THRESHOLD = 3;
     let targetShowList = showList.filter(item => item.startTime === show_time);
 

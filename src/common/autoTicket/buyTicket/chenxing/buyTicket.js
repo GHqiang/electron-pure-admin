@@ -185,6 +185,8 @@ export default class BuyTicket {
         this.logger.info("targetShow===>", buyTicketInfo.targetShow);
         // 由于登录信息顺序会被cinemaManage.js调整，故需要重新赋值
         this.currentParamsList = buyTicketInfo.currentParamsList;
+        const phone = this.currentParamsList[0].mobile;
+        this.logger.infoSave(`首次出票手机号-${phone}`);
         // 库里维护的可用会员卡列表
         this.usableCardList = buyTicketInfo.usableCardList;
         // 2、获取购票座位信息
