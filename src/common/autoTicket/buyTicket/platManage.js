@@ -191,7 +191,6 @@ export default class PlatCommon {
   // 上传取票码
   async submitTicketCode({
     qrcode,
-    orderInfo,
     flag, // 2-异步上传
     logger //日志记录实例
   }) {
@@ -201,7 +200,7 @@ export default class PlatCommon {
       order_number,
       supplierCode,
       lockseat
-    } = orderInfo;
+    } = this.order;
     // 不同平台参数处理
     let params;
     if (plat_name === "lieren") {
@@ -290,12 +289,12 @@ export default class PlatCommon {
     } else if (plat_name === "haha") {
       logger.infoSave("哈哈暂不上传取票码,需手动上传");
       sendWxPusherMessage({
-        orderInfo,
+        orderInfo: this.order,
         transferTip: "哈哈暂不上传取票码,需手动上传",
         failReason: "哈哈暂不上传取票码,需手动上传"
       });
       return { code: 1, msg: "哈哈暂不上传取票码,需手动上传" };
-      const { bid, cinema_name, hall_name, film_name, show_time } = orderInfo;
+      const { bid, cinema_name, hall_name, film_name, show_time } = this.order;
       params = {
         oid: order_id,
         bid,

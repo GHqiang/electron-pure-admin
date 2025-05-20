@@ -178,6 +178,8 @@ class OrderAutoTicketQueue {
           this.logger,
           isTestOrder
         );
+        // 开发时测试使用
+        window.buyTicket = buyTicket;
         const res = await buyTicket.singleTicket();
         // result: { profit, submitRes, transferParams, qrcode, quan_code, card_id, cardNum, quanType, offerRule, mobile }
         return res;

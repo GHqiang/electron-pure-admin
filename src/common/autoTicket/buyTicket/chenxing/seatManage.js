@@ -5,10 +5,14 @@ import {
   formatErrInfo, // 格式化错误信息
   trial // 重试方法
 } from "@/utils/utils";
+// 帮助锁定座位实例对象
+import assistLockSeatObj from "@/common/autoTicket/lockSeatQueue";
+
 export default class SeatManage {
   constructor(order, logger) {
     this.order = order;
     this.appFlag = order.app_name;
+    this.appApi = APP_API_OBJ[order.app_name];
     this.logger = logger; // 日志模块
   }
 
@@ -25,7 +29,7 @@ export default class SeatManage {
 
       const seatListRes = await this.getSeatLayout(params);
       const seatList = seatListRes?.seatData || [];
-      const areaInfoList = seatListRes?.areaInfoList || [];
+      const discountList = seatListRes?.discountList || [];
       if (!seatList?.length) {
         return;
       }
@@ -44,7 +48,7 @@ export default class SeatManage {
       if (seatCodes?.length != ticket_num) {
         return this.logger.errorSave("获取目标座位失败");
       }
-      return seatCodes;
+      return { seatCodes, discountList };
     } catch (error) {
       this.logger.errorSave("获取目标座位异常", formatErrInfo(error));
     }
@@ -57,19 +61,20 @@ export default class SeatManage {
 
   // 获取座位布局
   async getSeatLayout(params) {
-    const { appFlag } = this;
     try {
       this.logger.info("获取座位布局参数", params);
-      const res = await APP_API_OBJ[appFlag].getMoviePlaySeat(params);
+      const res = await this.appApi.getMoviePlaySeat(params);
       this.logger.info("获取座位布局返回", res);
       let seatData = res.data?.planSiteState || []; // 座位列表
+      let discountList = res.data?.disCountActivityResultList || []; // 优惠活动列表
       let areaInfoList = []; // 座位分区列表
       if (!seatData?.length) {
         this.logger.errorSave("获取座位布局为空");
       }
       return {
         seatData,
-        areaInfoList
+        areaInfoList,
+        discountList
       };
     } catch (error) {
       this.logger.errorSave("获取座位布局异常", formatErrInfo(error));
@@ -125,7 +130,6 @@ export default class SeatManage {
       filmId,
       featureAppNo,
       seatInfos,
-      seatList,
       lockseat,
       plat_name,
       order_number,
@@ -156,7 +160,7 @@ export default class SeatManage {
       }
 
       this.logger.info("锁定座位参数", params);
-      const res = await APP_API_OBJ[appFlag].lockSeat(params);
+      const res = await this.appApi.lockSeat(params);
       this.logger.infoSave(`第${inx}次锁定座位成功`, { res, params });
       return res?.data;
     } catch (error) {

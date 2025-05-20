@@ -253,7 +253,17 @@ const createApi = ({ app_name }) => {
 
   // 释放座位
   const releaseSeat = params =>
-    axios.post("/selfSupport/trade/front/advanceOrder/releaseSeat", params);
+    axios.post(
+      "/selfSupport/trade/front/advanceOrder/releaseSeat",
+      params ||
+        {
+          // unifiedCode: "14014771",
+          // cinemaCode: "14014771",
+          // cinemaId: 729925,
+          // defaultCardNo: "20001941293X",
+          // lockOrderId: "14014771202505200000800"
+        }
+    );
   // 绑定优惠券
   const bandQuan = params =>
     axios.post(
