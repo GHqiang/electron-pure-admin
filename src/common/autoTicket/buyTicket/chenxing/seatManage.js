@@ -1,3 +1,17 @@
+// 锁座重试常量配置
+const LOCK_RETRY_CONFIG = {
+  lieren: [10, 5],
+  mangguo: [10, 5],
+  sheng: [10, 5],
+  mayi: [10, 5],
+  yangcong: [10, 5],
+  haha: [6, 5],
+  yinghuasuan: [6, 5],
+  shangzhan: [6, 5]
+};
+// 辅助锁座触发原因
+const ASSIST_LOCK_ERRORS = ["座位旁边不要留空", "座位中间不要留空"];
+
 // 统一座位管理
 import { APP_API_OBJ } from "@/common/index";
 // 订单管理模块
@@ -16,146 +30,153 @@ export default class SeatManage {
     this.logger = logger; // 日志模块
   }
 
-  // 获取目标座位(主要暴漏方法)
+  /**
+   * 获取目标座位
+   * @param {Object} buyTicketInfo 购票信息
+   * @returns {Promise<{seatCodes: Array, discountList: Array}>} 目标座位信息及优惠活动信息
+   */
   async getTargetSeat(buyTicketInfo) {
-    const { lockseat, ticket_num } = this.order;
     try {
-      let params = {
-        cinemaCode: buyTicketInfo.cinemaCode,
-        cinemaId: buyTicketInfo.cinemaId,
-        filmId: buyTicketInfo.filmId,
-        featureAppNo: buyTicketInfo.targetShow.featureAppNo
-      };
-
+      const params = this.getSeatParams(buyTicketInfo);
       const seatListRes = await this.getSeatLayout(params);
-      const seatList = seatListRes?.seatData || [];
-      const discountList = seatListRes?.discountList || [];
+      const { seatData: seatList = [], discountList = [] } = seatListRes || {};
+
       if (!seatList?.length) {
+        this.logger.errorSave("座位列表为空");
         return;
       }
-      // 匹配目标座位
-      const seatName = lockseat.replaceAll(" ", ",").replaceAll("座", "号");
-      this.logger.info("目标座位seatName", seatName);
-      const selectSeatList = seatName.split(",");
-      this.logger.info("目标座位selectSeatList", selectSeatList);
-      const targeSeatList = seatList.filter(item => {
-        const { rowNum, columnNum } = item;
-        let seat2 = rowNum + "排" + columnNum + "号";
-        return selectSeatList.includes(seat2) && item.status == "N";
-      });
-      this.logger.infoSave("目标座位相关信息", { targeSeatList });
-      const seatCodes = targeSeatList.map(item => item.seatCode);
-      if (seatCodes?.length != ticket_num) {
-        return this.logger.errorSave("获取目标座位失败");
+
+      const targetSeats = this.filterTargetSeats(seatList);
+      if (targetSeats.length !== this.order.ticket_num) {
+        this.logger.errorSave("获取目标座位失败");
+        return;
       }
-      return { seatCodes, discountList };
+
+      return {
+        seatCodes: targetSeats.map(item => item.seatCode),
+        discountList
+      };
     } catch (error) {
       this.logger.errorSave("获取目标座位异常", formatErrInfo(error));
     }
   }
 
-  // 影院释放座位
-  async releaseSeatByApp() {
-    // sfc-先获取座位布局，然后锁定一个其它座位来进行释放；其它直接跳座位释放方法
+  /**
+   * 获取座位参数
+   * @private
+   */
+  getSeatParams(buyTicketInfo) {
+    const { cinemaCode, cinemaId, filmId, targetShow } = buyTicketInfo;
+    return {
+      cinemaCode,
+      cinemaId,
+      filmId,
+      featureAppNo: targetShow.featureAppNo
+    };
   }
 
-  // 获取座位布局
+  /**
+   * 过滤目标座位
+   * @private
+   */
+  filterTargetSeats(seatList) {
+    const seatName = this.order.lockseat
+      .replaceAll(" ", ",")
+      .replaceAll("座", "号");
+    const selectSeatList = seatName.split(",");
+
+    return seatList.filter(item => {
+      const seatLabel = `${item.rowNum}排${item.columnNum}号`;
+      return selectSeatList.includes(seatLabel) && item.status === "N";
+    });
+  }
+
+  /**
+   * 获取座位布局
+   * @param {Object} params 请求参数
+   * @returns {Promise<{seatData: Array, areaInfoList: Array, discountList: Array}>}
+   */
   async getSeatLayout(params) {
     try {
       this.logger.info("获取座位布局参数", params);
       const res = await this.appApi.getMoviePlaySeat(params);
-      this.logger.info("获取座位布局返回", res);
-      let seatData = res.data?.planSiteState || []; // 座位列表
-      let discountList = res.data?.disCountActivityResultList || []; // 优惠活动列表
-      let areaInfoList = []; // 座位分区列表
-      if (!seatData?.length) {
+
+      const seatData = res.data?.planSiteState || [];
+      const discountList = res.data?.disCountActivityResultList || [];
+
+      if (!seatData.length) {
         this.logger.errorSave("获取座位布局为空");
       }
-      return {
-        seatData,
-        areaInfoList,
-        discountList
-      };
+
+      return { seatData, discountList, areaInfoList: [] };
     } catch (error) {
       this.logger.errorSave("获取座位布局异常", formatErrInfo(error));
     }
   }
 
-  // 影院座位锁定
+  /**
+   * 锁定座位
+   * @param {Object} params 锁定座位参数
+   * @returns {Promise<Object>} 锁定结果
+   */
   async lockseatByApp(params) {
-    let lockRes;
     try {
-      lockRes = await this.lockSeatHandle(params); // 锁定座位
+      let lockRes = await this.lockSeatHandle(params);
       return lockRes;
     } catch (error) {
-      this.logger.error("座位锁定失败");
-      // 非这两种情况才需要走重试，这两种情况已经走帮助锁座逻辑了
-      let isTrial = !["座位旁边不要留空", "座位中间不要留空"].includes(
-        error?.msg
-      );
-      if (isTrial) {
-        // 锁定座位尝试配置
-        let delayConfig = {
-          lieren: [10, 5],
-          mangguo: [10, 5],
-          sheng: [10, 5],
-          mayi: [10, 5],
-          yangcong: [10, 5],
-          haha: [6, 5],
-          yinghuasuan: [6, 5],
-          shangzhan: [6, 5]
-        };
-        this.logger.info("座位锁定失败准备重试");
-        lockRes = await trial(
-          inx => this.lockSeatHandle(params, inx),
-          delayConfig[plat_name][0],
-          delayConfig[plat_name][1]
-        );
-      }
-      if (!lockRes && isTrial) {
-        return this.logger.infoSave("重试锁定座位失败");
-      }
-      if (isTrial) {
-        this.logger.infoSave("重试锁定座位成功");
-        return lockRes;
-      }
+      this.logger.error("座位锁定失败", error);
+      // 锁座重试
+      return this.retryLockSeat(params);
     }
   }
 
-  // 锁定座位-影院
+  /**
+   * 重试锁定座位
+   * @private
+   */
+  async retryLockSeat(params) {
+    const platName = this.order.plat_name;
+    const [retryCount, delay] = LOCK_RETRY_CONFIG[platName] || [6, 5];
+
+    this.logger.info("座位锁定失败准备重试");
+    return trial(inx => this.lockSeatHandle(params, inx), retryCount, delay);
+  }
+
+  /**
+   * 辅助锁定座位
+   * @private
+   */
+  async assistLockSeat(params) {
+    const seatListRes = await this.getSeatLayout({
+      ...params,
+      appFlag: this.appFlag
+    });
+
+    const res = await assistLockSeatObj.assistLockSeatHandle({
+      app_name: this.appFlag,
+      plat_name: this.order.plat_name,
+      order_number: this.order.order_number,
+      seatList: seatListRes?.seatData || [],
+      lockseat: params.lockseat,
+      lockSeatParams: params
+    });
+
+    if (res) {
+      return this.lockSeatHandle({ ...params, assistFlag: 1 });
+    }
+    return Promise.reject(new Error("辅助锁定座位失败"));
+  }
+
+  /**
+   * 锁定座位处理
+   * @private
+   */
   async lockSeatHandle(data, inx = 1) {
-    const {
-      cinemaCode,
-      cinemaId,
-      filmId,
-      featureAppNo,
-      seatInfos,
-      lockseat,
-      plat_name,
-      order_number,
-      session_id,
-      assistFlag // 帮助锁座后重试标识
-    } = data;
-    const { appFlag } = this;
-    let params = {
-      cinemaId,
-      cinemaCode,
-      unifiedCode: cinemaCode,
-      filmId,
-      featureAppNo,
-      seatInfos,
-      session_id
-    };
+    const params = this.getLockSeatParams(data);
+
     try {
-      // 不需要每个都调下，解决锁定座位时没座位返回重进就有座位的问题
       if (inx % 2 === 0) {
-        await this.getSeatLayout({
-          cinemaCode,
-          cinemaId,
-          filmId,
-          featureAppNo,
-          session_id
-        });
+        await this.getSeatLayout(params);
         await mockDelay(1);
       }
 
@@ -165,36 +186,36 @@ export default class SeatManage {
       return res?.data;
     } catch (error) {
       this.logger.errorSave(`第${inx}次锁定座位异常`, { error, params });
-      // 仅帮助锁座1次，帮助锁座后再锁定座位失败的话就不走帮助锁座逻辑了
-      if (
-        ["座位旁边不要留空", "座位中间不要留空"].includes(error?.msg) &&
-        assistFlag != 1
-      ) {
-        const seatListRes = await this.getSeatLayout({
-          cinemaCode,
-          cinemaId,
-          filmId,
-          featureAppNo,
-          appFlag,
-          session_id
-        });
-        let newSeatList = seatListRes?.seatData || [];
-        // 帮助锁定座位方法
-        const res = await assistLockSeatObj.assistLockSeatHandle({
-          app_name: appFlag,
-          plat_name,
-          order_number,
-          seatList: newSeatList,
-          lockseat,
-          lockSeatParams: params
-        });
-        if (!res) {
-          return Promise.reject(error);
-        } else {
-          return this.lockSeatHandle({ ...data, assistFlag: 1 });
-        }
+      // 辅助锁定座位
+      if (ASSIST_LOCK_ERRORS.includes(error?.msg) && data.assistFlag != 1) {
+        return this.assistLockSeat(data);
       }
+
       return Promise.reject(error);
     }
+  }
+
+  /**
+   * 获取锁定座位参数
+   * @private
+   */
+  getLockSeatParams(data) {
+    const {
+      cinemaId,
+      cinemaCode,
+      filmId,
+      featureAppNo,
+      seatInfos,
+      session_id
+    } = data;
+    return {
+      cinemaId,
+      cinemaCode,
+      unifiedCode: cinemaCode,
+      filmId,
+      featureAppNo,
+      seatInfos,
+      session_id
+    };
   }
 }
