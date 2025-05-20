@@ -566,15 +566,7 @@ const getCinemaLoginInfoList = userId => {
 // window.getCinemaLoginInfoList = getCinemaLoginInfoList;
 // 发送微信消息
 const sendWxPusherMessage = async ({
-  plat_name,
-  order_number,
-  city_name,
-  cinema_name,
-  film_name,
-  hall_name,
-  supplier_end_price,
-  show_time,
-  lockseat,
+  orderInfo,
   transferTip,
   failReason,
   app_name,
@@ -583,6 +575,17 @@ const sendWxPusherMessage = async ({
   quan_flag,
   black_quans
 }) => {
+  const {
+    plat_name,
+    order_number,
+    city_name,
+    cinema_name,
+    film_name,
+    show_time,
+    lockseat,
+    hall_name,
+    supplier_end_price
+  } = orderInfo || {};
   const url = "https://wxpusher.zjiecode.com/api/manager/message/send";
   const headers = {
     "content-type": "application/json;charset=UTF-8",

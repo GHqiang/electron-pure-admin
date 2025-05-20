@@ -103,13 +103,15 @@
           />
         </el-form-item>
         <el-form-item
-          v-if="formData.app_type_code === 'sfc_applet'"
-          label="乐影影院openID"
+          v-if="
+            ['sfc_applet', 'chenxing_applet'].includes(formData.app_type_code)
+          "
+          label="影院openID"
           prop="sfc_open_id"
         >
           <el-input
             v-model="formData.sfc_open_id"
-            placeholder="请输入乐影影院openID"
+            placeholder="请输入影院openID"
             clearable
           />
         </el-form-item>

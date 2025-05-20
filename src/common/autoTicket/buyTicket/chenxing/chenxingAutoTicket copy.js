@@ -17,7 +17,7 @@ import {
   couponInfoSpecial
 } from "@/utils/utils";
 // 帮助锁定座位实例对象
-import assistLockSeatObj from "./lockSeatQueue";
+import assistLockSeatObj from "../../lockSeatQueue";
 import svApi from "@/api/sv-api";
 
 // 机器登录用户信息
