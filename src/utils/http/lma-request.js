@@ -5,6 +5,7 @@ import { ElMessage } from "element-plus";
 import {
   logUpload,
   getCurrentTime,
+  sendWxPusherMessage,
   mockDelay,
   getCinemaLoginInfoList
 } from "@/utils/utils";

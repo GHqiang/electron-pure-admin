@@ -331,15 +331,7 @@ class OrderAutoTicketQueue {
           });
           if (cancelRes.error) {
             sendWxPusherMessage({
-              plat_name,
-              order_number,
-              city_name,
-              cinema_name,
-              film_name,
-              show_time,
-              lockseat,
-              hall_name: order.hall_name,
-              supplier_end_price: order.supplier_end_price,
+              orderInfo: order,
               transferTip:
                 "取消订单释放座位失败，建议先手动取消订单，以便后续订单正常出票",
               failReason: `${JSON.stringify(cancelRes.error)}`
@@ -357,15 +349,7 @@ class OrderAutoTicketQueue {
       }
       if (!isTransferOrder) {
         sendWxPusherMessage({
-          plat_name,
-          order_number,
-          city_name,
-          cinema_name,
-          film_name,
-          show_time,
-          lockseat,
-          hall_name: order.hall_name,
-          supplier_end_price: order.supplier_end_price,
+          orderInfo: order,
           transferTip:
             "自动转单处于关闭状态,仅取消订单释放座位,需适时手动出票或者转单",
           failReason: `${errMsg}——${errInfo}`
@@ -428,15 +412,7 @@ class OrderAutoTicketQueue {
         level: "info"
       });
       sendWxPusherMessage({
-        plat_name,
-        order_number,
-        city_name,
-        cinema_name,
-        film_name,
-        show_time,
-        lockseat,
-        hall_name: order.hall_name,
-        supplier_end_price: order.supplier_end_price,
+        orderInfo: order,
         transferTip: "自动转单处于开启状态,已转单无需处理",
         failReason: `${errMsg}——${errInfo}`
       });
@@ -473,15 +449,7 @@ class OrderAutoTicketQueue {
         }
       });
       sendWxPusherMessage({
-        plat_name,
-        order_number,
-        city_name,
-        cinema_name,
-        film_name,
-        show_time,
-        lockseat,
-        hall_name: order.hall_name,
-        supplier_end_price: order.supplier_end_price,
+        orderInfo: order,
         transferTip: "自动转单开启，转单失败，需手动出票或者转单",
         failReason: `${errMsg}——${errInfo}`
       });
@@ -589,15 +557,7 @@ class OrderAutoTicketQueue {
         }
       });
       sendWxPusherMessage({
-        plat_name,
-        order_number,
-        city_name,
-        cinema_name,
-        film_name,
-        show_time,
-        lockseat,
-        hall_name: item.hall_name,
-        supplier_end_price: item.supplier_end_price,
+        orderInfo: item,
         transferTip: "此处不转单，直接跳过，需手动出票",
         failReason: str
       });
@@ -1681,15 +1641,7 @@ class OrderAutoTicketQueue {
         }
       });
       sendWxPusherMessage({
-        plat_name: item.plat_name,
-        order_number: item.order_number,
-        city_name: item.city_name,
-        cinema_name: item.cinema_name,
-        film_name: item.film_name,
-        show_time: item.show_time,
-        lockseat: item.lockseat,
-        hall_name: item.hall_name,
-        supplier_end_price: item.supplier_end_price,
+        orderInfo: item,
         transferTip: "一键买票异常，请及时联系技术",
         failReason: JSON.stringify(error)
       });
@@ -2296,15 +2248,7 @@ class OrderAutoTicketQueue {
         level: "info"
       });
       sendWxPusherMessage({
-        plat_name,
-        order_number,
-        city_name: orderInfo?.city_name,
-        cinema_name: orderInfo?.cinema_name,
-        film_name: orderInfo?.film_name,
-        show_time: orderInfo?.show_time,
-        lockseat,
-        hall_name: orderInfo.hall_name,
-        supplier_end_price: orderInfo.supplier_end_price,
+        orderInfo,
         transferTip: "哈哈暂不上传取票码,需手动上传",
         failReason: "哈哈暂不上传取票码,需手动上传"
       });
@@ -2467,15 +2411,7 @@ class OrderAutoTicketQueue {
           level: "error"
         });
         sendWxPusherMessage({
-          plat_name,
-          order_number,
-          city_name: orderInfo.city_name,
-          cinema_name: orderInfo.cinema_name,
-          film_name: orderInfo.film_name,
-          show_time: orderInfo.show_time,
-          lockseat,
-          hall_name: orderInfo.hall_name,
-          supplier_end_price: orderInfo.supplier_end_price,
+          orderInfo,
           transferTip: "此处不转单，需关注该订单，适时手动上传取票码",
           failReason: "获取订单支付结果，取票码不存在，准备开始异步轮询获取"
         });
@@ -2565,15 +2501,7 @@ class OrderAutoTicketQueue {
       if (!qrcode) {
         // 3分钟后还失败消息推送
         sendWxPusherMessage({
-          plat_name,
-          order_number,
-          city_name: orderInfo.city_name,
-          cinema_name: orderInfo.cinema_name,
-          film_name: orderInfo.film_name,
-          show_time: orderInfo.show_time,
-          lockseat,
-          hall_name: orderInfo.hall_name,
-          supplier_end_price: orderInfo.supplier_end_price,
+          orderInfo,
           transferTip: "此处不转单，需关注该订单，适时手动上传取票码",
           failReason: "系统延迟轮询3分钟后获取取票码仍失败"
         });
@@ -2682,15 +2610,7 @@ class OrderAutoTicketQueue {
         });
         let errInfo = formatErrInfo(submitRes?.error);
         sendWxPusherMessage({
-          plat_name,
-          order_number,
-          city_name: orderInfo?.city_name,
-          cinema_name: orderInfo?.cinema_name,
-          film_name: orderInfo?.film_name,
-          show_time: orderInfo?.show_time,
-          lockseat,
-          hall_name: orderInfo.hall_name,
-          supplier_end_price: orderInfo.supplier_end_price,
+          orderInfo,
           transferTip: "提交取票码失败,需手动上传",
           failReason: errInfo
         });

@@ -241,15 +241,7 @@ class OrderAutoFetchQueue {
   // 发送微信消息
   sendWxMsgByOrder(order, errMsg) {
     sendWxPusherMessage({
-      plat_name: order.plat_name,
-      order_number: order.order_number,
-      city_name: order.city_name,
-      cinema_name: order.cinema_name,
-      film_name: order.film_name,
-      show_time: order.show_time,
-      lockseat: order.lockseat,
-      hall_name: order.hall_name,
-      supplier_end_price: order.supplier_end_price,
+      orderInfo: order,
       transferTip: "此处不转单，直接跳过，需手动出票",
       failReason: errMsg
     });
