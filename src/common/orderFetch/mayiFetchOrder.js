@@ -60,7 +60,7 @@ class OrderAutoFetchQueue {
             logo,
             playTime,
             jiorder,
-            cinemaId,
+            cinemaStdCode,
             cinemaChain // 品牌名 上影上海、上影二线等
           } = item;
           return {
@@ -78,7 +78,7 @@ class OrderAutoFetchQueue {
             rewards: 0, // 蚂蚁无奖励，只有快捷
             is_urgent: jiorder, // 1紧急 0非紧急
             cinema_group: cinemaChain,
-            cinema_code: cinemaId, // 影院id
+            cinema_code: cinemaStdCode, // 影院code
             order_number: tradeno,
             lockseat: seat.split(",").join(" "),
             plat_name: "mayi"
@@ -145,7 +145,10 @@ class OrderAutoFetchQueue {
             des: "蚂蚁新的待出票订单",
             level: "info",
             info: {
-              newOrder: item
+              newOrder: item,
+              oldOrder: stayList.find(
+                order => order.tradeno === item.order_number
+              )
             }
           }
         ];

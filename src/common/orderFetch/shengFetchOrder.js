@@ -115,7 +115,7 @@ class OrderAutoFetchQueue {
             quick: deliverMinute > 0, // true表示为快捷订单（需12分钟内完成发货），false表示为特惠订单（需45分钟内完成发货）
             // 省暂定和猎人针对sfc影院名字一样
             cinema_group: cinema_group,
-            cinema_code: cinema.cinemaId, // 影院id
+            cinema_code: film.standardId, // 影院id
             order_number: code, // 订单号
             supplierCode, // 商户号
             lockseat: seats.map(itemA => itemA.name).join(" "),
@@ -171,9 +171,6 @@ class OrderAutoFetchQueue {
       if (!sfcStayOfferlist?.length) return;
       console.warn(conPrefix + "待出票列表新订单", sfcStayOfferlist);
       sfcStayOfferlist.forEach(item => {
-        const originalOrder = stayList.find(
-          itemA => itemA.code === item.order_number
-        );
         let logList = [
           {
             opera_time: getCurrentTime(),
@@ -181,7 +178,7 @@ class OrderAutoFetchQueue {
             level: "info",
             info: {
               newOrder: item,
-              originalOrder
+              oldOrder: stayList.find(itemA => itemA.code === item.order_number)
             }
           }
         ];

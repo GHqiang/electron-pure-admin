@@ -149,7 +149,10 @@ class OrderAutoFetchQueue {
             des: "芒果新的待出票订单",
             level: "info",
             info: {
-              newOrder: item
+              newOrder: item,
+              oldOrder: stayList.find(
+                order => order.order_number === item.order_number
+              )
             }
           }
         ];
