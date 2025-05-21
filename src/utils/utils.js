@@ -23,6 +23,10 @@ import { useDataTableStoreBySpecialName } from "@/store/specialNameRule";
 const specialRules = useDataTableStoreBySpecialName();
 const { specialNameList } = storeToRefs(specialRules);
 
+import { useDataTableStore } from "@/store/offerRule";
+const offerRules = useDataTableStore();
+const { offerRuleList } = storeToRefs(offerRules);
+
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
 // console.log("user_id", user_id);
@@ -1099,7 +1103,7 @@ const judgeHandle = (item, app_name, offerList) => {
 
 // 根据报价规则id获取报价规则
 const getOfferRuleById = id => {
-  let appOfferRuleList = window.localStorage.getItem("offerRuleList");
+  let appOfferRuleList = toRaw(offerRuleList.value);
   if (appOfferRuleList) {
     appOfferRuleList = JSON.parse(appOfferRuleList);
     appOfferRuleList = appOfferRuleList.filter(item => id == item.id);
@@ -1126,7 +1130,7 @@ const offerRuleMatch = order => {
     let shadowLineName = appName || app_name;
     console.log("报价订单影线", shadowLineName, plat_name);
     // 这里后面需要从接口里读取，数据太大了本地缓存不够放
-    let appOfferRuleList = window.localStorage.getItem("offerRuleList");
+    let appOfferRuleList = toRaw(offerRuleList.value);
     if (appOfferRuleList) {
       appOfferRuleList = JSON.parse(appOfferRuleList);
       appOfferRuleList = appOfferRuleList

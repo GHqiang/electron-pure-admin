@@ -1,14 +1,10 @@
 import { defineStore } from "pinia";
-let specialNameList = window.localStorage.getItem("specialNameList");
-if (specialNameList) {
-  specialNameList = JSON.parse(specialNameList);
-}
 export const useDataTableStoreBySpecialName = defineStore(
   "specialNameDataTable",
   {
     state: () => {
       return {
-        items: specialNameList || []
+        items: []
       };
     },
     actions: {
@@ -16,7 +12,6 @@ export const useDataTableStoreBySpecialName = defineStore(
       setRuleList(list) {
         console.warn(`设置影院特殊匹配列表信息`, list);
         this.items = list;
-        window.localStorage.setItem("specialNameList", JSON.stringify(list));
       }
     },
     getters: {
