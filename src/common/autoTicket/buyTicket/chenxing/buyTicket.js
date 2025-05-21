@@ -72,7 +72,7 @@ export default class BuyTicket {
         offerRule: this.offerRule
       }
     });
-    // result: { profit, submitRes, qrcode, quan_code, card_id, offerRule } || undefined
+    // result: { profit, submitRes, qrcode, quan_code, card_id, offerRule, mobile } || undefined
     if (result) {
       console.warn("单个订单出票完成");
       return result;
@@ -502,7 +502,8 @@ export default class BuyTicket {
         quan_code,
         card_id,
         cardNum,
-        offerRule
+        offerRule,
+        mobile: this.currentPhone
       };
     } catch (error) {
       this.logger.errorSave("一键买票异常", formatErrInfo(error));
