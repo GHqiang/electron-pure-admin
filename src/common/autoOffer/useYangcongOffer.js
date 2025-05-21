@@ -50,7 +50,7 @@ class OrderAutoOfferQueue {
   }
 
   // 处理新订单
-  handleNewOrder(item) {
+  handleNewOrder(item, oldOrder) {
     console.warn(this.conPrefix + "新的待报价订单", item);
     this.handledOrders.set(item.order_number, 1);
 
@@ -67,7 +67,8 @@ class OrderAutoOfferQueue {
         des: "洋葱新的待报价订单",
         level: "info",
         info: {
-          newOrder: item
+          newOrder: item,
+          oldOrder
         }
       }
     ];
@@ -199,7 +200,10 @@ class OrderAutoOfferQueue {
       // );
       if (!newOrders?.length) return [];
       newOrders.forEach(item => {
-        this.handleNewOrder(item);
+        this.handleNewOrder(
+          item,
+          stayList.find(itemA => itemA.tradeno == item.order_number)
+        );
       });
       return newOrders;
     } catch (error) {

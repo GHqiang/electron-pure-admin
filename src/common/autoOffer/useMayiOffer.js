@@ -50,7 +50,7 @@ class OrderAutoOfferQueue {
   }
 
   // 处理新订单
-  handleNewOrder(item) {
+  handleNewOrder(item, oldOrder) {
     console.warn(this.conPrefix + "新的待报价订单", item);
     this.handledOrders.set(item.order_number, 1);
 
@@ -67,7 +67,8 @@ class OrderAutoOfferQueue {
         des: "蚂蚁新的待报价订单",
         level: "info",
         info: {
-          newOrder: item
+          newOrder: item,
+          oldOrder
         }
       }
     ];
@@ -143,7 +144,7 @@ class OrderAutoOfferQueue {
           logo,
           playTime,
           jiorder,
-          cinemaId,
+          cinemaStdCode,
           cinemaChain // 品牌名 上影上海、上影二线等
         } = item;
         return {
@@ -162,7 +163,7 @@ class OrderAutoOfferQueue {
           rewards: 0, // 蚂蚁无奖励，只有快捷
           is_urgent: jiorder, // 1紧急 0非紧急
           cinema_group: cinemaChain,
-          cinema_code: cinemaId, // 影院id
+          cinema_code: cinemaStdCode, // 影院code编码，和app影院code一致
           order_number: tradeno,
           // 转为截止时间戳，原值： "2024-09-22 21:02:55"
           offer_end_time: +new Date(item.expiretime)
@@ -200,7 +201,10 @@ class OrderAutoOfferQueue {
       // );
       if (!newOrders?.length) return [];
       newOrders.forEach(item => {
-        this.handleNewOrder(item);
+        this.handleNewOrder(
+          item,
+          stayList.find(itemA => itemA.tradeno === item.order_number)
+        );
       });
     } catch (error) {
       console.error(conPrefix + "获取待报价订单异常", error);

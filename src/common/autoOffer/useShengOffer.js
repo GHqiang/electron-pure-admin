@@ -185,7 +185,7 @@ class OrderAutoOfferQueue {
           quick: order.quick, // true表示为快捷订单（需12分钟内完成发货），false表示为特惠订单（需45分钟内完成发货）
           // 省暂定和猎人针对sfc影院名字一样
           cinema_group: cinema_group,
-          cinema_code: cinemaId, // 影院id
+          cinema_code: film.standardId, // 影院id
           order_number: orderCode,
           seats: seatInfo, // 座位信息
           // 转为截止时间戳，原值： "2024-09-22 21:02:55"

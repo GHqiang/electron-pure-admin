@@ -12,7 +12,7 @@ import Logger from "@/common/logger";
 // 机器登录用户信息
 import { platTokens } from "@/store/platTokens";
 const {
-  userInfo: { rule, user_id, phone }
+  userInfo: { user_id }
 } = platTokens();
 import SeatManage from "./seatManage";
 import OrderManage from "./orderManage";
@@ -151,7 +151,7 @@ export default class BuyTicket {
   // 一键买票核心流程
   async oneClickBuyTicket(changePhoneBuyParams) {
     const { appFlag } = this;
-    let buyTicketInfo = changePhoneBuyParams; // 换号购买参数
+    let buyTicketInfo = JSON.parse(JSON.stringify(changePhoneBuyParams)); // 换号购买参数
     this.logger.info("即将开始一键买票信息", this.order);
     let {
       order_number,
