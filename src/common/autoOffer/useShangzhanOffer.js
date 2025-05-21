@@ -161,7 +161,10 @@ class OrderAutoOfferQueue {
             des: "商展新的待报价订单",
             level: "info",
             info: {
-              newOrder: item
+              newOrder: item,
+              oldOrder: stayList.find(
+                itemA => itemA.order_sn === item.order_number
+              )
             }
           }
         ];

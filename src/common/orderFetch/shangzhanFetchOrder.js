@@ -124,7 +124,10 @@ class OrderAutoFetchQueue {
             des: "商展新的待出票订单",
             level: "info",
             info: {
-              newOrder: item
+              newOrder: item,
+              oldOrder: stayList.find(
+                itemA => itemA.order_sn === item.order_number
+              )
             }
           }
         ];
