@@ -16,6 +16,15 @@
         @click="oneClickStop"
         >一键停止</el-button
       >
+      <el-button
+        v-if="isActiveSyncYangcong"
+        v-throttle
+        type="primary"
+        :style="{ marginLeft: '20px' }"
+        :loading="syncYangcongLoading"
+        @click="syncYangcongCinemaList()"
+        >同步洋葱影院列表</el-button
+      >
     </div>
 
     <el-table :data="platQueueList" border show-overflow-tooltip>
@@ -156,6 +165,7 @@ import lierenApi from "@/api/lieren-api";
 import mayiApi from "@/api/mayi-api";
 import shengApi from "@/api/sheng-api";
 import mangguoApi from "@/api/mangguo-api";
+import yangcongApi from "@/api/yangcong-api";
 
 // 平台报价执行队列
 import lierenOfferQueue from "@/common/autoOffer/useLierenOffer";
@@ -185,7 +195,8 @@ const APP_LIST = computed(() => GET_APP_LIST());
 import {
   getCinemaLoginInfoList,
   getCurrentTime,
-  logUpload
+  logUpload,
+  mockDelay
 } from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
@@ -195,6 +206,8 @@ const {
 } = tokens;
 const tableDataStore = usePlatTableDataStore();
 const platQueueList = computed(() => tableDataStore.items);
+import { useYangcongCinemaList } from "@/store/specialNameRule";
+const yangcongCinemaListObj = useYangcongCinemaList();
 
 // 券类型列表
 const quanType = ref([]);
@@ -209,6 +222,50 @@ const isActiveOneClickStop = computed(() => {
   return tableDataStore.items.filter(item => item.isEnabled).length > 0;
 });
 
+// 洋葱同步loading
+const syncYangcongLoading = ref(false);
+// 是否显示同步洋葱影院列表
+const isActiveSyncYangcong = computed(() => {
+  return (
+    tableDataStore.items.filter(
+      item => item.platName == "yangcong" && item.platToken
+    ).length > 0
+  );
+});
+
+// 同步洋葱影院列表
+const syncYangcongCinemaList = async (list = [], pageNum = 1) => {
+  try {
+    if (pageNum == 1) {
+      let yangcongToken = tableDataStore.items.find(
+        item => item.platName == "yangcong" && item.platToken
+      )?.platToken;
+      console.log("yangcongToken", yangcongToken);
+      setPlatFunObj["yangcong"](yangcongToken);
+    }
+    syncYangcongLoading.value = true;
+    const res = await yangcongApi.queryCinemaList({ pageSize: 500, pageNum });
+    // console.log("res", res);
+    const { current, pages, records } = res?.data || {};
+    list = list.concat(
+      records.map(item => ({
+        cinemaName: item.cinemaName,
+        cinemaCode: item.standardCode
+      }))
+    );
+    if (+current < +pages) {
+      return syncYangcongCinemaList(list, pageNum + 1);
+    } else {
+      syncYangcongLoading.value = false;
+      yangcongCinemaListObj.setYangcongCinemaList(list);
+      ElMessage.warning("洋葱影院列表同步完成");
+    }
+  } catch (error) {
+    console.warn("同步洋葱影院列表异常", error);
+    syncYangcongLoading.value = false;
+    ElMessage.warning("同步洋葱影院列表失败");
+  }
+};
 // 平台报价队列集合
 let platOfferQueueObj = {
   lieren: lierenOfferQueue,

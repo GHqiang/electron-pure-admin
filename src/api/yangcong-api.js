@@ -28,11 +28,22 @@ const submitTicketCode = params =>
 const transferOrder = params =>
   axios.get("/prod-api/api/ticket/order/turn/order", { params });
 
+// 查询影院列表（支持模糊查询，分页数最大500）
+const queryCinemaList = params =>
+  axios.get("/prod-api/api/ticket/cinema/listByCityCodes", {
+    params:
+      params ||
+      {
+        // cinemaName: "ACE",
+        // pageNum: 1
+      }
+  });
 export default {
   queryStayOfferList, // 查询待报价列表
   submitOffer, // 提交报价
   unlockSeat, // 解锁座位
   submitTicketCode, // 提交取票码
   transferOrder, // 转单
-  stayTicketingList // 查询中签订单
+  stayTicketingList, // 查询中签订单
+  queryCinemaList //  查询影院列表
 };

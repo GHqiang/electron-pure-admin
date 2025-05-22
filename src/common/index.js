@@ -75,5 +75,6 @@ const PLAT_API_OBJ = {
   haha: hahaApi,
   yinghuasuan: yinghuasuanApi
 };
+window.PLAT_API_OBJ = PLAT_API_OBJ;
 // console.log("SFC_API_OBJ"), SFC_API_OBJ;
 export { APP_API_OBJ, PLAT_API_OBJ };

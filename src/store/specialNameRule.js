@@ -42,3 +42,31 @@ export const useCinemaCodeMatchList = defineStore("cinemaCodeMatchList", {
     }
   }
 });
+
+// 每次优先从localStorage里获取
+let yangCongCinemaList = window.localStorage.getItem("yangCongCinemaList");
+if (yangCongCinemaList) {
+  yangCongCinemaList = JSON.parse(yangCongCinemaList);
+}
+// 洋葱影院列表
+export const useYangcongCinemaList = defineStore("yangcongCinemaList", {
+  state: () => {
+    return {
+      items: yangCongCinemaList || []
+    };
+  },
+  actions: {
+    // 设置规则列表
+    setYangcongCinemaList(list) {
+      console.warn(`设置洋葱平台影院列表信息`, list);
+      this.items = list;
+      window.localStorage.setItem("yangCongCinemaList", JSON.stringify(list));
+    }
+  },
+  getters: {
+    // 可以添加getters以方便在组件中使用过滤、排序等逻辑
+    yangcongCinemaList(state) {
+      return state.items;
+    }
+  }
+});
