@@ -80,13 +80,16 @@ import {
   GET_APP_LIST,
   GET_UME_LIST,
   GET_H5_UME_LIST,
-  GET_CHENXING_LIST
+  GET_CHENXING_LIST,
+  GET_SFC_APP_LIST,
+  GE_APP_INFO
 } from "@/common/constant";
-import { cinemNameSpecial } from "@/utils/utils";
+import { cinemNameSpecial, getCinemaLoginInfoList } from "@/utils/utils";
 const APP_LIST = computed(() => GET_APP_LIST());
 const UME_LIST = computed(() => GET_UME_LIST());
 const H5_UME_LIST = computed(() => GET_H5_UME_LIST());
 const CHENXING_LIST = computed(() => GET_CHENXING_LIST());
+const SFC_LIST = computed(() => GET_SFC_APP_LIST());
 
 const ruleFormRef = ref(null);
 // 父传子props
@@ -142,8 +145,8 @@ const resetForm = el => {
 const shadowLineChange = async val => {
   console.log("影线改变val", val);
   resetForm(1);
-  const cityList = await getCityList();
-  const allCinemaList = await getAllCinemaList(cityList);
+  const cityList = await getCityList(val);
+  const allCinemaList = await getAllCinemaList(cityList, val);
   console.log("allCinemaList", allCinemaList);
 };
 
@@ -178,8 +181,8 @@ const open = async ruleInfo => {
         // 新增
         formData.app_name = formInfo.app_name;
       }
-      const cityList = await getCityList();
-      const allCinemaList = await getAllCinemaList(cityList);
+      const cityList = await getCityList(formData.app_name);
+      const allCinemaList = await getAllCinemaList(cityList, formData.app_name);
       console.log("allCinemaList", allCinemaList, formData.cinema_name);
       if (!formData.cinema_id) {
         formData.cinema_id = allCinemaList.find(
@@ -207,7 +210,91 @@ const open = async ruleInfo => {
     showSfcDialog.value = false;
   }
 };
+// 获取全部影院列表（测试方法）
+const getCinemaAllList = async () => {
+  try {
+    let appList = [];
+    let appAllList = Object.keys(APP_LIST.value);
+    console.log("appAllList", appAllList);
+    let loginInfoList = getCinemaLoginInfoList();
+    appAllList.forEach(item => {
+      let obj = loginInfoList.find(
+        itemA => itemA.app_name === item && itemA.session_id
+      );
+      if (!obj) {
+        appList.push(item);
+      }
+    });
+    let noLogingAppList = appAllList.filter(
+      item => !loginInfoList.find(itemA => itemA.app_name == item)
+    );
+    console.warn(
+      `该影院未登录`,
+      noLogingAppList.map(item => ({ ["" + item]: APP_LIST.value[item] }))
+    );
+    appList = appList.slice();
+    console.log("appList", appList);
+    let allCinemaList = [],
+      noCinemaList = [];
+    for (const appName of appList) {
+      const cityList = await getCityList(appName);
+      let list = await getAllCinemaList(cityList, appName);
+      list = list
+        .map(item => {
+          const appInfo = GE_APP_INFO(appName);
+          if (!appInfo) {
+            console.warn(`${appName} 该影院已废弃`);
+          }
+          return {
+            ...item,
+            app_label: appInfo?.app_label,
+            app_name: appInfo?.app_name,
+            app_type_code: appInfo?.app_type_code,
+            app_type_name: appInfo?.app_type_name
+          };
+        })
+        .filter(item => item.app_label);
+      allCinemaList.push(...list);
+      if (!list.length) {
+        noCinemaList.push({
+          app_name: appName,
+          app_label: APP_LIST.value[appName]
+        });
+      }
+    }
 
+    allCinemaList = allCinemaList.map(item => {
+      let app_cinema_code = item.id;
+      let isH5_UME = H5_UME_LIST.value.includes(item.app_name);
+      let isLMA = item.app_name === "lma";
+      let isSFC = SFC_LIST.value.includes(item.app_name);
+      // 以下三种没有cinema_code，用city_id+id组合当唯一标识
+      if (isH5_UME || isLMA || isSFC) {
+        app_cinema_code = item.city_id + "_" + item.id;
+      }
+      return {
+        app_type_code: item.app_type_code,
+        app_type_name: item.app_type_name,
+        app_name: item.app_name,
+        app_label: item.app_label,
+        app_cinema_code,
+        app_cinema_name: item.name
+      };
+    });
+    console.log("allCinemaList", allCinemaList);
+    console.log(
+      "allCinemaList-app-count",
+      [...new Set(allCinemaList.map(item => item.app_name))].length
+    );
+    console.log("noCinemaList", noCinemaList);
+
+    return allCinemaList;
+  } catch (err) {
+    console.warn("获取全部影院列表异常", err);
+    return [];
+  }
+};
+window.getCinemaAllList = getCinemaAllList;
 // 保存规则
 const saveRule = async () => {
   ruleFormRef.value.validate(async valid => {
@@ -237,10 +324,9 @@ const cancel = el => {
 };
 
 // 获取城市列表
-const getCityList = async () => {
+const getCityList = async app_name => {
   try {
     let params = {};
-    const { app_name } = formData;
     let list = [];
     console.log("获取城市列表参数", params, app_name);
     if (UME_LIST.value.includes(app_name)) {
@@ -296,17 +382,17 @@ const getCityList = async () => {
     return list;
   } catch (error) {
     console.warn("获取城市列表异常", error);
+    return [];
   }
 };
 
 // 根据城市获取影院列表
-const getCinemaListByCityId = async city_id => {
+const getCinemaListByCityId = async (city_id, app_name) => {
   try {
     let params = {
       city_id: city_id
     };
     console.log("根据城市获取影院列表参数", params);
-    const { app_name } = formData;
     let cinemaList = [];
     if (UME_LIST.value.includes(app_name)) {
       cinemaList =
@@ -333,7 +419,7 @@ const getCinemaListByCityId = async city_id => {
           ?.cinemaResultDTOList || [];
       cinemaList = cinemaList.map(item => ({
         ...item,
-        id: item.cinemaId,
+        id: item.cinemaCode,
         name: item.cinemaName
       }));
     } else if (app_name === "lma") {
@@ -346,6 +432,7 @@ const getCinemaListByCityId = async city_id => {
         city_name: item.city_name
       }));
     } else {
+      // sfc
       const res = await APP_API_OBJ[app_name].getCinemaList(params);
       console.log("根据城市获取影院列表返回", res);
       cinemaList = res.data?.cinema_data || [];
@@ -357,13 +444,12 @@ const getCinemaListByCityId = async city_id => {
 };
 
 // 获取全部影院列表
-const getAllCinemaList = async cityList => {
+const getAllCinemaList = async (cityList, app_name) => {
   try {
-    const { app_name } = formData;
     let allCinemaList = [];
     for (let index = 0; index < cityList.length; index++) {
       const item = cityList[index];
-      let list = await getCinemaListByCityId(item.id);
+      let list = await getCinemaListByCityId(item.id, app_name);
       list = list.map(itemA => {
         return {
           ...itemA,
@@ -375,6 +461,10 @@ const getAllCinemaList = async cityList => {
         allCinemaList = allCinemaList.concat(list);
       }
     }
+    if (!allCinemaList.length) {
+      console.warn(`${app_name} 获取影院列表为空`);
+    }
+    console.log("allCinemaList" + "——" + app_name, allCinemaList);
     cinemaList.value = allCinemaList;
     return allCinemaList;
   } catch (error) {
