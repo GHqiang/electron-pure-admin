@@ -27,8 +27,12 @@ const rules = useDataTableStore();
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
 
-import { useDataTableStoreBySpecialName } from "@/store/specialNameRule";
+import {
+  useDataTableStoreBySpecialName,
+  useCinemaCodeMatchList
+} from "@/store/specialNameRule";
 const specialRules = useDataTableStoreBySpecialName();
+const cinemaCodeMatchObj = useCinemaCodeMatchList();
 import { useCinemaList } from "@/store/cinemaList.js";
 const useCinemaListObj = useCinemaList();
 defineOptions({
@@ -72,7 +76,16 @@ const setLocalSpecialMatchList = async () => {
     console.warn("查询规则列表时设置本地规则数据异常", error);
   }
 };
-
+// 设置本地的影院映射列表
+const setLocalCinemaCodeMatchList = async () => {
+  try {
+    const res = await svApi.queryCinemaMatchList({});
+    let cinemaList = res.data.cinemaList || [];
+    cinemaCodeMatchObj.setCinemaCodeMatchList(cinemaList);
+  } catch (error) {
+    console.warn("设置本地的影院映射列表异常", error);
+  }
+};
 // 设置本地的规则列表
 const setLocalRuleList = async rule => {
   try {
@@ -142,6 +155,7 @@ const onLogin = async formEl => {
           });
           let rule = loginRes.data?.user.rule;
           await setLocalCinemaList(rule);
+          await setLocalCinemaCodeMatchList();
           await setLocalSpecialMatchList();
           await setLocalLoginList(rule);
           await setLocalRuleList(rule);

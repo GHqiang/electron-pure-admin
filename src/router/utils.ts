@@ -226,6 +226,13 @@ function initRouter(rule: any) {
                 }
               },
               {
+                path: "/permission/cinemaCodeMatch/index",
+                name: "CinemaCodeMatch",
+                meta: {
+                  title: "影院映射列表"
+                }
+              },
+              {
                 path: "/permission/cinemaNameManage/index",
                 name: "CinemaNameManage",
                 meta: {

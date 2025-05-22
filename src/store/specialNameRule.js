@@ -22,3 +22,23 @@ export const useDataTableStoreBySpecialName = defineStore(
     }
   }
 );
+export const useCinemaCodeMatchList = defineStore("cinemaCodeMatchList", {
+  state: () => {
+    return {
+      items: []
+    };
+  },
+  actions: {
+    // 设置规则列表
+    setCinemaCodeMatchList(list) {
+      console.warn(`设置影院映射列表信息`, list);
+      this.items = list;
+    }
+  },
+  getters: {
+    // 可以添加getters以方便在组件中使用过滤、排序等逻辑
+    cinemaCodeMatchList(state) {
+      return state.items;
+    }
+  }
+});
