@@ -3927,7 +3927,7 @@ const addOrderHandleRecored = async ({
       show_time: order.show_time,
       cinema_group: order.cinema_group,
       offer_type: res?.offerRule?.offer_type || "",
-      // cinema_code: order.cinema_code,
+      cinema_code: order.cinema_code,
       quan_value: res?.offerRule?.quan_value || "",
       order_status: order_status,
       // remark: '',
