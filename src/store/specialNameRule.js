@@ -68,5 +68,12 @@ export const useYangcongCinemaList = defineStore("yangcongCinemaList", {
     yangcongCinemaList(state) {
       return state.items;
     }
+  },
+  actions: {
+    // 直接定义一个方法
+    getCinemaCode(cinemaName) {
+      return this.items.find(item => item.cinemaName === cinemaName)
+        ?.cinemaCode;
+    }
   }
 });

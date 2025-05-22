@@ -14,6 +14,9 @@ import getOfferPriceFun from "./commonOfferHandle.js";
 // 平台toke列表
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
+// 洋葱影院列表
+import { useYangcongCinemaList } from "@/store/specialNameRule";
+const yangcongCinemaListObj = useYangcongCinemaList();
 
 let isTestOrder = false; //是否是测试订单
 // 创建一个订单自动报价队列类
@@ -122,6 +125,10 @@ class OrderAutoOfferQueue {
     }
     this.isOfferRunning = false;
   }
+  // 测试获取cinemaCode方法
+  testGetCinemaCode(item) {
+    return yangcongCinemaListObj.getCinemaCode(item.cinemaName);
+  }
   // 获取订单
   async fetchOrders(fetchDelay) {
     const { conPrefix } = this;
@@ -162,7 +169,7 @@ class OrderAutoOfferQueue {
           rewards: 0, // 洋葱无奖励，只有快捷
           is_urgent: "", // 1紧急 0非紧急
           cinema_group: cinemaChain,
-          cinema_code: cinemaId, // 影院id
+          cinema_code: yangcongCinemaListObj.getCinemaCode(cinemaName), // 影院id
           order_number: tradeno,
           // 转为截止时间戳，原值： "2024-09-22 21:02:55"
           offer_end_time: +new Date(item.orderExpireTime)

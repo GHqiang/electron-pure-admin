@@ -17,6 +17,9 @@ const {
   userInfo: { name }
 } = tokens;
 let conPrefix = "【洋葱自动获取订单】——"; // console打印前缀
+// 洋葱影院列表
+import { useYangcongCinemaList } from "@/store/specialNameRule";
+const yangcongCinemaListObj = useYangcongCinemaList();
 
 // 创建一个订单自动报价队列类
 class OrderAutoFetchQueue {
@@ -78,7 +81,7 @@ class OrderAutoFetchQueue {
             rewards: 0, // 洋葱无奖励，只有快捷
             is_urgent: "", // 1紧急 0非紧急
             cinema_group: cinemaChain,
-            cinema_code: cinemaId, // 影院id
+            cinema_code: yangcongCinemaListObj.getCinemaCode(cinemaName), // 影院id
             order_number: tradeno,
             lockseat: seatNames.split("|").join(" "),
             plat_name: "yangcong"
