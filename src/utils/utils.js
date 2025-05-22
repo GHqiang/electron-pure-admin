@@ -1107,14 +1107,17 @@ const cinemaMatchHandle = (cinema_name, list, appName, city_name) => {
 // 影院名称特殊处理（为了特殊匹配,去括号、空格及中间点）
 const cinemNameSpecial = cinema_name => {
   return cinema_name
+    .toLowerCase()
     .replace(/[\(\)\（\）\-\/、]/g, "") // 替换括号、破折号、斜杠和顿号
     .replace(/\s*/g, "") // 替换所有空白字符
     .replace(/·/g, "") // 替换中间点
     .replace(/:/g, ""); // 替换冒号
 };
+window.cinemNameSpecial = cinemNameSpecial;
 // 券名称特殊处理（为了特殊匹配,去括号、空格、中间点、中横线及冒号）
 const couponInfoSpecial = coupon_info => {
   return coupon_info
+    .toLowerCase()
     .replace(/[\(\)\（\）-]/g, "")
     .replace(/\s*/g, "")
     .replace(/·/g, "")
