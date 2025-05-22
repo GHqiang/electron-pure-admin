@@ -257,7 +257,7 @@ class OrderAutoTicketQueue {
         show_time,
         cinema_group,
         offer_type: offerRule?.offer_type || "",
-        // cinema_code: order.cinema_code,
+        cinema_code: order.cinema_code,
         quan_value: offerRule?.quan_value || "",
         order_status,
         // remark: '',
