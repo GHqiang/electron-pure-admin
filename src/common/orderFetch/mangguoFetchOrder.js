@@ -80,7 +80,7 @@ class OrderAutoFetchQueue {
             rewards: 0, // 芒果无奖励，只有快捷
             is_urgent: is_urgent, // 1紧急 0非紧急
             cinema_group: line_name,
-            cinema_code: cinemaid, // 影院id
+            cinema_code: relation_to_cinema.cinema_code, // 影院id
             order_number: order_number,
             lockseat: relation_to_seat
               .map(itemA => itemA.position_seat.replace(/\s+/g, ""))

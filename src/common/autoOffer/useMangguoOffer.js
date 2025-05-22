@@ -164,7 +164,7 @@ class OrderAutoOfferQueue {
           rewards: 0, // 芒果无奖励，只有快捷
           is_urgent: is_urgent, // 1紧急 0非紧急
           cinema_group: line_name,
-          cinema_code: cinemaid, // 影院id
+          cinema_code: relation_to_cinema.cinema_code, // 影院id
           order_number: order_number,
           // 转为截止时间戳，原值： 180 倒计时(单位秒)
           offer_end_time: +new Date() + item.quote_countdown * 1000
