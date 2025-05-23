@@ -44,7 +44,7 @@
             clearable
           />
         </el-form-item>
-        <el-form-item label="影线标识集合" prop="flag_list">
+        <!-- <el-form-item label="影线标识集合" prop="flag_list">
           <el-input
             v-model="formData.flag_list"
             style="width: 500px"
@@ -54,8 +54,8 @@
             type="textarea"
             placeholder="请输入影线标识集合，若有多个用;分隔"
           />
-        </el-form-item>
-        <el-form-item label="平台影线组别" prop="group_list">
+        </el-form-item> -->
+        <!-- <el-form-item label="平台影线组别" prop="group_list">
           <el-input
             v-model="formData.group_list"
             style="width: 500px"
@@ -65,8 +65,8 @@
             type="textarea"
             placeholder="请输入平台影线组别，若有多个用;分隔"
           />
-        </el-form-item>
-        <el-form-item label="影线包含城市" prop="city_list">
+        </el-form-item> -->
+        <!-- <el-form-item label="影线包含城市" prop="city_list">
           <el-input
             v-model="formData.city_list"
             style="width: 500px"
@@ -90,7 +90,7 @@
             type="textarea"
             placeholder="请输入黑名单影院，若有多个用;分隔"
           />
-        </el-form-item>
+        </el-form-item> -->
         <el-form-item
           v-if="formData.app_type_code === 'sfc_applet'"
           label="乐影影院groupID"
@@ -148,13 +148,13 @@
             clearable
           />
         </el-form-item>
-        <el-form-item label="影院code" prop="cinemaCode">
+        <!-- <el-form-item label="影院code" prop="cinemaCode">
           <el-input
             v-model="formData.cinemaCode"
             placeholder="请输入影院code(选填)"
             clearable
           />
-        </el-form-item>
+        </el-form-item> -->
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="formData.status">
             <el-radio value="1" size="large">正常</el-radio>
@@ -221,11 +221,11 @@ let formData = reactive({
   channelCode: "",
   status: "1",
   is_out_use: "1",
-  remark: "",
-  group_list: "",
-  flag_list: "",
-  black_list: "",
-  city_list: ""
+  remark: ""
+  // group_list: "",
+  // flag_list: "",
+  // black_list: "",
+  // city_list: ""
 });
 
 const rules = {
@@ -267,10 +267,10 @@ const resetForm = el => {
   formData.cinemaLinkId = "";
   formData.channelCode = "";
   formData.remark = "";
-  formData.group_list = "";
-  formData.flag_list = "";
-  formData.black_list = "";
-  formData.city_list = "";
+  // formData.group_list = "";
+  // formData.flag_list = "";
+  // formData.black_list = "";
+  // formData.city_list = "";
 };
 
 // 影线类型改变
@@ -308,10 +308,10 @@ const open = async cinemaInfo => {
         formData.status = formInfo.status || "1";
         formData.is_out_use = formInfo.is_out_use || "1";
         formData.remark = formInfo.remark;
-        formData.group_list = formInfo.group_list;
-        formData.flag_list = formInfo.flag_list;
-        formData.black_list = formInfo.black_list;
-        formData.city_list = formInfo.city_list;
+        // formData.group_list = formInfo.group_list;
+        // formData.flag_list = formInfo.flag_list;
+        // formData.black_list = formInfo.black_list;
+        // formData.city_list = formInfo.city_list;
       } else {
         // 新增
         formData.app_type_code = formInfo.app_type_code;

@@ -80,8 +80,6 @@
               <span>{{ is_out_use == 2 ? "否" : "是" }}</span>
             </template>
           </el-table-column>
-          <el-table-column prop="group_list" label="影线组别" min-width="150" />
-          <el-table-column prop="flag_list" label="影线标识" min-width="180" />
           <el-table-column
             v-if="formData.app_type_code === 'sfc_applet'"
             prop="sfc_group_id"
