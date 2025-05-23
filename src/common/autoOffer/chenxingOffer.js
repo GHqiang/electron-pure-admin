@@ -7,7 +7,7 @@ import {
   offerRuleMatch,
   logUpload,
   formatErrInfo,
-  getTargetCinema,
+  getTargetCinemaCommon,
   calcCount,
   roundToHalf,
   isDateInCurrentMonth,
@@ -1303,9 +1303,8 @@ class getChenxingOfferPrice {
         return;
       }
       let cinemaList =
-        allCinemaList?.find(item =>
-          item.cityInfoDTO?.cityName.includes(city_name)
-        )?.cinemaResultDTOList || [];
+        allCinemaList?.find(item => item.cityName.includes(city_name))
+          ?.cinemaList || [];
       console.log(conPrefix + "获取城市影院列表返回", cinemaList);
 
       // 2、获取目标影院
@@ -1313,13 +1312,13 @@ class getChenxingOfferPrice {
         item => item.cinemaCode == cinema_code
       );
       console.log("cinemaCode匹配结果", targetCinema);
+      let getCinemaParams = {
+        app_name: appFlag,
+        plat_cinema_code: cinema_code,
+        cinema_list: cinemaList
+      };
       if (!targetCinema) {
-        targetCinema = getTargetCinema(
-          cinema_name,
-          cinemaList,
-          appFlag,
-          city_name
-        );
+        targetCinema = getTargetCinemaCommon(getCinemaParams);
       }
       if (!targetCinema) {
         console.error(conPrefix + "获取目标影院失败");
@@ -1328,11 +1327,8 @@ class getChenxingOfferPrice {
           des: "获取目标影院失败",
           level: "error",
           info: {
-            cinemaList,
-            cinema_code,
-            cinema_name,
-            app_name: appFlag,
-            city_name
+            ...getCinemaParams,
+            cinema_name
           }
         });
         return;
@@ -1568,7 +1564,14 @@ class getChenxingOfferPrice {
       const res = await this.appApi.getCinemaList(params);
       console.log("获取城市影院列表返回", res);
       let list = res.data || [];
-      return list;
+      return list.map(item => ({
+        ...item,
+        cityName: item.cityInfoDTO?.cityName,
+        cinemaList: item.cinemaResultDTOList.map(itemA => ({
+          ...itemA,
+          cinemaCode: itemA.cinemaCode
+        }))
+      }));
     } catch (error) {
       console.error("获取城市影院列表异常", error);
       this.logList.push({

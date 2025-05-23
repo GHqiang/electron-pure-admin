@@ -19,10 +19,13 @@ import {
 } from "@/common/constant";
 import { toRaw } from "vue";
 import { storeToRefs } from "pinia";
-import { useDataTableStoreBySpecialName } from "@/store/specialNameRule";
+import {
+  useDataTableStoreBySpecialName,
+  useCinemaCodeMatchList
+} from "@/store/specialNameRule";
 const specialRules = useDataTableStoreBySpecialName();
 const { specialNameList } = storeToRefs(specialRules);
-
+const cinemaCodeMatchObj = useCinemaCodeMatchList();
 import { useDataTableStore } from "@/store/offerRule";
 const offerRules = useDataTableStore();
 const { offerRuleList } = storeToRefs(offerRules);
@@ -383,8 +386,18 @@ const colorObj = {
   lumiai: "#33CCCC"
 };
 
+// 获取影院标识新
+const newGetCinemaFlagFun = item => {
+  let appFlag = cinemaCodeMatchObj.getCinemaAppFlag(item.cinema_code);
+  if (appFlag === "wanxiangh5") {
+    appFlag = "wanxiang";
+  }
+  return appFlag;
+};
 // 获取影院标识
 const getCinemaFlagFun = item => {
+  // 最新根据cinemaCode判断影院标识
+  return newGetCinemaFlagFun(item);
   const { cinema_group, cinema_name, city_name, plat_name } = item;
   // 是否是排除影院
   const is_exclude_cinema = EXCLUDE_CINEMA_LIST_BY_CINEMA_FLAG.some(
@@ -1007,6 +1020,22 @@ const getTargetCinema = (cinema_name, list, appName, city_name) => {
   }
 };
 
+// 统一获取目标影院方法（影院列表需保证好cinemaCode和cinemaId字段）
+const getTargetCinemaCommon = ({ app_name, plat_cinema_code, cinema_list }) => {
+  const matchInfo = cinemaCodeMatchObj.getCinemaMatchInfo(
+    plat_cinema_code,
+    app_name
+  );
+  // 如果两个code一致直接返回
+  if (matchInfo?.app_cinema_code == plat_cinema_code) {
+    return cinema_list.find(item => item.cinemaCode == plat_cinema_code);
+  } else {
+    // 拆开用cinemaId匹配
+    const [city_id, cinema_id] = matchInfo?.app_cinema_code?.split("_");
+    return cinema_list.find(item => item.cinemaId == cinema_id);
+  }
+};
+window.getTargetCinemaCommon = getTargetCinemaCommon;
 // 获取目标影院特殊匹配测试方法
 window.getTargetCinema = ({ app_name, cinema_name, cinemaList, city_name }) => {
   if (GET_UME_LIST().includes(app_name)) {
@@ -1809,6 +1838,7 @@ export {
   sendWxPusherMessage, // 发送微信消息
   calcCount, // 计算连续中标数
   judgeHandle, // 判断该订单是否是新订单
+  getTargetCinemaCommon, // 统一获取目标影院方法
   getCinemaId, // 根据订单name获取影院id(主要用于sfc系统)
   getCinemaIdByLma, // 根据订单name获取影院id(主要用于lma系统)
   getTargetCinema,

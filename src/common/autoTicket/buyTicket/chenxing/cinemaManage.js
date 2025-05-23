@@ -1,6 +1,6 @@
 import {
   convertFullwidthToHalfwidth,
-  getTargetCinema,
+  getTargetCinemaCommon,
   formatErrInfo, // 格式化错误信息
   getCinemaLoginInfoList,
   getCurrentDay,
@@ -52,15 +52,11 @@ export default class CinemaManage {
       }
 
       // 3、获取目标影院
-      let targetCinema = this.getTargetCinemaInfo(
-        city_name,
-        cinemaList,
-        cinema_name,
-        cinema_code
-      );
+      let targetCinema = this.getTargetCinemaInfo(cinema_code, cinemaList);
       if (!targetCinema) {
         this.logger.errorSave("根据订单中的影院名称获取目标影院失败", {
           cinema_name,
+          cinema_code,
           cinemaList,
           appFlag,
           city_name
@@ -121,7 +117,10 @@ export default class CinemaManage {
       return cityCinemaList.map(item => ({
         ...item,
         cityName: item.cityInfoDTO?.cityName,
-        cinemaList: item.cinemaResultDTOList
+        cinemaList: item.cinemaResultDTOList.map(itemA => ({
+          ...itemA,
+          cinemaCode: itemA.cinemaCode
+        }))
       }));
     } catch (error) {
       this.logger.errorSave("获取城市影院列表异常", formatErrInfo(error));
@@ -137,15 +136,14 @@ export default class CinemaManage {
   }
 
   // 获取目标影院
-  getTargetCinemaInfo(cityName, cinemaList, cinemaName, cinemaCode) {
+  getTargetCinemaInfo(cinemaCode, cinemaList) {
     let targetCinema = cinemaList.find(item => item.cinemaCode === cinemaCode);
     if (!targetCinema) {
-      targetCinema = getTargetCinema(
-        cinemaName,
-        cinemaList,
-        this.appFlag,
-        cityName
-      );
+      targetCinema = getTargetCinemaCommon({
+        app_name: this.appFlag,
+        plat_cinema_code: cinemaCode,
+        cinema_list: cinemaList
+      });
     }
     return targetCinema;
   }

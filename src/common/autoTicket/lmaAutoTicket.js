@@ -2,7 +2,7 @@ import {
   getCurrentTime,
   formatTimeOfTime,
   convertFullwidthToHalfwidth,
-  getCinemaId, // 根据影院名称获取影院id
+  getTargetCinemaCommon, // 根据影院名称获取影院id
   mockDelay, // 模拟延时
   logUpload, // 日志上传
   trial, // 试错重试
@@ -844,6 +844,7 @@ class OrderAutoTicketQueue {
       order_number,
       city_name,
       cinema_name,
+      cinema_code,
       film_name,
       hall_name,
       show_time,
@@ -918,12 +919,11 @@ class OrderAutoTicketQueue {
           return { transferParams };
         }
         // 4、根据影院名称获取目标影院id
-        let cinemaIdRes = getCinemaId(
-          cinema_name,
-          cinemaList,
-          appFlag,
-          city_name
-        );
+        let cinemaIdRes = getTargetCinemaCommon({
+          app_name: appFlag,
+          plat_cinema_code: cinema_code,
+          cinema_list: cinemaList
+        });
         cinema_id = cinemaIdRes?.cinema_id;
         if (!cinema_id) {
           this.logList.push({
@@ -3021,7 +3021,7 @@ const getCityCinemaList = async ({ city_id, appFlag }) => {
       return {
         ...item,
         name: item.cinema_name,
-        id: item.cinema_id
+        cinemaId: item.cinema_id
       };
     });
 

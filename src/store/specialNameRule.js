@@ -33,6 +33,19 @@ export const useCinemaCodeMatchList = defineStore("cinemaCodeMatchList", {
     setCinemaCodeMatchList(list) {
       console.warn(`设置影院映射列表信息`, list);
       this.items = list;
+    },
+    // 获取影院标识
+    getCinemaAppFlag(plat_cinema_code) {
+      return this.items.find(item => item.plat_cinema_code === plat_cinema_code)
+        ?.app_name;
+    },
+    // 获取影院映射信息
+    getCinemaMatchInfo(plat_cinema_code, app_name) {
+      return this.items.find(
+        item =>
+          item.plat_cinema_code === plat_cinema_code &&
+          item.app_name === app_name
+      );
     }
   },
   getters: {
@@ -61,19 +74,17 @@ export const useYangcongCinemaList = defineStore("yangcongCinemaList", {
       console.warn(`设置洋葱平台影院列表信息`, list);
       this.items = list;
       window.localStorage.setItem("yangCongCinemaList", JSON.stringify(list));
+    },
+    // 获取影院code
+    getCinemaCode(cinemaName) {
+      return this.items.find(item => item.cinemaName === cinemaName)
+        ?.cinemaCode;
     }
   },
   getters: {
     // 可以添加getters以方便在组件中使用过滤、排序等逻辑
     yangcongCinemaList(state) {
       return state.items;
-    }
-  },
-  actions: {
-    // 直接定义一个方法
-    getCinemaCode(cinemaName) {
-      return this.items.find(item => item.cinemaName === cinemaName)
-        ?.cinemaCode;
     }
   }
 });

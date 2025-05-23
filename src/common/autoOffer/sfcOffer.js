@@ -7,7 +7,7 @@ import {
   offerRuleMatch,
   logUpload,
   formatErrInfo,
-  getCinemaId,
+  getTargetCinemaCommon,
   calcCount,
   roundToHalf,
   isDateInCurrentMonth,
@@ -1457,6 +1457,7 @@ class getSfcOfferPrice {
       const {
         city_name,
         cinema_name,
+        cinema_code,
         film_name,
         hall_name,
         show_time,
@@ -1477,12 +1478,15 @@ class getSfcOfferPrice {
       let res = await this.appApi.getCinemaList(params);
       console.log(conPrefix + "获取城市影院返回", res);
       let cinemaList = res.data?.cinema_data || [];
-      let cinemaIdRes = getCinemaId(
-        cinema_name,
-        cinemaList,
-        app_name,
-        city_name
-      );
+      cinemaList = cinemaList.map(itemA => ({
+        ...itemA,
+        cinemaId: itemA.id
+      }));
+      let cinemaIdRes = getTargetCinemaCommon({
+        app_name: appFlag,
+        plat_cinema_code: cinema_code,
+        cinema_list: cinemaList
+      });
       let cinema_id = cinemaIdRes?.cinema_id;
       if (!cinema_id) {
         console.error(conPrefix + "获取目标影院失败");

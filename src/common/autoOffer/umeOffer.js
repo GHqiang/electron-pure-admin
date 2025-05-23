@@ -4,7 +4,7 @@ import {
   getCurrentDay,
   convertFullwidthToHalfwidth,
   offerRuleMatch,
-  getTargetCinema,
+  getTargetCinemaCommon,
   logUpload,
   formatErrInfo,
   roundToHalf,
@@ -1390,12 +1390,11 @@ class getUmeOfferPrice {
         item => item.cinemaCode === cinema_code
       );
       if (!targetCinema) {
-        targetCinema = getTargetCinema(
-          cinema_name,
-          cinemaList,
-          appFlag,
-          city_name
-        );
+        targetCinema = getTargetCinemaCommon({
+          app_name: appFlag,
+          plat_cinema_code: cinema_code,
+          cinema_list: cinemaList
+        });
       }
       if (!targetCinema) {
         console.error(conPrefix + "获取目标影院失败");
@@ -1799,6 +1798,10 @@ class getUmeOfferPrice {
       const res = await this.appApi.getCinemaList(params);
       console.log(conPrefix + "获取城市影院列表返回", res);
       let list = res.data || [];
+      list = list.map(item => ({
+        ...item,
+        cinemaCode: item.cinemaCode
+      }));
       return list;
     } catch (error) {
       console.error(conPrefix + "获取城市影院列表异常", error);

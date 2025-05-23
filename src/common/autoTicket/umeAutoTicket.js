@@ -2,7 +2,7 @@ import {
   getCurrentTime,
   formatTimeOfTime,
   convertFullwidthToHalfwidth,
-  getTargetCinema,
+  getTargetCinemaCommon,
   mockDelay, // 模拟延时
   logUpload, // 日志上传
   trial, // 试错重试
@@ -895,12 +895,11 @@ class OrderAutoTicketQueue {
           item => item.cinemaCode === cinema_code
         );
         if (!targetCinema) {
-          targetCinema = getTargetCinema(
-            cinema_name,
-            cinemaList,
-            appFlag,
-            city_name
-          );
+          targetCinema = getTargetCinemaCommon({
+            app_name: appFlag,
+            plat_cinema_code: cinema_code,
+            cinema_list: cinemaList
+          });
         }
         if (!targetCinema) {
           console.error(
@@ -3432,6 +3431,10 @@ const getCityCinemaList = async ({ appFlag }) => {
     const res = await APP_API_OBJ[appFlag].getCinemaList(params);
     console.log(conPrefix + "获取城市影院列表返回", res);
     let cityCinemaList = res.data || [];
+    cityCinemaList = cityCinemaList.map(item => ({
+      ...item,
+      cinemaCode: item.cinemaCode
+    }));
     return {
       cityCinemaList
     };

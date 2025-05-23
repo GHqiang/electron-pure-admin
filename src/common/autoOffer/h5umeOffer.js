@@ -6,7 +6,7 @@ import {
   formatTimeOfTime,
   convertFullwidthToHalfwidth,
   offerRuleMatch,
-  getTargetCinema,
+  getTargetCinemaCommon,
   logUpload,
   formatErrInfo,
   roundToHalf,
@@ -1279,12 +1279,11 @@ class getUmeOfferPrice {
         item => item.cinemaCode === cinema_code
       );
       if (!targetCinema) {
-        targetCinema = getTargetCinema(
-          cinema_name,
-          cinemaList,
-          appFlag,
-          city_name
-        );
+        targetCinema = getTargetCinemaCommon({
+          app_name: appFlag,
+          plat_cinema_code: cinema_code,
+          cinema_list: cinemaList
+        });
       }
       if (!targetCinema) {
         console.error("获取目标影院失败");
@@ -1749,7 +1748,7 @@ class getUmeOfferPrice {
         cityName: item.cityName,
         cinemaList: item.cinemas.map(itemA => ({
           ...itemA,
-          cinemaCode: itemA.cinemaCode
+          cinemaId: itemA.cinemaLinkId
         }))
       }));
       this.logList.push({

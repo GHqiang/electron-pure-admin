@@ -7,7 +7,7 @@ import {
   offerRuleMatch,
   logUpload,
   formatErrInfo,
-  getCinemaIdByLma,
+  getTargetCinemaCommon,
   formatTimeStrByLma,
   getCinemaLoginInfoList,
   calcCount,
@@ -1013,6 +1013,7 @@ class getLmaOfferPrice {
       const {
         city_name,
         cinema_name,
+        cinema_code,
         film_name,
         hall_name,
         show_time,
@@ -1028,12 +1029,15 @@ class getLmaOfferPrice {
       let res = await this.appApi.getCinemaList(city_id);
       console.log(conPrefix + "获取城市影院返回", res);
       let cinemaList = res.data?.list || [];
-      let cinemaIdRes = getCinemaIdByLma(
-        cinema_name,
-        cinemaList,
-        app_name,
-        city_name
-      );
+      cinemaList = cinemaList.map(itemA => ({
+        ...itemA,
+        cinemaId: itemA.cinema_id
+      }));
+      let cinemaIdRes = getTargetCinemaCommon({
+        app_name: app_name,
+        plat_cinema_code: cinema_code,
+        cinema_list: cinemaList
+      });
       let cinema_id = cinemaIdRes?.cinema_id;
       if (!cinema_id) {
         console.error(conPrefix + "获取目标影院失败");

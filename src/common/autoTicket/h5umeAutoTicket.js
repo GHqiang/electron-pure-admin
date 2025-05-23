@@ -1,7 +1,7 @@
 import {
   getCurrentTime,
   convertFullwidthToHalfwidth,
-  getTargetCinema,
+  getTargetCinemaCommon,
   mockDelay, // 模拟延时
   logUpload, // 日志上传
   trial, // 试错重试
@@ -932,12 +932,11 @@ class OrderAutoTicketQueue {
           item => item.cinemaLinkId === cinemaCode
         );
         if (!targetCinema) {
-          targetCinema = getTargetCinema(
-            cinema_name,
-            cinemaList,
-            appFlag,
-            city_name
-          );
+          targetCinema = getTargetCinemaCommon({
+            app_name: appFlag,
+            plat_cinema_code: cinemaCode,
+            cinema_list: cinemaList
+          });
         }
         if (!targetCinema) {
           console.error(
@@ -3301,7 +3300,10 @@ class OrderAutoTicketQueue {
       // 通过排查以往ume系列订单，发现cinemaCode和cinemaLinkId值并不一样，故此处先不赋同值
       list = list.map(item => ({
         cityName: item.cityName,
-        cinemaList: item.cinemas
+        cinemaList: item.cinemas.map(itemA => ({
+          ...itemA,
+          cinemaId: itemA.cinemaLinkId
+        }))
       }));
       this.logList.push({
         opera_time: getCurrentTime(),
