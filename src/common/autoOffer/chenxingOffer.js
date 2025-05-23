@@ -1214,7 +1214,7 @@ class getChenxingOfferPrice {
         let cardList = cardListLimit.filter(item => {
           return !item.linkCinemaIds
             ? true
-            : item.linkCinemaIds.split(",").some(itemA => itemA == cinemaId);
+            : item.linkCinemaIds.split(",").some(itemA => itemA == cinemaCode);
         });
         this.logList.push({
           opera_time: getCurrentTime(),
@@ -1232,7 +1232,8 @@ class getChenxingOfferPrice {
             level: "error",
             info: {
               ticket_num,
-              cinemaId
+              cinemaId,
+              cinemaCode
             }
           });
           return;

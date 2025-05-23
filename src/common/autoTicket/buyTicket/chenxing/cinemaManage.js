@@ -184,9 +184,9 @@ export default class CinemaManage {
   async cinemaLinkCardHandle(cinemaInfo) {
     const { ticket_num } = this.order;
     try {
-      if (cinemaInfo.cinemaId && this.offerRule.offer_type != 1) {
+      if (cinemaInfo.cinemaCode && this.offerRule.offer_type != 1) {
         const usableCards = await this.getUsableCardList(
-          cinemaInfo.cinemaId,
+          cinemaInfo.cinemaCode,
           ticket_num
         );
         if (usableCards?.length) {
@@ -219,7 +219,7 @@ export default class CinemaManage {
   }
 
   // 获取影院可用会员卡
-  async getUsableCardList(cinemaId, ticket_num) {
+  async getUsableCardList(cinemaCode, ticket_num) {
     const { appFlag } = this;
     try {
       // 获取已维护的卡列表
@@ -233,13 +233,13 @@ export default class CinemaManage {
       });
       let list = res.data.cardList || [];
       // 对卡列表进行可用过滤处理
-      return this.filterUsableCardList(list, ticket_num);
+      return this.filterUsableCardList(list, ticket_num, cinemaCode);
     } catch (error) {
       this.logger.errorSave("获取会员卡维护列表异常", formatErrInfo(error));
     }
   }
   // 过滤可用卡
-  filterUsableCardList(list, ticket_num) {
+  filterUsableCardList(list, ticket_num, cinemaCode) {
     list = list.map(item => ({
       ...item,
       // 使用日非当天的就是0
@@ -284,7 +284,7 @@ export default class CinemaManage {
     let useCanCardList = cardListLimit.filter(item => {
       return !item.linkCinemaIds
         ? true
-        : item.linkCinemaIds.split(",").some(itemA => itemA == cinemaId);
+        : item.linkCinemaIds.split(",").some(itemA => itemA == cinemaCode);
     });
     this.logger.infoSave("根据制定影院对卡列表进行过滤", {
       useCanCardList

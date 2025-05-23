@@ -1177,7 +1177,7 @@ class getUmeOfferPrice {
             ? true
             : item.linkCinemaIds
                 .split(",")
-                .some(itemA => itemA == movieInfo.cinemaCode);
+                .some(itemA => itemA == movieInfo.cinemaLinkId);
         });
         this.logList.push({
           opera_time: getCurrentTime(),
@@ -1556,6 +1556,7 @@ class getUmeOfferPrice {
       }
       return {
         ...targetShow,
+        cinemaLinkId,
         maxSeatPrice
       };
     } catch (error) {
