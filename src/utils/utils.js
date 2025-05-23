@@ -1184,7 +1184,6 @@ const judgeHandle = (item, app_name, offerList) => {
 const getOfferRuleById = id => {
   let appOfferRuleList = toRaw(offerRuleList.value);
   if (appOfferRuleList) {
-    appOfferRuleList = JSON.parse(appOfferRuleList);
     appOfferRuleList = appOfferRuleList.filter(item => id == item.id);
     return appOfferRuleList?.[0];
   }

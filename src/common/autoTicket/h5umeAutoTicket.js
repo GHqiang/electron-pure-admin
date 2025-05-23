@@ -871,7 +871,7 @@ class OrderAutoTicketQueue {
       order_number,
       city_name,
       cinema_name,
-      cinemaCode,
+      cinema_code,
       film_name,
       hall_name,
       show_time,
@@ -929,12 +929,12 @@ class OrderAutoTicketQueue {
         }
         // 3、获取目标影院
         let targetCinema = cinemaList.find(
-          item => item.cinemaLinkId === cinemaCode
+          item => item.cinemaCode === cinema_code
         );
         if (!targetCinema) {
           targetCinema = getTargetCinemaCommon({
             app_name: appFlag,
-            plat_cinema_code: cinemaCode,
+            plat_cinema_code: cinema_code,
             cinema_list: cinemaList
           });
         }
