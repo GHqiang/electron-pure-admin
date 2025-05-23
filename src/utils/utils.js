@@ -1199,7 +1199,6 @@ const offerRuleMatch = order => {
     // 这里后面需要从接口里读取，数据太大了本地缓存不够放
     let appOfferRuleList = toRaw(offerRuleList.value);
     if (appOfferRuleList) {
-      appOfferRuleList = JSON.parse(appOfferRuleList);
       appOfferRuleList = appOfferRuleList
         .filter(item =>
           item.platOfferList?.length
@@ -1839,8 +1838,8 @@ export {
   calcCount, // 计算连续中标数
   judgeHandle, // 判断该订单是否是新订单
   getTargetCinemaCommon, // 统一获取目标影院方法
-  getCinemaId, // 根据订单name获取影院id(主要用于sfc系统)
-  getCinemaIdByLma, // 根据订单name获取影院id(主要用于lma系统)
+  // getCinemaId, // 根据订单name获取影院id(主要用于sfc系统)
+  // getCinemaIdByLma, // 根据订单name获取影院id(主要用于lma系统)
   getTargetCinema,
   // 根据订单name获取目标影院(主要用于ume系统)
   cinemaMatchHandle, // 影院名称匹配（匹配报价规则时使用）
