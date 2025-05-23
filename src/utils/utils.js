@@ -1031,7 +1031,7 @@ const getTargetCinemaCommon = ({ app_name, plat_cinema_code, cinema_list }) => {
     return cinema_list.find(item => item.cinemaCode == plat_cinema_code);
   } else {
     // 拆开用cinemaId匹配
-    const [city_id, cinema_id] = matchInfo?.app_cinema_code?.split("_");
+    const [city_id, cinema_id] = matchInfo?.app_cinema_code?.split("_") || [];
     return cinema_list.find(item => item.cinemaId == cinema_id);
   }
 };

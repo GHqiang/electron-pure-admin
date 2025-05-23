@@ -1487,7 +1487,7 @@ class getSfcOfferPrice {
         plat_cinema_code: cinema_code,
         cinema_list: cinemaList
       });
-      let cinema_id = cinemaIdRes?.cinema_id;
+      let cinema_id = cinemaIdRes?.id;
       if (!cinema_id) {
         console.error(conPrefix + "获取目标影院失败");
         this.logList.push({
