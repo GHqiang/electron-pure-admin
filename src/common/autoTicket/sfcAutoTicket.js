@@ -12,7 +12,9 @@ import {
   couponInfoSpecial,
   getCurrentDay,
   isDateInCurrentMonth,
-  findMostRepeatedChars
+  findMostRepeatedChars,
+  isNextDayBySfc,
+  getPreviousDay
 } from "@/utils/utils";
 
 import svApi from "@/api/sv-api";
@@ -1176,6 +1178,10 @@ class OrderAutoTicketQueue {
         // let movie_id = movieInfo?.movie_id || ''
         start_day = show_time.split(" ")[0];
         start_time = show_time.split(" ")[1].slice(0, 5);
+        // 是否是次日，如果是，showDay需要向前进一
+        if (isNextDayBySfc(start_day, start_time)) {
+          start_day = getPreviousDay(start_day);
+        }
         console.log(
           conPrefix + "movieInfo===>",
           movieInfo,

@@ -1819,7 +1819,14 @@ function findMostRepeatedChars(str1, str2) {
   }
 }
 
+// 判断sfc是否是次日（源码）
+const isNextDayBySfc = (show_date, start_time) => {
+  var i = (show_date = show_date.replace(/-/g, "/")) + " " + start_time + ":00",
+    r = (new Date(i).getTime(), parseInt(start_time.split(":")[0]));
+  return r >= 0 && r <= 5;
+};
 export {
+  isNextDayBySfc, // 判断sfc是否是次日
   findMostRepeatedChars, // 找出重复字符及数量
   adjustSeats, // 获取需要帮助锁定的座位
   calculateMarkup, // 格式化获取真实加价金额
