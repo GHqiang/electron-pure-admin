@@ -21,6 +21,8 @@ import CardQuanManage from "./cardQuanManage";
 import Logger from "@/common/logger";
 // 影院管理类
 import CinemaManage from "./cinemaManage";
+// 座位管理类
+import SeatManage from "./seatManage";
 class getChenxingOfferPrice {
   constructor({ appFlag, plat_name }) {
     // console.log("APP_API_OBJ", APP_API_OBJ, appFlag, plat_name);
@@ -34,6 +36,7 @@ class getChenxingOfferPrice {
     this.logger.init(order);
     this.cardQuanManage = new CardQuanManage(order, this.logger); // 卡券管理模块
     this.cinemaManage = new CinemaManage(order, this.logger); // 影院管理模块
+    this.seatManage = new SeatManage(order, this.logger); // 座位管理模块
   }
 
   // 获取最终报价信息（唯一暴漏给外包用的方法）
@@ -376,11 +379,14 @@ class getChenxingOfferPrice {
         return -1;
       }
 
-      const {
+      let {
         standardPrice: basePrice,
         servicePrice,
         serviceAddFee,
-        cinemaCode
+        cinemaCode,
+        cinemaId,
+        filmId,
+        featureAppNo
       } = movieInfo;
       if (basePrice === 0) {
         this.logger.errorSave("获取会员价为0");
@@ -390,6 +396,24 @@ class getChenxingOfferPrice {
       const cardList = await this.fetchAvailableCards(order, cinemaCode);
       this.logger.infoSave("获取到可用卡列表", { cardList });
       if (!cardList.length) return null;
+
+      // 从座位信息里获取优惠活动列表
+      const targetSeatRes = await this.seatManage.getSeatLayout({
+        cinemaCode,
+        cinemaId,
+        filmId,
+        featureAppNo
+      });
+      let discountList = targetSeatRes?.discountList || [];
+      this.logger.infoSave("获取到可用优惠列表", { discountList });
+      if (discountList.length) {
+        // 取最低价
+        basePrice = discountList
+          .map(item => item.price - item.cinemaPayAmount)
+          .sort((a, b) => a - b)?.[0];
+        this.logger.infoSave("从优惠活动里取最低价", { basePrice });
+      }
+
       // 计算最优折扣
       return this.calculateBestDiscount(cardList, basePrice);
     } catch (error) {

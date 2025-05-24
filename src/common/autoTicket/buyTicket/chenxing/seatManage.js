@@ -66,12 +66,13 @@ export default class SeatManage {
    * @private
    */
   getSeatParams(buyTicketInfo) {
-    const { cinemaCode, cinemaId, filmId, targetShow } = buyTicketInfo;
+    const { cinemaCode, cinemaId, filmId, featureAppNo, targetShow } =
+      buyTicketInfo;
     return {
       cinemaCode,
       cinemaId,
       filmId,
-      featureAppNo: targetShow.featureAppNo
+      featureAppNo: featureAppNo || targetShow?.featureAppNo
     };
   }
 
