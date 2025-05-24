@@ -33,14 +33,6 @@ const { offerRuleList } = storeToRefs(offerRules);
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
 // console.log("user_id", user_id);
-// console.log(
-//   "specialNameList0",
-//   specialNameList.value,
-//   specialNameList.value.filter(item => item.app_name == "hbchyxd")
-// );
-
-console.log("specialNameList123", toRaw(specialNameList.value));
-// window.specialNameList = specialNameList;
 
 // 获取上一天
 function getPreviousDay(dateString) {
@@ -1048,42 +1040,7 @@ window.getTargetCinema = ({ app_name, cinema_name, cinemaList, city_name }) => {
     getCinemaIdByLma(cinema_name, cinemaList, app_name, city_name);
   }
 };
-// 是否匹配测试方法（用于匹配对比出票记录的cinema_code）
-const isMatch = (app_name, cinema_name, cinema_name1, city_name) => {
-  // console.log(app_name, cinema_name, cinema_name1, city_name);
-  let isMatch = false;
-  isMatch = cinema_name === cinema_name1;
-  if (isMatch) return true;
-  isMatch = cinemNameSpecial(cinema_name) === cinemNameSpecial(cinema_name1);
-  if (isMatch) return true;
-  let specialList = toRaw(specialNameList.value)
-    .filter(item => item.app_name == app_name)
-    .map(item => ({
-      city_name: item.city_name,
-      sfc_cinema_name: item.cinema_name,
-      order_cinema_name: item.special_name
-        ?.split("**")
-        ?.map(itemName => cinemNameSpecial(itemName))
-    }));
-  cinema_name1 = cinemNameSpecial(cinema_name1);
-  // console.log("specialList", specialList, cinema_name1);
 
-  let specialCinemaInfo = specialList.find(
-    item =>
-      item.order_cinema_name.includes(cinema_name1) &&
-      (item.city_name ? item.city_name.includes(city_name) : true)
-  );
-  // console.log("specialCinemaInfo", specialCinemaInfo);
-
-  if (specialCinemaInfo) {
-    return (
-      cinemNameSpecial(specialCinemaInfo.sfc_cinema_name) ===
-      cinemNameSpecial(cinema_name)
-    );
-  }
-};
-
-window.isMatch = isMatch;
 // 影院名称匹配（匹配报价规则时使用）
 const cinemaMatchHandle = ({
   app_name,

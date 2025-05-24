@@ -231,14 +231,14 @@ function initRouter(rule: any) {
                 meta: {
                   title: "影院映射列表"
                 }
-              },
-              {
-                path: "/permission/cinemaNameManage/index",
-                name: "CinemaNameManage",
-                meta: {
-                  title: "特殊匹配列表"
-                }
               }
+              // {
+              //   path: "/permission/cinemaNameManage/index",
+              //   name: "CinemaNameManage",
+              //   meta: {
+              //     title: "特殊匹配列表"
+              //   }
+              // }
             ]
           );
         }
