@@ -18,7 +18,7 @@ import Logger from "@/common/logger";
 // 统一购票模块
 import StrategyFactory from "@/common/autoTicket/buyTicket/index";
 //是否是测试订单
-let isTestOrder = true;
+let isTestOrder = false;
 
 // 创建一个订单自动出票队列类
 class OrderAutoTicketQueue {
@@ -59,15 +59,15 @@ class OrderAutoTicketQueue {
       cinema_addr: "雨花台区软件大道109号雨花客厅E-PARK北区3层",
       ticket_num: 1,
       cinema_name: "太原时代影城华景天地IMAX店",
-      hall_name: "7号激光厅",
+      hall_name: "8号激光厅",
       film_name: "人生开门红",
       film_img:
         "https://gw.alicdn.com/tfscom/i4/O1CN01e8PcvF1NESAgdEsnM_!!6000000001538-0-alipicbeacon.jpg_120x120.jpg",
-      show_time: "2025-05-22 22:00:00",
+      show_time: "2025-05-25 22:35:00",
       rewards: 0,
       is_urgent: false,
       cinema_group: "",
-      cinema_code: 33018961,
+      cinema_code: 14014771,
       order_number: "12412221440316515",
       offer_end_time: 1734849690000,
       app_name: "taiyuanshidai",
