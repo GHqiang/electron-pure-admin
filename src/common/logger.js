@@ -20,7 +20,11 @@ export default class Logger {
     const timestamp = new Date().toLocaleString().replaceAll("/", "-");
     if (this.isPrint) {
       // console[level](`[${timestamp}] ${message}`, meta);
-      console[level](`${message}`, meta);
+      if (meta) {
+        console[level](`${message}`, meta);
+      } else {
+        console[level](`${message}`);
+      }
     }
     if (isSave) {
       // 统一日志格式

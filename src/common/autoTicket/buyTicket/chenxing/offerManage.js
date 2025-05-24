@@ -31,7 +31,7 @@ class getChenxingOfferPrice {
   // 初始化依赖模块
   initModules(order) {
     this.logger = new Logger({ logType: 1 }); // 日志管理模块
-    this.logger.init();
+    this.logger.init(order);
     this.cardQuanManage = new CardQuanManage(order, this.logger); // 卡券管理模块
     this.cinemaManage = new CinemaManage(order, this.logger); // 影院管理模块
   }
@@ -40,7 +40,7 @@ class getChenxingOfferPrice {
   async getEndOfferPrice({ order, offerList }) {
     try {
       // 1. 初始化模块
-      this.initModules();
+      this.initModules(order);
 
       // 2. 获取最终匹配的报价规则
       let offerRule = await this.getEndMatchOfferRule(order);
@@ -65,11 +65,17 @@ class getChenxingOfferPrice {
 
       // 5. 组装返回结果
       offerRule.offer_end_amount = endPrice;
+      this.logger.infoSave(`最终报价金额：${endPrice}`);
       return this.buildSuccessResponse(endPrice, offerRule, order.order_number);
     } catch (error) {
       this.logger.errorSave("获取最终报价信息方法执行异常", error);
       return this.buildErrorResponse();
     }
+  }
+
+  // 获取基础报价金额
+  getOfferBasePrice(offerRule) {
+    return Number(offerRule.offerAmount || offerRule.memberOfferAmount);
   }
 
   // 构建错误响应
@@ -373,7 +379,8 @@ class getChenxingOfferPrice {
       const {
         standardPrice: basePrice,
         servicePrice,
-        serviceAddFee
+        serviceAddFee,
+        cinemaCode
       } = movieInfo;
       if (basePrice === 0) {
         this.logger.errorSave("获取会员价为0");
@@ -499,8 +506,13 @@ class getChenxingOfferPrice {
       }
 
       // 5. 处理固定报价规则
-      const bestFixedRule = validFixedRules[0];
-
+      const bestFixedRule = validFixedRules?.[0];
+      console.log(
+        "bestFixedRule",
+        bestFixedRule,
+        "bestFixAddRule",
+        bestFixAddRule
+      );
       // 6. 对比会员价和固定价
       return this.comparePricingStrategies({
         bestFixAddRule,
@@ -607,16 +619,16 @@ class getChenxingOfferPrice {
   /**
    * 对比定价策略
    */
-  comparePricingStrategies({ bestAddRule, bestFixedRule }) {
-    if (!bestAddRule) return bestFixedRule;
-    if (!bestFixedRule) return bestAddRule;
+  comparePricingStrategies({ bestFixAddRule, bestFixedRule }) {
+    if (!bestFixAddRule) return bestFixedRule;
+    if (!bestFixedRule) return bestFixAddRule;
 
-    if (bestAddRule.memberOfferAmount >= bestFixedRule.offerAmount) {
-      this.logPriceComparison(bestAddRule, bestFixedRule, "固定");
+    if (bestFixAddRule.memberOfferAmount >= bestFixedRule.offerAmount) {
+      this.logPriceComparison(bestFixAddRule, bestFixedRule, "固定");
       return bestFixedRule;
     } else {
-      this.logPriceComparison(bestAddRule, bestFixedRule, "会员");
-      return bestAddRule;
+      this.logPriceComparison(bestFixAddRule, bestFixedRule, "会员");
+      return bestFixAddRule;
     }
   }
 

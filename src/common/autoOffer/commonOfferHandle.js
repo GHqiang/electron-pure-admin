@@ -1,5 +1,5 @@
 import getSfcOfferPrice from "./sfcOffer";
-import getChenxingOfferPrice from "./chenxingOffer";
+import getChenxingOfferPrice from "../autoTicket/buyTicket/chenxing/offerManage.js";
 import getUmeOfferPrice from "./umeOffer";
 import getH5UmeOfferPrice from "./h5umeOffer.js";
 import getLmaOfferPrice from "./lmaOffer";
