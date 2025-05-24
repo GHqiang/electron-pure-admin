@@ -23,8 +23,8 @@ export default class CinemaManage {
     this.currentParamsList = currentParamsList;
   }
 
-  // 获取购票前的影院信息（核心方法）
-  async getBuyPrevCinemaInfo() {
+  // 获取购票前的影院信息（核心方法）// 1-报价 默认出票
+  async getBuyPrevCinemaInfo(flag) {
     try {
       const { appFlag } = this;
       const { city_name, cinema_code, cinema_name, film_name, show_time } =
@@ -67,8 +67,12 @@ export default class CinemaManage {
       cinemaInfo.cinemaCode = targetCinema.cinemaCode;
 
       // 4、拿到影院code进行影院指定卡相关处理(获取可用卡列表，根据可用卡调整登录信息顺序)
-      await this.cinemaLinkCardHandle(cinemaInfo);
-      cinemaInfo.currentParamsList = this.currentParamsList;
+      if (flag != 1) {
+        // 出票调用时才需要这样处理
+        await this.cinemaLinkCardHandle(cinemaInfo);
+        cinemaInfo.currentParamsList = this.currentParamsList;
+      }
+
       // 5、获取目标影院放映列表
       const movie_data = await this.getMoviePlayInfo(cinemaInfo);
       if (!movie_data?.length) {

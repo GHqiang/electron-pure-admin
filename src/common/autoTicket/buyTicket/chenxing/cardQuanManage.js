@@ -5,7 +5,8 @@ import {
   mockDelay, // 模拟延时
   formatErrInfo, // 格式化错误信息
   getOfferRuleById,
-  couponInfoSpecial
+  couponInfoSpecial,
+  getCinemaLoginInfoList
 } from "@/utils/utils";
 import { APP_API_OBJ } from "@/common/index";
 import svApi from "@/api/sv-api";
@@ -458,13 +459,17 @@ export default class CardQuanManage {
   }
 
   // 单个更新券库存
-  async singleUpdateQuanStock(params) {
+  async singleUpdateQuanStock(data) {
+    let { logger, ...params } = data;
+    if (!logger) {
+      logger = this.logger;
+    }
     try {
-      this.logger.infoSave("单个更新券库存入参", params);
+      logger.infoSave("单个更新券库存入参", params);
       const res = await svApi.updateQuanType(params);
-      this.logger.infoSave("单个更新券库存返回", res);
+      logger.infoSave("单个更新券库存返回", res);
     } catch (error) {
-      this.logger.errorSave("单个更新券库存异常", formatErrInfo(error));
+      logger.errorSave("单个更新券库存异常", formatErrInfo(error));
     }
   }
   // 获取新券(暂未联调)
@@ -556,6 +561,285 @@ export default class CardQuanManage {
       return res;
     } catch (error) {
       logger.errorSave("绑定新券异常", formatErrInfo(error));
+    }
+  }
+
+  // 获取影院券类型列表(报价时通过库存判断是否报价使用)
+  async getQuanTypeListByApp() {
+    const { app_name } = this.order;
+    let useMobileList = getCinemaLoginInfoList()
+      .filter(
+        item => item.app_name === app_name && item.mobile && item.session_id
+      )
+      .map(item => item.mobile);
+    const params = {
+      app_name,
+      isNeedTotalNum: 0,
+      queryFields: "id,app_name,quan_value,quan_flag,black_quans,quanStockList"
+    };
+    try {
+      let quanTypeRes = await svApi.queryQuanTypeList(params);
+      let quanTypeList = quanTypeRes?.data?.quanTypeList || [];
+      quanTypeList.forEach(item => {
+        item.quanStockList = item.quanStockList
+          ? JSON.parse(item.quanStockList)
+          : [];
+        // 只拿关联账号的券库存信息进行判断
+        item.quanStockListByPhone = item.quanStockList.filter(itemA =>
+          useMobileList.includes(itemA.phone)
+        );
+        item.quan_stock = item.quan_stock || 0;
+        if (item.quanStockListByPhone?.length) {
+          // 最大数当做券库存
+          let maxNum = 0;
+          item.quanStockListByPhone.forEach(itemA => {
+            if (+itemA.quan_stock > maxNum) {
+              maxNum = +itemA.quan_stock;
+            }
+          });
+          item.quan_stock = maxNum;
+        }
+      });
+      this.logger.info("quanTypeList", quanTypeList);
+      this.logger.infoSave("根据影院获取券类型列表返回", {
+        quanTypeRes,
+        quanTypeList,
+        params,
+        useMobileList
+      });
+      return quanTypeList;
+    } catch (error) {
+      this.errorSave("根据影院获取券类型列表返回异常", {
+        error,
+        params
+      });
+    }
+  }
+  // 异步更新券库存-报价时
+  async syncUpdateQuanStock({ cinemaCode, cinemaId, quanTypeList }) {
+    if (quanTypeList?.length) return;
+    const { app_name } = this.order;
+    let logger = new Logger({
+      logType: 1
+    });
+    logger.init(this.order);
+    let targetLoginList = getCinemaLoginInfoList().filter(
+      item => item.app_name === app_name && item.mobile && item.session_id
+    );
+    console.log("targetLoginList", targetLoginList);
+    try {
+      let needUpdateQuanTypeList = [];
+      // 拿着处理过的最大券库存（几个号之间）+对应的更新时间去判断是否要更新（只判断自己号上的）
+      let isNeedUpdate = quanTypeList.some(item => {
+        // if (item.quan_stock < 5) {
+        let inx = item.quanStockListByPhone.findIndex(
+          itemA => itemA.quan_stock === item.quan_stock
+        );
+        console.log("inx", inx);
+        if (inx != -1) {
+          let update_time = item.quanStockListByPhone[inx].update_time;
+          console.log("update_time", update_time);
+
+          return !update_time
+            ? true
+            : +new Date() - +new Date(update_time) > 1000 * 60 * 60; // 超过1小时未更新
+        } else {
+          return true;
+        }
+        // }
+        return false;
+      });
+      if (!isNeedUpdate) {
+        logger.infoSave("不需要更新券库存", { quanTypeList });
+      } else {
+        // 只要有一个需要更新，就全部更新，因为会获取该号全部的券
+        needUpdateQuanTypeList = quanTypeList;
+        console.log("needUpdateQuanTypeList", needUpdateQuanTypeList);
+        logger.infoSave("需要更新的券类型列表", {
+          quanTypeList,
+          targetLoginList
+        });
+
+        let quanTypeListParams = needUpdateQuanTypeList.map(item => {
+          return {
+            id: item.id,
+            quan_flag: item.quan_flag,
+            black_quans: item.black_quans,
+            quanStockList: item.quanStockList.map(itemA => ({
+              phone: itemA.phone,
+              quan_stock: itemA.quan_stock || 0,
+              real_quan_stock: itemA.real_quan_stock || 0,
+              update_time: itemA.update_time
+            }))
+          };
+        });
+        // 获取关联用户每个号的优惠券列表
+        for (let i = 0; i < targetLoginList.length; i++) {
+          const { session_id, mobile } = targetLoginList[i];
+          const quanListAll = await this.getQuanListByPhone({
+            session_id,
+            cinemaCode,
+            cinemaId,
+            logger
+          });
+
+          quanTypeListParams.forEach(item => {
+            let targetQuanList = quanListAll.filter(
+              itemA =>
+                couponInfoSpecial(item.quan_flag) ===
+                  couponInfoSpecial(itemA.coupon_info) &&
+                !item.black_quans?.includes(itemA.coupon_num)
+            );
+            console.log(item.quan_flag, "targetQuanList", targetQuanList);
+            const { card_num } = targetQuanList?.[0] || {};
+            let quanStock = targetQuanList.length;
+            if (card_num) {
+              const groupedCoupons = targetQuanList.reduce((groups, coupon) => {
+                const key = coupon.card_num;
+                if (!groups[key]) {
+                  groups[key] = [];
+                }
+                groups[key].push(coupon);
+                return groups;
+              }, {});
+              let groupList = Object.values(groupedCoupons);
+              // 获取分组后最多出票量当做库存
+              let maxLength = groupList[0]?.length || 0; // 初始化为数组的第一个元素
+              for (let i = 1; i < groupList.length; i++) {
+                if (groupList[i]?.length > maxLength) {
+                  maxLength = groupList[i].length;
+                }
+              }
+              quanStock = maxLength;
+            }
+            let quanStockList = item.quanStockList;
+            console.log("quanStockList", quanStockList);
+            let inx = quanStockList.findIndex(itemB => itemB.phone === mobile);
+            if (inx != -1) {
+              quanStockList[inx].quan_stock = quanStock;
+              quanStockList[inx].real_quan_stock = targetQuanList.length;
+              quanStockList[inx].update_time = getCurrentTime();
+            } else {
+              quanStockList.push({
+                phone: mobile,
+                quan_stock: quanStock,
+                real_quan_stock: targetQuanList.length,
+                update_time: getCurrentTime()
+              });
+            }
+          });
+        }
+        console.log("quanTypeListParams", quanTypeListParams);
+        let updateTypeList = quanTypeListParams.map(item => ({
+          id: item.id,
+          quanStockList: item.quanStockList,
+          update_time: getCurrentTime()
+        }));
+        console.log("updateTypeList", updateTypeList);
+        logger.infoSave("最终要更新的券类型列表", { updateTypeList });
+        for (let index = 0; index < updateTypeList.length; index++) {
+          const item = updateTypeList[index];
+          // 单个更新
+          await this.singleUpdateQuanStock({
+            id: item.id,
+            quanStockList: JSON.stringify(item.quanStockList),
+            update_time: item.update_time,
+            logger
+          });
+        }
+      }
+    } catch (error) {
+      logger.errorSave("异步更新券库存异常", error);
+    } finally {
+      logger.logUpload();
+    }
+  }
+
+  // 获取某个手机号的全部优惠券列表
+  async getQuanListByPhone({
+    cinemaCode,
+    cinemaId,
+    session_id,
+    page = 1,
+    logger
+  }) {
+    try {
+      let params = {
+        cinemaCode,
+        cinemaId,
+        session_id
+        // 支付页获取券列表有传锁座id，这里不传不知道是否可行，个人中心暂未找到券列表
+        // lockOrderId=33018961202503300001857
+      };
+      logger.infoSave("获取优惠券列表参数", { params });
+      const res = await this.appApi.getQuanList(params);
+      console.log("获取优惠券列表返回-res", res);
+      let quanList = res.data?.unused?.lists || [];
+      let total_page = res.data?.unused?.total_page || [];
+      logger.infoSave("获取优惠券列表返回", { quanList, total_page });
+
+      let quanListAll = quanList.map(item => ({
+        coupon_info: item.coupon_info,
+        coupon_num: item.coupon_num,
+        card_num: item.card_num
+      }));
+      // 证明还有下一页
+      if (total_page > page) {
+        const quanData = await this.continuousGetQuan({
+          city_id,
+          cinemaId,
+          session_id,
+          page: 2,
+          logger
+        });
+        console.log("quanData", quanData);
+        logger.infoSave("连续获取券返回", { quanData });
+        quanListAll.push(...(quanData || []));
+      }
+      console.log("quanListAll", quanListAll);
+
+      return quanListAll;
+    } catch (error) {
+      logger.errorSave("获取优惠券列表异常", error);
+    }
+  }
+
+  // 连续获取券
+  async continuousGetQuan(data) {
+    let { city_id, cinemaId, session_id, page, quanData = [], logger } = data;
+    const params = {
+      city_id,
+      cinemaId,
+      session_id,
+      page,
+      status: 4
+    };
+    try {
+      const res = await this.appApi.getQuanList(params);
+      let quanList = res.data?.unused?.lists || [];
+      let total_page = res.data?.unused?.total_page || [];
+      if (page == 2) {
+        logger.infoSave("获取券返回", { quanList, params });
+      }
+      quanData.push(...quanList);
+      if (total_page > page) {
+        // 如果总数量仍小于所需数量，则继续获取下一页
+        return await this.continuousGetQuan({
+          ...data,
+          page: page + 1,
+          quanData
+        });
+      }
+      return quanData.map(item => ({
+        coupon_info: item.coupon_info,
+        coupon_num: item.coupon_num,
+        card_num: item.card_num
+      }));
+    } catch (error) {
+      logger.errorSave("连续获取券异常", {
+        error,
+        params
+      });
     }
   }
 }
