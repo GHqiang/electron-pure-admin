@@ -1,18 +1,12 @@
 // sfc报价逻辑
 import {
-  getCurrentTime,
-  formatTimeOfTime,
   getCurrentDay,
-  convertFullwidthToHalfwidth,
   offerRuleMatch,
-  logUpload,
   formatErrInfo,
-  getTargetCinemaCommon,
   calcCount,
   roundToHalf,
   isDateInCurrentMonth,
-  getCinemaLoginInfoList,
-  findMostRepeatedChars
+  getCinemaLoginInfoList
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
@@ -34,14 +28,19 @@ class getChenxingOfferPrice {
     this.appFlag = appFlag; // 影线标识
     this.plat_name = plat_name; // 平台标识
     this.appApi = APP_API_OBJ[appFlag];
-    this.logList = []; // 操作运行日志
+  }
+  // 初始化依赖模块
+  initModules(order) {
+    this.logger = new Logger({ logType: 1 }); // 日志管理模块
+    this.logger.init();
+    this.cardQuanManage = new CardQuanManage(order, this.logger); // 卡券管理模块
+    this.cinemaManage = new CinemaManage(order, this.logger); // 影院管理模块
   }
 
   // 获取最终报价信息（唯一暴漏给外包用的方法）
   async getEndOfferPrice({ order, offerList }) {
-    this.logger = new Logger({ logType: 1 }); // 日志管理模块
-    this.cardQuanManage = new CardQuanManage(order, this.logger); // 卡券管理模块
-    this.cinemaManage = new CinemaManage(order, this.logger); // 影院管理模块
+    // 1. 初始化模块
+    this.initModules();
 
     const { plat_name, appFlag } = this;
     let endPrice, offerRule;
@@ -52,14 +51,7 @@ class getChenxingOfferPrice {
       if (!offerRule) {
         return this.returnResultHandle({ endPrice, offerRule, order_number });
       }
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "最终匹配到的报价规则",
-        level: "info",
-        info: {
-          offerRule
-        }
-      });
+      this.logger.infoSave("最终匹配到的报价规则", offerRule);
       const {
         offerAmount,
         memberOfferAmount,
@@ -69,11 +61,7 @@ class getChenxingOfferPrice {
       } = offerRule;
       let price = Number(offerAmount || memberOfferAmount);
       if (!price) {
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "从最终报价规则里获取报价价格失败",
-          level: "error"
-        });
+        this.logger.errorSave("从最终报价规则里获取报价价格失败");
         return this.returnResultHandle({ endPrice, offerRule, order_number });
       }
       // 成本价
@@ -88,11 +76,7 @@ class getChenxingOfferPrice {
         cost_price = Number(memberCostPrice);
       }
       if (!cost_price) {
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "获取出票成本价格失败",
-          level: "error"
-        });
+        this.logger.errorSave("获取成本价格失败");
         return this.returnResultHandle({ endPrice, offerRule, order_number });
       }
       offerRule.cost_price = cost_price; // 成本价
@@ -114,44 +98,16 @@ class getChenxingOfferPrice {
       offerRule.offer_end_amount = endPrice;
       return this.returnResultHandle({ endPrice, offerRule, order_number });
     } catch (error) {
-      console.error("获取最终报价信息方法执行异常", error);
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "获取最终报价信息方法执行异常",
-        level: "error",
-        info: {
-          error
-        }
-      });
+      this.logger.errorSave("获取最终报价信息方法执行异常", error);
       return this.returnResultHandle({ endPrice, offerRule, order_number });
     }
   }
 
   // 返回获取最终报价结果
-  returnResultHandle({ endPrice, offerRule, order_number }) {
-    const { plat_name, appFlag } = this;
-    let err_msg, err_info;
-    try {
-      const errInfoObj = this.logList
-        .filter(item => item.level === "error")
-        .reverse()?.[0];
-      err_msg = errInfoObj?.des || "";
-      err_info = formatErrInfo(errInfoObj?.info) || "";
-    } catch (error) {
-      err_msg = "返回报价处理结果异常";
-      err_info = formatErrInfo(error) || "";
-    } finally {
-      logUpload(
-        {
-          plat_name,
-          app_name: appFlag,
-          order_number,
-          type: 1
-        },
-        this.logList
-      );
-      return { err_msg, err_info, endPrice, offerRule };
-    }
+  returnResultHandle({ endPrice, offerRule }) {
+    const { err_msg, err_info } = this.logger.getLastErrMsgAndInfo();
+    this.logger.logUpload();
+    return { err_msg, err_info, endPrice, offerRule };
   }
 
   // 获取最终匹配到的报价规则
@@ -160,14 +116,9 @@ class getChenxingOfferPrice {
       const matchRuleListRes = offerRuleMatch(order);
       let matchRuleList = matchRuleListRes?.matchRuleList || [];
       if (!matchRuleList?.length) {
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "报价规则匹配后为空",
-          level: "error",
-          info: {
-            error: matchRuleListRes?.error,
-            order
-          }
+        this.logger.errorSave("报价规则匹配后为空", {
+          error: matchRuleListRes?.error,
+          order
         });
         return;
       }
@@ -178,14 +129,11 @@ class getChenxingOfferPrice {
       );
       let filmType; // 电影放映信息
       // 获取电影放映信息以匹配电影格式
-      const buyTicketInfo = await this.cinemaManage.getBuyPrevCinemaInfo(1);
-      let movieInfo = buyTicketInfo?.targetShow;
+      let movieInfo = this.getMovieInfo();
       if (!movieInfo) {
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "报价规则匹配时获取当前场次电影信息失败，直接不报",
-          level: "info"
-        });
+        this.logger.infoSave(
+          "报价规则匹配时获取当前场次电影信息失败，直接不报"
+        );
         return;
       }
       if (filmTypeFlag) {
@@ -199,26 +147,15 @@ class getChenxingOfferPrice {
         }
       }
       if (!matchRuleList?.length) {
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "过滤完电影格式后匹配报价规则为空",
-          level: "error",
-          info: {
-            filmTypeFlag,
-            filmType,
-            movieInfo
-          }
+        this.logger.errorSave("过滤电影格式后匹配报价规则为空", {
+          filmTypeFlag,
+          filmType,
+          movieInfo
         });
         return;
       }
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "报价规则匹配列表",
-        level: "info",
-        info: {
-          matchRuleList
-        }
-      });
+      this.logger.infoSave("过滤电影格式后匹配报价规则列表", matchRuleList);
+
       // 获取报价最低的报价规则
       let endRule = await this.getMinAmountOfferRule(
         matchRuleList,
@@ -232,35 +169,20 @@ class getChenxingOfferPrice {
           item => item.offerType === "1" && item.offerAmount
         );
         if (fixedAmountRuleList.length) {
-          this.logList.push({
-            opera_time: getCurrentTime(),
-            des: "根据券库存过滤后固定报价规则为空",
-            level: "error",
-            info: {
-              fixedAmountRuleList
-            }
-          });
+          this.logger.errorSave(
+            "根据券库存过滤后固定报价规则为空",
+            fixedAmountRuleList
+          );
         }
         console.error("最终匹配到的报价规则不存在");
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "最终匹配到的报价规则不存在",
-          level: "info"
-        });
+        this.logger.infoSave("最终匹配到的报价规则不存在");
         return;
       }
       endRule = JSON.parse(JSON.stringify(endRule));
       return endRule;
     } catch (error) {
       console.error("获取最终匹配报价规则异常", error);
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "获取最终匹配报价规则异常",
-        level: "error",
-        info: {
-          error
-        }
-      });
+      this.logger.errorSave("获取最终匹配报价规则异常", error);
     }
   }
 
@@ -277,11 +199,7 @@ class getChenxingOfferPrice {
       );
       console.log("命中会员日报价规则从小往大排序", onlyMemberDayRuleList);
       if (onlyMemberDayRuleList.length) {
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "命中会员日报价规则",
-          level: "info"
-        });
+        this.logger.infoSave("命中会员日报价规则");
         return onlyMemberDayRuleList[0];
       }
       // 2、比对那个报价更低，就用那个规则出
@@ -314,24 +232,16 @@ class getChenxingOfferPrice {
                 ? false
                 : true;
           });
-          this.logList.push({
-            opera_time: getCurrentTime(),
-            des: "根据券库存过滤后的固定报价规则列表",
-            level: "info",
-            info: {
-              fixedAmountRuleList
-            }
-          });
+          this.logger.infoSave(
+            "根据券库存过滤后的固定报价规则列表",
+            fixedAmountRuleList
+          );
         } else {
           fixedAmountRuleList = [];
-          this.logList.push({
-            opera_time: getCurrentTime(),
-            des: "根据影院获取券类型列表为空，固定报价规则列表进行置空处理",
-            level: "info",
-            info: {
-              appQuanTypeList
-            }
-          });
+          this.logger.infoSave(
+            "根据影院获取券类型列表为空，固定报价规则列表进行置空处理",
+            appQuanTypeList
+          );
         }
       }
       let mixFixedAmountRule = fixedAmountRuleList.sort(
@@ -348,27 +258,18 @@ class getChenxingOfferPrice {
         // 计算会员报价
         let memberPriceRes = await this.getMemberPrice(order, movieInfo);
         if (memberPriceRes === -1) {
-          this.logList.push({
-            opera_time: getCurrentTime(),
-            des: "获取当前场次电影信息失败，直接不报",
-            level: "info"
-          });
+          this.logger.infoSave("获取当前场次电影信息失败，直接不报");
           return;
         }
         if (!memberPriceRes) {
-          console.warn(
+          this.logger.infoSave(
             "最小加价规则获取会员价失败,返回最小固定报价规则",
-            mixFixedAmountRule
-          );
-          this.logList.push({
-            opera_time: getCurrentTime(),
-            des: "最小加价规则获取会员价失败,返回最小固定报价规则",
-            level: "warn",
-            info: {
+            {
               memberPriceRes,
               fixedOfferAmount: mixFixedAmountRule?.offerAmount
             }
-          });
+          );
+
           return mixFixedAmountRule;
         }
         // 真实会员价
@@ -385,37 +286,27 @@ class getChenxingOfferPrice {
         mixAddAmountRule.memberOfferAmount =
           mixAddAmountRule.round_member_price +
           Number(mixAddAmountRule.addAmount);
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "会员报价最终信息",
-          level: "info",
-          info: {
-            real_member_price:
-              "真实会员价：" + mixAddAmountRule.real_member_price,
-            member_discount: "会员最小折扣" + mixAddAmountRule.member_discount,
-            memberCostPrice:
-              "会员成本价（真实会员价*折扣）：" +
-              mixAddAmountRule.memberCostPrice,
-            addAmount: "最小加价金额：" + mixAddAmountRule.addAmount,
-            round_member_price:
-              "会员成本价按0.5向上取整数倍：" +
-              mixAddAmountRule.round_member_price,
-            memberOfferAmount:
-              "会员预计报价：" + mixAddAmountRule.memberOfferAmount
-          }
+        this.logger.infoSave("会员报价最终信息", {
+          real_member_price:
+            "真实会员价：" + mixAddAmountRule.real_member_price,
+          member_discount: "会员最小折扣" + mixAddAmountRule.member_discount,
+          memberCostPrice:
+            "会员成本价（真实会员价*折扣）：" +
+            mixAddAmountRule.memberCostPrice,
+          addAmount: "最小加价金额：" + mixAddAmountRule.addAmount,
+          round_member_price:
+            "会员成本价按0.5向上取整数倍：" +
+            mixAddAmountRule.round_member_price,
+          memberOfferAmount:
+            "会员预计报价：" + mixAddAmountRule.memberOfferAmount
         });
       } else {
         console.warn(
           "最小加价规则不存在,返回最小固定报价规则",
           mixFixedAmountRule
         );
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "最小加价规则不存在,返回最小固定报价规则",
-          level: "info",
-          info: {
-            fixedOfferAmount: mixFixedAmountRule?.offerAmount
-          }
+        this.logger.infoSave("最小加价规则不存在,返回最小固定报价规则", {
+          fixedOfferAmount: mixFixedAmountRule?.offerAmount
         });
         return mixFixedAmountRule;
       }
@@ -430,37 +321,21 @@ class getChenxingOfferPrice {
         mixAddAmountRule.memberOfferAmount >=
         Number(mixFixedAmountRule.offerAmount)
       ) {
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "会员报价高于固定报价，返回最小固定报价规则",
-          level: "info",
-          info: {
-            memberOfferAmount: mixAddAmountRule.memberOfferAmount,
-            fixedOfferAmount: mixFixedAmountRule.offerAmount
-          }
+        this.logger.infoSave("会员报价高于固定报价，返回最小固定报价规则", {
+          memberOfferAmount: mixAddAmountRule.memberOfferAmount,
+          fixedOfferAmount: mixFixedAmountRule.offerAmount
         });
         return mixFixedAmountRule;
       } else {
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "会员报价低于固定报价，返回最小加价报价规则",
-          level: "info",
-          info: {
-            memberOfferAmount: mixAddAmountRule.memberOfferAmount,
-            fixedOfferAmount: mixFixedAmountRule.offerAmount
-          }
+        this.logger.infoSave("会员报价低于固定报价，返回最小会员报价规则", {
+          memberOfferAmount: mixAddAmountRule.memberOfferAmount,
+          fixedOfferAmount: mixFixedAmountRule.offerAmount
         });
         return mixAddAmountRule;
       }
     } catch (error) {
-      console.error("获取最低报价规则异常", error);
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "获取最低报价规则异常",
-        level: "error",
-        info: {
-          error
-        }
+      this.logger.errorSave("获取最低报价规则异常", {
+        error
       });
     }
   }
@@ -511,11 +386,7 @@ class getChenxingOfferPrice {
           str = `动态调价后的价格-${price}, 降低了-${outPrice}`;
           console.warn(str);
         }
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "动态调价生效:" + str,
-          level: "info"
-        });
+        this.logger.infoSave("动态调价生效:" + str);
       }
       let profitAddPrice = 0;
       if (offerType !== "1" && !GROUP_LIST.includes(this.appFlag)) {
@@ -528,32 +399,22 @@ class getChenxingOfferPrice {
       let currentHour = new Date().getHours();
       if (isOpenisNightMaxPrice && currentHour >= 1 && currentHour <= 6) {
         price = Number(supplier_max_price);
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "开启夜间顶价",
-          level: "info"
-        });
+        this.logger.infoSave("开启夜间顶价");
       }
       // 规则报价
       let rule_price = price;
       // 省、蚂蚁最后报价要求整数
       if (["sheng", "mayi", "yangcong"].includes(plat_name)) {
         price = Math.round(price);
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "调整最终报价为规则报价四舍五入取整",
-          level: "info"
-        });
+        this.logger.infoSave("调整最终报价为规则报价四舍五入取整");
       }
       // 最终报价高于平台限价，卡关闭超限报价直接不报
       if (price >= Number(supplier_max_price)) {
         let isOverrunOffer = window.localStorage.getItem("isOverrunOffer");
         if (isOverrunOffer !== "1" && offerType !== "1") {
-          this.logList.push({
-            opera_time: getCurrentTime(),
-            des: `用卡报价时，最终报价${price}超过平台限价${supplier_max_price}，超限报价处于关闭状态不进行报价`,
-            level: "error"
-          });
+          this.logger.errorSave(
+            `用卡报价时，最终报价${price}超过平台限价${supplier_max_price}，超限报价处于关闭状态不进行报价`
+          );
           return;
         }
         // 券或者卡开了超限报价调整规则报价为平台限价
@@ -563,11 +424,7 @@ class getChenxingOfferPrice {
           // 向下取0.5的倍数
           price = roundToHalf(supplier_max_price, -1);
         }
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "调整最终报价为平台限价四舍五入去整",
-          level: "info"
-        });
+        this.logger.infoSave("调整最终报价为平台限价四舍五入去整");
       }
 
       // 手续费
@@ -584,45 +441,24 @@ class getChenxingOfferPrice {
       // 预计利润（最终报价-真实成本）
       let expectProfit = (price - real_cost_price).toFixed(2);
       if (price <= real_cost_price && !TEST_NEW_PLAT_LIST.includes(plat_name)) {
-        let str = `最终报价${price}低于真实成本${real_cost_price}`;
-        console.error(str);
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: str,
-          level: "error"
-        });
+        this.logger.errorSave(`最终报价${price}低于真实成本${real_cost_price}`);
         return;
       }
-
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "sfc计算报价相关信息",
-        level: "info",
-        info: {
-          rule_price: "规则计算报价：" + rule_price,
-          profitAddPrice: "单店加价金额：" + profitAddPrice,
-          supplier_max_price: "平台最高限价：" + supplier_max_price,
-          cardQuanCost: "卡券成本：" + cardQuanCost,
-          price: "最终报价：" + price,
-          shouxufei: "手续费（最终报价*1%）：" + shouxufei,
-          cost_price: "出票成本（卡券成本+手续费）：" + cost_price,
-          rewardPrice:
-            `奖励金额(最终报价*奖励百分比-${rewards})：` + rewardPrice,
-          real_cost_price: "真实成本（出票成本-奖励金额）：" + real_cost_price,
-          expectProfit: "预计利润（最终报价-真实成本）：" + expectProfit
-        }
+      this.logger.infoSave("chenxing计算报价相关信息", {
+        rule_price: "规则计算报价：" + rule_price,
+        profitAddPrice: "单店加价金额：" + profitAddPrice,
+        supplier_max_price: "平台最高限价：" + supplier_max_price,
+        cardQuanCost: "卡券成本：" + cardQuanCost,
+        price: "最终报价：" + price,
+        shouxufei: "手续费（最终报价*1%）：" + shouxufei,
+        cost_price: "出票成本（卡券成本+手续费）：" + cost_price,
+        rewardPrice: `奖励金额(最终报价*奖励百分比-${rewards})：` + rewardPrice,
+        real_cost_price: "真实成本（出票成本-奖励金额）：" + real_cost_price,
+        expectProfit: "预计利润（最终报价-真实成本）：" + expectProfit
       });
       return price;
     } catch (error) {
-      console.error("获取最终报价异常", error);
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "获取最终报价异常",
-        level: "error",
-        info: {
-          error
-        }
-      });
+      this.logger.error("获取最终报价异常", { error });
     }
   }
 
@@ -652,14 +488,7 @@ class getChenxingOfferPrice {
       } = movieInfo;
       console.log("获取会员价", member_price);
       if (member_price === 0) {
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "获取会员价为0",
-          level: "error",
-          info: {
-            member_price
-          }
-        });
+        this.logger.error("获取会员价为0");
         return;
       }
       if (member_price > 0) {
@@ -683,14 +512,7 @@ class getChenxingOfferPrice {
             : item.monthly_usage || 0
         }));
         // console.log("list", list);
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "获取该影院已维护会员卡列表返回",
-          level: "info",
-          info: {
-            list
-          }
-        });
+        this.logger.infoSave("获取该影院已维护会员卡列表返回", { list });
         let useMobileList = getCinemaLoginInfoList()
           .filter(
             item => item.app_name === app_name && item.mobile && item.session_id
@@ -699,14 +521,9 @@ class getChenxingOfferPrice {
         let cardListByMobile = list.filter(item =>
           useMobileList.includes(item.mobile)
         );
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "根据该用户关联手机号对卡列表进行过滤",
-          level: "info",
-          info: {
-            useMobileList,
-            cardListByMobile
-          }
+        this.logger.infoSave("使用手机号获取的会员卡列表", {
+          useMobileList,
+          cardListByMobile
         });
         // 根据当天及当月出票量限制进行过滤
         let cardListLimit = cardListByMobile.filter(item => {
@@ -722,13 +539,8 @@ class getChenxingOfferPrice {
               : true)
           );
         });
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "根据当天及当月出票量限制过滤后",
-          level: "info",
-          info: {
-            cardListLimit
-          }
+        this.logger.infoSave("根据当天及当月出票量限制过滤后", {
+          cardListLimit
         });
         // 过滤指定卡
         let cardList = cardListLimit.filter(item => {
@@ -736,25 +548,14 @@ class getChenxingOfferPrice {
             ? true
             : item.linkCinemaIds.split(",").some(itemA => itemA == cinemaCode);
         });
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "根据指定卡过滤后",
-          level: "info",
-          info: {
-            cardList
-          }
+        this.logger.infoSave("根据指定卡过滤后", {
+          cardList
         });
         if (!cardList.length) {
-          console.error("影院单卡出票限制");
-          this.logList.push({
-            opera_time: getCurrentTime(),
-            des: "影院单卡出票限制，无可用卡",
-            level: "error",
-            info: {
-              ticket_num,
-              cinemaId,
-              cinemaCode
-            }
+          this.logger.errorSave("影院单卡出票限制，无可用卡", {
+            ticket_num,
+            cinemaId,
+            cinemaCode
           });
           return;
         }
@@ -770,16 +571,12 @@ class getChenxingOfferPrice {
         member_price = discount
           ? (Number(member_price) * 100 * discount) / 10000
           : Number(member_price);
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "获取会员价相关信息返回",
-          level: "info",
-          info: {
-            real_member_price,
-            discount,
-            cost_member_price: Number(member_price.toFixed(2))
-          }
+        this.logger.infoSave("获取会员价相关信息返回", {
+          real_member_price,
+          discount,
+          cost_member_price: Number(member_price.toFixed(2))
         });
+
         return {
           real_member_price,
           discount,
@@ -787,301 +584,15 @@ class getChenxingOfferPrice {
         };
       }
     } catch (error) {
-      console.error("获取会员价异常", error);
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "获取会员价异常",
-        level: "error",
-        info: {
-          error
-        }
-      });
+      this.logger.errorSave("获取会员价异常", error);
     }
   }
 
   // 获取电影信息
-  async getMovieInfo(item) {
-    const { appFlag } = this;
-    try {
-      // 1、获取影院列表拿到影院id
-      const {
-        city_name,
-        cinema_name,
-        cinema_code,
-        film_name,
-        hall_name,
-        show_time,
-        app_name
-      } = item;
-      // 1、获取城市影院列表
-      let allCinemaList = await this.getCityCinemaList();
-      if (!allCinemaList) {
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "获取城市影院列表失败",
-          level: "error"
-        });
-        return;
-      }
-      let cinemaList =
-        allCinemaList?.find(item => item.cityName.includes(city_name))
-          ?.cinemaList || [];
-      console.log("获取城市影院列表返回", cinemaList);
-
-      // 2、获取目标影院
-      let targetCinema = cinemaList.find(
-        item => item.cinemaCode == cinema_code
-      );
-      console.log("cinemaCode匹配结果", targetCinema);
-      let getCinemaParams = {
-        app_name: appFlag,
-        plat_cinema_code: cinema_code,
-        cinema_list: cinemaList
-      };
-      if (!targetCinema) {
-        targetCinema = getTargetCinemaCommon(getCinemaParams);
-      }
-      if (!targetCinema) {
-        console.error("获取目标影院失败");
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "获取目标影院失败",
-          level: "error",
-          info: {
-            ...getCinemaParams,
-            cinema_name
-          }
-        });
-        return;
-      }
-      // 3、获取影院放映信息用于拿会员价
-      const { cinemaCode, cinemaId } = targetCinema;
-      if (!cinemaCode) {
-        console.error("获取目标影院失败");
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "获取目标影院失败",
-          level: "error",
-          info: {
-            cinemaList,
-            cinema_name,
-            app_name,
-            city_name
-          }
-        });
-        return;
-      }
-
-      // 2、获取影院放映信息拿到会员价
-      const moviePlayInfo = await this.getMoviePlayInfo({
-        cinemaCode,
-        cinemaId
-      });
-      if (!moviePlayInfo) return;
-      // 3、匹配订单拿到会员价
-      const { items: movie_data } = moviePlayInfo;
-      let movieInfo = movie_data.find(
-        item =>
-          convertFullwidthToHalfwidth(item.filmName) ===
-          convertFullwidthToHalfwidth(film_name)
-      );
-      console.log("movieInfo", movieInfo, film_name);
-      if (!movieInfo) {
-        let targetFilmList = movie_data.map(item => {
-          const repeatedCharsResult = findMostRepeatedChars(
-            item.filmName,
-            film_name
-          );
-          return {
-            ...item,
-            ...repeatedCharsResult
-          };
-        });
-        targetFilmList = targetFilmList.sort(
-          (a, b) => b.similarity - a.similarity
-        );
-        // 必须有4个重复字符才采用模糊匹配结果
-        if (targetFilmList[0]?.totalRepeated >= 4) {
-          movieInfo = targetFilmList[0];
-        } else {
-          this.logList.push({
-            opera_time: getCurrentTime(),
-            des: "获取目标影片信息失败",
-            level: "error",
-            info: {
-              film_name,
-              movie_data
-            }
-          });
-          return;
-        }
-      }
-      let { id: filmId } = movieInfo;
-      // 获取某个放映日期的场次列表
-      const showList = await this.getMoviePlayTime({
-        cinemaCode,
-        cinemaId,
-        filmId,
-        featureDate: show_time.split(" ")[0]
-      });
-      // 解决同一时间多场次问题
-      let targetShowList = showList.filter(
-        item => item.startTime === show_time
-      );
-      let targetShow = targetShowList[0];
-      if (targetShowList.length > 1) {
-        targetShowList = targetShowList.map(item => {
-          const repeatedCharsResult = findMostRepeatedChars(
-            item.screenName,
-            hall_name
-          );
-          return {
-            ...item,
-            ...repeatedCharsResult
-          };
-        });
-        targetShowList = targetShowList.sort(
-          (a, b) => b.similarity - a.similarity
-        );
-        targetShow = targetShowList[0];
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "同一时间多场次",
-          level: "info",
-          info: {
-            targetShowList
-          }
-        });
-      }
-      if (!targetShow) {
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "匹配影片放映场次失败",
-          level: "error",
-          info: {
-            movieInfo,
-            show_time
-          }
-        });
-        return;
-      }
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "获取电影放映信息从而获取会员价",
-        level: "info",
-        info: {
-          targetShow,
-          cinemaCode,
-          cinemaId
-        }
-      });
-      return { ...targetShow, cinemaCode, cinemaId };
-    } catch (error) {
-      console.error("获取当前场次电影信息异常", error);
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "获取当前场次电影信息异常",
-        level: "error",
-        info: {
-          error: JSON.stringify(error)
-        }
-      });
-    }
-  }
-
-  // 获取电影放映信息
-  async getMoviePlayInfo(data) {
-    try {
-      let { cinemaCode, cinemaId } = data || {};
-      let params = {
-        cinemaCode,
-        cinemaId,
-        unifiedCode: cinemaCode,
-        pageNo: 1,
-        pageSize: 1000,
-        platForm: 5
-      };
-      console.log("获取电影放映信息参数", params);
-      let res = await this.appApi.getMoviePlayInfo(params);
-      console.log("获取电影放映信息返回", res);
-      return res.data;
-    } catch (error) {
-      console.error("获取电影放映信息异常", error);
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "获取电影放映信息异常",
-        level: "error",
-        info: {
-          error
-        }
-      });
-    }
-  }
-
-  // 获取电影放映场次
-  async getMoviePlayTime(data) {
-    let { cinemaCode, cinemaId, filmId, featureDate } = data || {};
-    let params = {
-      cinemaCode,
-      cinemaId,
-      filmId,
-      featureDate,
-      updateNode: "date"
-    };
-    try {
-      console.log("获取电影放映场次参数", params);
-      const res = await this.appApi.getMoviePlayTime(params);
-      console.log("获取电影放映场次返回", res);
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "获取电影放映场次返回",
-        level: "info",
-        info: {
-          params,
-          res
-        }
-      });
-      return res.data?.planList || [];
-    } catch (error) {
-      console.error("获取电影放映信息异常", error);
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "获取电影放映信息异常",
-        level: "error",
-        info: {
-          error,
-          params
-        }
-      });
-    }
-  }
-  // 获取城市影院列表
-  async getCityCinemaList() {
-    try {
-      let params = {};
-      console.log("获取城市影院列表参数", params);
-      const res = await this.appApi.getCinemaList(params);
-      console.log("获取城市影院列表返回", res);
-      let list = res.data || [];
-      return list.map(item => ({
-        ...item,
-        cityName: item.cityInfoDTO?.cityName,
-        cinemaList: item.cinemaResultDTOList.map(itemA => ({
-          ...itemA,
-          cinemaCode: itemA.cinemaCode
-        }))
-      }));
-    } catch (error) {
-      console.error("获取城市影院列表异常", error);
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "获取城市影院列表异常",
-        level: "error",
-        info: {
-          error
-        }
-      });
-    }
+  async getMovieInfo() {
+    const buyTicketInfo = await this.cinemaManage.getBuyPrevCinemaInfo(1);
+    const { targetShow, cinemaCode, cinemaId } = buyTicketInfo || {};
+    return { ...(targetShow || {}), cinemaCode, cinemaId };
   }
 }
 

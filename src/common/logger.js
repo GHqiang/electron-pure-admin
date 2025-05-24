@@ -1,6 +1,7 @@
 // logger.js - 统一日志处理
 import {
-  logUpload // 日志上传
+  logUpload, // 日志上传
+  formatErrInfo
 } from "@/utils/utils";
 
 export default class Logger {
@@ -75,5 +76,13 @@ export default class Logger {
       .filter(item => item.level === "error")
       .reverse()?.[0];
     return errInfoObj?.des || "";
+  }
+  getLastErrMsgAndInfo() {
+    const errInfoObj = this.logList
+      .filter(item => item.level === "error")
+      .reverse()?.[0];
+    let err_msg = errInfoObj?.des || "";
+    let err_info = formatErrInfo(errInfoObj?.info) || "";
+    return { err_msg, err_info };
   }
 }
