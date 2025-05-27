@@ -656,7 +656,7 @@ const sendWxPusherMessage = async ({
     topicIds: [],
     contentType: 2,
     verifyPay: false,
-    uids: ["UID_AIFZVT3B4zcj10CvGFLKB2hS2wt7", WX_MSG_UID[userInfo.user_id]],
+    uids: [userInfo.wxCode],
     summary,
     content
   };
