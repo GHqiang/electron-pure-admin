@@ -189,8 +189,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       let whitelistSp = [];
 
       let isError =
-        (IS_DEV ? response.config.url.indexOf("/selfSupport/") !== -1 : true) &&
-        data.code !== 200;
+        api_version === "3.0C" ? data.code !== 200 : data.retCode != "0";
       if (
         isError &&
         !whitelistSp.some(item => response.config.url.includes(item))
@@ -214,7 +213,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           });
           return Promise.reject(data);
         }
-        ElMessage.error(data.msg || "请求失败");
+        ElMessage.error(data.msg || data.retMsg || "请求失败");
         return Promise.reject(data);
       }
       return data;

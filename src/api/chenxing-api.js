@@ -17,6 +17,10 @@ const createApi = ({ app_name }) => {
       "3.0C": "/selfSupport/front/cticket/getCinemaList",
       C: "/chenxing/api/auth/token"
     },
+    getUserInfo: {
+      "3.0C": "/selfSupport/front/cticket/getCinemaList",
+      C: "/chenxing/api/middleground/member/user/getUserInfo "
+    },
     // 获取影院列表
     getCinemaList: {
       // "3.0C": ["/selfSupport/front/cticket/getCinemaList", "post"],
@@ -46,7 +50,7 @@ const createApi = ({ app_name }) => {
     // 获取会员卡列表
     getCardList: {
       "3.0C": "/selfSupport/trade/front/user/cards",
-      C: "/chenxing/"
+      C: "/chenxing/api/middleground/member/user/cards"
     },
     // 获取优惠券列表
     getQuanList: {
@@ -93,7 +97,8 @@ const createApi = ({ app_name }) => {
   let apiFunObj = {};
 
   Object.entries(apiUrlObj).map(([funName, apiUrl]) => {
-    apiFunObj[funName] = params => axios.post(apiUrl[api_version], params);
+    apiFunObj[funName] = params =>
+      axios.post(apiUrl[api_version], params || {});
   });
   // console.log("apiFunObj", apiFunObj);
   return apiFunObj;
