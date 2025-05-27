@@ -214,8 +214,8 @@ function initRouter(rule: any) {
       getAsyncRoutes().then(({ data }) => {
         console.log("data0", data);
         // 外部角色列表
-        const OUT_RULE_LIST = [3, 6, 5];
-        if (!OUT_RULE_LIST.includes(rule)) {
+        const IN_RULE_LIST = [1, 2];
+        if (IN_RULE_LIST.includes(rule)) {
           data?.[0]?.children.push(
             ...[
               {
