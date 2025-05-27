@@ -3,15 +3,103 @@
  */
 
 import createAxios from "@/utils/http/chenxing-request";
+import { GE_APP_INFO } from "@/common/constant";
 const createApi = ({ app_name }) => {
   // 启用新版本服务影院列表
   let axios = createAxios({
     app_name: app_name
   });
+  let api_version = GE_APP_INFO(app_name)?.api_version;
 
+  let apiUrlObj = {
+    // 授权token
+    authToken: {
+      "3.0C": "/selfSupport/front/cticket/getCinemaList",
+      C: "/chenxing/api/auth/token"
+    },
+    // 获取影院列表
+    getCinemaList: {
+      // "3.0C": ["/selfSupport/front/cticket/getCinemaList", "post"],
+      "3.0C": "/selfSupport/front/cticket/getCinemaList",
+      C: "/chenxing/api/middleground/ticket/c/cbase/cityAndCinemaList"
+    },
+    // 获取热映电影放映信息
+    getMoviePlayInfo: {
+      "3.0C": "/selfSupport/front/cticket/getHitFilm",
+      C: "/chenxing/api/middleground/ticket/c/cticket/getHitFilm"
+    },
+    // 获取电影放映场次
+    getMoviePlayTime: {
+      "3.0C": "/selfSupport/front/cticket/loadSchedule",
+      C: "/chenxing/api/middleground/ticket/c/cticket/getHitFilmAndFilmSession"
+    },
+    // 获取座位布局
+    getMoviePlaySeat: {
+      "3.0C": "/selfSupport/front/cticket/loadWxPlanSite",
+      C: "/chenxing/api/middleground/ticket/c/cticket/getSessionSeat"
+    },
+    // 锁定座位
+    lockSeat: {
+      "3.0C": "/selfSupport/trade/front/advanceOrder/lockSeat",
+      C: "/chenxing/api/middleground/trade/online/directly/cart/lockSeat"
+    },
+    // 获取会员卡列表
+    getCardList: {
+      "3.0C": "/selfSupport/trade/front/user/cards",
+      C: "/chenxing/"
+    },
+    // 获取优惠券列表
+    getQuanList: {
+      "3.0C": "/selfSupport/front/coupon/list",
+      C: "/chenxing/"
+    },
+    // 计算价格
+    priceCalculation: {
+      "3.0C": "/selfSupport/trade/front/orders/calculatePrice",
+      C: "/chenxing/api/middleground/trade/online/directly/cart/calculatePrice"
+    },
+    // 创建订单
+    createOrder: {
+      "3.0C": "/selfSupport/trade/front/orders/submitOrder",
+      C: "/chenxing/"
+    },
+    // 支付订单
+    buyTicket: {
+      "3.0C": "/selfSupport/trade/front/order/onlinePay",
+      C: "/chenxing/"
+    },
+    // 获取订单信息
+    queryOrderDetail: {
+      "3.0C": "/selfSupport/trade/front/orders/queryOrderDetail",
+      C: "/chenxing/"
+    },
+    // 取消订单
+    cancelOrder: {
+      "3.0C": "/selfSupport/trade/front/orders/cancelOrder",
+      C: "/chenxing/"
+    },
+    // 释放座位
+    releaseSeat: {
+      "3.0C": "/selfSupport/trade/front/advanceOrder/releaseSeat",
+      C: "/chenxing/"
+    },
+    // 绑定优惠券
+    bandQuan: {
+      "3.0C": "/selfSupport/trade/front/advanceOrder/releaseSeat",
+      C: "/chenxing/"
+    }
+  };
+
+  let apiFunObj = {};
+
+  Object.entries(apiUrlObj).map(([funName, apiUrl]) => {
+    apiFunObj[funName] = params => axios.post(apiUrl[api_version], params);
+  });
+  // console.log("apiFunObj", apiFunObj);
+  return apiFunObj;
   // 获取影院列表
   const getCinemaList = params =>
-    axios.post("/selfSupport/front/cticket/getCinemaList", params);
+    axios.post(apiUrlObj.getCinemaList[api_version], params);
 
   // 获取热映电影放映信息
   const getMoviePlayInfo = params =>

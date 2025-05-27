@@ -6,46 +6,111 @@ import { ElMessage } from "element-plus";
 import { platTokens } from "@/store/platTokens";
 import { GE_APP_INFO } from "@/common/constant";
 
-import {
-  logUpload,
-  getCurrentTime,
-  mockDelay,
-  getCinemaLoginInfoList
-} from "@/utils/utils";
+import { getCinemaLoginInfoList } from "@/utils/utils";
 const tokens = platTokens();
 
+const getToken = async appId => {
+  try {
+    // const tokenRes = await APP_API_OBJ[app_name].authToken({
+    //   appId: "5868e8d75ba04beda426437ba93ef4c6"
+    // });
+    const res = await axios.request({
+      url: "/svpi/chenxing-ser/api/auth/token",
+      method: "post",
+      data: {
+        api: "api",
+        v: "1.0",
+        timestamp: +new Date(),
+        sign: "sign",
+        data: { appId: appId || "5868e8d75ba04beda426437ba93ef4c6" }
+      },
+      headers: {
+        // "accept": "application/json, text/plain, */*",
+        // "accept-language": "zh-CN,zh;q=0.9,ar;q=0.8",
+        // "cache-control": "no-cache",
+        "content-type": "application/json"
+        // "pragma": "no-cache",
+        // "sec-fetch-dest": "empty",
+        // "sec-fetch-mode": "cors",
+        // "sec-fetch-site": "same-site",
+        // 'host': 'open.oristarcloud.com'
+      }
+    });
+    console.log("res", res);
+    return res?.data?.data;
+  } catch (error) {
+    console.error("tokenRes error", error);
+  }
+};
 const paramsHandle = (params, app_name) => {
   let targetLoginList = getCinemaLoginInfoList().filter(
     item => item.app_name === app_name && item.mobile && item.session_id
   );
   let token = targetLoginList?.[0]?.session_id || "";
-  // console.log("targetLoginList", targetLoginList);
-  let config = {
-    k: params?.session_id || token, // 登录接口返回token
-    t: 5,
-    r: 1,
-    v: "V4.0.2",
-    s: "Windows 11 x64",
-    i: "00000000-0000-0000-0000-000000000000",
-    d: "microsoft",
-    channelNo: GE_APP_INFO(app_name)?.channelCode,
-    channelCode: GE_APP_INFO(app_name)?.channelCode,
-    // channelName: "中影嘉华-自营",
-    tenantId: targetLoginList?.[0]?.tid || "", // 登录接口返回
-    unifiedCode: params?.cinemaCode || undefined
-    // cinemaCode: "33018961"
-    // cinemaId: 405384
-    // cinemaName: "中影嘉华国际影城（拱墅全景声巨幕店）"
-    // marketingName: "172.30.82.8",
-    // marketingCode: "CRM001",
-    // defaultCardNo: "",
-    // crmGroup: "CRM001"
-  };
-  // console.log("config", config);
-  return {
-    ...params,
-    ...config
-  };
+  let appInfo = GE_APP_INFO(app_name);
+  console.log("app_name", app_name, appInfo);
+  let api_version = appInfo?.api_version || "";
+  if (api_version == "3.0C") {
+    let config = {
+      k: params?.session_id || token, // 登录接口返回token
+      t: 5,
+      r: 1,
+      v: "V4.0.2",
+      s: "Windows 11 x64",
+      i: "00000000-0000-0000-0000-000000000000",
+      d: "microsoft",
+      channelNo: appInfo?.channelCode,
+      channelCode: appInfo?.channelCode,
+      // channelName: "中影嘉华-自营",
+      tenantId: targetLoginList?.[0]?.tid || "", // 登录接口返回
+      unifiedCode: params?.cinemaCode || undefined
+      // cinemaCode: "33018961"
+      // cinemaId: 405384
+      // cinemaName: "中影嘉华国际影城（拱墅全景声巨幕店）"
+      // marketingName: "172.30.82.8",
+      // marketingCode: "CRM001",
+      // defaultCardNo: "",
+      // crmGroup: "CRM001"
+    };
+    // console.log("config", config);
+    return {
+      ...params,
+      ...config
+    };
+  } else if (api_version == "C") {
+    let config = {
+      api: "api",
+      v: "1.0",
+      timestamp: +new Date(),
+      sign: "sign",
+      data: {
+        k: params?.session_id || token, // 登录接口返回token,
+        t: 5,
+        r: 1,
+        v: "V4.0.0",
+        s: "Windows 11 x64",
+        i: "00000000-0000-0000-0000-000000000000",
+        d: "microsoft",
+        channelNo: appInfo?.channelCode,
+        channelCode: appInfo?.channelCode,
+        channelNo: appInfo?.channelCode,
+        tenantId: token.split(":")[0],
+
+        unifiedCode: params.cinemaCode,
+        // cinemaCode: "42011801",
+        // cinemaId: "136365",
+        unifiedCinemaId: params.cinemaId,
+        // channelName: "银兴国际影城-自营",
+        // cinemaName: "银兴国际影城仙桃店",
+        // unifiedCinemaName: "银兴国际影城仙桃店",
+        ...params
+      },
+      pageNo: "",
+      pageSize: "",
+      channelCode: appInfo?.channelCode
+    };
+    return config;
+  }
 };
 const createAxios = ({ app_name, timeout = 20 }) => {
   // 创建axios实例
@@ -57,6 +122,9 @@ const createAxios = ({ app_name, timeout = 20 }) => {
 
   const NODE_ENV = process.env.NODE_ENV;
   const IS_DEV = NODE_ENV === "development";
+  const api_version = GE_APP_INFO(app_name)?.api_version || "";
+  // console.warn("api_version", api_version);
+  let chenxingToken, identityKey, identityType;
 
   // 配置axios-retry
   axiosRetry(instance, {
@@ -73,9 +141,19 @@ const createAxios = ({ app_name, timeout = 20 }) => {
 
   // 请求拦截器
   instance.interceptors.request.use(
-    config => {
-      if (config.url.indexOf("/selfSupport/") !== -1) {
+    async config => {
+      if (GE_APP_INFO(app_name)) {
+        if (!chenxingToken && config.url.indexOf("/auth/") === -1) {
+          const tokenRes = await getToken();
+          chenxingToken = tokenRes.token;
+          identityKey = tokenRes.identityKey;
+          identityType = tokenRes.identityType;
+        }
+        config.headers.authorization = "Bearer " + chenxingToken;
         config.headers["Content-Type"] = "application/json";
+        config.headers["Identity-key"] = identityKey;
+        config.headers["Identity-Type"] = identityType;
+
         if (config.method === "get") {
           config.params = paramsHandle(config.params, app_name);
         } else {
@@ -83,9 +161,16 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           config.data = paramsHandle(config.data, app_name);
         }
         // 生产环境不会跨域
-        config.url = IS_DEV
-          ? config.url
-          : "http://capi.oristarcloud.com" + config.url;
+        if (!IS_DEV) {
+          config.url = "http://capi.oristarcloud.com" + config.url;
+          if (api_version == "C") {
+            config.url = "https://open.oristarcloud.com" + config.url.slice(9); // 截取掉/chenxing
+          }
+        } else {
+          if (api_version == "C") {
+            config.url = config.url.replace("chenxing", "svpi/chenxing-ser");
+          }
+        }
       }
       // console.log('请求config', config)
       return config;

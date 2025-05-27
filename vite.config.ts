@@ -86,7 +86,7 @@ export default ({ command, mode }: ConfigEnv): UserConfigExport => {
           rewrite: path => path.replace(/^\/api/, "api") // 重写路径，去除/api前缀
         },
 
-        // 辰星
+        // 辰星3.0C
         "/selfSupport": {
           target: "https://capi.oristarcloud.com", // 后端API的真实地址
           changeOrigin: true, // 是否允许跨域
