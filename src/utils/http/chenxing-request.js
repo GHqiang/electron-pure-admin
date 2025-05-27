@@ -3,11 +3,9 @@
 import axios from "axios";
 import axiosRetry from "axios-retry";
 import { ElMessage } from "element-plus";
-import { platTokens } from "@/store/platTokens";
 import { GE_APP_INFO } from "@/common/constant";
 
-import { getCinemaLoginInfoList } from "@/utils/utils";
-const tokens = platTokens();
+import { getCinemaLoginInfoList, sendWxPusherMessage } from "@/utils/utils";
 
 const getToken = async appId => {
   try {
@@ -156,9 +154,11 @@ const createAxios = ({ app_name, timeout = 20 }) => {
 
         if (config.method === "get") {
           config.params = paramsHandle(config.params, app_name);
+          config.session_id = config.params.session_id;
         } else {
           // POST请求，使用formData封装参数
           config.data = paramsHandle(config.data, app_name);
+          config.session_id = config.data.session_id;
         }
         // 生产环境不会跨域
         if (!IS_DEV) {
@@ -195,22 +195,25 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         !whitelistSp.some(item => response.config.url.includes(item))
       ) {
         console.warn("接口响应失败", data);
-        if (data.code === 401) {
-          ElMessage({
-            type: "error",
-            message: "登录失效，请重新登录",
-            center: true,
-            duration: 5 * 1000,
-            onClose: () => {
-              console.warn("准备清除token刷新页面");
-              tokens.removeSelfPlatToken();
-              window.localStorage.removeItem("selfToken");
-              window.localStorage.removeItem("userInfo");
-              window.localStorage.removeItem("user-info");
-              // 刷新页面以确保状态完全重置
-              location.reload();
-            }
+        // 辰星C端失效处理，待添加3.0C端失效判断
+        if (data.retMsg.includes("登录")) {
+          let app_label = GE_APP_INFO(app_name).app_label;
+          ElMessage.warning(`${app_label}登录失效，请重新设置登录信息`);
+          let session_id = response?.config?.session_id;
+          let targetLoginList = getCinemaLoginInfoList().filter(
+            item => item.app_name === app_name && item.mobile && item.session_id
+          );
+          let phone = targetLoginList.find(
+            item => item.session_id == session_id
+          )?.mobile;
+          console.warn("登录失效", app_label, phone);
+          sendWxPusherMessage({
+            msgType: 1,
+            app_name: app_label,
+            expirePhone: phone,
+            transferTip: `${app_label}登录失效，请检查登录信息维护`
           });
+          // 此处加个消息推送
           return Promise.reject(data);
         }
         ElMessage.error(data.msg || data.retMsg || "请求失败");
