@@ -14,6 +14,7 @@ const ASSIST_LOCK_ERRORS = ["座位旁边不要留空", "座位中间不要留�
 
 // 统一座位管理
 import { APP_API_OBJ } from "@/common/index";
+import { GE_APP_INFO } from "@/common/constant";
 // 订单管理模块
 import {
   formatErrInfo, // 格式化错误信息
@@ -28,6 +29,7 @@ export default class SeatManage {
     this.appFlag = order.app_name;
     this.appApi = APP_API_OBJ[order.app_name];
     this.logger = logger; // 日志模块
+    this.api_version = GE_APP_INFO(order.app_name)?.api_version;
   }
 
   /**
@@ -68,11 +70,13 @@ export default class SeatManage {
   getSeatParams(buyTicketInfo) {
     const { cinemaCode, cinemaId, filmId, featureAppNo, targetShow } =
       buyTicketInfo;
+      const {api_version} = this
     return {
       cinemaCode,
       cinemaId,
       filmId,
-      featureAppNo: featureAppNo || targetShow?.featureAppNo
+      featureAppNo: featureAppNo || targetShow?.featureAppNo,
+      sessionId: targetShow?.sessionId
     };
   }
 

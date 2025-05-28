@@ -9,6 +9,7 @@ import {
   findMostRepeatedChars
 } from "@/utils/utils";
 import { APP_API_OBJ } from "@/common/index";
+import { GE_APP_INFO } from "@/common/constant";
 // 机器登录用户信息
 import { platTokens } from "@/store/platTokens";
 const {
@@ -21,6 +22,8 @@ export default class CinemaManage {
     this.offerRule = offerRule;
     this.logger = logger;
     this.currentParamsList = currentParamsList;
+    this.appApi = APP_API_OBJ[order.app_name];
+    this.api_version = GE_APP_INFO(order.app_name)?.api_version;
   }
 
   // 获取购票前的影院信息（核心方法）// 1-报价 默认出票
@@ -88,7 +91,7 @@ export default class CinemaManage {
         });
         return;
       }
-      cinemaInfo.filmId = movieInfo.id;
+      cinemaInfo.filmId = movieInfo.filmId;
 
       // 7、获取影片放映场次
       cinemaInfo.showDate = show_time.split(" ")[0];
@@ -107,25 +110,40 @@ export default class CinemaManage {
 
   // 获取城市影院列表
   async getCityCinemaList() {
-    const { appFlag } = this;
     try {
+      const { api_version } = this;
       let params = {};
       this.logger.info("获取城市影院列表参数", params);
-      const res = await APP_API_OBJ[appFlag].getCinemaList(params);
+      const res = await this.appApi.getCinemaList(params);
       this.logger.info("获取城市影院列表返回", res);
-      let cityCinemaList = res.data || [];
+      let cityCinemaList = [];
+      if (api_version === "3.0C") {
+        cityCinemaList = res.data || [];
+        cityCinemaList = cityCinemaList.map(item => ({
+          ...item,
+          cityName: item.cityInfoDTO.cityName,
+          cinemaList: item.cinemaResultDTOList.map(itemA => ({
+            ...itemA,
+            cinemaId: itemA.cinemaId,
+            cinemaCode: itemA.cinemaCode
+          }))
+        }));
+      } else if (api_version === "C") {
+        cityCinemaList = res.data?.resultDOList || [];
+        cityCinemaList = cityCinemaList.map(item => ({
+          cityName: item.cityInfo.chName,
+          cinemaList: item.cinemas.map(itemA => ({
+            ...itemA,
+            cinemaId: itemA.id,
+            cinemaCode: itemA.unifiedCode
+          }))
+        }));
+      }
       if (!cityCinemaList?.length) {
         this.logger.errorSave("获取城市影院列表为空");
         return;
       }
-      return cityCinemaList.map(item => ({
-        ...item,
-        cityName: item.cityInfoDTO?.cityName,
-        cinemaList: item.cinemaResultDTOList.map(itemA => ({
-          ...itemA,
-          cinemaCode: itemA.cinemaCode
-        }))
-      }));
+      return cityCinemaList;
     } catch (error) {
       this.logger.errorSave("获取城市影院列表异常", formatErrInfo(error));
     }
@@ -297,21 +315,34 @@ export default class CinemaManage {
   }
   // 获取影院放映信息
   async getMoviePlayInfo({ cinemaCode, cinemaId }) {
-    const { appFlag } = this;
     try {
+      const { api_version } = this;
       let params = {
         cinemaCode,
         cinemaId,
-        unifiedCode: cinemaCode,
         pageNo: 1,
         pageSize: 1000,
         platForm: 5
       };
       this.logger.info("获取电影放映信息参数", params);
-      let res = await APP_API_OBJ[appFlag].getMoviePlayInfo(params);
+      let res = await this.appApi.getMoviePlayInfo(params);
       this.logger.infoSave("获取电影放映信息返回", res);
-
-      const movie_data = res.data?.items || [];
+      let movie_data = [];
+      if (api_version === "3.0C") {
+        movie_data = res.data?.items || [];
+        movie_data = movie_data.map(item => ({
+          ...item,
+          filmName: item.filmName,
+          filmId: item.id
+        }));
+      } else if (api_version === "C") {
+        movie_data = res.data?.hitFilmResultDOList || [];
+        movie_data = movie_data.map(item => ({
+          ...item,
+          filmName: item.name,
+          filmId: item.id
+        }));
+      }
       if (!movie_data?.length) {
         this.logger.errorSave("获取电影放映信息返回空");
         return;
@@ -324,19 +355,30 @@ export default class CinemaManage {
   // 获取电影放映场次
   async getMoviePlayTime(cinemaInfo) {
     const { cinemaCode, cinemaId, filmId, showDate } = cinemaInfo;
-    const { appFlag } = this;
+    const { api_version } = this;
     try {
       let params = {
         cinemaCode,
         cinemaId,
         filmId,
-        featureDate: showDate,
         updateNode: "date"
       };
+      if (api_version === "3.0C") {
+        params.featureDate = showDate;
+      }
       this.logger.info("获取电影放映场次参数", params);
-      const res = await APP_API_OBJ[appFlag].getMoviePlayTime(params);
+      const res = await this.appApi.getMoviePlayTime(params);
       this.logger.infoSave("获取电影放映场次返回", res);
-      const moviePlayTime = res.data?.planList || [];
+      let moviePlayTime = [];
+      if (api_version === "3.0C") {
+        moviePlayTime = res.data?.planList || [];
+      } else if (api_version === "C") {
+        let filmList = res.data?.filmList || [];
+        let showList =
+          filmList.find(item => item.id == filmId)?.showList || [];
+        moviePlayTime = showList.find(item => item.dayStr == showDate)?.planList || []
+      }
+
       if (!moviePlayTime?.length) {
         this.logger.errorSave("获取电影放映场次返回空");
       }

@@ -8,7 +8,6 @@ import {
   getCinemaLoginInfoList
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
-import { APP_API_OBJ } from "@/common/index.js";
 import { GROUP_LIST, TEST_NEW_PLAT_LIST } from "@/common/constant.js";
 import { platTokens } from "@/store/platTokens";
 const {
@@ -25,10 +24,8 @@ import CinemaManage from "./cinemaManage";
 import SeatManage from "./seatManage";
 class getChenxingOfferPrice {
   constructor({ appFlag, plat_name }) {
-    // console.log("APP_API_OBJ", APP_API_OBJ, appFlag, plat_name);
     this.appFlag = appFlag; // 影线标识
     this.plat_name = plat_name; // 平台标识
-    this.appApi = APP_API_OBJ[appFlag];
   }
   // 初始化依赖模块
   initModules(order) {

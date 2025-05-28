@@ -7,6 +7,7 @@ import {
   sendWxPusherMessage
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
+import { GE_APP_INFO } from "@/common/constant";
 // 统一日志类
 import Logger from "@/common/logger";
 // 机器登录用户信息
@@ -37,6 +38,7 @@ export default class BuyTicket {
       this.platManage,
       isTestOrder
     ); // 订单管理模块
+    this.api_version = GE_APP_INFO(order.app_name)?.api_version;
   }
   // 单个订单出票（向外暴漏的唯一方法）
   async singleTicket() {
@@ -253,6 +255,20 @@ export default class BuyTicket {
         order_number,
         session_id: this.currentSessionId
       };
+      const {api_version} = this
+      if(api_version == 'C') {
+        lockSeatParams = {
+          cinemaCode,
+          cinemaId,
+          filmId,
+          seatCodes: targetSeatCodes,
+          sessionCode: targetShow.sessionId,
+          lockseat,
+          plat_name,
+          order_number,
+          session_id: this.currentSessionId
+        }
+      }
       const lockRes = await this.seatManage.lockseatByApp(lockSeatParams);
       if (!lockRes) {
         return await this.orderManage.transferOrder();
