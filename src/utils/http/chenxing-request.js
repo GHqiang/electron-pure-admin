@@ -196,7 +196,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       ) {
         console.warn("接口响应失败", data);
         // 辰星C端失效处理，待添加3.0C端失效判断
-        if (data.retMsg.includes("登录")) {
+        if (data.retMsg.includes("登录") || data.msg.includes("登录")) {
           let app_label = GE_APP_INFO(app_name).app_label;
           ElMessage.warning(`${app_label}登录失效，请重新设置登录信息`);
           let session_id = response?.config?.session_id;
