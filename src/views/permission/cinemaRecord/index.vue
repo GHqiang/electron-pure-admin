@@ -81,6 +81,12 @@
             </template>
           </el-table-column>
           <el-table-column
+            v-if="formData.app_type_code === 'chenxing_applet'"
+            prop="api_version"
+            label="api服务版本"
+            min-width="110"
+          />
+          <el-table-column
             v-if="formData.app_type_code === 'sfc_applet'"
             prop="sfc_group_id"
             label="乐影影院groupID"
