@@ -129,7 +129,8 @@ import { ElLoading, ElMessage } from "element-plus";
 import {
   GET_APP_LIST,
   GET_H5_UME_LIST,
-  GET_CHENXING_LIST
+  GET_CHENXING_LIST,
+  GE_APP_INFO
 } from "@/common/constant";
 import { platTokens } from "@/store/platTokens";
 const {
@@ -184,7 +185,17 @@ const validateTidPass = (rule, value, callback) => {
   if (!formData.app_name) {
     callback();
   } else if (!formData.tid) {
-    callback(new Error("续期tid不能为空"));
+    let appInfo = GE_APP_INFO(formData.app_name);
+    console.log("appInfo", appInfo);
+    if (
+      appInfo?.app_type_code == "ume_h5" ||
+      (appInfo?.app_type_code == "chenxing_applet" &&
+        appInfo?.api_version == "3.0C")
+    ) {
+      callback(new Error("续期tid不能为空"));
+    } else {
+      callback();
+    }
   } else {
     callback();
   }
@@ -199,9 +210,8 @@ const rules = {
   ],
   tid: [
     {
-      required: true,
       validator: validateTidPass,
-      message: "续期tid不能为空",
+      message: "不能为空",
       trigger: "blur"
     }
   ],
