@@ -27,11 +27,17 @@
         <el-form :inline="true" class="demo-form-inline">
           <el-form-item>
             <el-button type="primary" @click="searchData">搜索</el-button>
-            <el-button type="primary" @click="syncCinemeCodeMatch()"
+            <el-button
+              type="primary"
+              :loading="syncLoading"
+              @click="syncCinemeCodeMatch()"
               >同步映射信息</el-button
             >
 
-            <el-button type="primary" @click="exportCinemeCodeMatch"
+            <el-button
+              type="primary"
+              :loading="exportLoading"
+              @click="exportCinemeCodeMatch"
               >导出映射维护信息</el-button
             >
             <el-upload
@@ -253,9 +259,14 @@ const getCinemaList = async app_name => {
   }
   return list || [];
 };
+
+const syncLoading = ref(false);
 // 同步影院code映射
 const syncCinemeCodeMatch = async isExport => {
   try {
+    if (!isExport) {
+      syncLoading.value = true;
+    }
     // 1、获取未同步的影院列表
     const cinemaListRes = await svApi.queryNoSyncCinemaList({});
     let cinemaList = cinemaListRes?.data?.cinemaList || [];
@@ -298,22 +309,29 @@ const syncCinemeCodeMatch = async isExport => {
       syncList = syncList.concat(list);
     }
     console.warn("组装好的同步映射列表数据syncList", syncList);
-    if (isExport) return syncList;
+    if (isExport) {
+      return syncList;
+    }
     if (syncList.length > 0) {
       await syncCinemaMatch(syncList);
     } else {
       ElMessage.warning("没有可同步的影院");
     }
+    syncLoading.value = false;
   } catch (error) {
     console.warn("获取可以同步映射列表异常", error);
+    syncLoading.value = false;
   }
 };
 
+const exportLoading = ref(false);
 // 导出映射维护信息列表
 const exportCinemeCodeMatch = async () => {
+  exportLoading.value = true;
   const exportList = await syncCinemeCodeMatch(true);
   if (exportList.length === 0) {
     ElMessage.warning("没有可导出维护映射信息的影院");
+    exportLoading.value = false;
     return;
   }
   console.log("开始导出", exportList);
@@ -338,6 +356,7 @@ const exportCinemeCodeMatch = async () => {
   let fileName = `影院映射维护列表.xlsx`;
   console.warn("tableData", tableData, "fileName", fileName);
   createExcelDown(tableData, fileName);
+  exportLoading.value = false;
 };
 
 const uploadRef = ref(null);
@@ -406,18 +425,29 @@ const importCinemaMatch = async (uploadFile, uploadFiles) => {
       let tableDate = [...(res.header ?? []), ...res.content];
       console.warn("表格内容数据", tableDate);
       let [keys, ...tableList] = tableDate;
-      tableList = tableList.map(item => {
-        const result = keys.reduce((obj, key, index) => {
-          obj[key] = item[index] || ""; // 空字符串转为 null（可选）
-          return obj;
-        }, {});
-        // console.log("result", result);
-        return {
-          ...result,
-          update_time: getCurrentTime()
-        };
-      });
+      tableList = tableList
+        .map(item => {
+          const result = keys.reduce((obj, key, index) => {
+            obj[key] = item[index] || ""; // 空字符串转为 null（可选）
+            return obj;
+          }, {});
+          // console.log("result", result);
+          return {
+            ...result,
+            update_time: getCurrentTime()
+          };
+        })
+        .filter(item => item.plat_cinema_code);
       console.warn("最终组装好要上传的数据", tableList);
+      if (!tableList.length) {
+        ElMessage({
+          type: "warning",
+          message: "过滤后无可以导入的映射列表，请检查"
+        });
+        uploadRef.value?.clearFiles();
+        loading.close();
+        return;
+      }
       // 先查一下库里面的券过滤一下，如果存在该券已使用就不执行导入了
       let params = {
         queryFields: "plat_cinema_code"
@@ -427,9 +457,7 @@ const importCinemaMatch = async (uploadFile, uploadFiles) => {
       console.warn("远端已有映射数据", cinemaList);
       cinemaList = cinemaList.map(item => item.plat_cinema_code);
       let addList = tableList.filter(
-        item =>
-          item.plat_cinema_code &&
-          !cinemaList.includes("" + item.plat_cinema_code)
+        item => !cinemaList.includes("" + item.plat_cinema_code)
       );
       console.warn("要新增的映射数据", addList);
       if (!addList.length) {
