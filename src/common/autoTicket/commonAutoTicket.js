@@ -295,4 +295,6 @@ class OrderAutoTicketQueue {
 }
 // // 生成出票队列实例
 // const createTicketQueue = appFlag => new OrderAutoTicketQueue(appFlag);
-export default OrderAutoTicketQueue;
+// 生成出票队列实例
+const createCommonTicketQueue = appFlag => new OrderAutoTicketQueue(appFlag);
+export default createCommonTicketQueue;

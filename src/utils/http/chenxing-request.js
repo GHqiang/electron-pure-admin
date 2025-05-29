@@ -147,9 +147,9 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           config.url.indexOf("/auth/") === -1
         ) {
           const tokenRes = await getToken(app_name);
-          chenxingToken = tokenRes.token;
-          identityKey = tokenRes.identityKey;
-          identityType = tokenRes.identityType;
+          chenxingToken = tokenRes?.token;
+          identityKey = tokenRes?.identityKey;
+          identityType = tokenRes?.identityType;
         }
         config.headers.authorization = "Bearer " + chenxingToken;
         config.headers["Content-Type"] = "application/json";

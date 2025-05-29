@@ -1,6 +1,6 @@
 import createSfcTicketQueue from "./sfcAutoTicket";
 import createUmeTicketQueue from "./umeAutoTicket";
-import OrderAutoTicketQueue from "./commonAutoTicket";
+import createCommonTicketQueue from "./commonAutoTicket";
 import createH5UmeTicketQueue from "./h5umeAutoTicket";
 import createLmaTicketQueue from "./lmaAutoTicket";
 import {
@@ -20,7 +20,7 @@ const createTucketQueueFun = appFlag => {
     return createSfcTicketQueue(appFlag);
   } else {
     // 统一公共订单执行队列
-    return new OrderAutoTicketQueue(appFlag);
+    return createCommonTicketQueue(appFlag);
   }
 };
 
