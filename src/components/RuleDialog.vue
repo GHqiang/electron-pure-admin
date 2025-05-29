@@ -884,25 +884,13 @@ const getCityList = async () => {
           cityCinemaList = res.data || [];
           list = cityCinemaList.map(item => ({
             name: item.cityInfoDTO.cityName,
-            id: item.cityInfoDTO.cityCode,
-            cinemaList: item.cinemaResultDTOList.map(itemA => ({
-              ...itemA,
-              id: itemA.cinemaId,
-              name: itemA.cinemaName
-            }))
+            id: item.cityInfoDTO.cityCode
           }));
         } else if (api_version === "C") {
           cityCinemaList = res.data?.resultDOList || [];
           list = cityCinemaList.map(item => ({
             name: item.cityInfo.chName,
-            id: item.cityInfo.id,
-            cinemaList: item.cinemas.map(itemA => ({
-              ...itemA,
-              id: itemA.id,
-              name: itemA.name,
-              cinemaId: itemA.id,
-              cinemaCode: itemA.unifiedCode
-            }))
+            id: item.cityInfo.id
           }));
         }
         console.log("list", list);
@@ -967,9 +955,8 @@ const getFilmList = async (oneCity, oneCinema) => {
       }));
     } else if (CHENXING_LIST.value.includes(shadowLineName)) {
       const params = {
-        cinemaCode: oneCinema.cinemaCode,
+        cinemaCode: oneCinema.id,
         cinemaId: oneCinema.cinemaId,
-        // unifiedCode: oneCinema.cinemaCode,
         pageNo: 1,
         pageSize: 1000,
         platForm: 5
@@ -1035,7 +1022,7 @@ const getCinemaListByCityId = async city_id => {
     let cinemaList = [];
     if (UME_LIST.value.includes(shadowLineName)) {
       cinemaList =
-        cityList.value.find(item => item.cityCode === city_id)?.cinemaList ||
+        cityCinemaList.find(item => item.cityCode === city_id)?.cinemaList ||
         [];
       cinemaList = cinemaList.map(item => ({
         ...item,
@@ -1044,15 +1031,33 @@ const getCinemaListByCityId = async city_id => {
       }));
     } else if (H5_UME_LIST.value.includes(shadowLineName)) {
       cinemaList =
-        cityList.value.find(item => item.cityCode === city_id)?.cinemas || [];
+        cityCinemaList.find(item => item.cityCode === city_id)?.cinemas || [];
       cinemaList = cinemaList.map(item => ({
         ...item,
         id: item.cinemaLinkId,
         name: item.cinemaName
       }));
     } else if (CHENXING_LIST.value.includes(shadowLineName)) {
-      cinemaList =
-        cityList.value.find(item => item.id === city_id)?.cinemaList || [];
+      let api_version = GE_APP_INFO(shadowLineName)?.api_version || "";
+      if (api_version === "3.0C") {
+        cinemaList =
+          cityCinemaList.find(item => item.cityInfoDTO.cityCode === city_id)
+            ?.cinemaResultDTOList || [];
+        cinemaList = cinemaList.map(item => ({
+          ...item,
+          id: item.cinemaCode,
+          name: item.cinemaName
+        }));
+      } else if (api_version === "C") {
+        cinemaList =
+          cityCinemaList.find(item => item.cityInfo.id === city_id)?.cinemas ||
+          [];
+        cinemaList = cinemaList.map(item => ({
+          ...item,
+          id: item.unifiedCode,
+          name: item.name
+        }));
+      }
     } else if (shadowLineName === "lma") {
       const res = await APP_API_OBJ[shadowLineName].getCinemaList(city_id);
       cinemaList = res.data.list || [];
@@ -1078,24 +1083,21 @@ const getCinemaListByCityId = async city_id => {
 const getAllCinemaList = async cityList => {
   try {
     const { shadowLineName } = formData;
-    let allCinemaList = appBaseData[shadowLineName]?.allCinemaList || [];
-    console.log("获取全部影院列表", shadowLineName, toRaw(allCinemaList));
-    if (!allCinemaList?.length) {
-      for (let index = 0; index < cityList.length; index++) {
-        const item = cityList[index];
-        let list = await getCinemaListByCityId(item.id);
-        list = list.map(itemA => {
-          return {
-            ...itemA,
-            city_name: item.name,
-            city_id: item.id
-          };
-        });
-        if (list.length > 0) {
-          allCinemaList = allCinemaList.concat(list);
-        }
+    let allCinemaList = [];
+    console.log("准备获取全部影院列表", shadowLineName);
+    for (let index = 0; index < cityList.length; index++) {
+      const item = cityList[index];
+      let list = await getCinemaListByCityId(item.id);
+      list = list.map(itemA => {
+        return {
+          ...itemA,
+          city_name: item.name,
+          city_id: item.id
+        };
+      });
+      if (list.length > 0) {
+        allCinemaList = allCinemaList.concat(list);
       }
-      // setBaseData({ allCinemaList: allCinemaList }, shadowLineName);
     }
     cinemaList.value = allCinemaList;
     return allCinemaList;
