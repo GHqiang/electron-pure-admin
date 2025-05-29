@@ -150,18 +150,6 @@
         </el-form-item>
         <el-form-item
           v-if="formData.app_type_code === 'chenxing_applet'"
-          label="辰星appId"
-          prop="appId"
-        >
-          <el-input
-            v-model="formData.appId"
-            placeholder="请输入辰星影院appId"
-            clearable
-          />
-          <span style="color: red">注意：仅辰星C端影院需要，3.0C端不需要</span>
-        </el-form-item>
-        <el-form-item
-          v-if="formData.app_type_code === 'chenxing_applet'"
           label="辰星api版本"
           prop="api_version"
         >
@@ -173,6 +161,21 @@
           <span style="color: red"
             >注意：辰星C端影院输入大写C，3.0C端影院输入3.0C</span
           >
+        </el-form-item>
+        <el-form-item
+          v-if="
+            formData.app_type_code === 'chenxing_applet' &&
+            formData.api_version === 'C'
+          "
+          label="辰星appId"
+          prop="appId"
+        >
+          <el-input
+            v-model="formData.appId"
+            placeholder="请输入辰星影院appId"
+            clearable
+          />
+          <span style="color: red">注意：仅辰星C端影院需要，3.0C端不需要</span>
         </el-form-item>
         <!-- <el-form-item label="影院code" prop="cinemaCode">
           <el-input
@@ -277,6 +280,12 @@ const rules = {
   ],
   channelCode: [
     { required: true, message: "凤凰云智影院标识不能为空", trigger: "blur" }
+  ],
+  api_version: [
+    { required: true, message: "辰星系列api版本不能为空", trigger: "blur" }
+  ],
+  appId: [
+    { required: true, message: "辰星C端系列影院appId不能为空", trigger: "blur" }
   ]
 };
 
