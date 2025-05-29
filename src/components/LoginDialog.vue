@@ -70,6 +70,7 @@
             placeholder="请输入tenantId"
             clearable
           />
+          <span style="color: red">注意：仅辰星3.0C端影院需要，C端不需要</span>
         </el-form-item>
         <el-form-item
           v-if="H5_UME_LIST.includes(formData.app_name)"

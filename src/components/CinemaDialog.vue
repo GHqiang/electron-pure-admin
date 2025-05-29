@@ -148,6 +148,18 @@
             clearable
           />
         </el-form-item>
+        <el-form-item
+          v-if="formData.app_type_code === 'chenxing_applet'"
+          label="辰星appId"
+          prop="appId"
+        >
+          <el-input
+            v-model="formData.appId"
+            placeholder="请输入辰星影院appId"
+            clearable
+          />
+          <span style="color: red">注意：仅辰星C端影院需要，3.0C端不需要</span>
+        </el-form-item>
         <!-- <el-form-item label="影院code" prop="cinemaCode">
           <el-input
             v-model="formData.cinemaCode"
@@ -219,6 +231,7 @@ let formData = reactive({
   sfc_open_id: "",
   cinemaLinkId: "",
   channelCode: "",
+  appId: "",
   status: "1",
   is_out_use: "1",
   remark: ""
@@ -266,6 +279,7 @@ const resetForm = el => {
   formData.sfc_open_id = "";
   formData.cinemaLinkId = "";
   formData.channelCode = "";
+  formData.appId = "";
   formData.remark = "";
   // formData.group_list = "";
   // formData.flag_list = "";
@@ -282,6 +296,7 @@ const appTypeChange = val => {
   formData.sfc_open_id = "";
   formData.cinemaLinkId = "";
   formData.channelCode = "";
+  formData.appId = "";
 };
 // 打开弹窗
 const open = async cinemaInfo => {
@@ -305,6 +320,7 @@ const open = async cinemaInfo => {
         formData.sfc_open_id = formInfo.sfc_open_id;
         formData.cinemaLinkId = formInfo.cinemaLinkId;
         formData.channelCode = formInfo.channelCode;
+        formData.appId = formInfo.appId;
         formData.status = formInfo.status || "1";
         formData.is_out_use = formInfo.is_out_use || "1";
         formData.remark = formInfo.remark;

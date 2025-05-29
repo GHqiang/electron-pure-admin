@@ -7,7 +7,7 @@ import { GE_APP_INFO } from "@/common/constant";
 
 import { getCinemaLoginInfoList, sendWxPusherMessage } from "@/utils/utils";
 
-const getToken = async appId => {
+const getToken = async app_name => {
   try {
     // const tokenRes = await APP_API_OBJ[app_name].authToken({
     //   appId: "5868e8d75ba04beda426437ba93ef4c6"
@@ -20,7 +20,7 @@ const getToken = async appId => {
         v: "1.0",
         timestamp: +new Date(),
         sign: "sign",
-        data: { appId: appId || "5868e8d75ba04beda426437ba93ef4c6" }
+        data: { appId: GE_APP_INFO(app_name)?.appId }
       },
       headers: {
         // "accept": "application/json, text/plain, */*",
@@ -141,8 +141,12 @@ const createAxios = ({ app_name, timeout = 20 }) => {
   instance.interceptors.request.use(
     async config => {
       if (GE_APP_INFO(app_name)) {
-        if (!chenxingToken && config.url.indexOf("/auth/") === -1) {
-          const tokenRes = await getToken();
+        if (
+          !chenxingToken &&
+          api_version == "C" &&
+          config.url.indexOf("/auth/") === -1
+        ) {
+          const tokenRes = await getToken(app_name);
           chenxingToken = tokenRes.token;
           identityKey = tokenRes.identityKey;
           identityType = tokenRes.identityType;
