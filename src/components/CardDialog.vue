@@ -358,8 +358,26 @@ const getCinemaListByCityId = async city_id => {
         name: item.cinemaName
       }));
     } else if (CHENXING_LIST.value.includes(app_name)) {
-      cinemaList =
-        cityCinemaList.find(item => item.id === city_id)?.cinemaList || [];
+      let api_version = GE_APP_INFO(app_name)?.api_version || "";
+      if (api_version === "3.0C") {
+        cinemaList =
+          cityCinemaList.find(item => item.cityInfoDTO.cityCode === city_id)
+            ?.cinemaResultDTOList || [];
+        cinemaList = cinemaList.map(item => ({
+          ...item,
+          id: item.cinemaCode,
+          name: item.cinemaName
+        }));
+      } else if (api_version === "C") {
+        cinemaList =
+          cityCinemaList.find(item => item.cityInfo.id === city_id)?.cinemas ||
+          [];
+        cinemaList = cinemaList.map(item => ({
+          ...item,
+          id: item.unifiedCode,
+          name: item.name
+        }));
+      }
     } else if (app_name === "lma") {
       const res = await APP_API_OBJ[app_name].getCinemaList(city_id);
       cinemaList = res.data.list || [];
@@ -450,30 +468,17 @@ const getCityList = async () => {
       let api_version = GE_APP_INFO(app_name)?.api_version || "";
       if (api_version === "3.0C") {
         cityCinemaList = res.data || [];
-        cityCinemaList = cityCinemaList.map(item => ({
+        list = cityCinemaList.map(item => ({
           name: item.cityInfoDTO.cityName,
-          id: item.cityInfoDTO.cityCode,
-          cinemaList: item.cinemaResultDTOList.map(itemA => ({
-            ...itemA,
-            id: itemA.cinemaId,
-            name: itemA.cinemaName
-          }))
+          id: item.cityInfoDTO.cityCode
         }));
       } else if (api_version === "C") {
         cityCinemaList = res.data?.resultDOList || [];
-        cityCinemaList = cityCinemaList.map(item => ({
+        list = cityCinemaList.map(item => ({
           name: item.cityInfo.chName,
-          id: item.cityInfo.id,
-          cinemaList: item.cinemas.map(itemA => ({
-            ...itemA,
-            id: itemA.id,
-            name: itemA.name,
-            cinemaId: itemA.id,
-            cinemaCode: itemA.unifiedCode
-          }))
+          id: item.cityInfo.id
         }));
       }
-      list = cityCinemaList;
       console.log("list", list);
     } else if (app_name === "lma") {
       const res = await APP_API_OBJ[app_name].getCityList();
