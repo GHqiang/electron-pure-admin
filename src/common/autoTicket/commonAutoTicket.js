@@ -42,7 +42,7 @@ class OrderAutoTicketQueue {
     this.queue = [];
     this.handledOrders = new Map();
     this.isStart = true; // 是否启动
-    this.logger.warn("队列启动，开始监听是否有新订单");
+    this.logger.warn(this.appFlag + "辰星系列队列启动，开始监听是否有新订单");
   }
 
   // 测试新订单
