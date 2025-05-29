@@ -681,7 +681,7 @@ onBeforeMount(async () => {
 .tree-list :deep(.el-tree-node.is-current > .el-tree-node__content) {
   background-color: #5fe3de;
 }
-.demo-form-inline /deep/ .el-form-item__content {
+.demo-form-inline :deep(.el-form-item__content) {
   align-items: baseline;
 }
 </style>
