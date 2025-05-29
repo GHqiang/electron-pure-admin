@@ -27,31 +27,13 @@
         <el-form :inline="true" class="demo-form-inline">
           <el-form-item>
             <el-button type="primary" @click="searchData">搜索</el-button>
-            <el-button
-              type="primary"
-              style="padding-left: 0px"
-              :disabled="!appName"
+            <el-button type="primary" @click="syncCinemeCodeMatch()"
+              >同步映射信息</el-button
             >
-              <template #default>
-                <el-select
-                  v-model="appName"
-                  placeholder="请选择影线名称"
-                  style="width: 160px"
-                  filterable
-                  clearable
-                >
-                  <el-option
-                    v-for="(keyValue, keyName) in APP_LIST"
-                    :key="keyName"
-                    :label="keyValue"
-                    :value="keyName"
-                  />
-                </el-select>
-                <span @click="syncOperateHandle">{{
-                  operateName == 1 ? "同步映射信息" : "导出映射维护信息"
-                }}</span>
-              </template>
-            </el-button>
+
+            <el-button type="primary" @click="exportCinemeCodeMatch"
+              >导出映射维护信息</el-button
+            >
             <el-upload
               ref="uploadRef"
               style="margin-left: 15px"
@@ -259,73 +241,109 @@ const operateName = computed(() => {
   return "1";
 });
 let cinemaList = ref([]); // 影院列表
-let cityCinemaList = []; // 城市影院列表
-// 同步/导出维护处理
-const syncOperateHandle = async () => {
+
+// 获取某个影线的全部影院列表
+const getCinemaList = async app_name => {
+  const { cityList = [], cityCinemaList = [] } = await getCityList(app_name);
+  let list = [];
+  if (cityList?.length) {
+    list = await getAllCinemaList(cityList, app_name, cityCinemaList);
+  } else {
+    console.warn("获取城市列表异常", app_name);
+  }
+  return list || [];
+};
+// 同步影院code映射
+const syncCinemeCodeMatch = async isExport => {
   try {
-    let app_name = appName.value;
-    console.log("app_name", app_name);
-    const appInfo = GE_APP_INFO(app_name);
-    if (!appInfo) {
-      ElMessage.warning("该影院已废弃");
-      return;
-    }
-    const cityList = await getCityList(app_name);
-    let list = await getAllCinemaList(cityList, app_name);
-    list = list.map(item => {
-      let app_cinema_code = item.id;
-      let isH5_UME = H5_UME_LIST.value.includes(app_name);
-      let isLMA = app_name === "lma";
-      let isSFC = SFC_LIST.value.includes(app_name);
-      // 以下三种没有cinema_code，用city_id+id组合当唯一标识
-      if (isH5_UME || isLMA || isSFC) {
-        app_cinema_code = item.city_id + "_" + item.id;
-      }
-      return {
-        app_label: appInfo.app_label,
-        app_name: appInfo.app_name,
-        app_type_code: appInfo.app_type_code,
-        app_type_name: appInfo.app_type_name,
-        app_cinema_name: item.name,
-        app_cinema_code,
-        plat_cinema_code: item.cinemaCode || ""
-      };
+    // 1、获取未同步的影院列表
+    const cinemaListRes = await svApi.queryNoSyncCinemaList({});
+    let cinemaList = cinemaListRes?.data?.cinemaList || [];
+    console.warn("获取未同步的影院列表", cinemaList);
+
+    // 2、获取可以同步的影院列表
+    let syncCinemaList = cinemaList.filter(item => {
+      let canSyncAppTypeCodeList = ["ume_applet", "chenxing_applet"];
+      let isInclude = canSyncAppTypeCodeList.includes(item.app_type_code);
+      return isExport ? !isInclude : isInclude;
     });
-    console.warn("list", list);
-    if (operateName.value == 1) {
-      console.log("开始同步");
-      syncCinemaMatch(list, app_name);
-    } else {
-      console.log("开始导出");
-      let tableData = list.map(item => [
-        item.app_type_code,
-        item.app_type_name,
-        item.app_name,
-        item.app_label,
-        item.app_cinema_name,
-        item.app_cinema_code,
-        item.plat_cinema_code
-      ]);
-      tableData.unshift([
-        "app_type_code",
-        "app_type_name",
-        "app_name",
-        "app_label",
-        "app_cinema_name",
-        "app_cinema_code",
-        "plat_cinema_code"
-      ]);
-      let fileName = `${app_name}_影院映射维护.xlsx`;
-      console.warn("tableData", tableData, "fileName", fileName);
-      createExcelDown(tableData, fileName);
+    console.warn("获取可以同步的影院列表", syncCinemaList);
+
+    // 组装映射同步数据
+    let syncList = [];
+    for (let i = 0; i < syncCinemaList.length; i++) {
+      const { app_name, app_type_code } = syncCinemaList[i];
+      let list = await getCinemaList(app_name);
+      console.warn("getCinemaList", list);
+      const appInfo = GE_APP_INFO(app_name);
+      list = list.map(item => {
+        let app_cinema_code = item.cinemaCode;
+        let isH5_UME = app_type_code === "ume_h5";
+        let isLMA = app_name === "lma";
+        let isSFC = app_type_code === "sfc_applet";
+        // 以下三种没有cinema_code，用city_id+id组合当唯一标识
+        if (isH5_UME || isLMA || isSFC) {
+          app_cinema_code = item.cityId + "_" + item.cinemaId;
+        }
+        return {
+          app_label: appInfo.app_label,
+          app_name: appInfo.app_name,
+          app_type_code: appInfo.app_type_code,
+          app_type_name: appInfo.app_type_name,
+          app_cinema_name: item.cinemaName,
+          app_cinema_code,
+          plat_cinema_code: item.cinemaCode || ""
+        };
+      });
+      syncList = syncList.concat(list);
     }
-  } catch (err) {
-    console.warn("同步/导出维护处理异常", err);
+    console.warn("组装好的同步映射列表数据syncList", syncList);
+    if (isExport) return syncList;
+    if (syncList.length > 0) {
+      await syncCinemaMatch(syncList);
+    } else {
+      ElMessage.warning("没有可同步的影院");
+    }
+  } catch (error) {
+    console.warn("获取可以同步映射列表异常", error);
   }
 };
+
+// 导出映射维护信息列表
+const exportCinemeCodeMatch = async () => {
+  const exportList = await syncCinemeCodeMatch(true);
+  if (exportList.length === 0) {
+    ElMessage.warning("没有可导出维护映射信息的影院");
+    return;
+  }
+  console.log("开始导出", exportList);
+  let tableData = exportList.map(item => [
+    item.app_type_code,
+    item.app_type_name,
+    item.app_name,
+    item.app_label,
+    item.app_cinema_name,
+    item.app_cinema_code,
+    item.plat_cinema_code
+  ]);
+  tableData.unshift([
+    "app_type_code",
+    "app_type_name",
+    "app_name",
+    "app_label",
+    "app_cinema_name",
+    "app_cinema_code",
+    "plat_cinema_code"
+  ]);
+  let fileName = `影院映射维护列表.xlsx`;
+  console.warn("tableData", tableData, "fileName", fileName);
+  createExcelDown(tableData, fileName);
+};
+
 const uploadRef = ref(null);
+
 // 同步映射维护信息
-const syncCinemaMatch = async (cinema_list, app_name) => {
+const syncCinemaMatch = async cinema_list => {
   const loading = ElLoading.service({
     lock: true,
     text: "同步中",
@@ -443,7 +461,7 @@ const importCinemaMatch = async (uploadFile, uploadFiles) => {
 const getCityList = async app_name => {
   try {
     let params = {};
-    let list = [];
+    let cityList, cityCinemaList;
     console.log("获取城市列表参数", params, app_name);
     if (UME_LIST.value.includes(app_name)) {
       let params = {
@@ -456,9 +474,9 @@ const getCityList = async app_name => {
       };
       const res = await APP_API_OBJ[app_name].getCinemaList(params);
       cityCinemaList = res.data || [];
-      list = cityCinemaList.map(item => ({
-        name: item.cityName,
-        id: item.cityCode
+      cityList = cityCinemaList.map(item => ({
+        cityName: item.cityName,
+        cityId: item.cityCode
       }));
     } else if (H5_UME_LIST.value.includes(app_name)) {
       let params = {
@@ -466,90 +484,108 @@ const getCityList = async app_name => {
         leaseCode: ""
       };
       const res = await APP_API_OBJ[app_name].getCinemaList(params);
-      console.log("res", res);
       cityCinemaList = res.bizValue?.cities || [];
-      list = cityCinemaList.map(item => ({
-        name: item.cityName,
-        id: item.cityCode
+      cityList = cityCinemaList.map(item => ({
+        cityName: item.cityName,
+        cityId: item.cityCode
       }));
-      console.log("list", list);
     } else if (CHENXING_LIST.value.includes(app_name)) {
       let params = {};
       const res = await APP_API_OBJ[app_name].getCinemaList(params);
-      console.log("res", res);
-      cityCinemaList = res.data || [];
-      list = cityCinemaList.map(item => ({
-        name: item.cityInfoDTO.cityName,
-        id: item.cityInfoDTO.cityCode
-      }));
-      console.log("list", list);
+      let api_version = GE_APP_INFO(app_name)?.api_version || "";
+      if (api_version === "3.0C") {
+        cityCinemaList = res.data || [];
+        cityList = cityCinemaList.map(item => ({
+          cityName: item.cityInfoDTO.cityName,
+          cityId: item.cityInfoDTO.cityCode
+        }));
+      } else if (api_version === "C") {
+        cityCinemaList = res.data?.resultDOList || [];
+        cityList = cityCinemaList.map(item => ({
+          cityName: item.cityInfo.chName,
+          cityId: item.cityInfo.id
+        }));
+      }
     } else if (app_name === "lma") {
       const res = await APP_API_OBJ[app_name].getCityList();
-      list = res.data.list || [];
-      list = list.map(item => ({
-        name: item.city_name,
-        id: item.city_id
+      cityList = res.data.list || [];
+      cityList = cityList.map(item => ({
+        cityName: item.city_name,
+        cityId: item.city_id
       }));
     } else {
       const res = await APP_API_OBJ[app_name].getCityList(params);
-      list = res?.data?.all_city || [];
+      cityList = res?.data?.all_city || [];
+      cityList = cityList.map(item => ({
+        cityName: item.name,
+        cityId: item.id
+      }));
     }
-    console.log("获取城市列表返回", toRaw(list));
-    return list;
+    console.log("获取城市列表返回", cityList, cityCinemaList);
+    return { cityList, cityCinemaList };
   } catch (error) {
     console.warn("获取城市列表异常", error);
-    return [];
+    return {};
   }
 };
 
 // 根据城市获取影院列表
-const getCinemaListByCityId = async (city_id, app_name) => {
+const getCinemaListByCityId = async (cityId, app_name, cityCinemaList) => {
   try {
     let params = {
-      city_id: city_id
+      city_id: cityId
     };
     console.log("根据城市获取影院列表参数", params);
     let cinemaList = [];
     if (UME_LIST.value.includes(app_name)) {
       cinemaList =
-        cityCinemaList.find(item => item.cityCode === city_id)?.cinemaList ||
-        [];
+        cityCinemaList.find(item => item.cityCode === cityId)?.cinemaList || [];
       cinemaList = cinemaList.map(item => ({
         ...item,
-        id: item.cinemaCode,
-        name: item.cinemaName,
-        city_name: item.cityName,
-        cinemaCode: item.cinemaCode
+        cinemaCode: item.cinemaCode,
+        cinemaName: item.cinemaName,
+        cinemaId: ""
       }));
     } else if (H5_UME_LIST.value.includes(app_name)) {
       cinemaList =
-        cityCinemaList.find(item => item.cityCode === city_id)?.cinemas || [];
+        cityCinemaList.find(item => item.cityCode === cityId)?.cinemas || [];
       cinemaList = cinemaList.map(item => ({
         ...item,
-        id: item.cinemaLinkId,
-        name: item.cinemaName,
-        city_name: item.cityName,
-        cinemaCode: ""
+        cinemaCode: "",
+        cinemaName: item.cinemaName,
+        cinemaId: item.cinemaLinkId
       }));
     } else if (CHENXING_LIST.value.includes(app_name)) {
-      cinemaList =
-        cityCinemaList.find(item => item.cityInfoDTO.cityCode === city_id)
-          ?.cinemaResultDTOList || [];
-      cinemaList = cinemaList.map(item => ({
-        ...item,
-        id: item.cinemaCode,
-        name: item.cinemaName,
-        cinemaCode: item.cinemaCode
-      }));
+      let api_version = GE_APP_INFO(app_name)?.api_version || "";
+      if (api_version === "3.0C") {
+        cinemaList =
+          cityCinemaList.find(item => item.cityInfoDTO.cityCode === cityId)
+            ?.cinemaResultDTOList || [];
+        cinemaList = cinemaList.map(item => ({
+          ...item,
+          cinemaCode: item.cinemaCode,
+          cinemaName: item.cinemaName,
+          cinemaId: ""
+        }));
+      } else if (api_version === "C") {
+        cinemaList =
+          cityCinemaList.find(item => item.cityInfo.id === cityId)?.cinemas ||
+          [];
+        cinemaList = cinemaList.map(item => ({
+          ...item,
+          cinemaCode: item.unifiedCode,
+          cinemaName: item.name,
+          cinemaId: ""
+        }));
+      }
     } else if (app_name === "lma") {
-      const res = await APP_API_OBJ[app_name].getCinemaList(city_id);
+      const res = await APP_API_OBJ[app_name].getCinemaList(cityId);
       cinemaList = res.data.list || [];
       cinemaList = cinemaList.map(item => ({
         ...item,
-        id: item.cinema_id,
-        name: item.cinema_name,
-        city_name: item.city_name,
-        cinemaCode: ""
+        cinemaCode: "",
+        cinemaName: item.cinema_name,
+        cinemaId: item.cinema_id
       }));
     } else {
       // sfc
@@ -558,7 +594,9 @@ const getCinemaListByCityId = async (city_id, app_name) => {
       cinemaList = res.data?.cinema_data || [];
       cinemaList = cinemaList.map(item => ({
         ...item,
-        cinemaCode: ""
+        cinemaCode: "",
+        cinemaName: item.name,
+        cinemaId: item.id
       }));
     }
     return cinemaList;
@@ -568,17 +606,25 @@ const getCinemaListByCityId = async (city_id, app_name) => {
 };
 
 // 获取全部影院列表
-const getAllCinemaList = async (cityList, app_name) => {
+const getAllCinemaList = async (cityList, app_name, cityCinemaList) => {
   try {
     let allCinemaList = [];
     for (let index = 0; index < cityList.length; index++) {
       const item = cityList[index];
-      let list = await getCinemaListByCityId(item.id, app_name);
+      let list = await getCinemaListByCityId(
+        item.cityId,
+        app_name,
+        cityCinemaList
+      );
       list = list.map(itemA => {
         return {
           ...itemA,
-          city_name: item.name,
-          city_id: item.id
+          // 只关心以下字段
+          // cityName: item.cityName,
+          cityId: item.cityId,
+          cinemaId: itemA.cinemaId,
+          cinemaCode: itemA.cinemaCode,
+          cinemaName: itemA.cinemaName
         };
       });
       if (list.length > 0) {

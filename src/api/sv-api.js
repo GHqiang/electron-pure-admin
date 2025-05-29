@@ -140,6 +140,9 @@ const updateCinemaRecord = params =>
 // 查询影院映射信息列表
 const queryCinemaMatchList = params =>
   axios.get("/svpi/cinemaCodeMatch/query", { params });
+// 查询未同步的影院列表
+const queryNoSyncCinemaList = params =>
+  axios.get("/svpi/cinemaCodeMatch/queryNoSyncCinemaList", { params });
 // 删除影院映射信息
 const deleteCinemaMatch = params =>
   axios.get("/svpi/cinemaCodeMatch/delete", { params });
@@ -290,7 +293,8 @@ const svApi = {
   batchDeleteCinemaMatch,
   addCinemaMatch,
   batchAddCinemaMatch,
-  updateCinemaMatch
+  updateCinemaMatch,
+  queryNoSyncCinemaList
 };
 window.svApi = svApi;
 export default svApi;
