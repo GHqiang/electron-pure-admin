@@ -374,9 +374,9 @@ export default class CinemaManage {
         moviePlayTime = res.data?.planList || [];
       } else if (api_version === "C") {
         let filmList = res.data?.filmList || [];
-        let showList =
-          filmList.find(item => item.id == filmId)?.showList || [];
-        moviePlayTime = showList.find(item => item.dayStr == showDate)?.planList || []
+        let showList = filmList.find(item => item.id == filmId)?.showList || [];
+        moviePlayTime =
+          showList.find(item => item.dayStr == showDate)?.planList || [];
       }
 
       if (!moviePlayTime?.length) {

@@ -70,14 +70,18 @@ export default class SeatManage {
   getSeatParams(buyTicketInfo) {
     const { cinemaCode, cinemaId, filmId, featureAppNo, targetShow } =
       buyTicketInfo;
-      const {api_version} = this
-    return {
+    const { api_version } = this;
+    let params = {
       cinemaCode,
       cinemaId,
-      filmId,
-      featureAppNo: featureAppNo || targetShow?.featureAppNo,
-      sessionId: targetShow?.sessionId
+      filmId
     };
+    if (api_version === "3.0C") {
+      params.featureAppNo = featureAppNo || targetShow?.featureAppNo;
+    } else if (api_version === "C") {
+      params.sessionId = targetShow?.sessionId;
+    }
+    return params;
   }
 
   /**

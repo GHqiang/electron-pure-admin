@@ -382,6 +382,7 @@ const oneClickStart = () => {
         console.warn("一键启动自动出票队列");
         svApi.updateUser({
           plat_offer_queue: JSON.stringify(tableDataStore.items),
+          app_ticket_queue: JSON.stringify(Object.keys(appTicketQueueObj)),
           offer_queue_time: getCurrentTime()
         });
         logUpload({ plat_name: "", type: 1 }, [

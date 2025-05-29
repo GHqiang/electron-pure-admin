@@ -255,8 +255,8 @@ export default class BuyTicket {
         order_number,
         session_id: this.currentSessionId
       };
-      const {api_version} = this
-      if(api_version == 'C') {
+      const { api_version } = this;
+      if (api_version == "C") {
         lockSeatParams = {
           cinemaCode,
           cinemaId,
@@ -267,7 +267,7 @@ export default class BuyTicket {
           plat_name,
           order_number,
           session_id: this.currentSessionId
-        }
+        };
       }
       const lockRes = await this.seatManage.lockseatByApp(lockSeatParams);
       if (!lockRes) {
