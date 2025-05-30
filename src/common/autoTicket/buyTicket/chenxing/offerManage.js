@@ -440,7 +440,11 @@ class getChenxingOfferPrice {
           this.logger.infoSave("取最低座位价格", { basePrice });
         }
       }
-
+      this.logger.infoSave("会员服务费", { serviceAddFee });
+      if (serviceAddFee) {
+        basePrice = +basePrice + Number(serviceAddFee);
+        this.logger.infoSave("最低价格+会员服务费", { basePrice });
+      }
       // 计算最优折扣
       return this.calculateBestDiscount(cardList, basePrice);
     } catch (error) {

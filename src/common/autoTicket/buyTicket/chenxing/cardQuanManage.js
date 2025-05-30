@@ -66,7 +66,7 @@ export default class CardQuanManage {
         cardList,
         standardPrice, // 会员价
         member_price, // 成本价
-        handlingFee,
+        handlingFee, // 服务费
         rewards,
         supplier_end_price,
         ticket_num,
@@ -289,7 +289,7 @@ export default class CardQuanManage {
       cardList,
       standardPrice, // 会员价
       member_price, // 成本价
-      handlingFee,
+      handlingFee, // 服务费
       rewards,
       supplier_end_price,
       ticket_num,
@@ -301,8 +301,11 @@ export default class CardQuanManage {
       if (!cardList.length) {
         str = "无可用会员卡（疑似出满）";
       }
+      if (handlingFee) {
+        standardPrice = +standardPrice + Number(handlingFee);
+      }
       // 支付金额
-      let payAmoungt = standardPrice + (handlingFee || 0) * ticket_num;
+      let payAmoungt = (standardPrice * 1000 * ticket_num) / 1000;
       let cardData = cardList.filter(item => item.cardAmount >= payAmoungt);
       if (!cardList.length || !cardData?.length) {
         let maxCardAmount = cardList.sort(
