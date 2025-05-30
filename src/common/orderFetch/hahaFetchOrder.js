@@ -186,10 +186,7 @@ class OrderAutoFetchQueue {
       const eventName = `newOrder_${order.appName}`;
       // 创建一个事件对象
       const newOrderEvent = new CustomEvent(eventName, {
-        detail: {
-          ...order,
-          app_name: order.appName
-        }
+        detail: order
       });
       window.dispatchEvent(newOrderEvent);
     } catch (error) {
