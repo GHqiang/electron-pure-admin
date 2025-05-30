@@ -178,7 +178,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
               config.url.slice(9); // 截取掉/chenxing
           } else {
             // 不需要转发
-            config.url = "https://capi.oristarcloud.com" + config.url.slie(9);
+            config.url = "https://capi.oristarcloud.com" + config.url.slice(9);
           }
         } else {
           if (api_version == "C") {
