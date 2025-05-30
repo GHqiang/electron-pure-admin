@@ -124,9 +124,11 @@ class OrderAutoFetchQueue {
         })
         .filter(item => getCinemaFlag(item))
         .map(item => {
+          let app_name = getCinemaFlag(item);
           return {
             ...item,
-            appName: getCinemaFlag(item)
+            app_name,
+            appName: app_name
           };
         });
       sfcStayOfferlist = sfcStayOfferlist.filter(item => {

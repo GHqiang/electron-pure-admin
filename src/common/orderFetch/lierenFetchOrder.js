@@ -51,9 +51,11 @@ class OrderAutoFetchQueue {
       stayList = stayList
         .filter(item => getCinemaFlag(item))
         .map(item => {
+          let app_name = getCinemaFlag(item);
           return {
             ...item,
-            appName: getCinemaFlag(item)
+            app_name,
+            appName: app_name
           };
         });
       stayList = stayList.filter(item => {
