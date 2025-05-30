@@ -183,7 +183,7 @@ export default class CinemaManage {
       );
       if (!movieInfo) {
         // 模糊匹配
-        this.logger.warn("获取目标影片信息失败", { movieData, filmName });
+        this.logger.warn("全字匹配目标影片信息失败", { movieData, filmName });
         let targetFilmList = movieData.map(item => {
           return {
             ...item,
@@ -376,7 +376,7 @@ export default class CinemaManage {
         let filmList = res.data?.filmList || [];
         let showList = filmList.find(item => item.id == filmId)?.showList || [];
         moviePlayTime =
-          showList.find(item => item.dayStr == showDate)?.planList || [];
+          showList.find(item => item.dayStr == showDate)?.plist || [];
       }
 
       if (!moviePlayTime?.length) {

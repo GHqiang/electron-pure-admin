@@ -247,28 +247,15 @@ export default class BuyTicket {
         cinemaCode,
         cinemaId,
         filmId,
-        unifiedCode: cinemaCode,
         featureAppNo,
+        sessionCode: targetShow.sessionId,
         seatInfos: targetSeatCodes,
+        seatCodes: targetSeatCodes,
         lockseat,
         plat_name,
         order_number,
         session_id: this.currentSessionId
       };
-      const { api_version } = this;
-      if (api_version == "C") {
-        lockSeatParams = {
-          cinemaCode,
-          cinemaId,
-          filmId,
-          seatCodes: targetSeatCodes,
-          sessionCode: targetShow.sessionId,
-          lockseat,
-          plat_name,
-          order_number,
-          session_id: this.currentSessionId
-        };
-      }
       const lockRes = await this.seatManage.lockseatByApp(lockSeatParams);
       if (!lockRes) {
         return await this.orderManage.transferOrder();

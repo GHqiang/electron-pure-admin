@@ -8,7 +8,11 @@ import {
   getCinemaLoginInfoList
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
-import { GROUP_LIST, TEST_NEW_PLAT_LIST } from "@/common/constant.js";
+import {
+  GROUP_LIST,
+  TEST_NEW_PLAT_LIST,
+  GE_APP_INFO
+} from "@/common/constant.js";
 import { platTokens } from "@/store/platTokens";
 const {
   userInfo: { rule, user_id }
@@ -22,10 +26,14 @@ import Logger from "@/common/logger";
 import CinemaManage from "./cinemaManage";
 // 座位管理类
 import SeatManage from "./seatManage";
+
+// 是否是测试订单
+let isTestOrder = false;
 class getChenxingOfferPrice {
   constructor({ appFlag, plat_name }) {
     this.appFlag = appFlag; // 影线标识
     this.plat_name = plat_name; // 平台标识
+    this.api_version = GE_APP_INFO(appFlag)?.api_version;
   }
   // 初始化依赖模块
   initModules(order) {
@@ -100,18 +108,23 @@ class getChenxingOfferPrice {
     try {
       // 1. 初始规则匹配
       const matchRuleListRes = offerRuleMatch(order);
-      if (!matchRuleListRes.matchRuleList?.length) {
+      if (!matchRuleListRes.matchRuleList?.length && !isTestOrder) {
         this.handleRuleMatchError(matchRuleListRes, order);
         return null;
       }
 
       let matchRuleList = JSON.parse(
-        JSON.stringify(matchRuleListRes.matchRuleList)
+        JSON.stringify(matchRuleListRes?.matchRuleList || [])
       );
 
       // 2. 电影格式过滤
       const movieInfo = await this.getMovieInfo();
       if (!movieInfo) return null;
+      if (isTestOrder) {
+        // 测试订单获取会员价
+        const memberPriceRes = await this.getMemberPrice(order, movieInfo);
+        console.log("测试订单获取会员价", memberPriceRes, movieInfo);
+      }
 
       matchRuleList = this.filterByFilmType(matchRuleList, movieInfo.media);
       if (!matchRuleList.length) return this.handleEmptyRuleList("filmType");
@@ -382,8 +395,7 @@ class getChenxingOfferPrice {
         serviceAddFee,
         cinemaCode,
         cinemaId,
-        filmId,
-        featureAppNo
+        filmId
       } = movieInfo;
       if (basePrice === 0) {
         this.logger.errorSave("获取会员价为0");
@@ -392,23 +404,41 @@ class getChenxingOfferPrice {
       // 获取可用卡列表
       const cardList = await this.fetchAvailableCards(order, cinemaCode);
       this.logger.infoSave("获取到可用卡列表", { cardList });
-      if (!cardList.length) return null;
+      if (!cardList.length && !isTestOrder) return null;
 
       // 从座位信息里获取优惠活动列表
-      const targetSeatRes = await this.seatManage.getSeatLayout({
+      let seatParams = {
         cinemaCode,
         cinemaId,
-        filmId,
-        featureAppNo
-      });
-      let discountList = targetSeatRes?.discountList || [];
-      this.logger.infoSave("获取到可用优惠列表", { discountList });
-      if (discountList.length) {
-        // 取最低价
-        basePrice = discountList
-          .map(item => item.price - item.cinemaPayAmount)
-          .sort((a, b) => a - b)?.[0];
-        this.logger.infoSave("从优惠活动里取最低价", { basePrice });
+        filmId
+      };
+      const { api_version } = this;
+      if (api_version == "3.0C") {
+        seatParams.featureAppNo = movieInfo.featureAppNo;
+      } else {
+        seatParams.sessionId = movieInfo.sessionId;
+      }
+      const targetSeatRes = await this.seatManage.getSeatLayout(seatParams);
+      if (api_version == "3.0C") {
+        let discountList = targetSeatRes?.discountList || [];
+        this.logger.infoSave("获取到可用优惠列表", { discountList });
+        if (discountList.length) {
+          // 取最低价
+          basePrice = discountList
+            .map(item => item.price - item.cinemaPayAmount)
+            .sort((a, b) => a - b)?.[0];
+          this.logger.infoSave("从优惠活动里取最低价", { basePrice });
+        }
+      } else {
+        let areaInfoList = targetSeatRes?.areaInfoList || [];
+        this.logger.infoSave("获取到座位价格信息列表", { areaInfoList });
+        if (areaInfoList.length) {
+          // 取最低价
+          basePrice = areaInfoList
+            .map(item => item.areaPrice)
+            .sort((a, b) => a - b)?.[0];
+          this.logger.infoSave("取最低座位价格", { basePrice });
+        }
       }
 
       // 计算最优折扣
@@ -665,8 +695,8 @@ class getChenxingOfferPrice {
   // 获取电影信息
   async getMovieInfo() {
     const buyTicketInfo = await this.cinemaManage.getBuyPrevCinemaInfo(1);
-    const { targetShow, cinemaCode, cinemaId } = buyTicketInfo || {};
-    return { ...(targetShow || {}), cinemaCode, cinemaId };
+    const { targetShow, cinemaCode, cinemaId, filmId } = buyTicketInfo || {};
+    return { ...(targetShow || {}), cinemaCode, cinemaId, filmId };
   }
 }
 

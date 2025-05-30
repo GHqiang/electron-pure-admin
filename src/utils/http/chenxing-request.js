@@ -50,7 +50,7 @@ const paramsHandle = (params, app_name) => {
   );
   let token = targetLoginList?.[0]?.session_id || "";
   let appInfo = GE_APP_INFO(app_name);
-  console.log("app_name", app_name, appInfo);
+  // console.log("app_name", app_name, appInfo);
   let api_version = appInfo?.api_version || "";
   if (api_version == "3.0C") {
     let config = {

@@ -68,8 +68,14 @@ export default class SeatManage {
    * @private
    */
   getSeatParams(buyTicketInfo) {
-    const { cinemaCode, cinemaId, filmId, featureAppNo, targetShow } =
-      buyTicketInfo;
+    const {
+      cinemaCode,
+      cinemaId,
+      filmId,
+      featureAppNo,
+      sessionId,
+      targetShow
+    } = buyTicketInfo;
     const { api_version } = this;
     let params = {
       cinemaCode,
@@ -79,7 +85,7 @@ export default class SeatManage {
     if (api_version === "3.0C") {
       params.featureAppNo = featureAppNo || targetShow?.featureAppNo;
     } else if (api_version === "C") {
-      params.sessionId = targetShow?.sessionId;
+      params.sessionId = sessionId || targetShow?.sessionId;
     }
     return params;
   }
@@ -107,17 +113,23 @@ export default class SeatManage {
    */
   async getSeatLayout(params) {
     try {
+      const { api_version } = this;
       this.logger.info("获取座位布局参数", params);
       const res = await this.appApi.getMoviePlaySeat(params);
-
-      const seatData = res.data?.planSiteState || [];
-      const discountList = res.data?.disCountActivityResultList || [];
+      let seatData, discountList, areaInfoList;
+      if (api_version === "3.0C") {
+        seatData = res.data?.planSiteState || [];
+        discountList = res.data?.disCountActivityResultList || [];
+      } else {
+        seatData = res.data?.seats || [];
+        areaInfoList = res.data?.areas || [];
+      }
 
       if (!seatData.length) {
         this.logger.errorSave("获取座位布局为空");
       }
 
-      return { seatData, discountList, areaInfoList: [] };
+      return { seatData, discountList, areaInfoList };
     } catch (error) {
       this.logger.errorSave("获取座位布局异常", formatErrInfo(error));
     }
@@ -209,22 +221,35 @@ export default class SeatManage {
    * @private
    */
   getLockSeatParams(data) {
+    const { api_version } = this;
     const {
       cinemaId,
       cinemaCode,
       filmId,
       featureAppNo,
+      sessionCode,
       seatInfos,
+      seatCodes,
       session_id
     } = data;
-    return {
-      cinemaId,
-      cinemaCode,
-      unifiedCode: cinemaCode,
-      filmId,
-      featureAppNo,
-      seatInfos,
-      session_id
-    };
+    if (api_version === "3.0C") {
+      return {
+        cinemaId,
+        cinemaCode,
+        filmId,
+        featureAppNo,
+        seatInfos,
+        session_id
+      };
+    } else {
+      return {
+        cinemaId,
+        cinemaCode,
+        filmId,
+        sessionCode,
+        seatCodes,
+        session_id
+      };
+    }
   }
 }
