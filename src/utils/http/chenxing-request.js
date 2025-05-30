@@ -7,13 +7,17 @@ import { GE_APP_INFO } from "@/common/constant";
 
 import { getCinemaLoginInfoList, sendWxPusherMessage } from "@/utils/utils";
 
-const getToken = async app_name => {
+const getToken = async (app_name, IS_DEV) => {
   try {
     // const tokenRes = await APP_API_OBJ[app_name].authToken({
     //   appId: "5868e8d75ba04beda426437ba93ef4c6"
     // });
+    let url = "/svpi/chenxing-ser/api/auth/token";
+    if (!IS_DEV) {
+      url = "http://47.113.191.173:3000/chenxing-ser/api/auth/token";
+    }
     const res = await axios.request({
-      url: "/svpi/chenxing-ser/api/auth/token",
+      url: url,
       method: "post",
       data: {
         api: "api",
@@ -146,7 +150,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           api_version == "C" &&
           config.url.indexOf("/auth/") === -1
         ) {
-          const tokenRes = await getToken(app_name);
+          const tokenRes = await getToken(app_name, IS_DEV);
           chenxingToken = tokenRes?.token;
           identityKey = tokenRes?.identityKey;
           identityType = tokenRes?.identityType;
@@ -166,9 +170,14 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         }
         // 生产环境不会跨域
         if (!IS_DEV) {
-          config.url = "http://capi.oristarcloud.com" + config.url;
           if (api_version == "C") {
-            config.url = "https://open.oristarcloud.com" + config.url.slice(9); // 截取掉/chenxing
+            config.url =
+              "http://47.113.191.173:3000" +
+              "/chenxing-ser" +
+              config.url.slice(9); // 截取掉/chenxing
+          } else {
+            config.url =
+              "http://47.113.191.173:3000" + "/chenxing-ser" + config.url;
           }
         } else {
           if (api_version == "C") {
