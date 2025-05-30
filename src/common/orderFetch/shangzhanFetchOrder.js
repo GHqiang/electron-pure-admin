@@ -178,7 +178,12 @@ class OrderAutoFetchQueue {
       // 动态生成事件名称
       const eventName = `newOrder_${order.appName}`;
       // 创建一个事件对象
-      const newOrderEvent = new CustomEvent(eventName, { detail: order });
+      const newOrderEvent = new CustomEvent(eventName, {
+        detail: {
+          ...order,
+          app_name: order.appName
+        }
+      });
       window.dispatchEvent(newOrderEvent);
     } catch (error) {
       this.sendWxMsgByOrder(order, JSON.stringify(error));
