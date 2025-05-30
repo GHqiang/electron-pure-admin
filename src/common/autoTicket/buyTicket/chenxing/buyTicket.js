@@ -194,6 +194,9 @@ export default class BuyTicket {
         // 2、获取购票座位信息
         const targetSeatRes =
           await this.seatManage.getTargetSeat(buyTicketInfo);
+        if (!targetSeatRes) {
+          return await this.orderManage.transferOrder();
+        }
         buyTicketInfo.targetSeatCodes = targetSeatRes.seatCodes;
         buyTicketInfo.discountList = targetSeatRes.discountList;
       } else {
