@@ -181,9 +181,11 @@ class OrderAutoOfferQueue {
           }
         })
         .map(item => {
+          let app_name = getCinemaFlag(item);
           return {
             ...item,
-            app_name: getCinemaFlag(item)
+            app_name,
+            appName: app_name
           };
         });
       // console.warn(
