@@ -171,13 +171,14 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         // 生产环境不会跨域
         if (!IS_DEV) {
           if (api_version == "C") {
+            // 需要服务器转发
             config.url =
               "http://47.113.191.173:3000" +
               "/chenxing-ser" +
               config.url.slice(9); // 截取掉/chenxing
           } else {
-            config.url =
-              "http://47.113.191.173:3000" + "/chenxing-ser" + config.url;
+            // 不需要转发
+            config.url = "https://capi.oristarcloud.com" + config.url.slie(9);
           }
         } else {
           if (api_version == "C") {

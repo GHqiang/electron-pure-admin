@@ -668,7 +668,7 @@ const getQuanTypeList = async app_name => {
     // console.log("券类型列表===>", quanTypeList);
     quanType.value = quanTypeList;
   } catch (error) {
-    console.err("获取券类型列表异常", error);
+    console.error("获取券类型列表异常", error);
   }
 };
 
