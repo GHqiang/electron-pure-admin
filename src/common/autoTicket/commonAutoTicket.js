@@ -99,7 +99,7 @@ class OrderAutoTicketQueue {
     this.logger.warn("新的待出票订单", order);
     this.logger.init(order); // 设置日志的订单标识信息
     this.logger.infoSave("自动出票队列获取到新的待出票订单", {
-      newOrders: order,
+      newOrder: order,
       sjc: +new Date()
     });
     if (!isTestOrder) {
@@ -153,7 +153,7 @@ class OrderAutoTicketQueue {
               errInfo,
               mobile: res?.mobile
             };
-            await addOrderHandleRecored(params);
+            await this.addOrderHandleRecored(params);
             logger.infoSave("订单出票结束，远端已添加出票记录");
             logger.logUpload();
           }
