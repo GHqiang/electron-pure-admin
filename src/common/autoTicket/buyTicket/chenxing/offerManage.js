@@ -391,8 +391,6 @@ class getChenxingOfferPrice {
 
       let {
         standardPrice: basePrice,
-        servicePrice,
-        serviceAddFee,
         cinemaCode,
         cinemaId,
         filmId
@@ -418,6 +416,7 @@ class getChenxingOfferPrice {
       } else {
         seatParams.sessionId = movieInfo.sessionId;
       }
+      let serviceAddFee;
       const targetSeatRes = await this.seatManage.getSeatLayout(seatParams);
       if (api_version == "3.0C") {
         let discountList = targetSeatRes?.discountList || [];
@@ -428,6 +427,10 @@ class getChenxingOfferPrice {
             .map(item => item.price - item.cinemaPayAmount)
             .sort((a, b) => a - b)?.[0];
           this.logger.infoSave("从优惠活动里取最低价", { basePrice });
+        } else {
+          let cinemaPlanDto = targetSeatRes.cinemaPlanDto || {};
+          basePrice = cinemaPlanDto?.standardPrice;
+          serviceAddFee = cinemaPlanDto?.serviceAddFee;
         }
       } else {
         let areaInfoList = targetSeatRes?.areaInfoList || [];

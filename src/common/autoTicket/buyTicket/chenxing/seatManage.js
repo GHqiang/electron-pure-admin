@@ -116,10 +116,11 @@ export default class SeatManage {
       const { api_version } = this;
       this.logger.info("获取座位布局参数", params);
       const res = await this.appApi.getMoviePlaySeat(params);
-      let seatData, discountList, areaInfoList;
+      let seatData, discountList, areaInfoList, cinemaPlanDto;
       if (api_version === "3.0C") {
         seatData = res.data?.planSiteState || [];
         discountList = res.data?.disCountActivityResultList || [];
+        cinemaPlanDto = res.data?.cinemaPlanDto || {};
       } else {
         seatData = res.data?.seats || [];
         areaInfoList = res.data?.areas || [];
@@ -129,7 +130,7 @@ export default class SeatManage {
         this.logger.errorSave("获取座位布局为空");
       }
 
-      return { seatData, discountList, areaInfoList };
+      return { seatData, discountList, areaInfoList, cinemaPlanDto };
     } catch (error) {
       this.logger.errorSave("获取座位布局异常", formatErrInfo(error));
     }

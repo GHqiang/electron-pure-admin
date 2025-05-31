@@ -42,9 +42,9 @@ export default class BuyTicket {
   }
   // 单个订单出票（向外暴漏的唯一方法）
   async singleTicket() {
-    this.logger.warn("单个待出票订单信息", this.order);
+    this.logger.infoSave("单个待出票订单信息", this.order);
     // 1、获取影院登录信息并设置当前token
-    this.getCinemaLoginInfo();
+    await this.getCinemaLoginInfo();
     // 2、获取该订单报价规则
     await this.getOrderOfferRule();
     this.logger.infoSave("订单报价记录信息", {
@@ -109,13 +109,13 @@ export default class BuyTicket {
       this.offerRule = { offer_type: "2", member_price: "29.9" };
       return;
     }
-    const { appFlag, order_number, plat_name } = this.order;
+    const { app_name, order_number, plat_name } = this.order;
     try {
       // 1、获取该订单的报价记录，按对应报价规则出票
       const offerRes = await svApi.queryOfferInfo({
         user_id: user_id,
         order_status: "1",
-        app_name: appFlag,
+        app_name,
         order_number,
         plat_name
       });

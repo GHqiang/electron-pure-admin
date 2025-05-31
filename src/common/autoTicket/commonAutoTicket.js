@@ -148,7 +148,7 @@ class OrderAutoTicketQueue {
               appFlag,
               errMsg,
               errInfo,
-              mobile: res.mobile
+              mobile: res?.mobile
             };
             await addOrderHandleRecored(params);
             this.logger.infoSave("订单出票结束，远端已添加出票记录");
