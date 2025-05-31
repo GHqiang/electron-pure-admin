@@ -9,6 +9,8 @@ import {
   getCinemaLoginInfoList
 } from "@/utils/utils";
 import { APP_API_OBJ } from "@/common/index";
+import { GE_APP_INFO } from "@/common/constant";
+
 import svApi from "@/api/sv-api";
 // 统一日志类
 import Logger from "@/common/logger";
@@ -24,6 +26,7 @@ export default class CardQuanManage {
     this.appFlag = order.app_name;
     this.logger = logger;
     this.appApi = APP_API_OBJ[order.app_name];
+    this.api_version = GE_APP_INFO(order.app_name)?.api_version;
   }
 
   // 使用优惠券或会员卡（核心方法）
@@ -48,16 +51,21 @@ export default class CardQuanManage {
       // 1、获取卡券列表
       let cardList = await this.getCardList(cardParams);
       if (!cardList?.length) return {};
-      const defaultCardNo = cardList?.find(
-        item => item.defaultCard == 1
-      )?.cardNo;
-      const quanParams = {
+      let quanParams = {
         cinemaCode,
         cinemaId,
-        defaultCardNo,
-        couponStatus: 1,
         session_id
       };
+      if (this.api_version == "3.0C") {
+        const defaultCardNo = cardList?.find(
+          item => item.defaultCard == 1
+        )?.cardNo;
+        quanParams.defaultCardNo = defaultCardNo;
+        quanParams.couponStatus = 1;
+      } else if (this.api_version == "3.0B") {
+        quanParams.pageNo = 1;
+        quanParams.pageSize = 100;
+      }
       let quanList = await this.getQuanList(quanParams);
       // 2、按报价规则用卡用券
       const { offer_type, member_price, offer_rule_id } = offerRule;
@@ -247,6 +255,9 @@ export default class CardQuanManage {
       const res = await this.appApi.getCardList(params);
       this.logger.infoSave("获取会员卡列表返回", res);
       let cardList = res.data || [];
+      if (this.api_version == "C") {
+        cardList = res.data?.datalist || [];
+      }
       if (!cardList.length) {
         this.logger.errorSave("获取会员卡列表为空");
       }
@@ -264,19 +275,27 @@ export default class CardQuanManage {
   // 获取优惠券列表
   async getQuanList(params) {
     try {
+      const { api_version } = this;
       this.logger.infoSave("获取优惠券列表入参", params);
       const res = await this.appApi.getQuanList(params);
       this.logger.infoSave("获取优惠券列表返回", res);
-      let quanList = res.data || [];
+      let quanList;
+      if (api_version === "3.0C") {
+        quanList = res.data || [];
+        quanList = quanList.map(item => ({
+          ...item,
+          couponName: item.ticketName,
+          couponCode: item.ticketNum,
+          endDateTime: item.validEndDate
+        }));
+      } else if (api_version === "C") {
+        quanList = res.data?.records || [];
+        const { number, size, totalPages, last } = res.data?.pageable;
+      }
       if (!quanList.length) {
         this.logger.errorSave("获取优惠券列表为空");
       }
-      return quanList.map(item => ({
-        ...item,
-        couponName: item.ticketName,
-        couponCode: item.ticketNum,
-        endDateTime: item.validEndDate
-      }));
+      return;
     } catch (error) {
       this.logger.infoSave("获取优惠券列表异常", error);
       return [];
