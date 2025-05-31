@@ -120,15 +120,18 @@ class OrderAutoTicketQueue {
       // 取出队列首部订单并从队列里去掉
       const order = this.queue.shift();
       if (order) {
+        let logger = new Logger({
+          logType: 3
+        });
         if (this.prevOrderNumber === order.order_number) {
-          this.logger.warn("当前订单重复执行,直接执行下个");
+          logger.warn("当前订单重复执行,直接执行下个");
         } else {
           // 处理订单
-          this.logger.init(order);
-          const res = await this.orderHandle(order);
+          logger.init(order);
+          const res = await this.orderHandle(order, logger);
           this.prevOrderNumber = order.order_number;
           // res: { profit, submitRes, qrcode, quan_code, card_id, cardNum, offerRule, mobile } || undefined
-          this.logger.infoSave(
+          logger.infoSave(
             `单个订单自动出票结束，状态-${res?.submitRes ? "成功" : "失败"}`,
             { res }
           );
@@ -151,8 +154,8 @@ class OrderAutoTicketQueue {
               mobile: res?.mobile
             };
             await addOrderHandleRecored(params);
-            this.logger.infoSave("订单出票结束，远端已添加出票记录");
-            this.logger.logUpload();
+            logger.infoSave("订单出票结束，远端已添加出票记录");
+            logger.logUpload();
           }
         }
       }
@@ -161,9 +164,9 @@ class OrderAutoTicketQueue {
   }
 
   // 处理订单
-  async orderHandle(order, delayTime) {
+  async orderHandle(order, logger, delayTime) {
     try {
-      this.logger.infoSave(
+      logger.infoSave(
         `订单开始出票，订单号-${order.order_number}，上个订单号-${this.prevOrderNumber}`,
         {
           order,
@@ -171,11 +174,11 @@ class OrderAutoTicketQueue {
         }
       );
       // await mockDelay(delayTime);
-      this.logger.info(`订单处理 ${order.id}`);
+      logger.info(`订单处理 ${order.id}`);
       if (this.isRunning) {
         const buyTicket = StrategyFactory.createSeatStrategy(
           order,
-          this.logger,
+          logger,
           isTestOrder
         );
         // 开发时测试使用
@@ -184,10 +187,10 @@ class OrderAutoTicketQueue {
         // result: { profit, submitRes, transferParams, qrcode, quan_code, card_id, cardNum, quanType, offerRule, mobile }
         return res;
       } else {
-        this.logger.warn("订单出票队列已停止");
+        logger.warn("订单出票队列已停止");
       }
     } catch (error) {
-      this.logger.error("订单执行出票异常", error);
+      logger.error("订单执行出票异常", error);
     }
   }
 
