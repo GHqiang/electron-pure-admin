@@ -173,13 +173,12 @@ import svApi from "@/api/sv-api";
 import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import CinemaDialog from "@/components/CinemaDialog.vue";
 import {
-  GET_APP_LIST,
-  GET_APP_TYPE_LIST,
+  GET_ALL_APP_LIST,
+  GET_ALL_APP_TYPE_LIST,
   CINEMA_STATUS_OBJ
 } from "@/common/constant";
-const APP_LIST = computed(() => GET_APP_LIST());
-const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
-
+const APP_LIST = computed(() => GET_ALL_APP_LIST());
+const APP_TYPE_LIST = computed(() => GET_ALL_APP_TYPE_LIST());
 import { getCurrentTime, mockDelay } from "@/utils/utils";
 import { useCinemaList } from "@/store/cinemaList";
 const useCinemaListObj = useCinemaList();

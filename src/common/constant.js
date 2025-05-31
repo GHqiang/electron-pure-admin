@@ -75,8 +75,10 @@ const GROUP_LIST = [
   "shoudu" // 首都影城
 ];
 
-// 影院列表
-const GET_APP_LIST = () => cinemaStore.getAppList;
+// 可用影院列表
+const GET_APP_LIST = () => cinemaStore.getUsableAppList;
+// 全部影院列表
+const GET_ALL_APP_LIST = () => cinemaStore.getAllAppList;
 // 可用影院列表
 const GET_USABLE_APP_LIST = () => cinemaStore.getUsableAppList;
 // SFC影院集合列表
@@ -90,9 +92,11 @@ const GET_H5_UME_LIST = () => cinemaStore.getH5UmeList;
 const GET_CHENXING_LIST = () => cinemaStore.getChenxingList;
 // 获取某个影线配置信息
 const GE_APP_INFO = app_name =>
-  cinemaStore.getAllAppList.find(item => item.app_name === app_name);
-// 影线类型
-const GET_APP_TYPE_LIST = () => cinemaStore.getAppTypeList;
+  cinemaStore.allAppList.find(item => item.app_name === app_name);
+// 可用影线类型
+const GET_APP_TYPE_LIST = () => cinemaStore.getCanAppTypeList;
+// 全部影线类型
+const GET_ALL_APP_TYPE_LIST = () => cinemaStore.getAllAppTypeList;
 
 // 影线类型集合
 const APP_TYPE_OBJ = {
@@ -435,8 +439,10 @@ export {
   GET_CHENXING_LIST,
   GET_SFC_APP_LIST,
   GET_APP_LIST,
+  GET_ALL_APP_LIST,
   GET_USABLE_APP_LIST,
   GET_APP_TYPE_LIST,
+  GET_ALL_APP_TYPE_LIST,
   GE_APP_INFO,
   APP_TYPE_OBJ,
   LIERENR_REWARDS,
