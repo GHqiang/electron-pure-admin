@@ -42,44 +42,52 @@ export default class BuyTicket {
   }
   // 单个订单出票（向外暴漏的唯一方法）
   async singleTicket() {
-    this.logger.infoSave("单个待出票订单信息", this.order);
-    // 1、获取影院登录信息并设置当前token
-    await this.getCinemaLoginInfo();
-    // 2、获取该订单报价规则
-    await this.getOrderOfferRule();
-    this.logger.infoSave("订单报价记录信息", {
-      offerRule: this.offerRule
-    });
-    // 3、校验报价规则是否允许出票
-    const isNeedBuyTicket = this.checkOfferRuleRes();
-    if (!isNeedBuyTicket) {
-      return {
+    try {
+      this.logger.infoSave("单个待出票订单信息", this.order);
+      // 1、获取影院登录信息并设置当前token
+      await this.getCinemaLoginInfo();
+      // 2、获取该订单报价规则
+      await this.getOrderOfferRule();
+      this.logger.infoSave("订单报价记录信息", {
         offerRule: this.offerRule
-      };
-    }
-    // 4、平台解锁座位（测试单无需解锁）
-    if (!this.isTestOrder) {
-      const unlockRes = await this.platManage.unlockSeatByPlat(order);
-      if (!unlockRes) {
-        this.logger.error("平台解锁失败走转单逻辑");
-        // 转单逻辑待补充
-        return await this.orderManage.transferOrder();
+      });
+      // 3、校验报价规则是否允许出票
+      const isNeedBuyTicket = this.checkOfferRuleRes();
+      if (!isNeedBuyTicket) {
+        this.logger.infoSave("校验报价规则不允许出票");
+        return {
+          offerRule: this.offerRule
+        };
       }
-    }
-    // 5、一键买票
-    await mockDelay(1); // 解锁成功后延迟1秒再执行
-    const result = await this.oneClickBuyTicket({
-      ...this.order,
-      otherParams: {
-        offerRule: this.offerRule
+      this.logger.infoSave("校验报价规则允许出票");
+      // 4、平台解锁座位（测试单无需解锁）
+      if (!this.isTestOrder) {
+        this.logger.infoSave("开始准备解锁座位");
+        const unlockRes = await this.platManage.unlockSeatByPlat();
+        if (!unlockRes) {
+          this.logger.infoSave("平台解锁失败准备走转单逻辑");
+          this.logger.error("平台解锁失败走转单逻辑");
+          // 转单逻辑待补充
+          return await this.orderManage.transferOrder();
+        }
       }
-    });
-    // result: { profit, submitRes, qrcode, quan_code, card_id, offerRule, mobile } || undefined
-    if (result) {
-      console.warn("单个订单出票完成");
-      return result;
-    } else {
-      console.warn("单个订单出票失败");
+      // 5、一键买票
+      await mockDelay(1); // 解锁成功后延迟1秒再执行
+      const result = await this.oneClickBuyTicket({
+        ...this.order,
+        otherParams: {
+          offerRule: this.offerRule
+        }
+      });
+      // result: { profit, submitRes, qrcode, quan_code, card_id, offerRule, mobile } || undefined
+      if (result) {
+        console.warn("单个订单出票完成");
+        return result;
+      } else {
+        console.warn("单个订单出票失败");
+      }
+    } catch (error) {
+      this.logger.errorSave("单个订单出票执行出错", error);
     }
   }
 
@@ -154,7 +162,7 @@ export default class BuyTicket {
   async oneClickBuyTicket(changePhoneBuyParams) {
     const { appFlag } = this;
     let buyTicketInfo = JSON.parse(JSON.stringify(changePhoneBuyParams)); // 换号购买参数
-    this.logger.info("即将开始一键买票信息", this.order);
+    this.logger.infoSave("即将开始一键买票信息", this.order);
     let {
       order_number,
       lockseat,
