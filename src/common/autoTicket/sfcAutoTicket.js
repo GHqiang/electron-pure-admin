@@ -1265,7 +1265,10 @@ class OrderAutoTicketQueue {
           const transferParams = await this.transferOrder(item);
           return { transferParams };
         }
-        let seatName = lockseat.replaceAll(" ", ",").replaceAll("座", "号");
+        let seatName = lockseat
+          .replaceAll(" ", ",")
+          .replaceAll("座", "号")
+          .replaceAll("列", "号");
         console.log(conPrefix + "seatName", seatName);
         let selectSeatList = seatName.split(",");
         console.log(conPrefix + "selectSeatList", selectSeatList);
@@ -1663,7 +1666,10 @@ class OrderAutoTicketQueue {
         member_coupon_id,
         coupon_id,
         promo_id,
-        seat_info: lockseat.replaceAll(" ", ",").replaceAll("座", "号"),
+        seat_info: lockseat
+          .replaceAll(" ", ",")
+          .replaceAll("座", "号")
+          .replaceAll("列", "号"),
         pay_money,
         payType
       });

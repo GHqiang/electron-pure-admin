@@ -1124,7 +1124,10 @@ class OrderAutoTicketQueue {
         }
         // 创建订单时的影片编码要用获取座位布局接口返回的
         short_code = seatDataRes.short_code;
-        let seatName = lockseat.replaceAll(" ", ",").replaceAll("座", "号");
+        let seatName = lockseat
+          .replaceAll(" ", ",")
+          .replaceAll("座", "号")
+          .replaceAll("列", "号");
         console.log(conPrefix + "seatName", seatName);
         let selectSeatList = seatName.split(",");
         console.log(conPrefix + "selectSeatList", selectSeatList);

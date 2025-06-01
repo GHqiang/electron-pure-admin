@@ -135,6 +135,7 @@ class OrderAutoTicketQueue {
             `单个订单自动出票结束，状态-${res?.submitRes ? "成功" : "失败"}`,
             { res }
           );
+          console.warn("logger.logList", logger.logList);
           if (!isTestOrder) {
             let errMsg = "",
               errInfo = "";

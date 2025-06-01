@@ -97,7 +97,8 @@ export default class SeatManage {
   filterTargetSeats(seatList) {
     const seatName = this.order.lockseat
       .replaceAll(" ", ",")
-      .replaceAll("座", "号");
+      .replaceAll("座", "号")
+      .replaceAll("列", "号");
     const selectSeatList = seatName.split(",");
 
     return seatList.filter(item => {

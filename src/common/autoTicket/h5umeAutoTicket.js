@@ -1161,7 +1161,10 @@ class OrderAutoTicketQueue {
           return { transferParams };
         }
         // 9、匹配作为ids
-        let seatName = lockseat.replaceAll(" ", ",").replaceAll("座", "号");
+        let seatName = lockseat
+          .replaceAll(" ", ",")
+          .replaceAll("座", "号")
+          .replaceAll("列", "号");
         console.log("seatName", seatName);
         let selectSeatList = seatName.split(",");
         console.log("selectSeatList", selectSeatList);
