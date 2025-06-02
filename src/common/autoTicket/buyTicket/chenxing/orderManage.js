@@ -16,6 +16,7 @@ export default class OrderManage {
     this.appFlag = order.app_name;
     this.appApi = APP_API_OBJ[order.app_name];
     this.isTestOrder = isTestOrder; // 是否是测试订单
+    this.api_version = GE_APP_INFO(order.app_name)?.api_version;
   }
 
   // 转单
