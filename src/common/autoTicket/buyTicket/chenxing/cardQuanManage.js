@@ -33,8 +33,7 @@ export default class CardQuanManage {
   async useQuanOrCard({
     buyTicketInfo,
     offerRule,
-    standardPrice, // 标准会员价
-    handlingFee,
+    basePrice, // 会员价+服务费
     rewards,
     currentPhone,
     session_id
@@ -72,9 +71,8 @@ export default class CardQuanManage {
       let is_auto_use_quan = false; // 是否灵活用券
       let useCardParms = {
         cardList,
-        standardPrice, // 会员价
+        basePrice, // 会员价+服务费
         member_price, // 成本价
-        handlingFee, // 服务费
         rewards,
         supplier_end_price,
         ticket_num,
@@ -306,9 +304,8 @@ export default class CardQuanManage {
   async useCardHandle(data) {
     const {
       cardList,
-      standardPrice, // 会员价
+      basePrice, // 会员价+服务费
       member_price, // 成本价
-      handlingFee, // 服务费
       rewards,
       supplier_end_price,
       ticket_num,
@@ -320,11 +317,8 @@ export default class CardQuanManage {
       if (!cardList.length) {
         str = "无可用会员卡（疑似出满）";
       }
-      if (handlingFee) {
-        standardPrice = +standardPrice + Number(handlingFee);
-      }
       // 支付金额
-      let payAmoungt = (standardPrice * 1000 * ticket_num) / 1000;
+      let payAmoungt = (basePrice * 1000 * ticket_num) / 1000;
       let cardData = cardList.filter(item => item.cardAmount >= payAmoungt);
       if (!cardList.length || !cardData?.length) {
         let maxCardAmount = cardList.sort(
@@ -333,8 +327,7 @@ export default class CardQuanManage {
         this.logger.errorSave(str || "会员卡余额不足", {
           maxCardAmount,
           payAmoungt,
-          standardPrice,
-          handlingFee,
+          basePrice,
           ticket_num,
           cardList
         });

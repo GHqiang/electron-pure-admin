@@ -281,17 +281,17 @@ export default class BuyTicket {
       // 4、使用优惠券或者会员卡（仅判断是否有可用卡及券）
       this.cardQuanManage = new CardQuanManage(this.order, this.logger); // 卡券管理模块
 
-      let { standardPrice, serviceAddFee } = targetShow;
-      this.logger.warn("会员价及手续费", { standardPrice, serviceAddFee });
+      let { standardPrice: basePrice, serviceAddFee } = targetShow;
+      this.logger.warn("会员价及手续费", { basePrice, serviceAddFee });
       const { api_version } = this;
       if (api_version === "3.0C") {
         if (discountList?.length) {
           // 取最低价
-          standardPrice = discountList
+          basePrice = discountList
             .map(item => item.price - item.cinemaPayAmount)
             .sort((a, b) => a - b)?.[0];
           this.logger.infoSave("从优惠活动里取最低价", {
-            standardPrice,
+            basePrice,
             discountList
           });
         } else {
@@ -316,8 +316,7 @@ export default class BuyTicket {
       const cardQuanRes = await this.cardQuanManage.useQuanOrCard({
         buyTicketInfo,
         offerRule: this.offerRule,
-        standardPrice,
-        handlingFee: serviceAddFee, // 手续费
+        basePrice,
         rewards,
         session_id: this.currentSessionId,
         currentPhone: this.currentPhone
