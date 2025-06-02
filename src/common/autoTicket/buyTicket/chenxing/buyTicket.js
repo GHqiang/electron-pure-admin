@@ -485,6 +485,7 @@ export default class BuyTicket {
       const buyTicketRes = await this.orderManage.buyTicket({
         cinemaCode,
         cinemaId,
+        cinemaName: buyTicketInfo.cinemaName,
         cardNo: cardNum,
         quan_code,
         amount: paymentAmount,

@@ -185,6 +185,7 @@ export default class OrderManage {
   async buyTicket({
     cinemaCode,
     cinemaId,
+    cinemaName,
     cardNo,
     quan_code,
     amount,
@@ -199,6 +200,7 @@ export default class OrderManage {
       unifiedCode: cinemaCode,
       cinemaCode,
       cinemaId,
+      cinemaName,
       defaultCardNo: cardNo,
       amount, // 原价
       orderNo: order_num, // 创建订单号

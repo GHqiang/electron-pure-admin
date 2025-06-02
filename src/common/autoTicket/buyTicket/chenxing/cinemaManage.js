@@ -67,6 +67,7 @@ export default class CinemaManage {
         return;
       }
       cinemaInfo.cinemaId = targetCinema.cinemaId;
+      cinemaInfo.cinemaName = targetCinema.cinemaName;
       cinemaInfo.cinemaCode = targetCinema.cinemaCode;
 
       // 4、拿到影院code进行影院指定卡相关处理(获取可用卡列表，根据可用卡调整登录信息顺序)
@@ -125,6 +126,7 @@ export default class CinemaManage {
           cinemaList: item.cinemaResultDTOList.map(itemA => ({
             ...itemA,
             cinemaId: itemA.cinemaId,
+            cinemaName: itemA.cinemaName,
             cinemaCode: itemA.cinemaCode
           }))
         }));
@@ -135,6 +137,7 @@ export default class CinemaManage {
           cinemaList: item.cinemas.map(itemA => ({
             ...itemA,
             cinemaId: itemA.id,
+            cinemaName: itemA.name,
             cinemaCode: itemA.unifiedCode
           }))
         }));

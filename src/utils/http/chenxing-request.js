@@ -69,10 +69,10 @@ const paramsHandle = (params, app_name) => {
       // cinemaCode: "33018961"
       // cinemaId: 405384
       // cinemaName: "中影嘉华国际影城（拱墅全景声巨幕店）"
-      // marketingName: "172.30.82.8",
-      // marketingCode: "CRM001",
+      // marketingName: "172.30.82.8", // 影院列表可以拿到
+      // marketingCode: "CRM001", // 影院列表可以拿到
       // defaultCardNo: "",
-      // crmGroup: "CRM001"
+      // crmGroup: "CRM001" // 影院列表可以拿到
     };
     // console.log("config", config);
     return {
