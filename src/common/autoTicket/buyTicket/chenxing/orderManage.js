@@ -197,8 +197,8 @@ export default class OrderManage {
     session_id
   }) {
     const { appFlag } = this;
-    let open_id = GE_APP_INFO(appFlag)?.sfc_open_id;
-    let payChannel = GE_APP_INFO(appFlag)?.channelCode;
+    let appInfo = GE_APP_INFO(appFlag);
+    let open_id = appInfo?.sfc_open_id;
     let params = {
       unifiedCode: cinemaCode,
       cinemaCode,
@@ -210,8 +210,8 @@ export default class OrderManage {
       businessSystemName: "C_TRADE",
       payTerminal: "APPLET",
       payTerminalType: "Applet",
-      payChannel,
-      // payChannelName: "太原时代影城-自营", // 先不传试试
+      payChannel: appInfo?.channelCode,
+      payChannelName: appInfo?.channelName, // 先不传试试
       goodBody: "影票",
       openId: open_id,
       openID: open_id, // 小程序openid每个小程序一个
