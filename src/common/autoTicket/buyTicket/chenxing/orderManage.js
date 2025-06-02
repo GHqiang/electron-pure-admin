@@ -223,6 +223,11 @@ export default class OrderManage {
       orderNumber: order_num,
       session_id
     };
+    if (this.api_version === "C") {
+      params.businessSystemCode = "online_directly_trade_settle";
+      params.channelUid = payChannel;
+      delete params.defaultCardNo;
+    }
     try {
       this.logger.infoSave("订单购买参数", params);
       const buyRes = await this.appApi.buyTicket(params);
@@ -311,7 +316,10 @@ export default class OrderManage {
       }
       const res = await this.appApi.queryOrderDetail(params);
       logger.infoSave(`第${inx}次获取支付结果返回`, res);
-      qrcode = res?.data.printNo?.slice(-8); // 取后8位
+      qrcode = res?.data?.printNo?.slice(-8); // 取后8位
+      if (this.api_version == "C") {
+        qrcode = res?.data?.getCode?.slice(-8); // 取后8位
+      }
       if (qrcode) {
         return qrcode;
       }
