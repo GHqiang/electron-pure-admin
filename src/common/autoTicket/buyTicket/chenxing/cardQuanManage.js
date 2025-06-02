@@ -291,7 +291,7 @@ export default class CardQuanManage {
         const { number, size, totalPages, last } = res.data?.pageable;
       }
       if (!quanList.length) {
-        this.logger.errorSave("获取优惠券列表为空");
+        this.logger.infoSave("获取优惠券列表为空");
       }
       return;
     } catch (error) {

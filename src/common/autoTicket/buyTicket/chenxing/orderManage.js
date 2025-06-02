@@ -197,6 +197,7 @@ export default class OrderManage {
   }) {
     const { appFlag } = this;
     let open_id = GE_APP_INFO(appFlag)?.sfc_open_id;
+    let payChannel = GE_APP_INFO(appFlag)?.channelCode;
     let params = {
       unifiedCode: cinemaCode,
       cinemaCode,
@@ -208,7 +209,7 @@ export default class OrderManage {
       businessSystemName: "C_TRADE",
       payTerminal: "APPLET",
       payTerminalType: "Applet",
-      payChannel: "TYSDYC-ZY",
+      payChannel,
       // payChannelName: "太原时代影城-自营", // 先不传试试
       goodBody: "影票",
       openId: open_id,
@@ -229,7 +230,7 @@ export default class OrderManage {
         buyRes
       };
     } catch (error) {
-      this.logger.infoSave("订单购买异常", formatErrInfo(error));
+      this.logger.errorSave("订单购买异常", formatErrInfo(error));
       return {
         error
       };

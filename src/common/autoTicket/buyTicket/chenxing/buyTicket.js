@@ -495,7 +495,7 @@ export default class BuyTicket {
       const buyRes = buyTicketRes?.buyRes;
       if (!buyRes) {
         if (JSON.stringify(buyTicketRes?.error)?.indexOf("timeout") != -1) {
-          this.infoSave("订单购买返回超时当成功处理");
+          this.logger.infoSave("订单购买返回超时当成功处理");
         } else {
           // 转单或换号处理
           const transparams = { cinemaCode, cinemaId, order_num };
