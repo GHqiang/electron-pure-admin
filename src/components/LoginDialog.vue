@@ -61,7 +61,10 @@
           />
         </el-form-item>
         <el-form-item
-          v-if="CHENXING_LIST.includes(formData.app_name)"
+          v-if="
+            CHENXING_LIST.includes(formData.app_name) &&
+            GE_APP_INFO(formData.app_name).api_version == '3.0C'
+          "
           label="tenantId"
           prop="tid"
         >
@@ -185,17 +188,7 @@ const validateTidPass = (rule, value, callback) => {
   if (!formData.app_name) {
     callback();
   } else if (!formData.tid) {
-    let appInfo = GE_APP_INFO(formData.app_name);
-    console.log("appInfo", appInfo);
-    if (
-      appInfo?.app_type_code == "ume_h5" ||
-      (appInfo?.app_type_code == "chenxing_applet" &&
-        appInfo?.api_version == "3.0C")
-    ) {
-      callback(new Error("续期tid不能为空"));
-    } else {
-      callback();
-    }
+    callback(new Error("不能为空"));
   } else {
     callback();
   }
@@ -210,6 +203,7 @@ const rules = {
   ],
   tid: [
     {
+      required: true,
       validator: validateTidPass,
       message: "不能为空",
       trigger: "blur"
