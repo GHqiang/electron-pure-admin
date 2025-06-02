@@ -252,7 +252,9 @@ export default class BuyTicket {
         filmId,
         targetShow,
         targetSeatCodes,
-        discountList
+        discountList,
+        cinemaPlanDto,
+        areaInfoList
       } = buyTicketInfo;
       const { featureAppNo } = targetShow;
       // 3、锁定座位
@@ -281,15 +283,35 @@ export default class BuyTicket {
 
       let { standardPrice, serviceAddFee } = targetShow;
       this.logger.warn("会员价及手续费", { standardPrice, serviceAddFee });
-      if (discountList.length) {
-        // 取最低价
-        standardPrice = discountList
-          .map(item => item.price - item.cinemaPayAmount)
-          .sort((a, b) => a - b)?.[0];
-        this.logger.warn("从优惠活动里取最低价", {
-          standardPrice,
-          discountList
-        });
+      const { api_version } = this;
+      if (api_version === "3.0C") {
+        if (discountList?.length) {
+          // 取最低价
+          standardPrice = discountList
+            .map(item => item.price - item.cinemaPayAmount)
+            .sort((a, b) => a - b)?.[0];
+          this.logger.infoSave("从优惠活动里取最低价", {
+            standardPrice,
+            discountList
+          });
+        } else {
+          basePrice = cinemaPlanDto?.standardPrice;
+          serviceAddFee = cinemaPlanDto?.serviceAddFee;
+        }
+      } else {
+        this.logger.infoSave("获取到座位价格信息列表", { areaInfoList });
+        if (areaInfoList?.length) {
+          // 取最低价
+          basePrice = areaInfoList
+            .map(item => item.areaPrice)
+            .sort((a, b) => a - b)?.[0];
+          this.logger.infoSave("取最低座位价格", { basePrice });
+        }
+      }
+      this.logger.infoSave("会员服务费", { serviceAddFee });
+      if (serviceAddFee) {
+        basePrice = +basePrice + Number(serviceAddFee);
+        this.logger.infoSave("最低价格+会员服务费", { basePrice });
       }
       const cardQuanRes = await this.cardQuanManage.useQuanOrCard({
         buyTicketInfo,
