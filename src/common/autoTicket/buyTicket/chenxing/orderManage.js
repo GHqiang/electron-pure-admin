@@ -213,7 +213,7 @@ export default class OrderManage {
       cardNumber: cardNo,
       orderType: 1,
       password: md5.hex_md5(member_pwd), // 卡密码
-      orderNumber: orderNum,
+      orderNumber: order_num,
       session_id
     };
     try {

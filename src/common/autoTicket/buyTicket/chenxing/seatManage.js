@@ -41,6 +41,7 @@ export default class SeatManage {
     try {
       const params = this.getSeatParams(buyTicketInfo);
       const seatListRes = await this.getSeatLayout(params);
+      this.logger.info("获取到座位信息", { seatListRes });
       const {
         seatData: seatList = [],
         discountList = [],
@@ -107,9 +108,14 @@ export default class SeatManage {
       .replaceAll("座", "号")
       .replaceAll("列", "号");
     const selectSeatList = seatName.split(",");
-
+    const { api_version } = this;
     return seatList.filter(item => {
-      const seatLabel = `${item.rowNum}排${item.columnNum}号`;
+      let seatLabel;
+      if (api_version == "3.0C") {
+        seatLabel = `${item.rowNum}排${item.columnNum}号`;
+      } else if (api_version == "C") {
+        seatLabel = `${item.phyRowId}排${item.phyColId}号`;
+      }
       return selectSeatList.includes(seatLabel) && item.status === "N";
     });
   }
@@ -124,6 +130,7 @@ export default class SeatManage {
       const { api_version } = this;
       this.logger.info("获取座位布局参数", params);
       const res = await this.appApi.getMoviePlaySeat(params);
+      this.logger.info("获取座位布局返回", res);
       let seatData, discountList, areaInfoList, cinemaPlanDto;
       if (api_version === "3.0C") {
         seatData = res.data?.planSiteState || [];
