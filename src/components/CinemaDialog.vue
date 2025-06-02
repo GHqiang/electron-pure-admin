@@ -133,7 +133,7 @@
         >
           <el-input
             v-model="formData.channelCode"
-            placeholder="请输入凤凰云智影院标识"
+            placeholder="请输入凤凰云智影院标识:channelCode"
             clearable
           />
         </el-form-item>
@@ -144,7 +144,18 @@
         >
           <el-input
             v-model="formData.channelCode"
-            placeholder="请输入辰星影院标识"
+            placeholder="请输入辰星影院标识:channelCode"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item
+          v-if="formData.app_type_code === 'chenxing_applet'"
+          label="辰星影院渠道名"
+          prop="channelName"
+        >
+          <el-input
+            v-model="formData.channelName"
+            placeholder="请输入辰星影院渠道名：channelName"
             clearable
           />
         </el-form-item>
@@ -248,6 +259,7 @@ let formData = reactive({
   sfc_open_id: "",
   cinemaLinkId: "",
   channelCode: "",
+  channelName: "",
   appId: "",
   api_version: "",
   status: "1",
@@ -279,7 +291,14 @@ const rules = {
     { required: true, message: "凤凰云智影院id不能为空", trigger: "blur" }
   ],
   channelCode: [
-    { required: true, message: "凤凰云智影院标识不能为空", trigger: "blur" }
+    { required: true, message: "影院标识channelCode不能为空", trigger: "blur" }
+  ],
+  channelName: [
+    {
+      required: true,
+      message: "影院渠道名channelName不能为空",
+      trigger: "blur"
+    }
   ],
   api_version: [
     { required: true, message: "辰星系列api版本不能为空", trigger: "blur" }
@@ -305,6 +324,7 @@ const resetForm = el => {
   formData.channelCode = "";
   formData.appId = "";
   formData.api_version = "";
+  formData.channelName = "";
   formData.remark = "";
   // formData.group_list = "";
   // formData.flag_list = "";
@@ -323,6 +343,7 @@ const appTypeChange = val => {
   formData.channelCode = "";
   formData.appId = "";
   formData.api_version = "";
+  formData.channelName = "";
 };
 // 打开弹窗
 const open = async cinemaInfo => {
@@ -346,6 +367,7 @@ const open = async cinemaInfo => {
         formData.sfc_open_id = formInfo.sfc_open_id;
         formData.cinemaLinkId = formInfo.cinemaLinkId;
         formData.channelCode = formInfo.channelCode;
+        formData.channelName = formInfo.channelName;
         formData.appId = formInfo.appId;
         formData.api_version = formInfo.api_version;
         formData.status = formInfo.status || "1";
