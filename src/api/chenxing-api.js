@@ -55,7 +55,7 @@ const createApi = ({ app_name }) => {
     // 获取优惠券列表
     getQuanList: {
       "3.0C": "/selfSupport/front/coupon/list",
-      C: "/chenxing/"
+      C: "/chenxing/api/middleground/member/fin/voucher/ticketEnable"
     },
     // 计算价格
     priceCalculation: {
@@ -65,32 +65,32 @@ const createApi = ({ app_name }) => {
     // 创建订单
     createOrder: {
       "3.0C": "/selfSupport/trade/front/orders/submitOrder",
-      C: "/chenxing/"
+      C: "/chenxing/api/middleground/trade/online/directly/order/submitOrder"
     },
     // 支付订单
     buyTicket: {
       "3.0C": "/selfSupport/trade/front/order/onlinePay",
-      C: "/chenxing/"
+      C: "/chenxing/api/middleground/trade/online/directly/payment/onlinePay"
     },
     // 获取订单信息
     queryOrderDetail: {
       "3.0C": "/selfSupport/trade/front/orders/queryOrderDetail",
-      C: "/chenxing/"
+      C: "/chenxing/api/middleground/trade/online/directly/order/queryOrderDetail"
     },
     // 取消订单
     cancelOrder: {
       "3.0C": "/selfSupport/trade/front/orders/cancelOrder",
-      C: "/chenxing/"
+      C: "/chenxing/api/middleground/trade/online/directly/order/cancelOrder"
     },
     // 释放座位
     releaseSeat: {
       "3.0C": "/selfSupport/trade/front/advanceOrder/releaseSeat",
-      C: "/chenxing/"
+      C: "/chenxing/api/middleground/trade/online/directly/cart/releaseSeat"
     },
     // 绑定优惠券
     bandQuan: {
       "3.0C": "/selfSupport/trade/front/advanceOrder/releaseSeat",
-      C: "/chenxing/"
+      C: "/chenxing/api/middleground/member/fin/voucher/bind"
     }
   };
 
