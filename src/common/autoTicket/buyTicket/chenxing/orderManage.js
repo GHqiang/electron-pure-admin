@@ -130,11 +130,7 @@ export default class OrderManage {
       this.logger.info("计算价格参数", params);
       const res = await this.appApi.priceCalculation(params);
       this.logger.infoSave("计算价格返回", res);
-      if (this.api_version === "3.0C") {
-        return res;
-      } else if (this.api_version === "C") {
-        return res?.data;
-      }
+      return res?.data;
     } catch (error) {
       this.logger.infoSave("计算价格异常", error);
     }
@@ -225,7 +221,7 @@ export default class OrderManage {
     };
     if (this.api_version === "C") {
       params.businessSystemCode = "online_directly_trade_settle";
-      params.channelUid = payChannel;
+      params.channelUid = appInfo?.channelCode;
       delete params.defaultCardNo;
     }
     try {
