@@ -207,6 +207,8 @@ export default class BuyTicket {
         }
         buyTicketInfo.targetSeatCodes = targetSeatRes.seatCodes;
         buyTicketInfo.discountList = targetSeatRes.discountList;
+        buyTicketInfo.areaInfoList = targetSeatRes.areaInfoList;
+        buyTicketInfo.cinemaPlanDto = targetSeatRes.cinemaPlanDto;
       } else {
         // 换号出票操作（取消上个号的订单）
         // 取消订单释放座位参数
@@ -316,8 +318,6 @@ export default class BuyTicket {
           str = str + "-" + errMsg;
         }
         this.logger.errorSave(str, {
-          cardList,
-          quanList: quanList.slice(0, 10),
           supplier_end_price,
           ticket_num
         });
