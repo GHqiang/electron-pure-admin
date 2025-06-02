@@ -20,6 +20,7 @@ export default class OrderManage {
 
   // 转单
   async transferOrder(unlockSeatInfo) {
+    this.logger.infoSave("开始准备转单", unlockSeatInfo);
     if (unlockSeatInfo) {
       // 1、释放座位(仅锁座id存在时)
       if (!unlockSeatInfo.order_num) await this.releaseSeat(unlockSeatInfo);
@@ -128,7 +129,11 @@ export default class OrderManage {
       this.logger.info("计算价格参数", params);
       const res = await this.appApi.priceCalculation(params);
       this.logger.infoSave("计算价格返回", res);
-      return res;
+      if (this.api_version === "3.0C") {
+        return res;
+      } else if (this.api_version === "C") {
+        return res?.data;
+      }
     } catch (error) {
       this.logger.infoSave("计算价格异常", error);
     }

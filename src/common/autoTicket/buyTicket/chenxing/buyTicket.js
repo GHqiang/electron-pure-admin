@@ -356,7 +356,7 @@ export default class BuyTicket {
       });
       // 实际支付价格
       const paymentAmount = calcRes?.priceDetail?.totalRealPayAmount;
-
+      this.logger.infoSave("实际支付价格", { paymentAmount });
       // 6、校验是否可以创建订单
       // 券抵扣金额
       // let quanDiscountAmount = useQuan?.[0]?.discountAmount || 0;
@@ -414,6 +414,9 @@ export default class BuyTicket {
         session_id: this.currentSessionId
       });
       let order_num = createOrderRes?.orderNumber;
+      if (api_version == "C") {
+        order_num = createOrderRes?.businessSystemFlowNumber;
+      }
       if (!order_num) {
         this.logger.info("创建订单失败，单个订单直接出票结束走转单");
         // 转单或换号处理
@@ -552,11 +555,10 @@ export default class BuyTicket {
   }
 
   // 转单或换号处理
-  async transferOrChangePhone(transferParams, buyTicketInfo) {
+  async transferOrChangePhone(params, buyTicketInfo) {
     const { offerRule, currentParamsInx, currentParamsList } = this;
     if (currentParamsInx === currentParamsList.length - 1) {
-      const transferParams =
-        await this.orderManage.transferOrder(transferParams);
+      const transferParams = await this.orderManage.transferOrder(params);
       return { offerRule, transferParams };
     } else {
       this.logger.infoSave("非最后一次用卡用券失败，走换号");
