@@ -679,6 +679,16 @@ const createAxios = ({ app_name, timeout = 20 }) => {
               console.log("retryCount-config-登录超时", config);
               return instance(config);
             }
+          } else {
+            ElMessage.warning(
+              `${GET_APP_LIST()[app_name]}登录失效，请重新设置登录信息`
+            );
+            sendWxPusherMessage({
+              msgType: 1,
+              app_name: GET_APP_LIST()[app_name],
+              expirePhone: config.mobile,
+              transferTip: `${GET_APP_LIST()[app_name]}登录失效，请检查登录信息维护`
+            });
           }
         }
         let isOften = data?.msg?.includes("操作过于频繁");
