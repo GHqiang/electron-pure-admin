@@ -8,6 +8,8 @@ import md5 from "@/utils/md5";
 import { APP_API_OBJ } from "@/common/index";
 import { GE_APP_INFO } from "@/common/constant";
 import svApi from "@/api/sv-api";
+// 统一日志类
+import Logger from "@/common/logger";
 export default class OrderManage {
   constructor(order, logger, platManage, isTestOrder) {
     this.logger = logger; // 日志模块
@@ -276,8 +278,11 @@ export default class OrderManage {
         return;
       }
       this.logger.infoSave("非异步获取订单支付结果成功");
+      const { order_number, plat_name } = this.order;
       const submitRes = await this.submitQrcode({
         qrcode,
+        order_number,
+        plat_name,
         flag: 1,
         logger: this.logger
       });
@@ -386,7 +391,7 @@ export default class OrderManage {
         );
       }
       if (!qrcode) {
-        logger.errorSave("系统延迟轮询10分钟后获取取票码仍失败");
+        logger.errorSave("系统延迟轮询7分钟后获取取票码仍失败");
         logger.logUpload();
         svApi.updateTicketRecord({
           whereObj: {
@@ -394,7 +399,7 @@ export default class OrderManage {
             plat_name
           },
           updateObj: {
-            err_msg: "系统延迟轮询10分钟后获取取票码仍失败"
+            err_msg: "系统延迟轮询7分钟后获取取票码仍失败"
           }
         });
         return;
@@ -423,8 +428,7 @@ export default class OrderManage {
         logger
       });
       if (!submitRes || submitRes?.error) {
-        console.error(conPrefix + "订单提交取票码失败，单个订单直接出票结束");
-        logger.errorSave("提交取票码失败");
+        logger.errorSave("订单提交取票码失败，单个订单直接出票结束");
 
         let errInfo = formatErrInfo(submitRes?.error);
         sendWxPusherMessage({
