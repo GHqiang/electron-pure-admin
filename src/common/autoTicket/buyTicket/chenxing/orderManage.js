@@ -2,7 +2,8 @@
 import {
   formatErrInfo, // 格式化错误信息
   sendWxPusherMessage,
-  mockDelay
+  mockDelay,
+  trial
 } from "@/utils/utils";
 import md5 from "@/utils/md5";
 import { APP_API_OBJ } from "@/common/index";
