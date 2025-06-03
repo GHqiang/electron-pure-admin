@@ -633,8 +633,10 @@ const createAxios = ({ app_name, timeout = 20 }) => {
 
         // 登录超时是larkSid过期
         if (
-          data?.data?.bizCode == "2001" ||
-          data?.data?.bizAlertMsg == "登录超时，请重新登录"
+          ["2001", "1002"].includes(data?.data?.bizCode) ||
+          ["登录超时，请重新登录", "登录已失效，请重新登录后再操作"].includes(
+            data?.data?.bizAlertMsg
+          )
         ) {
           // 重新获取laskId,然后再请求
           // 根据tid重设laskId
