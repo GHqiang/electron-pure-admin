@@ -3553,6 +3553,15 @@ class OrderAutoTicketQueue {
       let targetQuanInfo = quanTypeList.find(
         item => item.quan_flag == quan_flag
       );
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "获取影院目标券信息返回",
+        level: "info",
+        info: {
+          targetQuanInfo,
+          quan_flag
+        }
+      });
       let quanStockList = targetQuanInfo?.quanStockList;
       if (quanStockList) {
         quanStockList = JSON.parse(quanStockList);
@@ -3573,6 +3582,15 @@ class OrderAutoTicketQueue {
         quanStockList.sort((a, b) => +b.quan_stock - +a.quan_stock);
         let sortMobileList = quanStockList.map(item => item.phone);
         console.log("sortMobileList", sortMobileList);
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "获取排序手机列表返回",
+          level: "info",
+          info: {
+            sortMobileList,
+            useMobileList
+          }
+        });
         return sortMobileList;
       }
     } catch (error) {
