@@ -458,15 +458,10 @@ export default class BuyTicket {
       if (offerRule.offer_type !== "1" && card_id) {
         real_member_price = (real_member_price * 10000 * ticket_num) / 10000;
         if (paymentAmount > real_member_price) {
-          this.logList.push({
-            opera_time: getCurrentTime(),
-            des: "用完卡发现支付金额大于会员价*票数，走转单",
-            level: "error",
-            info: {
-              paymentAmount,
-              real_member_price,
-              ticket_num
-            }
+          this.logger.errorSave("用完卡发现支付金额大于会员价*票数，走转单", {
+            paymentAmount,
+            real_member_price,
+            ticket_num
           });
           // 转单或换号处理
           const transparams = { cinemaCode, cinemaId, order_num };
