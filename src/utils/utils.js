@@ -487,13 +487,17 @@ const getCinemaFlagFun = item => {
   }
 };
 const getCinemaFlag = item => {
-  const app_name = getCinemaFlagFun(item);
+  const app_name = newGetCinemaFlagFun(item);
+  if (!app_name) return;
   let rule = tokens?.userInfo?.rule;
-  // 只针对内部角色，主要是控制影院是否进行报价
-  if (app_name && rule == 2 && GET_USABLE_APP_LIST()?.["" + app_name]) {
-    return app_name;
+  // 内部角色影院禁用，主要是控制影院是否进行报价
+  if (rule == 2 && !GET_USABLE_APP_LIST()?.["" + app_name]) {
+    return;
   }
-  return app_name;
+
+  // 进行登录信息过滤
+  const isLogin = isLoginByAppName(app_name);
+  if (isLogin) return app_name;
 };
 window.getCinemaFlag = getCinemaFlag;
 // 全角字符转换成半角
@@ -529,6 +533,20 @@ function convertFullwidthToHalfwidth(str) {
   result = result.replace(/\s/g, "");
   return result;
 }
+
+// 某个影线是否登录
+const isLoginByAppName = (app_name, userId) => {
+  let user_id = userId || tokens?.userInfo?.user_id;
+  let loginInfoList = window.localStorage.getItem("loginInfoList");
+  if (loginInfoList) {
+    loginInfoList = JSON.parse(loginInfoList);
+    loginInfoList = loginInfoList.filter(item =>
+      !item.link_user_id ? true : item.link_user_id == user_id
+    );
+    const isLogin = !!loginInfoList.find(item => item.app_name === app_name);
+    return isLogin;
+  }
+};
 
 // 获取影院登录信息列表
 const getCinemaLoginInfoList = userId => {
