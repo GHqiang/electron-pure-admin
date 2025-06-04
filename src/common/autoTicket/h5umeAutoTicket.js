@@ -959,38 +959,66 @@ class OrderAutoTicketQueue {
           return { transferParams };
         }
         cinemaLinkId = targetCinema.cinemaLinkId;
-        if (cinemaLinkId && offerRule.offer_type != 1) {
-          const usableCards = await this.getUsableCardList(
-            cinemaLinkId,
-            ticket_num
-          );
-          if (usableCards?.length) {
-            this.usableCardList = usableCards;
-            let cardLinkMobile = usableCards.map(item => item.mobile);
-            this.currentParamsList = this.currentParamsList.sort((a, b) => {
-              if (
-                cardLinkMobile.includes(a.mobile) &&
-                !cardLinkMobile.includes(b.mobile)
-              ) {
-                return -1; // a靠前
-              }
-              if (
-                !cardLinkMobile.includes(a.mobile) &&
-                cardLinkMobile.includes(b.mobile)
-              ) {
-                return 1;
-              }
-              return 0;
-            });
-          }
-          this.logList.push({
-            opera_time: getCurrentTime(),
-            des: "登录信息按照可用卡列表排序后",
-            level: "info",
-            info: {
-              currentParamsList: this.currentParamsList
+        if (cinemaLinkId) {
+          if (offerRule.offer_type != 1) {
+            const usableCards = await this.getUsableCardList(
+              cinemaLinkId,
+              ticket_num
+            );
+            if (usableCards?.length) {
+              this.usableCardList = usableCards;
+              let cardLinkMobile = usableCards.map(item => item.mobile);
+              this.currentParamsList = this.currentParamsList.sort((a, b) => {
+                if (
+                  cardLinkMobile.includes(a.mobile) &&
+                  !cardLinkMobile.includes(b.mobile)
+                ) {
+                  return -1; // a靠前
+                }
+                if (
+                  !cardLinkMobile.includes(a.mobile) &&
+                  cardLinkMobile.includes(b.mobile)
+                ) {
+                  return 1;
+                }
+                return 0;
+              });
             }
-          });
+            this.logList.push({
+              opera_time: getCurrentTime(),
+              des: "登录信息按照可用卡列表排序后",
+              level: "info",
+              info: {
+                currentParamsList: this.currentParamsList
+              }
+            });
+          } else {
+            const sortMobileList = await this.getSortPhoneByQuanTypeList(
+              appFlag,
+              offerRule?.quan_flag
+            );
+            if (sortMobileList?.length) {
+              this.currentParamsList = this.currentParamsList.sort((a, b) => {
+                const indexA = sortMobileList.indexOf(a.mobile);
+                const indexB = sortMobileList.indexOf(b.mobile);
+
+                // 1. 先按 phoneOrder 排序
+                if (indexA !== indexB) {
+                  return indexA - indexB;
+                }
+                return 0;
+              });
+              this.logList.push({
+                opera_time: getCurrentTime(),
+                des: "登录信息按照可用券数量关联手机号排序后",
+                level: "info",
+                info: {
+                  currentParamsList: this.currentParamsList,
+                  sortMobileList
+                }
+              });
+            }
+          }
         }
         const phone = this.currentParamsList[0].mobile;
         this.logList.push({
@@ -3512,6 +3540,45 @@ class OrderAutoTicketQueue {
     }
   }
 
+  // 获取影院券类型列表
+  async getSortPhoneByQuanTypeList(app_name, quan_flag) {
+    const params = {
+      app_name,
+      isNeedTotalNum: 0,
+      queryFields: "id,app_name,quan_value,quan_flag,black_quans,quanStockList"
+    };
+    try {
+      let quanTypeRes = await svApi.queryQuanTypeList(params);
+      let quanTypeList = quanTypeRes?.data?.quanTypeList || [];
+      let targetQuanInfo = quanTypeList.find(
+        item => item.quan_flag == quan_flag
+      );
+      let quanStockList = targetQuanInfo?.quanStockList;
+      if (quanStockList) {
+        quanStockList = JSON.parse(quanStockList);
+        quanStockList = quanStockList.map(itemA => ({
+          ...itemA,
+          quan_stock: itemA.quan_stock || 0
+        }));
+        console.log("quanStockList", quanStockList);
+        let useMobileList = getCinemaLoginInfoList()
+          .filter(
+            item => item.app_name === app_name && item.mobile && item.session_id
+          )
+          .map(item => item.mobile);
+        console.log("useMobileList", useMobileList);
+        quanStockList = quanStockList.filter(itemA =>
+          useMobileList.includes(itemA.phone)
+        );
+        quanStockList.sort((a, b) => +b.quan_stock - +a.quan_stock);
+        let sortMobileList = quanStockList.map(item => item.phone);
+        console.log("sortMobileList", sortMobileList);
+        return sortMobileList;
+      }
+    } catch (error) {
+      console.error("根据影院获取券类型列表返回异常", error);
+    }
+  }
   // 更新券库存
   async updateQuanStock(params) {
     const { quan_stock, quan_flag, phone, app_name, quan_value } = params;
