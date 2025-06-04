@@ -1614,6 +1614,9 @@ class getUmeOfferPrice {
       let member_discount_list = activities.filter(
         item => item.cardInfos?.length
       );
+      let inx = targetLoginList.findIndex(
+        item => item.session_id == session_id
+      );
       if (!member_discount_list.length && inx != targetLoginList.length - 1) {
         session_id = targetLoginList[inx + 1].session_id;
         this.logList.push({
