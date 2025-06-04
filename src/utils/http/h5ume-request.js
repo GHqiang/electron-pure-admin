@@ -638,59 +638,63 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             data?.data?.bizAlertMsg
           )
         ) {
-          if (!config.getSid) {
+          if (!data?.api?.includes("own.auth.getsidbytid")) {
             // 重新获取laskId,然后再请求
             // 根据tid重设laskId
-            config.getSid = 1;
-            const sidRes = await APP_API_OBJ[app_name].getsidbytid({
-              empCode: "",
-              leaseCode: "",
-              tid: tid
-            });
-            console.log("sidRes", sidRes);
-            let sid = sidRes?.bizValue?.sid;
-            if (sid) {
-              larkSid = sid;
-              // 更新对应手机号的token
-              if (config.mobile) {
-                newLarkSidObj[config.mobile] = sid;
-              }
-              if (!config.retryCount || config.retryCount < 3) {
-                config.retryCount = (config.retryCount || 0) + 1;
-                // 重新生成参数（含新larkSid）
-                let params = config.originalData;
-                params.larkSid = larkSid;
-                config.originalData = params;
-                config.data = { data: JSON.stringify(params) };
-
-                // 重新生成接口url(主要是sign签名和参数有关)
-                config.url = config.originalUrl.split("/1.0/")[0];
-                config.url = getUrl(newToken, config.url, params);
-                if (IS_DEV) {
-                  config.url = config.url.replace("h5ume", "svpi/ume-ser");
-                } else {
-                  config.url =
-                    "http://47.113.191.173:3000" +
-                    config.url.replace("h5ume", "ume-ser");
-                }
-                // const uidRes = await getumidToken();
-                // console.log("uidRes-登录超时", uidRes);
-                // config.headers["bx-ua"] = uidRes?.ua;
-                // config.headers["bx-umidtoken"] = uidRes?.umidToken;
-
-                console.log("retryCount-config-登录超时", config);
-                return instance(config);
-              }
-            } else {
-              ElMessage.warning(
-                `${GET_APP_LIST()[app_name]}登录失效，请重新设置登录信息`
-              );
-              sendWxPusherMessage({
-                msgType: 1,
-                app_name: GET_APP_LIST()[app_name],
-                expirePhone: config.mobile,
-                transferTip: `${GET_APP_LIST()[app_name]}登录失效，请检查登录信息维护`
+            try {
+              const sidRes = await APP_API_OBJ[app_name].getsidbytid({
+                empCode: "",
+                leaseCode: "",
+                tid: tid
               });
+              console.log("sidRes", sidRes);
+              let sid = sidRes?.bizValue?.sid;
+              if (sid) {
+                larkSid = sid;
+                // 更新对应手机号的token
+                if (config.mobile) {
+                  newLarkSidObj[config.mobile] = sid;
+                }
+                if (!config.retryCount || config.retryCount < 3) {
+                  config.retryCount = (config.retryCount || 0) + 1;
+                  // 重新生成参数（含新larkSid）
+                  let params = config.originalData;
+                  params.larkSid = larkSid;
+                  config.originalData = params;
+                  config.data = { data: JSON.stringify(params) };
+
+                  // 重新生成接口url(主要是sign签名和参数有关)
+                  config.url = config.originalUrl.split("/1.0/")[0];
+                  config.url = getUrl(newToken, config.url, params);
+                  if (IS_DEV) {
+                    config.url = config.url.replace("h5ume", "svpi/ume-ser");
+                  } else {
+                    config.url =
+                      "http://47.113.191.173:3000" +
+                      config.url.replace("h5ume", "ume-ser");
+                  }
+                  // const uidRes = await getumidToken();
+                  // console.log("uidRes-登录超时", uidRes);
+                  // config.headers["bx-ua"] = uidRes?.ua;
+                  // config.headers["bx-umidtoken"] = uidRes?.umidToken;
+
+                  console.log("retryCount-config-登录超时", config);
+                  return instance(config);
+                }
+              }
+            } catch (error) {
+              console.log("sidRes-error", error);
+              if (error?.data?.bizCode === "1002") {
+                ElMessage.warning(
+                  `${GET_APP_LIST()[app_name]}登录失效，请重新设置登录信息`
+                );
+                sendWxPusherMessage({
+                  msgType: 1,
+                  app_name: GET_APP_LIST()[app_name],
+                  expirePhone: config.mobile,
+                  transferTip: `${GET_APP_LIST()[app_name]}登录失效，请检查登录信息维护`
+                });
+              }
             }
           }
         }
