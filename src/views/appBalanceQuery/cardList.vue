@@ -325,7 +325,8 @@ import {
   GET_H5_UME_LIST,
   GE_APP_INFO,
   GET_APP_TYPE_LIST,
-  GET_CHENXING_LIST
+  GET_CHENXING_LIST,
+  GET_USABLE_APP_LIST
 } from "@/common/constant";
 const APP_LIST = computed(() => GET_APP_LIST());
 const UME_LIST = computed(() => GET_UME_LIST());
@@ -874,6 +875,9 @@ const syncCardInfo = async () => {
               : itemA.app_name == "lma")
     );
     console.log("该手机号的loginInfoListt", loginInfoList);
+    loginInfoList = loginInfoList.filter(
+      item => GET_USABLE_APP_LIST()?.["" + item.app_name]
+    );
     if (!loginInfoList?.length) {
       ElMessage.warning(
         `该手机号：${formData.app_name ? APP_LIST.value[formData.app_name] : "该系列"} 未维护登录信息`
