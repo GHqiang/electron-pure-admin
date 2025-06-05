@@ -137,14 +137,11 @@ class OrderAutoTicketQueue {
           );
           console.warn("logger.logList", logger.logList);
           if (!isTestOrder) {
-            let errMsg = "",
+            let { err_msg: errMsg, err_info: errInfo } =
+              logger.getLastErrMsgAndInfo();
+            if (res?.submitRes) {
+              errMsg = "";
               errInfo = "";
-            if (!res?.submitRes) {
-              const errInfoObj = this.logger.logList
-                .filter(item => item.level === "error")
-                .reverse()?.[0];
-              errMsg = errInfoObj?.des || "";
-              errInfo = formatErrInfo(errInfoObj?.info?.error) || "";
             }
             let params = {
               order,
