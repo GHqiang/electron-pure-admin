@@ -72,6 +72,7 @@ export default class OrderManage {
       this.logger.info("释放座位参数", params);
       const res = await this.appApi.releaseSeat(params);
       this.logger.infoSave("释放座位成功", { res });
+      return res;
     } catch (error) {
       this.logger.infoSave("释放座位异常", { error });
       sendWxPusherMessage({
@@ -98,6 +99,7 @@ export default class OrderManage {
       this.logger.info("取消订单参数", params);
       const res = await this.appApi.cancelOrder(params);
       this.logger.infoSave("取消订单成功", { res });
+      return res;
     } catch (error) {
       this.logger.infoSave("取消订单异常", { error });
       sendWxPusherMessage({
