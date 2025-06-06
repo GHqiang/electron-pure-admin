@@ -111,10 +111,16 @@ export default class OrderManage {
   }
 
   // 计算价格
-  async pripriceCalculation(
-    { cinemaCode, cinemaId, lockOrderId, cardNum, quan_code },
-    firstCalc = true
-  ) {
+  async pripriceCalculation(data) {
+    let {
+      cinemaCode,
+      cinemaId,
+      lockOrderId,
+      cardNum,
+      activityKey,
+      quan_code,
+      session_id
+    } = data;
     let params = {
       unifiedCode: cinemaCode,
       cinemaCode,
@@ -124,18 +130,41 @@ export default class OrderManage {
       addEquityGoods: [],
       orderGoodsType: 1,
       defaultCardNo: cardNum,
-      firstCalc: firstCalc || false, // 是否是首次计算
+      firstCalc: false, // 是否是首次计算(首次会默认用券)
       session_id
     };
     if (quan_code) {
       params.activityKey = "";
       params.ticketCouponCode = quan_code;
       params.optType = 0;
+    } else {
+      params.activityKey = activityKey;
     }
+    const { api_version } = this;
     try {
       this.logger.info("计算价格参数", params);
       const res = await this.appApi.priceCalculation(params);
       this.logger.infoSave("计算价格返回", res);
+      if (!quan_code && cardNum) {
+        // 用卡
+        if (api_version === "C") {
+          let activityList = res?.data?.activityList || [];
+          if (activityList.length) {
+            activityKey = activityList
+              .filter(item => item.cardNum === cardNum)
+              .sort(
+                (a, b) => b.discountAmount - a.discountAmount
+              )?.[0]?.activityKey;
+            this.logger.infoSave("计算价格获取到优惠活动key", { activityKey });
+            if (activityKey) {
+              return this.pripriceCalculation({
+                ...data,
+                activityKey
+              });
+            }
+          }
+        }
+      }
       return res?.data;
     } catch (error) {
       this.logger.infoSave("计算价格异常", error);
