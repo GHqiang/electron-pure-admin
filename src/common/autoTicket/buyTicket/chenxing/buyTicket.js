@@ -346,7 +346,12 @@ export default class BuyTicket {
           ticket_num
         });
         // 转单或换号处理
-        const transparams = { cinemaCode, cinemaId, lockOrderId };
+        const transparams = {
+          cinemaCode,
+          cinemaId,
+          lockOrderId,
+          session_id: this.currentSessionId
+        };
         return await this.transferOrChangePhone(transparams, buyTicketInfo);
       }
       // 5、计算价格
@@ -355,8 +360,20 @@ export default class BuyTicket {
       const calcRes = await this.orderManage.pripriceCalculation({
         ...buyTicketInfo,
         cardNum,
-        quan_code
+        quan_code,
+        session_id: this.currentSessionId
       });
+      if (!calcRes) {
+        this.logger.info("计算价格异常，走转单或换号处理");
+        // 转单或换号处理
+        const transparams = {
+          cinemaCode,
+          cinemaId,
+          lockOrderId,
+          session_id: this.currentSessionId
+        };
+        return await this.transferOrChangePhone(transparams, buyTicketInfo);
+      }
       // 实际支付价格
       const paymentAmount = calcRes?.priceDetail?.totalRealPayAmount;
       this.logger.infoSave("实际支付价格", { paymentAmount });
@@ -423,7 +440,12 @@ export default class BuyTicket {
       if (!order_num) {
         this.logger.info("创建订单失败，单个订单直接出票结束走转单");
         // 转单或换号处理
-        const transparams = { cinemaCode, cinemaId, lockOrderId };
+        const transparams = {
+          cinemaCode,
+          cinemaId,
+          lockOrderId,
+          session_id: this.currentSessionId
+        };
         return await this.transferOrChangePhone(transparams, buyTicketInfo);
       }
       this.logger.infoSave("创建订单成功", {
@@ -453,7 +475,12 @@ export default class BuyTicket {
           ticket_num
         });
         // 转单或换号处理
-        const transparams = { cinemaCode, cinemaId, order_num };
+        const transparams = {
+          cinemaCode,
+          cinemaId,
+          order_num,
+          session_id: this.currentSessionId
+        };
         return await this.transferOrChangePhone(transparams, buyTicketInfo);
       }
       // 支付前校验用卡价格
@@ -467,7 +494,12 @@ export default class BuyTicket {
             ticket_num
           });
           // 转单或换号处理
-          const transparams = { cinemaCode, cinemaId, order_num };
+          const transparams = {
+            cinemaCode,
+            cinemaId,
+            order_num,
+            session_id: this.currentSessionId
+          };
           return await this.transferOrChangePhone(transparams, buyTicketInfo);
         } else if (paymentAmount < real_member_price) {
           let member_discount = offerRule?.member_discount || 100;
@@ -497,7 +529,12 @@ export default class BuyTicket {
           this.logger.infoSave("订单购买返回超时当成功处理");
         } else {
           // 转单或换号处理
-          const transparams = { cinemaCode, cinemaId, order_num };
+          const transparams = {
+            cinemaCode,
+            cinemaId,
+            order_num,
+            session_id: this.currentSessionId
+          };
           return await this.transferOrChangePhone(transparams, buyTicketInfo);
         }
       }

@@ -124,7 +124,8 @@ export default class OrderManage {
       addEquityGoods: [],
       orderGoodsType: 1,
       defaultCardNo: cardNum,
-      firstCalc: firstCalc || false // 是否是首次计算
+      firstCalc: firstCalc || false, // 是否是首次计算
+      session_id
     };
     if (quan_code) {
       params.activityKey = "";
