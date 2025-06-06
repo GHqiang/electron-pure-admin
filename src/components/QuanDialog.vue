@@ -67,7 +67,7 @@
             clearable
           />
         </el-form-item>
-        <el-form-item label="指定影院">
+        <!-- <el-form-item label="指定影院">
           <el-select
             v-model="formData.linkCinemaIds"
             filterable
@@ -82,7 +82,7 @@
               :value="item.id"
             />
           </el-select>
-        </el-form-item>
+        </el-form-item> -->
         <!-- <el-form-item label="券库存" prop="quan_stock">
           <el-input
             v-model="formData.quan_stock"
@@ -304,8 +304,8 @@ const resetForm = el => {
 const shadowLineChange = async val => {
   console.log("val", val);
   // resetForm(1);
-  const cityList = await getCityList();
-  await getAllCinemaList(cityList);
+  // const cityList = await getCityList();
+  // await getAllCinemaList(cityList);
 };
 // 打开弹窗
 const open = async quanInfo => {
@@ -337,8 +337,8 @@ const open = async quanInfo => {
         // 新增
         formData.app_name = formInfo.app_name;
       }
-      const cityList = await getCityList();
-      await getAllCinemaList(cityList);
+      // const cityList = await getCityList();
+      // await getAllCinemaList(cityList);
       if (!formData.quanStockList?.length) {
         formData.quanStockList = [
           {
