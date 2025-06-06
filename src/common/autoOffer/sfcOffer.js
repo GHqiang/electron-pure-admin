@@ -806,19 +806,15 @@ class getSfcOfferPrice {
               itemA => itemA.quan_value == item.quanValue
             );
             let quan_stock = targetQuanInfo?.quan_stock;
-            let checkStock = quan_stock
+            return quan_stock
               ? quan_stock >= order.ticket_num
               : quan_stock == 0
                 ? false
                 : true;
-            let checkLinkCinema = targetQuanInfo?.linkCinemaIds
-              ? targetQuanInfo?.linkCinemaIds.includes("" + movieInfo.cinema_id)
-              : true;
-            return checkStock && checkLinkCinema;
           });
           this.logList.push({
             opera_time: getCurrentTime(),
-            des: "根据券库存和指定影院过滤后的固定报价规则列表",
+            des: "根据券库存过滤后的固定报价规则列表",
             level: "info",
             info: {
               fixedAmountRuleList
