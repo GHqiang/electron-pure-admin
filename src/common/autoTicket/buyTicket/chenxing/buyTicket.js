@@ -87,7 +87,7 @@ export default class BuyTicket {
         console.warn("单个订单出票失败");
       }
     } catch (error) {
-      this.logger.errorSave("单个订单出票执行出错", error);
+      this.logger.errorSave("单个订单出票执行出错", formatErrInfo(error));
     }
   }
 
@@ -325,7 +325,7 @@ export default class BuyTicket {
         currentPhone: this.currentPhone
       });
       this.logger.infoSave("用卡用券返回", cardQuanRes);
-      const {
+      let {
         card_id = "",
         cardNum,
         useQuan = [],
@@ -549,7 +549,7 @@ export default class BuyTicket {
         transferTip: "一键买票异常，请及时联系技术",
         failReason: JSON.stringify(error)
       });
-      return { offerRule };
+      return { offerRule: this.offerRule };
     }
   }
 

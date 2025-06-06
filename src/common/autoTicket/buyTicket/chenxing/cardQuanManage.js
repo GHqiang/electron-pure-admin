@@ -61,7 +61,7 @@ export default class CardQuanManage {
         )?.cardNo;
         quanParams.defaultCardNo = defaultCardNo;
         quanParams.couponStatus = 1;
-      } else if (this.api_version == "3.0B") {
+      } else if (this.api_version == "C") {
         quanParams.pageNo = 1;
         quanParams.pageSize = 100;
       }
@@ -288,14 +288,14 @@ export default class CardQuanManage {
         }));
       } else if (api_version === "C") {
         quanList = res.data?.records || [];
-        const { number, size, totalPages, last } = res.data?.pageable;
+        // const { number, size, totalPages, last } = res.data?.pageable;
       }
-      if (!quanList.length) {
+      if (!quanList?.length) {
         this.logger.infoSave("获取优惠券列表为空");
       }
-      return;
+      return quanList;
     } catch (error) {
-      this.logger.infoSave("获取优惠券列表异常", error);
+      this.logger.infoSave("获取优惠券列表异常", formatErrInfo(error));
       return [];
     }
   }
