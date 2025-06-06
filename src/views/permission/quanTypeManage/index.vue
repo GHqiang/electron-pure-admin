@@ -653,6 +653,7 @@ const saveQuan = async cardInfo => {
   try {
     cardInfo.update_time = getCurrentTime();
     cardInfo.quanStockList = JSON.stringify(cardInfo.quanStockList);
+    cardInfo.linkCinemaIds = cardInfo.linkCinemaIds?.join();
     let targetInfo = APP_TYPE_LIST.value.find(item =>
       item.app_name_list.includes(cardInfo.app_name)
     );
