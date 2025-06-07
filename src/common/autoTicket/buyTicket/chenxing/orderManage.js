@@ -249,11 +249,11 @@ export default class OrderManage {
       payTerminalType: "Applet",
       payChannel: appInfo?.channelCode,
       payChannelName: appInfo?.channelName, // 先不传试试
-      goodBody: "影票",
+      goodBody: !quan_code?.length ? "影票" : "影院商品",
       openId: open_id,
       openID: open_id, // 小程序openid每个小程序一个
       // ipAddress: "127.0.0.1", // 先不传试试
-      payWay: !quan_code?.length ? "MEMBER_CARD_PAY" : "", // 支付方式
+      payWay: !quan_code?.length ? "MEMBER_CARD_PAY" : "NO_CASH", // 支付方式
       cardNumber: cardNo,
       orderType: 1,
       password: md5.hex_md5(member_pwd), // 卡密码
