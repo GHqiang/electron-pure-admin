@@ -9,7 +9,7 @@ import {
   getCinemaLoginInfoList
 } from "@/utils/utils";
 import { APP_API_OBJ } from "@/common/index";
-import { GE_APP_INFO } from "@/common/constant";
+import { GE_APP_INFO, TEST_NEW_PLAT_LIST } from "@/common/constant";
 
 import svApi from "@/api/sv-api";
 // 统一日志类
@@ -108,7 +108,7 @@ export default class CardQuanManage {
         }
       }
       if (offer_type == "1" || is_auto_use_quan) {
-        this.logger.info("使用优惠券出票");
+        this.logger.infoSave("使用优惠券出票");
         if (is_auto_use_quan) {
           const quanInfo = await this.getQuanInfo(
             offerRule.quan_value,

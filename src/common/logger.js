@@ -82,11 +82,15 @@ export default class Logger {
     return errInfoObj?.des || "";
   }
   getLastErrMsgAndInfo() {
-    const errInfoObj = this.logList
-      .filter(item => item.level === "error")
-      .reverse()?.[0];
-    let err_msg = errInfoObj?.des || "";
-    let err_info = formatErrInfo(errInfoObj?.info) || "";
-    return { err_msg, err_info };
+    try {
+      const errInfoObj = this.logList
+        .filter(item => item.level === "error")
+        .reverse()?.[0];
+      let err_msg = errInfoObj?.des || "";
+      let err_info = formatErrInfo(errInfoObj?.info) || "";
+      return { err_msg, err_info };
+    } catch (error) {
+      return { err_msg: "", err_info: "" };
+    }
   }
 }
