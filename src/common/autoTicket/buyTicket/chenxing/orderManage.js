@@ -133,19 +133,23 @@ export default class OrderManage {
       firstCalc: false, // 是否是首次计算(首次会默认用券)
       session_id
     };
-    if (quan_code) {
+    const { api_version } = this;
+    if (quan_code?.length) {
       params.activityKey = "";
-      params.ticketCouponCode = quan_code;
-      params.optType = 0;
+      if (api_version == "3.0C") {
+        params.ticketCouponCode = quan_code.join();
+        params.optType = 0;
+      } else if (api_version === "C") {
+        params.ticketCodes = quan_code;
+      }
     } else {
       params.activityKey = activityKey;
     }
-    const { api_version } = this;
     try {
       this.logger.info("计算价格参数", params);
       const res = await this.appApi.priceCalculation(params);
       this.logger.infoSave("计算价格返回", res);
-      if (!quan_code && cardNum) {
+      if (!quan_code?.length && cardNum) {
         // 用卡
         if (api_version === "C") {
           let activityList = res?.data?.activityList || [];
@@ -249,7 +253,7 @@ export default class OrderManage {
       openId: open_id,
       openID: open_id, // 小程序openid每个小程序一个
       // ipAddress: "127.0.0.1", // 先不传试试
-      payWay: !quan_code ? "MEMBER_CARD_PAY" : "", // 支付方式
+      payWay: !quan_code?.length ? "MEMBER_CARD_PAY" : "", // 支付方式
       cardNumber: cardNo,
       orderType: 1,
       password: md5.hex_md5(member_pwd), // 卡密码

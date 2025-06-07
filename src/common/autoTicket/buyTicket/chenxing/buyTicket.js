@@ -356,7 +356,7 @@ export default class BuyTicket {
       }
       // 5、计算价格
 
-      let quan_code = useQuan.map(item => item.couponCode)?.join();
+      let quan_code = useQuan.map(item => item.couponCode);
       const calcRes = await this.orderManage.pripriceCalculation({
         ...buyTicketInfo,
         cardNum,
@@ -378,50 +378,29 @@ export default class BuyTicket {
       const paymentAmount = calcRes?.priceDetail?.totalRealPayAmount;
       this.logger.infoSave("实际支付价格", { paymentAmount });
       // 6、校验是否可以创建订单
-      // 券抵扣金额
-      // let quanDiscountAmount = useQuan?.[0]?.discountAmount || 0;
-      // 使用优惠券及会员卡
       // 用券时总价为0
       if (offer_type === "1") {
-        // if (offerRule.quan_fee > 0) {
-        //   total_price =
-        //     (+areaSettlePriceMin + handlingFee - quanDiscountAmount) / 100 || 0;
-        //   total_price = (total_price * 1000 * ticket_num) / 1000;
-        //   this.logList.push({
-        //     opera_time: getCurrentTime(),
-        //     des: "券补钱总价计算相关信息",
-        //     level: "info",
-        //     info: {
-        //       total_price,
-        //       quan_fee: offerRule.quan_fee,
-        //       areaSettlePriceMin,
-        //       handlingFee,
-        //       quanDiscountAmount,
-        //       ticket_num
-        //     }
-        //   });
-        // } else {
-        //   total_price = 0;
-        // }
+        if (offerRule.quan_fee > 0) {
+          this.logger.infoSave("券补钱总价计算相关信息", {
+            total_price,
+            quan_fee: offerRule.quan_fee,
+            paymentAmount,
+            ticket_num
+          });
+        }
         // yaolai绑券逻辑不一样，暂不处理
         if (offerRule.is_store == "1" && quanList.length - ticket_num < 15) {
           this.logger.infoSave("本次出票后券小于15，开始异步绑定券");
-          // this.getNewQuan({
-          //   cinemaCode,
-          //   cinemaLinkId,
-          //   quanValue: offerRule.quan_value,
-          //   black_quans: offerRule.black_quans,
-          //   quanNum: 15 - (quanList.length - Number(ticket_num)),
-          //   session_id:
-          //     this.currentParamsList[this.currentParamsInx].session_id,
-          //   asyncFlag: 1,
-          //   asyncBandQuanList: [],
-          //   plat_name,
-          //   order_number
-          // });
+          this.cardQuanManage.getNewQuan({
+            cinemaCode,
+            cinemaId,
+            quanValue: offerRule.quan_value,
+            black_quans: offerRule.black_quans,
+            quanNum: 15 - (quanList.length - Number(ticket_num)),
+            session_id: this.currentSessionId,
+            asyncFlag: 1
+          });
         }
-      } else {
-        // 座位价格-卡优惠价格
       }
       // 暂不创建订单
       // return { offerRule };
@@ -573,7 +552,7 @@ export default class BuyTicket {
         profit,
         qrcode: lastRes?.qrcode,
         submitRes: lastRes?.submitRes,
-        quan_code,
+        quan_code: quan_code?.join(),
         card_id,
         cardNum,
         offerRule,
