@@ -4608,14 +4608,14 @@ const bandQuan = async ({
     coupon_code: coupon_num,
     from_goods: "2"
   };
-  if (appFlag === "sfc") {
-    params.city_id = "499";
-    params.cinema_id = "3";
-    if (quan_value == "sfctianjin") {
-      params.city_id = "501";
-      params.cinema_id = "50";
-    }
-  }
+  // if (appFlag === "sfc") {
+  //   params.city_id = "499";
+  //   params.cinema_id = "3";
+  //   if (quan_value == "sfctianjin") {
+  //     params.city_id = "501";
+  //     params.cinema_id = "50";
+  //   }
+  // }
   try {
     await mockDelay(1);
     const res = await APP_API_OBJ[appFlag].bandQuan(params);
