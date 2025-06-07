@@ -288,6 +288,12 @@ export default class CardQuanManage {
         }));
       } else if (api_version === "C") {
         quanList = res.data?.records || [];
+        quanList = quanList.map(item => ({
+          ...item,
+          couponName: item.name,
+          couponCode: item.code,
+          endDateTime: item.endTime
+        }));
         // const { number, size, totalPages, last } = res.data?.pageable;
       }
       if (!quanList?.length) {
@@ -487,6 +493,7 @@ export default class CardQuanManage {
       logger.errorSave("单个更新券库存异常", formatErrInfo(error));
     }
   }
+
   // 获取新券(暂未联调)
   async getNewQuan({
     cinemaCode,
@@ -566,14 +573,27 @@ export default class CardQuanManage {
     }
   }
 
-  // 绑定券(暂未联调)
-  async bandQuan(params, logger) {
+  // 绑定券
+  async bandQuan(data, logger) {
+    const { cinemaCode, cinemaId, coupon_num, session_id } = data;
+    const { api_version } = this;
+    let params = {
+      cinemaCode,
+      cinemaId,
+      session_id
+    };
+    if (api_version == "C") {
+      params.c = coupon_num;
+    } else if (api_version == "3.0C") {
+      // 参数待确定
+      params.coupon_num = coupon_num;
+    }
     try {
       await mockDelay(0.1);
       logger.infoSave("绑定券参数", params);
       const res = await this.appApi.bandQuan(params);
       logger.infoSave("绑定券返回", res);
-      return res;
+      return { coupon_num };
     } catch (error) {
       logger.errorSave("绑定新券异常", formatErrInfo(error));
     }
@@ -630,6 +650,7 @@ export default class CardQuanManage {
       });
     }
   }
+
   // 异步更新券库存-报价时
   async syncUpdateQuanStock({ cinemaCode, cinemaId, quanTypeList }) {
     if (quanTypeList?.length) return;
@@ -771,49 +792,17 @@ export default class CardQuanManage {
   }
 
   // 获取某个手机号的全部优惠券列表
-  async getQuanListByPhone({
-    cinemaCode,
-    cinemaId,
-    session_id,
-    page = 1,
-    logger
-  }) {
+  async getQuanListByPhone({ cinemaCode, cinemaId, session_id, logger }) {
     try {
-      let params = {
+      const quanData = await this.continuousGetQuan({
         cinemaCode,
         cinemaId,
-        session_id
-        // 支付页获取券列表有传锁座id，这里不传不知道是否可行，个人中心暂未找到券列表
-        // lockOrderId=33018961202503300001857
-      };
-      logger.infoSave("获取优惠券列表参数", { params });
-      const res = await this.appApi.getQuanList(params);
-      console.log("获取优惠券列表返回-res", res);
-      let quanList = res.data?.unused?.lists || [];
-      let total_page = res.data?.unused?.total_page || [];
-      logger.infoSave("获取优惠券列表返回", { quanList, total_page });
-
-      let quanListAll = quanList.map(item => ({
-        coupon_info: item.coupon_info,
-        coupon_num: item.coupon_num,
-        card_num: item.card_num
-      }));
-      // 证明还有下一页
-      if (total_page > page) {
-        const quanData = await this.continuousGetQuan({
-          city_id,
-          cinemaId,
-          session_id,
-          page: 2,
-          logger
-        });
-        console.log("quanData", quanData);
-        logger.infoSave("连续获取券返回", { quanData });
-        quanListAll.push(...(quanData || []));
-      }
-      console.log("quanListAll", quanListAll);
-
-      return quanListAll;
+        session_id,
+        logger
+      });
+      console.log("quanData", quanData);
+      logger.infoSave("连续获取券返回", { quanData });
+      return quanData || [];
     } catch (error) {
       logger.errorSave("获取优惠券列表异常", error);
     }
@@ -821,20 +810,53 @@ export default class CardQuanManage {
 
   // 连续获取券
   async continuousGetQuan(data) {
-    let { city_id, cinemaId, session_id, page, quanData = [], logger } = data;
-    const params = {
-      city_id,
+    let {
+      cinemaCode,
       cinemaId,
       session_id,
-      page,
-      status: 4
+      page = 1,
+      quanData = [],
+      logger
+    } = data;
+    let params = {
+      cinemaCode,
+      cinemaId,
+      session_id
     };
+    const { api_version } = this;
+    if (api_version == "3.0C") {
+      // const defaultCardNo = cardList?.find(
+      //   item => item.defaultCard == 1
+      // )?.cardNo;
+      // quanParams.defaultCardNo = defaultCardNo;
+      quanParams.couponStatus = 1;
+    } else if (api_version == "C") {
+      quanParams.pageNo = page;
+      quanParams.pageSize = 20;
+    }
     try {
       const res = await this.appApi.getQuanList(params);
-      let quanList = res.data?.unused?.lists || [];
-      let total_page = res.data?.unused?.total_page || [];
-      if (page == 2) {
-        logger.infoSave("获取券返回", { quanList, params });
+      logger.infoSave("获取券返回", { quanList, params });
+      let quanList, total_page;
+      if (api_version === "3.0C") {
+        quanList = res.data || [];
+        quanList = quanList.map(item => ({
+          ...item,
+          couponName: item.ticketName,
+          couponCode: item.ticketNum,
+          endDateTime: item.validEndDate
+        }));
+        total_page = 1; // 没有分页所以设置为1不在往下查询
+      } else if (api_version === "C") {
+        quanList = res.data?.records || [];
+        quanList = quanList.map(item => ({
+          ...item,
+          couponName: item.name,
+          couponCode: item.code,
+          endDateTime: item.endTime
+        }));
+        const { number, size, totalPages = 1, last } = res.data?.pageable || {};
+        total_page = totalPages;
       }
       quanData.push(...quanList);
       if (total_page > page) {
@@ -845,11 +867,7 @@ export default class CardQuanManage {
           quanData
         });
       }
-      return quanData.map(item => ({
-        coupon_info: item.coupon_info,
-        coupon_num: item.coupon_num,
-        card_num: item.card_num
-      }));
+      return quanData;
     } catch (error) {
       logger.errorSave("连续获取券异常", {
         error,
