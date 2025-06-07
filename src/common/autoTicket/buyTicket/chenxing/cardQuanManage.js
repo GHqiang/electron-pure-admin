@@ -832,7 +832,7 @@ export default class CardQuanManage {
       quanParams.couponStatus = 1;
     } else if (api_version == "C") {
       quanParams.pageNo = page;
-      quanParams.pageSize = 20;
+      quanParams.pageSize = 100; // 支持多传
     }
     try {
       const res = await this.appApi.getQuanList(params);

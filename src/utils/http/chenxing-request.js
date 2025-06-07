@@ -107,8 +107,8 @@ const paramsHandle = (params, app_name) => {
         // unifiedCinemaName: "银兴国际影城仙桃店",
         ...params
       },
-      pageNo: "",
-      pageSize: "",
+      pageNo: params.pageNo || "",
+      pageSize: params.pageSize || "",
       channelCode: appInfo?.channelCode
     };
     return config;
