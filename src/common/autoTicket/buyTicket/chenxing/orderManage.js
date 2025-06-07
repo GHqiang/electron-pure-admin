@@ -122,7 +122,6 @@ export default class OrderManage {
       session_id
     } = data;
     let params = {
-      unifiedCode: cinemaCode,
       cinemaCode,
       cinemaId,
       lockOrderId,
@@ -143,10 +142,10 @@ export default class OrderManage {
         params.ticketCodes = quan_code;
       }
     } else {
-      params.activityKey = activityKey;
+      params.activityKey = activityKey || "";
     }
     try {
-      this.logger.info("计算价格参数", params);
+      this.logger.infoSave("计算价格参数", params);
       const res = await this.appApi.priceCalculation(params);
       this.logger.infoSave("计算价格返回", res);
       if (!quan_code?.length && cardNum) {
@@ -171,7 +170,7 @@ export default class OrderManage {
       }
       return res?.data;
     } catch (error) {
-      this.logger.infoSave("计算价格异常", error);
+      this.logger.errorSave("计算价格异常", error);
     }
   }
   // 创建订单
