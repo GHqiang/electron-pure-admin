@@ -96,6 +96,13 @@
               @click="batchDelete"
               >批量删除</el-button
             >
+            <el-button
+              style="margin-left: 10px"
+              type="primary"
+              :loading="queryExpireLoading"
+              @click="queryExpireLoginList"
+              >查看登录失效影院</el-button
+            >
           </el-form-item>
         </el-form>
         <!-- 表格 -->
@@ -197,6 +204,35 @@
       :userList="userList"
       @submit="saveCard"
     />
+
+    <el-dialog v-model="exprieCinemaVisible" width="60%" title="失效影院列表">
+      <el-table
+        :data="exprieCinemaList"
+        border
+        style="width: 100%"
+        max-height="400"
+      >
+        <el-table-column
+          prop="app_type_name"
+          sortable
+          label="影线系列"
+          width="180"
+        />
+        <el-table-column
+          prop="app_label"
+          sortable
+          label="影线名称"
+          width="180"
+        />
+        <el-table-column prop="mobile" sortable label="手机号" />
+        <el-table-column prop="session_id" label="失效session" />
+      </el-table>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button type="primary" @click="exportExpireList"> 导出 </el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -205,10 +241,23 @@ import { ref, reactive, computed, onBeforeMount, nextTick, watch } from "vue";
 import svApi from "@/api/sv-api";
 import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import LoginDialog from "@/components/LoginDialog.vue";
-import { GET_APP_LIST, GET_APP_TYPE_LIST } from "@/common/constant";
+import {
+  GET_APP_LIST,
+  GET_UME_LIST,
+  GET_H5_UME_LIST,
+  GET_CHENXING_LIST,
+  GET_APP_TYPE_LIST,
+  GET_USABLE_APP_LIST,
+  GE_APP_INFO
+} from "@/common/constant";
 const APP_LIST = computed(() => GET_APP_LIST());
+const UME_LIST = computed(() => GET_UME_LIST());
+const H5_UME_LIST = computed(() => GET_H5_UME_LIST());
+const CHENXING_LIST = computed(() => GET_CHENXING_LIST());
 const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
-import { getCurrentTime } from "@/utils/utils";
+
+import { APP_API_OBJ } from "@/common/index.js";
+import { getCurrentTime, mockDelay, createExcelDown } from "@/utils/utils";
 import { appUserInfo } from "@/store/appUserInfo";
 const userInfoAndTokens = appUserInfo();
 import { platTokens } from "@/store/platTokens";
@@ -305,6 +354,7 @@ const formatUserName = link_user_id => {
   if (!link_user_id) return "全部";
   return userList.value.find(item => item.id == link_user_id)?.name;
 };
+
 // 搜索数据
 const searchData = async () => {
   const loading = ElLoading.service({
@@ -475,6 +525,124 @@ const batchDelete = () => {
           message: "删除取消"
         });
       });
+  }
+};
+
+const exprieCinemaVisible = ref(false);
+const exprieCinemaList = ref([]);
+const queryExpireLoading = ref(false);
+// 查看登录失效影院列表
+const queryExpireLoginList = async () => {
+  try {
+    queryExpireLoading.value = true;
+    // 1、拿到全部登录信息列表进行可用影院过滤
+    const loginRes = await svApi.queryLoginList({ rule });
+    let loginRecords = loginRes.data.loginList || [];
+    let loginInfoList = loginRecords.filter(itemA => {
+      let checkUsable = GET_USABLE_APP_LIST()?.["" + itemA.app_name];
+      return checkUsable && itemA.is_xiaohao != 1;
+    });
+    console.warn("loginInfoListt", loginInfoList);
+    console.warn("全部手机号列表", [
+      ...new Set(loginInfoList.map(itemA => itemA.mobile))
+    ]);
+    let abnormalLoginInfoList = [];
+    for (let index = 0; index < loginInfoList.length; index++) {
+      const { app_name, session_id, mobile } = loginInfoList[index];
+      await getCardListByApp(
+        app_name,
+        mobile,
+        session_id,
+        index,
+        abnormalLoginInfoList
+      );
+    }
+    abnormalLoginInfoList = abnormalLoginInfoList.map(itemA => {
+      let appInfo = GE_APP_INFO(itemA.app_name);
+      return {
+        ...itemA,
+        app_label: appInfo?.app_label || "",
+        app_type_name: appInfo?.app_type_name || ""
+      };
+    });
+    console.warn("abnormalLoginInfoList", abnormalLoginInfoList);
+    if (abnormalLoginInfoList.length) {
+      exprieCinemaVisible.value = true;
+      exprieCinemaList.value = abnormalLoginInfoList;
+    } else {
+      ElMessage({
+        type: "info",
+        message: "没有登录失效的影院"
+      });
+    }
+    queryExpireLoading.value = false;
+  } catch (error) {
+    queryExpireLoading.value = false;
+  }
+};
+
+// 导出失效列表
+const exportExpireList = async () => {
+  let tableData = exprieCinemaList.value.map(item => [
+    item.app_type_name,
+    item.app_label,
+    item.mobile,
+    item.session_id
+  ]);
+  tableData.unshift(["影线系列", "影线名称", "手机号", "失效session"]);
+  let fileName = `登录失效影院列表.xlsx`;
+  console.warn("tableData", tableData, "fileName", fileName);
+  createExcelDown(tableData, fileName);
+};
+// 获取会员卡
+const getCardListByApp = async (
+  app_name,
+  phone,
+  session_id,
+  index,
+  abnormalLoginInfoList = []
+) => {
+  let params = {};
+  try {
+    if (UME_LIST.value.includes(app_name)) {
+      params.params = {
+        status: "CAN_USED",
+        channelCode: "QD0000001",
+        sysSourceCode: "YZ001"
+        // cinemaCode: "11015502",
+        // cinemaLinkId: "15953"
+      };
+      params.session_id = session_id;
+    } else if (H5_UME_LIST.value.includes(app_name)) {
+      params = {
+        cinemaLinkId: GE_APP_INFO(app_name)?.cinemaLinkId,
+        pageNo: 1,
+        pageSize: 30,
+        umeToken: session_id
+      };
+    } else if (CHENXING_LIST.value.includes(app_name)) {
+      params = {
+        session_id
+      };
+    } else if (app_name === "lma") {
+      params.lmaToken = session_id;
+    } else {
+      // params.city_id = "500";
+      // params.cinema_id = "1";
+      params.session_id = session_id;
+    }
+    await mockDelay(H5_UME_LIST.value.includes(app_name) ? 1 : 0.01);
+    if (index % 8) {
+      await mockDelay(1);
+    }
+    await APP_API_OBJ[app_name].getCardList(params);
+  } catch (err) {
+    console.warn(app_name + "——获取会员卡列表异常", err, params);
+    abnormalLoginInfoList.push({
+      app_name,
+      mobile: phone,
+      session_id
+    });
   }
 };
 onBeforeMount(async () => {

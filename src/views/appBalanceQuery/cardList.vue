@@ -822,7 +822,7 @@ const syncCardInfo = async () => {
   let phone = mobile.value;
   let syncFlag = syncType.value;
   let appName = formData.app_name;
-  console.log("appName", appName);
+  console.warn("appName", appName, "phone", phone, "syncFlag", syncFlag);
   let pro1;
 
   let tips = "本次同步只同步登录过的影院会员卡信息，";
@@ -872,8 +872,9 @@ const syncCardInfo = async () => {
     let loginInfoList = getCinemaLoginInfoList().filter(itemA => {
       let checkPhone = phone ? itemA.mobile == phone : true;
       let checkAppName = appName ? itemA.app_name == appName : true;
-      let checkSyncFlag =
-        syncFlag == 1
+      let checkSyncFlag = appName
+        ? true
+        : syncFlag == 1
           ? ![...H5_UME_LIST.value, "lma"].includes(itemA.app_name)
           : syncFlag == 2
             ? H5_UME_LIST.value.includes(itemA.app_name)
@@ -901,14 +902,15 @@ const syncCardInfo = async () => {
     let serCardList = cardRes.data?.cardList || [];
     serCardList = serCardList.filter(itemA => {
       let checkAppName = !!appName;
-      let checkSyncFlag =
-        syncFlag == 1
+      let checkSyncFlag = appName
+        ? true
+        : syncFlag == 1
           ? ![...H5_UME_LIST.value, "lma"].includes(itemA.app_name)
           : syncFlag == 2
             ? H5_UME_LIST.value.includes(itemA.app_name)
             : itemA.app_name == "lma";
       let checkUsable = GET_USABLE_APP_LIST()?.["" + itemA.app_name];
-      return (checkAppName || checkSyncFlag) && checkUsable;
+      return checkAppName && checkSyncFlag && checkUsable;
     });
     console.warn("该系列的serCardList", serCardList);
     let memberCardList = [],
