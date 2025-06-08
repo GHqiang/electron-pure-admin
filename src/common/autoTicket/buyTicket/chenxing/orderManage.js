@@ -62,7 +62,6 @@ export default class OrderManage {
       unlockSeatInfo;
     try {
       let params = {
-        unifiedCode: cinemaCode,
         cinemaCode,
         cinemaId,
         // defaultCardNo: cardNum, 经测试不传也行
@@ -88,8 +87,7 @@ export default class OrderManage {
       unlockSeatInfo;
     try {
       let params = {
-        unifiedCode: cinemaCode,
-        cinemaCode: cinemaCode,
+        cinemaCode,
         cinemaId,
         // defaultCardNo: cardNum, // 经测试可以不传
         orderCode: order_num,
@@ -185,7 +183,6 @@ export default class OrderManage {
     } = data;
     try {
       let params = {
-        unifiedCode: cinemaCode,
         cinemaCode,
         cinemaId,
         defaultCardNo: cardNum,
@@ -235,7 +232,6 @@ export default class OrderManage {
     let appInfo = GE_APP_INFO(appFlag);
     let open_id = appInfo?.sfc_open_id;
     let params = {
-      unifiedCode: cinemaCode,
       cinemaCode,
       cinemaId,
       cinemaName,

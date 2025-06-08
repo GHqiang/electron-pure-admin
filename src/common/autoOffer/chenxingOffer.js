@@ -1476,7 +1476,6 @@ class getChenxingOfferPrice {
       let params = {
         cinemaCode,
         cinemaId,
-        unifiedCode: cinemaCode,
         pageNo: 1,
         pageSize: 1000,
         platForm: 5
