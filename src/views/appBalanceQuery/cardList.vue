@@ -108,9 +108,9 @@
               <template #default>
                 <el-input
                   v-model="mobile"
-                  placeholder="所属账号(手机号)"
+                  placeholder="手机号(可不输入同步所有账号)"
                   clearable
-                  style="width: 350px; margin-left: -1px"
+                  style="width: 370px; margin-left: -1px"
                 >
                   <template #prepend>
                     <el-select
@@ -509,7 +509,13 @@ const getSummaries = param => {
 };
 
 // 获取会员卡
-const getCardListByApp = async (app_name, phone, session_id, index) => {
+const getCardListByApp = async (
+  app_name,
+  phone,
+  session_id,
+  index,
+  abnormalLoginInfoList = []
+) => {
   let params = {};
   let cardList = [];
   if (!session_id) {
@@ -547,12 +553,12 @@ const getCardListByApp = async (app_name, phone, session_id, index) => {
       // params.cinema_id = "1";
       params.session_id = session_id;
     }
-    await mockDelay(H5_UME_LIST.value.includes(app_name) ? 1 : 0.1);
+    await mockDelay(H5_UME_LIST.value.includes(app_name) ? 1 : 0.01);
     if (index % 8) {
-      await mockDelay(1.5);
+      await mockDelay(1);
     }
     const res = await APP_API_OBJ[app_name].getCardList(params);
-    console.warn("获取会员卡列表返回", res);
+    // console.warn("获取会员卡列表返回", res);
     // 只获取有效卡，无效卡要过滤掉
     if (UME_LIST.value.includes(app_name)) {
       cardList = res.data || [];
@@ -616,7 +622,7 @@ const getCardListByApp = async (app_name, phone, session_id, index) => {
           };
         });
     }
-    console.warn("获取会员卡列表返回的cardList", cardList);
+    console.warn(app_name + "——获取会员卡列表返回的cardList", cardList);
     cardList = cardList.map(item => ({
       ...item,
       app_name,
@@ -624,7 +630,12 @@ const getCardListByApp = async (app_name, phone, session_id, index) => {
     }));
     return cardList;
   } catch (err) {
-    console.warn("获取会员卡列表异常", err, params, app_name);
+    console.warn(app_name + "——获取会员卡列表异常", err, params, app_name);
+    abnormalLoginInfoList.push({
+      app_name,
+      mobile: phone,
+      session_id
+    });
     return [];
   }
 };
@@ -813,47 +824,42 @@ const syncCardInfo = async () => {
   let appName = formData.app_name;
   console.log("appName", appName);
   let pro1;
-  if (!phone) {
-    ElMessage.warning("请先输入要同步的账号（手机号）");
-    return;
+
+  let tips = "本次同步只同步登录过的影院会员卡信息，";
+  if (appName) {
+    tips = "本次同步只同步" + APP_LIST.value[appName];
   } else {
-    ElMessage.info("本次同步只同步登录过的影院会员卡信息");
-    let tips = "本次同步只同步登录过的影院会员卡信息，";
-    if (appName) {
-      tips = "本次同步只同步" + APP_LIST.value[appName];
-    } else {
-      tips +=
-        syncFlag == 1
-          ? "不包含凤凰云智h5、卢米埃系列"
-          : syncFlag == 2
-            ? "仅同步凤凰云智h5系列"
-            : "仅同步卢米埃系列";
-    }
-    if (appName === "lma" || syncFlag == 3) {
-      tips =
-        tips +
-        "，卢米埃同步时请先暂停队列或者关闭卢米埃报价规则，否则会造成卢米埃出票异常";
-    }
-    let confirmResolve;
-    pro1 = () =>
-      new Promise(resolve => {
-        confirmResolve = resolve;
-      });
-    ElMessageBox.confirm(tips, "提示", {
-      confirmButtonText: "确定",
-      cancelButtonText: "取消",
-      type: "warning"
-    })
-      .then(() => {
-        confirmResolve();
-      })
-      .catch(() => {
-        ElMessage({
-          type: "info",
-          message: "取消同步"
-        });
-      });
+    tips +=
+      syncFlag == 1
+        ? "不包含凤凰云智h5、卢米埃系列"
+        : syncFlag == 2
+          ? "仅同步凤凰云智h5系列"
+          : "仅同步卢米埃系列";
   }
+  if (appName === "lma" || syncFlag == 3) {
+    tips =
+      tips +
+      "，卢米埃同步时请先暂停队列或者关闭卢米埃报价规则，否则会造成卢米埃出票异常";
+  }
+  let confirmResolve;
+  pro1 = () =>
+    new Promise(resolve => {
+      confirmResolve = resolve;
+    });
+  ElMessageBox.confirm(tips, "提示", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning"
+  })
+    .then(() => {
+      confirmResolve();
+    })
+    .catch(() => {
+      ElMessage({
+        type: "info",
+        message: "取消同步"
+      });
+    });
   await pro1();
   console.warn("开始同步");
   const loading = ElLoading.service({
@@ -863,54 +869,63 @@ const syncCardInfo = async () => {
   });
   try {
     // 1、拿到该手机号已维护登录信息的影院列表
-    let loginInfoList = getCinemaLoginInfoList().filter(
-      itemA =>
-        itemA.mobile == phone &&
-        (formData.app_name
-          ? itemA.app_name == formData.app_name
-          : syncFlag == 1
-            ? ![...H5_UME_LIST.value, "lma"].includes(itemA.app_name)
-            : syncFlag == 2
-              ? H5_UME_LIST.value.includes(itemA.app_name)
-              : itemA.app_name == "lma")
-    );
-    console.log("该手机号的loginInfoListt", loginInfoList);
-    loginInfoList = loginInfoList.filter(
-      item => GET_USABLE_APP_LIST()?.["" + item.app_name]
-    );
+    let loginInfoList = getCinemaLoginInfoList().filter(itemA => {
+      let checkPhone = phone ? itemA.mobile == phone : true;
+      let checkAppName = appName ? itemA.app_name == appName : true;
+      let checkSyncFlag =
+        syncFlag == 1
+          ? ![...H5_UME_LIST.value, "lma"].includes(itemA.app_name)
+          : syncFlag == 2
+            ? H5_UME_LIST.value.includes(itemA.app_name)
+            : itemA.app_name == "lma";
+      let checkUsable = GET_USABLE_APP_LIST()?.["" + itemA.app_name];
+      return checkPhone && checkAppName && checkSyncFlag && checkUsable;
+    });
+    console.warn("该手机号的loginInfoListt", loginInfoList);
+    console.warn("该系列的手机号列表", [
+      ...new Set(loginInfoList.map(itemA => itemA.mobile))
+    ]);
     if (!loginInfoList?.length) {
-      ElMessage.warning(
-        `该手机号：${formData.app_name ? APP_LIST.value[formData.app_name] : "该系列"} 未维护登录信息`
-      );
+      ElMessage.warning("该系列没有维护登录信息，无法同步");
       loading.close();
       return;
     }
     // 2、获取服务端已维护的卡列表
     let cardRes = await svApi.queryCardList({
       page_num: 1,
-      page_size: 1000,
-      mobile: phone,
+      page_size: 2000,
+      rule: rule,
+      mobile: phone || undefined,
       app_name: formData.app_name || (syncFlag == 3 ? "lma" : undefined)
     });
     let serCardList = cardRes.data?.cardList || [];
-    serCardList = serCardList.filter(item => {
-      if (!formData.app_name) {
-        return syncFlag == 1
-          ? ![...H5_UME_LIST.value, "lma"].includes(item.app_name)
+    serCardList = serCardList.filter(itemA => {
+      let checkAppName = !!appName;
+      let checkSyncFlag =
+        syncFlag == 1
+          ? ![...H5_UME_LIST.value, "lma"].includes(itemA.app_name)
           : syncFlag == 2
-            ? H5_UME_LIST.value.includes(item.app_name)
-            : item.app_name == "lma";
-      }
-      return true;
+            ? H5_UME_LIST.value.includes(itemA.app_name)
+            : itemA.app_name == "lma";
+      let checkUsable = GET_USABLE_APP_LIST()?.["" + itemA.app_name];
+      return (checkAppName || checkSyncFlag) && checkUsable;
     });
-    console.log("该手机号的serCardList", serCardList);
-    let memberCardList = [];
+    console.warn("该系列的serCardList", serCardList);
+    let memberCardList = [],
+      abnormalLoginInfoList = [];
     for (let index = 0; index < loginInfoList.length; index++) {
-      const { app_name, session_id } = loginInfoList[index];
-      let cardList = await getCardListByApp(app_name, phone, session_id, index);
+      const { app_name, session_id, mobile } = loginInfoList[index];
+      let cardList = await getCardListByApp(
+        app_name,
+        mobile,
+        session_id,
+        index,
+        abnormalLoginInfoList
+      );
       memberCardList.push(...cardList);
     }
     console.log("本次同步会员卡余额拿到的数据信息", memberCardList);
+    console.warn("该系列失效的登录信息列表", abnormalLoginInfoList);
     if (memberCardList.length) {
       memberCardList = memberCardList.map(item => {
         return {
@@ -925,10 +940,8 @@ const syncCardInfo = async () => {
       });
       console.warn("memberCardList", memberCardList);
       let addCardList = memberCardList.filter(item => !item.id);
-      console.warn("addCardList", addCardList);
-      if (addCardList.length) {
-        await addCardListHandle(addCardList);
-      }
+      console.warn("准备新增的卡列表", addCardList);
+
       let updateCardList = memberCardList
         .filter(item => {
           return item.id && item.balance !== undefined;
@@ -938,10 +951,7 @@ const syncCardInfo = async () => {
           balance: item.balance,
           update_time: getCurrentTime()
         }));
-      if (updateCardList?.length) {
-        console.log("updateCardList", updateCardList);
-        updateCardListHandle(updateCardList);
-      }
+      console.warn("准备更新的卡列表", updateCardList);
       let unUseCardList = serCardList.filter(item => {
         return (
           !memberCardList.some(
@@ -952,6 +962,12 @@ const syncCardInfo = async () => {
         );
       });
       console.warn("无效卡列表", unUseCardList);
+      if (addCardList.length) {
+        await addCardListHandle(addCardList);
+      }
+      if (updateCardList?.length) {
+        await updateCardListHandle(updateCardList);
+      }
       if (unUseCardList.length) {
         const messageContent = h("div", null, [
           h("p", null, "以下是查出来的服务端的无效卡"),

@@ -117,7 +117,8 @@ export default class OrderManage {
       cardNum,
       activityKey,
       quan_code,
-      session_id
+      session_id,
+      firstCalc = true
     } = data;
     let params = {
       cinemaCode,
@@ -127,7 +128,7 @@ export default class OrderManage {
       addEquityGoods: [],
       orderGoodsType: 1,
       defaultCardNo: cardNum,
-      firstCalc: false, // 是否是首次计算(首次会默认用券)
+      firstCalc: firstCalc || false, // 是否是首次计算(首次会默认用券)
       session_id
     };
     const { api_version } = this;
@@ -144,8 +145,12 @@ export default class OrderManage {
     }
     try {
       this.logger.infoSave("计算价格参数", params);
-      const res = await this.appApi.priceCalculation(params);
-      this.logger.infoSave("计算价格返回", res);
+      let res = await this.appApi.priceCalculation(params);
+      this.logger.infoSave("计算价格返回", JSON.parse(JSON.stringify(res)));
+      params = { ...params, firstCalc: false };
+      // this.logger.infoSave("计算价格参数1", params);
+      res = await this.appApi.priceCalculation(params);
+      this.logger.infoSave("计算价格返回1", res);
       if (!quan_code?.length && cardNum) {
         // 用卡
         if (api_version === "C") {

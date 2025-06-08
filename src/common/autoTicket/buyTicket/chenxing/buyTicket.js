@@ -114,7 +114,7 @@ export default class BuyTicket {
     // 测试专用
     if (this.isTestOrder) {
       // offerRule = { offer_type: "1", quan_value: "35" };
-      this.offerRule = { offer_type: "2", member_price: "29.9" };
+      this.offerRule = { offer_type: "2", member_price: "25" };
       return;
     }
     const { app_name, order_number, plat_name } = this.order;

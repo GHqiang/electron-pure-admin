@@ -38,7 +38,7 @@ const getToken = async (app_name, IS_DEV) => {
         // 'host': 'open.oristarcloud.com'
       }
     });
-    console.log("res", res);
+    // console.log("res", res);
     return res?.data?.data;
   } catch (error) {
     console.error("tokenRes error", error);
