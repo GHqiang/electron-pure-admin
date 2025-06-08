@@ -53,7 +53,7 @@ class getChenxingOfferPrice {
       // 2. 获取最终匹配的报价规则
       let offerRule = await this.getEndMatchOfferRule(order);
       if (!offerRule) return this.buildErrorResponse();
-
+      this.logger.infoSave("最终匹配到的报价规则", offerRule);
       // 3. 获取成本价
       const cost_price = await this.getCostPrice(offerRule);
       if (!cost_price) return this.buildErrorResponse(offerRule);
