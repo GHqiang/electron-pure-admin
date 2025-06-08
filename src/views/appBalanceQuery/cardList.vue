@@ -901,7 +901,6 @@ const syncCardInfo = async () => {
     });
     let serCardList = cardRes.data?.cardList || [];
     serCardList = serCardList.filter(itemA => {
-      let checkAppName = !!appName;
       let checkSyncFlag = appName
         ? true
         : syncFlag == 1
@@ -910,7 +909,7 @@ const syncCardInfo = async () => {
             ? H5_UME_LIST.value.includes(itemA.app_name)
             : itemA.app_name == "lma";
       let checkUsable = GET_USABLE_APP_LIST()?.["" + itemA.app_name];
-      return checkAppName && checkSyncFlag && checkUsable;
+      return checkSyncFlag && checkUsable;
     });
     console.warn("该系列的serCardList", serCardList);
     let memberCardList = [],
