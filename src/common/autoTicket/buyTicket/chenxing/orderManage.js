@@ -58,13 +58,11 @@ export default class OrderManage {
 
   // 释放座位
   async releaseSeat(unlockSeatInfo) {
-    const { cinemaCode, cinemaId, cardNum, lockOrderId, session_id } =
-      unlockSeatInfo;
+    const { cinemaCode, cinemaId, lockOrderId, session_id } = unlockSeatInfo;
     try {
       let params = {
         cinemaCode,
         cinemaId,
-        // defaultCardNo: cardNum, 经测试不传也行
         lockOrderId,
         ...(session_id && { session_id })
       };
@@ -83,13 +81,11 @@ export default class OrderManage {
   }
   // 取消订单
   async cancelOrder(unlockSeatInfo) {
-    const { cinemaCode, cinemaId, cardNum, order_num, session_id } =
-      unlockSeatInfo;
+    const { cinemaCode, cinemaId, order_num, session_id } = unlockSeatInfo;
     try {
       let params = {
         cinemaCode,
         cinemaId,
-        // defaultCardNo: cardNum, // 经测试可以不传
         orderCode: order_num,
         orderNumber: order_num,
         ...(session_id && { session_id })
@@ -118,7 +114,8 @@ export default class OrderManage {
       activityKey,
       quan_code,
       session_id,
-      firstCalc = true
+      firstCalc = true,
+      isTrial = true
     } = data;
     let params = {
       cinemaCode,
@@ -153,7 +150,7 @@ export default class OrderManage {
       this.logger.infoSave("计算价格返回1", res);
       if (!quan_code?.length && cardNum) {
         // 用卡
-        if (api_version === "C") {
+        if (api_version === "C" && isTrial) {
           let activityList = res?.data?.activityList || [];
           if (activityList.length) {
             activityKey = activityList
@@ -165,7 +162,8 @@ export default class OrderManage {
             if (activityKey) {
               return this.pripriceCalculation({
                 ...data,
-                activityKey
+                activityKey,
+                isTrial: false
               });
             }
           }
