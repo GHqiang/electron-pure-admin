@@ -351,6 +351,7 @@
           <el-select
             v-model="formData.quanValue"
             placeholder="用券类型"
+            multiple
             clearable
           >
             <el-option
@@ -543,7 +544,7 @@ let formData = reactive({
   includeFilmNames: [], // 包含影片
   excludeFilmNames: [], // 排除影片
   timeLimit: "", // 开场时间限制
-  quanValue: "", // 用券类型
+  quanValue: [], // 用券类型
   ruleStartTime: "", // 规则启用时间
   ruleEndTime: "", // 规则结束时间
   offerType: "1", // 报价类型, 1-固定价 2-会员价加价 3-会员日报价
@@ -624,7 +625,7 @@ const resetForm = el => {
   formData.includeFilmNames = []; // 包含影片
   formData.excludeFilmNames = []; // 排除影片
   formData.timeLimit = ""; // 开场时间限制
-  formData.quanValue = ""; // 用券类型
+  formData.quanValue = []; // 用券类型
   formData.ruleStartTime = ""; // 规则启用时间
   formData.ruleEndTime = ""; // 规则结束时间
   formData.offerType = "1"; // 报价类型, 1-固定价 2-会员价加价 3-会员日报价
@@ -763,7 +764,7 @@ const offerTypeChange = val => {
   } else if (val === "2") {
     // 会员价加价
     formData.memberDay = "";
-    formData.quanValue = "";
+    formData.quanValue = [];
     formData.platOfferList = [
       {
         platName: "lieren",

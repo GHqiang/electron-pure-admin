@@ -172,7 +172,11 @@
               <span>{{ offerTypeObj[scope.row.offerType] || "" }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="用券类型" prop="quanValue" width="85" />
+          <el-table-column label="用券类型" width="85">
+            <template #default="scope">
+              <span>{{ scope.row.quanValue.join() }}</span>
+            </template>
+          </el-table-column>
           <el-table-column label="报价金额" prop="offerAmount" width="85">
             <template #default="scope">
               <span>{{ formatOfferAmount(scope.row) }}</span>
@@ -586,6 +590,7 @@ const setLocalRuleList = async () => {
       item.platOfferList = JSON.parse(item.platOfferList || "[]");
       item.weekDay = JSON.parse(item.weekDay);
       item.film_type = item.film_type ? item.film_type?.split(",") : [];
+      item.quanValueList = item.quanValue ? item.quanValue?.split(",") : [];
     });
     rules.setRuleList(ruleRecords);
   } catch (error) {
@@ -665,6 +670,7 @@ const searchData = async () => {
       item.platOfferList = JSON.parse(item.platOfferList || "[]");
       item.weekDay = JSON.parse(item.weekDay);
       item.film_type = item.film_type ? item.film_type.split(",") : [];
+      item.quanValue = item.quanValue ? item.quanValue?.split(",") : [];
     });
     console.log("规则列表===>", ruleRecords);
     tableData.value = ruleRecords;
@@ -810,6 +816,7 @@ const saveRule = async ruleInfo => {
     ruleInfo.includeFilmNames = JSON.stringify(ruleInfo.includeFilmNames);
     ruleInfo.excludeFilmNames = JSON.stringify(ruleInfo.excludeFilmNames);
     ruleInfo.film_type = ruleInfo.film_type?.join(",");
+    ruleInfo.quanValue = ruleInfo.quanValue?.join(",");
     ruleInfo.orderForm = (ruleInfo.platOfferList || [])
       .map(item => item.platName)
       .join();

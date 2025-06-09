@@ -158,10 +158,16 @@ class getSfcOfferPrice {
         return this.returnResultHandle({ endPrice, offerRule, order_number });
       }
       // 成本价
-      let cost_price;
+      let cost_price, quanInfoList;
       if (offerType === "1") {
         const quanInfo = await this.getQuanInfo(quanValue, appFlag);
         cost_price = quanInfo?.quan_cost;
+        // 只用多种券类型才会返回数组
+        // 这里取一个最小成本价去计算判断能否报价
+        if (Array.isArray(quanInfo)) {
+          quanInfoList = quanInfo;
+          cost_price = Math.min(...quanInfoList.map(item => +item.quan_cost));
+        }
       } else {
         cost_price = Number(memberCostPrice);
       }
@@ -182,11 +188,28 @@ class getSfcOfferPrice {
         rewards,
         offerType,
         offerList,
-        plat_name
+        plat_name,
+        offerRule
       });
       console.warn(conPrefix + "最终报价返回", endPrice);
       if (!endPrice) {
         return this.returnResultHandle({ endPrice, offerRule, order_number });
+      }
+      // 增加一个quanValue的过滤，依据最大券成本过滤
+      if (
+        offerType === "1" &&
+        offerRule?.maxCostPrice &&
+        quanInfoList?.length > 1
+      ) {
+        offerRule.quanValue = offerRule.quanValue
+          .split(",")
+          .filter(item => {
+            let targetQuanCost = quanInfoList.find(
+              quanInfo => quanInfo.quan_value === item
+            )?.quan_cost;
+            return targetQuanCost < offerRule?.maxCostPrice;
+          })
+          .join();
       }
       // 最终报价
       offerRule.offer_end_amount = endPrice;
@@ -802,8 +825,8 @@ class getSfcOfferPrice {
         // 校验其库存，进行过滤
         if (appQuanTypeList?.length) {
           fixedAmountRuleList = fixedAmountRuleList.filter(item => {
-            let targetQuanInfo = appQuanTypeList.find(
-              itemA => itemA.quan_value == item.quanValue
+            let targetQuanInfo = appQuanTypeList.find(itemA =>
+              item.quanValue?.includes(itemA.quan_value)
             );
             let quan_stock = targetQuanInfo?.quan_stock;
             return quan_stock
@@ -973,7 +996,8 @@ class getSfcOfferPrice {
         rewards,
         offerType,
         offerList,
-        plat_name
+        plat_name,
+        offerRule
       } = params || {};
       // console.log("获取最终报价相关字段", params);
       // 远端报价记录
@@ -1097,6 +1121,11 @@ class getSfcOfferPrice {
         return;
       }
 
+      // 最大卡券成本（即成本必须低于它才有利润）
+      let maxCostPrice =
+        (price * 1000 + rewardPrice * 1000 - shouxufei * 1000) / 1000;
+      offerRule.maxCostPrice = maxCostPrice;
+
       this.logList.push({
         opera_time: getCurrentTime(),
         des: "sfc计算报价相关信息",
@@ -1106,6 +1135,7 @@ class getSfcOfferPrice {
           profitAddPrice: "单店加价金额：" + profitAddPrice,
           supplier_max_price: "平台最高限价：" + supplier_max_price,
           cardQuanCost: "卡券成本：" + cardQuanCost,
+          maxCostPrice: "最大卡券成本（低于该值才有利润）：" + maxCostPrice,
           price: "最终报价：" + price,
           shouxufei: "手续费（最终报价*1%）：" + shouxufei,
           cost_price: "出票成本（卡券成本+手续费）：" + cost_price,
