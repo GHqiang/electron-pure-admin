@@ -52,6 +52,11 @@ export const useCinemaList = defineStore("cinemaDataTable", {
         .filter(item => item.app_type_code === "chenxing_applet")
         .map(item => item.app_name);
     },
+    getFenghuangList: state => {
+      return state.allAppList
+        .filter(item => item.app_type_code === "fenghuang_applet")
+        .map(item => item.app_name);
+    },
     // 获取可用影线及影院列表
     getCanAppTypeList: state => {
       return Object.keys(APP_TYPE_OBJ).map(item => ({
