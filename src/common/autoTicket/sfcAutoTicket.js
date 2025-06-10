@@ -1994,9 +1994,17 @@ class OrderAutoTicketQueue {
       }
 
       if (offerRule.offer_type === "1" || is_auto_use_quan) {
-        console.log(conPrefix + "使用优惠券出票");
+        let quanValueList = offerRule.quan_value.split(",");
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "使用优惠券出票",
+          level: "info",
+          info: {
+            quanValueList
+          }
+        });
         // 读取券库存进行过滤重新设置quan_value为单个券类型
-        if (offerRule.quan_value.split(",").length > 1) {
+        if (quanValueList.length > 1) {
           const appQuanTypeList = await this.getQuanTypeListByApp({
             appFlag,
             mobile
@@ -2004,7 +2012,7 @@ class OrderAutoTicketQueue {
           if (appQuanTypeList?.length) {
             let canUseQuanTypeList = appQuanTypeList.filter(
               itemA =>
-                offerRule.quan_value?.includes(itemA.quan_value) &&
+                quanValueList.includes(itemA.quan_value) &&
                 itemA.quan_stock >= ticket_num
             );
             this.logList.push({
@@ -2018,6 +2026,18 @@ class OrderAutoTicketQueue {
             if (canUseQuanTypeList.length) {
               offerRule.quan_value = canUseQuanTypeList[0].quan_value;
             }
+          }
+          if (offerRule.quan_value.split(",").length > 1) {
+            offerRule.quan_value =
+              offerRule.quan_value.split(",")[0].quan_value;
+            this.logList.push({
+              opera_time: getCurrentTime(),
+              des: "券类型容错处理：强制取第一个",
+              level: "info",
+              info: {
+                quan_value: offerRule.quan_value
+              }
+            });
           }
         }
         const quanInfo = await this.getQuanInfo(offerRule.quan_value, appFlag);
