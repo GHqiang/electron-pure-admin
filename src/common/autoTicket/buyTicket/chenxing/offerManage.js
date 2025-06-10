@@ -66,7 +66,8 @@ class getChenxingOfferPrice {
         price: this.getOfferBasePrice(offerRule),
         rewards: order.rewards,
         offerType: offerRule.offerType,
-        offerList
+        offerList,
+        offerRule
       });
 
       if (!endPrice) return this.buildErrorResponse(offerRule);
@@ -74,6 +75,22 @@ class getChenxingOfferPrice {
       // 5. 组装返回结果
       offerRule.offer_end_amount = endPrice;
       this.logger.infoSave(`最终报价金额：${endPrice}`);
+      // 增加一个quanValue的过滤，依据最大券成本过滤
+      if (
+        offerRule.offerType === "1" &&
+        offerRule?.maxCostPrice &&
+        this.quanInfoList?.length > 1
+      ) {
+        offerRule.quanValue = offerRule.quanValue
+          .split(",")
+          .filter(item => {
+            let targetQuanCost = this.quanInfoList.find(
+              quanInfo => quanInfo.quan_value === item
+            )?.quan_cost;
+            return targetQuanCost < offerRule?.maxCostPrice;
+          })
+          .join();
+      }
       return this.buildSuccessResponse(endPrice, offerRule, order.order_number);
     } catch (error) {
       this.logger.errorSave("获取最终报价信息方法执行异常", error);
@@ -182,10 +199,18 @@ class getChenxingOfferPrice {
     const { offerType, quanValue, memberCostPrice } = offerRule;
 
     if (offerType === "1") {
+      this.quanInfoList = [];
       const quanInfo = await this.cardQuanManage.getQuanInfo(
         quanValue,
         this.appFlag
       );
+      // 只用多种券类型才会返回数组
+      // 这里取一个最小成本价去计算判断能否报价
+      if (Array.isArray(quanInfo)) {
+        this.quanInfoList = quanInfo;
+        const quan_cost = Math.min(...quanInfo.map(item => +item.quan_cost));
+        return quan_cost;
+      }
       return quanInfo?.quan_cost;
     } else {
       return Number(memberCostPrice);
@@ -200,7 +225,8 @@ class getChenxingOfferPrice {
       price,
       rewards,
       offerType,
-      offerList
+      offerList,
+      offerRule
     } = params;
 
     try {
@@ -234,7 +260,8 @@ class getChenxingOfferPrice {
         adjustedPrice,
         cost_price,
         rewards,
-        supplier_max_price
+        supplier_max_price,
+        offerRule
       });
     } catch (error) {
       this.logger.error("获取最终报价异常", { error });
@@ -329,13 +356,20 @@ class getChenxingOfferPrice {
     adjustedPrice,
     cost_price,
     rewards,
-    supplier_max_price
+    supplier_max_price,
+    offerRule
   }) {
     // 手续费
     const shouxufei = (adjustedPrice * 100) / 10000;
     // 奖励费用
     const rewardPrice =
       rewards > 0 ? (adjustedPrice * 100 * rewards) / 10000 : 0;
+
+    // 最大卡券成本（即成本必须低于它才有利润）
+    let maxCostPrice =
+      (adjustedPrice * 1000 + rewardPrice * 1000 - shouxufei * 1000) / 1000;
+    offerRule.maxCostPrice = maxCostPrice;
+
     // 真实成本(卡券成本+手续费-奖励费用)
     const real_cost_price = (cost_price + shouxufei - rewardPrice).toFixed(2);
     // 预计利润（最终报价-真实成本）
@@ -356,6 +390,7 @@ class getChenxingOfferPrice {
     this.recordCalculationDetails({
       adjustedPrice,
       cost_price,
+      maxCostPrice: offerRule.maxCostPrice,
       rewards,
       shouxufei,
       rewardPrice,
@@ -372,6 +407,7 @@ class getChenxingOfferPrice {
     this.logger.infoSave("chenxing计算报价相关信息", {
       rule_price: `规则计算报价：${details.adjustedPrice}`,
       cardQuanCost: `卡券成本：${details.cost_price}`,
+      maxCostPrice: `最大卡券成本（低于该值才有利润）：${details.maxCostPrice}`,
       price: `最终报价：${details.adjustedPrice}`,
       shouxufei: `手续费（最终报价*1%）：${details.shouxufei}`,
       rewardPrice: `奖励金额（${details.rewards}%）：${details.rewardPrice}`,

@@ -2017,7 +2017,7 @@ class OrderAutoTicketQueue {
             );
             this.logList.push({
               opera_time: getCurrentTime(),
-              des: "跟进券类型和券库存进行筛选",
+              des: "根据券类型和券库存进行筛选",
               level: "info",
               info: {
                 canUseQuanTypeList

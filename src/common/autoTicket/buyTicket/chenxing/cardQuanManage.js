@@ -108,19 +108,43 @@ export default class CardQuanManage {
         }
       }
       if (offer_type == "1" || is_auto_use_quan) {
-        this.logger.infoSave("使用优惠券出票");
-        if (is_auto_use_quan) {
-          const quanInfo = await this.getQuanInfo(
-            offerRule.quan_value,
-            appFlag
-          );
-          offerRule.quan_id = quanInfo?.id;
-          offerRule.quan_cost = quanInfo?.quan_cost;
-          offerRule.quan_flag = quanInfo?.quan_flag;
-          offerRule.quan_fee = quanInfo?.quan_fee;
-          offerRule.is_store = quanInfo?.is_store;
-          offerRule.black_quans = quanInfo?.black_quans;
+        let quanValueList = offerRule.quan_value.split(",");
+        this.logger.infoSave("使用优惠券出票", { quanValueList });
+        // 读取券库存进行过滤重新设置quan_value为单个券类型
+        if (quanValueList.length > 1) {
+          const appQuanTypeList = await this.getQuanTypeListByAppMobile({
+            appFlag,
+            mobile: currentPhone
+          });
+          if (appQuanTypeList?.length) {
+            let canUseQuanTypeList = appQuanTypeList.filter(
+              itemA =>
+                quanValueList.includes(itemA.quan_value) &&
+                itemA.quan_stock >= ticket_num
+            );
+            this.logger.infoSave("根据券类型和券库存进行筛选", {
+              canUseQuanTypeList
+            });
+            if (canUseQuanTypeList.length) {
+              offerRule.quan_value = canUseQuanTypeList[0].quan_value;
+            }
+          }
+
+          if (offerRule.quan_value.split(",").length > 1) {
+            offerRule.quan_value =
+              offerRule.quan_value.split(",")[0].quan_value;
+            this.logger.infoSave("券类型容错处理：强制取第一个", {
+              quan_value: offerRule.quan_value
+            });
+          }
         }
+        const quanInfo = await this.getQuanInfo(offerRule.quan_value, appFlag);
+        offerRule.quan_id = quanInfo?.id;
+        offerRule.quan_cost = quanInfo?.quan_cost;
+        offerRule.quan_flag = quanInfo?.quan_flag;
+        offerRule.quan_fee = quanInfo?.quan_fee;
+        offerRule.is_store = quanInfo?.is_store;
+        offerRule.black_quans = quanInfo?.black_quans;
         let { quan_value, quan_cost, quan_flag, quan_fee, black_quans } =
           offerRule;
         // 根据券标识获取目标券
@@ -596,6 +620,48 @@ export default class CardQuanManage {
       return { coupon_num };
     } catch (error) {
       logger.errorSave("绑定新券异常", formatErrInfo(error));
+    }
+  }
+
+  // 获取影院券类型列表
+  async getQuanTypeListByAppMobile({ appFlag: app_name, mobile }) {
+    const params = {
+      app_name,
+      isNeedTotalNum: 0,
+      queryFields: "id,app_name,quan_value,quan_flag,black_quans,quanStockList"
+    };
+    try {
+      let quanTypeRes = await svApi.queryQuanTypeList(params);
+      let quanTypeList = quanTypeRes?.data?.quanTypeList || [];
+      quanTypeList.forEach(item => {
+        item.quanStockList = item.quanStockList
+          ? JSON.parse(item.quanStockList)
+          : [];
+        // 只拿关联账号的券库存信息进行判断
+        item.quanStockListByPhone = item.quanStockList.filter(
+          itemA => itemA.phone === mobile
+        );
+        item.quan_stock = item.quan_stock || 0;
+        if (item.quanStockListByPhone?.length) {
+          // 最大数当做券库存
+          let maxNum = 0;
+          item.quanStockListByPhone.forEach(itemA => {
+            if (+itemA.quan_stock > maxNum) {
+              maxNum = +itemA.quan_stock;
+            }
+          });
+          item.quan_stock = maxNum;
+        }
+      });
+      this.logger.infoSave("根据影院及手机号获取对应券类型列表返回", {
+        quanTypeList
+      });
+      return quanTypeList;
+    } catch (error) {
+      this.logger.errorSave(
+        "根据影院及手机号获取对应券类型列表返回异常",
+        formatErrInfo(error)
+      );
     }
   }
 
