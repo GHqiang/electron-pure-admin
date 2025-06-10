@@ -130,10 +130,12 @@ class getUmeOfferPrice {
         plat_name,
         offerRule
       });
-      console.warn(conPrefix + "最终报价返回", endPrice);
+      console.warn("最终报价返回", endPrice);
       if (!endPrice) {
         return this.returnResultHandle({ endPrice, offerRule, order_number });
       }
+      // 最终报价
+      offerRule.offer_end_amount = endPrice;
       // 增加一个quanValue的过滤，依据最大券成本过滤
       if (
         offerType === "1" &&
