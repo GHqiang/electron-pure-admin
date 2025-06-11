@@ -128,35 +128,21 @@
 </template>
 
 <script setup>
-import {
-  ref,
-  reactive,
-  computed,
-  toRaw,
-  onBeforeMount,
-  nextTick,
-  watch
-} from "vue";
+import { ref, reactive, computed, onBeforeMount, nextTick, watch } from "vue";
 import svApi from "@/api/sv-api";
-import { APP_API_OBJ } from "@/common/index.js";
 import { ElMessage, ElLoading } from "element-plus";
 import CinemaMatchDialog from "@/components/CinemaMatchDialog.vue";
 import {
   GET_APP_LIST,
   GET_APP_TYPE_LIST,
-  GET_UME_LIST,
-  GET_H5_UME_LIST,
-  GET_CHENXING_LIST,
-  GET_SFC_APP_LIST,
   GE_APP_INFO
 } from "@/common/constant";
 const APP_LIST = computed(() => GET_APP_LIST());
 const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
-const UME_LIST = computed(() => GET_UME_LIST());
-const H5_UME_LIST = computed(() => GET_H5_UME_LIST());
-const CHENXING_LIST = computed(() => GET_CHENXING_LIST());
-const SFC_LIST = computed(() => GET_SFC_APP_LIST());
 
+// 影院基础方法
+import useCinemaBaseFun from "@/mixins/useCinemaBaseFun";
+const { getCityList, getAllCinemaList } = useCinemaBaseFun();
 import {
   getCurrentTime,
   mockDelay,
@@ -227,37 +213,16 @@ const setLocalCinemaList = async () => {
   cinemaCodeMatchObj.setCinemaCodeMatchList(cinemaList);
 };
 
-const appName = ref("");
-const operateName = computed(() => {
-  if (UME_LIST.value.includes(appName.value)) {
-    return "1";
-  }
-  if (CHENXING_LIST.value.includes(appName.value)) {
-    return "1";
-  }
-  if (H5_UME_LIST.value.includes(appName.value)) {
-    return "2";
-  }
-  if (SFC_LIST.value.includes(appName.value)) {
-    return "2";
-  }
-  if ("lma" == appName.value) {
-    return "2";
-  }
-  return "1";
-});
-let cinemaList = ref([]); // 影院列表
-
 // 获取某个影线的全部影院列表
 const getCinemaList = async app_name => {
-  const { cityList = [], cityCinemaList = [] } = await getCityList(app_name);
-  let list = [];
-  if (cityList?.length) {
-    list = await getAllCinemaList(cityList, app_name, cityCinemaList);
+  const allCityList = await getCityList(app_name);
+  let allCinemaList = [];
+  if (allCityList?.length) {
+    allCinemaList = await getAllCinemaList(app_name, allCityList);
   } else {
     console.warn("获取城市列表异常", app_name);
   }
-  return list || [];
+  return allCinemaList || [];
 };
 
 const syncLoading = ref(false);
@@ -288,22 +253,22 @@ const syncCinemeCodeMatch = async isExport => {
       console.warn("getCinemaList", list);
       const appInfo = GE_APP_INFO(app_name);
       list = list.map(item => {
-        let app_cinema_code = item.cinemaCode;
+        let app_cinema_code = item.cinema_code;
         let isH5_UME = app_type_code === "ume_h5";
         let isLMA = app_name === "lma";
         let isSFC = app_type_code === "sfc_applet";
         // 以下三种没有cinema_code，用city_id+id组合当唯一标识
         if (isH5_UME || isLMA || isSFC) {
-          app_cinema_code = item.cityId + "_" + item.cinemaId;
+          app_cinema_code = item.city_id + "_" + item.cinema_id;
         }
         return {
           app_label: appInfo.app_label,
           app_name: appInfo.app_name,
           app_type_code: appInfo.app_type_code,
           app_type_name: appInfo.app_type_name,
-          app_cinema_name: item.cinemaName,
+          app_cinema_name: item.cinema_name,
           app_cinema_code,
-          plat_cinema_code: item.cinemaCode || ""
+          plat_cinema_code: item.cinema_code || "" // 没值就为空，导出维护
         };
       });
       syncList = syncList.concat(list);
@@ -485,190 +450,7 @@ const importCinemaMatch = async (uploadFile, uploadFiles) => {
     uploadRef.value?.clearFiles();
   }
 };
-// 获取城市列表
-const getCityList = async app_name => {
-  try {
-    let params = {};
-    let cityList, cityCinemaList;
-    console.log("获取城市列表参数", params, app_name);
-    if (UME_LIST.value.includes(app_name)) {
-      let params = {
-        params: {
-          channelCode: "QD0000001",
-          sysSourceCode: "YZ001",
-          cinemaCode: "32012801",
-          cinemaLinkId: "15946"
-        }
-      };
-      const res = await APP_API_OBJ[app_name].getCinemaList(params);
-      cityCinemaList = res.data || [];
-      cityList = cityCinemaList.map(item => ({
-        cityName: item.cityName,
-        cityId: item.cityCode
-      }));
-    } else if (H5_UME_LIST.value.includes(app_name)) {
-      let params = {
-        empCode: "",
-        leaseCode: ""
-      };
-      const res = await APP_API_OBJ[app_name].getCinemaList(params);
-      cityCinemaList = res.bizValue?.cities || [];
-      cityList = cityCinemaList.map(item => ({
-        cityName: item.cityName,
-        cityId: item.cityCode
-      }));
-    } else if (CHENXING_LIST.value.includes(app_name)) {
-      let params = {};
-      const res = await APP_API_OBJ[app_name].getCinemaList(params);
-      let api_version = GE_APP_INFO(app_name)?.api_version || "";
-      if (api_version === "3.0C") {
-        cityCinemaList = res.data || [];
-        cityList = cityCinemaList.map(item => ({
-          cityName: item.cityInfoDTO.cityName,
-          cityId: item.cityInfoDTO.cityCode
-        }));
-      } else if (api_version === "C") {
-        cityCinemaList = res.data?.resultDOList || [];
-        cityList = cityCinemaList.map(item => ({
-          cityName: item.cityInfo.chName,
-          cityId: item.cityInfo.id
-        }));
-      }
-    } else if (app_name === "lma") {
-      const res = await APP_API_OBJ[app_name].getCityList();
-      cityList = res.data.list || [];
-      cityList = cityList.map(item => ({
-        cityName: item.city_name,
-        cityId: item.city_id
-      }));
-    } else {
-      const res = await APP_API_OBJ[app_name].getCityList(params);
-      cityList = res?.data?.all_city || [];
-      cityList = cityList.map(item => ({
-        cityName: item.name,
-        cityId: item.id
-      }));
-    }
-    console.log("获取城市列表返回", cityList, cityCinemaList);
-    return { cityList, cityCinemaList };
-  } catch (error) {
-    console.warn("获取城市列表异常", error);
-    return {};
-  }
-};
 
-// 根据城市获取影院列表
-const getCinemaListByCityId = async (cityId, app_name, cityCinemaList) => {
-  try {
-    let params = {
-      city_id: cityId
-    };
-    console.log("根据城市获取影院列表参数", params);
-    let cinemaList = [];
-    if (UME_LIST.value.includes(app_name)) {
-      cinemaList =
-        cityCinemaList.find(item => item.cityCode === cityId)?.cinemaList || [];
-      cinemaList = cinemaList.map(item => ({
-        ...item,
-        cinemaCode: item.cinemaCode,
-        cinemaName: item.cinemaName,
-        cinemaId: ""
-      }));
-    } else if (H5_UME_LIST.value.includes(app_name)) {
-      cinemaList =
-        cityCinemaList.find(item => item.cityCode === cityId)?.cinemas || [];
-      cinemaList = cinemaList.map(item => ({
-        ...item,
-        cinemaCode: "",
-        cinemaName: item.cinemaName,
-        cinemaId: item.cinemaLinkId
-      }));
-    } else if (CHENXING_LIST.value.includes(app_name)) {
-      let api_version = GE_APP_INFO(app_name)?.api_version || "";
-      if (api_version === "3.0C") {
-        cinemaList =
-          cityCinemaList.find(item => item.cityInfoDTO.cityCode === cityId)
-            ?.cinemaResultDTOList || [];
-        cinemaList = cinemaList.map(item => ({
-          ...item,
-          cinemaCode: item.cinemaCode,
-          cinemaName: item.cinemaName,
-          cinemaId: ""
-        }));
-      } else if (api_version === "C") {
-        cinemaList =
-          cityCinemaList.find(item => item.cityInfo.id === cityId)?.cinemas ||
-          [];
-        cinemaList = cinemaList.map(item => ({
-          ...item,
-          cinemaCode: item.unifiedCode,
-          cinemaName: item.name,
-          cinemaId: ""
-        }));
-      }
-    } else if (app_name === "lma") {
-      const res = await APP_API_OBJ[app_name].getCinemaList(cityId);
-      cinemaList = res.data.list || [];
-      cinemaList = cinemaList.map(item => ({
-        ...item,
-        cinemaCode: "",
-        cinemaName: item.cinema_name,
-        cinemaId: item.cinema_id
-      }));
-    } else {
-      // sfc
-      const res = await APP_API_OBJ[app_name].getCinemaList(params);
-      console.log("根据城市获取影院列表返回", res);
-      cinemaList = res.data?.cinema_data || [];
-      cinemaList = cinemaList.map(item => ({
-        ...item,
-        cinemaCode: "",
-        cinemaName: item.name,
-        cinemaId: item.id
-      }));
-    }
-    return cinemaList;
-  } catch (error) {
-    console.warn("根据城市获取影院列表异常", error);
-  }
-};
-
-// 获取全部影院列表
-const getAllCinemaList = async (cityList, app_name, cityCinemaList) => {
-  try {
-    let allCinemaList = [];
-    for (let index = 0; index < cityList.length; index++) {
-      const item = cityList[index];
-      let list = await getCinemaListByCityId(
-        item.cityId,
-        app_name,
-        cityCinemaList
-      );
-      list = list.map(itemA => {
-        return {
-          ...itemA,
-          // 只关心以下字段
-          // cityName: item.cityName,
-          cityId: item.cityId,
-          cinemaId: itemA.cinemaId,
-          cinemaCode: itemA.cinemaCode,
-          cinemaName: itemA.cinemaName
-        };
-      });
-      if (list.length > 0) {
-        allCinemaList = allCinemaList.concat(list);
-      }
-    }
-    if (!allCinemaList.length) {
-      console.warn(`${app_name} 获取影院列表为空`);
-    }
-    console.log("allCinemaList" + "——" + app_name, allCinemaList);
-    cinemaList.value = allCinemaList;
-    return allCinemaList;
-  } catch (error) {
-    console.warn("获取全部影院列表异常", error);
-  }
-};
 // 搜索数据
 const searchData = async () => {
   const loading = ElLoading.service({

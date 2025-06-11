@@ -132,7 +132,8 @@ export default function useCinemaBaseFun() {
         cinemaList = cinemaList.map(item => ({
           ...item,
           cinema_id: item.cinemaCode,
-          cinema_name: item.cinemaName
+          cinema_name: item.cinemaName,
+          cinema_code: item.cinemaCode //同步影院code时使用
         }));
       } else if (H5_UME_LIST.value.includes(app_name)) {
         cinemaList =
@@ -140,7 +141,8 @@ export default function useCinemaBaseFun() {
         cinemaList = cinemaList.map(item => ({
           ...item,
           cinema_id: item.cinemaLinkId,
-          cinema_name: item.cinemaName
+          cinema_name: item.cinemaName,
+          cinema_code: "" //同步影院code时使用
         }));
       } else if (CHENXING_LIST.value.includes(app_name)) {
         let api_version = GE_APP_INFO(app_name)?.api_version || "";
@@ -151,7 +153,8 @@ export default function useCinemaBaseFun() {
           cinemaList = cinemaList.map(item => ({
             ...item,
             cinema_id: item.cinemaCode,
-            cinema_name: item.cinemaName
+            cinema_name: item.cinemaName,
+            cinema_code: item.cinemaCode //同步影院code时使用
           }));
         } else if (api_version === "C") {
           cinemaList =
@@ -160,7 +163,8 @@ export default function useCinemaBaseFun() {
           cinemaList = cinemaList.map(item => ({
             ...item,
             cinema_id: item.unifiedCode,
-            cinema_name: item.name
+            cinema_name: item.name,
+            cinema_code: item.unifiedCode //同步影院code时使用
           }));
         }
       } else if (app_name === "lma") {
@@ -169,7 +173,8 @@ export default function useCinemaBaseFun() {
         cinemaList = cinemaList.map(item => ({
           ...item,
           cinema_id: item.cinema_id,
-          cinema_name: item.cinema_name
+          cinema_name: item.cinema_name,
+          cinema_code: "" //同步影院code时使用
         }));
       } else {
         // sfc系列
@@ -178,7 +183,8 @@ export default function useCinemaBaseFun() {
         cinemaList = cinemaList.map(item => ({
           ...item,
           cinema_id: item.id,
-          cinema_name: item.name
+          cinema_name: item.name,
+          cinema_code: "" //同步影院code时使用
         }));
       }
       console.log("根据城市获取影院列表", cinemaList);
