@@ -321,28 +321,29 @@ import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import CardDialog from "@/components/CardDialog.vue";
 import {
   GET_APP_LIST,
-  GET_UME_LIST,
   GET_H5_UME_LIST,
-  GE_APP_INFO,
   GET_APP_TYPE_LIST,
-  GET_CHENXING_LIST,
   GET_USABLE_APP_LIST
 } from "@/common/constant";
 const APP_LIST = computed(() => GET_APP_LIST());
-const UME_LIST = computed(() => GET_UME_LIST());
 const H5_UME_LIST = computed(() => GET_H5_UME_LIST());
-const CHENXING_LIST = computed(() => GET_CHENXING_LIST());
 const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
 
-import { APP_API_OBJ } from "@/common/index.js";
 import {
   getCurrentTime,
-  formatTimeOfTime,
   getCinemaLoginInfoList,
   getCurrentDay,
   isDateInCurrentMonth,
   mockDelay
 } from "@/utils/utils";
+
+// 影院基础方法
+import useCinemaBaseFun from "@/mixins/useCinemaBaseFun";
+const { getCardListByApp } = useCinemaBaseFun();
+// 机器基础方法
+import usesMachineBaseFun from "@/mixins/usesMachineBaseFun";
+const { addCardListHandle, updateCardListHandle, queryCardBalance } =
+  usesMachineBaseFun();
 
 // 树节点属性映射
 const defaultProps = {
@@ -405,39 +406,6 @@ const nodeClick = nodeData => {
   searchData();
 };
 
-// window.testUpdateCardUse = () =>
-//   svApi.updateDayUsage({
-//     app_name: "sfc",
-//     card_id: "241071"
-//   });
-
-// window.testCardLimit = async () => {
-//   const member_price = "36.78",
-//     ticket_num = 2;
-//   const cardRes = await svApi.queryCardList({
-//     app_name: "sfc"
-//   });
-//   // 后续这块还要加上出票量限制判断
-//   let list = cardRes.data.cardList || [];
-//   // console.log("list", list);
-//   let cardList = list.filter(item =>
-//     !item.use_limit_day
-//       ? true
-//       : ticket_num <= item.use_limit_day - item.daily_usage
-//   );
-//   cardList = cardList.map(item => ({
-//     ...item,
-//     card_discount: !item.card_discount ? 100 : Number(item.card_discount)
-//   }));
-//   // console.log("cardList", cardList);
-//   cardList.sort((a, b) => a.card_discount - b.card_discount);
-//   // 按最低折扣取值报价
-//   let discount = cardList[0]?.card_discount;
-//   // console.log("discount", discount);
-//   return discount
-//     ? (Number(member_price) * discount) / 100
-//     : Number(member_price);
-// };
 // 搜索数据
 const searchData = async () => {
   const loading = ElLoading.service({
@@ -508,309 +476,14 @@ const getSummaries = param => {
   return sums;
 };
 
-// 获取会员卡
-const getCardListByApp = async (
-  app_name,
-  phone,
-  session_id,
-  index,
-  abnormalLoginInfoList = []
-) => {
-  let params = {};
-  let cardList = [];
-  if (!session_id) {
-    // console.log("getCinemaLoginInfoList()", getCinemaLoginInfoList());
-    let loginInfoList = getCinemaLoginInfoList().filter(
-      itemA => itemA.app_name == app_name && itemA.mobile == phone
-    );
-    session_id = loginInfoList[0]?.session_id;
-  }
-  try {
-    if (UME_LIST.value.includes(app_name)) {
-      params.params = {
-        status: "CAN_USED",
-        channelCode: "QD0000001",
-        sysSourceCode: "YZ001"
-        // cinemaCode: "11015502",
-        // cinemaLinkId: "15953"
-      };
-      params.session_id = session_id;
-    } else if (H5_UME_LIST.value.includes(app_name)) {
-      params = {
-        cinemaLinkId: GE_APP_INFO(app_name)?.cinemaLinkId,
-        pageNo: 1,
-        pageSize: 30,
-        umeToken: session_id
-      };
-    } else if (CHENXING_LIST.value.includes(app_name)) {
-      params = {
-        session_id
-      };
-    } else if (app_name === "lma") {
-      params.lmaToken = session_id;
-    } else {
-      // params.city_id = "500";
-      // params.cinema_id = "1";
-      params.session_id = session_id;
-    }
-    await mockDelay(H5_UME_LIST.value.includes(app_name) ? 1 : 0.01);
-    if (index % 8) {
-      await mockDelay(1);
-    }
-    const res = await APP_API_OBJ[app_name].getCardList(params);
-    // console.warn("获取会员卡列表返回", res);
-    // 只获取有效卡，无效卡要过滤掉
-    if (UME_LIST.value.includes(app_name)) {
-      cardList = res.data || [];
-      cardList = cardList.filter(item => item.cardStatus === "ENABLED");
-      cardList = cardList.map(item => ({
-        card_id: item.cardInstanceId + "",
-        card_num: item.cardNo,
-        balance: item.cardAmount / 100 + ""
-      }));
-    } else if (H5_UME_LIST.value.includes(app_name)) {
-      cardList = res.bizValue || [];
-      cardList = cardList.map(item => ({
-        card_id: item.cardNumber,
-        card_num: item.cardNumber,
-        balance: (item.balance || 0) / 100 + ""
-      }));
-    } else if (CHENXING_LIST.value.includes(app_name)) {
-      let api_version = GE_APP_INFO(app_name)?.api_version || "";
-      if (api_version === "3.0C") {
-        cardList = res.data || [];
-        cardList = cardList.map(item => ({
-          card_id: item.cardNo,
-          card_num: item.cardNo,
-          balance: (item.amount || 0) + ""
-        }));
-      } else if (api_version === "C") {
-        cardList = res.data?.datalist || [];
-        cardList = cardList.map(item => ({
-          card_id: item.cardNo,
-          card_num: item.cardNo,
-          balance: (item.amount || 0) + ""
-        }));
-      }
-    } else if (app_name === "lma") {
-      // 卢米埃只获取主卡，其它的出票后更新卡余额
-      cardList = res.data?.sleep || [];
-      cardList.unshift({
-        card_number: res.data.card_number,
-        balance: res.data.money_str,
-        is_main_card: 1
-      });
-      cardList = cardList.map(item => ({
-        card_id: item.card_number + "",
-        card_num: item.card_number,
-        balance: item.balance,
-        is_main_card: item.is_main_card
-      }));
-      const card_list = await getLmaOtherCardBalance(cardList, session_id);
-      cardList = card_list;
-    } else {
-      // sfc系列
-      cardList = res.data?.card_data || [];
-      cardList = cardList
-        .filter(item => item.card_status === "1")
-        .map(item => {
-          return {
-            card_id: item.id + "", // 卡id
-            card_num: item.card_num, // 卡号
-            balance: item.balance + "", // 卡余额
-            cinema_name: item.cinema_name // 卡关联影院
-          };
-        });
-    }
-    console.warn(app_name + "——获取会员卡列表返回的cardList", cardList);
-    cardList = cardList.map(item => ({
-      ...item,
-      app_name,
-      mobile: phone
-    }));
-    return cardList;
-  } catch (err) {
-    console.warn(app_name + "——获取会员卡列表异常", err, params, app_name);
-    abnormalLoginInfoList.push({
-      app_name,
-      mobile: phone,
-      session_id
-    });
-    return [];
-  }
-};
-
-// 卢米埃获取其它卡余额
-const getLmaOtherCardBalance = async (cardList, session_id) => {
-  let card_list = JSON.parse(JSON.stringify(cardList));
-  for (let index = 1; index < card_list.length; index++) {
-    const item = card_list[index];
-    const changeCardRes = await changeCardHandle({
-      card_number: item.card_num,
-      lmaToken: session_id
-    });
-    if (!changeCardRes?.error) {
-      item.balance = changeCardRes?.data?.money_str || "0";
-    }
-  }
-  // 再切换为主卡
-  await changeCardHandle({
-    card_number: card_list[0].card_num,
-    lmaToken: session_id
-  });
-  return card_list;
-};
-// 卢米埃切换卡
-const changeCardHandle = async ({ card_number, lmaToken }) => {
-  try {
-    let params = {
-      card_number,
-      lmaToken
-    };
-    console.log("切换卡参数", params);
-    const res = await APP_API_OBJ["lma"].changeCard(params);
-    console.log("切换卡返回", res);
-    return res;
-  } catch (error) {
-    console.error("切换卡异常", error);
-    return {
-      error
-    };
-  }
-};
-window.getCardListByApp = getCardListByApp;
-// window.getCardListByApp("hsmzyc", "13073792313")
-// 同步卡信息时新增卡
-const addCardListHandle = async cardList => {
-  try {
-    let params = {
-      addCardList: cardList.map(item => {
-        let card_discount = "100";
-        let use_limit_day = "";
-        let use_limit_month;
-        if (UME_LIST.value.includes(item.app_name)) {
-          // card_discount = "78";
-          use_limit_day = "12";
-        } else if (item.app_name === "lma") {
-          // card_discount = "78";
-          use_limit_day = "8";
-          use_limit_month = "20";
-        }
-        let targetInfo = APP_TYPE_LIST.value.find(itemA =>
-          itemA.app_name_list.includes(item.app_name)
-        );
-        let app_type;
-        if (targetInfo) {
-          app_type = targetInfo.app_type_code;
-        }
-        return {
-          ...item,
-          app_type,
-          card_discount,
-          use_limit_day,
-          use_limit_month,
-          status: "1",
-          rule: rule,
-          update_time: getCurrentTime()
-        };
-      })
-    };
-    console.warn("新增卡列表参数", params);
-    const res = await svApi.batchAddCardRecord(params);
-    console.warn("新增卡列表返回", res);
-  } catch (error) {
-    console.warn("新增卡列表异常", error);
-  }
-};
-
-// 同步卡信息时更新余额
-const updateCardListHandle = async cardList => {
-  try {
-    let params = {
-      updateList: cardList
-    };
-    console.warn("更新卡列表参数", params);
-    const res = await svApi.batchUpdateCardRecord(params);
-    console.warn("更新卡列表返回", res);
-    return true;
-  } catch (error) {
-    console.warn("更新卡列表异常", error);
-  }
-};
-
 const cardBalanceVisible = ref(false);
 const summaryData = ref([]);
 // 查看卡余额
 const queryCardBalanceTotal = async () => {
   try {
     // 假设这里是您之前定义的获取数据的方法
-    const cardRes = await svApi.queryCardList({
-      rule: rule,
-      isNeedTotalNum: 0,
-      queryFields: "app_name,status,mobile,card_num,card_discount,balance"
-    });
-    let list = cardRes.data.cardList || [];
-
-    const uniqueMap = new Map();
-    list.forEach(item => {
-      const key = `${item.mobile}-${item.card_num}`;
-      if (!uniqueMap.has(key) && APP_LIST.value[item.app_name]) {
-        uniqueMap.set(key, item);
-      }
-    });
-
-    list = Array.from(uniqueMap.values());
-
-    const summary = {};
-    let useBalance = 0,
-      noUseBalance = 0,
-      totalBalance = 0,
-      discountTotalBalance = 0;
-    list.forEach(item => {
-      const appName = APP_LIST.value[item.app_name];
-      const balance = parseFloat(item.balance) || 0;
-      const discountBalance =
-        (balance * 1000 * (item.card_discount || 100)) / 1000 / 100 || 0;
-
-      if (!summary[appName]) {
-        summary[appName] = {
-          appName,
-          status1Balance: 0,
-          notStatus1Balance: 0,
-          totalBalance: 0,
-          discountTotalBalance: 0
-        };
-      }
-
-      if (item.status == "1") {
-        summary[appName].status1Balance += balance;
-        useBalance += balance;
-      } else {
-        summary[appName].notStatus1Balance += balance;
-        noUseBalance += balance;
-      }
-
-      summary[appName].totalBalance += balance;
-      summary[appName].discountTotalBalance += discountBalance;
-      totalBalance += balance;
-      discountTotalBalance += discountBalance || 0;
-    });
-    let balance_list = Object.values(summary);
-    console.log("discountTotalBalance", discountTotalBalance);
-    balance_list.unshift({
-      appName: "总余额",
-      status1Balance: useBalance,
-      notStatus1Balance: noUseBalance,
-      totalBalance: totalBalance,
-      discountTotalBalance
-    });
-    summaryData.value = balance_list.map(item => ({
-      ...item,
-      status1Balance: +item.status1Balance.toFixed(),
-      notStatus1Balance: +item.notStatus1Balance.toFixed(),
-      totalBalance: +item.totalBalance.toFixed(),
-      discountTotalBalance: +item.discountTotalBalance.toFixed()
-    }));
+    const balance_list = await queryCardBalance();
+    summaryData.value = balance_list;
     cardBalanceVisible.value = true;
   } catch (err) {
     console.warn("查看卡余额异常", err);

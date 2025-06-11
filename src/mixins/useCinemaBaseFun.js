@@ -8,6 +8,14 @@ import {
   GE_APP_INFO
 } from "@/common/constant";
 
+import {
+  getCurrentTime,
+  getCinemaLoginInfoList,
+  getCurrentDay,
+  isDateInCurrentMonth,
+  mockDelay
+} from "@/utils/utils";
+
 export default function useCinemaBaseFun() {
   const UME_LIST = computed(() => GET_UME_LIST());
   const H5_UME_LIST = computed(() => GET_H5_UME_LIST());
@@ -277,5 +285,177 @@ export default function useCinemaBaseFun() {
     }
   };
 
-  return { getCityList, getAllCinemaList, getFilmList };
+  // 获取会员卡
+  const getCardListByApp = async (
+    app_name,
+    phone,
+    session_id,
+    index,
+    abnormalLoginInfoList = []
+  ) => {
+    let params = {};
+    let cardList = [];
+    if (!session_id) {
+      let loginInfoList = getCinemaLoginInfoList().filter(
+        itemA => itemA.app_name == app_name && itemA.mobile == phone
+      );
+      session_id = loginInfoList[0]?.session_id;
+    }
+    try {
+      if (UME_LIST.value.includes(app_name)) {
+        params.params = {
+          status: "CAN_USED",
+          channelCode: "QD0000001",
+          sysSourceCode: "YZ001"
+          // cinemaCode: "11015502",
+          // cinemaLinkId: "15953"
+        };
+        params.session_id = session_id;
+      } else if (H5_UME_LIST.value.includes(app_name)) {
+        params = {
+          cinemaLinkId: GE_APP_INFO(app_name)?.cinemaLinkId,
+          pageNo: 1,
+          pageSize: 30,
+          umeToken: session_id
+        };
+      } else if (CHENXING_LIST.value.includes(app_name)) {
+        params = {
+          session_id
+        };
+      } else if (app_name === "lma") {
+        params.lmaToken = session_id;
+      } else {
+        // params.city_id = "500";
+        // params.cinema_id = "1";
+        params.session_id = session_id;
+      }
+      await mockDelay(H5_UME_LIST.value.includes(app_name) ? 1 : 0.01);
+      if (index % 8) {
+        await mockDelay(1);
+      }
+      const res = await APP_API_OBJ[app_name].getCardList(params);
+      // console.warn("获取会员卡列表返回", res);
+      // 只获取有效卡，无效卡要过滤掉
+      if (UME_LIST.value.includes(app_name)) {
+        cardList = res.data || [];
+        cardList = cardList.filter(item => item.cardStatus === "ENABLED");
+        cardList = cardList.map(item => ({
+          card_id: item.cardInstanceId + "",
+          card_num: item.cardNo,
+          balance: item.cardAmount / 100 + ""
+        }));
+      } else if (H5_UME_LIST.value.includes(app_name)) {
+        cardList = res.bizValue || [];
+        cardList = cardList.map(item => ({
+          card_id: item.cardNumber,
+          card_num: item.cardNumber,
+          balance: (item.balance || 0) / 100 + ""
+        }));
+      } else if (CHENXING_LIST.value.includes(app_name)) {
+        let api_version = GE_APP_INFO(app_name)?.api_version || "";
+        if (api_version === "3.0C") {
+          cardList = res.data || [];
+          cardList = cardList.map(item => ({
+            card_id: item.cardNo,
+            card_num: item.cardNo,
+            balance: (item.amount || 0) + ""
+          }));
+        } else if (api_version === "C") {
+          cardList = res.data?.datalist || [];
+          cardList = cardList.map(item => ({
+            card_id: item.cardNo,
+            card_num: item.cardNo,
+            balance: (item.amount || 0) + ""
+          }));
+        }
+      } else if (app_name === "lma") {
+        // 卢米埃只获取主卡，其它的出票后更新卡余额
+        cardList = res.data?.sleep || [];
+        cardList.unshift({
+          card_number: res.data.card_number,
+          balance: res.data.money_str,
+          is_main_card: 1
+        });
+        cardList = cardList.map(item => ({
+          card_id: item.card_number + "",
+          card_num: item.card_number,
+          balance: item.balance,
+          is_main_card: item.is_main_card
+        }));
+        const card_list = await getLmaOtherCardBalance(cardList, session_id);
+        cardList = card_list;
+      } else {
+        // sfc系列
+        cardList = res.data?.card_data || [];
+        cardList = cardList
+          .filter(item => item.card_status === "1")
+          .map(item => {
+            return {
+              card_id: item.id + "", // 卡id
+              card_num: item.card_num, // 卡号
+              balance: item.balance + "", // 卡余额
+              cinema_name: item.cinema_name // 卡关联影院
+            };
+          });
+      }
+      console.warn(app_name + "——获取会员卡列表返回的cardList", cardList);
+      cardList = cardList.map(item => ({
+        ...item,
+        app_name,
+        mobile: phone
+      }));
+      return cardList;
+    } catch (err) {
+      console.warn(app_name + "——获取会员卡列表异常", err, params, app_name);
+      abnormalLoginInfoList.push({
+        app_name,
+        mobile: phone,
+        session_id
+      });
+      return [];
+    }
+  };
+  window.getCardListByApp = getCardListByApp;
+
+  // 卢米埃获取其它卡余额
+  const getLmaOtherCardBalance = async (cardList, session_id) => {
+    let card_list = JSON.parse(JSON.stringify(cardList));
+    for (let index = 1; index < card_list.length; index++) {
+      const item = card_list[index];
+      const changeCardRes = await changeCardHandle({
+        card_number: item.card_num,
+        lmaToken: session_id
+      });
+      if (!changeCardRes?.error) {
+        item.balance = changeCardRes?.data?.money_str || "0";
+      }
+    }
+    // 再切换为主卡
+    await changeCardHandle({
+      card_number: card_list[0].card_num,
+      lmaToken: session_id
+    });
+    return card_list;
+  };
+
+  // 卢米埃切换卡
+  const changeCardHandle = async ({ card_number, lmaToken }) => {
+    try {
+      let params = {
+        card_number,
+        lmaToken
+      };
+      console.log("切换卡参数", params);
+      const res = await APP_API_OBJ["lma"].changeCard(params);
+      console.log("切换卡返回", res);
+      return res;
+    } catch (error) {
+      console.error("切换卡异常", error);
+      return {
+        error
+      };
+    }
+  };
+
+  return { getCityList, getAllCinemaList, getFilmList, getCardListByApp };
 }
