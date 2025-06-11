@@ -433,6 +433,7 @@ const nodeClick = nodeData => {
     formData.shadowLineName = "";
   } else {
     formData.shadowLineName = nodeData.value;
+    shadowLine.value = nodeData.value;
     formData.app_type = "";
   }
   searchData();
