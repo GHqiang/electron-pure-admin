@@ -332,24 +332,16 @@ import {
   watch
 } from "vue";
 import svApi from "@/api/sv-api";
-import { APP_API_OBJ } from "@/common/index.js";
 import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import RuleDialog from "@/components/RuleDialog.vue";
-import {
-  ORDER_FORM,
-  GET_APP_LIST,
-  GET_UME_LIST,
-  GET_APP_TYPE_LIST
-} from "@/common/constant";
+import { ORDER_FORM, GET_APP_LIST, GET_APP_TYPE_LIST } from "@/common/constant";
 const APP_LIST = computed(() => GET_APP_LIST());
-const UME_LIST = computed(() => GET_UME_LIST());
 const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
+// 机器基础方法
+import usesMachineBaseFun from "@/mixins/usesMachineBaseFun";
+const { getQuanTypeList } = usesMachineBaseFun();
 
-import {
-  getCurrentTime,
-  getCinemaLoginInfoList,
-  cinemNameSpecial
-} from "@/utils/utils";
+import { getCurrentTime } from "@/utils/utils";
 import { useDataTableStore } from "@/store/offerRule";
 const rules = useDataTableStore();
 import { platTokens } from "@/store/platTokens";
@@ -439,139 +431,6 @@ const nodeClick = nodeData => {
   searchData();
 };
 
-const getAllCinemaList = async () => {
-  try {
-    let appList = [];
-    let loginInfoList = getCinemaLoginInfoList();
-    Object.keys(APP_LIST.value).forEach(item => {
-      let obj = loginInfoList.find(
-        itemA => itemA.app_name === item && itemA.session_id
-      );
-      if (obj) {
-        appList.push(item);
-      }
-    });
-    console.log("appList", appList);
-    let allCinemaList = [];
-    for (const appName of appList) {
-      const list = await getCinemaList(appName);
-      allCinemaList.push(...list);
-    }
-    console.log("allCinemaList", allCinemaList);
-    return allCinemaList;
-  } catch (err) {
-    console.warn("获取全部影院列表异常", err);
-    return [];
-  }
-};
-window.getAllCinemaList = getAllCinemaList;
-
-// app影院名字集合
-let appCinemaNameList = [];
-// 统计所有影院各平台报价情况（入参已报价影院集合，可通过sql查询导出excel转为json再传）
-const tongjiOfferInfo = async offerCinemaList => {
-  const isMatch = (app_name, cinema_name, cinemaName) => {
-    // console.log(app_name, cinema_name, cinemaName);
-    cinemaName = cinemNameSpecial(cinemaName);
-    const isPass = cinemNameSpecial(cinema_name) === cinemaName;
-    // console.log("isPass", isPass);
-    if (isPass) {
-      return true;
-    }
-    // let specialCinemaList = SPECIAL_CINEMA_OBJ[app_name]?.filter(
-    //   item =>
-    //     item.order_cinema_name === cinemaName ||
-    //     item.order_cinema_name.includes(cinemaName)
-    // );
-    // // console.log("specialCinemaList", specialCinemaList?.[0]);
-    // return (
-    //   specialCinemaList?.[0]?.sfc_cinema_name === cinemNameSpecial(cinema_name)
-    // );
-  };
-  if (!appCinemaNameList?.length) {
-    appCinemaNameList = await getAllCinemaList();
-  }
-  const statisticResult = appCinemaNameList.map(item => {
-    const { app_name, cinema_name } = item;
-    item.platCinemaList = [];
-    item.offerPlat = [];
-    let list = offerCinemaList.filter(itemA => {
-      return (
-        itemA.app_name === app_name &&
-        isMatch(app_name, cinema_name, itemA.cinema_name)
-      );
-    });
-    // console.log("list", list);
-    list.forEach(itemA => {
-      if (!item.offerPlat.includes(itemA.plat_name)) {
-        item.offerPlat.push(itemA.plat_name);
-      }
-      if (!item.platCinemaList.includes(itemA.cinema_name)) {
-        item.platCinemaList.push(itemA.cinema_name);
-      }
-    });
-    item.platCinemaList = item.platCinemaList.join();
-    item.offerPlat = item.offerPlat.join();
-    return item;
-  });
-  console.log("statisticResult", statisticResult);
-};
-
-window.tongjiOfferInfo = tongjiOfferInfo;
-// 获取影院列表
-const getCinemaList = async appName => {
-  try {
-    let list = [];
-    if (UME_LIST.value.includes(appName)) {
-      let params = {
-        params: {
-          channelCode: "QD0000001",
-          sysSourceCode: "YZ001",
-          cinemaCode: "32012801",
-          cinemaLinkId: "15946"
-        }
-      };
-      const res = await APP_API_OBJ[appName].getCinemaList(params);
-      const cityCinemaList = res.data || [];
-      // console.log(appName+ "根据城市获取影院列表返回", cityCinemaList);
-      list = cityCinemaList
-        .map(item => item.cinemaList)
-        .flat()
-        .map(itemA => ({
-          app_name: appName,
-          cinema_code: itemA.cinemaCode,
-          cinema_name: itemA.cinemaName
-        }));
-    } else {
-      const res = await APP_API_OBJ[appName].getCityList({});
-      let cityList = res?.data?.all_city || [];
-
-      for (const item of cityList) {
-        const res = await APP_API_OBJ[appName].getCinemaList({
-          city_id: item.id
-        });
-        // console.log("根据城市获取影院列表返回", res);
-        let cinemaList = res.data?.cinema_data || [];
-        // console.log(appName+ "根据城市获取影院列表返回", cinemaList);
-        cinemaList = cinemaList.map(item => ({
-          app_name: appName,
-          cinema_code: item.id,
-          cinema_name: item.name
-        }));
-        list.push(...cinemaList);
-      }
-    }
-    console.log(appName + "获取全部影院列表返回", list);
-    return list;
-  } catch (error) {
-    console.warn(appName + "获取全部影院列表异常", error);
-  }
-};
-
-const judgeHandle = (arr, str) => {
-  let tempArr = str.split(",");
-  return tempArr.every(item => arr.join().indexOf(item) !== -1);
-};
 // 设置本地的规则列表
 const setLocalRuleList = async () => {
   try {
@@ -933,24 +792,9 @@ const batchDelete = () => {
   }
 };
 
-// 获取券类型列表
-const getQuanTypeList = async () => {
-  try {
-    const params = {
-      page_num: 1,
-      page_size: 100
-    };
-    const res = await svApi.queryQuanTypeList(params);
-    let quanTypeList = res.data.quanTypeList || [];
-    // console.log("券类型列表===>", quanTypeList);
-    quanType.value = quanTypeList;
-  } catch (error) {
-    console.error("获取券类型列表异常", error);
-  }
-};
-
 onBeforeMount(async () => {
-  await getQuanTypeList();
+  const quanTypeList = await getQuanTypeList();
+  quanType.value = quanTypeList;
   nextTick(() => {
     if (treeRef.value) {
       treeRef.value.setCurrentKey(1);

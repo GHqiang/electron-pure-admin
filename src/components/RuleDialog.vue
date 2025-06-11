@@ -484,11 +484,7 @@
 </template>
 
 <script setup>
-import { platTokens } from "@/store/platTokens";
-const {
-  userInfo: { rule }
-} = platTokens();
-import { ref, reactive, computed, toRaw } from "vue";
+import { ref, reactive, computed } from "vue";
 import { ElLoading, ElMessage } from "element-plus";
 import { ORDER_FORM, GET_APP_LIST } from "@/common/constant";
 
