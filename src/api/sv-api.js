@@ -173,6 +173,10 @@ const queryQuanInventory = params =>
 // 批量导入券
 const batchAddQuan = params => axios.post("/svpi/quanRecord/batchAdd", params);
 
+// 批量删除券（导出即删）
+const batchDeleteQuan = params =>
+  axios.post("/svpi/quanRecord/batchdelete", params);
+
 // 查询操作日志
 const queryLogRecord = params =>
   axios.get("/svpi/operaRecord/query", { params });
@@ -275,6 +279,7 @@ const svApi = {
   addQuanType,
   updateQuanType,
   batchAddQuan,
+  batchDeleteQuan,
   exportQuanList,
   getSpecialNameList,
   querySpecialNameList,
