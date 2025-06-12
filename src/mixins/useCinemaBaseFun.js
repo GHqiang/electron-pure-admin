@@ -297,7 +297,7 @@ export default function useCinemaBaseFun() {
     phone,
     session_id,
     index,
-    abnormalLoginInfoList = []
+    abnormalLoginInfoList = [] // 登录异常的会员卡列表(无太大用)
   ) => {
     let params = {};
     let cardList = [];
