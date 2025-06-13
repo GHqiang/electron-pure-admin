@@ -41,6 +41,7 @@
               >导出映射维护信息</el-button
             >
             <el-upload
+              v-if="rule == 2"
               ref="uploadRef"
               style="margin-left: 15px"
               class="upload-demo"
@@ -88,11 +89,13 @@
             min-width="100"
           />
           <el-table-column
+            v-if="rule == 2"
             prop="update_time"
             label="更新时间"
             min-width="120"
           />
           <el-table-column
+            v-if="rule == 2"
             label="操作"
             fixed="right"
             align="center"
@@ -139,7 +142,10 @@ import {
 } from "@/common/constant";
 const APP_LIST = computed(() => GET_APP_LIST());
 const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
-
+import { platTokens } from "@/store/platTokens";
+const {
+  userInfo: { rule }
+} = platTokens();
 // 影院基础方法
 import useCinemaBaseFun from "@/mixins/useCinemaBaseFun";
 const { getCityList, getAllCinemaList } = useCinemaBaseFun();
@@ -215,6 +221,7 @@ const setLocalCinemaList = async () => {
 
 // 获取某个影线的全部影院列表
 const getCinemaList = async app_name => {
+  console.log("获取某个影线的全部影院列表", app_name);
   const allCityList = await getCityList(app_name);
   let allCinemaList = [];
   if (allCityList?.length) {
@@ -235,6 +242,7 @@ const syncCinemeCodeMatch = async isExport => {
     // 1、获取未同步的影院列表
     const cinemaListRes = await svApi.queryNoSyncCinemaList({});
     let cinemaList = cinemaListRes?.data?.cinemaList || [];
+    cinemaList = cinemaList.filter(item => item.status != 3);
     console.warn("获取未同步的影院列表", cinemaList);
 
     // 2、获取可以同步的影院列表

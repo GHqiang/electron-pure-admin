@@ -41,6 +41,14 @@ export default {
       }
     },
     {
+      path: "/permission/cinemaCodeMatch/index",
+      name: "CinemaCodeMatch",
+      component: () => import("@/views/permission/cinemaCodeMatch/index.vue"),
+      meta: {
+        title: "影院映射"
+      }
+    },
+    {
       path: "/set/cardList",
       name: "cardList",
       component: () => import("@/views/appBalanceQuery/cardList.vue"),
