@@ -957,10 +957,9 @@ const exportQuanHandle = async () => {
   try {
     // 1-可用券 2不可用券
     let tableData = toRaw(exportQuanList.value);
+    console.warn("tableData", tableData);
     let quanValueStr = exportQuanValue.value;
-    await svApi.batchDeleteQuanType({ delIds: tableData.map(item => item.id) });
-    // 先调接口更新状态，并更新导出人及使用时间
-    const res = await svApi.batchDeleteQuan(params);
+    await svApi.batchDeleteQuan({ delIds: tableData.map(item => item.id) });
     tableData = tableData.map(item => [
       item.coupon_num,
       item.quan_value,
