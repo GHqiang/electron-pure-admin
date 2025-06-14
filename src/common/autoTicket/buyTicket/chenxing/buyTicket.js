@@ -304,11 +304,11 @@ export default class BuyTicket {
       } else {
         this.logger.infoSave("获取到座位价格信息列表", { areaInfoList });
         if (areaInfoList?.length) {
-          // 取最低价
+          // 取最高价
           basePrice = areaInfoList
             .map(item => item.areaPrice)
-            .sort((a, b) => a - b)?.[0];
-          this.logger.infoSave("取最低座位价格", { basePrice });
+            .sort((a, b) => b - a)?.[0];
+          this.logger.infoSave("取最高座位价格", { basePrice });
         }
       }
       this.logger.infoSave("会员服务费", { serviceAddFee });
