@@ -153,7 +153,8 @@ import {
   getCurrentTime,
   mockDelay,
   createExcelDown,
-  parseExcel
+  parseExcel,
+  getCinemaLoginInfoList
 } from "@/utils/utils";
 import { useCinemaCodeMatchList } from "@/store/specialNameRule";
 const cinemaCodeMatchObj = useCinemaCodeMatchList();
@@ -243,6 +244,12 @@ const syncCinemeCodeMatch = async isExport => {
     const cinemaListRes = await svApi.queryNoSyncCinemaList({});
     let cinemaList = cinemaListRes?.data?.cinemaList || [];
     cinemaList = cinemaList.filter(item => item.status != 3);
+    let loginInfoList = getCinemaLoginInfoList().filter(
+      itemA => itemA.session_id
+    );
+    cinemaList = cinemaList.filter(item =>
+      loginInfoList.find(itemA => itemA.app_name == item.app_name)
+    );
     console.warn("获取未同步的影院列表", cinemaList);
 
     // 2、获取可以同步的影院列表
