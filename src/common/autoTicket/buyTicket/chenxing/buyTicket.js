@@ -49,7 +49,7 @@ export default class BuyTicket {
       // 2、获取该订单报价规则
       await this.getOrderOfferRule();
       this.logger.infoSave("订单报价记录信息", {
-        offerRule: this.offerRule
+        offerRule: JSON.parse(JSON.stringify(this.offerRule))
       });
       // 3、校验报价规则是否允许出票
       const isNeedBuyTicket = this.checkOfferRuleRes();

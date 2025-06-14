@@ -709,7 +709,7 @@ class OrderAutoTicketQueue {
       des: "获取该订单报价记录成功",
       level: "info",
       info: {
-        offerRule
+        offerRule: JSON.parse(JSON.stringify(offerRule))
       }
     });
     try {
