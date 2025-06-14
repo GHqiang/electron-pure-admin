@@ -259,6 +259,11 @@ export default class BuyTicket {
         cinemaPlanDto,
         areaInfoList
       } = buyTicketInfo;
+      this.logger.infoSave("座位价格相关信息", {
+        discountList,
+        cinemaPlanDto,
+        areaInfoList
+      });
       const { featureAppNo } = targetShow;
       // 3、锁定座位
       let lockSeatParams = {
@@ -288,6 +293,7 @@ export default class BuyTicket {
       this.logger.warn("会员价及手续费", { basePrice, serviceAddFee });
       const { api_version } = this;
       if (api_version === "3.0C") {
+        serviceAddFee = cinemaPlanDto?.serviceAddFee;
         if (discountList?.length) {
           // 取最低价
           basePrice = discountList
@@ -299,7 +305,6 @@ export default class BuyTicket {
           });
         } else {
           basePrice = cinemaPlanDto?.standardPrice;
-          serviceAddFee = cinemaPlanDto?.serviceAddFee;
         }
       } else {
         this.logger.infoSave("获取到座位价格信息列表", { areaInfoList });

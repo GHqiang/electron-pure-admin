@@ -456,7 +456,12 @@ class getChenxingOfferPrice {
       const targetSeatRes = await this.seatManage.getSeatLayout(seatParams);
       if (api_version == "3.0C") {
         let discountList = targetSeatRes?.discountList || [];
-        this.logger.infoSave("获取到可用优惠列表", { discountList });
+        let cinemaPlanDto = targetSeatRes.cinemaPlanDto || {};
+        serviceAddFee = cinemaPlanDto?.serviceAddFee;
+        this.logger.infoSave("获取到可用优惠列表", {
+          discountList,
+          cinemaPlanDto
+        });
         if (discountList.length) {
           // 取最低价
           basePrice = discountList
@@ -464,9 +469,7 @@ class getChenxingOfferPrice {
             .sort((a, b) => a - b)?.[0];
           this.logger.infoSave("从优惠活动里取最低价", { basePrice });
         } else {
-          let cinemaPlanDto = targetSeatRes.cinemaPlanDto || {};
           basePrice = cinemaPlanDto?.standardPrice;
-          serviceAddFee = cinemaPlanDto?.serviceAddFee;
         }
       } else {
         let areaInfoList = targetSeatRes?.areaInfoList || [];

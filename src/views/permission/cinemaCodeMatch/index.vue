@@ -247,6 +247,7 @@ const syncCinemeCodeMatch = async isExport => {
     let loginInfoList = getCinemaLoginInfoList().filter(
       itemA => itemA.session_id
     );
+    console.warn("loginInfoList", loginInfoList, cinemaList);
     cinemaList = cinemaList.filter(item =>
       loginInfoList.find(itemA => itemA.app_name == item.app_name)
     );
