@@ -43,7 +43,7 @@
             <el-upload
               v-if="rule == 2"
               ref="uploadRef"
-              style="margin-left: 15px"
+              style="margin: 0 15px"
               class="upload-demo"
               :limit="1"
               :on-change="importCinemaMatch"
@@ -55,6 +55,30 @@
                 <el-button type="primary">导入映射维护信息</el-button>
               </template>
             </el-upload>
+            <el-button
+              v-if="rule == 2"
+              type="primary"
+              style="padding-left: 0px"
+              :disabled="!shadowLine"
+              @click="deleteCinemeCodeMatch"
+            >
+              <template #default>
+                <el-select
+                  v-model="shadowLine"
+                  filterable
+                  placeholder="请选择影线名称"
+                  style="width: 150px; margin-left: -1px"
+                >
+                  <el-option
+                    v-for="(keyValue, keyName) in APP_LIST"
+                    :key="keyName"
+                    :label="keyValue"
+                    :value="keyName"
+                  />
+                </el-select>
+                &nbsp;&nbsp;删除
+              </template>
+            </el-button>
           </el-form-item>
         </el-form>
         <!-- 表格 -->
@@ -133,7 +157,7 @@
 <script setup>
 import { ref, reactive, computed, onBeforeMount, nextTick, watch } from "vue";
 import svApi from "@/api/sv-api";
-import { ElMessage, ElLoading } from "element-plus";
+import { ElMessage, ElLoading, ElMessageBox } from "element-plus";
 import CinemaMatchDialog from "@/components/CinemaMatchDialog.vue";
 import {
   GET_APP_LIST,
@@ -231,6 +255,34 @@ const getCinemaList = async app_name => {
     console.warn("获取城市列表异常", app_name);
   }
   return allCinemaList || [];
+};
+
+const shadowLine = ref("");
+// 删除
+const deleteCinemeCodeMatch = () => {
+  ElMessageBox.confirm("确定要删除该影院映射吗?", "提示", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning",
+    showClose: false,
+    closeOnClickModal: false,
+    closeOnPressEscape: false
+  })
+    .then(async () => {
+      console.warn("app_name", shadowLine.value);
+      await svApi.deleteCinemaMatch({ app_name: shadowLine.value });
+      searchData();
+      ElMessage({
+        type: "success",
+        message: "删除完成"
+      });
+    })
+    .catch(() => {
+      ElMessage({
+        type: "info",
+        message: "删除取消"
+      });
+    });
 };
 
 const syncLoading = ref(false);
