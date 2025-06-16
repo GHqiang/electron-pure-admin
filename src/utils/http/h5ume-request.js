@@ -647,7 +647,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
                 leaseCode: "",
                 tid: tid
               });
-              console.log("sidRes", sidRes);
+              // console.log("sidRes", sidRes);
               let sid = sidRes?.bizValue?.sid;
               if (sid) {
                 larkSid = sid;
@@ -678,12 +678,12 @@ const createAxios = ({ app_name, timeout = 20 }) => {
                   // config.headers["bx-ua"] = uidRes?.ua;
                   // config.headers["bx-umidtoken"] = uidRes?.umidToken;
 
-                  console.log("retryCount-config-登录超时", config);
+                  // console.log("retryCount-config-登录超时", config);
                   return instance(config);
                 }
               }
             } catch (error) {
-              console.log("sidRes-error", error);
+              // console.log("sidRes-error", error);
               if (error?.data?.bizCode === "1002") {
                 ElMessage.warning(
                   `${GET_APP_LIST()[app_name]}登录失效，请重新设置登录信息`
