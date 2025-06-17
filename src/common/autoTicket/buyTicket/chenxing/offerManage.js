@@ -676,7 +676,9 @@ class getChenxingOfferPrice {
    */
   applyQuanStockFilter(rules, quanTypes, ticketNum) {
     return rules.filter(rule => {
-      const quanInfo = quanTypes.find(q => q.quan_value === rule.quanValue);
+      const quanInfo = quanTypes.find(q =>
+        rule.quanValue?.split(",").includes(q.quan_value)
+      );
       return quanInfo ? quanInfo.quan_stock >= ticketNum : false;
     });
   }

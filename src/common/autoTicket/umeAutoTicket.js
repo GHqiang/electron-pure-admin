@@ -3477,7 +3477,7 @@ class OrderAutoTicketQueue {
         update_time: getCurrentTime()
       };
       // 增加最后使用时间更新（方便看是否压价）
-      if (quan_value?.includes(item.quan_value)) {
+      if (quan_value?.split(",")?.includes(item.quan_value)) {
         updateParams.end_use_time = getCurrentTime();
       }
       // 单个更新

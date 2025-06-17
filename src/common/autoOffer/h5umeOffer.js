@@ -697,7 +697,7 @@ class getUmeOfferPrice {
         if (appQuanTypeList?.length) {
           fixedAmountRuleList = fixedAmountRuleList.filter(item => {
             let targetQuanInfo = appQuanTypeList.find(itemA =>
-              item.quanValue?.includes(itemA.quan_value)
+              item.quanValue?.split(",")?.includes(itemA.quan_value)
             );
             let quan_stock = targetQuanInfo?.quan_stock;
             return quan_stock
