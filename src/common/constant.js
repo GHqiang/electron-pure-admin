@@ -206,17 +206,6 @@ const TICKET_CONPREFIX_OBJ = {
   qina: "【齐纳国际自动出票】——"
 };
 
-// 微信消息推送id
-const WX_MSG_UID = {
-  1: "UID_AIFZVT3B4zcj10CvGFLKB2hS2wt7", // 张三
-  9: "UID_Dc5u7HJZSLvjbGIwPeZmiSRPurim", // 苦瓜
-  10: "UID_NnfJzb7r8pPyfhuq89OOrzr216Ba", // 兜儿
-  11: "UID_aN8haBm8iKK2rlufRiBqNVL0pCen", // 婷婷
-  15: "UID_Wp4B8hCtrhCmHtM1S6MlgCWJlz7O", // 婷婷小号
-  20: "UID_XBUYeeRmX0Y9DzPp3pFp1rxP4mzN", // 令狐冲
-  21: "UID_r5wopdceRTbC56iJ3WcIQMvqUCM2" // coco
-};
-
 // 外部角色列表
 const OUT_RULE_LIST = [3, 6, 5];
 
@@ -296,7 +285,6 @@ export {
   LIERENR_REWARDS,
   GROUP_LIST,
   TICKET_CONPREFIX_OBJ,
-  WX_MSG_UID,
   OUT_RULE_LIST,
   SFC_CINEMA_NAME,
   CINEMA_STATUS_OBJ
