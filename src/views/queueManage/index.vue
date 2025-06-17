@@ -600,7 +600,6 @@ const syncPriceHandle = async (plat_name, syncPageSize) => {
       //   //   }));
       //   // syncOrderList.push(...shengList);
       // });
-      // 接口返回区分不了未中标状态及中标价格
     } else if (plat_name === "mangguo") {
       promiseList.push(
         mangguoApi.queryOfferRecord({

@@ -5,13 +5,6 @@ import axios from "axios";
 import * as CryptoJS from "crypto-js";
 import svApi from "@/api/sv-api";
 import {
-  WX_MSG_UID,
-  SFC_CINEMA_NAME,
-  YAOLAI_CINEMA_NAME,
-  UME_CINEMA_NAME,
-  YINGHUANG_CINEMA_NAME,
-  ZHEYINGSHIDAI_CINEMA_NAME,
-  EXCLUDE_CINEMA_LIST_BY_CINEMA_FLAG,
   GET_UME_LIST,
   GET_USABLE_APP_LIST,
   GET_H5_UME_LIST,
@@ -387,105 +380,6 @@ const newGetCinemaFlagFun = item => {
   return appFlag;
 };
 // 获取影院标识
-const getCinemaFlagFun = item => {
-  // 最新根据cinemaCode判断影院标识
-  return newGetCinemaFlagFun(item);
-  const { cinema_group, cinema_name, city_name, plat_name } = item;
-  // 是否是排除影院
-  const is_exclude_cinema = EXCLUDE_CINEMA_LIST_BY_CINEMA_FLAG.some(
-    itemA => cinemNameSpecial(itemA) === cinemNameSpecial(cinema_name)
-  );
-  if (is_exclude_cinema) return;
-  // 获取影院配置
-  let allCinemaList = window.localStorage.getItem("allCinemaList");
-  if (allCinemaList) {
-    allCinemaList = JSON.parse(allCinemaList);
-    // 中影比较特殊，很多sfc单店在平台那的group都划成中影了，但是还是要走单店出，故将中影排到最后
-    allCinemaList.sort((a, b) => {
-      if (a.app_name === "zhongying" && b.first !== "zhongying") return 1;
-      if (a.app_name !== "zhongying" && b.first === "zhongying") return -1;
-    });
-  }
-  // console.log("allCinemaList", allCinemaList);
-  let target = allCinemaList.find(itemA => {
-    let isGroup = false,
-      isCinema = false,
-      isBlackCinema = false,
-      isCity = true;
-    if (itemA.group_list && cinema_group) {
-      isGroup = itemA.group_list
-        .replace(/[;；]/g, "-")
-        .split("-")
-        .some(itemB => cinemNameSpecial(cinema_group) === itemB);
-    }
-    if (itemA.flag_list && cinema_name) {
-      isCinema = itemA.flag_list
-        .replace(/[;；]/g, "-")
-        .split("-")
-        .some(itemB => cinemNameSpecial(cinema_name).includes(itemB));
-    }
-    if (itemA.black_list && cinema_name) {
-      isBlackCinema = itemA.black_list
-        .replace(/[;；]/g, "-")
-        .split("-")
-        .some(itemB => cinemNameSpecial(cinema_name).includes(itemB));
-    }
-    if (itemA.city_list && city_name) {
-      isCity = itemA.city_list
-        .replace(/[;；]/g, "-")
-        .split("-")
-        .some(itemB => city_name.includes(itemB));
-    }
-    return (isGroup || isCinema) && isCity && !isBlackCinema;
-  });
-  if (target) {
-    console.log("target", target);
-    return target.app_name;
-  }
-
-  // 上影
-  let isSfcCinemaName = SFC_CINEMA_NAME.some(
-    item => cinemNameSpecial(item) === cinemNameSpecial(cinema_name)
-  );
-
-  // UME
-  let isUmeCinemaName = UME_CINEMA_NAME.some(
-    item => cinemNameSpecial(item) === cinemNameSpecial(cinema_name)
-  );
-
-  // 耀莱
-  let isYaolaiCinemaName = YAOLAI_CINEMA_NAME.some(
-    item => cinemNameSpecial(item) === cinemNameSpecial(cinema_name)
-  );
-
-  // 英皇
-  let isYinghuangCinemaName = YINGHUANG_CINEMA_NAME.some(
-    item => cinemNameSpecial(item) === cinemNameSpecial(cinema_name)
-  );
-
-  // 浙影时代
-  let isZheyingshidaiCinemaName = ZHEYINGSHIDAI_CINEMA_NAME.some(
-    item => cinemNameSpecial(item) === cinemNameSpecial(cinema_name)
-  );
-
-  if (isYinghuangCinemaName) {
-    return "yinghuang";
-  }
-  if (isZheyingshidaiCinemaName) {
-    return "zheyingshidai";
-  }
-  if (isSfcCinemaName) {
-    return "sfc";
-  }
-  // 蚂蚁和洋葱、哈哈：UME。 猎人和芒果：ume一线、ume二线
-  else if (isUmeCinemaName) {
-    return "ume";
-  }
-  // 蚂蚁和洋葱、哈哈：耀莱成龙。 猎人和芒果：耀莱一线、耀莱二线
-  else if (isYaolaiCinemaName) {
-    return "yaolai";
-  }
-};
 const getCinemaFlag = item => {
   const app_name = newGetCinemaFlagFun(item);
   if (!app_name) return;
