@@ -333,31 +333,37 @@ export default class CinemaManage {
       let movie_data = [];
       if (api_version === "3.0C") {
         movie_data = res.data?.items || [];
+      } else if (api_version === "C") {
+        movie_data = res.data?.hitFilmResultDOList || [];
+      }
+      let upcomingFilm = [];
+      try {
+        let res1 = await this.appApi.getUpcomingFilm(params);
+        if (api_version === "3.0C") {
+          upcomingFilm = res1.data?.items || [];
+          upcomingFilm = upcomingFilm.filter(
+            item => item.upcomingOrPreSell == "0"
+          );
+        } else if (api_version === "C") {
+          upcomingFilm = res1.data?.upComingFilmResultDOList || [];
+          upcomingFilm = upcomingFilm.filter(
+            item => item.upcomingOrPresell == "0"
+          );
+        }
+      } catch (error) {
+        this.logger.errorSave(
+          "获取预售电影放映信息返回异常",
+          formatErrInfo(error)
+        );
+      }
+      movie_data = movie_data.concat(upcomingFilm);
+      if (api_version === "3.0C") {
         movie_data = movie_data.map(item => ({
           ...item,
           filmName: item.filmName,
           filmId: item.id
         }));
-        let upcomingFilm = [];
-        try {
-          let res1 = await this.appApi.getUpcomingFilm(params);
-          upcomingFilm = res1.data?.items || [];
-          upcomingFilm = upcomingFilm
-            .filter(item => item.upcomingOrPreSell == "0")
-            .map(item => ({
-              ...item,
-              filmName: item.filmName,
-              filmId: item.id
-            }));
-        } catch (error) {
-          this.logger.errorSave(
-            "获取预售电影放映信息返回异常",
-            formatErrInfo(error)
-          );
-        }
-        movie_data = movie_data.concat(upcomingFilm);
       } else if (api_version === "C") {
-        movie_data = res.data?.hitFilmResultDOList || [];
         movie_data = movie_data.map(item => ({
           ...item,
           filmName: item.name,
