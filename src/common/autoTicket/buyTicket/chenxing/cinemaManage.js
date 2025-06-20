@@ -338,6 +338,24 @@ export default class CinemaManage {
           filmName: item.filmName,
           filmId: item.id
         }));
+        let upcomingFilm = [];
+        try {
+          let res1 = await this.appApi.getUpcomingFilm(params);
+          upcomingFilm = res1.data?.items || [];
+          upcomingFilm = upcomingFilm
+            .filter(item => item.upcomingOrPreSell == "0")
+            .map(item => ({
+              ...item,
+              filmName: item.filmName,
+              filmId: item.id
+            }));
+        } catch (error) {
+          this.logger.errorSave(
+            "获取预售电影放映信息返回异常",
+            formatErrInfo(error)
+          );
+        }
+        movie_data = movie_data.concat(upcomingFilm);
       } else if (api_version === "C") {
         movie_data = res.data?.hitFilmResultDOList || [];
         movie_data = movie_data.map(item => ({

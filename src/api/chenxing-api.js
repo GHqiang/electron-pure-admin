@@ -32,6 +32,11 @@ const createApi = ({ app_name }) => {
       "3.0C": "/selfSupport/front/cticket/getHitFilm",
       C: "/chenxing/api/middleground/ticket/c/cticket/getHitFilm"
     },
+    // 获取预售电影放映信息
+    getUpcomingFilm: {
+      "3.0C": "/selfSupport/front/cticket/getUpcomingFilm",
+      C: "/chenxing/api/middleground/ticket/c/cticket/getHitFilm"
+    },
     // 获取电影放映场次
     getMoviePlayTime: {
       "3.0C": "/selfSupport/front/cticket/loadSchedule",
