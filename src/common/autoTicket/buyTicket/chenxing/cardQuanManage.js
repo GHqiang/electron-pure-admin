@@ -500,6 +500,7 @@ export default class CardQuanManage {
       this.logger.infoSave("获取同类目标券返回", {
         targetQuanList
       });
+      return targetQuanList;
     } catch (error) {
       this.logger.errorSave("获取同类目标券异常", formatErrInfo(error));
     }
