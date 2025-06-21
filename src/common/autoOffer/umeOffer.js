@@ -808,30 +808,30 @@ class getUmeOfferPrice {
       let addAmountRuleList = otherRuleList.filter(
         item => item.offerType === "2" && item.addAmount
       );
-      let mixAddAmountRule = addAmountRuleList?.[0];
+      let minAddAmountRule = addAmountRuleList?.[0];
       // 如果addAmount设置比较特殊，就直接取第一条规则报价,如：30;>=+2;<+1
       if (
         addAmountRuleList?.length > 1 &&
         addAmountRuleList[0].addAmount?.split(";")?.length === 1
       ) {
-        mixAddAmountRule = addAmountRuleList.sort(
+        minAddAmountRule = addAmountRuleList.sort(
           (itemA, itemB) => itemA.addAmount - itemB.addAmount
         )?.[0];
       }
 
-      if (mixAddAmountRule) {
-        let addMountRule = mixAddAmountRule.addAmount?.split(";");
+      if (minAddAmountRule) {
+        let addMountRule = minAddAmountRule.addAmount?.split(";");
         if (addMountRule.length === 1) {
-          mixAddAmountRule.realAddMount = addMountRule[0];
+          minAddAmountRule.realAddMount = addMountRule[0];
         } else if (addMountRule.length > 1) {
-          mixAddAmountRule.addMountRule = addMountRule.slice();
+          minAddAmountRule.addMountRule = addMountRule.slice();
         }
 
         // 计算会员报价
         let memberPriceRes = await this.getMemberPrice({
           order,
           movieData: movieInfo,
-          mixAddAmountRule
+          minAddAmountRule
         });
         if (memberPriceRes === -1) {
           this.logList.push({
@@ -859,14 +859,14 @@ class getUmeOfferPrice {
           return mixFixedAmountRule;
         }
         // 真实会员价
-        mixAddAmountRule.real_member_price = memberPriceRes.real_member_price;
+        minAddAmountRule.real_member_price = memberPriceRes.real_member_price;
         if (
-          !mixAddAmountRule.realAddMount &&
-          mixAddAmountRule.addMountRule?.length > 1
+          !minAddAmountRule.realAddMount &&
+          minAddAmountRule.addMountRule?.length > 1
         ) {
           let realAddMount = this.getRealAddMount({
             real_member_price: memberPriceRes.real_member_price,
-            addMountRule: mixAddAmountRule.addMountRule
+            addMountRule: minAddAmountRule.addMountRule
           });
           if (!realAddMount) {
             this.logList.push({
@@ -875,43 +875,43 @@ class getUmeOfferPrice {
               level: "warn",
               info: {
                 real_member_price: memberPriceRes.real_member_price,
-                addMountRule: mixAddAmountRule.addMountRule
+                addMountRule: minAddAmountRule.addMountRule
               }
             });
             return mixFixedAmountRule;
           }
-          mixAddAmountRule.realAddMount = realAddMount;
+          minAddAmountRule.realAddMount = realAddMount;
         }
 
         // 最小折扣
-        mixAddAmountRule.member_discount = memberPriceRes.discount;
+        minAddAmountRule.member_discount = memberPriceRes.discount;
         // 会员成本价(真实会员价*折扣价)
-        mixAddAmountRule.memberCostPrice = memberPriceRes.member_price;
+        minAddAmountRule.memberCostPrice = memberPriceRes.member_price;
         // 会员成本价不为0.5的整数倍时进0.5
-        mixAddAmountRule.round_member_price = roundToHalf(
-          mixAddAmountRule.memberCostPrice
+        minAddAmountRule.round_member_price = roundToHalf(
+          minAddAmountRule.memberCostPrice
         );
         // 会员预计报价
-        mixAddAmountRule.memberOfferAmount =
-          mixAddAmountRule.round_member_price +
-          Number(mixAddAmountRule.realAddMount);
+        minAddAmountRule.memberOfferAmount =
+          minAddAmountRule.round_member_price +
+          Number(minAddAmountRule.realAddMount);
         this.logList.push({
           opera_time: getCurrentTime(),
           des: "会员报价最终信息",
           level: "info",
           info: {
             real_member_price:
-              "真实会员价：" + mixAddAmountRule.real_member_price,
-            member_discount: "会员最小折扣" + mixAddAmountRule.member_discount,
+              "真实会员价：" + minAddAmountRule.real_member_price,
+            member_discount: "会员最小折扣" + minAddAmountRule.member_discount,
             memberCostPrice:
               "会员成本价（真实会员价*折扣）：" +
-              mixAddAmountRule.memberCostPrice,
-            addAmount: "最小加价金额：" + mixAddAmountRule.realAddMount,
+              minAddAmountRule.memberCostPrice,
+            addAmount: "最小加价金额：" + minAddAmountRule.realAddMount,
             round_member_price:
               "会员成本价按0.5向上取整数倍：" +
-              mixAddAmountRule.round_member_price,
+              minAddAmountRule.round_member_price,
             memberOfferAmount:
-              "会员预计报价：" + mixAddAmountRule.memberOfferAmount
+              "会员预计报价：" + minAddAmountRule.memberOfferAmount
           }
         });
       } else {
@@ -932,12 +932,12 @@ class getUmeOfferPrice {
       if (!mixFixedAmountRule) {
         console.warn(
           conPrefix + "最小固定报价规则不存在，返回最小加价规则",
-          mixAddAmountRule
+          minAddAmountRule
         );
-        return mixAddAmountRule;
+        return minAddAmountRule;
       }
       if (
-        mixAddAmountRule.memberOfferAmount >=
+        minAddAmountRule.memberOfferAmount >=
         Number(mixFixedAmountRule.offerAmount)
       ) {
         this.logList.push({
@@ -945,7 +945,7 @@ class getUmeOfferPrice {
           des: "会员报价高于固定报价，返回最小固定报价规则",
           level: "info",
           info: {
-            memberOfferAmount: mixAddAmountRule.memberOfferAmount,
+            memberOfferAmount: minAddAmountRule.memberOfferAmount,
             fixedOfferAmount: mixFixedAmountRule.offerAmount
           }
         });
@@ -956,11 +956,11 @@ class getUmeOfferPrice {
           des: "会员报价低于固定报价，返回最小加价报价规则",
           level: "info",
           info: {
-            memberOfferAmount: mixAddAmountRule.memberOfferAmount,
+            memberOfferAmount: minAddAmountRule.memberOfferAmount,
             fixedOfferAmount: mixFixedAmountRule.offerAmount
           }
         });
-        return mixAddAmountRule;
+        return minAddAmountRule;
       }
     } catch (error) {
       console.error(conPrefix + "获取最低报价规则异常", error);
@@ -1166,7 +1166,7 @@ class getUmeOfferPrice {
   }
 
   // 获取会员价
-  async getMemberPrice({ order, movieData, mixAddAmountRule }) {
+  async getMemberPrice({ order, movieData, minAddAmountRule }) {
     const { conPrefix, appFlag } = this;
     try {
       console.log(conPrefix + "准备获取会员价", order);
@@ -1202,7 +1202,7 @@ class getUmeOfferPrice {
         }
       });
       let member_price = Math.max(ticketMemberPrice, maxSeatPrice) / 100;
-      if (mixAddAmountRule.memberPriceRule == "2") {
+      if (minAddAmountRule.memberPriceRule == "2") {
         member_price = Math.max(ticketMemberPrice, mostSeatPrice) / 100;
         this.logList.push({
           opera_time: getCurrentTime(),
