@@ -584,8 +584,9 @@ const isShowOfferFlag = computed(() => {
   let app_name = formData.shadowLineName;
   let offer_type = formData.offerType;
   return (
-    ["ume_applet"].includes(GE_APP_INFO(app_name)?.app_type_code) &&
-    offer_type === "2"
+    ["ume_applet", "chenxing_applet"].includes(
+      GE_APP_INFO(app_name)?.app_type_code
+    ) && offer_type === "2"
   );
 });
 

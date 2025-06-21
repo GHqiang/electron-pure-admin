@@ -4,6 +4,7 @@ import {
   offerRuleMatch,
   calcCount,
   roundToHalf,
+  formatErrInfo,
   isDateInCurrentMonth,
   getCinemaLoginInfoList
 } from "@/utils/utils";
@@ -139,7 +140,10 @@ class getChenxingOfferPrice {
       if (!movieInfo) return null;
       if (isTestOrder) {
         // 测试订单获取会员价
-        const memberPriceRes = await this.getMemberPrice(order, movieInfo);
+        const memberPriceRes = await this.getMemberPrice({
+          order,
+          movieData: movieInfo
+        });
         console.log("测试订单获取会员价", memberPriceRes, movieInfo);
       }
 
@@ -417,7 +421,7 @@ class getChenxingOfferPrice {
   }
 
   // 获取会员价
-  async getMemberPrice(order, movieData) {
+  async getMemberPrice({ order, movieData, minAddAmountRule }) {
     try {
       const movieInfo = movieData || (await this.getMovieInfo());
       if (!movieInfo) {
@@ -479,7 +483,15 @@ class getChenxingOfferPrice {
           basePrice = areaInfoList
             .map(item => item.areaPrice)
             .sort((a, b) => b - a)?.[0];
-          this.logger.infoSave("取最高座位价格", { basePrice });
+          if (minAddAmountRule.memberPriceRule == "2") {
+            basePrice = this.getMostSeatPrice(
+              targetSeatRes.seatData,
+              areaInfoList
+            );
+            this.logger.infoSave("取最多座位价格", { basePrice });
+          } else {
+            this.logger.infoSave("取最高座位价格", { basePrice });
+          }
         }
       }
       this.logger.infoSave("会员服务费", { serviceAddFee });
@@ -495,6 +507,40 @@ class getChenxingOfferPrice {
     }
   }
 
+  // 获取最多座位价格
+  getMostSeatPrice(seat_data, areaList) {
+    try {
+      // 过滤出来未售座位然后计算分区剩余座位占比，0-未售
+      let seatList = seat_data.filter(item => item.status === "N");
+
+      let areaRatioList = areaList.map(item => {
+        return {
+          ...item,
+          numRatio: Math.floor(
+            (seatList.filter(itemA => itemA.areaId == item.areaId).length *
+              100) /
+              seatList.length
+          )
+        };
+      });
+      areaRatioList.sort((a, b) => b.numRatio - a.numRatio);
+      this.logger.infoSave("座位分区剩余座位占比情况", areaRatioList);
+      let mostSeatPrice = areaRatioList[0]?.areaPrice;
+      return mostSeatPrice;
+      // // 默认取最高价格，最高座位占比不足百分之3时取次最高价格
+      // if (areaList[0].numRatio <= 3 && areaList[1]?.settlePrice) {
+      //   maxSeatPrice = areaList[1].settlePrice;
+      // }
+      // if (areaList[1].numRatio <= 3 && areaList[2]?.settlePrice) {
+      //   maxSeatPrice = areaList[2].settlePrice;
+      // }
+    } catch (error) {
+      this.logger.infoSave(
+        "座位分区剩余座位占比计算失败",
+        formatErrInfo(error)
+      );
+    }
+  }
   // 获取可用会员卡列表
   async fetchAvailableCards(order, cinemaCode) {
     const { ticket_num, app_name } = order;
@@ -596,9 +642,17 @@ class getChenxingOfferPrice {
       // 4. 处理会员价加价规则
       let bestFixAddRule = null;
       if (addRules.length) {
-        const memberPriceRes = await this.getMemberPrice(order, movieInfo);
+        let minAddAmountRule = addRules[0];
+        const memberPriceRes = await this.getMemberPrice({
+          order,
+          movieData: movieInfo,
+          minAddAmountRule
+        });
         if (memberPriceRes) {
-          bestFixAddRule = this.processAddRule(addRules[0], memberPriceRes);
+          bestFixAddRule = this.processAddRule(
+            minAddAmountRule,
+            memberPriceRes
+          );
         }
       }
 
