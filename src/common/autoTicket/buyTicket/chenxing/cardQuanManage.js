@@ -494,7 +494,9 @@ export default class CardQuanManage {
     try {
       let quanTypeRes = await svApi.queryQuanTypeList(quanTypeParams);
       let quanTypeList = quanTypeRes?.data?.quanTypeList || [];
-      targetQuanList = quanTypeList.filter(item => item.quan_flag == quan_flag);
+      let targetQuanList = quanTypeList.filter(
+        item => item.quan_flag == quan_flag
+      );
       this.logger.infoSave("获取同类目标券返回", {
         targetQuanList
       });
