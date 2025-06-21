@@ -52,7 +52,7 @@ export default class CardQuanManage {
       let cardList = await this.getCardList(cardParams);
       if (usableCardList?.length) {
         cardList = cardList?.filter(item =>
-          usableCardList.some(itemA => itemA.card_num === item.card_num)
+          usableCardList.some(itemA => itemA.card_num === item.cardNo)
         );
         this.logger.infoSave("可用卡过滤后的会员卡列表", { cardList });
       }
