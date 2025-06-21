@@ -36,7 +36,8 @@ export default class CardQuanManage {
     basePrice, // 会员价+服务费
     rewards,
     currentPhone,
-    session_id
+    session_id,
+    usableCardList // 库里维护的可用会员卡列表
   }) {
     try {
       const { appFlag } = this;
@@ -49,6 +50,12 @@ export default class CardQuanManage {
       };
       // 1、获取卡券列表
       let cardList = await this.getCardList(cardParams);
+      if (usableCardList?.length) {
+        cardList = cardList?.filter(item =>
+          usableCardList.some(itemA => itemA.card_num === item.card_num)
+        );
+        this.logger.infoSave("可用卡过滤后的会员卡列表", { cardList });
+      }
       if (!cardList?.length) return {};
       let quanParams = {
         cinemaCode,

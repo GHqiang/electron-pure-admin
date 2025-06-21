@@ -327,7 +327,8 @@ export default class BuyTicket {
         basePrice,
         rewards,
         session_id: this.currentSessionId,
-        currentPhone: this.currentPhone
+        currentPhone: this.currentPhone,
+        usableCardList: this.usableCardList
       });
       this.logger.infoSave("用卡用券返回", cardQuanRes);
       let {
