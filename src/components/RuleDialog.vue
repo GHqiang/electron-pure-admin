@@ -258,6 +258,15 @@
             <el-radio value="3" size="large">会员日价格</el-radio>
           </el-radio-group>
         </el-form-item>
+        <el-form-item v-if="isShowOfferFlag" label="会员价取值规则">
+          <el-radio-group v-model="formData.memberPriceRule">
+            <el-radio value="1" size="large">座位分区最高价</el-radio>
+            <el-radio value="2" size="large">剩余最多座位价格</el-radio>
+          </el-radio-group>
+          <span style="color: red; margin-left: 15px"
+            >提示：默认按座位分区最高价报</span
+          >
+        </el-form-item>
         <el-form-item
           v-if="formData.offerType === '3'"
           label="会员日"
@@ -486,7 +495,7 @@
 <script setup>
 import { ref, reactive, computed } from "vue";
 import { ElLoading, ElMessage } from "element-plus";
-import { ORDER_FORM, GET_APP_LIST } from "@/common/constant";
+import { ORDER_FORM, GET_APP_LIST, GE_APP_INFO } from "@/common/constant";
 
 const APP_LIST = computed(() => GET_APP_LIST());
 
@@ -550,7 +559,8 @@ let formData = reactive({
   ], // 平台报价规则
   autoUseQuanStatus: "2", // 自动用券状态 1-开启 2-关闭
   autoUseQuanPrice: "", // 自动用券价格
-  auto_quan_value: "" // 自动用券类型
+  auto_quan_value: "", // 自动用券类型
+  memberPriceRule: "" // 会员价取值报价规则
 });
 
 let cityList = ref([]); // 城市列表
@@ -568,6 +578,16 @@ const rules = {
     // 如果Session ID有特定格式要求，可以在这里添加pattern验证
   ]
 };
+
+// 座位报价规则
+const isShowOfferFlag = computed(() => {
+  let app_name = formData.shadowLineName;
+  let offer_type = formData.offerType;
+  return (
+    ["ume_applet"].includes(GE_APP_INFO(app_name)?.app_type_code) &&
+    offer_type === "2"
+  );
+});
 
 // 排除城市列表
 const excludeCityList = computed(() => {
@@ -618,6 +638,7 @@ const resetForm = el => {
   formData.offerType = "1"; // 报价类型, 1-固定价 2-会员价加价 3-会员日报价
   formData.weekDay = []; // 启用星期
   formData.seatNum = ""; // 座位数
+  formData.memberPriceRule = ""; // 座位数
   formData.memberDay = ""; // 会员日
   formData.film_type = [];
   formData.remark = ""; // 备注
@@ -689,6 +710,7 @@ const open = async ruleInfo => {
         formData.quanValue = formInfo.quanValue;
         formData.weekDay = formInfo.weekDay; // 启用星期
         formData.seatNum = formInfo.seatNum; // 座位数
+        formData.memberPriceRule = formInfo.memberPriceRule;
         formData.memberDay = formInfo.memberDay; // 会员日
         formData.film_type = formInfo.film_type;
         formData.remark = formInfo.remark;
