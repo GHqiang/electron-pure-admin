@@ -862,12 +862,16 @@ class getSfcOfferPrice {
       let addAmountRuleList = otherRuleList.filter(
         item => item.offerType === "2" && item.addAmount
       );
-      let mixAddAmountRule = addAmountRuleList.sort(
+      let minAddAmountRule = addAmountRuleList.sort(
         (itemA, itemB) => itemA.addAmount - itemB.addAmount
       )?.[0];
-      if (mixAddAmountRule) {
+      if (minAddAmountRule) {
         // 计算会员报价
-        let memberPriceRes = await this.getMemberPrice(order, movieInfo);
+        let memberPriceRes = await this.getMemberPrice({
+          order,
+          movieData: movieInfo,
+          minAddAmountRule
+        });
         if (memberPriceRes === -1) {
           this.logList.push({
             opera_time: getCurrentTime(),
@@ -893,36 +897,36 @@ class getSfcOfferPrice {
           return mixFixedAmountRule;
         }
         // 真实会员价
-        mixAddAmountRule.real_member_price = memberPriceRes.real_member_price;
+        minAddAmountRule.real_member_price = memberPriceRes.real_member_price;
         // 最小折扣
-        mixAddAmountRule.member_discount = memberPriceRes.discount;
+        minAddAmountRule.member_discount = memberPriceRes.discount;
         // 会员成本价(真实会员价*折扣价)
-        mixAddAmountRule.memberCostPrice = memberPriceRes.member_price;
+        minAddAmountRule.memberCostPrice = memberPriceRes.member_price;
         // 会员成本价不为0.5的整数倍时进0.5
-        mixAddAmountRule.round_member_price = roundToHalf(
-          mixAddAmountRule.memberCostPrice
+        minAddAmountRule.round_member_price = roundToHalf(
+          minAddAmountRule.memberCostPrice
         );
         // 会员预计报价
-        mixAddAmountRule.memberOfferAmount =
-          mixAddAmountRule.round_member_price +
-          Number(mixAddAmountRule.addAmount);
+        minAddAmountRule.memberOfferAmount =
+          minAddAmountRule.round_member_price +
+          Number(minAddAmountRule.addAmount);
         this.logList.push({
           opera_time: getCurrentTime(),
           des: "会员报价最终信息",
           level: "info",
           info: {
             real_member_price:
-              "真实会员价：" + mixAddAmountRule.real_member_price,
-            member_discount: "会员最小折扣" + mixAddAmountRule.member_discount,
+              "真实会员价：" + minAddAmountRule.real_member_price,
+            member_discount: "会员最小折扣" + minAddAmountRule.member_discount,
             memberCostPrice:
               "会员成本价（真实会员价*折扣）：" +
-              mixAddAmountRule.memberCostPrice,
-            addAmount: "最小加价金额：" + mixAddAmountRule.addAmount,
+              minAddAmountRule.memberCostPrice,
+            addAmount: "最小加价金额：" + minAddAmountRule.addAmount,
             round_member_price:
               "会员成本价按0.5向上取整数倍：" +
-              mixAddAmountRule.round_member_price,
+              minAddAmountRule.round_member_price,
             memberOfferAmount:
-              "会员预计报价：" + mixAddAmountRule.memberOfferAmount
+              "会员预计报价：" + minAddAmountRule.memberOfferAmount
           }
         });
       } else {
@@ -943,12 +947,12 @@ class getSfcOfferPrice {
       if (!mixFixedAmountRule) {
         console.warn(
           conPrefix + "最小固定报价规则不存在，返回最小加价规则",
-          mixAddAmountRule
+          minAddAmountRule
         );
-        return mixAddAmountRule;
+        return minAddAmountRule;
       }
       if (
-        mixAddAmountRule.memberOfferAmount >=
+        minAddAmountRule.memberOfferAmount >=
         Number(mixFixedAmountRule.offerAmount)
       ) {
         this.logList.push({
@@ -956,7 +960,7 @@ class getSfcOfferPrice {
           des: "会员报价高于固定报价，返回最小固定报价规则",
           level: "info",
           info: {
-            memberOfferAmount: mixAddAmountRule.memberOfferAmount,
+            memberOfferAmount: minAddAmountRule.memberOfferAmount,
             fixedOfferAmount: mixFixedAmountRule.offerAmount
           }
         });
@@ -967,11 +971,11 @@ class getSfcOfferPrice {
           des: "会员报价低于固定报价，返回最小加价报价规则",
           level: "info",
           info: {
-            memberOfferAmount: mixAddAmountRule.memberOfferAmount,
+            memberOfferAmount: minAddAmountRule.memberOfferAmount,
             fixedOfferAmount: mixFixedAmountRule.offerAmount
           }
         });
-        return mixAddAmountRule;
+        return minAddAmountRule;
       }
     } catch (error) {
       console.error(conPrefix + "获取最低报价规则异常", error);
@@ -1196,7 +1200,7 @@ class getSfcOfferPrice {
   }
 
   // 获取会员价
-  async getMemberPrice(order, movieData) {
+  async getMemberPrice({ order, movieData, minAddAmountRule }) {
     const { conPrefix } = this;
     try {
       console.log(conPrefix + "准备获取会员价", order);
@@ -1244,74 +1248,29 @@ class getSfcOfferPrice {
           });
           return;
         }
+        let bigPrice, maxSeatPrice, mostSeatPrice;
         if (area_price?.length) {
           // 座位分区从高到低排序
           let areaList = area_price.sort((a, b) => b.price - a.price);
           // 默认取最高价
-          let bigPrice = areaList[0].price;
-          // try {
-          //   // 过滤出来未售座位然后计算分区剩余座位占比，0-未售
-          //   let seatList = seat_data.filter(item => item[2] === "0");
-          //   // 正常座位信息最后一位是座位分区id，相同点都是第9位是id
-          //   areaList = areaList.map(item => {
-          //     return {
-          //       ...item,
-          //       numRatio: Math.floor(
-          //         (seatList.filter(
-          //           itemA => itemA[itemA.length - 1] == item.area_id
-          //         ).length *
-          //           100) /
-          //           seatList.length
-          //       )
-          //     };
-          //   });
-          //   this.logList.push({
-          //     opera_time: getCurrentTime(),
-          //     des: "座位分区剩余座位情况",
-          //     level: "info",
-          //     info: {
-          //       areaList
-          //     }
-          //   });
-          //   // 有的座位比较特殊，这样可解决排除特殊座位
-          //   // 正常座位：第9位是座位id
-          //   // ["8544", "1", "0", "10", "35", "8排1号", "", "1210", "1"]
-          //   // 特殊座位：必须连着一起买，且最后一位不是id, 不过第9位和正常座位一样都是id
-          //   // ['8557', '5', '0', '11', '13', '9排8号', 'seats_11_13', '465', '195', '', '8558']
-          //   // ['8558', '5', '0', '11', '14', '9排7号', 'seats_11_13', '400', '195', '8557', '8559']
-          //   // ['8559', '5', '0', '11', '15', '9排6号', 'seats_11_13', '335', '195', '8558', '']
-
-          //   for (let index = 0; index < areaList.length; index++) {
-          //     const item = areaList[index];
-          //     if (item[0].numRatio == 0 && areaList[index + 1]?.price) {
-          //       bigPrice = areaList[index + 1].price;
-          //       break;
-          //     }
-          //   }
-          //   // 默认取最高价格，最高座位占比不足百分之3时取次最高价格
-          //   // if (areaList[0].numRatio <= 3 && areaList[1]?.price) {
-          //   //   bigPrice = areaList[1].price;
-          //   // }
-          //   // if (areaList[1].numRatio <= 3 && areaList[2]?.price) {
-          //   //   bigPrice = areaList[2].price;
-          //   // }
-          // } catch (error) {
-          //   this.logList.push({
-          //     opera_time: getCurrentTime(),
-          //     des: "座位分区剩余座位占比计算失败",
-          //     level: "info",
-          //     info: {
-          //       error
-          //     }
-          //   });
-          // }
-          console.error(
-            conPrefix + "座位类型区分，取最高的价格座位会员价格",
-            bigPrice
-          );
+          maxSeatPrice = areaList[0].price;
+          bigPrice = maxSeatPrice;
+          // 获取最多座位价格
+          mostSeatPrice = this.getMostSeatPrice(seat_data, areaList);
+          if (minAddAmountRule.memberPriceRule == "2") {
+            bigPrice = mostSeatPrice;
+            this.logList.push({
+              opera_time: getCurrentTime(),
+              des: "报价规则从最多座位价格获取会员价",
+              level: "info",
+              info: {
+                mostSeatPrice
+              }
+            });
+          }
           this.logList.push({
             opera_time: getCurrentTime(),
-            des: "取座位分区最高价和会员价的最大值当会员价",
+            des: "取座位价格和会员价的最大值当会员价",
             level: "info",
             info: {
               member_price,
@@ -1474,6 +1433,109 @@ class getSfcOfferPrice {
         opera_time: getCurrentTime(),
         des: "获取会员价异常",
         level: "error",
+        info: {
+          error
+        }
+      });
+    }
+  }
+
+  // 获取最多座位价格
+  getMostSeatPrice(seat_data, areaList) {
+    try {
+      // try {
+      //   // 过滤出来未售座位然后计算分区剩余座位占比，0-未售
+      //   let seatList = seat_data.filter(item => item[2] === "0");
+      //   // 正常座位信息最后一位是座位分区id，相同点都是第9位是id
+      //   areaList = areaList.map(item => {
+      //     return {
+      //       ...item,
+      //       numRatio: Math.floor(
+      //         (seatList.filter(
+      //           itemA => itemA[itemA.length - 1] == item.area_id
+      //         ).length *
+      //           100) /
+      //           seatList.length
+      //       )
+      //     };
+      //   });
+      //   this.logList.push({
+      //     opera_time: getCurrentTime(),
+      //     des: "座位分区剩余座位情况",
+      //     level: "info",
+      //     info: {
+      //       areaList
+      //     }
+      //   });
+      //   // 有的座位比较特殊，这样可解决排除特殊座位
+      //   // 正常座位：第9位是座位id
+      //   // ["8544", "1", "0", "10", "35", "8排1号", "", "1210", "1"]
+      //   // 特殊座位：必须连着一起买，且最后一位不是id, 不过第9位和正常座位一样都是id
+      //   // ['8557', '5', '0', '11', '13', '9排8号', 'seats_11_13', '465', '195', '', '8558']
+      //   // ['8558', '5', '0', '11', '14', '9排7号', 'seats_11_13', '400', '195', '8557', '8559']
+      //   // ['8559', '5', '0', '11', '15', '9排6号', 'seats_11_13', '335', '195', '8558', '']
+
+      //   for (let index = 0; index < areaList.length; index++) {
+      //     const item = areaList[index];
+      //     if (item[0].numRatio == 0 && areaList[index + 1]?.price) {
+      //       bigPrice = areaList[index + 1].price;
+      //       break;
+      //     }
+      //   }
+      //   // 默认取最高价格，最高座位占比不足百分之3时取次最高价格
+      //   // if (areaList[0].numRatio <= 3 && areaList[1]?.price) {
+      //   //   bigPrice = areaList[1].price;
+      //   // }
+      //   // if (areaList[1].numRatio <= 3 && areaList[2]?.price) {
+      //   //   bigPrice = areaList[2].price;
+      //   // }
+      // } catch (error) {
+      //   this.logList.push({
+      //     opera_time: getCurrentTime(),
+      //     des: "座位分区剩余座位占比计算失败",
+      //     level: "info",
+      //     info: {
+      //       error
+      //     }
+      //   });
+      // }
+      // 过滤出来未售座位然后计算分区剩余座位占比，0-未售
+      let seatList = seat_data.filter(item => item[2] == 0);
+
+      let areaRatioList = areaList.map(item => {
+        return {
+          ...item,
+          numRatio: Math.floor(
+            (seatList.filter(itemA => itemA[itemA.length - 1] == item.area_id)
+              .length *
+              100) /
+              seatList.length
+          )
+        };
+      });
+      areaRatioList.sort((a, b) => b.numRatio - a.numRatio);
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "座位分区剩余座位占比情况",
+        level: "info",
+        info: {
+          areaRatioList
+        }
+      });
+      let mostSeatPrice = areaRatioList[0]?.settlePrice;
+      return mostSeatPrice;
+      // // 默认取最高价格，最高座位占比不足百分之3时取次最高价格
+      // if (areaList[0].numRatio <= 3 && areaList[1]?.settlePrice) {
+      //   maxSeatPrice = areaList[1].settlePrice;
+      // }
+      // if (areaList[1].numRatio <= 3 && areaList[2]?.settlePrice) {
+      //   maxSeatPrice = areaList[2].settlePrice;
+      // }
+    } catch (error) {
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "座位分区剩余座位占比计算失败",
+        level: "info",
         info: {
           error
         }
