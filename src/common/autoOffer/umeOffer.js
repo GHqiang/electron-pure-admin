@@ -1635,24 +1635,12 @@ class getUmeOfferPrice {
       let maxSeatPrice, mostSeatPrice;
       if (areaInfoList?.length) {
         // 座位分区从高到低排序
-        let areaList = areaInfoList
-          .map(item => {
-            let priceInfo;
-            if (item.areaMemberPrice?.length) {
-              priceInfo = item.areaMemberPrice.sort(
-                (a, b) => b.settlePrice - a.settlePrice
-              )[0];
-            } else {
-              priceInfo = { settlePrice: item.areaSettlePrice || 0 };
-            }
-            return {
-              ...item,
-              ...priceInfo
-            };
-          })
-          .sort((a, b) => b.settlePrice - a.settlePrice);
+        let areaList = areaInfoList.sort(
+          (a, b) =>
+            b.price + Number(b.areaServiceFee) - a.price - a.areaServiceFee
+        );
         // 复制座位分区最高价
-        maxSeatPrice = areaList[0].settlePrice;
+        maxSeatPrice = areaList[0].price + Number(areaList[0].areaServiceFee);
         // 获取最多座位价格
         mostSeatPrice = this.getMostSeatPrice(seat_data, areaList);
       }
@@ -1701,7 +1689,8 @@ class getUmeOfferPrice {
           areaRatioList
         }
       });
-      let mostSeatPrice = areaRatioList[0]?.settlePrice;
+      let mostSeatPrice =
+        areaRatioList[0].price + Number(areaRatioList[0].areaServiceFee);
       return mostSeatPrice;
       // // 默认取最高价格，最高座位占比不足百分之3时取次最高价格
       // if (areaList[0].numRatio <= 3 && areaList[1]?.settlePrice) {
