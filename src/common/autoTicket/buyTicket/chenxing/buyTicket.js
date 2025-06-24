@@ -397,14 +397,14 @@ export default class BuyTicket {
           });
         }
         // yaolai绑券逻辑不一样，暂不处理
-        if (offerRule.is_store == "1" && useQuan.length - ticket_num < 15) {
-          this.logger.infoSave("本次出票后券小于15，开始异步绑定券");
+        if (offerRule.is_store == "1" && useQuan.length - ticket_num < 10) {
+          this.logger.infoSave("本次出票后券小于10，开始异步绑定券");
           this.cardQuanManage.getNewQuan({
             cinemaCode,
             cinemaId,
             quanValue: offerRule.quan_value,
             black_quans: offerRule.black_quans,
-            quanNum: 15 - (useQuan.length - Number(ticket_num)),
+            quanNum: 10 - (useQuan.length - Number(ticket_num)),
             session_id: this.currentSessionId,
             asyncFlag: 1
           });

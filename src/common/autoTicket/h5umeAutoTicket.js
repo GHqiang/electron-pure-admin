@@ -1604,17 +1604,17 @@ class OrderAutoTicketQueue {
         } else {
           payAmount = 0;
         }
-        if (offerRule.is_store == "1" && quanList.length - ticket_num < 15) {
+        if (offerRule.is_store == "1" && quanList.length - ticket_num < 10) {
           this.logList.push({
             opera_time: getCurrentTime(),
-            des: "本次出票后券小于15，开始异步绑定券",
+            des: "本次出票后券小于10，开始异步绑定券",
             level: "info"
           });
           this.getNewQuan({
             cinemaLinkId,
             quanValue: offerRule.quan_value,
             black_quans: offerRule.black_quans,
-            quanNum: 15 - (quanList.length - Number(ticket_num)),
+            quanNum: 10 - (quanList.length - Number(ticket_num)),
             session_id:
               this.currentParamsList[this.currentParamsInx].session_id,
             asyncFlag: 1,
