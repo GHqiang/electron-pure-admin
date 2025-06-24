@@ -950,4 +950,55 @@ export default class CardQuanManage {
       });
     }
   }
+
+  // 获取影院券类型列表
+  async getSortPhoneByQuanTypeList(app_name, quan_flag, ticket_num) {
+    const params = {
+      app_name,
+      isNeedTotalNum: 0,
+      queryFields: "id,app_name,quan_value,quan_flag,black_quans,quanStockList"
+    };
+    try {
+      let quanTypeRes = await svApi.queryQuanTypeList(params);
+      let quanTypeList = quanTypeRes?.data?.quanTypeList || [];
+      let targetQuanInfo = quanTypeList.find(
+        item => item.quan_flag == quan_flag
+      );
+      this.logger.infoSave("获取影院目标券信息返回", {
+        targetQuanInfo,
+        quan_flag
+      });
+
+      let quanStockList = targetQuanInfo?.quanStockList;
+      if (quanStockList) {
+        quanStockList = JSON.parse(quanStockList);
+        quanStockList = quanStockList.map(itemA => ({
+          ...itemA,
+          quan_stock: itemA.quan_stock || 0
+        }));
+        console.log("quanStockList", quanStockList);
+        let useMobileList = getCinemaLoginInfoList()
+          .filter(
+            item => item.app_name === app_name && item.mobile && item.session_id
+          )
+          .map(item => item.mobile);
+        console.log("useMobileList", useMobileList);
+        quanStockList = quanStockList.filter(
+          itemA =>
+            useMobileList.includes(itemA.phone) &&
+            itemA.quan_stock >= ticket_num
+        );
+        let sortMobileList = quanStockList.map(item => item.phone);
+        console.log("sortMobileList", sortMobileList);
+        this.logger.infoSave("获取排序手机列表返回", {
+          sortMobileList,
+          useMobileList,
+          ticket_num
+        });
+        return sortMobileList;
+      }
+    } catch (error) {
+      console.error("根据影院获取券类型列表返回异常", error);
+    }
+  }
 }

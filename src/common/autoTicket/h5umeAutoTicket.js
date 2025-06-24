@@ -995,17 +995,23 @@ class OrderAutoTicketQueue {
           } else {
             const sortMobileList = await this.getSortPhoneByQuanTypeList(
               appFlag,
-              offerRule?.quan_flag
+              offerRule?.quan_flag,
+              ticket_num
             );
             if (sortMobileList?.length) {
               this.currentParamsList = this.currentParamsList.sort((a, b) => {
+                // 获取 a.mobile 在 sortMobileList 中的索引（不存在则返回 -1）
                 const indexA = sortMobileList.indexOf(a.mobile);
+                // 获取 b.mobile 在 sortMobileList 中的索引
                 const indexB = sortMobileList.indexOf(b.mobile);
 
-                // 1. 先按 phoneOrder 排序
-                if (indexA !== indexB) {
-                  return indexA - indexB;
-                }
+                // 规则1：a存在且b不存在 → a排前面
+                if (indexA !== -1 && indexB === -1) return -1;
+
+                // 规则2：a不存在且b存在 → b排前面
+                if (indexA === -1 && indexB !== -1) return 1;
+
+                // 其他情况：保持原顺序
                 return 0;
               });
               this.logList.push({
@@ -3636,7 +3642,7 @@ class OrderAutoTicketQueue {
   }
 
   // 获取影院券类型列表
-  async getSortPhoneByQuanTypeList(app_name, quan_flag) {
+  async getSortPhoneByQuanTypeList(app_name, quan_flag, ticket_num) {
     const params = {
       app_name,
       isNeedTotalNum: 0,
@@ -3671,10 +3677,11 @@ class OrderAutoTicketQueue {
           )
           .map(item => item.mobile);
         console.log("useMobileList", useMobileList);
-        quanStockList = quanStockList.filter(itemA =>
-          useMobileList.includes(itemA.phone)
+        quanStockList = quanStockList.filter(
+          itemA =>
+            useMobileList.includes(itemA.phone) &&
+            itemA.quan_stock >= ticket_num
         );
-        quanStockList.sort((a, b) => +b.quan_stock - +a.quan_stock);
         let sortMobileList = quanStockList.map(item => item.phone);
         console.log("sortMobileList", sortMobileList);
         this.logList.push({
@@ -3683,7 +3690,8 @@ class OrderAutoTicketQueue {
           level: "info",
           info: {
             sortMobileList,
-            useMobileList
+            useMobileList,
+            ticket_num
           }
         });
         return sortMobileList;

@@ -209,34 +209,63 @@ export default class CinemaManage {
   async cinemaLinkCardHandle(cinemaInfo) {
     const { ticket_num } = this.order;
     try {
-      if (cinemaInfo.cinemaCode && this.offerRule.offer_type != 1) {
-        const usableCards = await this.getUsableCardList(
-          cinemaInfo.cinemaCode,
-          ticket_num
-        );
-        if (usableCards?.length) {
-          cinemaInfo.usableCardList = usableCards; // 赋值可用卡列表
-          let cardLinkMobile = usableCards.map(item => item.mobile);
-          // 根据可用卡调整登录信息顺序
-          this.currentParamsList = this.currentParamsList.sort((a, b) => {
-            if (
-              cardLinkMobile.includes(a.mobile) &&
-              !cardLinkMobile.includes(b.mobile)
-            ) {
-              return -1; // a靠前
-            }
-            if (
-              !cardLinkMobile.includes(a.mobile) &&
-              cardLinkMobile.includes(b.mobile)
-            ) {
-              return 1;
-            }
-            return 0;
+      if (cinemaInfo.cinemaCode) {
+        if (this.offerRule.offer_type != 1) {
+          const usableCards = await this.getUsableCardList(
+            cinemaInfo.cinemaCode,
+            ticket_num
+          );
+          if (usableCards?.length) {
+            cinemaInfo.usableCardList = usableCards; // 赋值可用卡列表
+            let cardLinkMobile = usableCards.map(item => item.mobile);
+            // 根据可用卡调整登录信息顺序
+            this.currentParamsList = this.currentParamsList.sort((a, b) => {
+              if (
+                cardLinkMobile.includes(a.mobile) &&
+                !cardLinkMobile.includes(b.mobile)
+              ) {
+                return -1; // a靠前
+              }
+              if (
+                !cardLinkMobile.includes(a.mobile) &&
+                cardLinkMobile.includes(b.mobile)
+              ) {
+                return 1;
+              }
+              return 0;
+            });
+          }
+          this.logger.infoSave("登录信息按照可用卡列表排序后", {
+            currentParamsList: this.currentParamsList
           });
+        } else {
+          const sortMobileList = await this.getSortPhoneByQuanTypeList(
+            this.appFlag,
+            this.offerRule?.quan_flag,
+            ticket_num
+          );
+          if (sortMobileList?.length) {
+            this.currentParamsList = this.currentParamsList.sort((a, b) => {
+              // 获取 a.mobile 在 sortMobileList 中的索引（不存在则返回 -1）
+              const indexA = sortMobileList.indexOf(a.mobile);
+              // 获取 b.mobile 在 sortMobileList 中的索引
+              const indexB = sortMobileList.indexOf(b.mobile);
+
+              // 规则1：a存在且b不存在 → a排前面
+              if (indexA !== -1 && indexB === -1) return -1;
+
+              // 规则2：a不存在且b存在 → b排前面
+              if (indexA === -1 && indexB !== -1) return 1;
+
+              // 其他情况：保持原顺序
+              return 0;
+            });
+            this.logger.infoSave("登录信息按照可用券数量关联手机号排序后", {
+              currentParamsList: this.currentParamsList,
+              sortMobileList
+            });
+          }
         }
-        this.logger.infoSave("登录信息按照可用卡列表排序后", {
-          currentParamsList: this.currentParamsList
-        });
       }
     } catch (error) {
       this.logger.errorSave("影院指定卡相关处理异常", formatErrInfo(error));
