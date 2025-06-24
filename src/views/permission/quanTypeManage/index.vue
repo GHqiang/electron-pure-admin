@@ -124,6 +124,7 @@
                 <el-select
                   v-model="quan_value"
                   placeholder="券类型"
+                  filterable
                   style="width: 150px; vertical-align: middle"
                 >
                   <el-option
@@ -146,6 +147,7 @@
                   v-model="exportQuanValue"
                   style="width: 150px"
                   placeholder="券类型"
+                  filterable
                 >
                   <el-option
                     v-for="(item, index) in quanType"
@@ -1002,7 +1004,7 @@ const getQuanTypeList = async () => {
   try {
     const params = {
       page_num: 1,
-      page_size: 500
+      page_size: 1000
     };
     const res = await svApi.queryQuanTypeList(params);
     let quanTypeList = res.data.quanTypeList || [];

@@ -81,6 +81,7 @@
           placeholder="用券类型"
           style="width: 194px"
           clearable
+          filterable
         >
           <el-option
             v-for="(item, index) in quanType"
@@ -470,7 +471,7 @@ const getQuanTypeList = async () => {
   try {
     const params = {
       page_num: 1,
-      page_size: 100
+      page_size: 1000
     };
     const res = await svApi.queryQuanTypeList(params);
     let quanTypeList = res.data.quanTypeList || [];
