@@ -2028,8 +2028,7 @@ class OrderAutoTicketQueue {
             }
           }
           if (offerRule.quan_value.split(",").length > 1) {
-            offerRule.quan_value =
-              offerRule.quan_value.split(",")[0].quan_value;
+            offerRule.quan_value = offerRule.quan_value.split(",")[0];
             this.logList.push({
               opera_time: getCurrentTime(),
               des: "券类型容错处理：强制取第一个",
