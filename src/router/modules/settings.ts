@@ -17,35 +17,11 @@ export default {
       }
     },
     {
-      path: "/set/offerRule",
-      name: "offerRule",
-      component: () => import("@/views/offerRule/index.vue"),
-      meta: {
-        title: "报价规则"
-      }
-    },
-    // {
-    //   path: "/set/appLogin",
-    //   name: "appLogin",
-    //   component: () => import("@/views/appLogin/index.vue"),
-    //   meta: {
-    //     title: "影院登录"
-    //   }
-    // },
-    {
       path: "/set/loginList",
       name: "loginList",
       component: () => import("@/views/appLogin/appLoginSet.vue"),
       meta: {
         title: "影院登录"
-      }
-    },
-    {
-      path: "/permission/cinemaCodeMatch/index",
-      name: "CinemaCodeMatch",
-      component: () => import("@/views/permission/cinemaCodeMatch/index.vue"),
-      meta: {
-        title: "影院映射"
       }
     },
     {
@@ -64,6 +40,42 @@ export default {
         title: "券类型列表"
       }
     },
+    {
+      path: "/set/offerRule",
+      name: "offerRule",
+      component: () => import("@/views/offerRule/index.vue"),
+      meta: {
+        title: "报价规则"
+      }
+    },
+    {
+      path: "/set/queueManage",
+      name: "queueManage",
+      component: () => import("@/views/queueManage/index.vue"),
+      meta: {
+        title: "队列管理",
+        fixedTag: true,
+        keepAlive: true
+      }
+    },
+    // {
+    //   path: "/set/appLogin",
+    //   name: "appLogin",
+    //   component: () => import("@/views/appLogin/index.vue"),
+    //   meta: {
+    //     title: "影院登录"
+    //   }
+    // },
+
+    {
+      path: "/permission/cinemaCodeMatch/index",
+      name: "CinemaCodeMatch",
+      component: () => import("@/views/permission/cinemaCodeMatch/index.vue"),
+      meta: {
+        title: "影院映射"
+      }
+    },
+
     // {
     //   path: "/permission/cinemaRecord/index",
     //   name: "CinemaRecord",
@@ -82,16 +94,7 @@ export default {
         keepAlive: true
       }
     },
-    {
-      path: "/set/queueManage",
-      name: "queueManage",
-      component: () => import("@/views/queueManage/index.vue"),
-      meta: {
-        title: "队列管理",
-        fixedTag: true,
-        keepAlive: true
-      }
-    },
+
     {
       path: "/set/offerRecord",
       name: "offerRecord",
