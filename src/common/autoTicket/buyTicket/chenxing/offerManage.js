@@ -796,7 +796,9 @@ class getChenxingOfferPrice {
   }
   // 获取电影信息
   async getMovieInfo() {
-    const buyTicketInfo = await this.cinemaManage.getBuyPrevCinemaInfo(1);
+    const buyTicketInfo = await this.cinemaManage.getBuyPrevCinemaInfo({
+      flag: 1
+    });
     const { targetShow, cinemaCode, cinemaId, filmId } = buyTicketInfo || {};
     return buyTicketInfo
       ? { ...(targetShow || {}), cinemaCode, cinemaId, filmId }

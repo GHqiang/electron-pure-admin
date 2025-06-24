@@ -178,6 +178,7 @@ export default class BuyTicket {
     if (!rewards || Number(rewards) == 0) {
       rewards = this.offerRule?.rewards || 0;
     }
+    this.cardQuanManage = new CardQuanManage(this.order, this.logger); // 卡券管理模块
     try {
       if (this.currentParamsInx === 0) {
         // 影院信息模块（获取购票前相关信息）
@@ -189,7 +190,9 @@ export default class BuyTicket {
         );
 
         // 1、获取购票前的影院信息
-        buyTicketInfo = await this.cinemaManage.getBuyPrevCinemaInfo();
+        buyTicketInfo = await this.cinemaManage.getBuyPrevCinemaInfo({
+          cardQuanManage: this.cardQuanManage
+        });
         if (!buyTicketInfo) {
           this.logger.infoSave("获取购票前的影院信息失败");
           return await this.orderManage.transferOrder();
@@ -287,7 +290,6 @@ export default class BuyTicket {
       const { lockOrderId } = buyTicketInfo;
       // orderDate = lockRes.autoUnlockDatetime;
       // 4、使用优惠券或者会员卡（仅判断是否有可用卡及券）
-      this.cardQuanManage = new CardQuanManage(this.order, this.logger); // 卡券管理模块
 
       let { standardPrice: basePrice, serviceAddFee } = targetShow;
       this.logger.warn("会员价及手续费", { basePrice, serviceAddFee });

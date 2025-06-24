@@ -27,7 +27,7 @@ export default class CinemaManage {
   }
 
   // 获取购票前的影院信息（核心方法）// 1-报价 默认出票
-  async getBuyPrevCinemaInfo(flag) {
+  async getBuyPrevCinemaInfo({ flag, cardQuanManage }) {
     try {
       const { appFlag } = this;
       const { city_name, cinema_code, cinema_name, film_name, show_time } =
@@ -73,7 +73,7 @@ export default class CinemaManage {
       // 4、拿到影院code进行影院指定卡相关处理(获取可用卡列表，根据可用卡调整登录信息顺序)
       if (flag != 1) {
         // 出票调用时才需要这样处理
-        await this.cinemaLinkCardHandle(cinemaInfo);
+        await this.cinemaLinkCardHandle(cinemaInfo, cardQuanManage);
         cinemaInfo.currentParamsList = this.currentParamsList;
       }
 
@@ -206,7 +206,7 @@ export default class CinemaManage {
   }
 
   // 影院指定卡相关处理(根据可用卡调整登录信息顺序)
-  async cinemaLinkCardHandle(cinemaInfo) {
+  async cinemaLinkCardHandle(cinemaInfo, cardQuanManage) {
     const { ticket_num } = this.order;
     try {
       if (cinemaInfo.cinemaCode) {
@@ -239,11 +239,12 @@ export default class CinemaManage {
             currentParamsList: this.currentParamsList
           });
         } else {
-          const sortMobileList = await this.getSortPhoneByQuanTypeList(
-            this.appFlag,
-            this.offerRule?.quan_flag,
-            ticket_num
-          );
+          const sortMobileList =
+            await cardQuanManage.getSortPhoneByQuanTypeList(
+              this.appFlag,
+              this.offerRule?.quan_flag,
+              ticket_num
+            );
           if (sortMobileList?.length) {
             this.currentParamsList = this.currentParamsList.sort((a, b) => {
               // 获取 a.mobile 在 sortMobileList 中的索引（不存在则返回 -1）
