@@ -319,7 +319,7 @@ class getChenxingOfferPrice {
 
   // 格式化最终价格
   formatFinalPrice(price, plat_name) {
-    if (["sheng", "mayi", "yangcong"].includes(plat_name)) {
+    if (["mayi", "yangcong"].includes(plat_name)) {
       return Math.round(price); // 四舍五入取整
     }
     return price;
@@ -346,7 +346,7 @@ class getChenxingOfferPrice {
 
   // 调整至平台限价
   adjustToMaxPrice(price, supplier_max_price) {
-    if (["sheng", "mayi", "yangcong"].includes(this.plat_name)) {
+    if (["mayi", "yangcong"].includes(this.plat_name)) {
       price = Math.floor(supplier_max_price);
     } else {
       price = roundToHalf(supplier_max_price, -1);

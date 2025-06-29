@@ -951,7 +951,7 @@ class getUmeOfferPrice {
       // 规则报价
       let rule_price = price;
       // 省、蚂蚁最后报价要求整数
-      if (["sheng", "mayi", "yangcong"].includes(plat_name)) {
+      if (["mayi", "yangcong"].includes(plat_name)) {
         price = Math.round(price);
         this.logList.push({
           opera_time: getCurrentTime(),
@@ -971,7 +971,7 @@ class getUmeOfferPrice {
           return;
         }
         // 券或者卡开了超限报价调整规则报价为平台限价
-        if (["sheng", "mayi", "yangcong"].includes(plat_name)) {
+        if (["mayi", "yangcong"].includes(plat_name)) {
           price = Math.floor(supplier_max_price);
         } else {
           // 向下取0.5的倍数
