@@ -101,11 +101,12 @@ export const appUserInfo = defineStore("appUserInfo", {
       shth: null,
       qina: null
     },
-    loginInfoList: []
+    loginInfoList: [],
+    allLoginInfoList: []
   }),
   getters: {},
   actions: {
-    // 设置sfc用户信息
+    // 设置全部登录信息不含小号
     setLoginInfoList(list) {
       // 全都放开允许换号
       // let userInfo = window.localStorage.getItem("userInfo");
@@ -123,6 +124,14 @@ export const appUserInfo = defineStore("appUserInfo", {
       console.warn(`设置影院登录信息`, list);
       this.loginInfoList = list;
       window.localStorage.setItem("loginInfoList", JSON.stringify(list));
+    },
+    // 设置全部登录信息含小号
+    setAllLoginInfoList(list) {
+      console.warn(`设置影院全部登录信息`, list);
+      this.allLoginInfoList = list;
+    },
+    getAllLoginInfoList: state => {
+      return state.allLoginInfoList;
     },
     // 设置sfc用户信息
     setSfcUserInfo({ appName, userInfo }) {

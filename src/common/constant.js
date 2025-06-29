@@ -1,6 +1,9 @@
 import { useCinemaList } from "@/store/cinemaList.js";
 const cinemaStore = useCinemaList();
 
+import { appUserInfo } from "@/store/appUserInfo.js";
+const appInfoStore = appUserInfo();
+
 // 订单来源枚举，即平台
 const ORDER_FORM = {
   lieren: "猎人",
@@ -100,6 +103,8 @@ const GE_APP_INFO = app_name =>
 const GET_APP_TYPE_LIST = () => cinemaStore.getCanAppTypeList;
 // 全部影线类型
 const GET_ALL_APP_TYPE_LIST = () => cinemaStore.getAllAppTypeList;
+// 全部登录信息
+const GET_ALL_APP_LOGIN_LIST = () => appInfoStore.getAllLoginInfoList;
 
 // 影线类型集合
 const APP_TYPE_OBJ = {
@@ -281,6 +286,7 @@ export {
   GET_APP_TYPE_LIST,
   GET_ALL_APP_TYPE_LIST,
   GE_APP_INFO,
+  GET_ALL_APP_LOGIN_LIST,
   APP_TYPE_OBJ,
   LIERENR_REWARDS,
   GROUP_LIST,

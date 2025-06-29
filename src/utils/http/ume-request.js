@@ -2,12 +2,13 @@
 
 import axios from "axios";
 import { ElMessage } from "element-plus";
-import { GET_APP_LIST } from "@/common/constant";
+import { GET_APP_LIST, GET_ALL_APP_LOGIN_LIST } from "@/common/constant";
 
 import {
   logUpload,
   getCurrentTime,
   getCinemaLoginInfoList,
+  sendWxPusherMessage,
   mockDelay
 } from "@/utils/utils";
 // 机器登录用户信息
@@ -73,6 +74,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         }
         if (token) {
           config.headers.Certificate = `${token}`;
+          config.session_id = token;
         }
         if (!IS_DEV) {
           // 截取掉/ume/
@@ -131,6 +133,22 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         let errMsg =
           GET_APP_LIST()[app_name] + (data.message || data.msg || "请求失败");
         ElMessage.error(errMsg);
+        if (data.msg?.includes("登录信息已失效，请重新登录")) {
+          // 推送登录信息
+          let session_id = response?.config?.session_id;
+          let targetLoginList = GET_ALL_APP_LOGIN_LIST().filter(
+            item => item.app_name === app_name && item.mobile && item.session_id
+          );
+          let phone = targetLoginList.find(
+            item => item.session_id == session_id
+          )?.mobile;
+          sendWxPusherMessage({
+            msgType: 1,
+            app_name: GET_APP_LIST()[app_name],
+            expirePhone: phone,
+            transferTip: `${GET_APP_LIST()[app_name]}登录失效，请检查登录信息维护`
+          });
+        }
         return Promise.reject(data);
       }
       return data;

@@ -334,19 +334,20 @@ const setLocalLoginList = async () => {
   const loginRes = await svApi.queryLoginList({ rule });
   // console.log("ruleRes", ruleRes);
   let loginRecords = loginRes.data.loginList || [];
-  loginRecords = loginRecords
-    .map(item => ({
-      app_name: item.app_name,
-      mobile: item.mobile,
-      session_id: item.session_id,
-      tid: item.tid,
-      member_pwd: item.member_pwd,
-      first: item.first,
-      is_xiaohao: item.is_xiaohao,
-      link_user_id: item.link_user_id
-    }))
-    .filter(item => item.is_xiaohao != 1);
-  userInfoAndTokens.setLoginInfoList(loginRecords);
+  loginRecords = loginRecords.map(item => ({
+    app_name: item.app_name,
+    mobile: item.mobile,
+    session_id: item.session_id,
+    tid: item.tid,
+    member_pwd: item.member_pwd,
+    first: item.first,
+    is_xiaohao: item.is_xiaohao,
+    link_user_id: item.link_user_id
+  }));
+  userInfoAndTokens.setLoginInfoList(
+    loginRecords.filter(item => item.is_xiaohao != 1)
+  );
+  userInfoAndTokens.setAllLoginInfoList(loginRecords);
 };
 
 // 格式化支持用户
