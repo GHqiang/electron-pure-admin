@@ -225,7 +225,7 @@ class OrderAutoLockSeatQueue {
           const cancelRes = await this.cannelOneOrderByUme({
             cinemaCode,
             cinemaLinkId,
-            orderHeaderId, // 该字段不传就是取消最近一次的未支付订单
+            orderHeaderId: undefined, // 该字段不传就是取消最近一次的未支付订单
             app_name,
             session_id
           });

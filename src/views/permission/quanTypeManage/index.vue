@@ -987,7 +987,7 @@ const getUnUseQuanHandle = async () => {
   try {
     let params = {
       quan_status: "3",
-      queryFields: "app_name,coupon_num,quan_value,create_time,use_time"
+      queryFields: "id,app_name,coupon_num,quan_value,create_time,use_time"
     };
     let quanRes = await svApi.queryQuanList(params);
     let quanList = quanRes?.data?.quanList || [];
