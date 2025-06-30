@@ -3,6 +3,7 @@ import ExcelJS from "exceljs";
 import * as XLSX from "xlsx";
 import axios from "axios";
 import * as CryptoJS from "crypto-js";
+import QRCode from "qrcode";
 import svApi from "@/api/sv-api";
 import {
   GET_UME_LIST,
@@ -1694,6 +1695,201 @@ const isNextDayBySfc = (show_date, start_time) => {
     r = (new Date(i).getTime(), parseInt(start_time.split(":")[0]));
   return r >= 0 && r <= 5;
 };
+
+// 获取日期
+function classifyDate(inputStr) {
+  // 解析输入日期
+  const inputDate = new Date(inputStr.replace(" ", "T"));
+
+  // 验证日期有效性
+  if (isNaN(inputDate.getTime())) {
+    return null;
+  }
+
+  // 获取当前日期的午夜时间
+  const today = new Date();
+  const todayMidnight = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate()
+  );
+
+  // 获取输入日期的午夜时间
+  const inputMidnight = new Date(
+    inputDate.getFullYear(),
+    inputDate.getMonth(),
+    inputDate.getDate()
+  );
+
+  // 计算天数差
+  const diffTime = inputMidnight.getTime() - todayMidnight.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  // 判断返回结果
+  switch (diffDays) {
+    case 0:
+      return "今天";
+    case 1:
+      return "明天";
+    case 2:
+      return "后天";
+    default:
+      return null;
+  }
+}
+// 绘制虚线
+let drawDashedLine = (ctx, x1, y1, x2, y2, color) => {
+  ctx.setLineDash([5, 3]);
+  ctx.strokeStyle = color || "#e0e0e0";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+};
+
+// 生成电影票图片
+let generateTicketImage = async ticketInfo => {
+  const {
+    filmName = "名侦探柯南:独眼的残像",
+    cinemaName = "天娱广场天河电影城",
+    showTime = "2025-06-30 20:25",
+    hallName = "3号RGB激光厅(原声2D)",
+    lockseat = "6排10座 6排9座",
+    qrCode = "28893557698111824"
+  } = ticketInfo || {};
+  const canvas = document.createElement("canvas");
+  const width = 315;
+  const height = 560;
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  // 清除画布并绘制白色背景
+  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, width, height);
+  // 绘制顶部装饰线（虚线）
+  drawDashedLine(ctx, 0, 17, width, 17, "#1890ff");
+  // 设置文本左对齐
+  ctx.textAlign = "left";
+  // 绘制电影名称
+  ctx.fillStyle = "#1A237E";
+  ctx.font = '24px "PingFang SC", "Microsoft YaHei", sans-serif';
+  const filmNameX = 15;
+  const filmNameY = 50; // 在装饰线下方
+  ctx.fillText(filmName, filmNameX, filmNameY);
+
+  // 绘制影院名称
+  ctx.fillStyle = "#2196F3";
+  ctx.font = '18px "PingFang SC", "Microsoft YaHei", sans-serif';
+  const cinemaY = filmNameY + 35; // 电影名称下方40像素
+  ctx.fillText(cinemaName, filmNameX, cinemaY);
+  // 绘制放映时间
+  let yPos = cinemaY + 20; // 影院名称下方40像素
+
+  // 绘制"今天"标签
+  const dayText = classifyDate(showTime);
+  if (dayText) {
+    // ctx.fillStyle = "#4FC3F7";
+    // ctx.fillRect(filmNameX, yPos, 50, 30); // 使用filmNameX保持左对齐
+    // ctx.fillStyle = "#ffffff";
+    // ctx.font = 'bold 16px "PingFang SC", "Microsoft YaHei", sans-serif';
+    // ctx.textAlign = "center";
+    // // 注意：这里x坐标是标签中心，y坐标是文字基线
+    // ctx.fillText(dayText, filmNameX + 25, yPos + 20);
+    // 绘制"今天"标签
+    const labelWidth = 50;
+    const labelHeight = 30;
+    const cornerRadius = 5; // 圆角半径
+    ctx.fillStyle = "#4FC3F7";
+    // 使用roundRect绘制圆角矩形
+    ctx.beginPath();
+    ctx.roundRect(filmNameX, yPos, labelWidth, labelHeight, cornerRadius);
+    ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.font = 'bold 16px "PingFang SC", "Microsoft YaHei", sans-serif';
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle"; // 垂直居中，这样我们只需要计算垂直中心位置
+    // 文字位置：水平居中在标签内，垂直居中
+    ctx.fillText(dayText, filmNameX + labelWidth / 2, yPos + 18);
+  }
+
+  // 时间文字（左对齐，在标签右侧）
+  ctx.fillStyle = "#333333";
+  ctx.font = '17px "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.textAlign = "left";
+  ctx.fillText(showTime.replace(/-/g, "/"), filmNameX + 60, yPos + 18);
+
+  // 绘制影厅信息
+  yPos += 60;
+  ctx.fillStyle = "#333333";
+  ctx.font = '16px "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.fillText(hallName, filmNameX, yPos);
+
+  // 绘制座位信息
+  yPos += 25;
+  ctx.textAlign = "center";
+  ctx.font = '18px "PingFang SC", "Microsoft YaHei", sans-serif';
+  const seats = lockseat.split(" ");
+  const seatWidth = 90;
+  const totalWidth = seats.length * seatWidth + (seats.length - 1) * 20;
+  let xStart = (width - totalWidth) / 2;
+  seats.forEach((seat, index) => {
+    ctx.fillStyle = "#E3F2FD";
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(xStart, yPos, seatWidth, 40, 8);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#6594CC";
+    ctx.fillText(seat, xStart + seatWidth / 2, yPos + 22);
+    xStart += seatWidth + 20;
+  });
+
+  // 绘制取票码和状态
+  yPos += 50;
+  ctx.fillStyle = "#333333";
+  ctx.font = '15px "PingFang SC", "Microsoft YaHei", sans-serif';
+  ctx.textAlign = "left";
+  ctx.fillText("取票码：", filmNameX, yPos + 20);
+  ctx.fillText(qrCode, filmNameX + 60, yPos + 20);
+  ctx.fillStyle = "#13ce66";
+  ctx.fillText("已出票", width - 60, yPos + 20);
+  // 绘制分隔线
+  yPos += 40;
+  drawDashedLine(ctx, filmNameX, yPos, width - filmNameX, yPos, "#e0e0e0");
+  // 生成二维码
+  try {
+    const qrSize = 200;
+    const qrTop = yPos + 20; // 分隔线下方20像素
+    const qrCanvas = document.createElement("canvas");
+    await QRCode.toCanvas(qrCanvas, qrCode, {
+      width: qrSize,
+      margin: 0,
+      color: {
+        dark: "#000000",
+        light: "#ffffff"
+      }
+    });
+    // 居中绘制二维码
+    ctx.drawImage(qrCanvas, (width - qrSize) / 2, qrTop, qrSize, qrSize);
+    // 绘制票数信息
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#1890ff";
+    ctx.font = '18px "PingFang SC", "Microsoft YaHei", sans-serif';
+    ctx.fillText(`${seats.length}张票`, width / 2, qrTop + qrSize + 30);
+    const imgInfo = canvas.toDataURL("image/png");
+    console.log("imgInfo", imgInfo);
+    return imgInfo;
+  } catch (error) {
+    console.error("生成二维码失败:", error);
+    return null;
+  }
+};
+
+window.generateTicketImage = generateTicketImage;
 export {
   isNextDayBySfc, // 判断sfc是否是次日
   findMostRepeatedChars, // 找出重复字符及数量
