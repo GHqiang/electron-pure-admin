@@ -390,7 +390,6 @@ export default class BuyTicket {
       if (offer_type === "1") {
         if (offerRule.quan_fee > 0) {
           this.logger.infoSave("券补钱总价计算相关信息", {
-            total_price,
             quan_fee: offerRule.quan_fee,
             paymentAmount,
             ticket_num

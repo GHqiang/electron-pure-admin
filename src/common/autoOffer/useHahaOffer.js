@@ -50,7 +50,7 @@ class OrderAutoOfferQueue {
   }
 
   // 处理新订单
-  handleNewOrder(item) {
+  handleNewOrder(item, oldOrder) {
     console.warn(this.conPrefix + "新的待报价订单", item);
     this.handledOrders.set(item.order_number, 1);
 
@@ -67,7 +67,8 @@ class OrderAutoOfferQueue {
         des: "哈哈新的待报价订单",
         level: "info",
         info: {
-          newOrder: item
+          newOrder: item,
+          oldOrder
         }
       }
     ];
@@ -81,7 +82,7 @@ class OrderAutoOfferQueue {
       logList
     );
     this.insertOrderIntoQueue(item);
-    if (!this.isOfferRunning) {
+    if (!this.isOfferRunning && this.isRunning) {
       this.startProcessingQueue();
     }
   }
@@ -110,14 +111,13 @@ class OrderAutoOfferQueue {
       const order = this.queue.shift(); // 取出队列首部订单并从队列里去掉
       if (order) {
         // 处理订单
-        const offerResult = await this.orderHandle(order);
+        this.orderHandle(order);
         // offerResult：{ res, offerRule } || { offerRule, err_msg, err_info } || undefined
         // 添加订单处理记录
-        await this.addOrderHandleRecored(order, offerResult);
-        console.warn(
-          conPrefix + `单个订单自动报价${offerResult?.res ? "成功" : "失败"}`,
-          order
-        );
+        // console.warn(
+        //   conPrefix + `单个订单自动报价${offerResult?.res ? "成功" : "失败"}`,
+        //   order
+        // );
       }
     }
     this.isOfferRunning = false;
@@ -184,6 +184,7 @@ class OrderAutoOfferQueue {
           let app_name = getCinemaFlag(item);
           return {
             ...item,
+            plat_name: "haha",
             app_name,
             appName: app_name
           };
@@ -202,9 +203,11 @@ class OrderAutoOfferQueue {
       // );
       if (!newOrders?.length) return [];
       newOrders.forEach(item => {
-        this.handleNewOrder(item);
+        this.handleNewOrder(
+          item,
+          stayList.find(itemA => itemA.order_number === item.order_number)
+        );
       });
-      return newOrders;
     } catch (error) {
       console.error(conPrefix + "获取待报价订单异常", error);
       return [];
@@ -222,6 +225,7 @@ class OrderAutoOfferQueue {
           offerList: [] // 动态调价暂时不用先传空
         });
         // { res, offerRule } || { offerRule, err_msg, err_info } || undefined
+        await this.addOrderHandleRecored(order, offerResult);
         return offerResult;
       } else {
         console.warn(conPrefix + "订单报价队列已停止");

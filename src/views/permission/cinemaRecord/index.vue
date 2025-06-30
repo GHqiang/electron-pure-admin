@@ -231,7 +231,7 @@ const totalNum = ref(0);
 const formData = reactive({
   app_type_code: "",
   app_name: "",
-  status: ""
+  status: "1"
 });
 
 // 树节点点击
