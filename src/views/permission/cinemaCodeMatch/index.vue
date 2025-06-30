@@ -88,7 +88,6 @@
           :data="tableData"
           border
           stripe
-          max-height="450"
           show-overflow-tooltip
         >
           <el-table-column
