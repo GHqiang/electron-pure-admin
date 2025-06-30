@@ -143,7 +143,6 @@
           border
           stripe
           show-summary
-          max-height="450"
           :summary-method="getSummaries"
           show-overflow-tooltip
           @selection-change="handleSelectionChange"
