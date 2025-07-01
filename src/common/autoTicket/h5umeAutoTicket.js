@@ -2587,6 +2587,7 @@ class OrderAutoTicketQueue {
           }),
         9,
         20,
+        "",
         3 * 60
       );
       if (!qrcode) {
@@ -2614,6 +2615,7 @@ class OrderAutoTicketQueue {
             }),
           21,
           20,
+          "",
           7 * 60
         );
       }
