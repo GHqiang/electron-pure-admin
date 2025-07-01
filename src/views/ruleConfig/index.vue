@@ -45,6 +45,13 @@
           <el-radio value="2">否</el-radio>
         </el-radio-group>
       </div>
+      <div class="flex-yc m-t-10">
+        <span>是否禁用凤凰云智h5系列影院报价：</span>
+        <el-radio-group v-model="h5umeIsClose" @change="h5umeIsCloseChange">
+          <el-radio value="1">是</el-radio>
+          <el-radio value="2">否</el-radio>
+        </el-radio-group>
+      </div>
     </div>
 
     <div style="margin-top: 80px">
@@ -127,6 +134,12 @@ const lmaIsUseQuan = ref(lmaIsUseQuanValue || "1");
 const lmaIsUseQuanChange = val => {
   console.log("val", val);
   window.localStorage.setItem("lmaIsUseQuan", val);
+};
+let h5umeIsCloseValue = window.localStorage.getItem("h5umeIsClose");
+const h5umeIsClose = ref(h5umeIsCloseValue || "1");
+const h5umeIsCloseChange = val => {
+  console.log("val", val);
+  window.localStorage.setItem("h5umeIsClose", val);
 };
 </script>
 

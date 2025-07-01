@@ -7,6 +7,7 @@ import QRCode from "qrcode";
 import svApi from "@/api/sv-api";
 import {
   GET_UME_LIST,
+  GE_APP_INFO,
   GET_USABLE_APP_LIST,
   GET_H5_UME_LIST,
   GET_SFC_APP_LIST
@@ -384,6 +385,14 @@ const newGetCinemaFlagFun = item => {
 const getCinemaFlag = item => {
   const app_name = newGetCinemaFlagFun(item);
   if (!app_name) return;
+  // 是否禁用h5ume系列报价
+  let h5umeIsCloseValue = window.localStorage.getItem("h5umeIsClose");
+  if (
+    h5umeIsCloseValue == 1 &&
+    GE_APP_INFO(app_name)?.app_type_code === "ume_h5"
+  ) {
+    return;
+  }
   let rule = tokens?.userInfo?.rule;
   // 内部角色影院禁用，主要是控制影院是否进行报价
   if (rule == 2 && !GET_USABLE_APP_LIST()?.["" + app_name]) {
