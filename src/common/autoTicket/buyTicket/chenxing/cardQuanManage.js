@@ -240,10 +240,13 @@ export default class CardQuanManage {
             useQuans: []
           };
         }
+        let cardNum, card_id;
         if (quan_fee > 0) {
           let cardData = cardList.filter(
             item => item.cardAmount >= (quan_fee * 1000 * ticket_num) / 1000
           );
+          // 取最大余额
+          cardData = cardData.sort((a, b) => b.cardAmount - a.cardAmount);
           if (!cardData?.length) {
             this.logger.errorSave(
               `使用优惠券后发现没有可以支付券手续费的会员卡，${is_auto_use_quan ? ",灵活用券转用卡处理" : ""}`,
@@ -261,6 +264,9 @@ export default class CardQuanManage {
               card_id: "",
               profit: 0 // 利润
             };
+          } else {
+            cardNum = cardData?.[0]?.cardNo;
+            card_id = cardData?.[0]?.cardNo;
           }
         }
         if (is_auto_use_quan) {
@@ -269,7 +275,9 @@ export default class CardQuanManage {
         return {
           useQuan,
           quanStock: targetQuanList.length,
-          profit
+          profit,
+          cardNum,
+          card_id
         };
       }
     } catch (error) {
