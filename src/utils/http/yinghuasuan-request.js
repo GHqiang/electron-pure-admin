@@ -21,7 +21,7 @@ instance.interceptors.request.use(
       // console.log("tokens.yinghuasuanToken", tokens.yinghuasuanToken);
       const token = tokens.yinghuasuanToken || "";
       if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+        config.headers.Authorization = `${token}`;
       }
       // 生产环境不会跨域
       config.url = IS_DEV

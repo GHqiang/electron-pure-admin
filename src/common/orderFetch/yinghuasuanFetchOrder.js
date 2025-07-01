@@ -50,7 +50,7 @@ class OrderAutoFetchQueue {
         .map(item => {
           const {
             quote_price: supplier_end_price,
-            cinema_id: cinema_code,
+            standard_id: cinema_code,
             order_sn: order_number
           } = item;
           const {
