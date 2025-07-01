@@ -361,7 +361,9 @@ const urlObj = {
   "mtop.alipic.lark.own.coupon.bindcoupon":
     "mtop.alipic.lark.own.coupon.bindCoupon",
   "mtop.alipic.lark.own.pay.getpaydiscountprice":
-    "mtop.alipic.lark.own.pay.getPayDiscountPrice"
+    "mtop.alipic.lark.own.pay.getPayDiscountPrice",
+  "mtop.alipic.lark.own.order.createticketorder":
+    "mtop.alipic.lark.own.order.createTicketOrder"
 };
 
 // 获取url
@@ -486,18 +488,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             "/ume-ser" +
             config.originalUrl.slice(6);
 
-        if (
-          [
-            "cinema.getcinemas",
-            "film.gethotfilms",
-            "schedule.getschedules",
-            "seat.getSeatMap",
-            "order.getorderlist",
-            "pay.getpayprivilegeinfo"
-          ].some(item => config.url.includes(item))
-        ) {
-          config.responseType = "arraybuffer";
-        }
+        config.responseType = "arraybuffer";
       }
       // console.log('请求config', config)
       return config;
@@ -543,12 +534,14 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       //   data = await decompress(data);
       //   console.log("解压后的数据:", data);
       // }
-      if (headers1.is_buffer == 1) {
+      try {
         const decoder = new TextDecoder("utf-8");
         const jsonStr = decoder.decode(data);
         // data = data.toString("utf-8");
         // console.log("data===>1", jsonStr);
         data = JSON.parse(jsonStr);
+      } catch (error) {
+        console.warn("json解析失败==>", error);
       }
 
       // console.log("headers1===>", headers1);
