@@ -597,7 +597,7 @@ class OrderAutoTicketQueue {
     // 测试专用
     if (isTestOrder) {
       // offerRule = { offer_type: "1", quan_value: "35" };
-      offerRule = { offer_type: "2", member_price: "32" };
+      offerRule = { offer_type: "2", member_price: "30" };
     }
     console.warn("从该订单的报价记录获取到的报价规则", offerRule);
     if (
@@ -2949,8 +2949,11 @@ class OrderAutoTicketQueue {
             10000;
           profit += rewardPrice;
         }
-        profit = Number(profit).toFixed(2);
-        if (profit < 0 && !TEST_NEW_PLAT_LIST.includes(plat_name)) {
+        if (
+          !isTestOrder &&
+          profit < 0 &&
+          !TEST_NEW_PLAT_LIST.includes(plat_name)
+        ) {
           console.error("最终利润为负，单个订单直接出票结束");
           this.logList.push({
             opera_time: getCurrentTime(),
@@ -3117,7 +3120,11 @@ class OrderAutoTicketQueue {
           10000;
         profit += rewardPrice;
       }
-      if (profit < 0 && !TEST_NEW_PLAT_LIST.includes(plat_name)) {
+      if (
+        !isTestOrder &&
+        profit < 0 &&
+        !TEST_NEW_PLAT_LIST.includes(plat_name)
+      ) {
         console.error("最终利润为负，单个订单直接出票结束");
         this.logList.push({
           opera_time: getCurrentTime(),
