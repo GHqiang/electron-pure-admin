@@ -565,8 +565,8 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             "FAIL_SYS_TOKEN_EMPTY::令牌为空"
           ].includes(errReason)
         ) {
-          if (!config.retryCount) {
-            config.retryCount = 1;
+          if (!config.retryCount || config.retryCount < 3) {
+            config.retryCount = (config.retryCount || 0) + 1;
             config.url = config.originalUrl.split("/1.0/")[0];
             // console.log("config.url", config.url);
             let cookieStr = String(headers1["set_cookie"]);
@@ -610,17 +610,17 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             return instance(config);
           } else {
             ElMessage.warning(
-              `${GET_APP_LIST()[app_name]}登录失效，请重新设置登录信息`
+              `${GET_APP_LIST()[app_name]}令牌过期,联系技术排查`
             );
             sendWxPusherMessage({
               msgType: 1,
               app_name: GET_APP_LIST()[app_name],
               expirePhone: config.mobile,
-              transferTip: `${GET_APP_LIST()[app_name]}登录失效，请检查登录信息维护`
+              transferTip: `${GET_APP_LIST()[app_name]}令牌过期,联系技术排查`
             });
 
             // 此处加个消息推送
-            return Promise.reject(data);
+            return Promise.reject({ data, headers1, config });
           }
         }
 
@@ -777,7 +777,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             break;
           default:
             ElMessage.error(
-              `请求错误 ${response.status}: ${error.message || error.msg}`
+              `请求异常 ${response.status}: ${error.message || error.msg}`
             );
         }
       } else {
