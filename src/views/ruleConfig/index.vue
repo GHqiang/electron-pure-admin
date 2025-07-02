@@ -135,8 +135,10 @@ const lmaIsUseQuanChange = val => {
   console.log("val", val);
   window.localStorage.setItem("lmaIsUseQuan", val);
 };
+
+// 是否禁用凤凰云智h5系列影院报价：1-是 2-否，默认否
 let h5umeIsCloseValue = window.localStorage.getItem("h5umeIsClose");
-const h5umeIsClose = ref(h5umeIsCloseValue || "1");
+const h5umeIsClose = ref(h5umeIsCloseValue || "2");
 const h5umeIsCloseChange = val => {
   console.log("val", val);
   window.localStorage.setItem("h5umeIsClose", val);
