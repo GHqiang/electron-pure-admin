@@ -218,7 +218,9 @@ const createApi = ({ app_name }) => {
 
   // 创建订单
   const createOrder = params =>
-    axios.post("/h5ume/mtop.alipic.lark.own.order.createticketorder", params);
+    axios.post("/h5ume/mtop.alipic.lark.own.order.createticketorder", params, {
+      timeout: 10 * 1000
+    });
   // {
   //   mobile: "13073792313",
   //   cinemaLinkId: "11713",

@@ -747,7 +747,8 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         "film.gethotfilms",
         "schedule.getschedules",
         "seat.getseatmap",
-        "pay.getpayprivilegeinfo"
+        "pay.getpayprivilegeinfo",
+        "order.createticketorder"
       ];
       let isRetry = shouldRetry(error, config, maxRetries, retrieUrls);
       // console.log("isRetry", isRetry, config);
