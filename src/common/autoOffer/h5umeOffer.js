@@ -66,6 +66,11 @@ class getUmeOfferPrice {
     const { plat_name, appFlag } = this;
     let { supplier_max_price, rewards, order_number } = order || {};
     let endPrice, offerRule;
+    this.logList.push({
+      opera_time: getCurrentTime(),
+      des: "开始自动报价逻辑",
+      level: "info"
+    });
     try {
       // 获取匹配到的最终报价规则
       offerRule = await this.getEndMatchOfferRule(order);
@@ -216,6 +221,11 @@ class getUmeOfferPrice {
       let filmTypeFlag = matchRuleList.find(
         item => item?.film_type?.length == 1
       );
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "开始获取电影放映信息",
+        level: "info"
+      });
       let movieInfo, filmType; // 电影放映信息
       movieInfo = await this.getMovieInfo(order);
       if (!movieInfo) {
@@ -1301,6 +1311,11 @@ class getUmeOfferPrice {
         });
         return;
       }
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "获取城市影院列表成功",
+        level: "info"
+      });
       let cinemaList =
         allCinemaList?.find(item => item.cityName.includes(city_name))
           ?.cinemaList || [];
