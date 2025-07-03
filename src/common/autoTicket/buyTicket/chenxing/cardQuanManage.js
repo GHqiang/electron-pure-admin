@@ -56,7 +56,8 @@ export default class CardQuanManage {
         );
         this.logger.infoSave("可用卡过滤后的会员卡列表", { cardList });
       }
-      if (!cardList?.length) return {};
+      // 辰星3.0必须要有卡
+      if (!cardList?.length && this.api_version == "3.0C") return {};
       let quanParams = {
         cinemaCode,
         cinemaId,
