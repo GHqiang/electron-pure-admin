@@ -35,9 +35,19 @@ export const useCinemaCodeMatchList = defineStore("cinemaCodeMatchList", {
       this.items = list;
     },
     // 获取影院标识
-    getCinemaAppFlag(plat_cinema_code) {
-      return this.items.find(item => item.plat_cinema_code === plat_cinema_code)
-        ?.app_name;
+    getCinemaAppFlag({
+      cinema_code: plat_cinema_code,
+      cinema_name: plat_cinema_name
+    }) {
+      let targetCinema = this.items.find(
+        item => item.plat_cinema_code === plat_cinema_code
+      );
+      if (!targetCinema) {
+        targetCinema = this.items.find(item =>
+          item.plat_cinema_name?.split("#").includes(plat_cinema_name.trim())
+        );
+      }
+      return targetCinema?.app_name;
     },
     // 获取影院映射信息
     getCinemaMatchInfo(plat_cinema_code, app_name) {

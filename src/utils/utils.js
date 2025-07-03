@@ -375,7 +375,7 @@ const colorObj = {
 
 // 获取影院标识新
 const newGetCinemaFlagFun = item => {
-  let appFlag = cinemaCodeMatchObj.getCinemaAppFlag(item.cinema_code);
+  let appFlag = cinemaCodeMatchObj.getCinemaAppFlag(item);
   if (appFlag === "wanxiangh5") {
     appFlag = "wanxiang";
   }
