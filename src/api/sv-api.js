@@ -158,6 +158,9 @@ const batchAddCinemaMatch = params =>
 // 修改影院映射信息
 const updateCinemaMatch = params =>
   axios.post("/svpi/cinemaCodeMatch/update", params);
+// 智能更新影院映射信息，补充平台影院名字
+const updateCinemaMapping = params =>
+  axios.post("/svpi/cinemaCodeMatch/smartUpdateName", params);
 
 // 上传出票过程操作日志
 const addTicketOperaLog = params =>
@@ -299,6 +302,7 @@ const svApi = {
   addCinemaMatch,
   batchAddCinemaMatch,
   updateCinemaMatch,
+  updateCinemaMapping,
   queryNoSyncCinemaList
 };
 window.svApi = svApi;
