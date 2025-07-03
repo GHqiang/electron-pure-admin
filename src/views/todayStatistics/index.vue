@@ -94,8 +94,8 @@
         width="60"
       />
       <el-table-column prop="app_name" label="影线名称" min-width="100">
-        <template #default="scope">
-          <span>{{ APP_LIST[scope.row.app_name] }}</span>
+        <template #default="{ row: { app_name } }">
+          <span>{{ APP_LIST[app_name] || app_name + "-已调整" }}</span>
         </template>
       </el-table-column>
       <el-table-column
@@ -289,7 +289,7 @@ const loadData = async () => {
     });
     // 使用Object.fromEntries将过滤后的键值对数组转换回对象
     let queryParams = Object.fromEntries(filteredEntries);
-    queryParams.appList = JSON.stringify(APP_LIST.value);
+    queryParams.appList = JSON.stringify(Object.keys(APP_LIST.value));
     console.log("queryParams", queryParams);
     const res = await svApi.queryAnalysis(queryParams);
     // console.log("res", res);
