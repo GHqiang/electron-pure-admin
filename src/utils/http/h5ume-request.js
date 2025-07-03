@@ -383,6 +383,20 @@ const getUrl = (token, url, params) => {
   return `${url}/1.0/?jsv=2.6.0&appKey=${appKey}&t=${t}&sign=${sign}&api=${api}&v=1.0&type=originaljson&timeout=20000&dataType=json`;
 };
 
+const noProxyUrlList = [
+  "cinema.getcinemas",
+  "film.gethotfilms",
+  "schedule.getschedules",
+  "seat.getseatmap",
+  "seat.lockseats",
+  "seat.unlockseats",
+  "pay.getpayprivilegeinfo",
+  "pay.getpaydiscountprice"
+];
+// 是否不需要代理
+const checkUrlNoNeedProxy = url => {
+  return noProxyUrlList.some(item => url.toLowerCase().includes(item));
+};
 const createAxios = ({ app_name, timeout = 20 }) => {
   // 创建axios实例
   const instance = axios.create({
@@ -489,6 +503,11 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             config.originalUrl.slice(6);
 
         config.responseType = "arraybuffer";
+      }
+      // 默认都走代理，白名单不走代理
+      let isNoProxy = checkUrlNoNeedProxy(config.url);
+      if (isNoProxy) {
+        config.headers["Is-No-Proxy"] = 1;
       }
       // console.log('请求config', config)
       return config;
@@ -791,13 +810,17 @@ const createAxios = ({ app_name, timeout = 20 }) => {
   const shouldRetry = (error, config, maxRetries, retrieUrls) => {
     try {
       let isCountCheck = config.retryCount < maxRetries;
-      let isUrlCheck = retrieUrls.some(item => config.url.includes(item));
+      let isUrlCheck = retrieUrls.some(item =>
+        config.url.toLowerCase().includes(item)
+      );
       let isErrorCheck = false;
       // 检查错误类型
       if (axios.isAxiosError(error)) {
         const message = error.message.toLowerCase();
         isErrorCheck =
-          message.includes("timeout of") || message.includes("network error");
+          message.includes("timeout") ||
+          message.includes("network error") ||
+          message.includes("Request failed with status code 408");
       }
       // console.log(
       //   "isCountCheck",
