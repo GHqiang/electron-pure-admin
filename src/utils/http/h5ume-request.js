@@ -385,6 +385,7 @@ const getUrl = (token, url, params) => {
 
 const noProxyUrlList = [
   "cinema.getcinemas",
+  "auth.getsidbytid",
   "film.gethotfilms",
   "schedule.getschedules",
   "seat.getseatmap",
@@ -747,8 +748,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         "film.gethotfilms",
         "schedule.getschedules",
         "seat.getseatmap",
-        "pay.getpayprivilegeinfo",
-        "order.createticketorder"
+        "pay.getpayprivilegeinfo"
       ];
       let isRetry = shouldRetry(error, config, maxRetries, retrieUrls);
       // console.log("isRetry", isRetry, config);
