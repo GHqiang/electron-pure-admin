@@ -163,7 +163,7 @@ export default class CinemaManage {
   // 获取目标影院
   getTargetCinemaInfo(cinemaCode, cinemaList) {
     let targetCinema = cinemaList.find(
-      item => cinema_code && item.cinemaCode == cinemaCode
+      item => cinemaCode && item.cinemaCode == cinemaCode
     );
     if (!targetCinema) {
       targetCinema = getTargetCinemaCommon({
