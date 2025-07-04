@@ -91,6 +91,7 @@
           show-overflow-tooltip
         >
           <el-table-column
+            v-if="!formData.app_name"
             prop="app_label"
             label="影线名称"
             sortable
@@ -109,6 +110,12 @@
           <el-table-column
             prop="plat_cinema_code"
             label="平台影院编码"
+            min-width="100"
+          />
+          <el-table-column
+            v-if="rule == 2"
+            prop="plat_cinema_name"
+            label="平台影院名称"
             min-width="100"
           />
           <el-table-column
@@ -578,6 +585,7 @@ const saveCinema = async cinemaInfo => {
       await svApi.updateCinemaMatch({
         id: cinemaInfo.id,
         plat_cinema_code: cinemaInfo.plat_cinema_code,
+        plat_cinema_name: cinemaInfo.plat_cinema_name,
         update_time: getCurrentTime()
       });
       sfcDialogRef.value.closeTck();

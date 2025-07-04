@@ -55,6 +55,15 @@
             clearable
           />
         </el-form-item>
+        <el-form-item label="平台影院名称" prop="plat_cinema_name">
+          <el-input
+            v-model="formData.plat_cinema_name"
+            style="width: 500px"
+            :rows="3"
+            type="textarea"
+            placeholder="请输入平台影院名称，若有多个用#分隔"
+          />
+        </el-form-item>
         <!-- <el-form-item label="状态" prop="status">
           <el-radio-group v-model="formData.status">
             <el-radio value="1" size="large">正常</el-radio>
@@ -92,7 +101,8 @@ let formData = reactive({
   app_label: "",
   app_cinema_name: "",
   app_cinema_code: "",
-  plat_cinema_code: ""
+  plat_cinema_code: "",
+  plat_cinema_name: ""
 });
 
 const rules = {
@@ -124,6 +134,7 @@ const open = async cinemaInfo => {
         formData.app_cinema_name = formInfo.app_cinema_name;
         formData.app_cinema_code = formInfo.app_cinema_code;
         formData.plat_cinema_code = formInfo.plat_cinema_code;
+        formData.plat_cinema_name = formInfo.plat_cinema_name;
       }
     }
     loading.close();
