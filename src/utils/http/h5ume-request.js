@@ -396,7 +396,7 @@ const noProxyUrlList = [
 ];
 // 是否不需要代理
 const checkUrlNoNeedProxy = url => {
-  return noProxyUrlList.some(item => url.toLowerCase().includes(item));
+  return noProxyUrlList.some(item => url?.toLowerCase().includes(item));
 };
 const createAxios = ({ app_name, timeout = 20 }) => {
   // 创建axios实例
@@ -812,12 +812,12 @@ const createAxios = ({ app_name, timeout = 20 }) => {
     try {
       let isCountCheck = config.retryCount < maxRetries;
       let isUrlCheck = retrieUrls.some(item =>
-        config.url.toLowerCase().includes(item)
+        config.url?.toLowerCase().includes(item)
       );
       let isErrorCheck = false;
       // 检查错误类型
       if (axios.isAxiosError(error)) {
-        const message = error.message.toLowerCase();
+        const message = error.message?.toLowerCase();
         isErrorCheck =
           message.includes("timeout") ||
           message.includes("network error") ||
