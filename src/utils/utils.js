@@ -1772,7 +1772,7 @@ let generateTicketImage = async ticketInfo => {
   const {
     filmName = "名侦探柯南:独眼的残像",
     cinemaName = "天娱广场天河电影城",
-    showTime = "2025-06-30 20:25",
+    showTime = "2025-07-05 20:25",
     hallName = "3号RGB激光厅(原声2D)",
     lockseat = "6排10座 6排9座",
     qrCode = "28893557698111824"
@@ -1804,7 +1804,7 @@ let generateTicketImage = async ticketInfo => {
   const cinemaY = filmNameY + 35; // 电影名称下方40像素
   ctx.fillText(cinemaName, filmNameX, cinemaY);
   // 绘制放映时间
-  let yPos = cinemaY + 20; // 影院名称下方40像素
+  let yPos = cinemaY + 18; // 影院名称下方40像素
 
   // 绘制"今天"标签
   const dayText = classifyDate(showTime);
@@ -1818,7 +1818,7 @@ let generateTicketImage = async ticketInfo => {
     // ctx.fillText(dayText, filmNameX + 25, yPos + 20);
     // 绘制"今天"标签
     const labelWidth = 50;
-    const labelHeight = 30;
+    const labelHeight = 26;
     const cornerRadius = 5; // 圆角半径
     ctx.fillStyle = "#4FC3F7";
     // 使用roundRect绘制圆角矩形
@@ -1830,44 +1830,45 @@ let generateTicketImage = async ticketInfo => {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle"; // 垂直居中，这样我们只需要计算垂直中心位置
     // 文字位置：水平居中在标签内，垂直居中
-    ctx.fillText(dayText, filmNameX + labelWidth / 2, yPos + 18);
+    ctx.fillText(dayText, filmNameX + labelWidth / 2, yPos + 16);
   }
 
   // 时间文字（左对齐，在标签右侧）
   ctx.fillStyle = "#333333";
   ctx.font = '17px "PingFang SC", "Microsoft YaHei", sans-serif';
   ctx.textAlign = "left";
-  ctx.fillText(showTime.replace(/-/g, "/"), filmNameX + 60, yPos + 18);
+  ctx.fillText(showTime.replace(/-/g, "/"), filmNameX + 60, yPos + 16);
 
   // 绘制影厅信息
-  yPos += 60;
+  yPos += 52;
   ctx.fillStyle = "#333333";
   ctx.font = '16px "PingFang SC", "Microsoft YaHei", sans-serif';
   ctx.fillText(hallName, filmNameX, yPos);
 
   // 绘制座位信息
-  yPos += 25;
+  yPos += 23;
   ctx.textAlign = "center";
   ctx.font = '18px "PingFang SC", "Microsoft YaHei", sans-serif';
   const seats = lockseat.split(" ");
   const seatWidth = 90;
   const totalWidth = seats.length * seatWidth + (seats.length - 1) * 20;
   let xStart = (width - totalWidth) / 2;
+  xStart = 15;
   seats.forEach((seat, index) => {
     ctx.fillStyle = "#E3F2FD";
     ctx.strokeStyle = "#ffffff";
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.roundRect(xStart, yPos, seatWidth, 40, 8);
+    ctx.roundRect(xStart, yPos, seatWidth, 34, 8);
     ctx.fill();
     ctx.stroke();
     ctx.fillStyle = "#6594CC";
-    ctx.fillText(seat, xStart + seatWidth / 2, yPos + 22);
+    ctx.fillText(seat, xStart + seatWidth / 2, yPos + 20);
     xStart += seatWidth + 20;
   });
 
   // 绘制取票码和状态
-  yPos += 50;
+  yPos += 40;
   ctx.fillStyle = "#333333";
   ctx.font = '15px "PingFang SC", "Microsoft YaHei", sans-serif';
   ctx.textAlign = "left";
@@ -1880,7 +1881,7 @@ let generateTicketImage = async ticketInfo => {
   drawDashedLine(ctx, filmNameX, yPos, width - filmNameX, yPos, "#e0e0e0");
   // 生成二维码
   try {
-    const qrSize = 200;
+    const qrSize = 180;
     const qrTop = yPos + 20; // 分隔线下方20像素
     const qrCanvas = document.createElement("canvas");
     await QRCode.toCanvas(qrCanvas, qrCode, {
@@ -1897,7 +1898,7 @@ let generateTicketImage = async ticketInfo => {
     ctx.textAlign = "center";
     ctx.fillStyle = "#1890ff";
     ctx.font = '18px "PingFang SC", "Microsoft YaHei", sans-serif';
-    ctx.fillText(`${seats.length}张票`, width / 2, qrTop + qrSize + 30);
+    ctx.fillText(`${seats.length}张票`, width / 2, qrTop + qrSize + 25);
     const imgInfo = canvas.toDataURL("image/png");
     console.log("imgInfo", imgInfo);
     return imgInfo;
