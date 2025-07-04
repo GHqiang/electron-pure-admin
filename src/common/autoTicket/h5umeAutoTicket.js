@@ -929,7 +929,7 @@ class OrderAutoTicketQueue {
         }
         // 3、获取目标影院
         let targetCinema = cinemaList.find(
-          item => item.cinemaCode === cinema_code
+          item => cinema_code && item.cinemaCode === cinema_code
         );
         if (!targetCinema) {
           targetCinema = getTargetCinemaCommon({

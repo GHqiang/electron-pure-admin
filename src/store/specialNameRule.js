@@ -53,6 +53,8 @@ export const useCinemaCodeMatchList = defineStore("cinemaCodeMatchList", {
     getCinemaMatchInfo(plat_cinema_code, app_name) {
       return this.items.find(
         item =>
+          plat_cinema_code &&
+          app_name &&
           item.plat_cinema_code === plat_cinema_code &&
           item.app_name === app_name
       );
