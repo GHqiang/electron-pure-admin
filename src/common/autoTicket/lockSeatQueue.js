@@ -227,7 +227,8 @@ class OrderAutoLockSeatQueue {
             cinemaLinkId,
             orderHeaderId: undefined, // 该字段不传就是取消最近一次的未支付订单
             app_name,
-            session_id
+            session_id,
+            logList
           });
           if (cancelRes) {
             // 取消完再购买一次
@@ -255,7 +256,8 @@ class OrderAutoLockSeatQueue {
     cinemaLinkId,
     orderHeaderId, // 该字段不传就是取消最近一次的未支付订单
     app_name,
-    session_id
+    session_id,
+    logList
   }) {
     let params = {
       params: {
