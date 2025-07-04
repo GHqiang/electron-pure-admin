@@ -5,6 +5,7 @@ import svApi from "@/api/sv-api";
 import { SFC_CINEMA_NAME } from "@/common/constant";
 import {
   getCinemaFlag,
+  getCinemaCode,
   logUpload,
   getCurrentTime,
   formatTimeOfTime,
@@ -93,8 +94,10 @@ class OrderAutoFetchQueue {
         .filter(item => getCinemaFlag(item))
         .map(item => {
           let app_name = getCinemaFlag(item);
+          let cinema_code = getCinemaCode(item);
           return {
             ...item,
+            cinema_code,
             app_name,
             appName: app_name
           };

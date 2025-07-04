@@ -1,5 +1,6 @@
 import {
   getCinemaFlag, // 获取影院标识
+  getCinemaCode, // 获取影院编号
   getCurrentTime, // 格式化当前日期时间
   logUpload, // 日志上传
   mockDelay, // 模拟延时
@@ -162,7 +163,7 @@ class OrderAutoOfferQueue {
           rewards: 0, // 哈哈无奖励，只有快捷
           is_urgent: 0, // 1紧急 0非紧急
           cinema_group: "", // 哈哈没有影院标识
-          cinema_code: cinemaId, // 影院id
+          cinema_code: "", // 影院id
           order_number: order_id,
           // 转为截止时间戳，原值： 1727009811
           offer_end_time: item.endDownTime * 1000
@@ -182,8 +183,10 @@ class OrderAutoOfferQueue {
         })
         .map(item => {
           let app_name = getCinemaFlag(item);
+          let cinema_code = getCinemaCode(item);
           return {
             ...item,
+            cinema_code,
             plat_name: "haha",
             app_name,
             appName: app_name

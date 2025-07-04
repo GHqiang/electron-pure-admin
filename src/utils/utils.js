@@ -375,7 +375,7 @@ const colorObj = {
 
 // 获取影院标识新
 const newGetCinemaFlagFun = item => {
-  let appFlag = cinemaCodeMatchObj.getCinemaAppFlag(item);
+  let appFlag = cinemaCodeMatchObj.getCinemaAppFlag(item)?.app_name;
   if (appFlag === "wanxiangh5") {
     appFlag = "wanxiang";
   }
@@ -403,7 +403,16 @@ const getCinemaFlag = item => {
   const isLogin = isLoginByAppName(app_name);
   if (isLogin) return app_name;
 };
+
+// 获取影院code
+const getCinemaCode = item => {
+  const cinema_code =
+    cinemaCodeMatchObj.getCinemaAppFlag(item)?.plat_cinema_code;
+  return cinema_code;
+};
+
 window.getCinemaFlag = getCinemaFlag;
+window.getCinemaCode = getCinemaCode;
 // 全角字符转换成半角
 function convertFullwidthToHalfwidth(str) {
   // 全角到半角的映射表
@@ -1921,6 +1930,7 @@ export {
   findBestMatchByLevenshteinWithThreshold,
   isTimeAfter, // 判断time1时间是否在time2之后
   getCinemaFlag, // 获取影院标识
+  getCinemaCode, // 获取影院code
   convertFullwidthToHalfwidth, // 全角字符转换成半角
   cinemNameSpecial, // 影院名称特殊处理（为了特殊匹配,去括号、空格及中间点）
   couponInfoSpecial, // 券名称特殊处理（为了特殊匹配,去括号、空格、中间点、中横线及冒号）

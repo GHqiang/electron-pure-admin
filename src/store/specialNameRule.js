@@ -47,7 +47,7 @@ export const useCinemaCodeMatchList = defineStore("cinemaCodeMatchList", {
           item.plat_cinema_name?.split("#").includes(plat_cinema_name.trim())
         );
       }
-      return targetCinema?.app_name;
+      return targetCinema;
     },
     // 获取影院映射信息
     getCinemaMatchInfo(plat_cinema_code, app_name) {
