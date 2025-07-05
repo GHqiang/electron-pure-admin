@@ -45,7 +45,9 @@ class OrderAutoFetchQueue {
       await this.getStayConfirmOrderAndSure(logList);
       await mockDelay(1);
       let stayList = await this.orderFetch(logList);
-      if (!stayList?.length) return;
+      if (!stayList?.length) {
+        return;
+      }
       let sfcStayOfferlist = stayList
         .map(item => {
           const {
@@ -318,7 +320,16 @@ class OrderAutoFetchQueue {
         }
       });
       console.error("获取待确认订单并接单异常", error);
-      return [];
+    } finally {
+      logUpload(
+        {
+          plat_name: "",
+          app_name: "",
+          order_number: "",
+          type: 2
+        },
+        logList
+      );
     }
   }
 
