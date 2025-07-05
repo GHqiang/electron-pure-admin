@@ -1809,10 +1809,8 @@ class OrderAutoTicketQueue {
           let errInfo = buyTicketRes?.error
             ? JSON.stringify(buyTicketRes?.error)
             : "";
-          if (
-            errInfo?.includes("timeout") ||
-            errInfo?.includes("Request failed")
-          ) {
+          let errMsgList = ["timeout", "Request failed", "已下单成功"];
+          if (errMsgList.some(item => errInfo?.includes(item))) {
             this.logList.push({
               opera_time: getCurrentTime(),
               des: "订单购买返回超时或异常当成功处理",
