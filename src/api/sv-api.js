@@ -139,7 +139,7 @@ const updateCinemaRecord = params =>
 
 // 查询影院映射信息列表
 const queryCinemaMatchList = params =>
-  axios.get("/svpi/cinemaCodeMatch/query", { params });
+  axios.get("/svpi/cinemaCodeMatch/query", { params, timeout: 35 * 1000 });
 // 查询未同步的影院列表
 const queryNoSyncCinemaList = params =>
   axios.get("/svpi/cinemaCodeMatch/queryNoSyncCinemaList", { params });
