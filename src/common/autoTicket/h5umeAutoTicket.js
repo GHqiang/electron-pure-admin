@@ -1806,33 +1806,50 @@ class OrderAutoTicketQueue {
         const buyRes = buyTicketRes?.buyRes;
         if (!buyRes) {
           console.error("订单购买失败，单个订单直接出票结束", "走转单逻辑");
-          this.logList.push({
-            opera_time: getCurrentTime(),
-            des: "订单购买异常",
-            level: "error",
-            info: {
-              error: buyTicketRes?.error
-            }
-          });
-          // 后续要记录失败列表（订单信息、失败原因、时间戳）
-          const transferParams = await this.transferOrder(item, {
-            cinemaLinkId,
-            orderId
-          });
-          return { offerRule, transferParams };
+          let errInfo = buyTicketRes?.error
+            ? JSON.stringify(buyTicketRes?.error)
+            : "";
+          if (
+            errInfo?.includes("timeout") ||
+            errInfo?.includes("Request failed")
+          ) {
+            this.logList.push({
+              opera_time: getCurrentTime(),
+              des: "订单购买返回超时或异常当成功处理",
+              level: "info",
+              info: buyTicketRes
+            });
+          } else {
+            this.logList.push({
+              opera_time: getCurrentTime(),
+              des: "订单购买异常",
+              level: "error",
+              info: {
+                error: buyTicketRes?.error
+              }
+            });
+            // 后续要记录失败列表（订单信息、失败原因、时间戳）
+            const transferParams = await this.transferOrder(item, {
+              cinemaLinkId,
+              orderId
+            });
+            return { offerRule, transferParams };
+          }
         }
         this.logList.push({
           opera_time: getCurrentTime(),
           des: "订单购买成功",
           level: "info"
         });
-        // 更新卡使用量
-        updateCardDayUse({
-          app_name: appFlag,
-          card_id,
-          plat_name,
-          order_number
-        });
+        if (card_id) {
+          // 更新卡使用量
+          updateCardDayUse({
+            app_name: appFlag,
+            card_id,
+            plat_name,
+            order_number
+          });
+        }
       } else {
         buyTicketRes = {
           code: 1,

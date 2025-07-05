@@ -1772,38 +1772,50 @@ class OrderAutoTicketQueue {
         card_id,
         pay_password
       });
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "订单购买返回",
+        level: "info",
+        info: buyTicketRes
+      });
       const buyRes = buyTicketRes?.buyRes;
       if (!buyRes) {
         console.error(
           conPrefix + "订单购买失败，单个订单直接出票结束",
           "走转单逻辑"
         );
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "订单购买异常",
-          level: "error",
-          info: {
-            ...buyTicketRes
-          }
-        });
-        // 后续要记录失败列表（订单信息、失败原因、时间戳）
-        const transferParams = await this.transferOrder(item, {
-          city_id,
-          cinema_id,
-          show_id,
-          start_day,
-          start_time,
-          order_num
-        });
-        return { offerRule, transferParams };
+        if (JSON.stringify(buyTicketRes?.error)?.indexOf("timeout") != -1) {
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: "订单购买返回超时当成功处理",
+            level: "info",
+            info: buyTicketRes
+          });
+        } else {
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: "订单购买异常",
+            level: "error",
+            info: {
+              ...buyTicketRes
+            }
+          });
+          // 后续要记录失败列表（订单信息、失败原因、时间戳）
+          const transferParams = await this.transferOrder(item, {
+            city_id,
+            cinema_id,
+            show_id,
+            start_day,
+            start_time,
+            order_num
+          });
+          return { offerRule, transferParams };
+        }
       }
       this.logList.push({
         opera_time: getCurrentTime(),
-        des: "订单购买返回",
-        level: "info",
-        info: {
-          ...buyTicketRes
-        }
+        des: "订单购买成功",
+        level: "info"
       });
       // 只用卡
       let isOnlyUseCard = card_id && !quanType;

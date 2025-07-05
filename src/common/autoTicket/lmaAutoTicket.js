@@ -1570,25 +1570,40 @@ class OrderAutoTicketQueue {
         lmaToken: this.currentParamsList[this.currentParamsInx].lmaToken,
         appFlag
       });
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "订单购买返回",
+        level: "info",
+        info: buyTicketRes
+      });
       const buyRes = buyTicketRes?.buyRes;
       if (!buyRes) {
         console.error(
           conPrefix + "订单购买失败，单个订单直接出票结束",
           "走转单逻辑"
         );
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "订单购买异常",
-          level: "error",
-          info: {
-            error: buyTicketRes?.error
-          }
-        });
-        // 后续要记录失败列表（订单信息、失败原因、时间戳）
-        const transferParams = await this.transferOrder(item, {
-          order_str
-        });
-        return { offerRule, transferParams };
+        if (JSON.stringify(buyTicketRes?.error)?.indexOf("timeout") != -1) {
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: "订单购买返回超时当成功处理",
+            level: "info",
+            info: buyTicketRes
+          });
+        } else {
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: "订单购买异常",
+            level: "error",
+            info: {
+              error: buyTicketRes?.error
+            }
+          });
+          // 后续要记录失败列表（订单信息、失败原因、时间戳）
+          const transferParams = await this.transferOrder(item, {
+            order_str
+          });
+          return { offerRule, transferParams };
+        }
       }
       this.logList.push({
         opera_time: getCurrentTime(),
