@@ -1866,6 +1866,9 @@ class OrderAutoTicketQueue {
       if (!quan_code && quanType) {
         quan_code = coupon_id || member_coupon_id;
       }
+      if (profit) {
+        profit = Number(profit).toFixed(2);
+      }
       return {
         profit,
         qrcode: lastRes?.qrcode,

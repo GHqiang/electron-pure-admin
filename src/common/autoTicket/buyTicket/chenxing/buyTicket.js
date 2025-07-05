@@ -555,6 +555,9 @@ export default class BuyTicket {
         this.logger.infoSave("订单最后处理成功:获取取票码并上传");
       }
       console.log("一键买票完成");
+      if (profit) {
+        profit = Number(profit).toFixed(2);
+      }
       return {
         profit,
         qrcode: lastRes?.qrcode,

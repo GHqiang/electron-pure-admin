@@ -1887,6 +1887,9 @@ class OrderAutoTicketQueue {
         });
       }
       console.log("一键买票完成");
+      if (profit) {
+        profit = Number(profit).toFixed(2);
+      }
       return {
         profit,
         qrcode: lastRes?.qrcode,
