@@ -1808,7 +1808,7 @@ class OrderAutoTicketQueue {
           console.error("订单购买失败，单个订单直接出票结束", "走转单逻辑");
           this.logList.push({
             opera_time: getCurrentTime(),
-            des: "订单购买失败",
+            des: "订单购买异常",
             level: "error",
             info: {
               error: buyTicketRes?.error

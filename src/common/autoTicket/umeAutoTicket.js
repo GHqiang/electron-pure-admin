@@ -1851,7 +1851,7 @@ class OrderAutoTicketQueue {
         } else {
           this.logList.push({
             opera_time: getCurrentTime(),
-            des: "订单购买失败",
+            des: "订单购买异常",
             level: "error",
             info: {
               error: buyTicketRes?.error
