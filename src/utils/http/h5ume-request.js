@@ -392,7 +392,13 @@ const noProxyUrlList = [
   "seat.lockseats",
   "seat.unlockseats",
   "pay.getpayprivilegeinfo",
-  "pay.getpaydiscountprice"
+  "pay.getpaydiscountprice",
+  "coupon.getmyonlinecoupons",
+  "card.getcardlistbypage",
+  "order.cancelorder",
+  "coupon.bindcoupon",
+  "order.getorderlist",
+  "order.getorderdetail"
 ];
 // 是否不需要代理
 const checkUrlNoNeedProxy = url => {

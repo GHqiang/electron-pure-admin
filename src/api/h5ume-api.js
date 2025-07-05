@@ -219,7 +219,7 @@ const createApi = ({ app_name }) => {
   // 创建订单
   const createOrder = params =>
     axios.post("/h5ume/mtop.alipic.lark.own.order.createticketorder", params, {
-      timeout: 25 * 1000
+      timeout: 30 * 1000
     });
   // {
   //   mobile: "13073792313",
@@ -264,7 +264,9 @@ const createApi = ({ app_name }) => {
 
   // 电影票购买
   const buyTicket = params =>
-    axios.post("/h5ume/mtop.alipic.lark.own.card.payorderwithcard", params);
+    axios.post("/h5ume/mtop.alipic.lark.own.card.payorderwithcard", params, {
+      timeout: 30 * 1000
+    });
   // {
   //   channelCode: "JINQIU_H5_PROD_11713_MPS",
   //   larkSid: "9424183dd6be47e8a34673ce2cf77fe0",
