@@ -54,11 +54,13 @@ class OrderAutoFetchQueue {
       }
       let sfcStayOfferlist = stayList
         .map(item => {
-          const {
-            quote_price: supplier_end_price,
-            order_sn,
-            record_id: order_number // 该字段和报价的order_number一致，也就是待报价列表返回的inv_id
-          } = item;
+          // 待出票列表的record_id和待确认列表的id一致
+          // 待确认列表的inv_id和待报价的inv_id一致
+          // 这样取待出票和待报价的order_number就一致了
+          let order_number = this.confimrOrderList.find(
+            itemA => itemA.id == item.record_id
+          )?.inv_id;
+          const { quote_price: supplier_end_price, order_sn } = item;
           const {
             net_price: tpp_price,
             city_name,
@@ -69,6 +71,7 @@ class OrderAutoFetchQueue {
             film_name,
             film_pic: film_img,
             show_time,
+            seat_no,
             fast_buy: is_urgent,
             standard_id: cinema_code,
             brand_name: cinema_group // 品牌名 上影上海、上影二线等
@@ -104,6 +107,14 @@ class OrderAutoFetchQueue {
             appName: app_name
           };
         });
+      logList.push({
+        opera_time: getCurrentTime(),
+        des: `${name}：影划算转换后的待出票列表`,
+        level: "info",
+        info: {
+          sfcStayOfferlist: JSON.parse(JSON.stringify(sfcStayOfferlist))
+        }
+      });
       sfcStayOfferlist = sfcStayOfferlist.filter(item => {
         // 过滤出来新订单（未发送过新订单消息的）
         return !this.orderRecord.some(
@@ -114,7 +125,7 @@ class OrderAutoFetchQueue {
       });
       logList.push({
         opera_time: getCurrentTime(),
-        des: `${name}：影划算获取待出票列表返回`,
+        des: `${name}：影划算新的待出票订单列表`,
         level: "info",
         info: {
           sfcStayOfferlist
@@ -136,6 +147,10 @@ class OrderAutoFetchQueue {
       if (!sfcStayOfferlist?.length) return;
       console.warn("待出票列表新订单", stayList);
       sfcStayOfferlist.forEach(item => {
+        // 先根据order_number获取已确认的id，再根据id对比record_id获取原订单
+        let id = this.confimrOrderList.find(
+          itemA => itemA.inv_id === item.order_number
+        )?.id;
         let logList = [
           {
             opera_time: getCurrentTime(),
@@ -143,9 +158,7 @@ class OrderAutoFetchQueue {
             level: "info",
             info: {
               newOrder: item,
-              oldOrder: stayList.find(
-                itemA => itemA.record_id === item.order_number
-              )
+              oldOrder: stayList.find(itemA => itemA.record_id === id)
             }
           }
         ];
@@ -304,8 +317,8 @@ class OrderAutoFetchQueue {
           if (res && !res.error) {
             this.confimrOrderList.push(item);
             // 防止数据太大占用系统内存
-            if (this.confimrOrderList.length > 20) {
-              this.confimrOrderList = this.confimrOrderList.slice(15);
+            if (this.confimrOrderList.length > 30) {
+              this.confimrOrderList = this.confimrOrderList.slice(20);
             }
           }
         }
