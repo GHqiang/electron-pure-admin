@@ -630,7 +630,7 @@ class OrderAutoTicketQueue {
             order_id: id,
             inx: 1
           });
-        } else if (plat_name === "yinghuasuan") {
+        } else if (plat_name === "yinghuasuan" && item.is_lock_seat == 1) {
           await this.unlockSeat({
             plat_name,
             order_number: item.order_sn, // 取order_sn

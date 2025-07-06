@@ -60,7 +60,11 @@ class OrderAutoFetchQueue {
           let order_number = this.confimrOrderList.find(
             itemA => itemA.id == item.record_id
           )?.inv_id;
-          const { quote_price: supplier_end_price, order_sn } = item;
+          const {
+            quote_price: supplier_end_price,
+            order_sn,
+            is_lock_seat
+          } = item;
           const {
             net_price: tpp_price,
             city_name,
@@ -94,6 +98,7 @@ class OrderAutoFetchQueue {
             cinema_group,
             cinema_code, // 影院id
             order_number,
+            is_lock_seat, // 是否锁座 1-是 0-否 1需要解锁，0不需要
             lockseat: seat_no.split(",").join(" ") || "", // 最终要以空格拼接多座的话
             plat_name: "yinghuasuan"
           };

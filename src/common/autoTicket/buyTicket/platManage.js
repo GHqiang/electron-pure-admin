@@ -55,7 +55,7 @@ export default class PlatCommon {
           order_id: id,
           inx: 1
         });
-      } else if (plat_name === "yinghuasuan") {
+      } else if (plat_name === "yinghuasuan" && this.order.is_lock_seat == 1) {
         unlockRes = await this.unlockSeat({
           plat_name,
           order_number: this.order.order_sn, // 取order_sn
