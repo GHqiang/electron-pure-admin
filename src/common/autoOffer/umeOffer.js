@@ -771,15 +771,12 @@ class getUmeOfferPrice {
         // 校验其库存，进行过滤
         if (appQuanTypeList?.length) {
           fixedAmountRuleList = fixedAmountRuleList.filter(item => {
-            let targetQuanInfo = appQuanTypeList.find(itemA =>
-              item.quanValue?.split(",")?.includes(itemA.quan_value)
+            // 查找是否有目标券可以出的
+            return appQuanTypeList.some(
+              itemA =>
+                item.quanValue?.split(",")?.includes(itemA.quan_value) &&
+                itemA?.quan_stock > order.ticket_num
             );
-            let quan_stock = targetQuanInfo?.quan_stock;
-            return quan_stock
-              ? quan_stock >= order.ticket_num
-              : quan_stock == 0
-                ? false
-                : true;
           });
           this.logList.push({
             opera_time: getCurrentTime(),

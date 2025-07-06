@@ -730,10 +730,12 @@ class getChenxingOfferPrice {
    */
   applyQuanStockFilter(rules, quanTypes, ticketNum) {
     return rules.filter(rule => {
-      const quanInfo = quanTypes.find(q =>
-        rule.quanValue?.split(",")?.includes(q.quan_value)
+      // 查找是否有目标券可以出的
+      return quanTypes.some(
+        q =>
+          rule.quanValue?.split(",")?.includes(q.quan_value) &&
+          q.quan_stock >= ticketNum
       );
-      return quanInfo ? quanInfo.quan_stock >= ticketNum : false;
     });
   }
 
