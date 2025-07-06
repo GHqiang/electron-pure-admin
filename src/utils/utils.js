@@ -1767,16 +1767,49 @@ let drawDashedLine = (ctx, x1, y1, x2, y2, color) => {
   ctx.setLineDash([]);
 };
 
+/**
+ * 将Canvas转换为Blob对象
+ * @param {HTMLCanvasElement} canvas - 要转换的Canvas元素
+ * @param {string} [mimeType="image/png"] - 图片MIME类型
+ * @param {number} [quality=0.92] - 图片质量 (0-1)
+ * @returns {Promise<Blob>} 返回Blob对象
+ */
+const canvasToBlob = (canvas, mimeType = "image/png", quality = 0.92) => {
+  return new Promise((resolve, reject) => {
+    // 检查canvas有效性
+    if (!(canvas instanceof HTMLCanvasElement)) {
+      reject(new Error("参数必须是Canvas元素"));
+      return;
+    }
+
+    // 使用canvas.toBlob方法
+    canvas.toBlob(
+      blob => {
+        if (blob) {
+          resolve(blob);
+        } else {
+          reject(new Error("Canvas转换Blob失败"));
+        }
+      },
+      mimeType,
+      quality
+    );
+  });
+};
+
 // 生成电影票图片
 let generateTicketImage = async ticketInfo => {
-  const {
-    filmName = "名侦探柯南:独眼的残像",
-    cinemaName = "天娱广场天河电影城",
-    showTime = "2025-07-05 20:25",
-    hallName = "3号RGB激光厅(原声2D)",
-    lockseat = "6排10座 6排9座",
-    qrCode = "28893557698111824"
-  } = ticketInfo || {};
+  // const {
+  //   film_name = "侏罗纪世界:重生",
+  //   cinema_name = "SFC上影影城(徐汇日月光店)",
+  //   show_time = "2025-07-06 13:05",
+  //   hall_name = "3号激光厅",
+  //   lockseat = "4排3座 4排2座",
+  //   qrcode = "684869246542"
+  // } = ticketInfo || {};
+  if (!ticketInfo) return;
+  const { film_name, cinema_name, show_time, hall_name, lockseat, qrcode } =
+    ticketInfo || {};
   const canvas = document.createElement("canvas");
   const width = 315;
   const height = 560;
@@ -1796,18 +1829,18 @@ let generateTicketImage = async ticketInfo => {
   ctx.font = '24px "PingFang SC", "Microsoft YaHei", sans-serif';
   const filmNameX = 15;
   const filmNameY = 50; // 在装饰线下方
-  ctx.fillText(filmName, filmNameX, filmNameY);
+  ctx.fillText(film_name, filmNameX, filmNameY);
 
   // 绘制影院名称
   ctx.fillStyle = "#2196F3";
   ctx.font = '18px "PingFang SC", "Microsoft YaHei", sans-serif';
   const cinemaY = filmNameY + 35; // 电影名称下方40像素
-  ctx.fillText(cinemaName, filmNameX, cinemaY);
+  ctx.fillText(cinema_name, filmNameX, cinemaY);
   // 绘制放映时间
   let yPos = cinemaY + 18; // 影院名称下方40像素
 
   // 绘制"今天"标签
-  const dayText = classifyDate(showTime);
+  const dayText = classifyDate(show_time);
   if (dayText) {
     // ctx.fillStyle = "#4FC3F7";
     // ctx.fillRect(filmNameX, yPos, 50, 30); // 使用filmNameX保持左对齐
@@ -1837,13 +1870,13 @@ let generateTicketImage = async ticketInfo => {
   ctx.fillStyle = "#333333";
   ctx.font = '17px "PingFang SC", "Microsoft YaHei", sans-serif';
   ctx.textAlign = "left";
-  ctx.fillText(showTime.replace(/-/g, "/"), filmNameX + 60, yPos + 16);
+  ctx.fillText(show_time.replace(/-/g, "/"), filmNameX + 60, yPos + 16);
 
   // 绘制影厅信息
   yPos += 52;
   ctx.fillStyle = "#333333";
   ctx.font = '16px "PingFang SC", "Microsoft YaHei", sans-serif';
-  ctx.fillText(hallName, filmNameX, yPos);
+  ctx.fillText(hall_name, filmNameX, yPos);
 
   // 绘制座位信息
   yPos += 23;
@@ -1873,7 +1906,7 @@ let generateTicketImage = async ticketInfo => {
   ctx.font = '15px "PingFang SC", "Microsoft YaHei", sans-serif';
   ctx.textAlign = "left";
   ctx.fillText("取票码：", filmNameX, yPos + 20);
-  ctx.fillText(qrCode, filmNameX + 60, yPos + 20);
+  ctx.fillText(qrcode, filmNameX + 60, yPos + 20);
   ctx.fillStyle = "#13ce66";
   ctx.fillText("已出票", width - 60, yPos + 20);
   // 绘制分隔线
@@ -1884,7 +1917,7 @@ let generateTicketImage = async ticketInfo => {
     const qrSize = 180;
     const qrTop = yPos + 20; // 分隔线下方20像素
     const qrCanvas = document.createElement("canvas");
-    await QRCode.toCanvas(qrCanvas, qrCode, {
+    await QRCode.toCanvas(qrCanvas, qrcode, {
       width: qrSize,
       margin: 0,
       color: {
@@ -1899,9 +1932,25 @@ let generateTicketImage = async ticketInfo => {
     ctx.fillStyle = "#1890ff";
     ctx.font = '18px "PingFang SC", "Microsoft YaHei", sans-serif';
     ctx.fillText(`${seats.length}张票`, width / 2, qrTop + qrSize + 25);
-    const imgInfo = canvas.toDataURL("image/png");
-    console.log("imgInfo", imgInfo);
-    return imgInfo;
+    // const imgInfo = canvas.toDataURL("image/png");
+    // console.log("imgInfo", imgInfo);
+    // return imgInfo;
+    const blob = await canvasToBlob(canvas, "image/png", 0.9);
+    console.log("blob", blob);
+    // if (blob) {
+    //   // 上传到服务器
+    //   const result = await uploadBlobImage({
+    //     blob,
+    //     url: "https://up-hub-img.yinghuasuan.com/api/upload_img",
+    //     params: {
+    //       event: "order",
+    //       event_data: "H2025070523161130289994" // 获取待出票列表队列将order_sn赋值给了tpp_price
+    //     },
+    //     plat_name: "yinghuasuan"
+    //   });
+    //   console.log("result", result);
+    // }
+    return blob;
   } catch (error) {
     console.error("生成二维码失败:", error);
     return null;
@@ -1909,6 +1958,81 @@ let generateTicketImage = async ticketInfo => {
 };
 
 window.generateTicketImage = generateTicketImage;
+
+// 影划算图片校验
+const yinghuasuanCheckImg = async params => {
+  try {
+    const url =
+      "https://merchant-api.yinghuasuan.com/broker/v1/order/local_img_ocr";
+    let headers = { Authorization: `${tokens.yinghuasuanToken}` };
+    const res = await axios.post(url, params, {
+      headers
+    });
+    console.warn("影划算图片校验结果", res.data);
+  } catch (error) {
+    console.warn("影划算图片校验异常", error);
+  }
+};
+window.yinghuasuanCheckImg = yinghuasuanCheckImg;
+
+// 获取取票码url
+const uploadBlobImage = async ({ blob, url, params, plat_name }) => {
+  try {
+    // 创建表单数据
+    const formData = new FormData();
+
+    // 添加文件字段 (自动生成文件名)
+    const fileExtension = blob.type.split("/")[1] || "png";
+    const fileName = `image_${Date.now()}.${fileExtension}`;
+    formData.append("file", blob, fileName);
+
+    // 添加其他参数
+    Object.keys(params).forEach(key => {
+      formData.append(key, params[key]);
+    });
+
+    let headers = { "Content-Type": "multipart/form-data" };
+    if (plat_name === "yinghuasuan") {
+      headers.Authorization = `${tokens.yinghuasuanToken}`;
+    }
+    // 使用正确的Axios配置发送请求
+    const response = await axios.post(url, formData, { headers });
+    let res = response?.data;
+    console.log("取票码图片上传返回", res);
+    if (plat_name == "yinghuasuan") {
+      // 图片校验成功后才能用
+      await yinghuasuanCheckImg({
+        order_sn: params.event_data,
+        new_path: res?.data?.new_path,
+        file_url: res?.data?.file_url,
+        pod: "2"
+      });
+      return res?.data?.file_url;
+    } else if (plat_name == "haha") {
+      return res?.data?.url;
+    }
+  } catch (error) {
+    // 增强错误处理
+    let errorMessage = "上传失败";
+
+    if (error.response) {
+      // 服务器返回了错误响应
+      console.error("服务器错误:", error.response.data);
+      errorMessage =
+        error.response.data?.message || `服务器错误: ${error.response.status}`;
+    } else if (error.request) {
+      // 请求已发送但无响应
+      console.error("无响应:", error.request);
+      errorMessage = "服务器无响应";
+    } else {
+      // 请求配置错误
+      console.error("请求错误:", error.message);
+    }
+
+    throw new Error(errorMessage);
+  }
+};
+
 export {
   isNextDayBySfc, // 判断sfc是否是次日
   findMostRepeatedChars, // 找出重复字符及数量
@@ -1954,6 +2078,8 @@ export {
   trial, // 试错方法
   parseTimeStr, // 商展格式化获取放映时间
   formatTimeStrByLma,
+  generateTicketImage, // 生成取票码
+  uploadBlobImage, // 上传取票码获取url
   cryptoFunctions,
   CustomConsole
 };

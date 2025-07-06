@@ -57,11 +57,10 @@ class OrderAutoFetchQueue {
           const {
             quote_price: supplier_end_price,
             order_sn,
-            record_id: order_number
+            record_id: order_number // 该字段和报价的order_number一致，也就是待报价列表返回的inv_id
           } = item;
           const {
-            id,
-            // net_price: tpp_price,
+            net_price: tpp_price,
             city_name,
             cinema_address: cinema_addr,
             seat_num: ticket_num,
@@ -75,8 +74,9 @@ class OrderAutoFetchQueue {
             brand_name: cinema_group // 品牌名 上影上海、上影二线等
           } = item.demands;
           return {
-            id: id || "", // 他这里没这个id字段
-            tpp_price: order_sn, // 该字段无用，填充一个出票订单号
+            id: order_sn || "", // 他这里没这个id字段,填充一个出票订单号
+            order_sn,
+            tpp_price,
             supplier_end_price,
             city_name,
             cinema_addr,
@@ -131,11 +131,6 @@ class OrderAutoFetchQueue {
         ]
       );
       if (sfcStayOfferlist?.length) {
-        // const offerList = await getOfferList();
-        // const ticketList = await getTicketList();
-        // sfcStayOfferlist = sfcStayOfferlist.filter(item =>
-        //   judgeHandle(item, item.appName, offerList, ticketList)
-        // );
         const ticketList = await getTicketList();
         sfcStayOfferlist = sfcStayOfferlist.filter(item => {
           let isTicket = ticketList
@@ -183,6 +178,24 @@ class OrderAutoFetchQueue {
       });
     } catch (error) {
       console.error("获取订单列表异常", error);
+      logList.push({
+        opera_time: getCurrentTime(),
+        des: "影划算获取待出票订单列表异常",
+        level: "error",
+        info: {
+          error
+        }
+      });
+    } finally {
+      logUpload(
+        {
+          plat_name: "yinghuasuan",
+          app_name: "",
+          order_number: "",
+          type: 2
+        },
+        logList
+      );
     }
   }
 
@@ -301,8 +314,8 @@ class OrderAutoFetchQueue {
           if (res && !res.error) {
             this.confimrOrderList.push(order);
             // 防止数据太大占用系统内存
-            if (this.confimrOrderList.length >= 20) {
-              this.confimrOrderList = this.confimrOrderList.slice(20);
+            if (this.confimrOrderList.length > 20) {
+              this.confimrOrderList = this.confimrOrderList.slice(15);
             }
           }
         }
