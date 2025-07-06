@@ -6,7 +6,9 @@ import {
   mockDelay,
   formatErrInfo, // 格式化错误信息
   trial, // 重试方法
-  sendWxPusherMessage
+  sendWxPusherMessage,
+  generateTicketImage,
+  uploadBlobImage
 } from "@/utils/utils";
 export default class PlatCommon {
   constructor(order, logger, isTestOrder) {
@@ -56,7 +58,7 @@ export default class PlatCommon {
       } else if (plat_name === "yinghuasuan") {
         unlockRes = await this.unlockSeat({
           plat_name,
-          order_number,
+          order_number: this.order.order_sn, // 取order_sn
           inx: 1
         });
       }
@@ -199,7 +201,8 @@ export default class PlatCommon {
       id: order_id,
       order_number,
       supplierCode,
-      lockseat
+      lockseat,
+      order_sn
     } = this.order;
     // 不同平台参数处理
     let params;
@@ -258,14 +261,27 @@ export default class PlatCommon {
         ticketCodes: qrcode
       };
     } else if (plat_name === "yinghuasuan") {
+      const blob = await generateTicketImage({ ...this.order, qrcode });
+      let fileUrl = "";
+      if (blob) {
+        fileUrl = await uploadBlobImage({
+          blob,
+          url: "https://up-hub-img.yinghuasuan.com/api/upload_img",
+          params: {
+            event: "order",
+            event_data: order_sn
+          },
+          plat_name
+        });
+      }
       params = {
-        order_sn: order_number,
+        order_sn,
         ticket_code: qrcode,
-        ticket_image: " ",
+        ticket_image: fileUrl || " ", // 需传图片url
         real_seat_no: lockseat,
         ticket_original_info: [
           {
-            url: " ",
+            url: fileUrl || " ", // 需传图片url
             seat: lockseat.split(" "),
             ticketCode: {
               code: qrcode.split("|")[0],
@@ -295,6 +311,15 @@ export default class PlatCommon {
       });
       return { code: 1, msg: "哈哈暂不上传取票码,需手动上传" };
       const { bid, cinema_name, hall_name, film_name, show_time } = this.order;
+      const blob = await generateTicketImage({ ...this.order, qrcode });
+      const fileUrl = await uploadBlobImage({
+        blob,
+        url: "http://aliyun-oss.hahapiao.cn/ticket-code-images/2025-07-06/11572692993.jpg",
+        params: {
+          orderId: order_id
+        },
+        plat_name
+      });
       params = {
         oid: order_id,
         bid,
@@ -302,12 +327,12 @@ export default class PlatCommon {
         info: lockseat.split(" ").map((item, inx) => {
           if (inx === 0) {
             return {
-              img: " ", // 传空格可以成功
+              img: fileUrl || " ", // 传空格可以成功
               num: qrcode.split("|")[0],
               code: qrcode.split("|")[1],
               imgIndex: " ", // 传空格可以成功
-              isChai: false,
-              blob: "",
+              // isChai: false,
+              // blob: "",
               seat: lockseat.split(" "),
               comparison: {
                 movie: film_name,
@@ -332,7 +357,8 @@ export default class PlatCommon {
           }
         }),
         seat_type: 0,
-        ocr_code: [qrcode],
+        ticket_type: 1,
+        // ocr_code: [qrcode],
         recogniseSeat: lockseat.split(" ").map(item => ({
           oldSeat: item,
           newSeat: item,
@@ -370,7 +396,7 @@ export default class PlatCommon {
 
   // 平台转单
   async orderTransferByPlat(errMsg, errInfo) {
-    const { plat_name, id, order_number, supplierCode } = this.order;
+    const { plat_name, id, order_number, supplierCode, order_sn } = this.order;
     try {
       let params;
       if (plat_name === "lieren") {
@@ -408,7 +434,7 @@ export default class PlatCommon {
         };
       } else if (plat_name === "yinghuasuan") {
         params = {
-          order_sn: order_number,
+          order_sn,
           close_cause: "价格过低无法出票"
         };
       } else if (plat_name === "shangzhan") {

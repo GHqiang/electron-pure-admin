@@ -14,7 +14,9 @@ import {
   isDateInCurrentMonth,
   findMostRepeatedChars,
   isNextDayBySfc,
-  getPreviousDay
+  getPreviousDay,
+  generateTicketImage,
+  uploadBlobImage
 } from "@/utils/utils";
 
 import svApi from "@/api/sv-api";
@@ -530,7 +532,7 @@ class OrderAutoTicketQueue {
         };
       } else if (plat_name === "yinghuasuan") {
         params = {
-          order_sn: order_number,
+          order_sn: order.order_sn,
           close_cause: "价格过低无法出票"
         };
       } else if (plat_name === "shangzhan") {
@@ -789,7 +791,7 @@ class OrderAutoTicketQueue {
         } else if (plat_name === "yinghuasuan") {
           await this.unlockSeat({
             plat_name,
-            order_number,
+            order_number: item.order_sn, // 取order_sn
             inx: 1
           });
         }
@@ -3393,14 +3395,27 @@ class OrderAutoTicketQueue {
         ticketCodes: qrcode
       };
     } else if (plat_name === "yinghuasuan") {
+      const blob = await generateTicketImage({ ...orderInfo, qrcode });
+      let fileUrl = "";
+      if (blob) {
+        fileUrl = await uploadBlobImage({
+          blob,
+          url: "https://up-hub-img.yinghuasuan.com/api/upload_img",
+          params: {
+            event: "order",
+            event_data: orderInfo.order_sn
+          },
+          plat_name
+        });
+      }
       params = {
-        order_sn: order_number,
+        order_sn: orderInfo.order_sn,
         ticket_code: qrcode,
-        ticket_image: " ",
+        ticket_image: fileUrl || " ", // 需传图片url
         real_seat_no: lockseat,
         ticket_original_info: [
           {
-            url: " ",
+            url: fileUrl || " ", // 需传图片url
             seat: lockseat.split(" "),
             ticketCode: {
               code: qrcode.split("|")[0],
@@ -3434,51 +3449,28 @@ class OrderAutoTicketQueue {
       });
       return { code: 1, msg: "哈哈暂不上传取票码,需手动上传" };
       const { bid, cinema_name, hall_name, film_name, show_time } = orderInfo;
+      const blob = await generateTicketImage({ ...orderInfo, qrcode });
+      const fileUrl = await uploadBlobImage({
+        blob,
+        url: "http://aliyun-oss.hahapiao.cn/ticket-code-images/2025-07-06/11572692993.jpg",
+        params: {
+          orderId: order_id
+        },
+        plat_name
+      });
       params = {
-        // oid: order_id,
-        // bid,
-        // seat: lockseat.split(" "), // [("5排4座", "5排3座")]
-        // info: [
-        //   {
-        //     code: qrcode.split("|")[1], // 199079
-        //     img: "",
-        //     num: qrcode.split("|")[0], // 230628
-        //     imgIndex: "",
-        //     seat: lockseat.split(" "), // [("5排4座", "5排3座")]
-        //     comparison: {
-        //       movie: film_name,
-        //       movieStatus: 1,
-        //       showTime: show_time,
-        //       showTimeStatus: 1,
-        //       seat: lockseat.split(" "), // [("5排4座", "5排3座")]
-        //       seatStatus: 1,
-        //       cinema: cinema_name,
-        //       cinemaStatus: 1,
-        //       hall: hall_name,
-        //       hallStatus: 1
-        //     }
-        //   }
-        // ],
-        // seat_type: 0,
-        // recogniseSeat: lockseat.split(" ").map(item => ({
-        //   oldSeat: item,
-        //   newSeat: item,
-        //   imgIndex: ""
-        // }))
-
-        // 以下app参数，上面是web参数
         oid: order_id,
         bid,
         seat: lockseat.split(" "),
         info: lockseat.split(" ").map((item, inx) => {
           if (inx === 0) {
             return {
-              img: " ", // 传空格可以成功
+              img: fileUrl || " ", // 传空格可以成功
               num: qrcode.split("|")[0],
               code: qrcode.split("|")[1],
               imgIndex: " ", // 传空格可以成功
-              isChai: false,
-              blob: "",
+              // isChai: false,
+              // blob: "",
               seat: lockseat.split(" "),
               comparison: {
                 movie: film_name,
@@ -3503,7 +3495,8 @@ class OrderAutoTicketQueue {
           }
         }),
         seat_type: 0,
-        ocr_code: [qrcode],
+        ticket_type: 1,
+        // ocr_code: [qrcode],
         recogniseSeat: lockseat.split(" ").map(item => ({
           oldSeat: item,
           newSeat: item,
