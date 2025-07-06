@@ -107,14 +107,14 @@ class OrderAutoFetchQueue {
             appName: app_name
           };
         });
-      logList.push({
-        opera_time: getCurrentTime(),
-        des: `${name}：影划算转换后的待出票列表`,
-        level: "info",
-        info: {
-          sfcStayOfferlist: JSON.parse(JSON.stringify(sfcStayOfferlist))
-        }
-      });
+      // logList.push({
+      //   opera_time: getCurrentTime(),
+      //   des: `${name}：影划算转换后的待出票列表`,
+      //   level: "info",
+      //   info: {
+      //     sfcStayOfferlist: JSON.parse(JSON.stringify(sfcStayOfferlist))
+      //   }
+      // });
       sfcStayOfferlist = sfcStayOfferlist.filter(item => {
         // 过滤出来新订单（未发送过新订单消息的）
         return !this.orderRecord.some(
@@ -123,14 +123,14 @@ class OrderAutoFetchQueue {
             itemA.order_number === item.order_number
         );
       });
-      logList.push({
-        opera_time: getCurrentTime(),
-        des: `${name}：影划算新的待出票订单列表`,
-        level: "info",
-        info: {
-          sfcStayOfferlist
-        }
-      });
+      // logList.push({
+      //   opera_time: getCurrentTime(),
+      //   des: `${name}：影划算新的待出票订单列表`,
+      //   level: "info",
+      //   info: {
+      //     sfcStayOfferlist
+      //   }
+      // });
       if (sfcStayOfferlist?.length) {
         const ticketList = await getTicketList();
         sfcStayOfferlist = sfcStayOfferlist.filter(item => {
@@ -271,14 +271,14 @@ class OrderAutoFetchQueue {
           quote_price: item.quote_price
         }));
         console.log("从已接单列表里过滤后", logList);
-        logList.push({
-          opera_time: getCurrentTime(),
-          des: "从已接单列表里过滤后",
-          level: "info",
-          info: {
-            list
-          }
-        });
+        // logList.push({
+        //   opera_time: getCurrentTime(),
+        //   des: "从已接单列表里过滤后",
+        //   level: "info",
+        //   info: {
+        //     list
+        //   }
+        // });
         // const offerList = await getOfferList();
         // logList.push({
         //   opera_time: getCurrentTime(),
@@ -305,15 +305,15 @@ class OrderAutoFetchQueue {
           const item = list[i];
           const res = await startDeliver(item);
           console.log("确认接单返回", res, item);
-          logList.push({
-            opera_time: getCurrentTime(),
-            des: "确认接单返回",
-            level: "info",
-            info: {
-              res,
-              item
-            }
-          });
+          // logList.push({
+          //   opera_time: getCurrentTime(),
+          //   des: "确认接单返回",
+          //   level: "info",
+          //   info: {
+          //     res,
+          //     item
+          //   }
+          // });
           if (res && !res.error) {
             this.confimrOrderList.push(item);
             // 防止数据太大占用系统内存
@@ -359,15 +359,15 @@ class OrderAutoFetchQueue {
       let list = res?.data?.data || [];
       // list = list.filter(item => item.status === "1");
       console.log("获取影划算待确认列表返回", list);
-      logList.push({
-        opera_time: getCurrentTime(),
-        des: "获取待确认列表返回",
-        level: "info",
-        info: {
-          res,
-          list
-        }
-      });
+      // logList.push({
+      //   opera_time: getCurrentTime(),
+      //   des: "获取待确认列表返回",
+      //   level: "info",
+      //   info: {
+      //     res,
+      //     list
+      //   }
+      // });
       return list;
     } catch (error) {
       console.error("获取影划算待确认列表异常", error);
@@ -396,14 +396,14 @@ class OrderAutoFetchQueue {
       // console.log("获取影划算待出票订单列表参数", params);
       const res = await yinghuasuanApi.stayTicketingList(params);
       let list = res?.data?.data || [];
-      logList.push({
-        opera_time: getCurrentTime(),
-        des: "影划算获取待出票列表返回",
-        level: "info",
-        info: {
-          res
-        }
-      });
+      // logList.push({
+      //   opera_time: getCurrentTime(),
+      //   des: "影划算获取待出票列表返回",
+      //   level: "info",
+      //   info: {
+      //     res
+      //   }
+      // });
       console.log("获取影划算待出票列表返回", list);
       return list;
     } catch (error) {
