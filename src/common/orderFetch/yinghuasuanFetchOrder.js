@@ -42,8 +42,8 @@ class OrderAutoFetchQueue {
 
   // 获取订单
   async fetchOrders() {
+    let logList = [];
     try {
-      let logList = [];
       // 获取待确认列表并确认接单
       await this.getStayConfirmOrderAndSure(logList);
       await mockDelay(1);
@@ -112,24 +112,14 @@ class OrderAutoFetchQueue {
             itemA.order_number === item.order_number
         );
       });
-      logUpload(
-        {
-          plat_name: "yinghuasuan",
-          app_name: "",
-          order_number: "",
-          type: 2
-        },
-        [
-          {
-            opera_time: getCurrentTime(),
-            des: `${name}：影划算获取待出票列表返回`,
-            level: "info",
-            info: {
-              stayList: stayList
-            }
-          }
-        ]
-      );
+      logList.push({
+        opera_time: getCurrentTime(),
+        des: `${name}：影划算获取待出票列表返回`,
+        level: "info",
+        info: {
+          sfcStayOfferlist
+        }
+      });
       if (sfcStayOfferlist?.length) {
         const ticketList = await getTicketList();
         sfcStayOfferlist = sfcStayOfferlist.filter(item => {
@@ -312,7 +302,7 @@ class OrderAutoFetchQueue {
             }
           });
           if (res && !res.error) {
-            this.confimrOrderList.push(order);
+            this.confimrOrderList.push(item);
             // 防止数据太大占用系统内存
             if (this.confimrOrderList.length > 20) {
               this.confimrOrderList = this.confimrOrderList.slice(15);
@@ -395,7 +385,7 @@ class OrderAutoFetchQueue {
       let list = res?.data?.data || [];
       logList.push({
         opera_time: getCurrentTime(),
-        des: "获取待出票列表返回",
+        des: "影划算获取待出票列表返回",
         level: "info",
         info: {
           res
