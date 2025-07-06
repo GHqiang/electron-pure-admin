@@ -50,11 +50,8 @@ class OrderAutoFetchQueue {
       }
       let sfcStayOfferlist = stayList
         .map(item => {
-          const {
-            quote_price: supplier_end_price,
-            standard_id: cinema_code,
-            order_sn: order_number
-          } = item;
+          const { quote_price: supplier_end_price, order_sn: order_number } =
+            item;
           const {
             id,
             net_price: tpp_price,
@@ -67,6 +64,7 @@ class OrderAutoFetchQueue {
             film_pic: film_img,
             show_time,
             fast_buy: is_urgent,
+            standard_id: cinema_code,
             brand_name: cinema_group // 品牌名 上影上海、上影二线等
           } = item.demands;
           return {
@@ -257,7 +255,7 @@ class OrderAutoFetchQueue {
       if (list?.length) {
         list = list.map(item => ({
           ...item.demands,
-          id: item.id,
+          id: item.id, // 该id和待出票列表的record_id一致
           inv_id: item.inv_id,
           quote_price: item.quote_price
         }));
@@ -338,7 +336,8 @@ class OrderAutoFetchQueue {
     try {
       let params = {
         // status: "0%2C1", // 0:竞价中 1-竞价成功
-        page: 1
+        page: 1,
+        status: 1
       };
       // console.log("获取影划算待出票订单列表参数", params);
       const res = await yinghuasuanApi.queryStayConfirmList(params);
@@ -374,10 +373,11 @@ class OrderAutoFetchQueue {
   async orderFetch(logList) {
     try {
       let params = {
-        status: "1",
+        status: 1,
         page: 1,
+        limit: 10,
         keywords: "",
-        old: "0"
+        old: 1
       };
       // console.log("获取影划算待出票订单列表参数", params);
       const res = await yinghuasuanApi.stayTicketingList(params);
