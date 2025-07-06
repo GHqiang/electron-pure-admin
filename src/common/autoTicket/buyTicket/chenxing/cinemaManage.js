@@ -245,6 +245,7 @@ export default class CinemaManage {
             await cardQuanManage.getSortPhoneByQuanTypeList(
               this.appFlag,
               this.offerRule?.quan_flag,
+              this.offerRule?.quan_value,
               ticket_num
             );
           if (sortMobileList?.length) {

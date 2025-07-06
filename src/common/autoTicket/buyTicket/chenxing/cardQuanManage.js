@@ -960,8 +960,50 @@ export default class CardQuanManage {
     }
   }
 
+  // 获取排序手机号
+  getSortedPhones(targetQuanList, quanValueList) {
+    try {
+      // 1. 按quanValue顺序排序arr
+      const sortedByQuanValue = [...targetQuanList].sort((a, b) => {
+        return (
+          quanValueList.indexOf(a.quan_value) -
+          quanValueList.indexOf(b.quan_value)
+        );
+      });
+      // 2. 在每个分组内按库存降序排序
+      const fullySorted = sortedByQuanValue.map(item => ({
+        ...item,
+        quanStockList: [...item.quanStockList].sort(
+          (a, b) => b.quan_stock - a.quan_stock
+        )
+      }));
+      // 3. 提取排序后的手机号
+      const phoneSet = new Set();
+      const uniqueSortedPhones = [];
+      fullySorted.forEach(item => {
+        item.quanStockList.forEach(stock => {
+          if (!phoneSet.has(stock.phone)) {
+            phoneSet.add(stock.phone);
+            uniqueSortedPhones.push(stock.phone);
+          }
+        });
+      });
+      return uniqueSortedPhones;
+    } catch (error) {
+      this.logger.infoSave("获取按照券库存及顺序排序手机号异常", {
+        error,
+        targetQuanList,
+        quanValueList
+      });
+    }
+  }
   // 获取影院券类型列表
-  async getSortPhoneByQuanTypeList(app_name, quan_flag, ticket_num) {
+  async getSortPhoneByQuanTypeList(
+    app_name,
+    quan_flag,
+    quan_value,
+    ticket_num
+  ) {
     const params = {
       app_name,
       isNeedTotalNum: 0,
@@ -970,39 +1012,43 @@ export default class CardQuanManage {
     try {
       let quanTypeRes = await svApi.queryQuanTypeList(params);
       let quanTypeList = quanTypeRes?.data?.quanTypeList || [];
-      let targetQuanInfo = quanTypeList.find(
-        item => item.quan_flag == quan_flag
+      let quanValueList = quan_value?.split(",");
+      let targetQuanList = quanTypeList.filter(
+        item =>
+          item.quan_flag == quan_flag && quanValueList.includes(item.quan_value)
       );
+      let useMobileList = getCinemaLoginInfoList()
+        .filter(
+          item => item.app_name === app_name && item.mobile && item.session_id
+        )
+        .map(item => item.mobile);
+      console.log("useMobileList", useMobileList);
       this.logger.infoSave("获取影院目标券信息返回", {
         targetQuanInfo,
-        quan_flag
+        quan_flag,
+        quan_value,
+        useMobileList
       });
-
-      let quanStockList = targetQuanInfo?.quanStockList;
-      if (quanStockList) {
-        quanStockList = JSON.parse(quanStockList);
-        quanStockList = quanStockList.map(itemA => ({
-          ...itemA,
-          quan_stock: itemA.quan_stock || 0
-        }));
-        console.log("quanStockList", quanStockList);
-        let useMobileList = getCinemaLoginInfoList()
-          .filter(
-            item => item.app_name === app_name && item.mobile && item.session_id
-          )
-          .map(item => item.mobile);
-        console.log("useMobileList", useMobileList);
-        quanStockList = quanStockList.filter(
-          itemA =>
-            useMobileList.includes(itemA.phone) &&
-            itemA.quan_stock >= ticket_num
-        );
-        let sortMobileList = quanStockList.map(item => item.phone);
+      targetQuanList.forEach(item => {
+        let quanStockList = item?.quanStockList;
+        if (quanStockList) {
+          quanStockList = JSON.parse(quanStockList);
+          quanStockList = quanStockList.map(itemA => ({
+            ...itemA,
+            quan_stock: itemA.quan_stock || 0
+          }));
+          quanStockList = quanStockList.filter(
+            itemA =>
+              useMobileList.includes(itemA.phone) &&
+              itemA.quan_stock >= ticket_num
+          );
+        }
+      });
+      let sortMobileList = this.getSortedPhones(targetQuanList, quanValueList);
+      if (sortMobileList) {
         console.log("sortMobileList", sortMobileList);
         this.logger.infoSave("获取排序手机列表返回", {
-          sortMobileList,
-          useMobileList,
-          ticket_num
+          sortMobileList
         });
         return sortMobileList;
       }
