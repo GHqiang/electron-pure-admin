@@ -278,14 +278,34 @@ export default class PlatCommon {
         order_sn,
         ticket_code: qrcode,
         ticket_image: fileUrl || " ", // 需传图片url
-        real_seat_no: lockseat,
+        real_seat_no: lockseat.split(" ").join(","),
+        entry_method: 0,
         ticket_original_info: [
           {
-            url: fileUrl || " ", // 需传图片url
-            seat: lockseat.split(" "),
-            ticketCode: {
-              code: qrcode.split("|")[0],
-              pwd: qrcode.split("|")?.[1] || ""
+            file_url: fileUrl || " ", // 需传图片url
+            codeList: [
+              {
+                code: qrcode.split("|")[0],
+                pwd: qrcode.split("|")?.[1] || ""
+              }
+            ],
+            seatList: lockseat.split(" "),
+            // ocrInfo为图片校验接口返回数据
+            ocrInfo: {
+              film_name: true,
+              cinema_name: true,
+              hall_name: true,
+              show_time_day: true,
+              show_time_time: true,
+              seat_no: {
+                is_change: false,
+                seat_no: lockseat.split(" ")
+              },
+              ticket_code: [
+                [qrcode.split("|")[0], qrcode.split("|")?.[1] || ""]
+              ],
+              have_qrcode: true,
+              seatMatch: true
             }
           }
         ]
