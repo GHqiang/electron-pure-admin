@@ -17,7 +17,7 @@ const ORDER_FORM = {
 };
 
 // 测试新平台列表
-const TEST_NEW_PLAT_LIST = ["yinghuasuan", "shangzhan"];
+const TEST_NEW_PLAT_LIST = ["shangzhan"];
 
 // 影线状态枚举
 const CINEMA_STATUS_OBJ = {
