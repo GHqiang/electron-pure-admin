@@ -2,6 +2,7 @@
 
 import axios from "axios";
 import { ElMessage } from "element-plus";
+import { sendWxPusherMessage } from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
 // 创建axios实例
@@ -53,6 +54,14 @@ instance.interceptors.response.use(
       !whitelistSp.some(item => response.config.url.includes(item))
     ) {
       ElMessage.error(data.message || data.msg || "请求失败");
+      if (data.msg?.includes("token不存在或已过期")) {
+        sendWxPusherMessage({
+          msgType: 1,
+          app_name: "洋葱平台",
+          expirePhone: "机器手机号",
+          transferTip: `洋葱平台登录失效，请检查登录信息维护`
+        });
+      }
       return Promise.reject(data);
     }
     return data;
