@@ -2246,7 +2246,8 @@ class OrderAutoTicketQueue {
             event: "order",
             event_data: orderInfo.order_sn
           },
-          plat_name
+          plat_name,
+          logList: targetLogList
         });
       }
       params = {
@@ -2306,7 +2307,8 @@ class OrderAutoTicketQueue {
         params: {
           orderId: order_id
         },
-        plat_name
+        plat_name,
+        logList: targetLogList
       });
       if (!fileUrl) {
         targetLogList.push({

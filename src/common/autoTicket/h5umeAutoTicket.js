@@ -2345,7 +2345,11 @@ class OrderAutoTicketQueue {
         ticketCodes: qrcode
       };
     } else if (plat_name === "yinghuasuan") {
-      const blob = await generateTicketImage({ ...orderInfo, qrcode });
+      const blob = await generateTicketImage({
+        ...orderInfo,
+        qrcode,
+        logList: targetLogList
+      });
       let fileUrl = "";
       if (blob) {
         fileUrl = await uploadBlobImage({
@@ -2355,7 +2359,8 @@ class OrderAutoTicketQueue {
             event: "order",
             event_data: orderInfo.order_sn
           },
-          plat_name
+          plat_name,
+          logList: targetLogList
         });
       }
       params = {
@@ -2415,7 +2420,8 @@ class OrderAutoTicketQueue {
         params: {
           orderId: order_id
         },
-        plat_name
+        plat_name,
+        logList: targetLogList
       });
       if (!fileUrl) {
         targetLogList.push({

@@ -271,7 +271,8 @@ export default class PlatCommon {
             event: "order",
             event_data: order_sn
           },
-          plat_name
+          plat_name,
+          logger
         });
       }
       params = {
@@ -331,7 +332,8 @@ export default class PlatCommon {
         params: {
           orderId: order_id
         },
-        plat_name
+        plat_name,
+        logger
       });
       if (!fileUrl) {
         logger.infoSave("哈哈获取取票码图片失败,需手动上传");

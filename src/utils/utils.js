@@ -1960,23 +1960,49 @@ let generateTicketImage = async ticketInfo => {
 window.generateTicketImage = generateTicketImage;
 
 // 影划算图片校验
-const yinghuasuanCheckImg = async params => {
+const yinghuasuanCheckImg = async data => {
   try {
+    const { logList, logger, ...params } = data;
     const url =
       "https://merchant-api.yinghuasuan.com/broker/v1/order/local_img_ocr";
     let headers = { Authorization: `${tokens.yinghuasuanToken}` };
     const res = await axios.post(url, params, {
       headers
     });
+    logList?.push({
+      opera_time: getCurrentTime(),
+      des: "影划算图片校验返回",
+      level: "info",
+      info: {
+        res: res.data
+      }
+    });
+    logger?.infoSave("影划算图片校验返回", res.data);
     console.warn("影划算图片校验结果", res.data);
   } catch (error) {
     console.warn("影划算图片校验异常", error);
+    logList?.push({
+      opera_time: getCurrentTime(),
+      des: "影划算图片校验异常",
+      level: "info",
+      info: {
+        error
+      }
+    });
+    logger?.infoSave("影划算图片校验异常", error);
   }
 };
 window.yinghuasuanCheckImg = yinghuasuanCheckImg;
 
 // 获取取票码url
-const uploadBlobImage = async ({ blob, url, params, plat_name }) => {
+const uploadBlobImage = async ({
+  blob,
+  url,
+  params,
+  plat_name,
+  logList,
+  logger
+}) => {
   try {
     // 创建表单数据
     const formData = new FormData();
@@ -2001,19 +2027,39 @@ const uploadBlobImage = async ({ blob, url, params, plat_name }) => {
     const response = await axios.post(url, formData, { headers });
     let res = response?.data;
     console.log("取票码图片上传返回", res);
+    logList?.push({
+      opera_time: getCurrentTime(),
+      des: "取票码图片上传返回",
+      level: "info",
+      info: {
+        res
+      }
+    });
+    logger?.infoSave("取票码图片上传返回", res);
     if (plat_name == "yinghuasuan") {
       // 图片校验成功后才能用
       await yinghuasuanCheckImg({
         order_sn: params.event_data,
         new_path: res?.data?.new_path,
         file_url: res?.data?.file_url,
-        pod: "2"
+        pod: "2",
+        logList,
+        logger
       });
       return res?.data?.file_url;
     } else if (plat_name == "haha") {
       return res?.data?.url;
     }
   } catch (error) {
+    logList?.push({
+      opera_time: getCurrentTime(),
+      des: "取票码图片上传异常",
+      level: "info",
+      info: {
+        error
+      }
+    });
+    logger?.infoSave("取票码图片上传异常", error);
     // 增强错误处理
     let errorMessage = "上传失败";
 
