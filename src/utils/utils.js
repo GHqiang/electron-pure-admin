@@ -1993,7 +1993,9 @@ const uploadBlobImage = async ({ blob, url, params, plat_name }) => {
 
     let headers = { "Content-Type": "multipart/form-data" };
     if (plat_name === "yinghuasuan") {
-      headers.Authorization = `${tokens.yinghuasuanToken}`;
+      headers.Authorization = tokens.yinghuasuanToken;
+    } else if (plat_name === "haha") {
+      headers.Token = tokens.hahaToken;
     }
     // 使用正确的Axios配置发送请求
     const response = await axios.post(url, formData, { headers });
@@ -2029,7 +2031,7 @@ const uploadBlobImage = async ({ blob, url, params, plat_name }) => {
       console.error("请求错误:", error.message);
     }
 
-    throw new Error(errorMessage);
+    // throw new Error(errorMessage);
   }
 };
 

@@ -2407,17 +2407,6 @@ class OrderAutoTicketQueue {
         ]
       };
     } else if (plat_name === "haha") {
-      targetLogList.push({
-        opera_time: getCurrentTime(),
-        des: "哈哈暂不上传取票码,需手动上传",
-        level: "info"
-      });
-      sendWxPusherMessage({
-        orderInfo,
-        transferTip: "哈哈暂不上传取票码,需手动上传",
-        failReason: "哈哈暂不上传取票码,需手动上传"
-      });
-      return { code: 1, msg: "哈哈暂不上传取票码,需手动上传" };
       const { bid, cinema_name, hall_name, film_name, show_time } = orderInfo;
       const blob = await generateTicketImage({ ...orderInfo, qrcode });
       const fileUrl = await uploadBlobImage({
@@ -2428,6 +2417,19 @@ class OrderAutoTicketQueue {
         },
         plat_name
       });
+      if (!fileUrl) {
+        targetLogList.push({
+          opera_time: getCurrentTime(),
+          des: "哈哈获取取票码图片失败,需手动上传",
+          level: "info"
+        });
+        sendWxPusherMessage({
+          orderInfo,
+          transferTip: "哈哈获取取票码图片失败,需手动上传",
+          failReason: "哈哈获取取票码图片失败,需手动上传"
+        });
+        return { code: 1, msg: "哈哈获取取票码图片失败,需手动上传" };
+      }
       params = {
         oid: order_id,
         bid,

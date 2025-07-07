@@ -323,13 +323,6 @@ export default class PlatCommon {
         ]
       };
     } else if (plat_name === "haha") {
-      logger.infoSave("哈哈暂不上传取票码,需手动上传");
-      sendWxPusherMessage({
-        orderInfo: this.order,
-        transferTip: "哈哈暂不上传取票码,需手动上传",
-        failReason: "哈哈暂不上传取票码,需手动上传"
-      });
-      return { code: 1, msg: "哈哈暂不上传取票码,需手动上传" };
       const { bid, cinema_name, hall_name, film_name, show_time } = this.order;
       const blob = await generateTicketImage({ ...this.order, qrcode });
       const fileUrl = await uploadBlobImage({
@@ -340,6 +333,15 @@ export default class PlatCommon {
         },
         plat_name
       });
+      if (!fileUrl) {
+        logger.infoSave("哈哈获取取票码图片失败,需手动上传");
+        sendWxPusherMessage({
+          orderInfo: this.order,
+          transferTip: "哈哈获取取票码图片失败,需手动上传",
+          failReason: "哈哈获取取票码图片失败,需手动上传"
+        });
+        return { code: 1, msg: "哈哈获取取票码图片失败,需手动上传" };
+      }
       params = {
         oid: order_id,
         bid,
