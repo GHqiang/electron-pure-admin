@@ -18,6 +18,7 @@ import {
   generateTicketImage,
   uploadBlobImage
 } from "@/utils/utils";
+import md5 from "@/utils/md5.js";
 // 帮助锁定座位实例对象
 import assistLockSeatObj from "./lockSeatQueue";
 import svApi from "@/api/sv-api";
@@ -2436,6 +2437,7 @@ class OrderAutoTicketQueue {
         });
         return { code: 1, msg: "哈哈获取取票码图片失败,需手动上传" };
       }
+      let imgIndex = md5.hex_md5(fileUrl); // 图片的md5值
       params = {
         oid: order_id,
         bid,
@@ -2446,7 +2448,7 @@ class OrderAutoTicketQueue {
               img: fileUrl || " ", // 传空格可以成功
               num: qrcode.split("|")[0],
               code: qrcode.split("|")[1],
-              imgIndex: " ", // 传空格可以成功
+              imgIndex, // 传空格可以成功
               // isChai: false,
               // blob: "",
               seat: lockseat.split(" "),
@@ -2478,7 +2480,7 @@ class OrderAutoTicketQueue {
         recogniseSeat: lockseat.split(" ").map(item => ({
           oldSeat: item,
           newSeat: item,
-          imgIndex: ""
+          imgIndex
         }))
       };
     }
