@@ -2780,11 +2780,6 @@ class OrderAutoTicketQueue {
         });
         return;
       }
-      targetLogList.push({
-        opera_time: getCurrentTime(),
-        des: "提交取票码成功",
-        level: "info"
-      });
       if (flag !== 1) {
         // 更新出票结果
         svApi.updateTicketRecord({

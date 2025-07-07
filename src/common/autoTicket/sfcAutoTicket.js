@@ -3648,13 +3648,6 @@ class OrderAutoTicketQueue {
         flag: 1
       });
       // submitRes: {} | undefined
-      if (submitRes) {
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "非异步提交取票码成功",
-          level: "info"
-        });
-      }
       return { submitRes, qrcode };
     } catch (error) {
       console.warn("出票最后处理异常", error);
@@ -3823,11 +3816,6 @@ class OrderAutoTicketQueue {
         });
         return;
       }
-      targetLogList.push({
-        opera_time: getCurrentTime(),
-        des: "提交取票码成功",
-        level: "info"
-      });
       if (flag !== 1) {
         // 更新出票结果
         svApi.updateTicketRecord({
@@ -4616,14 +4604,6 @@ const continuousGetQuan = async data => {
     status: 4
   };
   try {
-    logList.push({
-      opera_time: getCurrentTime(),
-      des: "连续获取目标券参数",
-      level: "info",
-      info: {
-        params
-      }
-    });
     const res = await APP_API_OBJ[appFlag].getQuanList(params);
     logList.push({
       opera_time: getCurrentTime(),

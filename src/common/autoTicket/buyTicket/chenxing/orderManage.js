@@ -473,7 +473,6 @@ export default class OrderManage {
         });
         return;
       }
-      logger.infoSave("提交取票码成功");
       if (flag !== 1) {
         // 异步提交 -更新出票结果
         svApi.updateTicketRecord({

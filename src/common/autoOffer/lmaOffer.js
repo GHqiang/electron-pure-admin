@@ -746,14 +746,14 @@ class getLmaOfferPrice {
       console.log(conPrefix + "获取座位布局参数", params);
       const res = await this.appApi.getMoviePlaySeat(params);
       console.log(conPrefix + "获取座位布局返回", res);
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "获取座位布局返回",
-        level: "info",
-        info: {
-          res
-        }
-      });
+      // this.logList.push({
+      //   opera_time: getCurrentTime(),
+      //   des: "获取座位布局返回",
+      //   level: "info",
+      //   info: {
+      //     res
+      //   }
+      // });
       if (res.code !== "0") {
         return;
       }

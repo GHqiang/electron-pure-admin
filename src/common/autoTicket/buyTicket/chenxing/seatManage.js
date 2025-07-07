@@ -130,7 +130,7 @@ export default class SeatManage {
       const { api_version } = this;
       this.logger.info("获取座位布局参数", params);
       const res = await this.appApi.getMoviePlaySeat(params);
-      this.logger.info("获取座位布局返回", res);
+      // this.logger.info("获取座位布局返回", res);
       let seatData, discountList, areaInfoList, cinemaPlanDto;
       if (api_version === "3.0C") {
         seatData = res.data?.planSiteState || [];
