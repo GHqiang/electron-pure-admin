@@ -1802,9 +1802,9 @@ let generateTicketImage = async ticketInfo => {
   // const {
   //   film_name = "侏罗纪世界:重生",
   //   cinema_name = "SFC上影影城(徐汇日月光店)",
-  //   show_time = "2025-07-06 13:05",
+  //   show_time = "2025-07-07 13:05",
   //   hall_name = "3号激光厅",
-  //   lockseat = "4排3座 4排2座",
+  //   lockseat = "11排10座 11排11座 11排12座",
   //   qrcode = "684869246542"
   // } = ticketInfo || {};
   if (!ticketInfo) return;
@@ -1881,10 +1881,16 @@ let generateTicketImage = async ticketInfo => {
   // 绘制座位信息
   yPos += 23;
   ctx.textAlign = "center";
-  ctx.font = '18px "PingFang SC", "Microsoft YaHei", sans-serif';
   const seats = lockseat.split(" ");
-  const seatWidth = 90;
-  const totalWidth = seats.length * seatWidth + (seats.length - 1) * 20;
+  // 座位多时调整大小和间距
+  let fontSize = 16;
+  if (seats.length > 3) {
+    fontSize = 14;
+  }
+  ctx.font = `${fontSize}px "PingFang SC", "Microsoft YaHei", sans-serif`;
+  const seatWidth = seats.length > 3 ? 70 : 80;
+  let mgPx = seats.length > 3 ? 4 : 10;
+  const totalWidth = seats.length * seatWidth + (seats.length - 1) * mgPx;
   let xStart = (width - totalWidth) / 2;
   xStart = 15;
   seats.forEach((seat, index) => {
@@ -1897,7 +1903,7 @@ let generateTicketImage = async ticketInfo => {
     ctx.stroke();
     ctx.fillStyle = "#6594CC";
     ctx.fillText(seat, xStart + seatWidth / 2, yPos + 20);
-    xStart += seatWidth + 20;
+    xStart += seatWidth + mgPx;
   });
 
   // 绘制取票码和状态
@@ -1937,19 +1943,6 @@ let generateTicketImage = async ticketInfo => {
     // return imgInfo;
     const blob = await canvasToBlob(canvas, "image/png", 0.9);
     console.log("blob", blob);
-    // if (blob) {
-    //   // 上传到服务器
-    //   const result = await uploadBlobImage({
-    //     blob,
-    //     url: "https://up-hub-img.yinghuasuan.com/api/upload_img",
-    //     params: {
-    //       event: "order",
-    //       event_data: "H2025070523161130289994" // 获取待出票列表队列将order_sn赋值给了tpp_price
-    //     },
-    //     plat_name: "yinghuasuan"
-    //   });
-    //   console.log("result", result);
-    // }
     return blob;
   } catch (error) {
     console.error("生成二维码失败:", error);
