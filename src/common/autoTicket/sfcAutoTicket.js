@@ -3462,7 +3462,7 @@ class OrderAutoTicketQueue {
       const blob = await generateTicketImage({ ...orderInfo, qrcode });
       const fileUrl = await uploadBlobImage({
         blob,
-        url: "http://aliyun-oss.hahapiao.cn/ticket-code-images/2025-07-06/11572692993.jpg",
+        url: "https://hahapiao.cn/api/Synchro/upload",
         params: {
           orderId: order_id
         },
