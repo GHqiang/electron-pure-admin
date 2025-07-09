@@ -230,12 +230,12 @@
             row: { order_status, profit, id, order_number, user_id }
           }"
         >
-          <!-- <el-button
-            v-if="order_status === '2'"
+          <el-button
+            v-if="order_status === '2' && rule == 3"
             size="small"
             type="primary"
             @click="againTicket({ order_number, user_id })"
-            >重新出票</el-button -->
+            >重新出票</el-button
           >
 
           <el-button
