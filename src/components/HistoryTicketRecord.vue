@@ -230,6 +230,14 @@
             row: { order_status, profit, id, order_number, user_id }
           }"
         >
+          <!-- <el-button
+            v-if="order_status === '2'"
+            size="small"
+            type="primary"
+            @click="againTicket({ order_number, user_id })"
+            >重新出票</el-button -->
+          >
+
           <el-button
             v-if="profit && order_status === '1'"
             size="small"
@@ -239,7 +247,7 @@
           >
 
           <el-button
-            v-if="![3].includes(rule) && order_status === '2'"
+            v-if="rule != 2 && order_status === '2'"
             size="small"
             type="primary"
             @click="queryLog({ order_number, user_id })"
@@ -381,6 +389,34 @@ const searchData = async () => {
   } catch (error) {
     loading.close();
     console.warn("获取出票记录失败", error);
+  }
+};
+
+const againTicket = async ({ order_number, user_id }) => {
+  try {
+    const res = await svApi.queryLogRecord({
+      order_number,
+      user_id,
+      type: 3
+    });
+    console.warn("查询操作日志返回", res);
+    let logList = res.data?.cardList || [];
+    let ticketLogInfo = logList[0]?.info;
+    if (ticketLogInfo) {
+      ticketLogInfo = JSON.parse(ticketLogInfo);
+    }
+    let order = ticketLogInfo?.newOrders || ticketLogInfo?.newOrder;
+    console.warn("待重新出票订单信息", order);
+    // 动态生成事件名称
+    const eventName = `newOrder_${order.appName}`;
+    // 创建一个事件对象
+    const newOrderEvent = new CustomEvent(eventName, {
+      detail: order,
+      isAgain: true // 标记为重新出票
+    });
+    window.dispatchEvent(newOrderEvent);
+  } catch (error) {
+    console.warn("查询操作日志返回异常", error);
   }
 };
 
