@@ -237,7 +237,7 @@ class OrderAutoTicketQueue {
                   whereObj: {
                     order_number: order.order_number,
                     plat_name: order.plat_name,
-                    user_id: tokens.userInfo.user_id
+                    user_id: user_id
                   },
                   updateObj: {
                     order_status: 1,

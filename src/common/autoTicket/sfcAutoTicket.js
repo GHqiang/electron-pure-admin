@@ -248,9 +248,9 @@ class OrderAutoTicketQueue {
               if (order_status === 1) {
                 svApi.updateTicketRecord({
                   whereObj: {
-                    order_number,
-                    plat_name,
-                    user_id: tokens.userInfo.user_id
+                    order_number: order.order_number,
+                    plat_name: order.plat_name,
+                    user_id: user_id
                   },
                   updateObj: {
                     order_status: 1,
