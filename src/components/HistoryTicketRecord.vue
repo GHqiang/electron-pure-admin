@@ -411,8 +411,11 @@ const againTicket = async ({ order_number, user_id }) => {
     const eventName = `newOrder_${order.appName}`;
     // 创建一个事件对象
     const newOrderEvent = new CustomEvent(eventName, {
-      detail: order,
-      isAgain: true // 标记为重新出票
+      detail: {
+        // 将所有数据放入 detail 对象
+        order: order,
+        isAgain: true
+      }
     });
     window.dispatchEvent(newOrderEvent);
   } catch (error) {
