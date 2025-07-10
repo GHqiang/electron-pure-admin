@@ -184,17 +184,14 @@ export default class SeatManage {
    * @private
    */
   async assistLockSeat(params) {
-    const seatListRes = await this.getSeatLayout({
-      ...params,
-      appFlag: this.appFlag
-    });
+    const seatListRes = await this.getSeatLayout(params);
 
     const res = await assistLockSeatObj.assistLockSeatHandle({
       app_name: this.appFlag,
       plat_name: this.order.plat_name,
       order_number: this.order.order_number,
       seatList: seatListRes?.seatData || [],
-      lockseat: params.lockseat,
+      lockseat: this.order.lockseat,
       lockSeatParams: params
     });
 
@@ -225,7 +222,7 @@ export default class SeatManage {
       this.logger.errorSave(`第${inx}次锁定座位异常`, { error, params });
       // 辅助锁定座位
       if (ASSIST_LOCK_ERRORS.includes(error?.msg) && data.assistFlag != 1) {
-        return this.assistLockSeat(data);
+        return this.assistLockSeat(params);
       }
 
       return Promise.reject(error);

@@ -7,7 +7,7 @@ import {
 import svApi from "@/api/sv-api";
 // 影院特殊匹配列表及api
 import { APP_API_OBJ } from "@/common/index";
-import { GET_UME_LIST } from "@/common/constant";
+import { GET_UME_LIST, GE_APP_INFO } from "@/common/constant";
 import { platTokens } from "@/store/platTokens";
 const {
   userInfo: { rule, user_id }
@@ -57,8 +57,14 @@ class OrderAutoLockSeatQueue {
   // 帮助锁座统一处理
   async lockSeatCommonHandle(order, logList) {
     const { app_name, plat_name } = order;
-    let isUme = GET_UME_LIST().includes(app_name);
-    let funName = isUme ? "lockSeatHandleByUme" : "lockSeatHandleBySfc";
+    let app_type_name = GE_APP_INFO(app_name)?.app_type_code;
+    const funNameObj = {
+      ume_applet: "lockSeatHandleByUmeApplet",
+      ume_h5: "lockSeatHandleByUmeH5",
+      sfc_applet: "lockSeatHandleBySfcApplet",
+      chenxing_applet: "lockSeatHandleByChenxingApplet"
+    };
+    const funName = funNameObj[app_type_name];
     try {
       return await this[funName](order, logList); // 锁定座位
     } catch (error) {
@@ -84,7 +90,7 @@ class OrderAutoLockSeatQueue {
   }
 
   // 锁定座位ume
-  async lockSeatHandleByUme(order, logList, inx = 1) {
+  async lockSeatHandleByUmeApplet(order, logList, inx = 1) {
     try {
       // 10排6座 10排8座
       let { app_name, seatList, lockseat, lockSeatParams } = order || {};
@@ -222,7 +228,7 @@ class OrderAutoLockSeatQueue {
             level: "info"
           });
           const { cinemaCode, cinemaLinkId } = params1.params;
-          const cancelRes = await this.cannelOneOrderByUme({
+          const cancelRes = await this.cannelOneOrderByUmeApplet({
             cinemaCode,
             cinemaLinkId,
             orderHeaderId: undefined, // 该字段不传就是取消最近一次的未支付订单
@@ -232,7 +238,7 @@ class OrderAutoLockSeatQueue {
           });
           if (cancelRes) {
             // 取消完再购买一次
-            return await this.lockSeatHandleByUme(order, logList, inx);
+            return await this.lockSeatHandleByUmeApplet(order, logList, inx);
           }
         }
         return Promise.reject(error);
@@ -251,7 +257,7 @@ class OrderAutoLockSeatQueue {
   }
 
   // 取消订单ume
-  async cannelOneOrderByUme({
+  async cannelOneOrderByUmeApplet({
     cinemaCode,
     cinemaLinkId,
     orderHeaderId, // 该字段不传就是取消最近一次的未支付订单
@@ -328,7 +334,73 @@ class OrderAutoLockSeatQueue {
   }
 
   // 锁定座位sfc
-  async lockSeatHandleBysfc(order, logList, inx = 1) {
+  async lockSeatHandleBySfcApplet(order, logList, inx = 1) {
+    // let { app_name, seatList } = order || {};
+    // let params = order.lockSeatParams;
+    // try {
+    //   console.log("锁定座位参数", params);
+    //   const res = await APP_API_OBJ[app_name].lockSeat(params);
+    //   console.log("锁定座位返回", res);
+    //   logList.push({
+    //     opera_time: getCurrentTime(),
+    //     des: `第${inx}次锁定座位返回`,
+    //     level: "info",
+    //     info: {
+    //       res,
+    //       params
+    //     }
+    //   });
+    //   return res;
+    // } catch (error) {
+    //   console.error("锁定座位异常", error);
+    //   logList.push({
+    //     opera_time: getCurrentTime(),
+    //     des: `第${inx}次锁定座位失败`,
+    //     level: "error",
+    //     info: {
+    //       error,
+    //       params
+    //     }
+    //   });
+    //   return Promise.reject(error);
+    // }
+  }
+
+  // 锁定座位umeH5
+  async lockSeatHandleByUmeH5(order, logList, inx = 1) {
+    // let { app_name, seatList } = order || {};
+    // let params = order.lockSeatParams;
+    // try {
+    //   console.log("锁定座位参数", params);
+    //   const res = await APP_API_OBJ[app_name].lockSeat(params);
+    //   console.log("锁定座位返回", res);
+    //   logList.push({
+    //     opera_time: getCurrentTime(),
+    //     des: `第${inx}次锁定座位返回`,
+    //     level: "info",
+    //     info: {
+    //       res,
+    //       params
+    //     }
+    //   });
+    //   return res;
+    // } catch (error) {
+    //   console.error("锁定座位异常", error);
+    //   logList.push({
+    //     opera_time: getCurrentTime(),
+    //     des: `第${inx}次锁定座位失败`,
+    //     level: "error",
+    //     info: {
+    //       error,
+    //       params
+    //     }
+    //   });
+    //   return Promise.reject(error);
+    // }
+  }
+
+  // 锁定座位辰星
+  async lockSeatHandleByChenxingApplet(order, logList, inx = 1) {
     // let { app_name, seatList } = order || {};
     // let params = order.lockSeatParams;
     // try {
