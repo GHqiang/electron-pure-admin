@@ -196,7 +196,7 @@ class OrderAutoLockSeatQueue {
         console.log("锁定座位返回", res);
         logList.push({
           opera_time: getCurrentTime(),
-          des: `第${inx}次锁定座位返回`,
+          des: `第${inx}次辅助锁定座位返回`,
           level: "info",
           info: {
             res,
@@ -208,7 +208,7 @@ class OrderAutoLockSeatQueue {
         console.error("锁定座位异常", error);
         logList.push({
           opera_time: getCurrentTime(),
-          des: `第${inx}次锁定座位异常`,
+          des: `第${inx}次辅助锁定座位异常`,
           level: "error",
           info: {
             params1,
@@ -218,7 +218,7 @@ class OrderAutoLockSeatQueue {
         if (error?.msg === "存在有未支付的订单！") {
           logList.push({
             opera_time: getCurrentTime(),
-            des: `第${inx}次锁定座位时发现有未支付的订单，准备先取消订单，再进行锁座`,
+            des: `第${inx}次辅助锁定座位时发现有未支付的订单，准备先取消订单，再进行锁座`,
             level: "info"
           });
           const { cinemaCode, cinemaLinkId } = params1.params;
