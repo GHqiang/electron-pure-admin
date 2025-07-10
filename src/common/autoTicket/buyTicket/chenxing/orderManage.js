@@ -43,12 +43,15 @@ export default class OrderManage {
     let isAutoTransfer = window.localStorage.getItem("isAutoTransfer"); // 自动转单是否开启
     // 关闭自动转单只针对座位异常生效
     // if (this.isTestOrder || (isAutoTransfer !== "1" && errMsg === "锁定座位异常")) {
-    if (this.isTestOrder || isAutoTransfer !== "1") {
+    let des = "自动转单处于关闭状态，只取消订单释放座位，需手动出票或转单";
+    if (order.isAgain) {
+      des = "重新出票失败，不转单只取消订单释放座位，需手动出票或转单";
+    }
+    if (this.isTestOrder || isAutoTransfer !== "1" || order.isAgain) {
       this.logger.infoSave("自动转单处于关闭状态");
       sendWxPusherMessage({
         orderInfo: this.order,
-        transferTip:
-          "自动转单处于关闭状态,仅取消订单释放座位,需适时手动出票或者转单",
+        transferTip: des,
         failReason: `${errMsg}——${errInfo}`
       });
       return;

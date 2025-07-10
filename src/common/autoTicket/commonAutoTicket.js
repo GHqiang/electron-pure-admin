@@ -9,7 +9,7 @@ import svApi from "@/api/sv-api";
 // 机器登录用户信息
 import { platTokens } from "@/store/platTokens";
 const {
-  userInfo: { rule }
+  userInfo: { rule, user_id }
 } = platTokens();
 
 import { GET_APP_TYPE_LIST } from "@/common/constant";
@@ -88,17 +88,28 @@ class OrderAutoTicketQueue {
     const { isStart } = this;
     if (!isStart) return;
     const order = event.detail;
+    let isAgain = event.isAgain; // 是否重新出票
     // 检查是否已经处理过此订单
-    if (this.handledOrders.has(order.plat_name + "_" + order.order_number)) {
+    if (
+      !isAgain &&
+      this.handledOrders.has(order.plat_name + "_" + order.order_number)
+    ) {
       this.logger.warn("订单已被处理过，忽略重复消息", order);
       return;
     }
 
-    // 标记此订单为已处理
-    this.handledOrders.set(order.plat_name + "_" + order.order_number, 1);
+    let des = "自动出票队列获取到新的待出票订单";
+    if (!isAgain) {
+      // 标记此订单为已处理
+      this.handledOrders.set(order.plat_name + "_" + order.order_number, 1);
+    } else {
+      des = "自动出票队列获取到重新出票的订单";
+      order.isAgain = true;
+    }
+    console.warn(des, order);
     this.logger.warn("新的待出票订单", order);
     this.logger.init(order); // 设置日志的订单标识信息
-    this.logger.infoSave("自动出票队列获取到新的待出票订单", {
+    this.logger.infoSave(des, {
       newOrders: order,
       sjc: +new Date()
     });
@@ -123,7 +134,7 @@ class OrderAutoTicketQueue {
         let logger = new Logger({
           logType: 3
         });
-        if (this.prevOrderNumber === order.order_number) {
+        if (!order.isAgain && this.prevOrderNumber === order.order_number) {
           logger.warn("当前订单重复执行,直接执行下个");
         } else {
           // 处理订单
@@ -151,8 +162,35 @@ class OrderAutoTicketQueue {
               errInfo,
               mobile: res?.mobile
             };
-            await this.addOrderHandleRecored(params);
-            logger.infoSave("订单出票结束，远端已添加出票记录");
+            if (order.isAgain) {
+              let order_status = res?.submitRes ? 1 : 2;
+              // 出成功后修改出票记录
+              if (order_status === 1) {
+                svApi.updateTicketRecord({
+                  whereObj: {
+                    order_number: order.order_number,
+                    plat_name: order.plat_name,
+                    user_id: user_id
+                  },
+                  updateObj: {
+                    order_status: 1,
+                    profit: res?.profit || "",
+                    qrcode: res?.qrcode || "",
+                    quan_type: res?.quanType || "",
+                    quan_value: res?.offerRule?.quan_value || "",
+                    quan_code: res?.quan_code || "",
+                    card_id: res?.card_id || "",
+                    card_num: res?.cardNum || "",
+                    mobile: res?.mobile
+                  }
+                });
+              }
+            } else {
+              await addOrderHandleRecored(params);
+            }
+            logger.infoSave(
+              `订单出票结束，远端已${order.isAgain ? "修改" : "添加"}出票记录`
+            );
             logger.logUpload();
           }
         }
