@@ -110,7 +110,7 @@ class OrderAutoTicketQueue {
   handleNewOrder(event) {
     const { appFlag, conPrefix, isStart } = this;
     if (!isStart) return;
-    const order = event.detail?.order;
+    let order = event.detail?.order;
     const isAgain = event.detail?.isAgain; // 是否重新出票
     // 检查是否已经处理过此订单
     if (
