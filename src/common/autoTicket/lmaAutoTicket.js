@@ -105,8 +105,12 @@ class OrderAutoTicketQueue {
     const { appFlag, conPrefix, isStart } = this;
     if (!isStart) return;
     const order = event.detail;
+    let isAgain = event.isAgain; // 是否重新出票
     // 检查是否已经处理过此订单
-    if (this.handledOrders.has(order.plat_name + "_" + order.order_number)) {
+    if (
+      !isAgain &&
+      this.handledOrders.has(order.plat_name + "_" + order.order_number)
+    ) {
       console.warn(conPrefix + "订单已被处理过，忽略重复消息", order);
       let logList = [
         {
@@ -130,13 +134,19 @@ class OrderAutoTicketQueue {
       return;
     }
 
-    // 标记此订单为已处理
-    this.handledOrders.set(order.plat_name + "_" + order.order_number, 1);
-    console.warn(conPrefix + "新的待出票订单", order);
+    let des = "自动出票队列获取到新的待出票订单";
+    if (!isAgain) {
+      // 标记此订单为已处理
+      this.handledOrders.set(order.plat_name + "_" + order.order_number, 1);
+    } else {
+      des = "自动出票队列获取到重新出票的订单";
+      order.isAgain = true;
+    }
+    console.warn(des, order);
     let logList = [
       {
         opera_time: getCurrentTime(),
-        des: "自动出票队列获取到新的待出票订单",
+        des,
         level: "info",
         info: {
           newOrders: order,
@@ -167,7 +177,7 @@ class OrderAutoTicketQueue {
       // 取出队列首部订单并从队列里去掉
       const order = this.queue.shift();
       if (order) {
-        if (this.prevOrderNumber === order.order_number) {
+        if (!order.isAgain && this.prevOrderNumber === order.order_number) {
           let log_list = [
             {
               opera_time: getCurrentTime(),
@@ -221,10 +231,35 @@ class OrderAutoTicketQueue {
               errInfo: errInfo,
               mobile: this.currentParamsList[this.currentParamsInx].mobile
             };
-            await addOrderHandleRecored(params);
+            if (order.isAgain) {
+              let order_status = res?.submitRes ? 1 : 2;
+              // 出成功后修改出票记录
+              if (order_status === 1) {
+                svApi.updateTicketRecord({
+                  whereObj: {
+                    order_number: order.order_number,
+                    plat_name: order.plat_name,
+                    user_id: tokens.userInfo.user_id
+                  },
+                  updateObj: {
+                    order_status: 1,
+                    profit: res?.profit || "",
+                    qrcode: res?.qrcode || "",
+                    quan_type: res?.quanType || "",
+                    quan_value: res?.offerRule?.quan_value || "",
+                    quan_code: res?.quan_code || "",
+                    card_id: res?.card_id || "",
+                    card_num: res?.cardNum || "",
+                    mobile: this.currentParamsList[this.currentParamsInx].mobile
+                  }
+                });
+              }
+            } else {
+              await addOrderHandleRecored(params);
+            }
             this.logList.push({
               opera_time: getCurrentTime(),
-              des: "订单出票结束，远端已添加出票记录",
+              des: `订单出票结束，远端已${order.isAgain ? "修改" : "添加"}出票记录`,
               level: "info"
             });
             logUpload(
@@ -299,22 +334,19 @@ class OrderAutoTicketQueue {
     let errInfo = formatErrInfo(errInfoObj?.info?.error) || "";
     const { plat_name } = order;
     let isAutoTransfer = window.localStorage.getItem("isAutoTransfer");
-    const {
-      order_number,
-      city_name,
-      show_time,
-      cinema_name,
-      film_name,
-      lockseat
-    } = order;
+
     // 关闭自动转单只针对座位异常生效
     // if (isTestOrder || (isAutoTransfer !== "1" && errMsg === "锁定座位异常")) {
     let isTransferOrder = true;
-    if (isTestOrder || isAutoTransfer !== "1") {
+    let des = "自动转单处于关闭状态，只取消订单释放座位，需手动出票或转单";
+    if (order.isAgain) {
+      des = "重新出票失败，不转单只取消订单释放座位，需手动出票或转单";
+    }
+    if (isTestOrder || isAutoTransfer !== "1" || order.isAgain) {
       console.warn("自动转单处于关闭状态");
       this.logList.push({
         opera_time: getCurrentTime(),
-        des: "自动转单处于关闭状态，只取消订单释放座位",
+        des,
         level: "info"
       });
       isTransferOrder = false;
@@ -352,8 +384,7 @@ class OrderAutoTicketQueue {
       if (!isTransferOrder) {
         sendWxPusherMessage({
           orderInfo: order,
-          transferTip:
-            "自动转单处于关闭状态,仅取消订单释放座位,需适时手动出票或者转单",
+          transferTip: des,
           failReason: `${errMsg}——${errInfo}`
         });
         return;
@@ -399,7 +430,7 @@ class OrderAutoTicketQueue {
         };
       } else if (plat_name === "shangzhan") {
         params = {
-          order_sn: order_number,
+          order_sn: order.order_number,
           order_status: "3", // 出票状态（3：出票失败 9：出票成功）
           cancel_reason: "价格过低无法出票" // 出票失败原因（出票失败必传）
         };
