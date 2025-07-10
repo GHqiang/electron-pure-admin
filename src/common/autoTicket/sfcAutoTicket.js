@@ -478,14 +478,6 @@ class OrderAutoTicketQueue {
     let errInfo = formatErrInfo(errInfoObj?.info?.error) || "";
     const { plat_name } = order;
     let isAutoTransfer = window.localStorage.getItem("isAutoTransfer");
-    const {
-      order_number,
-      city_name,
-      show_time,
-      cinema_name,
-      film_name,
-      lockseat
-    } = order;
     // 关闭自动转单只针对座位异常生效
     // if (isTestOrder || (isAutoTransfer !== "1" && errMsg === "锁定座位异常")) {
     let isTransferOrder = true;
@@ -574,7 +566,7 @@ class OrderAutoTicketQueue {
         };
       } else if (plat_name === "shangzhan") {
         params = {
-          order_sn: order_number,
+          order_sn: order.order_number,
           order_status: "3", // 出票状态（3：出票失败 9：出票成功）
           cancel_reason: "价格过低无法出票" // 出票失败原因（出票失败必传）
         };
