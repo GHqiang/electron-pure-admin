@@ -18,8 +18,12 @@ const {
 } = tokens;
 let conPrefix = "【洋葱自动获取订单】——"; // console打印前缀
 // 洋葱影院列表
-import { useYangcongCinemaList } from "@/store/specialNameRule";
+import {
+  useYangcongCinemaList,
+  useCinemaCodeMatchList
+} from "@/store/specialNameRule";
 const yangcongCinemaListObj = useYangcongCinemaList();
+const cinemaCodeMatchObj = useCinemaCodeMatchList();
 
 // 创建一个订单自动报价队列类
 class OrderAutoFetchQueue {
@@ -90,12 +94,19 @@ class OrderAutoFetchQueue {
         .filter(item => getCinemaFlag(item))
         .map(item => {
           let app_name = getCinemaFlag(item);
+          let cinema_code = item.cinema_code;
+          if (!cinema_code) {
+            cinema_code =
+              cinemaCodeMatchObj.getCinemaAppFlag(item)?.plat_cinema_code;
+          }
           return {
             ...item,
             app_name,
-            appName: app_name
+            appName: app_name,
+            cinema_code
           };
-        });
+        })
+        .filter(item => item.cinema_code);
       sfcStayOfferlist = sfcStayOfferlist.filter(item => {
         // 过滤出来新订单（未发送过新订单消息的）
         return !this.orderRecord.some(

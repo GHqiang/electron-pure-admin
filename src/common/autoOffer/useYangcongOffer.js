@@ -15,9 +15,12 @@ import getOfferPriceFun from "./commonOfferHandle.js";
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
 // 洋葱影院列表
-import { useYangcongCinemaList } from "@/store/specialNameRule";
+import {
+  useYangcongCinemaList,
+  useCinemaCodeMatchList
+} from "@/store/specialNameRule";
 const yangcongCinemaListObj = useYangcongCinemaList();
-
+const cinemaCodeMatchObj = useCinemaCodeMatchList();
 let isTestOrder = false; //是否是测试订单
 // 创建一个订单自动报价队列类
 class OrderAutoOfferQueue {
@@ -189,12 +192,19 @@ class OrderAutoOfferQueue {
         })
         .map(item => {
           let app_name = getCinemaFlag(item);
+          let cinema_code = item.cinema_code;
+          if (!cinema_code) {
+            cinema_code =
+              cinemaCodeMatchObj.getCinemaAppFlag(item)?.plat_cinema_code;
+          }
           return {
             ...item,
             app_name,
-            appName: app_name
+            appName: app_name,
+            cinema_code
           };
-        });
+        })
+        .filter(item => item.cinema_code);
       // console.warn(
       //   conPrefix + "匹配已上架影院后的的待报价订单",
       //   sfcStayOfferlist
