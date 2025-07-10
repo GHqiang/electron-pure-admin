@@ -231,7 +231,7 @@
           }"
         >
           <el-button
-            v-if="order_status === '2' && rule == 3"
+            v-if="order_status === '2' && rule == 2"
             size="small"
             type="primary"
             @click="againTicket({ order_number, user_id })"
