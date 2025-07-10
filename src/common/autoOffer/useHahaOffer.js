@@ -191,7 +191,8 @@ class OrderAutoOfferQueue {
             app_name,
             appName: app_name
           };
-        });
+        })
+        .filter(item => item.cinema_code);
       // console.warn(
       //   conPrefix + "匹配已上架影院后的的待报价订单",
       //   sfcStayOfferlist

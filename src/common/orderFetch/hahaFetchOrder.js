@@ -101,7 +101,8 @@ class OrderAutoFetchQueue {
             app_name,
             appName: app_name
           };
-        });
+        })
+        .filter(item => item.cinema_code);
       sfcStayOfferlist = sfcStayOfferlist.filter(item => {
         // 过滤出来新订单（未发送过新订单消息的）
         return !this.orderRecord.some(
