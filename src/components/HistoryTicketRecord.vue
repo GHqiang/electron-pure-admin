@@ -175,7 +175,7 @@
           <span>{{ APP_LIST[scope.row.app_name] }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="出票状态" fixed width="85">
+      <el-table-column label="出票状态" fixed width="90">
         <template #default="{ row: { order_status } }">
           <span>{{ TICKET_STATUS[order_status] }}</span>
         </template>
@@ -234,7 +234,7 @@
             v-if="order_status === '2' && rule == 2"
             size="small"
             type="primary"
-            @click="againTicket({ order_number, user_id })"
+            @click="againTicket({ order_number, user_id, id })"
             >重新出票</el-button
           >
 
@@ -418,6 +418,22 @@ const againTicket = async ({ order_number, user_id }) => {
       }
     });
     window.dispatchEvent(newOrderEvent);
+    // 更新出票状态
+    svApi.updateTicketRecord({
+      whereObj: {
+        order_number,
+        user_id
+      },
+      updateObj: {
+        order_status: 5,
+        err_info: ""
+      }
+    });
+    // 更新出票状态
+    let item = tableData.value.find(item => item.id == id);
+    if (item) {
+      item.order_status = 5;
+    }
   } catch (error) {
     console.warn("查询操作日志返回异常", error);
   }

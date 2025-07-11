@@ -251,7 +251,21 @@ class OrderAutoTicketQueue {
                     quan_code: res?.quan_code || "",
                     card_id: res?.card_id || "",
                     card_num: res?.cardNum || "",
-                    mobile: this.currentParamsList[this.currentParamsInx].mobile
+                    mobile:
+                      this.currentParamsList[this.currentParamsInx].mobile,
+                    err_msg: "重新出票成功"
+                  }
+                });
+              } else {
+                svApi.updateTicketRecord({
+                  whereObj: {
+                    order_number: order.order_number,
+                    plat_name: order.plat_name,
+                    user_id: user_id
+                  },
+                  updateObj: {
+                    order_status: 2,
+                    err_msg: "重新出票失败"
                   }
                 });
               }
