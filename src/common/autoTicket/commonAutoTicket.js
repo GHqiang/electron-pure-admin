@@ -184,8 +184,7 @@ class OrderAutoTicketQueue {
                     quan_code: res?.quan_code || "",
                     card_id: res?.card_id || "",
                     card_num: res?.cardNum || "",
-                    mobile:
-                      this.currentParamsList[this.currentParamsInx].mobile,
+                    mobile: res?.mobile,
                     err_msg: "重新出票成功"
                   }
                 });
