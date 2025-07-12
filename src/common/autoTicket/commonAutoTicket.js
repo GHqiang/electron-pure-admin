@@ -202,7 +202,7 @@ class OrderAutoTicketQueue {
                 });
               }
             } else {
-              await addOrderHandleRecored(params);
+              await this.addOrderHandleRecored(params);
             }
             logger.infoSave(
               `订单出票结束，远端已${order.isAgain ? "修改" : "添加"}出票记录`
