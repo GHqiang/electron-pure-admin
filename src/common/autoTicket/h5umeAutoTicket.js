@@ -444,13 +444,13 @@ class OrderAutoTicketQueue {
       });
       // result: { profit, submitRes, qrcode, quan_code, card_id, offerRule } || undefined
       if (result) {
-        thhis.logger.warn("单个订单出票完成");
+        this.logger.warn("单个订单出票完成");
         return result;
       } else {
-        thhis.logger.warn("单个订单出票失败");
+        this.logger.warn("单个订单出票失败");
       }
     } catch (error) {
-      thhis.logger.errorSave("单个订单出票异常", { error });
+      this.logger.errorSave("单个订单出票异常", { error });
     }
   }
 
@@ -2673,7 +2673,7 @@ class OrderAutoTicketQueue {
       // this.logger.infoSave("获取座位布局返回", res);
       return sections;
     } catch (error) {
-      thiss.logger.errorSave("获取座位布局异常", error);
+      this.logger.errorSave("获取座位布局异常", error);
     }
   }
   // 获取最优卡券列表组合
