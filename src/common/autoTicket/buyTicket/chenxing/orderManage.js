@@ -468,7 +468,7 @@ export default class OrderManage {
       if (!submitRes || submitRes?.error) {
         logger.errorSave("订单提交取票码失败，单个订单直接出票结束");
 
-        let errInfo = formatErrInfo(submitRes?.error);
+        let errInfo = submitRes?.error;
         sendWxPusherMessage({
           orderInfo: this.order,
           transferTip: "提交取票码失败,需手动上传",

@@ -22,7 +22,8 @@ import assistLockSeatObj from "./lockSeatQueue";
 import svApi from "@/api/sv-api";
 // 统一日志类
 import Logger from "@/common/logger";
-
+// 平台管理类
+import PlatManage from "@/common/autoTicket/buyTicket/platManage";
 // 机器登录用户信息
 import { platTokens } from "@/store/platTokens";
 const {
@@ -230,6 +231,8 @@ class OrderAutoTicketQueue {
   async orderHandle(order, logger, delayTime) {
     // 放在这里最合适，方便后续方法直接用(该订单执行完了下次重新赋值也没问题)
     this.logger = logger;
+    this.order = order;
+    this.platManage = new PlatManage(order, logger, isTestOrder); // 平台管理模块
     try {
       this.logger.infoSave(
         `订单开始出票，订单号-${order.order_number}，上个订单号-${this.prevOrderNumber}`,
@@ -259,8 +262,8 @@ class OrderAutoTicketQueue {
     this.loggerQ.warn("自动出票队列停止");
   }
 
-  // 解锁座位
-  async unlockSeatByApp({ cinemaLinkId, lockOrderId, session_id }) {
+  // 释放座位
+  async releaseSeat({ cinemaLinkId, lockOrderId, session_id }) {
     // const session_id = this.currentParamsList[this.currentParamsInx].session_id;
     let params = {
       empCode: "",
@@ -271,178 +274,65 @@ class OrderAutoTicketQueue {
     };
     try {
       const res = await this.umeApi.unlockSeat(params);
-      this.logger.infoSave("解锁座位入参及返回", {
+      this.logger.infoSave("释放座位入参及返回", {
         params,
         res
       });
-      return { isSuccess: true };
+      return res;
     } catch (error) {
-      this.logger.errorSave("解锁座位异常", {
-        params,
-        error
+      this.logger.infoSave("释放座位异常", { error });
+      sendWxPusherMessage({
+        orderInfo: this.order,
+        transferTip: "释放座位失败，建议手动释放座位，以便后续订单正常出票",
+        failReason: formatErrInfo(error)
       });
-      return {
-        error
-      };
     }
   }
   // 转单
   async transferOrder(order, unlockSeatInfo) {
-    let { err_msg: errMsg, err_info: errInfo } =
-      this.logger.getLastErrMsgAndInfo();
-    const { plat_name } = order;
-    let isAutoTransfer = window.localStorage.getItem("isAutoTransfer");
-    const { cinemaLinkId, lockOrderId, orderId } = unlockSeatInfo || {};
-    const session_id = this.currentParamsList[this.currentParamsInx].session_id;
+    this.logger.infoSave("开始准备转单", unlockSeatInfo);
+    if (unlockSeatInfo) {
+      const { cinemaLinkId, lockOrderId, orderId } = unlockSeatInfo || {};
+      const session_id =
+        this.currentParamsList[this.currentParamsInx].session_id;
+      // 1、释放座位(仅锁座id存在时)
+      if (!orderId) {
+        await this.releaseSeat({ cinemaLinkId, lockOrderId, session_id });
+      }
+      // 2、取消订单(创建订单id存在时)
+      if (orderId) {
+        await this.cancelOrder({
+          cinemaLinkId,
+          orderId,
+          session_id
+        });
+      }
+    }
+
+    // 3、平台转单
+    // 获取转单原因
+    const errInfoObj = this.logger.logList
+      .filter(item => item.level === "error")
+      .reverse()?.[0];
+    let errMsg = errInfoObj?.des || "";
+    let errInfo = formatErrInfo(errInfoObj?.info?.error) || "";
+    let isAutoTransfer = window.localStorage.getItem("isAutoTransfer"); // 自动转单是否开启
     // 关闭自动转单只针对座位异常生效
-    // if (isTestOrder || (isAutoTransfer !== "1" && errMsg === "锁定座位异常")) {
-    let isTransferOrder = true;
+    // if (this.isTestOrder || (isAutoTransfer !== "1" && errMsg === "锁定座位异常")) {
     let des = "自动转单处于关闭状态，只取消订单释放座位，需手动出票或转单";
-    if (order.isAgain) {
+    if (this.order.isAgain) {
       des = "重新出票失败，不转单只取消订单释放座位，需手动出票或转单";
     }
-    if (isTestOrder || isAutoTransfer !== "1" || order.isAgain) {
-      this.logger.infoSave(des);
-      isTransferOrder = false;
-    }
-    this.logger.infoSave("自动转单方法传参", {
-      unlockSeatInfo
-    });
-    try {
-      // 先解锁座位再转单，负责转出去座位被占平台会处罚
-      // 3、获取座位布局
-      if (unlockSeatInfo) {
-        let operaDes = "释放座位",
-          operaRes = 0,
-          cancelError;
-        // 有创建订单号就取消订单
-        if (orderId) {
-          operaDes = "取消订单";
-          const cancelRes = await this.cannelOneOrder({
-            cinemaLinkId,
-            orderId,
-            session_id
-          });
-          if (cancelRes.error) {
-            cancelError = cancelRes.error;
-          } else {
-            operaRes = 1;
-          }
-        }
-        // 有锁座订单号就解锁座位
-        if (!orderId && lockOrderId) {
-          const unlockRes = await this.unlockSeatByApp({
-            cinemaLinkId,
-            lockOrderId,
-            session_id
-          });
-          if (!unlockRes.isSuccess) {
-            cancelError = unlockRes.error;
-          } else {
-            operaRes = 1;
-          }
-        }
-        this.logger.infoSave(`转单前${operaDes}-${operaRes ? "成功" : "失败"}`);
-        if (operaRes == 0) {
-          sendWxPusherMessage({
-            orderInfo: order,
-            transferTip:
-              "取消订单释放座位失败，建议先手动取消订单，以便后续订单正常出票",
-            failReason: `${JSON.stringify(cancelError)}`
-          });
-        }
-      }
-      if (!isTransferOrder) {
-        sendWxPusherMessage({
-          orderInfo: order,
-          transferTip: des,
-          failReason: `${errMsg}——${errInfo}`
-        });
-        return;
-      }
-      let params;
-      if (plat_name === "lieren") {
-        params = {
-          id: order.id,
-          confirm: 1
-        };
-      } else if (plat_name === "sheng") {
-        params = {
-          orderCode: order.order_number,
-          supplierCode: order.supplierCode,
-          reason: "价格过低无法出票"
-        };
-      } else if (plat_name === "mangguo") {
-        params = {
-          order_id: order.id,
-          remark: "渠道无法出票"
-        };
-      } else if (plat_name === "mayi") {
-        params = {
-          tradeno: order.id,
-          certificateImgUrl: "",
-          reason: "",
-          type: "bj_error"
-        };
-      } else if (plat_name === "yangcong") {
-        params = {
-          tradeno: order.id
-        };
-      } else if (plat_name === "haha") {
-        params = {
-          id: order.id,
-          reasonId: 9,
-          text: "其他-"
-        };
-      } else if (plat_name === "yinghuasuan") {
-        params = {
-          order_sn: order.order_sn,
-          close_cause: "价格过低无法出票"
-        };
-      } else if (plat_name === "shangzhan") {
-        params = {
-          order_sn: order.order_number,
-          order_status: "3", // 出票状态（3：出票失败 9：出票成功）
-          cancel_reason: "价格过低无法出票" // 出票失败原因（出票失败必传）
-        };
-      }
-      this.logger.warn("【转单】参数", params);
-      const res = await PLAT_API_OBJ[plat_name].transferOrder(params);
-      this.logger.infoSave("转单成功", res);
+    if (this.isTestOrder || isAutoTransfer !== "1" || this.order.isAgain) {
+      this.logger.infoSave("自动转单处于关闭状态");
       sendWxPusherMessage({
-        orderInfo: order,
-        transferTip: "自动转单处于开启状态,已转单无需处理",
+        orderInfo: this.order,
+        transferTip: des,
         failReason: `${errMsg}——${errInfo}`
       });
-      let { supplier_end_price, tpp_price, ticket_num } = order;
-      // 洋葱转单是原价的百分之三
-      if (["yangcong"].includes(plat_name) && tpp_price) {
-        supplier_end_price = tpp_price;
-      }
-      let transfer_fee = 0; // 蚂蚁转单扣积分
-      if (plat_name != "mayi") {
-        transfer_fee = (
-          (Number(supplier_end_price) * 100 * Number(ticket_num) * 3) /
-          10000
-        ).toFixed(2);
-      }
-      let transferParams = {
-        transfer_fee // 转单手续费
-      };
-      this.logger.warn("【转单】手续费", transfer_fee);
-      return transferParams;
-    } catch (error) {
-      this.logger.infoSave(`转单原因-${errMsg}——${errInfo}`, {
-        errMsg,
-        errInfo
-      });
-      this.logger.errorSave("转单异常", { error });
-      sendWxPusherMessage({
-        orderInfo: order,
-        transferTip: "自动转单开启，转单失败，需手动出票或者转单",
-        failReason: `${errMsg}——${errInfo}`
-      });
+      return;
     }
+    return await this.platManage.orderTransferByPlat(errMsg, errInfo);
   }
 
   // 单个订单出票
@@ -530,81 +420,17 @@ class OrderAutoTicketQueue {
     this.logger.infoSave("获取该订单报价记录成功", {
       offerRule: JSON.parse(JSON.stringify(offerRule))
     });
-
-    try {
-      // 1、解锁座位
-      if (!isTestOrder) {
-        if (plat_name === "lieren") {
-          await this.unlockSeat({ plat_name, order_id: id, inx: 1 });
-        } else if (plat_name === "sheng") {
-          const deliverRes = await startDeliver({
-            plat_name,
-            order_number,
-            supplierCode,
-            appFlag
-          });
-          this.logger.infoSave("确认接单返回", { deliverRes });
-          await mockDelay(2);
-          await this.unlockSeat({
-            plat_name,
-            order_number,
-            supplierCode,
-            inx: 1
-          });
-        } else if (plat_name === "mangguo") {
-          await this.unlockSeat({ plat_name, order_id: id, inx: 1 });
-        } else if (plat_name === "mayi") {
-          await this.unlockSeat({ plat_name, order_id: id, inx: 1 });
-        } else if (plat_name === "yangcong") {
-          await this.unlockSeat({ plat_name, order_id: id, inx: 1 });
-        } else if (plat_name === "haha") {
-          const deliverRes = await startDeliver({ plat_name, bid, appFlag });
-          this.logger.infoSave("确认接单返回", { deliverRes });
-          await mockDelay(2);
-          await this.unlockSeat({
-            plat_name,
-            order_id: id,
-            inx: 1
-          });
-        } else if (plat_name === "yinghuasuan" && item.is_lock_seat == 1) {
-          await this.unlockSeat({
-            plat_name,
-            order_number: item.order_sn, // 取order_sn
-            inx: 1
-          });
-        }
-        this.logger.infoSave("订单首次解锁座位完成");
-      }
-    } catch (error) {
-      this.logger.error("解锁座位失败准备试错3次，间隔3秒", error);
-      // 试错3次，间隔3秒
-      let params = {
-        order_id: id,
-        order_number,
-        supplierCode,
-        plat_name
-      };
-      let delayConfig = {
-        lieren: [3, 3],
-        mangguo: [3, 3],
-        sheng: [3, 3],
-        mayi: [60, 1],
-        yangcong: [3, 3],
-        haha: [3, 3],
-        yinghuasuan: [3, 3]
-      };
-      const res = await trial(
-        inx => this.unlockSeat({ ...params, inx }),
-        delayConfig[plat_name][0],
-        delayConfig[plat_name][1]
-      );
-      if (!res) {
-        this.logger.error("单个订单试错后仍解锁失败, 需要走转单逻辑");
-        // 转单逻辑待补充
+    // 平台解锁座位（测试单无需解锁）
+    if (!isTestOrder) {
+      this.logger.infoSave("开始准备解锁座位");
+      const unlockRes = await this.platManage.unlockSeatByPlat();
+      if (!unlockRes) {
+        this.logger.infoSave("平台解锁失败准备走转单逻辑");
+        this.logger.error("平台解锁失败走转单逻辑");
+        // 转单逻辑
         const transferParams = await this.transferOrder(item);
         return { transferParams };
       }
-      this.logger.infoSave("订单首次解锁失败试错后解锁成功");
     }
     try {
       // 解锁成功后延迟6秒再执行
@@ -1002,36 +828,26 @@ class OrderAutoTicketQueue {
           return { transferParams };
         }
       } else {
-        // 有创建订单号就取消订单
+        // 取消订单释放座位参数
+        let unlockSeatInfo = {
+          cinemaLinkId,
+          orderId,
+          lockOrderId,
+          session_id:
+            this.currentParamsList[this.currentParamsInx - 1].session_id
+        };
+        let isCancel;
         if (orderId) {
-          // 先用上个号的token取消订单，然后再重新出票
-          const cancelRes = await this.cannelOneOrder({
-            cinemaLinkId,
-            orderId,
-            session_id:
-              this.currentParamsList[this.currentParamsInx - 1].session_id
-          });
-          if (cancelRes.error) {
-            this.logger.infoSave("上个号取消订单失败", {
-              error: cancelRes.error
-            });
-            const transferParams = await this.transferOrder(item);
-            return { transferParams };
-          }
+          isCancel = await this.cancelOrder(unlockSeatInfo);
+        } else {
+          isCancel = await this.releaseSeat(unlockSeatInfo);
         }
-        // 有锁座订单号就解锁座位
-        if (!orderId && lockOrderId) {
-          const unlockRes = await this.unlockSeatByApp({
-            cinemaLinkId,
-            lockOrderId,
-            session_id:
-              this.currentParamsList[this.currentParamsInx - 1].session_id
-          });
-          if (!unlockRes.isSuccess) {
-            this.logger.infoSave("上个号释放座位失败", {
-              error: unlockRes.error
-            });
-          }
+        if (!isCancel) {
+          this.logger.infoSave(
+            "上个号取消订单释放座位失败，发送消息通知并直接走转单"
+          );
+          const transferParams = await this.transferOrder(item);
+          return { transferParams };
         }
         const phone = this.currentParamsList[this.currentParamsInx].mobile;
         this.logger.infoSave(
@@ -2071,16 +1887,10 @@ class OrderAutoTicketQueue {
       }
       this.logger.infoSave("非异步获取订单支付结果成功");
       const submitRes = await this.submitQrcode({
-        order_id,
         qrcode,
-        app_name,
-        card_id,
-        order_number,
-        supplierCode,
-        plat_name,
-        lockseat,
         orderInfo,
-        flag: 1
+        flag: 1,
+        logger: this.logger
       });
       return { submitRes, qrcode };
     } catch (error) {
@@ -2163,14 +1973,7 @@ class OrderAutoTicketQueue {
         return;
       }
       await this.submitQrcode({
-        order_id,
         qrcode,
-        app_name,
-        card_id,
-        order_number,
-        supplierCode,
-        plat_name,
-        lockseat,
         orderInfo,
         flag: 2,
         logger
@@ -2184,36 +1987,19 @@ class OrderAutoTicketQueue {
     }
   }
 
-  async submitQrcode({
-    order_id,
-    qrcode,
-    app_name,
-    card_id,
-    order_number,
-    supplierCode,
-    plat_name,
-    lockseat,
-    orderInfo,
-    flag,
-    logger
-  }) {
-    let targetLogger = flag === 1 ? this.logger : logger;
+  async submitQrcode({ qrcode, flag, logger, orderInfo }) {
+    const { plat_name, order_number } = orderInfo;
     try {
       // 10、提交取票码
-      const submitRes = await this.submitTicketCode({
-        plat_name,
-        order_id,
+      const submitRes = await this.platManage.submitTicketCode({
         qrcode,
-        order_number,
-        supplierCode,
-        lockseat,
-        orderInfo,
         flag,
-        targetLogger
+        logger
       });
       if (!submitRes || submitRes?.error) {
-        targetLogger.errorSave("提交取票码失败");
-        let errInfo = formatErrInfo(submitRes?.error);
+        logger.errorSave("订单提交取票码失败，单个订单直接出票结束");
+
+        let errInfo = submitRes?.error;
         sendWxPusherMessage({
           orderInfo,
           transferTip: "提交取票码失败,需手动上传",
@@ -2237,7 +2023,7 @@ class OrderAutoTicketQueue {
       }
       return submitRes;
     } catch (error) {
-      targetLogger.errorSave("提交取票码异常", { error });
+      logger.errorSave("提交取票码异常", { error });
     }
   }
 
@@ -2740,7 +2526,7 @@ class OrderAutoTicketQueue {
   }
 
   // 取消订单
-  async cannelOneOrder({ cinemaLinkId, orderId, session_id }) {
+  async cancelOrder({ cinemaLinkId, orderId, session_id }) {
     let params = {
       empCode: "",
       leaseCode: "",
@@ -2761,9 +2547,11 @@ class OrderAutoTicketQueue {
         error,
         params
       });
-      return {
-        error
-      };
+      sendWxPusherMessage({
+        orderInfo: this.order,
+        transferTip: "取消订单失败，建议手动取消订单，以便后续订单正常出票",
+        failReason: formatErrInfo(error)
+      });
     }
   }
 
@@ -3130,36 +2918,6 @@ const buyTicket = async ({
       error,
       params
     };
-  }
-};
-
-// 确认接单
-const startDeliver = async ({
-  order_number,
-  supplierCode,
-  plat_name,
-  bid,
-  quote_id,
-  appFlag
-}) => {
-  try {
-    let params;
-    if (plat_name === "sheng") {
-      params = {
-        orderCode: order_number,
-        supplierCode
-      };
-    } else if (plat_name === "haha") {
-      params = {
-        bid
-      };
-    }
-    console.log("确认接单参数", params);
-    const res = await PLAT_API_OBJ[plat_name].confirmOrder(params);
-    console.log("确认接单返回", res);
-    return res;
-  } catch (error) {
-    console.warn("确认接单异常", error);
   }
 };
 

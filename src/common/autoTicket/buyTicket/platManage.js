@@ -417,6 +417,9 @@ export default class PlatCommon {
           }
         });
       }
+      return {
+        error: err_info
+      };
     }
   }
 
