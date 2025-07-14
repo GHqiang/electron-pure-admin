@@ -43,7 +43,6 @@ class OrderAutoTicketQueue {
     this.umeApi = APP_API_OBJ[appFlag];
     this.currentParamsInx = 0;
     this.currentParamsList = [];
-    this.logList = []; // 操作运行日志
     this.prevOrderNumber = ""; // 上个订单号
     this.eventName = `newOrder_${appFlag}`;
     this.handledOrders = new Map(); // 用于存储已处理订单号及其相关信息
@@ -128,6 +127,7 @@ class OrderAutoTicketQueue {
       sjc: +new Date()
     });
     if (!isTestOrder) {
+      // 上送接收到新订单消息日志
       this.loggerQ.logUpload();
     }
     this.queue.push(order);
@@ -159,7 +159,6 @@ class OrderAutoTicketQueue {
             `单个订单自动出票结束，状态-${res?.submitRes ? "成功" : "失败"}`,
             { res }
           );
-          console.warn("logger.logList", logger.logList);
           if (!isTestOrder) {
             let { err_msg: errMsg, err_info: errInfo } =
               logger.getLastErrMsgAndInfo();
@@ -218,6 +217,7 @@ class OrderAutoTicketQueue {
             logger.infoSave(
               `订单出票结束，远端已${order.isAgain ? "修改" : "添加"}出票记录`
             );
+            // 上送该订单执行过程日志
             logger.logUpload();
           }
         }
@@ -248,7 +248,7 @@ class OrderAutoTicketQueue {
         this.logger.warn("订单出票队列已停止");
       }
     } catch (error) {
-      this.logger.error("订单执行出票异常", error);
+      this.logger.errorSave("订单执行出票异常", error);
     }
   }
 
@@ -406,7 +406,7 @@ class OrderAutoTicketQueue {
           cancel_reason: "价格过低无法出票" // 出票失败原因（出票失败必传）
         };
       }
-      console.warn("【转单】参数", params);
+      this.logger.warn("【转单】参数", params);
       const res = await PLAT_API_OBJ[plat_name].transferOrder(params);
       this.logger.infoSave("转单成功", res);
       sendWxPusherMessage({
@@ -429,10 +429,9 @@ class OrderAutoTicketQueue {
       let transferParams = {
         transfer_fee // 转单手续费
       };
-      console.warn("【转单】手续费", transfer_fee);
+      this.logger.warn("【转单】手续费", transfer_fee);
       return transferParams;
     } catch (error) {
-      console.error("【转单】异常", error);
       this.logger.infoSave(`转单原因-${errMsg}——${errInfo}`, {
         errMsg,
         errInfo
@@ -600,7 +599,7 @@ class OrderAutoTicketQueue {
         delayConfig[plat_name][1]
       );
       if (!res) {
-        this.logger.error("单个订单试错后仍解锁失败", "需要走转单逻辑");
+        this.logger.error("单个订单试错后仍解锁失败, 需要走转单逻辑");
         // 转单逻辑待补充
         const transferParams = await this.transferOrder(item);
         return { transferParams };
@@ -625,7 +624,7 @@ class OrderAutoTicketQueue {
         thhis.logger.warn("单个订单出票失败");
       }
     } catch (error) {
-      thhis.logger.error("单个订单出票异常", error);
+      thhis.logger.errorSave("单个订单出票异常", { error });
     }
   }
 
@@ -669,7 +668,7 @@ class OrderAutoTicketQueue {
           order_sn: orderCode
         };
       }
-      this.logger.info("解锁参数", params);
+      this.logger.infoSave("平台解锁参数", params);
       const res = await PLAT_API_OBJ[plat_name].unlockSeat(params);
       this.logger.infoSave(`第${inx}次解锁座位成功`, res);
       return res;
@@ -848,7 +847,7 @@ class OrderAutoTicketQueue {
         });
 
         if (!movie_data?.length) {
-          this.logger.error("获取目标影院放映列表失败");
+          this.logger.errorSave("获取目标影院放映列表失败");
           const transferParams = await this.transferOrder(item);
           return { transferParams };
         }
@@ -1309,8 +1308,6 @@ class OrderAutoTicketQueue {
           });
         }
       }
-
-      console.warn("payAmount", payAmount, "card_id", card_id);
       let quan_code = useQuan.map(item => item.couponCode)?.join();
       let tickets, payments;
       if (offerRule.offer_type !== "1" && card_id) {
@@ -1396,14 +1393,13 @@ class OrderAutoTicketQueue {
       let cardNo = card_id;
       let quan_fee_total = (quan_fee * 1000 * ticket_num) / 1000;
       if (!orderId) {
-        console.error("创建订单失败，单个订单直接出票结束", "走转单逻辑");
+        this.logger.error("创建订单失败，单个订单直接出票结束", "走转单逻辑");
         const transferParams = await this.transferOrder(item, {
           cinemaLinkId,
           lockOrderId
         });
         return { offerRule, transferParams };
       }
-      console.warn("创建订单成功", orderId, profit, card_id, offerRule);
       this.logger.infoSave("创建订单成功");
       if (isTestOrder) {
         this.logger.infoSave("测试单暂不购买");
@@ -1467,7 +1463,7 @@ class OrderAutoTicketQueue {
         this.logger.infoSave("订单购买返回", { buyTicketRes });
         const buyRes = buyTicketRes?.buyRes;
         if (!buyRes) {
-          console.error("订单购买失败，单个订单直接出票结束", "走转单逻辑");
+          this.logger.error("订单购买失败，单个订单直接出票结束走转单逻辑");
           let errInfo = buyTicketRes?.error
             ? JSON.stringify(buyTicketRes?.error)
             : "";
@@ -1532,7 +1528,7 @@ class OrderAutoTicketQueue {
       if (lastRes?.qrcode && lastRes?.submitRes) {
         this.logger.infoSave("订单最后处理成功:获取取票码并上传");
       }
-      console.log("一键买票完成");
+      this.logger.info("一键买票完成");
       if (profit) {
         profit = Number(profit).toFixed(2);
       }
@@ -1622,13 +1618,11 @@ class OrderAutoTicketQueue {
         await mockDelay(1);
       }
 
-      console.log("锁定座位参数", params);
+      this.logger.info("锁定座位参数", params);
       const res = await this.umeApi.lockSeat(params);
-      console.log("锁定座位返回", res);
       this.logger.infoSave(`第${inx}次锁定座位成功`, { res, params });
       return res?.bizValue;
     } catch (error) {
-      console.error("锁定座位异常", error);
       this.loggger.errorSave(`第${inx}次锁定座位异常`, { error, params });
       // 仅帮助锁座1次，帮助锁座后再锁定座位失败的话就不走帮助锁座逻辑了
       if (
@@ -1756,7 +1750,6 @@ class OrderAutoTicketQueue {
         needMatchConsumeGift: !!isUseQuan,
         umeToken: session_id
       };
-      console.log("获取支付结果参数", params);
       if (inx == 1) {
         targetLogger.infoSave("获取支付结果参数", { params });
       }
@@ -2005,7 +1998,6 @@ class OrderAutoTicketQueue {
       targetLogger.infoSave("提交取票码返回", res);
       return res;
     } catch (error) {
-      console.error("提交出票码异常", error);
       targetLogger.errorSave("提交出票码异常", { error });
       if (flag === 2) {
         let err_info = formatErrInfo(error);
@@ -2111,6 +2103,7 @@ class OrderAutoTicketQueue {
     isUseQuan
   }) {
     let logger = new Logger({ logType: 3 });
+    logger.init({ plat_name, order_number, app_name });
     try {
       logger.errorSave("异步轮询获取取票码并提交方法开始执行");
       // 每搁20秒查一次，查9次，3分钟
@@ -2154,9 +2147,9 @@ class OrderAutoTicketQueue {
           7 * 60
         );
       }
-      logger.init({ plat_name, order_number, app_name });
       if (!qrcode) {
         logger.errorSave("系统延迟轮询10分钟后获取取票码仍失败");
+        // 上送异步轮询获取取票码失败日志
         logger.logUpload();
         svApi.updateTicketRecord({
           whereObj: {
@@ -2182,9 +2175,12 @@ class OrderAutoTicketQueue {
         flag: 2,
         logger
       });
+      // 上送异步轮询获取取票码成功日志
       logger.logUpload();
     } catch (error) {
-      console.warn("异步轮询获取取票码上传提交异常", error);
+      logger.errorSave("异步轮询获取取票码上传提交异常", { error });
+      // 上送异步轮询获取取票码异常日志
+      logger.logUpload();
     }
   }
 
@@ -2301,7 +2297,7 @@ class OrderAutoTicketQueue {
           }
         }
         if (!is_auto_use_quan) {
-          console.log("使用会员卡出票");
+          this.logger.info("使用会员卡出票");
           return await this.useCardHandle(useCardParms);
         }
       }
@@ -2386,8 +2382,7 @@ class OrderAutoTicketQueue {
             targetQuanList,
             ticket_num
           });
-          console.warn("优惠券不够用");
-          console.error(`${quan_value} 面额券不足，不支持从服务端同步获取`);
+          this.logger.warn("优惠券不够用");
           if (is_auto_use_quan) {
             this.logger.infoSave("灵活用券时获取目标券不足,转用卡处理");
             offerRule.quan_value = "";
@@ -2426,7 +2421,6 @@ class OrderAutoTicketQueue {
           profit < 0 &&
           !TEST_NEW_PLAT_LIST.includes(plat_name)
         ) {
-          console.error("最终利润为负，单个订单直接出票结束");
           this.logger.errorSave(
             `使用优惠券后最终利润为负${is_auto_use_quan ? ",灵活用券转用卡处理" : ""}`,
             {
@@ -2513,7 +2507,6 @@ class OrderAutoTicketQueue {
           item.quan_stock = maxNum;
         }
       });
-      console.log("quanTypeList", quanTypeList);
       this.logger.infoSave("根据影院获取券类型列表", { quanTypeList });
       return quanTypeList;
     } catch (error) {
@@ -2564,7 +2557,6 @@ class OrderAutoTicketQueue {
         profit < 0 &&
         !TEST_NEW_PLAT_LIST.includes(plat_name)
       ) {
-        console.error("最终利润为负，单个订单直接出票结束");
         this.logger.errorSave("使用会员卡计算价格后最终利润为负", {
           profit
         });
@@ -2639,7 +2631,6 @@ class OrderAutoTicketQueue {
         useMobileList,
         cardListByMobile
       });
-      // console.log("list", list);
       // 根据当天及当月出票量限制进行过滤
       let cardListLimit = cardListByMobile.filter(item => {
         const { use_limit_day, use_limit_month, daily_usage, month_usage } =
@@ -2707,13 +2698,13 @@ class OrderAutoTicketQueue {
 
       let quanList = quanRes.data?.quanList || [];
       if (!quanList?.length && asyncFlag != 1) {
-        console.error(`数据库${quan_value}面额券不足`);
+        this.logger.error(`数据库${quan_value}面额券不足`);
         return;
       }
       // quanList = quanList.map(item => item.coupon_num.trim());
       let bandQuanList = [];
       for (const quan of quanList) {
-        console.log(`正在尝试绑定券 ${quan.coupon_num}...`);
+        this.logger.info(`正在尝试绑定券 ${quan.coupon_num}...`);
         const couponNumRes = await bandQuan({
           cinemaLinkId,
           coupon_num: quan.coupon_num,
@@ -2742,6 +2733,7 @@ class OrderAutoTicketQueue {
     } finally {
       if (asyncFlag) {
         targetLogger.init({ plat_name, order_number, app_name: appFlag });
+        // 上送异步绑券日志
         targetLogger.logUpload();
       }
     }
@@ -2758,9 +2750,7 @@ class OrderAutoTicketQueue {
       umeToken: session_id
     };
     try {
-      console.log("取消订单参数", params);
       const res = await this.umeApi.cannelOneOrder(params);
-      console.log("取消订单返回", res);
       this.logger.infoSave("取消订单返回", {
         res,
         params
@@ -2784,9 +2774,9 @@ class OrderAutoTicketQueue {
       leaseCode: ""
     };
     try {
-      console.log("获取城市影院列表参数", params);
+      this.logger.info("获取城市影院列表参数", params);
       const res = await this.umeApi.getCinemaList(params);
-      console.log("获取城市影院列表返回", res);
+      this.logger.info("获取城市影院列表返回", res);
       let list = res.bizValue?.cities || [];
       // 通过排查以往ume系列订单，发现cinemaCode和cinemaLinkId值并不一样，故此处先不赋同值
       list = list.map(item => ({
@@ -2815,7 +2805,7 @@ class OrderAutoTicketQueue {
       posterSize: "SMALL"
     };
     try {
-      console.log("获取影院放映列表参数", params);
+      this.logger.info("获取影院放映列表参数", params);
       const res = await this.umeApi.getMoviePlayInfo(params);
       let fimlList = res?.bizValue || [];
       // [
@@ -2838,7 +2828,6 @@ class OrderAutoTicketQueue {
       //         "showStatus": "SHOWING"
       //     },
       // ]
-      console.log("获取影院放映列表返回", fimlList);
       this.logger.infoSave("获取影院放映列表返回", {
         fimlList
       });
@@ -2858,9 +2847,9 @@ class OrderAutoTicketQueue {
         leaseCode: "",
         cinemaLinkId
       };
-      console.log("获取电影放映日期参数", params);
+      this.logger.info("获取电影放映日期参数", params);
       const res = await this.umeApi.getMoviePlayDate(params);
-      console.log("获取电影放映日期返回", res);
+      this.logger.info("获取电影放映日期返回", res);
       let films = res?.bizValue?.films || [];
       let filmDates = films.find(item => item.filmId === filmId)?.dates || [];
       this.logger.infoSave("获取电影放映日期返回", { filmDates });
@@ -2889,10 +2878,10 @@ class OrderAutoTicketQueue {
         leaseCode: "",
         session_id
       };
-      console.log("获取座位布局参数", params);
+      this.logger.info("获取座位布局参数", params);
       const res = await this.umeApi.getMoviePlaySeat(params);
       let sections = res.bizValue?.sections?.[0] || {};
-      console.log("获取座位布局返回", res);
+      this.logger.info("获取座位布局返回", res);
       // this.logger.infoSave("获取座位布局返回", res);
       return sections;
     } catch (error) {
@@ -2919,9 +2908,8 @@ class OrderAutoTicketQueue {
       umeToken: session_id
     };
     try {
-      console.log("获取最优卡券列表组合参数", params);
+      this.logger.info("获取最优卡券列表组合参数", params);
       const res = await this.umeApi.getCardQuanList(params);
-      console.log("获取最优卡券列表组合返回", res);
       let orderInfo = res.bizValue;
       this.logger.info("获取最优卡券列表组合返回", {
         orderInfo,
@@ -2995,7 +2983,6 @@ class OrderAutoTicketQueue {
           item => item.app_name === app_name && item.mobile && item.session_id
         )
         .map(item => item.mobile);
-      console.log("useMobileList", useMobileList);
       this.logger.infoSave("获取影院目标券信息返回", {
         targetQuanList,
         quan_flag,
@@ -3019,12 +3006,13 @@ class OrderAutoTicketQueue {
       });
       let sortMobileList = this.getSortedPhones(targetQuanList, quanValueList);
       if (sortMobileList) {
-        console.log("sortMobileList", sortMobileList);
         this.logger.infoSave("获取排序手机列表返回", { sortMobileList });
         return sortMobileList;
       }
     } catch (error) {
-      console.error("根据影院获取券类型列表返回异常", error);
+      this.logger.errorSave("根据影院获取券类型列表返回异常", {
+        error
+      });
     }
   }
   // 更新券库存
@@ -3276,11 +3264,6 @@ const updateCardDayUse = async ({
   order_number
 }) => {
   let logger = new Logger({ logType: 3 });
-  logger.init({
-    plat_name,
-    app_name,
-    order_number
-  });
   try {
     const res = await svApi.updateDayUsage({
       app_name: app_name,
@@ -3298,6 +3281,12 @@ const updateCardDayUse = async ({
       error
     });
   }
+  logger.init({
+    plat_name,
+    app_name,
+    order_number
+  });
+  // 上送更新卡当天使用量日志
   logger.logUpload();
 };
 export default createTicketQueue;
