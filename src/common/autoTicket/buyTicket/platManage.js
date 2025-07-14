@@ -56,12 +56,18 @@ export default class PlatCommon {
           order_id: id,
           inx: 1
         });
-      } else if (plat_name === "yinghuasuan" && this.order.is_lock_seat == 1) {
-        unlockRes = await this.unlockSeat({
-          plat_name,
-          order_number: this.order.order_sn, // 取order_sn
-          inx: 1
-        });
+      } else if (plat_name === "yinghuasuan") {
+        if (this.order.is_lock_seat == 1) {
+          unlockRes = await this.unlockSeat({
+            plat_name,
+            order_number: this.order.order_sn, // 取order_sn
+            inx: 1
+          });
+        } else {
+          unlockRes = {
+            msg: "订单无需解锁"
+          };
+        }
       }
       this.logger.infoSave("订单首次解锁座位完成");
       return unlockRes;
