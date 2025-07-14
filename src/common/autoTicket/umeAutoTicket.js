@@ -624,8 +624,8 @@ class OrderAutoTicketQueue {
       }
     });
     try {
-      // 1、解锁座位
-      if (!isTestOrder) {
+      // 1、解锁座位(重新出票不需要解锁座位)
+      if (!isTestOrder && !item.isAgain) {
         if (plat_name === "lieren") {
           await this.unlockSeat({ plat_name, order_id: id, inx: 1 });
         } else if (plat_name === "sheng") {

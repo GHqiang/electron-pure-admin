@@ -60,8 +60,8 @@ export default class BuyTicket {
         };
       }
       this.logger.infoSave("校验报价规则允许出票");
-      // 4、平台解锁座位（测试单无需解锁）
-      if (!this.isTestOrder) {
+      // 4、平台解锁座位(重新出票不需要解锁座位)
+      if (!this.isTestOrder && !this.order.isAgain) {
         this.logger.infoSave("开始准备解锁座位");
         const unlockRes = await this.platManage.unlockSeatByPlat();
         if (!unlockRes) {

@@ -420,8 +420,8 @@ class OrderAutoTicketQueue {
     this.logger.infoSave("获取该订单报价记录成功", {
       offerRule: JSON.parse(JSON.stringify(offerRule))
     });
-    // 平台解锁座位（测试单无需解锁）
-    if (!isTestOrder) {
+    // 平台解锁座位(重新出票不需要解锁座位)
+    if (!isTestOrder && !item.isAgain) {
       this.logger.infoSave("开始准备解锁座位");
       const unlockRes = await this.platManage.unlockSeatByPlat();
       if (!unlockRes) {
