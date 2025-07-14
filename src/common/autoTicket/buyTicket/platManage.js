@@ -176,7 +176,7 @@ export default class PlatCommon {
       // 芒果偶尔会这样
       if ((error?.msg || error?.message || "").includes("已经解锁")) {
         this.logger.infoSave(`第${inx}次解锁座位发现已解锁`, error);
-        return;
+        return { msg: "已解锁" };
       }
       // 芒果座位会未锁从而无需解锁
       if (
@@ -185,12 +185,12 @@ export default class PlatCommon {
         )
       ) {
         this.logger.infoSave(`第${inx}次解锁座位发现座位无需解锁`, error);
-        return;
+        return { msg: "无需解锁" };
       }
       // 哈哈偶尔会这样
       if (error?.msg === "当前订单座位没有被锁") {
         this.logger.infoSave(`第${inx}次解锁座位发现座位没有被锁`, error);
-        return;
+        return { msg: "座位没有被锁" };
       }
       this.logger.errorSave(`第${inx}次解锁座位失败`, error);
       return Promise.reject(error);
