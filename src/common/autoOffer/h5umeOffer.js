@@ -1102,6 +1102,7 @@ class getUmeOfferPrice {
       if (!movieData) {
         movieInfo = await this.getMovieInfo(order);
       }
+      let cardList = this.cardList;
       console.log("待报价订单当前场次电影相关信息", movieInfo);
       if (!movieInfo) {
         console.error("获取当前场次电影信息失败", "不再进行报价");
@@ -1143,89 +1144,6 @@ class getUmeOfferPrice {
       }
       console.log("获取会员总价", member_total_price);
       if (member_total_price > 0) {
-        const cardRes = await svApi.queryCardList({
-          app_name: app_name,
-          rule: rule,
-          status: "1",
-          isNeedTotalNum: 0,
-          queryFields:
-            "mobile,card_num,card_discount,linkCinemaIds,use_limit_day,use_limit_month,daily_usage,monthly_usage,usage_date"
-        });
-        let list = cardRes.data.cardList || [];
-        list = list.map(item => ({
-          ...item,
-          // 使用日非当天的就是0
-          daily_usage:
-            item.usage_date !== getCurrentDay() ? 0 : item.daily_usage || 0,
-          // 使用日非当月的就是0
-          month_usage: !isDateInCurrentMonth(item.usage_date)
-            ? 0
-            : item.monthly_usage || 0
-        }));
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "获取该影院已维护会员卡列表返回",
-          level: "info",
-          info: {
-            list
-          }
-        });
-        let useMobileList = getCinemaLoginInfoList()
-          .filter(
-            item => item.app_name === app_name && item.mobile && item.session_id
-          )
-          .map(item => item.mobile);
-        let cardListByMobile = list.filter(item =>
-          useMobileList.includes(item.mobile)
-        );
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "根据该用户关联手机号对卡列表进行过滤",
-          level: "info",
-          info: {
-            useMobileList,
-            cardListByMobile
-          }
-        });
-        // console.log("list", list);
-        // 根据当天及当月出票量限制进行过滤
-        let cardListLimit = cardListByMobile.filter(item => {
-          const { use_limit_day, use_limit_month, daily_usage, month_usage } =
-            item;
-          if (!use_limit_day && !use_limit_month) return true;
-          return (
-            (use_limit_day
-              ? ticket_num <= use_limit_day - daily_usage
-              : true) &&
-            (use_limit_month
-              ? ticket_num <= use_limit_month - month_usage
-              : true)
-          );
-        });
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "根据当天及当月出票量限制过滤后",
-          level: "info",
-          info: {
-            cardListLimit
-          }
-        });
-        // 过滤指定卡
-        let cardList = cardListLimit.filter(item => {
-          return !item.linkCinemaIds
-            ? true
-            : item.linkCinemaIds
-                .split(",")
-                .some(itemA => itemA == movieInfo.cinemaLinkId);
-        });
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "根据指定卡过滤后",
-          level: "info",
-          info: {
-            cardList
-          }
-        });
         if (!cardList.length) {
           console.error("影院单卡出票限制");
           this.logList.push({
@@ -1278,6 +1196,101 @@ class getUmeOfferPrice {
         opera_time: getCurrentTime(),
         des: "获取会员价异常",
         level: "error",
+        info: {
+          error
+        }
+      });
+    }
+  }
+
+  // 获取可用卡列表
+  async getCanUseCardList({ app_name, ticket_num }) {
+    try {
+      const cardRes = await svApi.queryCardList({
+        app_name: app_name,
+        rule: rule,
+        status: "1",
+        isNeedTotalNum: 0,
+        queryFields:
+          "mobile,card_num,card_discount,linkCinemaIds,use_limit_day,use_limit_month,daily_usage,monthly_usage,usage_date"
+      });
+      let list = cardRes.data.cardList || [];
+      list = list.map(item => ({
+        ...item,
+        // 使用日非当天的就是0
+        daily_usage:
+          item.usage_date !== getCurrentDay() ? 0 : item.daily_usage || 0,
+        // 使用日非当月的就是0
+        month_usage: !isDateInCurrentMonth(item.usage_date)
+          ? 0
+          : item.monthly_usage || 0
+      }));
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "获取该影院已维护会员卡列表返回",
+        level: "info",
+        info: {
+          list
+        }
+      });
+      let useMobileList = getCinemaLoginInfoList()
+        .filter(
+          item => item.app_name === app_name && item.mobile && item.session_id
+        )
+        .map(item => item.mobile);
+      let cardListByMobile = list.filter(item =>
+        useMobileList.includes(item.mobile)
+      );
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "根据该用户关联手机号对卡列表进行过滤",
+        level: "info",
+        info: {
+          useMobileList,
+          cardListByMobile
+        }
+      });
+      // console.log("list", list);
+      // 根据当天及当月出票量限制进行过滤
+      let cardListLimit = cardListByMobile.filter(item => {
+        const { use_limit_day, use_limit_month, daily_usage, month_usage } =
+          item;
+        if (!use_limit_day && !use_limit_month) return true;
+        return (
+          (use_limit_day ? ticket_num <= use_limit_day - daily_usage : true) &&
+          (use_limit_month ? ticket_num <= use_limit_month - month_usage : true)
+        );
+      });
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "根据当天及当月出票量限制过滤后",
+        level: "info",
+        info: {
+          cardListLimit
+        }
+      });
+      // 过滤指定卡
+      let cardList = cardListLimit.filter(item => {
+        return !item.linkCinemaIds
+          ? true
+          : item.linkCinemaIds
+              .split(",")
+              .some(itemA => itemA == movieInfo.cinemaLinkId);
+      });
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "根据指定卡过滤后",
+        level: "info",
+        info: {
+          cardList
+        }
+      });
+      return cardList;
+    } catch (error) {
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "获取可用卡列表异常",
+        level: "info",
         info: {
           error
         }
@@ -1518,6 +1531,12 @@ class getUmeOfferPrice {
           seatIds: JSON.parse(JSON.stringify(seatIds))
         }
       });
+      const cardList = await this.getCanUseCardList({
+        ticket_num,
+        app_name: appFlag
+      });
+      // 赋值到this上是为了其它地方好用
+      this.cardList = cardList || [];
       seatIds = seatIds.map(item => item.seatId);
       // try {
       //   // 过滤出来未售座位然后计算分区剩余座位占比，1-未售
@@ -1655,8 +1674,14 @@ class getUmeOfferPrice {
         }
       });
       let activities = orderInfo?.privileges || [];
+      // 系统可用卡列表
+      let canUseCardNumList = this.cardList.map(item => item.card_num);
       let member_discount_list = activities.filter(
-        item => item.cardInfos?.length
+        item =>
+          item.cardInfos?.length &&
+          item.cardInfos.some(itemC =>
+            canUseCardNumList?.includes(itemC.cardNumber)
+          )
       );
       let inx = targetLoginList.findIndex(
         item => item.session_id == session_id
