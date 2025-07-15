@@ -232,8 +232,6 @@ class OrderAutoTicketQueue {
     if (order) {
       this.loggerQ.info("添加新订单到队列");
       this.queue.push(order);
-    } else {
-      // console.log("从出票记录过滤后，无新订单添加到队列");
     }
   }
 
@@ -781,9 +779,9 @@ class OrderAutoTicketQueue {
           .replaceAll(" ", ",")
           .replaceAll("座", "号")
           .replaceAll("列", "号");
-        console.log("seatName", seatName);
+        this.logger.info("seatName", seatName);
         let selectSeatList = seatName.split(",");
-        console.log("selectSeatList", selectSeatList);
+        this.logger.info("selectSeatList", selectSeatList);
         targeSeatList = seatList.filter(item => {
           const { yCoord, rowName, columnName } = item;
           // let seat1 = yCoord + "排" + columnName + "号";
@@ -973,13 +971,12 @@ class OrderAutoTicketQueue {
         ticketMemberServiceFeeMin,
         areaSettlePriceMin // 区域最小结算价格
       } = targetShow;
-      this.logger.warn(
-        "ticketMemberPrice",
+      this.logger.warn("ticketMemberPrice", {
         ticketMemberPrice,
         handlingFee,
         ticketMemberServiceFeeMin,
         discountAmount
-      );
+      });
       // 原价格（座位价格）
       let originalAmount = targeSeatList.map(item => {
         let areaSettlePrice = areaInfoList.find(
@@ -2207,7 +2204,6 @@ class OrderAutoTicketQueue {
         useMobileList,
         cardListByMobile
       });
-      // console.log("list", list);
       // 根据当天及当月出票量限制进行过滤
       let cardListLimit = cardListByMobile.filter(item => {
         const { use_limit_day, use_limit_month, daily_usage, month_usage } =
@@ -2408,7 +2404,7 @@ class OrderAutoTicketQueue {
         return sortMobileList;
       }
     } catch (error) {
-      console.error("根据影院获取券类型列表返回异常", error);
+      this.logger.error("根据影院获取券类型列表返回异常", error);
     }
   }
 
