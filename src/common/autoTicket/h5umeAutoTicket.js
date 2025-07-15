@@ -425,8 +425,7 @@ class OrderAutoTicketQueue {
       this.logger.infoSave("开始准备解锁座位");
       const unlockRes = await this.platManage.unlockSeatByPlat();
       if (!unlockRes) {
-        this.logger.infoSave("平台解锁失败准备走转单逻辑");
-        this.logger.error("平台解锁失败走转单逻辑");
+        this.logger.errorSave("平台解锁失败准备走转单逻辑");
         // 转单逻辑
         const transferParams = await this.transferOrder(item);
         return { transferParams };
@@ -451,75 +450,6 @@ class OrderAutoTicketQueue {
       }
     } catch (error) {
       this.logger.errorSave("单个订单出票异常", { error });
-    }
-  }
-
-  // 解锁座位
-  async unlockSeat({
-    plat_name,
-    order_id,
-    inx = 1,
-    order_number: orderCode,
-    supplierCode
-  }) {
-    try {
-      let params;
-      if (plat_name === "lieren") {
-        params = {
-          order_id
-        };
-      } else if (plat_name === "sheng") {
-        params = {
-          orderCode,
-          supplierCode
-        };
-      } else if (plat_name === "mangguo") {
-        params = {
-          order_id
-        };
-      } else if (plat_name === "mayi") {
-        params = {
-          tradeno: order_id
-        };
-      } else if (plat_name === "yangcong") {
-        params = {
-          tradeno: order_id
-        };
-      } else if (plat_name === "haha") {
-        params = {
-          id: order_id
-        };
-      } else if (plat_name === "yinghuasuan") {
-        params = {
-          order_sn: orderCode
-        };
-      }
-      this.logger.infoSave("平台解锁参数", params);
-      const res = await PLAT_API_OBJ[plat_name].unlockSeat(params);
-      this.logger.infoSave(`第${inx}次解锁座位成功`, res);
-      return res;
-    } catch (error) {
-      // 芒果偶尔会这样
-      if ((error?.msg || error?.message || "").includes("已经解锁")) {
-        this.logger.infoSave(`第${inx}次解锁座位发现已解锁`, { error });
-        return;
-      }
-      // 芒果座位会未锁从而无需解锁
-      if (
-        (error?.msg || error?.message || "").includes(
-          "该座位未锁座成功，故无法解锁"
-        )
-      ) {
-        this.logger.infoSave(`第${inx}次解锁座位发现座位无需解锁`, { error });
-        return;
-      }
-      // 哈哈偶尔会这样
-      if (error?.msg === "当前订单座位没有被锁") {
-        this.logger.infoSave(`第${inx}次解锁座位发现座位没有被锁`, { error });
-        return;
-      }
-      this.logger.errorSave(`第${inx}次解锁座位失败`, { error });
-      return Promise.reject(error);
     }
   }
 
