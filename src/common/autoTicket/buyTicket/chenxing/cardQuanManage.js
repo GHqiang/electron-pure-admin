@@ -1042,6 +1042,7 @@ export default class CardQuanManage {
               useMobileList.includes(itemA.phone) &&
               itemA.quan_stock >= ticket_num
           );
+          item.quanStockList = quanStockList;
         }
       });
       let sortMobileList = this.getSortedPhones(targetQuanList, quanValueList);
