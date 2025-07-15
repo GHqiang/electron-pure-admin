@@ -4,7 +4,6 @@ import {
   convertFullwidthToHalfwidth,
   getTargetCinemaCommon,
   mockDelay, // 模拟延时
-  logUpload, // 日志上传
   trial, // 试错重试
   formatErrInfo, // 格式化错误信息
   getCinemaLoginInfoList,
@@ -14,11 +13,8 @@ import {
   isDateInCurrentMonth,
   getPreviousDay,
   findMostRepeatedChars,
-  couponInfoSpecial,
-  generateTicketImage,
-  uploadBlobImage
+  couponInfoSpecial
 } from "@/utils/utils";
-import md5 from "@/utils/md5.js";
 // 帮助锁定座位实例对象
 import assistLockSeatObj from "./lockSeatQueue";
 import svApi from "@/api/sv-api";
@@ -32,12 +28,8 @@ const {
   userInfo: { rule, user_id, phone }
 } = platTokens();
 // 影院特殊匹配列表及api
-import {
-  TICKET_CONPREFIX_OBJ,
-  TEST_NEW_PLAT_LIST,
-  GET_APP_TYPE_LIST
-} from "@/common/constant";
-import { APP_API_OBJ, PLAT_API_OBJ } from "@/common/index";
+import { TEST_NEW_PLAT_LIST, GET_APP_TYPE_LIST } from "@/common/constant";
+import { APP_API_OBJ } from "@/common/index";
 
 let isTestOrder = false; //是否是测试订单
 // 创建一个订单自动出票队列类
@@ -50,7 +42,6 @@ class OrderAutoTicketQueue {
     this.umeApi = APP_API_OBJ[appFlag];
     this.currentParamsInx = 0;
     this.currentParamsList = [];
-    this.logList = []; // 操作运行日志
     this.prevOrderNumber = ""; // 上个订单号
     this.eventName = `newOrder_${appFlag}`;
     this.handledOrders = new Map(); // 用于存储已处理订单号及其相关信息
@@ -106,7 +97,7 @@ class OrderAutoTicketQueue {
 
   // 处理新订单
   handleNewOrder(event) {
-    const { appFlag, isStart } = this;
+    const { isStart } = this;
     if (!isStart) return;
     const isAgain = event.detail?.isAgain; // 是否重新出票
     let order = event.detail;
@@ -356,7 +347,7 @@ class OrderAutoTicketQueue {
   async singleTicket(item) {
     // 放到这里即使修改token也不用重启队列了
     const { appFlag } = this;
-    const { id, plat_name, supplierCode, order_number, bid } = item;
+    const { plat_name, order_number } = item;
     this.logger.warn("单个待出票订单信息", item);
     let targetLoginList = getCinemaLoginInfoList().filter(
       item =>
@@ -1032,10 +1023,8 @@ class OrderAutoTicketQueue {
       let quanDiscountAmount = useQuan?.[0]?.discountAmount || 0;
       // 使用优惠券及会员卡
       if (!card_id && !useQuan?.length) {
-        const errInfoObj = this.logList
-          .filter(item => item.level === "error")
-          .reverse()?.[0];
-        const errMsg = errInfoObj?.des || "";
+        let { err_msg: errMsg, err_info: errInfo } =
+          this.logger.getLastErrMsgAndInfo();
         let str = "无可用会员卡";
         if (offerRule.offer_type === "1") {
           str = "无可用优惠券";
@@ -1109,7 +1098,6 @@ class OrderAutoTicketQueue {
             session_id:
               this.currentParamsList[this.currentParamsInx].session_id,
             asyncFlag: 1,
-            asyncBandQuanList: [],
             plat_name,
             order_number
           });
@@ -1410,7 +1398,6 @@ class OrderAutoTicketQueue {
       cinemaCode,
       cinemaLinkId,
       appFlag,
-      seatList,
       lockseat,
       plat_name,
       order_number,
@@ -1497,7 +1484,6 @@ class OrderAutoTicketQueue {
       orderHeaderId,
       coupon,
       card_id,
-      cardList,
       activityId,
       total_price,
       timestamp,
@@ -1537,12 +1523,10 @@ class OrderAutoTicketQueue {
         },
         session_id
       };
-      let order_num;
       this.logger.infoSave("创建订单参数", { params });
       const res = await this.umeApi.createOrder(params);
       this.logger.infoSave("创建订单返回", res);
       let createOrderRes = res.data;
-      // order_num = res.data?.payOrderCode || "";
       return createOrderRes;
     } catch (error) {
       this.logger.errorSave("创建订单异常", {
@@ -1573,9 +1557,9 @@ class OrderAutoTicketQueue {
 
   // 获取购票信息
   async getPayResult(data) {
-    let { orderHeaderId, session_id, syncQueryLogList, inx = 1 } = data || {};
+    let { orderHeaderId, session_id, inx = 1, logger } = data || {};
     let qrcode;
-    let targetLogList = syncQueryLogList || this.logList;
+    let targetLogger = logger || this.logger;
     try {
       let params = {
         params: {
@@ -1588,35 +1572,14 @@ class OrderAutoTicketQueue {
         session_id
       };
       if (inx == 1) {
-        targetLogList.push({
-          opera_time: getCurrentTime(),
-          des: "获取支付结果参数",
-          level: "info",
-          info: {
-            params
-          }
-        });
+        targetLogger.infoSave("获取支付结果参数", { params });
       }
       const res = await this.umeApi.getPayResult(params);
-      targetLogList.push({
-        opera_time: getCurrentTime(),
-        des: `第${inx}次获取支付结果返回`,
-        level: "info",
-        info: {
-          res
-        }
-      });
+      targetLogger.infoSave(`第${inx}次获取支付结果返回`, { res });
       let list = res.data || [];
       qrcode = list[0]?.ticketCode?.split(",").join("|") || "";
     } catch (error) {
-      targetLogList.push({
-        opera_time: getCurrentTime(),
-        des: `第${inx}次获取订单支付结果异常`,
-        level: "error",
-        info: {
-          error
-        }
-      });
+      targetLogger.errorSave(`第${inx}次获取订单支付结果异常`, { error });
     }
     // 获取失败后从已完成订单里匹配获取
     try {
@@ -1630,300 +1593,27 @@ class OrderAutoTicketQueue {
         pageRow: 5,
         session_id
       });
-      targetLogList.push({
-        opera_time: getCurrentTime(),
-        des: `第${inx}次获取已完成订单列表返回`,
-        level: "error",
-        info: {
-          listRes: listRes?.data?.slice(0, 3)
-        }
+      targetLogger.infoSave(`第${inx}次获取已完成订单列表返回`, {
+        listRes: listRes?.data?.slice(0, 2)
       });
       let payList = listRes.data || [];
       let targetObj = payList.find(item => item.orderHeaderId == orderHeaderId);
       qrcode = targetObj?.ticketCode?.split(",").join("|");
-      targetLogList.push({
-        opera_time: getCurrentTime(),
-        des: `第${inx}次从已完成订单里获取取票码${qrcode ? "成功" : "失败"}`,
-        level: "error",
-        info: {
+      targetLogger.errorSave(
+        `第${inx}次从已完成订单里获取取票码${qrcode ? "成功" : "失败"}`,
+        {
           qrcode
         }
-      });
+      );
     } catch (error) {
-      targetLogList.push({
-        opera_time: getCurrentTime(),
-        des: `第${inx}次获取已完成订单列表异常`,
-        level: "error",
-        info: {
-          error
-        }
+      targetLogger.errorSave(`第${inx}次获取已完成订单列表异常`, {
+        error
       });
     }
     if (qrcode) {
       return qrcode;
     }
     return Promise.reject("获取支付结果不存在");
-  }
-
-  // 提交出票码
-  async submitTicketCode({
-    plat_name,
-    order_id,
-    qrcode,
-    order_number,
-    supplierCode,
-    lockseat,
-    orderInfo,
-    flag,
-    syncQueryLogList
-  }) {
-    let targetLogList = flag === 1 ? this.logList : syncQueryLogList;
-    let params;
-    if (plat_name === "lieren") {
-      params = {
-        // order_id: id || 5548629,
-        // qupiao2: "[{\"result\":\"2024031154980669\",\"yzm\":\"\"}]"
-        order_id,
-        qupiao2: JSON.stringify([
-          {
-            result: qrcode.split("|")[0],
-            yzm: qrcode.split("|")?.[1] || ""
-          }
-        ]),
-        ticket_type: 2 // 取票方式
-        // 1，猫眼淘票票取票机取票。
-        // 2，影院专用取票机或前台取票。
-        // 3，直接在入闸处扫码入闸进场观影。
-      };
-    } else if (plat_name === "sheng") {
-      params = {
-        orderCode: order_number, // 省APP的订单编号
-        supplierCode: supplierCode,
-        deliverInfos: JSON.stringify([{ code: qrcode }]), // 提交的时候转成文本，格式是JSON数组，可以多个取票码
-        success: true // 是否成功 ，true，false需小写
-        // message: "", // 出票失败原因，不能发货才有（失败的情况下一定要传）
-        // desc: "" // 描述，允许空，换座信息也填在这里，如更换1排4座，1排5座
-      };
-    } else if (plat_name === "mangguo") {
-      params = {
-        order_id, // 省APP的订单编号
-        tickets: JSON.stringify([
-          {
-            num: lockseat.split(" ").length,
-            old_imgs: "",
-            old_text_ycode: qrcode.split("|")?.[1] || "",
-            text_info: qrcode.split("|")[0]
-          }
-        ]),
-        seats: JSON.stringify(lockseat.split(" "))
-      };
-    } else if (plat_name === "mayi") {
-      params = {
-        tradeno: order_id, // 蚂蚁APP的订单编号
-        ticketCodeList: [
-          {
-            picUrl: "",
-            ticketCode: qrcode
-          }
-        ]
-      };
-    } else if (plat_name === "yangcong") {
-      params = {
-        tradeno: order_id, // 蚂蚁APP的订单编号
-        ticketCodeUrls: "",
-        ticketCodes: qrcode
-      };
-    } else if (plat_name === "yinghuasuan") {
-      const blob = await generateTicketImage({ ...orderInfo, qrcode });
-      let fileUrl = "";
-      if (blob) {
-        fileUrl = await uploadBlobImage({
-          blob,
-          url: "https://up-hub-img.yinghuasuan.com/api/upload_img",
-          params: {
-            event: "order",
-            event_data: orderInfo.order_sn
-          },
-          plat_name,
-          logList: targetLogList
-        });
-      }
-      params = {
-        order_sn: orderInfo.order_sn,
-        ticket_code: qrcode,
-        ticket_image: fileUrl || " ", // 需传图片url
-        real_seat_no: lockseat.split(" ").join(","),
-        entry_method: 0,
-        ticket_original_info: [
-          {
-            file_url: fileUrl || " ", // 需传图片url
-            codeList: [
-              {
-                code: qrcode.split("|")[0],
-                pwd: qrcode.split("|")?.[1] || ""
-              }
-            ],
-            seatList: lockseat.split(" "),
-            // ocrInfo为图片校验接口返回数据
-            ocrInfo: {
-              film_name: true,
-              cinema_name: true,
-              hall_name: true,
-              show_time_day: true,
-              show_time_time: true,
-              seat_no: {
-                is_change: false,
-                seat_no: lockseat.split(" ")
-              },
-              ticket_code: [
-                [qrcode.split("|")[0], qrcode.split("|")?.[1] || ""]
-              ],
-              have_qrcode: true,
-              seatMatch: true
-            }
-          }
-        ]
-      };
-    } else if (plat_name === "shangzhan") {
-      params = {
-        order_sn: order_number,
-        order_status: "9", // 出票状态（3：出票失败 9：出票成功）
-        // cancel_reason: "", // 出票失败原因（出票失败必传）
-        ticket_list: [
-          {
-            ticket_code: qrcode.split("|")[0],
-            ticket_msg_code: qrcode.split("|")?.[1] || ""
-          }
-        ]
-      };
-    } else if (plat_name === "haha") {
-      const { bid, cinema_name, hall_name, film_name, show_time } = orderInfo;
-      const blob = await generateTicketImage({ ...orderInfo, qrcode });
-      const fileUrl = await uploadBlobImage({
-        blob,
-        url: "https://hahapiao.cn/api/Synchro/upload",
-        params: {
-          orderId: order_id
-        },
-        plat_name,
-        logList: targetLogList
-      });
-      if (!fileUrl) {
-        targetLogList.push({
-          opera_time: getCurrentTime(),
-          des: "哈哈获取取票码图片失败,需手动上传",
-          level: "info"
-        });
-        sendWxPusherMessage({
-          orderInfo,
-          transferTip: "哈哈获取取票码图片失败,需手动上传",
-          failReason: "哈哈获取取票码图片失败,需手动上传"
-        });
-        return { code: 1, msg: "哈哈获取取票码图片失败,需手动上传" };
-      }
-      let imgIndex = md5.hex_md5(fileUrl); // 图片的md5值
-      params = {
-        oid: order_id,
-        bid,
-        seat: lockseat.split(" "),
-        info: lockseat.split(" ").map((item, inx) => {
-          if (inx === 0) {
-            return {
-              img: fileUrl || " ", // 传空格可以成功
-              num: qrcode.split("|")[0],
-              code: qrcode.split("|")[1],
-              imgIndex, // 传空格可以成功
-              // isChai: false,
-              // blob: "",
-              seat: lockseat.split(" "),
-              comparison: {
-                movie: film_name,
-                movieStatus: 1,
-                showTime: show_time,
-                showTimeStatus: 1,
-                seat: lockseat.split(" "),
-                seatStatus: 1,
-                cinema: cinema_name,
-                cinemaStatus: 1,
-                hall: hall_name,
-                hallStatus: 1
-              }
-            };
-          } else {
-            return {
-              img: "",
-              num: "",
-              code: "",
-              imgIndex: null
-            };
-          }
-        }),
-        seat_type: 0,
-        ticket_type: 1,
-        // ocr_code: [qrcode],
-        recogniseSeat: lockseat.split(" ").map(item => ({
-          oldSeat: item,
-          newSeat: item,
-          imgIndex
-        }))
-      };
-    }
-    try {
-      console.log("提交出票码参数", params);
-      targetLogList.push({
-        opera_time: getCurrentTime(),
-        des: "提交出票码参数",
-        level: "info",
-        info: {
-          params
-        }
-      });
-      if (isTestOrder) {
-        targetLogList.push({
-          opera_time: getCurrentTime(),
-          des: "测试单暂不上传",
-          level: "error"
-        });
-        return;
-      }
-      const res = await PLAT_API_OBJ[plat_name].submitTicketCode(params);
-      console.log("提交出票码返回", res);
-      targetLogList.push({
-        opera_time: getCurrentTime(),
-        des: "提交取票码返回",
-        level: "info",
-        info: {
-          res
-        }
-      });
-      return res;
-    } catch (error) {
-      console.error("提交出票码异常", error);
-      targetLogList.push({
-        opera_time: getCurrentTime(),
-        des: "提交出票码异常",
-        level: "error",
-        info: {
-          error
-        }
-      });
-      if (flag === 2) {
-        let err_info = formatErrInfo(error);
-        svApi.updateTicketRecord({
-          whereObj: {
-            order_number,
-            plat_name
-          },
-          updateObj: {
-            err_msg: "系统延迟后提交出票码异常",
-            err_info
-          }
-        });
-      }
-      return {
-        error
-      };
-    }
   }
 
   async lastHandle({
@@ -1937,7 +1627,6 @@ class OrderAutoTicketQueue {
     orderInfo,
     lockseat
   }) {
-    const { appFlag } = this;
     try {
       let qrcode;
       const session_id =
@@ -1983,16 +1672,10 @@ class OrderAutoTicketQueue {
       }
       this.logger.infoSave("非异步获取订单支付结果成功");
       const submitRes = await this.submitQrcode({
-        order_id,
         qrcode,
-        app_name,
-        card_id,
-        order_number,
-        supplierCode,
-        plat_name,
-        lockseat,
         orderInfo,
-        flag: 1
+        flag: 1,
+        logger: this.logger
       });
       return { submitRes, qrcode };
     } catch (error) {
@@ -2005,23 +1688,16 @@ class OrderAutoTicketQueue {
   // 异步轮询获取取票码并提交
   async asyncFetchQrcodeSubmit({
     orderHeaderId,
-    order_id,
     app_name,
-    card_id,
     plat_name,
     order_number,
-    supplierCode,
     orderInfo,
-    lockseat,
     session_id
   }) {
-    let syncQueryLogList = []; // 异步运行日志
+    let logger = new Logger({ logType: 3 });
+    logger.init({ plat_name, order_number, app_name });
     try {
-      syncQueryLogList.push({
-        opera_time: getCurrentTime(),
-        des: "异步轮询获取取票码并提交方法开始执行",
-        level: "error"
-      });
+      logger.errorSave("异步轮询获取取票码并提交方法开始执行");
       // 每搁20秒查一次，查9次，3分钟
       let qrcode = await trial(
         inx =>
@@ -2029,7 +1705,7 @@ class OrderAutoTicketQueue {
             orderHeaderId,
             session_id,
             inx,
-            syncQueryLogList
+            logger
           }),
         9,
         20,
@@ -2043,11 +1719,7 @@ class OrderAutoTicketQueue {
           transferTip: "此处不转单，需关注该订单，适时手动上传取票码",
           failReason: "系统延迟轮询3分钟后获取取票码仍失败"
         });
-        syncQueryLogList.push({
-          opera_time: getCurrentTime(),
-          des: "系统延迟轮询3分钟后获取取票码仍失败",
-          level: "error"
-        });
+        logger.errorSave("系统延迟轮询3分钟后获取取票码仍失败");
         // 每搁20秒查一次，查21次，7分钟
         qrcode = await trial(
           inx =>
@@ -2055,7 +1727,7 @@ class OrderAutoTicketQueue {
               orderHeaderId,
               session_id,
               inx,
-              syncQueryLogList
+              logger
             }),
           21,
           20,
@@ -2064,20 +1736,9 @@ class OrderAutoTicketQueue {
         );
       }
       if (!qrcode) {
-        syncQueryLogList.push({
-          opera_time: getCurrentTime(),
-          des: "系统延迟轮询10分钟后获取取票码仍失败",
-          level: "error"
-        });
-        logUpload(
-          {
-            plat_name: plat_name,
-            app_name: app_name,
-            order_number: order_number,
-            type: 3
-          },
-          syncQueryLogList
-        );
+        logger.errorSave("系统延迟轮询10分钟后获取取票码仍失败");
+        // 上送异步轮询获取取票码失败日志
+        logger.logUpload();
         svApi.updateTicketRecord({
           whereObj: {
             order_number,
@@ -2090,67 +1751,32 @@ class OrderAutoTicketQueue {
         return;
       }
       await this.submitQrcode({
-        order_id,
         qrcode,
-        app_name,
-        card_id,
-        order_number,
-        supplierCode,
-        plat_name,
-        lockseat,
         orderInfo,
         flag: 2,
-        syncQueryLogList
+        logger
       });
-      logUpload(
-        {
-          plat_name: plat_name,
-          app_name: app_name,
-          order_number: order_number,
-          type: 3
-        },
-        syncQueryLogList
-      );
+      // 上送异步轮询获取取票码成功日志
+      logger.logUpload();
     } catch (error) {
-      console.warn("异步轮询获取取票码上传提交异常", error);
+      logger.errorSave("异步轮询获取取票码上传提交异常", { error });
+      // 上送异步轮询获取取票码异常日志
+      logger.logUpload();
     }
   }
 
-  async submitQrcode({
-    order_id,
-    qrcode,
-    app_name,
-    card_id,
-    order_number,
-    supplierCode,
-    plat_name,
-    lockseat,
-    orderInfo,
-    flag,
-    syncQueryLogList
-  }) {
-    let targetLogList = flag === 1 ? this.logList : syncQueryLogList;
+  async submitQrcode({ qrcode, flag, logger, orderInfo }) {
+    const { plat_name, order_number } = orderInfo;
     try {
       // 10、提交取票码
-      const submitRes = await this.submitTicketCode({
-        plat_name,
-        order_id,
+      const submitRes = await this.platManage.submitTicketCode({
         qrcode,
-        order_number,
-        supplierCode,
-        lockseat,
-        orderInfo,
         flag,
-        syncQueryLogList
+        logger
       });
       if (!submitRes || submitRes?.error) {
-        console.error("订单提交取票码失败，单个订单直接出票结束");
-        targetLogList.push({
-          opera_time: getCurrentTime(),
-          des: "提交取票码失败",
-          level: "error"
-        });
-        let errInfo = formatErrInfo(submitRes?.error);
+        logger.errorSave("订单提交取票码失败，单个订单直接出票结束");
+        let errInfo = submitRes?.error;
         sendWxPusherMessage({
           orderInfo,
           transferTip: "提交取票码失败,需手动上传",
@@ -2174,15 +1800,7 @@ class OrderAutoTicketQueue {
       }
       return submitRes;
     } catch (error) {
-      console.warn("提交取票码异常", error);
-      targetLogList.push({
-        opera_time: getCurrentTime(),
-        des: "提交取票码异常",
-        level: "info",
-        info: {
-          error
-        }
-      });
+      logger.errorSave("提交取票码异常", { error });
     }
   }
 
@@ -2628,12 +2246,14 @@ class OrderAutoTicketQueue {
     quanNum,
     session_id,
     asyncFlag,
-    asyncBandQuanList,
     plat_name,
     order_number
   }) {
     const { appFlag } = this;
-    let targetLogList = asyncFlag === 1 ? asyncBandQuanList : this.logList;
+    let logger = new Logger({
+      logType: 3
+    });
+    let targetLogger = asyncFlag === 1 ? logger : this.logger;
     let conPrev = asyncFlag === 1 ? "异步绑券_" : "";
     let params = {
       quan_value,
@@ -2647,27 +2267,21 @@ class OrderAutoTicketQueue {
         params.black_quans = black_quans;
       }
       let quanRes = await svApi.queryQuanList(params);
-      targetLogList.push({
-        opera_time: getCurrentTime(),
-        des: `${conPrev}从服务端获取券返回`,
-        level: "info",
-        info: {
-          quanRes,
-          quanNum,
-          quan_value,
-          params
-        }
+      targetLogger.infoSave(`${conPrev}从服务端获取券返回`, {
+        quanRes,
+        quanNum,
+        quan_value,
+        params
       });
-
       let quanList = quanRes.data?.quanList || [];
       if (!quanList?.length && asyncFlag != 1) {
-        console.error(`数据库${quan_value}面额券不足`);
+        logger.error(`数据库${quan_value}面额券不足`);
         return;
       }
       // quanList = quanList.map(item => item.coupon_num.trim());
       let bandQuanList = [];
       for (const quan of quanList) {
-        console.log(`正在尝试绑定券 ${quan.coupon_num}...`);
+        logger.info(`正在尝试绑定券 ${quan.coupon_num}...`);
         const couponNumRes = await bandQuan({
           cinemaCode,
           cinemaLinkId,
@@ -2676,14 +2290,7 @@ class OrderAutoTicketQueue {
           appFlag
         });
         const coupon_num = couponNumRes?.coupon_num;
-        targetLogList.push({
-          opera_time: getCurrentTime(),
-          des: `${conPrev}绑定券返回`,
-          level: "error",
-          info: {
-            ...couponNumRes
-          }
-        });
+        targetLogger.errorSave(`${conPrev}绑定券返回`, couponNumRes);
         if (coupon_num) {
           bandQuanList.push({ coupon_num });
         }
@@ -2697,27 +2304,15 @@ class OrderAutoTicketQueue {
       }
       return bandQuanList;
     } catch (error) {
-      console.error("获取新券异常", error);
-      targetLogList.push({
-        opera_time: getCurrentTime(),
-        des: "从服务端获取券异常",
-        level: "error",
-        info: {
-          error,
-          params
-        }
+      targetLogger.errorSave("获取新券异常", {
+        error,
+        params
       });
     } finally {
       if (asyncFlag) {
-        logUpload(
-          {
-            plat_name: plat_name,
-            app_name: appFlag,
-            order_number: order_number,
-            type: 3
-          },
-          targetLogList
-        );
+        targetLogger.init({ plat_name, order_number, app_name: appFlag });
+        // 上送异步绑券日志
+        targetLogger.logUpload();
       }
     }
   }
@@ -3238,40 +2833,6 @@ const buyTicket = async ({
   }
 };
 
-// 确认接单
-const startDeliver = async ({
-  order_number,
-  supplierCode,
-  plat_name,
-  bid,
-  quote_id,
-  appFlag
-}) => {
-  try {
-    let params;
-    if (plat_name === "sheng") {
-      params = {
-        orderCode: order_number,
-        supplierCode
-      };
-    } else if (plat_name === "haha") {
-      params = {
-        bid
-      };
-    } else if (plat_name === "yinghuasuan") {
-      params = {
-        quote_id
-      };
-    }
-    console.log("确认接单参数", params);
-    const res = await PLAT_API_OBJ[plat_name].confirmOrder(params);
-    console.log("确认接单返回", res);
-    return res;
-  } catch (error) {
-    console.warn("确认接单异常", error);
-  }
-};
-
 // 绑定券
 const bandQuan = async ({
   cinemaCode,
@@ -3376,37 +2937,36 @@ const addOrderHandleRecored = async ({
 };
 
 // 更新卡当天使用量
-const updateCardDayUse = ({ app_name, card_id, plat_name, order_number }) => {
-  let error;
+const updateCardDayUse = async ({
+  app_name,
+  card_id,
+  plat_name,
+  order_number
+}) => {
+  let logger = new Logger({ logType: 3 });
   try {
-    svApi.updateDayUsage({
+    const res = await svApi.updateDayUsage({
       app_name: app_name,
       card_id: card_id
     });
-  } catch (err) {
-    error = err;
+    logger.infoSave("订单用卡购买后更新当天使用量成功", {
+      app_name,
+      card_id,
+      res
+    });
+  } catch (error) {
+    logger.errorSave("订单用卡购买后更新当天使用量失败", {
+      app_name,
+      card_id,
+      error
+    });
   }
-
-  let log_list = [
-    {
-      opera_time: getCurrentTime(),
-      des: "订单用卡购买后更新当天使用量",
-      level: "info",
-      info: {
-        app_name,
-        card_id,
-        error
-      }
-    }
-  ];
-  logUpload(
-    {
-      plat_name: plat_name,
-      app_name: app_name,
-      order_number: order_number,
-      type: 3
-    },
-    log_list
-  );
+  logger.init({
+    plat_name,
+    app_name,
+    order_number
+  });
+  // 上送更新卡当天使用量日志
+  logger.logUpload();
 };
 export default createTicketQueue;
