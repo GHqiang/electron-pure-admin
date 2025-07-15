@@ -1369,7 +1369,7 @@ class OrderAutoTicketQueue {
       this.logger.infoSave(`第${inx}次锁定座位成功`, { res, params });
       return res?.bizValue;
     } catch (error) {
-      this.loggger.errorSave(`第${inx}次锁定座位异常`, { error, params });
+      this.logger.errorSave(`第${inx}次锁定座位异常`, { error, params });
       // 仅帮助锁座1次，帮助锁座后再锁定座位失败的话就不走帮助锁座逻辑了
       if (
         ["座位旁边不要留空", "座位中间不要留空"].includes(error?.msg) &&
