@@ -227,14 +227,6 @@ class OrderAutoTicketQueue {
     this.isRunning = false;
   }
 
-  // 将订单添加至队列
-  enqueue(order) {
-    if (order) {
-      this.loggerQ.info("添加新订单到队列");
-      this.queue.push(order);
-    }
-  }
-
   // 处理订单
   async orderHandle(order, logger, delayTime) {
     // 放在这里最合适，方便后续方法直接用(该订单执行完了下次重新赋值也没问题)
