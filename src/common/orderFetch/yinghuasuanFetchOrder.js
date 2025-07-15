@@ -35,7 +35,7 @@ class OrderAutoFetchQueue {
     // 循环直到队列停止
     while (this.isRunning) {
       // 获取订单列表(支持时间间隔)
-      await mockDelay(5);
+      await mockDelay(30);
       this.fetchOrders();
     }
   }
