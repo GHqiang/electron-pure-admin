@@ -76,7 +76,7 @@
           <span style="color: red">注意：仅辰星3.0C端影院需要，C端不需要</span>
         </el-form-item>
         <el-form-item
-          v-if="H5_UME_LIST.includes(formData.app_name)"
+          v-if="[...H5_UME_LIST, ...FENGHUANG_LIST].includes(formData.app_name)"
           label="续期tid"
           prop="tid"
         >
@@ -85,7 +85,7 @@
             placeholder="请输入续期tid"
             clearable
           >
-            <template #append>注意：仅凤凰云智h5系列需要维护</template>
+            <template #append>注意：仅凤凰云智系列需要维护</template>
           </el-input>
         </el-form-item>
         <el-form-item label="会员卡密码" prop="member_pwd">
@@ -132,6 +132,7 @@ import { ElLoading, ElMessage } from "element-plus";
 import {
   GET_APP_LIST,
   GET_H5_UME_LIST,
+  GET_FENGHUANG_LIST,
   GET_CHENXING_LIST,
   GE_APP_INFO
 } from "@/common/constant";
@@ -141,6 +142,7 @@ const {
 } = platTokens();
 const APP_LIST = computed(() => GET_APP_LIST());
 const H5_UME_LIST = computed(() => GET_H5_UME_LIST());
+const FENGHUANG_LIST = computed(() => GET_FENGHUANG_LIST());
 const CHENXING_LIST = computed(() => GET_CHENXING_LIST());
 // console.log("H5_UME_LIST", H5_UME_LIST);
 const loginFormRef = ref(null);
