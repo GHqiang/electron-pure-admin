@@ -415,30 +415,20 @@ export default class CinemaManage {
   // 获取电影放映场次
   async getMoviePlayTime(cinemaInfo) {
     const { cinemaCode, cinemaId, filmId, showDate } = cinemaInfo;
-    const { api_version } = this;
     try {
       let params = {
-        cinemaCode,
-        cinemaId,
-        filmId,
-        updateNode: "date"
+        cinemaLinkId: "15372",
+        pageInit: false
       };
-      if (api_version === "3.0C") {
-        params.featureDate = showDate;
-      }
       this.logger.info("获取电影放映场次参数", params);
       const res = await this.appApi.getMoviePlayTime(params);
       this.logger.infoSave("获取电影放映场次返回", res);
-      let moviePlayTime = [];
-      if (api_version === "3.0C") {
-        moviePlayTime = res.data?.planList || [];
-      } else if (api_version === "C") {
-        let filmList = res.data?.filmList || [];
-        let showList = filmList.find(item => item.id == filmId)?.showList || [];
-        moviePlayTime =
-          showList.find(item => item.dayStr == showDate)?.plist || [];
-      }
-
+      let filmList = res?.filmSchedules || [];
+      let showList =
+        filmList.find(item => item.filmId == filmId)?.dateSchedules || [];
+      let moviePlayTime =
+        showList.find(item => item.businessDate == +new Date(showDate))
+          ?.schedules || [];
       if (!moviePlayTime?.length) {
         this.logger.errorSave("获取电影放映场次返回空");
       }

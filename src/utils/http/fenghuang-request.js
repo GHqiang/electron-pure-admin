@@ -119,7 +119,20 @@ const urlObj = {
   "mtop.alipic.lark.card.membercards.get":
     "mtop.alipic.lark.card.memberCards.get",
   "mtop.alipic.lark.film.cinemafilms.get":
-    "mtop.alipic.lark.film.cinemaFilms.get"
+    "mtop.alipic.lark.film.cinemaFilms.get",
+  "mtop.alipic.lark.schedule.filmschedules.get":
+    "mtop.alipic.lark.schedule.filmSchedules.get",
+  "mtop.alipic.lark.seat.scheduleseats.get":
+    "mtop.alipic.lark.seat.scheduleSeats.get",
+  "mtop.alipic.lark.seat.scheduleseats.lock":
+    "mtop.alipic.lark.seat.scheduleSeats.lock",
+  "mtop.alipic.lark.order.ticketorder.settle":
+    "mtop.alipic.lark.order.ticketOrder.settle",
+  "mtop.alipic.lark.order.ticketorder.create":
+    "mtop.alipic.lark.order.ticketOrder.create",
+  "mtop.alipic.lark.order.detail.get": "mtop.alipic.lark.order.detail.get",
+  "mtop.alipic.lark.order.order.cancel": "mtop.alipic.lark.order.order.cancel",
+  "mtop.alipic.lark.coupon.mycoupon.get": "mtop.alipic.lark.coupon.myCoupon.get"
 };
 // 获取url
 const getUrl = (token, sid, url, params) => {

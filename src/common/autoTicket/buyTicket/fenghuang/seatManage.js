@@ -84,17 +84,12 @@ export default class SeatManage {
       sessionId,
       targetShow
     } = buyTicketInfo;
-    const { api_version } = this;
     let params = {
-      cinemaCode,
-      cinemaId,
-      filmId
+      cinemaLinkId: "15372",
+      scheduleId: "1000000996281184",
+      scheduleKey: "693AD998AEC37B813050502EA7628CE4",
+      pageInit: false
     };
-    if (api_version === "3.0C") {
-      params.featureAppNo = featureAppNo || targetShow?.featureAppNo;
-    } else if (api_version === "C") {
-      params.sessionId = sessionId || targetShow?.sessionId;
-    }
     return params;
   }
 

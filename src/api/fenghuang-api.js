@@ -29,18 +29,15 @@ const createApi = ({ app_name }) => {
     },
     // 获取电影放映场次
     getMoviePlayTime: {
-      "3.0C": "/selfSupport/front/cticket/loadSchedule",
-      C: "/chenxing/api/middleground/ticket/c/cticket/getHitFilmAndFilmSession"
+      "2.0": "/fenghuang/mtop.alipic.lark.schedule.filmschedules.get"
     },
     // 获取座位布局
     getMoviePlaySeat: {
-      "3.0C": "/selfSupport/front/cticket/loadWxPlanSite",
-      C: "/chenxing/api/middleground/ticket/c/cticket/getSessionSeat"
+      "2.0": "/fenghuang/mtop.alipic.lark.seat.scheduleseats.get"
     },
     // 锁定座位
     lockSeat: {
-      "3.0C": "/selfSupport/trade/front/advanceOrder/lockSeat",
-      C: "/chenxing/api/middleground/trade/online/directly/cart/lockSeat"
+      "2.0": "/fenghuang/mtop.alipic.lark.seat.scheduleseats.lock"
     },
     // 获取会员卡列表
     getCardList: {
@@ -48,43 +45,35 @@ const createApi = ({ app_name }) => {
     },
     // 获取优惠券列表
     getQuanList: {
-      "3.0C": "/selfSupport/front/coupon/list",
-      C: "/chenxing/api/middleground/member/fin/voucher/ticketEnable"
+      "2.0": "/fenghuang/mtop.alipic.lark.coupon.mycoupon.get"
     },
     // 计算价格
     priceCalculation: {
-      "3.0C": "/selfSupport/trade/front/orders/calculatePrice",
-      C: "/chenxing/api/middleground/trade/online/directly/cart/calculatePrice"
+      "2.0": "/fenghuang/mtop.alipic.lark.order.ticketorder.settle"
     },
     // 创建订单
     createOrder: {
-      "3.0C": "/selfSupport/trade/front/orders/submitOrder",
-      C: "/chenxing/api/middleground/trade/online/directly/order/submitOrder"
+      "2.0": "/fenghuang/mtop.alipic.lark.order.ticketorder.create"
     },
     // 支付订单
     buyTicket: {
-      "3.0C": "/selfSupport/trade/front/order/onlinePay",
-      C: "/chenxing/api/middleground/trade/online/directly/payment/onlinePay"
+      "3.0C": "/selfSupport/trade/front/order/onlinePay"
     },
     // 获取订单信息
     queryOrderDetail: {
-      "3.0C": "/selfSupport/trade/front/orders/queryOrderDetail",
-      C: "/chenxing/api/middleground/trade/online/directly/order/queryOrderDetail"
+      "2.0": "/fenghuang/mtop.alipic.lark.order.detail.get"
     },
     // 取消订单
     cancelOrder: {
-      "3.0C": "/selfSupport/trade/front/orders/cancelOrder",
-      C: "/chenxing/api/middleground/trade/online/directly/order/cancelOrder"
+      "2.0": "/fenghuang/mtop.alipic.lark.order.order.cancel"
     },
     // 释放座位
     releaseSeat: {
-      "3.0C": "/selfSupport/trade/front/advanceOrder/releaseSeat",
-      C: "/chenxing/api/middleground/trade/online/directly/cart/releaseSeat"
+      "3.0C": "/selfSupport/trade/front/advanceOrder/releaseSeat"
     },
     // 绑定优惠券
     bandQuan: {
-      "3.0C": "/selfSupport/trade/front/advanceOrder/releaseSeat",
-      C: "/chenxing/api/middleground/member/fin/voucher/bind"
+      "2.0": "/fenghuang/mtop.alipic.lark.coupon.mycoupon.bindcoupon"
     }
   };
 
