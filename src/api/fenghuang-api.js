@@ -25,8 +25,7 @@ const createApi = ({ app_name }) => {
     },
     // 获取热映电影放映信息
     getMoviePlayInfo: {
-      "3.0C": "/selfSupport/front/cticket/getHitFilm",
-      C: "/chenxing/api/middleground/ticket/c/cticket/getHitFilm"
+      "2.0": "/fenghuang/mtop.alipic.lark.film.cinemafilms.get"
     },
     // 获取电影放映场次
     getMoviePlayTime: {
@@ -45,8 +44,7 @@ const createApi = ({ app_name }) => {
     },
     // 获取会员卡列表
     getCardList: {
-      "3.0C": "/selfSupport/trade/front/user/cards",
-      C: "/chenxing/api/middleground/member/user/cards"
+      "2.0": "/fenghuang/mtop.alipic.lark.card.membercards.get"
     },
     // 获取优惠券列表
     getQuanList: {

@@ -5,6 +5,7 @@ import {
   GET_UME_LIST,
   GET_H5_UME_LIST,
   GET_CHENXING_LIST,
+  GET_FENGHUANG_LIST,
   GE_APP_INFO
 } from "@/common/constant";
 
@@ -16,10 +17,12 @@ import {
   mockDelay
 } from "@/utils/utils";
 
+// 影院相关方法接口
 export default function useCinemaBaseFun() {
   const UME_LIST = computed(() => GET_UME_LIST());
   const H5_UME_LIST = computed(() => GET_H5_UME_LIST());
   const CHENXING_LIST = computed(() => GET_CHENXING_LIST());
+  const FENGHUANG_LIST = computed(() => GET_FENGHUANG_LIST());
 
   let cityCinemaList = []; // 城市影院列表（仅特殊影院有值）
 
@@ -51,6 +54,14 @@ export default function useCinemaBaseFun() {
         };
         const res = await cinemaApi.getCinemaList(params);
         cityCinemaList = res.bizValue?.cities || [];
+        list = cityCinemaList.map(item => ({
+          city_name: item.cityName,
+          city_id: item.cityCode
+        }));
+      } else if (FENGHUANG_LIST.value.includes(app_name)) {
+        let params = {};
+        const res = await cinemaApi.getCinemaList(params);
+        cityCinemaList = res.cityCinemas || [];
         list = cityCinemaList.map(item => ({
           city_name: item.cityName,
           city_id: item.cityCode
@@ -144,6 +155,15 @@ export default function useCinemaBaseFun() {
           cinema_name: item.cinemaName,
           cinema_code: "" //同步影院code时使用
         }));
+      } else if (FENGHUANG_LIST.value.includes(app_name)) {
+        cinemaList =
+          cityCinemaList.find(item => item.cityCode === city_id)?.cinemas || [];
+        cinemaList = cinemaList.map(item => ({
+          ...item,
+          cinema_id: item.cinemaLinkId,
+          cinema_name: item.cinemaName,
+          cinema_code: "" //同步影院code时使用
+        }));
       } else if (CHENXING_LIST.value.includes(app_name)) {
         let api_version = GE_APP_INFO(app_name)?.api_version || "";
         if (api_version === "3.0C") {
@@ -225,6 +245,23 @@ export default function useCinemaBaseFun() {
         };
         const res = await cinemaApi.getMoviePlayInfo(params);
         list = res?.bizValue || [];
+        list = list.map(item => ({
+          ...item,
+          film_id: item.filmId,
+          film_name: item.filmName
+        }));
+      } else if (FENGHUANG_LIST.value.includes(app_name)) {
+        const params = {
+          cinemaLinkId: oneCinema.cinemaLinkId
+        };
+        const res = await cinemaApi.getMoviePlayInfo(params);
+        const hotFilms = res?.hotFilms || [];
+        let soonFilms = res?.soonFilms || [];
+        soonFilms = soonFilms
+          .map(item => item.films)
+          .flat()
+          .filter(item => item.saleType === "P");
+        list = [...hotFilms, ...soonFilms];
         list = list.map(item => ({
           ...item,
           film_id: item.filmId,
@@ -324,6 +361,13 @@ export default function useCinemaBaseFun() {
           pageSize: 30,
           umeToken: session_id
         };
+      } else if (FENGHUANG_LIST.value.includes(app_name)) {
+        params = {
+          cinemaLinkId: GE_APP_INFO(app_name)?.cinemaLinkId,
+          pageNumber: 1,
+          pageSize: 20,
+          fenghuangToken: session_id
+        };
       } else if (CHENXING_LIST.value.includes(app_name)) {
         params = {
           session_id
@@ -352,6 +396,13 @@ export default function useCinemaBaseFun() {
         }));
       } else if (H5_UME_LIST.value.includes(app_name)) {
         cardList = res.bizValue || [];
+        cardList = cardList.map(item => ({
+          card_id: item.cardNumber,
+          card_num: item.cardNumber,
+          balance: (item.balance || 0) / 100 + ""
+        }));
+      } else if (FENGHUANG_LIST.value.includes(app_name)) {
+        cardList = res.memberCards || [];
         cardList = cardList.map(item => ({
           card_id: item.cardNumber,
           card_num: item.cardNumber,

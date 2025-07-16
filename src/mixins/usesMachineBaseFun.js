@@ -10,6 +10,7 @@ import {
 } from "@/common/constant";
 import { platTokens } from "@/store/platTokens";
 
+// 机器相关方法接口
 export default function useCinemaBaseFun() {
   const APP_LIST = computed(() => GET_APP_LIST());
   const UME_LIST = computed(() => GET_UME_LIST());

@@ -115,7 +115,11 @@ const urlObj = {
     "mtop.alipic.lark.cinema.cityCinemas.get",
   "mtop.alipic.lark.account.authn.refresh":
     "mtop.alipic.lark.account.authn.refresh",
-  "mtop.alipic.lark.combo.common.get": "mtop.alipic.lark.combo.common.get"
+  "mtop.alipic.lark.combo.common.get": "mtop.alipic.lark.combo.common.get",
+  "mtop.alipic.lark.card.membercards.get":
+    "mtop.alipic.lark.card.memberCards.get",
+  "mtop.alipic.lark.film.cinemafilms.get":
+    "mtop.alipic.lark.film.cinemaFilms.get"
 };
 // 获取url
 const getUrl = (token, sid, url, params) => {
