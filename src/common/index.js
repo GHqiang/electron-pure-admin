@@ -47,6 +47,7 @@ GET_FENGHUANG_LIST().forEach(item => {
   FENGHUANG_API_OBJ[item] = createFenghuangApi({
     app_name: item
   });
+  FENGHUANG_API_OBJ[item].getCinemaList();
 });
 GET_H5_UME_LIST().forEach(item => {
   H5_UME_API_OBJ[item] = createH5UmeApi({

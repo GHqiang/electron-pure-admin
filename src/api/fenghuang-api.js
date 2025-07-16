@@ -9,23 +9,19 @@ const createApi = ({ app_name }) => {
   let axios = createAxios({
     app_name: app_name
   });
-  let api_version = GE_APP_INFO(app_name)?.api_version || "C";
+  let api_version = GE_APP_INFO(app_name)?.api_version || "2.0";
 
   let apiUrlObj = {
     // 授权token
-    authToken: {
-      "3.0C": "/selfSupport/front/cticket/getCinemaList",
-      C: "/fenghuang/mtop.alipic.lark.cinema.citycinemas.get"
+    authRefresh: {
+      "2.0": "/fenghuang/mtop.alipic.lark.account.authn.refresh"
     },
-    getUserInfo: {
-      "3.0C": "/selfSupport/front/cticket/getCinemaList",
-      C: "/chenxing/api/middleground/member/user/getUserInfo "
+    getCommon: {
+      "2.0": "/fenghuang/mtop.alipic.lark.combo.common.get"
     },
     // 获取影院列表
     getCinemaList: {
-      // "3.0C": ["/selfSupport/front/cticket/getCinemaList", "post"],
-      "3.0C": "/selfSupport/front/cticket/getCinemaList",
-      C: "/fenghuang/mtop.alipic.lark.cinema.citycinemas.get"
+      "2.0": "/fenghuang/mtop.alipic.lark.cinema.citycinemas.get"
     },
     // 获取热映电影放映信息
     getMoviePlayInfo: {
