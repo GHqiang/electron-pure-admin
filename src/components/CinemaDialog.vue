@@ -188,6 +188,17 @@
           />
           <span style="color: red">注意：仅辰星C端影院需要，3.0C端不需要</span>
         </el-form-item>
+        <el-form-item
+          v-if="formData.app_type_code === 'fenghuang_applet'"
+          label="凤凰appId"
+          prop="appId"
+        >
+          <el-input
+            v-model="formData.appId"
+            placeholder="请输入凤凰影院appId"
+            clearable
+          />
+        </el-form-item>
         <!-- <el-form-item label="影院code" prop="cinemaCode">
           <el-input
             v-model="formData.cinemaCode"

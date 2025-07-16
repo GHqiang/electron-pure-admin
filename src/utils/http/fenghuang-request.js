@@ -259,6 +259,11 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       }
       config.headers["x-tap"] = "wx";
       config.headers["x-xweb_xhr"] = "1";
+      // 该字段必须，否则会报“小程序访问未授权”(这里需要注意下是否每个小程序会不一样)
+      // 可从抓包请求头里找referer字段(23不确定是从哪来的，appId可从订单详情或者创建订单接口找)
+      config.headers["referer-url"] =
+        `https://servicewechat.com/${GE_APP_INFO(app_name)?.appId}/23/page-frame.html`;
+
       // 默认都走代理，白名单不走代理
       let isNoProxy = checkUrlNoNeedProxy(config.url);
       if (isNoProxy) {
