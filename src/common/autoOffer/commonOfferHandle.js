@@ -1,5 +1,6 @@
 import getSfcOfferPrice from "./sfcOffer";
 import getChenxingOfferPrice from "../autoTicket/buyTicket/chenxing/offerManage.js";
+import getFenghuangOfferPrice from "../autoTicket/buyTicket/fenghuang/offerManage.js";
 import getUmeOfferPrice from "./umeOffer";
 import getH5UmeOfferPrice from "./h5umeOffer.js";
 import getLmaOfferPrice from "./lmaOffer";
@@ -7,7 +8,8 @@ import {
   GET_UME_LIST,
   GET_H5_UME_LIST,
   GET_SFC_APP_LIST,
-  GET_CHENXING_LIST
+  GET_CHENXING_LIST,
+  GET_FENGHUANG_LIST
 } from "@/common/constant";
 
 // 生成获取报价价格实体类
@@ -23,6 +25,8 @@ const getOfferPriceFun = params => {
     return new getSfcOfferPrice(params);
   } else if (GET_CHENXING_LIST().includes(appFlag)) {
     return new getChenxingOfferPrice(params);
+  } else if (GET_FENGHUANG_LIST().includes(appFlag)) {
+    return new getFenghuangOfferPrice(params);
   }
 };
 

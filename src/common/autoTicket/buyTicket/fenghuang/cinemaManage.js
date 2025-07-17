@@ -53,7 +53,7 @@ export default class CinemaManage {
         });
         return;
       }
-
+      console.log("cinemaList", cinemaList);
       // 3、获取目标影院
       let targetCinema = this.getTargetCinemaInfo(cinema_code, cinemaList);
       if (!targetCinema) {
@@ -66,7 +66,8 @@ export default class CinemaManage {
         });
         return;
       }
-      cinemaInfo.cinemaId = targetCinema.cinemaId;
+      console.log("targetCinema", targetCinema);
+      cinemaInfo.cinemaLinkId = targetCinema.cinemaLinkId;
       cinemaInfo.cinemaName = targetCinema.cinemaName;
       cinemaInfo.cinemaCode = targetCinema.cinemaCode;
 
@@ -82,7 +83,7 @@ export default class CinemaManage {
       if (!movie_data?.length) {
         return;
       }
-
+      console.log("movie_data", movie_data);
       // 6、获取目标影片信息
       let movieInfo = this.getTargetMovie(movie_data, film_name);
       if (!movieInfo) {
@@ -96,6 +97,7 @@ export default class CinemaManage {
 
       // 7、获取影片放映场次
       cinemaInfo.showDate = show_time.split(" ")[0];
+      console.log("cinemaInfo", cinemaInfo);
       const targetShow = await this.getTargetShow(cinemaInfo);
       if (!targetShow) {
         return;
@@ -338,59 +340,27 @@ export default class CinemaManage {
     return useCanCardList;
   }
   // 获取影院放映信息
-  async getMoviePlayInfo({ cinemaCode, cinemaId }) {
+  async getMoviePlayInfo({ cinemaLinkId }) {
     try {
-      const { api_version } = this;
       let params = {
-        cinemaCode,
-        cinemaId,
-        pageNo: 1,
-        pageSize: 1000,
-        platForm: 5
+        cinemaLinkId,
+        pageInit: false
       };
       this.logger.info("获取电影放映信息参数", params);
       let res = await this.appApi.getMoviePlayInfo(params);
       this.logger.infoSave("获取电影放映信息返回", res);
-      let movie_data = [];
-      if (api_version === "3.0C") {
-        movie_data = res.data?.items || [];
-      } else if (api_version === "C") {
-        movie_data = res.data?.hitFilmResultDOList || [];
-      }
-      let upcomingFilm = [];
-      try {
-        let res1 = await this.appApi.getUpcomingFilm(params);
-        if (api_version === "3.0C") {
-          upcomingFilm = res1.data?.items || [];
-          upcomingFilm = upcomingFilm.filter(
-            item => item.upcomingOrPreSell == "0"
-          );
-        } else if (api_version === "C") {
-          upcomingFilm = res1.data?.upComingFilmResultDOList || [];
-          upcomingFilm = upcomingFilm.filter(
-            item => item.upcomingOrPresell == "0"
-          );
-        }
-      } catch (error) {
-        this.logger.errorSave(
-          "获取预售电影放映信息返回异常",
-          formatErrInfo(error)
-        );
-      }
-      movie_data = movie_data.concat(upcomingFilm);
-      if (api_version === "3.0C") {
-        movie_data = movie_data.map(item => ({
-          ...item,
-          filmName: item.filmName,
-          filmId: item.id
-        }));
-      } else if (api_version === "C") {
-        movie_data = movie_data.map(item => ({
-          ...item,
-          filmName: item.name,
-          filmId: item.id
-        }));
-      }
+      const hotFilms = res?.hotFilms || [];
+      let soonFilms = res?.soonFilms || [];
+      soonFilms = soonFilms
+        .map(item => item.films)
+        .flat()
+        .filter(item => item.saleType === "P");
+      let movie_data = [...hotFilms, ...soonFilms];
+      movie_data = movie_data.map(item => ({
+        ...item,
+        film_id: item.filmId,
+        film_name: item.filmName
+      }));
       if (!movie_data?.length) {
         this.logger.errorSave("获取电影放映信息返回空");
         return;
@@ -402,10 +372,10 @@ export default class CinemaManage {
   }
   // 获取电影放映场次
   async getMoviePlayTime(cinemaInfo) {
-    const { cinemaCode, cinemaId, filmId, showDate } = cinemaInfo;
+    const { cinemaLinkId, filmId, showDate } = cinemaInfo;
     try {
       let params = {
-        cinemaLinkId: "15372",
+        cinemaLinkId,
         pageInit: false
       };
       this.logger.info("获取电影放映场次参数", params);
@@ -414,9 +384,11 @@ export default class CinemaManage {
       let filmList = res?.filmSchedules || [];
       let showList =
         filmList.find(item => item.filmId == filmId)?.dateSchedules || [];
+      console.log("showList", showList);
       let moviePlayTime =
-        showList.find(item => item.businessDate == +new Date(showDate))
-          ?.schedules || [];
+        showList.find(
+          item => item.businessDate == +new Date(showDate + " 00:00:00")
+        )?.schedules || [];
       if (!moviePlayTime?.length) {
         this.logger.errorSave("获取电影放映场次返回空");
       }
@@ -431,6 +403,7 @@ export default class CinemaManage {
   async getTargetShow(cinemaInfo, retryNextDay = true) {
     try {
       const showList = await this.getMoviePlayTime(cinemaInfo);
+      console.log("showList1", showList);
       const targetShow = this._findTargetShow(showList);
 
       if (targetShow) {
@@ -458,7 +431,9 @@ export default class CinemaManage {
   _findTargetShow(showList) {
     const { hall_name, show_time } = this.order;
     const MIN_SIMILARITY_THRESHOLD = 3;
-    let targetShowList = showList.filter(item => item.startTime === show_time);
+    let targetShowList = showList.filter(
+      item => item.startTime === +new Date(show_time)
+    );
 
     if (targetShowList.length === 0) return;
     if (targetShowList.length === 1) return targetShowList[0];

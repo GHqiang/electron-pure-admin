@@ -29,7 +29,7 @@ import CinemaManage from "./cinemaManage";
 import SeatManage from "./seatManage";
 
 // 是否是测试订单
-let isTestOrder = false;
+let isTestOrder = true;
 class getChenxingOfferPrice {
   constructor({ appFlag, plat_name }) {
     this.appFlag = appFlag; // 影线标识
@@ -126,7 +126,7 @@ class getChenxingOfferPrice {
     try {
       // 1. 初始规则匹配
       const matchRuleListRes = offerRuleMatch(order);
-      if (!matchRuleListRes.matchRuleList?.length && !isTestOrder) {
+      if (!matchRuleListRes?.matchRuleList?.length && !isTestOrder) {
         this.handleRuleMatchError(matchRuleListRes, order);
         return null;
       }
@@ -429,12 +429,9 @@ class getChenxingOfferPrice {
         return -1;
       }
 
-      let {
-        standardPrice: basePrice,
-        cinemaCode,
-        cinemaId,
-        filmId
-      } = movieInfo;
+      let { cinemaCode, cinemaLinkId, scheduleId, scheduleKey } = movieInfo;
+      let basePrice = movieInfo.recommendCard?.discountedPrice;
+      console.log("会员价", basePrice);
       if (basePrice === 0) {
         this.logger.errorSave("获取会员价为0");
         return;
@@ -446,52 +443,29 @@ class getChenxingOfferPrice {
 
       // 从座位信息里获取优惠活动列表
       let seatParams = {
-        cinemaCode,
-        cinemaId,
-        filmId
+        cinemaLinkId,
+        scheduleId,
+        scheduleKey,
+        pageInit: false
       };
-      const { api_version } = this;
-      if (api_version == "3.0C") {
-        seatParams.featureAppNo = movieInfo.featureAppNo;
-      } else {
-        seatParams.sessionId = movieInfo.sessionId;
-      }
       let serviceAddFee;
       const targetSeatRes = await this.seatManage.getSeatLayout(seatParams);
-      if (api_version == "3.0C") {
-        let discountList = targetSeatRes?.discountList || [];
-        let cinemaPlanDto = targetSeatRes.cinemaPlanDto || {};
-        serviceAddFee = cinemaPlanDto?.serviceAddFee;
-        this.logger.infoSave("获取到可用优惠列表", {
-          discountList,
-          cinemaPlanDto
-        });
-        if (discountList.length) {
-          // 取最低价
-          basePrice = discountList
-            .map(item => item.price - item.cinemaPayAmount)
-            .sort((a, b) => a - b)?.[0];
-          this.logger.infoSave("从优惠活动里取最低价", { basePrice });
+
+      let areaInfoList = targetSeatRes?.areaInfoList || [];
+      this.logger.infoSave("获取到座位价格信息列表", { areaInfoList });
+      if (areaInfoList.length) {
+        // 取最高价
+        basePrice = areaInfoList
+          .map(item => item.salePrice)
+          .sort((a, b) => b - a)?.[0];
+        if (minAddAmountRule?.memberPriceRule == "2") {
+          basePrice = this.getMostSeatPrice(
+            targetSeatRes.seatData,
+            areaInfoList
+          );
+          this.logger.infoSave("取最多座位价格", { basePrice });
         } else {
-          basePrice = cinemaPlanDto?.standardPrice;
-        }
-      } else {
-        let areaInfoList = targetSeatRes?.areaInfoList || [];
-        this.logger.infoSave("获取到座位价格信息列表", { areaInfoList });
-        if (areaInfoList.length) {
-          // 取最高价
-          basePrice = areaInfoList
-            .map(item => item.areaPrice)
-            .sort((a, b) => b - a)?.[0];
-          if (minAddAmountRule.memberPriceRule == "2") {
-            basePrice = this.getMostSeatPrice(
-              targetSeatRes.seatData,
-              areaInfoList
-            );
-            this.logger.infoSave("取最多座位价格", { basePrice });
-          } else {
-            this.logger.infoSave("取最高座位价格", { basePrice });
-          }
+          this.logger.infoSave("取最高座位价格", { basePrice });
         }
       }
       this.logger.infoSave("会员服务费", { serviceAddFee });
@@ -525,7 +499,7 @@ class getChenxingOfferPrice {
       });
       areaRatioList.sort((a, b) => b.numRatio - a.numRatio);
       this.logger.infoSave("座位分区剩余座位占比情况", areaRatioList);
-      let mostSeatPrice = areaRatioList[0]?.areaPrice;
+      let mostSeatPrice = areaRatioList[0]?.salePrice;
       return mostSeatPrice;
       // // 默认取最高价格，最高座位占比不足百分之3时取次最高价格
       // if (areaList[0].numRatio <= 3 && areaList[1]?.settlePrice) {
@@ -603,7 +577,7 @@ class getChenxingOfferPrice {
     cardList.sort((a, b) => a.card_discount - b.card_discount);
 
     const bestCard = cardList[0];
-    const discount = bestCard.card_discount;
+    const discount = bestCard?.card_discount;
     const member_price = (basePrice * 100 * discount) / 10000;
 
     return {
@@ -801,9 +775,10 @@ class getChenxingOfferPrice {
     const buyTicketInfo = await this.cinemaManage.getBuyPrevCinemaInfo({
       flag: 1
     });
-    const { targetShow, cinemaCode, cinemaId, filmId } = buyTicketInfo || {};
+    const { targetShow, cinemaCode, cinemaLinkId, filmId } =
+      buyTicketInfo || {};
     return buyTicketInfo
-      ? { ...(targetShow || {}), cinemaCode, cinemaId, filmId }
+      ? { ...(targetShow || {}), cinemaCode, cinemaLinkId, filmId }
       : null;
   }
 }
@@ -830,7 +805,7 @@ window.chenxingOfferObj = (plat_name, app_name) => {
 //   rewards: 0,
 //   is_urgent: false,
 //   cinema_group: "AMG海上明珠",
-//   cinema_code: 13011341,
+//   cinema_code: '13011341',
 //   order_number: "12412221440316515",
 //   offer_end_time: 1734849690000,
 //   app_name: "sjzhlh"

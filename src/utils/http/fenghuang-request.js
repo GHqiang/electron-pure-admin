@@ -330,6 +330,15 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         ) {
           config.retryCount = (config.retryCount || 0) + 1;
           await getNewSid(tid);
+          // 重新生成接口url(主要是sign签名和参数有关)
+          config.url = config.originalUrl.split("/1.0/")[0];
+          config.url = getUrl(tokenC, sid, config.url, config.originalData);
+          config.url = IS_DEV
+            ? config.url.replace("fenghuang", "svpi/fenghuang-ser")
+            : "http://47.113.191.173:3000" +
+              "/fenghuang-ser" +
+              config.originalUrl.slice(10);
+          return instance(config);
         }
         if (
           isRetryCount &&
@@ -345,6 +354,15 @@ const createAxios = ({ app_name, timeout = 20 }) => {
               newSidObj[config.mobile] = sidRes.accessToken;
             }
             tid = sidRes.refreshToken;
+            // 重新生成接口url(主要是sign签名和参数有关)
+            config.url = config.originalUrl.split("/1.0/")[0];
+            config.url = getUrl(tokenC, sid, config.url, config.originalData);
+            config.url = IS_DEV
+              ? config.url.replace("fenghuang", "svpi/fenghuang-ser")
+              : "http://47.113.191.173:3000" +
+                "/fenghuang-ser" +
+                config.originalUrl.slice(10);
+            return instance(config);
           }
           return data;
         }
