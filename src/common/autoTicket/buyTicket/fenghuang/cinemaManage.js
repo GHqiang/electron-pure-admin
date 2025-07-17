@@ -112,36 +112,24 @@ export default class CinemaManage {
   // 获取城市影院列表
   async getCityCinemaList() {
     try {
-      const { api_version } = this;
       let params = {};
       this.logger.info("获取城市影院列表参数", params);
       const res = await this.appApi.getCinemaList(params);
       this.logger.info("获取城市影院列表返回", res);
       let cityCinemaList = [];
-      if (api_version === "3.0C") {
-        cityCinemaList = res.data || [];
-        cityCinemaList = cityCinemaList.map(item => ({
-          ...item,
-          cityName: item.cityInfoDTO.cityName,
-          cinemaList: item.cinemaResultDTOList.map(itemA => ({
-            ...itemA,
-            cinemaId: itemA.cinemaId,
-            cinemaName: itemA.cinemaName,
-            cinemaCode: itemA.cinemaCode
-          }))
-        }));
-      } else if (api_version === "C") {
-        cityCinemaList = res.data?.resultDOList || [];
-        cityCinemaList = cityCinemaList.map(item => ({
-          cityName: item.cityInfo.chName,
-          cinemaList: item.cinemas.map(itemA => ({
-            ...itemA,
-            cinemaId: itemA.id,
-            cinemaName: itemA.name,
-            cinemaCode: itemA.unifiedCode
-          }))
-        }));
-      }
+
+      cityCinemaList = res.cityCinemas || [];
+      cityCinemaList = cityCinemaList.map(item => ({
+        ...item,
+        cityCode: item.cityCode,
+        cityName: item.cityName,
+        cinemaList: item.cinemas.map(itemA => ({
+          ...itemA,
+          cinemaId: itemA.cinemaLinkId,
+          cinemaName: itemA.cinemaName,
+          cinemaCode: ""
+        }))
+      }));
       if (!cityCinemaList?.length) {
         this.logger.errorSave("获取城市影院列表为空");
         return;
