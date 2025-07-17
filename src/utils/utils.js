@@ -464,6 +464,7 @@ const isLoginByAppName = (app_name, userId) => {
 // 获取影院登录信息列表
 const getCinemaLoginInfoList = userId => {
   let user_id = userId || tokens?.userInfo?.user_id;
+  const phone = tokens?.userInfo?.phone;
   if (user_id == 1) {
     user_id = 9;
   }
@@ -471,11 +472,14 @@ const getCinemaLoginInfoList = userId => {
   let loginInfoList = window.localStorage.getItem("loginInfoList");
   if (loginInfoList) {
     loginInfoList = JSON.parse(loginInfoList);
+    // 非研发账号过滤掉研发登录信息
+    if (tokens?.userInfo?.user_id != 1) {
+      loginInfoList = loginInfoList.filter(item => item.mobile != phone);
+    }
     loginInfoList = loginInfoList.filter(item =>
       !item.link_user_id ? true : item.link_user_id == user_id
     );
   }
-  const phone = tokens?.userInfo?.phone;
   if (phone) {
     loginInfoList = loginInfoList.sort((a, b) => {
       // 优先按 first 字段排序
