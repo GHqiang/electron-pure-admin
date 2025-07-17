@@ -328,11 +328,8 @@ const syncCinemeCodeMatch = async isExport => {
       const appInfo = GE_APP_INFO(app_name);
       list = list.map(item => {
         let app_cinema_code = item.cinema_code;
-        let isH5_UME = app_type_code === "ume_h5";
-        let isLMA = app_name === "lma";
-        let isSFC = app_type_code === "sfc_applet";
-        // 以下三种没有cinema_code，用city_id+id组合当唯一标识
-        if (isH5_UME || isLMA || isSFC) {
+        // 除以下2种外没有cinema_code，用city_id+id组合当唯一标识
+        if (!["ume_applet", "chenxing_applet"].includes(app_type_code)) {
           app_cinema_code = item.city_id + "_" + item.cinema_id;
         }
         return {
