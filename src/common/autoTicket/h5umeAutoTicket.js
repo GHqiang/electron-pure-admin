@@ -1139,12 +1139,18 @@ class OrderAutoTicketQueue {
       let cardNo = card_id;
       let quan_fee_total = (quan_fee * 1000 * ticket_num) / 1000;
       if (!orderId) {
-        this.logger.error("创建订单失败，单个订单直接出票结束", "走转单逻辑");
-        const transferParams = await this.transferOrder(item, {
-          cinemaLinkId,
-          lockOrderId
-        });
-        return { offerRule, transferParams };
+        if (!card_id && offerRule.offer_type == "1") {
+          this.logger.infoSave(
+            "纯用券场景由于不需要支付，创建订单失败当成功处理"
+          );
+        } else {
+          this.logger.error("创建订单失败，单个订单直接出票结束", "走转单逻辑");
+          const transferParams = await this.transferOrder(item, {
+            cinemaLinkId,
+            lockOrderId
+          });
+          return { offerRule, transferParams };
+        }
       }
       this.logger.infoSave("创建订单成功");
       if (isTestOrder) {
