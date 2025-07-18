@@ -366,6 +366,7 @@ export default function useCinemaBaseFun() {
           cinemaLinkId: GE_APP_INFO(app_name)?.cinemaLinkId,
           pageNumber: 1,
           pageSize: 20,
+          pageInit: false,
           fenghuangToken: session_id
         };
       } else if (CHENXING_LIST.value.includes(app_name)) {
@@ -404,8 +405,8 @@ export default function useCinemaBaseFun() {
       } else if (FENGHUANG_LIST.value.includes(app_name)) {
         cardList = res.memberCards || [];
         cardList = cardList.map(item => ({
-          card_id: item.cardNumber,
-          card_num: item.cardNumber,
+          card_id: item.cardNo,
+          card_num: item.cardNo,
           balance: (item.balance || 0) / 100 + ""
         }));
       } else if (CHENXING_LIST.value.includes(app_name)) {

@@ -223,9 +223,11 @@ export default class BuyTicket {
         let isCancel;
         if (buyTicketInfo.order_num) {
           isCancel = await this.orderManage.cancelOrder(unlockSeatInfo);
-        } else {
-          isCancel = await this.orderManage.releaseSeat(unlockSeatInfo);
         }
+        // 不产生订单无需释放
+        // else {
+        //   isCancel = await this.orderManage.releaseSeat(unlockSeatInfo);
+        // }
         if (!isCancel) {
           this.logger.infoSave(
             "上个号取消订单释放座位失败，发送消息通知并直接走转单"
@@ -262,7 +264,7 @@ export default class BuyTicket {
         cinemaLinkId,
         scheduleId,
         scheduleKey,
-        seatCodes: targetSeatCodes,
+        seatCodes: targetSeatCodes.map(item => item.seatCode),
         lockseat,
         plat_name,
         order_number,
@@ -276,17 +278,18 @@ export default class BuyTicket {
       const { lockOrderId } = buyTicketInfo;
       // 4、使用优惠券或者会员卡（仅判断是否有可用卡及券）
       let basePrice = targetShow.recommendCard?.discountedPrice;
-      let { serviceAddFee } = targetShow;
+      basePrice = basePrice / 100;
+      let { serviceAddFee = 0 } = targetShow;
       this.logger.warn("会员价及手续费", { basePrice, serviceAddFee });
 
-      this.logger.infoSave("获取到座位价格信息列表", { areaInfoList });
-      if (areaInfoList?.length) {
-        // 取最高价
-        basePrice = areaInfoList
-          .map(item => item.salePrice)
-          .sort((a, b) => b - a)?.[0];
-        this.logger.infoSave("取最高座位价格", { basePrice });
-      }
+      // this.logger.infoSave("获取到座位价格信息列表", { areaInfoList });
+      // if (areaInfoList?.length) {
+      //   // 取最高价
+      //   basePrice = areaInfoList
+      //     .map(item => item.salePrice)
+      //     .sort((a, b) => b - a)?.[0];
+      //   this.logger.infoSave("取最高座位价格", { basePrice });
+      // }
       this.logger.infoSave("会员服务费", { serviceAddFee });
       if (serviceAddFee) {
         basePrice = +basePrice + Number(serviceAddFee);
@@ -350,7 +353,8 @@ export default class BuyTicket {
         return await this.transferOrChangePhone(transparams, buyTicketInfo);
       }
       // 实际支付价格
-      const paymentAmount = calcRes?.priceDetail?.totalRealPayAmount;
+      const paymentAmount =
+        (calcRes?.settlement?.totalDiscountedPrice || 0) / 100;
       this.logger.infoSave("实际支付价格", { paymentAmount });
       // 6、校验是否可以创建订单
       // 用券时总价为0
@@ -376,7 +380,7 @@ export default class BuyTicket {
         }
       }
       // 暂不创建订单
-      // return { offerRule };
+      return { offerRule };
       // 7、创建订单
       const createOrderRes = await this.orderManage.createOrder({
         cinemaLinkId,

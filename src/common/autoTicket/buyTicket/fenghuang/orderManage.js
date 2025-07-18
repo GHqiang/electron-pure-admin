@@ -26,8 +26,8 @@ export default class OrderManage {
   async transferOrder(unlockSeatInfo) {
     this.logger.infoSave("开始准备转单", unlockSeatInfo);
     if (unlockSeatInfo) {
-      // 1、释放座位(仅锁座id存在时)
-      if (!unlockSeatInfo.order_num) await this.releaseSeat(unlockSeatInfo);
+      // 1、释放座位(仅锁座id存在时，不产生订单无需释放)
+      // if (!unlockSeatInfo.order_num) await this.releaseSeat(unlockSeatInfo);
 
       // 2、取消订单(创建订单id存在时)
       if (unlockSeatInfo.order_num) await this.cancelOrder(unlockSeatInfo);
@@ -110,39 +110,27 @@ export default class OrderManage {
   // 计算价格
   async pripriceCalculation(data) {
     let {
-      cinemaCode,
-      cinemaId,
+      cinemaLinkId,
+      scheduleId,
+      scheduleKey,
+      targetSeatCodes,
       lockOrderId,
-      cardNum,
-      activityKey,
-      quan_code,
-      session_id,
-      firstCalc = true,
-      isTrial = true
+      session_id
     } = data;
     let params = {
-      cinemaCode,
-      cinemaId,
+      cinemaLinkId,
+      scheduleId,
+      scheduleKey,
       lockOrderId,
-      addRetailGoods: [],
-      addEquityGoods: [],
-      orderGoodsType: 1,
-      defaultCardNo: cardNum,
-      firstCalc: firstCalc || false, // 是否是首次计算(首次会默认用券)
-      session_id
+      seats: JSON.stringify(
+        targetSeatCodes.map(item => ({
+          areaId: item.areaId,
+          seatCode: item.seatCode
+        }))
+      ),
+      pageInit: true,
+      fenghuangToken: session_id
     };
-    const { api_version } = this;
-    if (quan_code?.length) {
-      params.activityKey = "";
-      if (api_version == "3.0C") {
-        params.ticketCouponCode = quan_code.join();
-        params.optType = 0;
-      } else if (api_version === "C") {
-        params.ticketCodes = quan_code;
-      }
-    } else {
-      params.activityKey = activityKey || "";
-    }
     try {
       this.logger.infoSave("计算价格参数", params);
       let res = await this.appApi.priceCalculation(params);
@@ -151,28 +139,7 @@ export default class OrderManage {
       // this.logger.infoSave("计算价格参数1", params);
       res = await this.appApi.priceCalculation(params);
       this.logger.infoSave("计算价格返回1", res);
-      if (!quan_code?.length && cardNum) {
-        // 用卡
-        if (api_version === "C" && isTrial) {
-          let activityList = res?.data?.activityList || [];
-          if (activityList.length) {
-            activityKey = activityList
-              .filter(item => item.cardNum === cardNum)
-              .sort(
-                (a, b) => b.discountAmount - a.discountAmount
-              )?.[0]?.activityKey;
-            this.logger.infoSave("计算价格获取到优惠活动key", { activityKey });
-            if (activityKey) {
-              return this.pripriceCalculation({
-                ...data,
-                activityKey,
-                isTrial: false
-              });
-            }
-          }
-        }
-      }
-      return res?.data;
+      return res;
     } catch (error) {
       this.logger.errorSave("计算价格异常", error);
     }
@@ -180,21 +147,30 @@ export default class OrderManage {
   // 创建订单
   async createOrder(data) {
     let {
-      cinemaCode,
-      cinemaId,
-      cardNum,
+      cinemaLinkId,
+      scheduleKey,
+      scheduleId,
       lockOrderId,
       session_id,
       isTimeoutRetry = 1 // 默认超时重试
     } = data;
     try {
       let params = {
-        cinemaCode,
-        cinemaId,
-        defaultCardNo: cardNum,
+        seats: '[{"seatCode":"00000052917-2-13","areaId":"10486"}]',
+        promotions:
+          '[{"promotionType":"MARKET","promoCode":"qxlinqiio4dx","discountedAmount":1600,"cardNo":"20005091387X","cardType":"DEPOSIT"}]',
+        totalOriginalPrice: 3590,
+        totalPayAmount: 1990,
+        cinemaLinkId,
+        phoneNumber: "15237761435",
+        scheduleId,
+        scheduleKey,
         lockOrderId,
-        shareCode: "",
-        session_id
+        payments:
+          '[{"paymentType":"MEMBER_CARD","payToken":"C7IHrj3IMBKA2RMgF+Erux2YwuWDFahPNynfQU647gdtWsADscVwGCfqDniUmjRuh/lW+zc6ShZ9a/oBV8tTuNSnI6hPh5oQYblIiWUWw1io319xpqamWz+UEPyOmcUykViYQZ5O4MpiBteYjzSUEo/9ucVvTCa3UmDqVGkLmPVJJpUErwZlBWod4f4nYa1UTBOEyo3W00F+EUH6mbNLQPLEnN+eC2ZjYmTORFSuzQ5F9rbjXV0q+DTjrqQYA3My+SGq76AAw6HHUD66aTJVeg+o+764le11k5zAjasdP4tR5ENAjeLmYskapMFX2HxybuHvflj30AV4ZXXCX+51Pw==","payCode":"20005091387X","payAmount":1990}]',
+        closeOuterId: "gpjh2ow9850zffy7",
+        outerId: "gpjh2ow9850zffy7",
+        fenghuangToken: session_id
       };
       this.logger.infoSave("创建订单参数", params);
       const res = await this.appApi.createOrder(params);

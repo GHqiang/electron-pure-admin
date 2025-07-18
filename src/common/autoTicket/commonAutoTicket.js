@@ -55,24 +55,24 @@ class OrderAutoTicketQueue {
       id: "12412221440316515",
       tpp_price: 42,
       supplier_end_price: 32,
-      city_name: "石家庄",
+      city_name: "重庆",
       cinema_addr: "雨花台区软件大道109号雨花客厅E-PARK北区3层",
       ticket_num: 1,
-      cinema_name: "UME影城（石家庄欢乐汇店）",
-      hall_name: "3号RGB激光厅(儿童均需购票)",
+      cinema_name: "重庆华熙国际影城",
+      hall_name: "5号厅-(影城会员周二19.9元观影)",
       film_name: "长安的荔枝",
       film_img:
         "https://gw.alicdn.com/tfscom/i4/O1CN01e8PcvF1NESAgdEsnM_!!6000000001538-0-alipicbeacon.jpg_120x120.jpg",
-      show_time: "2025-07-27 19:00:00",
+      show_time: "2025-07-25 19:00:00",
       rewards: 0,
       is_urgent: false,
       cinema_group: "",
-      cinema_code: "13011341",
+      cinema_code: "50130161",
       order_number: "2025071815072984896",
       offer_end_time: 1734849690000,
-      app_name: "sjzhlh",
-      appName: "sjzhlh",
-      lockseat: "3排17座"
+      app_name: "cqhx",
+      appName: "cqhx",
+      lockseat: "3排1座"
     };
 
     // 动态生成事件名称

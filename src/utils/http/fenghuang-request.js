@@ -179,7 +179,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       const sidRes = await APP_API_OBJ[app_name].authRefresh({
         refreshToken: tid
       });
-      console.log("sidRes", sidRes);
+      // console.log("sidRes", sidRes);
       return sidRes;
       // let sid = sidRes?.bizValue?.sid;
       // if (sid) {
@@ -231,7 +231,6 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         sid = newSidObj[mobile];
       }
       config.mobile = mobile;
-      config.oldSid = sid;
       // 保存原始参数和原始URL
       if (!config.originalData) {
         config.originalData = {
@@ -321,7 +320,15 @@ const createAxios = ({ app_name, timeout = 20 }) => {
 
       if (isError) {
         let errReason = data?.data?.bizMsg || data?.ret?.[0];
-        console.error("失败原因", errReason);
+        console.error("失败原因", errReason, config.retryCount, sid, tid);
+        // 刷新接口的刷新令牌过期（需要重新登录抓包维护该值tid）
+        if (
+          errReason === "FAIL_SYS_SESSION_EXPIRED::Session过期" &&
+          config.url.includes("authn.refresh")
+        ) {
+          // 消息推送待补充，提示用户重新登录维护登录信息
+          return Promise.reject(error);
+        }
         let isRetryCount = !config.retryCount || config.retryCount < 3;
         if (
           ["FAIL_SYS_SESSION_EXPIRED::Session过期"].includes(errReason) &&
@@ -329,31 +336,33 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           !config.url.includes("authn.refresh")
         ) {
           config.retryCount = (config.retryCount || 0) + 1;
-          await getNewSid(tid);
-          // 重新生成接口url(主要是sign签名和参数有关)
-          config.url = config.originalUrl.split("/1.0/")[0];
-          config.url = getUrl(tokenC, sid, config.url, config.originalData);
-          config.url = IS_DEV
-            ? config.url.replace("fenghuang", "svpi/fenghuang-ser")
-            : "http://47.113.191.173:3000" +
-              "/fenghuang-ser" +
-              config.originalUrl.slice(10);
-          return instance(config);
+          const sidRes = await getNewSid(tid);
+          console.warn("过期获取sidRes结果", sidRes);
+          if (sidRes?.accessToken) {
+            // 更新对应手机号的token
+            if (config.mobile) {
+              sid = sidRes.accessToken;
+              newSidObj[config.mobile] = sidRes.accessToken;
+            }
+            tid = sidRes.refreshToken;
+            // 重新生成接口url(主要是sign签名和参数有关)
+            config.url = config.originalUrl.split("/1.0/")[0];
+            config.url = getUrl(tokenC, sid, config.url, config.originalData);
+            config.url = IS_DEV
+              ? config.url.replace("fenghuang", "svpi/fenghuang-ser")
+              : "http://47.113.191.173:3000" +
+                "/fenghuang-ser" +
+                config.originalUrl.slice(10);
+            return instance(config);
+          }
         }
         if (
           isRetryCount &&
           ["FAIL_SYS_TOKEN_EMPTY::令牌为空"].includes(errReason)
         ) {
-          config.retryCount = (config.retryCount || 0) + 1;
-          tokenC = data.c; // 更新token
-          const sidRes = await getNewSid(tid);
-          console.warn("getNewSid-sidRes", sidRes);
-          if (sidRes?.accessToken) {
-            // 更新对应手机号的token
-            if (config.mobile) {
-              newSidObj[config.mobile] = sidRes.accessToken;
-            }
-            tid = sidRes.refreshToken;
+          if (data?.c) {
+            console.warn("填充token令牌", data.c);
+            tokenC = data.c; // 更新token
             // 重新生成接口url(主要是sign签名和参数有关)
             config.url = config.originalUrl.split("/1.0/")[0];
             config.url = getUrl(tokenC, sid, config.url, config.originalData);

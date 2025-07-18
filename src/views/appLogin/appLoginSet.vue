@@ -324,6 +324,7 @@ const nodeClick = nodeData => {
     formData.app_name = "";
   } else {
     formData.app_name = nodeData.value;
+    shadowLine.value = nodeData.value;
     formData.app_type = "";
   }
   searchData();

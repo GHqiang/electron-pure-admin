@@ -45,6 +45,9 @@ export default class CardQuanManage {
       const { cinemaLinkId } = buyTicketInfo;
       const cardParams = {
         cinemaLinkId,
+        pageNumber: 1,
+        pageSize: 20,
+        pageInit: false,
         fenghuangToken: session_id
       };
       // 1、获取卡券列表
@@ -55,23 +58,12 @@ export default class CardQuanManage {
         );
         this.logger.infoSave("可用卡过滤后的会员卡列表", { cardList });
       }
-      // 辰星3.0必须要有卡
-      if (!cardList?.length && this.api_version == "3.0C") return {};
       let quanParams = {
-        cinemaCode,
-        cinemaId,
-        session_id
+        status: "USEFUL",
+        pageNumber: 1,
+        pageSize: 20,
+        fenghuangToken: session_id
       };
-      if (this.api_version == "3.0C") {
-        const defaultCardNo = cardList?.find(
-          item => item.defaultCard == 1
-        )?.cardNo;
-        quanParams.defaultCardNo = defaultCardNo;
-        quanParams.couponStatus = 1;
-      } else if (this.api_version == "C") {
-        quanParams.pageNo = 1;
-        quanParams.pageSize = 100;
-      }
       let quanList = await this.getQuanList(quanParams);
       // 2、按报价规则用卡用券
       const { offer_type, member_price, offer_rule_id } = offerRule;
@@ -290,13 +282,13 @@ export default class CardQuanManage {
       this.logger.infoSave("获取会员卡列表参数", params);
       const res = await this.appApi.getCardList(params);
       this.logger.infoSave("获取会员卡列表返回", res);
-      let cardList = res.initCards || [];
+      let cardList = res.memberCards || [];
       if (!cardList.length) {
         this.logger.errorSave("获取会员卡列表为空");
       }
       cardList = cardList.map(item => ({
         ...item,
-        cardAmount: item.amount
+        cardAmount: (item.balance || 0) / 100
       }));
       return cardList;
     } catch (error) {
@@ -888,7 +880,7 @@ export default class CardQuanManage {
 
   // 连续获取券
   async continuousGetQuan(data) {
-    let { cinemaLinkId, session_id, page = 1, quanData = [], logger } = data;
+    let { session_id, page = 1, quanData = [], logger } = data;
     let params = {
       status: "USEFUL",
       pageNumber: 1,

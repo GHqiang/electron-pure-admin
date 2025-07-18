@@ -40,12 +40,7 @@ export default class SeatManage {
       const params = this.getSeatParams(buyTicketInfo);
       const seatListRes = await this.getSeatLayout(params);
       this.logger.info("获取到座位信息", { seatListRes });
-      const {
-        seatData: seatList = [],
-        discountList = [],
-        areaInfoList,
-        cinemaPlanDto
-      } = seatListRes || {};
+      const { seatData: seatList = [], areaInfoList } = seatListRes || {};
 
       if (!seatList?.length) {
         this.logger.errorSave("座位列表为空");
@@ -59,10 +54,8 @@ export default class SeatManage {
       }
 
       return {
-        seatCodes: targetSeats.map(item => item.seatCode),
-        discountList,
-        areaInfoList,
-        cinemaPlanDto
+        seatCodes: targetSeats,
+        areaInfoList
       };
     } catch (error) {
       this.logger.errorSave("获取目标座位异常", formatErrInfo(error));
