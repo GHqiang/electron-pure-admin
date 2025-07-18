@@ -1,13 +1,11 @@
 // 买票主流程
 import {
-  getCurrentTime,
   mockDelay, // 模拟延时
   formatErrInfo, // 格式化错误信息
   getCinemaLoginInfoList,
   sendWxPusherMessage
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
-import { GE_APP_INFO } from "@/common/constant";
 // 统一日志类
 import Logger from "@/common/logger";
 // 机器登录用户信息
@@ -38,7 +36,6 @@ export default class BuyTicket {
       this.platManage,
       isTestOrder
     ); // 订单管理模块
-    this.api_version = GE_APP_INFO(order.app_name)?.api_version;
   }
   // 单个订单出票（向外暴漏的唯一方法）
   async singleTicket() {
@@ -212,15 +209,12 @@ export default class BuyTicket {
           return await this.orderManage.transferOrder();
         }
         buyTicketInfo.targetSeatCodes = targetSeatRes.seatCodes;
-        buyTicketInfo.discountList = targetSeatRes.discountList;
         buyTicketInfo.areaInfoList = targetSeatRes.areaInfoList;
-        buyTicketInfo.cinemaPlanDto = targetSeatRes.cinemaPlanDto;
       } else {
         // 换号出票操作（取消上个号的订单）
         // 取消订单释放座位参数
         let unlockSeatInfo = {
-          cinemaCode: buyTicketInfo.cinemaCode,
-          cinemaId: buyTicketInfo.cinemaId,
+          cinemaLinkId: buyTicketInfo.cinemaLinkId,
           lockOrderId: buyTicketInfo.lockOrderId,
           order_num: buyTicketInfo.order_num,
           session_id:
@@ -253,29 +247,21 @@ export default class BuyTicket {
       // 锁定座位前延迟一秒
       // await mockDelay(1);
       const {
-        cinemaCode,
-        cinemaId,
-        filmId,
+        cinemaLinkId,
+        scheduleId,
+        scheduleKey,
         targetShow,
         targetSeatCodes,
-        discountList,
-        cinemaPlanDto,
         areaInfoList
       } = buyTicketInfo;
       this.logger.infoSave("座位价格相关信息", {
-        discountList,
-        cinemaPlanDto,
         areaInfoList
       });
-      const { featureAppNo } = targetShow;
       // 3、锁定座位
       let lockSeatParams = {
-        cinemaCode,
-        cinemaId,
-        filmId,
-        featureAppNo,
-        sessionCode: targetShow.sessionId,
-        seatInfos: targetSeatCodes,
+        cinemaLinkId,
+        scheduleId,
+        scheduleKey,
         seatCodes: targetSeatCodes,
         lockseat,
         plat_name,
@@ -288,35 +274,18 @@ export default class BuyTicket {
       }
       buyTicketInfo.lockOrderId = lockRes.lockOrderId;
       const { lockOrderId } = buyTicketInfo;
-      // orderDate = lockRes.autoUnlockDatetime;
       // 4、使用优惠券或者会员卡（仅判断是否有可用卡及券）
-
-      let { standardPrice: basePrice, serviceAddFee } = targetShow;
+      let basePrice = targetShow.recommendCard?.discountedPrice;
+      let { serviceAddFee } = targetShow;
       this.logger.warn("会员价及手续费", { basePrice, serviceAddFee });
-      const { api_version } = this;
-      if (api_version === "3.0C") {
-        serviceAddFee = cinemaPlanDto?.serviceAddFee;
-        if (discountList?.length) {
-          // 取最低价
-          basePrice = discountList
-            .map(item => item.price - item.cinemaPayAmount)
-            .sort((a, b) => a - b)?.[0];
-          this.logger.infoSave("从优惠活动里取最低价", {
-            basePrice,
-            discountList
-          });
-        } else {
-          basePrice = cinemaPlanDto?.standardPrice;
-        }
-      } else {
-        this.logger.infoSave("获取到座位价格信息列表", { areaInfoList });
-        if (areaInfoList?.length) {
-          // 取最高价
-          basePrice = areaInfoList
-            .map(item => item.areaPrice)
-            .sort((a, b) => b - a)?.[0];
-          this.logger.infoSave("取最高座位价格", { basePrice });
-        }
+
+      this.logger.infoSave("获取到座位价格信息列表", { areaInfoList });
+      if (areaInfoList?.length) {
+        // 取最高价
+        basePrice = areaInfoList
+          .map(item => item.salePrice)
+          .sort((a, b) => b - a)?.[0];
+        this.logger.infoSave("取最高座位价格", { basePrice });
       }
       this.logger.infoSave("会员服务费", { serviceAddFee });
       if (serviceAddFee) {
@@ -355,8 +324,7 @@ export default class BuyTicket {
         });
         // 转单或换号处理
         const transparams = {
-          cinemaCode,
-          cinemaId,
+          cinemaLinkId,
           lockOrderId,
           session_id: this.currentSessionId
         };
@@ -375,8 +343,7 @@ export default class BuyTicket {
         this.logger.info("计算价格异常，走转单或换号处理");
         // 转单或换号处理
         const transparams = {
-          cinemaCode,
-          cinemaId,
+          cinemaLinkId,
           lockOrderId,
           session_id: this.currentSessionId
         };
@@ -399,8 +366,7 @@ export default class BuyTicket {
         if (offerRule.is_store == "1" && useQuan.length - ticket_num < 10) {
           this.logger.infoSave("本次出票后券小于10，开始异步绑定券");
           this.cardQuanManage.getNewQuan({
-            cinemaCode,
-            cinemaId,
+            cinemaLinkId,
             quanValue: offerRule.quan_value,
             black_quans: offerRule.black_quans,
             quanNum: 10 - (useQuan.length - Number(ticket_num)),
@@ -413,22 +379,17 @@ export default class BuyTicket {
       // return { offerRule };
       // 7、创建订单
       const createOrderRes = await this.orderManage.createOrder({
-        cinemaCode,
-        cinemaId,
+        cinemaLinkId,
         cardNum,
         lockOrderId,
         session_id: this.currentSessionId
       });
       let order_num = createOrderRes?.orderNumber;
-      if (api_version == "C") {
-        order_num = createOrderRes?.businessSystemFlowNumber;
-      }
       if (!order_num) {
         this.logger.info("创建订单失败，单个订单直接出票结束走转单");
         // 转单或换号处理
         const transparams = {
-          cinemaCode,
-          cinemaId,
+          cinemaLinkId,
           lockOrderId,
           session_id: this.currentSessionId
         };
@@ -462,8 +423,7 @@ export default class BuyTicket {
         });
         // 转单或换号处理
         const transparams = {
-          cinemaCode,
-          cinemaId,
+          cinemaLinkId,
           order_num,
           session_id: this.currentSessionId
         };
@@ -481,8 +441,7 @@ export default class BuyTicket {
           });
           // 转单或换号处理
           const transparams = {
-            cinemaCode,
-            cinemaId,
+            cinemaLinkId,
             order_num,
             session_id: this.currentSessionId
           };
@@ -499,8 +458,7 @@ export default class BuyTicket {
       }
       // 8、购买电影票
       const buyTicketRes = await this.orderManage.buyTicket({
-        cinemaCode,
-        cinemaId,
+        cinemaLinkId,
         cinemaName: buyTicketInfo.cinemaName,
         cardNo: cardNum,
         quan_code,
@@ -516,8 +474,7 @@ export default class BuyTicket {
         } else {
           // 转单或换号处理
           const transparams = {
-            cinemaCode,
-            cinemaId,
+            cinemaLinkId,
             order_num,
             session_id: this.currentSessionId
           };
@@ -545,8 +502,7 @@ export default class BuyTicket {
       }
       // 最后处理：获取支付结果上传取票码
       const lastRes = await this.orderManage.getQrcodeUploadByPlat({
-        cinemaCode,
-        cinemaId,
+        cinemaLinkId,
         cardNum,
         order_num,
         session_id: this.currentSessionId

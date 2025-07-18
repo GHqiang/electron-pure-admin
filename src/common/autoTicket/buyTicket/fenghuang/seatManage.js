@@ -187,7 +187,7 @@ export default class SeatManage {
       this.logger.info("锁定座位参数", params);
       const res = await this.appApi.lockSeat(params);
       this.logger.infoSave(`第${inx}次锁定座位成功`, { res, params });
-      return res?.data;
+      return res;
     } catch (error) {
       this.logger.errorSave(`第${inx}次锁定座位异常`, { error, params });
       // 辅助锁定座位

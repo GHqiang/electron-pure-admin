@@ -103,7 +103,8 @@ export default class CinemaManage {
       }
       this.logger.infoSave("出票前获取电影放映信息", { targetShow });
       cinemaInfo.targetShow = targetShow;
-
+      cinemaInfo.scheduleId = targetShow.scheduleId;
+      cinemaInfo.scheduleKey = targetShow.scheduleKey;
       return cinemaInfo;
     } catch (error) {
       this.logger.errorSave("获取购票前的影院信息异常", formatErrInfo(error));

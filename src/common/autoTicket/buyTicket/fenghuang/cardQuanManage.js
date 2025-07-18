@@ -42,11 +42,10 @@ export default class CardQuanManage {
     try {
       const { appFlag } = this;
       const { supplier_end_price, ticket_num, plat_name } = this.order;
-      const { cinemaCode, cinemaId } = buyTicketInfo;
+      const { cinemaLinkId } = buyTicketInfo;
       const cardParams = {
-        cinemaCode,
-        cinemaId,
-        session_id
+        cinemaLinkId,
+        fenghuangToken: session_id
       };
       // 1、获取卡券列表
       let cardList = await this.getCardList(cardParams);
@@ -291,10 +290,7 @@ export default class CardQuanManage {
       this.logger.infoSave("获取会员卡列表参数", params);
       const res = await this.appApi.getCardList(params);
       this.logger.infoSave("获取会员卡列表返回", res);
-      let cardList = res.data || [];
-      if (this.api_version == "C") {
-        cardList = res.data?.datalist || [];
-      }
+      let cardList = res.initCards || [];
       if (!cardList.length) {
         this.logger.errorSave("获取会员卡列表为空");
       }
