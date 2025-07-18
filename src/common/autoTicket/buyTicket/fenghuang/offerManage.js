@@ -9,11 +9,7 @@ import {
   getCinemaLoginInfoList
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
-import {
-  GROUP_LIST,
-  TEST_NEW_PLAT_LIST,
-  GE_APP_INFO
-} from "@/common/constant.js";
+import { GROUP_LIST, TEST_NEW_PLAT_LIST } from "@/common/constant.js";
 import { platTokens } from "@/store/platTokens";
 const {
   userInfo: { rule, user_id }
@@ -30,11 +26,10 @@ import SeatManage from "./seatManage";
 
 // 是否是测试订单
 let isTestOrder = true;
-class getChenxingOfferPrice {
+class getFenghuangOfferPrice {
   constructor({ appFlag, plat_name }) {
     this.appFlag = appFlag; // 影线标识
     this.plat_name = plat_name; // 平台标识
-    this.api_version = GE_APP_INFO(appFlag)?.api_version;
   }
   // 初始化依赖模块
   initModules(order) {
@@ -126,6 +121,7 @@ class getChenxingOfferPrice {
     try {
       // 1. 初始规则匹配
       const matchRuleListRes = offerRuleMatch(order);
+      console.log("初始规则匹配", matchRuleListRes);
       if (!matchRuleListRes?.matchRuleList?.length && !isTestOrder) {
         this.handleRuleMatchError(matchRuleListRes, order);
         return null;
@@ -429,7 +425,7 @@ class getChenxingOfferPrice {
         return -1;
       }
 
-      let { cinemaCode, cinemaLinkId, scheduleId, scheduleKey } = movieInfo;
+      let { cinemaLinkId, scheduleId, scheduleKey } = movieInfo;
       let basePrice = movieInfo.recommendCard?.discountedPrice;
       console.log("会员价", basePrice);
       if (basePrice === 0) {
@@ -437,7 +433,7 @@ class getChenxingOfferPrice {
         return;
       }
       // 获取可用卡列表
-      const cardList = await this.fetchAvailableCards(order, cinemaCode);
+      const cardList = await this.fetchAvailableCards(order, cinemaLinkId);
       this.logger.infoSave("获取到可用卡列表", { cardList });
       if (!cardList.length && !isTestOrder) return null;
 
@@ -473,6 +469,7 @@ class getChenxingOfferPrice {
         basePrice = +basePrice + Number(serviceAddFee);
         this.logger.infoSave("最低价格+会员服务费", { basePrice });
       }
+      basePrice = basePrice / 100;
       // 计算最优折扣
       return this.calculateBestDiscount(cardList, basePrice);
     } catch (error) {
@@ -516,7 +513,7 @@ class getChenxingOfferPrice {
     }
   }
   // 获取可用会员卡列表
-  async fetchAvailableCards(order, cinemaCode) {
+  async fetchAvailableCards(order, cinemaLinkId) {
     const { ticket_num, app_name } = order;
     const useMobileList = getCinemaLoginInfoList()
       .filter(item => item.app_name === app_name && item.mobile)
@@ -544,7 +541,7 @@ class getChenxingOfferPrice {
     return list
       .filter(item => useMobileList.includes(item.mobile))
       .filter(item => this.checkUsageLimit(item, ticket_num))
-      .filter(item => this.checkCinemaLink(item, cinemaCode));
+      .filter(item => this.checkCinemaLink(item, cinemaLinkId));
   }
 
   /**
@@ -561,9 +558,10 @@ class getChenxingOfferPrice {
   /**
    * 检查影院关联
    */
-  checkCinemaLink(item, cinemaCode) {
+  checkCinemaLink(item, cinemaLinkId) {
     return (
-      !item.linkCinemaIds || item.linkCinemaIds.split(",").includes(cinemaCode)
+      !item.linkCinemaIds ||
+      item.linkCinemaIds.split(",").includes(cinemaLinkId)
     );
   }
 
@@ -689,8 +687,7 @@ class getChenxingOfferPrice {
 
     const appQuanTypeList = await this.cardQuanManage.getQuanTypeListByApp();
     this.cardQuanManage.syncUpdateQuanStock({
-      cinemaCode: movieInfo.cinemaCode,
-      cinemaId: movieInfo.cinemaId,
+      cinemaLinkId: movieInfo.cinemaLinkId,
       quanTypeList: appQuanTypeList
     });
 
@@ -775,20 +772,19 @@ class getChenxingOfferPrice {
     const buyTicketInfo = await this.cinemaManage.getBuyPrevCinemaInfo({
       flag: 1
     });
-    const { targetShow, cinemaCode, cinemaLinkId, filmId } =
-      buyTicketInfo || {};
+    const { targetShow, cinemaLinkId, filmId } = buyTicketInfo || {};
     return buyTicketInfo
-      ? { ...(targetShow || {}), cinemaCode, cinemaLinkId, filmId }
+      ? { ...(targetShow || {}), cinemaLinkId, filmId }
       : null;
   }
 }
 
 // 测试报价实例的方法
-window.chenxingOfferObj = (plat_name, app_name) => {
-  return new getChenxingOfferPrice({ appFlag: app_name, plat_name });
+window.fenghuangOfferObj = (plat_name, app_name) => {
+  return new getFenghuangOfferPrice({ appFlag: app_name, plat_name });
 };
 // 测试方法
-// window.chenxingOfferObj("mayi", "sjzhlh").getMemberPrice({
+// window.fenghuangOfferObj("mayi", "sjzhlh").getMemberPrice({
 //   plat_name: "mayi",
 //   id: "12412221440316515",
 //   tpp_price: 42,
@@ -810,4 +806,4 @@ window.chenxingOfferObj = (plat_name, app_name) => {
 //   offer_end_time: 1734849690000,
 //   app_name: "sjzhlh"
 // });
-export default getChenxingOfferPrice;
+export default getFenghuangOfferPrice;

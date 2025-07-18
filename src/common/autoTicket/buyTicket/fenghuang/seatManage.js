@@ -14,7 +14,6 @@ const ASSIST_LOCK_ERRORS = ["座位旁边不要留空", "座位中间不要留�
 
 // 统一座位管理
 import { APP_API_OBJ } from "@/common/index";
-import { GE_APP_INFO } from "@/common/constant";
 // 订单管理模块
 import {
   formatErrInfo, // 格式化错误信息
@@ -29,7 +28,6 @@ export default class SeatManage {
     this.appFlag = order.app_name;
     this.appApi = APP_API_OBJ[order.app_name];
     this.logger = logger; // 日志模块
-    this.api_version = GE_APP_INFO(order.app_name)?.api_version;
   }
 
   /**
@@ -72,22 +70,15 @@ export default class SeatManage {
   }
 
   /**
-   * 获取座位参数
+   * 获取座位列表参数
    * @private
    */
   getSeatParams(buyTicketInfo) {
-    const {
-      cinemaCode,
-      cinemaId,
-      filmId,
-      featureAppNo,
-      sessionId,
-      targetShow
-    } = buyTicketInfo;
+    const { cinemaLinkId, scheduleId, scheduleKey } = buyTicketInfo;
     let params = {
-      cinemaLinkId: "15372",
-      scheduleId: "1000000996281184",
-      scheduleKey: "693AD998AEC37B813050502EA7628CE4",
+      cinemaLinkId,
+      scheduleId,
+      scheduleKey,
       pageInit: false
     };
     return params;
@@ -100,25 +91,17 @@ export default class SeatManage {
   filterTargetSeats(seatList) {
     const seatName = this.order.lockseat
       .replaceAll(" ", ",")
-      .replaceAll("座", "号")
-      .replaceAll("列", "号");
+      .replaceAll("列", "座");
     const selectSeatList = seatName.split(",");
-    const { api_version } = this;
     return seatList.filter(item => {
-      let seatLabel;
-      if (api_version == "3.0C") {
-        seatLabel = `${item.rowNum}排${item.columnNum}号`;
-      } else if (api_version == "C") {
-        seatLabel = `${item.phyRowId}排${item.phyColId}号`;
-      }
-      return selectSeatList.includes(seatLabel) && item.status === "N";
+      return selectSeatList.includes(item.seatName) && item.status === "N";
     });
   }
 
   /**
    * 获取座位布局
    * @param {Object} params 请求参数
-   * @returns {Promise<{seatData: Array, areaInfoList: Array, discountList: Array}>}
+   * @returns {Promise<{seatData: Array, areaInfoList: Array}>}
    */
   async getSeatLayout(params) {
     try {
@@ -221,35 +204,15 @@ export default class SeatManage {
    * @private
    */
   getLockSeatParams(data) {
-    const { api_version } = this;
-    const {
-      cinemaId,
-      cinemaCode,
-      filmId,
-      featureAppNo,
-      sessionCode,
-      seatInfos,
+    const { cinemaLinkId, scheduleId, scheduleKey, seatCodes, session_id } =
+      data;
+    return {
+      cinemaLinkId,
+      scheduleId,
+      scheduleKey,
+      // seatCodes: '["00000047887-4-20"]',
       seatCodes,
-      session_id
-    } = data;
-    if (api_version === "3.0C") {
-      return {
-        cinemaId,
-        cinemaCode,
-        filmId,
-        featureAppNo,
-        seatInfos,
-        session_id
-      };
-    } else {
-      return {
-        cinemaId,
-        cinemaCode,
-        filmId,
-        sessionCode,
-        seatCodes,
-        session_id
-      };
-    }
+      fenghuangToken: session_id
+    };
   }
 }

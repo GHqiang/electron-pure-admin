@@ -69,7 +69,6 @@ export default class CinemaManage {
       console.log("targetCinema", targetCinema);
       cinemaInfo.cinemaLinkId = targetCinema.cinemaLinkId;
       cinemaInfo.cinemaName = targetCinema.cinemaName;
-      cinemaInfo.cinemaCode = targetCinema.cinemaCode;
 
       // 4、拿到影院code进行影院指定卡相关处理(获取可用卡列表，根据可用卡调整登录信息顺序)
       if (flag != 1) {
