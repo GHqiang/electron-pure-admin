@@ -242,6 +242,10 @@ export default class BuyTicket {
             currentParamsList: this.currentParamsList
           }
         );
+        // 换号时恢复原先券类型
+        if (this.offerRule.old_quan_value) {
+          this.offerRule.quan_value = this.offerRule.old_quan_value;
+        }
       }
       this.currentSessionId =
         this.currentParamsList[this.currentParamsInx].session_id;

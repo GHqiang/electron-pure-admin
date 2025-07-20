@@ -130,6 +130,7 @@ export default class CardQuanManage {
           }
 
           if (offerRule.quan_value.split(",").length > 1) {
+            offerRule.old_quan_value = offerRule.quan_value;
             offerRule.quan_value = offerRule.quan_value.split(",")[0];
             this.logger.infoSave("券类型容错处理：强制取第一个", {
               quan_value: offerRule.quan_value
@@ -968,9 +969,8 @@ export default class CardQuanManage {
       let quanTypeRes = await svApi.queryQuanTypeList(params);
       let quanTypeList = quanTypeRes?.data?.quanTypeList || [];
       let quanValueList = quan_value?.split(",");
-      let targetQuanList = quanTypeList.filter(
-        item =>
-          item.quan_flag == quan_flag && quanValueList.includes(item.quan_value)
+      let targetQuanList = quanTypeList.filter(item =>
+        quanValueList.includes(item.quan_value)
       );
       let useMobileList = getCinemaLoginInfoList()
         .filter(
@@ -1000,6 +1000,10 @@ export default class CardQuanManage {
           item.quanStockList = quanStockList;
         }
       });
+      // 再根据券库存做下过滤
+      targetQuanList = targetQuanList.filter(
+        item => !!item.quanStockList.length
+      );
       let sortMobileList = this.getSortedPhones(targetQuanList, quanValueList);
       if (sortMobileList) {
         console.log("sortMobileList", sortMobileList);
