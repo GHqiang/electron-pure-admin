@@ -386,6 +386,20 @@ export default class BuyTicket {
         cinemaLinkId,
         cardNum,
         lockOrderId,
+        cinemaLinkId,
+        scheduleKey,
+        scheduleId,
+        lockOrderId,
+        seats: JSON.stringify(
+          targetSeatCodes.map(item => ({
+            areaId: item.areaId,
+            seatCode: item.seatCode
+          }))
+        ),
+        totalOriginalPrice: calcRes.settlement.totalOriginalPrice,
+        totalPayAmount: calcRes.settlement.totalDiscountedPrice,
+        promotions: calcRes.settlement.promotions,
+        phoneNumber: this.currentPhone,
         session_id: this.currentSessionId
       });
       let order_num = createOrderRes?.orderNumber;

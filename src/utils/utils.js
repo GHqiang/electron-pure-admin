@@ -2078,6 +2078,19 @@ const uploadBlobImage = async ({
   }
 };
 
+// 获取随机数
+const randomNumByLength = function () {
+  for (
+    var e = arguments.length > 0 && void 0 !== arguments[0] ? arguments[0] : 32,
+      t = "abcdefghijklmnopqrstuvwxyz0123456789",
+      n = "",
+      r = 0;
+    r < e;
+    r++
+  )
+    n += t.charAt(Math.floor(Math.random() * t.length));
+  return n;
+};
 export {
   isNextDayBySfc, // 判断sfc是否是次日
   findMostRepeatedChars, // 找出重复字符及数量
@@ -2125,6 +2138,7 @@ export {
   formatTimeStrByLma,
   generateTicketImage, // 生成取票码
   uploadBlobImage, // 上传取票码获取url
+  randomNumByLength, // 获取随机数
   cryptoFunctions,
   CustomConsole
 };

@@ -3,7 +3,8 @@ import {
   formatErrInfo, // 格式化错误信息
   sendWxPusherMessage,
   mockDelay,
-  trial
+  trial,
+  randomNumByLength
 } from "@/utils/utils";
 import md5 from "@/utils/md5";
 import { APP_API_OBJ } from "@/common/index";
@@ -151,25 +152,32 @@ export default class OrderManage {
       scheduleKey,
       scheduleId,
       lockOrderId,
+      seats,
+      totalOriginalPrice,
+      totalPayAmount,
+      promotions,
+      phoneNumber,
       session_id,
       isTimeoutRetry = 1 // 默认超时重试
     } = data;
     try {
+      let outerId = randomNumByLength(16);
       let params = {
-        seats: '[{"seatCode":"00000052917-2-13","areaId":"10486"}]',
-        promotions:
-          '[{"promotionType":"MARKET","promoCode":"qxlinqiio4dx","discountedAmount":1600,"cardNo":"20005091387X","cardType":"DEPOSIT"}]',
-        totalOriginalPrice: 3590,
-        totalPayAmount: 1990,
+        seats,
+        promotions,
+        totalOriginalPrice,
+        totalPayAmount,
         cinemaLinkId,
-        phoneNumber: "15237761435",
+        phoneNumber,
         scheduleId,
         scheduleKey,
         lockOrderId,
         payments:
           '[{"paymentType":"MEMBER_CARD","payToken":"C7IHrj3IMBKA2RMgF+Erux2YwuWDFahPNynfQU647gdtWsADscVwGCfqDniUmjRuh/lW+zc6ShZ9a/oBV8tTuNSnI6hPh5oQYblIiWUWw1io319xpqamWz+UEPyOmcUykViYQZ5O4MpiBteYjzSUEo/9ucVvTCa3UmDqVGkLmPVJJpUErwZlBWod4f4nYa1UTBOEyo3W00F+EUH6mbNLQPLEnN+eC2ZjYmTORFSuzQ5F9rbjXV0q+DTjrqQYA3My+SGq76AAw6HHUD66aTJVeg+o+764le11k5zAjasdP4tR5ENAjeLmYskapMFX2HxybuHvflj30AV4ZXXCX+51Pw==","payCode":"20005091387X","payAmount":1990}]',
-        closeOuterId: "gpjh2ow9850zffy7",
-        outerId: "gpjh2ow9850zffy7",
+        // closeOuterId: "gpjh2ow9850zffy7",
+        // outerId: "gpjh2ow9850zffy7",
+        outerId,
+        closeOuterId: outerId,
         fenghuangToken: session_id
       };
       this.logger.infoSave("创建订单参数", params);

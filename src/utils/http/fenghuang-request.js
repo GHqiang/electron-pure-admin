@@ -326,6 +326,16 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           errReason === "FAIL_SYS_SESSION_EXPIRED::Session过期" &&
           config.url.includes("authn.refresh")
         ) {
+          console.warn("tid过期需重新维护登录信息");
+          let app_label = GE_APP_INFO(app_name).app_label;
+          ElMessage.warning(`${app_label}登录失效，请重新设置登录信息`);
+          console.warn("登录失效", app_label, mobile);
+          sendWxPusherMessage({
+            msgType: 1,
+            app_name: app_label,
+            expirePhone: mobile,
+            transferTip: `${app_label}登录失效，请检查登录信息维护`
+          });
           // 消息推送待补充，提示用户重新登录维护登录信息
           return Promise.reject(error);
         }
@@ -337,7 +347,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         ) {
           config.retryCount = (config.retryCount || 0) + 1;
           const sidRes = await getNewSid(tid);
-          console.warn("过期获取sidRes结果", sidRes);
+          console.warn("sid过期获取sidRes结果", sidRes);
           if (sidRes?.accessToken) {
             // 更新对应手机号的token
             if (config.mobile) {
