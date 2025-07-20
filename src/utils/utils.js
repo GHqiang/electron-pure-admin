@@ -474,7 +474,9 @@ const getCinemaLoginInfoList = userId => {
     loginInfoList = JSON.parse(loginInfoList);
     // 非研发账号过滤掉研发登录信息
     if (tokens?.userInfo?.user_id != 1) {
-      loginInfoList = loginInfoList.filter(item => item.mobile != phone);
+      loginInfoList = loginInfoList.filter(
+        item => item.mobile != "15237761435"
+      );
     }
     loginInfoList = loginInfoList.filter(item =>
       !item.link_user_id ? true : item.link_user_id == user_id
