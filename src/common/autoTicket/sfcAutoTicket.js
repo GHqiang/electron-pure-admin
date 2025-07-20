@@ -1379,6 +1379,10 @@ class OrderAutoTicketQueue {
             currentParamsList: this.currentParamsList
           }
         });
+        // 换号时恢复原先券类型
+        if (offerRule.old_quan_value) {
+          offerRule.quan_value = offerRule.old_quan_value;
+        }
         this.curPhone = phone;
         // 拿上一个号的session去释放座位
         let currentParams = this.currentParamsList[this.currentParamsInx - 1];
@@ -2102,6 +2106,7 @@ class OrderAutoTicketQueue {
             }
           }
           if (offerRule.quan_value.split(",").length > 1) {
+            offerRule.old_quan_value = offerRule.quan_value;
             offerRule.quan_value = offerRule.quan_value.split(",")[0];
             this.logList.push({
               opera_time: getCurrentTime(),
@@ -2661,9 +2666,8 @@ class OrderAutoTicketQueue {
       let quanTypeRes = await svApi.queryQuanTypeList(params);
       let quanTypeList = quanTypeRes?.data?.quanTypeList || [];
       let quanValueList = quan_value?.split(",");
-      let targetQuanList = quanTypeList.filter(
-        item =>
-          item.quan_flag == quan_flag && quanValueList.includes(item.quan_value)
+      let targetQuanList = quanTypeList.filter(item =>
+        quanValueList.includes(item.quan_value)
       );
       let useMobileList = getCinemaLoginInfoList()
         .filter(
@@ -2699,6 +2703,10 @@ class OrderAutoTicketQueue {
           item.quanStockList = quanStockList;
         }
       });
+      // 再根据券库存做下过滤
+      targetQuanList = targetQuanList.filter(
+        item => !!item.quanStockList.length
+      );
       let sortMobileList = this.getSortedPhones(targetQuanList, quanValueList);
       if (sortMobileList) {
         console.log("sortMobileList", sortMobileList);
