@@ -318,12 +318,12 @@ class OrderAutoTicketQueue {
     let errInfo = formatErrInfo(errInfoObj?.info?.error) || "";
     let isAutoTransfer = window.localStorage.getItem("isAutoTransfer"); // 自动转单是否开启
     // 关闭自动转单只针对座位异常生效
-    // if (this.isTestOrder || (isAutoTransfer !== "1" && errMsg === "锁定座位异常")) {
+    // if (isTestOrder || (isAutoTransfer !== "1" && errMsg === "锁定座位异常")) {
     let des = "自动转单处于关闭状态，只取消订单释放座位，需手动出票或转单";
     if (this.order.isAgain) {
       des = "重新出票失败，不转单只取消订单释放座位，需手动出票或转单";
     }
-    if (this.isTestOrder || isAutoTransfer !== "1" || this.order.isAgain) {
+    if (isTestOrder || isAutoTransfer !== "1" || this.order.isAgain) {
       this.logger.infoSave("自动转单处于关闭状态");
       sendWxPusherMessage({
         orderInfo: this.order,
