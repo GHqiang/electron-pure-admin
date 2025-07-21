@@ -182,9 +182,7 @@ export default class OrderManage {
       this.logger.infoSave("创建订单参数", params);
       const res = await this.appApi.createOrder(params);
       this.logger.infoSave("创建订单返回", res);
-      let createOrderRes = res.data;
-      // order_num = res.data?.orderNumber || "";
-      return createOrderRes;
+      return res;
     } catch (error) {
       this.logger.infoSave("创建订单异常", formatErrInfo(error));
       if (error?.msg?.includes("超时") && isTimeoutRetry === 1) {

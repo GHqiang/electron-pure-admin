@@ -477,7 +477,6 @@ export default class BuyTicket {
         phoneNumber: this.currentPhone,
         session_id: this.currentSessionId
       });
-      return { offerRule };
       let order_num = createOrderRes?.orderNumber;
       if (!order_num) {
         this.logger.info("创建订单失败，单个订单直接出票结束走转单");
