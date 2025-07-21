@@ -312,7 +312,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       } catch (error) {
         console.warn("json解析失败==>", error);
       }
-      console.log("data===>", data);
+      // console.log("data===>", data);
 
       let isError =
         response.config.url.indexOf("/fenghuang-ser/") !== -1 &&
@@ -323,7 +323,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         console.error("失败原因", errReason, config.retryCount, sid, tid);
         // 刷新接口的刷新令牌过期（需要重新登录抓包维护该值tid）
         if (
-          errReason === "FAIL_SYS_SESSION_EXPIRED::Session过期" &&
+          errReason === "FAIL_BIZ_INVALID_REFRESH_TOKEN::令牌过期" &&
           config.url.includes("authn.refresh")
         ) {
           console.warn("tid过期需重新维护登录信息");
@@ -337,7 +337,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             transferTip: `${app_label}登录失效，请检查登录信息维护`
           });
           // 消息推送待补充，提示用户重新登录维护登录信息
-          return Promise.reject(error);
+          return Promise.reject(`${app_label}登录失效`);
         }
         let isRetryCount = !config.retryCount || config.retryCount < 3;
         if (
@@ -368,7 +368,10 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         }
         if (
           isRetryCount &&
-          ["FAIL_SYS_TOKEN_EMPTY::令牌为空"].includes(errReason)
+          [
+            "FAIL_SYS_TOKEN_EMPTY::令牌为空",
+            "FAIL_SYS_TOKEN_ILLEGAL::非法令牌"
+          ].includes(errReason)
         ) {
           if (data?.c) {
             console.warn("填充token令牌", data.c);

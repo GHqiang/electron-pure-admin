@@ -444,28 +444,28 @@ class getFenghuangOfferPrice {
         scheduleKey,
         pageInit: false
       };
-      let serviceAddFee;
-      const targetSeatRes = await this.seatManage.getSeatLayout(seatParams);
+      let serviceAddFee = 0;
+      // const targetSeatRes = await this.seatManage.getSeatLayout(seatParams);
 
-      let areaInfoList = targetSeatRes?.areaInfoList || [];
-      this.logger.infoSave("获取到座位价格信息列表", { areaInfoList });
-      if (areaInfoList.length) {
-        // 取最高价
-        basePrice = areaInfoList
-          .map(item => item.salePrice)
-          .sort((a, b) => b - a)?.[0];
-        if (minAddAmountRule?.memberPriceRule == "2") {
-          basePrice = this.getMostSeatPrice(
-            targetSeatRes.seatData,
-            areaInfoList
-          );
-          this.logger.infoSave("取最多座位价格", { basePrice });
-        } else {
-          this.logger.infoSave("取最高座位价格", { basePrice });
-        }
-      }
-      this.logger.infoSave("会员服务费", { serviceAddFee });
+      // let areaInfoList = targetSeatRes?.areaInfoList || [];
+      // this.logger.infoSave("获取到座位价格信息列表", { areaInfoList });
+      // if (areaInfoList.length) {
+      //   // 取最高价
+      //   basePrice = areaInfoList
+      //     .map(item => item.salePrice)
+      //     .sort((a, b) => b - a)?.[0];
+      //   if (minAddAmountRule?.memberPriceRule == "2") {
+      //     basePrice = this.getMostSeatPrice(
+      //       targetSeatRes.seatData,
+      //       areaInfoList
+      //     );
+      //     this.logger.infoSave("取最多座位价格", { basePrice });
+      //   } else {
+      //     this.logger.infoSave("取最高座位价格", { basePrice });
+      //   }
+      // }
       if (serviceAddFee) {
+        this.logger.infoSave("会员服务费", { serviceAddFee });
         basePrice = +basePrice + Number(serviceAddFee);
         this.logger.infoSave("最低价格+会员服务费", { basePrice });
       }
@@ -784,26 +784,28 @@ window.fenghuangOfferObj = (plat_name, app_name) => {
   return new getFenghuangOfferPrice({ appFlag: app_name, plat_name });
 };
 // 测试方法
-// window.fenghuangOfferObj("mayi", "sjzhlh").getMemberPrice({
-//   plat_name: "mayi",
-//   id: "12412221440316515",
-//   tpp_price: 42,
-//   supplier_max_price: 39,
-//   city_name: "石家庄",
-//   cinema_addr: "雨花台区软件大道109号雨花客厅E-PARK北区3层",
-//   ticket_num: 1,
-//   cinema_name: "UME影城（石家庄欢乐汇店）",
-//   hall_name: "3号RGB激光厅(儿童均需购票)",
-//   film_name: "长安的荔枝",
-//   film_img:
-//     "https://gw.alicdn.com/tfscom/i4/O1CN01e8PcvF1NESAgdEsnM_!!6000000001538-0-alipicbeacon.jpg_120x120.jpg",
-//   show_time: "2025-07-27 19:00:00",
-//   rewards: 0,
-//   is_urgent: false,
-//   cinema_group: "AMG海上明珠",
-//   cinema_code: '13011341',
-//   order_number: "12412221440316515",
-//   offer_end_time: 1734849690000,
-//   app_name: "sjzhlh"
+// window.fenghuangOfferObj("mayi", "cqhx").getEndOfferPrice({
+//   order: {
+//     plat_name: "mayi",
+//     id: "12412221440316515",
+//     tpp_price: 42,
+//     supplier_max_price: 39,
+//     city_name: "重庆",
+//     cinema_addr: "雨花台区软件大道109号雨花客厅E-PARK北区3层",
+//     ticket_num: 1,
+//     cinema_name: "重庆华熙国际影城",
+//     hall_name: "7号厅(杜比全景声影厅)",
+//     film_name: "长安的荔枝",
+//     film_img:
+//       "https://gw.alicdn.com/tfscom/i4/O1CN01e8PcvF1NESAgdEsnM_!!6000000001538-0-alipicbeacon.jpg_120x120.jpg",
+//     show_time: "2025-07-24 19:15:00",
+//     rewards: 0,
+//     is_urgent: false,
+//     cinema_group: "AMG海上明珠",
+//     cinema_code: "50130161",
+//     order_number: "12412221440316515",
+//     offer_end_time: 1734849690000,
+//     app_name: "cqhx"
+//   }
 // });
 export default getFenghuangOfferPrice;

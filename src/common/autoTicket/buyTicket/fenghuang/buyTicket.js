@@ -114,7 +114,11 @@ export default class BuyTicket {
     // 测试专用
     if (this.isTestOrder) {
       // offerRule = { offer_type: "1", quan_value: "35" };
-      this.offerRule = { offer_type: "2", member_price: "25" };
+      this.offerRule = {
+        offer_type: "2",
+        member_price: "18",
+        real_member_price: 19.9
+      };
       return;
     }
     const { app_name, order_number, plat_name } = this.order;
@@ -343,7 +347,6 @@ export default class BuyTicket {
         return await this.transferOrChangePhone(transparams, buyTicketInfo);
       }
       // 5、计算价格
-
       let quan_code = useQuan.map(item => item.couponCode);
       const calcRes = await this.orderManage.pripriceCalculation({
         ...buyTicketInfo,
@@ -388,8 +391,59 @@ export default class BuyTicket {
           });
         }
       }
-      // // 暂不创建订单
-      // return { offerRule };
+      if (this.isTestOrder) {
+        this.logger.infoSave("测试单暂不购买");
+        return { offerRule };
+      }
+      // 支付前校验用券价格
+      let quan_fee = offerRule.quan_fee || 0;
+      quan_fee = Number(quan_fee);
+      let quan_fee_total = (quan_fee * 1000 * ticket_num) / 1000;
+      if (
+        offer_type === "1" &&
+        useQuan?.length &&
+        paymentAmount > quan_fee_total
+      ) {
+        this.logger.errorSave("用完券发现支付金额大于券手续费*票数，走转单", {
+          paymentAmount,
+          quan_fee,
+          ticket_num
+        });
+        // 转单或换号处理
+        const transparams = {
+          cinemaLinkId,
+          lockOrderId,
+          session_id: this.currentSessionId
+        };
+        return await this.transferOrChangePhone(transparams, buyTicketInfo);
+      }
+      // 支付前校验用卡价格
+      let real_member_price = offerRule?.real_member_price || 0;
+      if (offerRule.offer_type !== "1" && card_id) {
+        real_member_price = (real_member_price * 10000 * ticket_num) / 10000;
+        if (paymentAmount > real_member_price) {
+          this.logger.errorSave("用完卡发现支付金额大于会员价*票数，走转单", {
+            paymentAmount,
+            real_member_price,
+            ticket_num
+          });
+          // 转单或换号处理
+          const transparams = {
+            cinemaLinkId,
+            lockOrderId,
+            session_id: this.currentSessionId
+          };
+          return await this.transferOrChangePhone(transparams, buyTicketInfo);
+        } else if (paymentAmount < real_member_price) {
+          let member_discount = offerRule?.member_discount || 100;
+          profit =
+            Number(profit) +
+            ((real_member_price * 1000 - paymentAmount * 1000) *
+              member_discount) /
+              (1000 * 100);
+          profit = Number(profit).toFixed(2);
+        }
+      }
       // 7、创建订单
       let paymentsList = calcRes?.settlement?.payments;
       let payInfo = paymentsList?.find(item => item.cardNo === cardNum);
@@ -418,11 +472,12 @@ export default class BuyTicket {
         ),
         totalOriginalPrice: calcRes.settlement.totalOriginalPrice,
         totalPayAmount: calcRes.settlement.totalDiscountedPrice,
-        promotions: calcRes.settlement.promotions,
+        promotions: JSON.stringify(calcRes.settlement.promotions),
         payments: JSON.stringify(payments),
         phoneNumber: this.currentPhone,
         session_id: this.currentSessionId
       });
+      return { offerRule };
       let order_num = createOrderRes?.orderNumber;
       if (!order_num) {
         this.logger.info("创建订单失败，单个订单直接出票结束走转单");
@@ -441,85 +496,6 @@ export default class BuyTicket {
         offerRule
       });
       buyTicketInfo.order_num = order_num;
-
-      if (this.isTestOrder) {
-        this.logger.infoSave("测试单暂不购买");
-        return { offerRule };
-      }
-      // 支付前校验用券价格
-      let quan_fee = offerRule.quan_fee || 0;
-      quan_fee = Number(quan_fee);
-      let quan_fee_total = (quan_fee * 1000 * ticket_num) / 1000;
-      if (
-        offer_type === "1" &&
-        useQuan?.length &&
-        paymentAmount > quan_fee_total
-      ) {
-        this.logger.errorSave("用完券发现支付金额大于券手续费*票数，走转单", {
-          paymentAmount,
-          quan_fee,
-          ticket_num
-        });
-        // 转单或换号处理
-        const transparams = {
-          cinemaLinkId,
-          order_num,
-          session_id: this.currentSessionId
-        };
-        return await this.transferOrChangePhone(transparams, buyTicketInfo);
-      }
-      // 支付前校验用卡价格
-      let real_member_price = offerRule?.real_member_price || 0;
-      if (offerRule.offer_type !== "1" && card_id) {
-        real_member_price = (real_member_price * 10000 * ticket_num) / 10000;
-        if (paymentAmount > real_member_price) {
-          this.logger.errorSave("用完卡发现支付金额大于会员价*票数，走转单", {
-            paymentAmount,
-            real_member_price,
-            ticket_num
-          });
-          // 转单或换号处理
-          const transparams = {
-            cinemaLinkId,
-            order_num,
-            session_id: this.currentSessionId
-          };
-          return await this.transferOrChangePhone(transparams, buyTicketInfo);
-        } else if (paymentAmount < real_member_price) {
-          let member_discount = offerRule?.member_discount || 100;
-          profit =
-            Number(profit) +
-            ((real_member_price * 1000 - paymentAmount * 1000) *
-              member_discount) /
-              (1000 * 100);
-          profit = Number(profit).toFixed(2);
-        }
-      }
-      // 8、购买电影票
-      const buyTicketRes = await this.orderManage.buyTicket({
-        cinemaLinkId,
-        cinemaName: buyTicketInfo.cinemaName,
-        cardNo: cardNum,
-        quan_code,
-        amount: paymentAmount,
-        order_num,
-        member_pwd: this.currentParamsList[this.currentParamsInx].member_pwd,
-        session_id: this.currentSessionId
-      });
-      const buyRes = buyTicketRes?.buyRes;
-      if (!buyRes) {
-        if (JSON.stringify(buyTicketRes?.error)?.indexOf("timeout") != -1) {
-          this.logger.infoSave("订单购买返回超时当成功处理");
-        } else {
-          // 转单或换号处理
-          const transparams = {
-            cinemaLinkId,
-            order_num,
-            session_id: this.currentSessionId
-          };
-          return await this.transferOrChangePhone(transparams, buyTicketInfo);
-        }
-      }
       if (card_id) {
         // 更新卡使用量
         updateCardDayUse({

@@ -45,6 +45,7 @@ class OrderAutoTicketQueue {
     this.logger.warn(this.appFlag + "辰星系列队列启动，开始监听是否有新订单");
   }
 
+  // window.appTicketQueueObj.sjzhlh.testSendNewOrder()
   // 测试新订单
   testSendNewOrder(order) {
     const { appFlag } = this;
@@ -72,7 +73,7 @@ class OrderAutoTicketQueue {
       offer_end_time: 1734849690000,
       app_name: "cqhx",
       appName: "cqhx",
-      lockseat: "3排1座"
+      lockseat: "3排4座"
     };
 
     // 动态生成事件名称

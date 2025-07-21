@@ -2986,5 +2986,5 @@
       var t = new Ne();
       return t.setPublicKey(Te), t.encrypt(e);
     };
-  window.getPayToekn = Ie;
+  window.getPayToken = Ie;
 })(window);

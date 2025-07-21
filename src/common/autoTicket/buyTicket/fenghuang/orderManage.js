@@ -27,11 +27,12 @@ export default class OrderManage {
   async transferOrder(unlockSeatInfo) {
     this.logger.infoSave("开始准备转单", unlockSeatInfo);
     if (unlockSeatInfo) {
-      // 1、释放座位(仅锁座id存在时，不产生订单无需释放)
+      // 不购买不产生待支付订单且座位不会锁定故无需释放或取消座位;
+      //  貌似需要释放座位但不知道怎么释放
+      // 1、释放座位(仅锁座id存在时，)
       // if (!unlockSeatInfo.order_num) await this.releaseSeat(unlockSeatInfo);
-
       // 2、取消订单(创建订单id存在时)
-      if (unlockSeatInfo.order_num) await this.cancelOrder(unlockSeatInfo);
+      // if (unlockSeatInfo.order_num) await this.cancelOrder(unlockSeatInfo);
     }
 
     // 3、平台转单
@@ -156,6 +157,7 @@ export default class OrderManage {
       totalOriginalPrice,
       totalPayAmount,
       promotions,
+      payments,
       phoneNumber,
       session_id,
       isTimeoutRetry = 1 // 默认超时重试
