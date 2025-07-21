@@ -48,7 +48,6 @@ class OrderAutoTicketQueue {
     this.sfcApi = APP_API_OBJ[appFlag];
     this.currentParamsInx = 0;
     this.currentParamsList = [];
-    this.logList = []; // 操作运行日志
     this.prevOrderNumber = ""; // 上个订单号
     this.eventName = `newOrder_${appFlag}`;
     this.handledOrders = new Map(); // 用于存储已处理订单号及其相关信息
@@ -1448,7 +1447,7 @@ class OrderAutoTicketQueue {
           });
         }
         if (quanList?.length < ticket_num) {
-          this.logList.errorSave(
+          this.logger.errorSave(
             `目标券${is_store == "1" ? "从服务端获取后" : ""}数量不足`
           );
           if (is_auto_use_quan) {
