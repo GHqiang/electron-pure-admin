@@ -6,6 +6,9 @@ import {
   sendWxPusherMessage
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
+// 引入获取payToken方法（window.getPayToken）
+import "@/utils/fenghuang-payToken";
+
 // 统一日志类
 import Logger from "@/common/logger";
 // 机器登录用户信息
@@ -250,6 +253,8 @@ export default class BuyTicket {
       this.currentSessionId =
         this.currentParamsList[this.currentParamsInx].session_id;
       this.currentPhone = this.currentParamsList[this.currentParamsInx].mobile;
+      this.currentMemberPwd =
+        this.currentParamsList[this.currentParamsInx].member_pwd;
       // 锁定座位前延迟一秒
       // await mockDelay(1);
       const {
@@ -383,9 +388,20 @@ export default class BuyTicket {
           });
         }
       }
-      // 暂不创建订单
-      return { offerRule };
+      // // 暂不创建订单
+      // return { offerRule };
       // 7、创建订单
+      let paymentsList = calcRes?.settlement?.payments;
+      let payInfo = paymentsList?.find(item => item.cardNo === cardNum);
+      let payments = [];
+      if (payInfo) {
+        payments.push({
+          paymentType: payInfo.paymentType,
+          payCode: payInfo.cardNo,
+          payToken: window.getPayToken(this.currentMemberPwd),
+          payAmount: calcRes.settlement.totalDiscountedPrice
+        });
+      }
       const createOrderRes = await this.orderManage.createOrder({
         cinemaLinkId,
         cardNum,
@@ -403,6 +419,7 @@ export default class BuyTicket {
         totalOriginalPrice: calcRes.settlement.totalOriginalPrice,
         totalPayAmount: calcRes.settlement.totalDiscountedPrice,
         promotions: calcRes.settlement.promotions,
+        payments: JSON.stringify(payments),
         phoneNumber: this.currentPhone,
         session_id: this.currentSessionId
       });

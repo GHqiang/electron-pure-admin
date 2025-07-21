@@ -172,10 +172,7 @@ export default class OrderManage {
         scheduleId,
         scheduleKey,
         lockOrderId,
-        payments:
-          '[{"paymentType":"MEMBER_CARD","payToken":"C7IHrj3IMBKA2RMgF+Erux2YwuWDFahPNynfQU647gdtWsADscVwGCfqDniUmjRuh/lW+zc6ShZ9a/oBV8tTuNSnI6hPh5oQYblIiWUWw1io319xpqamWz+UEPyOmcUykViYQZ5O4MpiBteYjzSUEo/9ucVvTCa3UmDqVGkLmPVJJpUErwZlBWod4f4nYa1UTBOEyo3W00F+EUH6mbNLQPLEnN+eC2ZjYmTORFSuzQ5F9rbjXV0q+DTjrqQYA3My+SGq76AAw6HHUD66aTJVeg+o+764le11k5zAjasdP4tR5ENAjeLmYskapMFX2HxybuHvflj30AV4ZXXCX+51Pw==","payCode":"20005091387X","payAmount":1990}]',
-        // closeOuterId: "gpjh2ow9850zffy7",
-        // outerId: "gpjh2ow9850zffy7",
+        payments,
         outerId,
         closeOuterId: outerId,
         fenghuangToken: session_id
