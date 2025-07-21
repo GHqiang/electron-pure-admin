@@ -116,7 +116,7 @@
           />
         </el-form-item>
         <el-form-item
-          v-if="formData.app_type_code === 'ume_h5'"
+          v-if="['ume_h5', 'fenghuang_applet'].includes(formData.app_type_code)"
           label="凤凰云智影院id"
           prop="cinemaLinkId"
         >
