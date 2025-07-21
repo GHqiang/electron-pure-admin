@@ -36,7 +36,6 @@ class OrderAutoTicketQueue {
     this.sfcApi = APP_API_OBJ[appFlag];
     this.currentParamsInx = 0;
     this.currentParamsList = [];
-    this.logList = []; // 操作运行日志
     this.prevOrderNumber = ""; // 上个订单号
     this.eventName = `newOrder_${appFlag}`;
     this.handledOrders = new Map(); // 用于存储已处理订单号及其相关信息
@@ -794,10 +793,6 @@ class OrderAutoTicketQueue {
       let lockRes;
       try {
         lockRes = await this.lockSeatHandle(params); // 锁定座位
-        // this.logList.push({
-        //   opera_time: getCurrentTime(),
-        //   des: "首次锁定座位成功"
-        // });
       } catch (error) {
         console.error("锁定座位失败准备试错2次，间隔5秒", error);
         // 试错3次，间隔5秒
@@ -819,15 +814,7 @@ class OrderAutoTicketQueue {
         //   ''
         // );
         if (!lockRes) {
-          // console.error(
-          //   "单个订单试错后仍锁定座位失败",
-          //   "需要走转单逻辑"
-          // );
-          // this.logList.push({
-          //   opera_time: getCurrentTime(),
-          //   des: "首次锁定座位失败轮询尝试后仍失败，走转单",
-          //   level: "info"
-          // });
+          this.logger.infoSave("锁定座位失败走转单");
           const transferParams = await this.transferOrder(item);
           return { offerRule, transferParams };
         }
