@@ -290,7 +290,8 @@ export default class BuyTicket {
       buyTicketInfo.lockOrderId = lockRes.lockOrderId;
       const { lockOrderId } = buyTicketInfo;
       // 4、使用优惠券或者会员卡（仅判断是否有可用卡及券）
-      let basePrice = targetShow.recommendCard?.discountedPrice;
+      let basePrice =
+        targetShow.recommendCard?.discountedPrice || targetShow.originalPrice;
       basePrice = basePrice / 100;
       let { serviceAddFee = 0 } = targetShow;
       this.logger.warn("会员价及手续费", { basePrice, serviceAddFee });
