@@ -39,6 +39,10 @@ const createApi = ({ app_name }) => {
     lockSeat: {
       "2.0": "/fenghuang/mtop.alipic.lark.seat.scheduleseats.lock"
     },
+    // 获取锁定座位价格
+    getSeatPrice: {
+      "2.0": "/fenghuang/mtop.alipic.lark.seat.scheduleseatprices.get"
+    },
     // 获取会员卡列表
     getCardList: {
       "2.0": "/fenghuang/mtop.alipic.lark.card.membercards.get"

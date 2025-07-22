@@ -290,29 +290,24 @@ export default class BuyTicket {
       buyTicketInfo.lockOrderId = lockRes.lockOrderId;
       const { lockOrderId } = buyTicketInfo;
       // 4、使用优惠券或者会员卡（仅判断是否有可用卡及券）
-      let basePrice =
-        targetShow.recommendCard?.discountedPrice || targetShow.originalPrice;
-      basePrice = basePrice / 100;
-      let { serviceAddFee = 0 } = targetShow;
-      this.logger.warn("会员价及手续费", { basePrice, serviceAddFee });
-
-      // this.logger.infoSave("获取到座位价格信息列表", { areaInfoList });
-      // if (areaInfoList?.length) {
-      //   // 取最高价
-      //   basePrice = areaInfoList
-      //     .map(item => item.salePrice)
-      //     .sort((a, b) => b - a)?.[0];
-      //   this.logger.infoSave("取最高座位价格", { basePrice });
-      // }
-      this.logger.infoSave("会员服务费", { serviceAddFee });
-      if (serviceAddFee) {
-        basePrice = +basePrice + Number(serviceAddFee);
-        this.logger.infoSave("最低价格+会员服务费", { basePrice });
-      }
+      // 座位支付总价格
+      let seatPayTotalPrice = this.cardQuanManage.getSeatPrice({
+        cinemaLinkId,
+        scheduleId,
+        scheduleKey,
+        seats: JSON.stringify(
+          targetSeatCodes.map(item => ({
+            areaId: item.areaId,
+            seatCode: item.seatCode
+          }))
+        ),
+        fenghuangToken: this.currentSessionId
+      });
+      seatPayTotalPrice = seatPayTotalPrice / 100;
       const cardQuanRes = await this.cardQuanManage.useQuanOrCard({
         buyTicketInfo,
         offerRule: this.offerRule,
-        basePrice,
+        seatPayTotalPrice,
         rewards,
         session_id: this.currentSessionId,
         currentPhone: this.currentPhone,

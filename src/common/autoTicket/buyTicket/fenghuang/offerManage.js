@@ -426,8 +426,7 @@ class getFenghuangOfferPrice {
       }
 
       let { cinemaLinkId, scheduleId, scheduleKey } = movieInfo;
-      let basePrice =
-        movieInfo.recommendCard?.discountedPrice || movieInfo.originalPrice;
+      let basePrice = movieInfo.recommendCard?.discountedPrice;
       console.log("会员价", basePrice);
       if (basePrice === 0) {
         this.logger.errorSave("获取会员价为0");
@@ -437,38 +436,37 @@ class getFenghuangOfferPrice {
       const cardList = await this.fetchAvailableCards(order, cinemaLinkId);
       this.logger.infoSave("获取到可用卡列表", { cardList });
       if (!cardList.length && !isTestOrder) return null;
+      // 获取不到会员价从座位信息里面获取
+      if (basePrice === undefined || basePrice === null) {
+        this.logger.infoSave("获取不到会员价，从座位信息获取");
+        // 从座位信息里获取优惠活动列表
+        let seatParams = {
+          cinemaLinkId,
+          scheduleId,
+          scheduleKey,
+          pageInit: false
+        };
+        const targetSeatRes = await this.seatManage.getSeatLayout(seatParams);
 
-      // 从座位信息里获取优惠活动列表
-      let seatParams = {
-        cinemaLinkId,
-        scheduleId,
-        scheduleKey,
-        pageInit: false
-      };
-      let serviceAddFee = 0;
-      // const targetSeatRes = await this.seatManage.getSeatLayout(seatParams);
-
-      // let areaInfoList = targetSeatRes?.areaInfoList || [];
-      // this.logger.infoSave("获取到座位价格信息列表", { areaInfoList });
-      // if (areaInfoList.length) {
-      //   // 取最高价
-      //   basePrice = areaInfoList
-      //     .map(item => item.salePrice)
-      //     .sort((a, b) => b - a)?.[0];
-      //   if (minAddAmountRule?.memberPriceRule == "2") {
-      //     basePrice = this.getMostSeatPrice(
-      //       targetSeatRes.seatData,
-      //       areaInfoList
-      //     );
-      //     this.logger.infoSave("取最多座位价格", { basePrice });
-      //   } else {
-      //     this.logger.infoSave("取最高座位价格", { basePrice });
-      //   }
-      // }
-      if (serviceAddFee) {
-        this.logger.infoSave("会员服务费", { serviceAddFee });
-        basePrice = +basePrice + Number(serviceAddFee);
-        this.logger.infoSave("最低价格+会员服务费", { basePrice });
+        let areaInfoList = targetSeatRes?.areaInfoList || [];
+        this.logger.infoSave("获取到座位价格信息列表", { areaInfoList });
+        if (areaInfoList.length) {
+          // 取最高价
+          basePrice = areaInfoList
+            .map(item => item.salePrice)
+            .sort((a, b) => b - a)?.[0];
+          if (minAddAmountRule?.memberPriceRule == "2") {
+            basePrice = this.getMostSeatPrice(
+              targetSeatRes.seatData,
+              areaInfoList
+            );
+            this.logger.infoSave("取最多座位价格", { basePrice });
+          } else {
+            this.logger.infoSave("取最高座位价格", { basePrice });
+          }
+        }
+      } else {
+        this.logger.infoSave("获取到会员价:" + basePrice);
       }
       basePrice = basePrice / 100;
       // 计算最优折扣

@@ -132,7 +132,10 @@ const urlObj = {
     "mtop.alipic.lark.order.ticketOrder.create",
   "mtop.alipic.lark.order.detail.get": "mtop.alipic.lark.order.detail.get",
   "mtop.alipic.lark.order.order.cancel": "mtop.alipic.lark.order.order.cancel",
-  "mtop.alipic.lark.coupon.mycoupon.get": "mtop.alipic.lark.coupon.myCoupon.get"
+  "mtop.alipic.lark.coupon.mycoupon.get":
+    "mtop.alipic.lark.coupon.myCoupon.get",
+  "mtop.alipic.lark.seat.scheduleseatprices.get":
+    "mtop.alipic.lark.seat.scheduleSeatPrices.get"
 };
 // 获取url
 const getUrl = (token, sid, url, params) => {

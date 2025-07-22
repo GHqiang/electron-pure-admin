@@ -33,7 +33,7 @@ export default class CardQuanManage {
   async useQuanOrCard({
     buyTicketInfo,
     offerRule,
-    basePrice, // 会员价+服务费
+    seatPayTotalPrice, // 座位支付总价格
     rewards,
     currentPhone,
     session_id,
@@ -70,7 +70,7 @@ export default class CardQuanManage {
       let is_auto_use_quan = false; // 是否灵活用券
       let useCardParms = {
         cardList,
-        basePrice, // 会员价+服务费
+        seatPayTotalPrice, // 座位支付总价格
         member_price, // 成本价
         rewards,
         supplier_end_price,
@@ -277,6 +277,17 @@ export default class CardQuanManage {
       this.logger.errorSave("使用会员卡或优惠券报错", formatErrInfo(error));
     }
   }
+  // 获取锁定座位总价格
+  async getSeatPrice(params) {
+    try {
+      this.logger.infoSave("获取锁定座位总价格参数", params);
+      const res = await this.appApi.getCardList(params);
+      this.logger.infoSave("获取锁定座位总价格返回", res);
+      return res.totalDiscountedPrice;
+    } catch (error) {
+      this.logger.errorSave("获取锁定座位总价格异常", error);
+    }
+  }
   // 获取会员卡列表
   async getCardList(params) {
     try {
@@ -338,7 +349,7 @@ export default class CardQuanManage {
   async useCardHandle(data) {
     const {
       cardList,
-      basePrice, // 会员价+服务费
+      seatPayTotalPrice, // 座位支付总价格
       member_price, // 成本价
       rewards,
       supplier_end_price,
@@ -352,7 +363,7 @@ export default class CardQuanManage {
         str = "无可用会员卡（疑似出满）";
       }
       // 支付金额
-      let payAmoungt = (basePrice * 1000 * ticket_num) / 1000;
+      let payAmoungt = seatPayTotalPrice;
       let cardData = cardList.filter(item => item.cardAmount >= payAmoungt);
       if (!cardList.length || !cardData?.length) {
         let maxCardAmount = cardList.sort(
@@ -361,7 +372,7 @@ export default class CardQuanManage {
         this.logger.errorSave(str || "会员卡余额不足", {
           maxCardAmount,
           payAmoungt,
-          basePrice,
+          seatPayTotalPrice, // 座位支付总价格
           ticket_num,
           cardList
         });
