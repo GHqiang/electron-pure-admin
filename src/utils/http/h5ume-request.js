@@ -430,6 +430,14 @@ const createAxios = ({ app_name, timeout = 20 }) => {
   instance.interceptors.request.use(
     async config => {
       if (config.url.indexOf("/h5ume/") !== -1) {
+        // 如果未获取到cookie里面的token且接口非获取影院列表接口时需要调一下获取下
+        if (!newToken && !config.url.includes("cinema.getcinemas")) {
+          try {
+            await APP_API_OBJ[app_name].getCinemaList();
+          } catch (error) {
+            console.error("获取影院列表失败", error);
+          }
+        }
         config.headers["Content-Type"] = "application/x-www-form-urlencoded";
         let targetLoginList = getCinemaLoginInfoList().filter(
           item => item.app_name === app_name && item.mobile && item.session_id

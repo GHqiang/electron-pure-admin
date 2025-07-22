@@ -47,27 +47,29 @@ GET_FENGHUANG_LIST().forEach(item => {
   FENGHUANG_API_OBJ[item] = createFenghuangApi({
     app_name: item
   });
-  let loginInfoList = getCinemaLoginInfoList();
-  let isLogin = loginInfoList.find(
-    itemA => itemA.app_name === item && itemA.session_id
-  );
-  if (isLogin) {
-    FENGHUANG_API_OBJ[item].getCinemaList();
-  }
+  // 通过测试这块好像可以先不执行
+  // let loginInfoList = getCinemaLoginInfoList();
+  // let isLogin = loginInfoList.find(
+  //   itemA => itemA.app_name === item && itemA.session_id
+  // );
+  // if (isLogin) {
+  //   FENGHUANG_API_OBJ[item].getCinemaList();
+  // }
 });
 GET_H5_UME_LIST().forEach(item => {
   H5_UME_API_OBJ[item] = createH5UmeApi({
     app_name: item
   });
-  let loginInfoList = getCinemaLoginInfoList();
-  let isLogin = loginInfoList.find(
-    itemA => itemA.app_name === item && itemA.session_id
-  );
-  const IS_DEV = process.env.NODE_ENV === "development";
-  if (isLogin && !IS_DEV) {
-    // 这里执行一下主要是为了解决上来就请求非getCinemaList接口会报错，这里调一下是为了补充令牌（cookie里的_m_h5_tk）
-    H5_UME_API_OBJ[item].getCinemaList();
-  }
+  // 这里已改为在请求拦截器做兼容处理
+  // let loginInfoList = getCinemaLoginInfoList();
+  // let isLogin = loginInfoList.find(
+  //   itemA => itemA.app_name === item && itemA.session_id
+  // );
+  // const IS_DEV = process.env.NODE_ENV === "development";
+  // if (isLogin && !IS_DEV) {
+  //   // 这里执行一下主要是为了解决上来就请求非getCinemaList接口会报错，这里调一下是为了补充令牌（cookie里的_m_h5_tk）
+  //   H5_UME_API_OBJ[item].getCinemaList();
+  // }
 });
 
 const APP_API_OBJ = {
