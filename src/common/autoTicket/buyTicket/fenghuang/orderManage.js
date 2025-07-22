@@ -24,12 +24,10 @@ export default class OrderManage {
   async transferOrder(unlockSeatInfo) {
     this.logger.infoSave("开始准备转单", unlockSeatInfo);
     if (unlockSeatInfo) {
-      // 不购买不产生待支付订单且座位不会锁定故无需释放或取消座位;
-      //  貌似需要释放座位但不知道怎么释放
-      // 1、释放座位(仅锁座id存在时，)
-      // if (!unlockSeatInfo.order_num) await this.releaseSeat(unlockSeatInfo);
+      // 1、释放座位(仅锁座id存在时)
+      if (!unlockSeatInfo.order_num) await this.releaseSeat(unlockSeatInfo);
       // 2、取消订单(创建订单id存在时)
-      // if (unlockSeatInfo.order_num) await this.cancelOrder(unlockSeatInfo);
+      if (unlockSeatInfo.order_num) await this.cancelOrder(unlockSeatInfo);
     }
 
     // 3、平台转单
@@ -60,15 +58,15 @@ export default class OrderManage {
 
   // 释放座位
   async releaseSeat(unlockSeatInfo) {
-    const { cinemaCode, cinemaId, lockOrderId, session_id } = unlockSeatInfo;
+    const { cinemaLinkId, lockOrderId, session_id } = unlockSeatInfo;
     try {
       let params = {
-        cinemaCode,
-        cinemaId,
+        cinemaLinkId,
         lockOrderId,
-        ...(session_id && { session_id })
+        pageInit: false,
+        fenghuangToken: session_id
       };
-      this.logger.info("释放座位参数", params);
+      this.logger.infoSave("释放座位参数", params);
       const res = await this.appApi.releaseSeat(params);
       this.logger.infoSave("释放座位成功", { res });
       return res;

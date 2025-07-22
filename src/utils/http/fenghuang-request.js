@@ -137,7 +137,9 @@ const urlObj = {
   "mtop.alipic.lark.seat.scheduleseatprices.get":
     "mtop.alipic.lark.seat.scheduleSeatPrices.get",
   "mtop.alipic.lark.order.ticketorderpromo.settle":
-    "mtop.alipic.lark.order.ticketOrderPromo.settle"
+    "mtop.alipic.lark.order.ticketOrderPromo.settle",
+  "mtop.alipic.lark.seat.scheduleseats.unlock":
+    "mtop.alipic.lark.seat.scheduleSeats.unlock"
 };
 // 获取url
 const getUrl = (token, sid, url, params) => {

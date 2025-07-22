@@ -77,7 +77,7 @@ const createApi = ({ app_name }) => {
     },
     // 释放座位
     releaseSeat: {
-      "3.0C": "/selfSupport/trade/front/advanceOrder/releaseSeat"
+      "3.0C": "/fenghuang/mtop.alipic.lark.seat.scheduleseats.unlock"
     },
     // 绑定优惠券
     bandQuan: {

@@ -230,11 +230,9 @@ export default class BuyTicket {
         let isCancel;
         if (buyTicketInfo.order_num) {
           isCancel = await this.orderManage.cancelOrder(unlockSeatInfo);
+        } else {
+          isCancel = await this.orderManage.releaseSeat(unlockSeatInfo);
         }
-        // 不产生订单无需释放
-        // else {
-        //   isCancel = await this.orderManage.releaseSeat(unlockSeatInfo);
-        // }
         if (!isCancel) {
           this.logger.infoSave(
             "上个号取消订单释放座位失败，发送消息通知并直接走转单"
