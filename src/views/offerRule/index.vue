@@ -276,6 +276,12 @@
               >
               <el-button
                 size="small"
+                type="success"
+                @click="querRule(scope.row, '3')"
+                >查看</el-button
+              >
+              <el-button
+                size="small"
                 type="danger"
                 @click="deleteRow(scope.$index, scope.row)"
                 >删除</el-button
@@ -661,6 +667,12 @@ const switchOnlyOffer = async (row, type) => {
 const editRule = (row, type) => {
   dialogTitle.value = type === "1" ? "编辑" : "复制新增";
   sfcDialogRef.value.open(type === "1" ? row : { ...row, id: "" });
+};
+
+// 查看规则
+const querRule = (row, type) => {
+  dialogTitle.value = "查看规则";
+  sfcDialogRef.value.open(row);
 };
 
 // 保存规则

@@ -484,7 +484,12 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="saveRule">保存</el-button>
+          <el-button
+            v-if="dialogTitle != '查看规则'"
+            type="primary"
+            @click="saveRule"
+            >保存</el-button
+          >
           <el-button @click="cancel(ruleFormRef)">取消</el-button>
         </el-form-item>
       </el-form>
@@ -508,7 +513,7 @@ const { getQuanTypeList } = usesMachineBaseFun();
 
 const ruleFormRef = ref(null);
 // 父传子props
-defineProps({
+const props = defineProps({
   dialogTitle: String
 });
 
@@ -734,16 +739,18 @@ const open = async ruleInfo => {
         formData.shadowLineName = formInfo.shadowLineName;
       }
       const app_name = formData.shadowLineName;
-      const allCityList = await getCityList(app_name);
-      cityList.value = allCityList;
-      const allCinemaList = await getAllCinemaList(app_name, allCityList);
-      cinemaList.value = allCinemaList;
-      const allFilmList = await getFilmList(
-        app_name,
-        allCityList[0],
-        allCinemaList[0]
-      );
-      filmList.value = allFilmList;
+      if (props.dialogTitle !== "查看规则") {
+        const allCityList = await getCityList(app_name);
+        cityList.value = allCityList;
+        const allCinemaList = await getAllCinemaList(app_name, allCityList);
+        cinemaList.value = allCinemaList;
+        const allFilmList = await getFilmList(
+          app_name,
+          allCityList[0],
+          allCinemaList[0]
+        );
+        filmList.value = allFilmList;
+      }
       const quanTypeList = await getQuanTypeList(app_name);
       quanType.value = quanTypeList;
     }
