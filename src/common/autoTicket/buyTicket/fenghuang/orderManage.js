@@ -114,6 +114,7 @@ export default class OrderManage {
       scheduleKey,
       targetSeatCodes,
       lockOrderId,
+      promotions,
       session_id
     } = data;
     let params = {
@@ -130,14 +131,18 @@ export default class OrderManage {
       pageInit: true,
       fenghuangToken: session_id
     };
+    // 优惠券参数处理
+    if (promotions) {
+      params.promotions = promotions;
+      delete params.pageInit;
+    }
     try {
       this.logger.infoSave("计算价格参数", params);
-      let res = await this.appApi.priceCalculation(params);
-      this.logger.infoSave("计算价格返回", JSON.parse(JSON.stringify(res)));
-      params = { ...params, firstCalc: false };
-      // this.logger.infoSave("计算价格参数1", params);
-      res = await this.appApi.priceCalculation(params);
-      this.logger.infoSave("计算价格返回1", res);
+      let res =
+        await this.appApi[
+          !promotions ? "priceCalculation" : "priceCalculationByQuan"
+        ](params);
+      this.logger.infoSave("计算价格返回", res);
       return res;
     } catch (error) {
       this.logger.errorSave("计算价格异常", error);

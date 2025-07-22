@@ -343,11 +343,15 @@ export default class BuyTicket {
         return await this.transferOrChangePhone(transparams, buyTicketInfo);
       }
       // 5、计算价格
-      let quan_code = useQuan.map(item => item.couponCode);
+      let quan_code = useQuan.map(item => ({
+        promotionType: "COUPON",
+        promoCode: item.couponCode,
+        productType: "TICKET"
+      }));
       const calcRes = await this.orderManage.pripriceCalculation({
         ...buyTicketInfo,
         cardNum,
-        quan_code,
+        promotions: JSON.stringify(quan_code),
         session_id: this.currentSessionId
       });
       if (!calcRes) {
@@ -441,17 +445,38 @@ export default class BuyTicket {
         }
       }
       // 7、创建订单
-      let paymentsList = calcRes?.settlement?.payments;
-      let payInfo = paymentsList?.find(item => item.cardNo === cardNum);
       let payments = [];
-      if (payInfo) {
-        payments.push({
-          paymentType: payInfo.paymentType,
-          payCode: payInfo.cardNo,
-          payToken: window.getPayToken(this.currentMemberPwd),
-          payAmount: calcRes.settlement.totalDiscountedPrice
-        });
+      let paymentsList = calcRes?.settlement?.payments;
+      let promotions = [];
+      if (offer_type === "1" && useQuan?.length && !quan_fee_total) {
+        promotions = calcRes.settlement.promotions;
+        if (promotions?.length) {
+          promotions[0].productType = "TICKET";
+        }
+        let payInfo = paymentsList?.find(
+          item => item.paymentType === "WECHAT_MINI_PROGRAM"
+        );
+        if (payInfo) {
+          payments.push({
+            paymentType: payInfo.paymentType,
+            payAmount: 0,
+            payConfigId: payInfo.payConfigId,
+            payCode: "0b3Oq1ll2VFCYf4Gznnl2FQ3SI1Oq1lP" // 需要破解生成逻辑
+          });
+        }
+      } else if (offer_type === "2" && card_id) {
+        promotions = calcRes.settlement.promotions;
+        let payInfo = paymentsList?.find(item => item.cardNo === cardNum);
+        if (payInfo) {
+          payments.push({
+            paymentType: payInfo.paymentType,
+            payCode: payInfo.cardNo,
+            payToken: window.getPayToken(this.currentMemberPwd),
+            payAmount: calcRes.settlement.totalDiscountedPrice
+          });
+        }
       }
+
       const createOrderRes = await this.orderManage.createOrder({
         cinemaLinkId,
         cardNum,
@@ -468,7 +493,7 @@ export default class BuyTicket {
         ),
         totalOriginalPrice: calcRes.settlement.totalOriginalPrice,
         totalPayAmount: calcRes.settlement.totalDiscountedPrice,
-        promotions: JSON.stringify(calcRes.settlement.promotions),
+        promotions: JSON.stringify(promotions),
         payments: JSON.stringify(payments),
         phoneNumber: this.currentPhone,
         session_id: this.currentSessionId

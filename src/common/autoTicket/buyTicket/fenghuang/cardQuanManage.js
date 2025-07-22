@@ -26,7 +26,6 @@ export default class CardQuanManage {
     this.appFlag = order.app_name;
     this.logger = logger;
     this.appApi = APP_API_OBJ[order.app_name];
-    this.api_version = GE_APP_INFO(order.app_name)?.api_version;
   }
 
   // 使用优惠券或会员卡（核心方法）
@@ -61,7 +60,7 @@ export default class CardQuanManage {
       let quanParams = {
         status: "USEFUL",
         pageNumber: 1,
-        pageSize: 20,
+        pageSize: 200, // 先取200，后面不够了再说
         fenghuangToken: session_id
       };
       let quanList = await this.getQuanList(quanParams);
@@ -281,7 +280,7 @@ export default class CardQuanManage {
   async getSeatPrice(params) {
     try {
       this.logger.infoSave("获取锁定座位总价格参数", params);
-      const res = await this.appApi.getCardList(params);
+      const res = await this.appApi.getSeatPrice(params);
       this.logger.infoSave("获取锁定座位总价格返回", res);
       return res.totalDiscountedPrice;
     } catch (error) {
@@ -312,29 +311,18 @@ export default class CardQuanManage {
   // 获取优惠券列表
   async getQuanList(params) {
     try {
-      const { api_version } = this;
       this.logger.infoSave("获取优惠券列表入参", params);
       const res = await this.appApi.getQuanList(params);
       this.logger.infoSave("获取优惠券列表返回", res);
-      let quanList;
-      if (api_version === "3.0C") {
-        quanList = res.data || [];
-        quanList = quanList.map(item => ({
-          ...item,
-          couponName: item.ticketName,
-          couponCode: item.ticketNum,
-          endDateTime: item.validEndDate
-        }));
-      } else if (api_version === "C") {
-        quanList = res.data?.records || [];
-        quanList = quanList.map(item => ({
-          ...item,
-          couponName: item.name,
-          couponCode: item.code,
-          endDateTime: item.endTime
-        }));
-        // const { number, size, totalPages, last } = res.data?.pageable;
-      }
+      let quanList = res.coupons || [];
+      // let totalCount = res.totalCount || 0;
+      quanList = quanList.map(item => ({
+        ...item,
+        couponName: item.couponName,
+        couponCode: item.couponCode,
+        endDateTime: item.endTime
+      }));
+      // const { number, size, totalPages, last } = res.data?.pageable;
       if (!quanList?.length) {
         this.logger.infoSave("获取优惠券列表为空");
       }

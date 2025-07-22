@@ -55,6 +55,10 @@ const createApi = ({ app_name }) => {
     priceCalculation: {
       "2.0": "/fenghuang/mtop.alipic.lark.order.ticketorder.settle"
     },
+    // 用券计算价格
+    priceCalculationByQuan: {
+      "2.0": "/fenghuang/mtop.alipic.lark.order.ticketorderpromo.settle"
+    },
     // 创建订单
     createOrder: {
       "2.0": "/fenghuang/mtop.alipic.lark.order.ticketorder.create"
