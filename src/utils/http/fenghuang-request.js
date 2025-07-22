@@ -362,7 +362,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
               ? config.url.replace("fenghuang", "svpi/fenghuang-ser")
               : "http://47.113.191.173:3000" +
                 "/fenghuang-ser" +
-                config.originalUrl.slice(10);
+                config.url.slice(10);
             return instance(config);
           }
         }
@@ -383,7 +383,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
               ? config.url.replace("fenghuang", "svpi/fenghuang-ser")
               : "http://47.113.191.173:3000" +
                 "/fenghuang-ser" +
-                config.originalUrl.slice(10);
+                config.url.slice(10);
             return instance(config);
           }
           return data;
