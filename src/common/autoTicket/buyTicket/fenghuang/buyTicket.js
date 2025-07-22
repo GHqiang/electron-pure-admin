@@ -477,7 +477,7 @@ export default class BuyTicket {
         phoneNumber: this.currentPhone,
         session_id: this.currentSessionId
       });
-      let order_num = createOrderRes?.orderNumber;
+      let order_num = createOrderRes?.orderId;
       if (!order_num) {
         this.logger.info("创建订单失败，单个订单直接出票结束走转单");
         // 转单或换号处理
@@ -488,7 +488,7 @@ export default class BuyTicket {
         };
         return await this.transferOrChangePhone(transparams, buyTicketInfo);
       }
-      this.logger.infoSave("创建订单成功", {
+      this.logger.infoSave("创建订单支付成功", {
         order_num,
         profit,
         card_id,
@@ -516,8 +516,6 @@ export default class BuyTicket {
       }
       // 最后处理：获取支付结果上传取票码
       const lastRes = await this.orderManage.getQrcodeUploadByPlat({
-        cinemaLinkId,
-        cardNum,
         order_num,
         session_id: this.currentSessionId
       });

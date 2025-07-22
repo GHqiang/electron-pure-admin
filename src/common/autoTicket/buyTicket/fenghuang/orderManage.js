@@ -6,9 +6,7 @@ import {
   trial,
   randomNumByLength
 } from "@/utils/utils";
-import md5 from "@/utils/md5";
 import { APP_API_OBJ } from "@/common/index";
-import { GE_APP_INFO } from "@/common/constant";
 import svApi from "@/api/sv-api";
 // 统一日志类
 import Logger from "@/common/logger";
@@ -20,7 +18,6 @@ export default class OrderManage {
     this.appFlag = order.app_name;
     this.appApi = APP_API_OBJ[order.app_name];
     this.isTestOrder = isTestOrder; // 是否是测试订单
-    this.api_version = GE_APP_INFO(order.app_name)?.api_version;
   }
 
   // 转单
@@ -203,82 +200,15 @@ export default class OrderManage {
       }
     }
   }
-  // 订单购买
-  async buyTicket({
-    cinemaCode,
-    cinemaId,
-    cinemaName,
-    cardNo,
-    quan_code,
-    amount,
-    order_num,
-    member_pwd,
-    session_id
-  }) {
-    const { appFlag } = this;
-    let appInfo = GE_APP_INFO(appFlag);
-    let open_id = appInfo?.sfc_open_id;
-    let params = {
-      cinemaCode,
-      cinemaId,
-      cinemaName,
-      defaultCardNo: cardNo,
-      amount, // 原价
-      orderNo: order_num, // 创建订单号
-      businessSystemFlowNumber: "5" + new Date().getTime(), // 自定义流水号
-      businessSystemName: "C_TRADE",
-      payTerminal: "APPLET",
-      payTerminalType: "Applet",
-      payChannel: appInfo?.channelCode,
-      payChannelName: appInfo?.channelName, // 先不传试试
-      goodBody: !quan_code?.length ? "影票" : "影院商品",
-      openId: open_id,
-      openID: open_id, // 小程序openid每个小程序一个
-      // ipAddress: "127.0.0.1", // 先不传试试
-      payWay: !quan_code?.length ? "MEMBER_CARD_PAY" : "NO_CASH", // 支付方式
-      cardNumber: cardNo,
-      orderType: 1,
-      password: md5.hex_md5(member_pwd), // 卡密码
-      orderNumber: order_num,
-      session_id
-    };
-    if (this.api_version === "C") {
-      params.businessSystemCode = "online_directly_trade_settle";
-      params.channelUid = appInfo?.channelCode;
-      delete params.defaultCardNo;
-    }
-    try {
-      this.logger.infoSave("订单购买参数", params);
-      const buyRes = await this.appApi.buyTicket(params);
-      this.logger.infoSave("订单购买返回", buyRes);
-      return {
-        buyRes
-      };
-    } catch (error) {
-      this.logger.errorSave("订单购买异常", formatErrInfo(error));
-      return {
-        error
-      };
-    }
-  }
 
   // 获取取票码并上传
-  async getQrcodeUploadByPlat({
-    cinemaCode,
-    cinemaId,
-    cardNum,
-    order_num,
-    session_id
-  }) {
+  async getQrcodeUploadByPlat({ order_num, session_id }) {
     try {
       let qrcode;
       try {
         // 9、获取订单结果
         qrcode = await this.getPayResult({
-          cinemaCode,
-          cinemaId,
-          cardNum,
-          orderCode: order_num,
+          orderId: order_num,
           session_id,
           logger: this.logger
         });
@@ -288,9 +218,6 @@ export default class OrderManage {
           "获取订单支付结果，取票码不存在，暂时返回异步获取"
         );
         this.asyncFetchQrcodeSubmit({
-          cinemaCode,
-          cinemaId,
-          cardNum,
           order_num,
           session_id
         });
@@ -313,24 +240,14 @@ export default class OrderManage {
 
   // 获取购票信息
   async getPayResult(data) {
-    let {
-      cinemaCode,
-      cinemaId,
-      cardNum,
-      orderCode,
-      session_id,
-      logger,
-      inx = 1
-    } = data || {};
+    let { orderId, session_id, logger, inx = 1 } = data || {};
     let qrcode;
     try {
       let params = {
-        cinemaCode,
-        cinemaId,
-        defaultCardNo: cardNum,
-        orderCode,
-        orderNumber: orderCode,
-        session_id
+        orderId,
+        operationType: "TICKET",
+        pageInit: true,
+        fenghuangToken: session_id
       };
       logger.info("获取支付结果参数", params);
       if (inx == 1) {
@@ -338,10 +255,7 @@ export default class OrderManage {
       }
       const res = await this.appApi.queryOrderDetail(params);
       logger.infoSave(`第${inx}次获取支付结果返回`, res);
-      qrcode = res?.data?.printNo?.slice(-8); // 取后8位
-      if (this.api_version == "C") {
-        qrcode = res?.data?.getCode?.slice(-8); // 取后8位
-      }
+      qrcode = res?.ticket?.pickupCode;
       if (qrcode) {
         return qrcode;
       }
@@ -352,13 +266,7 @@ export default class OrderManage {
   }
 
   // 异步轮询获取取票码并提交
-  async asyncFetchQrcodeSubmit({
-    cinemaCode,
-    cinemaId,
-    cardNum,
-    order_num,
-    session_id
-  }) {
+  async asyncFetchQrcodeSubmit({ order_num, session_id }) {
     let logger = new Logger({ logType: 3 });
     logger.init(this.order);
     const { plat_name, order_number } = this.order;
@@ -369,10 +277,7 @@ export default class OrderManage {
       let qrcode = await trial(
         inx =>
           this.getPayResult({
-            cinemaCode,
-            cinemaId,
-            cardNum,
-            orderCode: order_num,
+            orderId: order_num,
             session_id,
             logger,
             inx
@@ -395,10 +300,7 @@ export default class OrderManage {
         qrcode = await trial(
           inx =>
             this.getPayResult({
-              cinemaCode,
-              cinemaId,
-              cardNum,
-              orderCode: order_num,
+              orderId: order_num,
               session_id,
               logger,
               inx
