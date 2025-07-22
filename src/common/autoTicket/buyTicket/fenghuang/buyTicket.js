@@ -3,7 +3,8 @@ import {
   mockDelay, // 模拟延时
   formatErrInfo, // 格式化错误信息
   getCinemaLoginInfoList,
-  sendWxPusherMessage
+  sendWxPusherMessage,
+  randomNumByLength
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 // 引入获取payToken方法（window.getPayToken）
@@ -459,7 +460,8 @@ export default class BuyTicket {
             paymentType: payInfo.paymentType,
             payAmount: 0,
             payConfigId: payInfo.payConfigId,
-            payCode: "0b3Oq1ll2VFCYf4Gznnl2FQ3SI1Oq1lP" // 需要破解生成逻辑
+            // payCode: "0b3Oq1ll2VFCYf4Gznnl2FQ3SI1Oq1lP" // 需要破解生成逻辑
+            payCode: randomNumByLength(32) // 生成32位随机字符串作为支付码
           });
         }
       } else if (offer_type === "2" && card_id) {

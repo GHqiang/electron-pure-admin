@@ -2093,6 +2093,7 @@ const randomNumByLength = function () {
     n += t.charAt(Math.floor(Math.random() * t.length));
   return n;
 };
+window.randomNumByLength = randomNumByLength;
 export {
   isNextDayBySfc, // 判断sfc是否是次日
   findMostRepeatedChars, // 找出重复字符及数量
