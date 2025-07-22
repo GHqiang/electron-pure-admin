@@ -25,7 +25,7 @@ import CinemaManage from "./cinemaManage";
 import SeatManage from "./seatManage";
 
 // 是否是测试订单
-let isTestOrder = true;
+let isTestOrder = false;
 class getFenghuangOfferPrice {
   constructor({ appFlag, plat_name }) {
     this.appFlag = appFlag; // 影线标识
@@ -426,7 +426,8 @@ class getFenghuangOfferPrice {
       }
 
       let { cinemaLinkId, scheduleId, scheduleKey } = movieInfo;
-      let basePrice = movieInfo.recommendCard?.discountedPrice;
+      let basePrice =
+        movieInfo.recommendCard?.discountedPrice || movieInfo.originalPrice;
       console.log("会员价", basePrice);
       if (basePrice === 0) {
         this.logger.errorSave("获取会员价为0");
