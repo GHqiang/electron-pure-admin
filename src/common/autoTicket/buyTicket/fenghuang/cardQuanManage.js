@@ -527,8 +527,6 @@ export default class CardQuanManage {
 
   // 获取新券(暂未联调)
   async getNewQuan({
-    cinemaCode,
-    cinemaId,
     quanValue: quan_value,
     black_quans,
     quanNum,
@@ -573,8 +571,6 @@ export default class CardQuanManage {
         logger.info(`正在尝试绑定券 ${quan.coupon_num}...`);
         const couponNumRes = await this.bandQuan(
           {
-            cinemaCode,
-            cinemaId,
             coupon_num: quan.coupon_num,
             session_id,
             appFlag
@@ -606,19 +602,12 @@ export default class CardQuanManage {
 
   // 绑定券
   async bandQuan(data, logger) {
-    const { cinemaCode, cinemaId, coupon_num, session_id } = data;
-    const { api_version } = this;
+    const { coupon_num, session_id } = data;
     let params = {
-      cinemaCode,
-      cinemaId,
-      session_id
+      couponCode: coupon_num,
+      pinCode: "",
+      fenghuangToken: session_id
     };
-    if (api_version == "C") {
-      params.c = coupon_num;
-    } else if (api_version == "3.0C") {
-      // 参数待确定
-      params.coupon_num = coupon_num;
-    }
     try {
       await mockDelay(0.1);
       logger.infoSave("绑定券参数", params);
@@ -884,7 +873,7 @@ export default class CardQuanManage {
     let { session_id, page = 1, quanData = [], logger } = data;
     let params = {
       status: "USEFUL",
-      pageNumber: 1,
+      pageNumber: page,
       pageSize: 20,
       fenghuangToken: session_id
     };
@@ -892,14 +881,15 @@ export default class CardQuanManage {
       const res = await this.appApi.getQuanList(params);
       logger.infoSave("获取券返回", { quanList, params });
       let quanList = res.coupons || [];
+      let totalCount = res.totalCount || 0;
       quanList = quanList.map(item => ({
         ...item,
-        couponName: item.ticketName,
-        couponCode: item.ticketNum,
-        endDateTime: item.validEndDate
+        couponName: item.couponName,
+        couponCode: item.couponCode,
+        endDateTime: item.endTime
       }));
       quanData.push(...quanList);
-      if (quanList.lengt == pageSize) {
+      if (page < totalCount) {
         // 如果还有下一页，则继续获取下一页
         return await this.continuousGetQuan({
           ...data,
