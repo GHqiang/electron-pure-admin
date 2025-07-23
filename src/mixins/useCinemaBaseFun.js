@@ -404,11 +404,15 @@ export default function useCinemaBaseFun() {
         }));
       } else if (FENGHUANG_LIST.value.includes(app_name)) {
         cardList = res.memberCards || [];
-        cardList = cardList.map(item => ({
-          card_id: item.cardNo,
-          card_num: item.cardNo,
-          balance: (item.balance || 0) / 100 + ""
-        }));
+        cardList = cardList
+          .filter(
+            item => item.cardType !== "BENEFIT" && item.cardStatus === "ENABLED"
+          )
+          .map(item => ({
+            card_id: item.cardNo,
+            card_num: item.cardNo,
+            balance: (item.balance || 0) / 100 + ""
+          }));
       } else if (CHENXING_LIST.value.includes(app_name)) {
         let api_version = GE_APP_INFO(app_name)?.api_version || "";
         if (api_version === "3.0C") {
