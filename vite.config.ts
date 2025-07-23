@@ -43,6 +43,12 @@ export default ({ command, mode }: ConfigEnv): UserConfigExport => {
           changeOrigin: true, // 是否允许跨域
           rewrite: path => path.replace(/^\/sp/, "/sp") // 重写路径，去除/api前缀
         },
+        // 守兔
+        "/seller-api": {
+          target: "https://moviepc.taototo.cn", // 后端API的真实地址
+          changeOrigin: true, // 是否允许跨域
+          rewrite: path => path.replace(/^\/seller-api/, "/seller-api") // 重写路径，去除/api前缀
+        },
         // 省
         "/supplier": {
           target: "https://api.shenga.co", // 后端API的真实地址

@@ -13,7 +13,8 @@ const ORDER_FORM = {
   yangcong: "洋葱",
   yinghuasuan: "影划算",
   shangzhan: "商展",
-  haha: "哈哈"
+  haha: "哈哈",
+  shoutu: "守兔"
 };
 
 // 测试新平台列表

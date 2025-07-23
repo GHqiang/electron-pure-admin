@@ -2021,6 +2021,8 @@ const uploadBlobImage = async ({
       headers.Authorization = tokens.yinghuasuanToken;
     } else if (plat_name === "haha") {
       headers.Token = tokens.hahaToken;
+    } else if (plat_name === "shoutu") {
+      headers.Token = tokens.shoutuToken;
     }
     // 使用正确的Axios配置发送请求
     const response = await axios.post(url, formData, { headers });
