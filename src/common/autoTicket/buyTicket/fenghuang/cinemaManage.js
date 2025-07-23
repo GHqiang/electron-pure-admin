@@ -6,7 +6,8 @@ import {
   getCurrentDay,
   isDateInCurrentMonth,
   getPreviousDay,
-  findMostRepeatedChars
+  findMostRepeatedChars,
+  mockDelay // 模拟延时
 } from "@/utils/utils";
 import { APP_API_OBJ } from "@/common/index";
 import { GE_APP_INFO } from "@/common/constant";
@@ -112,7 +113,8 @@ export default class CinemaManage {
   }
 
   // 获取城市影院列表
-  async getCityCinemaList() {
+  async getCityCinemaList(retryCount = 1) {
+    const maxRetries = 3; // 最大重试次数
     try {
       let params = {};
       this.logger.info("获取城市影院列表参数", params);
@@ -134,6 +136,11 @@ export default class CinemaManage {
       }));
       if (!cityCinemaList?.length) {
         this.logger.errorSave("获取城市影院列表为空");
+        if (retryCount < maxRetries) {
+          this.logger.errorSave("1秒回重新获取影院列表");
+          await mockDelay(1);
+          return this.getCityCinemaList(retryCount + 1);
+        }
         return;
       }
       return cityCinemaList;
