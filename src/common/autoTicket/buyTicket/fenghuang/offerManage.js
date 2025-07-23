@@ -426,54 +426,125 @@ class getFenghuangOfferPrice {
       }
 
       let { cinemaLinkId, scheduleId, scheduleKey } = movieInfo;
-      let basePrice = movieInfo.recommendCard?.discountedPrice;
-      console.log("会员价", basePrice);
-      if (basePrice === 0) {
-        this.logger.errorSave("获取会员价为0");
-        return;
-      }
       // 获取可用卡列表
       const cardList = await this.fetchAvailableCards(order, cinemaLinkId);
       this.logger.infoSave("获取到可用卡列表", { cardList });
       if (!cardList.length && !isTestOrder) return null;
-      // 获取不到会员价从座位信息里面获取
-      if (basePrice === undefined || basePrice === null) {
-        this.logger.infoSave("获取不到会员价，从座位信息获取");
-        // 从座位信息里获取优惠活动列表
-        let seatParams = {
-          cinemaLinkId,
-          scheduleId,
-          scheduleKey,
-          pageInit: false
-        };
-        const targetSeatRes = await this.seatManage.getSeatLayout(seatParams);
+      this.logger.infoSave("从座位信息获取会员价");
+      // 从座位信息里获取优惠活动列表
+      let seatParams = {
+        cinemaLinkId,
+        scheduleId,
+        scheduleKey,
+        pageInit: false
+      };
+      const targetSeatRes = await this.seatManage.getSeatLayout(seatParams);
+      let areaInfoList = targetSeatRes?.areaInfoList || [];
+      let seatData = targetSeatRes?.seatData || [];
+      this.logger.infoSave("获取到座位价格信息列表", {
+        areaInfoList,
+        seatData
+      });
+      let basePrice;
+      if (areaInfoList.length) {
+        // 取最高价
+        let areaIdSortList = areaInfoList.sort(
+          (a, b) => b.salePrice - a.salePrice
+        );
+        if (minAddAmountRule?.memberPriceRule == "2") {
+          let seatList = seatData.filter(item => item.status === "N");
+          console.log("seatList", seatList);
+          areaInfoList = areaInfoList.map(item => {
+            return {
+              ...item,
+              numRatio: Math.floor(
+                (seatList.filter(itemA => itemA.areaId == item.areaId).length *
+                  100) /
+                  seatList.length
+              )
+            };
+          });
+          this.logger.infoSave("获取到座位分区余座占比", { areaInfoList });
 
-        let areaInfoList = targetSeatRes?.areaInfoList || [];
-        this.logger.infoSave("获取到座位价格信息列表", { areaInfoList });
-        if (areaInfoList.length) {
-          // 取最高价
-          basePrice = areaInfoList
-            .map(item => item.salePrice)
-            .sort((a, b) => b - a)?.[0];
-          if (minAddAmountRule?.memberPriceRule == "2") {
-            basePrice = this.getMostSeatPrice(
-              targetSeatRes.seatData,
-              areaInfoList
-            );
-            this.logger.infoSave("取最多座位价格", { basePrice });
-          } else {
-            this.logger.infoSave("取最高座位价格", { basePrice });
-          }
+          areaIdSortList = areaInfoList.sort((a, b) => b.numRatio - a.numRatio);
+          this.logger.infoSave("按照座位占比从高到低获取座位", {
+            areaIdSortList
+          });
+        } else {
+          this.logger.infoSave("按照座位价格从高到低获取座位", {
+            areaIdSortList
+          });
         }
-      } else {
-        this.logger.infoSave("获取到会员价:" + basePrice);
+        // 获取票数对应座位来获取价格
+        let seatTotalPrice = await this.getSeatPriceByTicket(
+          order.ticket_num,
+          areaIdSortList,
+          seatData,
+          movieInfo
+        );
+        basePrice = (seatTotalPrice * 100) / order.ticket_num / 100;
+        this.logger.infoSave("座位总价除以票数得到会员价", {
+          basePrice,
+          seatTotalPrice
+        });
       }
-      basePrice = basePrice / 100;
       // 计算最优折扣
       return this.calculateBestDiscount(cardList, basePrice);
     } catch (error) {
       this.logger.errorSave("获取会员价异常", error);
       return null;
+    }
+  }
+
+  // 根据票数获取座位价格
+  async getSeatPriceByTicket(ticket_num, areaInfoList, seat_data, movieInfo) {
+    try {
+      console.log(
+        "获取座位价格",
+        ticket_num,
+        areaInfoList,
+        seat_data,
+        movieInfo
+      );
+      let seatInfo = [];
+      const seatMap = new Map();
+      seat_data.forEach(seat => {
+        if (seat.status !== "N") return; // 只处理可用座位
+        const areaId = seat.areaId;
+        if (!seatMap.has(areaId)) {
+          seatMap.set(areaId, []);
+        }
+        seatMap.get(areaId).push(seat);
+      });
+      for (let i = 0; i < areaInfoList.length; i++) {
+        const area = areaInfoList[i];
+        const areaSeatList = seatMap.get(area.areaId) || []; // 如果没有则为空数组
+        for (let j = 0; j < areaSeatList.length; j++) {
+          const item = areaSeatList[j];
+          if (seatInfo.length >= ticket_num) {
+            break;
+          }
+          seatInfo.push({
+            areaId: item.areaId,
+            seatCode: item.seatCode
+          });
+        }
+        if (seatInfo.length >= ticket_num) {
+          break;
+        }
+      }
+      this.logger.infoSave("获取座位价格前获取座位完成:", { seatInfo });
+      // 座位支付总价格
+      let seatPayTotalPrice = await this.cardQuanManage.getSeatPrice({
+        cinemaLinkId: movieInfo.cinemaLinkId,
+        scheduleId: movieInfo.scheduleId,
+        scheduleKey: movieInfo.scheduleKey,
+        seats: JSON.stringify(seatInfo)
+      });
+      seatPayTotalPrice = seatPayTotalPrice / 100;
+      return seatPayTotalPrice;
+    } catch (error) {
+      this.logger.errorSave("获取座位价格异常", { error });
     }
   }
 
@@ -495,7 +566,7 @@ class getFenghuangOfferPrice {
       });
       areaRatioList.sort((a, b) => b.numRatio - a.numRatio);
       this.logger.infoSave("座位分区剩余座位占比情况", areaRatioList);
-      let mostSeatPrice = areaRatioList[0]?.salePrice;
+      // let mostSeatPrice = areaRatioList[0]?.salePrice;
       return mostSeatPrice;
       // // 默认取最高价格，最高座位占比不足百分之3时取次最高价格
       // if (areaList[0].numRatio <= 3 && areaList[1]?.settlePrice) {
