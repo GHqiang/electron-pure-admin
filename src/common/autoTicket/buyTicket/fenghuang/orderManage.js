@@ -256,7 +256,7 @@ export default class OrderManage {
       }
       const res = await this.appApi.queryOrderDetail(params);
       logger.infoSave(`第${inx}次获取支付结果返回`, res);
-      qrcode = res?.ticket?.pickupCode;
+      qrcode = res?.order?.ticket?.pickupCode;
       if (qrcode) {
         return qrcode;
       }
