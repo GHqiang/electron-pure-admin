@@ -431,12 +431,22 @@ class getFenghuangOfferPrice {
       this.logger.infoSave("获取到可用卡列表", { cardList });
       if (!cardList.length && !isTestOrder) return null;
       // this.logger.infoSave("从座位信息获取会员价");
+      let useCardMobileList = cardList?.map(item => item.mobile) || [];
+      // 获取该影院的可用手机号列表
+      let useLoginList = getCinemaLoginInfoList().filter(
+        item =>
+          item.app_name === order.app_name &&
+          item.session_id &&
+          useCardMobileList.includes(item.mobile)
+      );
+      let fenghuangToken = useLoginList[0]?.session_id;
       // 从座位信息里获取优惠活动列表
       let seatParams = {
         cinemaLinkId,
         scheduleId,
         scheduleKey,
-        pageInit: false
+        pageInit: false,
+        fenghuangToken
       };
       const targetSeatRes = await this.seatManage.getSeatLayout(seatParams);
       let areaInfoList = targetSeatRes?.areaInfoList || [];
@@ -478,7 +488,7 @@ class getFenghuangOfferPrice {
           order.ticket_num,
           areaIdSortList,
           seatData,
-          movieInfo
+          fenghuangToken
         );
         basePrice = (seatTotalPrice * 100) / order.ticket_num / 100;
         this.logger.infoSave("座位总价除以票数得到会员价", {
@@ -495,7 +505,13 @@ class getFenghuangOfferPrice {
   }
 
   // 根据票数获取座位价格
-  async getSeatPriceByTicket(ticket_num, areaInfoList, seat_data, movieInfo) {
+  async getSeatPriceByTicket(
+    ticket_num,
+    areaInfoList,
+    seat_data,
+    movieInfo,
+    fenghuangToken
+  ) {
     try {
       // console.log(
       //   "获取座位价格",
@@ -537,7 +553,8 @@ class getFenghuangOfferPrice {
         cinemaLinkId: movieInfo.cinemaLinkId,
         scheduleId: movieInfo.scheduleId,
         scheduleKey: movieInfo.scheduleKey,
-        seats: JSON.stringify(seatInfo)
+        seats: JSON.stringify(seatInfo),
+        fenghuangToken
       });
       seatPayTotalPrice = seatPayTotalPrice / 100;
       return seatPayTotalPrice;
