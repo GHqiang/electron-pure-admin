@@ -87,7 +87,9 @@ export default class SeatManage {
       .replaceAll("列", "座");
     const selectSeatList = seatName.split(",");
     return seatList.filter(item => {
-      return selectSeatList.includes(item.seatName) && item.status === "N";
+      return selectSeatList.includes(item.seatName);
+      // 考虑延迟可能先不用状态判断
+      // return selectSeatList.includes(item.seatName) && item.status === "N";
     });
   }
 

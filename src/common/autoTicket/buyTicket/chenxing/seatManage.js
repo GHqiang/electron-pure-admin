@@ -116,7 +116,9 @@ export default class SeatManage {
       } else if (api_version == "C") {
         seatLabel = `${item.phyRowId}排${item.phyColId}号`;
       }
-      return selectSeatList.includes(seatLabel) && item.status === "N";
+      return selectSeatList.includes(seatLabel);
+      // 考虑延迟可能先不用状态判断
+      // return selectSeatList.includes(seatLabel) && item.status === "N";
     });
   }
 
