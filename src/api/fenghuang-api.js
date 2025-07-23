@@ -47,6 +47,23 @@ const createApi = ({ app_name }) => {
     getCardList: {
       "2.0": "/fenghuang/mtop.alipic.lark.card.membercards.get"
     },
+    // 获取会员卡列表
+    getCardDetail: {
+      "2.0": "/fenghuang/mtop.alipic.lark.card.membercarddetail.get"
+    },
+    // 同步卡时增加适用影院功能
+    // {"cardNo":"20005091387X","cinemaLinkId":"15222","pageInit":true,"leaseCode":"huaxi","channelCode":"HUAXI_MP_WX_PRO"}
+    // 适用影院
+    // availableCinemas: [
+    //   {
+    //     address: "鱼洞街道华熙LIVE·鱼洞商业街3楼",
+    //     cinemaName: "重庆华熙国际影城"
+    //   },
+    //   {
+    //     address: "成都市锦江区雨树巷30号L2-209号",
+    //     cinemaName: "华熙国际影城"
+    //   }
+    // ],
     // 获取优惠券列表
     getQuanList: {
       "2.0": "/fenghuang/mtop.alipic.lark.coupon.mycoupon.get"

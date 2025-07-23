@@ -18,18 +18,22 @@ const IS_DEV = NODE_ENV === "development";
 // 请求拦截器
 instance.interceptors.request.use(
   config => {
-    if (config.url.indexOf("/prod-api/") !== -1) {
-      // 猎人平台接口添加token
-      // console.log("tokens.lierenToken", tokens.lierenToken);
-      const token = tokens.shoutuToken || "";
-      if (token) {
-        config.headers.Token = `${token}`;
+    config.headers["Content-Type"] = "application/x-www-form-urlencoded";
+    // 猎人平台接口添加token
+    // console.log("tokens.lierenToken", tokens.lierenToken);
+    const token = tokens.shoutuToken || "";
+    if (token) {
+      if (config.url.startsWith("/seller-api")) {
+        config.headers["X-Token"] = `${token.split("_")[0]}`;
+      } else {
+        config.headers["Token"] = `${token.split("_")[1]}`;
       }
-      // 生产环境不会跨域
-      config.url = IS_DEV
-        ? config.url
-        : "https://seller.taototo.cn" + config.url;
     }
+    let baseURL = config.url.startsWith("/seller-api")
+      ? "http://moviepc.taototo.cn"
+      : "https://seller.taototo.cn";
+    // 生产环境不会跨域
+    config.url = IS_DEV ? config.url : baseURL + config.url;
     // console.log('请求config', config)
     return config;
   },
@@ -47,20 +51,18 @@ instance.interceptors.response.use(
     // let whitelistSp = ['/sp/order', '/sp/unlock']
     let whitelistSp = [];
 
-    let isErrorByLieRen =
-      response.config.url.indexOf("/prod-api/") !== -1 && !data.success;
     if (
-      isErrorByLieRen &&
+      data.code != 1 &&
       !whitelistSp.some(item => response.config.url.includes(item))
     ) {
       ElMessage.error(data.message || data.msg || "请求失败");
       if (data.msg?.includes("token不存在或已过期")) {
-        sendWxPusherMessage({
-          msgType: 1,
-          app_name: "洋葱平台",
-          expirePhone: "机器手机号",
-          transferTip: `洋葱平台登录失效，请检查登录信息维护`
-        });
+        // sendWxPusherMessage({
+        //   msgType: 1,
+        //   app_name: "守兔平台",
+        //   expirePhone: "机器手机号",
+        //   transferTip: `守兔平台登录失效，请检查登录信息维护`
+        // });
       }
       return Promise.reject(data);
     }

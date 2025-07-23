@@ -5,6 +5,7 @@ import mayiApi from "@/api/mayi-api";
 import yangcongApi from "@/api/yangcong-api";
 import hahaApi from "@/api/haha-api";
 import yinghuasuanApi from "@/api/yinghuasuan-api";
+import shoutuApi from "@/api/shoutu-api";
 
 import createSfcApi from "@/api/sfc-api";
 import createUmeApi from "@/api/ume-api";
@@ -90,7 +91,8 @@ const PLAT_API_OBJ = {
   mayi: mayiApi,
   yangcong: yangcongApi,
   haha: hahaApi,
-  yinghuasuan: yinghuasuanApi
+  yinghuasuan: yinghuasuanApi,
+  shoutu: shoutuApi
 };
 window.PLAT_API_OBJ = PLAT_API_OBJ;
 // console.log("SFC_API_OBJ"), SFC_API_OBJ;

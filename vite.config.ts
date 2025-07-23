@@ -45,9 +45,14 @@ export default ({ command, mode }: ConfigEnv): UserConfigExport => {
         },
         // 守兔
         "/seller-api": {
-          target: "https://moviepc.taototo.cn", // 后端API的真实地址
+          target: "http://moviepc.taototo.cn", // 后端API的真实地址
           changeOrigin: true, // 是否允许跨域
           rewrite: path => path.replace(/^\/seller-api/, "/seller-api") // 重写路径，去除/api前缀
+        },
+        "/yp-api": {
+          target: "ttps://seller.taototo.cn", // 后端API的真实地址
+          changeOrigin: true, // 是否允许跨域
+          rewrite: path => path.replace(/^\/yp-api/, "/yp-api") // 重写路径，去除/api前缀
         },
         // 省
         "/supplier": {

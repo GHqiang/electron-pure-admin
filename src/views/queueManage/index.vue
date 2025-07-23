@@ -310,7 +310,8 @@ let setPlatFunObj = {
   yinghuasuan: tokens.setYinghuasuanPlatToken,
   shangzhan: tokens.setShangzhanPlatToken,
   haha: tokens.setHahaPlatToken,
-  sheng: tokens.setShengPlatToken
+  sheng: tokens.setShengPlatToken,
+  shoutu: tokens.setShoutuPlatToken
 };
 
 // 同步中标价定时器
