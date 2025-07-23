@@ -351,15 +351,15 @@ export default class CardQuanManage {
         str = "无可用会员卡（疑似出满）";
       }
       // 支付金额
-      let payAmoungt = seatPayTotalPrice;
-      let cardData = cardList.filter(item => item.cardAmount >= payAmoungt);
+      let payAmount = seatPayTotalPrice;
+      let cardData = cardList.filter(item => item.cardAmount >= payAmount);
       if (!cardList.length || !cardData?.length) {
         let maxCardAmount = cardList.sort(
           (a, b) => b.cardAmount - a.cardAmount
         )[0].cardAmount;
         this.logger.errorSave(str || "会员卡余额不足", {
           maxCardAmount,
-          payAmoungt,
+          payAmount,
           seatPayTotalPrice, // 座位支付总价格
           ticket_num,
           cardList

@@ -290,7 +290,7 @@ export default class BuyTicket {
       const { lockOrderId } = buyTicketInfo;
       // 4、使用优惠券或者会员卡（仅判断是否有可用卡及券）
       // 座位支付总价格
-      let seatPayTotalPrice = this.cardQuanManage.getSeatPrice({
+      let seatPayTotalPrice = await this.cardQuanManage.getSeatPrice({
         cinemaLinkId,
         scheduleId,
         scheduleKey,
