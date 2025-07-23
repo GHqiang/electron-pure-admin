@@ -356,7 +356,7 @@ export default class CardQuanManage {
       if (!cardList.length || !cardData?.length) {
         let maxCardAmount = cardList.sort(
           (a, b) => b.cardAmount - a.cardAmount
-        )[0].cardAmount;
+        )?.[0]?.cardAmount;
         this.logger.errorSave(str || "会员卡余额不足", {
           maxCardAmount,
           payAmount,

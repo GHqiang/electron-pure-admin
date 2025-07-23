@@ -81,16 +81,14 @@ export default class OrderManage {
   }
   // 取消订单
   async cancelOrder(unlockSeatInfo) {
-    const { cinemaCode, cinemaId, order_num, session_id } = unlockSeatInfo;
+    const { cinemaLinkId, order_num, session_id } = unlockSeatInfo;
     try {
       let params = {
-        cinemaCode,
-        cinemaId,
-        orderCode: order_num,
-        orderNumber: order_num,
-        ...(session_id && { session_id })
+        cinemaLinkId,
+        orderId: order_num,
+        fenghuangToken: session_id
       };
-      this.logger.info("取消订单参数", params);
+      this.logger.infoSave("取消订单参数", params);
       const res = await this.appApi.cancelOrder(params);
       this.logger.infoSave("取消订单成功", { res });
       return res;
@@ -134,8 +132,8 @@ export default class OrderManage {
       let res = await this.appApi.priceCalculation(params);
       this.logger.infoSave("计算价格返回", res);
       // 优惠券参数处理
-      if (promotions) {
-        params.promotions = promotions;
+      if (promotions?.length) {
+        params.promotions = JSON.stringify(promotions);
         delete params.pageInit;
         this.logger.infoSave("用券计算价格参数", params);
         res = await this.appApi.priceCalculationByQuan(params);

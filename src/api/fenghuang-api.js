@@ -65,7 +65,7 @@ const createApi = ({ app_name }) => {
     },
     // 支付订单
     buyTicket: {
-      "3.0C": "/selfSupport/trade/front/order/onlinePay"
+      "2.0": "/selfSupport/trade/front/order/onlinePay"
     },
     // 获取订单信息
     queryOrderDetail: {
@@ -77,7 +77,7 @@ const createApi = ({ app_name }) => {
     },
     // 释放座位
     releaseSeat: {
-      "2.0C": "/fenghuang/mtop.alipic.lark.seat.scheduleseats.unlock"
+      "2.0": "/fenghuang/mtop.alipic.lark.seat.scheduleseats.unlock"
     },
     // 绑定优惠券
     bandQuan: {

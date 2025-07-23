@@ -342,15 +342,15 @@ export default class BuyTicket {
         return await this.transferOrChangePhone(transparams, buyTicketInfo);
       }
       // 5、计算价格
-      let quan_code = useQuan.map(item => ({
-        promotionType: "COUPON",
-        promoCode: item.couponCode,
-        productType: "TICKET"
-      }));
+      let quan_code = useQuan.map(item => item.couponCode);
       const calcRes = await this.orderManage.pripriceCalculation({
         ...buyTicketInfo,
         cardNum,
-        promotions: JSON.stringify(quan_code),
+        promotions: useQuan.map(item => ({
+          promotionType: "COUPON",
+          promoCode: item.couponCode,
+          productType: "TICKET"
+        })),
         session_id: this.currentSessionId
       });
       if (!calcRes) {
