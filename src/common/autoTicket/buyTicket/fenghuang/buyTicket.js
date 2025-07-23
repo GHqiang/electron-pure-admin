@@ -448,7 +448,7 @@ export default class BuyTicket {
       let paymentsList = calcRes?.settlement?.payments;
       let promotions = [];
       if (offer_type === "1" && useQuan?.length && !quan_fee_total) {
-        promotions = calcRes.settlement.promotions;
+        promotions = calcRes?.settlement?.promotions;
         if (promotions?.length) {
           promotions[0].productType = "TICKET";
         }
