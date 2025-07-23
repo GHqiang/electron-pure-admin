@@ -430,7 +430,7 @@ class getFenghuangOfferPrice {
       const cardList = await this.fetchAvailableCards(order, cinemaLinkId);
       this.logger.infoSave("获取到可用卡列表", { cardList });
       if (!cardList.length && !isTestOrder) return null;
-      this.logger.infoSave("从座位信息获取会员价");
+      // this.logger.infoSave("从座位信息获取会员价");
       // 从座位信息里获取优惠活动列表
       let seatParams = {
         cinemaLinkId,
@@ -442,8 +442,7 @@ class getFenghuangOfferPrice {
       let areaInfoList = targetSeatRes?.areaInfoList || [];
       let seatData = targetSeatRes?.seatData || [];
       this.logger.infoSave("获取到座位价格信息列表", {
-        areaInfoList,
-        seatData
+        areaInfoList
       });
       let basePrice;
       if (areaInfoList.length) {
@@ -453,7 +452,6 @@ class getFenghuangOfferPrice {
         );
         if (minAddAmountRule?.memberPriceRule == "2") {
           let seatList = seatData.filter(item => item.status === "N");
-          console.log("seatList", seatList);
           areaInfoList = areaInfoList.map(item => {
             return {
               ...item,
@@ -499,13 +497,13 @@ class getFenghuangOfferPrice {
   // 根据票数获取座位价格
   async getSeatPriceByTicket(ticket_num, areaInfoList, seat_data, movieInfo) {
     try {
-      console.log(
-        "获取座位价格",
-        ticket_num,
-        areaInfoList,
-        seat_data,
-        movieInfo
-      );
+      // console.log(
+      //   "获取座位价格",
+      //   ticket_num,
+      //   areaInfoList,
+      //   seat_data,
+      //   movieInfo
+      // );
       let seatInfo = [];
       const seatMap = new Map();
       seat_data.forEach(seat => {
