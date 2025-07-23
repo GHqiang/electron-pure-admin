@@ -488,6 +488,7 @@ class getFenghuangOfferPrice {
           order.ticket_num,
           areaIdSortList,
           seatData,
+          movieInfo,
           fenghuangToken
         );
         basePrice = (seatTotalPrice * 100) / order.ticket_num / 100;
