@@ -377,7 +377,8 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           isRetryCount &&
           [
             "FAIL_SYS_TOKEN_EMPTY::令牌为空",
-            "FAIL_SYS_TOKEN_ILLEGAL::非法令牌"
+            "FAIL_SYS_TOKEN_ILLEGAL::非法令牌",
+            "FAIL_SYS_TOKEN_EXOIRED::令牌过期"
           ].includes(errReason)
         ) {
           if (data?.c) {
