@@ -20,13 +20,15 @@ instance.interceptors.request.use(
   config => {
     config.headers["Content-Type"] = "application/x-www-form-urlencoded";
     // 猎人平台接口添加token
-    // console.log("tokens.lierenToken", tokens.lierenToken);
     const token = tokens.shoutuToken || "";
+    const subToken = localStorage.getItem("shoutuPlatSubToken");
+    // console.log("tokens.shoutuToken", token, subToken);
+
     if (token) {
       if (config.url.startsWith("/seller-api")) {
-        config.headers["X-Token"] = `${token.split("_")[0]}`;
+        config.headers["X-Token"] = token;
       } else {
-        config.headers["Token"] = `${token.split("_")[1]}`;
+        config.headers["Token"] = subToken;
       }
     }
     let baseURL = config.url.startsWith("/seller-api")

@@ -85,6 +85,26 @@
           />
         </template>
       </el-table-column>
+      <el-table-column prop="platSubToken" label="平台子Token">
+        <template #default="{ row, $index }">
+          <span v-if="row.id !== editingRowId">{{ row.platSubToken }}</span>
+          <el-input
+            v-if="row.platName === 'shoutu' && row.id === editingRowId"
+            v-model="editingRow.platSubToken"
+            @blur="saveEdit(row.id)"
+          />
+        </template>
+      </el-table-column>
+      <el-table-column prop="userUUID" label="平台userUUID">
+        <template #default="{ row, $index }">
+          <span v-if="row.id !== editingRowId">{{ row.userUUID }}</span>
+          <el-input
+            v-if="row.platName === 'shoutu' && row.id === editingRowId"
+            v-model="editingRow.userUUID"
+            @blur="saveEdit(row.id)"
+          />
+        </template>
+      </el-table-column>
       <el-table-column label="队列执行状态">
         <template #default="{ row }">
           <el-switch v-model="row.isEnabled" disabled />
@@ -658,8 +678,12 @@ const startEdit = row => {
 const saveEdit = id => {
   if (id === editingRowId.value) {
     tableDataStore.saveEdit(editingRow.value);
-    const { platToken, platName } = editingRow.value;
+    const { platToken, platSubToken, userUUID, platName } = editingRow.value;
     platToken && setPlatFunObj[platName](platToken);
+    if (platName == "shoutu") {
+      localStorage.setItem("shoutuPlatSubToken", platSubToken);
+      localStorage.setItem("shoutuPlatUserUUID", userUUID);
+    }
     editingRowId.value = null;
   }
 };
