@@ -86,7 +86,11 @@ export default class SeatManage {
       .replaceAll(" ", ",")
       .replaceAll("列", "座");
     const selectSeatList = seatName.split(",");
-    return seatList.filter(item => {
+    const targetRow = seatList.filter(item =>
+      selectSeatList.some(itemA => item.seatName.includes(itemA.slice(0, 2)))
+    );
+    this.logger.info("目标列座位信息", { targetRow });
+    return targetRow.filter(item => {
       return selectSeatList.includes(item.seatName);
       // 考虑延迟可能先不用状态判断
       // return selectSeatList.includes(item.seatName) && item.status === "N";
