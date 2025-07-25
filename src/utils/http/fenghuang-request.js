@@ -394,8 +394,8 @@ const createAxios = ({ app_name, timeout = 20 }) => {
                 config.url.slice(10);
             return instance(config);
           }
-          return data;
         }
+        return Promise.reject(data);
       }
       return data?.data;
     },
