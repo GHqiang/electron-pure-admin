@@ -884,7 +884,9 @@ class OrderAutoTicketQueue {
         "cardList(从可用卡列表过滤后的卡:)": cardList,
         oldCardList: orderInfoRes?.cards,
         quanList: quanList.slice(0, 10),
-        activities
+        activities,
+        canUseCoupon,
+        preferCoupons: preferCoupons?.slice(0, 10)
       });
       // 原总价
       total_price = activities.find(
@@ -2643,7 +2645,7 @@ class OrderAutoTicketQueue {
       umeToken: session_id
     };
     try {
-      this.logger.info("获取最优卡券列表组合参数", params);
+      this.logger.infoSave("获取最优卡券列表组合参数", params);
       const res = await this.umeApi.getCardQuanList(params);
       let orderInfo = res.bizValue;
       this.logger.info("获取最优卡券列表组合返回", {
