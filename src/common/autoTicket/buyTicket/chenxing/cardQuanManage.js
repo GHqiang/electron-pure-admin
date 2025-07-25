@@ -1024,7 +1024,7 @@ export default class CardQuanManage {
         .map(item => item.mobile);
       console.log("useMobileList", useMobileList);
       this.logger.infoSave("获取影院目标券信息返回", {
-        targetQuanInfo,
+        targetQuanList,
         quan_flag,
         quan_value,
         useMobileList
@@ -1058,7 +1058,9 @@ export default class CardQuanManage {
         return sortMobileList;
       }
     } catch (error) {
-      console.error("根据影院获取券类型列表返回异常", error);
+      this.logger.errorSave("根据券库存获取排序手机列表异常", {
+        error
+      });
     }
   }
 }
