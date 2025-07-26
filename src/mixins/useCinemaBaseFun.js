@@ -435,14 +435,14 @@ export default function useCinemaBaseFun() {
         cardList = res.data?.sleep || [];
         cardList.unshift({
           card_number: res.data.card_number,
-          balance: res.data.money_str,
-          is_main_card: 1
+          balance: res.data.money_str
+          // is_main_card: 1
         });
         cardList = cardList.map(item => ({
           card_id: item.card_number + "",
           card_num: item.card_number,
-          balance: item.balance,
-          is_main_card: item.is_main_card
+          balance: item.balance
+          // is_main_card: item.is_main_card
         }));
         const card_list = await getLmaOtherCardBalance(cardList, session_id);
         cardList = card_list;
