@@ -30,7 +30,9 @@ const {
 // 影院特殊匹配列表及api
 import { TEST_NEW_PLAT_LIST, GET_APP_TYPE_LIST } from "@/common/constant";
 import { APP_API_OBJ } from "@/common/index";
-
+// 机器基础方法
+import usesMachineBaseFun from "@/mixins/usesMachineBaseFun";
+const { updateQuanBlackInfo } = usesMachineBaseFun();
 let isTestOrder = false; //是否是测试订单
 // 创建一个订单自动出票队列类
 class OrderAutoTicketQueue {
@@ -1150,6 +1152,7 @@ class OrderAutoTicketQueue {
         cinemaLinkId,
         orderHeaderId,
         coupon: useQuan,
+        quan_flag: offerRule?.quan_flag,
         card_id,
         activityId,
         total_price,
@@ -1476,6 +1479,7 @@ class OrderAutoTicketQueue {
       cinemaLinkId,
       orderHeaderId,
       coupon,
+      quan_flag,
       card_id,
       activityId,
       total_price,
@@ -1544,6 +1548,23 @@ class OrderAutoTicketQueue {
             error
           });
         }
+      }
+      // {"error":"{\"msg\":\"券 3GUZVUJBGG 不可用\",\"count\":0,\"status\":\"E\"}"}
+      // {"error":{"msg":"券 3GUZVUJBGG 不可用","count":0,"status":"E"}}
+      // {"msg":"券 3D7Y3X4K,3DWY38TK 不可用","count":0,"status":"E"}
+      // 券不可用，更新黑名单信息
+      if (error?.msg?.includes("券") && error?.msg?.includes("不可用")) {
+        let coupon = error?.msg?.split(" ")?.[1];
+        const { plat_name, order_number } = this.order;
+        // 更新券黑名单
+        updateQuanBlackInfo({
+          coupon,
+          quan_flag,
+          plat_name,
+          order_number,
+          app_name: this.appFlag,
+          logger: this.logger
+        });
       }
     }
   }

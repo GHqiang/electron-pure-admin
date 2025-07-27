@@ -1,6 +1,6 @@
 import svApi from "@/api/sv-api";
 import { computed } from "vue";
-import { getCurrentTime } from "@/utils/utils";
+import { getCurrentTime, sendWxPusherMessage } from "@/utils/utils";
 import {
   GET_APP_LIST,
   GET_UME_LIST,
@@ -169,10 +169,86 @@ export default function useCinemaBaseFun() {
     }
   };
 
+  // 更新券黑名单信息
+  const updateQuanBlackInfo = async params => {
+    const { app_name, quan_flag, coupon, plat_name, order_number, logger } =
+      params;
+    if (!coupon || !quan_flag) return;
+    let black_quan_list = coupon.split(",");
+    const quanTypeParams = {
+      app_name,
+      isNeedTotalNum: 0,
+      queryFields: "id,quan_flag,app_name,quan_value,black_quans"
+    };
+    let targetQuanList = [];
+    try {
+      let quanTypeRes = await svApi.queryQuanTypeList(quanTypeParams);
+      targetQuanList =
+        quanTypeRes?.data?.quanTypeList?.filter(
+          item => item.quan_flag == quan_flag
+        ) || [];
+      logger.infoSave("更新券黑名单信息前获取同类目标券返回", {
+        params,
+        quanTypeParams
+      });
+    } catch (error) {
+      logger.infoSave("更新券黑名单信息前获取同类目标券异常", {
+        error,
+        quanTypeParams
+      });
+      return;
+    }
+
+    let updateQuanList = []; // 收集需要更新的券
+    let updatePromises = targetQuanList.map(async item => {
+      try {
+        let existingBlackQuans = item.black_quans
+          ? item.black_quans.split(";")
+          : [];
+        let newBlackQuans = black_quan_list.filter(
+          quan => !existingBlackQuans.includes(quan)
+        );
+        if (newBlackQuans.length === 0) return;
+
+        // 收集需要更新的券
+        updateQuanList = [...new Set([...updateQuanList, ...newBlackQuans])];
+
+        let updateParams = {
+          id: item.id,
+          black_quans: item.black_quans + ";" + newBlackQuans.join(";"),
+          update_time: getCurrentTime()
+        };
+        const res = await svApi.updateQuanType(updateParams);
+        logger.infoSave("单个更新券黑名单信息返回", {
+          res,
+          updateParams
+        });
+      } catch (error) {
+        this.logger.errorSave("单个更新券黑名单信息异常", { error });
+      }
+    });
+
+    // 等待所有更新任务完成
+    await Promise.all(updatePromises);
+
+    // 如果有需要更新的券，发送消息
+    if (updateQuanList.length > 0) {
+      sendWxPusherMessage({
+        msgType: 3,
+        quan_flag,
+        plat_name,
+        order_number,
+        black_quans: updateQuanList.join(";"),
+        transferTip:
+          "创建订单时发现券不可用，请去券维护列表搜索以下券标识并检查以下黑名单券是否准确，不准确请手动修改维护（可能会有可用的券，需从黑名单券里移除）"
+      });
+    }
+  };
   return {
-    getQuanTypeList,
-    addCardListHandle,
-    updateCardListHandle,
-    queryCardBalance
+    getQuanTypeList, // 获取券类型列表
+    addCardListHandle, // 同步卡信息时新增卡
+    updateCardListHandle, // 同步卡信息时更新余额
+    queryCardBalance, // 查看卡余额
+    updateQuanBlackInfo // 更新券黑名单信息
   };
 }

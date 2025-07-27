@@ -36,6 +36,9 @@ import {
   GET_APP_TYPE_LIST
 } from "@/common/constant";
 import { APP_API_OBJ } from "@/common/index";
+// 机器基础方法
+import usesMachineBaseFun from "@/mixins/usesMachineBaseFun";
+const { updateQuanBlackInfo } = usesMachineBaseFun();
 
 let isTestOrder = false; //是否是测试订单
 // 创建一个订单自动出票队列类
@@ -1672,81 +1675,6 @@ class OrderAutoTicketQueue {
       this.logger.errorSave("获取券类型信息异常", { error });
     }
   }
-  // 更新券黑名单信息
-  async updateQuanBlackInfo(params) {
-    const { appFlag } = this;
-    const { quan_flag, coupon, plat_name, order_number } = params;
-    if (!coupon || !quan_flag) return;
-    let black_quan_list = coupon.split(",");
-    const quanTypeParams = {
-      app_name: appFlag,
-      isNeedTotalNum: 0,
-      queryFields: "id,quan_flag,app_name,quan_value,black_quans"
-    };
-    let targetQuanList = [];
-    try {
-      let quanTypeRes = await svApi.queryQuanTypeList(quanTypeParams);
-      targetQuanList =
-        quanTypeRes?.data?.quanTypeList?.filter(
-          item => item.quan_flag == quan_flag
-        ) || [];
-      this.logger.infoSave("更新券黑名单信息前获取同类目标券返回", {
-        params,
-        quanTypeParams
-      });
-    } catch (error) {
-      this.logger.errorSave("更新券黑名单信息前获取同类目标券异常", {
-        error,
-        quanTypeParams
-      });
-      return;
-    }
-
-    let updateQuanList = []; // 收集需要更新的券
-    let updatePromises = targetQuanList.map(async item => {
-      try {
-        let existingBlackQuans = item.black_quans
-          ? item.black_quans.split(";")
-          : [];
-        let newBlackQuans = black_quan_list.filter(
-          quan => !existingBlackQuans.includes(quan)
-        );
-        if (newBlackQuans.length === 0) return;
-
-        // 收集需要更新的券
-        updateQuanList = [...new Set([...updateQuanList, ...newBlackQuans])];
-
-        let updateParams = {
-          id: item.id,
-          black_quans: item.black_quans + ";" + newBlackQuans.join(";"),
-          update_time: getCurrentTime()
-        };
-        const res = await svApi.updateQuanType(updateParams);
-        this.logger.infoSave("单个更新券黑名单信息返回", {
-          res,
-          updateParams
-        });
-      } catch (error) {
-        this.logger.errorSave("单个更新券黑名单信息异常", { error });
-      }
-    });
-
-    // 等待所有更新任务完成
-    await Promise.all(updatePromises);
-
-    // 如果有需要更新的券，发送消息
-    if (updateQuanList.length > 0) {
-      sendWxPusherMessage({
-        msgType: 3,
-        quan_flag,
-        plat_name,
-        order_number,
-        black_quans: updateQuanList.join(";"),
-        transferTip:
-          "创建订单时发现券不可用，请去券维护列表搜索以下券标识并检查以下黑名单券是否准确，不准确请手动修改维护（可能会有可用的券，需从黑名单券里移除）"
-      });
-    }
-  }
 
   // 获取排序手机号
   getSortedPhones(targetQuanList, quanValueList) {
@@ -2055,11 +1983,14 @@ class OrderAutoTicketQueue {
           quan_flag,
           coupon
         });
-        this.updateQuanBlackInfo({
+        // 更新券黑名单
+        updateQuanBlackInfo({
           coupon,
           quan_flag,
           plat_name,
-          order_number
+          order_number,
+          app_name: this.appFlag,
+          logger: this.logger
         });
       }
       if (error?.msg === "请求接口超时,请重试" && isTimeoutRetry === 1) {
