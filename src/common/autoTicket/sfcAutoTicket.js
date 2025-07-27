@@ -2327,7 +2327,8 @@ class OrderAutoTicketQueue {
       const submitRes = await this.platManage.submitTicketCode({
         qrcode,
         flag,
-        logger
+        logger,
+        orderInfo: JSON.parse(JSON.stringify(orderInfo))
       });
       if (!submitRes || submitRes?.error) {
         logger.errorSave("订单提交取票码失败");

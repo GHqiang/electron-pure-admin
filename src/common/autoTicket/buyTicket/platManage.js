@@ -201,7 +201,8 @@ export default class PlatCommon {
   async submitTicketCode({
     qrcode,
     flag, // 2-异步上传
-    logger //日志记录实例
+    logger, //日志记录实例
+    orderInfo = {}
   }) {
     const {
       plat_name,
@@ -210,7 +211,7 @@ export default class PlatCommon {
       supplierCode,
       lockseat,
       order_sn
-    } = this.order;
+    } = orderInfo;
     // 不同平台参数处理
     let params;
     if (plat_name === "lieren") {
