@@ -90,20 +90,19 @@ const getumidToken = () => {
 const noProxyUrlList = [
   "cinema.citycinemas", // 调试时可注释
   "authn.refresh",
-  "common.get"
-  // "film.gethotfilms",
-  // "schedule.getschedules",
-  // "seat.getseatmap",
-  // "seat.lockseats",
-  // "seat.unlockseats",
-  // "pay.getpayprivilegeinfo",
-  // "pay.getpaydiscountprice",
-  // "coupon.getmyonlinecoupons",
-  // "card.getcardlistbypage",
-  // "order.cancelorder",
-  // "coupon.bindcoupon",
-  // "order.getorderlist",
-  // "order.getorderdetail"
+  "cinemafilms.get",
+  "film.cinemafilms",
+  "schedule.filmschedules",
+  "seat.scheduleseats.get",
+  "seat.scheduleseats.lock",
+  "seat.scheduleseatprices.get",
+  "card.membercards.get",
+  "coupon.mycoupon.get",
+  "order.ticketorder.settle",
+  "order.ticketorderpromo.settle",
+  "order.detail.get",
+  "seat.scheduleseats.unlock",
+  "coupon.mycoupon.bindcoupon"
 ];
 // 是否不需要代理
 const checkUrlNoNeedProxy = url => {

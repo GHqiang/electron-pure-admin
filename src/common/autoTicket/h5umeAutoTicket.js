@@ -67,6 +67,7 @@ class OrderAutoTicketQueue {
   testSendNewOrder(order) {
     const { appFlag } = this;
     isTestOrder = true;
+    this.start();
     let newOrder = order || {
       id: 7177,
       plat_name: "lieren",
