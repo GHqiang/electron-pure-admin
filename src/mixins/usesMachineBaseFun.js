@@ -224,7 +224,7 @@ export default function useCinemaBaseFun() {
           updateParams
         });
       } catch (error) {
-        this.logger.errorSave("单个更新券黑名单信息异常", { error });
+        logger.infoSave("单个更新券黑名单信息异常", { error });
       }
     });
 
