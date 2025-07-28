@@ -182,7 +182,7 @@ export default class OrderManage {
       this.logger.infoSave("创建订单返回", res);
       return res;
     } catch (error) {
-      this.logger.infoSave("创建订单异常", formatErrInfo(error));
+      this.logger.errorSave("创建订单异常", formatErrInfo(error));
       if (error?.msg?.includes("超时") && isTimeoutRetry === 1) {
         this.logger.infoSave("创建订单接口超时，延迟1秒后重试");
         await mockDelay(1);

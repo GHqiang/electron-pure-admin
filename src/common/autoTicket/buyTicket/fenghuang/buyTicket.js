@@ -314,8 +314,7 @@ export default class BuyTicket {
       });
       this.logger.infoSave("用卡用券返回", cardQuanRes);
       let {
-        card_id = "",
-        cardNum,
+        canUseCardList = [], // 可用会员卡列表
         useQuan = [],
         profit = 0,
         quanStock
@@ -323,7 +322,7 @@ export default class BuyTicket {
       // 由于offerRule可能被useQuanOrCard调整，后续使用地方需注意
       let { offerRule } = this;
       const { offer_type } = offerRule;
-      if (!card_id && !useQuan?.length) {
+      if (!canUseCardList?.length && !useQuan?.length) {
         let errMsg = this.logger.getLastErrMsg();
         let str = offer_type === "1" ? "无可用优惠券" : "无可用会员卡";
         if (errMsg) {
@@ -345,7 +344,6 @@ export default class BuyTicket {
       let quan_code = useQuan.map(item => item.couponCode);
       const calcRes = await this.orderManage.pripriceCalculation({
         ...buyTicketInfo,
-        cardNum,
         promotions: useQuan.map(item => ({
           promotionType: "COUPON",
           promoCode: item.couponCode,
@@ -418,7 +416,7 @@ export default class BuyTicket {
       }
       // 支付前校验用卡价格
       let real_member_price = offerRule?.real_member_price || 0;
-      if (offerRule.offer_type !== "1" && card_id) {
+      if (offerRule.offer_type !== "1" && canUseCardList?.length) {
         real_member_price = (real_member_price * 10000 * ticket_num) / 10000;
         if (paymentAmount > real_member_price) {
           this.logger.errorSave("用完卡发现支付金额大于会员价*票数，走转单", {
@@ -444,6 +442,7 @@ export default class BuyTicket {
         }
       }
       // 7、创建订单
+      let card_id, cardNum;
       let payments = [];
       let paymentsList = calcRes?.settlement?.payments;
       let promotions = [];
@@ -464,16 +463,37 @@ export default class BuyTicket {
             payCode: randomNumByLength(32) // 生成32位随机字符串作为支付码
           });
         }
-      } else if (offer_type === "2" && card_id) {
+      } else if (offer_type === "2" && canUseCardList?.length) {
         promotions = calcRes.settlement.promotions;
-        let payInfo = paymentsList?.find(item => item.cardNo === cardNum);
+        // 取优惠金额一样的优惠信息
+        let payInfo = promotions?.find(
+          item =>
+            item.discountedAmount === calcRes.settlement.totalDiscountedAmount
+        );
         if (payInfo) {
           payments.push({
-            paymentType: payInfo.paymentType,
-            payCode: payInfo.cardNo,
+            paymentType: payInfo.promotionType,
+            payCode: payInfo.promoCode,
             payToken: window.getPayToken(this.currentMemberPwd),
             payAmount: calcRes.settlement.totalDiscountedPrice
           });
+        }
+        // 判断优惠专属卡是否可用
+        if (canUseCardList?.some(item => item.cardNo == payInfo?.promoCode)) {
+          card_id = payInfo.promoCode;
+          cardNum = payInfo.promoCode;
+        } else {
+          this.logger.errorSave("优惠专属卡不在可用卡列表内", {
+            canUseCardList,
+            promoCode: payInfo?.promoCode
+          });
+          // 转单或换号处理
+          const transparams = {
+            cinemaLinkId,
+            lockOrderId,
+            session_id: this.currentSessionId
+          };
+          return await this.transferOrChangePhone(transparams, buyTicketInfo);
         }
       }
 
