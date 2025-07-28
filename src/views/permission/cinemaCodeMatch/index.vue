@@ -292,6 +292,71 @@ const deleteCinemeCodeMatch = () => {
 };
 
 const syncLoading = ref(false);
+
+// 测试同步影院映射是否有出入
+const testSyncCinemaCodeMatch = async () => {
+  try {
+    // 1、先获取库里凤凰新的映射维护列表
+    const res = await svApi.queryCinemaMatchList({});
+    let cinemaList = res.data.cinemaList || [];
+    cinemaList = cinemaList.filter(
+      item => item.app_type_code === "fenghuang_applet"
+    );
+    console.warn("获取凤凰映射维护列表", cinemaList);
+    let asyncAppNamList = cinemaList.map(item => item.app_name);
+    asyncAppNamList = [...new Set(asyncAppNamList)];
+    console.warn("asyncAppNamList", asyncAppNamList);
+    // 2、那这些影院组装数据
+    // 组装映射同步数据
+    let syncList = [];
+    for (let i = 0; i < asyncAppNamList.length; i++) {
+      let app_name = asyncAppNamList[i],
+        app_type_code = "fenghuang_applet";
+      let list = await getCinemaList(app_name);
+      // console.warn("getCinemaList", list);
+      const appInfo = GE_APP_INFO(app_name);
+      list = list.map(item => {
+        let app_cinema_code = item.cinema_code;
+        // 除以下2种外没有cinema_code，用city_id+id组合当唯一标识
+        if (!["ume_applet", "chenxing_applet"].includes(app_type_code)) {
+          app_cinema_code = item.city_id + "_" + item.cinema_id;
+        }
+        return {
+          app_label: appInfo.app_label,
+          app_name: appInfo.app_name,
+          app_type_code: appInfo.app_type_code,
+          app_type_name: appInfo.app_type_name,
+          app_cinema_name: item.cinema_name,
+          app_cinema_code,
+          plat_cinema_code: item.cinema_code || "" // 没值就为空，导出维护
+        };
+      });
+      syncList = syncList.concat(list);
+    }
+    console.warn("组装好的同步映射列表数据syncList", syncList);
+    // 3、进行对比找出不一致的
+    let noSomeList = cinemaList.filter(
+      item =>
+        !syncList.some(
+          itemA =>
+            itemA.app_cinema_name == item.app_cinema_name &&
+            itemA.app_cinema_code == item.app_cinema_code
+        )
+    );
+    let noSomeList1 = syncList.filter(
+      item =>
+        !cinemaList.some(
+          itemA =>
+            itemA.app_cinema_name == item.app_cinema_name &&
+            itemA.app_cinema_code == item.app_cinema_code
+        )
+    );
+    console.warn("noSomeList", noSomeList);
+    console.warn("noSomeList1", noSomeList1);
+  } catch (error) {}
+};
+window.testSyncCinemaCodeMatch = testSyncCinemaCodeMatch;
+
 // 同步影院code映射
 const syncCinemeCodeMatch = async isExport => {
   try {
