@@ -464,28 +464,50 @@ export default class BuyTicket {
           });
         }
       } else if (offer_type === "2" && canUseCardList?.length) {
-        promotions = calcRes.settlement.promotions;
+        promotions = calcRes.settlement.promotions; // 可能为空没有优惠
         // 取优惠金额一样的优惠信息
-        let payInfo = promotions?.find(
+        let promotionInfo = promotions?.find(
           item =>
             item.discountedAmount === calcRes.settlement.totalDiscountedAmount
         );
+        let promotionCardNo, payInfo;
+        const canUseCardNoList = canUseCardList.map(item => item.cardNo);
+        if (promotionInfo) {
+          if (promotionInfo.promotionType == "MEMBER_CARD") {
+            promotionCardNo = promotionInfo.promoCode;
+          } else {
+            promotionCardNo = promotionInfo.cardNo;
+          }
+          // 从支付信息中取相关信息
+          payInfo = paymentsList?.find(item => item.cardNo === promotionCardNo);
+          this.logger.infoSave("从优惠信息中取支付信息", {
+            promotionInfo,
+            payInfo
+          });
+        } else {
+          this.logger.infoSave("无优惠信息", {
+            paymentsList,
+            promotions
+          });
+          const sortPaymentsList = paymentsList
+            .filter(item => item.paymentType === "MEMBER_CARD")
+            .sort((a, b) => b.balance - a.balance);
+          payInfo = sortPaymentsList.find(item =>
+            canUseCardNoList.includes(item.cardNo)
+          );
+        }
         if (payInfo) {
+          card_id = payInfo?.cardNo;
+          cardNum = payInfo?.cardNo;
           payments.push({
-            paymentType: payInfo.promotionType,
-            payCode: payInfo.promoCode,
+            paymentType: payInfo?.paymentType,
+            payCode: payInfo?.cardNo,
             payToken: window.getPayToken(this.currentMemberPwd),
             payAmount: calcRes.settlement.totalDiscountedPrice
           });
-        }
-        // 判断优惠专属卡是否可用
-        if (canUseCardList?.some(item => item.cardNo == payInfo?.promoCode)) {
-          card_id = payInfo.promoCode;
-          cardNum = payInfo.promoCode;
         } else {
-          this.logger.errorSave("优惠专属卡不在可用卡列表内", {
-            canUseCardList,
-            promoCode: payInfo?.promoCode
+          this.logger.errorSave("无可用卡", {
+            canUseCardList
           });
           // 转单或换号处理
           const transparams = {
