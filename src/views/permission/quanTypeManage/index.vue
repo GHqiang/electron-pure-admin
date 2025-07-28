@@ -781,10 +781,12 @@ const getQuanInventory = async () => {
   try {
     const params = {
       isNeedTotalNum: 0,
-      queryFields: "id,app_name,quan_value,quan_flag,quan_cost,quan_fee"
+      queryFields:
+        "id,app_name,quan_value,quan_flag,quan_cost,is_store,quan_fee"
     };
     let quanTypeRes = await svApi.queryQuanTypeList(params);
     let quanTypeList = quanTypeRes.data.quanTypeList || [];
+    quanTypeList = quanTypeList.filter(item => item.is_store == 1);
     console.warn("quanTypeList", quanTypeList);
 
     const res = await svApi.queryQuanInventory();
@@ -821,6 +823,16 @@ const getQuanInventory = async () => {
       remaining_count: total_num,
       real_total_price: total_price
     });
+    const otherQuanList = quanTypeList
+      .filter(
+        item => !quanList.some(itemA => itemA.quan_value == item.quan_value)
+      )
+      .map(item => ({
+        quan_value: item.quan_value,
+        remaining_count: 0,
+        real_total_price: 0
+      }));
+    quanList = [...quanList, ...otherQuanList];
     dialogQueryQuanVisible.value = true;
     quanData.value = quanList;
   } catch (error) {
