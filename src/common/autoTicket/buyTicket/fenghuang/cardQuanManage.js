@@ -968,7 +968,7 @@ export default class CardQuanManage {
         .map(item => item.mobile);
       console.log("useMobileList", useMobileList);
       this.logger.infoSave("获取影院目标券信息返回", {
-        targetQuanList,
+        targetQuanList: JSON.parse(JSON.stringify(targetQuanList)),
         quan_flag,
         quan_value,
         useMobileList

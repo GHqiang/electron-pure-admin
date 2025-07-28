@@ -1738,7 +1738,7 @@ class OrderAutoTicketQueue {
         )
         .map(item => item.mobile);
       this.logger.infoSave("获取影院目标券信息返回", {
-        targetQuanList,
+        targetQuanList: JSON.parse(JSON.stringify(targetQuanList)),
         quan_flag,
         quan_value,
         useMobileList
