@@ -195,6 +195,7 @@ class OrderAutoFetchQueue {
         // 两个队列根据报价记录里的app_name去选择用哪个出
         if (offerRecord?.app_name) {
           order.appName = offerRecord.app_name;
+          order.app_name = offerRecord.app_name;
         } else {
           this.sendWxMsgByOrder(
             order,
