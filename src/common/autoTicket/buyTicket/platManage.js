@@ -68,6 +68,15 @@ export default class PlatCommon {
             msg: "订单无需解锁"
           };
         }
+      } else if (plat_name === "shoutu") {
+        const deliverRes = await this.startDeliver({ orderUUID: id });
+        this.logger.infoSave("确认接单返回", { deliverRes });
+        await mockDelay(1);
+        unlockRes = await this.unlockSeat({
+          plat_name,
+          order_id: id,
+          inx: 1
+        });
       }
       this.logger.infoSave("订单首次解锁座位完成");
       return unlockRes;
@@ -102,7 +111,14 @@ export default class PlatCommon {
   }
 
   // 确认接单
-  async startDeliver({ order_number, supplierCode, plat_name, bid, quote_id }) {
+  async startDeliver({
+    order_number,
+    supplierCode,
+    plat_name,
+    bid,
+    quote_id,
+    orderUUID
+  }) {
     try {
       let params;
       if (plat_name === "sheng") {
@@ -117,6 +133,10 @@ export default class PlatCommon {
       } else if (plat_name === "yinghuasuan") {
         params = {
           quote_id
+        };
+      } else if (plat_name === "shoutu") {
+        params = {
+          orderUUID
         };
       }
       this.logger.info("确认接单参数", params);
@@ -167,7 +187,24 @@ export default class PlatCommon {
         params = {
           order_sn: orderCode
         };
+      } else if (plat_name === "shoutu") {
+        const result = await PLAT_API_OBJ[plat_name].getIsUnlock({
+          orderUUID: order_id
+        });
+        this.logger.infoSave("获取是否需要解锁返回", result);
+        return {
+          msg: "订单无需解锁"
+        };
+        if (result.code === 0) {
+          return {
+            msg: "订单无需解锁"
+          };
+        }
+        params = {
+          orderUUID: order_id
+        };
       }
+
       this.logger.info("解锁座位入参", params);
       const res = await PLAT_API_OBJ[plat_name].unlockSeat(params);
       this.logger.infoSave(`第${inx}次解锁座位成功`, res);
@@ -398,6 +435,59 @@ export default class PlatCommon {
           imgIndex
         }))
       };
+    } else if (plat_name === "shoutu") {
+      const blob = await generateTicketImage({ ...this.order, qrcode });
+      const fileUrl = await uploadBlobImage({
+        blob,
+        url: "https://gw.taototo.cn/movie/api/ticket/ticketImgUpload",
+        params: {
+          orderUUID: order_id,
+          userUUID: window.localStorage.getItem("shoutuPlatUserUUID") || ""
+        },
+        plat_name,
+        logger
+      });
+      if (!fileUrl) {
+        logger.infoSave("守兔获取取票码图片失败,需手动上传");
+        sendWxPusherMessage({
+          orderInfo: this.order,
+          transferTip: "守兔获取取票码图片失败,需手动上传",
+          failReason: "守兔获取取票码图片失败,需手动上传"
+        });
+        return { code: 1, msg: "守兔获取取票码图片失败,需手动上传" };
+      }
+      // 提交前校验，不确定是否需要先注释
+      // await PLAT_API_OBJ[plat_name].checkOrder({
+      //   orderUUID: order_id
+      // });
+      params = {
+        orderUUID: order_id,
+        orderTicketCodeList: [
+          {
+            code: qrcode,
+            // realSeat: "6排11座(列),6排10座(列),6排9座(列)",
+            realSeat: lockseat
+              .split(" ")
+              .map(item => item + "(列)")
+              .join(","),
+            splitType: 0,
+            // realSeatIndexList: [
+            //   { column: "11", row: "6" },
+            //   { column: "10", row: "6" },
+            //   { column: "9", row: "6" }
+            // ],
+            realSeatIndexList: lockseat.split(" ").map(item => ({
+              column: item.split("排")[1].split("座")[0],
+              row: item.split("排")[0]
+            })),
+            id: 0
+          }
+        ],
+        realSeat: "",
+        deleteImageStr: "",
+        userUUID: window.localStorage.getItem("shoutuPlatUserUUID"),
+        isChangeSeat: 0
+      };
     }
     try {
       logger.infoSave("提交出票码参数", params);
@@ -478,6 +568,14 @@ export default class PlatCommon {
           order_sn: order_number,
           order_status: "3", // 出票状态（3：出票失败 9：出票成功）
           cancel_reason: "价格过低无法出票" // 出票失败原因（出票失败必传）
+        };
+      } else if (plat_name === "shoutu") {
+        params = {
+          orderUUID: id,
+          operatorId: window.localStorage.getItem("shoutuPlatUserUUID") || "",
+          userUUID: window.localStorage.getItem("shoutuPlatUserUUID") || "",
+          clientType: 2,
+          reason: "" // 出票失败原因
         };
       }
       this.logger.warn("转单参数", params);

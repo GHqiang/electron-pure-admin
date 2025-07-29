@@ -2062,6 +2062,8 @@ const uploadBlobImage = async ({
       return res?.data?.file_url;
     } else if (plat_name == "haha") {
       return res?.data?.url;
+    } else if (plat_name == "shoutu") {
+      return res?.data?.url;
     }
   } catch (error) {
     logList?.push({

@@ -19,10 +19,17 @@ const stayTicketingList = params =>
 const confirmOrder = params =>
   axios.post("/yp-api/ticket/order/confirm-issue", params);
 
+// 获取是否需要解锁
+const getIsUnlock = params =>
+  axios.post("/seller-api/order/getLockSeat", params);
+
 // 解锁座位
 const unlockSeat = params =>
-  axios.get("/seller-api/order/getLockSeat", { params });
+  axios.post("/seller-api/order/getLockSeat", params);
 
+// 提交前校验
+const checkOrder = params =>
+  axios.post("/yp-api/ticket/intercept/check-intercept", params);
 // 提交取票码(发货回调)
 const submitTicketCode = params =>
   axios.post("/yp-api/ticket/order/issue-tickets", params);
@@ -35,7 +42,9 @@ export default {
   queryStayOfferList, // 查询待报价列表
   submitOffer, // 提交报价
   confirmOrder, // 确认接货
+  getIsUnlock, // 获取是否需要解锁
   unlockSeat, // 解锁座位
+  checkOrder, // 提交前校验
   submitTicketCode, // 提交取票码
   transferOrder, // 转单
   stayTicketingList // 查询中签订单
