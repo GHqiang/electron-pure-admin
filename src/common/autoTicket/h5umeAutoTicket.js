@@ -1223,7 +1223,8 @@ class OrderAutoTicketQueue {
           orderId,
           appFlag,
           session_id: this.currentParamsList[this.currentParamsInx].session_id,
-          member_pwd: this.currentParamsList[this.currentParamsInx].member_pwd
+          member_pwd: this.currentParamsList[this.currentParamsInx].member_pwd,
+          orderInfo: this.order
         });
         this.logger.infoSave("订单购买返回", { buyTicketRes });
         const buyRes = buyTicketRes?.buyRes;
@@ -2845,7 +2846,8 @@ const buyTicket = async ({
   orderId,
   appFlag,
   session_id,
-  member_pwd
+  member_pwd,
+  orderInfo
 }) => {
   let params = {
     cinemaLinkId,
@@ -2869,6 +2871,17 @@ const buyTicket = async ({
     };
   } catch (error) {
     console.error("订单购买异常", error);
+    if (
+      formatErrInfo(error)?.includes("密码") &&
+      formatErrInfo(error)?.includes("错误")
+    ) {
+      sendWxPusherMessage({
+        orderInfo,
+        msgType: 5,
+        cardNoByPwdError: cardNo,
+        failReason: "密码输入错误，请检查卡号密码是否正确"
+      });
+    }
     return {
       error,
       params
