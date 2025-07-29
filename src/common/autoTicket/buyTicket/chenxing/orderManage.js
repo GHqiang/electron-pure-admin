@@ -275,6 +275,17 @@ export default class OrderManage {
       };
     } catch (error) {
       this.logger.errorSave("订单购买异常", formatErrInfo(error));
+      if (
+        formatErrInfo(error)?.includes("密码") &&
+        formatErrInfo(error)?.includes("错误")
+      ) {
+        sendWxPusherMessage({
+          orderInfo: this.order,
+          msgType: 5,
+          cardNoByPwdError: cardNo,
+          failReason: "密码输入错误，请检查卡号密码是否正确"
+        });
+      }
       return {
         error
       };
