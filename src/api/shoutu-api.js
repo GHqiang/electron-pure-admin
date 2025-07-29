@@ -6,7 +6,7 @@ import axios from "@/utils/http/shoutu-request";
 
 // 待报价列表查询
 const queryStayOfferList = params =>
-  axios.post("/seller-api/order/orderList?status=1", params);
+  axios.post("/yp-api/ticket/order/list-wait-quote-order", params);
 
 // 提交报价
 const submitOffer = params => axios.post("/yp-api/ticket/order/offer", params);

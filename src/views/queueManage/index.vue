@@ -196,6 +196,7 @@ import yangcongOfferQueue from "@/common/autoOffer/useYangcongOffer";
 import yinghuasuanOfferQueue from "@/common/autoOffer/useYinghuasuanOffer";
 import shangzhanOfferQueue from "@/common/autoOffer/useShangzhanOffer";
 import hahaOfferQueue from "@/common/autoOffer/useHahaOffer";
+import shoutuOfferQueue from "@/common/autoOffer/useShoutuOffer";
 
 // 平台待出票订单执行队列
 import lierenFetchOrder from "@/common/orderFetch/lierenFetchOrder";
@@ -295,7 +296,8 @@ let platOfferQueueObj = {
   yinghuasuan: yinghuasuanOfferQueue,
   shangzhan: shangzhanOfferQueue,
   haha: hahaOfferQueue,
-  sheng: shengOfferQueue
+  sheng: shengOfferQueue,
+  shoutu: shoutuOfferQueue
 };
 
 // 平台获取待出票订单队列集合

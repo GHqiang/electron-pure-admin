@@ -52,9 +52,15 @@ instance.interceptors.response.use(
     const data = response.data;
     // let whitelistSp = ['/sp/order', '/sp/unlock']
     let whitelistSp = [];
-
+    const checkCode = () => {
+      if (response.config.url.includes("yp-api/")) {
+        return data.code !== 200;
+      } else {
+        return data.code != 1;
+      }
+    };
     if (
-      data.code != 1 &&
+      checkCode() &&
       !whitelistSp.some(item => response.config.url.includes(item))
     ) {
       ElMessage.error(data.message || data.msg || "请求失败");
