@@ -1317,6 +1317,35 @@ class OrderAutoTicketQueue {
       return { offerRule };
     }
   }
+  // 连续获取券
+  async continuousGetQuan(data) {
+    let { session_id, pageNo = 1, pageSize = 100, quanData = [] } = data;
+    let params = {
+      state: "USEFUL",
+      pageNo,
+      pageSize, // 支持修改
+      umeToken: session_id
+    };
+    try {
+      const res = await this.umeApi.getQuanList(params);
+      console.log("获取优惠券列表返回", res);
+      let quanList = res.bizValue || [];
+      quanData.push(...quanList);
+      if (pageSize > quanList.length) {
+        return quanData;
+      } else {
+        // 继续获取下一页
+        return await this.continuousGetQuan({
+          ...data,
+          pageNo: pageNo + 1,
+          quanData
+        });
+      }
+    } catch (error) {
+      this.logger.errorSave("连续获取券异常", { error });
+      return [];
+    }
+  }
 
   // 查询最近用券记录返回
   async queryUsedQuanList({ quan_value, app_name }) {
@@ -2084,6 +2113,19 @@ class OrderAutoTicketQueue {
         let targetQuanList = quanList.filter(
           item => couponInfoSpecial(item.name) === couponInfoSpecial(quan_flag)
         );
+        if (!targetQuanList?.length) {
+          this.logger.infoSave("未找到券标识对应的券，准备从个人中心获取");
+          const quanListByPerCenter = await this.continuousGetQuan({
+            session_id: currentParams.session_id
+          });
+          targetQuanList = quanListByPerCenter?.filter(
+            item =>
+              couponInfoSpecial(item.name) === couponInfoSpecial(quan_flag)
+          );
+          this.logger.infoSave("从个人中心获取到的目标券", {
+            targetQuanList: targetQuanList.slice(0, 8)
+          });
+        }
         // 增加已用完过滤，防止核销延迟导致用券失败
         const usedQuanList = await this.queryUsedQuanList({
           quan_value: offerRule.quan_value,
