@@ -157,6 +157,7 @@ export default class OrderManage {
       promotions,
       payments,
       phoneNumber,
+      cardNum,
       session_id,
       isTimeoutRetry = 1 // 默认超时重试
     } = data;
@@ -183,7 +184,15 @@ export default class OrderManage {
       return res;
     } catch (error) {
       this.logger.errorSave("创建订单异常", formatErrInfo(error));
-      if (error?.msg?.includes("超时") && isTimeoutRetry === 1) {
+      if (formatErrInfo(error)?.includes("密码输入错误")) {
+        sendWxPusherMessage({
+          orderInfo: this.order,
+          msgType: 5,
+          cardNoByPwdError: cardNum,
+          failReason: "密码输入错误，请检查卡号密码是否正确"
+        });
+      }
+      if (eformatErrInfo(error).includes("超时") && isTimeoutRetry === 1) {
         this.logger.infoSave("创建订单接口超时，延迟1秒后重试");
         await mockDelay(1);
         try {

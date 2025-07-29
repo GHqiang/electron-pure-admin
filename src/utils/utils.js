@@ -516,8 +516,9 @@ const sendWxPusherMessage = async ({
   transferTip,
   failReason,
   app_name,
-  msgType, // 消息类型 1-登录失效
+  msgType, // 消息类型 1-登录失效 2-出票队列重复 3-黑名单券更新 5-密码输入错误
   expirePhone, // 失效手机号
+  cardNoByPwdError, // 密码错误卡号
   quan_flag,
   black_quans
 }) => {
@@ -586,6 +587,17 @@ const sendWxPusherMessage = async ({
     提示：${transferTip};<br/>
     券标识：${quan_flag};<br/>
     黑名单券：${black_quans};<br/>
+    </p>`;
+  } else if (msgType === 5) {
+    summary = "卡号密码错误请检查";
+    content = `<p>
+    时间：${getCurrentTime()}; <br/>
+    用户：${userInfo.name}; <br/>
+    平台：${plat_name}; <br/>
+    单号：${order_number}; <br/>
+    影院：${app_name || orderInfo?.app_name}; <br/>
+    提示：${transferTip};<br/>
+    卡号：${cardNoByPwdError};<br/>
     </p>`;
   }
   const messageData = {
