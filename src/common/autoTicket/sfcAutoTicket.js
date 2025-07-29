@@ -1130,7 +1130,8 @@ class OrderAutoTicketQueue {
         offer_type: offerRule.offer_type,
         isV3App,
         card_id,
-        pay_password
+        pay_password,
+        orderInfo: this.order
       });
       this.logger.infoSave("订单购买返回", buyTicketRes);
       const buyRes = buyTicketRes?.buyRes;
@@ -1974,6 +1975,17 @@ class OrderAutoTicketQueue {
       return order_num;
     } catch (error) {
       this.logger.errorSave("创建订单异常", { error });
+      if (
+        formatErrInfo(error)?.includes("密码") &&
+        formatErrInfo(error)?.includes("错误")
+      ) {
+        sendWxPusherMessage({
+          orderInfo: this.order,
+          msgType: 5,
+          cardNoByPwdError: card_id,
+          failReason: "密码输入错误，请检查卡号密码是否正确"
+        });
+      }
       // 只有内部用户支持该功能，外部用户待券维护分开后再放开该功能
       if (
         error?.msg?.includes("请联系影院将使用该券的原订单后台退款后") &&
@@ -3124,7 +3136,8 @@ const buyTicket = async ({
   appFlag,
   isV3App,
   card_id,
-  pay_password
+  pay_password,
+  orderInfo
 }) => {
   let params = {
     city_id,
@@ -3151,6 +3164,17 @@ const buyTicket = async ({
     };
   } catch (error) {
     console.error("订单购买异常", error);
+    if (
+      formatErrInfo(error)?.includes("密码") &&
+      formatErrInfo(error)?.includes("错误")
+    ) {
+      sendWxPusherMessage({
+        orderInfo,
+        msgType: 5,
+        cardNoByPwdError: card_id,
+        failReason: "密码输入错误，请检查卡号密码是否正确"
+      });
+    }
     return {
       error,
       params
