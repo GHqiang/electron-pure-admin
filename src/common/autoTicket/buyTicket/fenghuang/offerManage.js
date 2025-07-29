@@ -360,7 +360,10 @@ class getFenghuangOfferPrice {
     offerRule
   }) {
     // 手续费
-    const shouxufei = (adjustedPrice * 100) / 10000;
+    let shouxufei = (adjustedPrice * 100) / 10000;
+    if (["shoutu", "mahua"].includes(this.plat_name)) {
+      shouxufei = 0;
+    }
     // 奖励费用
     const rewardPrice =
       rewards > 0 ? (adjustedPrice * 100 * rewards) / 10000 : 0;

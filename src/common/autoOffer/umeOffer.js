@@ -1061,8 +1061,10 @@ class getUmeOfferPrice {
       }
 
       // 手续费
-      const shouxufei = (price * 100) / 10000;
-
+      let shouxufei = (price * 100) / 10000;
+      if (["shoutu", "mahua"].includes(plat_name)) {
+        shouxufei = 0;
+      }
       // 奖励费用
       const rewardPrice = rewards > 0 ? (price * 100 * rewards) / 10000 : 0;
       // 卡券成本
