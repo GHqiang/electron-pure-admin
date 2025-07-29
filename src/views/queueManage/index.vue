@@ -207,6 +207,7 @@ import yangcongFetchOrder from "@/common/orderFetch/yangcongFetchOrder";
 import yinghuasuanFetchOrder from "@/common/orderFetch/yinghuasuanFetchOrder";
 import shangzhanFetchOrder from "@/common/orderFetch/shangzhanFetchOrder";
 import hahaFetchOrder from "@/common/orderFetch/hahaFetchOrder";
+import shoutuFetchOrder from "@/common/orderFetch/shoutuFetchOrder";
 
 import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
 import createTucketQueueFun from "@/common/autoTicket/comTicketHandle";
@@ -309,7 +310,8 @@ let platFetchOrderQueueObj = {
   yinghuasuan: yinghuasuanFetchOrder,
   shangzhan: shangzhanFetchOrder,
   haha: hahaFetchOrder,
-  sheng: shengFetchOrder
+  sheng: shengFetchOrder,
+  shoutu: shoutuFetchOrder
 };
 
 // 平台出票队列集合
