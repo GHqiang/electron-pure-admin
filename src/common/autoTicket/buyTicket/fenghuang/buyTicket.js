@@ -547,6 +547,13 @@ export default class BuyTicket {
       });
       let order_num = createOrderRes?.orderId;
       if (!order_num) {
+        // 从订单列表获取到目标订单
+        const orderInfo = await this.orderManage.getOrderInfoByOrderList({
+          session_id: this.currentSessionId
+        });
+        order_num = orderInfo?.orderId;
+      }
+      if (!order_num) {
         this.logger.info("创建订单失败，单个订单直接出票结束走转单");
         // 转单或换号处理
         const transparams = {

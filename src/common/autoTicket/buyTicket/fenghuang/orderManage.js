@@ -205,16 +205,47 @@ export default class OrderManage {
         });
       }
       if (formatErrInfo(error).includes("超时")) {
-        this.logger.infoSave("订单支付接口超时，可能已经成功，请检查");
+        this.logger.infoSave("订单支付接口超时，请关注该订单购买出票情况");
         sendWxPusherMessage({
           orderInfo: this.order,
-          transferTip: "订单支付接口超时，可能已经成功，请检查",
+          transferTip: "订单支付接口超时，请关注该订单购买出票情况",
           failReason: formatErrInfo(error)
         });
       }
     }
   }
 
+  // 从个人中心获取购买订单信息
+  async getOrderInfoByOrderList({ session_id }) {
+    try {
+      const params = {
+        category: "TICKET",
+        pageSize: 10,
+        pageNumber: 1,
+        pageInit: true,
+        fenghuangToken: session_id
+      };
+      this.logger.infoSave("获取订单列表参数", params);
+      const res = await this.appApi.queryOrderList(params);
+      this.logger.infoSave("获取订单列表返回", res);
+      let orderList = res.orders || [];
+      const { film_name, show_time, lockseat } = this.order;
+      let targerOrder = orderList.find(item => {
+        const { filmName, startTime, ticketSeats } = item.ticket;
+        return (
+          filmName === film_name &&
+          +new Date(show_time) == startTime &&
+          lockseat === ticketSeats.map(item => item.seatName).join(" ")
+        );
+      });
+      if (targerOrder) {
+        this.logger.infoSave("从订单列表获取到目标订单", { targerOrder });
+        return targerOrder;
+      }
+    } catch (error) {
+      this.logger.errorSave("从订单列表获取到目标订单异常", { error });
+    }
+  }
   // 获取取票码并上传
   async getQrcodeUploadByPlat({ order_num, session_id }) {
     try {

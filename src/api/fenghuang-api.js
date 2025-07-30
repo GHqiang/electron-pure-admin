@@ -88,6 +88,10 @@ const createApi = ({ app_name }) => {
     queryOrderDetail: {
       "2.0": "/fenghuang/mtop.alipic.lark.order.detail.get"
     },
+    // 获取订单列表
+    queryOrderList: {
+      "2.0": "/fenghuang/mtop.alipic.lark.order.orders.get"
+    },
     // 取消订单
     cancelOrder: {
       "2.0": "/fenghuang/mtop.alipic.lark.order.order.cancel"
