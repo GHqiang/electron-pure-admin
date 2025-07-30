@@ -1,13 +1,15 @@
 import axios from "axios";
 import { ElMessage } from "element-plus";
-import { GET_APP_LIST, GE_APP_INFO } from "@/common/constant";
+import { GE_APP_INFO } from "@/common/constant";
 import { APP_API_OBJ } from "@/common/index";
+// 统一日志类
+import Logger from "@/common/logger";
+let logger = new Logger({ logType: 3 });
+
 import {
-  logUpload,
-  getCurrentTime,
   getCinemaLoginInfoList,
   sendWxPusherMessage,
-  mockDelay
+  formatErrInfo
 } from "@/utils/utils";
 import { md5 } from "./crypto"; // 从原代码中提取的 MD5 函数（见下文）
 window.md51 = md5;
@@ -178,6 +180,11 @@ const createAxios = ({ app_name, timeout = 20 }) => {
     mobile = "",
     newSidObj = {};
 
+  logger.init({
+    plat_name: "",
+    app_name,
+    order_number: ""
+  });
   // 获取新的sid
   const getNewSid = async (retryCount = 0) => {
     let MAX_RETRIES = 2;
@@ -197,19 +204,15 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       // }
     } catch (error) {
       console.error("获取sid失败", error);
+      logger.errorSave("sid续期失败", {
+        app_name,
+        tid,
+        mobile,
+        error: formatErrInfo(error)
+      });
+      logger.logUpload();
       if (retryCount < MAX_RETRIES) {
-        // // 这三种都需要重新提取
-        // let errStatus = [407, 408, 410];
-        // if (
-        //   errStatus.includes(error.response?.status) ||
-        //   error?.message?.includes("timeout")
-        // ) {
-        //   console.log(
-        //     `[重试 ${retryCount + 1}/${MAX_RETRIES}] 代理IP失效，正在更新...`
-        //   );
-        //   await setNewProxyIp(); // 获取新IP
-        // }
-        // return getNewSid(retryCount + 1); // 递归重试
+        return getNewSid(retryCount + 1); // 递归重试
       }
     }
   };
