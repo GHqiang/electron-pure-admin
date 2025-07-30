@@ -58,7 +58,12 @@ export default class OrderManage {
 
   // 释放座位
   async releaseSeat(unlockSeatInfo) {
-    const { cinemaLinkId, lockOrderId, session_id } = unlockSeatInfo;
+    const {
+      cinemaLinkId,
+      lockOrderId,
+      session_id,
+      retryCount = 0
+    } = unlockSeatInfo;
     try {
       let params = {
         cinemaLinkId,
@@ -72,6 +77,17 @@ export default class OrderManage {
       return res;
     } catch (error) {
       this.logger.infoSave("释放座位异常", { error });
+      // 锁座流水号无效，重试2次
+      if (
+        formatErrInfo(error).includes("无效的锁座流水号") &&
+        unlockSeatInfo.retryCount < 2
+      ) {
+        this.logger.infoSave("无效的锁座流水号,准备重试");
+        return await this.releaseSeat({
+          ...unlockSeatInfo,
+          retryCount: retryCount + 1
+        });
+      }
       sendWxPusherMessage({
         orderInfo: this.order,
         transferTip: "释放座位失败，建议手动释放座位，以便后续订单正常出票",
