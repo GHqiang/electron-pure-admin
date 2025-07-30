@@ -479,13 +479,18 @@ export default class BuyTicket {
             promotionCardNo = promotionInfo.cardNo;
           }
           // 从支付信息中取相关信息
-          payInfo = paymentsList?.find(item => item.cardNo === promotionCardNo);
-          this.logger.infoSave("从优惠信息中取支付信息", {
-            promotionInfo,
-            payInfo
-          });
-        } else {
-          this.logger.infoSave("无优惠信息", {
+          if (promotionCardNo) {
+            payInfo = paymentsList?.find(
+              item => item.cardNo === promotionCardNo
+            );
+            this.logger.infoSave("从优惠信息中取支付信息", {
+              promotionInfo,
+              payInfo
+            });
+          }
+        }
+        if (!payInfo) {
+          this.logger.infoSave("从支付列表中取支付信息", {
             paymentsList,
             promotions
           });
