@@ -78,10 +78,7 @@ export default class OrderManage {
     } catch (error) {
       this.logger.infoSave("释放座位异常", { error });
       // 锁座流水号无效，重试2次
-      if (
-        formatErrInfo(error).includes("无效的锁座流水号") &&
-        unlockSeatInfo.retryCount < 2
-      ) {
+      if (formatErrInfo(error).includes("无效的锁座流水号") && retryCount < 2) {
         this.logger.infoSave("无效的锁座流水号,准备重试");
         return await this.releaseSeat({
           ...unlockSeatInfo,
