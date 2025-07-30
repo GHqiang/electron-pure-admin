@@ -57,13 +57,6 @@ export default class CardQuanManage {
         );
         this.logger.infoSave("可用卡过滤后的会员卡列表", { cardList });
       }
-      let quanParams = {
-        status: "USEFUL",
-        pageNumber: 1,
-        pageSize: 200, // 先取200，后面不够了再说
-        fenghuangToken: session_id
-      };
-      let quanList = await this.getQuanList(quanParams);
       // 2、按报价规则用卡用券
       const { offer_type, member_price, offer_rule_id } = offerRule;
       let is_auto_use_quan = false; // 是否灵活用券
@@ -105,9 +98,17 @@ export default class CardQuanManage {
           return await this.useCardHandle(useCardParms);
         }
       }
+      let quanList = [];
       if (offer_type == "1" || is_auto_use_quan) {
         let quanValueList = offerRule.quan_value.split(",");
         this.logger.infoSave("使用优惠券出票", { quanValueList });
+        let quanParams = {
+          status: "USEFUL",
+          pageNumber: 1,
+          pageSize: 200, // 先取200，后面不够了再说
+          fenghuangToken: session_id
+        };
+        quanList = await this.getQuanList(quanParams);
         // 读取券库存进行过滤重新设置quan_value为单个券类型
         if (quanValueList.length > 1) {
           const appQuanTypeList = await this.getQuanTypeListByAppMobile({
