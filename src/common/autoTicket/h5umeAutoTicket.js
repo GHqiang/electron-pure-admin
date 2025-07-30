@@ -1141,6 +1141,13 @@ class OrderAutoTicketQueue {
       //     "payMethod": "CARD"
       // },
       orderId = createOrderRes?.orderId;
+      if (!orderId) {
+        // 从订单列表获取到目标订单
+        const orderInfo = await this.getOrderInfoByOrderList({
+          session_id: this.currentParamsList[this.currentParamsInx].session_id
+        });
+        orderId = orderInfo?.orderId;
+      }
       let quan_fee = offerRule.quan_fee || 0;
       quan_fee = Number(quan_fee);
       let cardNo = card_id;
@@ -1317,6 +1324,35 @@ class OrderAutoTicketQueue {
       return { offerRule };
     }
   }
+
+  // 从个人中心获取购买订单信息
+  async getOrderInfoByOrderList({ session_id }) {
+    try {
+      const params = {
+        umeToken: session_id
+      };
+      this.logger.infoSave("获取订单列表参数", params);
+      const res = await this.umeApi.getOrderList(params);
+      this.logger.infoSave("获取订单列表返回", res);
+      let orderList = res?.bizValue || [];
+      const { film_name, show_time, lockseat } = this.order;
+      let targerOrder = orderList.find(item => {
+        const { filmName, showDate, seatNames } = item.ticketInfo;
+        return (
+          filmName === film_name &&
+          +new Date(show_time) == showDate &&
+          lockseat.replaceAll(" ", "") === seatNames.replaceAll("|", "")
+        );
+      });
+      if (targerOrder) {
+        this.logger.infoSave("从订单列表获取到目标订单", { targerOrder });
+        return targerOrder;
+      }
+    } catch (error) {
+      this.logger.errorSave("从订单列表获取到目标订单异常", { error });
+    }
+  }
+
   // 连续获取券
   async continuousGetQuan(data) {
     let { session_id, pageNo = 1, pageSize = 100, quanData = [] } = data;
@@ -2924,10 +2960,13 @@ const buyTicket = async ({
         failReason: "密码输入错误，请检查卡号密码是否正确"
       });
     }
-    if (formatErrInfo(error).includes("超时")) {
+    if (
+      formatErrInfo(error).includes("超时") ||
+      formatErrInfo(error).includes("timeout of")
+    ) {
       sendWxPusherMessage({
         orderInfo,
-        transferTip: "订单支付接口超时，可能已经成功，请检查",
+        transferTip: "订单支付接口超时，请关注该订单购买出票情况",
         failReason: formatErrInfo(error)
       });
     }
