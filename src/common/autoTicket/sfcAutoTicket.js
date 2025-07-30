@@ -3175,10 +3175,13 @@ const buyTicket = async ({
         failReason: "密码输入错误，请检查卡号密码是否正确"
       });
     }
-    if (formatErrInfo(error).includes("超时")) {
+    if (
+      formatErrInfo(error).includes("超时") ||
+      formatErrInfo(error).includes("timeout of")
+    ) {
       sendWxPusherMessage({
         orderInfo,
-        transferTip: "订单支付接口超时，可能已经成功，请检查",
+        transferTip: "订单支付接口超时，请关注该订单购买出票情况",
         failReason: formatErrInfo(error)
       });
     }

@@ -2847,10 +2847,13 @@ const buyTicket = async ({
     };
   } catch (error) {
     console.error("订单购买异常", error);
-    if (formatErrInfo(error).includes("超时")) {
+    if (
+      formatErrInfo(error).includes("超时") ||
+      formatErrInfo(error).includes("timeout of")
+    ) {
       sendWxPusherMessage({
         orderInfo,
-        transferTip: "订单支付接口超时，可能已经成功，请检查",
+        transferTip: "订单支付接口超时，请关注该订单购买出票情况",
         failReason: formatErrInfo(error)
       });
     }
