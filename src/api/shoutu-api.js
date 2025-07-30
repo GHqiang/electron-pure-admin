@@ -15,17 +15,20 @@ const submitOffer = params => axios.post("/yp-api/ticket/order/offer", params);
 const stayTicketingList = params =>
   axios.post("/seller-api/order/orderList?status=3", params);
 
+// 确认接货前置处理
+const confirmOrderPrevHandle = params =>
+  axios.post("/yp-api/ticket/order-list/set-bury-point", params);
 // 确认接货
 const confirmOrder = params =>
-  axios.post("/yp-api/ticket/order/confirm-issue", params);
+  axios.post("//yp-api/ticket/order/confirm-issue", params);
 
 // 获取是否需要解锁
 const getIsUnlock = params =>
-  axios.post("/seller-api/order/getLockSeat", params);
+  axios.post("/yp-api//ticket/order/get-lock-seat", params);
 
 // 解锁座位
 const unlockSeat = params =>
-  axios.post("/seller-api/order/getLockSeat", params);
+  axios.post("/yp-api/ticket/order/unlock-seat", params);
 
 // 提交前校验
 const checkOrder = params =>
@@ -41,6 +44,7 @@ const transferOrder = params =>
 export default {
   queryStayOfferList, // 查询待报价列表
   submitOffer, // 提交报价
+  confirmOrderPrevHandle, // 确认接货前置处理
   confirmOrder, // 确认接货
   getIsUnlock, // 获取是否需要解锁
   unlockSeat, // 解锁座位

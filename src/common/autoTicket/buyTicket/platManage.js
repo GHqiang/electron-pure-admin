@@ -28,12 +28,11 @@ export default class PlatCommon {
       if (plat_name === "lieren") {
         unlockRes = await this.unlockSeat({ plat_name, order_id: id, inx: 1 });
       } else if (plat_name === "sheng") {
-        const deliverRes = await this.startDeliver({
+        await this.startDeliver({
           plat_name,
           order_number,
           supplierCode
         });
-        this.logger.infoSave("确认接单返回", { deliverRes });
         await mockDelay(2);
         unlockRes = await this.unlockSeat({
           plat_name,
@@ -48,8 +47,7 @@ export default class PlatCommon {
       } else if (plat_name === "yangcong") {
         unlockRes = await this.unlockSeat({ plat_name, order_id: id, inx: 1 });
       } else if (plat_name === "haha") {
-        const deliverRes = await this.startDeliver({ plat_name, bid });
-        this.logger.infoSave("确认接单返回", { deliverRes });
+        await this.startDeliver({ plat_name, bid });
         await mockDelay(2);
         unlockRes = await this.unlockSeat({
           plat_name,
@@ -69,8 +67,7 @@ export default class PlatCommon {
           };
         }
       } else if (plat_name === "shoutu") {
-        const deliverRes = await this.startDeliver({ orderUUID: id });
-        this.logger.infoSave("确认接单返回", { deliverRes });
+        await this.startDeliver({ orderUUID: id });
         await mockDelay(1);
         unlockRes = await this.unlockSeat({
           plat_name,
@@ -116,7 +113,6 @@ export default class PlatCommon {
     supplierCode,
     plat_name,
     bid,
-    quote_id,
     orderUUID
   }) {
     try {
@@ -130,18 +126,19 @@ export default class PlatCommon {
         params = {
           bid
         };
-      } else if (plat_name === "yinghuasuan") {
-        params = {
-          quote_id
-        };
       } else if (plat_name === "shoutu") {
         params = {
           orderUUID
         };
+        // 确认接单前置处理
+        await PLAT_API_OBJ[plat_name].confirmOrderPrevHandle({
+          orderUUID,
+          type: 0
+        });
       }
-      this.logger.info("确认接单参数", params);
+      this.logger.infoSave("确认接单参数", params);
       const res = await PLAT_API_OBJ[plat_name].confirmOrder(params);
-      this.logger.info("确认接单返回", res);
+      this.logger.infoSave("确认接单返回", res);
       return res;
     } catch (error) {
       this.logger.warn("确认接单异常", error);
@@ -192,10 +189,7 @@ export default class PlatCommon {
           orderUUID: order_id
         });
         this.logger.infoSave("获取是否需要解锁返回", result);
-        return {
-          msg: "订单无需解锁"
-        };
-        if (result.code === 0) {
+        if (!result?.data?.isTppLock) {
           return {
             msg: "订单无需解锁"
           };
@@ -210,8 +204,12 @@ export default class PlatCommon {
       this.logger.infoSave(`第${inx}次解锁座位成功`, res);
       return res;
     } catch (error) {
-      // 芒果偶尔会这样
+      // 守兔会有这种情况
+      if (error?.msg.includes("暂无锁座记录")) {
+        return { msg: "无需解锁" };
+      }
       if ((error?.msg || error?.message || "").includes("已经解锁")) {
+        // 芒果偶尔会这样
         this.logger.infoSave(`第${inx}次解锁座位发现已解锁`, error);
         return { msg: "已解锁" };
       }
@@ -461,32 +459,34 @@ export default class PlatCommon {
       //   orderUUID: order_id
       // });
       params = {
-        orderUUID: order_id,
-        orderTicketCodeList: [
-          {
-            code: qrcode,
-            // realSeat: "6排11座(列),6排10座(列),6排9座(列)",
-            realSeat: lockseat
-              .split(" ")
-              .map(item => item + "(列)")
-              .join(","),
-            splitType: 0,
-            // realSeatIndexList: [
-            //   { column: "11", row: "6" },
-            //   { column: "10", row: "6" },
-            //   { column: "9", row: "6" }
-            // ],
-            realSeatIndexList: lockseat.split(" ").map(item => ({
-              column: item.split("排")[1].split("座")[0],
-              row: item.split("排")[0]
-            })),
-            id: 0
-          }
-        ],
-        realSeat: "",
-        deleteImageStr: "",
-        userUUID: window.localStorage.getItem("shoutuPlatUserUUID"),
-        isChangeSeat: 0
+        json: JSON.stringify({
+          orderUUID: order_id,
+          orderTicketCodeList: [
+            {
+              code: qrcode,
+              // realSeat: "6排11座(列),6排10座(列),6排9座(列)",
+              realSeat: lockseat
+                .split(" ")
+                .map(item => item + "(列)")
+                .join(","),
+              splitType: 0,
+              // realSeatIndexList: [
+              //   { column: "11", row: "6" },
+              //   { column: "10", row: "6" },
+              //   { column: "9", row: "6" }
+              // ],
+              realSeatIndexList: lockseat.split(" ").map(item => ({
+                column: item.split("排")[1].split("座")[0],
+                row: item.split("排")[0]
+              })),
+              id: 0
+            }
+          ],
+          realSeat: "",
+          deleteImageStr: "",
+          userUUID: window.localStorage.getItem("shoutuPlatUserUUID"),
+          isChangeSeat: 0
+        })
       };
     }
     try {
