@@ -171,8 +171,7 @@ export default class OrderManage {
       payments,
       phoneNumber,
       cardNum,
-      session_id,
-      isTimeoutRetry = 1 // 默认超时重试
+      session_id
     } = data;
     try {
       let outerId = randomNumByLength(16);
@@ -205,21 +204,13 @@ export default class OrderManage {
           failReason: "密码输入错误，请检查卡号密码是否正确"
         });
       }
-      if (eformatErrInfo(error).includes("超时") && isTimeoutRetry === 1) {
-        this.logger.infoSave("创建订单接口超时，延迟1秒后重试");
-        await mockDelay(1);
-        try {
-          const createOrderRes = await this.createOrder({
-            ...data,
-            isTimeoutRetry: 0
-          });
-          if (createOrderRes) {
-            this.logger.infoSave("创建订单接口重试成功", createOrderRes);
-            return createOrderRes;
-          }
-        } catch (error) {
-          this.logger.infoSave("创建订单接口重试失败", formatErrInfo(error));
-        }
+      if (formatErrInfo(error).includes("超时")) {
+        this.logger.infoSave("订单支付接口超时，可能已经成功，请检查");
+        sendWxPusherMessage({
+          orderInfo: this.order,
+          transferTip: "订单支付接口超时，可能已经成功，请检查",
+          failReason: formatErrInfo(error)
+        });
       }
     }
   }

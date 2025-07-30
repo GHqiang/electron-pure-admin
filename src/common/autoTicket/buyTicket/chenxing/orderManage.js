@@ -286,6 +286,14 @@ export default class OrderManage {
           failReason: "密码输入错误，请检查卡号密码是否正确"
         });
       }
+      if (formatErrInfo(error).includes("超时")) {
+        this.logger.infoSave("订单支付接口超时，可能已经成功，请检查");
+        sendWxPusherMessage({
+          orderInfo: this.order,
+          transferTip: "订单支付接口超时，可能已经成功，请检查",
+          failReason: formatErrInfo(error)
+        });
+      }
       return {
         error
       };

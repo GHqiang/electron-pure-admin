@@ -1279,7 +1279,8 @@ class OrderAutoTicketQueue {
         orderCode,
         orderDate,
         appFlag,
-        session_id: this.currentParamsList[this.currentParamsInx].session_id
+        session_id: this.currentParamsList[this.currentParamsInx].session_id,
+        orderInfo: this.order
       });
       this.logger.infoSave("订单购买返回", { buyTicketRes });
       const buyRes = buyTicketRes?.buyRes;
@@ -2782,7 +2783,8 @@ const buyTicket = async ({
   cardNo,
   orderHeaderId,
   appFlag,
-  session_id
+  session_id,
+  orderInfo
 }) => {
   let params = {
     params: {
@@ -2845,6 +2847,13 @@ const buyTicket = async ({
     };
   } catch (error) {
     console.error("订单购买异常", error);
+    if (formatErrInfo(error).includes("超时")) {
+      sendWxPusherMessage({
+        orderInfo,
+        transferTip: "订单支付接口超时，可能已经成功，请检查",
+        failReason: formatErrInfo(error)
+      });
+    }
     return {
       error,
       params
