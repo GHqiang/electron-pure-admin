@@ -458,9 +458,9 @@ export default class BuyTicket {
           payments.push({
             paymentType: payInfo.paymentType,
             payAmount: 0,
-            payConfigId: payInfo.payConfigId,
+            payConfigId: payInfo.payConfigId
             // payCode: "0b3Oq1ll2VFCYf4Gznnl2FQ3SI1Oq1lP" // 其逻辑为wx.login拿到临时登录凭证
-            payCode: randomNumByLength(32) // 生成32位随机字符串作为支付码
+            // payCode: randomNumByLength(32) // 生成32位随机字符串作为支付码
           });
         }
       } else if (offer_type === "2" && canUseCardList?.length) {
