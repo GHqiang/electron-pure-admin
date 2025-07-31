@@ -15,6 +15,12 @@ const submitOffer = params => axios.post("/yp-api/ticket/order/offer", params);
 const stayTicketingList = params =>
   axios.post("/seller-api/order/orderList?status=3", params);
 
+const findWaitRange = params =>
+  axios.post("//yp-api/ticket/config/find-wait-range", params);
+
+const findWaitNum = params =>
+  axios.post("//yp-api/ticket/author/find-wait-num", params);
+
 // 确认接货前置处理
 const confirmOrderPrevHandle = params =>
   axios.post("/yp-api/ticket/order-list/set-bury-point", params);
@@ -51,5 +57,7 @@ export default {
   checkOrder, // 提交前校验
   submitTicketCode, // 提交取票码
   transferOrder, // 转单
+  findWaitRange,
+  findWaitNum,
   stayTicketingList // 查询中签订单
 };

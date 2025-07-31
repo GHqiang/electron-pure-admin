@@ -240,12 +240,26 @@ class OrderAutoFetchQueue {
     try {
       let params = {
         page: 1,
-        pagesize: 30,
-        isImportantUser: 0
+        appealStatus: "",
+        endInitPrice: "",
+        interceptStatus: "",
+        isAllowChangeSeats: "",
+        isImportUser: "",
+        isImportantUser: 0,
+        orderType: "",
+        page: 1,
+        pagesize: 20,
+        sortField: "",
+        sortType: "",
+        startInitPrice: ""
       };
       // console.log(conPrefix + "获取守兔待出票订单列表参数", params);
       const res = await shoutuApi.stayTicketingList(params);
       let list = res?.data?.order_list || [];
+      try {
+        shoutuApi.findWaitRange({});
+        shoutuApi.findWaitNum({});
+      } catch (error) {}
       if (list.length) {
         list = list.filter(
           item =>
