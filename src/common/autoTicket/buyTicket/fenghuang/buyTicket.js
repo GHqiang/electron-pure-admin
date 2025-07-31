@@ -501,6 +501,15 @@ export default class BuyTicket {
             canUseCardNoList.includes(item.cardNo)
           );
         }
+        if (!payInfo && canUseCardList?.length) {
+          this.logger.infoSave("从可用卡列表中取支付信息", {
+            canUseCardList
+          });
+          payInfo = {
+            cardNo: canUseCardList?.[0]?.cardNo,
+            paymentType: "MEMBER_CARD"
+          };
+        }
         if (payInfo) {
           card_id = payInfo?.cardNo;
           cardNum = payInfo?.cardNo;
