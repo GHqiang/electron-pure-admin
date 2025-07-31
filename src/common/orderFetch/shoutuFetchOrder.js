@@ -1,7 +1,8 @@
 // sheng平台获取订单队列
 import shoutuApi from "@/api/shoutu-api";
 import svApi from "@/api/sv-api";
-
+// 统一日志类
+import Logger from "@/common/logger";
 import {
   getCinemaFlag,
   logUpload,
@@ -23,6 +24,12 @@ class OrderAutoFetchQueue {
   constructor() {
     this.isRunning = false; // 初始化时队列未运行
     this.orderRecord = []; // 订单记录
+    this.logger = new Logger({ logType: 3 });
+    this.logger.init({
+      plat_name: "shoutu",
+      app_name: "",
+      order_number: ""
+    });
   }
 
   // 启动队列（fetchDelay获取订单列表间隔，processDelay处理订单间隔）
@@ -43,7 +50,14 @@ class OrderAutoFetchQueue {
   // 获取订单
   async fetchOrders() {
     try {
+      if (!this.prevRecordTime) {
+        this.prevRecordTime = +new Date();
+      }
       let stayList = await this.orderFetch();
+      if (+new Date() - this.prevRecordTime > 1000 * 60 * 1) {
+        this.logger.infoSave("守兔获取待出票订单返回", { stayList });
+        this.prevRecordTime = +new Date();
+      }
       if (!stayList?.length) return;
       let sfcStayOfferlist = stayList
         .map(item => {
