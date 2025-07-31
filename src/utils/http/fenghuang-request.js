@@ -193,6 +193,10 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       const sidRes = await APP_API_OBJ[app_name].authRefresh({
         refreshToken: tid
       });
+      logger.infoSave("sid续期返回", {
+        sidRes
+      });
+      logger.logUpload();
       // console.log("sidRes", sidRes);
       return sidRes;
       // let sid = sidRes?.bizValue?.sid;
@@ -355,6 +359,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           isRetryCount &&
           !config.url.includes("authn.refresh")
         ) {
+          logger.errorSave("Session过期准备续期", { sid, tid });
           config.retryCount = (config.retryCount || 0) + 1;
           const sidRes = await getNewSid(tid);
           console.warn("sid过期获取sidRes结果", sidRes);
