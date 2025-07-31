@@ -17,6 +17,9 @@ const ORDER_FORM = {
   shoutu: "守兔"
 };
 
+// 无手续费平台
+const NO_FEE_PLAT_LIST = ["yinghuasuan", "haha", "shoutu", "mahua"];
+
 // 测试新平台列表
 const TEST_NEW_PLAT_LIST = ["shangzhan"];
 
@@ -274,6 +277,7 @@ const SFC_CINEMA_NAME = [
 export {
   ORDER_FORM,
   TICKET_STATUS,
+  NO_FEE_PLAT_LIST,
   TEST_NEW_PLAT_LIST,
   sfcV3AppList,
   SFC_APP_VER_OBJ,

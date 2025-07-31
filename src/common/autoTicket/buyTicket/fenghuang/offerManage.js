@@ -9,7 +9,11 @@ import {
   getCinemaLoginInfoList
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
-import { GROUP_LIST, TEST_NEW_PLAT_LIST } from "@/common/constant.js";
+import {
+  GROUP_LIST,
+  TEST_NEW_PLAT_LIST,
+  NO_FEE_PLAT_LIST
+} from "@/common/constant.js";
 import { platTokens } from "@/store/platTokens";
 const {
   userInfo: { rule, user_id }
@@ -361,7 +365,7 @@ class getFenghuangOfferPrice {
   }) {
     // 手续费
     let shouxufei = (adjustedPrice * 100) / 10000;
-    if (["shoutu", "mahua"].includes(this.plat_name)) {
+    if (NO_FEE_PLAT_LIST.includes(this.plat_name)) {
       shouxufei = 0;
     }
     // 奖励费用

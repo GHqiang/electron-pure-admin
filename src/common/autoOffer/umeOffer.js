@@ -21,7 +21,8 @@ import {
   GET_APP_LIST,
   GET_UME_LIST,
   GROUP_LIST,
-  TEST_NEW_PLAT_LIST
+  TEST_NEW_PLAT_LIST,
+  NO_FEE_PLAT_LIST
 } from "@/common/constant.js";
 // 获取最终报价信息实体类
 import getOfferPriceFun from "./commonOfferHandle.js";
@@ -1062,7 +1063,7 @@ class getUmeOfferPrice {
 
       // 手续费
       let shouxufei = (price * 100) / 10000;
-      if (["shoutu", "mahua"].includes(plat_name)) {
+      if (NO_FEE_PLAT_LIST.includes(plat_name)) {
         shouxufei = 0;
       }
       // 奖励费用

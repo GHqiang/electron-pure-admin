@@ -17,7 +17,11 @@ import {
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
-import { GET_APP_LIST, TEST_NEW_PLAT_LIST } from "@/common/constant.js";
+import {
+  GET_APP_LIST,
+  TEST_NEW_PLAT_LIST,
+  NO_FEE_PLAT_LIST
+} from "@/common/constant.js";
 import lierenApi from "@/api/lieren-api";
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
@@ -682,7 +686,7 @@ class getLmaOfferPrice {
 
       // 手续费
       let shouxufei = (price * 100) / 10000;
-      if (["shoutu", "mahua"].includes(plat_name)) {
+      if (NO_FEE_PLAT_LIST.includes(plat_name)) {
         shouxufei = 0;
       }
 
