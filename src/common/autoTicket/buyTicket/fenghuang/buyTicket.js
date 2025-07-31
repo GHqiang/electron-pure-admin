@@ -548,6 +548,7 @@ export default class BuyTicket {
       let order_num = createOrderRes?.orderId;
       if (!order_num) {
         // 从订单列表获取到目标订单
+        await mockDelay(3);
         const orderInfo = await this.orderManage.getOrderInfoByOrderList({
           session_id: this.currentSessionId
         });

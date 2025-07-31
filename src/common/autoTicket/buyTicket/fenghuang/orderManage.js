@@ -237,7 +237,7 @@ export default class OrderManage {
       let orderList = res.orders || [];
       const { film_name, show_time, lockseat } = this.order;
       let targerOrder = orderList.find(item => {
-        const { filmName, startTime, ticketSeats } = item.ticket;
+        const { filmName, startTime, ticketSeats } = item.ticket || {};
         return (
           filmName === film_name &&
           +new Date(show_time) == startTime &&

@@ -1130,7 +1130,8 @@ class OrderAutoTicketQueue {
         tickets,
         totalPrice: total_price || areaTotalPrice,
         payAmount,
-        payments
+        payments,
+        card_id
       });
       // 用券补钱场景接口返回
       // "bizValue": {
@@ -1143,6 +1144,7 @@ class OrderAutoTicketQueue {
       orderId = createOrderRes?.orderId;
       if (!orderId) {
         // 从订单列表获取到目标订单
+        await mockDelay(3);
         const orderInfo = await this.getOrderInfoByOrderList({
           session_id: this.currentParamsList[this.currentParamsInx].session_id
         });
@@ -1337,7 +1339,7 @@ class OrderAutoTicketQueue {
       let orderList = res?.bizValue || [];
       const { film_name, show_time, lockseat } = this.order;
       let targerOrder = orderList.find(item => {
-        const { filmName, showDate, seatNames } = item.ticketInfo;
+        const { filmName, showDate, seatNames } = item.ticketInfo || {};
         return (
           filmName === film_name &&
           +new Date(show_time) == showDate &&
@@ -1513,7 +1515,7 @@ class OrderAutoTicketQueue {
       totalPrice,
       payAmount,
       payments,
-
+      card_id,
       isTimeoutRetry = 1 // 默认超时重试
     } = data;
     const { session_id, mobile } =
@@ -1538,7 +1540,12 @@ class OrderAutoTicketQueue {
       return createOrderRes;
     } catch (error) {
       this.logger.errorSave("创建订单异常", { error });
-      if (error?.msg?.includes("超时") && isTimeoutRetry === 1) {
+      // 用卡时才重试，用券该接口就直接支付了
+      if (
+        formatErrInfo(error).includes("超时") &&
+        isTimeoutRetry === 1 &&
+        card_id
+      ) {
         this.logger.infoSave("创建订单接口超时，延迟1秒后重试");
         await mockDelay(1);
         try {

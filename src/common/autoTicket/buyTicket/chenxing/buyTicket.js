@@ -428,6 +428,12 @@ export default class BuyTicket {
         order_num = createOrderRes?.businessSystemFlowNumber;
       }
       if (!order_num) {
+        // // 从订单列表获取到目标订单
+        // await mockDelay(3);
+        // const orderInfo = await this.orderManage.getOrderInfoByOrderList({
+        //   session_id: this.currentSessionId
+        // });
+        // order_num = orderInfo?.orderId;
         this.logger.info("创建订单失败，单个订单直接出票结束走转单");
         // 转单或换号处理
         const transparams = {
