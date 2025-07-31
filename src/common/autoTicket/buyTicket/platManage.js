@@ -131,17 +131,18 @@ export default class PlatCommon {
           orderUUID
         };
         // 确认接单前置处理
-        await PLAT_API_OBJ[plat_name].confirmOrderPrevHandle({
+        const prevRes = await PLAT_API_OBJ[plat_name].confirmOrderPrevHandle({
           orderUUID,
           type: 0
         });
+        this.logger.infoSave("确认接单前置处理", { prevRes });
       }
       this.logger.infoSave("确认接单参数", params);
       const res = await PLAT_API_OBJ[plat_name].confirmOrder(params);
       this.logger.infoSave("确认接单返回", res);
       return res;
     } catch (error) {
-      this.logger.warn("确认接单异常", error);
+      this.logger.errorSave("确认接单异常", { error });
     }
   }
 
