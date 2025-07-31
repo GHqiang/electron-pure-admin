@@ -205,7 +205,7 @@ export default class PlatCommon {
       return res;
     } catch (error) {
       // 守兔会有这种情况
-      if (error?.msg.includes("暂无锁座记录")) {
+      if (error?.msg?.includes("暂无锁座记录")) {
         return { msg: "无需解锁" };
       }
       if ((error?.msg || error?.message || "").includes("已经解锁")) {
