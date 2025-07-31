@@ -87,7 +87,8 @@ export default class Logger {
         .filter(item => item.level === "error")
         .reverse()?.[0];
       let err_msg = errInfoObj?.des || "";
-      let err_info = formatErrInfo(errInfoObj?.info) || "";
+      let err_info =
+        formatErrInfo(errInfoObj?.info?.error || errInfoObj?.info) || "";
       return { err_msg, err_info };
     } catch (error) {
       return { err_msg: "", err_info: "" };
