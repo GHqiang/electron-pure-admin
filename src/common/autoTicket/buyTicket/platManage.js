@@ -78,7 +78,7 @@ export default class PlatCommon {
       this.logger.infoSave("订单首次解锁座位完成");
       return unlockRes;
     } catch (error) {
-      this.logger.error("解锁座位失败准备试错", error);
+      this.logger.infoSave("解锁座位失败准备试错", { error });
       // 试错3次，间隔3秒
       let params = {
         order_id: id,
@@ -210,7 +210,7 @@ export default class PlatCommon {
       }
       if ((error?.msg || error?.message || "").includes("已经解锁")) {
         // 芒果偶尔会这样
-        this.logger.infoSave(`第${inx}次解锁座位发现已解锁`, error);
+        this.logger.infoSave(`第${inx}次解锁座位发现已解锁`, { error });
         return { msg: "已解锁" };
       }
       // 芒果座位会未锁从而无需解锁
@@ -219,15 +219,15 @@ export default class PlatCommon {
           "该座位未锁座成功，故无法解锁"
         )
       ) {
-        this.logger.infoSave(`第${inx}次解锁座位发现座位无需解锁`, error);
+        this.logger.infoSave(`第${inx}次解锁座位发现座位无需解锁`, { error });
         return { msg: "无需解锁" };
       }
       // 哈哈偶尔会这样
       if (error?.msg === "当前订单座位没有被锁") {
-        this.logger.infoSave(`第${inx}次解锁座位发现座位没有被锁`, error);
+        this.logger.infoSave(`第${inx}次解锁座位发现座位没有被锁`, { error });
         return { msg: "座位没有被锁" };
       }
-      this.logger.errorSave(`第${inx}次解锁座位失败`, error);
+      this.logger.errorSave(`第${inx}次解锁座位失败`, { error });
       return Promise.reject(error);
     }
   }
