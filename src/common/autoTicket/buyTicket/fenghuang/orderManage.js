@@ -71,6 +71,9 @@ export default class OrderManage {
         pageInit: false,
         fenghuangToken: session_id
       };
+      if (retryCount) {
+        delete params.pageInit;
+      }
       this.logger.infoSave("释放座位参数", params);
       const res = await this.appApi.releaseSeat(params);
       this.logger.infoSave("释放座位成功", { res });
