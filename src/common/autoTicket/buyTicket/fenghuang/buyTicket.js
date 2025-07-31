@@ -459,7 +459,7 @@ export default class BuyTicket {
             paymentType: payInfo.paymentType,
             payAmount: 0,
             payConfigId: payInfo.payConfigId,
-            // payCode: "0b3Oq1ll2VFCYf4Gznnl2FQ3SI1Oq1lP" // 需要破解生成逻辑
+            // payCode: "0b3Oq1ll2VFCYf4Gznnl2FQ3SI1Oq1lP" // 其逻辑为wx.login拿到临时登录凭证
             payCode: randomNumByLength(32) // 生成32位随机字符串作为支付码
           });
         }

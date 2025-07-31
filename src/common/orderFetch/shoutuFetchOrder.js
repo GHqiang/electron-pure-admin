@@ -9,7 +9,8 @@ import {
   getCurrentTime,
   formatTimeOfTime,
   sendWxPusherMessage,
-  mockDelay
+  mockDelay,
+  formatErrInfo
 } from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
 // 平台toke列表
@@ -24,12 +25,6 @@ class OrderAutoFetchQueue {
   constructor() {
     this.isRunning = false; // 初始化时队列未运行
     this.orderRecord = []; // 订单记录
-    this.logger = new Logger({ logType: 3 });
-    this.logger.init({
-      plat_name: "shoutu",
-      app_name: "",
-      order_number: ""
-    });
   }
 
   // 启动队列（fetchDelay获取订单列表间隔，processDelay处理订单间隔）
@@ -53,9 +48,16 @@ class OrderAutoFetchQueue {
       if (!this.prevRecordTime) {
         this.prevRecordTime = +new Date();
       }
-      let stayList = await this.orderFetch();
+      let logger = new Logger({ logType: 3 });
+      logger.init({
+        plat_name: "shoutu",
+        app_name: "",
+        order_number: ""
+      });
+      let stayList = await this.orderFetch(logger);
       if (+new Date() - this.prevRecordTime > 1000 * 60 * 1) {
-        this.logger.infoSave("守兔获取待出票订单返回", { stayList });
+        logger.infoSave("守兔获取待出票订单返回", { stayList });
+        logger.logUpload();
         this.prevRecordTime = +new Date();
       }
       if (!stayList?.length) return;
@@ -234,7 +236,7 @@ class OrderAutoFetchQueue {
   }
 
   // 获取待出票订单列表
-  async orderFetch() {
+  async orderFetch(logger) {
     try {
       let params = {
         page: 1,
@@ -243,7 +245,7 @@ class OrderAutoFetchQueue {
       };
       // console.log(conPrefix + "获取守兔待出票订单列表参数", params);
       const res = await shoutuApi.stayTicketingList(params);
-      let list = res?.data.order_list || [];
+      let list = res?.data?.order_list || [];
       if (list.length) {
         list = list.filter(
           item =>
@@ -260,6 +262,7 @@ class OrderAutoFetchQueue {
       console.log(conPrefix + "获取守兔待出票列表返回", list);
       return list;
     } catch (error) {
+      logger.errorSave("获取守兔待出票列表异常", formatErrInfo(error));
       console.error("获取守兔待出票列表异常", error);
       return [];
     }
