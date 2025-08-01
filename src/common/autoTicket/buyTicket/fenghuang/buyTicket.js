@@ -532,7 +532,25 @@ export default class BuyTicket {
           return await this.transferOrChangePhone(transparams, buyTicketInfo);
         }
       }
-
+      // 用券接口传参
+      // const useQuanParams = {
+      //   seats: '[{"seatCode":"00000039405-6-12","areaId":"0"}]',
+      //   promotions:
+      //     '[{"promotionType":"COUPON","promoCode":"3J6W0HUSMY","discountedAmount":3390,"productType":"TICKET"}]',
+      //   totalOriginalPrice: 3390,
+      //   totalPayAmount: 0,
+      //   cinemaLinkId: "16480",
+      //   phoneNumber: "15237761435",
+      //   scheduleId: "1000001003189829",
+      //   scheduleKey: "D6AA6334484204A4C36183F5C088D7A6",
+      //   lockOrderId: "2922016480804030269",
+      //   payments:
+      //     '[{"paymentType":"WECHAT_MINI_PROGRAM","payAmount":0,"payConfigId":25782,"payCode":"0f3Z08ll2zxM1g4HkFkl2yRWuH3Z08lb"}]',
+      //   closeOuterId: "ewob7heljfkww3nx",
+      //   outerId: "ewob7heljfkww3nx",
+      //   leaseCode: "sdwlyc",
+      //   channelCode: "SDWLYC_MP_WX_PRO"
+      // };
       const createOrderRes = await this.orderManage.createOrder({
         cinemaLinkId,
         cardNum,
