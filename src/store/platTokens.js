@@ -93,11 +93,11 @@ export const platTokens = defineStore("platTokens", {
     },
     // 设置自身平台token
     setSelfPlatToken(data) {
-      // data.user.phone = "13073792313";
       console.warn("设置自身平台token", data);
       this.selfToken = data.token;
       // 测试使用
-      // data.user.user_id = 10;
+      // data.user.user_id = 9;
+      // data.user.phone = "13073792313";
       this.userInfo = data.user;
       window.localStorage.setItem("selfToken", data.token);
       window.localStorage.setItem("userInfo", JSON.stringify(data.user));

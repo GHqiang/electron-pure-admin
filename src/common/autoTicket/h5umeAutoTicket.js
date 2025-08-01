@@ -1365,9 +1365,17 @@ class OrderAutoTicketQueue {
       umeToken: session_id
     };
     try {
+      this.logger.infoSave("连续获取券参数", params);
       const res = await this.umeApi.getQuanList(params);
-      console.log("获取优惠券列表返回", res);
       let quanList = res.bizValue || [];
+
+      this.logger.infoSave("连续获取券返回", {
+        quanList: quanList.map(item => ({
+          name: item.name,
+          couponCode: item.couponCode
+        }))
+      });
+
       quanData.push(...quanList);
       if (pageSize > quanList.length) {
         return quanData;
@@ -2157,7 +2165,11 @@ class OrderAutoTicketQueue {
           item => couponInfoSpecial(item.name) === couponInfoSpecial(quan_flag)
         );
         if (!targetQuanList?.length) {
-          this.logger.infoSave("未找到券标识对应的券，准备从个人中心获取");
+          this.logger.infoSave("未找到券标识对应的券，准备从个人中心获取", {
+            session_id: currentParams.session_id,
+            quan_flag,
+            black_quans
+          });
           const quanListByPerCenter = await this.continuousGetQuan({
             session_id: currentParams.session_id
           });
@@ -2166,7 +2178,9 @@ class OrderAutoTicketQueue {
               couponInfoSpecial(item.name) === couponInfoSpecial(quan_flag)
           );
           this.logger.infoSave("从个人中心获取到的目标券", {
-            targetQuanList: targetQuanList.slice(0, 8)
+            targetQuanList: JSON.parse(
+              JSON.stringify(targetQuanList.slice(0, 8))
+            )
           });
         }
         // 增加已用完过滤，防止核销延迟导致用券失败
@@ -2221,9 +2235,7 @@ class OrderAutoTicketQueue {
           return {
             couponType: item.couponType,
             concreteProductType: item.concreteProductType,
-            compensatePrice: item.compensatePrice,
             couponCode: item.couponCode,
-            couponName: item.couponName,
             discountAmount: item.discountValue
           };
         });
