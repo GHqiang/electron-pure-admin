@@ -354,31 +354,39 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           return Promise.reject(`${app_label}登录失效`);
         }
         let isRetryCount = !config.retryCount || config.retryCount < 3;
-        if (
-          ["FAIL_SYS_SESSION_EXPIRED::Session过期"].includes(errReason) &&
-          isRetryCount &&
-          !config.url.includes("authn.refresh")
-        ) {
-          // logger.errorSave("Session过期准备续期", { sid, tid });
-          config.retryCount = (config.retryCount || 0) + 1;
-          const sidRes = await getNewSid(tid);
-          console.warn("sid过期获取sidRes结果", sidRes);
-          if (sidRes?.accessToken) {
-            // 更新对应手机号的token
-            if (config.mobile) {
-              sid = sidRes.accessToken;
-              newSidObj[config.mobile] = sidRes.accessToken;
+        if (["FAIL_SYS_SESSION_EXPIRED::Session过期"].includes(errReason)) {
+          if (isRetryCount && !config.url.includes("authn.refresh")) {
+            // logger.errorSave("Session过期准备续期", { sid, tid });
+            config.retryCount = (config.retryCount || 0) + 1;
+            const sidRes = await getNewSid(tid);
+            console.warn("sid过期获取sidRes结果", sidRes);
+            if (sidRes?.accessToken) {
+              // 更新对应手机号的token
+              if (config.mobile) {
+                sid = sidRes.accessToken;
+                newSidObj[config.mobile] = sidRes.accessToken;
+              }
+              tid = sidRes.refreshToken;
+              // 重新生成接口url(主要是sign签名和参数有关)
+              config.url = config.originalUrl.split("/1.0/")[0];
+              config.url = getUrl(tokenC, sid, config.url, config.originalData);
+              config.url = IS_DEV
+                ? config.url.replace("fenghuang", "svpi/fenghuang-ser")
+                : "http://47.113.191.173:3000" +
+                  "/fenghuang-ser" +
+                  config.url.slice(10);
+              return instance(config);
+            } else {
+              logger.errorSave("sid续期返回为空", { sidRes });
             }
-            tid = sidRes.refreshToken;
-            // 重新生成接口url(主要是sign签名和参数有关)
-            config.url = config.originalUrl.split("/1.0/")[0];
-            config.url = getUrl(tokenC, sid, config.url, config.originalData);
-            config.url = IS_DEV
-              ? config.url.replace("fenghuang", "svpi/fenghuang-ser")
-              : "http://47.113.191.173:3000" +
-                "/fenghuang-ser" +
-                config.url.slice(10);
-            return instance(config);
+          } else {
+            logger.errorSave("Session过期无法续期", {
+              retryCount: config.retryCount,
+              url: config.url,
+              sid,
+              tid
+            });
+            logger.logUpload();
           }
         }
         if (

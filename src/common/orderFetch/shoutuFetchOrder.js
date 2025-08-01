@@ -55,46 +55,44 @@ class OrderAutoFetchQueue {
         order_number: ""
       });
       let stayList = await this.orderFetch(logger);
-      if (+new Date() - this.prevRecordTime > 1000 * 60 * 1) {
-        logger.infoSave("守兔获取待出票订单返回", { stayList });
-        logger.logUpload();
-        this.prevRecordTime = +new Date();
-      }
+      logger.infoSave("守兔获取待出票订单返回", { stayList });
+      logger.logUpload();
       if (!stayList?.length) return;
-      let sfcStayOfferlist = stayList
-        .map(item => {
-          const {
-            orderUUID: id,
-            unitPrice: supplier_end_price,
-            city: city_name,
-            seat: lockseat,
-            orderNum: ticket_num,
-            cinemaName: cinema_name,
-            hallName: hall_name,
-            movieName: film_name,
-            startTime,
-            orderId: order_number,
-            standardId: cinema_code
-          } = item;
-          return {
-            id,
-            supplier_end_price,
-            city_name,
-            cinema_addr: "",
-            ticket_num,
-            cinema_name,
-            hall_name,
-            film_name,
-            show_time: formatTimeOfTime(startTime * 1000),
-            rewards: 0, // 守兔无奖励，只有快捷
-            is_urgent: 0, // 1紧急 0非紧急
-            cinema_group: "",
-            cinema_code, // 影院code
-            order_number,
-            lockseat,
-            plat_name: "shoutu"
-          };
-        })
+      let shoutuStaylist = stayList.map(item => {
+        const {
+          orderUUID: id,
+          unitPrice: supplier_end_price,
+          city: city_name,
+          seat: lockseat,
+          orderNum: ticket_num,
+          cinemaName: cinema_name,
+          hallName: hall_name,
+          movieName: film_name,
+          startTime,
+          orderId: order_number,
+          standardId: cinema_code
+        } = item;
+        return {
+          id,
+          supplier_end_price,
+          city_name,
+          cinema_addr: "",
+          ticket_num,
+          cinema_name,
+          hall_name,
+          film_name,
+          show_time: formatTimeOfTime(startTime * 1000),
+          rewards: 0, // 守兔无奖励，只有快捷
+          is_urgent: 0, // 1紧急 0非紧急
+          cinema_group: "",
+          cinema_code, // 影院code
+          order_number,
+          lockseat,
+          plat_name: "shoutu"
+        };
+      });
+      console.warn(conPrefix + "shoutuStaylist", shoutuStaylist);
+      let shoutuStaylistFilter = shoutuStaylist
         .filter(item => getCinemaFlag(item))
         .map(item => {
           let app_name = getCinemaFlag(item);
@@ -104,7 +102,9 @@ class OrderAutoFetchQueue {
             appName: app_name
           };
         });
-      sfcStayOfferlist = sfcStayOfferlist.filter(item => {
+      console.warn(conPrefix + "shoutuStaylistFilter", shoutuStaylistFilter);
+
+      let newStaylist = shoutuStaylistFilter.filter(item => {
         // 过滤出来新订单（未发送过新订单消息的）
         return !this.orderRecord.some(
           itemA =>
@@ -131,22 +131,20 @@ class OrderAutoFetchQueue {
         },
         logList
       );
-      if (sfcStayOfferlist?.length) {
+      console.warn(conPrefix + "newStaylist", newStaylist);
+      if (newStaylist?.length) {
         const ticketList = await getTicketList();
-        sfcStayOfferlist = sfcStayOfferlist.filter(item => {
+        newStaylist = newStaylist.filter(item => {
           let isTicket = ticketList
             .filter(itemA => itemA.app_name === item.appName)
             .some(itemA => itemA.order_number === item.order_number);
           return !isTicket;
         });
-        // console.warn(
-        //   conPrefix + "守兔待出票列表从远端过滤后",
-        //   sfcStayOfferlist
-        // );
+        console.warn(conPrefix + "守兔待出票列表从远端过滤后", newStaylist);
       }
-      if (!sfcStayOfferlist?.length) return;
+      if (!newStaylist?.length) return;
       console.warn(conPrefix + "待出票列表新订单", stayList);
-      sfcStayOfferlist.forEach(item => {
+      newStaylist.forEach(item => {
         let logList = [
           {
             opera_time: getCurrentTime(),
@@ -261,6 +259,10 @@ class OrderAutoFetchQueue {
         shoutuApi.findWaitNum({});
       } catch (error) {}
       if (list.length) {
+        console.log(
+          conPrefix + "获取守兔待出票列表返回0",
+          JSON.parse(JSON.stringify(list))
+        );
         list = list.filter(
           item =>
             !this.platOrderList.some(
@@ -273,7 +275,10 @@ class OrderAutoFetchQueue {
           this.platOrderList = this.platOrderList.slice(-100);
         }
       }
-      console.log(conPrefix + "获取守兔待出票列表返回", list);
+      console.log(
+        conPrefix + "获取守兔待出票列表返回1",
+        JSON.parse(JSON.stringify(list))
+      );
       return list;
     } catch (error) {
       logger.errorSave("获取守兔待出票列表异常", formatErrInfo(error));

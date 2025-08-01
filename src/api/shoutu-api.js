@@ -16,17 +16,17 @@ const stayTicketingList = params =>
   axios.post("/seller-api/order/orderList?status=3", params);
 
 const findWaitRange = params =>
-  axios.post("//yp-api/ticket/config/find-wait-range", params);
+  axios.post("/yp-api/ticket/config/find-wait-range", params);
 
 const findWaitNum = params =>
-  axios.post("//yp-api/ticket/author/find-wait-num", params);
+  axios.post("/yp-api/ticket/author/find-wait-num", params);
 
 // 确认接货前置处理
 const confirmOrderPrevHandle = params =>
   axios.post("/yp-api/ticket/order-list/set-bury-point", params);
 // 确认接货
 const confirmOrder = params =>
-  axios.post("//yp-api/ticket/order/confirm-issue", params);
+  axios.post("/yp-api/ticket/order/confirm-issue", params);
 
 // 获取是否需要解锁
 const getIsUnlock = params =>
