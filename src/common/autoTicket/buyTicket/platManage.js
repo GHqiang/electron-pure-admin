@@ -67,7 +67,8 @@ export default class PlatCommon {
           };
         }
       } else if (plat_name === "shoutu") {
-        await this.startDeliver({ orderUUID: id });
+        console.warn("守兔准备接单", { orderUUID: id });
+        await this.startDeliver({ plat_name, orderUUID: id });
         await mockDelay(1);
         unlockRes = await this.unlockSeat({
           plat_name,
