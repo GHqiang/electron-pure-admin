@@ -234,31 +234,29 @@ export default class CardQuanManage {
           };
         }
         let canUseCardList;
-        if (quan_fee > 0) {
-          let cardData = cardList.filter(
-            item => item.cardAmount >= (quan_fee * 1000 * ticket_num) / 1000
-          );
-          // 取最大余额
-          cardData = cardData.sort((a, b) => b.cardAmount - a.cardAmount);
-          if (!cardData?.length) {
-            this.logger.errorSave(
-              `使用优惠券后发现没有可以支付券手续费的会员卡，${is_auto_use_quan ? ",灵活用券转用卡处理" : ""}`,
-              {
-                quan_fee,
-                cardList
-              }
-            );
-            if (is_auto_use_quan) {
-              offerRule.quan_value = "";
-              return await this.useCardHandle(useCardParms);
+        let cardData = cardList.filter(
+          item => item.cardAmount >= (quan_fee * 1000 * ticket_num) / 1000
+        );
+        // 取最大余额
+        cardData = cardData.sort((a, b) => b.cardAmount - a.cardAmount);
+        if (!cardData?.length) {
+          this.logger.errorSave(
+            `使用优惠券后发现没有可以支付券手续费的会员卡，${is_auto_use_quan ? ",灵活用券转用卡处理" : ""}`,
+            {
+              quan_fee,
+              cardList
             }
-            return {
-              useQuan: [],
-              profit: 0 // 利润
-            };
-          } else {
-            canUseCardList = cardData;
+          );
+          if (is_auto_use_quan) {
+            offerRule.quan_value = "";
+            return await this.useCardHandle(useCardParms);
           }
+          return {
+            useQuan: [],
+            profit: 0 // 利润
+          };
+        } else {
+          canUseCardList = cardData;
         }
         if (is_auto_use_quan) {
           offerRule.offer_type = "1";

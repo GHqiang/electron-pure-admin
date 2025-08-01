@@ -209,31 +209,31 @@ export default class CinemaManage {
     const { ticket_num } = this.order;
     try {
       if (cinemaInfo.cinemaLinkId) {
+        const usableCards = await this.getUsableCardList(
+          cinemaInfo.cinemaLinkId,
+          ticket_num
+        );
+        if (usableCards?.length) {
+          cinemaInfo.usableCardList = usableCards; // 赋值可用卡列表
+        }
         if (this.offerRule.offer_type != 1) {
-          const usableCards = await this.getUsableCardList(
-            cinemaInfo.cinemaLinkId,
-            ticket_num
-          );
-          if (usableCards?.length) {
-            cinemaInfo.usableCardList = usableCards; // 赋值可用卡列表
-            let cardLinkMobile = usableCards.map(item => item.mobile);
-            // 根据可用卡调整登录信息顺序
-            this.currentParamsList = this.currentParamsList.sort((a, b) => {
-              if (
-                cardLinkMobile.includes(a.mobile) &&
-                !cardLinkMobile.includes(b.mobile)
-              ) {
-                return -1; // a靠前
-              }
-              if (
-                !cardLinkMobile.includes(a.mobile) &&
-                cardLinkMobile.includes(b.mobile)
-              ) {
-                return 1;
-              }
-              return 0;
-            });
-          }
+          let cardLinkMobile = usableCards.map(item => item.mobile);
+          // 根据可用卡调整登录信息顺序
+          this.currentParamsList = this.currentParamsList.sort((a, b) => {
+            if (
+              cardLinkMobile.includes(a.mobile) &&
+              !cardLinkMobile.includes(b.mobile)
+            ) {
+              return -1; // a靠前
+            }
+            if (
+              !cardLinkMobile.includes(a.mobile) &&
+              cardLinkMobile.includes(b.mobile)
+            ) {
+              return 1;
+            }
+            return 0;
+          });
           this.logger.infoSave("登录信息按照可用卡列表排序后", {
             currentParamsList: this.currentParamsList
           });
