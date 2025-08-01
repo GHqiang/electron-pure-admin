@@ -445,50 +445,46 @@ export default class BuyTicket {
       let card_id, cardNum;
       let payments = [];
       let paymentsList = calcRes?.settlement?.payments;
-      let promotions = [];
-      if (offer_type === "1" && useQuan?.length && !quan_fee_total) {
-        promotions = calcRes?.settlement?.promotions;
+      // 可能为空没有优惠
+      let promotions = calcRes?.settlement?.promotions || [];
+      let isUseCard = false;
+      if (offer_type === "1" && useQuan?.length) {
+        // 可能需要，也可能需要每一项都做此处理
         if (promotions?.length) {
           promotions[0].productType = "TICKET";
         }
-        let payInfo = paymentsList?.find(
-          item => item.paymentType === "WECHAT_MINI_PROGRAM"
-        );
-        if (payInfo) {
-          payments.push({
-            paymentType: payInfo.paymentType,
-            payAmount: 0,
-            payConfigId: payInfo.payConfigId
-            // payCode: "0b3Oq1ll2VFCYf4Gznnl2FQ3SI1Oq1lP" // 其逻辑为wx.login拿到临时登录凭证
-            // payCode: randomNumByLength(32) // 生成32位随机字符串作为支付码
-          });
-        }
-      } else if (offer_type === "2" && canUseCardList?.length) {
-        promotions = calcRes.settlement.promotions; // 可能为空没有优惠
-        // 取优惠金额一样的优惠信息
-        let promotionInfo = promotions?.find(
-          item =>
-            item.discountedAmount === calcRes.settlement.totalDiscountedAmount
-        );
-        let promotionCardNo, payInfo;
+        isUseCard = true;
+      }
+      if ((offer_type === "2" && canUseCardList?.length) || isUseCard) {
         const canUseCardNoList = canUseCardList.map(item => item.cardNo);
-        if (promotionInfo) {
-          if (promotionInfo.promotionType == "MEMBER_CARD") {
-            promotionCardNo = promotionInfo.promoCode;
-          } else {
-            promotionCardNo = promotionInfo.cardNo;
-          }
-          // 从支付信息中取相关信息
-          if (promotionCardNo) {
-            payInfo = paymentsList?.find(
-              item => item.cardNo === promotionCardNo
-            );
-            this.logger.infoSave("从优惠信息中取支付信息", {
-              promotionInfo,
-              payInfo
-            });
+        let payInfo;
+        // 纯用卡场景从这里获取支付信息
+        if (!isUseCard) {
+          // 取优惠金额一样的优惠信息
+          let promotionInfo = promotions?.find(
+            item =>
+              item.discountedAmount === calcRes.settlement.totalDiscountedAmount
+          );
+          let promotionCardNo;
+          if (promotionInfo) {
+            if (promotionInfo.promotionType == "MEMBER_CARD") {
+              promotionCardNo = promotionInfo.promoCode;
+            } else {
+              promotionCardNo = promotionInfo.cardNo;
+            }
+            // 从支付信息中取相关信息
+            if (promotionCardNo) {
+              payInfo = paymentsList?.find(
+                item => item.cardNo === promotionCardNo
+              );
+              this.logger.infoSave("从优惠信息中取支付信息", {
+                promotionInfo,
+                payInfo
+              });
+            }
           }
         }
+
         if (!payInfo) {
           this.logger.infoSave("从支付列表中取支付信息", {
             paymentsList,
