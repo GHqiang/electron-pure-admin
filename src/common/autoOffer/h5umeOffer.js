@@ -982,7 +982,7 @@ class getUmeOfferPrice {
           return;
         }
         // 券或者卡开了超限报价调整规则报价为平台限价
-        if (["mayi", "yangcong"].includes(plat_name)) {
+        if (["mayi"].includes(plat_name)) {
           price = Math.floor(supplier_max_price);
         } else {
           // 向下取0.5的倍数
