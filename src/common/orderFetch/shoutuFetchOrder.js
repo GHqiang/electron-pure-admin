@@ -254,10 +254,10 @@ class OrderAutoFetchQueue {
       // console.log(conPrefix + "获取守兔待出票订单列表参数", params);
       const res = await shoutuApi.stayTicketingList(params);
       let list = res?.data?.order_list || [];
-      try {
-        shoutuApi.findWaitRange({});
-        shoutuApi.findWaitNum({});
-      } catch (error) {}
+      // try {
+      //   shoutuApi.findWaitRange({});
+      //   shoutuApi.findWaitNum({});
+      // } catch (error) {}
       if (list.length) {
         // console.log(
         //   conPrefix + "获取守兔待出票列表返回0",
