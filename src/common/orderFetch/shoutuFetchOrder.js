@@ -48,15 +48,15 @@ class OrderAutoFetchQueue {
       if (!this.prevRecordTime) {
         this.prevRecordTime = +new Date();
       }
-      let logger = new Logger({ logType: 3 });
-      logger.init({
-        plat_name: "shoutu",
-        app_name: "",
-        order_number: ""
-      });
-      let stayList = await this.orderFetch(logger);
-      logger.infoSave("守兔获取待出票订单返回", { stayList });
-      logger.logUpload();
+      // let logger = new Logger({ logType: 3 });
+      // logger.init({
+      //   plat_name: "shoutu",
+      //   app_name: "",
+      //   order_number: ""
+      // });
+      let stayList = await this.orderFetch();
+      // logger.infoSave("守兔获取待出票订单返回", { stayList });
+      // logger.logUpload();
       if (!stayList?.length) return;
       let shoutuStaylist = stayList.map(item => {
         const {
@@ -91,7 +91,7 @@ class OrderAutoFetchQueue {
           plat_name: "shoutu"
         };
       });
-      console.warn(conPrefix + "shoutuStaylist", shoutuStaylist);
+      // console.warn(conPrefix + "shoutuStaylist", shoutuStaylist);
       let shoutuStaylistFilter = shoutuStaylist
         .filter(item => getCinemaFlag(item))
         .map(item => {
@@ -102,7 +102,7 @@ class OrderAutoFetchQueue {
             appName: app_name
           };
         });
-      console.warn(conPrefix + "shoutuStaylistFilter", shoutuStaylistFilter);
+      // console.warn(conPrefix + "shoutuStaylistFilter", shoutuStaylistFilter);
 
       let newStaylist = shoutuStaylistFilter.filter(item => {
         // 过滤出来新订单（未发送过新订单消息的）
@@ -234,7 +234,7 @@ class OrderAutoFetchQueue {
   }
 
   // 获取待出票订单列表
-  async orderFetch(logger) {
+  async orderFetch() {
     try {
       let params = {
         page: 1,
@@ -259,15 +259,13 @@ class OrderAutoFetchQueue {
         shoutuApi.findWaitNum({});
       } catch (error) {}
       if (list.length) {
-        console.log(
-          conPrefix + "获取守兔待出票列表返回0",
-          JSON.parse(JSON.stringify(list))
-        );
+        // console.log(
+        //   conPrefix + "获取守兔待出票列表返回0",
+        //   JSON.parse(JSON.stringify(list))
+        // );
         list = list.filter(
           item =>
-            !this.platOrderList.some(
-              itemA => itemA.order_number === item.order_number
-            )
+            !this.platOrderList.some(itemA => itemA.orderId === item.orderId)
         );
         this.platOrderList.push(...list);
         let ln = this.platOrderList.length;
@@ -275,13 +273,12 @@ class OrderAutoFetchQueue {
           this.platOrderList = this.platOrderList.slice(-100);
         }
       }
-      console.log(
-        conPrefix + "获取守兔待出票列表返回1",
-        JSON.parse(JSON.stringify(list))
-      );
+      // console.log(
+      //   conPrefix + "获取守兔待出票列表返回1",
+      //   JSON.parse(JSON.stringify(list))
+      // );
       return list;
     } catch (error) {
-      logger.errorSave("获取守兔待出票列表异常", formatErrInfo(error));
       console.error("获取守兔待出票列表异常", error);
       return [];
     }
