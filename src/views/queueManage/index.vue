@@ -347,7 +347,8 @@ let syncIntervalObj = {
   yinghuasuan: null,
   shangzhan: null,
   haha: null,
-  sheng: null
+  sheng: null,
+  shoutu: null
 };
 // 支持同步中标价的平台集合
 let syncPricePlatList = ["lieren", "mayi", "mangguo"];
