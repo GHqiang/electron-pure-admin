@@ -59,7 +59,7 @@ class OrderAutoFetchQueue {
       // logger.logUpload();
       if (!stayList?.length) return;
       let shoutuStaylist = stayList.map(item => {
-        const {
+        let {
           orderUUID: id,
           unitPrice: supplier_end_price,
           city: city_name,
@@ -87,7 +87,7 @@ class OrderAutoFetchQueue {
           cinema_group: "",
           cinema_code, // 影院code
           order_number,
-          lockseat,
+          lockseat: lockseat.replaceAll("(情侣号)", "").replaceAll("号", "座"),
           plat_name: "shoutu"
         };
       });
