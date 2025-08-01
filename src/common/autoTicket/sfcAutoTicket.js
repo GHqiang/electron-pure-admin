@@ -1979,6 +1979,7 @@ class OrderAutoTicketQueue {
         formatErrInfo(error)?.includes("密码") &&
         formatErrInfo(error)?.includes("错误")
       ) {
+        this.logger.infoSave("发送密码配置错误提醒");
         sendWxPusherMessage({
           orderInfo: this.order,
           msgType: 5,
@@ -3168,6 +3169,7 @@ const buyTicket = async ({
       formatErrInfo(error)?.includes("密码") &&
       formatErrInfo(error)?.includes("错误")
     ) {
+      this.logger.infoSave("发送密码配置错误提醒");
       sendWxPusherMessage({
         orderInfo,
         msgType: 5,
