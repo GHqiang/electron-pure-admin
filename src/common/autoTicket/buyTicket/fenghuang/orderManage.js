@@ -172,7 +172,8 @@ export default class OrderManage {
       payments,
       phoneNumber,
       cardNum,
-      session_id
+      session_id,
+      retryCount = 0
     } = data;
     try {
       let outerId = randomNumByLength(16);
@@ -194,6 +195,9 @@ export default class OrderManage {
       this.logger.infoSave("创建订单参数", params);
       const res = await this.appApi.createOrder(params);
       this.logger.infoSave("创建订单返回", res);
+      if (retryCount) {
+        this.logger.infoSave("重试后创建订单成功");
+      }
       return res;
     } catch (error) {
       this.logger.errorSave("创建订单异常", formatErrInfo(error));
@@ -201,13 +205,20 @@ export default class OrderManage {
         formatErrInfo(error)?.includes("密码") &&
         formatErrInfo(error)?.includes("错误")
       ) {
-        this.logger.infoSave("发送密码配置错误提醒");
-        sendWxPusherMessage({
-          orderInfo: this.order,
-          msgType: 5,
-          cardNoByPwdError: cardNum,
-          failReason: "密码输入错误，请检查卡号密码是否正确"
-        });
+        if (retryCount) {
+          this.logger.infoSave("发送密码配置错误提醒");
+          sendWxPusherMessage({
+            orderInfo: this.order,
+            msgType: 5,
+            cardNoByPwdError: cardNum,
+            failReason: "密码输入错误，请检查卡号密码是否正确"
+          });
+        } else {
+          return await this.createOrder({
+            ...data,
+            retryCount: retryCount + 1
+          });
+        }
       }
       if (
         formatErrInfo(error).includes("超时") ||
