@@ -861,7 +861,7 @@ class OrderAutoTicketQueue {
           haha: [6, 5],
           yinghuasuan: [6, 5],
           shangzhan: [6, 5],
-          shoutu: [10, 5]
+          shoutu: [20, 12]
         };
         const res = await trial(
           inx => this.lockSeatHandle(params, inx),
