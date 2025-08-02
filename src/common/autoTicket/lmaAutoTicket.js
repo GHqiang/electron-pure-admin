@@ -1643,6 +1643,7 @@ class OrderAutoTicketQueue {
           coupon_num: quan.coupon_num,
           appFlag
         });
+        targetLogger.infoSave(`绑定券返回`, couponNumRes);
         const coupon_num = couponNumRes?.coupon_num;
         if (couponNumRes?.errMsg) {
           targetLogger.errorSave(`${conPrev}绑定券异常`, couponNumRes);
