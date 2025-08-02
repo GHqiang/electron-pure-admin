@@ -87,7 +87,10 @@ class OrderAutoFetchQueue {
           cinema_group: "",
           cinema_code, // 影院code
           order_number,
-          lockseat: lockseat.replaceAll("(情侣号)", "").replaceAll("号", "座"),
+          lockseat: lockseat
+            .replaceAll("(情侣号)", "")
+            .replaceAll("(情侣座)", "")
+            .replaceAll("号", "座"),
           plat_name: "shoutu"
         };
       });

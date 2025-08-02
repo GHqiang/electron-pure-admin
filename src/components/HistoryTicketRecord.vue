@@ -247,7 +247,7 @@
           >
 
           <el-button
-            v-if="rule != 2 && order_status === '2'"
+            v-if="order_status != 1"
             size="small"
             type="primary"
             @click="queryLog({ order_number, user_id })"
