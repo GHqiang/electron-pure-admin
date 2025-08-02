@@ -353,7 +353,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           // 消息推送待补充，提示用户重新登录维护登录信息
           return Promise.reject(`${app_label}登录失效`);
         }
-        let isRetryCount = !config.retryCount || config.retryCount < 3;
+        let isRetryCount = !config.retryCount || config.retryCount < 5;
         if (["FAIL_SYS_SESSION_EXPIRED::Session过期"].includes(errReason)) {
           if (isRetryCount && !config.url.includes("authn.refresh")) {
             // logger.errorSave("Session过期准备续期", { sid, tid });
