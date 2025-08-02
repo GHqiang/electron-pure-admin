@@ -1160,7 +1160,7 @@ class OrderAutoTicketQueue {
       let cardNo = card_id;
       let quan_fee_total = (quan_fee * 1000 * ticket_num) / 1000;
       if (!orderId) {
-        this.logger.error("创建订单失败，单个订单直接出票结束", "走转单逻辑");
+        this.logger.error("创建订单失败，单个订单直接出票结束,走转单逻辑");
         const transferParams = await this.transferOrder(item, {
           cinemaLinkId,
           lockOrderId

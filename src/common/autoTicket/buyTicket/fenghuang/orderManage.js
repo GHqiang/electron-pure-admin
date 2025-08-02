@@ -140,17 +140,15 @@ export default class OrderManage {
           seatCode: item.seatCode
         }))
       ),
-      pageInit: true,
       fenghuangToken: session_id
     };
     try {
-      this.logger.infoSave("计算价格参数", params);
+      this.logger.infoSave("计算价格参数", JSON.parse(JSON.stringify(params)));
       let res = await this.appApi.priceCalculation(params);
       this.logger.infoSave("计算价格返回", res);
       // 优惠券参数处理
       if (promotions?.length) {
         params.promotions = JSON.stringify(promotions);
-        delete params.pageInit;
         this.logger.infoSave("用券计算价格参数", params);
         res = await this.appApi.priceCalculationByQuan(params);
         this.logger.infoSave("用券计算价格返回", res);
