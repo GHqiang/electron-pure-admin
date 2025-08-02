@@ -596,7 +596,7 @@ const sendWxPusherMessage = async ({
     平台：${plat_name}; <br/>
     单号：${order_number}; <br/>
     影院：${app_name || orderInfo?.app_name}; <br/>
-    提示：${transferTip};<br/>
+    提示：${failReason};<br/>
     卡号：${cardNoByPwdError};<br/>
     </p>`;
   }
