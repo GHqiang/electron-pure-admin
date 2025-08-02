@@ -22,7 +22,7 @@ import PlatManage from "@/common/autoTicket/buyTicket/platManage";
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
 // 影院特殊匹配列表及api
-import { GET_APP_TYPE_LIST } from "@/common/constant";
+import { GET_APP_TYPE_LIST, NO_FEE_PLAT_LIST } from "@/common/constant";
 import { APP_API_OBJ } from "@/common/index";
 
 let isTestOrder = false; //是否是测试订单
@@ -945,21 +945,19 @@ class OrderAutoTicketQueue {
         }
       }
       this.logger.infoSave("订单支付前计算订单价格成功");
-
+      // 手续费
+      let shouxufei = (supplier_end_price * 100) / 10000;
+      if (NO_FEE_PLAT_LIST.includes(plat_name)) {
+        shouxufei = 0;
+      }
       // 计算利润(奖励未加)
       let profit;
       // 中标价-会员成本价
       if (offerRule.offer_type !== "1") {
-        profit =
-          supplier_end_price -
-          offerRule?.member_price -
-          (Number(supplier_end_price) * 100) / 10000;
+        profit = supplier_end_price - offerRule?.member_price - shouxufei;
         profit = Number(profit) * Number(ticket_num);
       } else {
-        profit =
-          Number(supplier_end_price) -
-          offerRule.quan_cost -
-          (Number(supplier_end_price) * 100) / 10000;
+        profit = Number(supplier_end_price) - offerRule.quan_cost - shouxufei;
         profit = (profit * 100 * ticket_num) / 100;
       }
       if (rewards > 0) {

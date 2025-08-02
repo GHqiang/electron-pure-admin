@@ -30,7 +30,11 @@ const {
   userInfo: { rule, user_id, phone }
 } = platTokens();
 // 影院特殊匹配列表及api
-import { TEST_NEW_PLAT_LIST, GET_APP_TYPE_LIST } from "@/common/constant";
+import {
+  TEST_NEW_PLAT_LIST,
+  GET_APP_TYPE_LIST,
+  NO_FEE_PLAT_LIST
+} from "@/common/constant";
 import { APP_API_OBJ, PLAT_API_OBJ } from "@/common/index";
 
 let isTestOrder = false; //是否是测试订单
@@ -2240,10 +2244,12 @@ class OrderAutoTicketQueue {
             discountAmount: item.discountValue
           };
         });
-        let profit =
-          supplier_end_price -
-          quan_cost -
-          (Number(supplier_end_price) * 100) / 10000;
+        // 手续费
+        let shouxufei = (supplier_end_price * 100) / 10000;
+        if (NO_FEE_PLAT_LIST.includes(plat_name)) {
+          shouxufei = 0;
+        }
+        let profit = supplier_end_price - quan_cost - shouxufei;
         profit = Number(profit) * Number(ticket_num);
         if (rewards > 0) {
           // 特急奖励订单中标价格 * 张数 * 0.04;
@@ -2375,11 +2381,13 @@ class OrderAutoTicketQueue {
           profit: 0 // 利润
         };
       }
+      // 手续费
+      let shouxufei = (supplier_end_price * 100) / 10000;
+      if (NO_FEE_PLAT_LIST.includes(plat_name)) {
+        shouxufei = 0;
+      }
       // 中标价-会员成本价
-      let profit =
-        supplier_end_price -
-        member_price -
-        (Number(supplier_end_price) * 100) / 10000;
+      let profit = supplier_end_price - member_price - shouxufei;
       profit = Number(profit) * Number(ticket_num);
       if (rewards > 0) {
         // 特急奖励订单中标价格 * 张数 * 0.04;

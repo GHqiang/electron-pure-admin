@@ -9,7 +9,11 @@ import {
   getCinemaLoginInfoList
 } from "@/utils/utils";
 import { APP_API_OBJ } from "@/common/index";
-import { GE_APP_INFO, TEST_NEW_PLAT_LIST } from "@/common/constant";
+import {
+  GE_APP_INFO,
+  TEST_NEW_PLAT_LIST,
+  NO_FEE_PLAT_LIST
+} from "@/common/constant";
 
 import svApi from "@/api/sv-api";
 // 统一日志类
@@ -203,10 +207,12 @@ export default class CardQuanManage {
             couponName: item.couponName
           };
         });
-        let profit =
-          supplier_end_price -
-          quan_cost -
-          (Number(supplier_end_price) * 100) / 10000;
+        // 手续费
+        let shouxufei = (supplier_end_price * 100) / 10000;
+        if (NO_FEE_PLAT_LIST.includes(plat_name)) {
+          shouxufei = 0;
+        }
+        let profit = supplier_end_price - quan_cost - shouxufei;
         profit = Number(profit) * Number(ticket_num);
         if (rewards > 0) {
           // 特急奖励订单中标价格 * 张数 * 0.04;
@@ -364,11 +370,13 @@ export default class CardQuanManage {
           profit: 0 // 利润
         };
       }
+      // 手续费
+      let shouxufei = (supplier_end_price * 100) / 10000;
+      if (NO_FEE_PLAT_LIST.includes(plat_name)) {
+        shouxufei = 0;
+      }
       // 中标价-会员成本价
-      let profit =
-        supplier_end_price -
-        member_price -
-        (Number(supplier_end_price) * 100) / 10000;
+      let profit = supplier_end_price - member_price - shouxufei;
       profit = Number(profit) * Number(ticket_num);
       if (rewards > 0) {
         // 特急奖励订单中标价格 * 张数 * 0.04;

@@ -33,7 +33,8 @@ import {
   GE_APP_INFO,
   TEST_NEW_PLAT_LIST,
   sfcV3AppList,
-  GET_APP_TYPE_LIST
+  GET_APP_TYPE_LIST,
+  NO_FEE_PLAT_LIST
 } from "@/common/constant";
 import { APP_API_OBJ } from "@/common/index";
 // 机器基础方法
@@ -2598,10 +2599,12 @@ class OrderAutoTicketQueue {
       // 用券列表
       let useQuans = targetQuanList.filter((item, index) => index < ticket_num);
       let profit = 0; // 利润
-      profit =
-        Number(supplier_end_price) -
-        quan_cost -
-        (Number(supplier_end_price) * 100) / 10000;
+      // 手续费
+      let shouxufei = (supplier_end_price * 100) / 10000;
+      if (NO_FEE_PLAT_LIST.includes(plat_name)) {
+        shouxufei = 0;
+      }
+      profit = Number(supplier_end_price) - quan_cost - shouxufei;
       profit = profit * (useQuans.length || 0);
       // useQuans = useQuans.map(item => item.coupon_num);
       if (rewards > 0) {
@@ -2750,12 +2753,13 @@ class OrderAutoTicketQueue {
         card_id = cardData[0]?.member_id;
         cardNum = cardData[0]?.member_id;
       }
-
+      // 手续费
+      let shouxufei = (supplier_end_price * 100) / 10000;
+      if (NO_FEE_PLAT_LIST.includes(plat_name)) {
+        shouxufei = 0;
+      }
       // 卡的话 1块钱成本就是一块钱，利润 =  中标价格-会员出票价格 -手续费（中标价格1%）
-      let profit =
-        supplier_end_price -
-        member_price -
-        (Number(supplier_end_price) * 100) / 10000;
+      let profit = supplier_end_price - member_price - shouxufei;
       profit = Number(profit) * Number(ticket_num);
       if (rewards > 0) {
         // 特急奖励订单中标价格 * 张数 * 0.04;
