@@ -228,8 +228,9 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         sid = config.data?.fenghuangToken;
         tid = targetLoginList.find(itemA => itemA.session_id === sid)?.tid;
         delete config.data.fenghuangToken;
-        mobile = targetLoginList.find(itemA => itemA.tid === tid)?.mobile;
       }
+      mobile = targetLoginList.find(itemA => itemA.session_id === sid)?.mobile;
+
       // 如果对应的手机号的token有新的直接获取新的
       if (mobile && newSidObj[mobile]) {
         sid = newSidObj[mobile];
@@ -349,6 +350,15 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         let isRetryCount = !config.retryCount || config.retryCount < 5;
         if (["FAIL_SYS_SESSION_EXPIRED::Session过期"].includes(errReason)) {
           if (isRetryCount && !config.url.includes("authn.refresh")) {
+            if (config.retryCount) {
+              logger.errorSave("Session续期后仍过期", {
+                sid,
+                tid,
+                mobile: config.mobile,
+                url: config.url
+              });
+              logger.logUpload();
+            }
             // logger.errorSave("Session过期准备续期", { sid, tid });
             config.retryCount = (config.retryCount || 0) + 1;
             const sidRes = await getNewSid(tid);
@@ -372,6 +382,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
               return instance(config);
             } else {
               logger.errorSave("sid续期返回为空", { sidRes });
+              logger.logUpload();
             }
           } else {
             logger.errorSave("Session过期无法续期", {

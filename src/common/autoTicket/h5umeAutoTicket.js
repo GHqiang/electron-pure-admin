@@ -1326,7 +1326,7 @@ class OrderAutoTicketQueue {
       sendWxPusherMessage({
         orderInfo: item,
         transferTip: "一键买票异常，请及时联系技术",
-        failReason: JSON.stringify(error)
+        failReason: formatErrInfo(error)
       });
       return { offerRule };
     }
