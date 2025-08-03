@@ -746,7 +746,7 @@ export default class CardQuanManage {
 
   // 异步更新券库存-报价时
   async syncUpdateQuanStock({ cinemaCode, cinemaId, quanTypeList }) {
-    if (quanTypeList?.length) return;
+    if (!quanTypeList?.length) return;
     const { app_name } = this.order;
     let logger = new Logger({
       logType: 1
