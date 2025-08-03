@@ -179,7 +179,8 @@ const createAxios = ({ app_name, timeout = 20 }) => {
     sid = "", // 授权刷新接口返回的accessToken
     tid = "", // 用于授权刷新接口传参，从该接口获取返回值refreshToken
     mobile = "",
-    newSidObj = {};
+    newSidObj = {},
+    newTidObj = {};
 
   logger.init({
     plat_name: "",
@@ -188,36 +189,25 @@ const createAxios = ({ app_name, timeout = 20 }) => {
   });
   // 获取新的sid
   const getNewSid = async (retryCount = 0) => {
-    let MAX_RETRIES = 2;
     try {
       const sidRes = await APP_API_OBJ[app_name].authRefresh({
         refreshToken: tid
       });
-      // logger.infoSave("sid续期返回", {
-      //   sidRes
-      // });
-      // logger.logUpload();
-      // console.log("sidRes", sidRes);
+
+      // 验证响应结构
+      if (!sidRes?.accessToken) {
+        throw new Error("无效响应结构: " + JSON.stringify(sidRes));
+      }
       return sidRes;
-      // let sid = sidRes?.bizValue?.sid;
-      // if (sid) {
-      //   sid = sid;
-      //   // 更新对应手机号的token
-      //   if (config.mobile) {
-      //     newLarkSidObj[config.mobile] = sid;
-      //   }
-      // }
     } catch (error) {
-      console.error("获取sid失败", error);
-      logger.errorSave("sid续期失败", {
-        app_name,
+      logger.errorSave("sid续期请求异常", {
         tid,
-        mobile,
-        error: formatErrInfo(error)
+        error: error.message,
+        stack: error.stack
       });
       logger.logUpload();
-      if (retryCount < MAX_RETRIES) {
-        return getNewSid(retryCount + 1); // 递归重试
+      if (retryCount < 2) {
+        return getNewSid(retryCount + 1);
       }
     }
   };
@@ -238,11 +228,14 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         sid = config.data?.fenghuangToken;
         tid = targetLoginList.find(itemA => itemA.session_id === sid)?.tid;
         delete config.data.fenghuangToken;
+        mobile = targetLoginList.find(itemA => itemA.tid === tid)?.mobile;
       }
-      mobile = targetLoginList.find(itemA => itemA.session_id === sid)?.mobile;
       // 如果对应的手机号的token有新的直接获取新的
       if (mobile && newSidObj[mobile]) {
         sid = newSidObj[mobile];
+      }
+      if (mobile && newTidObj[mobile]) {
+        tid = newTidObj[mobile];
       }
       config.mobile = mobile;
       // 保存原始参数和原始URL
@@ -361,12 +354,13 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             const sidRes = await getNewSid(tid);
             console.warn("sid过期获取sidRes结果", sidRes);
             if (sidRes?.accessToken) {
+              sid = sidRes.accessToken;
+              tid = sidRes.refreshToken;
               // 更新对应手机号的token
               if (config.mobile) {
-                sid = sidRes.accessToken;
-                newSidObj[config.mobile] = sidRes.accessToken;
+                newSidObj[config.mobile] = sid;
+                newTidObj[config.mobile] = tid;
               }
-              tid = sidRes.refreshToken;
               // 重新生成接口url(主要是sign签名和参数有关)
               config.url = config.originalUrl.split("/1.0/")[0];
               config.url = getUrl(tokenC, sid, config.url, config.originalData);
