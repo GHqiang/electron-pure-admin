@@ -188,27 +188,44 @@ const createAxios = ({ app_name, timeout = 20 }) => {
     order_number: ""
   });
   // 获取新的sid
-  const getNewSid = async (retryCount = 0) => {
+  const getNewSid = async (retryCount, config, logger) => {
+    let sidRes;
+    if (!logger) {
+      logger = new Logger({ logType: 4 });
+      logger.init({
+        plat_name: "",
+        app_name,
+        order_number: ""
+      });
+    }
+    logger.infoSave("获取新的sid", {
+      url: config.url,
+      retryCount: config.retryCount,
+      mobile: config.mobile,
+      sid,
+      tid,
+      getNewSidRetryCount: retryCount
+    });
     try {
-      const sidRes = await APP_API_OBJ[app_name].authRefresh({
+      sidRes = await APP_API_OBJ[app_name].authRefresh({
         refreshToken: tid
       });
-
+      logger.infoSave("sid续期返回", sidRes);
       // 验证响应结构
       if (!sidRes?.accessToken) {
         throw new Error("无效响应结构: " + JSON.stringify(sidRes));
       }
       return sidRes;
     } catch (error) {
-      logger.errorSave("sid续期请求异常", {
-        tid,
+      logger.errorSave("sid续期异常", {
         error: error.message,
         stack: error.stack
       });
-      logger.logUpload();
-      if (retryCount < 2) {
-        return getNewSid(retryCount + 1);
+      if (retryCount < 3) {
+        return getNewSid(retryCount + 1, config, logger);
       }
+    } finally {
+      logger.logUpload();
     }
   };
   // 请求拦截器
@@ -352,38 +369,33 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           if (isRetryCount && !config.url.includes("authn.refresh")) {
             if (config.retryCount) {
               logger.errorSave("Session续期后仍过期", {
-                sid,
-                tid,
+                retryCount: config.retryCount,
                 mobile: config.mobile,
-                url: config.url
+                url: config.url,
+                sid,
+                tid
               });
               logger.logUpload();
             }
-            // logger.errorSave("Session过期准备续期", { sid, tid });
             config.retryCount = (config.retryCount || 0) + 1;
-            const sidRes = await getNewSid(tid);
+            const sidRes = await getNewSid(1, config);
             console.warn("sid过期获取sidRes结果", sidRes);
-            if (sidRes?.accessToken) {
-              sid = sidRes.accessToken;
-              tid = sidRes.refreshToken;
-              // 更新对应手机号的token
-              if (config.mobile) {
-                newSidObj[config.mobile] = sid;
-                newTidObj[config.mobile] = tid;
-              }
-              // 重新生成接口url(主要是sign签名和参数有关)
-              config.url = config.originalUrl.split("/1.0/")[0];
-              config.url = getUrl(tokenC, sid, config.url, config.originalData);
-              config.url = IS_DEV
-                ? config.url.replace("fenghuang", "svpi/fenghuang-ser")
-                : "http://47.113.191.173:3000" +
-                  "/fenghuang-ser" +
-                  config.url.slice(10);
-              return instance(config);
-            } else {
-              logger.errorSave("sid续期返回为空", { sidRes });
-              logger.logUpload();
+            sid = sidRes.accessToken;
+            tid = sidRes.refreshToken;
+            // 更新对应手机号的token
+            if (config.mobile) {
+              newSidObj[config.mobile] = sid;
+              newTidObj[config.mobile] = tid;
             }
+            // 重新生成接口url(主要是sign签名和参数有关)
+            config.url = config.originalUrl.split("/1.0/")[0];
+            config.url = getUrl(tokenC, sid, config.url, config.originalData);
+            config.url = IS_DEV
+              ? config.url.replace("fenghuang", "svpi/fenghuang-ser")
+              : "http://47.113.191.173:3000" +
+                "/fenghuang-ser" +
+                config.url.slice(10);
+            return instance(config);
           } else {
             logger.errorSave("Session过期无法续期", {
               retryCount: config.retryCount,
