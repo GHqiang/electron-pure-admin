@@ -8,7 +8,7 @@ export default class Logger {
   static levels = { INFO: "info", WARN: "warn", ERROR: "error" };
   constructor({ logType, isPrint }) {
     this.logList = [];
-    this.type = logType; // 日志类型 1-报价队列 2-获取待出票队列 3-出票队列 4-sid续期
+    this.type = logType; // 日志类型 1-报价队列 2-获取待出票队列 3-出票队列 4-凤凰新sid续期 5-帮助锁座6-h5ume-sid续期
     this.isPrint = isPrint || true;
   }
   init({ plat_name, order_number, app_name }) {

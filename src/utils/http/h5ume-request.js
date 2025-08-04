@@ -4,6 +4,10 @@ import axios from "axios";
 import { ElMessage } from "element-plus";
 import { GET_APP_LIST, GE_APP_INFO } from "@/common/constant";
 import { APP_API_OBJ } from "@/common/index";
+// 统一日志类
+import Logger from "@/common/logger";
+let logger = new Logger({ logType: 6 });
+
 import {
   logUpload,
   getCurrentTime,
@@ -422,16 +426,69 @@ const createAxios = ({ app_name, timeout = 20 }) => {
   let newToken = "",
     ua = "",
     umidToken = "",
-    larkSid = "",
+    sid = "",
     tid = "",
     mobile = "",
-    newLarkSidObj = {};
+    newSidObj = {},
+    newTidObj = {};
+
+  // 初始化全局日志
+  logger.init({
+    plat_name: "",
+    app_name,
+    order_number: ""
+  });
+
+  // 获取新的sid
+  const getNewSid = async (retryCount, config, logger) => {
+    let sidRes;
+    if (!logger) {
+      logger = new Logger({ logType: 6 });
+      logger.init({
+        plat_name: "",
+        app_name,
+        order_number: ""
+      });
+    }
+    logger.infoSave("获取新的sid", {
+      url: config.url,
+      retryCount: config.retryCount,
+      mobile: config.mobile,
+      sid,
+      tid,
+      getNewSidRetryCount: retryCount
+    });
+    try {
+      sidRes = await APP_API_OBJ[app_name].getsidbytid({
+        empCode: "",
+        leaseCode: "",
+        tid: tid
+      });
+      logger.infoSave("sid续期返回", sidRes);
+      // 验证响应结构
+      if (!sidRes?.bizValue?.sid) {
+        throw new Error("无效响应结构: " + JSON.stringify(sidRes));
+      }
+      return sidRes;
+    } catch (error) {
+      logger.errorSave("sid续期异常", {
+        error: error.message,
+        stack: error.stack
+      });
+      if (retryCount < 3) {
+        return getNewSid(retryCount + 1, config, logger);
+      }
+    } finally {
+      logger.logUpload();
+    }
+  };
   // 请求拦截器
   instance.interceptors.request.use(
     async config => {
       if (config.url.indexOf("/h5ume/") !== -1) {
         // 如果未获取到cookie里面的token且接口非获取影院列表接口时需要调一下获取下
         if (!newToken && !config.url.includes("cinema.getcinemas")) {
+          // 此处是为了更新newToken
           try {
             await APP_API_OBJ[app_name].getCinemaList();
           } catch (error) {
@@ -444,34 +501,41 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         );
         // 登录标识：larkSid
         // e6b99a4fe34244d680a8e57ae79eff3b
-        larkSid = targetLoginList?.[0]?.session_id || "";
+        sid = targetLoginList?.[0]?.session_id || "";
         tid = targetLoginList?.[0]?.tid || "";
         // 先自己匹配登录信息，然后从参数里获取更新
         if (config.data?.umeToken) {
-          larkSid = config.data.umeToken;
-          tid = targetLoginList.find(
-            itemA => itemA.session_id === larkSid
-          )?.tid;
+          sid = config.data.umeToken;
+          tid = targetLoginList.find(itemA => itemA.session_id === sid)?.tid;
           delete config.data.umeToken;
         }
-        mobile = targetLoginList.find(
-          itemA => itemA.session_id === larkSid
-        )?.mobile;
-        // 如果对应的手机号的token有新的直接获取新的
-        if (mobile && newLarkSidObj[mobile]) {
-          larkSid = newLarkSidObj[mobile];
+        if (!config.mobile) {
+          // 每个登录信息的tid不会变的
+          mobile = targetLoginList.find(itemA => itemA.tid === tid)?.mobile;
+          config.mobile = mobile;
+        } else {
+          mobile = config.mobile;
+          // console.warn("重试的请求", config);
         }
-        config.mobile = mobile;
-        config.oldLarkSid = larkSid;
+        // 如果对应的手机号的token有新的直接获取新的
+        if (mobile && newSidObj[mobile]) {
+          sid = newSidObj[mobile];
+        }
+        if (mobile && newTidObj[mobile]) {
+          tid = newTidObj[mobile];
+        }
         // 保存原始参数和原始URL
         if (!config.originalData) {
           config.originalData = {
             ...config.data,
             channelCode: GE_APP_INFO(app_name)?.channelCode,
-            larkSid,
+            larkSid: sid,
             version: "H5",
             appVersion: "H5_5.0"
           };
+        } else {
+          // 更新重试请求里的sid
+          config.originalData.larkSid = sid;
         }
         let params = config.originalData;
         if (!config.originalUrl) {
@@ -605,63 +669,36 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             "FAIL_SYS_TOKEN_EMPTY::令牌为空"
           ].includes(errReason)
         ) {
-          if (!config.retryCount || config.retryCount < 3) {
-            config.retryCount = (config.retryCount || 0) + 1;
-            config.url = config.originalUrl.split("/1.0/")[0];
-            // console.log("config.url", config.url);
-            let cookieStr = String(headers1["set_cookie"]);
-            let _m_h5_tk = extractCookieValueByRegex(cookieStr, "_m_h5_tk=");
-            let _m_h5_tk_enc = extractCookieValueByRegex(
-              cookieStr,
-              "_m_h5_tk_enc="
-            );
-            let umetoken = headers1.umetoken;
-            // console.log("oldToken", token);
-            // 接口重试时token续期
-            if (_m_h5_tk) {
-              const regex = new RegExp(`(_m_h5_tk=[^;]+);?`);
-              umetoken =
-                umetoken?.indexOf("_m_h5_tk=") > -1
-                  ? umetoken.replace(regex, `_m_h5_tk=${_m_h5_tk};`)
-                  : `_m_h5_tk=${_m_h5_tk};`;
-            }
-            if (_m_h5_tk_enc) {
-              const regex = new RegExp(`(_m_h5_tk_enc=[^;]+);?`);
-              umetoken =
-                umetoken?.indexOf("_m_h5_tk_enc=") > -1
-                  ? umetoken.replace(regex, `_m_h5_tk_enc=${_m_h5_tk_enc};`)
-                  : umetoken + ` _m_h5_tk_enc=${_m_h5_tk_enc};`;
-              newToken = umetoken;
-            }
-
-            // console.log("newtoken", newToken);
-            config.headers["umetoken"] = umetoken;
-            let params = config.originalData;
-            // console.log("params", params);
-            config.url = getUrl(newToken, config.url, params);
-            // console.log("retryCount-config", config);
-            if (IS_DEV) {
-              config.url = config.url.replace("h5ume", "svpi/ume-ser");
-            } else {
-              config.url =
-                "http://47.113.191.173:3000" +
-                config.url.replace("h5ume", "ume-ser");
-            }
-            return instance(config);
-          } else {
-            ElMessage.warning(
-              `${GET_APP_LIST()[app_name]}令牌过期,联系技术排查`
-            );
-            sendWxPusherMessage({
-              msgType: 1,
-              app_name: GET_APP_LIST()[app_name],
-              expirePhone: config.mobile,
-              transferTip: `${GET_APP_LIST()[app_name]}令牌过期,联系技术排查`
-            });
-
-            // 此处加个消息推送
-            return Promise.reject({ data, headers1, config });
+          let cookieStr = String(headers1["set_cookie"]);
+          let _m_h5_tk = extractCookieValueByRegex(cookieStr, "_m_h5_tk=");
+          let _m_h5_tk_enc = extractCookieValueByRegex(
+            cookieStr,
+            "_m_h5_tk_enc="
+          );
+          let umetoken = headers1.umetoken;
+          // console.log("oldToken", token);
+          // 接口重试时token续期
+          if (_m_h5_tk) {
+            const regex = new RegExp(`(_m_h5_tk=[^;]+);?`);
+            umetoken =
+              umetoken?.indexOf("_m_h5_tk=") > -1
+                ? umetoken.replace(regex, `_m_h5_tk=${_m_h5_tk};`)
+                : `_m_h5_tk=${_m_h5_tk};`;
           }
+          if (_m_h5_tk_enc) {
+            const regex = new RegExp(`(_m_h5_tk_enc=[^;]+);?`);
+            umetoken =
+              umetoken?.indexOf("_m_h5_tk_enc=") > -1
+                ? umetoken.replace(regex, `_m_h5_tk_enc=${_m_h5_tk_enc};`)
+                : umetoken + ` _m_h5_tk_enc=${_m_h5_tk_enc};`;
+            newToken = umetoken;
+          }
+
+          // console.log("newtoken", newToken);
+          // 重新生成接口url(主要是sign签名和参数有关)
+          config.url = config.originalUrl.split("/1.0/")[0];
+          config.originalUrl = null;
+          return instance(config);
         }
 
         // 登录超时是larkSid过期
@@ -671,72 +708,32 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             data?.data?.bizAlertMsg
           )
         ) {
-          if (!data?.api?.includes("own.auth.getsidbytid")) {
-            // 重新获取laskId,然后再请求
-            // 根据tid重设laskId
-            try {
-              const sidRes = await APP_API_OBJ[app_name].getsidbytid({
-                empCode: "",
-                leaseCode: "",
-                tid: tid
-              });
-              // console.log("sidRes", sidRes);
-              let sid = sidRes?.bizValue?.sid;
-              if (sid) {
-                larkSid = sid;
-                // 更新对应手机号的token
-                if (config.mobile) {
-                  newLarkSidObj[config.mobile] = sid;
-                }
-                if (!config.retryCount || config.retryCount < 3) {
-                  config.retryCount = (config.retryCount || 0) + 1;
-                  // 重新生成参数（含新larkSid）
-                  let params = config.originalData;
-                  params.larkSid = larkSid;
-                  config.originalData = params;
-                  config.data = { data: JSON.stringify(params) };
-
-                  // 重新生成接口url(主要是sign签名和参数有关)
-                  config.url = config.originalUrl.split("/1.0/")[0];
-                  config.url = getUrl(newToken, config.url, params);
-                  if (IS_DEV) {
-                    config.url = config.url.replace("h5ume", "svpi/ume-ser");
-                  } else {
-                    config.url =
-                      "http://47.113.191.173:3000" +
-                      config.url.replace("h5ume", "ume-ser");
-                  }
-                  // const uidRes = await getumidToken();
-                  // console.log("uidRes-登录超时", uidRes);
-                  // config.headers["bx-ua"] = uidRes?.ua;
-                  // config.headers["bx-umidtoken"] = uidRes?.umidToken;
-
-                  // console.log("retryCount-config-登录超时", config);
-                  return instance(config);
-                }
-              }
-            } catch (error) {
-              // console.log("sidRes-error", error);
-              if (error?.data?.bizCode === "1002") {
-                ElMessage.warning(
-                  `${GET_APP_LIST()[app_name]}登录失效，请重新设置登录信息`
-                );
-                sendWxPusherMessage({
-                  msgType: 1,
-                  app_name: GET_APP_LIST()[app_name],
-                  expirePhone: config.mobile,
-                  transferTip: `${GET_APP_LIST()[app_name]}登录失效，请检查登录信息维护`
-                });
-              }
+          let isRetryCount = !config.retryCount || config.retryCount < 5;
+          if (isRetryCount && !data?.api?.includes("own.auth.getsidbytid")) {
+            config.retryCount = (config.retryCount || 0) + 1;
+            const sidRes = await getNewSid(1, config);
+            console.warn("sid过期获取sidRes结果", sidRes);
+            sid = sidRes?.bizValue?.sid;
+            tid = sidRes?.bizValue?.tid;
+            // 更新对应手机号的token
+            if (config.mobile) {
+              newSidObj[config.mobile] = sid;
+              newTidObj[config.mobile] = tid;
             }
+            // 重新生成接口url(主要是sign签名和参数有关)
+            config.url = config.originalUrl.split("/1.0/")[0];
+            config.originalUrl = "";
+            // 这里会重新走响应拦截流程
+            return instance(config);
+          } else {
+            logger.errorSave("Session过期无法续期", {
+              retryCount: config.retryCount,
+              url: config.url,
+              sid,
+              tid
+            });
+            logger.logUpload();
           }
-        }
-        let isOften = data?.msg?.includes("操作过于频繁");
-        if (isOften) {
-          // 等待一段时间后重试
-          await mockDelay(3);
-          // 重试请求
-          return instance(response?.config);
         }
 
         let errMsg =
@@ -779,7 +776,8 @@ const createAxios = ({ app_name, timeout = 20 }) => {
 
         // 等待一段时间后重试
         await mockDelay(retryDelay);
-
+        config.url = config.originalUrl.split("/1.0/")[0];
+        config.originalUrl = null;
         // 重试请求
         return instance(config);
       }

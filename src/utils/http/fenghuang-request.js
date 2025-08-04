@@ -4,7 +4,7 @@ import { GE_APP_INFO } from "@/common/constant";
 import { APP_API_OBJ } from "@/common/index";
 // 统一日志类
 import Logger from "@/common/logger";
-let logger = new Logger({ logType: 3 });
+let logger = new Logger({ logType: 4 });
 
 import {
   getCinemaLoginInfoList,
