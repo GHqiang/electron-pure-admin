@@ -246,7 +246,14 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         tid = targetLoginList.find(itemA => itemA.session_id === sid)?.tid;
         delete config.data.fenghuangToken;
       }
-      mobile = targetLoginList.find(itemA => itemA.session_id === sid)?.mobile;
+      if (!config.mobile) {
+        // 每个登录信息的tid不会变的
+        mobile = targetLoginList.find(itemA => itemA.tid === tid)?.mobile;
+        config.mobile = mobile;
+      } else {
+        mobile = config.mobile;
+        // console.warn("重试的请求", config);
+      }
 
       // 如果对应的手机号的token有新的直接获取新的
       if (mobile && newSidObj[mobile]) {
@@ -255,7 +262,6 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       if (mobile && newTidObj[mobile]) {
         tid = newTidObj[mobile];
       }
-      config.mobile = mobile;
       // 保存原始参数和原始URL
       if (!config.originalData) {
         config.originalData = {
@@ -389,12 +395,8 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             }
             // 重新生成接口url(主要是sign签名和参数有关)
             config.url = config.originalUrl.split("/1.0/")[0];
-            config.url = getUrl(tokenC, sid, config.url, config.originalData);
-            config.url = IS_DEV
-              ? config.url.replace("fenghuang", "svpi/fenghuang-ser")
-              : "http://47.113.191.173:3000" +
-                "/fenghuang-ser" +
-                config.url.slice(10);
+            config.originalUrl = "";
+            // 这里会重新走响应拦截流程
             return instance(config);
           } else {
             logger.errorSave("Session过期无法续期", {
@@ -419,12 +421,8 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             tokenC = data.c; // 更新token
             // 重新生成接口url(主要是sign签名和参数有关)
             config.url = config.originalUrl.split("/1.0/")[0];
-            config.url = getUrl(tokenC, sid, config.url, config.originalData);
-            config.url = IS_DEV
-              ? config.url.replace("fenghuang", "svpi/fenghuang-ser")
-              : "http://47.113.191.173:3000" +
-                "/fenghuang-ser" +
-                config.url.slice(10);
+            config.originalUrl = null;
+            // 这里会重新走响应拦截流程
             return instance(config);
           }
         }
