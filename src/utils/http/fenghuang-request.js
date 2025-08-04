@@ -401,6 +401,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           } else {
             logger.errorSave("Session过期无法续期", {
               retryCount: config.retryCount,
+              mobile: config.mobile,
               url: config.url,
               sid,
               tid
