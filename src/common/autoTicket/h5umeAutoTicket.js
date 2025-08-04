@@ -979,7 +979,7 @@ class OrderAutoTicketQueue {
         if (!useQuan?.length) {
           failMsg = "无可用优惠券";
         }
-        if (offerRule.quan_fee > 0 && !card_id) {
+        if (offerRule.quan_fee > 0 && !card_id && useQuan?.length) {
           failMsg = "无可补券手续费的会员卡";
         }
       } else {
@@ -1369,6 +1369,7 @@ class OrderAutoTicketQueue {
       pageSize, // 支持修改
       umeToken: session_id
     };
+    // {"channelCode":"BONA_H5_PROD_S_MPS","larkSid":"f7ccceebb0db410b8971dccb540178c0","version":"H5","appVersion":"H5_5.0","state":"USEFUL","pageNo":1,"pageSize":20}
     try {
       this.logger.infoSave("连续获取券参数", params);
       const res = await this.umeApi.getQuanList(params);
