@@ -254,7 +254,8 @@ export default class OrderManage {
         return (
           filmName === film_name &&
           +new Date(show_time) == startTime &&
-          lockseat === ticketSeats.map(item => item.seatName).join(" ")
+          ticketSeats?.length &&
+          ticketSeats.every(item => lockseat.includes(item.seatName))
         );
       });
       if (targerOrder) {
