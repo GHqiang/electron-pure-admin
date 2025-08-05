@@ -1348,7 +1348,7 @@ class OrderAutoTicketQueue {
         return (
           filmName === film_name &&
           +new Date(show_time) == showDate &&
-          lockseat.replaceAll(" ", "") === seatNames.replaceAll("|", "")
+          seatNames.split("|").every(itemA => lockseat.includes(itemA))
         );
       });
       if (targerOrder) {
