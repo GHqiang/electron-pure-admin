@@ -439,7 +439,6 @@ const createAxios = ({ app_name, timeout = 20 }) => {
   // 在文件顶部添加会话请求队列
   const sessionRefreshQueue = new Map();
   // 获取新的sid
-  // 修改后的 getNewSid 函数
   const getNewSid = async config => {
     // 使用 config.tid 而不是全局 tid 变量
     const currentTid = config.tid;
