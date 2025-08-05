@@ -224,7 +224,7 @@
           }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" fixed="right" align="center" width="120">
+      <el-table-column label="操作" fixed="right" align="center" width="210">
         <template
           #default="{
             row: { order_status, profit, id, order_number, user_id }
