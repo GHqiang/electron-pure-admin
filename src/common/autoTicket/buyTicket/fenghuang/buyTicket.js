@@ -585,7 +585,9 @@ export default class BuyTicket {
           lockOrderId,
           session_id: this.currentSessionId
         };
-        return await this.transferOrChangePhone(transparams, buyTicketInfo);
+        const transferParams =
+          await this.orderManage.transferOrder(transparams);
+        return { offerRule, transferParams };
       }
       this.logger.infoSave("创建订单支付成功", {
         order_num,
