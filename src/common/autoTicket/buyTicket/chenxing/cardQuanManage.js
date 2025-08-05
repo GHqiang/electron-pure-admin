@@ -929,7 +929,6 @@ export default class CardQuanManage {
     }
     try {
       const res = await this.appApi.getQuanList(params);
-      logger.infoSave("获取券返回", { quanList, params });
       let quanList, total_page;
       if (api_version === "3.0C") {
         quanList = res.data || [];
@@ -951,6 +950,7 @@ export default class CardQuanManage {
         const { number, size, totalPages = 1, last } = res.data?.pageable || {};
         total_page = totalPages;
       }
+      logger.infoSave("获取券返回", { quanList, params });
       quanData.push(...quanList);
       if (total_page > page) {
         // 如果总数量仍小于所需数量，则继续获取下一页

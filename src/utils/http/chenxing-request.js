@@ -159,14 +159,20 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         config.headers["Content-Type"] = "application/json";
         config.headers["Identity-key"] = identityKey;
         config.headers["Identity-Type"] = identityType;
-
-        if (config.method === "get") {
-          config.params = paramsHandle(config.params, app_name);
-          config.session_id = config.params?.session_id;
+        if (!config.originUrl) {
+          config.originUrl = config.url;
+        }
+        if (!config.tokenRetry) {
+          if (config.method === "get") {
+            config.params = paramsHandle(config.params, app_name);
+            config.session_id = config.params?.session_id;
+          } else {
+            // POST请求，使用formData封装参数
+            config.data = paramsHandle(config.data, app_name);
+            config.session_id = config.data?.session_id;
+          }
         } else {
-          // POST请求，使用formData封装参数
-          config.data = paramsHandle(config.data, app_name);
-          config.session_id = config.data?.session_id;
+          config.url = config.originUrl;
         }
         // 生产环境不会跨域
         if (!IS_DEV) {
@@ -197,7 +203,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
 
   // 响应拦截器
   instance.interceptors.response.use(
-    response => {
+    async response => {
       // 对响应进行统一处理
       const data = response.data;
       let whitelistSp = [];
@@ -209,6 +215,14 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         !whitelistSp.some(item => response.config.url.includes(item))
       ) {
         console.warn("接口响应失败", data);
+        if (data.retMsg?.includes("会话无效或已过期")) {
+          const tokenRes = await getToken(app_name, IS_DEV);
+          chenxingToken = tokenRes?.token;
+          identityKey = tokenRes?.identityKey;
+          identityType = tokenRes?.identityType;
+          response.config.tokenRetry = 1;
+          return instance(response.config);
+        }
         // 辰星C端失效处理，待添加3.0C端失效判断
         if (data.retMsg?.includes("登录") || data.msg?.includes("登录")) {
           let app_label = GE_APP_INFO(app_name).app_label;
@@ -230,6 +244,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           // 此处加个消息推送
           return Promise.reject(data);
         }
+
         ElMessage.error(data.msg || data.retMsg || "请求失败");
         return Promise.reject(data);
       }

@@ -878,8 +878,8 @@ export default class CardQuanManage {
     };
     try {
       const res = await this.appApi.getQuanList(params);
-      logger.infoSave("获取券返回", { quanList, params });
       let quanList = res.coupons || [];
+      logger.infoSave("获取券返回", { quanList, params });
       let totalCount = res.totalCount || 0;
       quanList = quanList.map(item => ({
         ...item,
