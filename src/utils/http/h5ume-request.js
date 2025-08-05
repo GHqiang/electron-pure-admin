@@ -455,11 +455,11 @@ const createAxios = ({ app_name, timeout = 20 }) => {
     // 创建新的续期请求
     const refreshPromise = (async () => {
       try {
-        logger.infoSave("发起新的SID续期请求", {
-          mobile: currentMobile,
-          tid: currentTid,
-          url: config.url
-        });
+        // logger.infoSave("发起新的SID续期请求", {
+        //   mobile: currentMobile,
+        //   tid: currentTid,
+        //   url: config.url
+        // });
 
         const sidRes = await APP_API_OBJ[app_name].getsidbytid({
           empCode: "",
@@ -467,7 +467,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           tid: currentTid // 使用当前请求的 tid
         });
 
-        logger.infoSave("新的SID续期结果", sidRes);
+        // logger.infoSave("新的SID续期结果", sidRes);
 
         // 更新会话缓存
         if (sidRes?.bizValue?.sid && sidRes?.bizValue?.account?.mobile) {
@@ -479,11 +479,11 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           newSidObj[mobile] = newSid;
           newTidObj[mobile] = newTid;
 
-          logger.infoSave("更新会话缓存", {
-            mobile,
-            newSid,
-            newTid
-          });
+          // logger.infoSave("更新会话缓存", {
+          //   mobile,
+          //   newSid,
+          //   newTid
+          // });
         }
 
         return sidRes;
@@ -545,8 +545,8 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           mobile = config.mobile;
           // console.warn("重试的请求", config);
         }
-        console.log("newSidObj", newSidObj);
-        console.log("newTidObj", newTidObj);
+        // console.log("newSidObj", newSidObj);
+        // console.log("newTidObj", newTidObj);
 
         // 如果对应的手机号的token有新的直接获取新的
         if (mobile && newSidObj[mobile]) {

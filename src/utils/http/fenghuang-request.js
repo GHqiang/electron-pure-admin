@@ -204,17 +204,17 @@ const createAxios = ({ app_name, timeout = 20 }) => {
     // 创建新的续期请求
     const refreshPromise = (async () => {
       try {
-        logger.infoSave("发起新的SID续期请求", {
-          mobile: currentMobile,
-          tid: currentTid,
-          url: config.url
-        });
+        // logger.infoSave("发起新的SID续期请求", {
+        //   mobile: currentMobile,
+        //   tid: currentTid,
+        //   url: config.url
+        // });
 
         const sidRes = await APP_API_OBJ[app_name].authRefresh({
           refreshToken: currentTid
         });
 
-        logger.infoSave("新的SID续期结果", sidRes);
+        // logger.infoSave("新的SID续期结果", sidRes);
         // 更新会话缓存
         if (sidRes?.accessToken && sidRes?.refreshToken) {
           const newSid = sidRes.accessToken;
@@ -224,13 +224,13 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           // 确保只更新对应手机号的会话
           newSidObj[mobile] = newSid;
           newTidObj[mobile] = newTid;
-          console.log("newSidObj", newSidObj);
-          console.log("newTidObj", newTidObj);
-          logger.infoSave("更新会话缓存", {
-            mobile,
-            newSid,
-            newTid
-          });
+          // console.log("newSidObj", newSidObj);
+          // console.log("newTidObj", newTidObj);
+          // logger.infoSave("更新会话缓存", {
+          //   mobile,
+          //   newSid,
+          //   newTid
+          // });
         }
 
         return sidRes;
