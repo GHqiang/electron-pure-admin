@@ -568,7 +568,9 @@ export default class PlatCommon {
       } else if (plat_name === "yinghuasuan") {
         params = {
           order_sn,
-          close_cause: "价格过低无法出票"
+          close_cause: "座位被占",
+          is_appeal: 2,
+          extra_close_cause: "无最优座位"
         };
       } else if (plat_name === "shangzhan") {
         params = {
