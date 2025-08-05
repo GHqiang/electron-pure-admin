@@ -1074,7 +1074,7 @@ class getSfcOfferPrice {
         });
       }
       // 最终报价高于平台限价，卡关闭超限报价直接不报
-      if (price >= Number(supplier_max_price)) {
+      if (price > Number(supplier_max_price)) {
         let isOverrunOffer = window.localStorage.getItem("isOverrunOffer");
         if (isOverrunOffer !== "1" && offerType !== "1") {
           this.logList.push({
