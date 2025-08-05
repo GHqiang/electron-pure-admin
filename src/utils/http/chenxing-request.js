@@ -159,21 +159,19 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         config.headers["Content-Type"] = "application/json";
         config.headers["Identity-key"] = identityKey;
         config.headers["Identity-Type"] = identityType;
-        if (!config.originUrl) {
-          config.originUrl = config.url;
-        }
-        if (!config.tokenRetry) {
-          if (config.method === "get") {
-            config.params = paramsHandle(config.params, app_name);
-            config.session_id = config.params?.session_id;
-          } else {
-            // POST请求，使用formData封装参数
-            config.data = paramsHandle(config.data, app_name);
-            config.session_id = config.data?.session_id;
-          }
+        let targetLoginList = getCinemaLoginInfoList().filter(
+          item => item.app_name === app_name && item.mobile && item.session_id
+        );
+        let token = targetLoginList?.[0]?.session_id || "";
+        if (config.method === "get") {
+          config.params = paramsHandle(config.params, app_name);
+          config.session_id = config.params?.session_id || token;
         } else {
-          config.url = config.originUrl;
+          // POST请求，使用formData封装参数
+          config.data = paramsHandle(config.data, app_name);
+          config.session_id = config.data?.session_id || token;
         }
+
         // 生产环境不会跨域
         if (!IS_DEV) {
           if (api_version == "C") {
@@ -206,28 +204,21 @@ const createAxios = ({ app_name, timeout = 20 }) => {
     async response => {
       // 对响应进行统一处理
       const data = response.data;
+      let config = response.config;
       let whitelistSp = [];
 
       let isError =
         api_version === "3.0C" ? data.code !== 200 : data.retCode != "0";
-      if (
-        isError &&
-        !whitelistSp.some(item => response.config.url.includes(item))
-      ) {
+      if (isError && !whitelistSp.some(item => config.url.includes(item))) {
         console.warn("接口响应失败", data);
-        if (data.retMsg?.includes("会话无效或已过期")) {
-          const tokenRes = await getToken(app_name, IS_DEV);
-          chenxingToken = tokenRes?.token;
-          identityKey = tokenRes?.identityKey;
-          identityType = tokenRes?.identityType;
-          response.config.tokenRetry = 1;
-          return instance(response.config);
-        }
+        let isCExpried =
+          data.retMsg?.includes("会话无效或已过期") && api_version == "C";
+        let is3CExpried = data.msg?.includes("登录") && api_version == "3.0C";
         // 辰星C端失效处理，待添加3.0C端失效判断
-        if (data.retMsg?.includes("登录") || data.msg?.includes("登录")) {
+        if (isCExpried || is3CExpried) {
           let app_label = GE_APP_INFO(app_name).app_label;
           ElMessage.warning(`${app_label}登录失效，请重新设置登录信息`);
-          let session_id = response?.config?.session_id;
+          let session_id = config?.session_id;
           let targetLoginList = getCinemaLoginInfoList().filter(
             item => item.app_name === app_name && item.mobile && item.session_id
           );
