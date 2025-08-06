@@ -205,13 +205,13 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       const currentTid = config.tid;
       const currentSid = config.sid;
       try {
-        logger.infoSave("发起新的SID续期请求", {
-          app_name,
-          mobile: currentMobile,
-          tid: currentTid,
-          sid: currentSid,
-          url: config.url
-        });
+        // logger.infoSave("发起新的SID续期请求", {
+        //   app_name,
+        //   mobile: currentMobile,
+        //   tid: currentTid,
+        //   sid: currentSid,
+        //   url: config.url
+        // });
 
         const sidRes = await APP_API_OBJ[app_name].authRefresh({
           refreshToken: currentTid
@@ -230,16 +230,17 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           newTidObj[mobile] = newTid;
           // console.log("newSidObj", newSidObj);
           // console.log("newTidObj", newTidObj);
-          logger.infoSave("更新会话缓存", {
-            app_name,
-            mobile,
-            newSid,
-            newTid
-          });
+          // logger.infoSave("更新会话缓存", {
+          //   app_name,
+          //   mobile,
+          //   newSid,
+          //   newTid
+          // });
         }
 
         return sidRes;
       } catch (error) {
+        // console.log("error", error);
         logger.errorSave("SID续期请求失败", {
           error: error.message || error,
           mobile: currentMobile,
@@ -247,10 +248,16 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           sid: currentSid,
           app_name
         });
-        // if (
-        //   formatErrInfo(error).includes("登录失效") 
-        // ) {
-        // }
+        if (formatErrInfo(error).includes("登录失效")) {
+          let app_label = GE_APP_INFO(app_name).app_label;
+          ElMessage.warning(`${app_label}登录失效，请重新设置登录信息`);
+          sendWxPusherMessage({
+            msgType: 1,
+            app_name: app_label,
+            expirePhone: currentMobile,
+            transferTip: `${app_label}登录失效，请检查登录信息维护`
+          });
+        }
         throw error;
       } finally {
         // 无论成功失败都清理队列
@@ -401,8 +408,12 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           errReason === "FAIL_BIZ_INVALID_REFRESH_TOKEN::令牌过期" &&
           config.url.includes("authn.refresh")
         ) {
-          console.warn("tid不会过期，只会app_name的tid用混之后会出现这个报错");
           let app_label = GE_APP_INFO(app_name).app_label;
+          // console.warn(
+          //   "tid不会过期，只会app_name的tid用混之后会出现这个报错",
+          //   app_name,
+          //   app_label
+          // );
           return Promise.reject(`${app_label}登录失效`);
         }
         let isRetryCount = !config.retryCount || config.retryCount < 5;
