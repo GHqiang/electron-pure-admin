@@ -783,31 +783,11 @@ export default class CardQuanManage {
             let targetQuanList = quanListAll.filter(
               itemA =>
                 couponInfoSpecial(item.quan_flag) ===
-                  couponInfoSpecial(itemA.coupon_info) &&
-                !item.black_quans?.includes(itemA.coupon_num)
+                  couponInfoSpecial(itemA.couponName) &&
+                !item.black_quans?.includes(itemA.couponCode)
             );
             console.log(item.quan_flag, "targetQuanList", targetQuanList);
-            const { card_num } = targetQuanList?.[0] || {};
             let quanStock = targetQuanList.length;
-            if (card_num) {
-              const groupedCoupons = targetQuanList.reduce((groups, coupon) => {
-                const key = coupon.card_num;
-                if (!groups[key]) {
-                  groups[key] = [];
-                }
-                groups[key].push(coupon);
-                return groups;
-              }, {});
-              let groupList = Object.values(groupedCoupons);
-              // 获取分组后最多出票量当做库存
-              let maxLength = groupList[0]?.length || 0; // 初始化为数组的第一个元素
-              for (let i = 1; i < groupList.length; i++) {
-                if (groupList[i]?.length > maxLength) {
-                  maxLength = groupList[i].length;
-                }
-              }
-              quanStock = maxLength;
-            }
             let quanStockList = item.quanStockList;
             console.log("quanStockList", quanStockList);
             let inx = quanStockList.findIndex(itemB => itemB.phone === mobile);
@@ -845,7 +825,7 @@ export default class CardQuanManage {
         }
       }
     } catch (error) {
-      logger.errorSave("异步更新券库存异常", error);
+      logger.errorSave("异步更新券库存异常", { error });
     } finally {
       logger.logUpload();
     }
