@@ -176,7 +176,6 @@ const createAxios = ({ app_name, timeout = 20 }) => {
   let tokenC = "",
     ua = "",
     umidToken = "",
-    mobile = "",
     newSidObj = {},
     newTidObj = {};
 
@@ -190,7 +189,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
   // 获取新的sid
   const getNewSid = async config => {
     // 使用 config.tid 而不是全局 tid 变量
-    const currentTid = config.tid;
+
     const currentMobile = config.mobile;
 
     // 生成队列标识（APP+手机号）
@@ -202,16 +201,21 @@ const createAxios = ({ app_name, timeout = 20 }) => {
     }
 
     // 创建新的续期请求
-    const refreshPromise = (async () => {
+    const refreshPromise = (async config => {
+      const currentTid = config.tid;
+      const currentSid = config.sid;
       try {
-        // logger.infoSave("发起新的SID续期请求", {
-        //   mobile: currentMobile,
-        //   tid: currentTid,
-        //   url: config.url
-        // });
+        logger.infoSave("发起新的SID续期请求", {
+          app_name,
+          mobile: currentMobile,
+          tid: currentTid,
+          sid: currentSid,
+          url: config.url
+        });
 
         const sidRes = await APP_API_OBJ[app_name].authRefresh({
           refreshToken: currentTid
+          // refreshToken: "21535bd8e2a04628aaec270011f3482e"
         });
 
         // logger.infoSave("新的SID续期结果", sidRes);
@@ -226,19 +230,22 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           newTidObj[mobile] = newTid;
           // console.log("newSidObj", newSidObj);
           // console.log("newTidObj", newTidObj);
-          // logger.infoSave("更新会话缓存", {
-          //   mobile,
-          //   newSid,
-          //   newTid
-          // });
+          logger.infoSave("更新会话缓存", {
+            app_name,
+            mobile,
+            newSid,
+            newTid
+          });
         }
 
         return sidRes;
       } catch (error) {
         logger.errorSave("SID续期请求失败", {
-          error: error.message,
+          error: error.message || error,
           mobile: currentMobile,
-          tid: currentTid
+          tid: currentTid,
+          sid: currentSid,
+          app_name
         });
         throw error;
       } finally {
@@ -246,7 +253,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         sessionRefreshQueue.delete(queueKey);
         logger.logUpload();
       }
-    })();
+    })(config);
 
     // 加入队列
     sessionRefreshQueue.set(queueKey, refreshPromise);
@@ -275,15 +282,13 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       }
       if (!config.mobile) {
         // 每个登录信息的tid不会变的
-        mobile = targetLoginList.find(
+        config.mobile = targetLoginList.find(
           itemA => itemA.tid === config.tid
         )?.mobile;
-        config.mobile = mobile;
       } else {
-        mobile = config.mobile;
         // console.warn("重试的请求", config);
       }
-
+      const mobile = config.mobile;
       // 如果对应的手机号的token有新的直接获取新的
       if (mobile && newSidObj[mobile]) {
         config.sid = newSidObj[mobile];
@@ -392,17 +397,8 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           errReason === "FAIL_BIZ_INVALID_REFRESH_TOKEN::令牌过期" &&
           config.url.includes("authn.refresh")
         ) {
-          console.warn("tid过期需重新维护登录信息");
+          console.warn("tid不会过期，只会app_name的tid用混之后会出现这个报错");
           let app_label = GE_APP_INFO(app_name).app_label;
-          ElMessage.warning(`${app_label}登录失效，请重新设置登录信息`);
-          console.warn("登录失效", app_label, mobile);
-          sendWxPusherMessage({
-            msgType: 1,
-            app_name: app_label,
-            expirePhone: mobile,
-            transferTip: `${app_label}登录失效，请检查登录信息维护`
-          });
-          // 消息推送待补充，提示用户重新登录维护登录信息
           return Promise.reject(`${app_label}登录失效`);
         }
         let isRetryCount = !config.retryCount || config.retryCount < 5;
