@@ -145,7 +145,7 @@ class OrderAutoOfferQueue {
           plat_name: "shoutu",
           tpp_price: tpp_price,
           supplier_max_price: supplier_max_price,
-          city_name: cinemaInfo[8],
+          city_name: cinemaInfo[8].replaceAll("市", ""),
           cinema_addr: cinemaInfo[7],
           ticket_num: ticket_num,
           cinema_name: cinemaInfo[0],

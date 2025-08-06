@@ -75,7 +75,7 @@ class OrderAutoFetchQueue {
         return {
           id,
           supplier_end_price,
-          city_name,
+          city_name: city_name.replaceAll("市", ""),
           cinema_addr: "",
           ticket_num,
           cinema_name,
