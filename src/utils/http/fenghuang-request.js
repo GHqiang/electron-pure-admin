@@ -4,7 +4,6 @@ import { GE_APP_INFO } from "@/common/constant";
 import { APP_API_OBJ } from "@/common/index";
 // 统一日志类
 import Logger from "@/common/logger";
-let logger = new Logger({ logType: 4 });
 
 import {
   getCinemaLoginInfoList,
@@ -164,6 +163,7 @@ const getUrl = (token, sid, url, params) => {
 };
 
 const createAxios = ({ app_name, timeout = 20 }) => {
+  let logger = new Logger({ logType: 4 });
   // 创建axios实例
   const instance = axios.create({
     //   baseURL: process.env.VITE_API_BASE_URL,
@@ -247,6 +247,10 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           sid: currentSid,
           app_name
         });
+        // if (
+        //   formatErrInfo(error).includes("登录失效") 
+        // ) {
+        // }
         throw error;
       } finally {
         // 无论成功失败都清理队列

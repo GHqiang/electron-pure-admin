@@ -6,7 +6,6 @@ import { GET_APP_LIST, GE_APP_INFO } from "@/common/constant";
 import { APP_API_OBJ } from "@/common/index";
 // 统一日志类
 import Logger from "@/common/logger";
-let logger = new Logger({ logType: 6 });
 
 import {
   logUpload,
@@ -413,6 +412,7 @@ const checkUrlNoNeedProxy = url => {
   return noProxyUrlList.some(item => url?.toLowerCase().includes(item));
 };
 const createAxios = ({ app_name, timeout = 20 }) => {
+  let logger = new Logger({ logType: 6 });
   // 创建axios实例
   const instance = axios.create({
     //   baseURL: process.env.VITE_API_BASE_URL,
