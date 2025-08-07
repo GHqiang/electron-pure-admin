@@ -14,7 +14,8 @@ const createApi = ({ app_name }) => {
   let apiUrlObj = {
     // 授权token
     authRefresh: {
-      "2.0": "/fenghuang/mtop.alipic.lark.account.authn.refresh"
+      "2.0": "/fenghuang/mtop.alipic.lark.account.authn.refresh",
+      timeout: 25
     },
     getCommon: {
       "2.0": "/fenghuang/mtop.alipic.lark.combo.common.get"
@@ -110,7 +111,9 @@ const createApi = ({ app_name }) => {
 
   Object.entries(apiUrlObj).map(([funName, apiUrl]) => {
     apiFunObj[funName] = params =>
-      axios.post(apiUrl[api_version], params || {});
+      axios.post(apiUrl[api_version], params || {}, {
+        timeout: apiUrl.timeout || 20
+      });
   });
   // console.log("apiFunObj", apiFunObj);
   return apiFunObj;
