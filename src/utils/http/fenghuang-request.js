@@ -277,6 +277,15 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       config.headers["Content-Type"] = "application/x-www-form-urlencoded";
       // 仅处理 MTOP 请求（路径以 /fenghuang 开头）
       if (!config.url.startsWith("/fenghuang")) return config;
+
+      if (!tokenC && !config.url.includes("cinema.citycinemas.get")) {
+        // 此处是为了更新newToken
+        try {
+          await APP_API_OBJ[app_name].getCinemaList({});
+        } catch (error) {
+          console.error("获取影院列表失败", error);
+        }
+      }
       let targetLoginList = getCinemaLoginInfoList().filter(
         item => item.app_name === app_name && item.mobile && item.session_id
       );
