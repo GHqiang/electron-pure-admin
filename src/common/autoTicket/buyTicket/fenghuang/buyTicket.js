@@ -365,6 +365,8 @@ export default class BuyTicket {
       const paymentAmount =
         (calcRes?.settlement?.totalDiscountedPrice || 0) / 100;
       this.logger.infoSave("实际支付价格", { paymentAmount });
+      // 校验卡余额是否足够
+
       // 6、校验是否可以创建订单
       // 用券时总价为0
       if (offer_type === "1") {
@@ -507,6 +509,7 @@ export default class BuyTicket {
           };
         }
         if (payInfo) {
+          payInfo.promotionType = "MEMBER_CARD";
           card_id = payInfo?.cardNo;
           cardNum = payInfo?.cardNo;
           payments.push({
