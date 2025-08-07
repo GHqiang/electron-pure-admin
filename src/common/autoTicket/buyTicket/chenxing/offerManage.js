@@ -251,12 +251,12 @@ class getChenxingOfferPrice {
       adjustedPrice = this.formatFinalPrice(adjustedPrice, this.plat_name);
 
       // 5. 超限检查处理
-      const isCheckOverrun = await this.handleOverrunCheck(
+      adjustedPrice = await this.handleOverrunCheck(
         adjustedPrice,
         supplier_max_price,
         offerType
       );
-      if (isCheckOverrun) {
+      if (adjustedPrice) {
         return null;
       }
 
@@ -327,7 +327,7 @@ class getChenxingOfferPrice {
   }
 
   // 超限检查
-  async handleOverrunCheck(price, supplier_max_price, offerType) {
+  handleOverrunCheck(price, supplier_max_price, offerType) {
     if (price > Number(supplier_max_price)) {
       const isOverrunOfferEnabled =
         window.localStorage.getItem("isOverrunOffer") === "1";
@@ -336,15 +336,14 @@ class getChenxingOfferPrice {
         this.logger.errorSave(
           `最终报价${price}超过平台限价${supplier_max_price}且超限报价关闭`
         );
-        return true;
+        return;
       }
 
       // 调整价格至平台限价
-      this.adjustToMaxPrice(price, supplier_max_price);
+      return this.adjustToMaxPrice(price, supplier_max_price);
     }
-    return false;
+    return price;
   }
-
   // 调整至平台限价
   adjustToMaxPrice(price, supplier_max_price) {
     if (["mayi", "yangcong"].includes(this.plat_name)) {
@@ -352,7 +351,7 @@ class getChenxingOfferPrice {
     } else {
       price = roundToHalf(supplier_max_price, -1);
     }
-    this.logger.infoSave("调整最终报价为平台限价");
+    this.logger.infoSave("调整最终报价为平台限价", { price });
     return price;
   }
 
