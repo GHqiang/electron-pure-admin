@@ -563,13 +563,14 @@ const syncCardInfo = async () => {
       loading.close();
       return;
     }
+    let app_ame = formData.app_name || (syncFlag == 3 ? "lma" : undefined);
     // 2、获取服务端已维护的卡列表
     let cardRes = await svApi.queryCardList({
       page_num: 1,
-      page_size: 2000,
+      page_size: app_ame ? 50 : 1500,
       rule: rule,
       mobile: phone || undefined,
-      app_name: formData.app_name || (syncFlag == 3 ? "lma" : undefined)
+      app_name: app_ame
     });
     let serCardList = cardRes.data?.cardList || [];
     serCardList = serCardList.filter(itemA => {
