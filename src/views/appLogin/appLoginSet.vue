@@ -651,7 +651,7 @@ onBeforeMount(async () => {
   // console.log("res", res);
   let list = res.data.userList || [];
   // console.log("list", list);
-  userList.value = list.filter(item => [9, 10].includes(item.id));
+  userList.value = list.filter(item => item.rule == rule && item.is_view == 1);
   nextTick(() => {
     if (treeRef.value) {
       treeRef.value.setCurrentKey(1);
