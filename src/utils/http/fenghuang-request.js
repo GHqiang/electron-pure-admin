@@ -90,7 +90,7 @@ const getumidToken = () => {
 // 不走代理的url列表
 const noProxyUrlList = [
   "cinema.citycinemas", // 调试时可注释
-  "authn.refresh",
+  // "authn.refresh",
   "cinemafilms.get",
   "film.cinemafilms",
   "schedule.filmschedules",
@@ -258,7 +258,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             transferTip: `${app_label}登录失效，请检查登录信息维护`
           });
         }
-        throw error;
+        // throw error;
       } finally {
         // 无论成功失败都清理队列
         sessionRefreshQueue.delete(queueKey);
