@@ -392,7 +392,7 @@ const getUrl = (token, url, params) => {
 
 const noProxyUrlList = [
   "cinema.getcinemas", // 调试时可注释
-  "auth.getsidbytid",
+  // "auth.getsidbytid",
   "film.gethotfilms",
   "schedule.getschedules",
   "seat.getseatmap",
