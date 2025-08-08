@@ -474,8 +474,9 @@ const getCinemaLoginInfoList = userId => {
     loginInfoList = JSON.parse(loginInfoList);
     // 非研发账号过滤掉研发登录信息
     if (tokens?.userInfo?.user_id != 1) {
-      loginInfoList = loginInfoList.filter(
-        item => item.mobile != "15237761435"
+      // 重启华熙有张卡需要使用掉（100面额）
+      loginInfoList = loginInfoList.filter(item =>
+        item.app_name != "cqhx" ? item.mobile != "15237761435" : true
       );
     }
     loginInfoList = loginInfoList.filter(item =>
