@@ -255,7 +255,7 @@ class getFenghuangOfferPrice {
         supplier_max_price,
         offerType
       );
-      if (adjustedPrice) {
+      if (!adjustedPrice) {
         return null;
       }
 
