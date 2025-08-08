@@ -877,7 +877,7 @@ export default class CardQuanManage {
       logger.infoSave("连续获取券返回", { quanData });
       return quanData || [];
     } catch (error) {
-      logger.errorSave("获取优惠券列表异常", error);
+      logger.errorSave("获取优惠券列表异常", formatErrInfo(error));
     }
   }
 
