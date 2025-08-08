@@ -362,11 +362,16 @@ export default class BuyTicket {
         return await this.transferOrChangePhone(transparams, buyTicketInfo);
       }
       // 实际支付价格
-      const paymentAmount =
-        (calcRes?.settlement?.totalDiscountedPrice || 0) / 100;
+      let paymentAmount = calcRes?.settlement?.totalDiscountedPrice;
+      // 原价
+      let totalOriginalPrice = calcRes?.settlement?.totalOriginalPrice;
+      // 券码不存在标识（不在可用券50个内，但是个人中心有）
+      let quanEmptyFlag = calcRes?.quanEmptyFlag;
       this.logger.infoSave("实际支付价格", { paymentAmount });
       // 校验卡余额是否足够
-
+      let quan_fee = offerRule.quan_fee || 0;
+      quan_fee = Number(quan_fee);
+      let quan_fee_total = (quan_fee * 1000 * ticket_num * 100) / 1000;
       // 6、校验是否可以创建订单
       // 用券时总价为0
       if (offer_type === "1") {
@@ -376,6 +381,9 @@ export default class BuyTicket {
             paymentAmount,
             ticket_num
           });
+        }
+        if (quanEmptyFlag) {
+          paymentAmount = quan_fee_total;
         }
         // yaolai绑券逻辑不一样，暂不处理
         if (offerRule.is_store == "1" && useQuan.length - ticket_num < 10) {
@@ -395,9 +403,6 @@ export default class BuyTicket {
         return { offerRule };
       }
       // 支付前校验用券价格
-      let quan_fee = offerRule.quan_fee || 0;
-      quan_fee = Number(quan_fee);
-      let quan_fee_total = (quan_fee * 1000 * ticket_num) / 1000;
       if (
         offer_type === "1" &&
         useQuan?.length &&
@@ -405,6 +410,7 @@ export default class BuyTicket {
       ) {
         this.logger.errorSave("用完券发现支付金额大于券手续费*票数，走转单", {
           paymentAmount,
+          quan_fee_total,
           quan_fee,
           ticket_num
         });
@@ -418,6 +424,7 @@ export default class BuyTicket {
       }
       // 支付前校验用卡价格
       let real_member_price = offerRule?.real_member_price || 0;
+      real_member_price = real_member_price * 100;
       if (offerRule.offer_type !== "1" && canUseCardList?.length) {
         real_member_price = (real_member_price * 10000 * ticket_num) / 10000;
         if (paymentAmount > real_member_price) {
@@ -454,6 +461,15 @@ export default class BuyTicket {
         // 可能需要，也可能需要每一项都做此处理
         if (promotions?.length) {
           promotions[0].productType = "TICKET";
+        }
+        if (quanEmptyFlag) {
+          promotions = useQuan.map(item => ({
+            discountedAmount:
+              (totalOriginalPrice - quan_fee_total) / ticket_num,
+            promotionType: "COUPON",
+            promoCode: item.couponCode,
+            productType: "TICKET"
+          }));
         }
         isUseCard = true;
       }
@@ -516,7 +532,7 @@ export default class BuyTicket {
             paymentType: payInfo?.paymentType,
             payCode: payInfo?.cardNo,
             payToken: window.getPayToken(this.currentMemberPwd),
-            payAmount: calcRes.settlement.totalDiscountedPrice
+            payAmount: paymentAmount
           });
         } else {
           this.logger.errorSave("无可用卡", {
@@ -564,8 +580,8 @@ export default class BuyTicket {
             seatCode: item.seatCode
           }))
         ),
-        totalOriginalPrice: calcRes.settlement.totalOriginalPrice,
-        totalPayAmount: calcRes.settlement.totalDiscountedPrice,
+        totalOriginalPrice: totalOriginalPrice,
+        totalPayAmount: paymentAmount,
         promotions: JSON.stringify(promotions),
         payments: JSON.stringify(payments),
         phoneNumber: this.currentPhone,

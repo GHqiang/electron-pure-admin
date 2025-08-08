@@ -142,9 +142,10 @@ export default class OrderManage {
       ),
       fenghuangToken: session_id
     };
+    let res;
     try {
       this.logger.infoSave("计算价格参数", JSON.parse(JSON.stringify(params)));
-      let res = await this.appApi.priceCalculation(params);
+      res = await this.appApi.priceCalculation(params);
       this.logger.infoSave("计算价格返回", res);
       // 优惠券参数处理
       if (promotions?.length) {
@@ -156,6 +157,12 @@ export default class OrderManage {
       return res;
     } catch (error) {
       this.logger.errorSave("计算价格异常", error);
+      if (formatErrInfo(error).includes("券码不存在") && res) {
+        return {
+          ...res,
+          quanEmptyFlag: 1
+        };
+      }
     }
   }
   // 创建订单
