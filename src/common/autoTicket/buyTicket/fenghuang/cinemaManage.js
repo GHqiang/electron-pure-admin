@@ -341,6 +341,12 @@ export default class CinemaManage {
         ? true
         : item.linkCinemaIds.split(",").some(itemA => itemA == cinemaLinkId);
     });
+    // 设置指定影院的卡优先
+    useCanCardList = useCanCardList.sort((a, b) => {
+      if (a.linkCinemaIds && !b.linkCinemaIds) return -1;
+      if (!a.linkCinemaIds && b.linkCinemaIds) return 1;
+      return 0;
+    });
     this.logger.infoSave("根据制定影院对卡列表进行过滤", {
       useCanCardList
     });

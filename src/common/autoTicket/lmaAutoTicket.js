@@ -1660,12 +1660,21 @@ class OrderAutoTicketQueue {
         useMobileList,
         cardListByMobile
       });
-      cardList = cardListByMobile.filter(item => {
+      let useCanCardList = cardListByMobile.filter(item => {
         return !item.linkCinemaIds
           ? true
           : item.linkCinemaIds.split(",").some(itemA => itemA == cinema_id);
       });
-      return cardList;
+      // 设置指定影院的卡优先
+      useCanCardList = useCanCardList.sort((a, b) => {
+        if (a.linkCinemaIds && !b.linkCinemaIds) return -1;
+        if (!a.linkCinemaIds && b.linkCinemaIds) return 1;
+        return 0;
+      });
+      this.logger.infoSave("根据制定影院过滤后的卡列表", {
+        useCanCardList
+      });
+      return useCanCardList;
     } catch (error) {
       this.logger.errorSave("获取会员卡维护列表异常", { error });
     }
