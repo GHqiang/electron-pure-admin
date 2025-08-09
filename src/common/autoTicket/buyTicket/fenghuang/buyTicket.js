@@ -446,7 +446,8 @@ export default class BuyTicket {
             Number(profit) +
             ((real_member_price * 1000 - paymentAmount * 1000) *
               member_discount) /
-              (1000 * 100);
+              (1000 * 100) /
+              100;
           profit = Number(profit).toFixed(2);
         }
       }

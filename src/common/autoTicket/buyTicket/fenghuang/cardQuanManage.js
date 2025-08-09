@@ -245,7 +245,7 @@ export default class CardQuanManage {
         );
         // 取最大余额
         cardData = cardData.sort((a, b) => b.cardAmount - a.cardAmount);
-        if (!cardData?.length) {
+        if (!cardData?.length && offerRule.quan_fee > 0) {
           this.logger.errorSave(
             `使用优惠券后发现没有可以支付券手续费的会员卡，${is_auto_use_quan ? ",灵活用券转用卡处理" : ""}`,
             {
