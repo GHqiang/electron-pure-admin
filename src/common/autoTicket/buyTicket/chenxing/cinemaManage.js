@@ -368,7 +368,7 @@ export default class CinemaManage {
       };
       this.logger.info("获取电影放映信息参数", params);
       let res = await this.appApi.getMoviePlayInfo(params);
-      this.logger.infoSave("获取电影放映信息返回", res);
+      // this.logger.infoSave("获取电影放映信息返回", res);
       let movie_data = [];
       if (api_version === "3.0C") {
         movie_data = res.data?.items || [];
