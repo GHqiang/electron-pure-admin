@@ -223,7 +223,7 @@ class OrderAutoOfferQueue {
   async orderHandle(order, delayTime) {
     const { conPrefix } = this;
     try {
-      await mockDelay(delayTime);
+      // await mockDelay(delayTime);
       // console.log(conPrefix + `订单处理 ${order.id}`);
       if (this.isRunning) {
         const offerResult = await this.singleOffer({
