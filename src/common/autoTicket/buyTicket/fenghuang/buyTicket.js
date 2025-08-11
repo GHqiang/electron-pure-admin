@@ -386,13 +386,13 @@ export default class BuyTicket {
           paymentAmount = quan_fee_total;
         }
         // yaolai绑券逻辑不一样，暂不处理
-        if (offerRule.is_store == "1" && useQuan.length - ticket_num < 10) {
+        if (offerRule.is_store == "1" && quanStock - ticket_num < 10) {
           this.logger.infoSave("本次出票后券小于10，开始异步绑定券");
           this.cardQuanManage.getNewQuan({
             cinemaLinkId,
             quanValue: offerRule.quan_value,
             black_quans: offerRule.black_quans,
-            quanNum: 10 - (useQuan.length - Number(ticket_num)),
+            quanNum: 10 - (quanStock - Number(ticket_num)),
             session_id: this.currentSessionId,
             asyncFlag: 1
           });
