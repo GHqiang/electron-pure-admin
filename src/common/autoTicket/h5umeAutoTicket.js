@@ -1029,8 +1029,9 @@ class OrderAutoTicketQueue {
         }
       }
       let payAmount = member_total_price; // 会员支付价
-      // 券抵扣金额（这种券比较少，且没法算成本，暂时不考虑）
-      // let quanDiscountAmount = +(useQuan?.[0]?.discountAmount || 0);
+      // 个人中心用券时
+      let quanDiscountAmount =
+        quanList?.[0]?.discountValue || useQuan?.[0]?.discountAmount || 0;
       // 用券时总价为0
       if (offerRule.offer_type === "1") {
         // total_price = orderInfoRes?.preferCouponInfo?.totalTicketPrivilegePrice;
@@ -1038,8 +1039,7 @@ class OrderAutoTicketQueue {
           // 支付价格要乘以100
           payAmount = (+offerRule.quan_fee * 1000 * ticket_num) / 10 || 0;
           // 这里本身单位就乘过100了，故不用再乘100
-          let realPayAmount =
-            (quanList[0].discountValue * 1000 * ticket_num) / 1000;
+          let realPayAmount = (quanDiscountAmount * 1000 * ticket_num) / 1000;
           // payAmount = realPayAmount;
           this.logger.infoSave("券补钱总价计算相关信息", {
             total_price,
