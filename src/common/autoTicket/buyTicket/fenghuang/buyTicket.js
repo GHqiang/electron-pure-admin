@@ -424,7 +424,7 @@ export default class BuyTicket {
       }
       // 支付前校验用卡价格
       let real_member_price = offerRule?.real_member_price || 0;
-      real_member_price = real_member_price * 100;
+      real_member_price = (real_member_price * 1000) / 10;
       if (offerRule.offer_type !== "1" && canUseCardList?.length) {
         real_member_price = (real_member_price * 10000 * ticket_num) / 10000;
         if (paymentAmount > real_member_price) {
