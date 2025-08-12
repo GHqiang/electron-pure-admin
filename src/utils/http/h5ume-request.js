@@ -493,7 +493,17 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           mobile: currentMobile,
           tid: currentTid
         });
-        throw error;
+        if (formatErrInfo(error).includes("登录失效")) {
+          let app_label = GE_APP_INFO(app_name).app_label;
+          ElMessage.warning(`${app_label}登录失效，请重新设置登录信息`);
+          sendWxPusherMessage({
+            msgType: 1,
+            app_name: app_label,
+            expirePhone: currentMobile,
+            transferTip: `${app_label}登录失效，请检查登录信息维护`
+          });
+        }
+        // throw error;
       } finally {
         // 无论成功失败都清理队列
         sessionRefreshQueue.delete(queueKey);
@@ -693,6 +703,21 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         !whitelistSp.some(item => response.config.url.includes(item))
       ) {
         let errReason = data?.data?.bizMsg || data?.ret?.[0];
+
+        // 刷新接口的刷新令牌过期（需要重新登录抓包维护该值tid）
+        if (
+          errReason?.includes("登录已失效") &&
+          config.url.includes("auth.getsidbytid")
+        ) {
+          let app_label = GE_APP_INFO(app_name).app_label;
+          // console.warn(
+          //   "tid不会过期，只会app_name的tid用混之后会出现这个报错",
+          //   app_name,
+          //   app_label
+          // );
+          return Promise.reject(`${app_label}登录失效`);
+        }
+
         // 令牌为空或者过期是cookie里的_m_h5_tk为空或者过期
         if (
           [
