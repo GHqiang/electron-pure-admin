@@ -63,6 +63,7 @@
     "axios-retry": "^4.5.0",
     "crypto-js": "^4.2.0",
     "dayjs": "^1.11.11",
+    "decimal.js": "^10.6.0",
     "echarts": "^5.5.0",
     "element-plus": "^2.7.3",
     "exceljs": "^4.4.0",

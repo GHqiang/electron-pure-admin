@@ -5,6 +5,8 @@ import axios from "axios";
 import * as CryptoJS from "crypto-js";
 import QRCode from "qrcode";
 import svApi from "@/api/sv-api";
+import Decimal from "decimal.js";
+
 import {
   GET_UME_LIST,
   GE_APP_INFO,
@@ -2115,7 +2117,73 @@ const randomNumByLength = function () {
   return n;
 };
 window.randomNumByLength = randomNumByLength;
+
+// 加法
+const addDecimal = (a, b) => Decimal(a).add(Decimal(b)).toNumber();
+// 减法
+const subDecimal = (a, b) => Decimal(a).sub(Decimal(b)).toNumber();
+// 乘法
+const mulDecimal = (a, b) => Decimal(a).mul(Decimal(b)).toNumber();
+// 除法
+const divDecimal = (a, b) => Decimal(a).div(Decimal(b)).toNumber();
+
+window.addDecimal = addDecimal;
+window.subDecimal = subDecimal;
+window.mulDecimal = mulDecimal;
+window.divDecimal = divDecimal;
+
+// 连续加法
+const multipleAddDecimal = (...numbers) => {
+  // 使用reduce进行累加，注意：初始值为Decimal(0)
+  return numbers
+    .reduce((acc, num) => acc.plus(Decimal(num)), Decimal(0))
+    .toNumber();
+};
+
+// 连续减法
+const multipleSubDecimal = (...numbers) => {
+  // 使用reduce进行累加，注意：初始值为Decimal(numbers[0])
+  return numbers
+    .slice(1)
+    .reduce((acc, num) => acc.minus(Decimal(num)), Decimal(numbers[0]))
+    .toNumber();
+};
+
+// 连续乘法
+const multipleMulDecimal = (...numbers) => {
+  // 使用reduce进行累积，注意：初始值为Decimal(1)
+  let result = numbers
+    .reduce((acc, num) => acc.times(Decimal(num)), Decimal(1))
+    .toNumber()
+    .toFixed(2);
+  return Number(result);
+};
+
+// 连续除法
+const multipleDivDecimal = (...numbers) => {
+  // 使用reduce进行累积，注意：初始值为Decimal(1)
+  let result = numbers
+    .slice(1)
+    .reduce((acc, num) => acc.dividedBy(Decimal(num)), Decimal(numbers[0]))
+    .toNumber()
+    .toFixed(2);
+  return Number(result);
+};
+
+window.multipleAddDecimal = multipleAddDecimal;
+window.multipleSubDecimal = multipleSubDecimal;
+window.multipleMulDecimal = multipleMulDecimal;
+window.multipleDivDecimal = multipleDivDecimal;
+
 export {
+  addDecimal, // 加
+  subDecimal, // 减
+  mulDecimal, // 乘
+  divDecimal, // 除
+  multipleAddDecimal, // 连续加
+  multipleSubDecimal, // 连续减
+  multipleMulDecimal, // 连续乘
+  multipleDivDecimal, // 连续除
   isNextDayBySfc, // 判断sfc是否是次日
   findMostRepeatedChars, // 找出重复字符及数量
   adjustSeats, // 获取需要帮助锁定的座位
