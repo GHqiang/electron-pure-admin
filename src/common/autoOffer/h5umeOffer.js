@@ -263,14 +263,14 @@ class getUmeOfferPrice {
         });
         return;
       }
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "报价规则匹配列表",
-        level: "info",
-        info: {
-          matchRuleList
-        }
-      });
+      // this.logList.push({
+      //   opera_time: getCurrentTime(),
+      //   des: "报价规则匹配列表",
+      //   level: "info",
+      //   info: {
+      //     matchRuleList
+      //   }
+      // });
       // 获取报价最低的报价规则
       let endRule = await this.getMinAmountOfferRule(
         matchRuleList,
@@ -537,7 +537,6 @@ class getUmeOfferPrice {
         des: "根据影院获取券类型列表返回",
         level: "info",
         info: {
-          quanTypeRes,
           quanTypeList,
           params,
           useMobileList
@@ -1253,7 +1252,7 @@ class getUmeOfferPrice {
         level: "info",
         info: {
           useMobileList,
-          cardListByMobile
+          cardListByMobile: cardListByMobile.map(item => item.card_num)
         }
       });
       // console.log("list", list);
@@ -1272,7 +1271,7 @@ class getUmeOfferPrice {
         des: "根据当天及当月出票量限制过滤后",
         level: "info",
         info: {
-          cardListLimit
+          cardListLimit: cardListLimit.map(item => item.card_num)
         }
       });
       // 过滤指定卡
@@ -1327,16 +1326,27 @@ class getUmeOfferPrice {
         });
         return;
       }
-      // this.logList.push({
-      //   opera_time: getCurrentTime(),
-      //   des: "获取城市影院列表成功",
-      //   level: "info"
-      // });
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "获取城市影院列表成功",
+        level: "info"
+      });
       let cinemaList =
         allCinemaList?.find(item => item.cityName.includes(city_name))
           ?.cinemaList || [];
       console.log("获取城市影院列表返回", cinemaList);
-
+      if (!cinemaList?.length) {
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "获取城市下影院列表失败",
+          level: "info",
+          info: {
+            allCinemaList,
+            city_name
+          }
+        });
+        return;
+      }
       // 2、获取目标影院
       let targetCinema = cinemaList.find(
         item => cinema_code && item.cinemaCode === cinema_code
@@ -1402,7 +1412,11 @@ class getUmeOfferPrice {
               level: "error",
               info: {
                 film_name,
-                movie_data
+                movie_data: movie_data?.map(item => ({
+                  filmName: item.filmName,
+                  filmId: item.filmId,
+                  filmVersion: filmVersion // 2D、3D
+                }))
               }
             });
             return;
@@ -1460,7 +1474,12 @@ class getUmeOfferPrice {
           des: "匹配影片放映场次失败",
           level: "error",
           info: {
-            showList,
+            playDateList: playDateList?.map(item => ({
+              schedules: item.schedules?.map(itemA => ({
+                showTime: itemA.showTime,
+                hallName: itemA.hallName
+              }))
+            })),
             show_time
           }
         });
@@ -1675,7 +1694,7 @@ class getUmeOfferPrice {
         des: "报价前获取用卡购票价格信息返回",
         level: "info",
         info: {
-          orderInfo,
+          privileges: orderInfo?.privileges,
           params
         }
       });
@@ -1753,14 +1772,14 @@ class getUmeOfferPrice {
       //     },
       // ]
       console.log("获取影院放映列表返回", fimlList);
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "获取影院放映列表返回",
-        level: "info",
-        info: {
-          fimlList
-        }
-      });
+      // this.logList.push({
+      //   opera_time: getCurrentTime(),
+      //   des: "获取影院放映列表返回",
+      //   level: "info",
+      //   info: {
+      //     fimlList
+      //   }
+      // });
       return fimlList;
     } catch (error) {
       console.error("获取影院放映列表异常", error);
@@ -1789,14 +1808,19 @@ class getUmeOfferPrice {
       let films = res?.bizValue?.films || [];
       let filmDates = films.find(item => item.filmId === filmId)?.dates || [];
       console.log("filmDates", filmDates);
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "获取电影放映日期返回",
-        level: "info",
-        info: {
-          filmDates
-        }
-      });
+      if (!filmDates.length) {
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "获取电影放映日期失败",
+          level: "info",
+          info: {
+            films: films?.map(item => ({
+              filmId: item.filmId,
+              datesLength: item.dates?.length
+            }))
+          }
+        });
+      }
       return filmDates;
     } catch (error) {
       console.error("获取电影放映日期异常", error);
@@ -1830,14 +1854,14 @@ class getUmeOfferPrice {
           cinemaId: itemA.cinemaLinkId
         }))
       }));
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "获取城市影院列表返回",
-        level: "info",
-        info: {
-          list
-        }
-      });
+      // this.logList.push({
+      //   opera_time: getCurrentTime(),
+      //   des: "获取城市影院列表返回",
+      //   level: "info",
+      //   info: {
+      //     list
+      //   }
+      // });
       // [
       //     {
       //         "alphabet": "KUNMING",

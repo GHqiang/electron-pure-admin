@@ -242,7 +242,7 @@ class OrderAutoTicketQueue {
       this.logger.infoSave(
         `订单开始出票，订单号-${order.order_number}，上个订单号-${this.prevOrderNumber}`,
         {
-          order,
+          // order,
           delayTime
         }
       );
@@ -503,6 +503,7 @@ class OrderAutoTicketQueue {
         // 2、获取目标城市影院列表
         let cityCinemaList = await this.getCityCinemaList();
         if (!cityCinemaList?.length) {
+          this.logger.errorSave("获取城市影院列表失败");
           const transferParams = await this.transferOrder(item);
           return { transferParams };
         }
@@ -598,9 +599,7 @@ class OrderAutoTicketQueue {
           }
         }
         const phone = this.currentParamsList[0].mobile;
-        this.logger.infoSave(`首次出票手机号-${phone}`, {
-          currentParamsList: this.currentParamsList
-        });
+        this.logger.infoSave(`首次出票手机号-${phone}`);
         this.curPhone = phone;
         // 4、获取目标影院放映列表
         const movie_data = await this.getMoviePlayInfo({
@@ -2639,7 +2638,7 @@ class OrderAutoTicketQueue {
           cinemaId: itemA.cinemaLinkId
         }))
       }));
-      this.logger.infoSave("获取城市影院列表返回", { list });
+      // this.logger.infoSave("获取城市影院列表返回", { list });
       return list;
     } catch (error) {
       this.logger.errorSave("获取城市影院异常", {
@@ -2681,9 +2680,9 @@ class OrderAutoTicketQueue {
       //         "showStatus": "SHOWING"
       //     },
       // ]
-      this.logger.infoSave("获取影院放映列表返回", {
-        fimlList
-      });
+      // this.logger.infoSave("获取影院放映列表返回", {
+      //   fimlList
+      // });
       return fimlList;
     } catch (error) {
       this.logger.errorSave("获取电影放映列表异常", {
@@ -2705,7 +2704,7 @@ class OrderAutoTicketQueue {
       this.logger.info("获取电影放映日期返回", res);
       let films = res?.bizValue?.films || [];
       let filmDates = films.find(item => item.filmId === filmId)?.dates || [];
-      this.logger.infoSave("获取电影放映日期返回", { filmDates });
+      // this.logger.infoSave("获取电影放映日期返回", { filmDates });
       return filmDates;
     } catch (error) {
       this.logger.errorSave("获取电影放映日期异常", { error });
