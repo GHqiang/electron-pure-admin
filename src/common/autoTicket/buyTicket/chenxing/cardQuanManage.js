@@ -902,10 +902,10 @@ export default class CardQuanManage {
       //   item => item.defaultCard == 1
       // )?.cardNo;
       // quanParams.defaultCardNo = defaultCardNo;
-      quanParams.couponStatus = 1;
+      params.couponStatus = 1;
     } else if (api_version == "C") {
-      quanParams.pageNo = page;
-      quanParams.pageSize = 100; // 支持多传
+      params.pageNo = page;
+      params.pageSize = 100; // 支持多传
     }
     try {
       const res = await this.appApi.getQuanList(params);
