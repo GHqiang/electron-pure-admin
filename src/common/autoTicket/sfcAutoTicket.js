@@ -13,7 +13,8 @@ import {
   isDateInCurrentMonth,
   findMostRepeatedChars,
   isNextDayBySfc,
-  getPreviousDay
+  getPreviousDay,
+  subDecimal
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 // 统一日志类
@@ -1036,19 +1037,34 @@ class OrderAutoTicketQueue {
       if (offerRule.offer_type !== "1" && card_id) {
         real_member_price = (real_member_price * 10000 * ticket_num) / 10000;
         if (pay_money > real_member_price) {
-          this.logger.errorSave("用完卡发现支付金额大于会员价*票数，走转单", {
-            pay_money,
-            real_member_price,
-            ticket_num
-          });
-          const transferParams = await this.transferOrder(item, {
-            city_id,
-            cinema_id,
-            show_id,
-            start_day,
-            start_time
-          });
-          return { offerRule, transferParams };
+          if (subDecimal(pay_money, real_member_price) < profit) {
+            this.logger.infoSave(
+              "用完卡发现支付金额大于会员价*票数，利润需减去差值",
+              {
+                pay_money,
+                real_member_price,
+                profit
+              }
+            );
+            profit = subDecimal(
+              profit,
+              subDecimal(pay_money, real_member_price)
+            );
+          } else {
+            this.logger.errorSave("用完卡发现无利润，走转单", {
+              pay_money,
+              real_member_price,
+              ticket_num
+            });
+            const transferParams = await this.transferOrder(item, {
+              city_id,
+              cinema_id,
+              show_id,
+              start_day,
+              start_time
+            });
+            return { offerRule, transferParams };
+          }
         } else if (pay_money < real_member_price) {
           let member_discount = offerRule?.member_discount || 100;
           profit =

@@ -13,7 +13,8 @@ import {
   isDateInCurrentMonth,
   getPreviousDay,
   findMostRepeatedChars,
-  couponInfoSpecial
+  couponInfoSpecial,
+  subDecimal
 } from "@/utils/utils";
 // 帮助锁定座位实例对象
 import assistLockSeatObj from "./lockSeatQueue";
@@ -1251,17 +1252,32 @@ class OrderAutoTicketQueue {
       if (offerRule.offer_type !== "1" && card_id) {
         real_member_price = (real_member_price * 10000 * ticket_num) / 10000;
         if (paymentAmount > real_member_price) {
-          this.logger.errorSave("用完卡发现支付金额大于会员价*票数，走转单", {
-            paymentAmount,
-            real_member_price,
-            ticket_num
-          });
-          const transferParams = await this.transferOrder(item, {
-            cinemaCode,
-            cinemaLinkId,
-            orderHeaderId
-          });
-          return { offerRule, transferParams };
+          if (subDecimal(paymentAmount, real_member_price) < profit) {
+            this.logger.infoSave(
+              "用完卡发现支付金额大于会员价*票数，利润需减去差值",
+              {
+                paymentAmount,
+                real_member_price,
+                profit
+              }
+            );
+            profit = subDecimal(
+              profit,
+              subDecimal(paymentAmount, real_member_price)
+            );
+          } else {
+            this.logger.errorSave("用完卡发现无利润，走转单", {
+              paymentAmount,
+              real_member_price,
+              ticket_num
+            });
+            const transferParams = await this.transferOrder(item, {
+              cinemaCode,
+              cinemaLinkId,
+              orderHeaderId
+            });
+            return { offerRule, transferParams };
+          }
         } else if (paymentAmount < real_member_price) {
           let member_discount = offerRule?.member_discount || 100;
           profit =

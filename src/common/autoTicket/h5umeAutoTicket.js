@@ -14,7 +14,8 @@ import {
   findMostRepeatedChars,
   couponInfoSpecial,
   generateTicketImage,
-  uploadBlobImage
+  uploadBlobImage,
+  subDecimal
 } from "@/utils/utils";
 import md5 from "@/utils/md5.js";
 // 帮助锁定座位实例对象
@@ -1206,16 +1207,31 @@ class OrderAutoTicketQueue {
       let real_member_total_price = offerRule?.real_member_price || 0;
       if (offerRule.offer_type !== "1" && card_id) {
         if (payAmount > real_member_total_price) {
-          this.logger.errorSave("用完卡发现支付金额大于真实会员总价，走转单", {
-            payAmount,
-            real_member_total_price,
-            ticket_num
-          });
-          const transferParams = await this.transferOrder(item, {
-            cinemaLinkId,
-            orderId
-          });
-          return { offerRule, transferParams };
+          if (subDecimal(payAmount, real_member_price) < profit) {
+            this.logger.infoSave(
+              "用完卡发现支付金额大于会员价*票数，利润需减去差值",
+              {
+                payAmount,
+                real_member_price,
+                profit
+              }
+            );
+            profit = subDecimal(
+              profit,
+              subDecimal(payAmount, real_member_price)
+            );
+          } else {
+            this.logger.errorSave("用完卡发现无利润，走转单", {
+              payAmount,
+              real_member_total_price,
+              ticket_num
+            });
+            const transferParams = await this.transferOrder(item, {
+              cinemaLinkId,
+              orderId
+            });
+            return { offerRule, transferParams };
+          }
         } else if (payAmount < real_member_total_price) {
           let member_discount = offerRule?.member_discount || 100;
           profit =

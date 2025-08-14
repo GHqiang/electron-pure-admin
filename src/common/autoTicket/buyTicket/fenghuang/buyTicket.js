@@ -4,7 +4,8 @@ import {
   formatErrInfo, // 格式化错误信息
   getCinemaLoginInfoList,
   sendWxPusherMessage,
-  randomNumByLength
+  randomNumByLength,
+  subDecimal
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 // 引入获取payToken方法（window.getPayToken）
@@ -428,18 +429,33 @@ export default class BuyTicket {
       if (offerRule.offer_type !== "1" && canUseCardList?.length) {
         real_member_price = (real_member_price * 10000 * ticket_num) / 10000;
         if (paymentAmount > real_member_price) {
-          this.logger.errorSave("用完卡发现支付金额大于会员价*票数，走转单", {
-            paymentAmount,
-            real_member_price,
-            ticket_num
-          });
-          // 转单或换号处理
-          const transparams = {
-            cinemaLinkId,
-            lockOrderId,
-            session_id: this.currentSessionId
-          };
-          return await this.transferOrChangePhone(transparams, buyTicketInfo);
+          if (subDecimal(paymentAmount, real_member_price) < profit) {
+            this.logger.infoSave(
+              "用完卡发现支付金额大于会员价*票数，利润需减去差值",
+              {
+                paymentAmount,
+                real_member_price,
+                profit
+              }
+            );
+            profit = subDecimal(
+              profit,
+              subDecimal(paymentAmount, real_member_price)
+            );
+          } else {
+            this.logger.errorSave("用完卡发现无利润，走转单", {
+              paymentAmount,
+              real_member_price,
+              ticket_num
+            });
+            // 转单或换号处理
+            const transparams = {
+              cinemaLinkId,
+              lockOrderId,
+              session_id: this.currentSessionId
+            };
+            return await this.transferOrChangePhone(transparams, buyTicketInfo);
+          }
         } else if (paymentAmount < real_member_price) {
           let member_discount = offerRule?.member_discount || 100;
           profit =
