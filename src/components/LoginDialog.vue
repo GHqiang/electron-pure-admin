@@ -39,10 +39,14 @@
             clearable
           />
         </el-form-item>
-        <el-form-item label="支持用户">
+        <el-form-item
+          label="指定用户"
+          prop="link_user_id"
+          :required="FENGHUANG_LIST.includes(formData.app_name)"
+        >
           <el-select
             v-model="formData.link_user_id"
-            placeholder="支持用户"
+            placeholder="指定用户"
             clearable
           >
             <el-option
@@ -196,6 +200,16 @@ const validateTidPass = (rule, value, callback) => {
   }
 };
 
+const validateLinkUserId = (rule, value, callback) => {
+  if (!FENGHUANG_LIST.value.includes(formData.app_name)) {
+    callback();
+  } else if (!formData.link_user_id) {
+    callback(new Error("凤凰新系列指定用户不能为空"));
+  } else {
+    callback();
+  }
+};
+
 const rules = {
   app_name: [
     { required: true, message: "影线名称不能为空", trigger: ["change", "blur"] }
@@ -218,6 +232,12 @@ const rules = {
     {
       required: true,
       validator: validatePhoneNumber,
+      trigger: ["change", "blur"]
+    }
+  ],
+  link_user_id: [
+    {
+      validator: validateLinkUserId,
       trigger: ["change", "blur"]
     }
   ]
