@@ -25,6 +25,13 @@
       <el-main style="margin-left: 15px; padding: 0">
         <!-- 查询表单 -->
         <el-form :inline="true" class="demo-form-inline">
+          <el-form-item label="平台影院code">
+            <el-input
+              v-model="formData.plat_cinema_code"
+              placeholder="请输入平台影院code"
+              clearable
+            />
+          </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="searchData">搜索</el-button>
             <el-button
@@ -228,7 +235,8 @@ const totalNum = ref(0);
 // 表单查询数据
 const formData = reactive({
   app_type_code: "",
-  app_name: ""
+  app_name: "",
+  plat_cinema_code: ""
 });
 
 // 树节点点击
