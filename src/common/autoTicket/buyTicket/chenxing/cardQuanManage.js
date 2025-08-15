@@ -248,7 +248,7 @@ export default class CardQuanManage {
             useQuans: []
           };
         }
-        let cardNum, card_id;
+        let useCardList = [];
         if (quan_fee > 0) {
           let cardData = cardList.filter(
             item => item.cardAmount >= (quan_fee * 1000 * ticket_num) / 1000
@@ -269,12 +269,10 @@ export default class CardQuanManage {
             }
             return {
               useQuan: [],
-              card_id: "",
               profit: 0 // 利润
             };
           } else {
-            cardNum = cardData?.[0]?.cardNo;
-            card_id = cardData?.[0]?.cardNo;
+            useCardList = cardData?.slice();
           }
         }
         if (is_auto_use_quan) {
@@ -284,8 +282,7 @@ export default class CardQuanManage {
           useQuan,
           quanStock: targetQuanList.length,
           profit,
-          cardNum,
-          card_id
+          useCardList
         };
       }
     } catch (error) {
@@ -384,7 +381,6 @@ export default class CardQuanManage {
           cardList
         });
         return {
-          card_id: "",
           profit: 0 // 利润
         };
       }
@@ -406,22 +402,19 @@ export default class CardQuanManage {
       if (profit < 0 && !TEST_NEW_PLAT_LIST.includes(plat_name)) {
         this.logger.errorSave("使用会员卡计算价格后最终利润为负", { profit });
         return {
-          profit: 0,
-          card_id: ""
+          profit: 0
         };
       }
       profit = Number(profit).toFixed(2);
       // 取最大余额
       cardData = cardData.sort((a, b) => b.cardAmount - a.cardAmount);
       return {
-        card_id: cardData?.[0]?.cardNo,
-        cardNum: cardData?.[0]?.cardNo,
+        useCardList: cardData?.slice(),
         profit // 利润
       };
     } catch (error) {
       this.logger.errorSave("会员用卡处理异常", formatErrInfo(error));
       return {
-        card_id: "",
         profit: 0 // 利润
       };
     }

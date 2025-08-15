@@ -340,7 +340,8 @@ export default class BuyTicket {
       this.logger.infoSave("用卡用券返回", cardQuanRes);
       let {
         card_id = "",
-        cardNum,
+        cardNum = "",
+        useCardList = [],
         useQuan = [],
         profit = 0,
         quanStock
@@ -348,7 +349,7 @@ export default class BuyTicket {
       // 由于offerRule可能被useQuanOrCard调整，后续使用地方需注意
       let { offerRule } = this;
       const { offer_type } = offerRule;
-      if (!card_id && !useQuan?.length) {
+      if (!useCardList?.length && !useQuan?.length) {
         let errMsg = this.logger.getLastErrMsg();
         let str = offer_type === "1" ? "无可用优惠券" : "无可用会员卡";
         if (errMsg) {
@@ -367,12 +368,16 @@ export default class BuyTicket {
         };
         return await this.transferOrChangePhone(transparams, buyTicketInfo);
       }
-      // 5、计算价格
-
+      // 5、计算价格拿到目标卡
+      // 预计支付价格
+      let real_member_price = offerRule?.real_member_price || 0;
+      real_member_price = (real_member_price * 10000 * ticket_num) / 10000;
       let quan_code = useQuan.map(item => item.couponCode);
       const calcRes = await this.orderManage.pripriceCalculation({
         ...buyTicketInfo,
         cardNum,
+        useCardList,
+        real_member_price,
         quan_code,
         session_id: this.currentSessionId
       });
@@ -387,6 +392,8 @@ export default class BuyTicket {
         };
         return await this.transferOrChangePhone(transparams, buyTicketInfo);
       }
+      card_id = calcRes?.cardNum;
+      cardNum = calcRes?.cardNum;
       // 实际支付价格
       const paymentAmount = calcRes?.priceDetail?.totalRealPayAmount;
       this.logger.infoSave("实际支付价格", { paymentAmount });
@@ -475,9 +482,7 @@ export default class BuyTicket {
         return await this.transferOrChangePhone(transparams, buyTicketInfo);
       }
       // 支付前校验用卡价格
-      let real_member_price = offerRule?.real_member_price || 0;
       if (offerRule.offer_type !== "1" && card_id) {
-        real_member_price = (real_member_price * 10000 * ticket_num) / 10000;
         if (paymentAmount > real_member_price) {
           if (subDecimal(paymentAmount, real_member_price) < profit) {
             this.logger.infoSave(

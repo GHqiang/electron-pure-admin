@@ -113,13 +113,15 @@ export default class OrderManage {
       cinemaCode,
       cinemaId,
       lockOrderId,
-      cardNum,
       activityKey,
       quan_code,
       session_id,
+      useCardList = [],
+      real_member_price, // 预计支付价格
       firstCalc = true,
       isTrial = true
     } = data;
+    let cardNum = useCardList?.[0]?.cardNo;
     let params = {
       cinemaCode,
       cinemaId,
@@ -169,6 +171,32 @@ export default class OrderManage {
                 isTrial: false
               });
             }
+          }
+        }
+        const paymentAmount = res?.data?.priceDetail?.totalRealPayAmount;
+        if (paymentAmount == real_member_price) {
+          return {
+            ...res?.data,
+            cardNum
+          };
+        } else {
+          if (useCardList?.length > 1) {
+            this.logger.infoSave(
+              "辰星计算价格和预计支付价格不符，准备换卡计算",
+              {
+                paymentAmount,
+                real_member_price
+              }
+            );
+            return await this.pripriceCalculation({
+              ...data,
+              useCardList: useCardList.slice(1)
+            });
+          } else {
+            return {
+              ...res?.data,
+              cardNum
+            };
           }
         }
       }
