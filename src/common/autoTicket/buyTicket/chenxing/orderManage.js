@@ -144,6 +144,9 @@ export default class OrderManage {
       }
     } else {
       params.activityKey = activityKey || "";
+      if (api_version === "C") {
+        params.limitConsume = false;
+      }
     }
     try {
       this.logger.infoSave("计算价格参数", params);
@@ -159,7 +162,7 @@ export default class OrderManage {
           let activityList = res?.data?.activityList || [];
           if (activityList.length) {
             activityKey = activityList
-              .filter(item => item.cardNum === cardNum)
+              .filter(item => (item.cardNum ? item.cardNum === cardNum : true))
               .sort(
                 (a, b) => b.discountAmount - a.discountAmount
               )?.[0]?.activityKey;
