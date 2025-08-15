@@ -718,9 +718,6 @@ class OrderAutoTicketQueue {
           };
         });
         if (!seatList?.length) {
-          this.logger.errorSave("获取座位布局异常", {
-            error: seatListRes?.error
-          });
           const transferParams = await this.transferOrder(item);
           return { transferParams };
         }
