@@ -106,13 +106,18 @@ export default class CardQuanManage {
       if (offer_type == "1" || is_auto_use_quan) {
         let quanValueList = offerRule.quan_value.split(",");
         this.logger.infoSave("使用优惠券出票", { quanValueList });
-        let quanParams = {
-          status: "USEFUL",
-          pageNumber: 1,
-          pageSize: 200, // 先取200，后面不够了再说
-          fenghuangToken: session_id
-        };
-        quanList = await this.getQuanList(quanParams);
+        quanList = await this.continuousGetQuan({
+          session_id,
+          logger: this.logger
+        });
+        this.logger.infoSave("连续获取券返回", {
+          quanData: quanList?.map(item => ({
+            couponName: item.couponName,
+            couponCode: item.couponCode,
+            endDateTime: item.endDateTime
+            // couponValue: item.couponValue
+          }))
+        });
         // 读取券库存进行过滤重新设置quan_value为单个券类型
         if (quanValueList.length > 1) {
           const appQuanTypeList = await this.getQuanTypeListByAppMobile({
@@ -832,15 +837,21 @@ export default class CardQuanManage {
   }
 
   // 获取某个手机号的全部优惠券列表
-  async getQuanListByPhone({ cinemaLinkId, session_id, logger }) {
+  async getQuanListByPhone({ session_id, logger }) {
     try {
       const quanData = await this.continuousGetQuan({
-        cinemaLinkId,
         session_id,
         logger
       });
       console.log("quanData", quanData);
-      logger.infoSave("连续获取券返回", { quanData });
+      logger.infoSave("连续获取券返回", {
+        quanData: quanData.map(item => ({
+          couponName: item.couponName,
+          couponCode: item.couponCode,
+          endDateTime: item.endDateTime
+          // couponValue: item.couponValue
+        }))
+      });
       return quanData || [];
     } catch (error) {
       logger.errorSave("获取优惠券列表异常", error);
@@ -849,18 +860,23 @@ export default class CardQuanManage {
 
   // 连续获取券
   async continuousGetQuan(data) {
-    let { session_id, page = 1, quanData = [], logger } = data;
+    let {
+      session_id,
+      pageNumber = 1,
+      pageSize = 100,
+      quanData = [],
+      logger
+    } = data;
     let params = {
       status: "USEFUL",
-      pageNumber: page,
-      pageSize: 20,
+      pageNumber,
+      pageSize,
       fenghuangToken: session_id
     };
     try {
       const res = await this.appApi.getQuanList(params);
       let quanList = res.coupons || [];
-      logger.infoSave("获取券返回", { quanList, params });
-      let totalCount = res.totalCount || 0;
+      // logger.infoSave("获取券返回", { quanList, params });
       quanList = quanList.map(item => ({
         ...item,
         couponName: item.couponName,
@@ -868,11 +884,11 @@ export default class CardQuanManage {
         endDateTime: item.endTime
       }));
       quanData.push(...quanList);
-      if (page < totalCount) {
+      if (quanList?.length == pageSize) {
         // 如果还有下一页，则继续获取下一页
         return await this.continuousGetQuan({
           ...data,
-          page: page + 1,
+          pageNumber: pageNumber + 1,
           quanData
         });
       }
@@ -882,6 +898,7 @@ export default class CardQuanManage {
         error,
         params
       });
+      return [];
     }
   }
 
