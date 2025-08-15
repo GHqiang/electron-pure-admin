@@ -2943,9 +2943,15 @@ const continuousGetQuan = async data => {
   };
   try {
     const res = await APP_API_OBJ[appFlag].getQuanList(params);
-    logger.infoSave("连续获取目标券返回", { res, params });
     let quanList = res.data?.unused?.lists || [];
     let total_page = res.data?.unused?.total_page || [];
+    logger.infoSave("连续获取目标券返回", {
+      quanList: quanList?.map(item => ({
+        coupon_num: item.coupon_num,
+        coupon_info: item.coupon_info
+      }))
+    });
+
     let targetQuanList = [];
     if (quan_value) {
       targetQuanList = quanList.filter(
@@ -3018,8 +3024,16 @@ const getQuanList = async data => {
     };
     logger.infoSave("获取优惠券列表参数", { params });
     const res = await APP_API_OBJ[appFlag].getQuanList(params);
-    logger.infoSave("获取优惠券列表返回", { res });
     let quanList = res.data?.unused?.lists || [];
+    logger.infoSave("获取优惠券列表返回", {
+      quanList: quanList?.map(item => ({
+        card_num: item.card_num || undefined,
+        coupon_num: item.coupon_num,
+        coupon_name: item.coupon_name,
+        coupon_info: item.coupon_info,
+        validate_date_end: item.validate_date_end
+      }))
+    });
     let total_page = res.data?.unused?.total_page || [];
     // 获取目标券
     let targetQuanList = [];

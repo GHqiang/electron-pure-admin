@@ -524,16 +524,21 @@ class getSfcOfferPrice {
             let quanStockList = item.quanStockList;
             console.log("quanStockList", quanStockList);
             let inx = quanStockList.findIndex(itemB => itemB.phone === mobile);
+            let endDateTime = targetQuanList.sort(
+              (a, b) => new Date(b.endDateTime) - new Date(a.endDateTime)
+            )?.[0]?.endDateTime;
             if (inx != -1) {
               quanStockList[inx].quan_stock = quanStock;
               quanStockList[inx].real_quan_stock = targetQuanList.length;
               quanStockList[inx].update_time = getCurrentTime();
+              quanStockList[inx].endDateTime = endDateTime;
             } else {
               quanStockList.push({
                 phone: mobile,
                 quan_stock: quanStock,
                 real_quan_stock: targetQuanList.length,
-                update_time: getCurrentTime()
+                update_time: getCurrentTime(),
+                endDateTime
               });
             }
           });
@@ -654,7 +659,14 @@ class getSfcOfferPrice {
 
   // 连续获取券
   async continuousGetQuan(data) {
-    let { city_id, cinema_id, session_id, page, quanData = [], logList } = data;
+    let {
+      city_id,
+      cinema_id,
+      session_id,
+      page = 1,
+      quanData = [],
+      logList
+    } = data;
     const params = {
       city_id,
       cinema_id,
@@ -666,17 +678,6 @@ class getSfcOfferPrice {
       const res = await this.appApi.getQuanList(params);
       let quanList = res.data?.unused?.lists || [];
       let total_page = res.data?.unused?.total_page || [];
-      if (page == 2) {
-        logList.push({
-          opera_time: getCurrentTime(),
-          des: "获取券返回",
-          level: "info",
-          info: {
-            quanList,
-            params
-          }
-        });
-      }
       quanData.push(...quanList);
       if (total_page > page) {
         // 如果总数量仍小于所需数量，则继续获取下一页
@@ -689,7 +690,8 @@ class getSfcOfferPrice {
       return quanData.map(item => ({
         coupon_info: item.coupon_info,
         coupon_num: item.coupon_num,
-        card_num: item.card_num
+        card_num: item.card_num,
+        validate_date_end: item.validate_date_end // '2026.06.30'
       }));
     } catch (error) {
       console.warn("连续获取券失败", error);
@@ -702,75 +704,32 @@ class getSfcOfferPrice {
           params
         }
       });
+      return [];
     }
   }
 
   // 获取优惠券列表
-  async getQuanListByPhone({
-    city_id,
-    cinema_id,
-    session_id,
-    page = 1,
-    logList
-  }) {
+  async getQuanListByPhone({ city_id, cinema_id, session_id, logList }) {
     try {
-      let params = {
+      const quanData = await this.continuousGetQuan({
         city_id,
         cinema_id,
         session_id,
-        page,
-        status: 4 // 未使用
-      };
+        logList
+      });
+      console.log("quanData", quanData);
       logList.push({
         opera_time: getCurrentTime(),
-        des: "获取优惠券列表参数",
+        des: "连续获取券最终返回",
         level: "info",
         info: {
-          params
+          quanData
         }
       });
-      console.log("获取优惠券列表参数", params);
-      const res = await this.appApi.getQuanList(params);
-      console.log("获取优惠券列表返回", res);
-      let quanList = res.data?.unused?.lists || [];
-      let total_page = res.data?.unused?.total_page || [];
-      logList.push({
-        opera_time: getCurrentTime(),
-        des: "获取优惠券列表返回",
-        level: "info",
-        info: {
-          quanList,
-          total_page
-        }
-      });
-      let quanListAll = quanList.map(item => ({
-        coupon_info: item.coupon_info,
-        coupon_num: item.coupon_num,
-        card_num: item.card_num
+      return quanData.map(item => ({
+        ...item,
+        endDateTime: item.validate_date_end // '2026.06.30'
       }));
-      // 证明还有下一页
-      if (total_page > page) {
-        const quanData = await this.continuousGetQuan({
-          city_id,
-          cinema_id,
-          session_id,
-          page: 2,
-          logList
-        });
-        console.log("quanData", quanData);
-        logList.push({
-          opera_time: getCurrentTime(),
-          des: "连续获取券最终返回",
-          level: "info",
-          info: {
-            quanData
-          }
-        });
-        quanListAll.push(...(quanData || []));
-      }
-      console.log("quanListAll", quanListAll);
-
-      return quanListAll;
     } catch (error) {
       console.error("获取优惠券列表异常", error);
       logList.push({
