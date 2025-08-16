@@ -148,10 +148,14 @@ export default class OrderManage {
         params.limitConsume = false;
       }
     }
+    let res;
     try {
       this.logger.infoSave("计算价格参数", params);
-      let res = await this.appApi.priceCalculation(params);
-      this.logger.infoSave("计算价格返回", JSON.parse(JSON.stringify(res)));
+      // 通过优惠调用时无需再调用之前的价格计算接口
+      if (!(activityKey && isTrial === false)) {
+        res = await this.appApi.priceCalculation(params);
+        this.logger.infoSave("计算价格返回", JSON.parse(JSON.stringify(res)));
+      }
       params = { ...params, firstCalc: false };
       // this.logger.infoSave("计算价格参数1", params);
       res = await this.appApi.priceCalculation(params);
