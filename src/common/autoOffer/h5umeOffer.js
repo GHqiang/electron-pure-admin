@@ -358,12 +358,12 @@ class getUmeOfferPrice {
       // 拿着处理过的最大券库存（几个号之间）+对应的更新时间去判断是否要更新（只判断自己号上的）
       let isNeedUpdate = quanTypeList.some(item => {
         // if (item.quan_stock < 5) {
-        let inx = item.quanStockListByPhone.findIndex(
+        let inx = item.quanStockList.findIndex(
           itemA => itemA.quan_stock === item.quan_stock
         );
         console.log("inx", inx);
         if (inx != -1) {
-          let update_time = item.quanStockListByPhone[inx].update_time;
+          let update_time = item.quanStockList[inx].update_time;
           console.log("update_time", update_time);
 
           return !update_time
@@ -380,10 +380,7 @@ class getUmeOfferPrice {
         logList.push({
           opera_time: getCurrentTime(),
           des: "不满足更新条件",
-          level: "info",
-          info: {
-            quanTypeList
-          }
+          level: "info"
         });
       } else {
         // 只要有一个需要更新，就全部更新，因为会获取该号全部的券
@@ -516,20 +513,21 @@ class getUmeOfferPrice {
           ? JSON.parse(item.quanStockList)
           : [];
         // 只拿关联账号的券库存信息进行判断
-        item.quanStockListByPhone = item.quanStockList.filter(itemA =>
+        const quanStockListByPhone = item.quanStockList.filter(itemA =>
           useMobileList.includes(itemA.phone)
         );
         item.quan_stock = item.quan_stock || 0;
-        if (item.quanStockListByPhone?.length) {
+        if (quanStockListByPhone?.length) {
           // 最大数当做券库存
           let maxNum = 0;
-          item.quanStockListByPhone.forEach(itemA => {
+          quanStockListByPhone.forEach(itemA => {
             if (+itemA.quan_stock > maxNum) {
               maxNum = +itemA.quan_stock;
             }
           });
           item.quan_stock = maxNum;
         }
+        item.quanStockList = quanStockListByPhone.slice();
       });
       console.log("quanTypeList", quanTypeList);
       this.logList.push({
@@ -853,10 +851,7 @@ class getUmeOfferPrice {
         this.logList.push({
           opera_time: getCurrentTime(),
           des: "最小加价规则不存在,返回最小固定报价规则",
-          level: "info",
-          info: {
-            fixedOfferAmount: mixFixedAmountRule?.offerAmount
-          }
+          level: "info"
         });
         return mixFixedAmountRule;
       }
@@ -874,11 +869,7 @@ class getUmeOfferPrice {
         this.logList.push({
           opera_time: getCurrentTime(),
           des: "会员报价高于固定报价，返回最小固定报价规则",
-          level: "info",
-          info: {
-            memberOfferAmount: mixAddAmountRule.memberOfferAmount,
-            fixedOfferAmount: mixFixedAmountRule.offerAmount
-          }
+          level: "info"
         });
         return mixFixedAmountRule;
       } else {

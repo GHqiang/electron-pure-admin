@@ -241,11 +241,7 @@ class OrderAutoTicketQueue {
     this.platManage = new PlatManage(order, logger, isTestOrder); // 平台管理模块
     try {
       this.logger.infoSave(
-        `订单开始出票，订单号-${order.order_number}，上个订单号-${this.prevOrderNumber}`,
-        {
-          // order,
-          delayTime
-        }
+        `订单开始出票，订单号-${order.order_number}，上个订单号-${this.prevOrderNumber}`
       );
       // await mockDelay(delayTime);
       this.logger.info(`订单处理 ${order.id}`);
