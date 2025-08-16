@@ -2342,14 +2342,14 @@ class OrderAutoTicketQueue {
           ? JSON.parse(item.quanStockList)
           : [];
         // 只拿关联账号的券库存信息进行判断
-        item.quanStockListByPhone = item.quanStockList.filter(
+        const quanStockListByPhone = item.quanStockList.filter(
           itemA => itemA.phone === mobile
         );
         item.quan_stock = item.quan_stock || 0;
-        if (item.quanStockListByPhone?.length) {
+        if (quanStockListByPhone?.length) {
           // 最大数当做券库存
           let maxNum = 0;
-          item.quanStockListByPhone.forEach(itemA => {
+          quanStockListByPhone.forEach(itemA => {
             if (+itemA.quan_stock > maxNum) {
               maxNum = +itemA.quan_stock;
             }

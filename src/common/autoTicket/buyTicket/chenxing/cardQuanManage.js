@@ -658,14 +658,14 @@ export default class CardQuanManage {
           ? JSON.parse(item.quanStockList)
           : [];
         // 只拿关联账号的券库存信息进行判断
-        item.quanStockListByPhone = item.quanStockList.filter(
+        const quanStockListByPhone = item.quanStockList.filter(
           itemA => itemA.phone === mobile
         );
         item.quan_stock = item.quan_stock || 0;
-        if (item.quanStockListByPhone?.length) {
+        if (quanStockListByPhone?.length) {
           // 最大数当做券库存
           let maxNum = 0;
-          item.quanStockListByPhone.forEach(itemA => {
+          quanStockListByPhone.forEach(itemA => {
             if (+itemA.quan_stock > maxNum) {
               maxNum = +itemA.quan_stock;
             }
@@ -706,24 +706,24 @@ export default class CardQuanManage {
           ? JSON.parse(item.quanStockList)
           : [];
         // 只拿关联账号的券库存信息进行判断
-        item.quanStockListByPhone = item.quanStockList.filter(itemA =>
+        const quanStockListByPhone = item.quanStockList.filter(itemA =>
           useMobileList.includes(itemA.phone)
         );
         item.quan_stock = item.quan_stock || 0;
-        if (item.quanStockListByPhone?.length) {
+        if (quanStockListByPhone?.length) {
           // 最大数当做券库存
           let maxNum = 0;
-          item.quanStockListByPhone.forEach(itemA => {
+          quanStockListByPhone.forEach(itemA => {
             if (+itemA.quan_stock > maxNum) {
               maxNum = +itemA.quan_stock;
             }
           });
           item.quan_stock = maxNum;
         }
+        item.quanStockList = quanStockListByPhone.slice();
       });
       this.logger.info("quanTypeList", quanTypeList);
       this.logger.infoSave("根据影院获取券类型列表返回", {
-        quanTypeRes,
         quanTypeList,
         params,
         useMobileList
@@ -754,12 +754,12 @@ export default class CardQuanManage {
       // 拿着处理过的最大券库存（几个号之间）+对应的更新时间去判断是否要更新（只判断自己号上的）
       let isNeedUpdate = quanTypeList.some(item => {
         // if (item.quan_stock < 5) {
-        let inx = item.quanStockListByPhone.findIndex(
+        let inx = item.quanStockList.findIndex(
           itemA => itemA.quan_stock === item.quan_stock
         );
         console.log("inx", inx);
         if (inx != -1) {
-          let update_time = item.quanStockListByPhone[inx].update_time;
+          let update_time = item.quanStockList[inx].update_time;
           console.log("update_time", update_time);
 
           return !update_time
