@@ -944,7 +944,7 @@ class OrderAutoTicketQueue {
         total_price,
         member_total_price,
         ticket_num,
-        real_member_total_price: offerRule.real_member_price,
+        real_member_price: offerRule.real_member_price,
         cardInfos
       });
       let {
@@ -1201,9 +1201,9 @@ class OrderAutoTicketQueue {
         return { offerRule, transferParams };
       }
       // 支付前校验用卡价格
-      let real_member_total_price = offerRule?.real_member_price || 0;
+      let real_member_price = offerRule?.real_member_price || 0;
       if (offerRule.offer_type !== "1" && card_id) {
-        if (payAmount > real_member_total_price) {
+        if (payAmount > real_member_price) {
           if (subDecimal(payAmount, real_member_price) < profit) {
             this.logger.infoSave(
               "用完卡发现支付金额大于会员价*票数，利润需减去差值",
@@ -1220,7 +1220,7 @@ class OrderAutoTicketQueue {
           } else {
             this.logger.errorSave("用完卡发现无利润，走转单", {
               payAmount,
-              real_member_total_price,
+              real_member_price,
               ticket_num
             });
             const transferParams = await this.transferOrder(item, {
@@ -1229,12 +1229,11 @@ class OrderAutoTicketQueue {
             });
             return { offerRule, transferParams };
           }
-        } else if (payAmount < real_member_total_price) {
+        } else if (payAmount < real_member_price) {
           let member_discount = offerRule?.member_discount || 100;
           profit =
             Number(profit) +
-            ((real_member_total_price * 1000 - payAmount * 1000) *
-              member_discount) /
+            ((real_member_price * 1000 - payAmount * 1000) * member_discount) /
               (1000 * 100);
           profit = Number(profit).toFixed(2);
         }
