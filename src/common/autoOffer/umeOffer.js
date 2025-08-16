@@ -279,14 +279,14 @@ class getUmeOfferPrice {
         });
         return;
       }
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "报价规则匹配列表",
-        level: "info",
-        info: {
-          matchRuleList
-        }
-      });
+      // this.logList.push({
+      //   opera_time: getCurrentTime(),
+      //   des: "报价规则匹配列表",
+      //   level: "info",
+      //   info: {
+      //     matchRuleList
+      //   }
+      // });
       // 获取报价最低的报价规则
       let endRule = await this.getMinAmountOfferRule(
         matchRuleList,
@@ -589,7 +589,7 @@ class getUmeOfferPrice {
       cinemaCode,
       cinemaLinkId,
       session_id,
-      page,
+      page = 1,
       quanData = [],
       logList
     } = data;
@@ -610,17 +610,6 @@ class getUmeOfferPrice {
       console.log("获取优惠券列表返回", res);
       let quanList = res.data || [];
       let total_page = res.pagesCount;
-      if (page == 2) {
-        logList.push({
-          opera_time: getCurrentTime(),
-          des: "获取券返回",
-          level: "info",
-          info: {
-            quanList,
-            params
-          }
-        });
-      }
       quanData.push(...quanList);
       if (total_page > page) {
         // 如果总数量仍小于所需数量，则继续获取下一页
@@ -632,7 +621,8 @@ class getUmeOfferPrice {
       }
       return quanData.map(item => ({
         coupon_info: item.couponName,
-        coupon_num: item.couponCode
+        coupon_num: item.couponCode,
+        endDateTime: item.endDateTime // "2025-10-02 23:59:59"
       }));
     } catch (error) {
       console.warn("连续获取券失败", error);
@@ -645,79 +635,32 @@ class getUmeOfferPrice {
           params
         }
       });
+      return [];
     }
   }
 
   // 获取优惠券列表
-  async getQuanListByPhone({
-    cinemaCode,
-    cinemaLinkId,
-    session_id,
-    page = 1,
-    logList
-  }) {
+  async getQuanListByPhone({ cinemaCode, cinemaLinkId, session_id, logList }) {
     try {
-      let params = {
-        params: {
-          status: "UN_USED",
-          channelCode: "QD0000001",
-          sysSourceCode: "YZ001",
-          cinemaCode,
-          cinemaLinkId
-        },
-        pageIndex: page,
-        pageRows: 50, // 支持修改
-        session_id
-      };
+      const quanData = await this.continuousGetQuan({
+        cinemaCode,
+        cinemaLinkId,
+        session_id,
+        logList
+      });
+      console.log("quanData", quanData);
       logList.push({
         opera_time: getCurrentTime(),
-        des: "获取优惠券列表参数",
+        des: "连续获取券最终返回",
         level: "info",
         info: {
-          params
+          quanData
         }
       });
-      console.log("获取优惠券列表参数", params);
-      const res = await this.appApi.findCouponByMember(params);
-      console.log("获取优惠券列表返回", res);
-      let quanList = res.data || [];
-      let total_page = res.pagesCount;
-      logList.push({
-        opera_time: getCurrentTime(),
-        des: "获取优惠券列表返回",
-        level: "info",
-        info: {
-          quanList,
-          total_page
-        }
-      });
-      let quanListAll = quanList.map(item => ({
-        coupon_info: item.couponName,
-        coupon_num: item.couponCode
+      return quanData.map(item => ({
+        ...item,
+        endDateTime: item.endDateTime // "2025-10-02 23:59:59"
       }));
-      // 证明还有下一页
-      if (total_page > page) {
-        const quanData = await this.continuousGetQuan({
-          cinemaCode,
-          cinemaLinkId,
-          session_id,
-          page: 2,
-          logList
-        });
-        console.log("quanData", quanData);
-        logList.push({
-          opera_time: getCurrentTime(),
-          des: "连续获取券最终返回",
-          level: "info",
-          info: {
-            quanData
-          }
-        });
-        quanListAll.push(...(quanData || []));
-      }
-      console.log("quanListAll", quanListAll);
-
-      return quanListAll;
     } catch (error) {
       console.error("获取优惠券列表异常", error);
       logList.push({
@@ -1754,14 +1697,14 @@ class getUmeOfferPrice {
           .filter(item =>
             ["SHOWING", "SOON_SHOW_TICKET"].includes(item.showStatus)
           ) || [];
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "获取影院放映列表返回",
-        level: "info",
-        info: {
-          fimlList
-        }
-      });
+      // this.logList.push({
+      //   opera_time: getCurrentTime(),
+      //   des: "获取影院放映列表返回",
+      //   level: "info",
+      //   info: {
+      //     fimlList
+      //   }
+      // });
       return fimlList;
     } catch (error) {
       console.error(conPrefix + "获取电影放映信息异常", error);
