@@ -334,14 +334,14 @@ class getSfcOfferPrice {
         });
         return;
       }
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "报价规则匹配列表",
-        level: "info",
-        info: {
-          matchRuleList
-        }
-      });
+      // this.logList.push({
+      //   opera_time: getCurrentTime(),
+      //   des: "报价规则匹配列表",
+      //   level: "info",
+      //   info: {
+      //     matchRuleList
+      //   }
+      // });
       // 获取报价最低的报价规则
       let endRule = await this.getMinAmountOfferRule(
         matchRuleList,
@@ -450,10 +450,7 @@ class getSfcOfferPrice {
         logList.push({
           opera_time: getCurrentTime(),
           des: "不满足更新条件",
-          level: "info",
-          info: {
-            quanTypeList
-          }
+          level: "info"
         });
       } else {
         // 只要有一个需要更新，就全部更新，因为会获取该号全部的券

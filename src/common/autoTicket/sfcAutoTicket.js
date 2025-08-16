@@ -252,11 +252,7 @@ class OrderAutoTicketQueue {
     this.platManage = new PlatManage(order, logger, isTestOrder); // 平台管理模块
     try {
       this.logger.infoSave(
-        `订单开始出票，订单号-${order.order_number}，上个订单号-${this.prevOrderNumber}`,
-        {
-          order,
-          delayTime
-        }
+        `订单开始出票，订单号-${order.order_number}，上个订单号-${this.prevOrderNumber}`
       );
       // await mockDelay(delayTime);
       this.logger.info(`订单处理 ${order.id}`);
@@ -662,9 +658,7 @@ class OrderAutoTicketQueue {
           }
         }
         const phone = this.currentParamsList[0].mobile;
-        this.logger.infoSave(`首次出票手机号-${phone}`, {
-          currentParamsList: this.currentParamsList
-        });
+        this.logger.infoSave(`首次出票手机号-${phone}`);
         this.curPhone = phone;
         // 5、获取目标影院放映列表
         const movieDataRes = await getMoviePlayInfo({
