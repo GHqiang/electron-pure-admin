@@ -1340,15 +1340,18 @@ class OrderAutoTicketQueue {
   }
 
   // 从个人中心获取购买订单信息
-  async getOrderInfoByOrderList({ session_id }) {
+  async getOrderInfoByOrderList({ session_id, retryCount = 1 }) {
+    const MAX_RETRY_COUNT = 3;
     try {
       const params = {
         umeToken: session_id
       };
       this.logger.infoSave("获取订单列表参数", params);
       const res = await this.umeApi.getOrderList(params);
-      this.logger.infoSave("获取订单列表返回", res);
       let orderList = res?.bizValue || [];
+      this.logger.infoSave("获取订单列表返回", {
+        orderList: orderList.slice(0, 5)
+      });
       const { film_name, show_time, lockseat } = this.order;
       let targerOrder = orderList.find(item => {
         const { filmName, showDate, seatNames } = item.ticketInfo || {};
@@ -1362,8 +1365,24 @@ class OrderAutoTicketQueue {
         this.logger.infoSave("从订单列表获取到目标订单", { targerOrder });
         return targerOrder;
       }
+      // 重试2次获取订单列表
+      if (!targerOrder && retryCount < MAX_RETRY_COUNT) {
+        await mockDelay(1);
+        return await this.getOrderInfoByOrderList({
+          session_id,
+          retryCount: retryCount + 1
+        });
+      }
     } catch (error) {
       this.logger.errorSave("从订单列表获取到目标订单异常", { error });
+      // 重试2次获取订单列表
+      if (retryCount < MAX_RETRY_COUNT) {
+        await mockDelay(1);
+        return await this.getOrderInfoByOrderList({
+          session_id,
+          retryCount: retryCount + 1
+        });
+      }
     }
   }
 
