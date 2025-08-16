@@ -237,12 +237,17 @@ export default class OrderManage {
           transferTip: "订单支付接口超时，请关注该订单购买出票情况",
           failReason: formatErrInfo(error)
         });
+        return { isTimeout: true };
       }
     }
   }
 
   // 从个人中心获取购买订单信息
-  async getOrderInfoByOrderList({ session_id, retryCount = 1 }) {
+  async getOrderInfoByOrderList({
+    session_id,
+    retryCount = 1,
+    isRetry = true // 是否允许重试，异步查询时不允许
+  }) {
     const MAX_RETRY_COUNT = 3;
     try {
       const params = {
@@ -273,7 +278,7 @@ export default class OrderManage {
         return targerOrder;
       }
       // 重试2次获取订单列表
-      if (!targerOrder && retryCount < MAX_RETRY_COUNT) {
+      if (!targerOrder && retryCount < MAX_RETRY_COUNT && isRetry) {
         await mockDelay(1);
         return await this.getOrderInfoByOrderList({
           session_id,
@@ -283,7 +288,7 @@ export default class OrderManage {
     } catch (error) {
       this.logger.errorSave("从订单列表获取到目标订单异常", { error });
       // 重试2次获取订单列表
-      if (retryCount < MAX_RETRY_COUNT) {
+      if (retryCount < MAX_RETRY_COUNT && isRetry) {
         await mockDelay(1);
         return await this.getOrderInfoByOrderList({
           session_id,
@@ -334,21 +339,31 @@ export default class OrderManage {
     let { orderId, session_id, logger, inx = 1 } = data || {};
     let qrcode;
     try {
-      let params = {
-        orderId,
-        operationType: "TICKET",
-        pageInit: true,
-        fenghuangToken: session_id
-      };
-      logger.info("获取支付结果参数", params);
-      if (inx == 1) {
-        logger.infoSave("获取支付结果参数", params);
-      }
-      const res = await this.appApi.queryOrderDetail(params);
-      logger.infoSave(`第${inx}次获取支付结果返回`, res);
-      qrcode = res?.order?.ticket?.pickupCode;
-      if (qrcode) {
-        return qrcode;
+      if (!orderId) {
+        const targetOrder = await this.getOrderInfoByOrderList({
+          session_id,
+          isRetry: false
+        });
+        if (targetOrder?.ticket?.pickupCode) {
+          return targetOrder?.ticket?.pickupCode;
+        }
+      } else {
+        let params = {
+          orderId,
+          operationType: "TICKET",
+          pageInit: true,
+          fenghuangToken: session_id
+        };
+        logger.info("获取支付结果参数", params);
+        if (inx == 1) {
+          logger.infoSave("获取支付结果参数", params);
+        }
+        const res = await this.appApi.queryOrderDetail(params);
+        logger.infoSave(`第${inx}次获取支付结果返回`, res);
+        qrcode = res?.order?.ticket?.pickupCode;
+        if (qrcode) {
+          return qrcode;
+        }
       }
     } catch (error) {
       logger.errorSave(`第${inx}次获取订单支付结果异常`, formatErrInfo(error));

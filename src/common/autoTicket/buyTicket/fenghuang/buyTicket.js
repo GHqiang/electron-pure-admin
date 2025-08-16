@@ -614,16 +614,20 @@ export default class BuyTicket {
         order_num = orderInfo?.orderId;
       }
       if (!order_num) {
-        this.logger.info("创建订单失败，单个订单直接出票结束走转单");
-        // 转单或换号处理
-        const transparams = {
-          cinemaLinkId,
-          lockOrderId,
-          session_id: this.currentSessionId
-        };
-        const transferParams =
-          await this.orderManage.transferOrder(transparams);
-        return { offerRule, transferParams };
+        if (createOrderRes?.isTimeout) {
+          this.logger.infoSave("支付订单超时当成功处理");
+        } else {
+          this.logger.info("创建订单失败，单个订单直接出票结束走转单");
+          // 转单或换号处理
+          const transparams = {
+            cinemaLinkId,
+            lockOrderId,
+            session_id: this.currentSessionId
+          };
+          const transferParams =
+            await this.orderManage.transferOrder(transparams);
+          return { offerRule, transferParams };
+        }
       }
       this.logger.infoSave("创建订单支付成功", {
         order_num,
