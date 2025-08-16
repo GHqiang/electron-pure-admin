@@ -1408,7 +1408,7 @@ class OrderAutoTicketQueue {
           black_quans,
           logger: this.logger
         });
-        this.logger.infoSave("获取优惠券列表返回", quanListRes);
+
         // 这里拿到的券列表会比票数多10张
         let quanList = quanListRes?.quanList || [];
         let quanType = quanListRes?.quanType;
@@ -1416,6 +1416,15 @@ class OrderAutoTicketQueue {
         if (!quanList?.length) {
           this.logger.errorSave("个人中心获取目标券列表返回为空");
         }
+        this.logger.infoSave("获取优惠券列表返回", {
+          quanList: quanList?.map(item => ({
+            card_num: item.card_num || undefined,
+            coupon_num: item.coupon_num,
+            coupon_name: item.coupon_name,
+            coupon_info: item.coupon_info,
+            validate_date_end: item.validate_date_end
+          }))
+        });
         if (is_store == "1") {
           if (quanList?.length < ticket_num) {
             this.logger.infoSave("用券前个人中心目标券不够，从服务端获取");

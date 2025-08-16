@@ -101,6 +101,7 @@
                 <span @click="addQuan">新增</span>
               </template>
             </el-button>
+            <el-button type="primary" @click="expireQuery">过期查询</el-button>
             <el-button
               type="danger"
               :disabled="!hasSelected"
@@ -367,6 +368,17 @@
         />
       </el-table>
     </el-dialog>
+
+    <el-dialog v-model="quanExpireVisible" width="70%" title="临近过期券明细">
+      <el-table :data="expireQuanList" border style="width: 100%">
+        <el-table-column prop="app_name" label="应用名称" />
+        <el-table-column prop="quan_flag" sortable label="券标识" />
+        <el-table-column prop="quan_value" sortable label="券类型" />
+        <el-table-column prop="real_quan_stock" sortable label="券库存" />
+        <el-table-column prop="phone" sortable label="手机号" />
+        <el-table-column prop="expire_time" sortable label="最快过期时间" />
+      </el-table>
+    </el-dialog>
   </div>
 </template>
 
@@ -505,6 +517,48 @@ const searchData = async () => {
   }
 };
 
+const quanExpireVisible = ref(false);
+const expireQuanList = ref([]);
+// 过期查询
+const expireQuery = async () => {
+  const params = {
+    isNeedTotalNum: 0,
+    queryFields: "id,app_name,quan_value,quan_flag,quanStockList"
+  };
+  try {
+    let quanTypeRes = await svApi.queryQuanTypeList(params);
+    let quanTypeList = quanTypeRes?.data?.quanTypeList || [];
+    quanTypeList.forEach(item => {
+      item.quanStockList = item.quanStockList
+        ? JSON.parse(item.quanStockList)
+        : [];
+    });
+    quanTypeList = quanTypeList
+      .map(item =>
+        item.quanStockList.map(itemA => ({
+          ...itemA,
+          app_name: item.app_name,
+          quan_value: item.quan_value,
+          quan_flag: item.quan_flag
+        }))
+      )
+      .flat()
+      .filter(
+        item =>
+          item.real_quan_stock > 0 &&
+          item.endDateTime &&
+          +new Date(item.endDateTime) - +new Date() < 10 * 24 * 60 * 60 * 1000
+      );
+    console.log("quanTypeList", quanTypeList);
+    quanExpireVisible.value = true;
+    expireQuanList.value = quanTypeList.map(item => ({
+      ...item,
+      expire_time: formatTimeOfTime(+new Date(item.endDateTime))
+    }));
+  } catch (error) {
+    console.error("根据影院获取券类型列表返回异常", error);
+  }
+};
 const handleSizeChange = val => {
   console.log(`${val} items per page`);
   currentPage.value = 1;
