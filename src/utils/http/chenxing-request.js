@@ -212,7 +212,9 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       if (isError && !whitelistSp.some(item => config.url.includes(item))) {
         console.warn("接口响应失败", data);
         let isCExpried =
-          data.retMsg?.includes("会话无效或已过期") && api_version == "C";
+          ["用户未登录", "会话无效或已过期"].some(item =>
+            data.retMsg?.includes(item)
+          ) && api_version == "C";
         let is3CExpried = data.msg?.includes("登录") && api_version == "3.0C";
         // 辰星C端失效处理，待添加3.0C端失效判断
         if (isCExpried || is3CExpried) {
