@@ -350,17 +350,6 @@ class getLmaOfferPrice {
       const res = await this.appApi.getQuanList(params);
       console.log("获取优惠券列表返回", res);
       let quanList = res.data || [];
-      if (page == 2) {
-        logList.push({
-          opera_time: getCurrentTime(),
-          des: "获取券返回",
-          level: "info",
-          info: {
-            quanList,
-            params
-          }
-        });
-      }
       quanData.push(...quanList);
       if (quanList.length == 10) {
         // 继续获取下一页;
@@ -372,7 +361,8 @@ class getLmaOfferPrice {
       }
       return quanData.map(item => ({
         coupon_info: item.voucher_name,
-        coupon_num: item.code
+        coupon_num: item.code,
+        expire_time: item.expire_time // "有效期至 2026-01-22"
       }));
     } catch (error) {
       console.warn("连续获取券失败", error);
@@ -383,6 +373,40 @@ class getLmaOfferPrice {
         info: {
           error,
           params
+        }
+      });
+      return [];
+    }
+  }
+
+  // 获取优惠券列表
+  async getQuanListByPhone({ session_id, logList }) {
+    try {
+      const quanData = await this.continuousGetQuan({
+        session_id,
+        logList
+      });
+      console.log("quanData", quanData);
+      logList.push({
+        opera_time: getCurrentTime(),
+        des: "连续获取券最终返回",
+        level: "info",
+        info: {
+          quanData
+        }
+      });
+      return quanData.map(item => ({
+        ...item,
+        endDateTime: item.expire_time?.split(" ")?.[1] // "有效期至 2026-01-22"
+      }));
+    } catch (error) {
+      console.error("获取优惠券列表异常", error);
+      logList.push({
+        opera_time: getCurrentTime(),
+        des: "获取优惠券列表异常",
+        level: "error",
+        info: {
+          error
         }
       });
     }
@@ -457,7 +481,7 @@ class getLmaOfferPrice {
         // 获取关联用户每个号的优惠券列表
         for (let i = 0; i < targetLoginList.length; i++) {
           const { session_id, mobile } = targetLoginList[i];
-          const quanListAll = await this.continuousGetQuan({
+          const quanListAll = await this.getQuanListByPhone({
             session_id,
             logList
           });
@@ -474,16 +498,21 @@ class getLmaOfferPrice {
             let quanStockList = item.quanStockList;
             console.log("quanStockList", quanStockList);
             let inx = quanStockList.findIndex(itemB => itemB.phone === mobile);
+            let endDateTime = targetQuanList.sort(
+              (a, b) => new Date(b.endDateTime) - new Date(a.endDateTime)
+            )?.[0]?.endDateTime;
             if (inx != -1) {
               quanStockList[inx].quan_stock = quanStock;
               quanStockList[inx].real_quan_stock = targetQuanList.length;
               quanStockList[inx].update_time = getCurrentTime();
+              quanStockList[inx].endDateTime = endDateTime;
             } else {
               quanStockList.push({
                 phone: mobile,
                 quan_stock: quanStock,
                 real_quan_stock: targetQuanList.length,
-                update_time: getCurrentTime()
+                update_time: getCurrentTime(),
+                endDateTime
               });
             }
           });

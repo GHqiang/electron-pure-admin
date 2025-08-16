@@ -429,16 +429,21 @@ class getUmeOfferPrice {
             let quanStockList = item.quanStockList;
             console.log("quanStockList", quanStockList);
             let inx = quanStockList.findIndex(itemB => itemB.phone === mobile);
+            let endDateTime = targetQuanList.sort(
+              (a, b) => new Date(b.endDateTime) - new Date(a.endDateTime)
+            )?.[0]?.endDateTime;
             if (inx != -1) {
               quanStockList[inx].quan_stock = quanStock;
               quanStockList[inx].real_quan_stock = targetQuanList.length;
               quanStockList[inx].update_time = getCurrentTime();
+              quanStockList[inx].endDateTime = endDateTime;
             } else {
               quanStockList.push({
                 phone: mobile,
                 quan_stock: quanStock,
                 real_quan_stock: targetQuanList.length,
-                update_time: getCurrentTime()
+                update_time: getCurrentTime(),
+                endDateTime
               });
             }
           });
@@ -562,41 +567,37 @@ class getUmeOfferPrice {
 
   // 连续获取券
   async continuousGetQuan(data) {
-    let { session_id, page, quanData = [], logList } = data;
+    let {
+      session_id,
+      pageNo = 1,
+      pageSize = 50,
+      quanData = [],
+      logList
+    } = data;
     let params = {
       state: "USEFUL",
-      pageNo: page,
-      pageSize: 20, // 支持修改
+      pageNo,
+      pageSize, // 支持修改
       umeToken: session_id
     };
     try {
       const res = await this.appApi.getQuanList(params);
       console.log("获取优惠券列表返回", res);
       let quanList = res.bizValue || [];
-      if (page == 2) {
-        logList.push({
-          opera_time: getCurrentTime(),
-          des: "获取券返回",
-          level: "info",
-          info: {
-            quanList,
-            params
-          }
-        });
-      }
       quanData.push(...quanList);
       // 如果返回和每页请求条数相等证明还有下一页
-      if (20 == quanList.length) {
+      if (pageSize == quanList.length) {
         // 如果总数量仍小于所需数量，则继续获取下一页
         return await this.continuousGetQuan({
           ...data,
-          page: page + 1,
+          pageNo: pageNo + 1,
           quanData
         });
       }
       return quanData.map(item => ({
         coupon_info: item.name,
-        coupon_num: item.couponCode
+        coupon_num: item.couponCode,
+        expireTime: item.expireTime // 1762963199000
       }));
     } catch (error) {
       console.warn("连续获取券失败", error);
@@ -609,6 +610,7 @@ class getUmeOfferPrice {
           params
         }
       });
+      return [];
     }
   }
 
@@ -621,44 +623,24 @@ class getUmeOfferPrice {
       umeToken: session_id
     };
     try {
-      console.log("获取优惠券列表参数", params);
-      const res = await this.appApi.getQuanList(params);
-      console.log("获取优惠券列表返回", res);
-      let quanList = res.bizValue || [];
+      const quanData = await this.continuousGetQuan({
+        session_id,
+        logList
+      });
+      console.log("quanData", quanData);
       logList.push({
         opera_time: getCurrentTime(),
-        des: "获取优惠券列表返回",
+        des: "连续获取券最终返回",
         level: "info",
         info: {
-          quanList,
-          params
+          quanData
         }
       });
-      let quanListAll = quanList.map(item => ({
-        coupon_info: item.name,
-        coupon_num: item.couponCode
-      }));
-      // 证明还有下一页
-      if (20 == quanList.length) {
-        const quanData = await this.continuousGetQuan({
-          session_id,
-          page: 2,
-          logList
-        });
-        console.log("quanData", quanData);
-        logList.push({
-          opera_time: getCurrentTime(),
-          des: "连续获取券最终返回",
-          level: "info",
-          info: {
-            quanData
-          }
-        });
-        quanListAll.push(...(quanData || []));
-      }
-      console.log("quanListAll", quanListAll);
 
-      return quanListAll;
+      return quanData.map(item => ({
+        ...item,
+        endDateTime: item.expireTime // 1762963199000
+      }));
     } catch (error) {
       console.error("获取优惠券列表异常", error);
       logList.push({

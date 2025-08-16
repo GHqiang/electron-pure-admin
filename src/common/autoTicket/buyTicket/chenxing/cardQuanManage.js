@@ -809,24 +809,29 @@ export default class CardQuanManage {
             let targetQuanList = quanListAll.filter(
               itemA =>
                 couponInfoSpecial(item.quan_flag) ===
-                  couponInfoSpecial(itemA.coupon_info) &&
-                !item.black_quans?.includes(itemA.coupon_num)
+                  couponInfoSpecial(itemA.couponName) &&
+                !item.black_quans?.includes(itemA.couponCode)
             );
             console.log(item.quan_flag, "targetQuanList", targetQuanList);
             let quanStock = targetQuanList.length;
             let quanStockList = item.quanStockList;
             console.log("quanStockList", quanStockList);
             let inx = quanStockList.findIndex(itemB => itemB.phone === mobile);
+            let endDateTime = targetQuanList.sort(
+              (a, b) => new Date(b.endDateTime) - new Date(a.endDateTime)
+            )?.[0]?.endDateTime;
             if (inx != -1) {
               quanStockList[inx].quan_stock = quanStock;
               quanStockList[inx].real_quan_stock = targetQuanList.length;
               quanStockList[inx].update_time = getCurrentTime();
+              quanStockList[inx].endDateTime = endDateTime;
             } else {
               quanStockList.push({
                 phone: mobile,
                 quan_stock: quanStock,
                 real_quan_stock: targetQuanList.length,
-                update_time: getCurrentTime()
+                update_time: getCurrentTime(),
+                endDateTime
               });
             }
           });
@@ -867,7 +872,13 @@ export default class CardQuanManage {
         logger
       });
       console.log("quanData", quanData);
-      logger.infoSave("连续获取券返回", { quanData });
+      logger.infoSave("连续获取券返回", {
+        quanData: quanData.map(item => ({
+          couponName: item.couponName,
+          couponCode: item.couponCode,
+          endDateTime: item.endDateTime
+        }))
+      });
       return quanData || [];
     } catch (error) {
       logger.errorSave("获取优惠券列表异常", formatErrInfo(error));
@@ -923,7 +934,7 @@ export default class CardQuanManage {
         const { number, size, totalPages = 1, last } = res.data?.pageable || {};
         total_page = totalPages;
       }
-      logger.infoSave("获取券返回", { quanList, params });
+      // logger.infoSave("获取券返回", { quanList, params });
       quanData.push(...quanList);
       if (total_page > page) {
         // 如果总数量仍小于所需数量，则继续获取下一页
@@ -939,6 +950,7 @@ export default class CardQuanManage {
         error,
         params
       });
+      return [];
     }
   }
 

@@ -796,16 +796,21 @@ export default class CardQuanManage {
             let quanStockList = item.quanStockList;
             console.log("quanStockList", quanStockList);
             let inx = quanStockList.findIndex(itemB => itemB.phone === mobile);
+            let endDateTime = targetQuanList.sort(
+              (a, b) => new Date(b.endDateTime) - new Date(a.endDateTime)
+            )?.[0]?.endDateTime;
             if (inx != -1) {
               quanStockList[inx].quan_stock = quanStock;
               quanStockList[inx].real_quan_stock = targetQuanList.length;
               quanStockList[inx].update_time = getCurrentTime();
+              quanStockList[inx].endDateTime = endDateTime;
             } else {
               quanStockList.push({
                 phone: mobile,
                 quan_stock: quanStock,
                 real_quan_stock: targetQuanList.length,
-                update_time: getCurrentTime()
+                update_time: getCurrentTime(),
+                endDateTime
               });
             }
           });
