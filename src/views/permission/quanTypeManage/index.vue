@@ -101,7 +101,7 @@
                 <span @click="addQuan">新增</span>
               </template>
             </el-button>
-            <el-button type="primary" @click="expireQuery">过期查询</el-button>
+            <el-button type="primary" @click="expireQuery">临期查询</el-button>
             <el-button
               type="danger"
               :disabled="!hasSelected"
@@ -547,7 +547,7 @@ const expireQuery = async () => {
         item =>
           item.real_quan_stock > 0 &&
           item.endDateTime &&
-          +new Date(item.endDateTime) - +new Date() < 10 * 24 * 60 * 60 * 1000
+          +new Date(item.endDateTime) - +new Date() < 15 * 24 * 60 * 60 * 1000
       );
     console.log("quanTypeList", quanTypeList);
     quanExpireVisible.value = true;
