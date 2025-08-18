@@ -219,31 +219,23 @@ class getLmaOfferPrice {
       }
       matchRuleList = JSON.parse(JSON.stringify(matchRuleList));
       // 判断规则里是否有指定电影格式的（2D/3D）
-      let filmTypeFlag = matchRuleList.find(
-        item => item?.film_type?.length == 1
-      );
-      let movieInfo, filmType; // 电影放映信息
-      if (filmTypeFlag) {
-        // 获取电影放映信息以匹配电影格式
-        movieInfo = await this.getMovieInfo(order);
-        if (!movieInfo) {
-          this.logList.push({
-            opera_time: getCurrentTime(),
-            des: "报价规则匹配电影格式时获取当前场次电影信息失败，直接不报",
-            level: "info"
-          });
-          return;
-        }
-        // 当前场次电影格式
-        filmType = movieInfo.language_type?.split("/")?.[0];
-        if (filmType) {
-          filmType = filmType.toUpperCase();
-          matchRuleList = matchRuleList.filter(
-            item => item.film_type[0] === filmType
-          );
-        }
+      let filmTypeFlag = matchRuleList.find(item => !!item?.film_type?.length);
+      // 获取电影放映信息以匹配电影格式
+      let movieInfo = await this.getMovieInfo(order);
+      if (!movieInfo) {
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "报价规则匹配电影格式时获取当前场次电影信息失败，直接不报",
+          level: "info"
+        });
+        return;
       }
-      if (!matchRuleList?.length) {
+      // 校验电影格式，减少后续接口请求
+      let filmType = movieInfo.language_type?.split("/")?.[0].toUpperCase();
+      if (
+        filmTypeFlag &&
+        !matchRuleList.some(item => item.film_type?.includes(filmType))
+      ) {
         this.logList.push({
           opera_time: getCurrentTime(),
           des: "过滤完电影格式后匹配报价规则为空",

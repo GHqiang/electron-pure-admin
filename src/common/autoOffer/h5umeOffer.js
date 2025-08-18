@@ -222,16 +222,14 @@ class getUmeOfferPrice {
       }
       matchRuleList = JSON.parse(JSON.stringify(matchRuleList));
       // 判断规则里是否有指定电影格式的（2D/3D）
-      let filmTypeFlag = matchRuleList.find(
-        item => item?.film_type?.length == 1
-      );
+      let filmTypeFlag = matchRuleList.find(item => !!item?.film_type?.length);
       this.logList.push({
         opera_time: getCurrentTime(),
         des: "开始获取电影放映信息",
         level: "info"
       });
       let movieInfo, filmType; // 电影放映信息
-      movieInfo = await this.getMovieInfo(order);
+      movieInfo = await this.getMovieInfo(order, filmTypeFlag, matchRuleList);
       if (!movieInfo) {
         this.logList.push({
           opera_time: getCurrentTime(),
@@ -240,24 +238,13 @@ class getUmeOfferPrice {
         });
         return;
       }
-      if (filmTypeFlag) {
-        // 当前场次电影格式
-        filmType = movieInfo.filmVersion;
-        if (filmType) {
-          filmType = filmType.toUpperCase();
-          matchRuleList = matchRuleList.filter(
-            item => item.film_type[0] === filmType
-          );
-        }
-      }
-      if (!matchRuleList?.length) {
+      if (movieInfo?.filmTypeCheckFail) {
         this.logList.push({
           opera_time: getCurrentTime(),
           des: "过滤完电影格式后匹配报价规则为空",
           level: "error",
           info: {
             filmTypeFlag,
-            filmType,
             movieInfo
           }
         });
@@ -1278,7 +1265,7 @@ class getUmeOfferPrice {
   }
 
   // 获取当前场次电影信息
-  async getMovieInfo(order) {
+  async getMovieInfo(order, filmTypeFlag, matchRuleList) {
     const { appFlag } = this;
     let {
       city_name,
@@ -1465,6 +1452,15 @@ class getUmeOfferPrice {
           targetShow
         }
       });
+      if (filmTypeFlag && targetShow.filmVersion) {
+        // 校验电影格式，减少后续接口请求
+        let filmType = targetShow.filmVersion.toUpperCase();
+        if (!matchRuleList.some(item => item.film_type?.includes(filmType))) {
+          return {
+            filmTypeCheckFail: true
+          };
+        }
+      }
       const { hallId, scheduleId, scheduleKey } = targetShow;
       const areaRes = await this.getSeatLayout({
         cinemaLinkId,

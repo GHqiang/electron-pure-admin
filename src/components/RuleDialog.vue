@@ -239,7 +239,6 @@
         <el-form-item label="电影格式">
           <el-select
             v-model="formData.film_type"
-            multiple
             clearable
             placeholder="电影格式"
           >
