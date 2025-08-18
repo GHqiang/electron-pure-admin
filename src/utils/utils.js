@@ -9,7 +9,7 @@ import Decimal from "decimal.js";
 
 import {
   GET_UME_LIST,
-  GE_APP_INFO,
+  GET_APP_INFO,
   GET_USABLE_APP_LIST,
   GET_H5_UME_LIST,
   GET_SFC_APP_LIST
@@ -391,7 +391,7 @@ const getCinemaFlag = item => {
   let h5umeIsCloseValue = window.localStorage.getItem("h5umeIsClose");
   if (
     h5umeIsCloseValue == 1 &&
-    GE_APP_INFO(app_name)?.app_type_code === "ume_h5"
+    GET_APP_INFO(app_name)?.app_type_code === "ume_h5"
   ) {
     return;
   }

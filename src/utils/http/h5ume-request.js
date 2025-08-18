@@ -2,7 +2,7 @@
 
 import axios from "axios";
 import { ElMessage } from "element-plus";
-import { GET_APP_LIST, GE_APP_INFO } from "@/common/constant";
+import { GET_APP_LIST, GET_APP_INFO } from "@/common/constant";
 import { APP_API_OBJ } from "@/common/index";
 // 统一日志类
 import Logger from "@/common/logger";
@@ -494,7 +494,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           tid: currentTid
         });
         if (formatErrInfo(error).includes("登录失效")) {
-          let app_label = GE_APP_INFO(app_name).app_label;
+          let app_label = GET_APP_INFO(app_name).app_label;
           ElMessage.warning(`${app_label}登录失效，请重新设置登录信息`);
           sendWxPusherMessage({
             msgType: 1,
@@ -569,7 +569,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         if (!config.originalData) {
           config.originalData = {
             ...config.data,
-            channelCode: GE_APP_INFO(app_name)?.channelCode,
+            channelCode: GET_APP_INFO(app_name)?.channelCode,
             larkSid: config.sid,
             version: "H5",
             appVersion: "H5_5.0"
@@ -592,7 +592,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         if (newToken) {
           config.headers["umetoken"] = newToken;
           config.headers["gray-lease-code"] =
-            GE_APP_INFO(app_name)?.channelCode?.split("_H5_")[0];
+            GET_APP_INFO(app_name)?.channelCode?.split("_H5_")[0];
           config.headers["accesstoken"] = null;
           config.headers["bx-ua"] = ua;
           config.headers["bx-umidtoken"] = umidToken;
@@ -709,7 +709,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           errReason?.includes("登录已失效") &&
           config.url.includes("auth.getsidbytid")
         ) {
-          let app_label = GE_APP_INFO(app_name).app_label;
+          let app_label = GET_APP_INFO(app_name).app_label;
           // console.warn(
           //   "tid不会过期，只会app_name的tid用混之后会出现这个报错",
           //   app_name,

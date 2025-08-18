@@ -10,7 +10,7 @@ import {
 } from "@/utils/utils";
 import { APP_API_OBJ } from "@/common/index";
 import {
-  GE_APP_INFO,
+  GET_APP_INFO,
   TEST_NEW_PLAT_LIST,
   NO_FEE_PLAT_LIST
 } from "@/common/constant";

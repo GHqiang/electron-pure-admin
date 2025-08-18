@@ -7,7 +7,7 @@ import {
 } from "@/utils/utils";
 import md5 from "@/utils/md5";
 import { APP_API_OBJ } from "@/common/index";
-import { GE_APP_INFO } from "@/common/constant";
+import { GET_APP_INFO } from "@/common/constant";
 import svApi from "@/api/sv-api";
 // 统一日志类
 import Logger from "@/common/logger";
@@ -19,7 +19,7 @@ export default class OrderManage {
     this.appFlag = order.app_name;
     this.appApi = APP_API_OBJ[order.app_name];
     this.isTestOrder = isTestOrder; // 是否是测试订单
-    this.api_version = GE_APP_INFO(order.app_name)?.api_version;
+    this.api_version = GET_APP_INFO(order.app_name)?.api_version;
   }
 
   // 转单
@@ -270,7 +270,7 @@ export default class OrderManage {
     session_id
   }) {
     const { appFlag } = this;
-    let appInfo = GE_APP_INFO(appFlag);
+    let appInfo = GET_APP_INFO(appFlag);
     let open_id = appInfo?.sfc_open_id;
     let params = {
       cinemaCode,

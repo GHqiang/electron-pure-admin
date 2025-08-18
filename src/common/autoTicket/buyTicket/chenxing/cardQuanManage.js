@@ -10,7 +10,7 @@ import {
 } from "@/utils/utils";
 import { APP_API_OBJ } from "@/common/index";
 import {
-  GE_APP_INFO,
+  GET_APP_INFO,
   TEST_NEW_PLAT_LIST,
   NO_FEE_PLAT_LIST
 } from "@/common/constant";
@@ -30,7 +30,7 @@ export default class CardQuanManage {
     this.appFlag = order.app_name;
     this.logger = logger;
     this.appApi = APP_API_OBJ[order.app_name];
-    this.api_version = GE_APP_INFO(order.app_name)?.api_version;
+    this.api_version = GET_APP_INFO(order.app_name)?.api_version;
   }
 
   // 使用优惠券或会员卡（核心方法）

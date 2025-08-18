@@ -6,7 +6,7 @@ import {
   GET_H5_UME_LIST,
   GET_CHENXING_LIST,
   GET_FENGHUANG_LIST,
-  GE_APP_INFO
+  GET_APP_INFO
 } from "@/common/constant";
 
 import {
@@ -69,7 +69,7 @@ export default function useCinemaBaseFun() {
       } else if (CHENXING_LIST.value.includes(app_name)) {
         let params = {};
         const res = await cinemaApi.getCinemaList(params);
-        let api_version = GE_APP_INFO(app_name)?.api_version || "";
+        let api_version = GET_APP_INFO(app_name)?.api_version || "";
         if (api_version === "3.0C") {
           cityCinemaList = res.data || [];
           list = cityCinemaList.map(item => ({
@@ -165,7 +165,7 @@ export default function useCinemaBaseFun() {
           cinema_code: "" //同步影院code时使用
         }));
       } else if (CHENXING_LIST.value.includes(app_name)) {
-        let api_version = GE_APP_INFO(app_name)?.api_version || "";
+        let api_version = GET_APP_INFO(app_name)?.api_version || "";
         if (api_version === "3.0C") {
           cinemaList =
             cityCinemaList.find(item => item.cityInfoDTO.cityCode === city_id)
@@ -268,7 +268,7 @@ export default function useCinemaBaseFun() {
           film_name: item.filmName
         }));
       } else if (CHENXING_LIST.value.includes(app_name)) {
-        let api_version = GE_APP_INFO(app_name)?.api_version || "";
+        let api_version = GET_APP_INFO(app_name)?.api_version || "";
         const params = {
           cinemaCode: oneCinema.cinemaCode,
           cinemaId: oneCinema.cinemaId,
@@ -356,14 +356,14 @@ export default function useCinemaBaseFun() {
         params.session_id = session_id;
       } else if (H5_UME_LIST.value.includes(app_name)) {
         params = {
-          cinemaLinkId: GE_APP_INFO(app_name)?.cinemaLinkId,
+          cinemaLinkId: GET_APP_INFO(app_name)?.cinemaLinkId,
           pageNo: 1,
           pageSize: 30,
           umeToken: session_id
         };
       } else if (FENGHUANG_LIST.value.includes(app_name)) {
         params = {
-          cinemaLinkId: GE_APP_INFO(app_name)?.cinemaLinkId,
+          cinemaLinkId: GET_APP_INFO(app_name)?.cinemaLinkId,
           pageNumber: 1,
           pageSize: 20,
           pageInit: false,
@@ -414,7 +414,7 @@ export default function useCinemaBaseFun() {
             balance: (item.balance || 0) / 100 + ""
           }));
       } else if (CHENXING_LIST.value.includes(app_name)) {
-        let api_version = GE_APP_INFO(app_name)?.api_version || "";
+        let api_version = GET_APP_INFO(app_name)?.api_version || "";
         if (api_version === "3.0C") {
           cardList = res.data || [];
           cardList = cardList.map(item => ({

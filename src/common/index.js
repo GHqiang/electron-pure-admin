@@ -19,7 +19,7 @@ import {
   GET_SFC_APP_LIST,
   GET_CHENXING_LIST,
   GET_FENGHUANG_LIST,
-  GE_APP_INFO
+  GET_APP_INFO
 } from "@/common/constant";
 import { getCinemaLoginInfoList } from "@/utils/utils";
 const SFC_API_OBJ = {};
@@ -30,7 +30,7 @@ const FENGHUANG_API_OBJ = {};
 
 GET_SFC_APP_LIST().forEach(item => {
   SFC_API_OBJ[item] = createSfcApi({
-    group: GE_APP_INFO(item)?.sfc_group_id,
+    group: GET_APP_INFO(item)?.sfc_group_id,
     app_name: item
   });
 });

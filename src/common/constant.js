@@ -102,7 +102,7 @@ const GET_CHENXING_LIST = () => cinemaStore.getChenxingList;
 const GET_FENGHUANG_LIST = () => cinemaStore.getFenghuangList;
 
 // 获取某个影线配置信息
-const GE_APP_INFO = app_name =>
+const GET_APP_INFO = app_name =>
   cinemaStore.allAppList.find(item => item.app_name === app_name);
 // 可用影线类型
 const GET_APP_TYPE_LIST = () => cinemaStore.getCanAppTypeList;
@@ -291,7 +291,7 @@ export {
   GET_USABLE_APP_LIST,
   GET_APP_TYPE_LIST,
   GET_ALL_APP_TYPE_LIST,
-  GE_APP_INFO,
+  GET_APP_INFO,
   GET_ALL_APP_LOGIN_LIST,
   APP_TYPE_OBJ,
   LIERENR_REWARDS,

@@ -1,6 +1,6 @@
 import axios from "axios";
 import { ElMessage } from "element-plus";
-import { GE_APP_INFO } from "@/common/constant";
+import { GET_APP_INFO } from "@/common/constant";
 import { APP_API_OBJ } from "@/common/index";
 // 统一日志类
 import Logger from "@/common/logger";
@@ -249,7 +249,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           app_name
         });
         if (formatErrInfo(error).includes("登录失效")) {
-          let app_label = GE_APP_INFO(app_name).app_label;
+          let app_label = GET_APP_INFO(app_name).app_label;
           ElMessage.warning(`${app_label}登录失效，请重新设置登录信息`);
           sendWxPusherMessage({
             msgType: 1,
@@ -320,8 +320,8 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       if (!config.originalData) {
         config.originalData = {
           ...config.data,
-          channelCode: GE_APP_INFO(app_name)?.channelCode,
-          leaseCode: GE_APP_INFO(app_name)
+          channelCode: GET_APP_INFO(app_name)?.channelCode,
+          leaseCode: GET_APP_INFO(app_name)
             ?.channelCode?.split("_")?.[0]
             ?.toLowerCase()
         };
@@ -346,7 +346,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       // 该字段必须，否则会报“小程序访问未授权”(这里需要注意下是否每个小程序会不一样)
       // 可从抓包请求头里找referer字段(23不确定是从哪来的，appId可随便找个借口看请求头里referer字段中间部分)
       config.headers["referer-url"] =
-        `https://servicewechat.com/${GE_APP_INFO(app_name)?.appId}/page-frame.html`;
+        `https://servicewechat.com/${GET_APP_INFO(app_name)?.appId}/page-frame.html`;
 
       // 默认都走代理，白名单不走代理
       let isNoProxy = checkUrlNoNeedProxy(config.url);
@@ -417,7 +417,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           errReason === "FAIL_BIZ_INVALID_REFRESH_TOKEN::令牌过期" &&
           config.url.includes("authn.refresh")
         ) {
-          let app_label = GE_APP_INFO(app_name).app_label;
+          let app_label = GET_APP_INFO(app_name).app_label;
           // console.warn(
           //   "tid不会过期，只会app_name的tid用混之后会出现这个报错",
           //   app_name,

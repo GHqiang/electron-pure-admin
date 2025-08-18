@@ -82,7 +82,7 @@ import {
   GET_H5_UME_LIST,
   GET_CHENXING_LIST,
   GET_SFC_APP_LIST,
-  GE_APP_INFO
+  GET_APP_INFO
 } from "@/common/constant";
 import { cinemNameSpecial, getCinemaLoginInfoList } from "@/utils/utils";
 const APP_LIST = computed(() => GET_APP_LIST());
@@ -241,7 +241,7 @@ const getCinemaAllList = async () => {
       let list = await getAllCinemaList(cityList, appName);
       list = list
         .map(item => {
-          const appInfo = GE_APP_INFO(appName);
+          const appInfo = GET_APP_INFO(appName);
           if (!appInfo) {
             console.warn(`${appName} 该影院已废弃`);
           }

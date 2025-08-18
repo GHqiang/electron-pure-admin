@@ -8,7 +8,7 @@ import {
   subDecimal
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
-import { GE_APP_INFO } from "@/common/constant";
+import { GET_APP_INFO } from "@/common/constant";
 // 统一日志类
 import Logger from "@/common/logger";
 // 机器登录用户信息
@@ -39,7 +39,7 @@ export default class BuyTicket {
       this.platManage,
       isTestOrder
     ); // 订单管理模块
-    this.api_version = GE_APP_INFO(order.app_name)?.api_version;
+    this.api_version = GET_APP_INFO(order.app_name)?.api_version;
   }
   // 单个订单出票（向外暴漏的唯一方法）
   async singleTicket() {

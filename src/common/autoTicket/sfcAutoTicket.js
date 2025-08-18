@@ -31,7 +31,7 @@ const {
 } = platTokens();
 // 影院特殊匹配列表及api
 import {
-  GE_APP_INFO,
+  GET_APP_INFO,
   TEST_NEW_PLAT_LIST,
   sfcV3AppList,
   GET_APP_TYPE_LIST,
@@ -3187,7 +3187,7 @@ const buyTicket = async ({
   let params = {
     city_id,
     cinema_id,
-    open_id: GE_APP_INFO(appFlag)?.sfc_open_id, // 微信openId
+    open_id: GET_APP_INFO(appFlag)?.sfc_open_id, // 微信openId
     order_num, // 订单号
     pay_money, // 支付金额
     pay_type: "", // 购买方式 传空意味着用优惠券或者会员卡

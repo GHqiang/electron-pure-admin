@@ -1,7 +1,7 @@
 // buyTicket/index.js
 import ChenxingBuyTicket from "./chenxing/buyTicket";
 import FenghuangBuyTicket from "./fenghuang/buyTicket";
-import { GE_APP_INFO } from "@/common/constant";
+import { GET_APP_INFO } from "@/common/constant";
 
 // 支持的影院策略映射
 const STRATEGY_MAP = {
@@ -13,7 +13,7 @@ const STRATEGY_MAP = {
 export default class StrategyFactory {
   static createSeatStrategy(order, logger, isTestOrder) {
     const { app_name } = order;
-    const StrategyClass = STRATEGY_MAP[GE_APP_INFO(app_name).app_type_code];
+    const StrategyClass = STRATEGY_MAP[GET_APP_INFO(app_name).app_type_code];
     if (!StrategyClass) {
       throw new Error(`不支持的影院类型: ${appFlag}`);
     }

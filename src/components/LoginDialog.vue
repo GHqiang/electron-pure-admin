@@ -67,7 +67,7 @@
         <el-form-item
           v-if="
             CHENXING_LIST.includes(formData.app_name) &&
-            GE_APP_INFO(formData.app_name).api_version == '3.0C'
+            GET_APP_INFO(formData.app_name).api_version == '3.0C'
           "
           label="tenantId"
           prop="tid"
@@ -138,7 +138,7 @@ import {
   GET_H5_UME_LIST,
   GET_FENGHUANG_LIST,
   GET_CHENXING_LIST,
-  GE_APP_INFO
+  GET_APP_INFO
 } from "@/common/constant";
 import { platTokens } from "@/store/platTokens";
 const {

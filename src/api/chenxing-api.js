@@ -3,13 +3,13 @@
  */
 
 import createAxios from "@/utils/http/chenxing-request";
-import { GE_APP_INFO } from "@/common/constant";
+import { GET_APP_INFO } from "@/common/constant";
 const createApi = ({ app_name }) => {
   // 启用新版本服务影院列表
   let axios = createAxios({
     app_name: app_name
   });
-  let api_version = GE_APP_INFO(app_name)?.api_version;
+  let api_version = GET_APP_INFO(app_name)?.api_version;
 
   let apiUrlObj = {
     // 授权token

@@ -500,7 +500,7 @@
 <script setup>
 import { ref, reactive, computed } from "vue";
 import { ElLoading, ElMessage } from "element-plus";
-import { ORDER_FORM, GET_APP_LIST, GE_APP_INFO } from "@/common/constant";
+import { ORDER_FORM, GET_APP_LIST, GET_APP_INFO } from "@/common/constant";
 
 const APP_LIST = computed(() => GET_APP_LIST());
 
@@ -590,7 +590,7 @@ const isShowOfferFlag = computed(() => {
   let offer_type = formData.offerType;
   return (
     ["ume_applet", "chenxing_applet", "sfc_applet"].includes(
-      GE_APP_INFO(app_name)?.app_type_code
+      GET_APP_INFO(app_name)?.app_type_code
     ) && offer_type === "2"
   );
 });

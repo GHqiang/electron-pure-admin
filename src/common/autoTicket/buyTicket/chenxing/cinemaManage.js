@@ -9,7 +9,7 @@ import {
   findMostRepeatedChars
 } from "@/utils/utils";
 import { APP_API_OBJ } from "@/common/index";
-import { GE_APP_INFO } from "@/common/constant";
+import { GET_APP_INFO } from "@/common/constant";
 // 机器登录用户信息
 import { platTokens } from "@/store/platTokens";
 const {
@@ -23,7 +23,7 @@ export default class CinemaManage {
     this.logger = logger;
     this.currentParamsList = currentParamsList;
     this.appApi = APP_API_OBJ[order.app_name];
-    this.api_version = GE_APP_INFO(order.app_name)?.api_version;
+    this.api_version = GET_APP_INFO(order.app_name)?.api_version;
   }
 
   // 获取购票前的影院信息（核心方法）// 1-报价 默认出票

@@ -175,7 +175,7 @@ import CinemaMatchDialog from "@/components/CinemaMatchDialog.vue";
 import {
   GET_APP_LIST,
   GET_APP_TYPE_LIST,
-  GE_APP_INFO
+  GET_APP_INFO
 } from "@/common/constant";
 const APP_LIST = computed(() => GET_APP_LIST());
 const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
@@ -322,7 +322,7 @@ const testSyncCinemaCodeMatch = async () => {
         app_type_code = "fenghuang_applet";
       let list = await getCinemaList(app_name);
       // console.warn("getCinemaList", list);
-      const appInfo = GE_APP_INFO(app_name);
+      const appInfo = GET_APP_INFO(app_name);
       list = list.map(item => {
         let app_cinema_code = item.cinema_code;
         // 除以下2种外没有cinema_code，用city_id+id组合当唯一标识
@@ -398,7 +398,7 @@ const syncCinemeCodeMatch = async isExport => {
       const { app_name, app_type_code } = syncCinemaList[i];
       let list = await getCinemaList(app_name);
       console.warn("getCinemaList", list);
-      const appInfo = GE_APP_INFO(app_name);
+      const appInfo = GET_APP_INFO(app_name);
       list = list.map(item => {
         let app_cinema_code = item.cinema_code;
         // 除以下2种外没有cinema_code，用city_id+id组合当唯一标识

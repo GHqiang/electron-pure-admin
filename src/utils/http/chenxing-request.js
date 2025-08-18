@@ -3,7 +3,7 @@
 import axios from "axios";
 import axiosRetry from "axios-retry";
 import { ElMessage } from "element-plus";
-import { GE_APP_INFO } from "@/common/constant";
+import { GET_APP_INFO } from "@/common/constant";
 
 import { getCinemaLoginInfoList, sendWxPusherMessage } from "@/utils/utils";
 
@@ -24,7 +24,7 @@ const getToken = async (app_name, IS_DEV) => {
         v: "1.0",
         timestamp: +new Date(),
         sign: "sign",
-        data: { appId: GE_APP_INFO(app_name)?.appId }
+        data: { appId: GET_APP_INFO(app_name)?.appId }
       },
       headers: {
         // "accept": "application/json, text/plain, */*",
@@ -49,7 +49,7 @@ const paramsHandle = (params, app_name) => {
     item => item.app_name === app_name && item.mobile && item.session_id
   );
   let token = targetLoginList?.[0]?.session_id || "";
-  let appInfo = GE_APP_INFO(app_name);
+  let appInfo = GET_APP_INFO(app_name);
   // console.log("app_name", app_name, appInfo);
   let api_version = appInfo?.api_version || "";
   if (api_version == "3.0C") {
@@ -124,7 +124,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
 
   const NODE_ENV = process.env.NODE_ENV;
   const IS_DEV = NODE_ENV === "development";
-  const api_version = GE_APP_INFO(app_name)?.api_version || "";
+  const api_version = GET_APP_INFO(app_name)?.api_version || "";
   // console.warn("api_version", api_version);
   let chenxingToken, identityKey, identityType;
 
@@ -144,7 +144,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
   // 请求拦截器
   instance.interceptors.request.use(
     async config => {
-      if (GE_APP_INFO(app_name)) {
+      if (GET_APP_INFO(app_name)) {
         if (
           !chenxingToken &&
           api_version == "C" &&
@@ -218,7 +218,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         let is3CExpried = data.msg?.includes("登录") && api_version == "3.0C";
         // 辰星C端失效处理，待添加3.0C端失效判断
         if (isCExpried || is3CExpried) {
-          let app_label = GE_APP_INFO(app_name).app_label;
+          let app_label = GET_APP_INFO(app_name).app_label;
           ElMessage.warning(`${app_label}登录失效，请重新设置登录信息`);
           let session_id = config?.session_id;
           let targetLoginList = getCinemaLoginInfoList().filter(

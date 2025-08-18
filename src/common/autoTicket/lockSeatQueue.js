@@ -7,7 +7,7 @@ import {
 import svApi from "@/api/sv-api";
 // 影院特殊匹配列表及api
 import { APP_API_OBJ } from "@/common/index";
-import { GET_UME_LIST, GE_APP_INFO } from "@/common/constant";
+import { GET_UME_LIST, GET_APP_INFO } from "@/common/constant";
 import { platTokens } from "@/store/platTokens";
 const {
   userInfo: { rule, user_id }
@@ -57,7 +57,7 @@ class OrderAutoLockSeatQueue {
   // 帮助锁座统一处理
   async lockSeatCommonHandle(order, logList) {
     const { app_name, plat_name } = order;
-    let app_type_name = GE_APP_INFO(app_name)?.app_type_code;
+    let app_type_name = GET_APP_INFO(app_name)?.app_type_code;
     const funNameObj = {
       ume_applet: "lockSeatHandleByUmeApplet",
       ume_h5: "lockSeatHandleByUmeH5",

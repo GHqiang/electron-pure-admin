@@ -6,7 +6,7 @@ import {
   GET_UME_LIST,
   GET_H5_UME_LIST,
   GET_CHENXING_LIST,
-  GE_APP_INFO
+  GET_APP_INFO
 } from "@/common/constant";
 import { platTokens } from "@/store/platTokens";
 
@@ -54,7 +54,7 @@ export default function useCinemaBaseFun() {
             use_limit_day = "8";
             use_limit_month = "20";
           }
-          let app_type = GE_APP_INFO(item.app_name)?.app_type_code;
+          let app_type = GET_APP_INFO(item.app_name)?.app_type_code;
           return {
             ...item,
             app_type,

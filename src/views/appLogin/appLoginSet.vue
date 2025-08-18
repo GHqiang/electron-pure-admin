@@ -247,7 +247,7 @@ import {
   GET_CHENXING_LIST,
   GET_APP_TYPE_LIST,
   GET_USABLE_APP_LIST,
-  GE_APP_INFO
+  GET_APP_INFO
 } from "@/common/constant";
 const APP_LIST = computed(() => GET_APP_LIST());
 const UME_LIST = computed(() => GET_UME_LIST());
@@ -559,7 +559,7 @@ const queryExpireLoginList = async () => {
       );
     }
     abnormalLoginInfoList = abnormalLoginInfoList.map(itemA => {
-      let appInfo = GE_APP_INFO(itemA.app_name);
+      let appInfo = GET_APP_INFO(itemA.app_name);
       return {
         ...itemA,
         app_label: appInfo?.app_label || "",
@@ -616,7 +616,7 @@ const getCardListByApp = async (
       params.session_id = session_id;
     } else if (H5_UME_LIST.value.includes(app_name)) {
       params = {
-        cinemaLinkId: GE_APP_INFO(app_name)?.cinemaLinkId,
+        cinemaLinkId: GET_APP_INFO(app_name)?.cinemaLinkId,
         pageNo: 1,
         pageSize: 30,
         umeToken: session_id
