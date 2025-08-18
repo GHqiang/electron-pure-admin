@@ -292,13 +292,14 @@ class getUmeOfferPrice {
               fixedAmountRuleList
             }
           });
+        } else {
+          console.error("最终匹配到的报价规则不存在");
+          this.logList.push({
+            opera_time: getCurrentTime(),
+            des: "最终匹配到的报价规则不存在",
+            level: "error"
+          });
         }
-        console.error("最终匹配到的报价规则不存在");
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "最终匹配到的报价规则不存在",
-          level: "info"
-        });
         return;
       }
       endRule = JSON.parse(JSON.stringify(endRule));

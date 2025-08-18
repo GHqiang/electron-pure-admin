@@ -290,7 +290,7 @@ class getLmaOfferPrice {
         this.logList.push({
           opera_time: getCurrentTime(),
           des: "最终匹配到的报价规则不存在",
-          level: "info"
+          level: "error"
         });
         return;
       }
