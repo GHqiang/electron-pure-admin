@@ -441,7 +441,7 @@ export default class CinemaManage {
     const { hall_name, show_time } = this.order;
     const MIN_SIMILARITY_THRESHOLD = 3;
     let targetShowList = showList.filter(
-      item => item.startTime === +new Date(show_time)
+      item => +new Date(item.startTime) === +new Date(show_time)
     );
 
     if (targetShowList.length === 0) return;
