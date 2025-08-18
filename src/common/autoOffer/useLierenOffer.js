@@ -8,7 +8,11 @@ import {
 } from "@/utils/utils";
 import svApi from "@/api/sv-api"; // 机器api
 import lierenApi from "@/api/lieren-api"; // 猎人平台api
-import { LIERENR_REWARDS, GET_APP_TYPE_LIST } from "@/common/constant.js";
+import {
+  LIERENR_REWARDS,
+  GET_APP_TYPE_LIST,
+  GET_APP_INFO
+} from "@/common/constant.js";
 // 获取最终报价信息实体类
 import getOfferPriceFun from "./commonOfferHandle.js";
 // 平台toke列表
@@ -148,6 +152,7 @@ class OrderAutoOfferQueue {
             plat_name: "lieren",
             app_name,
             appName: app_name,
+            app_type_code: GET_APP_INFO(app_name)?.app_type_code,
             // rewards: item.rewards == 1 ? 4 : 0,
             rewards: LIERENR_REWARDS[item.order_urgent] || 0, // 0-普通 1-加急 2-特急 3-vip
             // 转为截止时间戳，原值： 1727009794

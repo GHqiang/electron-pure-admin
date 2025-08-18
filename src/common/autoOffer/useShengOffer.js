@@ -8,7 +8,7 @@ import {
 } from "@/utils/utils";
 import svApi from "@/api/sv-api"; // 机器api
 import shengApi from "@/api/sheng-api"; // 省平台api
-import { GET_APP_TYPE_LIST } from "@/common/constant.js";
+import { GET_APP_TYPE_LIST, GET_APP_INFO } from "@/common/constant.js";
 // 获取最终报价信息实体类
 import getOfferPriceFun from "./commonOfferHandle.js";
 // 平台toke列表
@@ -209,7 +209,8 @@ class OrderAutoOfferQueue {
           return {
             ...item,
             app_name,
-            appName: app_name
+            appName: app_name,
+            app_type_code: GET_APP_INFO(app_name)?.app_type_code
           };
         });
       // console.warn(
