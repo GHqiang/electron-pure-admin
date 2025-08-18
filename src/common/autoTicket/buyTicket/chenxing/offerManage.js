@@ -816,26 +816,28 @@ window.chenxingOfferObj = (plat_name, app_name) => {
   return new getChenxingOfferPrice({ appFlag: app_name, plat_name });
 };
 // 测试方法
-// window.chenxingOfferObj("mayi", "hsmzyc").getMemberPrice({
-//   plat_name: "mayi",
-//   id: "12412221440316515",
-//   tpp_price: 42,
-//   supplier_max_price: 39,
-//   city_name: "南京",
-//   cinema_addr: "雨花台区软件大道109号雨花客厅E-PARK北区3层",
-//   ticket_num: 2,
-//   cinema_name: "AMG海上明珠影城（南京雨花客厅IMAX店）",
-//   hall_name: "1号儿童主题厅",
-//   film_name: "“骗骗”喜欢你",
-//   film_img:
-//     "https://gw.alicdn.com/tfscom/i4/O1CN01e8PcvF1NESAgdEsnM_!!6000000001538-0-alipicbeacon.jpg_120x120.jpg",
-//   show_time: "2024-12-22 16:30:00",
-//   rewards: 0,
-//   is_urgent: false,
-//   cinema_group: "AMG海上明珠",
-//   cinema_code: 45702,
-//   order_number: "12412221440316515",
-//   offer_end_time: 1734849690000,
-//   app_name: "hsmzyc"
+// window.chenxingOfferObj("mayi", "hsmzyc").getEndOfferPrice({
+//   order: {
+//     plat_name: "mayi",
+//     id: "12412221440316515",
+//     tpp_price: 42,
+//     supplier_max_price: 39,
+//     city_name: "南京",
+//     cinema_addr: "雨花台区软件大道109号雨花客厅E-PARK北区3层",
+//     ticket_num: 2,
+//     cinema_name: "AMG海上明珠影城（南京雨花客厅IMAX店）",
+//     hall_name: "1号儿童主题厅",
+//     film_name: "“骗骗”喜欢你",
+//     film_img:
+//       "https://gw.alicdn.com/tfscom/i4/O1CN01e8PcvF1NESAgdEsnM_!!6000000001538-0-alipicbeacon.jpg_120x120.jpg",
+//     show_time: "2024-12-22 16:30:00",
+//     rewards: 0,
+//     is_urgent: false,
+//     cinema_group: "AMG海上明珠",
+//     cinema_code: 45702,
+//     order_number: "12412221440316515",
+//     offer_end_time: 1734849690000,
+//     app_name: "hsmzyc"
+//   }
 // });
 export default getChenxingOfferPrice;
