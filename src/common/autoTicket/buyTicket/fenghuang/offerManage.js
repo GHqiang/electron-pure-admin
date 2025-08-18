@@ -167,7 +167,7 @@ class getFenghuangOfferPrice {
 
   // 按电影类型过滤规则
   filterByFilmType(rules, mediaType) {
-    const filmTypeFlag = rules.find(item => !!item.film_type?.length);
+    const filmTypeFlag = rules.some(item => !!item.film_type?.length);
     if (!filmTypeFlag) return rules;
 
     const filmType = mediaType?.toUpperCase();

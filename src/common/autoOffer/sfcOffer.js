@@ -297,7 +297,7 @@ class getSfcOfferPrice {
       }
       matchRuleList = JSON.parse(JSON.stringify(matchRuleList));
       // 判断规则里是否有指定电影格式的（2D/3D）
-      let filmTypeFlag = matchRuleList.find(item => !!item?.film_type?.length);
+      let filmTypeFlag = matchRuleList.some(item => !!item?.film_type?.length);
       let movieInfo, filmType; // 电影放映信息
       // 获取电影放映信息以匹配电影格式
       movieInfo = await this.getMovieInfo(order);
