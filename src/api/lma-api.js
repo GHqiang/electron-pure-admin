@@ -20,12 +20,12 @@ const createApi = ({ app_name }) => {
   });
 
   // 获取影院列表
-  const getCinemaList = city_id => {
+  const getCinemaList = () => {
     return {
       status: true,
       code: "0",
       data: {
-        list: cinemas.filter(item => item.city_id == city_id)
+        list: cinemas
       }
     };
   };

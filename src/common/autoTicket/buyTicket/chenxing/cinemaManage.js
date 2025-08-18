@@ -44,11 +44,10 @@ export default class CinemaManage {
         return;
       }
 
-      // 2、获取目标城市影院列表
-      let cinemaList = this.getTargetCityCinemas(cityCinemaList, city_name);
+      // 2、获取全部城市影院列表
+      let cinemaList = this.getTargetCityCinemas(cityCinemaList);
       if (!cinemaList?.length) {
-        this.logger.errorSave("获取目标城市影院列表失败", {
-          city_name,
+        this.logger.errorSave("获取全部影院列表失败", {
           cityCinemaList
         });
         return;
@@ -152,12 +151,9 @@ export default class CinemaManage {
     }
   }
 
-  // 获取目标城市影院列表
-  getTargetCityCinemas(cityCinemaList, cityName) {
-    return (
-      cityCinemaList.find(item => item.cityName.includes(cityName))
-        ?.cinemaList || []
-    );
+  // 获取全部城市影院列表
+  getTargetCityCinemas(cityCinemaList) {
+    return cityCinemaList.map(item => item.cinemaList)?.flat() || [];
   }
 
   // 获取目标影院

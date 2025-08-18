@@ -32,7 +32,6 @@ class OrderAutoTicketQueue {
   constructor(appFlag) {
     this.queue = []; // 初始化空队列
     this.isRunning = false; // 初始化时队列未运行
-    this.cityList = []; // 城市列表
     this.appFlag = appFlag; // 影线标识
     this.sfcApi = APP_API_OBJ[appFlag];
     this.currentParamsInx = 0;
@@ -466,21 +465,8 @@ class OrderAutoTicketQueue {
     try {
       this.logger.info("一键买票待下单信息", item);
       if (this.currentParamsInx === 0) {
-        // 2、获取城市列表
-        const cityListRes = await getCityList({ appFlag });
-        this.cityList = cityListRes?.cityList || [];
-        if (!this.cityList?.length) {
-          this.logger.errorSave("获取城市列表异常", {
-            error: cityListRes?.error
-          });
-          const transferParams = await this.transferOrder(item);
-          return { transferParams };
-        }
-        city_id = this.cityList.find(
-          item => item.name.indexOf(city_name) !== -1
-        )?.id;
         // 3、获取城市影城列表
-        const cinemaListRes = await getCityCinemaList({ city_id, appFlag });
+        const cinemaListRes = await getCityCinemaList({ appFlag });
         const cinemaList = cinemaListRes?.cinemaList || [];
         if (!cinemaList.length) {
           this.logger.errorSave("获取城市影院列表异常", {
@@ -507,6 +493,7 @@ class OrderAutoTicketQueue {
           const transferParams = await this.transferOrder(item);
           return { transferParams };
         }
+        city_id = cinemaIdRes?.city_id;
         // 5、获取目标影院放映列表
         const movieDataRes = await getMoviePlayInfo({
           cinema_id,
@@ -2067,41 +2054,10 @@ class OrderAutoTicketQueue {
 // 生成出票队列实例
 const createTicketQueue = appFlag => new OrderAutoTicketQueue(appFlag);
 
-// 获取城市列表
-const getCityList = async ({ appFlag }) => {
-  try {
-    let params = {};
-    console.log("获取城市列表参数", params);
-    const res = await APP_API_OBJ[appFlag].getCityList(params);
-    console.log("获取城市列表返回", res);
-    let cityList = res.data?.list || [];
-    // 转换数据保持和上面取值一致
-    cityList = cityList.map(item => {
-      return {
-        name: item.city_name,
-        id: item.city_id
-      };
-    });
-
-    return {
-      cityList
-    };
-  } catch (error) {
-    console.error("获取城市列表异常", error);
-    return {
-      error
-    };
-  }
-};
-
 // 获取城市影院列表
-const getCityCinemaList = async ({ city_id, appFlag }) => {
+const getCityCinemaList = async ({ appFlag }) => {
   try {
-    let params = {
-      city_id
-    };
-    console.log("获取城市影院参数", params);
-    const res = await APP_API_OBJ[appFlag].getCinemaList(city_id);
+    const res = await APP_API_OBJ[appFlag].getCinemaList();
     console.log("获取城市影院返回", res);
     let cinemaList = res.data?.list || [];
     // 转换数据保持和上面取值一致

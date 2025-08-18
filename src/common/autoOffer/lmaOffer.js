@@ -1304,15 +1304,8 @@ class getLmaOfferPrice {
         show_time,
         app_name
       } = item;
-      const cityList = await this.getCityList();
-      if (!cityList?.length) {
-        return;
-      }
-      let city_id = cityList?.find(
-        item => item.city_name.indexOf(city_name) !== -1
-      )?.city_id;
-      let res = await this.appApi.getCinemaList(city_id);
-      console.log(conPrefix + "获取城市影院返回", res);
+      let res = await this.appApi.getCinemaList();
+      console.log(conPrefix + "获取全部影院返回", res);
       let cinemaList = res.data?.list || [];
       cinemaList = cinemaList.map(itemA => ({
         ...itemA,
@@ -1466,7 +1459,7 @@ class getLmaOfferPrice {
           targetShow
         }
       });
-      return { ...targetShow, city_id, cinema_id, short_code };
+      return { ...targetShow, cinema_id, short_code };
     } catch (error) {
       console.error(conPrefix + "获取当前场次电影信息异常", error);
       this.logList.push({
@@ -1536,28 +1529,6 @@ class getLmaOfferPrice {
         info: {
           error,
           params
-        }
-      });
-    }
-  }
-
-  // 获取城市列表
-  async getCityList() {
-    const { conPrefix } = this;
-    try {
-      let params = {};
-      console.log(conPrefix + "获取城市列表参数", params);
-      let res = await this.appApi.getCityList(params);
-      console.log(conPrefix + "获取城市列表返回", res);
-      return res.data.list || [];
-    } catch (error) {
-      console.error(conPrefix + "获取城市列表异常", error);
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "获取城市列表异常",
-        level: "error",
-        info: {
-          error
         }
       });
     }

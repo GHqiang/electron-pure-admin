@@ -1380,9 +1380,8 @@ class getUmeOfferPrice {
         return;
       }
       let cinemaList =
-        allCinemaList?.find(item => item.cityName.includes(city_name))
-          ?.cinemaList || [];
-      console.log(conPrefix + "获取城市影院列表返回", cinemaList);
+        allCinemaList?.map(item => item.cinemaList)?.flat() || [];
+      console.log(conPrefix + "获取全部影院列表返回", cinemaList);
 
       // 2、获取目标影院
       let targetCinema = cinemaList.find(

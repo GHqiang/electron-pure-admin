@@ -1306,17 +1306,15 @@ class getUmeOfferPrice {
         level: "info"
       });
       let cinemaList =
-        allCinemaList?.find(item => item.cityName.includes(city_name))
-          ?.cinemaList || [];
-      console.log("获取城市影院列表返回", cinemaList);
+        allCinemaList?.map(item => item.cinemaList)?.flat() || [];
+      console.log("获取全部影院列表返回", cinemaList);
       if (!cinemaList?.length) {
         this.logList.push({
           opera_time: getCurrentTime(),
-          des: "获取城市下影院列表失败",
+          des: "获取全部影院列表失败",
           level: "info",
           info: {
-            allCinemaList,
-            city_name
+            allCinemaList
           }
         });
         return;

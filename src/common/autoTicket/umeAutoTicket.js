@@ -513,11 +513,9 @@ class OrderAutoTicketQueue {
           return { transferParams };
         }
         let cinemaList =
-          cityCinemaList?.find(item => item.cityName.includes(city_name))
-            ?.cinemaList || [];
+          cityCinemaList?.map(item => item.cinemaList)?.flat() || [];
         if (!cinemaList?.length) {
-          this.logger.errorSave("获取目标城市影院列表失败", {
-            city_name,
+          this.logger.errorSave("获取全部影院列表失败", {
             cityCinemaList
           });
           const transferParams = await this.transferOrder(item);
