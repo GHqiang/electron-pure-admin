@@ -527,7 +527,7 @@ class OrderAutoTicketQueue {
           });
         }
         if (!targetCinema) {
-          this.logger.errorSave("根据订单中的影院名称获取目标影院失败", {
+          this.logger.errorSave("获取目标影院失败", {
             cinema_name,
             cinemaList,
             appFlag,

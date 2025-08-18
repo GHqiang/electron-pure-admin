@@ -1389,7 +1389,7 @@ class getUmeOfferPrice {
                 movie_data: movie_data?.map(item => ({
                   filmName: item.filmName,
                   filmId: item.filmId,
-                  filmVersion: filmVersion // 2D、3D
+                  filmVersion: item.filmVersion // 2D、3D
                 }))
               }
             });
@@ -1628,7 +1628,7 @@ class getUmeOfferPrice {
         des: "获取当前场次电影信息异常",
         level: "error",
         info: {
-          error: JSON.stringify(error)
+          error: formatErrInfo(error)
         }
       });
     }

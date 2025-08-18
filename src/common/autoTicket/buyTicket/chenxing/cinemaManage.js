@@ -57,7 +57,7 @@ export default class CinemaManage {
       // 3、获取目标影院
       let targetCinema = this.getTargetCinemaInfo(cinema_code, cinemaList);
       if (!targetCinema) {
-        this.logger.errorSave("根据订单中的影院名称获取目标影院失败", {
+        this.logger.errorSave("获取目标影院失败", {
           cinema_name,
           cinema_code,
           cinemaList,
