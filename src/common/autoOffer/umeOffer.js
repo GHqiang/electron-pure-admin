@@ -1774,15 +1774,15 @@ class getUmeOfferPrice {
       console.log(conPrefix + "获取电影放映场次参数", params);
       const res = await this.appApi.getMoviePlayTime(params);
       console.log(conPrefix + "获取电影放映场次返回", res);
-      this.logList.push({
-        opera_time: getCurrentTime(),
-        des: "获取电影放映场次返回",
-        level: "info",
-        info: {
-          params,
-          res
-        }
-      });
+      // this.logList.push({
+      //   opera_time: getCurrentTime(),
+      //   des: "获取电影放映场次返回",
+      //   level: "info",
+      //   info: {
+      //     params,
+      //     res
+      //   }
+      // });
       return res.data || [];
     } catch (error) {
       console.error(conPrefix + "获取电影放映信息异常", error);

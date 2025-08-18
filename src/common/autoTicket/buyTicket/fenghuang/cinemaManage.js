@@ -389,7 +389,6 @@ export default class CinemaManage {
       };
       this.logger.info("获取电影放映场次参数", params);
       const res = await this.appApi.getMoviePlayTime(params);
-      this.logger.infoSave("获取电影放映场次返回", res);
       let filmList = res?.filmSchedules || [];
       let showList =
         filmList.find(item => item.filmId == filmId)?.dateSchedules || [];
@@ -400,6 +399,7 @@ export default class CinemaManage {
         )?.schedules || [];
       if (!moviePlayTime?.length) {
         this.logger.errorSave("获取电影放映场次返回空");
+        this.logger.infoSave("获取电影放映场次返回", res);
       }
       return moviePlayTime;
     } catch (error) {
@@ -430,7 +430,7 @@ export default class CinemaManage {
           false
         );
       }
-      this.logger.errorSave("未找到匹配场次", { cinemaInfo, showList });
+      this.logger.errorSave("未找到匹配场次", { showList, cinemaInfo });
     } catch (error) {
       this.logger.errorSave("场次匹配异常", formatErrInfo(error));
     }
