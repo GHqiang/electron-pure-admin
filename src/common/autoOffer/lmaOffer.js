@@ -416,12 +416,12 @@ class getLmaOfferPrice {
       // 拿着处理过的最大券库存（几个号之间）+对应的更新时间去判断是否要更新（只判断自己号上的）
       let isNeedUpdate = quanTypeList.some(item => {
         // if (item.quan_stock < 5) {
-        let inx = item.quanStockList.findIndex(
+        let inx = item.quanStockListByPhone.findIndex(
           itemA => itemA.quan_stock === item.quan_stock
         );
         console.log("inx", inx);
         if (inx != -1) {
-          let update_time = item.quanStockList[inx].update_time;
+          let update_time = item.quanStockListByPhone[inx].update_time;
           console.log("update_time", update_time);
 
           return !update_time
@@ -447,15 +447,15 @@ class getLmaOfferPrice {
         // 只要有一个需要更新，就全部更新，因为会获取该号全部的券
         needUpdateQuanTypeList = quanTypeList;
         console.log("needUpdateQuanTypeList", needUpdateQuanTypeList);
-        logList.push({
-          opera_time: getCurrentTime(),
-          des: "需要更新的券类型列表",
-          level: "info",
-          info: {
-            quanTypeList,
-            targetLoginList
-          }
-        });
+        // logList.push({
+        //   opera_time: getCurrentTime(),
+        //   des: "需要更新的券类型列表",
+        //   level: "info",
+        //   info: {
+        //     quanTypeList,
+        //     targetLoginList
+        //   }
+        // });
 
         let quanTypeListParams = needUpdateQuanTypeList.map(item => {
           return {
@@ -592,7 +592,7 @@ class getLmaOfferPrice {
           });
           item.quan_stock = maxNum;
         }
-        item.quanStockList = quanStockListByPhone.slice();
+        item.quanStockListByPhone = quanStockListByPhone.slice();
       });
       console.log("quanTypeList", quanTypeList);
       this.logList.push({
@@ -600,9 +600,9 @@ class getLmaOfferPrice {
         des: "根据影院获取券类型列表返回",
         level: "info",
         info: {
-          quanTypeRes,
-          quanTypeList,
-          params,
+          quanTypeList: quanTypeList.map(
+            ({ quanStockListByPhone, ...item }) => item
+          ),
           useMobileList
         }
       });

@@ -700,12 +700,13 @@ export default class CardQuanManage {
           });
           item.quan_stock = maxNum;
         }
-        item.quanTypeList = quanStockListByPhone.slice();
+        item.quanStockListByPhone = quanStockListByPhone.slice();
       });
       this.logger.info("quanTypeList", quanTypeList);
       this.logger.infoSave("根据影院获取券类型列表返回", {
-        quanTypeList,
-        params,
+        quanTypeList: quanTypeList.map(
+          ({ quanStockListByPhone, ...item }) => item
+        ),
         useMobileList
       });
       return quanTypeList;
@@ -734,12 +735,12 @@ export default class CardQuanManage {
       // 拿着处理过的最大券库存（几个号之间）+对应的更新时间去判断是否要更新（只判断自己号上的）
       let isNeedUpdate = quanTypeList.some(item => {
         // if (item.quan_stock < 5) {
-        let inx = item.quanTypeList.findIndex(
+        let inx = item.quanStockListByPhone.findIndex(
           itemA => itemA.quan_stock === item.quan_stock
         );
         console.log("inx", inx);
         if (inx != -1) {
-          let update_time = item.quanTypeList[inx].update_time;
+          let update_time = item.quanStockListByPhone[inx].update_time;
           console.log("update_time", update_time);
 
           return !update_time
@@ -757,10 +758,10 @@ export default class CardQuanManage {
         // 只要有一个需要更新，就全部更新，因为会获取该号全部的券
         needUpdateQuanTypeList = quanTypeList;
         console.log("needUpdateQuanTypeList", needUpdateQuanTypeList);
-        logger.infoSave("需要更新的券类型列表", {
-          quanTypeList,
-          targetLoginList
-        });
+        // logger.infoSave("需要更新的券类型列表", {
+        //   quanTypeList,
+        //   targetLoginList
+        // });
 
         let quanTypeListParams = needUpdateQuanTypeList.map(item => {
           return {
