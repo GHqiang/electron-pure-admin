@@ -241,6 +241,7 @@
             v-model="formData.film_type"
             clearable
             placeholder="电影格式"
+            @clear="formData.film_type = ''"
           >
             <el-option label="2D" value="2D" />
             <el-option label="3D" value="3D" />
@@ -552,7 +553,7 @@ let formData = reactive({
   weekDay: [], // 启用星期
   seatNum: "", // 座位数
   memberDay: "", // 会员日
-  film_type: [], // 电影格式
+  film_type: "", // 电影格式
   remark: "", // 备注
   status: "1", // 状态
   platOfferList: [
@@ -645,7 +646,7 @@ const resetForm = el => {
   formData.seatNum = ""; // 座位数
   formData.memberPriceRule = ""; // 座位数
   formData.memberDay = ""; // 会员日
-  formData.film_type = [];
+  formData.film_type = "";
   formData.remark = ""; // 备注
   formData.status = "1"; // 状态
   formData.platOfferList = [
