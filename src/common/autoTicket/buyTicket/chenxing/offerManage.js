@@ -331,8 +331,7 @@ class getChenxingOfferPrice {
     if (price > Number(supplier_max_price)) {
       const isOverrunOfferEnabled =
         window.localStorage.getItem("isOverrunOffer") === "1";
-      // 仅针对用会员卡报价
-      if (!isOverrunOfferEnabled && offerType !== "1") {
+      if (!isOverrunOfferEnabled) {
         this.logger.errorSave(
           `最终报价${price}超过平台限价${supplier_max_price}且超限报价关闭`
         );

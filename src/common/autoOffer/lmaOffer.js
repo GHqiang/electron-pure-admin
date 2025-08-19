@@ -929,13 +929,13 @@ class getLmaOfferPrice {
           level: "info"
         });
       }
-      // 最终报价高于平台限价，卡关闭超限报价直接不报
+      // 最终报价高于平台限价，关闭超限报价直接不报
       if (price > Number(supplier_max_price)) {
         let isOverrunOffer = window.localStorage.getItem("isOverrunOffer");
-        if (isOverrunOffer !== "1" && offerType !== "1") {
+        if (isOverrunOffer !== "1") {
           this.logList.push({
             opera_time: getCurrentTime(),
-            des: `用卡报价时，最终报价${price}超过平台限价${supplier_max_price}，超限报价处于关闭状态不进行报价`,
+            des: `最终报价${price}超过平台限价${supplier_max_price}，超限报价处于关闭状态不进行报价`,
             level: "error"
           });
           return;
