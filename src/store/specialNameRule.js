@@ -49,13 +49,23 @@ export const useCinemaCodeMatchList = defineStore("cinemaCodeMatchList", {
       }
       return targetCinema;
     },
-    // 获取影院映射信息
+    // 获取影院映射信息根据code
     getCinemaMatchInfo(plat_cinema_code, app_name) {
       return this.items.find(
         item =>
           plat_cinema_code &&
           app_name &&
           item.plat_cinema_code === plat_cinema_code &&
+          item.app_name === app_name
+      );
+    },
+    // 获取影院映射信息根据名称
+    getCinemaMatchInfoByName(app_cinema_name, app_name) {
+      return this.items.find(
+        item =>
+          app_cinema_name &&
+          app_name &&
+          item.app_cinema_name === app_cinema_name &&
           item.app_name === app_name
       );
     }

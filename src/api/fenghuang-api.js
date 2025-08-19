@@ -48,7 +48,7 @@ const createApi = ({ app_name }) => {
     getCardList: {
       "2.0": "/fenghuang/mtop.alipic.lark.card.membercards.get"
     },
-    // 获取会员卡列表
+    // 获取会员卡详情
     getCardDetail: {
       "2.0": "/fenghuang/mtop.alipic.lark.card.membercarddetail.get"
     },

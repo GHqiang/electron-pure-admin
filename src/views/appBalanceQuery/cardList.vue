@@ -623,6 +623,7 @@ const syncCardInfo = async () => {
         .map(item => ({
           id: item.id,
           balance: item.balance,
+          linkCinemaIds: item.linkCinemaIds,
           update_time: getCurrentTime()
         }));
       console.warn("准备更新的卡列表", updateCardList);

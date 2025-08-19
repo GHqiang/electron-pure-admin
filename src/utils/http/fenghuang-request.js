@@ -140,7 +140,9 @@ const urlObj = {
     "mtop.alipic.lark.order.ticketOrderPromo.settle",
   "mtop.alipic.lark.seat.scheduleseats.unlock":
     "mtop.alipic.lark.seat.scheduleSeats.unlock",
-  "mtop.alipic.lark.order.orders.get": "mtop.alipic.lark.order.orders.get"
+  "mtop.alipic.lark.order.orders.get": "mtop.alipic.lark.order.orders.get",
+  "mtop.alipic.lark.card.membercarddetail.get":
+    "mtop.alipic.lark.card.membercarddetail.get"
 };
 // 获取url
 const getUrl = (token, sid, url, params) => {
@@ -425,7 +427,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           // );
           return Promise.reject(`${app_label}登录失效`);
         }
-        let isRetryCount = !config.retryCount || config.retryCount < 5;
+        let isRetryCount = !config.retryCount || config.retryCount < 3;
         if (["FAIL_SYS_SESSION_EXPIRED::Session过期"].includes(errReason)) {
           if (isRetryCount && !config.url.includes("authn.refresh")) {
             config.retryCount = (config.retryCount || 0) + 1;

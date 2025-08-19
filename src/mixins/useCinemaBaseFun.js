@@ -16,6 +16,8 @@ import {
   isDateInCurrentMonth,
   mockDelay
 } from "@/utils/utils";
+import { useCinemaCodeMatchList } from "@/store/specialNameRule";
+const cinemaCodeMatchObj = useCinemaCodeMatchList();
 
 // 影院相关方法接口
 export default function useCinemaBaseFun() {
@@ -413,6 +415,13 @@ export default function useCinemaBaseFun() {
             card_num: item.cardNo,
             balance: (item.balance || 0) / 100 + ""
           }));
+        // 进行关联影院处理
+        cardList = await getCardLinkCinemaListAll({
+          cinemaLinkId: params.cinemaLinkId,
+          session_id,
+          app_name,
+          cardList
+        });
       } else if (CHENXING_LIST.value.includes(app_name)) {
         let api_version = GET_APP_INFO(app_name)?.api_version || "";
         if (api_version === "3.0C") {
@@ -479,6 +488,60 @@ export default function useCinemaBaseFun() {
   };
   window.getCardListByApp = getCardListByApp;
 
+  // 会员卡关联影院处理
+  const getCardLinkCinemaListAll = async ({
+    cinemaLinkId,
+    session_id,
+    app_name,
+    cardList
+  }) => {
+    try {
+      for (let i = 0; i < cardList.length; i++) {
+        const linkCinemaIds = await getCardLinkCinemaList({
+          cinemaLinkId,
+          cardNo: cardList[i].card_num,
+          fenghuangToken: session_id,
+          app_name
+        });
+        // console.log("linkCinemaIds", linkCinemaIds);
+        if (linkCinemaIds) {
+          cardList[i].linkCinemaIds = linkCinemaIds;
+        }
+      }
+      return cardList;
+    } catch (error) {
+      return cardList;
+    }
+  };
+
+  // 获取卡适用影院
+  const getCardLinkCinemaList = async ({
+    cinemaLinkId,
+    cardNo,
+    fenghuangToken,
+    app_name
+  }) => {
+    try {
+      const res = await APP_API_OBJ[app_name].getCardDetail({
+        cinemaLinkId,
+        cardNo,
+        fenghuangToken
+      });
+      const availableCinemas = res.availableCinemas || [];
+      // console.log("availableCinemas1", availableCinemas);
+      return availableCinemas
+        .map(item => {
+          const cinema_id = cinemaCodeMatchObj
+            .getCinemaMatchInfoByName(item.cinemaName, app_name)
+            ?.app_cinema_code?.split("_")?.[1];
+          return cinema_id;
+        })
+        .filter(item => item)
+        .join(",");
+    } catch (error) {
+      console.error("获取卡适用影院异常", error);
+    }
+  };
   // 卢米埃获取其它卡余额
   const getLmaOtherCardBalance = async (cardList, session_id) => {
     let card_list = JSON.parse(JSON.stringify(cardList));
