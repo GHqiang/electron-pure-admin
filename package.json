@@ -1,6 +1,6 @@
 {
   "name": "electron-pure-admin",
-  "version": "5.6.0",
+  "version": "5.6.1",
   "description": "electron-pure-admin",
   "private": true,
   "type": "module",
@@ -10,7 +10,7 @@
     "serve": "vite",
     "icon": "esno build/icon.ts --input=public/icon.png --output=dist",
     "build": "rimraf dist && rimraf release && cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build && yarn icon && electron-builder",
-    "build:staging": "rimraf dist && rimraf release && vite build --mode staging && yarn icon && electron-builder",
+    "build:staging": "rimraf dist && rimraf release && node scripts/update-version.js && vite build --mode staging && yarn icon && electron-builder",
     "browser:dev": "cross-env NODE_OPTIONS=--max-old-space-size=4096 vite",
     "browser:build": "rimraf dist && cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build",
     "preview": "vite preview",
