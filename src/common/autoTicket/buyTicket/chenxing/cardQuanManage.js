@@ -773,7 +773,7 @@ export default class CardQuanManage {
         return false;
       });
       if (!isNeedUpdate) {
-        logger.infoSave("不需要更新券库存", { quanTypeList });
+        logger.infoSave("不需要更新券库存");
       } else {
         // 只要有一个需要更新，就全部更新，因为会获取该号全部的券
         needUpdateQuanTypeList = quanTypeList;

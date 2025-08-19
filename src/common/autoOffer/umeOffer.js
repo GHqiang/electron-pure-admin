@@ -395,10 +395,7 @@ class getUmeOfferPrice {
         logList.push({
           opera_time: getCurrentTime(),
           des: "不满足更新条件",
-          level: "info",
-          info: {
-            quanTypeList
-          }
+          level: "info"
         });
       } else {
         // 只要有一个需要更新，就全部更新，因为会获取该号全部的券
