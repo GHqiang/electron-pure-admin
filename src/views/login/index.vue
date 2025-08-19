@@ -9,7 +9,18 @@ import { useUserStoreHook } from "@/store/modules/user";
 import { initRouter, getTopMenu } from "@/router/utils";
 import { bg, avatar, illustration } from "./utils/static";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import { ref, reactive, toRaw, onMounted, onBeforeUnmount } from "vue";
+
+import {
+  ref,
+  reactive,
+  toRaw,
+  onMounted,
+  onBeforeUnmount,
+  getCurrentInstance
+} from "vue";
+const { Version } =
+  getCurrentInstance().appContext.config.globalProperties.$config;
+console.log("Version：", Version);
 import { useDataThemeChange } from "@/layout/hooks/useDataThemeChange";
 
 import dayIcon from "@/assets/svg/day.svg?component";
@@ -138,7 +149,8 @@ const onLogin = async formEl => {
           console.log("loginRes", loginRes);
           tokens.setSelfPlatToken(loginRes.data);
           await svApi.updateUser({
-            login_time: getCurrentTime()
+            login_time: getCurrentTime(),
+            version: Version
           });
           let rule = loginRes.data?.user.rule;
           await setLocalCinemaList(rule);
