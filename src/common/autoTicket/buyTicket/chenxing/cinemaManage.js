@@ -458,7 +458,6 @@ export default class CinemaManage {
       const targetShow = this._findTargetShow(showList);
 
       if (targetShow) {
-        this.logger.infoSave("场次匹配成功", { targetShow });
         return targetShow;
       }
 

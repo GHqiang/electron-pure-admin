@@ -168,8 +168,8 @@ export default class BuyTicket {
   async oneClickBuyTicket(changePhoneBuyParams) {
     const { appFlag } = this;
     let buyTicketInfo = JSON.parse(JSON.stringify(changePhoneBuyParams)); // 换号购买参数
-    this.logger.infoSave("即将开始一键买票信息", this.order);
-    if (buyTicketInfo) {
+    // this.logger.infoSave("即将开始一键买票信息", this.order);
+    if (buyTicketInfo && this.currentParamsInx) {
       this.logger.infoSave("换号出票携带参数信息", buyTicketInfo);
     }
     let {

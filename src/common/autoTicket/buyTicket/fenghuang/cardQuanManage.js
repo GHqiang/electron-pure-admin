@@ -299,7 +299,6 @@ export default class CardQuanManage {
     try {
       this.logger.infoSave("获取会员卡列表参数", params);
       const res = await this.appApi.getCardList(params);
-      this.logger.infoSave("获取会员卡列表返回", res);
       let cardList = res.memberCards || [];
       if (!cardList.length) {
         this.logger.errorSave("获取会员卡列表为空");
@@ -308,6 +307,13 @@ export default class CardQuanManage {
         ...item,
         cardAmount: (item.balance || 0) / 100
       }));
+      this.logger.infoSave("获取会员卡列表返回", {
+        cardList: cardList.map(item => ({
+          cardAmount: item.cardAmount,
+          cardNo: item.cardNo,
+          cardName: item.cardName
+        }))
+      });
       return cardList;
     } catch (error) {
       this.logger.errorSave("获取会员卡列表异常", error);

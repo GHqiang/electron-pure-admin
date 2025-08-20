@@ -220,11 +220,7 @@ class OrderAutoTicketQueue {
   async orderHandle(order, logger, delayTime) {
     try {
       logger.infoSave(
-        `订单开始出票，订单号-${order.order_number}，上个订单号-${this.prevOrderNumber}`,
-        {
-          order,
-          delayTime
-        }
+        `订单开始出票，订单号-${order.order_number}，上个订单号-${this.prevOrderNumber}`
       );
       // await mockDelay(delayTime);
       logger.info(`订单处理 ${order.id}`);
