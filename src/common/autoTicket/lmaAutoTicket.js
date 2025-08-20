@@ -1158,42 +1158,17 @@ class OrderAutoTicketQueue {
           card_id: ""
         };
       }
-      // 获取无效卡列表进行过滤
-      const invalidCardRes = await getUnCardList(appFlag);
-      this.logger.infoSave("获取无效会员卡列表返回", invalidCardRes);
-      let invalidCardList = invalidCardRes?.list || [];
-      cardList = cardList.filter(
-        item =>
-          !invalidCardList.some(itemA => itemA.card_num === item.card_number)
+      // 获取影院维护的可用卡列表
+      const usableCardList = await this.getUsableCardList(
+        cinema_id,
+        ticket_num
       );
-      const useListRes = await getCardDailyAndMonthlyTicketCount({
-        cardIdList: cardList.map(item => item.card_number),
-        appFlag
-      });
-      if (useListRes?.error) {
-        this.logger.errorSave("获取会员卡当天及当月出票量异常", useListRes);
-        return {
-          card_id: ""
-        };
-      }
-      let useList = useListRes.useList || [];
-      console.warn("会员卡当天及当月出票量", useList);
-      // 需要查询当前卡的月出票数和天出票数，单卡一月20，一天8张，
-      let activeCard = cardList[0]; //第一个为活跃卡，活跃卡出失败了需要切换并日志记录
-      cardList = cardList.filter(item => {
-        let useInfo = useList.find(itemA => itemA.card_id === item.card_number);
-        return (
-          (useInfo?.daily_ticket_count || 0) + Number(ticket_num) <= 8 &&
-          (useInfo?.monthly_ticket_count || 0) + Number(ticket_num) <= 20
+      if (usableCardList?.length) {
+        cardList = cardList.filter(item =>
+          usableCardList.some(itemA => itemA.card_num === item.card_number)
         );
-      });
-      this.logger.infoSave("获取会员卡当天及当月出票量过滤后的卡列表", {
-        cardListRes,
-        useList,
-        cardList
-      });
-      if (!cardList?.length) {
-        this.logger.errorSave("获取会员卡当天及当月出票量过滤后卡列表为空");
+      } else {
+        this.logger.errorSave("可用卡过滤后无可用卡");
         return {
           card_id: ""
         };
@@ -1639,7 +1614,7 @@ class OrderAutoTicketQueue {
     }
   }
 
-  // 获取影院指定会员卡(未用)
+  // 获取影院指定会员卡
   async getUsableCardList(cinema_id, ticket_num) {
     const { appFlag } = this;
     try {
@@ -2193,7 +2168,7 @@ const getSeatLayout = async ({ cinema_id, show_id, lmaToken, appFlag }) => {
 };
 
 // 获取会员卡列表
-const getCardList = async ({ cinema_id, lmaToken, appFlag }) => {
+const getCardList = async ({ lmaToken, appFlag }) => {
   try {
     let params = {
       lmaToken
@@ -2209,13 +2184,6 @@ const getCardList = async ({ cinema_id, lmaToken, appFlag }) => {
       money_str: res.data?.money_str
       // member_status: res.data?.member_status
     });
-    // 根据影院id过滤指定卡（卢米埃暂时用不到）
-    // const usableCarrdList = await this.getUsableCardList(cinema_id);
-    // if (usableCarrdList?.length) {
-    //   cardList = cardList.filter(item =>
-    //     usableCarrdList.some(itemA => itemA.card_num === item.card_number)
-    //   );
-    // }
     return {
       cardList,
       cardRes: res.data,
@@ -2228,54 +2196,6 @@ const getCardList = async ({ cinema_id, lmaToken, appFlag }) => {
     };
   }
 };
-
-// 获取无效卡列表
-const getUnCardList = async appFlag => {
-  try {
-    const cardRes = await svApi.queryCardList({
-      app_name: appFlag,
-      rule: tokens.userInfo.rule,
-      status: "2",
-      isNeedTotalNum: 0,
-      queryFields:
-        "card_num,card_id,balance,mobile,card_discount,linkCinemaIds,use_limit_day,use_limit_month,daily_usage,monthly_usage,usage_date"
-    });
-    let list = cardRes?.data?.cardList || [];
-    return {
-      list
-    };
-  } catch (error) {
-    console.warn("获取无效卡列表异常", error);
-    return {
-      error
-    };
-  }
-};
-
-// 获取会员卡当天及当月出票量
-const getCardDailyAndMonthlyTicketCount = async ({ cardIdList, appFlag }) => {
-  let params = {
-    card_list: JSON.stringify(cardIdList),
-    app_name: appFlag
-  };
-  try {
-    console.log("获取会员卡当天及当月出票量参数", params);
-    const res = await svApi.getCardDailyAndMonthlyTicketCount(params);
-    console.log("获取会员卡当天及当月出票量返回", res);
-    let useList = res.data?.useList || [];
-    return {
-      useList,
-      params
-    };
-  } catch (error) {
-    console.warn("获取会员卡当天及当月出票量异常", error);
-    return {
-      error,
-      params
-    };
-  }
-};
-window.getCardDailyAndMonthlyTicketCount = getCardDailyAndMonthlyTicketCount;
 
 // 连续获取目标券
 const continuousGetQuan = async data => {
