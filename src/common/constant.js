@@ -44,7 +44,7 @@ const sfcV3AppList = ["hbchyxd"];
 
 // sfc系列影院程序版本
 const SFC_APP_VER_OBJ = {
-  hbchyxd: ["8.0", "7.9.4"],
+  hbchyxd: ["8.0", "8.0.8"],
   ningbo: ["7.0", "7.9.4"],
   nanguojgh: ["7.0", "7.9.4"]
 };

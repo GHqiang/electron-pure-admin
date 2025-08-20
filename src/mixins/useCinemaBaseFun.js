@@ -378,15 +378,16 @@ export default function useCinemaBaseFun() {
       } else if (app_name === "lma") {
         params.lmaToken = session_id;
       } else {
-        // params.city_id = "500";
-        // params.cinema_id = "1";
         params.session_id = session_id;
       }
       await mockDelay(H5_UME_LIST.value.includes(app_name) ? 1 : 0.01);
       if (index % 8) {
         await mockDelay(1);
       }
-      const res = await APP_API_OBJ[app_name].getCardList(params);
+      let res =
+        await APP_API_OBJ[app_name][
+          app_name == "hbchyxd" ? "getCardAndQuanList" : "getCardList"
+        ](params);
       // console.warn("获取会员卡列表返回", res);
       // 只获取有效卡，无效卡要过滤掉
       if (UME_LIST.value.includes(app_name)) {
@@ -457,17 +458,29 @@ export default function useCinemaBaseFun() {
         cardList = card_list;
       } else {
         // sfc系列
-        cardList = res.data?.card_data || [];
-        cardList = cardList
-          .filter(item => item.card_status === "1")
-          .map(item => {
-            return {
-              card_id: item.id + "", // 卡id
-              card_num: item.card_num, // 卡号
-              balance: item.balance + "", // 卡余额
-              cinema_name: item.cinema_name // 卡关联影院
-            };
-          });
+        if (app_name === "hbchyxd") {
+          let member_info = res?.data?.member_info;
+          cardList = [];
+          if (member_info) {
+            cardList.push({
+              card_id: member_info.member_id,
+              card_num: member_info.member_id,
+              balance: member_info.balance
+            });
+          }
+        } else {
+          cardList = res.data?.card_data || [];
+          cardList = cardList
+            .filter(item => item.card_status === "1")
+            .map(item => {
+              return {
+                card_id: item.id + "", // 卡id
+                card_num: item.card_num, // 卡号
+                balance: item.balance + "", // 卡余额
+                cinema_name: item.cinema_name // 卡关联影院
+              };
+            });
+        }
       }
       console.warn(app_name + "——获取会员卡列表返回的cardList", cardList);
       cardList = cardList.map(item => ({

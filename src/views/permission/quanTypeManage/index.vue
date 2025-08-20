@@ -41,13 +41,13 @@
               />
             </el-select>
           </el-form-item>
-          <el-form-item label="券&nbsp;&nbsp;&nbsp;&nbsp;名称">
+          <!-- <el-form-item label="券&nbsp;&nbsp;&nbsp;&nbsp;名称">
             <el-input
               v-model="formData.quan_name"
               placeholder="请输入券名称"
               clearable
             />
-          </el-form-item>
+          </el-form-item> -->
           <el-form-item label="券&nbsp;&nbsp;&nbsp;&nbsp;成本">
             <el-input
               v-model="formData.quan_cost"
@@ -456,7 +456,7 @@ const uploadRef = ref(null);
 const formData = reactive({
   app_type: "",
   app_name: "",
-  quan_name: "",
+  // quan_name: "",
   quan_value: "",
   quan_cost: "",
   quan_flag: "",
@@ -740,7 +740,7 @@ const hasSelected = computed(() => multipleSelection.value.length > 0);
 // 重置表单
 const resetForm = () => {
   formData.app_name = "";
-  formData.quan_name = "";
+  // formData.quan_name = "";
   formData.quan_value = "";
   formData.quan_cost = "";
   formData.quan_flag = "";
