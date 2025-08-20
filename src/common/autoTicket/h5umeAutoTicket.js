@@ -2498,7 +2498,7 @@ class OrderAutoTicketQueue {
       );
       this.logger.infoSave("根据该用户关联手机号对卡列表进行过滤", {
         useMobileList,
-        cardListByMobile
+        cardListByMobile: cardListByMobile.map(item => item.card_num)
       });
       // 根据当天及当月出票量限制进行过滤
       let cardListLimit = cardListByMobile.filter(item => {
@@ -2511,7 +2511,7 @@ class OrderAutoTicketQueue {
         );
       });
       this.logger.infoSave("根据当天及当月出票量限制过滤后", {
-        cardListLimit
+        cardListLimit: cardListLimit.map(item => item.card_num)
       });
       let useCanCardList = cardListLimit.filter(item => {
         return !item.linkCinemaIds
@@ -2525,7 +2525,7 @@ class OrderAutoTicketQueue {
         return 0;
       });
       this.logger.infoSave("根据制定影院过滤后的卡列表", {
-        useCanCardList
+        useCanCardList: useCanCardList.map(item => item.card_num)
       });
       return useCanCardList;
     } catch (error) {

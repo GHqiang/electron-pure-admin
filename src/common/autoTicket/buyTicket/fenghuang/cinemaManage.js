@@ -315,7 +315,7 @@ export default class CinemaManage {
     );
     this.logger.infoSave("根据可用手机号对卡列表进行过滤", {
       useMobileList,
-      cardListByMobile
+      cardListByMobile: cardListByMobile.map(item => item.card_num)
     });
 
     // 根据当天及当月出票量限制进行过滤
@@ -328,7 +328,7 @@ export default class CinemaManage {
       );
     });
     this.logger.infoSave("根据当天及当月出票量限制对卡列表进行过滤", {
-      cardListLimit
+      cardListLimit: cardListLimit.map(item => item.card_num)
     });
 
     // 根据影院指定卡进行过滤
@@ -344,7 +344,7 @@ export default class CinemaManage {
       return 0;
     });
     this.logger.infoSave("根据制定影院对卡列表进行过滤", {
-      useCanCardList
+      useCanCardList: useCanCardList.map(item => item.card_num)
     });
     return useCanCardList;
   }

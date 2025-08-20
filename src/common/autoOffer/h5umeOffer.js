@@ -1246,10 +1246,10 @@ class getUmeOfferPrice {
       });
       this.logList.push({
         opera_time: getCurrentTime(),
-        des: "根据指定卡过滤后",
+        des: "根据制定影院过滤后的卡列表",
         level: "info",
         info: {
-          cardList
+          cardList: cardList.map(item => item.card_num)
         }
       });
       return cardList;

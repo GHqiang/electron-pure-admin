@@ -318,7 +318,7 @@ export default class CinemaManage {
     );
     this.logger.infoSave("根据可用手机号对卡列表进行过滤", {
       useMobileList,
-      cardListByMobile
+      cardListByMobile: cardListByMobile.map(item => item.card_num)
     });
 
     // 根据当天及当月出票量限制进行过滤
@@ -330,8 +330,8 @@ export default class CinemaManage {
         (use_limit_month ? ticket_num <= use_limit_month - month_usage : true)
       );
     });
-    this.logger.infoSave("根据当天及当月出票量限制对卡列表进行过滤", {
-      cardListLimit
+    this.logger.infoSave("根据当天及当月出票量限制过滤后", {
+      cardListLimit: cardListLimit.map(item => item.card_num)
     });
 
     // 根据影院指定卡进行过滤
@@ -347,7 +347,7 @@ export default class CinemaManage {
       return 0;
     });
     this.logger.infoSave("根据制定影院对卡列表进行过滤", {
-      useCanCardList
+      useCanCardList: useCanCardList.map(item => item.card_num)
     });
     return useCanCardList;
   }
@@ -482,7 +482,9 @@ export default class CinemaManage {
   _findTargetShow(showList) {
     const { hall_name, show_time } = this.order;
     const MIN_SIMILARITY_THRESHOLD = 3;
-    let targetShowList = showList.filter(item => +new Date(item.startTime) === +new Date(show_time));
+    let targetShowList = showList.filter(
+      item => +new Date(item.startTime) === +new Date(show_time)
+    );
 
     if (targetShowList.length === 0) return;
     if (targetShowList.length === 1) return targetShowList[0];

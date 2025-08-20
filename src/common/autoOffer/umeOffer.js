@@ -1237,7 +1237,7 @@ class getUmeOfferPrice {
           level: "info",
           info: {
             useMobileList,
-            cardListByMobile
+            cardListByMobile: cardListByMobile.map(item => item.card_num)
           }
         });
         // console.log("list", list);
@@ -1260,7 +1260,7 @@ class getUmeOfferPrice {
           des: "根据当天及当月出票量限制过滤后",
           level: "info",
           info: {
-            cardListLimit
+            cardListLimit: cardListLimit.map(item => item.card_num)
           }
         });
         // 过滤指定卡
@@ -1273,10 +1273,10 @@ class getUmeOfferPrice {
         });
         this.logList.push({
           opera_time: getCurrentTime(),
-          des: "根据指定卡过滤后",
+          des: "根据制定影院过滤后的卡列表",
           level: "info",
           info: {
-            cardList
+            cardList: cardList.map(item => item.card_num)
           }
         });
         if (!cardList.length) {

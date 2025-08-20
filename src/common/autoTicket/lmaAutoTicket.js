@@ -1661,7 +1661,7 @@ class OrderAutoTicketQueue {
       );
       this.logger.infoSave("根据该用户关联手机号对卡列表进行过滤", {
         useMobileList,
-        cardListByMobile
+        cardListByMobile: cardListByMobile.map(item => item.card_num)
       });
       let useCanCardList = cardListByMobile.filter(item => {
         return !item.linkCinemaIds
@@ -1675,7 +1675,7 @@ class OrderAutoTicketQueue {
         return 0;
       });
       this.logger.infoSave("根据制定影院过滤后的卡列表", {
-        useCanCardList
+        useCanCardList: useCanCardList.map(item => item.card_num)
       });
       return useCanCardList;
     } catch (error) {
