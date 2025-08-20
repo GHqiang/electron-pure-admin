@@ -11,7 +11,9 @@ import {
   formatTimeStrByLma,
   findMostRepeatedChars,
   couponInfoSpecial,
-  subDecimal
+  subDecimal,
+  getCurrentDay,
+  isDateInCurrentMonth
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 // 统一日志类
@@ -1637,8 +1639,8 @@ class OrderAutoTicketQueue {
     }
   }
 
-  // 获取影院指定会员卡
-  async getUsableCardList(cinema_id) {
+  // 获取影院指定会员卡(未用)
+  async getUsableCardList(cinema_id, ticket_num) {
     const { appFlag } = this;
     try {
       const res = await svApi.queryCardList({
@@ -1649,21 +1651,45 @@ class OrderAutoTicketQueue {
         queryFields:
           "card_num,card_id,balance,mobile,card_discount,linkCinemaIds,use_limit_day,use_limit_month,daily_usage,monthly_usage,usage_date"
       });
-      this.logger.infoSave("获取会员卡维护列表返回", res);
-      let cardList = res.data.cardList || [];
+      let list = res.data.cardList || [];
+      list = list.map(item => ({
+        ...item,
+        // 使用日非当天的就是0
+        daily_usage:
+          item.usage_date !== getCurrentDay() ? 0 : item.daily_usage || 0,
+        // 使用日非当月的就是0
+        month_usage: !isDateInCurrentMonth(item.usage_date)
+          ? 0
+          : item.monthly_usage || 0
+      }));
+      this.logger.infoSave("获取会员卡维护列表返回", { list });
+
       let useMobileList = getCinemaLoginInfoList()
         .filter(
           item => item.app_name === appFlag && item.mobile && item.session_id
         )
         .map(item => item.mobile);
-      let cardListByMobile = cardList.filter(item =>
+      let cardListByMobile = list.filter(item =>
         useMobileList.includes(item.mobile)
       );
       this.logger.infoSave("根据该用户关联手机号对卡列表进行过滤", {
         useMobileList,
         cardListByMobile: cardListByMobile.map(item => item.card_num)
       });
-      let useCanCardList = cardListByMobile.filter(item => {
+      // 根据当天及当月出票量限制进行过滤
+      let cardListLimit = cardListByMobile.filter(item => {
+        const { use_limit_day, use_limit_month, daily_usage, month_usage } =
+          item;
+        if (!use_limit_day && !use_limit_month) return true;
+        return (
+          (use_limit_day ? ticket_num <= use_limit_day - daily_usage : true) &&
+          (use_limit_month ? ticket_num <= use_limit_month - month_usage : true)
+        );
+      });
+      this.logger.infoSave("根据当天及当月出票量限制过滤后", {
+        cardListLimit: cardListLimit.map(item => item.card_num)
+      });
+      let useCanCardList = cardListLimit.filter(item => {
         return !item.linkCinemaIds
           ? true
           : item.linkCinemaIds.split(",").some(itemA => itemA == cinema_id);

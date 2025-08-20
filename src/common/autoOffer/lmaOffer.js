@@ -1178,7 +1178,7 @@ class getLmaOfferPrice {
         });
         // 根据当天及当月出票量限制进行过滤
         let cardListLimit = cardListByMobile.filter(item => {
-          const { use_limit_day, use_limit_month, daily_usage, monthly_usage } =
+          const { use_limit_day, use_limit_month, daily_usage, month_usage } =
             item;
           if (!use_limit_day && !use_limit_month) return true;
           return (
@@ -1186,7 +1186,7 @@ class getLmaOfferPrice {
               ? ticket_num <= use_limit_day - daily_usage
               : true) &&
             (use_limit_month
-              ? ticket_num <= use_limit_month - monthly_usage
+              ? ticket_num <= use_limit_month - month_usage
               : true)
           );
         });
