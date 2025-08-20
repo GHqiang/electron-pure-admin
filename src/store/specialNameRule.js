@@ -37,15 +37,24 @@ export const useCinemaCodeMatchList = defineStore("cinemaCodeMatchList", {
     // 获取影院标识
     getCinemaAppFlag({
       cinema_code: plat_cinema_code,
-      cinema_name: plat_cinema_name
+      cinema_name: plat_cinema_name,
+      city_name
     }) {
       let targetCinema = this.items.find(
         item => item.plat_cinema_code === plat_cinema_code
       );
       if (!targetCinema) {
-        targetCinema = this.items.find(item =>
+        let targetList = this.items.filter(item =>
           item.plat_cinema_name?.split("#").includes(plat_cinema_name.trim())
         );
+        // 可能存在plat_cinema_name一致但是影院不一致的（镇江苏宁影城（CGS中国巨幕店））
+        if (targetList.length > 1) {
+          targetCinema = targetList.find(item =>
+            item.app_cinema_name.includes(city_name.replace("市", ""))
+          );
+        } else {
+          targetCinema = targetList[0];
+        }
       }
       return targetCinema;
     },
