@@ -25,7 +25,7 @@ const confirmOrder = params =>
 
 // 订单详情
 const queryOrderInfo = params =>
-  axios.post("/mhapi/movie-server/movie/get/order/confirm", params);
+  axios.post("/mhapi/movie-server/movie/get/order/detail", params);
 
 // 解锁座位
 const unlockSeat = params => axios.post("/v2/api/62e10db983b63", params);

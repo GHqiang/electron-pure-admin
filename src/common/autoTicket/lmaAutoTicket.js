@@ -758,7 +758,7 @@ class OrderAutoTicketQueue {
         cardNum = useCardRes.card_id;
         card_balance = useCardRes.card_balance;
         console.log("card_balance", card_balance);
-        console.warn("锁座前用卡成功", card_id);
+        this.logger.infoSave("锁座前用卡成功", useCardRes);
       }
       // 卢米埃需要锁座前用券，一旦锁座就相当于创建订单不可切换券了
       const useQuanRes = await this.useQuanHandle({

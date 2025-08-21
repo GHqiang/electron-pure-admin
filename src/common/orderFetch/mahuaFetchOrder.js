@@ -1,7 +1,8 @@
 // sheng平台获取订单队列
 import mahuaApi from "@/api/mahua-api";
 import svApi from "@/api/sv-api";
-
+import { useCinemaCodeMatchList } from "@/store/specialNameRule";
+const cinemaCodeMatchObj = useCinemaCodeMatchList();
 import {
   getCinemaFlag,
   logUpload,
@@ -59,6 +60,15 @@ class OrderAutoFetchQueue {
             movieShowTime: show_time,
             movieCinemaAddress: cinema_address
           } = item;
+          // 对应报价信息
+          let targetOfferInfo = offerList.find(
+            itemA =>
+              itemA.show_time == show_time &&
+              itemA.cinema_name == cinema_name &&
+              itemA.hall_name == hall_name &&
+              itemA.film_name == film_name &&
+              itemA.ticket_num == ticket_num
+          );
           return {
             id: id,
             tpp_price: "",
@@ -73,8 +83,8 @@ class OrderAutoFetchQueue {
             rewards: 0, // 麻花无奖励，只有快捷
             is_urgent: 0, // 1紧急 0非紧急
             cinema_group: "",
-            cinema_code: offerList.find(itemA => itemA.order_number == id)
-              ?.cinema_code, // 影院id
+            cinema_code: targetOfferInfo?.cinema_code, // 影院id
+            offer_order_number: targetOfferInfo?.order_number, // 报价订单号
             order_number: id,
             lockseat: "",
             plat_name: "mahua"
@@ -82,10 +92,13 @@ class OrderAutoFetchQueue {
         })
         .filter(item => getCinemaFlag(item))
         .map(item => {
-          let app_name = getCinemaFlag(item);
+          let app_name = cinemaCodeMatchObj.getCinemaAppFlag(item).app_name;
+          let plat_cinema_code =
+            cinemaCodeMatchObj.getCinemaAppFlag(item).app_name;
           return {
             ...item,
             app_name,
+            cinema_code: item.cinema_code || plat_cinema_code,
             appName: app_name
           };
         });
@@ -298,7 +311,8 @@ const getOfferList = async () => {
       page_num: 1,
       page_size: 200,
       isNeedTotalNum: 0,
-      queryFields: "order_number,cinema_code"
+      queryFields:
+        "order_number,cinema_code,show_time,app_name,cinema_name,film_name,hall_name,ticket_num"
     });
     return res.data.offerList || [];
   } catch (error) {

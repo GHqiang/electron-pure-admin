@@ -2,6 +2,7 @@
 
 import axios from "axios";
 import { ElMessage } from "element-plus";
+import { sendWxPusherMessage } from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
 // 创建axios实例
@@ -55,6 +56,14 @@ instance.interceptors.response.use(
       isErrorByLieRen &&
       !whitelistSp.some(item => response.config.url.includes(item))
     ) {
+      if (data.rtnMsg?.includes("token已过期")) {
+        sendWxPusherMessage({
+          msgType: 1,
+          app_name: "麻花平台",
+          expirePhone: "机器手机号",
+          transferTip: `麻花平台登录失效，请检查登录信息维护`
+        });
+      }
       ElMessage.error(data.message || data.msg || "请求失败");
       return Promise.reject(data);
     }
