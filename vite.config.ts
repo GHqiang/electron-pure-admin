@@ -66,6 +66,12 @@ export default ({ command, mode }: ConfigEnv): UserConfigExport => {
           changeOrigin: true, // 是否允许跨域
           rewrite: path => path.replace(/^\/v2/, "/v2") // 重写路径，去除/api前缀
         },
+        // 麻花
+        "/mhapi": {
+          target: "https://mhdyp.com", // 后端API的真实地址
+          changeOrigin: true, // 是否允许跨域
+          rewrite: path => path.replace(/^\/mhapi/, "/api") // 重写路径，去除/api前缀
+        },
         // 蚂蚁
         "/newwww": {
           target: "https://piao.mayiufu.com", // 后端API的真实地址

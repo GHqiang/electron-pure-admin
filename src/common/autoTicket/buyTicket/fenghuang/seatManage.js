@@ -8,7 +8,8 @@ const LOCK_RETRY_CONFIG = {
   haha: [6, 5],
   yinghuasuan: [6, 5],
   shangzhan: [6, 5],
-  shoutu: [20, 12]
+  shoutu: [20, 12],
+  mahua: [10, 5]
 };
 // 辅助锁座触发原因
 const ASSIST_LOCK_ERRORS = ["座位旁边不要留空", "座位中间不要留空"];

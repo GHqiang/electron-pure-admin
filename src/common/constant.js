@@ -14,7 +14,8 @@ const ORDER_FORM = {
   yinghuasuan: "影划算",
   shangzhan: "商展",
   haha: "哈哈",
-  shoutu: "守兔"
+  shoutu: "守兔",
+  mahua: "麻花"
 };
 
 // 无手续费平台

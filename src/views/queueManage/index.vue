@@ -197,6 +197,7 @@ import yinghuasuanOfferQueue from "@/common/autoOffer/useYinghuasuanOffer";
 import shangzhanOfferQueue from "@/common/autoOffer/useShangzhanOffer";
 import hahaOfferQueue from "@/common/autoOffer/useHahaOffer";
 import shoutuOfferQueue from "@/common/autoOffer/useShoutuOffer";
+import mahuaOfferQueue from "@/common/autoOffer/useMahuaOffer";
 
 // 平台待出票订单执行队列
 import lierenFetchOrder from "@/common/orderFetch/lierenFetchOrder";
@@ -208,6 +209,7 @@ import yinghuasuanFetchOrder from "@/common/orderFetch/yinghuasuanFetchOrder";
 import shangzhanFetchOrder from "@/common/orderFetch/shangzhanFetchOrder";
 import hahaFetchOrder from "@/common/orderFetch/hahaFetchOrder";
 import shoutuFetchOrder from "@/common/orderFetch/shoutuFetchOrder";
+import mahuaFetchOrder from "@/common/orderFetch/mahuaFetchOrder";
 
 import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
 import createTucketQueueFun from "@/common/autoTicket/comTicketHandle";
@@ -298,7 +300,8 @@ let platOfferQueueObj = {
   shangzhan: shangzhanOfferQueue,
   haha: hahaOfferQueue,
   sheng: shengOfferQueue,
-  shoutu: shoutuOfferQueue
+  shoutu: shoutuOfferQueue,
+  mahua: mahuaOfferQueue
 };
 
 // 平台获取待出票订单队列集合
@@ -311,7 +314,8 @@ let platFetchOrderQueueObj = {
   shangzhan: shangzhanFetchOrder,
   haha: hahaFetchOrder,
   sheng: shengFetchOrder,
-  shoutu: shoutuFetchOrder
+  shoutu: shoutuFetchOrder,
+  mahua: mahuaFetchOrder
 };
 
 // 平台出票队列集合
@@ -335,7 +339,8 @@ let setPlatFunObj = {
   shangzhan: tokens.setShangzhanPlatToken,
   haha: tokens.setHahaPlatToken,
   sheng: tokens.setShengPlatToken,
-  shoutu: tokens.setShoutuPlatToken
+  shoutu: tokens.setShoutuPlatToken,
+  mahua: tokens.setMahuaPlatToken
 };
 
 // 同步中标价定时器
