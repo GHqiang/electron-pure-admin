@@ -12,7 +12,8 @@ import svApi from "@/api/sv-api";
 import {
   GROUP_LIST,
   TEST_NEW_PLAT_LIST,
-  NO_FEE_PLAT_LIST
+  NO_FEE_PLAT_LIST,
+  ONE_STEP_PLAT_LIST
 } from "@/common/constant.js";
 import { platTokens } from "@/store/platTokens";
 const {
@@ -348,7 +349,11 @@ class getFenghuangOfferPrice {
     if (["mayi", "yangcong"].includes(this.plat_name)) {
       price = Math.floor(supplier_max_price);
     } else {
-      price = roundToHalf(supplier_max_price, -1);
+      price = roundToHalf(
+        supplier_max_price,
+        ONE_STEP_PLAT_LIST.includes(this.plat_name) ? 0.1 : 0.5,
+        "down"
+      );
     }
     this.logger.infoSave("调整最终报价为平台限价", { price });
     return price;
@@ -811,7 +816,8 @@ class getFenghuangOfferPrice {
     processedRule.member_discount = memberPriceRes.discount;
     processedRule.memberCostPrice = memberPriceRes.member_price;
     processedRule.round_member_price = roundToHalf(
-      processedRule.memberCostPrice
+      processedRule.memberCostPrice,
+      ONE_STEP_PLAT_LIST.includes(this.plat_name) ? 0.1 : 0.5
     );
     processedRule.memberOfferAmount =
       processedRule.round_member_price + Number(processedRule.addAmount);

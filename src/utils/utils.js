@@ -1543,14 +1543,33 @@ const removeLeadingZeros = lockseat => {
 };
 
 // 按0.5向上去整，即4.1变为4.5,4.6变为5
-function roundToHalf(num, flag = 1) {
-  // 计算 num 除以 0.5 的商
-  const quotient = +num / 0.5;
-  // 向上/向下取整
-  const roundedQuotient =
-    flag == 1 ? Math.ceil(quotient) : Math.floor(quotient);
-  // 返回结果
-  return roundedQuotient * 0.5;
+function roundToHalf(num, step, direction = "up") {
+  if (typeof step !== "number" || step <= 0) {
+    return NaN;
+  }
+
+  // 对于已知步进值 0.5 和 0.1，使用特定方法
+  if (step === 0.5 || step === 0.1) {
+    // 检查是否是整数倍
+    if ((num * 1000) % (step * 1000) == 0) {
+      return num;
+    }
+
+    // 使用更简单的方法处理已知步进值
+    const factor = step === 0.5 ? 2 : 10;
+    const scaledNum = num * factor;
+
+    let roundedScaledNum;
+    if (direction === "up") {
+      roundedScaledNum = Math.ceil(scaledNum);
+    } else if (direction === "down") {
+      roundedScaledNum = Math.floor(scaledNum);
+    } else {
+      roundedScaledNum = Math.round(scaledNum);
+    }
+
+    return roundedScaledNum / factor;
+  }
 }
 
 /**

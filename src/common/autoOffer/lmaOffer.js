@@ -21,7 +21,8 @@ import { APP_API_OBJ } from "@/common/index.js";
 import {
   GET_APP_LIST,
   TEST_NEW_PLAT_LIST,
-  NO_FEE_PLAT_LIST
+  NO_FEE_PLAT_LIST,
+  ONE_STEP_PLAT_LIST
 } from "@/common/constant.js";
 import lierenApi from "@/api/lieren-api";
 import { platTokens } from "@/store/platTokens";
@@ -731,7 +732,8 @@ class getLmaOfferPrice {
         mixAddAmountRule.memberCostPrice = memberPriceRes.member_price;
         // 会员成本价不为0.5的整数倍时进0.5
         mixAddAmountRule.round_member_price = roundToHalf(
-          mixAddAmountRule.memberCostPrice
+          mixAddAmountRule.memberCostPrice,
+          ONE_STEP_PLAT_LIST.includes(order.plat_name) ? 0.1 : 0.5
         );
         // 会员预计报价
         mixAddAmountRule.memberOfferAmount =
@@ -942,7 +944,11 @@ class getLmaOfferPrice {
           price = Math.floor(supplier_max_price);
         } else {
           // 向下取0.5的倍数
-          price = roundToHalf(supplier_max_price, -1);
+          price = roundToHalf(
+            supplier_max_price,
+            ONE_STEP_PLAT_LIST.includes(plat_name) ? 0.1 : 0.5,
+            "down"
+          );
         }
         this.logList.push({
           opera_time: getCurrentTime(),
