@@ -944,6 +944,30 @@ class OrderAutoTicketQueue {
         });
         return { offerRule, transferParams };
       }
+      // 手续费
+      let shouxufei = (supplier_end_price * 100) / 10000;
+      if (NO_FEE_PLAT_LIST.includes(plat_name)) {
+        shouxufei = 0;
+      }
+      // 计算利润(奖励未加)
+      let profit;
+      // 中标价-会员成本价
+      if (offerRule.offer_type !== "1") {
+        profit = supplier_end_price - offerRule?.member_price - shouxufei;
+        profit = Number(profit) * Number(ticket_num);
+      } else {
+        profit = Number(supplier_end_price) - offerRule.quan_cost - shouxufei;
+        profit = (profit * 100 * ticket_num) / 100;
+      }
+      if (rewards > 0) {
+        // 特急奖励订单中标价格 * 张数 * 0.04;
+        let rewardPrice =
+          (Number(supplier_end_price) * Number(ticket_num) * 100 * rewards) /
+          10000;
+        profit += rewardPrice;
+      }
+      profit = profit.toFixed(2);
+
       let real_member_price = offerRule?.real_member_price || 0;
       if (offerRule.offer_type !== "1" && card_id) {
         real_member_price = (real_member_price * 10000 * ticket_num) / 10000;
@@ -982,29 +1006,7 @@ class OrderAutoTicketQueue {
         }
       }
       this.logger.infoSave("订单支付前计算订单价格成功");
-      // 手续费
-      let shouxufei = (supplier_end_price * 100) / 10000;
-      if (NO_FEE_PLAT_LIST.includes(plat_name)) {
-        shouxufei = 0;
-      }
-      // 计算利润(奖励未加)
-      let profit;
-      // 中标价-会员成本价
-      if (offerRule.offer_type !== "1") {
-        profit = supplier_end_price - offerRule?.member_price - shouxufei;
-        profit = Number(profit) * Number(ticket_num);
-      } else {
-        profit = Number(supplier_end_price) - offerRule.quan_cost - shouxufei;
-        profit = (profit * 100 * ticket_num) / 100;
-      }
-      if (rewards > 0) {
-        // 特急奖励订单中标价格 * 张数 * 0.04;
-        let rewardPrice =
-          (Number(supplier_end_price) * Number(ticket_num) * 100 * rewards) /
-          10000;
-        profit += rewardPrice;
-      }
-      profit = profit.toFixed(2);
+
       let order_num = order_str;
       if (isTestOrder) {
         return { offerRule };
