@@ -1158,6 +1158,7 @@ class OrderAutoTicketQueue {
           card_id: ""
         };
       }
+      let activeCard = cardList[0]; //第一个为活跃卡
       // 获取影院维护的可用卡列表
       const usableCardList = await this.getUsableCardList(
         cinema_id,
