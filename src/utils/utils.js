@@ -2074,7 +2074,7 @@ const uploadBlobImage = async ({
     } else if (plat_name == "shoutu") {
       return res?.data?.url;
     } else if (plat_name == "mahua") {
-      return res?.rtnData;
+      return res?.rtnData?.imgUrl;
     }
   } catch (error) {
     logList?.push({

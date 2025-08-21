@@ -518,14 +518,14 @@ export default class PlatCommon {
       };
     } else if (plat_name === "mahua") {
       const blob = await generateTicketImage({ ...this.order, qrcode });
-      const fileInfo = await uploadBlobImage({
+      const fileUrl = await uploadBlobImage({
         blob,
         url: "https://mhdyp.com/api/user-server/user/common/img/uploadAndIdentify",
         params: {},
         plat_name,
         logger
       });
-      if (!fileInfo) {
+      if (!fileUrl) {
         logger.infoSave("麻花获取取票码图片失败,需手动上传");
         sendWxPusherMessage({
           orderInfo: this.order,
@@ -537,15 +537,15 @@ export default class PlatCommon {
       // 提交前校验，不确定是否需要
       await PLAT_API_OBJ[plat_name].checkTicketCodeImg({
         getOrderId: order_id,
-        urlList: [fileUrl.imgUrl]
+        urlList: [fileUrl]
       });
       params = {
         getOrderId: order_id,
         imgInfo: [
           {
             url: fileUrl.imgUrl,
-            info: fileUrl.qrcodeInfo,
-            code: "",
+            info: qrcode,
+            code: qrcode.split("|")?.[1] || "",
             ticketPassword: "",
             getTicketType: 0,
             maySeats: lockseat.split(" ").map(item => ({

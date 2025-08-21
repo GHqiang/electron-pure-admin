@@ -22,14 +22,17 @@ const stayTicketingList = params =>
 // 确认接货
 const confirmOrder = params =>
   axios.post("/mhapi/movie-server/movie/get/order/confirm", params);
+
+// 订单详情
+const queryOrderInfo = params =>
+  axios.post("/mhapi/movie-server/movie/get/order/confirm", params);
+
 // 解锁座位
 const unlockSeat = params => axios.post("/v2/api/62e10db983b63", params);
 
 // 图片识别校验
-const checkTicketCodeImg = axios.post(
-  "/mhapi/movie-server/movie/get/order/img/rec",
-  params
-);
+const checkTicketCodeImg = params =>
+  axios.post("/mhapi/movie-server/movie/get/order/img/rec", params);
 
 // 提交取票码(发货回调)
 const submitTicketCode = params =>
@@ -46,6 +49,7 @@ export default {
   confirmOrder, // 确认接单
   unlockSeat, // 解锁座位
   checkTicketCodeImg, // 图片识别校验
+  queryOrderInfo,
   submitTicketCode, // 提交取票码
   transferOrder, // 转单
   stayTicketingList // 查询中签订单

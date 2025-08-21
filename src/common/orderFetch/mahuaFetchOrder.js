@@ -45,6 +45,7 @@ class OrderAutoFetchQueue {
     try {
       let stayList = await this.orderFetch();
       if (!stayList?.length) return;
+      const offerList = await getOfferList();
       let sfcStayOfferlist = stayList
         .map(item => {
           const {
@@ -72,7 +73,8 @@ class OrderAutoFetchQueue {
             rewards: 0, // 麻花无奖励，只有快捷
             is_urgent: 0, // 1紧急 0非紧急
             cinema_group: "",
-            cinema_code: "", // 影院id
+            cinema_code: offerList.find(itemA => itemA.order_number == id)
+              ?.cinema_code, // 影院id
             order_number: id,
             lockseat: "",
             plat_name: "mahua"
@@ -198,6 +200,14 @@ class OrderAutoFetchQueue {
           return;
         }
       }
+      if (!order.lockseat) {
+        const res = await mahuaApi.queryOrderInfo({
+          getOrderId: order.id
+        });
+        if (res?.rtnData?.buySeats) {
+          order.lockseat = res.rtnData.buySeats?.split(",").join(" ");
+        }
+      }
       // 动态生成事件名称
       const eventName = `newOrder_${order.appName}`;
       // 创建一个事件对象
@@ -286,7 +296,9 @@ const getOfferList = async () => {
       user_id: tokens.userInfo.user_id,
       plat_name: "mahua",
       page_num: 1,
-      page_size: 50
+      page_size: 200,
+      isNeedTotalNum: 0,
+      queryFields: "order_number,cinema_code"
     });
     return res.data.offerList || [];
   } catch (error) {
