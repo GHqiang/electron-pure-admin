@@ -300,8 +300,8 @@ let platOfferQueueObj = {
   shangzhan: shangzhanOfferQueue,
   haha: hahaOfferQueue,
   sheng: shengOfferQueue,
-  shoutu: shoutuOfferQueue,
-  mahua: mahuaOfferQueue
+  shoutu: shoutuOfferQueue
+  // mahua: mahuaOfferQueue
 };
 
 // 平台获取待出票订单队列集合
@@ -314,8 +314,8 @@ let platFetchOrderQueueObj = {
   shangzhan: shangzhanFetchOrder,
   haha: hahaFetchOrder,
   sheng: shengFetchOrder,
-  shoutu: shoutuFetchOrder,
-  mahua: mahuaFetchOrder
+  shoutu: shoutuFetchOrder
+  // mahua: mahuaFetchOrder
 };
 
 // 平台出票队列集合
