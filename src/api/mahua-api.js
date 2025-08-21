@@ -25,6 +25,12 @@ const confirmOrder = params =>
 // 解锁座位
 const unlockSeat = params => axios.post("/v2/api/62e10db983b63", params);
 
+// 图片识别校验
+const checkTicketCodeImg = axios.post(
+  "/mhapi/movie-server/movie/get/order/img/rec",
+  params
+);
+
 // 提交取票码(发货回调)
 const submitTicketCode = params =>
   axios.post("/mhapi/movie-server/movie/get/order/report", params);
@@ -39,6 +45,7 @@ export default {
   submitOffer, // 提交报价
   confirmOrder, // 确认接单
   unlockSeat, // 解锁座位
+  checkTicketCodeImg, // 图片识别校验
   submitTicketCode, // 提交取票码
   transferOrder, // 转单
   stayTicketingList // 查询中签订单

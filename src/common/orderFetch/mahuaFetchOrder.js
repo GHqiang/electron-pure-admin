@@ -1,5 +1,5 @@
 // sheng平台获取订单队列
-import mangguoApi from "@/api/mangguo-api";
+import mahuaApi from "@/api/mahua-api";
 import svApi from "@/api/sv-api";
 
 import {
@@ -16,7 +16,7 @@ const tokens = platTokens();
 const {
   userInfo: { name }
 } = tokens;
-let conPrefix = "【芒果自动获取订单】——"; // console打印前缀
+let conPrefix = "【麻花自动获取订单】——"; // console打印前缀
 
 // 创建一个订单自动报价队列类
 class OrderAutoFetchQueue {
@@ -49,43 +49,33 @@ class OrderAutoFetchQueue {
         .map(item => {
           const {
             id,
-            maoyan_price,
-            supplier_end_price,
-            city_name,
-            relation_to_cinema,
-            relation_to_seat,
-            ticket_num,
-            cinema_name,
-            hall_name,
-            film_name,
-            film_img,
-            show_time,
-            is_urgent,
-            order_number,
-            cinemaid,
-            line_name // 品牌名 上影上海、上影二线等
+            biddingPrice: supplier_end_price,
+            movieCityName: city_name,
+            buyNum: ticket_num,
+            movieCinemaName: cinema_name,
+            movieHallName: hall_name,
+            movieName: film_name,
+            movieShowTime: show_time,
+            movieCinemaAddress: cinema_address
           } = item;
           return {
             id: id,
-            tpp_price: maoyan_price,
+            tpp_price: "",
             supplier_end_price: supplier_end_price,
             city_name: city_name,
-            cinema_addr: relation_to_cinema.cinema_addr,
+            cinema_addr: cinema_address,
             ticket_num: ticket_num,
             cinema_name: cinema_name,
             hall_name: hall_name,
             film_name: film_name,
-            film_img: film_img,
             show_time: show_time,
-            rewards: 0, // 芒果无奖励，只有快捷
-            is_urgent: is_urgent, // 1紧急 0非紧急
-            cinema_group: line_name,
-            cinema_code: relation_to_cinema.cinema_code, // 影院id
-            order_number: order_number,
-            lockseat: relation_to_seat
-              .map(itemA => itemA.position_seat.replace(/\s+/g, ""))
-              .join(" "),
-            plat_name: "mangguo"
+            rewards: 0, // 麻花无奖励，只有快捷
+            is_urgent: 0, // 1紧急 0非紧急
+            cinema_group: "",
+            cinema_code: "", // 影院id
+            order_number: id,
+            lockseat: "",
+            plat_name: "mahua"
           };
         })
         .filter(item => getCinemaFlag(item))
@@ -108,7 +98,7 @@ class OrderAutoFetchQueue {
       let logList = [
         {
           opera_time: getCurrentTime(),
-          des: `${name}：芒果获取待出票列表返回`,
+          des: `${name}：麻花获取待出票列表返回`,
           level: "info",
           info: {
             stayList: stayList
@@ -138,7 +128,7 @@ class OrderAutoFetchQueue {
           return !isTicket;
         });
         // console.warn(
-        //   conPrefix + "芒果待出票列表从远端过滤后",
+        //   conPrefix + "麻花待出票列表从远端过滤后",
         //   sfcStayOfferlist
         // );
       }
@@ -148,7 +138,7 @@ class OrderAutoFetchQueue {
         let logList = [
           {
             opera_time: getCurrentTime(),
-            des: "芒果新的待出票订单",
+            des: "麻花新的待出票订单",
             level: "info",
             info: {
               newOrder: item,
@@ -237,18 +227,18 @@ class OrderAutoFetchQueue {
   async orderFetch() {
     try {
       let params = {
-        page_size: 12,
-        order_type: "1"
+        tag: "0",
+        nowId: "",
+        getOrderId: "",
+        movieName: "",
+        cinemaName: ""
       };
-      // console.log(conPrefix + "获取芒果待出票订单列表参数", params);
-      const res = await mangguoApi.stayTicketingList(params);
-      let list = res?.data.list || [];
+      // console.log(conPrefix + "获取麻花待出票订单列表参数", params);
+      const res = await mahuaApi.stayTicketingList(params);
+      let list = res?.rtnData || [];
       if (list.length) {
         list = list.filter(
-          item =>
-            !this.platOrderList.some(
-              itemA => itemA.order_number === item.order_number
-            )
+          item => !this.platOrderList.some(itemA => itemA.id === item.id)
         );
         this.platOrderList.push(...list);
         let ln = this.platOrderList.length;
@@ -256,10 +246,10 @@ class OrderAutoFetchQueue {
           this.platOrderList = this.platOrderList.slice(-100);
         }
       }
-      // console.log(conPrefix + "获取芒果待出票列表返回", list);
+      // console.log(conPrefix + "获取麻花待出票列表返回", list);
       return list;
     } catch (error) {
-      console.error("获取芒果待出票列表异常", error);
+      console.error("获取麻花待出票列表异常", error);
       return [];
     }
   }
@@ -294,13 +284,13 @@ const getOfferList = async () => {
   try {
     const res = await svApi.queryOfferList({
       user_id: tokens.userInfo.user_id,
-      plat_name: "mangguo",
+      plat_name: "mahua",
       page_num: 1,
       page_size: 50
     });
     return res.data.offerList || [];
   } catch (error) {
-    console.error(conPrefix + "获取芒果历史报价记录异常", error);
+    console.error(conPrefix + "获取麻花历史报价记录异常", error);
     return [];
   }
 };
@@ -310,7 +300,7 @@ const getTicketList = async () => {
   try {
     const ticketRes = await svApi.queryTicketList({
       user_id: tokens.userInfo?.user_id,
-      plat_name: "mangguo",
+      plat_name: "mahua",
       page_num: 1,
       page_size: 30,
       isNeedTotalNum: 0,
@@ -318,7 +308,7 @@ const getTicketList = async () => {
     });
     return ticketRes.data.ticketList || [];
   } catch (error) {
-    console.error(conPrefix + "获取芒果历史出票记录异常", error);
+    console.error(conPrefix + "获取麻花历史出票记录异常", error);
     return [];
   }
 };

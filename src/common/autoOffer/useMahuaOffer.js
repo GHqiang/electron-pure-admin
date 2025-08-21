@@ -7,7 +7,7 @@ import {
   getCinemaLoginInfoList
 } from "@/utils/utils";
 import svApi from "@/api/sv-api"; // 机器api
-import mangguoApi from "@/api/mangguo-api"; // 芒果平台api
+import mahuaApi from "@/api/mahua-api"; // 麻花平台api
 import { GET_APP_TYPE_LIST, GET_APP_INFO } from "@/common/constant.js";
 // 获取最终报价信息实体类
 import getOfferPriceFun from "./commonOfferHandle.js";
@@ -22,7 +22,7 @@ class OrderAutoOfferQueue {
     this.queue = []; // 初始化空队列
     this.isRunning = false; // 初始化时队列未运行
     this.isOfferRunning = false;
-    this.conPrefix = "【芒果自动报价】——"; // console打印前缀
+    this.conPrefix = "【麻花自动报价】——"; // console打印前缀
     this.logList = []; // 队列运行日志
     this.handledOrders = new Map(); // 用于存储已处理订单号及其相关信息
   }
@@ -41,7 +41,7 @@ class OrderAutoOfferQueue {
       // 获取订单列表(支持时间间隔)
       let platQueueRule = window.localStorage.getItem("platQueueRule");
       platQueueRule = JSON.parse(platQueueRule).filter(
-        item => item.platName === "mangguo"
+        item => item.platName === "mahua"
       );
       const { getInterval } = platQueueRule[0];
       let fetchDelay = getInterval;
@@ -64,7 +64,7 @@ class OrderAutoOfferQueue {
     let logList = [
       {
         opera_time: getCurrentTime(),
-        des: "芒果新的待报价订单",
+        des: "麻花新的待报价订单",
         level: "info",
         info: {
           newOrder: item,
@@ -133,41 +133,37 @@ class OrderAutoOfferQueue {
       let sfcStayOfferlist = stayList.map(item => {
         const {
           id,
-          maoyan_price,
-          supplier_max_price,
-          city_name,
-          relation_to_cinema,
-          ticket_num,
-          cinema_name,
-          hall_name,
-          film_name,
-          film_img,
-          show_time,
-          is_urgent,
-          order_number,
-          cinemaid,
-          line_name // 品牌名 上影上海、上影二线等
+          salePrice: maoyan_price,
+          discountPriceUp: supplier_max_price,
+          movieCityName: city_name,
+          buyNum: ticket_num,
+          movieCinemaName: cinema_name,
+          movieHallName: hall_name,
+          movieName: film_name,
+          movieShowTime: show_time,
+          movieCinemaAddress: cinema_addr,
+          standardId: cinema_code,
+          biddingEndtime: offer_end_time
         } = item;
         return {
-          plat_name: "mangguo",
+          plat_name: "mahua",
           id: id,
           tpp_price: maoyan_price,
           supplier_max_price: supplier_max_price,
           city_name: city_name,
-          cinema_addr: relation_to_cinema.cinema_addr,
+          cinema_addr: cinema_addr,
           ticket_num: ticket_num,
           cinema_name: cinema_name,
           hall_name: hall_name,
           film_name: film_name,
-          film_img: film_img,
           show_time: show_time,
-          rewards: 0, // 芒果无奖励，只有快捷
-          is_urgent: is_urgent, // 1紧急 0非紧急
-          cinema_group: line_name,
-          cinema_code: relation_to_cinema.cinema_code, // 影院id
-          order_number: order_number,
+          rewards: 0, // 麻花无奖励，只有快捷
+          is_urgent: 0, // 1紧急 0非紧急
+          cinema_group: "",
+          cinema_code: cinema_code, // 影院id
+          order_number: id,
           // 转为截止时间戳，原值： 180 倒计时(单位秒)
-          offer_end_time: +new Date() + item.quote_countdown * 1000
+          offer_end_time: +new Date(offer_end_time)
         };
       });
       // console.warn(conPrefix + "转换后的订单列表", sfcStayOfferlist);
@@ -207,7 +203,7 @@ class OrderAutoOfferQueue {
       newOrders.forEach(item => {
         this.handleNewOrder(
           item,
-          stayList.find(itemA => itemA.order_number == item.order_number)
+          stayList.find(itemA => itemA.id == item.order_number)
         );
       });
       return newOrders;
@@ -255,7 +251,7 @@ class OrderAutoOfferQueue {
         ?.reverse()?.[0];
       let serOrderInfo = {
         // user_id: order.user_id,
-        plat_name: "mangguo",
+        plat_name: "mahua",
         app_name:
           order.app_name || offerResult?.offerRule?.shadowLineName || "",
         order_id: order.id,
@@ -286,18 +282,13 @@ class OrderAutoOfferQueue {
           (errInfoObj?.info ? formatErrInfo(errInfoObj?.info) : ""),
         rewards: order.rewards, // 是否是奖励订单 1是 0否
         rule: tokens.userInfo.rule,
-        offer_rule_id: offerResult?.offerRule?.id
+        offer_rule_id: offerResult?.offerRule?.id,
+        app_type: order.app_type_code
       };
-      let targetInfo = GET_APP_TYPE_LIST().find(item =>
-        item.app_name_list.includes(serOrderInfo.app_name)
-      );
-      if (targetInfo) {
-        serOrderInfo.app_type = targetInfo.app_type_code;
-      }
       // 上传该订单的运行日志
       logUpload(
         {
-          plat_name: "mangguo",
+          plat_name: "mahua",
           app_name: serOrderInfo.app_name,
           order_number: serOrderInfo.order_number,
           type: 1
@@ -316,7 +307,11 @@ class OrderAutoOfferQueue {
   // 提交报价
   async submitOffer({ order_id, price }) {
     const { conPrefix } = this;
-    let params = { order_id, price };
+    let params = {
+      putOrderId: order_id,
+      biddingPrice: price,
+      isDirectGetOrder: 0 // 是否抢单
+    };
     try {
       console.log(conPrefix + "提交报价参数", params);
       if (isTestOrder) {
@@ -328,7 +323,7 @@ class OrderAutoOfferQueue {
         });
         return;
       }
-      const res = await mangguoApi.submitOffer(params);
+      const res = await mahuaApi.submitOffer(params);
       console.log(conPrefix + "提交报价返回", res);
       this.logList.push({
         opera_time: getCurrentTime(),
@@ -357,7 +352,7 @@ class OrderAutoOfferQueue {
     try {
       let offerExample = getOfferPriceFun({
         appFlag: order.app_name,
-        plat_name: "mangguo"
+        plat_name: "mahua"
       });
       const result = await offerExample.getEndOfferPrice({
         order,
@@ -378,7 +373,7 @@ class OrderAutoOfferQueue {
       }
       const res = await this.submitOffer({
         order_id: order.id,
-        price: endPrice * 100
+        price: "" + endPrice
       });
       return { res, offerRule };
     } catch (error) {
@@ -398,31 +393,30 @@ class OrderAutoOfferQueue {
     console.warn(conPrefix + "主动停止订单自动报价队列");
   }
   // 获取待报价订单列表
-  async getStayOfferList(page, stayList = []) {
+  async getStayOfferList() {
     const { conPrefix } = this;
     try {
-      const res = await mangguoApi.queryStayOfferList({
-        order_type: "1",
-        page: page || 1,
-        page_size: 100,
-        sort_field: "created_at",
-        sort_order: "desc"
+      const res = await mahuaApi.queryStayOfferList({
+        pageNum: 1,
+        pageLimit: 200,
+        provName: "",
+        cityName: "",
+        cinemaName: "",
+        movieName: "",
+        acceptChangeSeat: "",
+        ticketsNum: "",
+        minPrice: "",
+        maxPrice: "",
+        cinemaClassify: [],
+        cinemaClassifyOfficial: []
       });
-      let list = res.data.list || [];
-      // let count = res.data.count || 1; // 总数
-      // stayList = [...stayList, ...list];
-      // if (list.length < 20) {
-      //   return stayList;
-      // } else {
-      //   return await this.getStayOfferList(count++, stayList);
-      // }
-      // console.log(conPrefix + "获取待报价列表返回", list);
+      let list = res.rtnData || [];
       return list;
     } catch (error) {
       console.error(conPrefix + "获取待报价列表异常", error);
       logUpload(
         {
-          plat_name: "mangguo",
+          plat_name: "mahua",
           type: 1
         },
         [

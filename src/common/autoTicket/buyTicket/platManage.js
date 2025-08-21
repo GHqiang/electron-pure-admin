@@ -75,6 +75,15 @@ export default class PlatCommon {
           order_id: id,
           inx: 1
         });
+      } else if (plat_name === "mahua") {
+        console.warn("麻花准备接单", { orderId: id });
+        await this.startDeliver({ plat_name, orderId: id });
+        await mockDelay(1);
+        unlockRes = await this.unlockSeat({
+          plat_name,
+          order_id: id,
+          inx: 1
+        });
       }
       this.logger.infoSave("订单首次解锁座位完成");
       return unlockRes;
@@ -95,7 +104,8 @@ export default class PlatCommon {
         yangcong: [3, 3],
         haha: [3, 3],
         yinghuasuan: [3, 3],
-        shoutu: [3, 3]
+        shoutu: [3, 3],
+        mahua: [3, 3]
       };
       unlockRes = await trial(
         inx => this.unlockSeat({ ...params, inx }),
@@ -115,7 +125,8 @@ export default class PlatCommon {
     supplierCode,
     plat_name,
     bid,
-    orderUUID
+    orderUUID,
+    orderId
   }) {
     try {
       let params;
@@ -132,16 +143,10 @@ export default class PlatCommon {
         params = {
           orderUUID
         };
-        // try {
-        //   // 确认接单前置处理
-        //   const prevRes = await PLAT_API_OBJ[plat_name].confirmOrderPrevHandle({
-        //     orderUUID,
-        //     type: 0
-        //   });
-        //   this.logger.infoSave("确认接单前置处理", { prevRes });
-        // } catch (error) {
-        //   this.logger.errorSave("确认接单前置处理异常", { error });
-        // }
+      } else if (plat_name === "mahua") {
+        params = {
+          orderId
+        };
       }
       this.logger.infoSave("确认接单参数", { params });
       const res = await PLAT_API_OBJ[plat_name].confirmOrder(params);
@@ -203,6 +208,22 @@ export default class PlatCommon {
         }
         params = {
           orderUUID: order_id
+        };
+      } else if (plat_name === "mahua") {
+        return {
+          msg: "麻花订单无需解锁"
+        };
+        // const result = await PLAT_API_OBJ[plat_name].getIsUnlock({
+        //   orderId: order_id
+        // });
+        // this.logger.infoSave("获取是否需要解锁返回", result);
+        // if (!result?.data?.isTppLock) {
+        //   return {
+        //     msg: "订单无需解锁"
+        //   };
+        // }
+        params = {
+          orderId: order_id
         };
       }
 
@@ -495,6 +516,51 @@ export default class PlatCommon {
           isChangeSeat: 0
         })
       };
+    } else if (plat_name === "mahua") {
+      const blob = await generateTicketImage({ ...this.order, qrcode });
+      const fileInfo = await uploadBlobImage({
+        blob,
+        url: "https://mhdyp.com/api/user-server/user/common/img/uploadAndIdentify",
+        params: {},
+        plat_name,
+        logger
+      });
+      if (!fileInfo) {
+        logger.infoSave("麻花获取取票码图片失败,需手动上传");
+        sendWxPusherMessage({
+          orderInfo: this.order,
+          transferTip: "麻花获取取票码图片失败,需手动上传",
+          failReason: "麻花获取取票码图片失败,需手动上传"
+        });
+        return { code: 1, msg: "麻花获取取票码图片失败,需手动上传" };
+      }
+      // 提交前校验，不确定是否需要
+      await PLAT_API_OBJ[plat_name].checkTicketCodeImg({
+        getOrderId: order_id,
+        urlList: [fileUrl.imgUrl]
+      });
+      params = {
+        getOrderId: order_id,
+        imgInfo: [
+          {
+            url: fileUrl.imgUrl,
+            info: fileUrl.qrcodeInfo,
+            code: "",
+            ticketPassword: "",
+            getTicketType: 0,
+            maySeats: lockseat.split(" ").map(item => ({
+              show: true,
+              maySeats: item
+            })),
+            realmaySeats: lockseat.split(" ").map(item => ({
+              show: true,
+              maySeats: item
+            })),
+            seats: lockseat.split(" "),
+            entryType: 0
+          }
+        ]
+      };
     }
     try {
       logger.infoSave("提交出票码参数", params);
@@ -585,6 +651,12 @@ export default class PlatCommon {
           userUUID: window.localStorage.getItem("shoutuPlatUserUUID") || "",
           clientType: 2,
           reason: "" // 出票失败原因
+        };
+      } else if (plat_name === "mahua") {
+        params = {
+          getOrderId: id,
+          note: "渠道溢价",
+          reason: ""
         };
       }
       this.logger.warn("转单参数", params);
