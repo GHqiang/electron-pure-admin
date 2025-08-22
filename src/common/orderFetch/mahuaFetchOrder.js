@@ -218,21 +218,6 @@ class OrderAutoFetchQueue {
           return;
         }
       }
-      const res = await mahuaApi.queryOrderInfo({
-        getOrderId: order.id
-      });
-      let buySeats = res?.rtnData?.buySeats;
-      order.lockseat = order.lockseat || buySeats?.split(",").join(" ");
-      order.info = res;
-      // await this.updateOfferRecord({
-      //   whereObj: {
-      //     order_number: order.offer_order_number,
-      //     app_name: order.app_name
-      //   },
-      //   updateObj: {
-      //     order_number: order.order_number
-      //   }
-      // });
       // 动态生成事件名称
       const eventName = `newOrder_${order.appName}`;
       // 创建一个事件对象

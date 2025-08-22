@@ -212,12 +212,11 @@ export default class PlatCommon {
       } else if (plat_name === "mahua") {
         if (!this.order.lockseat) {
           // 获取锁座信息
-          this.logger.infoSave("麻花接单后开始获取锁座信息");
           const res = await PLAT_API_OBJ[plat_name].queryOrderInfo({
             getOrderId: order_id
           });
           let buySeats = res?.rtnData?.buySeats;
-          this.logger.infoSave("麻花接单后获取锁座信息返回", res);
+          this.logger.infoSave("麻花接单后获取座位信息返回", res);
           this.order.lockseat = buySeats?.split(",").join(" ");
         }
         return {

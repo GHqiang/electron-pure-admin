@@ -50,7 +50,7 @@ instance.interceptors.response.use(
     let whitelistSp = [];
 
     let isErrorByLieRen =
-      response.config.url.indexOf("/mhapi/") !== -1 &&
+      response.config.url.indexOf(IS_DEV ? "/mhapi/" : "/api/") !== -1 &&
       data.rtnCode !== "000000";
     if (
       isErrorByLieRen &&
