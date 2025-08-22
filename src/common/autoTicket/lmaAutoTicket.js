@@ -1463,8 +1463,8 @@ class OrderAutoTicketQueue {
       if (teagerCard) {
         this.logger.infoSave("超出时更新卡使用量目标卡信息", teagerCard);
         const min_usage = (teagerCard.use_limit_month || 20) - ticket_num;
-        const max_num = Math.max(min_usage, teagerCard.monthly_usage || 0);
-        let add_count = max_num - (teagerCard.monthly_usage || 0) + 1;
+        const max_num = Math.max(min_usage, teagerCard.month_usage || 0);
+        let add_count = max_num - (teagerCard.month_usage || 0) + 1;
         this.logger.infoSave("超出时更新卡使用量", { add_count });
         if (add_count > 0) {
           await updateCardDayUse({
