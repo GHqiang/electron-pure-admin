@@ -835,6 +835,10 @@ class OrderAutoTicketQueue {
         //   delayConfig[plat_name][1],
         //   ''
         // );
+        if (formatErrInfo(error)?.includes("超过会员购票限制")) {
+          // 更新月使用量限制
+          await this.updateMonthlyLimit(item, card_id);
+        }
         if (!lockRes) {
           this.logger.infoSave("锁定座位失败走转单");
           const transferParams = await this.transferOrder(item);
@@ -1429,6 +1433,55 @@ class OrderAutoTicketQueue {
     } catch (error) {
       logger.errorSave(`第${inx}次获取订单支付结果异常`, { error });
       return Promise.reject(error);
+    }
+  }
+
+  // 超出更新月出票量限制
+  async updateMonthlyLimit(order, card_id) {
+    try {
+      const { app_name, plat_name, order_number, ticket_num } = order;
+      const res = await svApi.queryCardList({
+        app_name: app_name,
+        rule: tokens.userInfo.rule,
+        status: "1",
+        isNeedTotalNum: 0,
+        queryFields:
+          "card_num,card_id,use_limit_day,use_limit_month,daily_usage,monthly_usage,usage_date"
+      });
+      let list = res.data.cardList || [];
+      list = list.map(item => ({
+        ...item,
+        // 使用日非当天的就是0
+        daily_usage:
+          item.usage_date !== getCurrentDay() ? 0 : item.daily_usage || 0,
+        // 使用日非当月的就是0
+        month_usage: !isDateInCurrentMonth(item.usage_date)
+          ? 0
+          : item.monthly_usage || 0
+      }));
+      const teagerCard = list.find(item => item.card_id === card_id);
+      if (teagerCard) {
+        this.logger.infoSave("超出时更新卡使用量目标卡信息", teagerCard);
+        const min_usage = (teagerCard.use_limit_month || 20) - ticket_num;
+        const max_num = Math.max(min_usage, teagerCard.monthly_usage || 0);
+        let add_count = max_num - (teagerCard.monthly_usage || 0) + 1;
+        this.logger.infoSave("超出时更新卡使用量", { add_count });
+        if (add_count > 0) {
+          await updateCardDayUse({
+            app_name,
+            card_id,
+            plat_name,
+            order_number,
+            add_count
+          });
+        }
+      } else {
+        this.logger.infoSave("超出更新卡使用量时未查到目标卡", { card_id });
+      }
+    } catch (error) {
+      this.logger.errorSave("超出更新卡使用量异常", {
+        error: formatErrInfo(error)
+      });
     }
   }
 
