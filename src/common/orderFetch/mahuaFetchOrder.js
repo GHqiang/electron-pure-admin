@@ -223,7 +223,7 @@ class OrderAutoFetchQueue {
       });
       let buySeats = res?.rtnData?.buySeats;
       order.lockseat = order.lockseat || buySeats?.split(",").join(" ");
-      order.buySeats = buySeats;
+      order.info = res;
       // await this.updateOfferRecord({
       //   whereObj: {
       //     order_number: order.offer_order_number,
