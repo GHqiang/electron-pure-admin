@@ -639,11 +639,12 @@ export default class BuyTicket {
       buyTicketInfo.order_num = order_num;
       if (card_id) {
         // 更新卡使用量
-        updateCardDayUse({
+        await updateCardDayUse({
           app_name: appFlag,
           card_id,
           plat_name,
-          order_number
+          order_number,
+          add_count: ticket_num
         });
       }
       if (offerRule.offer_type === "1" && useQuan?.length) {
@@ -703,12 +704,20 @@ export default class BuyTicket {
   }
 }
 // 更新卡当天使用量
-const updateCardDayUse = ({ app_name, card_id, plat_name, order_number }) => {
+const updateCardDayUse = ({
+  app_name,
+  card_id,
+  plat_name,
+  order_number,
+  add_count
+}) => {
   let error;
   try {
     svApi.updateDayUsage({
       app_name: app_name,
-      card_id: card_id
+      card_id: card_id,
+      add_count,
+      plat_name
     });
   } catch (err) {
     error = err;

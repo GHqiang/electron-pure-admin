@@ -1319,11 +1319,12 @@ class OrderAutoTicketQueue {
         card_id =
           cardList.find(item => item.cardNo === card_id)?.cardInstanceId || "";
         // 更新卡使用量
-        updateCardDayUse({
+        await updateCardDayUse({
           app_name: appFlag,
           card_id,
           plat_name,
-          order_number
+          order_number,
+          add_count: ticket_num
         });
       }
       if (offerRule.offer_type === "1" && useQuan?.length) {
@@ -2990,13 +2991,16 @@ const updateCardDayUse = async ({
   app_name,
   card_id,
   plat_name,
-  order_number
+  order_number,
+  add_count
 }) => {
   let logger = new Logger({ logType: 3 });
   try {
     const res = await svApi.updateDayUsage({
       app_name: app_name,
-      card_id: card_id
+      card_id: card_id,
+      add_count,
+      plat_name
     });
     logger.infoSave("订单用卡购买后更新当天使用量成功", {
       app_name,

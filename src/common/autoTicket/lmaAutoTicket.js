@@ -1035,16 +1035,13 @@ class OrderAutoTicketQueue {
         }
       }
       this.logger.infoSave("订单购买成功");
-      // 只用卡
-      let isOnlyUseCard = card_id && !quan_code?.length;
-      if (offerRule.offer_type !== "1" && isOnlyUseCard) {
-        updateCardDayUse({
-          app_name: appFlag,
-          card_id,
-          plat_name,
-          order_number
-        });
-      }
+      await updateCardDayUse({
+        app_name: appFlag,
+        card_id,
+        plat_name,
+        order_number,
+        add_count: ticket_num
+      });
       // 更新非入库券的券库存
       if (offerRule.offer_type === "1" && offerRule.is_store != 1) {
         this.updateQuanStock({
@@ -2475,13 +2472,16 @@ const updateCardDayUse = async ({
   app_name,
   card_id,
   plat_name,
-  order_number
+  order_number,
+  add_count
 }) => {
   let logger = new Logger({ logType: 3 });
   try {
     const res = await svApi.updateDayUsage({
       app_name: app_name,
-      card_id: card_id
+      card_id: card_id,
+      add_count,
+      plat_name
     });
     logger.infoSave("订单用卡购买后更新当天使用量成功", {
       app_name,

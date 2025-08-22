@@ -1170,11 +1170,12 @@ class OrderAutoTicketQueue {
       let isOnlyUseCard = card_id && !quanType;
       if (offerRule.offer_type !== "1" && isOnlyUseCard) {
         // 更新卡使用量
-        updateCardDayUse({
+        await updateCardDayUse({
           app_name: appFlag,
           card_id,
           plat_name,
-          order_number
+          order_number,
+          add_count: ticket_num
         });
       }
       // 更新非入库券的券库存
@@ -3317,13 +3318,16 @@ const updateCardDayUse = async ({
   app_name,
   card_id,
   plat_name,
-  order_number
+  order_number,
+  add_count
 }) => {
   let logger = new Logger({ logType: 3 });
   try {
     const res = await svApi.updateDayUsage({
       app_name: app_name,
-      card_id: card_id
+      card_id: card_id,
+      add_count,
+      plat_name
     });
     logger.infoSave("订单用卡购买后更新当天使用量成功", {
       app_name,
