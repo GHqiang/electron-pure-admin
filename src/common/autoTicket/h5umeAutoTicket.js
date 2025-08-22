@@ -341,7 +341,14 @@ class OrderAutoTicketQueue {
   async singleTicket(item) {
     // 放到这里即使修改token也不用重启队列了
     const { appFlag } = this;
-    const { id, plat_name, supplierCode, order_number, bid } = item;
+    const {
+      id,
+      plat_name,
+      supplierCode,
+      order_number,
+      bid,
+      offer_order_number
+    } = item;
     this.logger.warn("单个待出票订单信息", item);
     let targetLoginList = getCinemaLoginInfoList().filter(
       item =>
@@ -385,7 +392,7 @@ class OrderAutoTicketQueue {
         user_id: user_id,
         order_status: "1",
         app_name: appFlag,
-        order_number,
+        order_number: plat_name != "mahua" ? order_number : offer_order_number,
         plat_name
       });
       offerRule = offerRes?.data?.offerInfo;

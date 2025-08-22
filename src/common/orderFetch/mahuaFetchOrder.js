@@ -184,7 +184,12 @@ class OrderAutoFetchQueue {
       console.error(conPrefix + "获取订单列表异常", error);
     }
   }
-
+  // 更新报价记录订单号（未用）
+  async updateOfferRecord(params) {
+    try {
+      await svApi.updateOfferRecord(params);
+    } catch (error) {}
+  }
   // 发送新订单消息
   async sendNeworderMsg(item) {
     let order = JSON.parse(JSON.stringify(item));
@@ -213,14 +218,21 @@ class OrderAutoFetchQueue {
           return;
         }
       }
-      if (!order.lockseat) {
-        const res = await mahuaApi.queryOrderInfo({
-          getOrderId: order.id
-        });
-        if (res?.rtnData?.buySeats) {
-          order.lockseat = res.rtnData.buySeats?.split(",").join(" ");
-        }
-      }
+      const res = await mahuaApi.queryOrderInfo({
+        getOrderId: order.id
+      });
+      let buySeats = res?.rtnData?.buySeats;
+      order.lockseat = order.lockseat || buySeats?.split(",").join(" ");
+      order.buySeats = buySeats;
+      // await this.updateOfferRecord({
+      //   whereObj: {
+      //     order_number: order.offer_order_number,
+      //     app_name: order.app_name
+      //   },
+      //   updateObj: {
+      //     order_number: order.order_number
+      //   }
+      // });
       // 动态生成事件名称
       const eventName = `newOrder_${order.appName}`;
       // 创建一个事件对象

@@ -123,14 +123,15 @@ export default class BuyTicket {
       };
       return;
     }
-    const { app_name, order_number, plat_name } = this.order;
+    const { app_name, order_number, plat_name, offer_order_number } =
+      this.order;
     try {
       // 1、获取该订单的报价记录，按对应报价规则出票
       const offerRes = await svApi.queryOfferInfo({
         user_id: user_id,
         order_status: "1",
         app_name,
-        order_number,
+        order_number: plat_name != "mahua" ? order_number : offer_order_number,
         plat_name
       });
       this.offerRule = offerRes?.data?.offerInfo;
