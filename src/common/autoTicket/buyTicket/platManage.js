@@ -544,15 +544,16 @@ export default class PlatCommon {
         return { code: 1, msg: "麻花获取取票码图片失败,需手动上传" };
       }
       // 提交前校验，不确定是否需要
-      await PLAT_API_OBJ[plat_name].checkTicketCodeImg({
+      const checkRes = await PLAT_API_OBJ[plat_name].checkTicketCodeImg({
         getOrderId: order_id,
         urlList: [fileUrl]
       });
+      logger.infoSave("麻花取票码图片校验返回", checkRes);
       params = {
         getOrderId: order_id,
         imgInfo: [
           {
-            url: fileUrl.imgUrl,
+            url: fileUrl,
             info: qrcode,
             code: qrcode.split("|")?.[1] || "",
             ticketPassword: "",
