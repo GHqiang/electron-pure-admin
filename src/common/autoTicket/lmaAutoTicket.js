@@ -838,6 +838,13 @@ class OrderAutoTicketQueue {
         if (formatErrInfo(error)?.includes("超过会员购票限制")) {
           // 更新月使用量限制
           await this.updateMonthlyLimit(item, card_id);
+          sendWxPusherMessage({
+            orderInfo: this.order,
+            msgType: 6,
+            cardNoByPwdError: card_id,
+            failReason:
+              "发现支付价格大于会员价*票数，疑似卡出满，请检查维护月使用量"
+          });
         }
         if (!lockRes) {
           this.logger.infoSave("锁定座位失败走转单");
@@ -976,6 +983,21 @@ class OrderAutoTicketQueue {
       if (offerRule.offer_type !== "1" && card_id) {
         real_member_price = (real_member_price * 10000 * ticket_num) / 10000;
         if (paymentAmount > real_member_price) {
+          this.logger.infoSave(
+            "发现支付价格大于会员价*票数，疑似卡出满，请检查维护月使用量",
+            {
+              paymentAmount,
+              real_member_price,
+              ticket_num
+            }
+          );
+          sendWxPusherMessage({
+            orderInfo: this.order,
+            msgType: 6,
+            cardNoByPwdError: card_id,
+            failReason:
+              "发现支付价格大于会员价*票数，疑似卡出满，请检查维护月使用量"
+          });
           if (subDecimal(paymentAmount, real_member_price) < profit) {
             this.logger.infoSave(
               "用完卡发现支付金额大于会员价*票数，利润需减去差值",

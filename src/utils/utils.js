@@ -519,7 +519,7 @@ const sendWxPusherMessage = async ({
   transferTip,
   failReason,
   app_name,
-  msgType, // 消息类型 1-登录失效 2-出票队列重复 3-黑名单券更新 5-密码输入错误
+  msgType, // 消息类型 1-登录失效 2-出票队列重复 3-黑名单券更新 5-密码输入错误 6-卡号出满提醒
   expirePhone, // 失效手机号
   cardNoByPwdError, // 密码错误卡号
   quan_flag,
@@ -602,7 +602,19 @@ const sendWxPusherMessage = async ({
     提示：${failReason};<br/>
     卡号：${cardNoByPwdError};<br/>
     </p>`;
+  } else if (msgType === 6) {
+    summary = "卡号出满请检查月使用量";
+    content = `<p>
+    时间：${getCurrentTime()}; <br/>
+    用户：${userInfo.name}; <br/>
+    平台：${plat_name}; <br/>
+    单号：${order_number}; <br/>
+    影院：${app_name || orderInfo?.app_name}; <br/>
+    提示：${failReason};<br/>
+    卡号：${cardNoByPwdError};<br/>
+    </p>`;
   }
+
   const messageData = {
     appId: 80173,
     topicIds: [],
