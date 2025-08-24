@@ -14,7 +14,9 @@ import {
   roundToHalf,
   isDateInCurrentMonth,
   findMostRepeatedChars,
-  couponInfoSpecial
+  couponInfoSpecial,
+  isNextDay,
+  getPreviousDay
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
@@ -1384,6 +1386,11 @@ class getLmaOfferPrice {
         short_code
       });
       let start_day = show_time.split(" ")[0];
+      let start_time = show_time.split(" ")[1].slice(0, 5);
+      // 是否是次日，如果是，showDay需要向前进一
+      if (isNextDay(start_day, start_time, "lma")) {
+        start_day = getPreviousDay(start_day);
+      }
       let targetDate = playDateList?.find(
         item => formatTimeStrByLma(item.date) === start_day
       );
@@ -1400,7 +1407,6 @@ class getLmaOfferPrice {
         return;
       }
       let showList = targetDate?.session || [];
-      let start_time = show_time.split(" ")[1].slice(0, 5);
       // 解决同一时间多场次问题
       let targetShowList = showList.filter(
         item => item.start_time === start_time

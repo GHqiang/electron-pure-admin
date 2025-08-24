@@ -13,7 +13,9 @@ import {
   couponInfoSpecial,
   subDecimal,
   getCurrentDay,
-  isDateInCurrentMonth
+  isDateInCurrentMonth,
+  isNextDay,
+  getPreviousDay
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 // 统一日志类
@@ -564,6 +566,10 @@ class OrderAutoTicketQueue {
         }
         start_day = show_time.split(" ")[0];
         start_time = show_time.split(" ")[1].slice(0, 5);
+        // 是否是次日，如果是，showDay需要向前进一
+        if (isNextDay(start_day, start_time, "lma")) {
+          start_day = getPreviousDay(start_day);
+        }
         console.log("movieInfo===>", movieInfo, start_day, start_time);
         let targetDate = playDateList?.find(
           item => formatTimeStrByLma(item.date) === start_day

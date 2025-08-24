@@ -12,7 +12,7 @@ import {
   getCurrentDay,
   isDateInCurrentMonth,
   findMostRepeatedChars,
-  isNextDayBySfc,
+  isNextDay,
   getPreviousDay,
   subDecimal
 } from "@/utils/utils";
@@ -714,7 +714,7 @@ class OrderAutoTicketQueue {
         start_day = show_time.split(" ")[0];
         start_time = show_time.split(" ")[1].slice(0, 5);
         // 是否是次日，如果是，showDay需要向前进一
-        if (isNextDayBySfc(start_day, start_time)) {
+        if (isNextDay(start_day, start_time, "sfc")) {
           start_day = getPreviousDay(start_day);
         }
         this.logger.info("movieInfo===>", { movieInfo, start_day, start_time });

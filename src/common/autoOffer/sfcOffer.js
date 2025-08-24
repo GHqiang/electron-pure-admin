@@ -14,7 +14,7 @@ import {
   getCinemaLoginInfoList,
   findMostRepeatedChars,
   couponInfoSpecial,
-  isNextDayBySfc,
+  isNextDay,
   getPreviousDay
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
@@ -1610,7 +1610,7 @@ class getSfcOfferPrice {
       let showDay = show_time.split(" ")[0];
       let showTime = show_time.split(" ")[1].slice(0, 5);
       // 是否是次日，如果是，showDay需要向前进一
-      if (isNextDayBySfc(showDay, showTime)) {
+      if (isNextDay(showDay, showTime, "sfc")) {
         showDay = getPreviousDay(showDay);
       }
       let showList = shows[showDay] || [];
