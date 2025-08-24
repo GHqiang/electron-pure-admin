@@ -1494,7 +1494,8 @@ class OrderAutoTicketQueue {
             card_id,
             plat_name,
             order_number,
-            add_count
+            add_count: ticket_num,
+            month_usage_update: (teagerCard.month_usage || 0) + add_count // 月量更新值
           });
         }
       } else {
@@ -2548,7 +2549,8 @@ const updateCardDayUse = async ({
   card_id,
   plat_name,
   order_number,
-  add_count
+  add_count,
+  month_usage_update
 }) => {
   let logger = new Logger({ logType: 3 });
   try {
@@ -2556,7 +2558,8 @@ const updateCardDayUse = async ({
       app_name: app_name,
       card_id: card_id,
       add_count,
-      plat_name
+      plat_name,
+      month_usage_update
     });
     logger.infoSave("订单用卡购买后更新当天使用量成功", {
       app_name,
