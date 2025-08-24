@@ -145,7 +145,12 @@
         label="中标数"
         min-width="95"
       />
-      <el-table-column label="中标率%" width="90">
+      <el-table-column
+        label="中标率%"
+        sortable
+        :sort-method="sortHandle"
+        width="105"
+      >
         <template #default="{ row: { offerSuccessNum, ticketTotalNum } }">
           <span
             >{{
@@ -238,6 +243,28 @@ formData.start_time = getTodayTime(+new Date());
 formData.end_time = getTodayTime(+new Date() + 1 * 24 * 60 * 60 * 1000);
 // 每个影院报价数
 
+const sortHandle = (a, b) => {
+  let aRadio = a.ticketTotalNum
+    ? Math.floor((a.ticketTotalNum / a.offerSuccessNum) * 100)
+    : 0;
+  let bRadio = b.ticketTotalNum
+    ? Math.floor((b.ticketTotalNum / b.offerSuccessNum) * 100)
+    : 0;
+  if (a.offerSuccessNum == 0 && b.offerSuccessNum) {
+    return 1;
+  } else if (a.offerSuccessNum && b.offerSuccessNum == 0) {
+    return -1;
+  } else if (a.offerSuccessNum == 0 && b.offerSuccessNum == 0) {
+    return -1;
+  }
+  if (aRadio > bRadio) {
+    return 1;
+  } else if (aRadio < bRadio) {
+    return -1;
+  } else {
+    return 0;
+  }
+};
 // 重置
 const resetForm = () => {
   formData.plat_name = "";
