@@ -89,7 +89,10 @@
         <template #default="{ row, $index }">
           <span v-if="row.id !== editingRowId">{{ row.platSubToken }}</span>
           <el-input
-            v-if="row.platName === 'shoutu' && row.id === editingRowId"
+            v-if="
+              ['shoutu', 'mahua'].includes(row.platName) &&
+              row.id === editingRowId
+            "
             v-model="editingRow.platSubToken"
             @blur="saveEdit(row.id)"
           />
@@ -693,6 +696,9 @@ const saveEdit = id => {
     if (platName == "shoutu") {
       localStorage.setItem("shoutuPlatSubToken", platSubToken);
       localStorage.setItem("shoutuPlatUserUUID", userUUID);
+    } else if (platName == "mahua") {
+      // 续期token
+      localStorage.setItem("mahuPlatSubToken", platSubToken);
     }
     editingRowId.value = null;
   }

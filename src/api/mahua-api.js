@@ -42,6 +42,10 @@ const submitTicketCode = params =>
 const transferOrder = params =>
   axios.post("/mhapi/movie-server/movie/get/order/cancel", params);
 
+// token续期
+const refreshToken = params =>
+  axios.post("/mhapi/user-server/user/customer/refresh/token", params);
+
 export default {
   queryOfferRecord, // 查询报价记录
   queryStayOfferList, // 查询待报价列表
@@ -52,5 +56,6 @@ export default {
   queryOrderInfo,
   submitTicketCode, // 提交取票码
   transferOrder, // 转单
-  stayTicketingList // 查询中签订单
+  stayTicketingList, // 查询中签订单
+  refreshToken // token续期
 };

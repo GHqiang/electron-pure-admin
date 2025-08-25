@@ -5,6 +5,8 @@ import { ElMessage } from "element-plus";
 import { sendWxPusherMessage } from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
+import mahuaApi from "@/api/mahua-api";
+
 // 创建axios实例
 const instance = axios.create({
   //   baseURL: process.env.VITE_API_BASE_URL,
@@ -14,6 +16,79 @@ const instance = axios.create({
 
 const NODE_ENV = process.env.NODE_ENV;
 const IS_DEV = NODE_ENV === "development";
+
+// 是否正在刷新token的标志
+let isRefreshing = false;
+// 重试队列，每一项是一个待执行的函数
+let requests = [];
+
+// 添加token续期方法（需要根据实际情况实现）
+const refreshToken = async () => {
+  try {
+    // 这里需要根据您的实际业务实现token刷新逻辑
+    // 示例：调用刷新token的API
+    const res = await mahuaApi.refreshToken({
+      refreshToken: localStorage.getItem("mahuPlatSubToken")
+    });
+    if (res?.rtnData?.token) {
+      tokens.setMahuaPlatToken(res?.rtnData?.token);
+      localStorage.setItem("mahuPlatSubToken", res?.rtnData?.refreshToken);
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error("Token刷新失败:", error);
+    return false;
+  }
+};
+
+// 处理token过期的情况
+const handleTokenExpired = response => {
+  const originalRequest = response.config;
+
+  // 如果正在刷新token，将当前请求加入队列
+  if (isRefreshing) {
+    return new Promise((resolve, reject) => {
+      requests.push(token => {
+        originalRequest.headers["Token"] = token;
+        resolve(instance(originalRequest));
+      });
+    });
+  }
+
+  // 设置刷新标志
+  isRefreshing = true;
+
+  // 尝试刷新token
+  return refreshToken()
+    .then(success => {
+      if (success) {
+        // 刷新成功，执行队列中的所有请求
+        requests.forEach(cb => cb(tokens.mahuaToken));
+        requests = [];
+
+        // 重试原始请求
+        originalRequest.headers["Token"] = tokens.mahuaToken;
+        return instance(originalRequest);
+      } else {
+        // 刷新失败，拒绝所有请求
+        requests.forEach(cb => cb(null));
+        requests = [];
+        // 发送过期通知
+        sendWxPusherMessage({
+          msgType: 1,
+          app_name: "麻花平台",
+          expirePhone: "机器手机号",
+          transferTip: `麻花平台token续期失败，请检查登录信息维护`
+        });
+        // ElMessage.error("Token续期失败，请重新登录");
+        return Promise.reject(response.data);
+      }
+    })
+    .finally(() => {
+      isRefreshing = false;
+    });
+};
 
 // 请求拦截器
 instance.interceptors.request.use(
@@ -31,6 +106,11 @@ instance.interceptors.request.use(
       config.url = IS_DEV
         ? config.url
         : "https://mhdyp.com/" + config.url.slice(3);
+      if (!config.originalUrl) {
+        config.originalUrl = config.url;
+      } else {
+        config.url = config.originalUrl;
+      }
     }
     // console.log('请求config', config)
     return config;
@@ -57,12 +137,8 @@ instance.interceptors.response.use(
       !whitelistSp.some(item => response.config.url.includes(item))
     ) {
       if (data.rtnMsg?.includes("token已过期")) {
-        sendWxPusherMessage({
-          msgType: 1,
-          app_name: "麻花平台",
-          expirePhone: "机器手机号",
-          transferTip: `麻花平台登录失效，请检查登录信息维护`
-        });
+        // 处理token过期
+        return handleTokenExpired(response);
       }
       ElMessage.error(data.message || data.msg || "请求失败");
       return Promise.reject(data);
