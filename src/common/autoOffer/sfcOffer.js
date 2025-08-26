@@ -287,7 +287,7 @@ class getSfcOfferPrice {
       if (!matchRuleList?.length) {
         this.logList.push({
           opera_time: getCurrentTime(),
-          des: "报价规则匹配后为空",
+          des: "报价规则匹配后规则为空",
           level: "error",
           info: {
             error: matchRuleListRes?.error,
@@ -363,10 +363,10 @@ class getSfcOfferPrice {
             }
           });
         } else {
-          console.error("最终匹配到的报价规则不存在");
+          console.error("最终匹配到的报价规则为空");
           this.logList.push({
             opera_time: getCurrentTime(),
-            des: "最终匹配到的报价规则不存在",
+            des: "最终匹配到的报价规则为空",
             level: "error"
           });
         }

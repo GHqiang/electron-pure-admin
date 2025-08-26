@@ -179,7 +179,7 @@ class getFenghuangOfferPrice {
 
   // 处理规则匹配失败
   handleRuleMatchError(result, order) {
-    this.logger.errorSave("报价规则匹配后为空", {
+    this.logger.errorSave("报价规则匹配后规则为空", {
       error: result.error,
       order
     });
@@ -189,7 +189,7 @@ class getFenghuangOfferPrice {
   handleEmptyRuleList(context, extraInfo = {}) {
     const errorMsgs = {
       filmType: "过滤电影格式后匹配报价规则为空",
-      finalRule: "最终匹配到的报价规则不存在"
+      finalRule: "最终匹配到的报价规则为空"
     };
 
     this.logger.errorSave(errorMsgs[context] || "空规则列表", {
