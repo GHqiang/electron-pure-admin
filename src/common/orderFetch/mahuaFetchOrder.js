@@ -199,7 +199,7 @@ class OrderAutoFetchQueue {
         const res = await svApi.queryOfferList({
           user_id: tokens.userInfo.user_id,
           plat_name: order.plat_name,
-          order_number: order.order_number,
+          order_number: order.offer_order_number,
           order_status: "1",
           isNeedTotalNum: 0,
           queryFields: "plat_name,order_number,app_name,order_status"
