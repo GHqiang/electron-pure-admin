@@ -613,6 +613,14 @@ const sendWxPusherMessage = async ({
     提示：${failReason};<br/>
     卡号：${cardNoByPwdError};<br/>
     </p>`;
+  } else if (msgType === 7) {
+    summary = plat_name + "平台登录失效";
+    content = `<p>
+    时间：${getCurrentTime()}; <br/>
+    用户：${userInfo.name}; <br/>
+    失效手机号：${expirePhone}; <br/>
+    提示：${transferTip};<br/>
+    </p>`;
   }
 
   const messageData = {

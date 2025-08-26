@@ -2,7 +2,7 @@
 
 import axios from "axios";
 import { ElMessage } from "element-plus";
-import { sendWxPusherMessage } from "@/utils/utils";
+import { sendWxPusherMessage, formatErrInfo } from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
 import mahuaApi from "@/api/mahua-api";
@@ -31,14 +31,18 @@ const refreshToken = async () => {
       refreshToken: localStorage.getItem("mahuPlatSubToken")
     });
     if (res?.rtnData?.token) {
+      localStorage.setItem("mahuaRefreshTokenResult", JSON.stringify(res));
       tokens.setMahuaPlatToken(res?.rtnData?.token);
       localStorage.setItem("mahuPlatSubToken", res?.rtnData?.refreshToken);
-      return true;
+      return res;
+    } else {
+      localStorage.setItem("mahuaRefreshTokenResult", JSON.stringify(res));
+      return { errMsg: "刷新token返回空——" + JSON.stringify(res) };
     }
-    return false;
   } catch (error) {
     console.error("Token刷新失败:", error);
-    return false;
+    localStorage.setItem("mahuaRefreshTokenResult", formatErrInfo(error));
+    return { errMsg: formatErrInfo(error) };
   }
 };
 
@@ -61,8 +65,8 @@ const handleTokenExpired = response => {
 
   // 尝试刷新token
   return refreshToken()
-    .then(success => {
-      if (success) {
+    .then(res => {
+      if (!res.errMsg) {
         // 刷新成功，执行队列中的所有请求
         requests.forEach(cb => cb(tokens.mahuaToken));
         requests = [];
@@ -76,10 +80,10 @@ const handleTokenExpired = response => {
         requests = [];
         // 发送过期通知
         sendWxPusherMessage({
-          msgType: 1,
-          app_name: "麻花平台",
+          msgType: 7,
+          plat_name: "麻花平台",
           expirePhone: "机器手机号",
-          transferTip: `麻花平台token续期失败，请检查登录信息维护`
+          transferTip: `麻花平台token续期失败，请检查登录信息维护${res.errMsg}`
         });
         // ElMessage.error("Token续期失败，请重新登录");
         return Promise.reject(response.data);
