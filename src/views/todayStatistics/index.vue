@@ -141,6 +141,12 @@
         min-width="105"
       />
       <el-table-column
+        prop="offerExceedLimitedMaxPriceNum"
+        sortable
+        label="超出限价"
+        min-width="105"
+      />
+      <el-table-column
         prop="ticketTotalNum"
         sortable
         label="中标数"
