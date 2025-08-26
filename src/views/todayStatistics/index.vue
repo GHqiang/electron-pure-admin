@@ -80,6 +80,7 @@
       height="500"
       style="width: 100%"
       :data="tableData"
+      :default-sort="{ prop: 'successRate', order: 'ascending' }"
       border
       stripe
       show-summary
@@ -148,14 +149,18 @@
       <el-table-column
         label="中标率%"
         sortable
+        :sort-orders="['ascending', 'descending']"
         :sort-method="sortHandle"
+        prop="successRate"
         width="105"
       >
         <template #default="{ row: { offerSuccessNum, ticketTotalNum } }">
           <span
             >{{
               ticketTotalNum
-                ? Math.floor((ticketTotalNum / offerSuccessNum) * 100)
+                ? (((ticketTotalNum / offerSuccessNum) * 10000) / 100).toFixed(
+                    2
+                  )
                 : 0
             }}
             %</span
@@ -244,25 +249,54 @@ formData.end_time = getTodayTime(+new Date() + 1 * 24 * 60 * 60 * 1000);
 // 每个影院报价数
 
 const sortHandle = (a, b) => {
-  let aRadio = a.ticketTotalNum
-    ? Math.floor((a.ticketTotalNum / a.offerSuccessNum) * 100)
-    : 0;
-  let bRadio = b.ticketTotalNum
-    ? Math.floor((b.ticketTotalNum / b.offerSuccessNum) * 100)
-    : 0;
-  if (a.offerSuccessNum == 0 && b.offerSuccessNum) {
-    return 1;
-  } else if (a.offerSuccessNum && b.offerSuccessNum == 0) {
-    return -1;
-  } else if (a.offerSuccessNum == 0 && b.offerSuccessNum == 0) {
-    return -1;
-  }
-  if (aRadio > bRadio) {
-    return 1;
-  } else if (aRadio < bRadio) {
-    return -1;
-  } else {
+  // 1. offerSuccessNum 为 0 的排在最后
+  if (a.offerSuccessNum == 0 && b.offerSuccessNum == 0) {
+    // console.log("Case 1: both offerSuccessNum are 0");
     return 0;
+  }
+  if (a.offerSuccessNum == 0) {
+    // console.log("Case 2: a.offerSuccessNum is 0, return 1");
+    return 1; // a排在最后
+  }
+  if (b.offerSuccessNum == 0) {
+    // console.log("Case 3: b.offerSuccessNum is 0, return -1");
+    return -1; // b排在最后
+  }
+
+  const isAscending = true;
+  // console.log("isAscending:", isAscending);
+
+  // 2. & 3. 根据ticketTotalNum是否为0来决定排序方式
+  const aIsZeroRate = a.ticketTotalNum == 0;
+  const bIsZeroRate = b.ticketTotalNum == 0;
+  // console.log("aIsZeroRate:", aIsZeroRate, "bIsZeroRate:", bIsZeroRate);
+
+  // 如果都是0%或都不是0%
+  if (aIsZeroRate === bIsZeroRate) {
+    if (aIsZeroRate) {
+      // 都是0%，按offerSuccessNum排序
+      // console.log("Case 4: both are 0%, sort by offerSuccessNum");
+      return isAscending
+        ? a.offerSuccessNum - b.offerSuccessNum
+        : b.offerSuccessNum - a.offerSuccessNum;
+    } else {
+      // 都不是0%，按中标率排序
+      const aRate = a.ticketTotalNum / a.offerSuccessNum;
+      const bRate = b.ticketTotalNum / b.offerSuccessNum;
+      // console.log("Case 5: both are normal rates, sort by rate", aRate, bRate);
+      return isAscending ? aRate - bRate : bRate - aRate;
+    }
+  }
+
+  // 一个0%一个非0%
+  if (aIsZeroRate) {
+    // a是0%，b是正常率
+    // console.log("Case 6: a is 0%, b is normal");
+    return isAscending ? -1 : 1;
+  } else {
+    // a是正常率，b是0%
+    // console.log("Case 7: a is normal, b is 0%");
+    return isAscending ? 1 : -1;
   }
 };
 // 重置
