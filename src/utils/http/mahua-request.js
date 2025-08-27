@@ -3,6 +3,9 @@
 import axios from "axios";
 import { ElMessage } from "element-plus";
 import { sendWxPusherMessage, formatErrInfo } from "@/utils/utils";
+import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
+const tableDataStore = usePlatTableDataStore();
+// window.tableDataStore = tableDataStore;
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
 import mahuaApi from "@/api/mahua-api";
@@ -31,6 +34,11 @@ const refreshToken = async () => {
       refreshToken: localStorage.getItem("mahuPlatSubToken")
     });
     if (res?.rtnData?.token) {
+      // 修改队列里面的token
+      tableDataStore.saveMahuaNewRefreshToken({
+        platToken: res?.rtnData?.token,
+        platSubToken: res?.rtnData?.refreshToken
+      });
       localStorage.setItem("mahuaRefreshTokenResult", JSON.stringify(res));
       tokens.setMahuaPlatToken(res?.rtnData?.token);
       localStorage.setItem("mahuPlatSubToken", res?.rtnData?.refreshToken);

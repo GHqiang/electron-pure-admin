@@ -63,6 +63,15 @@ export const usePlatTableDataStore = defineStore("platforms", {
       }
       window.localStorage.setItem("platQueueRule", JSON.stringify(this.items));
     },
+    // 保存麻花新续期token
+    saveMahuaNewRefreshToken({ platToken, platSubToken }) {
+      const index = this.items.findIndex(item => item.platName === "mahua");
+      // console.log("index", index, newValue);
+      if (index > -1) {
+        this.items[index] = { ...this.items[index], platToken, platSubToken };
+      }
+      window.localStorage.setItem("platQueueRule", JSON.stringify(this.items));
+    },
     deleteItem(id) {
       // 模拟删除逻辑
       this.items = this.items.filter(item => item.id !== id);

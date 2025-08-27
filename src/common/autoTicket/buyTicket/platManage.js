@@ -665,7 +665,7 @@ export default class PlatCommon {
       } else if (plat_name === "mahua") {
         params = {
           getOrderId: id,
-          note: "渠道溢价",
+          note: "优惠库存不足",
           reason: ""
         };
       }
