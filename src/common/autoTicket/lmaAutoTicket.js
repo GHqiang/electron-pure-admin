@@ -808,7 +808,7 @@ class OrderAutoTicketQueue {
           });
         }
       }
-      let { quan_code } = useQuanRes || {};
+      let { quan_code, quanStock } = useQuanRes || {};
       // 4、锁定座位/创建订单
       let params = {
         cinema_id,
@@ -1075,9 +1075,9 @@ class OrderAutoTicketQueue {
         add_count: ticket_num
       });
       // 更新非入库券的券库存
-      if (offerRule.offer_type === "1" && offerRule.is_store != 1) {
+      if (offerRule.offer_type === "1" && quan_code) {
         this.updateQuanStock({
-          ticket_num,
+          quan_stock: quanStock - ticket_num,
           quan_flag: offerRule.quan_flag,
           quan_value: offerRule.quan_value,
           app_name: appFlag,
@@ -1335,8 +1335,6 @@ class OrderAutoTicketQueue {
         quan_flag,
         black_quans,
         usedQuanList,
-        ticket_num,
-        target_num: ticket_num + 10, // 票数+10，用于后面异步绑券判断
         logger: this.logger
       });
       this.logger.infoSave("连续获取优惠券列表返回", quanListRes);
@@ -1348,7 +1346,11 @@ class OrderAutoTicketQueue {
         });
         return { error: "获取优惠券列表异常" };
       }
-      let targetQuanList = quanList.map(item => ({ code: item.code })) || [];
+      // 优先使用快过期的券
+      let targetQuanList =
+        quanList
+          .sort((a, b) => +new Date(a.endDateTime) - new Date(b.endDateTime))
+          .map(item => ({ code: item.code })) || [];
       let isGetNewQuan = false;
       if (is_store == "1") {
         if (targetQuanList.length < ticket_num) {
@@ -1379,22 +1381,10 @@ class OrderAutoTicketQueue {
               ticket_num
             });
           }
-        } else {
-          let quanStockList = offerRule.quanStockList
-            ? JSON.parse(offerRule.quanStockList)
-            : [];
-          let targetInfo = quanStockList.find(
-            itemA => itemA.phone === this.curPhone
-          );
-          quanStock =
-            targetInfo?.quan_stock < quanStock
-              ? quanStock
-              : targetInfo?.quan_stock;
         }
-        // 更新入库券的本地已绑定的券库存
+        // 更新本地已绑定的券库存
         this.updateQuanStock({
-          quan_stock:
-            quanStock < ticket_num ? quanStock : quanStock - ticket_num, // 直接传过去券库存
+          quan_stock: quanStock, // 直接传过去券库存
           quan_value: offerRule.quan_value,
           quan_flag: offerRule.quan_flag,
           app_name: appFlag,
@@ -1424,7 +1414,8 @@ class OrderAutoTicketQueue {
       }
       targetQuanList = targetQuanList.slice(0, ticket_num);
       return {
-        quan_code: targetQuanList?.length ? JSON.stringify(targetQuanList) : ""
+        quan_code: targetQuanList?.length ? JSON.stringify(targetQuanList) : "",
+        quanStock
       };
     } catch (error) {
       this.logger.errorSave("使用优惠券或者会员卡异常", { error });
@@ -1839,16 +1830,6 @@ class OrderAutoTicketQueue {
           break;
         }
       }
-      // 异步绑券更新券库存
-      if (asyncFlag === 1 && ticket_num) {
-        this.updateQuanStock({
-          quan_stock: quanStock - ticket_num + bandQuanList.length, // 直接传过去券库存
-          quan_value,
-          quan_flag,
-          app_name: appFlag,
-          phone: this.curPhone
-        });
-      }
       return bandQuanList;
     } catch (error) {
       targetLogger.errorSave(`${conPrev}获取新券异常`, {
@@ -1983,9 +1964,7 @@ class OrderAutoTicketQueue {
 
   // 更新券库存
   async updateQuanStock(params) {
-    const { ticket_num, quan_stock, quan_flag, phone, app_name, quan_value } =
-      params;
-    // quan_stock：入库券的本地库存
+    const { quan_stock, quan_flag, phone, app_name, quan_value } = params;
     let targetQuanList = [];
     const quanTypeParams = {
       app_name,
@@ -2003,8 +1982,8 @@ class OrderAutoTicketQueue {
       });
     } catch (error) {
       this.logger.errorSave("更新券库存前获取同类目标券异常", {
-        error,
-        quanTypeParams
+        params,
+        error
       });
     }
 
@@ -2015,30 +1994,38 @@ class OrderAutoTicketQueue {
         quanStockList = JSON.parse(quanStockList);
         let inx = quanStockList.findIndex(itemA => itemA.phone === phone);
         if (inx != -1) {
-          let info = quanStockList[inx];
-          quanStockList[inx].quan_stock =
-            quan_stock !== undefined
-              ? quan_stock
-              : info.quan_stock - ticket_num;
-          quanStockList[inx].real_quan_stock =
-            quan_stock !== undefined
-              ? quan_stock
-              : info.real_quan_stock - ticket_num;
+          quanStockList[inx].quan_stock = quan_stock;
+          quanStockList[inx].real_quan_stock = quan_stock;
           quanStockList[inx].update_time = getCurrentTime();
-
-          let updateParams = {
-            id: item.id,
-            quanStockList: JSON.stringify(quanStockList),
+        } else {
+          quanStockList.push({
+            phone,
+            quan_stock,
+            real_quan_stock: quan_stock,
             update_time: getCurrentTime()
-          };
-          // 增加最后使用时间更新（方便看是否压价）
-          if (quan_value?.split(",")?.includes(item.quan_value)) {
-            updateParams.end_use_time = getCurrentTime();
-          }
-          // 单个更新
-          this.singleUpdateQuanStock(updateParams);
+          });
         }
+      } else {
+        quanStockList = [
+          {
+            phone,
+            quan_stock,
+            real_quan_stock: quan_stock,
+            update_time: getCurrentTime()
+          }
+        ];
       }
+      let updateParams = {
+        id: item.id,
+        quanStockList: JSON.stringify(quanStockList),
+        update_time: getCurrentTime()
+      };
+      // 增加最后使用时间更新（方便看是否压价）
+      if (quan_value?.split(",")?.includes(item.quan_value)) {
+        updateParams.end_use_time = getCurrentTime();
+      }
+      // 单个更新
+      this.singleUpdateQuanStock(updateParams);
     });
   }
 
@@ -2288,8 +2275,6 @@ const continuousGetQuan = async data => {
     quan_flag,
     black_quans,
     usedQuanList,
-    ticket_num,
-    target_num, // 目标数ticket_num + 10
     quanData = [],
     logger
   } = data;
@@ -2316,13 +2301,7 @@ const continuousGetQuan = async data => {
     });
     quanData.push(...targetQuanList);
     // 1页10条
-    if (quanList.length == 10 && quanData.length < target_num) {
-      let currentQuanNum = quanData?.length;
-      logger.infoSave("目标券列表数量不够，递归连续获取目标券", {
-        ticket_num,
-        target_num,
-        currentQuanNum
-      });
+    if (quanList.length == 10) {
       // 如果总数量仍小于所需数量，则继续获取下一页
       return await continuousGetQuan({
         ...data,
@@ -2332,7 +2311,10 @@ const continuousGetQuan = async data => {
     }
     // 先控制只返回目标券数量
     return {
-      quanList: quanData?.slice(0, target_num)
+      quanList: quanData.map(item => ({
+        ...item,
+        endDateTime: item.expire_time?.split(" ")?.[1] // "有效期至 2026-01-22"
+      }))
     };
   } catch (error) {
     logger.errorSave("连续获取目标券异常", { error });
