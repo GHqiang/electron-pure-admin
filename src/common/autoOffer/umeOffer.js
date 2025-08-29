@@ -448,7 +448,7 @@ class getUmeOfferPrice {
             console.log("quanStockList", quanStockList);
             let inx = quanStockList.findIndex(itemB => itemB.phone === mobile);
             let endDateTime = targetQuanList.sort(
-              (a, b) => new Date(b.endDateTime) - new Date(a.endDateTime)
+              (a, b) => new Date(a.endDateTime) - new Date(b.endDateTime)
             )?.[0]?.endDateTime;
             if (inx != -1) {
               quanStockList[inx].quan_stock = quanStock;
