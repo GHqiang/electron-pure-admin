@@ -2285,7 +2285,7 @@ const continuousGetQuan = async data => {
   };
   try {
     const res = await APP_API_OBJ[appFlag].getQuanList(params);
-    logger.infoSave("连续获取目标券返回", { res, params });
+    // logger.infoSave("连续获取目标券返回", { res, params });
     let quanList = res.data || [];
     let targetQuanList = quanList.filter(
       item =>
@@ -2293,12 +2293,12 @@ const continuousGetQuan = async data => {
         !black_quans?.includes(item.code) &&
         !usedQuanList.some(itemA => itemA.quan_code?.includes(item.code))
     );
-    logger.infoSave("券标识匹配、黑名单&最近用券记录过滤后", {
-      quan_flag,
-      black_quans,
-      usedQuanList,
-      targetQuanList
-    });
+    // logger.infoSave("券标识匹配、黑名单&最近用券记录过滤后", {
+    //   quan_flag,
+    //   black_quans,
+    //   usedQuanList,
+    //   targetQuanList
+    // });
     quanData.push(...targetQuanList);
     // 1页10条
     if (quanList.length == 10) {
@@ -2312,7 +2312,8 @@ const continuousGetQuan = async data => {
     // 先控制只返回目标券数量
     return {
       quanList: quanData.map(item => ({
-        ...item,
+        // voucher_name: item.voucher_name,
+        code: item.code,
         endDateTime: item.expire_time?.split(" ")?.[1] // "有效期至 2026-01-22"
       }))
     };
