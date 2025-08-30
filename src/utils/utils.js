@@ -100,6 +100,18 @@ function getCurrentDay() {
   return `${year}-${month}-${date}`;
 }
 
+// 获取下一天
+function getNextDayTime(dateStr = getCurrentDay()) {
+  const date = new Date(dateStr);
+  date.setDate(date.getDate() + 1);
+
+  const year = date.getFullYear();
+  const month = padZero(date.getMonth() + 1);
+  const day = padZero(date.getDate());
+
+  return `${year}-${month}-${day} 00:00:00`;
+}
+
 // 辅助函数：补零
 function padZero(num) {
   return `0${num}`.slice(-2);
@@ -2245,6 +2257,7 @@ export {
   formatTimeOfTime, // 格式化时间 YYYY-MM-DD HH:mm:ss
   formatTimeOfDay, // 格式化日期 YYYY-MM-DD
   getCurrentDay, // 获取当前天 YYYY-MM-DD
+  getNextDayTime, // 获取下一天 YYYY-MM-DD HH:mm:ss
   getCurrentTime, // 获取当前时间 YYYY-MM-DD HH:mm:ss
   parseExcel, // 解析xlsx文件
   createExcelDown, // 生成excel文件并下载

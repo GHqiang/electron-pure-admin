@@ -469,6 +469,19 @@
             clearable
           />
         </el-form-item> -->
+        <el-form-item label="允许报价时间">
+          <el-date-picker
+            v-model="formData.allow_offer_time"
+            type="datetime"
+            placeholder="允许报价时间"
+            format="YYYY-MM-DD hh:mm:ss"
+            value-format="YYYY-MM-DD hh:mm:ss"
+            clearable
+          />
+          <span style="color: red"
+            >提示：主要是配合当日不报使用，如果想关闭当日不报可置空，如果次日下午才能报，也可调整其时间来实现</span
+          >
+        </el-form-item>
         <el-form-item label="备注">
           <el-input
             v-model="formData.remark"
@@ -549,6 +562,7 @@ let formData = reactive({
   quanValue: [], // 用券类型
   // ruleStartTime: "", // 规则启用时间
   // ruleEndTime: "", // 规则结束时间
+  allow_offer_time: "", // 允许报价时间
   offerType: "1", // 报价类型, 1-固定价 2-会员价加价 3-会员日报价
   weekDay: [], // 启用星期
   seatNum: "", // 座位数
@@ -641,6 +655,7 @@ const resetForm = el => {
   formData.quanValue = []; // 用券类型
   // formData.ruleStartTime = ""; // 规则启用时间
   // formData.ruleEndTime = ""; // 规则结束时间
+  formData.allow_offer_time = "";
   formData.offerType = "1"; // 报价类型, 1-固定价 2-会员价加价 3-会员日报价
   formData.weekDay = []; // 启用星期
   formData.seatNum = ""; // 座位数
@@ -713,6 +728,7 @@ const open = async ruleInfo => {
         // formData.ruleStartTime = formInfo.ruleStartTime;
         // formData.ruleEndTime = formInfo.ruleEndTime;
         // formData.timeLimit = formInfo.timeLimit;
+        formData.allow_offer_time = formInfo.allow_offer_time;
         formData.quanValue = formInfo.quanValue;
         formData.weekDay = formInfo.weekDay; // 启用星期
         formData.seatNum = formInfo.seatNum; // 座位数

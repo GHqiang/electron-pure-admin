@@ -287,26 +287,26 @@
                 >删除</el-button
               >
               <el-button
-                v-if="scope.row.status === '1'"
+                v-if="scope.row.status === '1' && clickNoOffer(scope.row)"
                 size="small"
                 type="primary"
-                @click="currentDayNoOfferHandle(scope.row, '3')"
+                @click="currentDayNoOfferHandle(scope.row)"
                 >当日不报</el-button
               >
-              <el-button
-                v-if="scope.row.status === '1' && ![3].includes(rule)"
+              <!-- <el-button
+                v-if="scope.row.status === '1' && [2].includes(rule)"
                 size="small"
                 type="primary"
                 @click="switchOnlyOffer(scope.row, '3')"
-                >开启仅报价</el-button
-              >
-              <el-button
-                v-if="scope.row.status === '3' && ![3].includes(rule)"
+                >仅报价</el-button
+              > -->
+              <!-- <el-button
+                v-if="scope.row.status === '3' && [2].includes(rule)"
                 size="small"
                 type="primary"
                 @click="switchOnlyOffer(scope.row, '1')"
                 >关闭仅报价</el-button
-              >
+              > -->
               <!-- <el-button size="small" @click="viewDetails(scope.row)">详情</el-button> -->
             </template>
           </el-table-column>
@@ -354,7 +354,7 @@ const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
 import usesMachineBaseFun from "@/mixins/usesMachineBaseFun";
 const { getQuanTypeList } = usesMachineBaseFun();
 
-import { getCurrentTime } from "@/utils/utils";
+import { getCurrentTime, getNextDayTime } from "@/utils/utils";
 import { useDataTableStore } from "@/store/offerRule";
 const rules = useDataTableStore();
 import { platTokens } from "@/store/platTokens";
@@ -412,7 +412,8 @@ const offerTypeObj = {
 const statusObj = {
   1: "正常",
   2: "禁用",
-  3: "仅报价"
+  3: "仅报价",
+  5: "当日不报"
   // 4: "删除"
 };
 
@@ -517,12 +518,16 @@ const searchData = async () => {
     });
     // 使用Object.fromEntries将过滤后的键值对数组转换回对象
     let queryParams = Object.fromEntries(filteredEntries);
+    if (queryParams.status == 5) {
+      queryParams.status = 1;
+      queryParams.allow_offer_time = getCurrentTime();
+    }
     // console.log("queryParams", queryParams);
     let res;
     let page_num = currentPage.value;
     let page_size = pageSize.value;
     if (JSON.stringify(queryParams) === "{}") {
-      res = await svApi.getRuleList({ page_num, page_size });
+      res = await svApi.queryRuleList({ page_num, page_size });
     } else {
       res = await svApi.queryRuleList({
         ...queryParams,
@@ -620,12 +625,18 @@ const editStatus = async row => {
   }
 };
 
+// 是否可以点击当日不报
+const clickNoOffer = row => {
+  return !row.allow_offer_time
+    ? true
+    : +new Date() > +new Date(row.allow_offer_time);
+};
 // 当日不报
 const currentDayNoOfferHandle = async row => {
   try {
     await svApi.updateRuleRecord({
       id: row.id,
-      status: type === "3" ? "3" : "1",
+      allow_offer_time: getNextDayTime(), // 允许报价时间下一天
       update_time: getCurrentTime()
     });
     searchData();
@@ -633,7 +644,12 @@ const currentDayNoOfferHandle = async row => {
       type: "success",
       message: "操作完成"
     });
-  } catch (error) {}
+  } catch (error) {
+    ElMessage({
+      type: "error",
+      message: "操作失败"
+    });
+  }
 };
 
 // 开启关闭仅报价
@@ -710,6 +726,7 @@ const saveRule = async ruleInfo => {
     ruleInfo.includeFilmNames = JSON.stringify(ruleInfo.includeFilmNames);
     ruleInfo.excludeFilmNames = JSON.stringify(ruleInfo.excludeFilmNames);
     ruleInfo.film_type = ruleInfo.film_type || "";
+    ruleInfo.allow_offer_time = ruleInfo.allow_offer_time || null;
     ruleInfo.quanValue = ruleInfo.quanValue?.join(",");
     ruleInfo.orderForm = (ruleInfo.platOfferList || [])
       .map(item => item.platName)
