@@ -194,7 +194,7 @@
           </el-table-column>
           <el-table-column label="会员日" prop="memberDay" width="85" />
           <el-table-column label="电影格式" prop="film_type" width="85" />
-          <el-table-column label="开场时间限制" prop="timeLimit" width="110" />
+          <!-- <el-table-column label="开场时间限制" prop="timeLimit" width="110" /> -->
           <el-table-column label="包含城市" width="110">
             <template #default="scope">
               <span>{{ scope.row.includeCityNames.join() }}</span>
@@ -249,7 +249,7 @@
               <span>{{ scope.row.excludeFilmNames.join() }}</span>
             </template>
           </el-table-column>
-          <el-table-column
+          <!-- <el-table-column
             prop="ruleStartTime"
             label="开始放映时间"
             width="110"
@@ -258,7 +258,7 @@
             prop="ruleEndTime"
             label="结束放映时间"
             width="110"
-          />
+          /> -->
           <el-table-column prop="remark" label="备注" width="110" />
           <el-table-column label="操作" fixed="right" align="left" width="350">
             <template #default="scope">
@@ -285,6 +285,13 @@
                 type="danger"
                 @click="deleteRow(scope.$index, scope.row)"
                 >删除</el-button
+              >
+              <el-button
+                v-if="scope.row.status === '1'"
+                size="small"
+                type="primary"
+                @click="currentDayNoOfferHandle(scope.row, '3')"
+                >当日不报</el-button
               >
               <el-button
                 v-if="scope.row.status === '1' && ![3].includes(rule)"
@@ -611,6 +618,22 @@ const editStatus = async row => {
   } catch (err) {
     throw new Error("状态更新失败");
   }
+};
+
+// 当日不报
+const currentDayNoOfferHandle = async row => {
+  try {
+    await svApi.updateRuleRecord({
+      id: row.id,
+      status: type === "3" ? "3" : "1",
+      update_time: getCurrentTime()
+    });
+    searchData();
+    ElMessage({
+      type: "success",
+      message: "操作完成"
+    });
+  } catch (error) {}
 };
 
 // 开启关闭仅报价

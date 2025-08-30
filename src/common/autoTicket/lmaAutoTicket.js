@@ -2280,7 +2280,7 @@ const continuousGetQuan = async data => {
   } = data;
   const params = {
     type: 1,
-    page,
+    page, // 固定1页10条
     lmaToken
   };
   try {
