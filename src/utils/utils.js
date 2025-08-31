@@ -1183,8 +1183,14 @@ const offerRuleMatch = order => {
       ["1", "3"].includes(item.status)
     );
     console.log("启用的规则列表", useRuleList);
+    let useOfferRuleList = useRuleList.filter(item =>
+      !item.allow_offer_time
+        ? true
+        : +new Date(item.allow_offer_time) < +new Date()
+    );
+    console.log("可报价的规则列表", useOfferRuleList);
     // 2、获取某个影线的规则列表
-    let shadowLineRuleList = useRuleList.filter(item => {
+    let shadowLineRuleList = useOfferRuleList.filter(item => {
       // 万象ume和h5ume都需要用
       if (shadowLineName != "wanxiang") {
         return item.shadowLineName === shadowLineName;
