@@ -60,7 +60,7 @@
         </template>
       </el-table-column>
       <el-table-column
-        v-if="![3].includes(rule)"
+        v-if="[2].includes(rule)"
         prop="syncPageSize"
         width="160"
         label="同步频率(条数/1分钟)"
@@ -102,7 +102,10 @@
         <template #default="{ row, $index }">
           <span v-if="row.id !== editingRowId">{{ row.userUUID }}</span>
           <el-input
-            v-if="row.platName === 'shoutu' && row.id === editingRowId"
+            v-if="
+              ['shoutu', 'lieren'].includes(row.platName) &&
+              row.id === editingRowId
+            "
             v-model="editingRow.userUUID"
             @blur="saveEdit(row.id)"
           />
@@ -556,32 +559,32 @@ const syncPriceHandle = async (plat_name, syncPageSize) => {
     let promiseList = [],
       syncOrderList = [];
     if (plat_name === "lieren") {
-      promiseList.push(
-        lierenApi.queryOfferRecord({
-          page: 1,
-          limit: syncPageSize,
-          cinema_name: "",
-          sort: "id",
-          desc: "desc",
-          type: 1
-        })
-      );
-      const results = await Promise.allSettled(promiseList);
-      results.forEach(item => {
-        let lierenList = item?.value?.data || [];
-        // supplier_end_price为0时代表还在竞价中
-        lierenList = lierenList
-          .filter(
-            item =>
-              item.offer !== item.supplier_end_price && item.supplier_end_price
-          )
-          .map(item => ({
-            order_number: item.order_number,
-            supplier_end_price: item.supplier_end_price,
-            plat_name: "lieren"
-          }));
-        syncOrderList.push(...lierenList);
-      });
+      // promiseList.push(
+      //   lierenApi.queryOfferRecord({
+      //     page: 1,
+      //     limit: syncPageSize,
+      //     cinema_name: "",
+      //     sort: "id",
+      //     desc: "desc",
+      //     type: 1
+      //   })
+      // );
+      // const results = await Promise.allSettled(promiseList);
+      // results.forEach(item => {
+      //   let lierenList = item?.value?.data || [];
+      //   // supplier_end_price为0时代表还在竞价中
+      //   lierenList = lierenList
+      //     .filter(
+      //       item =>
+      //         item.offer !== item.supplier_end_price && item.supplier_end_price
+      //     )
+      //     .map(item => ({
+      //       order_number: item.order_number,
+      //       supplier_end_price: item.supplier_end_price,
+      //       plat_name: "lieren"
+      //     }));
+      //   syncOrderList.push(...lierenList);
+      // });
     } else if (plat_name === "mayi") {
       // 蚂蚁1页8条，不支持传条数
       let lengths = Math.ceil(syncPageSize / 8); // 向上取整
