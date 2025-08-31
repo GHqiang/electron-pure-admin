@@ -665,7 +665,7 @@ class getLmaOfferPrice {
             return appQuanTypeList.some(
               itemA =>
                 item.quanValue?.split(",")?.includes(itemA.quan_value) &&
-                itemA?.quan_stock > order.ticket_num
+                itemA?.quan_stock >= order.ticket_num
             );
           });
           this.logList.push({
