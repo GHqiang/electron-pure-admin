@@ -4,8 +4,11 @@ import {
   logUpload, // 日志上传
   mockDelay, // 模拟延时
   formatErrInfo, // 格式化errInfo
-  getCinemaLoginInfoList
+  getCinemaLoginInfoList,
+  dynamicPrice
 } from "@/utils/utils";
+// 统一日志类
+import Logger from "@/common/logger";
 import svApi from "@/api/sv-api"; // 机器api
 import lierenApi from "@/api/lieren-api"; // 猎人平台api
 import {
@@ -253,7 +256,8 @@ class OrderAutoOfferQueue {
           (errInfoObj?.info ? formatErrInfo(errInfoObj?.info) : ""),
         rewards: order.rewards, // 奖励百分比, 4个点
         rule: tokens.userInfo.rule,
-        offer_rule_id: offerResult?.offerRule?.id
+        offer_rule_id: offerResult?.offerRule?.id,
+        adjust_price: offerResult?.offerRule?.adjustPrice // 动态调价调整价格
       };
       let targetInfo = GET_APP_TYPE_LIST().find(item =>
         item.app_name_list.includes(serOrderInfo.app_name)
@@ -335,7 +339,7 @@ class OrderAutoOfferQueue {
         console.error(conPrefix + "获取最终报价返回空");
         return;
       }
-      const { endPrice, offerRule, err_msg, err_info, app_name } = result || {};
+      let { endPrice, offerRule, err_msg, err_info, app_name } = result || {};
       console.warn(conPrefix + "获取最终报价返回", endPrice);
       if (!endPrice) {
         return { offerRule, err_msg, err_info };
@@ -343,6 +347,13 @@ class OrderAutoOfferQueue {
       if (app_name === "wanxiangh5") {
         order.app_name = app_name;
       }
+      // 动态调价处理
+      let logger = new Logger({
+        logType: 1
+      });
+      logger.init(order);
+      endPrice = dynamicPrice({ order, offerRule, logger });
+      logger.logUpload();
       const res = await this.submitOffer({ id: order.id, price: endPrice });
       return { res, offerRule };
     } catch (error) {

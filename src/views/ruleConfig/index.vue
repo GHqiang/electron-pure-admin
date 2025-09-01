@@ -17,11 +17,33 @@
       <el-button type="primary" @click="isAnomaly = !isAnomaly">{{
         !isAnomaly ? "开启sfc故障检测" : "关闭sfc故障检测"
       }}</el-button>
+
+      <el-button
+        type="primary"
+        v-if="IN_RULE_LIST.includes(rule)"
+        @click="isAdjustPrice = !isAdjustPrice"
+        >{{ !isAdjustPrice ? "开启动态调价" : "关闭动态调价" }}</el-button
+      >
     </div>
 
     <div style="margin-top: 50px">
       <el-divider content-position="left">设置类规则</el-divider>
-      <div class="flex-yc">
+      <div class="flex-yc" v-if="IN_RULE_LIST.includes(rule)">
+        <el-input
+          v-model="minAdjustPriceProfit"
+          type="number"
+          clearable
+          style="max-width: 360px; margin-right: 15px"
+          placeholder="请输入动态调价最低利润"
+        >
+          <template #prepend>动态调价最小利润</template>
+          <template #append>
+            <el-button text @click="setAdjustPriceMinProfit">保存</el-button>
+          </template>
+        </el-input>
+      </div>
+
+      <div class="flex-yc m-t-10">
         <el-input
           v-model="profitAddPrice"
           type="number"
@@ -87,7 +109,12 @@ defineOptions({
 });
 import { ref, computed, onBeforeMount, watch, onBeforeUnmount } from "vue";
 import { ElMessageBox, ElMessage } from "element-plus";
+import { platTokens } from "@/store/platTokens";
+const {
+  userInfo: { rule, user_id }
+} = platTokens();
 
+import { IN_RULE_LIST } from "@/common/constant.js";
 // 是否超限报价
 let isOpenOverrunOffer = localStorage.getItem("isOverrunOffer") == 1;
 const isOverrunOffer = ref(isOpenOverrunOffer ? true : false);
@@ -112,6 +139,14 @@ watch(isAnomaly, (newVal, oldVal) => {
   window.localStorage.setItem("isAnomaly", newVal ? "1" : "0");
 });
 
+// 是否动态调价
+let isOpenAdjustPrice = localStorage.getItem("isAdjustPrice") == 1;
+const isAdjustPrice = ref(isOpenAdjustPrice ? true : false);
+watch(isAdjustPrice, (newVal, oldVal) => {
+  console.log(`isAdjustPrice 的值从 '${oldVal}' 变为 '${newVal}'`);
+  window.localStorage.setItem("isAdjustPrice", newVal ? "1" : "0");
+});
+
 // 是否自动转单
 let isOpen = localStorage.getItem("isAutoTransfer") == 1;
 const isAutoTransfer = ref(isOpen ? true : false);
@@ -119,6 +154,19 @@ watch(isAutoTransfer, (newVal, oldVal) => {
   console.log(`isAutoTransfer 的值从 '${oldVal}' 变为 '${newVal}'`);
   window.localStorage.setItem("isAutoTransfer", newVal ? "1" : "0");
 });
+
+// 动态调价最小利润
+let minAdjustPriceProfitValue = window.localStorage.getItem(
+  "minAdjustPriceProfit"
+);
+const minAdjustPriceProfit = ref(minAdjustPriceProfitValue || "");
+const setAdjustPriceMinProfit = () => {
+  console.log("val", minAdjustPriceProfit.value);
+  window.localStorage.setItem(
+    "minAdjustPriceProfit",
+    minAdjustPriceProfit.value
+  );
+};
 
 // 单店会员报价加价金额
 let profitAddPriceValue = window.localStorage.getItem("profitAddPrice");
@@ -128,7 +176,7 @@ const setProfitAddPrice = () => {
   window.localStorage.setItem("profitAddPrice", profitAddPrice.value);
 };
 
-// 单店会员报价加价金额
+// 卢米埃是否用券
 let lmaIsUseQuanValue = window.localStorage.getItem("lmaIsUseQuan");
 const lmaIsUseQuan = ref(lmaIsUseQuanValue || "1");
 const lmaIsUseQuanChange = val => {

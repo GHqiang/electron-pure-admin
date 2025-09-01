@@ -203,6 +203,13 @@
       </el-table-column>
       <el-table-column
         v-if="IN_RULE_LIST.includes(rule)"
+        prop="adjust_price"
+        fixed
+        label="动态调价"
+        width="85"
+      />
+      <el-table-column
+        v-if="IN_RULE_LIST.includes(rule)"
         prop="member_price"
         fixed
         label="成本价"

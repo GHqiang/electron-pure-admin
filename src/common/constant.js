@@ -225,6 +225,7 @@ const OUT_RULE_LIST = [3, 6, 5, 7];
 
 // 内部角色列表
 const IN_RULE_LIST = [1, 2];
+// 内部角色能看到其它角色（隐藏角色除外）的报价、出票数据， 目前是在后端服务常量文件控制的
 
 // sfc上影影院名称(小程序名称)
 const SFC_CINEMA_NAME = [

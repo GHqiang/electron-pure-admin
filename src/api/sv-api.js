@@ -20,6 +20,13 @@ const queryAnalysis = params =>
 const queryOfferList = params =>
   axios.get("/svpi/offerRecord/query", { params, timeout: 60 * 1000 });
 
+// 查询最近中标记录
+const queryDealOfferList = params =>
+  axios.get("/svpi/offerRecord/queryDealRecord", {
+    params,
+    timeout: 30 * 1000
+  });
+
 // 查询订单报价信息
 const queryOfferInfo = params =>
   axios.get("/svpi/offerRecord/queryOfferInfo", { params, timeout: 30 * 1000 });
@@ -234,6 +241,7 @@ const svApi = {
   getUserList,
   queryAnalysis,
   queryOfferList,
+  queryDealOfferList,
   queryOfferInfo,
   addOfferRecord,
   updateOfferRecord,

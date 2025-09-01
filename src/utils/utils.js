@@ -2243,7 +2243,270 @@ window.multipleSubDecimal = multipleSubDecimal;
 window.multipleMulDecimal = multipleMulDecimal;
 window.multipleDivDecimal = multipleDivDecimal;
 
+// 动态调价处理(目前仅猎人调用)
+const dynamicPrice = async ({ order, offerRule, logger }) => {
+  try {
+    // 1、获取该规则、该影院的历史报价记录（需查出其中标价）
+    const {
+      id: offer_rule_id,
+      offer_end_amount,
+      cost_price // 卡券成本
+    } = offerRule;
+    const { plat_name, cinema_code, supplier_max_price } = order;
+    const params = {
+      offer_rule_id,
+      plat_name,
+      user_id: tokens?.userInfo?.user_id,
+      cinema_code,
+      queryFields: "deal_price,is_deal",
+      page_num: 1,
+      page_size: 15
+    };
+    const res = await svApi.getOfferList(params);
+    const offerList = res.data.offerList || [];
+    logger.infoSave("动态调价获取历史中标记录", { offerList });
+    const adjustRes = dynamicPricingAlgorithm(
+      offerList,
+      cost_price,
+      offer_end_amount,
+      supplier_max_price,
+      0.5 //猎人步进值0.5
+    );
+    logger.infoSave("动态调价算法返回", adjustRes);
+    if (adjustRes.adjustment == "none") return offer_end_price;
+    // 推荐价格
+    offerRule.recommendedPrice = adjustRes.recommendedPrice;
+    // 调整价格
+    offerRule.adjustPrice =
+      adjustRes.recommendedPrice < offer_end_price
+        ? adjustRes.recommendedPrice - offer_end_price
+        : offer_end_price - adjustRes.recommendedPrice;
+    return adjustRes.recommendedPrice;
+  } catch (error) {
+    console.log("动态调价处理失败：", error);
+  }
+};
+
+/**
+ * 动态调价算法 - 基于初始预计报价进行智能调整
+ *
+ * @param {Array} offerList - 历史报价数据（倒序排列，最新报价在最前面）
+ *   格式: [
+ *     {
+ *       "deal_price": "中标价",
+ *       "is_deal": "1=中标,2=未中标"
+ *     },
+ *     ...
+ *   ]
+ * @param {number} costPrice - 成本价
+ * @param {number} initialExpectedPrice - 初始预计报价（基于成本价+X规则计算得出）
+ * @param {number} maxPrice - 平台最高限价
+ * @param {number} stepValue - 步进值（调整的最小单位，通常为0.1或0.5）
+ *
+ * @returns {Object} 返回包含推荐报价和详细信息的对象
+ *   {
+ *     recommendedPrice: number,  // 最终推荐报价
+ *     reason: string,           // 调整原因说明
+ *     adjustment: string,       // 调整类型
+ *     debugInfo: Object         // 调试信息
+ *   }
+ */
+function dynamicPricingAlgorithm(
+  offerList,
+  costPrice,
+  initialExpectedPrice,
+  maxPrice,
+  stepValue
+) {
+  // 数据验证 - 确保必要参数存在
+  if (!offerList || offerList.length === 0) {
+    return {
+      recommendedPrice: initialExpectedPrice,
+      reason: "无历史数据，使用初始预计报价",
+      adjustment: "none"
+    };
+  }
+  // 最小调价利润
+  let minProfit = window.localStorage.getItem("minAdjustPriceProfit") || 1;
+  minProfit = +minProfit;
+
+  // 步进值默认为0.1，如果未传入则使用默认值
+  stepValue = stepValue || 0.1;
+
+  // 计算关键市场指标
+  const minDealPrice = Math.min(...offerList.map(item => item.deal_price)); // 历史最低中标价
+  const maxDealPrice = Math.max(...offerList.map(item => item.deal_price)); // 历史最高中标价
+
+  // 统计连续中标/未中标情况（基于倒序数组，从前往后统计最新的）
+  let consecutiveMissed = 0; // 连续未中标次数
+  let consecutiveHit = 0; // 连续中标次数
+
+  // 从最新记录开始统计连续未中标次数
+  for (let i = 0; i < offerList.length; i++) {
+    if (offerList[i].is_deal == "2") {
+      consecutiveMissed++;
+    } else {
+      break; // 遇到中标记录则停止统计
+    }
+  }
+
+  // 从最新记录开始统计连续中标次数
+  for (let i = 0; i < offerList.length; i++) {
+    if (offerList[i].is_deal == "1") {
+      consecutiveHit++;
+    } else {
+      break; // 遇到未中标记录则停止统计
+    }
+  }
+
+  // 以初始预计报价为基础进行智能调整
+  let currentOffer = initialExpectedPrice;
+  let reason = []; // 记录所有调整原因
+  let adjustment = "none"; // 记录调整类型
+
+  // 策略1: 连续未中标 - 直接向高频中标价靠拢
+  // 当连续5次或以上未中标时，寻找历史最高频次中标价并调整
+  if (consecutiveMissed >= 5 && offerList.length >= 8) {
+    // 统计中标价频次，找出出现频率最高的中标价
+    const priceFrequency = {};
+    offerList.forEach(item => {
+      const roundedPrice = parseFloat(Number(item.deal_price).toFixed(2)); // 保留2位小数
+      priceFrequency[roundedPrice] = (priceFrequency[roundedPrice] || 0) + 1;
+    });
+
+    // 找出出现频率最高的中标价
+    let mostFrequentPrice = null;
+    let maxFrequency = 0;
+    for (let price in priceFrequency) {
+      if (priceFrequency[price] > maxFrequency) {
+        maxFrequency = priceFrequency[price];
+        mostFrequentPrice = parseFloat(price);
+      }
+    }
+
+    // 如果最高频次的中标价存在，直接向其调整
+    if (mostFrequentPrice) {
+      // 确保调整后的价格不低于成本价+1
+      const targetPrice = Math.max(mostFrequentPrice, costPrice + minProfit);
+
+      if (targetPrice < currentOffer) {
+        const originalPrice = currentOffer;
+        currentOffer = targetPrice;
+        const reductionAmount = subDecimal(originalPrice, currentOffer);
+        reason.push(
+          `连续${consecutiveMissed}次未中标，向高频中标价${mostFrequentPrice.toFixed(2)}靠齐，降价${reductionAmount.toFixed(2)}元`
+        );
+        adjustment = "price_down_to_frequency";
+      }
+    }
+  }
+
+  // 策略2: 连续中标 - 适当提高报价增加收益
+  // 当连续3次或以上中标时，可以适当提高报价以增加收益
+  if (consecutiveHit >= 3) {
+    let dealPrice = offerList[0].deal_price;
+    let dealPriceAdd = dealPrice;
+    // 检查提价空间：不能超过平台限价
+    const availableSpace = subDecimal(maxPrice, dealPrice);
+
+    if (availableSpace >= stepValue) {
+      // 计算实际提价金额（最多提价2步的价值）
+      const maxIncrease = Math.min(mulDecimal(2, stepValue), availableSpace);
+      const increaseAmount = Math.max(stepValue, maxIncrease); // 至少提价一步
+
+      if (increaseAmount >= stepValue) {
+        dealPriceAdd = addDecimal(dealPrice, increaseAmount);
+        reason.push(
+          `连续${consecutiveHit}次中标，中标价${dealPrice} 提价${increaseAmount.toFixed(2)}元`
+        );
+        adjustment = "price_up";
+      }
+    }
+    // 取连续中标价和初始价格取最大
+    currentOffer = Math.max(dealPriceAdd, initialExpectedPrice);
+    reason.push(
+      `取中标价加价后${dealPriceAdd}和初始价${initialExpectedPrice}的最大值`
+    );
+    if (adjustment === "none") adjustment = "aggressive_up_to_max";
+  }
+
+  // 策略3: 整体中标率极低时 - 直接向历史最低中标价靠拢
+  // 当整体报价次数>=5且中标率低于10%时，采用激进策略
+  if (offerList.length >= 5) {
+    const totalBids = offerList.length;
+    const totalHits = offerList.filter(item => item.is_deal === "1").length;
+    const hitRate = totalHits / totalBids;
+
+    if (hitRate < 0.1 && minDealPrice) {
+      // 中标率低于10%
+      // 直接向历史最低中标价调整,确保调整后的价格不低于成本价+1
+      const targetPrice = Math.max(minDealPrice, costPrice + minProfit);
+
+      if (targetPrice < currentOffer) {
+        const originalPrice = currentOffer;
+        currentOffer = targetPrice;
+        const reductionAmount = subDecimal(originalPrice, currentOffer);
+        reason.push(
+          `整体中标率极低(${(hitRate * 100).toFixed(1)}%)，向历史最低中标价${minDealPrice.toFixed(2)}靠拢，降价${reductionAmount.toFixed(2)}元`
+        );
+        if (adjustment === "none") adjustment = "aggressive_down_to_min";
+      }
+    }
+  }
+
+  // 策略4: 保证最小利润约束
+  // 确保报价至少比成本价高1元
+  const minAllowedPrice = addDecimal(costPrice, 1);
+  if (currentOffer < minAllowedPrice) {
+    const originalPrice = currentOffer;
+    currentOffer = minAllowedPrice;
+    const increaseAmount = subDecimal(currentOffer, originalPrice);
+    reason.push(`保障最小利润，提价${increaseAmount.toFixed(2)}元`);
+    adjustment = "profit_protection";
+  }
+
+  // 策略5: 平台限价约束
+  // 确保报价不超过平台最高限价
+  if (currentOffer > maxPrice) {
+    const originalPrice = currentOffer;
+    currentOffer = maxPrice;
+    const reductionAmount = subDecimal(originalPrice, currentOffer);
+    reason.push(
+      `不超过平台限价${maxPrice.toFixed(2)}，降价${reductionAmount.toFixed(2)}元`
+    );
+    adjustment = "limit_protection";
+  }
+
+  // 返回结果对象（保留两位小数）
+  const finalPrice = parseFloat(currentOffer.toFixed(2));
+
+  // 如果没有任何调整，说明初始报价已经合理
+  if (reason.length === 0) {
+    reason.push("初始预计报价合理，无需调整");
+  }
+
+  // 返回结果对象
+  return {
+    recommendedPrice: finalPrice,
+    reason: reason.join("；"), // 合并所有调整原因
+    adjustment: adjustment, // 调整类型
+    debugInfo: {
+      consecutiveMissed, // 连续未中标次数
+      consecutiveHit, // 连续中标次数
+      totalBids: offerList.length, // 总报价次数
+      totalHits: offerList.filter(item => item.is_deal == "1").length, // 总中标次数
+      minDealPrice, // 历史最低中标价
+      maxDealPrice, // 历史最高中标价
+      initialExpectedPrice, // 初始预计报价
+      finalPrice, // 最终报价
+      stepValue // 使用的步进值
+    }
+  };
+}
+
+window.dynamicPricingAlgorithm = dynamicPricingAlgorithm;
 export {
+  dynamicPrice, // 动态调价处理
   addDecimal, // 加
   subDecimal, // 减
   mulDecimal, // 乘
