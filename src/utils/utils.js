@@ -12,7 +12,8 @@ import {
   GET_APP_INFO,
   GET_USABLE_APP_LIST,
   GET_H5_UME_LIST,
-  GET_SFC_APP_LIST
+  GET_SFC_APP_LIST,
+  IN_RULE_LIST
 } from "@/common/constant";
 import { toRaw } from "vue";
 import { storeToRefs } from "pinia";
@@ -409,7 +410,7 @@ const getCinemaFlag = item => {
   }
   let rule = tokens?.userInfo?.rule;
   // 内部角色影院禁用，主要是控制影院是否进行报价
-  if (rule == 2 && !GET_USABLE_APP_LIST()?.["" + app_name]) {
+  if (IN_RULE_LIST.includes(rule) && !GET_USABLE_APP_LIST()?.["" + app_name]) {
     return;
   }
 

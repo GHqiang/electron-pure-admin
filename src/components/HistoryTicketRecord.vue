@@ -297,7 +297,12 @@ const {
   userInfo: { rule, user_id }
 } = platTokens();
 
-import { ORDER_FORM, GET_APP_LIST, TICKET_STATUS } from "@/common/constant.js";
+import {
+  ORDER_FORM,
+  GET_APP_LIST,
+  TICKET_STATUS,
+  IN_RULE_LIST
+} from "@/common/constant.js";
 
 // 券类型列表
 const quanType = ref([]);
@@ -344,7 +349,7 @@ const formData = reactive({
   end_time: ""
 });
 
-if (rule !== 2) {
+if (!IN_RULE_LIST.includes(rule)) {
   formData.rule = rule;
 }
 const getTodayTime = sjc => {

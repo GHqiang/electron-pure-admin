@@ -27,6 +27,7 @@ import dayIcon from "@/assets/svg/day.svg?component";
 import darkIcon from "@/assets/svg/dark.svg?component";
 import Lock from "@iconify-icons/ri/lock-fill";
 import User from "@iconify-icons/ri/user-3-fill";
+import { IN_RULE_LIST } from "@/common/constant.js";
 
 import { getCurrentTime } from "@/utils/utils";
 import svApi from "@/api/sv-api";
@@ -64,7 +65,7 @@ const ruleForm = reactive({
 // 设置本地的影院信息列表
 const setLocalCinemaList = async rule => {
   let params = {};
-  if (rule != 2) {
+  if (!IN_RULE_LIST.includes(rule)) {
     params.is_out_use = 1;
   }
   const res = await svApi.queryCinemaList(params);

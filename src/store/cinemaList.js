@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { APP_TYPE_OBJ } from "@/common/constant";
+import { APP_TYPE_OBJ, IN_RULE_LIST } from "@/common/constant";
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
 let allCinemaList = window.localStorage.getItem("allCinemaList");
@@ -18,7 +18,9 @@ export const useCinemaList = defineStore("cinemaDataTable", {
     // 设置规则列表
     setCinemaInfoList(list) {
       let cinemaList = list.filter(item =>
-        tokens?.userInfo?.rule == 2 ? item.status == 1 : item.status != "3"
+        IN_RULE_LIST.includes(tokens?.userInfo?.rule)
+          ? item.status == 1
+          : item.status != "3"
       );
       console.warn(`设置影院列表信息`, cinemaList);
       this.canAppList = cinemaList;

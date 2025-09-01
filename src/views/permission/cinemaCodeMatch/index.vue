@@ -48,7 +48,7 @@
               >导出映射维护信息</el-button
             >
             <el-upload
-              v-if="rule == 2"
+              v-if="IN_RULE_LIST.includes(rule)"
               ref="uploadRef"
               style="margin: 0 15px"
               class="upload-demo"
@@ -63,7 +63,7 @@
               </template>
             </el-upload>
             <el-button
-              v-if="rule == 2"
+              v-if="IN_RULE_LIST.includes(rule)"
               type="primary"
               style="padding-left: 0px"
               :disabled="!shadowLine"
@@ -120,19 +120,19 @@
             min-width="100"
           />
           <el-table-column
-            v-if="rule == 2"
+            v-if="IN_RULE_LIST.includes(rule)"
             prop="plat_cinema_name"
             label="平台影院名称"
             min-width="100"
           />
           <el-table-column
-            v-if="rule == 2"
+            v-if="IN_RULE_LIST.includes(rule)"
             prop="update_time"
             label="更新时间"
             min-width="120"
           />
           <el-table-column
-            v-if="rule == 2"
+            v-if="IN_RULE_LIST.includes(rule)"
             label="操作"
             fixed="right"
             align="center"
@@ -175,7 +175,8 @@ import CinemaMatchDialog from "@/components/CinemaMatchDialog.vue";
 import {
   GET_APP_LIST,
   GET_APP_TYPE_LIST,
-  GET_APP_INFO
+  GET_APP_INFO,
+  IN_RULE_LIST
 } from "@/common/constant";
 const APP_LIST = computed(() => GET_APP_LIST());
 const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());

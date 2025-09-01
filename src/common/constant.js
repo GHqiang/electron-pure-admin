@@ -221,7 +221,10 @@ const TICKET_CONPREFIX_OBJ = {
 };
 
 // 外部角色列表
-const OUT_RULE_LIST = [3, 6, 5];
+const OUT_RULE_LIST = [3, 6, 5, 7];
+
+// 内部角色列表
+const IN_RULE_LIST = [1, 2];
 
 // sfc上影影院名称(小程序名称)
 const SFC_CINEMA_NAME = [
@@ -303,6 +306,7 @@ export {
   GROUP_LIST,
   TICKET_CONPREFIX_OBJ,
   OUT_RULE_LIST,
+  IN_RULE_LIST,
   SFC_CINEMA_NAME,
   CINEMA_STATUS_OBJ
 };

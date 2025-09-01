@@ -60,7 +60,7 @@
         </template>
       </el-table-column>
       <el-table-column
-        v-if="[2].includes(rule)"
+        v-if="IN_RULE_LIST.includes(rule)"
         prop="syncPageSize"
         width="160"
         label="同步频率(条数/1分钟)"
@@ -219,7 +219,7 @@ import mahuaFetchOrder from "@/common/orderFetch/mahuaFetchOrder";
 
 import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
 import createTucketQueueFun from "@/common/autoTicket/comTicketHandle";
-import { ORDER_FORM, GET_APP_LIST } from "@/common/constant";
+import { ORDER_FORM, GET_APP_LIST, IN_RULE_LIST } from "@/common/constant";
 const APP_LIST = computed(() => GET_APP_LIST());
 
 import {

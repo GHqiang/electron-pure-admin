@@ -78,7 +78,7 @@
           <el-option label="否" value="2" />
         </el-select>
       </el-form-item>
-      <el-form-item v-if="![3].includes(rule)" label="报价差异">
+      <el-form-item v-if="IN_RULE_LIST.includes(rule)" label="报价差异">
         <el-select
           v-model="formData.is_price_diff"
           placeholder="报价差异"
@@ -185,7 +185,7 @@
         width="85"
       />
       <el-table-column
-        v-if="![3].includes(rule)"
+        v-if="IN_RULE_LIST.includes(rule)"
         prop="deal_price"
         fixed
         label="中标价"
@@ -202,13 +202,17 @@
         </template>
       </el-table-column>
       <el-table-column
-        v-if="![3].includes(rule)"
+        v-if="IN_RULE_LIST.includes(rule)"
         prop="member_price"
         fixed
         label="成本价"
         width="85"
       />
-      <el-table-column v-if="![3].includes(rule)" label="利润空间" width="85">
+      <el-table-column
+        v-if="IN_RULE_LIST.includes(rule)"
+        label="利润空间"
+        width="85"
+      >
         <template #default="{ row: { supplier_max_price, member_price } }">
           <span>{{
             supplier_max_price && member_price
@@ -218,7 +222,7 @@
         </template>
       </el-table-column>
       <el-table-column
-        v-if="![3].includes(rule)"
+        v-if="IN_RULE_LIST.includes(rule)"
         prop="is_deal"
         label="是否中标"
         width="85"
@@ -249,7 +253,7 @@
       <el-table-column label="操作" fixed="right" align="center" width="120">
         <template #default="{ row: { order_number, user_id } }">
           <el-button
-            v-if="![3].includes(rule)"
+            v-if="IN_RULE_LIST.includes(rule)"
             size="small"
             type="primary"
             @click="queryLog({ order_number, user_id })"
@@ -299,7 +303,7 @@ const {
   userInfo: { rule, user_id }
 } = platTokens();
 
-import { ORDER_FORM, GET_APP_LIST } from "@/common/constant.js";
+import { ORDER_FORM, GET_APP_LIST, IN_RULE_LIST } from "@/common/constant.js";
 
 // 券类型列表
 const quanType = ref([]);
@@ -352,7 +356,7 @@ const formData = reactive({
   end_time: ""
 });
 
-if (rule !== 2) {
+if (!IN_RULE_LIST.includes(rule)) {
   formData.rule = rule;
 }
 const getTodayTime = sjc => {

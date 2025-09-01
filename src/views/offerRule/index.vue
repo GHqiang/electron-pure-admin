@@ -294,14 +294,14 @@
                 >当日不报</el-button
               >
               <!-- <el-button
-                v-if="scope.row.status === '1' && [2].includes(rule)"
+                v-if="scope.row.status === '1' && IN_RULE_LIST.includes(rule)"
                 size="small"
                 type="primary"
                 @click="switchOnlyOffer(scope.row, '3')"
                 >仅报价</el-button
               > -->
               <!-- <el-button
-                v-if="scope.row.status === '3' && [2].includes(rule)"
+                v-if="scope.row.status === '3' && IN_RULE_LIST.includes(rule)"
                 size="small"
                 type="primary"
                 @click="switchOnlyOffer(scope.row, '1')"
@@ -347,7 +347,12 @@ import {
 import svApi from "@/api/sv-api";
 import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import RuleDialog from "@/components/RuleDialog.vue";
-import { ORDER_FORM, GET_APP_LIST, GET_APP_TYPE_LIST } from "@/common/constant";
+import {
+  ORDER_FORM,
+  GET_APP_LIST,
+  GET_APP_TYPE_LIST,
+  IN_RULE_LIST
+} from "@/common/constant";
 const APP_LIST = computed(() => GET_APP_LIST());
 const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
 // 机器基础方法
