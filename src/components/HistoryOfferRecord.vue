@@ -217,6 +217,13 @@
       />
       <el-table-column
         v-if="IN_RULE_LIST.includes(rule)"
+        prop="price_spread"
+        fixed
+        label="成本价差"
+        width="85"
+      />
+      <el-table-column
+        v-if="IN_RULE_LIST.includes(rule)"
         label="利润空间"
         width="85"
       >

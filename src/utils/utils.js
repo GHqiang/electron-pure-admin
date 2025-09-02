@@ -2293,6 +2293,7 @@ const dynamicPrice = async ({ order, offerRule, logger }) => {
     if (adjustRes.adjustment == "none") return offer_end_amount;
     // 推荐价格
     offerRule.recommendedPrice = adjustRes.recommendedPrice;
+    offerRule.price_spread = adjustRes.price_spread; // 成本价距离高频中标价的差值
     // 调整价格
     offerRule.adjustPrice =
       adjustRes.recommendedPrice < offer_end_amount
@@ -2400,26 +2401,26 @@ function dynamicPricingAlgorithm(
     });
 
     // 找出出现频率最高的中标价
-    let mostFrequentPrice = null;
+    let mostDealPrice = null;
     let maxFrequency = 0;
     for (let price in priceFrequency) {
       if (priceFrequency[price] > maxFrequency) {
         maxFrequency = priceFrequency[price];
-        mostFrequentPrice = parseFloat(price);
+        mostDealPrice = parseFloat(price);
       }
     }
 
     // 如果最高频次的中标价存在，直接向其调整
-    if (mostFrequentPrice) {
+    if (mostDealPrice) {
       // 确保调整后的价格不低于成本价+1
-      // const targetPrice = Math.max(mostFrequentPrice, costPrice + minProfit);
-      const targetPrice = mostFrequentPrice;
+      // const targetPrice = Math.max(mostDealPrice, costPrice + minProfit);
+      const targetPrice = mostDealPrice;
       if (targetPrice < currentOffer) {
         const originalPrice = currentOffer;
         currentOffer = targetPrice;
         const reductionAmount = subDecimal(originalPrice, currentOffer);
         reason.push(
-          `连续 ${consecutiveMissed} 次未中标，向高频中标价 ${mostFrequentPrice.toFixed(2)} 靠齐，降价：${reductionAmount.toFixed(2)}`
+          `连续 ${consecutiveMissed} 次未中标，向高频中标价 ${mostDealPrice.toFixed(2)} 靠齐，降价：${reductionAmount.toFixed(2)}`
         );
         adjustment = "price_down_to_frequency";
       }
@@ -2481,8 +2482,12 @@ function dynamicPricingAlgorithm(
   }
 
   // 策略4: 保证最小利润约束
-  const minAllowedPrice = addDecimal(costPrice, minProfit);
+  let roundCostPrice = roundToHalf(+costPrice, 0.5); // 向上进0.5倍
+  const minAllowedPrice = addDecimal(roundCostPrice, minProfit);
   if (currentOffer < minAllowedPrice) {
+    reason.push(
+      `成本价 ${costPrice} 向上进0.5倍：${roundCostPrice}，得到最低允许报价：${minAllowedPrice}`
+    );
     const originalPrice = currentOffer;
     currentOffer = minAllowedPrice;
     const increaseAmount = subDecimal(currentOffer, originalPrice);
@@ -2524,12 +2529,14 @@ function dynamicPricingAlgorithm(
     recommendedPrice: finalPrice,
     reason, // 合并所有调整原因
     adjustment: adjustment, // 调整类型
+    price_spread: subDecimal(costPrice, mostDealPrice), // 成本价距离高频中标价的差值
     debugInfo: {
       consecutiveMissed, // 连续未中标次数
       consecutiveHit, // 连续中标次数
       totalBids: offerList.length, // 总报价次数
       totalHits: offerList.filter(item => item.is_deal == "1").length, // 总中标次数
       minDealPrice, // 历史最低中标价
+      mostDealPrice, // 历史高频中标价
       maxDealPrice, // 历史最高中标价
       initialExpectedPrice, // 初始预计报价
       costPrice, // 成本价

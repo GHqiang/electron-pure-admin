@@ -257,7 +257,8 @@ class OrderAutoOfferQueue {
         rewards: order.rewards, // 奖励百分比, 4个点
         rule: tokens.userInfo.rule,
         offer_rule_id: offerResult?.offerRule?.id,
-        adjust_price: offerResult?.offerRule?.adjustPrice // 动态调价调整价格
+        adjust_price: offerResult?.offerRule?.adjustPrice, // 动态调价调整价格
+        price_spread: offerResult?.offerRule?.price_spread // 成本价距离高频中标价的差值
       };
       let targetInfo = GET_APP_TYPE_LIST().find(item =>
         item.app_name_list.includes(serOrderInfo.app_name)
@@ -353,6 +354,7 @@ class OrderAutoOfferQueue {
       });
       logger.init(order);
       endPrice = await dynamicPrice({ order, offerRule, logger });
+      offerRule.offer_end_amount = endPrice;
       console.warn("动态调价后的最终报价", endPrice, offerRule);
       logger.logUpload();
       const res = await this.submitOffer({ id: order.id, price: endPrice });
