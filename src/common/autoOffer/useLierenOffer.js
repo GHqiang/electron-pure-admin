@@ -352,7 +352,8 @@ class OrderAutoOfferQueue {
         logType: 1
       });
       logger.init(order);
-      endPrice = dynamicPrice({ order, offerRule, logger });
+      endPrice = await dynamicPrice({ order, offerRule, logger });
+      console.warn("动态调价后的最终报价", endPrice, offerRule);
       logger.logUpload();
       const res = await this.submitOffer({ id: order.id, price: endPrice });
       return { res, offerRule };

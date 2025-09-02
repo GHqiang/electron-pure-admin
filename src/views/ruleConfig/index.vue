@@ -32,7 +32,6 @@
         <el-input
           v-model="minAdjustPriceProfit"
           type="number"
-          clearable
           style="max-width: 360px; margin-right: 15px"
           placeholder="请输入动态调价最低利润"
         >
@@ -47,7 +46,6 @@
         <el-input
           v-model="profitAddPrice"
           type="number"
-          clearable
           style="max-width: 360px; margin-right: 15px"
           placeholder="请输入单店利润加价金额"
         >
