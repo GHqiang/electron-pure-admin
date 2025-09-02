@@ -587,26 +587,26 @@ const syncPriceHandle = async (plat_name, syncPageSize) => {
       // });
     } else if (plat_name === "mayi") {
       // 蚂蚁1页8条，不支持传条数
-      let lengths = Math.ceil(syncPageSize / 8); // 向上取整
-      for (var i = 1; i <= lengths; i++) {
-        promiseList.push(
-          mayiApi.queryOfferRecord({
-            pageNo: i
-          })
-        );
-      }
-      const results = await Promise.allSettled(promiseList);
-      results.forEach(item => {
-        let mayiList = item?.value?.data?.records || [];
-        mayiList = mayiList
-          .filter(item => item.baojiastatusText === "竞价失败")
-          .map(item => ({
-            order_number: item.tradeno,
-            supplier_end_price: item.chengjiaojia,
-            plat_name: "mayi"
-          }));
-        syncOrderList.push(...mayiList);
-      });
+      // let lengths = Math.ceil(syncPageSize / 8); // 向上取整
+      // for (var i = 1; i <= lengths; i++) {
+      //   promiseList.push(
+      //     mayiApi.queryOfferRecord({
+      //       pageNo: i
+      //     })
+      //   );
+      // }
+      // const results = await Promise.allSettled(promiseList);
+      // results.forEach(item => {
+      //   let mayiList = item?.value?.data?.records || [];
+      //   mayiList = mayiList
+      //     .filter(item => item.baojiastatusText === "竞价失败")
+      //     .map(item => ({
+      //       order_number: item.tradeno,
+      //       supplier_end_price: item.chengjiaojia,
+      //       plat_name: "mayi"
+      //     }));
+      //   syncOrderList.push(...mayiList);
+      // });
     } else if (plat_name === "sheng") {
       // 省1页8条，不支持传条数
       // let lengths = Math.ceil(syncPageSize / 8); // 向上取整

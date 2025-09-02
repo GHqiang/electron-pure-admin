@@ -2258,11 +2258,7 @@ const dynamicPrice = async ({ order, offerRule, logger }) => {
 
     // 是否开启动态调价
     let isOpenAdjustPrice = localStorage.getItem("isAdjustPrice") == 1;
-    if (
-      !(
-        isOpenAdjustPrice && ["sfc", "ume", "yaolai", "bona"].includes(app_name)
-      )
-    ) {
+    if (!isOpenAdjustPrice) {
       return offer_end_amount;
     }
     logger.infoSave("动态调价开启");
