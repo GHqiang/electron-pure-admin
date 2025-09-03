@@ -224,15 +224,11 @@
       />
       <el-table-column
         v-if="IN_RULE_LIST.includes(rule)"
-        label="利润空间"
+        label="预计利润"
         width="85"
       >
-        <template #default="{ row: { supplier_max_price, member_price } }">
-          <span>{{
-            supplier_max_price && member_price
-              ? (supplier_max_price - member_price).toFixed(2)
-              : ""
-          }}</span>
+        <template #default="{ row }">
+          <span>{{ formatProfit(row) }}</span>
         </template>
       </el-table-column>
       <el-table-column
@@ -317,8 +313,13 @@ const {
   userInfo: { rule, user_id }
 } = platTokens();
 
-import { ORDER_FORM, GET_APP_LIST, IN_RULE_LIST } from "@/common/constant.js";
-
+import {
+  ORDER_FORM,
+  GET_APP_LIST,
+  IN_RULE_LIST,
+  NO_FEE_PLAT_LIST
+} from "@/common/constant.js";
+import { addDecimal, subDecimal } from "@/utils/utils";
 // 券类型列表
 const quanType = ref([]);
 
@@ -475,6 +476,27 @@ const resetForm = () => {
   pageSize.value = 10;
 };
 
+const formatProfit = ({
+  offer_end_amount,
+  order_status,
+  member_price,
+  plat_name,
+  rewards = 0
+}) => {
+  if (order_status != 1) {
+    return;
+  }
+  let shouxufei = (offer_end_amount * 100) / 10000;
+  if (NO_FEE_PLAT_LIST.includes(plat_name)) {
+    shouxufei = 0;
+  }
+  // 奖励费用
+  const rewardPrice = rewards > 0 ? (member_price * 100 * rewards) / 10000 : 0;
+  return subDecimal(
+    addDecimal(offer_end_amount, rewardPrice),
+    addDecimal(member_price, shouxufei)
+  ).toFixed(2);
+};
 // 获取券类型列表
 const getQuanTypeList = async () => {
   try {

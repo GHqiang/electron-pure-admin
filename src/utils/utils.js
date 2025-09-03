@@ -2252,6 +2252,7 @@ const dynamicPrice = async ({ order, offerRule, logger }) => {
       offer_end_amount,
       offerAmount,
       addAmount,
+      realAddMount, // 真实加价金额
       cost_price // 卡券成本
     } = offerRule;
     const { plat_name, cinema_code, supplier_max_price, app_name } = order;
@@ -2274,8 +2275,10 @@ const dynamicPrice = async ({ order, offerRule, logger }) => {
     const res = await svApi.queryDealOfferList(params);
     const offerList = res.data.offerList || [];
     logger.infoSave("动态调价获取历史中标记录", { offerList });
-    const orgProfit = addAmount
-      ? +addAmount
+    // 实际加价 优先取真实加价
+    let actual_amount = realAddMount || addAmount;
+    const orgProfit = actual_amount
+      ? +actual_amount
       : subDecimal(offerAmount, cost_price);
     const adjustRes = dynamicPricingAlgorithm(
       offerList, // 近15条的报价是否中标记录（半个小时前）
