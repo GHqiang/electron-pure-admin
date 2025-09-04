@@ -212,7 +212,7 @@
         v-if="IN_RULE_LIST.includes(rule)"
         prop="member_price"
         fixed
-        label="成本价"
+        label="税前成本"
         width="85"
       />
       <el-table-column
@@ -476,6 +476,25 @@ const resetForm = () => {
   pageSize.value = 10;
 };
 
+// 税后成本价（含手续费）
+const formatCostPrice = ({
+  offer_end_amount,
+  order_status,
+  member_price,
+  plat_name
+}) => {
+  if (order_status != 1) {
+    return;
+  }
+  let shouxufei = (offer_end_amount * 100) / 10000;
+  if (NO_FEE_PLAT_LIST.includes(plat_name)) {
+    shouxufei = 0;
+  }
+  // 真实成本
+  return addDecimal(member_price, shouxufei).toFixed(2);
+};
+
+// 预计利润
 const formatProfit = ({
   offer_end_amount,
   order_status,
