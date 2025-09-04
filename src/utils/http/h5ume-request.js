@@ -398,7 +398,7 @@ const noProxyUrlList = [
   "seat.getseatmap",
   "seat.lockseats",
   "seat.unlockseats",
-  "pay.getpayprivilegeinfo",
+  // "pay.getpayprivilegeinfo",
   "pay.getpaydiscountprice",
   "coupon.getmyonlinecoupons",
   "card.getcardlistbypage",
