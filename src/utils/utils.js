@@ -2268,7 +2268,7 @@ const dynamicPrice = async ({ order, offerRule, logger }) => {
       plat_name,
       user_id: tokens?.userInfo?.user_id,
       cinema_code,
-      queryFields: "deal_price,is_deal",
+      queryFields: "offer_end_amount,deal_price,is_deal",
       page_num: 1,
       page_size: 15
     };
@@ -2310,6 +2310,7 @@ const dynamicPrice = async ({ order, offerRule, logger }) => {
  * @param {Array} offerList - 历史报价数据（倒序排列，最新报价在最前面）
  *   格式: [
  *     {
+ *       "offer_end_amount": "我的报价"
  *       "deal_price": "中标价",
  *       "is_deal": "1=中标,2=未中标"
  *     },
@@ -2358,9 +2359,22 @@ function dynamicPricingAlgorithm(
   // 步进值默认为0.1，如果未传入则使用默认值
   stepValue = stepValue || 0.1;
 
+  // 中标价数组（过滤掉空值）
+  const deal_price_list = offerList
+    .map(item => parseFloat(item.deal_price))
+    .filter(
+      item => !isNaN(item) && item !== null && item !== undefined && !!item
+    );
+
   // 计算关键市场指标
-  const minDealPrice = Math.min(...offerList.map(item => item.deal_price)); // 历史最低中标价
-  const maxDealPrice = Math.max(...offerList.map(item => item.deal_price)); // 历史最高中标价
+  // 历史最低中标价
+  const minDealPrice = deal_price_list?.length
+    ? Math.min(...deal_price_list)
+    : null;
+  // 历史最高中标价
+  const maxDealPrice = deal_price_list?.length
+    ? Math.max(...deal_price_list)
+    : null;
 
   // 统计连续中标/未中标情况（基于倒序数组，从前往后统计最新的）
   let consecutiveMissed = 0; // 连续未中标次数
@@ -2386,9 +2400,11 @@ function dynamicPricingAlgorithm(
 
   // 统计中标价频次，找出出现频率最高的中标价
   const priceFrequency = {};
-  offerList.forEach(item => {
-    const roundedPrice = parseFloat(Number(item.deal_price).toFixed(2)); // 保留2位小数
-    priceFrequency[roundedPrice] = (priceFrequency[roundedPrice] || 0) + 1;
+  deal_price_list.forEach(deal_price => {
+    if (deal_price) {
+      const roundedPrice = parseFloat(Number(deal_price).toFixed(2)); // 保留2位小数
+      priceFrequency[roundedPrice] = (priceFrequency[roundedPrice] || 0) + 1;
+    }
   });
 
   // 找出出现频率最高的中标价
@@ -2401,6 +2417,33 @@ function dynamicPricingAlgorithm(
     }
   }
 
+  // 我的报价数组
+  const myOfferList = offerList
+    .map(item => parseFloat(item.offer_end_amount))
+    .filter(item => !isNaN(item) && !!item);
+  // 统计我的报价频次，找出出现频率最高的报价
+  const myPriceFrequency = {};
+  myOfferList.forEach(myPrice => {
+    const roundedPrice = parseFloat(Number(myPrice).toFixed(2)); // 保留2位小数
+    myPriceFrequency[roundedPrice] = (myPriceFrequency[roundedPrice] || 0) + 1;
+  });
+
+  // 找出我出现频率最高的报价
+  let mostMyPrice = null;
+  let maxMyFrequency = 0;
+  for (let price in myPriceFrequency) {
+    if (myPriceFrequency[price] > maxMyFrequency) {
+      maxMyFrequency = myPriceFrequency[price];
+      mostMyPrice = parseFloat(price);
+    }
+  }
+  // 我的历史最低报价
+  const minMyPrice = myOfferList?.length ? Math.min(...myOfferList) : null;
+
+  const totalBids = offerList.length; // 总报价次数
+  const totalHits = offerList.filter(item => item.is_deal == "1").length; // 总中标次数
+  const hitRate = totalHits / totalBids; // 中标率
+
   // 以初始预计报价为基础进行智能调整
   let currentOffer = initialExpectedPrice;
 
@@ -2410,16 +2453,17 @@ function dynamicPricingAlgorithm(
   // 当连续5次或以上未中标时，寻找历史最高频次中标价并调整
   if (consecutiveMissed >= 5 && offerList.length >= 8) {
     // 如果最高频次的中标价存在，直接向其调整
-    if (mostDealPrice) {
+    let mostPrice = mostDealPrice || mostMyPrice; // 高频中标价或者高频报价
+    if (mostPrice) {
       // 确保调整后的价格不低于成本价+1
-      // const targetPrice = Math.max(mostDealPrice, costPrice + minProfit);
-      const targetPrice = mostDealPrice;
+      // const targetPrice = Math.max(mostPrice, costPrice + minProfit);
+      const targetPrice = mostPrice;
       if (targetPrice < currentOffer) {
         const originalPrice = currentOffer;
         currentOffer = targetPrice;
         const reductionAmount = subDecimal(originalPrice, currentOffer);
         reason.push(
-          `连续 ${consecutiveMissed} 次未中标，向高频中标价 ${mostDealPrice.toFixed(2)} 靠齐，降价：${reductionAmount.toFixed(2)}`
+          `连续 ${consecutiveMissed} 次未中标，向高频${mostDealPrice ? "中标价" : "报价"} ${mostPrice.toFixed(2)} 靠齐，降价：${reductionAmount.toFixed(2)}`
         );
         adjustment = "price_down_to_frequency";
       }
@@ -2429,8 +2473,8 @@ function dynamicPricingAlgorithm(
   // 策略2: 连续中标 - 适当提高报价增加收益
   // 当连续3次或以上中标时，可以适当提高报价以增加收益
   if (consecutiveHit >= 3) {
-    let dealPrice = offerList[0].deal_price;
-    let dealPriceAdd = dealPrice;
+    let dealPrice = offerList[0].deal_price || offerList[0].offer_end_amount;
+    let dealPriceAdd = +dealPrice; // 中标价加价后
     // 检查提价空间：不能超过平台限价
     const availableSpace = subDecimal(supplier_max_price, dealPrice);
 
@@ -2448,34 +2492,30 @@ function dynamicPricingAlgorithm(
       }
     }
     // 取连续中标价和初始价格取最大
-    currentOffer = Math.max(dealPriceAdd, initialExpectedPrice);
-    reason.push(
-      `中标价加价后 ${dealPriceAdd} 和初始价 ${initialExpectedPrice} 的最大值作为目标报价：${currentOffer}`
-    );
-    if (adjustment === "none") adjustment = "aggressive_up_to_max";
+    if (dealPriceAdd > initialExpectedPrice) {
+      currentOffer = +dealPriceAdd;
+      reason.push(
+        `取连续中标价${adjustment == "price_up" ? "加价后" : ""} ${dealPriceAdd} 和初始价 ${initialExpectedPrice} 的最大值作为目标报价：${currentOffer}`
+      );
+    }
   }
 
   // 策略3: 整体中标率极低时 - 直接向历史最低中标价靠拢
-  // 当整体报价次数>=5且中标率低于10%时，采用激进策略
-  if (offerList.length >= 5) {
-    const totalBids = offerList.length;
-    const totalHits = offerList.filter(item => item.is_deal === "1").length;
-    const hitRate = totalHits / totalBids;
-
-    if (hitRate < 0.1 && minDealPrice) {
-      // 中标率低于10%
-      // 直接向历史最低中标价调整,确保调整后的价格不低于成本价+1
-      // const targetPrice = Math.max(minDealPrice, costPrice + minProfit);
-      const targetPrice = minDealPrice;
-      if (targetPrice < currentOffer) {
-        const originalPrice = currentOffer;
-        currentOffer = targetPrice;
-        const reductionAmount = subDecimal(originalPrice, currentOffer);
-        reason.push(
-          `整体中标率极低：${(hitRate * 100).toFixed(1)}%，向历史最低中标价 ${minDealPrice.toFixed(2)} 靠齐，降价：${reductionAmount.toFixed(2)}`
-        );
-        if (adjustment === "none") adjustment = "aggressive_down_to_min";
-      }
+  // 当整体中标率低于10%时，采用激进策略
+  let minPrice = minDealPrice || minMyPrice; // 最低中标价或者我的最低报价
+  if (hitRate < 0.1 && minPrice) {
+    // 中标率低于10%
+    // 直接向历史最低中标价调整,确保调整后的价格不低于成本价+1
+    // const targetPrice = Math.max(minPrice, costPrice + minProfit);
+    const targetPrice = minPrice;
+    if (targetPrice < currentOffer) {
+      const originalPrice = currentOffer;
+      currentOffer = targetPrice;
+      const reductionAmount = subDecimal(originalPrice, currentOffer);
+      reason.push(
+        `整体中标率极低：${(hitRate * 100).toFixed(1)}%，向历史最低${minDealPrice ? "中标价" : "报价"} ${minPrice.toFixed(2)} 靠齐，降价：${reductionAmount.toFixed(2)}`
+      );
+      if (adjustment === "none") adjustment = "aggressive_down_to_min";
     }
   }
 
@@ -2536,6 +2576,8 @@ function dynamicPricingAlgorithm(
       minDealPrice, // 历史最低中标价
       mostDealPrice, // 历史高频中标价
       maxDealPrice, // 历史最高中标价
+      mostMyPrice, // 历史高频我的报价
+      minMyPrice, // 历史我的最低报价
       initialExpectedPrice, // 初始预计报价
       costPrice, // 成本价
       orgProfit, // 报价初始加价利润
