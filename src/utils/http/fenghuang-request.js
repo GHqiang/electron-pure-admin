@@ -89,10 +89,10 @@ const getumidToken = () => {
 
 // 不走代理的url列表
 const noProxyUrlList = [
-  "cinema.citycinemas", // 调试时可注释
+  "cinema.citycinemas" // 调试时可注释
   // "authn.refresh",
-  "cinemafilms.get",
-  "film.cinemafilms"
+  // "cinemafilms.get"
+  // "film.cinemafilms"
   // "schedule.filmschedules",
   // "seat.scheduleseats.get",
   // "seat.scheduleseats.lock",
