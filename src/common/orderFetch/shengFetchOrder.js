@@ -76,6 +76,7 @@ class OrderAutoFetchQueue {
             type,
             status,
             deliverMinute,
+            property,
             stopDeliverTime
           } = item;
           // id             订单id    integer
@@ -112,7 +113,7 @@ class OrderAutoFetchQueue {
             film_img: film.imgUrl,
             show_time: show.startTime,
             rewards: "", // 省的奖励从报价记录里获取
-            quick: deliverMinute > 0, // true表示为快捷订单（需12分钟内完成发货），false表示为特惠订单（需45分钟内完成发货）
+            quick: property, // 区分不同类型订单【0:普通45】【1:限时12】【2:限时5】【3:普通27】
             // 省暂定和猎人针对sfc影院名字一样
             cinema_group: cinema_group,
             cinema_code: film.standardId, // 影院id
