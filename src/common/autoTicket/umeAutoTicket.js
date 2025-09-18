@@ -307,17 +307,17 @@ class OrderAutoTicketQueue {
 
   // 取消订单
   async cancelOrder({ cinemaCode, cinemaLinkId, orderHeaderId, session_id }) {
+    let params = {
+      params: {
+        channelCode: "QD0000001",
+        sysSourceCode: "YZ001",
+        orderHeaderId,
+        cinemaCode,
+        cinemaLinkId
+      },
+      ...(session_id && { session_id })
+    };
     try {
-      let params = {
-        params: {
-          channelCode: "QD0000001",
-          sysSourceCode: "YZ001",
-          orderHeaderId,
-          cinemaCode,
-          cinemaLinkId
-        },
-        ...(session_id && { session_id })
-      };
       const res = await this.umeApi.cannelOneOrder(params);
       this.logger.infoSave("取消订单返回", {
         res,
