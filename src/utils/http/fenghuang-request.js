@@ -15,7 +15,7 @@ window.md51 = md5;
 // 机器登录用户信息
 import { platTokens } from "@/store/platTokens";
 const {
-  userInfo: { user_id }
+  userInfo: { user_id, rule }
 } = platTokens();
 
 // MTOP 配置
@@ -357,6 +357,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       }
       config.headers["APP-NAME"] = app_name;
       config.headers["USER-ID"] = user_id;
+      config.headers["RULE"] = rule;
 
       if (config.method === "get") {
         config.params = params;

@@ -17,7 +17,7 @@ import {
 // 机器登录用户信息
 import { platTokens } from "@/store/platTokens";
 const {
-  userInfo: { user_id }
+  userInfo: { user_id, rule }
 } = platTokens();
 
 // 获取bx-ua及bx-umidtoken
@@ -635,6 +635,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       }
       config.headers["APP-NAME"] = app_name;
       config.headers["USER-ID"] = user_id;
+      config.headers["RULE"] = rule;
       // console.log('请求config', config)
       return config;
     },
