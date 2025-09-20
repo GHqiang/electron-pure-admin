@@ -112,7 +112,7 @@ const createApi = ({ app_name }) => {
   Object.entries(apiUrlObj).map(([funName, apiUrl]) => {
     apiFunObj[funName] = params =>
       axios.post(apiUrl[api_version], params || {}, {
-        timeout: (apiUrl.timeout || 20) * 1000
+        timeout: (apiUrl.timeout || 30) * 1000
       });
   });
   // console.log("apiFunObj", apiFunObj);
