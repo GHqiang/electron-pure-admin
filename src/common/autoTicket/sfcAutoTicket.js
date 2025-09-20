@@ -681,7 +681,10 @@ class OrderAutoTicketQueue {
           movieInfo = movie_data.find(
             item =>
               convertFullwidthToHalfwidth(item.movie_name) ===
-              convertFullwidthToHalfwidth(film_name)
+                convertFullwidthToHalfwidth(film_name) ||
+              convertFullwidthToHalfwidth(film_name).includes(
+                convertFullwidthToHalfwidth(item.movie_name)
+              )
           );
           if (!movieInfo) {
             let targetFilmList = movie_data.map(item => {

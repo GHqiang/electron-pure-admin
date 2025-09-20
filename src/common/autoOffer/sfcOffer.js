@@ -1573,7 +1573,10 @@ class getSfcOfferPrice {
       let movieInfo = movie_data.find(
         item =>
           convertFullwidthToHalfwidth(item.movie_name) ===
-          convertFullwidthToHalfwidth(film_name)
+            convertFullwidthToHalfwidth(film_name) ||
+          convertFullwidthToHalfwidth(film_name).includes(
+            convertFullwidthToHalfwidth(item.movie_name)
+          )
       );
       console.log("movieInfo", movieInfo, film_name);
       if (!movieInfo) {

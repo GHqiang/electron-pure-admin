@@ -626,7 +626,10 @@ class OrderAutoTicketQueue {
           movieInfo = movie_data.find(
             item =>
               convertFullwidthToHalfwidth(item.filmName) ===
-              convertFullwidthToHalfwidth(film_name)
+                convertFullwidthToHalfwidth(film_name) ||
+              convertFullwidthToHalfwidth(film_name).includes(
+                convertFullwidthToHalfwidth(item.filmName)
+              )
           );
           if (!movieInfo) {
             this.logger.warn("获取目标影片信息失败", { movie_data, film_name });

@@ -180,7 +180,10 @@ export default class CinemaManage {
       movieInfo = movieData.find(
         item =>
           convertFullwidthToHalfwidth(item.filmName) ===
-          convertFullwidthToHalfwidth(filmName)
+            convertFullwidthToHalfwidth(filmName) ||
+          convertFullwidthToHalfwidth(filmName).includes(
+            convertFullwidthToHalfwidth(item.filmName)
+          )
       );
       if (!movieInfo) {
         // 模糊匹配

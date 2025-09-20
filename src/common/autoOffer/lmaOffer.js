@@ -1345,7 +1345,10 @@ class getLmaOfferPrice {
         movieInfo = film.find(
           item =>
             convertFullwidthToHalfwidth(item.title) ===
-            convertFullwidthToHalfwidth(film_name)
+              convertFullwidthToHalfwidth(film_name) ||
+            convertFullwidthToHalfwidth(film_name).includes(
+              convertFullwidthToHalfwidth(item.title)
+            )
         );
         if (!movieInfo) {
           let targetFilmList = film.map(item => {

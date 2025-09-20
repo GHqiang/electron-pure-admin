@@ -1352,7 +1352,10 @@ class getUmeOfferPrice {
         movieInfo = movie_data.find(
           item =>
             convertFullwidthToHalfwidth(item.filmName) ===
-            convertFullwidthToHalfwidth(film_name)
+              convertFullwidthToHalfwidth(film_name) ||
+            convertFullwidthToHalfwidth(film_name).includes(
+              convertFullwidthToHalfwidth(item.filmName)
+            )
         );
         if (!movieInfo) {
           let targetFilmList = movie_data.map(item => {
