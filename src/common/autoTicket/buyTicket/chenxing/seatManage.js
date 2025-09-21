@@ -58,7 +58,10 @@ export default class SeatManage {
 
       const targetSeats = this.filterTargetSeats(seatList);
       if (targetSeats.length !== this.order.ticket_num) {
-        this.logger.errorSave("获取目标座位失败");
+        this.logger.errorSave("获取目标座位失败", {
+          targetSeats,
+          ticket_num: this.order.ticket_num
+        });
         return;
       }
 
