@@ -1699,7 +1699,6 @@ class getUmeOfferPrice {
       console.log(conPrefix + "获取影院放映列表参数", params);
       const res = await this.appApi.getMoviePlayInfo(params);
       console.log(conPrefix + "获取影院放映列表返回", res);
-      // 只获取出售中的列表，即将上映暂不返回
       let fimlList =
         res.data
           ?.map(item => item.fimlList)
@@ -1715,7 +1714,12 @@ class getUmeOfferPrice {
       //     fimlList
       //   }
       // });
-      return fimlList;
+      return fimlList.map(item => ({
+        ...item,
+        stillList: null,
+        introduction: null,
+        poster: null
+      }));
     } catch (error) {
       console.error(conPrefix + "获取电影放映信息异常", error);
       this.logList.push({
