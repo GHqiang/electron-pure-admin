@@ -2589,7 +2589,14 @@ function dynamicPricingAlgorithm(
 }
 
 window.dynamicPricingAlgorithm = dynamicPricingAlgorithm;
+
+// 移除括号及括号内的内容 如"12排20座(10300) 12排19座(10300)" 输出: "12排20座 12排19座"
+function removeParenthesesContent(str) {
+  return str.replace(/\([^()]*\)/g, "").trim();
+}
+
 export {
+  removeParenthesesContent, // 移除括号及括号内的内容
   dynamicPrice, // 动态调价处理
   addDecimal, // 加
   subDecimal, // 减

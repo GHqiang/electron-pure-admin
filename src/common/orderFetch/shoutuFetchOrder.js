@@ -10,6 +10,7 @@ import {
   formatTimeOfTime,
   sendWxPusherMessage,
   mockDelay,
+  removeParenthesesContent,
   formatErrInfo
 } from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
@@ -87,10 +88,8 @@ class OrderAutoFetchQueue {
           cinema_group: "",
           cinema_code, // 影院code
           order_number,
-          lockseat: lockseat
-            .replaceAll("(情侣号)", "")
-            .replaceAll("(情侣座)", "")
-            .replaceAll("号", "座"),
+          // 移除括号及括号内的内容 如"12排20座(10300) 12排19座(10300)" 输出: "12排20座 12排19座"
+          lockseat: removeParenthesesContent(lockseat).replaceAll("号", "座"),
           plat_name: "shoutu"
         };
       });
