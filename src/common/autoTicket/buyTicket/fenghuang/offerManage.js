@@ -6,7 +6,8 @@ import {
   roundToHalf,
   formatErrInfo,
   isDateInCurrentMonth,
-  getCinemaLoginInfoList
+  getCinemaLoginInfoList,
+  calculateMarkup
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import {
@@ -699,7 +700,8 @@ class getFenghuangOfferPrice {
 
       // 2. 处理普通报价规则
       const generalRules = this.filterGeneralRules(ruleList);
-      const { fixedRules, addRules } = this.splitRuleTypes(generalRules);
+      const { fixedRules, addAmountRuleList } =
+        this.splitRuleTypes(generalRules);
 
       // 3. 处理固定报价规则的券库存校验
       const validFixedRules = await this.validateQuanStock({
@@ -710,18 +712,49 @@ class getFenghuangOfferPrice {
 
       // 4. 处理会员价加价规则
       let bestFixAddRule = null;
-      if (addRules.length) {
-        let minAddAmountRule = addRules[0];
+      if (addAmountRuleList.length) {
+        let minAddAmountRule = addAmountRuleList[0];
+        // 如果addAmount设置比较特殊，就直接取第一条规则报价,如：30;>=+2;<+1
+        if (
+          addAmountRuleList?.length > 1 &&
+          addAmountRuleList.every(
+            item => item?.addAmount?.split(";")?.length === 1
+          )
+        ) {
+          minAddAmountRule = addAmountRuleList.sort(
+            (itemA, itemB) => itemA.addAmount - itemB.addAmount
+          )?.[0];
+        }
+
+        let addMountRule = minAddAmountRule.addAmount?.split(";");
+        if (addMountRule.length === 1) {
+          minAddAmountRule.realAddMount = addMountRule[0];
+        } else if (addMountRule.length > 1) {
+          minAddAmountRule.addMountRule = addMountRule.slice();
+        }
+
         const memberPriceRes = await this.getMemberPrice({
           order,
           movieData: movieInfo,
           minAddAmountRule
         });
         if (memberPriceRes) {
-          bestFixAddRule = this.processAddRule(
-            minAddAmountRule,
-            memberPriceRes
-          );
+          if (
+            !minAddAmountRule.realAddMount &&
+            minAddAmountRule.addMountRule?.length > 1
+          ) {
+            let realAddMount = this.getRealAddMount({
+              real_member_price: memberPriceRes.real_member_price,
+              addMountRule: minAddAmountRule.addMountRule
+            });
+            minAddAmountRule.realAddMount = realAddMount;
+          }
+          if (minAddAmountRule.realAddMount) {
+            bestFixAddRule = this.processAddRule(
+              minAddAmountRule,
+              memberPriceRes
+            );
+          }
         }
       }
 
@@ -741,6 +774,22 @@ class getFenghuangOfferPrice {
     } catch (error) {
       this.logger.errorSave("获取最低报价规则异常", error);
       return null;
+    }
+  }
+
+  // 获取真实加价金额
+  getRealAddMount({ real_member_price, addMountRule }) {
+    try {
+      let comparePrice = addMountRule[0];
+      let realAddMount = calculateMarkup(
+        comparePrice,
+        real_member_price,
+        addMountRule.slice(1)
+      );
+      console.log("realAddMount", realAddMount);
+      return realAddMount;
+    } catch (error) {
+      this.logger.errorSave("获取真实加价金额异常", error);
     }
   }
 
@@ -770,7 +819,7 @@ class getFenghuangOfferPrice {
       fixedRules: rules
         .filter(item => item.offerType === "1" && item.offerAmount)
         .sort((a, b) => a.offerAmount - b.offerAmount),
-      addRules: rules
+      addAmountRuleList: rules
         .filter(item => item.offerType === "2" && item.addAmount)
         .sort((a, b) => a.addAmount - b.addAmount)
     };
@@ -820,7 +869,7 @@ class getFenghuangOfferPrice {
       ONE_STEP_PLAT_LIST.includes(this.plat_name) ? 0.1 : 0.5
     );
     processedRule.memberOfferAmount =
-      processedRule.round_member_price + Number(processedRule.addAmount);
+      processedRule.round_member_price + Number(processedRule.realAddMount);
 
     this.recordMemberPriceDetails(processedRule);
     return processedRule;
