@@ -753,7 +753,7 @@ class getUmeOfferPrice {
         item => item.offerType === "2" && item.addAmount
       );
       let minAddAmountRule = addAmountRuleList?.[0];
-      // 如果addAmount设置比较特殊，就直接取第一条规则报价,如：30;>=+2;<+1
+      // 如果addAmount设置比较特殊，严谨来说只能有且仅有一条规则或者其规则再首位时才能生效；如：30;>=+2;<+1
       if (
         addAmountRuleList?.length > 1 &&
         addAmountRuleList.every(
