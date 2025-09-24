@@ -1473,12 +1473,16 @@ class getUmeOfferPrice {
         filmUniqueId,
         showDate: start_day
       });
+      // if (!showList) {
+      //   console.warn("获取某个放映日期的场次列表失败");
+      //   return;
+      // }
       // 解决同一时间多场次问题
-      let targetShowList = showList.filter(
+      let targetShowList = showList?.filter(
         item => +new Date(item.showDateTime) == +new Date(show_time)
       );
-      let targetShow = targetShowList[0];
-      if (targetShowList.length > 1) {
+      let targetShow = targetShowList?.[0];
+      if (targetShowList?.length > 1) {
         targetShowList = targetShowList.map(item => {
           const repeatedCharsResult = findMostRepeatedChars(
             item.hallName,
@@ -1520,11 +1524,11 @@ class getUmeOfferPrice {
           showDate: getPreviousDay(start_day)
         });
         // 解决同一时间多场次问题
-        let targetShowList = showList1.filter(
+        let targetShowList = showList1?.filter(
           item => +new Date(item.showDateTime) == +new Date(show_time)
         );
-        targetShow = targetShowList[0];
-        if (targetShowList.length > 1) {
+        targetShow = targetShowList?.[0];
+        if (targetShowList?.length > 1) {
           targetShowList = targetShowList.map(item => {
             const repeatedCharsResult = findMostRepeatedChars(
               item.hallName,
