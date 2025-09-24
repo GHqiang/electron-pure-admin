@@ -756,7 +756,9 @@ class getUmeOfferPrice {
       // 如果addAmount设置比较特殊，就直接取第一条规则报价,如：30;>=+2;<+1
       if (
         addAmountRuleList?.length > 1 &&
-        addAmountRuleList[0].addAmount?.split(";")?.length === 1
+        addAmountRuleList.every(
+          item => item?.addAmount?.split(";")?.length === 1
+        )
       ) {
         minAddAmountRule = addAmountRuleList.sort(
           (itemA, itemB) => itemA.addAmount - itemB.addAmount
