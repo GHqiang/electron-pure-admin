@@ -357,6 +357,7 @@ export default class CinemaManage {
       let params = {
         cinemaLinkId,
         pageInit: false
+        // isNoCache: true // 放开时可在报价规则那里调试是否走代理
       };
       this.logger.info("获取电影放映信息参数", params);
       let res = await this.appApi.getMoviePlayInfo(params);
