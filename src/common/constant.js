@@ -18,6 +18,9 @@ const ORDER_FORM = {
   mahua: "麻花"
 };
 
+// 最小允许报价时间差(报价结束时间距离当前时间差)
+const MIN_ALLOW_OFFER_SJC = 1 * 1000;
+
 // 无手续费平台
 const NO_FEE_PLAT_LIST = ["yinghuasuan", "haha", "shoutu", "mahua"];
 
@@ -309,5 +312,6 @@ export {
   OUT_RULE_LIST,
   IN_RULE_LIST,
   SFC_CINEMA_NAME,
-  CINEMA_STATUS_OBJ
+  CINEMA_STATUS_OBJ,
+  MIN_ALLOW_OFFER_SJC
 };

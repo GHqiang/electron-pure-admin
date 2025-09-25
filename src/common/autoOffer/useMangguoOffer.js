@@ -8,7 +8,11 @@ import {
 } from "@/utils/utils";
 import svApi from "@/api/sv-api"; // 机器api
 import mangguoApi from "@/api/mangguo-api"; // 芒果平台api
-import { GET_APP_TYPE_LIST, GET_APP_INFO } from "@/common/constant.js";
+import {
+  GET_APP_TYPE_LIST,
+  GET_APP_INFO,
+  MIN_ALLOW_OFFER_SJC
+} from "@/common/constant.js";
 // 获取最终报价信息实体类
 import getOfferPriceFun from "./commonOfferHandle.js";
 // 平台toke列表
@@ -54,7 +58,7 @@ class OrderAutoOfferQueue {
     // 增加报价截止时间判断，小于等于1秒则不处理
     if (
       item.offer_end_time &&
-      item.offer_end_time - new Date().getTime() <= 1 * 1000
+      item.offer_end_time - new Date().getTime() <= MIN_ALLOW_OFFER_SJC
     ) {
       return;
     }
