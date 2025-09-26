@@ -503,6 +503,7 @@ class getFenghuangOfferPrice {
           movieInfo,
           fenghuangToken
         );
+        if (!seatTotalPrice) return null;
         basePrice = (seatTotalPrice * 100) / order.ticket_num / 100;
         this.logger.infoSave("座位总价除以票数得到会员价", {
           basePrice,
@@ -559,6 +560,14 @@ class getFenghuangOfferPrice {
         if (seatInfo.length >= ticket_num) {
           break;
         }
+      }
+      if (seatInfo.length != ticket_num) {
+        this.logger.errorSave("获取座位价格前获取座位失败", {
+          seatInfo,
+          ticket_num,
+          seat_data
+        });
+        return;
       }
       this.logger.infoSave("获取座位价格前获取座位完成:", { seatInfo });
       // 座位支付总价格
