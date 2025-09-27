@@ -2,6 +2,7 @@
 
 import axios from "axios";
 import { ElMessage } from "element-plus";
+import { sendWxPusherMessage } from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
 // 创建axios实例
@@ -52,7 +53,15 @@ instance.interceptors.response.use(
       isErrorByLieRen &&
       !whitelistSp.some(item => response.config.url.includes(item))
     ) {
-      ElMessage.error(data.message || data.msg || "请求失败");
+      ElMessage.error(data.message || "请求失败");
+      if (data.message?.includes("Token校验失败或已失效")) {
+        sendWxPusherMessage({
+          msgType: 1,
+          app_name: "芒果平台",
+          expirePhone: "机器手机号",
+          transferTip: `登录失效，请检查登录信息维护`
+        });
+      }
       return Promise.reject(data);
     }
     return data;
@@ -68,9 +77,7 @@ instance.interceptors.response.use(
           //   store.dispatch('auth/logout');
           break;
         default:
-          ElMessage.error(
-            `请求错误 ${response.status}: ${error.message || error.msg}`
-          );
+          ElMessage.error(`请求错误 ${response.status}: ${error.message}`);
       }
     } else {
       ElMessage.error("网络连接异常，请稍后再试");
