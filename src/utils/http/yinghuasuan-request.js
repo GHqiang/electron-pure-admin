@@ -53,15 +53,15 @@ instance.interceptors.response.use(
       isErrorByLieRen &&
       !whitelistSp.some(item => response.config.url.includes(item))
     ) {
-      if (data.msg?.includes("登陆过期")) {
+      if (data.msg?.includes("登陆") || data.msg?.includes("登录")) {
         sendWxPusherMessage({
           msgType: 1,
           app_name: "影划算平台",
           expirePhone: "机器手机号",
-          transferTip: `影划算平台登录失效，请检查登录信息维护`
+          transferTip: `平台登录失效，请检查登录信息维护`
         });
       }
-      ElMessage.error(data.message || data.msg || "请求失败");
+      ElMessage.error(data.msg || "请求失败");
       return Promise.reject(data);
     }
     return data;
