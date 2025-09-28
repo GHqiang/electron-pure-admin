@@ -2270,7 +2270,7 @@ const dynamicPrice = async ({ order, offerRule, logger }) => {
       cinema_code,
       queryFields: "offer_end_amount,deal_price,is_deal",
       page_num: 1,
-      page_size: 15
+      page_size: 10
     };
     const res = await svApi.queryDealOfferList(params);
     const offerList = res.data.offerList || [];
@@ -2379,6 +2379,9 @@ function dynamicPricingAlgorithm(
   // 统计连续中标/未中标情况（基于倒序数组，从前往后统计最新的）
   let consecutiveMissed = 0; // 连续未中标次数
   let consecutiveHit = 0; // 连续中标次数
+  let lastDealPrice = null; // 最近一次中标价
+  // 获取我的最近报价（最新一条记录的报价）
+  const lastMyPrice = parseFloat(offerList[0].offer_end_amount);
 
   // 从最新记录开始统计连续未中标次数
   for (let i = 0; i < offerList.length; i++) {
@@ -2392,6 +2395,9 @@ function dynamicPricingAlgorithm(
   // 从最新记录开始统计连续中标次数
   for (let i = 0; i < offerList.length; i++) {
     if (offerList[i].is_deal == "1") {
+      if (!lastDealPrice) {
+        lastDealPrice = parseFloat(offerList[i].deal_price);
+      }
       consecutiveHit++;
     } else {
       break; // 遇到未中标记录则停止统计
@@ -2500,20 +2506,33 @@ function dynamicPricingAlgorithm(
     }
   }
 
-  // 策略3: 整体中标率极低时 - 直接向历史最低中标价靠拢
+  // 策略3: 整体中标率极低时 - 直接向最近一次中标价和高频中标价的最小值减去步进值靠拢
   // 当整体中标率低于10%时，采用激进策略
-  let minPrice = minDealPrice || minMyPrice; // 最低中标价或者我的最低报价
-  if (hitRate < 0.1 && minPrice) {
+  if (hitRate < 0.1) {
     // 中标率低于10%
-    // 直接向历史最低中标价调整,确保调整后的价格不低于成本价+1
-    // const targetPrice = Math.max(minPrice, costPrice + minProfit);
-    const targetPrice = minPrice;
+    let aggressivePrice = null;
+
+    // 优先获取最近一次中标价和最多中标价的最小值
+    if (lastDealPrice && mostDealPrice) {
+      aggressivePrice = Math.min(lastDealPrice, mostDealPrice);
+      reason.push(
+        `中标率极低，取最近一次中标价${lastDealPrice}和最多中标价${mostDealPrice}的最小值：${aggressivePrice}`
+      );
+    }
+    // 如果获取不到中标价数据，则取我的最近报价和我的高频报价的最小值
+    else if (lastMyPrice && mostMyPrice) {
+      aggressivePrice = Math.min(lastMyPrice, mostMyPrice);
+      reason.push(
+        `中标率极低且无中标价数据，取我的最近报价${lastMyPrice}和我的高频报价${mostMyPrice}的最小值：${aggressivePrice}`
+      );
+    }
+    const targetPrice = subDecimal(aggressivePrice, stepValue);
     if (targetPrice < currentOffer) {
       const originalPrice = currentOffer;
       currentOffer = targetPrice;
       const reductionAmount = subDecimal(originalPrice, currentOffer);
       reason.push(
-        `整体中标率极低：${(hitRate * 100).toFixed(1)}%，向历史最低${minDealPrice ? "中标价" : "报价"} ${minPrice.toFixed(2)} 靠齐，降价：${reductionAmount.toFixed(2)}`
+        `整体中标率极低：${(hitRate * 100).toFixed(1)}%，使用激进策略报价 ${targetPrice} 靠齐，降价：${reductionAmount}`
       );
       if (adjustment === "none") adjustment = "aggressive_down_to_min";
     }
