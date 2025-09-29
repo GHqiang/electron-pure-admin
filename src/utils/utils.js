@@ -2379,7 +2379,7 @@ function dynamicPricingAlgorithm(
   // 统计连续中标/未中标情况（基于倒序数组，从前往后统计最新的）
   let consecutiveMissed = 0; // 连续未中标次数
   let consecutiveHit = 0; // 连续中标次数
-  let lastDealPrice = null; // 最近一次中标价
+  let lastDealPrice = parseFloat(deal_price_list[0]); // 最近一次中标价
   // 获取我的最近报价（最新一条记录的报价）
   const lastMyPrice = parseFloat(offerList[0].offer_end_amount);
 
@@ -2395,9 +2395,6 @@ function dynamicPricingAlgorithm(
   // 从最新记录开始统计连续中标次数
   for (let i = 0; i < offerList.length; i++) {
     if (offerList[i].is_deal == "1") {
-      if (!lastDealPrice) {
-        lastDealPrice = parseFloat(offerList[i].deal_price);
-      }
       consecutiveHit++;
     } else {
       break; // 遇到未中标记录则停止统计
