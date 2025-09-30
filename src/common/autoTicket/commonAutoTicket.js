@@ -305,7 +305,7 @@ class OrderAutoTicketQueue {
         cinema_name,
         hall_name,
         film_name,
-        lockseat,
+        lockseat: lockseat || offerRule?.lockseat,
         show_time,
         cinema_group,
         offer_type: offerRule?.offer_type || "",

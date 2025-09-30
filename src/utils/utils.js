@@ -2268,13 +2268,24 @@ const dynamicPrice = async ({ order, offerRule, logger }) => {
       plat_name,
       user_id: tokens?.userInfo?.user_id,
       cinema_code,
-      queryFields: "offer_end_amount,deal_price,is_deal",
+      queryFields: "offer_end_amount,deal_price,is_deal,order_number",
       page_num: 1,
       page_size: 10
     };
     const res = await svApi.queryDealOfferList(params);
-    const offerList = res.data.offerList || [];
+    let offerList = res.data.offerList || [];
     logger.infoSave("动态调价获取历史中标记录", { offerList });
+    // 这样不行，因为报价记录表保存时间少，还是得往中标记录表同步才行
+    // 有些平台还没有同步中标记录，所以需要获取我的历史报价记录进行调价判断
+    // if (!offerList.length) {
+    //   const res = await svApi.queryOfferList({
+    //     ...params,
+    //     order_status: "1",
+    //     isNeedTotalNum: 0
+    //   });
+    //   offerList = res.data.offerList || [];
+    //   logger.infoSave("动态调价获取我的历史报价记录", { offerList });
+    // }
     // 实际加价 优先取真实加价
     let actual_amount = realAddMount || addAmount;
     const orgProfit = actual_amount

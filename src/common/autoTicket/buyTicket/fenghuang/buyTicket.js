@@ -73,6 +73,7 @@ export default class BuyTicket {
           return await this.orderManage.transferOrder();
         }
       }
+      this.offerRule.lockseat = this.order.lockseat;
       // 5、一键买票
       await mockDelay(1); // 解锁成功后延迟1秒再执行
       const result = await this.oneClickBuyTicket({

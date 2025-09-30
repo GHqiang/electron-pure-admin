@@ -174,7 +174,7 @@ class OrderAutoTicketQueue {
               errInfo = "";
             }
             let params = {
-              order,
+              order: JSON.parse(JSON.stringify(this.order)),
               ticketRes: res,
               appFlag,
               errMsg,
@@ -440,6 +440,7 @@ class OrderAutoTicketQueue {
         return { transferParams };
       }
     }
+    offerRule.lockseat = this.order.lockseat;
     try {
       // 解锁成功后延迟6秒再执行
       await mockDelay(1);
