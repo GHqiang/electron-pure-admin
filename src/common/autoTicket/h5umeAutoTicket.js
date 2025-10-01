@@ -3103,7 +3103,7 @@ const addOrderHandleRecored = async ({
       cinema_name: order.cinema_name,
       hall_name: order.hall_name,
       film_name: order.film_name,
-      lockseat: order.lockseat,
+      lockseat: order.lockseat || res?.offerRule?.lockseat,
       show_time: order.show_time,
       cinema_group: order.cinema_group,
       offer_type: res?.offerRule?.offer_type || "",
