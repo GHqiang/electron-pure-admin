@@ -14,7 +14,8 @@ import {
   calculateMarkup,
   getCinemaLoginInfoList,
   findMostRepeatedChars,
-  couponInfoSpecial
+  couponInfoSpecial,
+  divDecimal
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
@@ -1097,7 +1098,7 @@ class getUmeOfferPrice {
         level: "info",
         info: {
           displayPrice: "会员价：" + displayPrice,
-          maxSeatPrice: "座位最高总价：" + maxSeatPrice,
+          maxSeatPrice: "座位最高价：" + maxSeatPrice,
           privilegeTags
         }
       });
@@ -1140,7 +1141,7 @@ class getUmeOfferPrice {
         cardList.sort((a, b) => a.card_discount - b.card_discount);
         // 按最低折扣取值报价
         let discount = cardList[0]?.card_discount;
-        let real_member_price = Number(member_total_price);
+        let real_member_price = divDecimal(member_total_price, ticket_num);
         let member_cost_price = discount
           ? (Number(member_total_price) * 100 * discount) / 10000
           : Number(member_total_price);

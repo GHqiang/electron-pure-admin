@@ -412,6 +412,7 @@ const againTicket = async ({ order_number, user_id }) => {
     }
     let order = ticketLogInfo?.newOrders || ticketLogInfo?.newOrder;
     console.warn("待重新出票订单信息", order);
+    return;
     // 动态生成事件名称
     const eventName = `newOrder_${order.appName}`;
     // 创建一个事件对象
