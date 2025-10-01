@@ -474,7 +474,7 @@ export default class CinemaManage {
           false
         );
       }
-      this.logger.errorSave("匹配影片放映场次失败", { showLis, cinemaInfo });
+      this.logger.errorSave("匹配影片放映场次失败", { showList, cinemaInfo });
     } catch (error) {
       this.logger.errorSave("场次匹配异常", formatErrInfo(error));
     }
