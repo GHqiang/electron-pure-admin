@@ -1210,7 +1210,7 @@ class OrderAutoTicketQueue {
       // 报价记录里的真实会员价
       let real_member_price = offerRule?.real_member_price || 0;
       let real_member_total_price =
-        (real_member_price * 1000 * 100 * ticket_num) / 1000;
+        (real_member_price * 1000 * ticket_num) / 1000;
       // 支付前校验用卡价格
       if (offerRule.offer_type !== "1" && card_id) {
         if (payAmount > real_member_total_price) {
