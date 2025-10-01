@@ -227,7 +227,7 @@
       <el-table-column label="操作" fixed="right" align="center" width="210">
         <template
           #default="{
-            row: { order_status, profit, id, order_number, user_id }
+            row: { order_status, profit, id, order_number, user_id, lockseat }
           }"
         >
           <el-button
@@ -411,7 +411,7 @@ const againTicket = async ({ order_number, user_id, lockseat }) => {
       ticketLogInfo = JSON.parse(ticketLogInfo);
     }
     let order = ticketLogInfo?.newOrders || ticketLogInfo?.newOrder;
-    if (order?.lockseat) {
+    if (!order?.lockseat) {
       order.lockseat = lockseat;
     }
     console.warn("待重新出票订单信息", order);
