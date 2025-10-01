@@ -136,7 +136,7 @@
             label="操作"
             fixed="right"
             align="center"
-            width="100"
+            width="160"
           >
             <template #default="scope">
               <el-button
@@ -144,6 +144,12 @@
                 type="primary"
                 @click="editCard(scope.row, '1')"
                 >编辑</el-button
+              >
+              <el-button
+                size="small"
+                type="warning"
+                @click="deleteRow(scope.row)"
+                >删除</el-button
               >
             </template>
           </el-table-column>
@@ -642,6 +648,32 @@ const handleCurrentChange = val => {
 
 // 弹框实例
 const sfcDialogRef = ref(null);
+
+// 删除单行规则
+const deleteRow = (index, row) => {
+  ElMessageBox.confirm("确定要删除该记录吗?", "提示", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning",
+    showClose: false,
+    closeOnClickModal: false,
+    closeOnPressEscape: false
+  })
+    .then(async () => {
+      await svApi.deleteById({ id: row.id });
+      searchData();
+      ElMessage({
+        type: "success",
+        message: "删除完成"
+      });
+    })
+    .catch(() => {
+      ElMessage({
+        type: "info",
+        message: "删除取消"
+      });
+    });
+};
 
 // 编辑影院信息
 const editCard = (row, type) => {

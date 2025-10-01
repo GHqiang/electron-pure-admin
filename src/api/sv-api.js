@@ -156,6 +156,10 @@ const deleteCinemaMatch = params =>
 // 批量删除影院映射信息
 const batchDeleteCinemaMatch = params =>
   axios.post("/svpi/cinemaCodeMatch/batchdelete", params);
+
+// 根据id删除影院映射信息
+const deleteById = params =>
+  axios.post("/svpi/cinemaCodeMatch/deleteById", params);
 // 添加影院映射信息
 const addCinemaMatch = params =>
   axios.post("/svpi/cinemaCodeMatch/add", params);
@@ -307,6 +311,7 @@ const svApi = {
   queryCinemaMatchList,
   deleteCinemaMatch,
   batchDeleteCinemaMatch,
+  deleteById,
   addCinemaMatch,
   batchAddCinemaMatch,
   updateCinemaMatch,
