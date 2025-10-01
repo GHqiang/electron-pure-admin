@@ -234,7 +234,7 @@
             v-if="order_status === '2'"
             size="small"
             type="primary"
-            @click="againTicket({ order_number, user_id, id })"
+            @click="againTicket({ order_number, user_id, id, lockseat })"
             >重新出票</el-button
           >
 
@@ -397,7 +397,7 @@ const searchData = async () => {
   }
 };
 
-const againTicket = async ({ order_number, user_id }) => {
+const againTicket = async ({ order_number, user_id, lockseat }) => {
   try {
     const res = await svApi.queryLogRecord({
       order_number,
@@ -411,6 +411,9 @@ const againTicket = async ({ order_number, user_id }) => {
       ticketLogInfo = JSON.parse(ticketLogInfo);
     }
     let order = ticketLogInfo?.newOrders || ticketLogInfo?.newOrder;
+    if (order?.lockseat) {
+      order.lockseat = lockseat;
+    }
     console.warn("待重新出票订单信息", order);
     return;
     // 动态生成事件名称
