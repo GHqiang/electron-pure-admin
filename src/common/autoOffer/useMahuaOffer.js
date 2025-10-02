@@ -4,8 +4,11 @@ import {
   logUpload, // 日志上传
   mockDelay, // 模拟延时
   formatErrInfo, // 格式化errInfo
-  getCinemaLoginInfoList
+  getCinemaLoginInfoList,
+  dynamicPrice
 } from "@/utils/utils";
+// 统一日志类
+import Logger from "@/common/logger";
 import svApi from "@/api/sv-api"; // 机器api
 import mahuaApi from "@/api/mahua-api"; // 麻花平台api
 import {
@@ -294,6 +297,8 @@ class OrderAutoOfferQueue {
         rewards: order.rewards, // 是否是奖励订单 1是 0否
         rule: tokens.userInfo.rule,
         offer_rule_id: offerResult?.offerRule?.id,
+        adjust_price: offerResult?.offerRule?.adjustPrice, // 动态调价调整价格
+        price_spread: offerResult?.offerRule?.price_spread, // 成本价距离高频中标价的差值
         app_type: order.app_type_code
       };
       // 上传该订单的运行日志
@@ -374,7 +379,7 @@ class OrderAutoOfferQueue {
         console.error(conPrefix + "获取最终报价返回空");
         return;
       }
-      const { endPrice, offerRule, err_msg, err_info, app_name } = result || {};
+      let { endPrice, offerRule, err_msg, err_info, app_name } = result || {};
       console.warn(conPrefix + "获取最终报价返回", endPrice);
       if (!endPrice) {
         return { offerRule, err_msg, err_info };
@@ -382,6 +387,15 @@ class OrderAutoOfferQueue {
       if (app_name === "wanxiangh5") {
         order.app_name = app_name;
       }
+      // 动态调价处理
+      let logger = new Logger({
+        logType: 1
+      });
+      logger.init(order);
+      endPrice = await dynamicPrice({ order, offerRule, logger });
+      offerRule.offer_end_amount = endPrice;
+      console.warn("动态调价后的最终报价", endPrice, offerRule);
+      logger.logUpload();
       const res = await this.submitOffer({
         order_id: order.id,
         price: "" + endPrice
