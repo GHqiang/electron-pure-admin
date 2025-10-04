@@ -59,7 +59,7 @@
           />
         </template>
       </el-table-column>
-      <el-table-column
+      <!-- <el-table-column
         v-if="IN_RULE_LIST.includes(rule)"
         prop="syncPageSize"
         width="160"
@@ -74,7 +74,7 @@
             @blur="saveEdit(row.id)"
           />
         </template>
-      </el-table-column>
+      </el-table-column> -->
       <el-table-column prop="platToken" label="平台Token">
         <template #default="{ row, $index }">
           <span v-if="row.id !== editingRowId">{{ row.platToken }}</span>
@@ -103,7 +103,7 @@
           <span v-if="row.id !== editingRowId">{{ row.userUUID }}</span>
           <el-input
             v-if="
-              ['shoutu', 'lieren'].includes(row.platName) &&
+              ['shoutu', 'lieren', 'mangguo'].includes(row.platName) &&
               row.id === editingRowId
             "
             v-model="editingRow.userUUID"
@@ -401,14 +401,14 @@ const oneClickStart = () => {
           isStartOffer && platOfferQueueObj[item.platName].start();
           isStartFetch && platFetchOrderQueueObj[item.platName].start();
           // 1分钟同步1次中标价
-          const { platName, syncPageSize } = item;
-          if (syncPageSize && syncPricePlatList.includes(platName)) {
-            syncPriceHandle(platName, syncPageSize);
-            syncIntervalObj[platName] = setInterval(
-              () => syncPriceHandle(platName, syncPageSize),
-              1000 * 60
-            );
-          }
+          // const { platName, syncPageSize } = item;
+          // if (syncPageSize && syncPricePlatList.includes(platName)) {
+          //   syncPriceHandle(platName, syncPageSize);
+          //   syncIntervalObj[platName] = setInterval(
+          //     () => syncPriceHandle(platName, syncPageSize),
+          //     1000 * 60
+          //   );
+          // }
         }
       });
 
@@ -497,13 +497,13 @@ const singleStartOrStop = ({ id, platToken, platName, syncPageSize }, flag) => {
     isStartOffer && platOfferQueueObj[platName].start();
     isStartFetch && platFetchOrderQueueObj[platName].start();
     // 1分钟同步1次中标价
-    if (syncPageSize && syncPricePlatList.includes(platName)) {
-      syncPriceHandle(platName, syncPageSize);
-      syncIntervalObj[platName] = setInterval(
-        () => syncPriceHandle(platName, syncPageSize),
-        1000 * 60
-      );
-    }
+    // if (syncPageSize && syncPricePlatList.includes(platName)) {
+    //   syncPriceHandle(platName, syncPageSize);
+    //   syncIntervalObj[platName] = setInterval(
+    //     () => syncPriceHandle(platName, syncPageSize),
+    //     1000 * 60
+    //   );
+    // }
     // 删除没有登录信息的队列
     let loginInfoList = getCinemaLoginInfoList();
     Object.keys(APP_LIST.value).forEach(item => {
@@ -638,32 +638,32 @@ const syncPriceHandle = async (plat_name, syncPageSize) => {
       //   // syncOrderList.push(...shengList);
       // });
     } else if (plat_name === "mangguo") {
-      promiseList.push(
-        mangguoApi.queryOfferRecord({
-          order_type: 2,
-          page: 1,
-          page_size: syncPageSize,
-          cinema_name: ""
-        })
-      );
-      const results = await Promise.allSettled(promiseList);
-      console.warn("芒果获取报价记录返回", results);
-      results.forEach(item => {
-        // 接口返回和预计不准
-        let mangguoList = item?.value?.data?.list || [];
-        mangguoList = mangguoList
-          .filter(
-            item =>
-              item.offer_amount !== item.supplier_end_price &&
-              item.supplier_end_price
-          )
-          .map(item => ({
-            order_number: item.order_number,
-            supplier_end_price: item.supplier_end_price,
-            plat_name: "mangguo"
-          }));
-        syncOrderList.push(...mangguoList);
-      });
+      // promiseList.push(
+      //   mangguoApi.queryOfferRecord({
+      //     order_type: 2,
+      //     page: 1,
+      //     page_size: syncPageSize,
+      //     cinema_name: ""
+      //   })
+      // );
+      // const results = await Promise.allSettled(promiseList);
+      // console.warn("芒果获取报价记录返回", results);
+      // results.forEach(item => {
+      //   // 接口返回和预计不准
+      //   let mangguoList = item?.value?.data?.list || [];
+      //   mangguoList = mangguoList
+      //     .filter(
+      //       item =>
+      //         item.offer_amount !== item.supplier_end_price &&
+      //         item.supplier_end_price
+      //     )
+      //     .map(item => ({
+      //       order_number: item.order_number,
+      //       supplier_end_price: item.supplier_end_price,
+      //       plat_name: "mangguo"
+      //     }));
+      //   syncOrderList.push(...mangguoList);
+      // });
     }
     console.warn("未中标的报价记录", plat_name, syncOrderList);
     if (syncOrderList.length) {
