@@ -147,8 +147,8 @@ class OrderAutoOfferQueue {
       // 奖励百分比枚举
       const rewardsTypeObj = {
         0: 0,
-        1: 2.5,
-        2: 3,
+        1: 1.5,
+        2: 2.5,
         3: 0
       };
       let sfcStayOfferlist = stayList.map(item => {
@@ -161,7 +161,7 @@ class OrderAutoOfferQueue {
           supplierCode, // 供应商号
           seatInfo, // 座位信息
           orderCode,
-          property // 奖励字段标识0 （45分钟无奖励）1（12分钟奖励中标价格3个点）2（五分钟奖励订单4个点） 3 （27分钟无奖励）
+          property // 奖励字段标识0 （45分钟无奖励）1（10分钟奖励中标价格1.5个点）2（五分钟奖励订单2.5个点） 3 （27分钟无奖励）
         } = item;
         // orderId    订单id    integer
         // id         抢单id    integer
