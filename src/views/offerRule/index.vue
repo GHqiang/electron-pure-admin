@@ -80,6 +80,7 @@
               v-model="formData.quanValue"
               placeholder="用券类型"
               style="width: 194px"
+              filterable
               clearable
             >
               <el-option

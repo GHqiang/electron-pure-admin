@@ -361,6 +361,7 @@
             v-model="formData.quanValue"
             placeholder="用券类型"
             multiple
+            filterable
             clearable
           >
             <el-option
@@ -412,6 +413,7 @@
                 v-model="formData.auto_quan_value"
                 placeholder="用券类型"
                 style="width: 194px"
+                filterable
                 clearable
               >
                 <el-option
