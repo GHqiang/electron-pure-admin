@@ -57,7 +57,7 @@ const paramsHandle = (params, app_name) => {
       k: params?.session_id || token, // 登录接口返回token
       t: 5,
       r: 1,
-      v: "V4.0.2",
+      v: appInfo?.api_v || "V4.0.2",
       s: "Windows 11 x64",
       i: "00000000-0000-0000-0000-000000000000",
       d: "microsoft",

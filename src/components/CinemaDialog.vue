@@ -161,12 +161,12 @@
         </el-form-item>
         <el-form-item
           v-if="formData.app_type_code === 'chenxing_applet'"
-          label="辰星api版本"
+          label="辰星api标识"
           prop="api_version"
         >
           <el-input
             v-model="formData.api_version"
-            placeholder="请输入辰星api版本"
+            placeholder="请输入辰星api标识"
             clearable
           />
           <span style="color: red"
@@ -187,6 +187,21 @@
             clearable
           />
           <span style="color: red">注意：仅辰星C端影院需要，3.0C端不需要</span>
+        </el-form-item>
+        <el-form-item
+          v-if="
+            formData.app_type_code === 'chenxing_applet' &&
+            formData.api_version === '3.0C'
+          "
+          label="辰星api版本"
+          prop="api_v"
+        >
+          <el-input
+            v-model="formData.api_v"
+            placeholder="请输入辰星api版本"
+            clearable
+          />
+          <span style="color: red">注意：可通过任意接口参数v字段获取</span>
         </el-form-item>
         <el-form-item
           v-if="formData.app_type_code === 'fenghuang_applet'"
@@ -273,6 +288,7 @@ let formData = reactive({
   channelName: "",
   appId: "",
   api_version: "",
+  api_v: '',
   status: "1",
   is_out_use: "1",
   remark: ""
@@ -316,6 +332,9 @@ const rules = {
   ],
   appId: [
     { required: true, message: "辰星C端系列影院appId不能为空", trigger: "blur" }
+  ],
+  api_v: [
+    { required: true, message: "辰星3.0C端系列影院api版本不能为空", trigger: "blur" }
   ]
 };
 
@@ -335,6 +354,7 @@ const resetForm = el => {
   formData.channelCode = "";
   formData.appId = "";
   formData.api_version = "";
+  formData.api_v = "";
   formData.channelName = "";
   formData.remark = "";
   // formData.group_list = "";
@@ -354,6 +374,7 @@ const appTypeChange = val => {
   formData.channelCode = "";
   formData.appId = "";
   formData.api_version = "";
+  formData.api_v = "";
   formData.channelName = "";
 };
 // 打开弹窗
@@ -381,6 +402,7 @@ const open = async cinemaInfo => {
         formData.channelName = formInfo.channelName;
         formData.appId = formInfo.appId;
         formData.api_version = formInfo.api_version;
+        formData.api_v = formInfo.api_v;
         formData.status = formInfo.status || "1";
         formData.is_out_use = formInfo.is_out_use || "1";
         formData.remark = formInfo.remark;
