@@ -307,12 +307,7 @@ export default class BuyTicket {
           // 取最低价
           basePrice = discountList
             .filter(item => {
-              if (item.cardLevelCode && item.featureAppNo) {
-                return this.usableCardList.some(
-                  itemA => itemA.card_num === item.featureAppNo
-                );
-              }
-              return true;
+              return item.cardLevelCode;
             })
             .map(item => item.price - item.cinemaPayAmount)
             .sort((a, b) => a - b)?.[0];

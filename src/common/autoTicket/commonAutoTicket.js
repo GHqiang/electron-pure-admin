@@ -56,24 +56,24 @@ class OrderAutoTicketQueue {
       id: "12412221440316515",
       tpp_price: 42,
       supplier_end_price: 32,
-      city_name: "重庆",
+      city_name: "南京",
       cinema_addr: "雨花台区软件大道109号雨花客厅E-PARK北区3层",
       ticket_num: 1,
-      cinema_name: "重庆华熙国际影城",
-      hall_name: "5号厅-(影城会员周二19.9元观影)",
-      film_name: "长安的荔枝",
+      cinema_name: "幸福蓝海国际影城江宁金鹰店",
+      hall_name: "7号激光厅",
+      film_name: "震耳欲聋",
       film_img:
         "https://gw.alicdn.com/tfscom/i4/O1CN01e8PcvF1NESAgdEsnM_!!6000000001538-0-alipicbeacon.jpg_120x120.jpg",
-      show_time: "2025-07-25 19:00:00",
+      show_time: "2025-10-14 16:15:00",
       rewards: 0,
       is_urgent: false,
       cinema_group: "",
-      cinema_code: "50130161",
+      cinema_code: "32017411",
       order_number: "2025071815072984896",
       offer_end_time: 1734849690000,
-      app_name: "cqhx",
-      appName: "cqhx",
-      lockseat: "3排4座"
+      app_name: "xingfulanhai",
+      appName: "xingfulanhai",
+      lockseat: "1排1座"
     };
 
     // 动态生成事件名称
