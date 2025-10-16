@@ -15,7 +15,7 @@ const submitOffer = params => axios.post("/yp-api/ticket/order/offer", params);
 
 // 中签订单查询
 const stayTicketingList = params =>
-  axios.post("/seller-api/order/orderList?status=3", params);
+  axios.post("/yp-api/ticket/pc-order/page-order", params);
 
 const findWaitRange = params =>
   axios.post("/yp-api/ticket/config/find-wait-range", params);

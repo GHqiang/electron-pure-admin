@@ -239,23 +239,23 @@ class OrderAutoFetchQueue {
   async orderFetch() {
     try {
       let params = {
-        page: 1,
-        appealStatus: "",
-        endInitPrice: "",
-        interceptStatus: "",
-        isAllowChangeSeats: "",
-        isImportUser: "",
+        pageNo: 1,
+        pageSize: 10,
+        appealStatus: '',
+        interceptStatus: '',
+        startInitPrice: '',
+        endInitPrice: '',
+        isImportUser: '',
+        isAllowChangeSeats: '',
         isImportantUser: 0,
-        orderType: "",
-        page: 1,
-        pagesize: 20,
-        sortField: "",
-        sortType: "",
-        startInitPrice: ""
+        sortField: '',
+        sortType: '',
+        orderType: '',
+        queryStatus: 3
       };
       // console.log(conPrefix + "获取守兔待出票订单列表参数", params);
       const res = await shoutuApi.stayTicketingList(params);
-      let list = res?.data?.order_list || [];
+      let list = res?.data?.page?.list || [];
       // try {
       //   shoutuApi.findWaitRange({});
       //   shoutuApi.findWaitNum({});
