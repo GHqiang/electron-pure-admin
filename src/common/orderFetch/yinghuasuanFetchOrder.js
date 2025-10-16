@@ -277,14 +277,14 @@ class OrderAutoFetchQueue {
           quote_price: item.quote_price
         }));
         console.log("从已接单列表里过滤后", logList);
-        // logList.push({
-        //   opera_time: getCurrentTime(),
-        //   des: "从已接单列表里过滤后",
-        //   level: "info",
-        //   info: {
-        //     list
-        //   }
-        // });
+        logList.push({
+          opera_time: getCurrentTime(),
+          des: "从已接单列表里过滤后",
+          level: "info",
+          info: {
+            list
+          }
+        });
         // const offerList = await getOfferList();
         // logList.push({
         //   opera_time: getCurrentTime(),
@@ -365,15 +365,14 @@ class OrderAutoFetchQueue {
       let list = res?.data?.data || [];
       // list = list.filter(item => item.status === "1");
       console.log("获取影划算待确认列表返回", list);
-      // logList.push({
-      //   opera_time: getCurrentTime(),
-      //   des: "获取待确认列表返回",
-      //   level: "info",
-      //   info: {
-      //     res,
-      //     list
-      //   }
-      // });
+      logList.push({
+        opera_time: getCurrentTime(),
+        des: "获取待确认列表返回",
+        level: "info",
+        info: {
+          list
+        }
+      });
       return list;
     } catch (error) {
       console.error("获取影划算待确认列表异常", error);

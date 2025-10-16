@@ -305,16 +305,18 @@ export default class BuyTicket {
         serviceAddFee = cinemaPlanDto?.serviceAddFee;
         if (discountList?.length) {
           // 取最低价
-          basePrice = discountList
-            .filter(item => {
-              return item.cardLevelCode;
-            })
+        basePrice = discountList
+            .filter(item => item.cardLevelCode)
             .map(item => item.price - item.cinemaPayAmount)
             .sort((a, b) => a - b)?.[0];
-          this.logger.infoSave("从优惠活动里取最低价", {
-            basePrice,
-            discountList
-          });
+          this.logger.infoSave("从有卡优惠活动里取最低价", { basePrice });
+          if(!basePrice) {
+            basePrice = discountList
+            .filter(item => !item.cardLevelCode)
+            .map(item => item.price - item.cinemaPayAmount)
+            .sort((a, b) => a - b)?.[0];
+            this.logger.infoSave("从无卡优惠活动里取最低价", { basePrice, discountList });
+          }
         } else {
           basePrice = cinemaPlanDto?.standardPrice;
         }
