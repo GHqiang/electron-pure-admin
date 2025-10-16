@@ -399,6 +399,7 @@ const searchData = async () => {
 
 const againTicket = async ({ order_number, user_id, lockseat }) => {
   try {
+    if(!order_number) return
     const res = await svApi.queryLogRecord({
       order_number,
       user_id,
