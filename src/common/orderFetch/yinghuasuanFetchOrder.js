@@ -54,35 +54,33 @@ class OrderAutoFetchQueue {
       }
       let sfcStayOfferlist = stayList
         .map(item => {
-          // 待出票列表的record_id和待确认列表的id一致
-          // 待确认列表的inv_id和待报价的inv_id一致
-          // 这样取待出票和待报价的order_number就一致了
+          // 待出票列表的record_id和待确认列表的inv_id一致
           let order_number = this.confimrOrderList.find(
-            itemA => itemA.id == item.record_id
+            itemA => itemA.inv_id == item.record_id
           )?.inv_id;
           const {
             quote_price: supplier_end_price,
             order_sn,
-            is_lock_seat
+            is_lock_seat,
+            net_price: tpp_price,
           } = item;
           const {
-            net_price: tpp_price,
+            quick_reward, // 是否快速奖励，0=否，1=是
             city_name,
             cinema_address: cinema_addr,
             seat_num: ticket_num,
             cinema_name,
             hall_name,
             film_name,
-            film_pic: film_img,
             show_time,
             seat_no,
-            fast_buy: is_urgent,
             standard_id: cinema_code,
             brand_name: cinema_group // 品牌名 上影上海、上影二线等
           } = item.demands;
           return {
             id: order_sn || "", // 他这里没这个id字段,填充一个出票订单号
             order_sn,
+            plat_order_sn: order_sn, // 平台订单编号
             tpp_price,
             supplier_end_price,
             city_name,
@@ -91,10 +89,8 @@ class OrderAutoFetchQueue {
             cinema_name,
             hall_name,
             film_name,
-            film_img,
             show_time,
             rewards: 0, // 影划算无奖励，只有快捷
-            is_urgent, // 1紧急 0非紧急
             cinema_group,
             cinema_code, // 影院id
             order_number,
@@ -267,19 +263,19 @@ class OrderAutoFetchQueue {
       let list = await this.stayConfirmOrderFetch(logList);
       // 从已接单列表里过滤
       list = list.filter(
-        item => !this.confimrOrderList.some(itemA => itemA.id === item.id)
+        item => !this.confimrOrderList.some(itemA => itemA.in_id === item.in_id)
       );
       if (list?.length) {
         list = list.map(item => ({
           ...item.demands,
-          id: item.id, // 该id和待出票列表的record_id一致
-          inv_id: item.inv_id,
+          inv_id: item.inv_id, // 待确认订单ID
+          bro_id: item.bro_id, // 票商id
           quote_price: item.quote_price
         }));
         console.log("从已接单列表里过滤后", logList);
         logList.push({
           opera_time: getCurrentTime(),
-          des: "从已接单列表里过滤后",
+          des: "待确认列表",
           level: "info",
           info: {
             list
@@ -355,15 +351,12 @@ class OrderAutoFetchQueue {
   // 获取待确认订单列表
   async stayConfirmOrderFetch(logList) {
     try {
-      let params = {
-        // status: "0%2C1", // 0:竞价中 1-竞价成功
-        page: 1,
-        status: 1
-      };
+      let params = {};
       // console.log("获取影划算待出票订单列表参数", params);
       const res = await yinghuasuanApi.queryStayConfirmList(params);
-      let list = res?.data?.data || [];
-      // list = list.filter(item => item.status === "1");
+      let list = res?.data || [];
+      // type:订单类型，invitation表示竞价成功的订单。intention表示意向订单，属于各种承包获得的订单
+      list = list.filter(item => item.type === "invitation");
       console.log("获取影划算待确认列表返回", list);
       logList.push({
         opera_time: getCurrentTime(),
@@ -391,16 +384,10 @@ class OrderAutoFetchQueue {
   // 获取待出票订单列表
   async orderFetch(logList) {
     try {
-      let params = {
-        status: 1,
-        page: 1,
-        limit: 10,
-        keywords: "",
-        old: 1
-      };
+      let params = { };
       // console.log("获取影划算待出票订单列表参数", params);
       const res = await yinghuasuanApi.stayTicketingList(params);
-      let list = res?.data?.data || [];
+      let list = res?.data || [];
       // logList.push({
       //   opera_time: getCurrentTime(),
       //   des: "影划算获取待出票列表返回",
@@ -481,7 +468,8 @@ const judgeHandle = (item, app_name, offerList, ticketList) => {
 const startDeliver = async order => {
   try {
     let params = {
-      quote_id: order.id
+      type: "intention",
+      in_id: order.in_id
     };
     console.log("确认接单参数", params);
     const res = await yinghuasuanApi.confirmOrder(params);

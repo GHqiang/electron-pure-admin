@@ -84,11 +84,17 @@ export default ({ command, mode }: ConfigEnv): UserConfigExport => {
           changeOrigin: true, // 是否允许跨域
           rewrite: path => path.replace(/^\/prod-api/, "/prod-api") // 重写路径，去除/api前缀
         },
-        // 影划算
+        // 影划算旧
         "/broker": {
           target: "https://merchant-api.yinghuasuan.com", // 后端API的真实地址
           changeOrigin: true, // 是否允许跨域
           rewrite: path => path.replace(/^\/broker/, "broker") // 重写路径，去除/api前缀
+        },
+        // 影划算新
+        "/open": {
+          target: "https://merchant-api.yinghuasuan.com", // 后端API的真实地址
+          changeOrigin: true, // 是否允许跨域
+          rewrite: path => path.replace(/^\/open/, "open") // 重写路径，去除/api前缀
         },
         // 商展
         "/openapi": {

@@ -103,7 +103,7 @@
           <span v-if="row.id !== editingRowId">{{ row.userUUID }}</span>
           <el-input
             v-if="
-              ['shoutu', 'lieren', 'mangguo'].includes(row.platName) &&
+              ['shoutu', 'lieren', 'mangguo', 'yinghuasuan'].includes(row.platName) &&
               row.id === editingRowId
             "
             v-model="editingRow.userUUID"
@@ -702,6 +702,9 @@ const saveEdit = id => {
     } else if (platName == "mahua") {
       // 续期token
       localStorage.setItem("mahuPlatSubToken", platSubToken);
+    } else if (platName == "yinghuasuan") {
+      // 续期token
+      localStorage.setItem("yinghuasuanPlatUserUUID", userUUID);
     }
     editingRowId.value = null;
   }

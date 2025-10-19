@@ -21,7 +21,7 @@ export default class PlatCommon {
 
   // 解锁座位(接单&解锁)
   async unlockSeatByPlat() {
-    const { plat_name, id, bid, order_number, supplierCode } = this.order;
+    const { plat_name, id, bid, order_number, order_sn, is_lock_seat, supplierCode } = this.order;
     let unlockRes;
     try {
       // 1、解锁座位
@@ -55,10 +55,10 @@ export default class PlatCommon {
           inx: 1
         });
       } else if (plat_name === "yinghuasuan") {
-        if (this.order.is_lock_seat == 1) {
+        if (is_lock_seat == 1) {
           unlockRes = await this.unlockSeat({
             plat_name,
-            order_number: this.order.order_sn, // 取order_sn
+            order_number: order_sn, // 取order_sn
             inx: 1
           });
         } else {
@@ -361,35 +361,6 @@ export default class PlatCommon {
         ticket_image: fileUrl || " ", // 需传图片url
         real_seat_no: lockseat.split(" ").join(","),
         entry_method: 0,
-        ticket_original_info: [
-          {
-            file_url: fileUrl || " ", // 需传图片url
-            codeList: [
-              {
-                code: qrcode.split("|")[0],
-                pwd: qrcode.split("|")?.[1] || ""
-              }
-            ],
-            seatList: lockseat.split(" "),
-            // ocrInfo为图片校验接口返回数据
-            ocrInfo: {
-              film_name: true,
-              cinema_name: true,
-              hall_name: true,
-              show_time_day: true,
-              show_time_time: true,
-              seat_no: {
-                is_change: false,
-                seat_no: lockseat.split(" ")
-              },
-              ticket_code: [
-                [qrcode.split("|")[0], qrcode.split("|")?.[1] || ""]
-              ],
-              have_qrcode: true,
-              seatMatch: true
-            }
-          }
-        ]
       };
     } else if (plat_name === "shangzhan") {
       params = {

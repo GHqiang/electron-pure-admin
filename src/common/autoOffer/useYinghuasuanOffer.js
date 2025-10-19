@@ -149,9 +149,13 @@ class OrderAutoOfferQueue {
       if (!stayList?.length) return [];
       let sfcStayOfferlist = stayList.map(item => {
         const {
-          inv_id: id,
+          invitation_id: id,
           net_price: tpp_price,
           max_price: supplier_max_price,
+          deal_price, // 立即成交价格
+          allow_last_time, // 该字段大于0，属于限时单，需要在该字段的时间戳前出票
+          seckill_point, // 秒杀所需积分
+          quick_reward, // 1代表有额外奖励
           city_name,
           cinema_address: cinema_addr,
           seat_num: ticket_num,
@@ -160,11 +164,9 @@ class OrderAutoOfferQueue {
           film_name,
           film_pic: film_img,
           show_time,
-          fast_buy: is_urgent,
           cinemaid,
           standard_id,
-          seat_no,
-          brand_name // 品牌名 上影-上海、上影二线等
+          tag_name // 品牌名 上影-上海、上影二线等
         } = item;
         return {
           plat_name: "yinghuasuan",
@@ -180,11 +182,11 @@ class OrderAutoOfferQueue {
           film_img,
           show_time,
           rewards: 0, // 影划算无奖励，只有快捷
-          is_urgent, // 1紧急 0非紧急
-          cinema_group: brand_name || "",
+          allow_last_time, // 该字段大于0，属于限时单，需要在该字段的时间戳前出票
+          cinema_group: tag_name || "",
           cinema_code: standard_id || "", // 影院code
           order_number: id || "",
-          lockseat: seat_no?.split(",").join(" ") || "",
+          lockseat: "",
           // 转为截止时间戳，原值： 1727009794
           offer_end_time: item.stop_time * 1000
         };
@@ -226,7 +228,7 @@ class OrderAutoOfferQueue {
       newOrders.forEach(item => {
         this.handleNewOrder(
           item,
-          stayList.find(itemA => itemA.inv_id === item.order_number)
+          stayList.find(itemA => itemA.invitation_id === item.order_number)
         );
       });
       return newOrders;
@@ -336,9 +338,9 @@ class OrderAutoOfferQueue {
   }
 
   // 提交报价
-  async submitOffer({ inv_id, quote_price }) {
+  async submitOffer({ invitation_id, quote_price }) {
     const { conPrefix } = this;
-    let params = { inv_id, quote_price };
+    let params = { invitation_id, quote_price };
     try {
       console.log(conPrefix + "提交报价参数", params);
       if (isTestOrder) {
@@ -411,7 +413,7 @@ class OrderAutoOfferQueue {
       console.warn("动态调价后的最终报价", endPrice, offerRule);
       logger.logUpload();
       const res = await this.submitOffer({
-        inv_id: "" + order.id,
+        invitation_id: "" + order.id,
         quote_price: "" + endPrice
       });
       return { res, offerRule };
@@ -435,14 +437,7 @@ class OrderAutoOfferQueue {
   async getStayOfferList() {
     const { conPrefix } = this;
     try {
-      const res = await yinghuasuanApi.queryStayOfferList({
-        city_name: "",
-        film_id: "",
-        seat_num: "",
-        accept_change_seat: "",
-        net_price: "",
-        keywords: ""
-      });
+      const res = await yinghuasuanApi.queryStayOfferList({ });
       let list = res.data || [];
       // console.log(conPrefix + "获取待报价列表返回", list);
       return list;
