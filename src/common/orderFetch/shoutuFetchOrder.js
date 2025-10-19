@@ -82,7 +82,7 @@ class OrderAutoFetchQueue {
           cinema_name,
           hall_name,
           film_name,
-          show_time: formatTimeOfTime(startTime * 1000),
+          show_time: startTime,
           rewards: 0, // 守兔无奖励，只有快捷
           is_urgent: 0, // 1紧急 0非紧急
           cinema_group: "",
