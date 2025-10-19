@@ -510,7 +510,7 @@ const formatProfit = ({
     shouxufei = 0;
   }
   // 奖励费用
-  const rewardPrice = rewards > 0 ? (member_price * 100 * rewards) / 10000 : 0;
+  const rewardPrice = rewards > 0 ? (offer_end_amount * 100 * rewards) / 10000 : 0;
   return subDecimal(
     addDecimal(offer_end_amount, rewardPrice),
     addDecimal(member_price, shouxufei)

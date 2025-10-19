@@ -41,7 +41,19 @@
           </template>
         </el-input>
       </div>
-
+      <div class="flex-yc m-t-10" v-if="IN_RULE_LIST.includes(rule)">
+        <el-input
+          v-model="minGrabProfit"
+          type="number"
+          style="max-width: 360px; margin-right: 15px"
+          placeholder="请输入允许秒单最低利润"
+        >
+          <template #prepend>允许秒单最低利润</template>
+          <template #append>
+            <el-button text @click="setGrabMinProfit">保存</el-button>
+          </template>
+        </el-input>
+      </div>
       <div class="flex-yc m-t-10">
         <el-input
           v-model="profitAddPrice"
@@ -163,6 +175,19 @@ const setAdjustPriceMinProfit = () => {
   window.localStorage.setItem(
     "minAdjustPriceProfit",
     minAdjustPriceProfit.value
+  );
+};
+
+// 允许抢单最小利润
+let minGrabProfitValue = window.localStorage.getItem(
+  "minGrabProfit"
+);
+const minGrabProfit = ref(minGrabProfitValue || "");
+const setGrabMinProfit = () => {
+  console.log("val", minGrabProfit.value);
+  window.localStorage.setItem(
+    "minGrabProfit",
+    minGrabProfit.value
   );
 };
 

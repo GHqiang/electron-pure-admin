@@ -5,7 +5,9 @@ import {
   mockDelay, // 模拟延时
   formatErrInfo, // 格式化errInfo
   getCinemaLoginInfoList,
-  dynamicPrice
+  dynamicPrice,
+  subDecimal,
+  addDecimal
 } from "@/utils/utils";
 // 统一日志类
 import Logger from "@/common/logger";
@@ -14,7 +16,8 @@ import mahuaApi from "@/api/mahua-api"; // 麻花平台api
 import {
   GET_APP_TYPE_LIST,
   GET_APP_INFO,
-  MIN_ALLOW_OFFER_SJC
+  MIN_ALLOW_OFFER_SJC,
+  NO_FEE_PLAT_LIST
 } from "@/common/constant.js";
 // 获取最终报价信息实体类
 import getOfferPriceFun from "./commonOfferHandle.js";
@@ -320,14 +323,36 @@ class OrderAutoOfferQueue {
     }
   }
 
+  // 预计利润
+  getProfit(offerRule, order) {
+    const { member_price, offer_end_amount } = offerRule
+    const { plat_name, rewards = 0, ticket_num } = order
+    let shouxufei = (offer_end_amount * 100) / 10000;
+    if (NO_FEE_PLAT_LIST.includes(plat_name)) {
+      shouxufei = 0;
+    }
+    // 奖励费用
+    const rewardPrice = rewards > 0 ? (offer_end_amount * 100 * rewards) / 10000 : 0;
+    return subDecimal(
+      addDecimal(offer_end_amount, rewardPrice),
+      addDecimal(member_price, shouxufei)
+    ).toFixed(2) * 10000 * ticket_num / 10000;
+  }
   // 提交报价
-  async submitOffer({ order_id, price }) {
+  async submitOffer({ order_id, price, offerRule, order }) {
     const { conPrefix } = this;
     let params = {
       putOrderId: order_id,
       biddingPrice: price,
       isDirectGetOrder: 0 // 是否抢单
     };
+    let minGrabProfitValue = window.localStorage.getItem(
+      "minGrabProfit"
+    );
+    let expectProfit = this.getProfit(offerRule, order);
+    if(minGrabProfitValue && +expectProfit >= +minGrabProfitValue) {
+      params.isDirectGetOrder = 1
+    }
     try {
       console.log(conPrefix + "提交报价参数", params);
       if (isTestOrder) {
@@ -398,7 +423,9 @@ class OrderAutoOfferQueue {
       logger.logUpload();
       const res = await this.submitOffer({
         order_id: order.id,
-        price: "" + endPrice
+        price: "" + endPrice,
+        offerRule,
+        order
       });
       return { res, offerRule };
     } catch (error) {
