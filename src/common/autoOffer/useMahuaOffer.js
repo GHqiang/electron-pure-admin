@@ -325,7 +325,7 @@ class OrderAutoOfferQueue {
 
   // 预计利润
   getProfit(offerRule, order) {
-    const { member_price, offer_end_amount } = offerRule
+    const { cost_price, offer_end_amount } = offerRule
     const { plat_name, rewards = 0, ticket_num } = order
     let shouxufei = (offer_end_amount * 100) / 10000;
     if (NO_FEE_PLAT_LIST.includes(plat_name)) {
@@ -333,9 +333,10 @@ class OrderAutoOfferQueue {
     }
     // 奖励费用
     const rewardPrice = rewards > 0 ? (offer_end_amount * 100 * rewards) / 10000 : 0;
+    // console.log('offer_end_amount', offer_end_amount, rewardPrice, cost_price, shouxufei)
     return subDecimal(
       addDecimal(offer_end_amount, rewardPrice),
-      addDecimal(member_price, shouxufei)
+      addDecimal(cost_price, shouxufei)
     ).toFixed(2) * 10000 * ticket_num / 10000;
   }
   // 提交报价
