@@ -56,8 +56,8 @@ class OrderAutoFetchQueue {
         .map(item => {
           // 待出票列表的record_id和待确认列表的inv_id一致
           let order_number = this.confimrOrderList.find(
-            itemA => itemA.inv_id == item.record_id
-          )?.inv_id;
+            itemA => itemA.in_id == item.record_id
+          )?.in_id;
           const {
             quote_price: supplier_end_price,
             order_sn,
@@ -150,7 +150,7 @@ class OrderAutoFetchQueue {
       sfcStayOfferlist.forEach(item => {
         // 先根据order_number获取已确认的id，再根据id对比record_id获取原订单
         let id = this.confimrOrderList.find(
-          itemA => itemA.inv_id === item.order_number
+          itemA => itemA.in_id === item.order_number
         )?.id;
         let logList = [
           {
@@ -268,7 +268,7 @@ class OrderAutoFetchQueue {
       if (list?.length) {
         list = list.map(item => ({
           ...item.demands,
-          inv_id: item.inv_id, // 待确认订单ID
+          in_id: item.in_id, // 待确认订单ID
           bro_id: item.bro_id, // 票商id
           quote_price: item.quote_price
         }));
@@ -292,7 +292,7 @@ class OrderAutoFetchQueue {
         // });
         // // 匹配报价记录
         // list = list.filter(item =>
-        //   offerList.some(itemA => itemA.order_id === item.inv_id)
+        //   offerList.some(itemA => itemA.order_id === item.in_id)
         // );
         // console.log("最近报价记录过滤后", list, offerList);
         // logList.push({
