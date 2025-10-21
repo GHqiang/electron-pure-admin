@@ -156,6 +156,13 @@ export default class OrderManage {
         res = await this.appApi.priceCalculation(params);
         this.logger.infoSave("计算价格返回", JSON.parse(JSON.stringify(res)));
       }
+      // 用券价格已为0时无需重新计算
+      if (
+        quan_code?.length &&
+        res?.data?.priceDetail?.totalRealPayAmount === 0
+      ) {
+        return res.data;
+      }
       params = { ...params, firstCalc: false };
       // this.logger.infoSave("计算价格参数1", params);
       res = await this.appApi.priceCalculation(params);
