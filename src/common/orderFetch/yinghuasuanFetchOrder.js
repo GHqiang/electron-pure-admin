@@ -62,7 +62,7 @@ class OrderAutoFetchQueue {
             quote_price: supplier_end_price,
             order_sn,
             is_lock_seat,
-            net_price: tpp_price,
+            net_price: tpp_price
           } = item;
           const {
             quick_reward, // 是否快速奖励，0=否，1=是
@@ -307,16 +307,16 @@ class OrderAutoFetchQueue {
           const item = list[i];
           const res = await startDeliver(item);
           console.log("确认接单返回", res, item);
-          // logList.push({
-          //   opera_time: getCurrentTime(),
-          //   des: "确认接单返回",
-          //   level: "info",
-          //   info: {
-          //     res,
-          //     item
-          //   }
-          // });
-          if (res && !res.error) {
+          logList.push({
+            opera_time: getCurrentTime(),
+            des: "确认接单返回",
+            level: "info",
+            info: {
+              res,
+              item
+            }
+          });
+          if (!res?.error) {
             this.confimrOrderList.push(item);
             // 防止数据太大占用系统内存
             if (this.confimrOrderList.length > 30) {
@@ -384,18 +384,18 @@ class OrderAutoFetchQueue {
   // 获取待出票订单列表
   async orderFetch(logList) {
     try {
-      let params = { };
+      let params = {};
       // console.log("获取影划算待出票订单列表参数", params);
       const res = await yinghuasuanApi.stayTicketingList(params);
       let list = res?.data || [];
-      // logList.push({
-      //   opera_time: getCurrentTime(),
-      //   des: "影划算获取待出票列表返回",
-      //   level: "info",
-      //   info: {
-      //     res
-      //   }
-      // });
+      logList.push({
+        opera_time: getCurrentTime(),
+        des: "影划算获取待出票列表返回",
+        level: "info",
+        info: {
+          res
+        }
+      });
       console.log("获取影划算待出票列表返回", list);
       return list;
     } catch (error) {

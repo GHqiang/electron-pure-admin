@@ -183,7 +183,7 @@ class OrderAutoOfferQueue {
           show_time,
           rewards: 0, // 影划算无奖励，只有快捷
           allow_last_time, // 该字段大于0，属于限时单，需要在该字段的时间戳前出票
-          cinema_group: tag_name || "",
+          cinema_group: "",
           cinema_code: standard_id || "", // 影院code
           order_number: id || "",
           lockseat: "",
@@ -437,7 +437,7 @@ class OrderAutoOfferQueue {
   async getStayOfferList() {
     const { conPrefix } = this;
     try {
-      const res = await yinghuasuanApi.queryStayOfferList({ });
+      const res = await yinghuasuanApi.queryStayOfferList({});
       let list = res.data || [];
       // console.log(conPrefix + "获取待报价列表返回", list);
       return list;
