@@ -635,8 +635,8 @@ export default class CardQuanManage {
     if (api_version == "C") {
       params.c = coupon_num;
     } else if (api_version == "3.0C") {
-      // 参数待确定
-      params.coupon_num = coupon_num;
+      params.couponCode = coupon_num;
+      params.c = coupon_num;
     }
     try {
       await mockDelay(0.1);
