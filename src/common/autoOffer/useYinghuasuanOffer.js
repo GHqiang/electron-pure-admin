@@ -279,7 +279,7 @@ class OrderAutoOfferQueue {
         plat_name: "yinghuasuan",
         app_name:
           order.app_name || offerResult?.offerRule?.shadowLineName || "",
-        order_id: order.order_id, // 报价后赋值待确认订单id
+        order_id: order.order_id || order.id, // 报价后赋值待确认订单id
         order_number: order.order_number,
         lockseat: order.lockseat,
         tpp_price: order.tpp_price,

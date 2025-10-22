@@ -1666,7 +1666,9 @@ class getSfcOfferPrice {
             level: "error",
             info: {
               film_name,
-              movie_data
+              movie_data: movie_data.map(item => ({
+                movie_name: item.movie_name
+              }))
             }
           });
           return;
