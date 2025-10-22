@@ -2940,6 +2940,7 @@ const addOrderHandleRecored = async ({
       plat_name: order.plat_name,
       app_name: res?.offerRule?.app_name || appFlag,
       order_id: order.id,
+      plat_order_sn: order.plat_order_sn,
       order_number: order.order_number,
       tpp_price: order.tpp_price,
       supplier_end_price: order.supplier_end_price,

@@ -180,7 +180,11 @@
           <span>{{ TICKET_STATUS[order_status] }}</span>
         </template>
       </el-table-column>
-      <el-table-column prop="order_number" fixed label="订单号" width="110" />
+      <el-table-column fixed label="订单号" width="110">
+        <template #default="{ row: { order_number, plat_order_sn } }">
+          <span>{{ plat_order_sn || order_number }}</span>
+        </template>
+      </el-table-column>
       <el-table-column
         prop="supplier_max_price"
         fixed
@@ -399,7 +403,7 @@ const searchData = async () => {
 
 const againTicket = async ({ order_number, user_id, lockseat }) => {
   try {
-    if(!order_number) return
+    if (!order_number) return;
     const res = await svApi.queryLogRecord({
       order_number,
       user_id,

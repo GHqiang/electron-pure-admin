@@ -295,6 +295,7 @@ class OrderAutoTicketQueue {
         plat_name,
         app_name: appFlag,
         order_id,
+        plat_order_sn: order.plat_order_sn,
         order_number,
         tpp_price,
         supplier_end_price,
