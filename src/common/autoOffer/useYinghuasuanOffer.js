@@ -279,7 +279,7 @@ class OrderAutoOfferQueue {
         plat_name: "yinghuasuan",
         app_name:
           order.app_name || offerResult?.offerRule?.shadowLineName || "",
-        order_id: order.id,
+        order_id: order.order_id, // 报价后赋值待确认订单id
         order_number: order.order_number,
         lockseat: order.lockseat,
         tpp_price: order.tpp_price,
@@ -416,6 +416,10 @@ class OrderAutoOfferQueue {
         invitation_id: "" + order.id,
         quote_price: "" + endPrice
       });
+      // 赋值报价返回的待确认订单id，以便出票时好反推出来报价订单号
+      if (res?.data?.quote_id) {
+        order.order_id = res?.data?.quote_id;
+      }
       return { res, offerRule };
     } catch (error) {
       console.error(conPrefix + "单个报价异常", error);

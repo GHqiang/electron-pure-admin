@@ -57,7 +57,7 @@ class OrderAutoFetchQueue {
           // 待出票列表的record_id和待确认列表的inv_id一致
           let order_number = this.confimrOrderList.find(
             itemA => itemA.in_id == item.record_id
-          )?.in_id;
+          )?.offer_order_number;
           const {
             quote_price: supplier_end_price,
             order_sn,
@@ -281,19 +281,19 @@ class OrderAutoFetchQueue {
             list
           }
         });
-        // const offerList = await getOfferList();
-        // logList.push({
-        //   opera_time: getCurrentTime(),
-        //   des: "获取最近报价记录",
-        //   level: "info",
-        //   info: {
-        //     offerList
-        //   }
-        // });
+        const offerList = await getOfferList();
+        logList.push({
+          opera_time: getCurrentTime(),
+          des: "获取最近报价记录",
+          level: "info",
+          info: {
+            offerList
+          }
+        });
         // // 匹配报价记录
-        // list = list.filter(item =>
-        //   offerList.some(itemA => itemA.order_id === item.in_id)
-        // );
+        list = list.filter(item =>
+          offerList.some(itemA => itemA.order_id === item.in_id)
+        );
         // console.log("最近报价记录过滤后", list, offerList);
         // logList.push({
         //   opera_time: getCurrentTime(),
@@ -317,7 +317,12 @@ class OrderAutoFetchQueue {
             }
           });
           if (!res?.error) {
-            this.confimrOrderList.push(item);
+            this.confimrOrderList.push({
+              ...item,
+              offer_order_number: offerList.find(
+                itemA => itemA.order_id === item.in_id
+              )?.order_number
+            });
             // 防止数据太大占用系统内存
             if (this.confimrOrderList.length > 30) {
               this.confimrOrderList = this.confimrOrderList.slice(20);
@@ -468,7 +473,7 @@ const judgeHandle = (item, app_name, offerList, ticketList) => {
 const startDeliver = async order => {
   try {
     let params = {
-      type: "intention",
+      type: "invitation",
       in_id: order.in_id
     };
     console.log("确认接单参数", params);
@@ -487,11 +492,11 @@ const getOfferList = async () => {
     const res = await svApi.queryOfferList({
       user_id: tokens.userInfo.user_id,
       plat_name: "yinghuasuan",
+      order_status: 1,
       page_num: 1,
-      page_size: 50,
+      page_size: 100,
       isNeedTotalNum: 0,
-      queryFields:
-        "order_id,order_number,app_name,order_status,cinema_group,cinema_name,show_time,lockseat"
+      queryFields: "order_id,order_number,app_name"
     });
     let list = res.data.offerList || [];
     console.error("获取历史报价记录返回", error);
