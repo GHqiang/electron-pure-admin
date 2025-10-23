@@ -499,7 +499,7 @@ const getOfferList = async () => {
       queryFields: "order_id,order_number,app_name"
     });
     let list = res.data.offerList || [];
-    console.error("获取历史报价记录返回", error);
+    console.error("获取历史报价记录返回", list);
     return list;
   } catch (error) {
     console.error("获取历史报价记录异常", error);
