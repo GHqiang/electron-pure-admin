@@ -273,23 +273,23 @@ class OrderAutoFetchQueue {
           quote_price: item.quote_price
         }));
         console.log("从已接单列表里过滤后", logList);
-        logList.push({
-          opera_time: getCurrentTime(),
-          des: "待确认列表",
-          level: "info",
-          info: {
-            list
-          }
-        });
+        // logList.push({
+        //   opera_time: getCurrentTime(),
+        //   des: "待确认列表",
+        //   level: "info",
+        //   info: {
+        //     list
+        //   }
+        // });
         const offerList = await getOfferList();
-        logList.push({
-          opera_time: getCurrentTime(),
-          des: "获取最近报价记录",
-          level: "info",
-          info: {
-            offerList
-          }
-        });
+        // logList.push({
+        //   opera_time: getCurrentTime(),
+        //   des: "获取最近报价记录",
+        //   level: "info",
+        //   info: {
+        //     offerList
+        //   }
+        // });
         // // 匹配报价记录
         list = list.filter(item =>
           offerList.some(itemA => itemA.order_id === item.in_id)
@@ -363,14 +363,14 @@ class OrderAutoFetchQueue {
       // type:订单类型，invitation表示竞价成功的订单。intention表示意向订单，属于各种承包获得的订单
       list = list.filter(item => item.type === "invitation");
       console.log("获取影划算待确认列表返回", list);
-      logList.push({
-        opera_time: getCurrentTime(),
-        des: "获取待确认列表返回",
-        level: "info",
-        info: {
-          list
-        }
-      });
+      // logList.push({
+      //   opera_time: getCurrentTime(),
+      //   des: "获取待确认列表返回",
+      //   level: "info",
+      //   info: {
+      //     list
+      //   }
+      // });
       return list;
     } catch (error) {
       console.error("获取影划算待确认列表异常", error);
@@ -393,14 +393,14 @@ class OrderAutoFetchQueue {
       // console.log("获取影划算待出票订单列表参数", params);
       const res = await yinghuasuanApi.stayTicketingList(params);
       let list = res?.data || [];
-      logList.push({
-        opera_time: getCurrentTime(),
-        des: "影划算获取待出票列表返回",
-        level: "info",
-        info: {
-          res
-        }
-      });
+      // logList.push({
+      //   opera_time: getCurrentTime(),
+      //   des: "影划算获取待出票列表返回",
+      //   level: "info",
+      //   info: {
+      //     res
+      //   }
+      // });
       console.log("获取影划算待出票列表返回", list);
       return list;
     } catch (error) {

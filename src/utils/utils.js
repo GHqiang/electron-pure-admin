@@ -1619,8 +1619,8 @@ function roundToHalf(num, step, direction = "up") {
  * @returns {number} - 加价金额
  */
 function calculateMarkup(comparePrice, memberPrice, ruleList) {
-  let qujianPrice = comparePrice.split('-');
-  let includesPrice = comparePrice.split(',')
+  let qujianPrice = comparePrice.split("-");
+  let includesPrice = comparePrice.split(",");
   for (const rule of ruleList) {
     const [condition, amount] = rule.split("+");
 
@@ -1651,22 +1651,22 @@ function calculateMarkup(comparePrice, memberPrice, ruleList) {
         }
         break;
       case "<>":
-        if (memberPrice >= qujianPrice[0] ||  memberPrice <= qujianPrice[1] ) {
+        if (memberPrice >= qujianPrice[0] || memberPrice <= qujianPrice[1]) {
           return parseFloat(amount);
         }
         break;
       case "!<>":
-        if (memberPrice < qujianPrice[0] ||  memberPrice > qujianPrice[1] ) {
+        if (memberPrice < qujianPrice[0] || memberPrice > qujianPrice[1]) {
           return parseFloat(amount);
         }
         break;
       case "=||":
-        if (includesPrice.includes(memberPrice + '')) {
+        if (includesPrice.includes(memberPrice + "")) {
           return parseFloat(amount);
         }
         break;
       case "!=||":
-        if (!includesPrice.includes(memberPrice + '')) {
+        if (!includesPrice.includes(memberPrice + "")) {
           return parseFloat(amount);
         }
         break;
@@ -2123,7 +2123,7 @@ const uploadBlobImage = async ({
 
     let headers = { "Content-Type": "multipart/form-data" };
     if (plat_name === "yinghuasuan") {
-      headers.Authorization = tokens.yinghuasuanToken;
+      headers.Authorization = tokens.yinghuasuanRealToken;
     } else if (plat_name === "haha") {
       headers.Token = tokens.hahaToken;
     } else if (plat_name === "shoutu") {

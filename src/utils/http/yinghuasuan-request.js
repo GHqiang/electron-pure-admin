@@ -16,38 +16,47 @@ const instance = axios.create({
 const NODE_ENV = process.env.NODE_ENV;
 const IS_DEV = NODE_ENV === "development";
 
-let realToken, expires, token_type = 'Bearer';
+let realToken,
+  expires,
+  token_type = "Bearer";
 
 // 刷新token方法
-const refreshToken = async (params) => {
+const refreshToken = async params => {
   try {
-    const res = await axios.post('https://merchant-api.yinghuasuan.com/open/v1/getToken', params)
-    console.log('获取token返回', res)
-    const tokenData = res.data?.data
-    if(tokenData) {
-      realToken = tokenData.token
-      token_type = tokenData.token_type
-      expires = +new Date() +  tokenData.expires * 1000
+    const res = await axios.post(
+      "https://merchant-api.yinghuasuan.com/open/v1/getToken",
+      params
+    );
+    console.log("获取token返回", res);
+    const tokenData = res.data?.data;
+    if (tokenData) {
+      realToken = tokenData.token;
+      token_type = tokenData.token_type;
+      expires = +new Date() + tokenData.expires * 1000;
+      tokens.setYinghuasuanPlatRealToken(`${token_type} ${realToken}`);
     }
   } catch (error) {
-    console.log('获取token返回异常', error)
+    console.log("获取token返回异常", error);
   }
-}
+};
 
 // token是否过期或无效
 const isTokenExpires = () => {
-  return !realToken || expires - +new Date() < 3 * 60 * 1000
-}
+  return !realToken || expires - +new Date() < 3 * 60 * 1000;
+};
 // 请求拦截器
 instance.interceptors.request.use(
   async config => {
     // console.log("tokens.yinghuasuanToken", tokens.yinghuasuanToken);
     const open_secret = tokens.yinghuasuanToken || "";
-    const mobile = tokens.userInfo?.mobile || localStorage.getItem("yinghuasuanPlatUserUUID");
-    if(isTokenExpires()) {
+    const mobile =
+      tokens.userInfo?.mobile ||
+      localStorage.getItem("yinghuasuanPlatUserUUID");
+    if (isTokenExpires()) {
       await refreshToken({
-        open_secret, mobile
-      })
+        open_secret,
+        mobile
+      });
     }
     if (realToken) {
       config.headers.Authorization = `${token_type} ${realToken}`;
@@ -73,7 +82,7 @@ instance.interceptors.response.use(
     // let whitelistSp = ['/sp/order', '/sp/unlock']
     let whitelistSp = [];
 
-    let isErrorByLieRen =  data.code !== 200;
+    let isErrorByLieRen = data.code !== 200;
     if (
       isErrorByLieRen &&
       !whitelistSp.some(item => response.config.url.includes(item))

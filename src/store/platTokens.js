@@ -12,7 +12,8 @@ export const platTokens = defineStore("platTokens", {
     yangcongToken: "",
     hahaToken: "",
     shengToken: "",
-    yinghuasuanToken: "",
+    yinghuasuanToken: "", // 密钥
+    yinghuasuanRealToken: "", // 真实token
     shangzhanToken: "",
     shoutuToken: "", // 守兔平台token
     mahuaToken: "", // 麻花平台token
@@ -91,6 +92,11 @@ export const platTokens = defineStore("platTokens", {
       console.warn("设置影划算平台token", data);
       window.localStorage.setItem("yinghuasuanToken", data);
       this.yinghuasuanToken = data;
+    },
+    // 设置影划算平台token
+    setYinghuasuanPlatRealToken(data) {
+      console.warn("设置影划算平台真实token", data);
+      this.yinghuasuanRealToken = data;
     },
     // 设置商展平台token
     setShangzhanPlatToken(data) {
