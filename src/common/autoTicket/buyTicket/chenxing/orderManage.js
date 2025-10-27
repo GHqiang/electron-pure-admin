@@ -137,7 +137,7 @@ export default class OrderManage {
     if (quan_code?.length) {
       params.activityKey = "";
       if (api_version == "3.0C") {
-        params.ticketCouponCode = quan_code.join();
+        params.ticketCouponCode = quan_code.length == 1? quan_code.join() : quan_code;
         params.optType = 0;
       } else if (api_version === "C") {
         params.ticketCodes = quan_code;
