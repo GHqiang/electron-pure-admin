@@ -230,6 +230,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           // 确保只更新对应手机号的会话
           newSidObj[mobile] = newSid;
           newTidObj[mobile] = newTid;
+          newTidObj[mobile + '_UpdateTime'] = + new Date();
           // console.log("newSidObj", newSidObj);
           // console.log("newTidObj", newTidObj);
           // logger.infoSave("更新会话缓存", {
@@ -300,6 +301,12 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         config.tid = targetLoginList.find(
           itemA => itemA.session_id === config.sid
         )?.tid;
+        config.tidUpdateTime = targetLoginList.find(
+          itemA => itemA.session_id === config.sid
+        )?.update_time;
+        if(config.tidUpdateTime) {
+          config.tidUpdateTime = + new Date(config.tidUpdateTime)
+        }
         delete config.data.fenghuangToken;
       }
       if (!config.mobile) {
@@ -312,10 +319,10 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       }
       const mobile = config.mobile;
       // 如果对应的手机号的token有新的直接获取新的
-      if (mobile && newSidObj[mobile]) {
+      if (mobile && newSidObj[mobile] && newTidObj[mobile + '_UpdateTime'] > config.tidUpdateTime) {
         config.sid = newSidObj[mobile];
       }
-      if (mobile && newTidObj[mobile]) {
+      if (mobile && newTidObj[mobile] && newTidObj[mobile + '_UpdateTime'] > config.tidUpdateTime) {
         config.tid = newTidObj[mobile];
       }
       // 保存原始参数和原始URL

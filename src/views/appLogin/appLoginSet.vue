@@ -342,7 +342,8 @@ const setLocalLoginList = async () => {
     member_pwd: item.member_pwd,
     first: item.first,
     is_xiaohao: item.is_xiaohao,
-    link_user_id: item.link_user_id
+    link_user_id: item.link_user_id,
+    update_time: item.update_time,
   }));
   userInfoAndTokens.setLoginInfoList(
     loginRecords.filter(item => item.is_xiaohao != 1)
