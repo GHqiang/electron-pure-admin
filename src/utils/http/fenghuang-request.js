@@ -220,7 +220,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           // refreshToken: "21535bd8e2a04628aaec270011f3482e"
         });
 
-        // logger.infoSave("新的SID续期结果", sidRes);
+        logger.infoSave("新的SID续期结果", sidRes);
         // 更新会话缓存
         if (sidRes?.accessToken && sidRes?.refreshToken) {
           const newSid = sidRes.accessToken;
@@ -301,14 +301,16 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         config.tid = targetLoginList.find(
           itemA => itemA.session_id === config.sid
         )?.tid;
-        config.tidUpdateTime = targetLoginList.find(
-          itemA => itemA.session_id === config.sid
-        )?.update_time;
-        if(config.tidUpdateTime) {
-          config.tidUpdateTime = + new Date(config.tidUpdateTime)
-        }
         delete config.data.fenghuangToken;
       }
+      // console.log('config.sid', config.sid, targetLoginList)
+      config.tidUpdateTime = targetLoginList.find(
+        itemA => itemA.session_id === config.sid
+      )?.update_time;
+      if(config.tidUpdateTime) {
+        config.tidUpdateTime = + new Date(config.tidUpdateTime)
+      }
+      // console.log('tidUpdateTime', config.tidUpdateTime)
       if (!config.mobile) {
         // 每个登录信息的tid不会变的
         config.mobile = targetLoginList.find(
@@ -318,6 +320,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         // console.warn("重试的请求", config);
       }
       const mobile = config.mobile;
+      // console.log('newTidObj', newTidObj, 'mobile', mobile, config.tidUpdateTime)
       // 如果对应的手机号的token有新的直接获取新的
       if (mobile && newSidObj[mobile] && newTidObj[mobile + '_UpdateTime'] > config.tidUpdateTime) {
         config.sid = newSidObj[mobile];

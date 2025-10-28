@@ -332,7 +332,7 @@ const nodeClick = nodeData => {
 // 设置本地的登录信息列表
 const setLocalLoginList = async () => {
   const loginRes = await svApi.queryLoginList({ rule });
-  // console.log("ruleRes", ruleRes);
+  // console.log("loginRes", loginRes);
   let loginRecords = loginRes.data.loginList || [];
   loginRecords = loginRecords.map(item => ({
     app_name: item.app_name,
