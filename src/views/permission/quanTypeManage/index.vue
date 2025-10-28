@@ -1023,10 +1023,26 @@ const getQuanHandle = async () => {
 const exportQuanHandle = async () => {
   try {
     // 1-可用券 2不可用券
+    let exportQuanFlagValue = exportQuanFlag.value;
     let tableData = toRaw(exportQuanList.value);
-    console.warn("tableData", tableData);
+
+    let params = {
+      coupon_num_list: tableData.map(item => item.coupon_num)
+    };
     let quanValueStr = exportQuanValue.value;
-    await svApi.batchDeleteQuan({ delIds: tableData.map(item => item.id) });
+    if (exportQuanFlagValue == 1) {
+      let quanTypeInfo = quanType.value.find(
+        item => item.quan_value == quanValueStr
+      );
+      params.quan_value = quanTypeInfo.quan_value;
+      params.app_name = quanTypeInfo.app_name;
+      params.quan_status = 4;
+    } else if (exportQuanFlagValue == 2) {
+      params.quan_status = 5;
+    }
+    console.warn("导出文件传参", params);
+    // 先调接口更新状态，并更新导出人及使用时间
+    const res = await svApi.exportQuanList(params);
     tableData = tableData.map(item => [
       item.coupon_num,
       item.quan_value,
