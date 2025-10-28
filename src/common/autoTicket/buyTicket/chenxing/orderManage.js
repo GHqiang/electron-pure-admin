@@ -137,8 +137,16 @@ export default class OrderManage {
     if (quan_code?.length) {
       params.activityKey = "";
       if (api_version == "3.0C") {
-        params.ticketCouponCode = quan_code.length == 1? quan_code.join() : quan_code;
+        params.ticketCouponCode = quan_code.join();
         params.optType = 0;
+        // 幸福蓝海比较特殊，多张券时参数不一样
+        if (quan_code.length > 1 && this.api_v != "V4.0.2") {
+          params.ticketCodes = quan_code;
+          params.firstCalc = false;
+          delete params.activityKey;
+          delete params.ticketCouponCode;
+          delete params.optType;
+        }
       } else if (api_version === "C") {
         params.ticketCodes = quan_code;
       }
