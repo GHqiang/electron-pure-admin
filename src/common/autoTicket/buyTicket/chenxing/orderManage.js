@@ -20,6 +20,7 @@ export default class OrderManage {
     this.appApi = APP_API_OBJ[order.app_name];
     this.isTestOrder = isTestOrder; // 是否是测试订单
     this.api_version = GET_APP_INFO(order.app_name)?.api_version;
+    this.api_v = GET_APP_INFO(order.app_name)?.api_v;
   }
 
   // 转单
