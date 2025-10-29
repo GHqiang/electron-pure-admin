@@ -39,6 +39,13 @@
             clearable
           />
         </el-form-item>
+        <el-form-item label="券描述" prop="quan_desc">
+          <el-input
+            v-model="formData.quan_desc"
+            placeholder="请输入券描述(凤凰新可参考couponDesc字段，仅同名券必填)"
+            clearable
+          />
+        </el-form-item>
         <el-form-item label="券类型" prop="quan_value">
           <el-input
             v-model="formData.quan_value"
@@ -195,7 +202,7 @@
 <script setup>
 import { ref, reactive, computed, toRaw } from "vue";
 import { ElLoading, ElMessage } from "element-plus";
-import { GET_APP_LIST } from "@/common/constant";
+import { GET_APP_LIST, GET_APP_INFO } from "@/common/constant";
 // 影院基础方法
 import useCinemaBaseFun from "@/mixins/useCinemaBaseFun";
 const { getCityList, getAllCinemaList } = useCinemaBaseFun();
@@ -223,6 +230,7 @@ let formData = reactive({
   id: "",
   app_name: "",
   quan_name: "",
+  quan_desc: "",
   quan_value: "",
   quan_cost: "",
   quan_flag: "",
@@ -245,6 +253,7 @@ let formData = reactive({
 const rules = {
   app_name: [{ required: true, message: "影线名称不能为空", trigger: "blur" }],
   quan_name: [{ required: true, message: "券名称不能为空", trigger: "blur" }],
+  quan_desc: [{ required: false, trigger: "blur" }],
   quan_value: [{ required: true, message: "券类型不能为空", trigger: "blur" }],
   quan_cost: [{ required: true, message: "券成本不能为空", trigger: "blur" }],
   quan_flag: [{ required: true, message: "券标识不能为空", trigger: "blur" }]
@@ -276,6 +285,7 @@ const resetForm = el => {
     formData.app_name = "";
   }
   formData.quan_name = "";
+  formData.quan_desc = "";
   formData.quan_value = "";
   formData.quan_cost = "";
   formData.quan_flag = "";
@@ -317,6 +327,7 @@ const open = async quanInfo => {
         formData.id = formInfo.id;
         formData.app_name = formInfo.app_name;
         formData.quan_name = formInfo.quan_name;
+        formData.quan_desc = formInfo.quan_desc;
         formData.quan_value = formInfo.quan_value;
         formData.quan_cost = formInfo.quan_cost;
         formData.quan_flag = formInfo.quan_flag;
