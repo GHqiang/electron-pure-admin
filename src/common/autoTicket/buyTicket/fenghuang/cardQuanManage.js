@@ -155,13 +155,23 @@ export default class CardQuanManage {
         offerRule.quan_fee = quanInfo?.quan_fee;
         offerRule.is_store = quanInfo?.is_store;
         offerRule.black_quans = quanInfo?.black_quans;
-        let { quan_value, quan_cost, quan_flag, quan_desc, quan_fee, black_quans } =
-          offerRule;
+        let {
+          quan_value,
+          quan_cost,
+          quan_flag,
+          quan_desc,
+          quan_fee,
+          black_quans
+        } = offerRule;
         // 根据券标识获取目标券
         let targetQuanList = quanList.filter(
           item =>
-            couponInfoSpecial(item.couponName) === couponInfoSpecial(quan_flag)
-            && quan_desc? couponInfoSpecial(item.couponDesc) == couponInfoSpecial(quan_desc) : true
+            couponInfoSpecial(item.couponName) ===
+              couponInfoSpecial(quan_flag) &&
+            (quan_desc
+              ? couponInfoSpecial(item.couponDesc) ==
+                couponInfoSpecial(quan_desc)
+              : true)
         );
         // 增加已用完过滤，防止核销延迟导致用券失败
         const usedQuanList = await this.queryUsedQuanList({
@@ -458,8 +468,13 @@ export default class CardQuanManage {
 
   // 更新券库存
   async updateQuanStock(params) {
-    const { quan_stock, quan_flag, quan_desc, phone, app_name, quan_value } = params;
-    let targetQuanList = await this.getTargetQuanByApp(app_name, quan_flag, quan_desc);
+    const { quan_stock, quan_flag, quan_desc, phone, app_name, quan_value } =
+      params;
+    let targetQuanList = await this.getTargetQuanByApp(
+      app_name,
+      quan_flag,
+      quan_desc
+    );
     // 同类目标券更新处理
     targetQuanList?.forEach(item => {
       let quanStockList = item.quanStockList || [];
@@ -513,7 +528,9 @@ export default class CardQuanManage {
       let quanTypeRes = await svApi.queryQuanTypeList(quanTypeParams);
       let quanTypeList = quanTypeRes?.data?.quanTypeList || [];
       let targetQuanList = quanTypeList.filter(
-        item => item.quan_flag == quan_flag && quan_desc? item.quan_desc == quan_desc : true
+        item =>
+          item.quan_flag == quan_flag &&
+          (quan_desc ? item.quan_desc == quan_desc : true)
       );
       this.logger.infoSave("获取同类目标券返回", {
         targetQuanList
@@ -686,7 +703,8 @@ export default class CardQuanManage {
     const params = {
       app_name,
       isNeedTotalNum: 0,
-      queryFields: "id,app_name,quan_value,quan_flag,quan_desc,black_quans,quanStockList"
+      queryFields:
+        "id,app_name,quan_value,quan_flag,quan_desc,black_quans,quanStockList"
     };
     try {
       let quanTypeRes = await svApi.queryQuanTypeList(params);
@@ -802,8 +820,10 @@ export default class CardQuanManage {
                 couponInfoSpecial(item.quan_flag) ===
                   couponInfoSpecial(itemA.couponName) &&
                 !item.black_quans?.includes(itemA.couponCode) &&
-                item.quan_desc? couponInfoSpecial(item.quan_desc) ===
-                  couponInfoSpecial(itemA.couponDesc)  : true
+                (item.quan_desc
+                  ? couponInfoSpecial(item.quan_desc) ===
+                    couponInfoSpecial(itemA.couponDesc)
+                  : true)
             );
             console.log(item.quan_flag, "targetQuanList", targetQuanList);
             let quanStock = targetQuanList.length;
