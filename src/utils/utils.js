@@ -2284,7 +2284,6 @@ const dynamicPrice = async ({ order, offerRule, logger }) => {
     if (!isOpenAdjustPrice) {
       return offer_end_amount;
     }
-    logger.infoSave("动态调价开启");
     const params = {
       offer_rule_id,
       plat_name,
@@ -2294,6 +2293,7 @@ const dynamicPrice = async ({ order, offerRule, logger }) => {
       page_num: 1,
       page_size: 10
     };
+    logger.infoSave("动态调价开启", { offerRule, params });
     const res = await svApi.queryDealOfferList(params);
     let offerList = res.data.offerList || [];
     logger.infoSave("动态调价获取历史中标记录", { offerList });
@@ -2517,8 +2517,8 @@ function dynamicPricingAlgorithm(
     if (availableSpace >= stepValue) {
       // 计算实际提价金额（最多提价2步的价值）
       const maxIncrease = Math.min(mulDecimal(2, stepValue), availableSpace);
-      const increaseAmount = Math.max(stepValue, maxIncrease); // 至少提价一步
-
+      const increaseAmount = Math.min(stepValue, maxIncrease); // 至少提价一步
+      // 一步一步往上提，不提太多
       if (increaseAmount >= stepValue) {
         dealPriceAdd = addDecimal(dealPrice, increaseAmount);
         reason.push(
@@ -2604,10 +2604,7 @@ function dynamicPricingAlgorithm(
     reason.push("初始预计报价合理，无需调整");
   }
   // 调整价格
-  const adjustPrice =
-    finalPrice < initialExpectedPrice
-      ? subDecimal(finalPrice, initialExpectedPrice)
-      : subDecimal(initialExpectedPrice, finalPrice);
+  const adjustPrice = subDecimal(finalPrice, initialExpectedPrice);
   reason.push(
     `最终报价：${finalPrice}, 对比初始报价：${initialExpectedPrice}，调价：${adjustPrice}`
   );
