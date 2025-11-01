@@ -141,9 +141,7 @@ export default class OrderManage {
         params.ticketCouponCode = quan_code.join();
         params.optType = 0;
         // 幸福蓝海比较特殊，多张券时参数不一样
-        if (quan_code.length > 1 && this.api_v != "V4.0.2") {
-          params.ticketCodes = quan_code;
-          params.firstCalc = false;
+        if (quan_code.length > 1 && this.api_v != "V4.0.2" && firstCalc) {
           delete params.activityKey;
           delete params.ticketCouponCode;
           delete params.optType;
@@ -161,7 +159,7 @@ export default class OrderManage {
     try {
       this.logger.infoSave("计算价格参数", params);
       // 通过优惠调用时无需再调用之前的价格计算接口
-      if (!(activityKey && isTrial === false)) {
+      if (!(activityKey && !isTrial)) {
         res = await this.appApi.priceCalculation(params);
         this.logger.infoSave("计算价格返回", JSON.parse(JSON.stringify(res)));
       }
@@ -173,7 +171,10 @@ export default class OrderManage {
         return res.data;
       }
       params = { ...params, firstCalc: false };
-      // this.logger.infoSave("计算价格参数1", params);
+      if (quan_code.length > 1 && this.api_v != "V4.0.2") {
+        params.ticketCodes = quan_code;
+      }
+      this.logger.infoSave("计算价格参数1", params);
       res = await this.appApi.priceCalculation(params);
       this.logger.infoSave("计算价格返回1", res);
       if (!quan_code?.length && cardNum) {

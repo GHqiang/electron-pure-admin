@@ -114,11 +114,11 @@ export default class BuyTicket {
   // 2、获取订单报价规则
   async getOrderOfferRule() {
     // 测试专用
-    if (this.isTestOrder) {
-      // offerRule = { offer_type: "1", quan_value: "35" };
-      this.offerRule = { offer_type: "2", member_price: "25" };
-      return;
-    }
+    // if (this.isTestOrder) {
+    //   offerRule = { offer_type: "1", quan_value: "35" };
+    //   // this.offerRule = { offer_type: "2", member_price: "25" };
+    //   return;
+    // }
     const { app_name, order_number, plat_name, offer_order_number } =
       this.order;
     try {
@@ -305,17 +305,20 @@ export default class BuyTicket {
         serviceAddFee = cinemaPlanDto?.serviceAddFee;
         if (discountList?.length) {
           // 取最低价
-        basePrice = discountList
+          basePrice = discountList
             .filter(item => item.cardLevelCode)
             .map(item => item.price - item.cinemaPayAmount)
             .sort((a, b) => a - b)?.[0];
           this.logger.infoSave("从有卡优惠活动里取最低价", { basePrice });
-          if(!basePrice) {
+          if (!basePrice) {
             basePrice = discountList
-            .filter(item => !item.cardLevelCode)
-            .map(item => item.price - item.cinemaPayAmount)
-            .sort((a, b) => a - b)?.[0];
-            this.logger.infoSave("从无卡优惠活动里取最低价", { basePrice, discountList });
+              .filter(item => !item.cardLevelCode)
+              .map(item => item.price - item.cinemaPayAmount)
+              .sort((a, b) => a - b)?.[0];
+            this.logger.infoSave("从无卡优惠活动里取最低价", {
+              basePrice,
+              discountList
+            });
           }
         } else {
           basePrice = cinemaPlanDto?.standardPrice;
@@ -417,7 +420,8 @@ export default class BuyTicket {
         // yaolai绑券逻辑不一样，暂不处理
         if (offerRule.is_store == "1" && quanStock - ticket_num < 10) {
           this.logger.infoSave("本次出票后券小于10，开始异步绑定券", {
-            quanStock, ticket_num
+            quanStock,
+            ticket_num
           });
           this.cardQuanManage.getNewQuan({
             cinemaCode,
