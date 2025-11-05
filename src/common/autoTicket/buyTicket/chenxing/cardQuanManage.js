@@ -274,6 +274,8 @@ export default class CardQuanManage {
           } else {
             useCardList = cardData?.slice();
           }
+        } else {
+          // useCardList = cardList?.slice();
         }
         if (is_auto_use_quan) {
           offerRule.offer_type = "1";

@@ -108,6 +108,49 @@ export default class OrderManage {
     }
   }
 
+  // 幸福蓝海多张券计算价格
+  async specialCalcPrice(data) {
+    try {
+      let {
+        cinemaCode,
+        cinemaId,
+        lockOrderId,
+        quan_code,
+        session_id,
+        useCardList = [],
+        reqCount = 0
+      } = data;
+      let cardNum = useCardList?.[0]?.cardNo;
+      let params = {
+        cinemaCode,
+        cinemaId,
+        lockOrderId,
+        addRetailGoods: [],
+        addEquityGoods: [],
+        orderGoodsType: 1,
+        firstCalc: reqCount == 0, // 是否是首次计算(首次会默认用券)
+        session_id
+      };
+      if (reqCount > 0 && reqCount <= quan_code?.length) {
+        params.optType = 0;
+        params.ticketCouponCode = quan_code[reqCount - 1];
+      }
+      let res = await this.appApi.priceCalculation(params);
+      this.logger.infoSave(
+        "计算价格返回" + reqCount,
+        JSON.parse(JSON.stringify(res))
+      );
+      if (reqCount < quan_code?.length) {
+        return await this.specialCalcPrice({
+          ...data,
+          reqCount: reqCount + 1
+        });
+      } else {
+        console.log("计算价格结束", res?.data);
+        return res?.data;
+      }
+    } catch (error) {}
+  }
   // 计算价格
   async pripriceCalculation(data) {
     let {
@@ -142,6 +185,7 @@ export default class OrderManage {
         params.optType = 0;
         // 幸福蓝海比较特殊，多张券时参数不一样
         if (quan_code.length > 1 && this.api_v != "V4.0.2" && firstCalc) {
+          return await this.specialCalcPrice(data);
           delete params.activityKey;
           delete params.ticketCouponCode;
           delete params.optType;
