@@ -976,7 +976,8 @@ class OrderAutoTicketQueue {
       this.logger.infoSave("使用会员卡或优惠券返回", {
         card_id,
         useQuan,
-        profit
+        profit,
+        quanStock
       });
       let failMsg;
       if (offerRule.offer_type === "1") {
@@ -1055,13 +1056,13 @@ class OrderAutoTicketQueue {
         } else {
           payAmount = 0;
         }
-        if (offerRule.is_store == "1" && quanList.length - ticket_num < 10) {
+        if (offerRule.is_store == "1" && quanStock - ticket_num < 10) {
           this.logger.infoSave("本次出票后券小于10，开始异步绑定券");
           this.getNewQuan({
             cinemaLinkId,
             quanValue: offerRule.quan_value,
             black_quans: offerRule.black_quans,
-            quanNum: 10 - (quanList.length - Number(ticket_num)),
+            quanNum: 10 - (quanStock - Number(ticket_num)),
             session_id:
               this.currentParamsList[this.currentParamsInx].session_id,
             asyncFlag: 1,
