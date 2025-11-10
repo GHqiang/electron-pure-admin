@@ -382,6 +382,11 @@ const searchData = async () => {
     });
     // 使用Object.fromEntries将过滤后的键值对数组转换回对象
     let queryParams = Object.fromEntries(filteredEntries);
+    // 影划算特殊处理下订单号查询的问题
+    if (queryParams.plat_name === "yinghuasuan" && queryParams.order_number) {
+      queryParams.plat_order_sn = queryParams.order_number;
+      delete queryParams.order_number;
+    }
     // console.log("queryParams", queryParams);
     let page_num = currentPage.value;
     let page_size = pageSize.value;
