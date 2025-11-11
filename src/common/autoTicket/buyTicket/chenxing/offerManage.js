@@ -178,7 +178,9 @@ class getChenxingOfferPrice {
 
     const filmType = mediaType?.toUpperCase();
     return filmType
-      ? rules.filter(item => item.film_type?.includes(filmType))
+      ? rules.filter(item =>
+          item.film_type?.some(itemA => filmType.includes(itemA))
+        )
       : rules;
   }
 

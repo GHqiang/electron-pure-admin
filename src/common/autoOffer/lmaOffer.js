@@ -238,7 +238,9 @@ class getLmaOfferPrice {
       let filmType = movieInfo.language_type?.split("/")?.[0].toUpperCase();
       if (
         filmTypeFlag &&
-        !matchRuleList.some(item => item.film_type?.includes(filmType))
+        !matchRuleList.some(item =>
+          item.film_type?.some(itemA => filmType.includes(itemA))
+        )
       ) {
         this.logList.push({
           opera_time: getCurrentTime(),

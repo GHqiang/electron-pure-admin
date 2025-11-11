@@ -1468,7 +1468,11 @@ class getUmeOfferPrice {
       if (filmTypeFlag && targetShow.filmVersion) {
         // 校验电影格式，减少后续接口请求
         let filmType = targetShow.filmVersion.toUpperCase();
-        if (!matchRuleList.some(item => item.film_type?.includes(filmType))) {
+        if (
+          !matchRuleList.some(item =>
+            item.film_type?.some(itemA => filmType.includes(itemA))
+          )
+        ) {
           return {
             filmTypeCheckFail: true
           };

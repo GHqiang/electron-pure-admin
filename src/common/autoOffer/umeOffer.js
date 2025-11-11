@@ -261,7 +261,7 @@ class getUmeOfferPrice {
         if (filmType) {
           filmType = filmType.toUpperCase();
           matchRuleList = matchRuleList.filter(item =>
-            item.film_type?.includes(filmType)
+            item.film_type?.some(itemA => filmType.includes(itemA))
           );
         }
       }
