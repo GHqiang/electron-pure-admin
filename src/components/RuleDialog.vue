@@ -842,16 +842,16 @@ const cancel = el => {
 // 包含城市改变
 const includeCityChange = value => {
   try {
-    console.log("包含城市改变", value);
-    if (formData.includeCinemaNames.length) {
-      formData.includeCinemaNames = formData.includeCinemaNames.filter(item =>
-        value.some(itemV => item.includes(itemV.replace(/市$/, "")))
-      );
-    } else if (formData.excludeCinemaNames.length) {
-      formData.excludeCinemaNames = formData.excludeCinemaNames.filter(item =>
-        value.some(itemV => item.includes(itemV.replace(/市$/, "")))
-      );
-    }
+    console.log("包含城市改变", value, formData.includeCinemaNames);
+    // if (formData.includeCinemaNames.length) {
+    //   formData.includeCinemaNames = formData.includeCinemaNames.filter(item =>
+    //     value.some(itemV => item.includes(itemV.replace(/市$/, "")))
+    //   );
+    // } else if (formData.excludeCinemaNames.length) {
+    //   formData.excludeCinemaNames = formData.excludeCinemaNames.filter(item =>
+    //     value.some(itemV => item.includes(itemV.replace(/市$/, "")))
+    //   );
+    // }
   } catch (error) {
     console.warn("包含城市改变处理异常", error);
   }
@@ -861,15 +861,15 @@ const includeCityChange = value => {
 const excludeCityChange = value => {
   try {
     console.log("排除城市改变", value);
-    if (formData.includeCinemaNames.length) {
-      formData.includeCinemaNames = formData.includeCinemaNames.filter(
-        item => !value.some(itemV => item.includes(itemV.replace(/市$/, "")))
-      );
-    } else if (formData.excludeCinemaNames.length) {
-      formData.excludeCinemaNames = formData.excludeCinemaNames.filter(
-        item => !value.some(itemV => item.includes(itemV.replace(/市$/, "")))
-      );
-    }
+    // if (formData.includeCinemaNames.length) {
+    //   formData.includeCinemaNames = formData.includeCinemaNames.filter(
+    //     item => !value.some(itemV => item.includes(itemV.replace(/市$/, "")))
+    //   );
+    // } else if (formData.excludeCinemaNames.length) {
+    //   formData.excludeCinemaNames = formData.excludeCinemaNames.filter(
+    //     item => !value.some(itemV => item.includes(itemV.replace(/市$/, "")))
+    //   );
+    // }
   } catch (error) {
     console.warn("排查城市改变处理异常", error);
   }
