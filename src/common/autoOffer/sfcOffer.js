@@ -844,12 +844,7 @@ class getSfcOfferPrice {
           movieData: movieInfo,
           minAddAmountRule
         });
-        if (memberPriceRes === -1) {
-          this.logList.push({
-            opera_time: getCurrentTime(),
-            des: "获取当前场次电影信息失败，直接不报",
-            level: "info"
-          });
+        if (memberPriceRes === -1 || memberPriceRes === -3) {
           return;
         }
         if (!memberPriceRes) {
