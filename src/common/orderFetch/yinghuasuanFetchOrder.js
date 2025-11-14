@@ -99,7 +99,7 @@ class OrderAutoFetchQueue {
             plat_name: "yinghuasuan"
           };
         })
-        .filter(item => getCinemaFlag(item))
+        .filter(item => getCinemaFlag(item) && item.order_number)
         .map(item => {
           let app_name = getCinemaFlag(item);
           return {
