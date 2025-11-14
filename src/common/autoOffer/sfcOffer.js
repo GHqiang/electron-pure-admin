@@ -329,7 +329,8 @@ class getSfcOfferPrice {
           info: {
             filmTypeFlag,
             filmType,
-            movieInfo
+            movieInfo,
+            matchRuleList
           }
         });
         return;

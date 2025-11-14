@@ -273,7 +273,8 @@ class getUmeOfferPrice {
           info: {
             filmTypeFlag,
             filmType,
-            movieInfo
+            movieInfo,
+            matchRuleList
           }
         });
         return;

@@ -247,7 +247,8 @@ class getUmeOfferPrice {
           level: "error",
           info: {
             filmTypeFlag,
-            movieInfo
+            filmType: movieInfo.filmType,
+            matchRuleList
           }
         });
         return;
@@ -1474,7 +1475,8 @@ class getUmeOfferPrice {
           )
         ) {
           return {
-            filmTypeCheckFail: true
+            filmTypeCheckFail: true,
+            filmType
           };
         }
       }

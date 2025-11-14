@@ -249,7 +249,8 @@ class getLmaOfferPrice {
           info: {
             filmTypeFlag,
             filmType,
-            movieInfo
+            movieInfo,
+            matchRuleList
           }
         });
         return;
