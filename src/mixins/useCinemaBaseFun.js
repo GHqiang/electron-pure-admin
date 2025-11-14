@@ -125,6 +125,9 @@ export default function useCinemaBaseFun() {
         if (list.length > 0) {
           allCinemaList = allCinemaList.concat(list);
         }
+        if (app_name === "lma") {
+          break;
+        }
       }
       return allCinemaList;
     } catch (error) {
