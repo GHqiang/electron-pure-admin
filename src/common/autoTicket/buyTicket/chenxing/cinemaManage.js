@@ -365,7 +365,7 @@ export default class CinemaManage {
         pageSize: 1000,
         platForm: 5
       };
-      this.logger.info("获取电影放映信息参数", params);
+      this.logger.infoSave("获取电影放映信息参数", params);
       let res = await this.appApi.getMoviePlayInfo(params);
       // this.logger.infoSave("获取电影放映信息返回", res);
       let movie_data = [];

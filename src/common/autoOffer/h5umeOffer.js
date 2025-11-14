@@ -1349,6 +1349,11 @@ class getUmeOfferPrice {
       const movie_data = await this.getMoviePlayInfo({
         cinemaLinkId
       });
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "获取影院放映列表结束",
+        level: "info"
+      });
       // 4、获取目标影片信息
       let movieInfo = movie_data?.find(item => item.filmName === film_name);
       if (!movieInfo) {
@@ -1408,7 +1413,11 @@ class getUmeOfferPrice {
           itemA => +new Date(+itemA.showTime) === +new Date(show_time)
         )
       );
-
+      this.logList.push({
+        opera_time: getCurrentTime(),
+        des: "获取影片场次列表结束",
+        level: "info"
+      });
       // 获取某个放映日期的场次列表
       const showList = targetShowInfo?.schedules || [];
       // 解决同一时间多场次问题
