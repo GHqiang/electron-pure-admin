@@ -2,7 +2,7 @@
 
 import axios from "axios";
 import { ElMessage } from "element-plus";
-import { GET_APP_LIST, GET_ALL_APP_LOGIN_LIST } from "@/common/constant";
+import { GET_APP_LIST } from "@/common/constant";
 
 import {
   logUpload,
@@ -136,7 +136,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         if (data.msg?.includes("登录信息已失效，请重新登录")) {
           // 推送登录信息
           let session_id = response?.config?.session_id;
-          let targetLoginList = GET_ALL_APP_LOGIN_LIST().filter(
+          let targetLoginList = getCinemaLoginInfoList().filter(
             item => item.app_name === app_name && item.mobile && item.session_id
           );
           let phone = targetLoginList.find(
