@@ -391,8 +391,9 @@ const colorObj = {
 // 获取影院标识新
 const newGetCinemaFlagFun = item => {
   let appFlag = cinemaCodeMatchObj.getCinemaAppFlag(item)?.app_name;
-  if (appFlag === "wanxiangh5") {
-    appFlag = "wanxiang";
+  // 万象可以不用了，只用万象h5
+  if (appFlag === "wanxiang") {
+    appFlag = "wanxiangh5";
   }
   return appFlag;
 };
