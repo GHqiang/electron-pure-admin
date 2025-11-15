@@ -160,7 +160,8 @@ class getLmaOfferPrice {
         rewards,
         offerType,
         offerList,
-        plat_name
+        plat_name,
+        offerRule
       });
       console.warn("最终报价返回", endPrice);
       if (!endPrice) {
@@ -949,7 +950,8 @@ class getLmaOfferPrice {
         rewards,
         offerType,
         offerList,
-        plat_name
+        plat_name,
+        offerRule
       } = params || {};
       // console.log("获取最终报价相关字段", params);
       // 远端报价记录
