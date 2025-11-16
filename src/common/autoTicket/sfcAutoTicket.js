@@ -1148,7 +1148,8 @@ class OrderAutoTicketQueue {
         isV3App,
         card_id,
         pay_password,
-        orderInfo: this.order
+        orderInfo: this.order,
+        loggger: this.logger
       });
       this.logger.infoSave("订单购买返回", buyTicketRes);
       const buyRes = buyTicketRes?.buyRes;
@@ -3188,7 +3189,8 @@ const buyTicket = async ({
   isV3App,
   card_id,
   pay_password,
-  orderInfo
+  orderInfo,
+  logger
 }) => {
   let params = {
     city_id,
@@ -3197,7 +3199,8 @@ const buyTicket = async ({
     order_num, // 订单号
     pay_money, // 支付金额
     pay_type: "", // 购买方式 传空意味着用优惠券或者会员卡
-    session_id
+    session_id,
+    logger
   };
   try {
     if (isV3App && card_id) {
@@ -3219,7 +3222,7 @@ const buyTicket = async ({
       formatErrInfo(error)?.includes("密码") &&
       formatErrInfo(error)?.includes("错误")
     ) {
-      this.logger.infoSave("发送密码配置错误提醒");
+      logger.infoSave("发送密码配置错误提醒");
       sendWxPusherMessage({
         orderInfo,
         msgType: 5,

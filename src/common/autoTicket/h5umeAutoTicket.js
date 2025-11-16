@@ -1261,7 +1261,8 @@ class OrderAutoTicketQueue {
           appFlag,
           session_id: this.currentParamsList[this.currentParamsInx].session_id,
           member_pwd: this.currentParamsList[this.currentParamsInx].member_pwd,
-          orderInfo: this.order
+          orderInfo: this.order,
+          logger: this.logger
         });
         this.logger.infoSave("订单购买返回", { buyTicketRes });
         const buyRes = buyTicketRes?.buyRes;
@@ -3003,7 +3004,8 @@ const buyTicket = async ({
   appFlag,
   session_id,
   member_pwd,
-  orderInfo
+  orderInfo,
+  logger
 }) => {
   let params = {
     cinemaLinkId,
@@ -3031,7 +3033,7 @@ const buyTicket = async ({
       formatErrInfo(error)?.includes("密码") &&
       formatErrInfo(error)?.includes("错误")
     ) {
-      this.logger.infoSave("发送密码配置错误提醒");
+      logger.infoSave("发送密码配置错误提醒");
       sendWxPusherMessage({
         orderInfo,
         msgType: 5,
