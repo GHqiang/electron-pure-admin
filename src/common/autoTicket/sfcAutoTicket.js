@@ -3199,8 +3199,7 @@ const buyTicket = async ({
     order_num, // 订单号
     pay_money, // 支付金额
     pay_type: "", // 购买方式 传空意味着用优惠券或者会员卡
-    session_id,
-    logger
+    session_id
   };
   try {
     if (isV3App && card_id) {
