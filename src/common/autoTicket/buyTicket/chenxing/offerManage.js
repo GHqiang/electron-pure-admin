@@ -327,9 +327,6 @@ class getChenxingOfferPrice {
 
   // 格式化最终价格
   formatFinalPrice(price, plat_name) {
-    if (["mayi", "yangcong"].includes(plat_name)) {
-      return Math.round(price); // 四舍五入取整
-    }
     return price;
   }
 

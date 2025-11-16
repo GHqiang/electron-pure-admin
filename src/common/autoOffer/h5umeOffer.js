@@ -928,15 +928,6 @@ class getUmeOfferPrice {
       }
       // 规则报价
       let rule_price = price;
-      // 省、蚂蚁最后报价要求整数
-      if (["mayi", "yangcong"].includes(plat_name)) {
-        price = Math.round(price);
-        this.logList.push({
-          opera_time: getCurrentTime(),
-          des: "调整最终报价为规则报价四舍五入取整",
-          level: "info"
-        });
-      }
       // 最终报价高于平台限价，关闭超限报价直接不报
       if (price > Number(supplier_max_price)) {
         let isOverrunOffer = window.localStorage.getItem("isOverrunOffer");
