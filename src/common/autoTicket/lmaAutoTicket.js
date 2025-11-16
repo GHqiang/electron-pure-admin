@@ -1301,6 +1301,43 @@ class OrderAutoTicketQueue {
     }
   }
 
+  // 获取影院券类型列表
+  async getQuanTypeListByApp({ appFlag: app_name, mobile }) {
+    const params = {
+      app_name,
+      isNeedTotalNum: 0,
+      queryFields: "id,app_name,quan_value,quan_flag,black_quans,quanStockList"
+    };
+    try {
+      let quanTypeRes = await svApi.queryQuanTypeList(params);
+      let quanTypeList = quanTypeRes?.data?.quanTypeList || [];
+      quanTypeList.forEach(item => {
+        item.quanStockList = item.quanStockList
+          ? JSON.parse(item.quanStockList)
+          : [];
+        // 只拿关联账号的券库存信息进行判断
+        const quanStockListByPhone = item.quanStockList.filter(
+          itemA => itemA.phone === mobile
+        );
+        item.quan_stock = item.quan_stock || 0;
+        if (quanStockListByPhone?.length) {
+          // 最大数当做券库存
+          let maxNum = 0;
+          quanStockListByPhone.forEach(itemA => {
+            if (+itemA.quan_stock > maxNum) {
+              maxNum = +itemA.quan_stock;
+            }
+          });
+          item.quan_stock = maxNum;
+        }
+      });
+      this.logger.infoSave("根据影院获取券类型列表", { quanTypeList });
+      return quanTypeList;
+    } catch (error) {
+      this.logger.errorSave("根据影院获取券类型列表返回异常", { error });
+    }
+  }
+
   // 使用优惠券
   async useQuanHandle(params) {
     const { appFlag } = this;
@@ -1308,7 +1345,7 @@ class OrderAutoTicketQueue {
     try {
       let { offer_type, quan_value, real_member_price } = offerRule;
       let currentParams = this.currentParamsList[this.currentParamsInx];
-      const { lmaToken } = currentParams;
+      const { lmaToken, mobile } = currentParams;
       // 拿订单号去匹配报价记录
       if (offer_type !== "1") {
         let lmaIsUseQuanValue = window.localStorage.getItem("lmaIsUseQuan");
@@ -1317,7 +1354,40 @@ class OrderAutoTicketQueue {
         // 只判断价格是否大于33，如果大于就用券
         quan_value = "lma-5";
       }
-      const quanInfo = await this.getQuanInfo(quan_value, appFlag);
+
+      let quanValueList = offerRule.quan_value.split(",");
+      this.logger.infoSave("使用优惠券出票", {
+        quanValueList
+      });
+      // 读取券库存进行过滤重新设置quan_value为单个券类型
+      if (quanValueList.length > 1) {
+        const appQuanTypeList = await this.getQuanTypeListByApp({
+          appFlag,
+          mobile
+        });
+        if (appQuanTypeList?.length) {
+          let canUseQuanTypeList = appQuanTypeList.filter(
+            itemA =>
+              quanValueList.includes(itemA.quan_value) &&
+              itemA.quan_stock >= ticket_num
+          );
+          this.logger.infoSave("根据券类型和券库存进行筛选", {
+            canUseQuanTypeList
+          });
+          if (canUseQuanTypeList.length) {
+            offerRule.quan_value = canUseQuanTypeList[0].quan_value;
+          }
+        }
+
+        if (offerRule.quan_value.split(",").length > 1) {
+          offerRule.old_quan_value = offerRule.quan_value;
+          offerRule.quan_value = offerRule.quan_value.split(",")[0];
+          this.logger.infoSave("券类型容错处理：强制取第一个", {
+            quan_value: offerRule.quan_value
+          });
+        }
+      }
+      const quanInfo = await this.getQuanInfo(offerRule.quan_value, appFlag);
       const { quan_cost, quan_flag, quan_fee, is_store, black_quans } =
         quanInfo || {};
       offerRule.quan_cost = quan_cost;
