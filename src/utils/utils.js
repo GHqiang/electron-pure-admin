@@ -1743,8 +1743,12 @@ function cleanString(str) {
 }
 
 // 找出重复字符及数量
-function findMostRepeatedChars(str1, str2) {
+function findMostRepeatedChars(str1, str2, fieldType) {
   try {
+    if (fieldType == "hall_name") {
+      str1 = str1.replace(/\（[^)]*\）/g, "").replace(/\([^)]*\)/g, "");
+      str2 = str2.replace(/\（[^)]*\）/g, "").replace(/\([^)]*\)/g, "");
+    }
     // 将字符串转换为小写，并清理掉特殊字符
     str1 = cleanString(str1.toLowerCase());
     str2 = cleanString(str2.toLowerCase());

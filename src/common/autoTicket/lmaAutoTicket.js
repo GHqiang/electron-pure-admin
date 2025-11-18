@@ -597,7 +597,8 @@ class OrderAutoTicketQueue {
           targetShowList = targetShowList.map(item => {
             const repeatedCharsResult = findMostRepeatedChars(
               item.screen_name,
-              hall_name
+              hall_name,
+              "hall_name"
             );
             return {
               ...item,

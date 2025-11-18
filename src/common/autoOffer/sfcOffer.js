@@ -1679,7 +1679,8 @@ class getSfcOfferPrice {
         targetShowList = targetShowList.map(item => {
           const repeatedCharsResult = findMostRepeatedChars(
             item.hall_name,
-            hall_name
+            hall_name,
+            "hall_name"
           );
           return {
             ...item,

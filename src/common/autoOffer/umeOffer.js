@@ -1478,7 +1478,8 @@ class getUmeOfferPrice {
         targetShowList = targetShowList.map(item => {
           const repeatedCharsResult = findMostRepeatedChars(
             item.hallName,
-            hall_name
+            hall_name,
+            "hall_name"
           );
           return {
             ...item,
@@ -1524,7 +1525,8 @@ class getUmeOfferPrice {
           targetShowList = targetShowList.map(item => {
             const repeatedCharsResult = findMostRepeatedChars(
               item.hallName,
-              hall_name
+              hall_name,
+              "hall_name"
             );
             return {
               ...item,

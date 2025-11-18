@@ -453,7 +453,7 @@ export default class CinemaManage {
     // 多场次按厅名相似度排序
     targetShowList = targetShowList.map(item => ({
       ...item,
-      ...findMostRepeatedChars(item.hallName, hall_name)
+      ...findMostRepeatedChars(item.hallName, hall_name, "hall_name")
     }));
 
     targetShowList.sort((a, b) => (b.similarity || 0) - (a.similarity || 0));
