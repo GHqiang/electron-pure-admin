@@ -21,7 +21,15 @@ export default class PlatCommon {
 
   // 解锁座位(接单&解锁)
   async unlockSeatByPlat() {
-    const { plat_name, id, bid, order_number, order_sn, is_lock_seat, supplierCode } = this.order;
+    const {
+      plat_name,
+      id,
+      bid,
+      order_number,
+      order_sn,
+      is_lock_seat,
+      supplierCode
+    } = this.order;
     let unlockRes;
     try {
       // 1、解锁座位
@@ -360,7 +368,7 @@ export default class PlatCommon {
         ticket_code: qrcode,
         ticket_image: fileUrl || " ", // 需传图片url
         real_seat_no: lockseat.split(" ").join(","),
-        entry_method: 0,
+        entry_method: 0
       };
     } else if (plat_name === "shangzhan") {
       params = {
@@ -650,16 +658,14 @@ export default class PlatCommon {
       });
       let { supplier_end_price, tpp_price, ticket_num } = this.order;
       // 洋葱转单是原价的百分之三
-      if (["yangcong"].includes(plat_name) && tpp_price) {
+      if (["yangcong", "mayi"].includes(plat_name) && tpp_price) {
         supplier_end_price = tpp_price;
       }
-      let transfer_fee = 0; // 蚂蚁转单扣积分
-      if (plat_name != "mayi") {
-        transfer_fee = (
-          (Number(supplier_end_price) * 100 * Number(ticket_num) * 3) /
-          10000
-        ).toFixed(2);
-      }
+      let transfer_fee = 0;
+      transfer_fee = (
+        (Number(supplier_end_price) * 100 * Number(ticket_num) * 3) /
+        10000
+      ).toFixed(2);
       this.logger.warn("转单手续费", transfer_fee);
       return { transfer_fee };
     } catch (error) {
