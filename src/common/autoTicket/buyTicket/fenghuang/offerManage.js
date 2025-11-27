@@ -149,7 +149,10 @@ class getFenghuangOfferPrice {
         console.log("测试订单获取会员价", memberPriceRes, movieInfo);
       }
 
-      matchRuleList = this.filterByFilmType(matchRuleList, movieInfo.media);
+      matchRuleList = this.filterByFilmType(
+        matchRuleList,
+        movieInfo.filmVersion
+      );
       if (!matchRuleList.length) return this.handleEmptyRuleList("filmType");
 
       // 3. 获取最低报价规则

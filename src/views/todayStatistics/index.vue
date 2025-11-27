@@ -111,6 +111,12 @@
         min-width="100"
       />
       <el-table-column
+        prop="supplier_end_price_total"
+        sortable
+        label="流水"
+        min-width="105"
+      />
+      <el-table-column
         prop="offerTotalNum"
         sortable
         label="报价总数"
@@ -338,9 +344,10 @@ const getSummaries = param => {
   });
   sums[2] = Number(sums[2]).toFixed(2);
   sums[3] = Number(sums[3]).toFixed(2);
-  sums[11] = Math.floor((sums[10] / sums[5]) * 100) + "%";
-  sums[14] =
-    sums[12] > 0 ? Math.floor((sums[12] / sums[10]) * 100) + "%" : "0%";
+  sums[4] = Number(sums[4]).toFixed(2);
+  sums[12] = Math.floor((sums[11] / sums[6]) * 100) + "%";
+  sums[15] =
+    sums[13] > 0 ? Math.floor((sums[13] / sums[11]) * 100) + "%" : "0%";
   return sums;
 };
 
