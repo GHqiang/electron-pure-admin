@@ -1235,11 +1235,36 @@ class OrderAutoTicketQueue {
               real_member_total_price,
               ticket_num
             });
-            const transferParams = await this.transferOrder(item, {
-              cinemaLinkId,
-              orderId
-            });
-            return { offerRule, transferParams };
+            // const transferParams = await this.transferOrder(item, {
+            //   cinemaLinkId,
+            //   orderId
+            // });
+            // return { offerRule, transferParams };
+            if (this.currentParamsInx === this.currentParamsList.length - 1) {
+              const transferParams = await this.transferOrder(item, {
+                cinemaLinkId,
+                orderId
+              });
+              return { offerRule, transferParams };
+            } else {
+              this.logger.infoSave("非最后一次用卡用券失败，走换号");
+              this.currentParamsInx++;
+              return await this.oneClickBuyTicket({
+                ...item,
+                otherParams: {
+                  cinemaLinkId,
+                  hallId,
+                  scheduleId,
+                  orderId,
+                  scheduleKey,
+                  seatIds,
+                  areaTotalPrice,
+                  seatList,
+                  offerRule,
+                  targetShow
+                }
+              });
+            }
           }
         } else if (payAmount < real_member_total_price) {
           let member_discount = offerRule?.member_discount || 100;
