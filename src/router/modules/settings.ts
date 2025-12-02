@@ -110,7 +110,15 @@ export default {
       meta: {
         title: "出票记录"
       }
-    }
+    },
+    {
+      path: "/set/offerFailRecord",
+      name: "offerFailRecord",
+      component: () => import("@/views/offerFailRecord/index.vue"),
+      meta: {
+        title: "未报价记录"
+      }
+    },
     // {
     //   path: "/set/balanceQuery",
     //   name: "balanceQuery",

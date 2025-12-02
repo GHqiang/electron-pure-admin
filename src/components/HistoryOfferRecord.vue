@@ -56,7 +56,7 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="报价状态">
+      <!-- <el-form-item label="报价状态">
         <el-select
           v-model="formData.order_status"
           placeholder="报价状态"
@@ -66,8 +66,8 @@
           <el-option label="成功" value="1" />
           <el-option label="失败" value="2" />
         </el-select>
-      </el-form-item>
-      <el-form-item label="是否中标">
+      </el-form-item> -->
+      <el-form-item label="是否中标" v-if="orderStatus == 1">
         <el-select
           v-model="formData.is_deal"
           placeholder="是否中标"
@@ -78,7 +78,10 @@
           <el-option label="否" value="2" />
         </el-select>
       </el-form-item>
-      <el-form-item v-if="IN_RULE_LIST.includes(rule)" label="报价差异">
+      <el-form-item
+        v-if="IN_RULE_LIST.includes(rule) && orderStatus == 1"
+        label="报价差异"
+      >
         <el-select
           v-model="formData.is_price_diff"
           placeholder="报价差异"
@@ -112,7 +115,7 @@
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="失败原因">
+      <el-form-item label="失败原因" v-if="orderStatus == 2">
         <el-input
           v-model="formData.err_msg"
           placeholder="请输入报价失败原因"
@@ -172,11 +175,11 @@
           <span>{{ APP_LIST[scope.row.app_name] }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="报价状态" fixed width="85">
+      <!-- <el-table-column label="报价状态" fixed width="85">
         <template #default="scope">
           <span>{{ scope.row.order_status === "1" ? "成功" : "失败" }}</span>
         </template>
-      </el-table-column>
+      </el-table-column> -->
       <el-table-column prop="order_number" fixed label="订单号" width="110" />
       <el-table-column
         prop="supplier_max_price"
@@ -185,7 +188,7 @@
         width="85"
       />
       <el-table-column
-        v-if="IN_RULE_LIST.includes(rule)"
+        v-if="IN_RULE_LIST.includes(rule) && orderStatus == 1"
         prop="deal_price"
         fixed
         label="中标价"
@@ -202,28 +205,28 @@
         </template>
       </el-table-column>
       <el-table-column
-        v-if="IN_RULE_LIST.includes(rule)"
+        v-if="IN_RULE_LIST.includes(rule) && orderStatus == 1"
         prop="adjust_price"
         fixed
         label="动态调价"
         width="85"
       />
       <el-table-column
-        v-if="IN_RULE_LIST.includes(rule)"
+        v-if="IN_RULE_LIST.includes(rule) && orderStatus == 1"
         prop="member_price"
         fixed
         label="税前成本"
         width="85"
       />
       <el-table-column
-        v-if="IN_RULE_LIST.includes(rule)"
+        v-if="IN_RULE_LIST.includes(rule) && orderStatus == 1"
         prop="price_spread"
         fixed
         label="成本价差"
         width="85"
       />
       <el-table-column
-        v-if="IN_RULE_LIST.includes(rule)"
+        v-if="IN_RULE_LIST.includes(rule) && orderStatus == 1"
         label="预计利润"
         width="85"
       >
@@ -232,7 +235,7 @@
         </template>
       </el-table-column>
       <el-table-column
-        v-if="IN_RULE_LIST.includes(rule)"
+        v-if="IN_RULE_LIST.includes(rule) && orderStatus == 1"
         prop="is_deal"
         label="是否中标"
         width="85"
@@ -389,6 +392,13 @@ formData.end_time = getTodayTime(+new Date() + 1 * 24 * 60 * 60 * 1000);
 const tableDataFilter = ref([]);
 let timer;
 
+// 父传子props
+const props = defineProps({
+  orderStatus: Number
+});
+
+formData.order_status = props.orderStatus;
+
 // 查询操作日志
 const queryLog = async ({ order_number, user_id }) => {
   try {
@@ -510,7 +520,8 @@ const formatProfit = ({
     shouxufei = 0;
   }
   // 奖励费用
-  const rewardPrice = rewards > 0 ? (offer_end_amount * 100 * rewards) / 10000 : 0;
+  const rewardPrice =
+    rewards > 0 ? (offer_end_amount * 100 * rewards) / 10000 : 0;
   return subDecimal(
     addDecimal(offer_end_amount, rewardPrice),
     addDecimal(member_price, shouxufei)
