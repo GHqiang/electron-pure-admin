@@ -42,8 +42,10 @@ const getToken = async (app_name, IS_DEV) => {
     return res?.data?.data;
   } catch (error) {
     console.error("tokenRes error", error);
+    throw error; // 确保错误能被后续捕获
   }
 };
+
 const paramsHandle = (params, app_name) => {
   let targetLoginList = getCinemaLoginInfoList().filter(
     item => item.app_name === app_name && item.mobile && item.session_id
@@ -52,6 +54,7 @@ const paramsHandle = (params, app_name) => {
   let appInfo = GET_APP_INFO(app_name);
   // console.log("app_name", app_name, appInfo);
   let api_version = appInfo?.api_version || "";
+
   if (api_version == "3.0C") {
     let config = {
       k: params?.session_id || token, // 登录接口返回token
@@ -95,9 +98,7 @@ const paramsHandle = (params, app_name) => {
         d: "microsoft",
         channelNo: appInfo?.channelCode,
         channelCode: appInfo?.channelCode,
-        channelNo: appInfo?.channelCode,
         tenantId: token.split(":")[0],
-
         unifiedCode: params.cinemaCode,
         // cinemaCode: "42011801",
         // cinemaId: "136365",
@@ -114,10 +115,9 @@ const paramsHandle = (params, app_name) => {
     return config;
   }
 };
+
 const createAxios = ({ app_name, timeout = 20 }) => {
-  // 创建axios实例
   const instance = axios.create({
-    //   baseURL: process.env.VITE_API_BASE_URL,
     baseURL: "",
     timeout: timeout * 1000
   });
@@ -125,8 +125,13 @@ const createAxios = ({ app_name, timeout = 20 }) => {
   const NODE_ENV = process.env.NODE_ENV;
   const IS_DEV = NODE_ENV === "development";
   const api_version = GET_APP_INFO(app_name)?.api_version || "";
-  // console.warn("api_version", api_version);
-  let chenxingToken, identityKey, identityType;
+
+  // 用于存储token刷新状态
+  let chenxingToken = null;
+  let identityKey = null;
+  let identityType = null;
+  let isRefreshingToken = false;
+  let tokenRefreshQueue = [];
 
   // 配置axios-retry
   axiosRetry(instance, {
@@ -145,24 +150,39 @@ const createAxios = ({ app_name, timeout = 20 }) => {
   instance.interceptors.request.use(
     async config => {
       if (GET_APP_INFO(app_name)) {
+        // 获取token（如果尚未获取且需要）
         if (
           !chenxingToken &&
           api_version == "C" &&
           config.url.indexOf("/auth/") === -1
         ) {
-          const tokenRes = await getToken(app_name, IS_DEV);
-          chenxingToken = tokenRes?.token;
-          identityKey = tokenRes?.identityKey;
-          identityType = tokenRes?.identityType;
+          try {
+            const tokenRes = await getToken(app_name, IS_DEV);
+            chenxingToken = tokenRes?.token;
+            // 放开后可用会员卡同步功能测试401场景
+            // chenxingToken = "";
+            identityKey = tokenRes?.identityKey;
+            identityType = tokenRes?.identityType;
+          } catch (error) {
+            console.error("Failed to get token", error);
+          }
         }
-        config.headers.authorization = "Bearer " + chenxingToken;
+
+        // 设置请求头
+        if (chenxingToken) {
+          config.headers.authorization = "Bearer " + chenxingToken;
+          config.headers["Identity-key"] = identityKey;
+          config.headers["Identity-Type"] = identityType;
+        }
         config.headers["Content-Type"] = "application/json";
-        config.headers["Identity-key"] = identityKey;
-        config.headers["Identity-Type"] = identityType;
+        // 如果是c端401过期后重试不再处理参数和url
+        if (config.isRetry) return config;
+        // 处理参数
         let targetLoginList = getCinemaLoginInfoList().filter(
           item => item.app_name === app_name && item.mobile && item.session_id
         );
         let token = targetLoginList?.[0]?.session_id || "";
+
         if (config.method === "get") {
           config.params = paramsHandle(config.params, app_name);
           config.session_id = config.params?.session_id || token;
@@ -172,7 +192,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           config.session_id = config.data?.session_id || token;
         }
 
-        // 生产环境不会跨域
+        // 处理URL
         if (!IS_DEV) {
           if (api_version == "C") {
             // 需要服务器转发
@@ -201,14 +221,15 @@ const createAxios = ({ app_name, timeout = 20 }) => {
 
   // 响应拦截器
   instance.interceptors.response.use(
-    async response => {
-      // 对响应进行统一处理
+    response => {
       const data = response.data;
       let config = response.config;
       let whitelistSp = [];
 
+      // 检查API版本并判断错误
       let isError =
-        api_version === "3.0C" ? data.code !== 200 : data.retCode != "0";
+        api_version === "3.0C" ? data.code !== 200 : data.retCode !== "0";
+
       if (isError && !whitelistSp.some(item => config.url.includes(item))) {
         console.warn("接口响应失败", data);
         let isCExpried =
@@ -216,7 +237,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             data.retMsg?.includes(item)
           ) && api_version == "C";
         let is3CExpried = data.msg?.includes("登录") && api_version == "3.0C";
-        // 辰星C端失效处理，待添加3.0C端失效判断
+
         if (isCExpried || is3CExpried) {
           let app_label = GET_APP_INFO(app_name).app_label;
           ElMessage.warning(`${app_label}登录失效，请重新设置登录信息`);
@@ -227,6 +248,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           let phone = targetLoginList.find(
             item => item.session_id == session_id
           )?.mobile;
+
           console.warn("登录失效", app_label, phone);
           sendWxPusherMessage({
             msgType: 1,
@@ -234,7 +256,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             expirePhone: phone,
             transferTip: `${app_label}登录失效，请检查登录信息维护`
           });
-          // 此处加个消息推送
+
           return Promise.reject(data);
         }
 
@@ -243,18 +265,71 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       }
       return data;
     },
-    error => {
-      // 对HTTP错误码进行处理
+    async error => {
       const { response } = error;
-      if (response && response.status) {
+      if (response) {
         switch (response.status) {
           case 401:
-            //   // 未授权，处理登出逻辑
-            //   const store = useStore();
-            //   store.dispatch('auth/logout');
+            // 非C端场景直接返回异常
+            if (api_version !== "C") {
+              ElMessage.error(`请求错误 ${response.status}: ${error.message}`);
+              return Promise.reject(error);
+            }
+            // 处理401：刷新token并重试
+            if (isRefreshingToken) {
+              // 正在刷新token，将请求加入队列
+              return new Promise((resolve, reject) => {
+                tokenRefreshQueue.push({ resolve, reject });
+              });
+            }
+
+            isRefreshingToken = true;
+            let config = error.config;
+            console.log("error-config", config);
+            config.isRetry = true;
+            try {
+              // 获取新token
+              const tokenRes = await getToken(app_name, IS_DEV);
+
+              // 更新token信息
+              chenxingToken = tokenRes?.token;
+              identityKey = tokenRes?.identityKey;
+              identityType = tokenRes?.identityType;
+
+              // 更新axios默认headers
+              instance.defaults.headers.common["authorization"] =
+                "Bearer " + chenxingToken;
+              instance.defaults.headers.common["Identity-key"] = identityKey;
+              instance.defaults.headers.common["Identity-Type"] = identityType;
+
+              // 重试所有等待的请求
+              tokenRefreshQueue.forEach(({ resolve }) => {
+                resolve(instance(config));
+              });
+              tokenRefreshQueue = [];
+              isRefreshingToken = false;
+
+              // 重试当前请求
+              return instance(config);
+            } catch (refreshError) {
+              // 刷新失败
+              tokenRefreshQueue.forEach(({ reject }) => {
+                reject(refreshError);
+              });
+              tokenRefreshQueue = [];
+              isRefreshingToken = false;
+
+              // 显示错误信息
+              ElMessage.error("登录失效，请重新登录");
+              return Promise.reject(refreshError);
+            }
+
+          case 403:
+            ElMessage.error("权限不足");
             break;
+
           default:
-            ElMessage.error(`请求错误 ${response.status}: ${error.msg}`);
+            ElMessage.error(`请求错误 ${response.status}: ${error.message}`);
         }
       } else {
         ElMessage.error("网络连接异常，请稍后再试");
@@ -262,6 +337,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       return Promise.reject(error);
     }
   );
+
   return instance;
 };
 
