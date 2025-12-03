@@ -808,24 +808,19 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         config.retryCount = 0;
       }
       const maxRetries = config.maxRetries || 3;
-      const retryDelay = config.retryDelay || 1; // 1 second
-      // 重试接口名单
-      let retrieUrls = [
-        "cinema.getcinemas",
-        "film.gethotfilms",
-        "schedule.getschedules",
-        "seat.getseatmap",
-        "pay.getpayprivilegeinfo"
-      ];
-      let isRetry = shouldRetry(error, config, maxRetries, retrieUrls);
+      let isRetry = shouldRetry(error, config, maxRetries);
       // console.log("isRetry", isRetry, config);
       if (isRetry) {
         // 检查是否需要重试
         config.retryCount = config.retryCount + 1;
         console.log(`请求失败，正在进行第 ${config.retryCount} 次重试...`);
 
-        // 等待一段时间后重试
-        await mockDelay(retryDelay);
+        // 指数退避延迟：等待一段时间后重试
+        const delay = Math.min(
+          1000 * Math.pow(2, config.retryCount),
+          20 * 1000
+        );
+        await mockDelay(delay / 1000);
         config.url = config.originalUrl.split("/1.0/")[0];
         config.originalUrl = null;
         // 重试请求
@@ -876,31 +871,34 @@ const createAxios = ({ app_name, timeout = 20 }) => {
   );
 
   // 判断是否需要重试
-  const shouldRetry = (error, config, maxRetries, retrieUrls) => {
+  const shouldRetry = (error, config, maxRetries) => {
     try {
-      let isCountCheck = config.retryCount < maxRetries;
-      let isUrlCheck = retrieUrls.some(item =>
-        config.url?.toLowerCase().includes(item)
-      );
-      let isErrorCheck = false;
-      // 检查错误类型
-      if (axios.isAxiosError(error)) {
-        const message = error.message?.toLowerCase();
-        isErrorCheck =
-          message.includes("timeout") ||
-          message.includes("network error") ||
-          message.includes("Request failed with status code 408");
+      // 排除已处理的登录失效情况
+      if (
+        error.response?.data?.data?.bizCode === "2001" ||
+        error.response?.data?.data?.bizCode === "1002"
+      ) {
+        return false;
       }
-      // console.log(
-      //   "isCountCheck",
-      //   isCountCheck,
-      //   "isUrlCheck",
-      //   isUrlCheck,
-      //   isErrorCheck
-      // );
+
+      // 检查重试条件
+      const isCountCheck = config.retryCount < maxRetries;
+      const isUrlCheck = [
+        "cinema.getcinemas",
+        "film.gethotfilms",
+        "schedule.getschedules",
+        "seat.getseatmap",
+        "pay.getpayprivilegeinfo"
+      ].some(item => config.url.toLowerCase().includes(item));
+
+      const isErrorCheck =
+        error.message?.includes("timeout") ||
+        error.message?.includes("network error") ||
+        error.message?.includes("408") ||
+        error.response?.status >= 500;
+
       return isCountCheck && isUrlCheck && isErrorCheck;
     } catch (e) {
-      //TODO handle the exception
       return false;
     }
   };
