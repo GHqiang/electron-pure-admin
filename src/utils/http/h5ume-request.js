@@ -12,7 +12,8 @@ import {
   getCurrentTime,
   getCinemaLoginInfoList,
   sendWxPusherMessage,
-  mockDelay
+  mockDelay,
+  formatErrInfo
 } from "@/utils/utils";
 // 机器登录用户信息
 import { platTokens } from "@/store/platTokens";
