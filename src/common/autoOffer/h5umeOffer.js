@@ -1172,7 +1172,7 @@ class getUmeOfferPrice {
   }
 
   // 获取可用卡列表
-  async getCanUseCardList({ app_name, ticket_num }) {
+  async getCanUseCardList({ app_name, ticket_num, cinemaLinkId }) {
     try {
       const cardRes = await svApi.queryCardList({
         app_name: app_name,
@@ -1241,9 +1241,7 @@ class getUmeOfferPrice {
       let cardList = cardListLimit.filter(item => {
         return !item.linkCinemaIds
           ? true
-          : item.linkCinemaIds
-              .split(",")
-              .some(itemA => itemA == movieInfo.cinemaLinkId);
+          : item.linkCinemaIds.split(",").some(itemA => itemA == cinemaLinkId);
       });
       this.logList.push({
         opera_time: getCurrentTime(),
@@ -1546,7 +1544,8 @@ class getUmeOfferPrice {
       });
       const cardList = await this.getCanUseCardList({
         ticket_num,
-        app_name: appFlag
+        app_name: appFlag,
+        cinemaLinkId
       });
       // 赋值到this上是为了其它地方好用
       this.cardList = cardList || [];
