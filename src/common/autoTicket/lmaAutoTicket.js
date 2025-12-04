@@ -736,10 +736,7 @@ class OrderAutoTicketQueue {
           ticket_num,
           supplier_end_price
         });
-        if (useCardRes?.error || !useCardRes?.card_id) {
-          this.logger.errorSave("锁定座位前用卡异常", {
-            error: useCardRes?.error
-          });
+        if (!useCardRes?.card_id) {
           if (this.currentParamsInx === this.currentParamsList.length - 1) {
             console.error("锁定座位前用卡异常", "走转单逻辑");
             const transferParams = await this.transferOrder(item);
@@ -1241,7 +1238,10 @@ class OrderAutoTicketQueue {
         card_balance
       };
     } catch (error) {
-      this.logger.errorSave("用卡处理异常", { error });
+      this.logger.errorSave("用卡处理异常", { error: formatErrInfo(error) });
+      return {
+        card_id: ""
+      };
     }
   }
 
