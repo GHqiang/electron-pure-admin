@@ -1,4 +1,7 @@
 import { defineStore } from "pinia";
+import { useCinemaList } from "@/store/cinemaList";
+const cinemaList = useCinemaList();
+
 export const useDataTableStoreBySpecialName = defineStore(
   "specialNameDataTable",
   {
@@ -40,6 +43,7 @@ export const useCinemaCodeMatchList = defineStore("cinemaCodeMatchList", {
       cinema_name: plat_cinema_name,
       city_name
     }) {
+      console.log("cinemaList.canAppList", cinemaList.canAppList);
       let targetCinema = this.items.find(
         item => item.plat_cinema_code === plat_cinema_code
       );
@@ -55,6 +59,14 @@ export const useCinemaCodeMatchList = defineStore("cinemaCodeMatchList", {
         } else {
           targetCinema = targetList[0];
         }
+      }
+      console.log("targetCinema.app_name", targetCinema?.app_name);
+      if (targetCinema) {
+        const isCanUse = cinemaList.canAppList?.some(
+          item => item.app_name === targetCinema.app_name
+        );
+        console.log("isCanUse", isCanUse);
+        if (!isCanUse) return;
       }
       return targetCinema;
     },
