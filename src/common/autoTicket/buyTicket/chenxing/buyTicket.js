@@ -241,6 +241,9 @@ export default class BuyTicket {
           );
           return await this.orderManage.transferOrder();
         }
+        // 取消订单释放座位成功后请求对应值，以免下次换号时携带过去
+        buyTicketInfo.order_num = "";
+        buyTicketInfo.lockOrderId = "";
         const phone = this.currentParamsList[this.currentParamsInx].mobile;
         this.logger.infoSave(
           `第${this.currentParamsInx}次换号出票手机号-${phone}`,
