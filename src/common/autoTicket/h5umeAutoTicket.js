@@ -891,8 +891,16 @@ class OrderAutoTicketQueue {
       quanList = quanList.filter(item => item.state == "USEFUL");
       let activities = orderInfoRes?.privileges || [];
       this.logger.infoSave("获取最优卡券组合返回", {
-        "cardList(从可用卡列表过滤后的卡:)": cardList,
-        oldCardList: orderInfoRes?.cards,
+        "cardList(从可用卡列表过滤后的卡:)": cardList?.map(item => ({
+          cardNumber: item.cardNumber,
+          balance: item.balance
+        })),
+        oldCardList: orderInfoRes?.cards?.map(item => ({
+          cardNumber: item.cardNumber,
+          balance: item.balance,
+          cardName: item.cardName,
+          cinemaLinkId: item.cinemaLinkId
+        })),
         quanList: quanList.slice(0, 10),
         activities,
         canUseCoupon,
@@ -932,7 +940,10 @@ class OrderAutoTicketQueue {
       let target_card_info = member_discount_list[0];
       let member_total_price, cardInfos;
       if (target_card_info) {
-        total_price = target_card_info.originalTicketTotalPrice;
+        // 非固定报价时总价才会优惠活动的原总价
+        if (offerRule.offer_type != "1") {
+          total_price = target_card_info.originalTicketTotalPrice;
+        }
         member_total_price = target_card_info.privilegeTotalPrice;
         cardInfos = target_card_info.cardInfos;
         cardInfos = cardInfos.map(itemC => ({

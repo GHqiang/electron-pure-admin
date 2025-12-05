@@ -1941,6 +1941,10 @@ class OrderAutoTicketQueue {
         offerRule.black_quans = quanInfo?.black_quans;
         let { quan_value, quan_cost, quan_flag, quan_fee, black_quans } =
           offerRule;
+        // 特殊处理此种券在个人中心和出票时名称不一致，出票时特殊处理下
+        if (quan_value == "yaolaiguowaiquanxin") {
+          quan_flag = "观影兑换券";
+        }
         // 根据券标识获取目标券
         let targetQuanList = quanList.filter(
           item =>
