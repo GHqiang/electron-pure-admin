@@ -146,92 +146,99 @@ class OrderAutoTicketQueue {
 
   // 开始队列上传
   async startProcessingQueue() {
+    let logger;
     const { appFlag } = this;
     this.isRunning = true;
-    while (this.queue.length > 0 && this.isRunning) {
-      // 取出队列首部订单并从队列里去掉
-      const order = this.queue.shift();
-      if (order) {
-        let logger = new Logger({
-          logType: 3
-        });
-        if (!order.isAgain && this.prevOrderNumber === order.order_number) {
-          logger.warn("当前订单重复执行,直接执行下个");
-        } else {
-          // 处理订单
-          logger.init(order);
-          const res = await this.orderHandle(order, logger);
-          this.prevOrderNumber = order.order_number;
-          // res: { profit, submitRes, qrcode, quan_code, card_id, cardNum, offerRule } || undefined
-          logger.infoSave(
-            `单个订单自动出票结束，状态-${res?.submitRes ? "成功" : "失败"}`,
-            { res }
-          );
-          if (!isTestOrder) {
-            let { err_msg: errMsg, err_info: errInfo } =
-              logger.getLastErrMsgAndInfo();
-            if (res?.submitRes) {
-              errMsg = "";
-              errInfo = "";
-            }
-            let params = {
-              order: JSON.parse(JSON.stringify(this.order)),
-              ticketRes: res,
-              appFlag,
-              errMsg,
-              errInfo,
-              mobile: this.currentParamsList[this.currentParamsInx].mobile
-            };
-            if (order.isAgain) {
-              let order_status = res?.submitRes ? 1 : 2;
-              // 出成功后修改出票记录
-              if (order_status === 1) {
-                svApi.updateTicketRecord({
-                  whereObj: {
-                    order_number: order.order_number,
-                    plat_name: order.plat_name,
-                    user_id: user_id
-                  },
-                  updateObj: {
-                    order_status: 1,
-                    profit: res?.profit || "",
-                    qrcode: res?.qrcode || "",
-                    quan_type: res?.quanType || "",
-                    quan_value: res?.offerRule?.quan_value || "",
-                    quan_code: res?.quan_code || "",
-                    card_id: res?.card_id || "",
-                    card_num: res?.cardNum || "",
-                    mobile:
-                      this.currentParamsList[this.currentParamsInx].mobile,
-                    err_msg: "重新出票成功"
-                  }
-                });
-              } else {
-                svApi.updateTicketRecord({
-                  whereObj: {
-                    order_number: order.order_number,
-                    plat_name: order.plat_name,
-                    user_id: user_id
-                  },
-                  updateObj: {
-                    order_status: 2,
-                    err_msg: "重新出票失败"
-                  }
-                });
-              }
-            } else {
-              await addOrderHandleRecored(params);
-            }
+    try {
+      while (this.queue.length > 0 && this.isRunning) {
+        // 取出队列首部订单并从队列里去掉
+        const order = this.queue.shift();
+        if (order) {
+          logger = new Logger({
+            logType: 3
+          });
+          if (!order.isAgain && this.prevOrderNumber === order.order_number) {
+            logger.warn("当前订单重复执行,直接执行下个");
+          } else {
+            // 处理订单
+            logger.init(order);
+            const res = await this.orderHandle(order, logger);
+            this.prevOrderNumber = order.order_number;
+            // res: { profit, submitRes, qrcode, quan_code, card_id, cardNum, offerRule } || undefined
             logger.infoSave(
-              `订单出票结束，远端已${order.isAgain ? "修改" : "添加"}出票记录`
+              `单个订单自动出票结束，状态-${res?.submitRes ? "成功" : "失败"}`,
+              { res }
             );
-            // 上送该订单执行过程日志
-            logger.logUpload();
+            if (!isTestOrder) {
+              let { err_msg: errMsg, err_info: errInfo } =
+                logger.getLastErrMsgAndInfo();
+              if (res?.submitRes) {
+                errMsg = "";
+                errInfo = "";
+              }
+              let params = {
+                order: JSON.parse(JSON.stringify(this.order)),
+                ticketRes: res,
+                appFlag,
+                errMsg,
+                errInfo,
+                mobile: this.currentParamsList[this.currentParamsInx].mobile
+              };
+              if (order.isAgain) {
+                let order_status = res?.submitRes ? 1 : 2;
+                // 出成功后修改出票记录
+                if (order_status === 1) {
+                  svApi.updateTicketRecord({
+                    whereObj: {
+                      order_number: order.order_number,
+                      plat_name: order.plat_name,
+                      user_id: user_id
+                    },
+                    updateObj: {
+                      order_status: 1,
+                      profit: res?.profit || "",
+                      qrcode: res?.qrcode || "",
+                      quan_type: res?.quanType || "",
+                      quan_value: res?.offerRule?.quan_value || "",
+                      quan_code: res?.quan_code || "",
+                      card_id: res?.card_id || "",
+                      card_num: res?.cardNum || "",
+                      mobile:
+                        this.currentParamsList[this.currentParamsInx].mobile,
+                      err_msg: "重新出票成功"
+                    }
+                  });
+                } else {
+                  svApi.updateTicketRecord({
+                    whereObj: {
+                      order_number: order.order_number,
+                      plat_name: order.plat_name,
+                      user_id: user_id
+                    },
+                    updateObj: {
+                      order_status: 2,
+                      err_msg: "重新出票失败"
+                    }
+                  });
+                }
+              } else {
+                await addOrderHandleRecored(params);
+              }
+              logger.infoSave(
+                `订单出票结束，远端已${order.isAgain ? "修改" : "添加"}出票记录`
+              );
+              // 上送该订单执行过程日志
+              logger.logUpload();
+            }
           }
         }
       }
+      this.isRunning = false;
+    } catch (error) {
+      logger.errorSave("订单出票异常", { error: formatErrInfo(error) });
+      // 上送该订单执行过程日志
+      logger.logUpload();
     }
-    this.isRunning = false;
   }
 
   // 处理订单
@@ -1165,6 +1172,27 @@ class OrderAutoTicketQueue {
         timestamp
       });
       let order_num = createOrderRes?.payOrderCode;
+      if (!order_num) {
+        this.logger.error("创建订单失败，单个订单直接出票结束走转单逻辑");
+        const transferParams = await this.transferOrder(item, {
+          cinemaCode,
+          cinemaLinkId,
+          orderHeaderId
+        });
+        return { offerRule, transferParams };
+      }
+
+      this.logger.infoSave("创建订单成功", {
+        order_num,
+        profit,
+        card_id,
+        offerRule
+      });
+      if (isTestOrder) {
+        this.logger.infoSave("测试单暂不购买");
+        return { offerRule };
+      }
+
       let paymentAmount = createOrderRes?.paymentAmount;
       let quan_fee = offerRule.quan_fee || 0;
       quan_fee = Number(quan_fee);
@@ -1209,25 +1237,6 @@ class OrderAutoTicketQueue {
         }
       }
       let quan_fee_total = (quan_fee * 1000 * ticket_num) / 1000;
-      if (!order_num) {
-        this.logger.error("创建订单失败，单个订单直接出票结束走转单逻辑");
-        const transferParams = await this.transferOrder(item, {
-          cinemaCode,
-          cinemaLinkId,
-          orderHeaderId
-        });
-        return { offerRule, transferParams };
-      }
-      this.logger.infoSave("创建订单成功", {
-        order_num,
-        profit,
-        card_id,
-        offerRule
-      });
-      if (isTestOrder) {
-        this.logger.infoSave("测试单暂不购买");
-        return { offerRule };
-      }
       // 支付前校验用券价格
       if (
         offerRule.offer_type === "1" &&
