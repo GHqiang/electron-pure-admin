@@ -174,7 +174,8 @@ export default function useCinemaBaseFun() {
     const { app_name, quan_flag, coupon, plat_name, order_number, logger } =
       params;
     if (!coupon || !quan_flag) return;
-    let black_quan_list = coupon.split(",");
+    let black_quan_list = coupon.split(",").filter(item => item);
+    if (!black_quan_list.length) return;
     const quanTypeParams = {
       app_name,
       isNeedTotalNum: 0,
