@@ -32,6 +32,9 @@ import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
 // console.log("user_id", user_id);
 
+import { dictTable } from "@/store/dictTable";
+const dictStore = dictTable();
+
 // 获取上一天
 function getPreviousDay(dateString) {
   // 将日期字符串转换为Date对象
@@ -554,7 +557,7 @@ const sendWxPusherMessage = async ({
   const url = "https://wxpusher.zjiecode.com/api/manager/message/send";
   const headers = {
     "content-type": "application/json;charset=UTF-8",
-    token: "82654120d2548ae653d67ea98a601a82"
+    token: dictStore.dictInfo.wxpusherToken
     // 需注意一旦token过期就会不发消息，需要重新扫码登录然后发个消息拿network里的token
   };
   let userInfo = window.localStorage.getItem("userInfo");

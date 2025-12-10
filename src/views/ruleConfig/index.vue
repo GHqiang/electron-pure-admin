@@ -24,6 +24,8 @@
         @click="isAdjustPrice = !isAdjustPrice"
         >{{ !isAdjustPrice ? "开启动态调价" : "关闭动态调价" }}</el-button
       >
+
+      <el-button type="primary" @click="setDictTableList">刷新字典表</el-button>
     </div>
 
     <div style="margin-top: 50px">
@@ -113,6 +115,7 @@
 </template>
 
 <script setup>
+import svApi from "@/api/sv-api";
 // keepAlive生效前提：对应页面 name 必须与路由的 name 保持一致
 defineOptions({
   name: "ruleConfig"
@@ -123,6 +126,9 @@ import { platTokens } from "@/store/platTokens";
 const {
   userInfo: { rule, user_id }
 } = platTokens();
+
+import { dictTable } from "@/store/dictTable";
+const dictStore = dictTable();
 
 import { IN_RULE_LIST } from "@/common/constant.js";
 // 是否超限报价
@@ -179,16 +185,11 @@ const setAdjustPriceMinProfit = () => {
 };
 
 // 允许抢单最小利润
-let minGrabProfitValue = window.localStorage.getItem(
-  "minGrabProfit"
-);
+let minGrabProfitValue = window.localStorage.getItem("minGrabProfit");
 const minGrabProfit = ref(minGrabProfitValue || "");
 const setGrabMinProfit = () => {
   console.log("val", minGrabProfit.value);
-  window.localStorage.setItem(
-    "minGrabProfit",
-    minGrabProfit.value
-  );
+  window.localStorage.setItem("minGrabProfit", minGrabProfit.value);
 };
 
 // 单店会员报价加价金额
@@ -213,6 +214,18 @@ const h5umeIsClose = ref(h5umeIsCloseValue || "2");
 const h5umeIsCloseChange = val => {
   console.log("val", val);
   window.localStorage.setItem("h5umeIsClose", val);
+};
+
+// 设置字典表信息
+const setDictTableList = async () => {
+  try {
+    const res = await svApi.queryDictList();
+    let dictList = res?.data?.dictList || [];
+    console.log("字典表返回", dictList);
+    dictStore.setDictTableList(dictList);
+  } catch (error) {
+    console.warn("字典表返回异常", error);
+  }
 };
 </script>
 

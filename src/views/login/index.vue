@@ -43,6 +43,10 @@ import { useCinemaCodeMatchList } from "@/store/specialNameRule";
 const cinemaCodeMatchObj = useCinemaCodeMatchList();
 import { useCinemaList } from "@/store/cinemaList.js";
 const useCinemaListObj = useCinemaList();
+
+import { dictTable } from "@/store/dictTable";
+const dictStore = dictTable();
+
 defineOptions({
   name: "Login"
 });
@@ -112,6 +116,17 @@ const setLocalRuleList = async rule => {
   }
 };
 
+// 设置字典表信息
+const setDictTableList = async () => {
+  try {
+    const res = await svApi.queryDictList();
+    let dictList = res?.data?.dictList || [];
+    console.log("字典表返回", dictList);
+    dictStore.setDictTableList(dictList);
+  } catch (error) {
+    console.warn("字典表返回异常", error);
+  }
+};
 // 设置本地的登录信息列表
 const setLocalLoginList = async rule => {
   const loginRes = await svApi.queryLoginList({ rule });
@@ -126,7 +141,7 @@ const setLocalLoginList = async rule => {
     first: item.first,
     is_xiaohao: item.is_xiaohao,
     link_user_id: item.link_user_id,
-    update_time: item.update_time,
+    update_time: item.update_time
   }));
   userInfoAndTokens.setLoginInfoList(
     loginRecords.filter(item => item.is_xiaohao != 1)
@@ -159,6 +174,7 @@ const onLogin = async formEl => {
           await setLocalCinemaCodeMatchList();
           await setLocalLoginList(rule);
           await setLocalRuleList(rule);
+          await setDictTableList(rule);
           // 获取后端路由
           await initRouter(rule);
           let getTopMenuPath = getTopMenu(true).path;
