@@ -893,8 +893,8 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       ].some(item => config.url.toLowerCase().includes(item));
 
       const isErrorCheck =
-        error.message?.includes("timeout") ||
-        error.message?.includes("network error") ||
+        error.message?.toLowerCase()?.includes("timeout") ||
+        error.message?.toLowerCase()?.includes("network error") ||
         error.message?.includes("408") ||
         error.response?.status >= 500;
 
