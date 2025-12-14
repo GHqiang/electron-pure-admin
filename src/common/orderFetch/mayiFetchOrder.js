@@ -49,14 +49,14 @@ class OrderAutoFetchQueue {
           const {
             tradeno,
             unitprice,
-            mybaojia,
-            cityname,
+            baojia,
+            cityName,
             address,
             seat,
             quantity,
-            cinemaname,
-            roomname,
-            moviename,
+            cinemaName,
+            roomName,
+            movieName,
             logo,
             playTime,
             jiorder,
@@ -66,17 +66,17 @@ class OrderAutoFetchQueue {
           return {
             id: tradeno,
             tpp_price: unitprice,
-            supplier_end_price: mybaojia,
-            city_name: cityname,
+            supplier_end_price: baojia,
+            city_name: cityName,
             cinema_addr: address,
             ticket_num: quantity,
-            cinema_name: cinemaname,
-            hall_name: roomname,
-            film_name: moviename,
+            cinema_name: cinemaName,
+            hall_name: roomName,
+            film_name: movieName,
             film_img: logo,
             show_time: playTime,
             rewards: 0, // 蚂蚁无奖励，只有快捷
-            is_urgent: jiorder, // 1紧急 0非紧急
+            is_urgent: jiorder === "Y" ? 1 : 0, // 1紧急 0非紧急
             cinema_group: cinemaChain,
             cinema_code: cinemaStdCode, // 影院code
             order_number: tradeno,

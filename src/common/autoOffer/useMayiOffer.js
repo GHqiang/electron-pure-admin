@@ -149,12 +149,12 @@ class OrderAutoOfferQueue {
           tradeno,
           unitprice,
           maxBaojia,
-          cityname,
+          cityName,
           address,
           quantity,
-          cinemaname,
-          roomname,
-          moviename,
+          cinemaName,
+          roomName,
+          movieName,
           logo,
           playTime,
           jiorder,
@@ -166,21 +166,21 @@ class OrderAutoOfferQueue {
           id: tradeno,
           tpp_price: unitprice,
           supplier_max_price: maxBaojia,
-          city_name: cityname,
+          city_name: cityName,
           cinema_addr: address,
           ticket_num: quantity,
-          cinema_name: cinemaname,
-          hall_name: roomname,
-          film_name: moviename,
+          cinema_name: cinemaName,
+          hall_name: roomName,
+          film_name: movieName,
           film_img: logo,
           show_time: playTime,
           rewards: 0, // 蚂蚁无奖励，只有快捷
-          is_urgent: jiorder, // 1紧急 0非紧急
+          is_urgent: jiorder === "Y" ? 1 : 0, // 1紧急 0非紧急
           cinema_group: cinemaChain,
           cinema_code: cinemaStdCode, // 影院code编码，和app影院code一致
           order_number: tradeno,
           // 转为截止时间戳，原值： "2024-09-22 21:02:55"
-          offer_end_time: +new Date(item.expiretime)
+          offer_end_time: +new Date(item.addtime)
         };
       });
       // console.warn(conPrefix + "转换后的订单列表", sfcStayOfferlist);

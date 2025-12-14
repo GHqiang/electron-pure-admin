@@ -6,30 +6,31 @@ import axios from "@/utils/http/mayi-request";
 
 // 报价记录查询
 const queryOfferRecord = params =>
-  axios.post("/newwww/api/order/jingjiaPageV2", params);
+  axios.get("/newwww/open/api/movie/list", { params });
 
 // 待报价列表查询
 const queryStayOfferList = params =>
-  axios.post("/newwww/api/order/newOrderListV2", params);
+  axios.get("/newwww/open/api/movie/list", { params });
 
 // 提交报价
 const submitOffer = params =>
-  axios.post("/newwww/api/order/huangniuBaojia", params);
+  axios.get("/newwww/open/api/order/baojia", { params });
 
 // 中签订单查询
 const stayTicketingList = params =>
-  axios.post("/newwww/api/order/waitTicketPage", params);
+  axios.get("/newwww/open/api/order/waitTicket/list", { params });
 
 // 解锁座位
-const unlockSeat = params => axios.post("/newwww/api/order/unlock", params);
+const unlockSeat = params =>
+  axios.get("/newwww/open/api/order/unLockSeat", { params });
 
 // 提交取票码(发货回调)
 const submitTicketCode = params =>
-  axios.post("/newwww/api/order/uploadTicket4PicV2", params);
+  axios.get("/newwww/open/api/order/uploadTicketCode", { params });
 
 // 取消订单
 const transferOrder = params =>
-  axios.post("/newwww/api/order/turnOrder", params);
+  axios.get("/newwww/open/api/order/cancelBaojia", { params });
 
 export default {
   queryOfferRecord, // 查询报价记录

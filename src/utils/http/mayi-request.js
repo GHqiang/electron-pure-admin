@@ -4,6 +4,8 @@ import axios from "axios";
 import { ElMessage } from "element-plus";
 import { sendWxPusherMessage } from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
+import md5 from "@/utils/md5";
+
 const tokens = platTokens();
 // 创建axios实例
 const instance = axios.create({
@@ -14,38 +16,71 @@ const instance = axios.create({
 
 const NODE_ENV = process.env.NODE_ENV;
 const IS_DEV = NODE_ENV === "development";
+const merCode = "00696"; // 从环境变量获取
+const priKey = "9PX4UDEGH3NBODPNMP3LO2EBRTKSYHPW"; // 从环境变量获取
 
-function jsonToUrlEncoded(json) {
-  return Object.keys(json)
-    .map(key => {
-      return encodeURIComponent(key) + "=" + encodeURIComponent(json[key]);
-    })
-    .join("&");
-}
 // 请求拦截器
 instance.interceptors.request.use(
   config => {
-    if (config.url.indexOf("/newwww/") !== -1) {
-      // 猎人平台接口添加token
-      // console.log("tokens.lierenToken", tokens.lierenToken);
-      const token = tokens.mayiToken || "";
-      if (token) {
-        config.headers.W_auth_code = `${token}`;
-      }
-      if (config.method === "post") {
-        // 除了该接口，其他都做特殊处理
-        if (config.url.indexOf("/newwww/api/order/uploadTicket4PicV2") === -1) {
-          config.headers["Content-Type"] ===
-            "application/x-www-form-urlencoded;charset=UTF-8";
-          config.data = jsonToUrlEncoded(config.data);
-        }
-      }
-      // 生产环境不会跨域
-      config.url = IS_DEV
-        ? config.url
-        : "https://piao.mayiufu.com" + config.url;
+    // 检查必填配置
+    if (!merCode || !priKey) {
+      console.error(
+        "ERROR: VITE_MER_CODE or VITE_PRI_KEY not configured in .env"
+      );
+      ElMessage.error("接口配置缺失，请联系管理员");
+      return Promise.reject(new Error("Missing API config"));
     }
-    // console.log('请求config', config)
+    const isPost = config.method?.toLowerCase() === "post";
+
+    // 生成公共参数
+    const time = Math.floor(Date.now() / 1000).toString(); // 秒级时间戳
+    const publicParams = {
+      merCode,
+      time,
+      v: "1.0" // 接口版本
+    };
+
+    // 处理业务参数（支持字符串/对象格式）
+    let businessParams = (isPost ? config.data : config.params) || {};
+    // 合并参数并处理空值
+    const params = { ...businessParams, ...publicParams };
+    console.log("params:", params);
+    Object.keys(params).forEach(key => {
+      if (params[key] == null) {
+        // 处理 null/undefined
+        params[key] = "";
+      }
+    });
+
+    // 生成签名（按文档要求排序+拼接）
+    const sortedKeys = Object.keys(params).sort();
+    let signStr = "";
+    for (const key of sortedKeys) {
+      if (key !== "sign") {
+        // 排除sign参数
+        signStr += `${key}=${params[key]}&`;
+      }
+    }
+    signStr = signStr.slice(0, -1); // 移除末尾&
+    const sign = md5.hex_md5(signStr + priKey);
+
+    // 添加签名
+    params.sign = sign;
+
+    if (isPost) {
+      // POST: 使用 form-urlencoded
+      config.headers["Content-Type"] =
+        "application/x-www-form-urlencoded;charset=utf-8";
+      config.data = Object.keys(params)
+        .map(key => `${key}=${params[key]}`)
+        .join("&");
+    } else {
+      // GET: 参数必须放在 params 中（Axios 会自动拼到 URL）
+      config.params = params;
+    }
+    // 生产环境地址处理
+    config.url = IS_DEV ? config.url : `https://piao.mayiufu.com${config.url}`;
+
     return config;
   },
   error => {
@@ -61,22 +96,22 @@ instance.interceptors.response.use(
     const data = response.data;
     // let whitelistSp = ['/sp/order', '/sp/unlock']
     let whitelistSp = [];
-
+    console.log("response:", data);
     let isErrorByLieRen =
-      response.config.url.indexOf("/newwww/") !== -1 && !data.success;
+      response.config.url.indexOf("/open/api/") !== -1 && !data.success;
     if (
       isErrorByLieRen &&
       !whitelistSp.some(item => response.config.url.includes(item))
     ) {
       ElMessage.error(data.error?.msg || "请求失败");
-      if (data.error?.msg?.includes("登录信息已过期")) {
-        sendWxPusherMessage({
-          msgType: 1,
-          app_name: "蚂蚁平台",
-          expirePhone: "机器手机号",
-          transferTip: `登录失效，请检查登录信息维护`
-        });
-      }
+      // if (data.error?.msg?.includes("登录信息已过期")) {
+      //   sendWxPusherMessage({
+      //     msgType: 1,
+      //     app_name: "蚂蚁平台",
+      //     expirePhone: "机器手机号",
+      //     transferTip: `登录失效，请检查登录信息维护`
+      //   });
+      // }
       return Promise.reject(data);
     }
     return data;

@@ -335,12 +335,12 @@ export default class PlatCommon {
     } else if (plat_name === "mayi") {
       params = {
         tradeno: order_id, // 蚂蚁APP的订单编号
-        ticketCodeList: [
+        ticketCode: JSON.stringify([
           {
-            picUrl: "",
+            picUrl: "", // 待补充
             ticketCode: qrcode
           }
-        ]
+        ])
       };
     } else if (plat_name === "yangcong") {
       params = {
@@ -606,9 +606,9 @@ export default class PlatCommon {
       } else if (plat_name === "mayi") {
         params = {
           tradeno: id,
-          certificateImgUrl: "",
+          picUrl: "", // 凭证图片
           reason: "",
-          type: "bj_error"
+          type: "no_match_seat"
         };
       } else if (plat_name === "yangcong") {
         params = {

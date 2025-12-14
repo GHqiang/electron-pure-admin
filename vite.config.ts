@@ -72,11 +72,16 @@ export default ({ command, mode }: ConfigEnv): UserConfigExport => {
           changeOrigin: true, // 是否允许跨域
           rewrite: path => path.replace(/^\/mhapi/, "/api") // 重写路径，去除/api前缀
         },
-        // 蚂蚁
-        "/newwww": {
-          target: "https://piao.mayiufu.com", // 后端API的真实地址
-          changeOrigin: true, // 是否允许跨域
-          rewrite: path => path.replace(/^\/newwww/, "/newwww") // 重写路径，去除/api前缀
+       "/newwww": {
+          target: "https://piao.mayiufu.com",
+          changeOrigin: true,
+          rewrite: path => path.replace(/^\/newwww/, "") // 关键修改：移除前缀
+        },
+        // 影划算新
+        "/open": {
+          target: "https://merchant-api.yinghuasuan.com",
+          changeOrigin: true,
+          rewrite: path => path.replace(/^\/open/, "open")
         },
         // 洋葱
         "/prod-api": {
@@ -89,12 +94,6 @@ export default ({ command, mode }: ConfigEnv): UserConfigExport => {
           target: "https://merchant-api.yinghuasuan.com", // 后端API的真实地址
           changeOrigin: true, // 是否允许跨域
           rewrite: path => path.replace(/^\/broker/, "broker") // 重写路径，去除/api前缀
-        },
-        // 影划算新
-        "/open": {
-          target: "https://merchant-api.yinghuasuan.com", // 后端API的真实地址
-          changeOrigin: true, // 是否允许跨域
-          rewrite: path => path.replace(/^\/open/, "open") // 重写路径，去除/api前缀
         },
         // 商展
         "/openapi": {
