@@ -6,11 +6,11 @@ import axios from "@/utils/http/mayi-request";
 
 // 报价记录查询
 const queryOfferRecord = params =>
-  axios.get("/newwww/open/api/movie/list", { params });
+  axios.get("/newwww/open/api/order/pool/list", { params });
 
 // 待报价列表查询
 const queryStayOfferList = params =>
-  axios.get("/newwww/open/api/movie/list", { params });
+  axios.get("/newwww/open/api/order/pool/list", { params });
 
 // 提交报价
 const submitOffer = params =>

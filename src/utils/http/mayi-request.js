@@ -44,7 +44,7 @@ instance.interceptors.request.use(
     let businessParams = (isPost ? config.data : config.params) || {};
     // 合并参数并处理空值
     const params = { ...businessParams, ...publicParams };
-    console.log("params:", params);
+    // console.log("params:", params);
     Object.keys(params).forEach(key => {
       if (params[key] == null) {
         // 处理 null/undefined
@@ -96,7 +96,7 @@ instance.interceptors.response.use(
     const data = response.data;
     // let whitelistSp = ['/sp/order', '/sp/unlock']
     let whitelistSp = [];
-    console.log("response:", data);
+    // console.log("response:", data);
     let isErrorByLieRen =
       response.config.url.indexOf("/open/api/") !== -1 && !data.success;
     if (

@@ -425,11 +425,7 @@ class OrderAutoOfferQueue {
     const { conPrefix } = this;
     try {
       // let start_time = +new Date();
-      const res = await mayiApi.queryStayOfferList({
-        specialHall: "",
-        minPrice: "",
-        maxPrice: ""
-      });
+      const res = await mayiApi.queryStayOfferList();
       let list = res.data || [];
       // console.log(conPrefix + "获取待报价列表返回", list);
       // logUpload(
