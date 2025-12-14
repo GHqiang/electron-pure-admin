@@ -475,12 +475,6 @@ export default class CardQuanManage {
       quan_flag,
       quan_desc
     );
-    // 只更新描述一样的券库存，其它不更新，解决将描述不一样券标识一样的库存更新为相同的问题
-    targetQuanList = targetQuanList.filter(item =>
-      quan_desc
-        ? couponInfoSpecial(item.quan_desc) == couponInfoSpecial(quan_desc)
-        : true
-    );
     // 同类目标券更新处理
     targetQuanList?.forEach(item => {
       let quanStockList = item.quanStockList || [];

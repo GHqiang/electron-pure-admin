@@ -656,6 +656,7 @@ export default class BuyTicket {
         this.cardQuanManage.updateQuanStock({
           quan_stock: quanStock - ticket_num,
           quan_flag: offerRule.quan_flag,
+          quan_desc: offerRule.quan_desc,
           quan_value: offerRule.quan_value,
           app_name: appFlag,
           phone: this.currentPhone
