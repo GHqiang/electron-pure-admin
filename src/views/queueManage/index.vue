@@ -90,7 +90,7 @@
           <span v-if="row.id !== editingRowId">{{ row.platSubToken }}</span>
           <el-input
             v-if="
-              ['shoutu', 'mahua'].includes(row.platName) &&
+              ['shoutu', 'mahua', 'mayi'].includes(row.platName) &&
               row.id === editingRowId
             "
             v-model="editingRow.platSubToken"
@@ -103,8 +103,9 @@
           <span v-if="row.id !== editingRowId">{{ row.userUUID }}</span>
           <el-input
             v-if="
-              ['shoutu', 'lieren', 'mangguo', 'yinghuasuan'].includes(row.platName) &&
-              row.id === editingRowId
+              ['shoutu', 'lieren', 'mangguo', 'yinghuasuan', 'mayi'].includes(
+                row.platName
+              ) && row.id === editingRowId
             "
             v-model="editingRow.userUUID"
             @blur="saveEdit(row.id)"
@@ -705,6 +706,9 @@ const saveEdit = id => {
     } else if (platName == "yinghuasuan") {
       // 续期token
       localStorage.setItem("yinghuasuanPlatUserUUID", userUUID);
+    } else if (platName == "mayi") {
+      localStorage.setItem("mayiPlatSubToken", platSubToken);
+      localStorage.setItem("mayiPlatUserUUID", userUUID);
     }
     editingRowId.value = null;
   }

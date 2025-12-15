@@ -16,12 +16,14 @@ const instance = axios.create({
 
 const NODE_ENV = process.env.NODE_ENV;
 const IS_DEV = NODE_ENV === "development";
-const merCode = "00696"; // 从环境变量获取
-const priKey = "9PX4UDEGH3NBODPNMP3LO2EBRTKSYHPW"; // 从环境变量获取
+let merCode = "00696"; // 兜哥商户号
+let priKey = "9PX4UDEGH3NBODPNMP3LO2EBRTKSYHPW"; // 兜哥商户密钥
 
 // 请求拦截器
 instance.interceptors.request.use(
   config => {
+    priKey = localStorage.getItem("mayiPlatSubToken");
+    merCode = localStorage.getItem("mayiPlatUserUUID");
     // 检查必填配置
     if (!merCode || !priKey) {
       console.error(
