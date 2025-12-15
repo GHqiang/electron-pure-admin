@@ -81,7 +81,9 @@ instance.interceptors.request.use(
       config.params = params;
     }
     // 生产环境地址处理
-    config.url = IS_DEV ? config.url : `https://piao.mayiufu.com${config.url}`;
+    config.url = IS_DEV
+      ? config.url
+      : `https://piao.mayiufu.com${config.url}`.replace("/newwww", "");
 
     return config;
   },

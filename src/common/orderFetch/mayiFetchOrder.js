@@ -234,7 +234,7 @@ class OrderAutoFetchQueue {
     try {
       // console.log(conPrefix + "获取蚂蚁待出票订单列表参数", params);
       const res = await mayiApi.stayTicketingList({});
-      let list = res?.data.records || [];
+      let list = res?.data || [];
       list = list.filter(
         item =>
           !this.platOrderList.some(itemA => itemA.tradeno === item.tradeno)
