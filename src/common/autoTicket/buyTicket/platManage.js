@@ -333,11 +333,31 @@ export default class PlatCommon {
         seats: JSON.stringify(lockseat.split(" "))
       };
     } else if (plat_name === "mayi") {
+      const { cinema_name, hall_name, film_name, show_time } = this.order;
+      const blob = await generateTicketImage({ ...this.order, qrcode });
+      const fileUrl = await uploadBlobImage({
+        blob,
+        url: "https://piao.mayiufu.com/open/api/order/uploadPicture",
+        params: {
+          tradeno: order_number
+        },
+        plat_name,
+        logger
+      });
+      if (!fileUrl) {
+        logger.infoSave("蚂蚁获取取票码图片失败,需手动上传");
+        sendWxPusherMessage({
+          orderInfo: this.order,
+          transferTip: "蚂蚁获取取票码图片失败,需手动上传",
+          failReason: "蚂蚁获取取票码图片失败,需手动上传"
+        });
+        return { code: 1, msg: "蚂蚁获取取票码图片失败,需手动上传" };
+      }
       params = {
-        tradeno: order_id, // 蚂蚁APP的订单编号
+        tradeno: order_number, // 蚂蚁APP的订单编号
         ticketCode: JSON.stringify([
           {
-            picUrl: "", // 待补充
+            picUrl: fileUrl || "", // 待补充
             ticketCode: qrcode
           }
         ])

@@ -2170,6 +2170,8 @@ const uploadBlobImage = async ({
       return res?.data?.url;
     } else if (plat_name == "mahua") {
       return res?.rtnData?.imgUrl;
+    } else if (plat_name == "mayi") {
+      return res?.data?.picUrl;
     }
   } catch (error) {
     logList?.push({
