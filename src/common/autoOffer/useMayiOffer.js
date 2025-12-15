@@ -59,12 +59,12 @@ class OrderAutoOfferQueue {
   // 处理新订单
   handleNewOrder(item, oldOrder) {
     // 增加报价截止时间判断，小于等于1秒则不处理
-    if (
-      item.offer_end_time &&
-      item.offer_end_time - new Date().getTime() <= MIN_ALLOW_OFFER_SJC
-    ) {
-      return;
-    }
+    // if (
+    //   item.offer_end_time &&
+    //   item.offer_end_time - new Date().getTime() <= MIN_ALLOW_OFFER_SJC
+    // ) {
+    //   return;
+    // }
     console.warn(this.conPrefix + "新的待报价订单", item);
     this.handledOrders.set(item.order_number, 1);
 

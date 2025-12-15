@@ -22,8 +22,8 @@ let priKey = "9PX4UDEGH3NBODPNMP3LO2EBRTKSYHPW"; // 兜哥商户密钥
 // 请求拦截器
 instance.interceptors.request.use(
   config => {
-    priKey = localStorage.getItem("mayiPlatSubToken");
-    merCode = localStorage.getItem("mayiPlatUserUUID");
+    // priKey = localStorage.getItem("mayiPlatSubToken");
+    // merCode = localStorage.getItem("mayiPlatUserUUID");
     // 检查必填配置
     if (!merCode || !priKey) {
       console.error(
@@ -105,7 +105,7 @@ instance.interceptors.response.use(
       isErrorByLieRen &&
       !whitelistSp.some(item => response.config.url.includes(item))
     ) {
-      ElMessage.error(data.error?.msg || "请求失败");
+      ElMessage.error(data?.msg || "请求失败");
       // if (data.error?.msg?.includes("登录信息已过期")) {
       //   sendWxPusherMessage({
       //     msgType: 1,
