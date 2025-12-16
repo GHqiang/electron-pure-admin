@@ -26,11 +26,11 @@ const unlockSeat = params =>
 
 // 提交取票码(发货回调)
 const submitTicketCode = params =>
-  axios.get("/newwww/open/api/order/uploadTicketCode", { params });
+  axios.post("/newwww/open/api/order/uploadTicketCode", params);
 
 // 取消订单
 const transferOrder = params =>
-  axios.get("/newwww/open/api/order/cancelBaojia", { params });
+  axios.post("/newwww/open/api/order/turn", params);
 
 export default {
   queryOfferRecord, // 查询报价记录

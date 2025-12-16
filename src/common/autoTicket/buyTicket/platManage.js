@@ -335,30 +335,30 @@ export default class PlatCommon {
     } else if (plat_name === "mayi") {
       const { cinema_name, hall_name, film_name, show_time } = this.order;
       const blob = await generateTicketImage({ ...this.order, qrcode });
-      let params = {
+      let uploadParams = {
         tradeno: order_number,
-        merCode: '00696',
+        merCode: "00696",
         time: Math.floor(Date.now() / 1000).toString(), // 秒级时间戳
         v: "1.0" // 接口版本
-      }
-      const sortedKeys = Object.keys(params).sort();
+      };
+      const sortedKeys = Object.keys(uploadParams).sort();
       let signStr = "";
       for (const key of sortedKeys) {
         if (key !== "sign") {
           // 排除sign参数
-          signStr += `${key}=${params[key]}&`;
+          signStr += `${key}=${uploadParams[key]}&`;
         }
       }
       signStr = signStr.slice(0, -1); // 移除末尾&
-      const priKey = '9PX4UDEGH3NBODPNMP3LO2EBRTKSYHPW';
+      const priKey = "9PX4UDEGH3NBODPNMP3LO2EBRTKSYHPW";
       const sign = md5.hex_md5(signStr + priKey);
-  
+
       // 添加签名
-      params.sign = sign;
+      uploadParams.sign = sign;
       const fileUrl = await uploadBlobImage({
         blob,
         url: "https://piao.mayiufu.com/open/api/order/uploadPicture",
-        params,
+        params: uploadParams,
         plat_name,
         logger
       });
