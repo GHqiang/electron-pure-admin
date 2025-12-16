@@ -43,7 +43,7 @@
           </template>
         </el-input>
       </div>
-      <div class="flex-yc m-t-10" v-if="IN_RULE_LIST.includes(rule)">
+      <div class="flex-yc m-t-10">
         <el-input
           v-model="minGrabProfit"
           type="number"
