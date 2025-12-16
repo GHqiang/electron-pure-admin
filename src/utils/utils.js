@@ -2652,7 +2652,29 @@ function removeParenthesesContent(str) {
   return str.replace(/\([^()]*\)/g, "").trim();
 }
 
+// 渲染进程通知主线程进行请求
+// url,
+// method = 'GET',
+// headers = {},
+// data = null,      // 用于 POST/PUT body
+// params = null,    // 新增：用于 GET 查询参数
+// timeout = 10000
+const requestViaMain = async options => {
+  const result = await window.electron.ipcRenderer.invoke(
+    "proxy-http-request",
+    options
+  );
+  console.log("渲染进程收到主进程请求结果", result);
+  if (!result.success) {
+    throw new Error(
+      `Request failed: ${result.message} (status: ${result.status})`
+    );
+  }
+
+  return result.data;
+};
 export {
+  requestViaMain, // 渲染进程通知主线程进行请求
   removeParenthesesContent, // 移除括号及括号内的内容
   dynamicPrice, // 动态调价处理
   addDecimal, // 加

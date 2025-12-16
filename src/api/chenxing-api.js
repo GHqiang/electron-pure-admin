@@ -4,44 +4,47 @@
 
 import createAxios from "@/utils/http/chenxing-request";
 import { GET_APP_INFO } from "@/common/constant";
+import { requestViaMain } from "@/utils/utils"; // 你已封装的主进程请求方法
+import { paramsHandle } from "@/utils/http/chenxing-request"; // 确保你已导出 paramsHandle
+const IS_DEV = process.env.NODE_ENV === "development";
 const createApi = ({ app_name }) => {
   // 启用新版本服务影院列表
   let axios = createAxios({
     app_name: app_name
   });
   let api_version = GET_APP_INFO(app_name)?.api_version;
-  let api_v = GET_APP_INFO(app_name)?.api_v || 'V4.0.2';
+  let api_v = GET_APP_INFO(app_name)?.api_v || "V4.0.2";
 
   const apiPathByVerObj = {
     getCinemaList: {
-      'V4.0.2': "/selfSupport/front/cticket/getCinemaList",
-      'V3.1.2': "/selfSupport/front/cticket/getCinemaList",
+      "V4.0.2": "/selfSupport/front/cticket/getCinemaList",
+      "V3.1.2": "/selfSupport/front/cticket/getCinemaList"
     },
     getCardList: {
-      'V4.0.2': "/selfSupport/trade/front/user/cards",
-      'V3.1.2': "/selfSupport/trade/front/user/cards/crmMultiCard",
+      "V4.0.2": "/selfSupport/trade/front/user/cards",
+      "V3.1.2": "/selfSupport/trade/front/user/cards/crmMultiCard"
     },
     getQuanList: {
-      'V4.0.2': "/selfSupport/front/coupon/list",
-      'V3.1.2': "/selfSupport/front/coupon/v2/list",
+      "V4.0.2": "/selfSupport/front/coupon/list",
+      "V3.1.2": "/selfSupport/front/coupon/v2/list"
     },
     getMoviePlayInfo: {
-      'V4.0.2': "/selfSupport/front/cticket/getHitFilm",
-      'V3.1.2': "/selfSupport/front/cticket/v2/getHitFilm",
+      "V4.0.2": "/selfSupport/front/cticket/getHitFilm",
+      "V3.1.2": "/selfSupport/front/cticket/v2/getHitFilm"
     },
     getUpcomingFilm: {
-      'V4.0.2': "/selfSupport/front/cticket/getUpcomingFilm",
-      'V3.1.2': "/selfSupport/front/cticket/v2/getUpcomingFilm",
+      "V4.0.2": "/selfSupport/front/cticket/getUpcomingFilm",
+      "V3.1.2": "/selfSupport/front/cticket/v2/getUpcomingFilm"
     },
     getMoviePlayTime: {
-      'V4.0.2': "/selfSupport/front/cticket/loadSchedule",
-      'V3.1.2': "/selfSupport/front/cticket/v2/loadSchedule",
+      "V4.0.2": "/selfSupport/front/cticket/loadSchedule",
+      "V3.1.2": "/selfSupport/front/cticket/v2/loadSchedule"
     },
     priceCalculation: {
-      'V4.0.2': "/selfSupport/trade/front/orders/calculatePrice",
-      'V3.1.2': "/selfSupport/trade/front/orders/calculatePriceV2",
-    },
-  }
+      "V4.0.2": "/selfSupport/trade/front/orders/calculatePrice",
+      "V3.1.2": "/selfSupport/trade/front/orders/calculatePriceV2"
+    }
+  };
   let apiUrlObj = {
     // 授权token
     authToken: {
@@ -133,8 +136,44 @@ const createApi = ({ app_name }) => {
   let apiFunObj = {};
 
   Object.entries(apiUrlObj).map(([funName, apiUrl]) => {
-    apiFunObj[funName] = params =>
-      axios.post(apiUrl[api_version], params || {});
+    const path = apiUrl[api_version];
+    if (!path) {
+      console.warn(`未找到 ${app_name} 的 ${funName} 接口路径`);
+      apiFunObj[funName] = () =>
+        Promise.reject(new Error("API path not found"));
+      return;
+    }
+    apiFunObj[funName] = async (params = {}) => {
+      return axios.post(path, params || {});
+      // 判断是否需要走主进程代理
+      // if (IS_DEV && api_version === "3.0C") {
+      //   // 1. 处理参数（复用原有逻辑）
+      //   const processedParams = paramsHandle(params, app_name);
+
+      //   // 2. 构造完整 URL
+      //   const fullUrl = "https://capi.oristarcloud.com" + path;
+
+      //   // 3. 调用主进程代理（所有 3.0C 接口目前都是 POST）
+      //   try {
+      //     const result = await requestViaMain({
+      //       url: fullUrl,
+      //       method: "POST",
+      //       headers: {
+      //         "Content-Type": "application/json"
+      //       },
+      //       data: processedParams,
+      //       timeout: 20000
+      //     });
+      //     return result; // 注意：requestViaMain 已经返回 .data
+      //   } catch (error) {
+      //     // 统一错误格式，便于上层 ElMessage 捕获
+      //     return Promise.reject(error);
+      //   }
+      // } else {
+      //   // 走原 axios 流程
+      //   return axios.post(path, params || {});
+      // }
+    };
   });
   // console.log("apiFunObj", apiFunObj);
   return apiFunObj;

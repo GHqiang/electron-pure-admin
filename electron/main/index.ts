@@ -11,7 +11,7 @@ import {
   BrowserWindow,
   dialog
 } from "electron";
-
+// import axios from 'axios';
 // The built directory structure
 //
 // ├─┬ dist-electron
@@ -241,3 +241,70 @@ ipcMain.handle("open-win", (_, arg) => {
     childWindow.loadFile(indexHtml, { hash: arg });
   }
 });
+
+// 新增：通用 HTTP 代理接口
+// ipcMain.handle('proxy-http-request', async (event, requestOptions) => {
+//   const {
+//     url,
+//     method = 'GET',
+//     headers = {},
+//     data = null,      // 用于 POST/PUT body
+//     params = null,    // 新增：用于 GET 查询参数
+//     timeout = 10000
+//   } = requestOptions;
+
+//   try {
+//     // 【可选】安全校验域名
+//     // const allowedHosts = ['capi.oristarcloud.com', ...];
+//     // const host = new URL(url).hostname;
+//     // if (!allowedHosts.includes(host)) throw new Error('Forbidden');
+
+//     const config: any = {
+//       url,
+//       method: method.toUpperCase(),
+//       headers,
+//       timeout
+//     };
+
+//     // 根据方法类型决定参数位置
+//     if (['GET', 'HEAD', 'DELETE'].includes(config.method)) {
+//       config.params = params || data; // 兼容：如果前端只传了 data，也当作 params
+//     } else {
+//       config.data = data;
+//     }
+
+//     const response = await axios(config);
+//     console.log('主进程请求接口返回:', response);
+//     return {
+//       success: true,
+//       status: response.status,
+//       data: response.data,
+//       headers: response.headers
+//     };
+//   } catch (error: any) {
+//     console.error('Proxy request failed:', error.message, url);
+//     // ... 错误处理同上
+//     if (error.response) {
+//       return {
+//         success: false,
+//         status: error.response.status,
+//         data: error.response.data,
+//         message: error.message
+//       };
+//     } else if (error.request) {
+//       return {
+//         success: false,
+//         status: null,
+//         data: null,
+//         message: 'Network error'
+//       };
+//     } else {
+//       return {
+//         success: false,
+//         status: null,
+//         data: null,
+//         message: error.message || 'Unknown error'
+//       };
+//     }
+//   }
+// });

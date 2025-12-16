@@ -115,7 +115,7 @@ const paramsHandle = (params, app_name) => {
     return config;
   }
 };
-
+export { paramsHandle };
 const createAxios = ({ app_name, timeout = 20 }) => {
   const instance = axios.create({
     baseURL: "",
