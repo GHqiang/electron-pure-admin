@@ -4,6 +4,7 @@ let dictTableList = window.localStorage.getItem("dictTableList");
 if (dictTableList) {
   dictTableList = JSON.parse(dictTableList);
 }
+// 字典表信息
 export const dictTable = defineStore("dictTableList", {
   state: () => ({
     dictTableList: dictTableList || []
@@ -24,6 +25,21 @@ export const dictTable = defineStore("dictTableList", {
       console.warn(`设置字典表信息`, list);
       this.dictTableList = list;
       window.localStorage.setItem("dictTableList", JSON.stringify(list));
+    }
+  }
+});
+
+// 名称映射表信息
+export const nameMatchTable = defineStore("nameMatchTableList", {
+  state: () => ({
+    nameList: []
+  }),
+  getters: {},
+  actions: {
+    // 设置字典表信息
+    setNameMatchTableList(list) {
+      console.warn(`设置名称映射表信息`, list);
+      this.nameList = list;
     }
   }
 });

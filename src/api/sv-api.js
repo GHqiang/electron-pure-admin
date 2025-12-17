@@ -15,6 +15,10 @@ const getUserList = params => axios.get("/svpi/users", { params });
 
 // 查询字典表
 const queryDictList = params => axios.get("/svpi/dictRecord", { params });
+
+// 查询名称映射表
+const queryNameMatchList = params => axios.get("/svpi/nameMatch", { params });
+
 //查询统计分析
 const queryAnalysis = params =>
   axios.get("/svpi/statisticalAnalysis/query", { params, timeout: 60 * 1000 });
@@ -241,6 +245,7 @@ const addSpecialNameRecord = params =>
 const updateSpecialNameRecord = params =>
   axios.post("/svpi/specialNameRecord/update", params);
 const svApi = {
+  queryNameMatchList, // 查询名称映射表
   queryDictList, // 查询字典列表
   login,
   logout,

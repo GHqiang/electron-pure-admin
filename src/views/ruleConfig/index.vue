@@ -26,6 +26,9 @@
       >
 
       <el-button type="primary" @click="setDictTableList">刷新字典表</el-button>
+      <el-button type="primary" @click="setNameTableList"
+        >刷新名称映射表</el-button
+      >
     </div>
 
     <div style="margin-top: 50px">
@@ -127,8 +130,9 @@ const {
   userInfo: { rule, user_id }
 } = platTokens();
 
-import { dictTable } from "@/store/dictTable";
+import { dictTable, nameMatchTable } from "@/store/dictTable";
 const dictStore = dictTable();
+const nameMatchStore = nameMatchTable();
 
 import { IN_RULE_LIST } from "@/common/constant.js";
 // 是否超限报价
@@ -225,6 +229,18 @@ const setDictTableList = async () => {
     dictStore.setDictTableList(dictList);
   } catch (error) {
     console.warn("字典表返回异常", error);
+  }
+};
+
+// 设置影片映射表信息
+const setNameTableList = async () => {
+  try {
+    const res = await svApi.queryNameMatchList();
+    let nameList = res?.data?.nameList || [];
+    console.log("名称映射表返回", nameList);
+    nameMatchStore.setNameMatchTableList(nameList);
+  } catch (error) {
+    console.warn("名称映射表返回异常", error);
   }
 };
 </script>

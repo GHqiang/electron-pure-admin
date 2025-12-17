@@ -44,8 +44,9 @@ const cinemaCodeMatchObj = useCinemaCodeMatchList();
 import { useCinemaList } from "@/store/cinemaList.js";
 const useCinemaListObj = useCinemaList();
 
-import { dictTable } from "@/store/dictTable";
+import { dictTable, nameMatchTable } from "@/store/dictTable";
 const dictStore = dictTable();
+const nameMatchStore = nameMatchTable();
 
 defineOptions({
   name: "Login"
@@ -127,6 +128,19 @@ const setDictTableList = async () => {
     console.warn("字典表返回异常", error);
   }
 };
+
+// 设置影片映射表信息
+const setNameTableList = async () => {
+  try {
+    const res = await svApi.queryNameMatchList();
+    let nameList = res?.data?.nameList || [];
+    console.log("名称映射表返回", nameList);
+    nameMatchStore.setNameMatchTableList(nameList);
+  } catch (error) {
+    console.warn("名称映射表返回异常", error);
+  }
+};
+
 // 设置本地的登录信息列表
 const setLocalLoginList = async rule => {
   const loginRes = await svApi.queryLoginList({ rule });
@@ -175,6 +189,7 @@ const onLogin = async formEl => {
           await setLocalLoginList(rule);
           await setLocalRuleList(rule);
           await setDictTableList(rule);
+          await setNameTableList(rule);
           // 获取后端路由
           await initRouter(rule);
           let getTopMenuPath = getTopMenu(true).path;
