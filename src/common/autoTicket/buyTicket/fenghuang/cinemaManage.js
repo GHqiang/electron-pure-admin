@@ -7,6 +7,7 @@ import {
   isDateInCurrentMonth,
   getPreviousDay,
   findMostRepeatedChars,
+  getMovieInfoFromFilmName,
   mockDelay // 模拟延时
 } from "@/utils/utils";
 import { APP_API_OBJ } from "@/common/index";
@@ -171,34 +172,16 @@ export default class CinemaManage {
   // 获取目标影片信息
   getTargetMovie(movieData, filmName) {
     // 全字匹配
-    let movieInfo = movieData.find(item => item.filmName === filmName);
+    let movieInfo = getMovieInfoFromFilmName({
+      filmName: filmName,
+      movieData: movieData?.map(item => ({
+        ...item,
+        filmName: item.filmName
+      }))
+    });
     if (!movieInfo) {
-      // 特殊处理后匹配
-      movieInfo = movieData.find(
-        item =>
-          convertFullwidthToHalfwidth(item.filmName) ===
-            convertFullwidthToHalfwidth(filmName) ||
-          convertFullwidthToHalfwidth(filmName).includes(
-            convertFullwidthToHalfwidth(item.filmName)
-          )
-      );
-      if (!movieInfo) {
-        // 模糊匹配
-        this.logger.warn("全字匹配目标影片信息失败", { movieData, filmName });
-        let targetFilmList = movieData.map(item => {
-          return {
-            ...item,
-            ...findMostRepeatedChars(item.filmName, filmName)
-          };
-        });
-        targetFilmList = targetFilmList.sort(
-          (a, b) => b.similarity - a.similarity
-        );
-        // 必须有4个重复字符才采用模糊匹配结果
-        if (targetFilmList[0]?.totalRepeated >= 3) {
-          movieInfo = targetFilmList[0];
-        }
-      }
+      // 模糊匹配
+      this.logger.warn("全字匹配目标影片信息失败", { movieData, filmName });
     }
     return movieInfo;
   }

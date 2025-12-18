@@ -14,6 +14,7 @@ import {
   calculateMarkup,
   getCinemaLoginInfoList,
   findMostRepeatedChars,
+  getMovieInfoFromFilmName,
   couponInfoSpecial,
   divDecimal
 } from "@/utils/utils";
@@ -1344,51 +1345,29 @@ class getUmeOfferPrice {
         level: "info"
       });
       // 4、获取目标影片信息
-      let movieInfo = movie_data?.find(item => item.filmName === film_name);
+      let movieInfo = getMovieInfoFromFilmName({
+        filmName: film_name,
+        movieData: movie_data?.map(item => ({
+          ...item,
+          filmName: item.filmName
+        }))
+      });
       if (!movieInfo) {
         console.warn("获取目标影片信息失败", movie_data, film_name);
-        movieInfo = movie_data.find(
-          item =>
-            convertFullwidthToHalfwidth(item.filmName) ===
-              convertFullwidthToHalfwidth(film_name) ||
-            convertFullwidthToHalfwidth(film_name).includes(
-              convertFullwidthToHalfwidth(item.filmName)
-            )
-        );
-        if (!movieInfo) {
-          let targetFilmList = movie_data.map(item => {
-            const repeatedCharsResult = findMostRepeatedChars(
-              item.filmName,
-              film_name
-            );
-            return {
-              ...item,
-              ...repeatedCharsResult
-            };
-          });
-          targetFilmList = targetFilmList.sort(
-            (a, b) => b.similarity - a.similarity
-          );
-          // 必须有4个重复字符才采用模糊匹配结果
-          if (targetFilmList[0]?.totalRepeated >= 3) {
-            movieInfo = targetFilmList[0];
-          } else {
-            this.logList.push({
-              opera_time: getCurrentTime(),
-              des: "获取目标影片信息失败",
-              level: "error",
-              info: {
-                film_name,
-                movie_data: movie_data?.map(item => ({
-                  filmName: item.filmName,
-                  filmId: item.filmId,
-                  filmVersion: item.filmVersion // 2D、3D
-                }))
-              }
-            });
-            return;
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "获取目标影片信息失败",
+          level: "error",
+          info: {
+            film_name,
+            movie_data: movie_data?.map(item => ({
+              filmName: item.filmName,
+              filmId: item.filmId,
+              filmVersion: item.filmVersion // 2D、3D
+            }))
           }
-        }
+        });
+        return;
       }
       console.log("movieInfo", movieInfo, film_name);
       // 5、获取目标影片的放映日期

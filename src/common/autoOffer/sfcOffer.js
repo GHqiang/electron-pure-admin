@@ -13,6 +13,7 @@ import {
   isDateInCurrentMonth,
   getCinemaLoginInfoList,
   findMostRepeatedChars,
+  getMovieInfoFromFilmName,
   couponInfoSpecial,
   isNextDay,
   getPreviousDay,
@@ -1620,46 +1621,26 @@ class getSfcOfferPrice {
       if (!moviePlayInfo) return;
       // 3、匹配订单拿到会员价
       const { movie_data } = moviePlayInfo;
-      let movieInfo = movie_data.find(
-        item =>
-          convertFullwidthToHalfwidth(item.movie_name) ===
-            convertFullwidthToHalfwidth(film_name) ||
-          convertFullwidthToHalfwidth(film_name).includes(
-            convertFullwidthToHalfwidth(item.movie_name)
-          )
-      );
-      console.log("movieInfo", movieInfo, film_name);
+      let movieInfo = getMovieInfoFromFilmName({
+        filmName: film_name,
+        movieData: movie_data?.map(item => ({
+          ...item,
+          filmName: item.movie_name
+        }))
+      });
       if (!movieInfo) {
-        let targetFilmList = movie_data.map(item => {
-          const repeatedCharsResult = findMostRepeatedChars(
-            item.movie_name,
-            film_name
-          );
-          return {
-            ...item,
-            ...repeatedCharsResult
-          };
+        this.logList.push({
+          opera_time: getCurrentTime(),
+          des: "获取目标影片信息失败",
+          level: "error",
+          info: {
+            film_name,
+            movie_data: movie_data.map(item => ({
+              movie_name: item.movie_name
+            }))
+          }
         });
-        targetFilmList = targetFilmList.sort(
-          (a, b) => b.similarity - a.similarity
-        );
-        // 必须有4个重复字符才采用模糊匹配结果
-        if (targetFilmList[0]?.totalRepeated >= 3) {
-          movieInfo = targetFilmList[0];
-        } else {
-          this.logList.push({
-            opera_time: getCurrentTime(),
-            des: "获取目标影片信息失败",
-            level: "error",
-            info: {
-              film_name,
-              movie_data: movie_data.map(item => ({
-                movie_name: item.movie_name
-              }))
-            }
-          });
-          return;
-        }
+        return;
       }
       let { shows } = movieInfo;
       let showDay = show_time.split(" ")[0];

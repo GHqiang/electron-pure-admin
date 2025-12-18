@@ -32,8 +32,9 @@ import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
 // console.log("user_id", user_id);
 
-import { dictTable } from "@/store/dictTable";
+import { dictTable, nameMatchTable } from "@/store/dictTable";
 const dictStore = dictTable();
+const nameMatchStore = nameMatchTable();
 
 // 获取上一天
 function getPreviousDay(dateString) {
@@ -2673,7 +2674,72 @@ const requestViaMain = async options => {
 
   return result.data;
 };
+
+// 名称特殊处理-只保留英文字母、数字、中文并转小写
+const nameSpecialHandle = cinema_name => {
+  return cinema_name
+    .replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, "") // 只保留英文字母、数字、中文
+    .toLowerCase(); // 如果你仍需要转小写（注意：中文不受影响）
+};
+
+// 获取映射名称匹配
+const getNameSpecialMatch = (name, type) => {
+  try {
+    return nameMatchStore.nameList?.find(
+      item =>
+        item.type == type &&
+        nameSpecialHandle(name) == nameSpecialHandle(item.name)
+    )?.match_name;
+  } catch (error) {}
+};
+
+window.getNameSpecialMatch = getNameSpecialMatch;
+
+// 根据影片名获取电影信息
+const getMovieInfoFromFilmName = (filmName, movieData) => {
+  try {
+    // 1、检查入参是否合规
+    if (!filmName || !movieData?.length) {
+      return;
+    }
+    // 2、全字匹配
+    let movieInfo = movieData?.find(item => item.filmName === filmName);
+    if (movieInfo) return movieInfo;
+    // 3、特殊匹配-只保留英文字母、数字、中文并转小写
+    movieInfo = movieData.find(
+      item => nameSpecialHandle(item.filmName) === nameSpecialHandle(filmName)
+    );
+    if (movieInfo) return movieInfo;
+    // 4、映射特殊匹配
+    movieInfo = movieData.find(
+      item =>
+        nameSpecialHandle(item.filmName) ===
+        nameSpecialHandle(getNameSpecialMatch(filmName, 1))
+    );
+    if (movieInfo) return movieInfo;
+    // 5-模糊匹配-特殊处理后相同字符多的优先
+    let targetFilmList = movieData.map(item => {
+      return {
+        ...item,
+        ...findMostRepeatedChars(
+          nameSpecialHandle(item.filmName),
+          nameSpecialHandle(filmName)
+        )
+      };
+    });
+    targetFilmList = targetFilmList.sort((a, b) => b.similarity - a.similarity);
+    // 必须有4个重复字符才采用模糊匹配结果
+    if (targetFilmList[0]?.totalRepeated >= 4) {
+      movieInfo = targetFilmList[0];
+    }
+    return movieInfo;
+  } catch (error) {
+    console.warn("根据影片名获取电影信息异常", error);
+  }
+};
+
 export {
+  getMovieInfoFromFilmName, // 根据影片名获取电影信息
   requestViaMain, // 渲染进程通知主线程进行请求
   removeParenthesesContent, // 移除括号及括号内的内容
   dynamicPrice, // 动态调价处理
