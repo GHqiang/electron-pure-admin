@@ -2678,8 +2678,8 @@ const requestViaMain = async options => {
 // 名称特殊处理-只保留英文字母、数字、中文并转小写
 const nameSpecialHandle = cinema_name => {
   return cinema_name
-    .replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, "") // 只保留英文字母、数字、中文
-    .toLowerCase(); // 如果你仍需要转小写（注意：中文不受影响）
+    ?.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, "") // 只保留英文字母、数字、中文
+    ?.toLowerCase(); // 如果你仍需要转小写（注意：中文不受影响）
 };
 
 // 获取映射名称匹配
@@ -2699,7 +2699,7 @@ window.getNameSpecialMatch = getNameSpecialMatch;
 const getMovieInfoFromFilmName = (filmName, movieData) => {
   try {
     // 1、检查入参是否合规
-    if (!filmName || !movieData?.length) {
+    if (!filmName || !movieData?.length || !movieData?.[0]?.fileName) {
       return;
     }
     // 2、全字匹配
