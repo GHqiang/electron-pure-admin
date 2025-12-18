@@ -188,7 +188,7 @@
         width="85"
       />
       <el-table-column
-        v-if="IN_RULE_LIST.includes(rule) && orderStatus == 1"
+        v-if="orderStatus == 1"
         prop="deal_price"
         fixed
         label="中标价"

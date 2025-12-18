@@ -59,8 +59,7 @@
           />
         </template>
       </el-table-column>
-      <!-- <el-table-column
-        v-if="IN_RULE_LIST.includes(rule)"
+      <el-table-column
         prop="syncPageSize"
         width="160"
         label="同步频率(条数/1分钟)"
@@ -74,7 +73,7 @@
             @blur="saveEdit(row.id)"
           />
         </template>
-      </el-table-column> -->
+      </el-table-column>
       <el-table-column prop="platToken" label="平台Token">
         <template #default="{ row, $index }">
           <span v-if="row.id !== editingRowId">{{ row.platToken }}</span>
