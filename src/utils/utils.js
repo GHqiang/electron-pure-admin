@@ -2696,10 +2696,11 @@ const getNameSpecialMatch = (name, type) => {
 window.getNameSpecialMatch = getNameSpecialMatch;
 
 // 根据影片名获取电影信息
-const getMovieInfoFromFilmName = (filmName, movieData) => {
+const getMovieInfoFromFilmName = ({ filmName, movieData }) => {
   try {
+    console.log("getMovieInfoFromFilmName", filmName, movieData);
     // 1、检查入参是否合规
-    if (!filmName || !movieData?.length || !movieData?.[0]?.fileName) {
+    if (!filmName || !movieData?.length || !movieData?.[0]?.filmName) {
       return;
     }
     // 2、全字匹配
@@ -2737,6 +2738,7 @@ const getMovieInfoFromFilmName = (filmName, movieData) => {
     console.warn("根据影片名获取电影信息异常", error);
   }
 };
+window.getMovieInfoFromFilmName = getMovieInfoFromFilmName;
 
 export {
   getMovieInfoFromFilmName, // 根据影片名获取电影信息
