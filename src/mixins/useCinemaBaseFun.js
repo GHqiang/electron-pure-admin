@@ -546,12 +546,7 @@ export default function useCinemaBaseFun() {
       const availableCinemas = res.availableCinemas || [];
       // console.log("availableCinemas1", availableCinemas);
       return availableCinemas
-        .map(item => {
-          const cinema_id = cinemaCodeMatchObj
-            .getCinemaMatchInfoByName(item.cinemaName, app_name)
-            ?.app_cinema_code?.split("_")?.[1];
-          return cinema_id;
-        })
+        .map(item => item.cinemaLinkId)
         .filter(item => item)
         .join(",");
     } catch (error) {
