@@ -237,7 +237,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             );
         }
       } else {
-        ElMessage.error("网络连接异常，请稍后再试");
+        ElMessage.error("卢米埃网络连接异常，请稍后再试");
       }
       return Promise.reject(error);
     }

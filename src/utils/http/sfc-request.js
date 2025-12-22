@@ -276,7 +276,7 @@ const createAxios = ({ group, app_name, timeout = 20 }) => {
             ElMessage.error(`请求错误 ${response.status}: ${error.message}`);
         }
       } else {
-        ElMessage.error("网络连接异常，请稍后再试");
+        ElMessage.error("乐影网络连接异常，请稍后再试");
       }
       return Promise.reject(error);
     }

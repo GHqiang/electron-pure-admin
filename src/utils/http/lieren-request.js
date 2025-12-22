@@ -80,7 +80,7 @@ instance.interceptors.response.use(
           ElMessage.error(`请求错误 ${response.status}: ${error.message}`);
       }
     } else {
-      ElMessage.error("网络连接异常，请稍后再试");
+      ElMessage.error("猎人网络连接异常，请稍后再试");
     }
     return Promise.reject(error);
   }

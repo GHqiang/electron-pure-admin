@@ -118,7 +118,7 @@ instance.interceptors.response.use(
           );
       }
     } else {
-      ElMessage.error("网络连接异常，请稍后再试");
+      ElMessage.error("商展网络连接异常，请稍后再试");
     }
     return Promise.reject(error);
   }
