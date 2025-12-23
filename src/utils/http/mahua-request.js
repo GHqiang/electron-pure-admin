@@ -2,7 +2,12 @@
 
 import axios from "axios";
 import { ElMessage } from "element-plus";
-import { sendWxPusherMessage, formatErrInfo } from "@/utils/utils";
+import {
+  sendWxPusherMessage,
+  logUpload,
+  getCurrentTime,
+  formatErrInfo
+} from "@/utils/utils";
 import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
 const tableDataStore = usePlatTableDataStore();
 // window.tableDataStore = tableDataStore;
@@ -173,6 +178,24 @@ instance.interceptors.response.use(
           );
       }
     } else {
+      logUpload(
+        {
+          plat_name: "mahua",
+          app_name: "",
+          order_number: "",
+          type: ""
+        },
+        [
+          {
+            opera_time: getCurrentTime(),
+            des: "麻花网络连接异常",
+            level: "error",
+            info: {
+              error: formatErrInfo(error)
+            }
+          }
+        ]
+      );
       ElMessage.error("麻花网络连接异常，请稍后再试");
     }
     return Promise.reject(error);

@@ -3,6 +3,12 @@
 import axios from "axios";
 import md5 from "../md5.js";
 import { ElMessage } from "element-plus";
+import {
+  sendWxPusherMessage,
+  logUpload,
+  getCurrentTime,
+  formatErrInfo
+} from "@/utils/utils";
 // 创建axios实例
 const instance = axios.create({
   //   baseURL: process.env.VITE_API_BASE_URL,
@@ -111,6 +117,24 @@ instance.interceptors.response.use(
           );
       }
     } else {
+      logUpload(
+        {
+          plat_name: "sheng",
+          app_name: "",
+          order_number: "",
+          type: ""
+        },
+        [
+          {
+            opera_time: getCurrentTime(),
+            des: "省网络连接异常",
+            level: "error",
+            info: {
+              error: formatErrInfo(error)
+            }
+          }
+        ]
+      );
       ElMessage.error("省网络连接异常，请稍后再试");
     }
     return Promise.reject(error);

@@ -4,6 +4,12 @@ import axios from "axios";
 import md5 from "../md5.js";
 window.md5 = md5;
 import { ElMessage } from "element-plus";
+import {
+  sendWxPusherMessage,
+  logUpload,
+  getCurrentTime,
+  formatErrInfo
+} from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
 // 创建axios实例
@@ -118,6 +124,24 @@ instance.interceptors.response.use(
           );
       }
     } else {
+      logUpload(
+        {
+          plat_name: "shangzhan",
+          app_name: "",
+          order_number: "",
+          type: ""
+        },
+        [
+          {
+            opera_time: getCurrentTime(),
+            des: "商展网络连接异常",
+            level: "error",
+            info: {
+              error: formatErrInfo(error)
+            }
+          }
+        ]
+      );
       ElMessage.error("商展网络连接异常，请稍后再试");
     }
     return Promise.reject(error);

@@ -2,7 +2,12 @@
 
 import axios from "axios";
 import { ElMessage } from "element-plus";
-import { sendWxPusherMessage } from "@/utils/utils";
+import {
+  sendWxPusherMessage,
+  logUpload,
+  getCurrentTime,
+  formatErrInfo
+} from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
 // 创建axios实例
@@ -80,6 +85,24 @@ instance.interceptors.response.use(
           ElMessage.error(`请求错误 ${response.status}: ${error.message}`);
       }
     } else {
+      logUpload(
+        {
+          plat_name: "mangguo",
+          app_name: "",
+          order_number: "",
+          type: ""
+        },
+        [
+          {
+            opera_time: getCurrentTime(),
+            des: "芒果网络连接异常",
+            level: "error",
+            info: {
+              error: formatErrInfo(error)
+            }
+          }
+        ]
+      );
       ElMessage.error("芒果网络连接异常，请稍后再试");
     }
     return Promise.reject(error);

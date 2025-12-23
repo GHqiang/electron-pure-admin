@@ -3,8 +3,12 @@
 import axios from "axios";
 import { ElMessage } from "element-plus";
 import { platTokens } from "@/store/platTokens";
-import { sendWxPusherMessage } from "@/utils/utils";
-
+import {
+  sendWxPusherMessage,
+  logUpload,
+  getCurrentTime,
+  formatErrInfo
+} from "@/utils/utils";
 const tokens = platTokens();
 // 创建axios实例
 const instance = axios.create({
@@ -116,6 +120,24 @@ instance.interceptors.response.use(
           );
       }
     } else {
+      logUpload(
+        {
+          plat_name: "yinghuasuan",
+          app_name: "",
+          order_number: "",
+          type: ""
+        },
+        [
+          {
+            opera_time: getCurrentTime(),
+            des: "影划算网络连接异常",
+            level: "error",
+            info: {
+              error: formatErrInfo(error)
+            }
+          }
+        ]
+      );
       ElMessage.error("影划算网络连接异常，请稍后再试");
     }
     return Promise.reject(error);
