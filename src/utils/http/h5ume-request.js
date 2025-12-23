@@ -865,6 +865,24 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             );
         }
       } else {
+        logUpload(
+          {
+            plat_name: "",
+            app_name: app_name,
+            order_number: "",
+            type: ""
+          },
+          [
+            {
+              opera_time: getCurrentTime(),
+              des: "凤凰H5网络连接异常",
+              level: "error",
+              info: {
+                error: formatErrInfo(error)
+              }
+            }
+          ]
+        );
         ElMessage.error("凤凰H5网络连接异常，请稍后再试");
       }
       return Promise.reject(error);

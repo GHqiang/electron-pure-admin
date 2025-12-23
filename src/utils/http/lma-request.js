@@ -7,7 +7,8 @@ import {
   getCurrentTime,
   sendWxPusherMessage,
   mockDelay,
-  getCinemaLoginInfoList
+  getCinemaLoginInfoList,
+  formatErrInfo
 } from "@/utils/utils";
 import { GET_APP_LIST } from "@/common/constant";
 
@@ -237,6 +238,24 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             );
         }
       } else {
+        logUpload(
+          {
+            plat_name: "",
+            app_name: app_name,
+            order_number: "",
+            type: ""
+          },
+          [
+            {
+              opera_time: getCurrentTime(),
+              des: "卢米埃网络连接异常",
+              level: "error",
+              info: {
+                error: formatErrInfo(error)
+              }
+            }
+          ]
+        );
         ElMessage.error("卢米埃网络连接异常，请稍后再试");
       }
       return Promise.reject(error);

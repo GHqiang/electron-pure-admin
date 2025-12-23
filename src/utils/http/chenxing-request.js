@@ -5,7 +5,13 @@ import axiosRetry from "axios-retry";
 import { ElMessage } from "element-plus";
 import { GET_APP_INFO } from "@/common/constant";
 
-import { getCinemaLoginInfoList, sendWxPusherMessage } from "@/utils/utils";
+import {
+  getCinemaLoginInfoList,
+  sendWxPusherMessage,
+  logUpload,
+  getCurrentTime,
+  formatErrInfo
+} from "@/utils/utils";
 
 const getToken = async (app_name, IS_DEV) => {
   try {
@@ -332,6 +338,24 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             ElMessage.error(`请求错误 ${response.status}: ${error.message}`);
         }
       } else {
+        logUpload(
+          {
+            plat_name: "",
+            app_name: app_name,
+            order_number: "",
+            type: ""
+          },
+          [
+            {
+              opera_time: getCurrentTime(),
+              des: "辰星网络连接异常",
+              level: "error",
+              info: {
+                error: formatErrInfo(error)
+              }
+            }
+          ]
+        );
         ElMessage.error("辰星网络连接异常，请稍后再试");
       }
       return Promise.reject(error);

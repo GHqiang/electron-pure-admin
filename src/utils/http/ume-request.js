@@ -5,11 +5,13 @@ import { ElMessage } from "element-plus";
 import { GET_APP_LIST } from "@/common/constant";
 
 import {
-  logUpload,
   getCurrentTime,
   getCinemaLoginInfoList,
   sendWxPusherMessage,
-  mockDelay
+  mockDelay,
+  logUpload,
+  getCurrentTime,
+  formatErrInfo
 } from "@/utils/utils";
 // 机器登录用户信息
 import { platTokens } from "@/store/platTokens";
@@ -228,6 +230,24 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             );
         }
       } else {
+        logUpload(
+          {
+            plat_name: "",
+            app_name: app_name,
+            order_number: "",
+            type: ""
+          },
+          [
+            {
+              opera_time: getCurrentTime(),
+              des: "凤凰小程序网络连接异常",
+              level: "error",
+              info: {
+                error: formatErrInfo(error)
+              }
+            }
+          ]
+        );
         ElMessage.error("凤凰小程序网络连接异常，请稍后再试");
       }
       return Promise.reject(error);

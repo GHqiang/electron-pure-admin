@@ -8,7 +8,8 @@ import {
   getCurrentTime,
   sendWxPusherMessage,
   getCinemaLoginInfoList,
-  mockDelay
+  mockDelay,
+  formatErrInfo
 } from "@/utils/utils";
 // 机器登录用户信息
 
@@ -276,6 +277,24 @@ const createAxios = ({ group, app_name, timeout = 20 }) => {
             ElMessage.error(`请求错误 ${response.status}: ${error.message}`);
         }
       } else {
+        logUpload(
+          {
+            plat_name: "",
+            app_name: app_name,
+            order_number: "",
+            type: ""
+          },
+          [
+            {
+              opera_time: getCurrentTime(),
+              des: "乐影网络连接异常",
+              level: "error",
+              info: {
+                error: formatErrInfo(error)
+              }
+            }
+          ]
+        );
         ElMessage.error("乐影网络连接异常，请稍后再试");
       }
       return Promise.reject(error);
