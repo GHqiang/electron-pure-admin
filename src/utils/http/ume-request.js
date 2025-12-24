@@ -5,7 +5,6 @@ import { ElMessage } from "element-plus";
 import { GET_APP_LIST } from "@/common/constant";
 
 import {
-  getCurrentTime,
   getCinemaLoginInfoList,
   sendWxPusherMessage,
   mockDelay,
