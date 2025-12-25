@@ -64,7 +64,7 @@ const createRetryRequest = (instance, config) => {
   // 重试请求
   const retryRequest = async (retryCount = 0) => {
     try {
-      console.log(`🚀 发起请求: ${config.url} (重试次数: ${retryCount})`);
+      // console.log(`🚀 发起请求: ${config.url} (重试次数: ${retryCount})`);
       return await instance.request(config);
     } catch (error) {
       const currentRetry = retryCount + 1;
