@@ -6,18 +6,11 @@ import {
   GET_H5_UME_LIST,
   GET_CHENXING_LIST,
   GET_FENGHUANG_LIST,
+  GET_JINYI_LIST,
   GET_APP_INFO
 } from "@/common/constant";
 
-import {
-  getCurrentTime,
-  getCinemaLoginInfoList,
-  getCurrentDay,
-  isDateInCurrentMonth,
-  mockDelay
-} from "@/utils/utils";
-import { useCinemaCodeMatchList } from "@/store/specialNameRule";
-const cinemaCodeMatchObj = useCinemaCodeMatchList();
+import { getCinemaLoginInfoList, mockDelay } from "@/utils/utils";
 
 // 影院相关方法接口
 export default function useCinemaBaseFun() {
@@ -25,6 +18,7 @@ export default function useCinemaBaseFun() {
   const H5_UME_LIST = computed(() => GET_H5_UME_LIST());
   const CHENXING_LIST = computed(() => GET_CHENXING_LIST());
   const FENGHUANG_LIST = computed(() => GET_FENGHUANG_LIST());
+  const JINYI_LIST = computed(() => GET_JINYI_LIST());
 
   let cityCinemaList = []; // 城市影院列表（仅特殊影院有值）
 
@@ -67,6 +61,14 @@ export default function useCinemaBaseFun() {
         list = cityCinemaList.map(item => ({
           city_name: item.cityName,
           city_id: item.cityCode
+        }));
+      } else if (JINYI_LIST.value.includes(app_name)) {
+        let params = {};
+        const res = await cinemaApi.getCinemaList(params);
+        cityCinemaList = res?.data?.normal || [];
+        list = cityCinemaList.map(item => ({
+          city_name: item.city_name,
+          city_id: item.city_id
         }));
       } else if (CHENXING_LIST.value.includes(app_name)) {
         let params = {};
@@ -168,6 +170,15 @@ export default function useCinemaBaseFun() {
           cinema_id: item.cinemaLinkId,
           cinema_name: item.cinemaName,
           cinema_code: "" //同步影院code时使用
+        }));
+      } else if (JINYI_LIST.value.includes(app_name)) {
+        cinemaList =
+          cityCinemaList.find(item => item.city_id === city_id)?.cinemas || [];
+        cinemaList = cinemaList.map(item => ({
+          ...item,
+          cinema_id: item.cinema_id,
+          cinema_name: item.cinema_name,
+          cinema_code: item.cinema_code //同步影院code时使用
         }));
       } else if (CHENXING_LIST.value.includes(app_name)) {
         let api_version = GET_APP_INFO(app_name)?.api_version || "";
@@ -271,6 +282,17 @@ export default function useCinemaBaseFun() {
           ...item,
           film_id: item.filmId,
           film_name: item.filmName
+        }));
+      } else if (JINYI_LIST.value.includes(app_name)) {
+        const params = {
+          cinema_id: oneCinema.cinema_id
+        };
+        const res = await cinemaApi.getMoviePlayInfo(params);
+        list = res?.data || [];
+        list = list.map(item => ({
+          ...item,
+          film_id: item.movie_id,
+          film_name: item.name
         }));
       } else if (CHENXING_LIST.value.includes(app_name)) {
         let api_version = GET_APP_INFO(app_name)?.api_version || "";
@@ -426,6 +448,18 @@ export default function useCinemaBaseFun() {
           app_name,
           cardList
         });
+      } else if (JINYI_LIST.value.includes(app_name)) {
+        cardList = res.solid_card || [];
+        // 待联调
+        // cardList = cardList
+        //   .filter(
+        //     item => item.cardType !== "BENEFIT" && item.cardStatus === "ENABLED"
+        //   )
+        //   .map(item => ({
+        //     card_id: item.cardNo,
+        //     card_num: item.cardNo,
+        //     balance: (item.balance || 0) / 100 + ""
+        //   }));
       } else if (CHENXING_LIST.value.includes(app_name)) {
         let api_version = GET_APP_INFO(app_name)?.api_version || "";
         if (api_version === "3.0C") {

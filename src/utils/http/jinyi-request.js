@@ -126,7 +126,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       // 添加自定义配置标记
       config.__retryCount = config.__retryCount || 0;
       config.__startTime = Date.now();
-
+      // console.log("config.url", config.url);
       if (config.url.indexOf(`/ticket/`) !== -1) {
         // 设置请求类型
         config.headers["Content-Type"] =
@@ -150,6 +150,12 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         let cinema_id =
           (config.method == "post" ? config.data : config.params)?.cinema_id ||
           "400343";
+
+        config.url =
+          (IS_DEV ? "" : "https://ct.womovie.cn") +
+          config.url
+            .replace("channelCode", channelCode)
+            .replace("cinema_id", cinema_id);
       }
 
       return config;
