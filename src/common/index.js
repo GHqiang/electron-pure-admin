@@ -14,12 +14,14 @@ import createLmaApi from "@/api/lma-api";
 import createH5UmeApi from "@/api/h5ume-api";
 import createChenxingApi from "@/api/chenxing-api";
 import createFenghuangApi from "@/api/fenghuang-api";
+import createJinyiApi from "@/api/jinyi-api";
 import {
   GET_UME_LIST,
   GET_H5_UME_LIST,
   GET_SFC_APP_LIST,
   GET_CHENXING_LIST,
   GET_FENGHUANG_LIST,
+  GET_JINYI_LIST,
   GET_APP_INFO
 } from "@/common/constant";
 import { getCinemaLoginInfoList } from "@/utils/utils";
@@ -28,6 +30,7 @@ const UME_API_OBJ = {};
 const H5_UME_API_OBJ = {};
 const CHENXING_API_OBJ = {};
 const FENGHUANG_API_OBJ = {};
+const JINYI_API_OBJ = {};
 
 GET_SFC_APP_LIST().forEach(item => {
   SFC_API_OBJ[item] = createSfcApi({
@@ -58,6 +61,12 @@ GET_FENGHUANG_LIST().forEach(item => {
   //   FENGHUANG_API_OBJ[item].getCinemaList();
   // }
 });
+GET_JINYI_LIST().forEach(item => {
+  JINYI_API_OBJ[item] = createJinyiApi({
+    app_name: item
+  });
+});
+
 GET_H5_UME_LIST().forEach(item => {
   H5_UME_API_OBJ[item] = createH5UmeApi({
     app_name: item
@@ -80,9 +89,13 @@ const APP_API_OBJ = {
   ...H5_UME_API_OBJ,
   ...CHENXING_API_OBJ,
   ...FENGHUANG_API_OBJ,
+  ...JINYI_API_OBJ,
   lma: createLmaApi({
     app_name: "lma"
   })
+  // jinyi: createJinyiApi({
+  //   app_name: "jinyi"
+  // })
 };
 window.APP_API_OBJ = APP_API_OBJ;
 const PLAT_API_OBJ = {

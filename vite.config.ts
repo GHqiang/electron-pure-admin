@@ -37,6 +37,12 @@ export default ({ command, mode }: ConfigEnv): UserConfigExport => {
           changeOrigin: true, // 是否允许跨域
           rewrite: path => path.replace(/^\/svpi/, "") // 重写路径，去除/api前缀
         },
+        // 金逸
+        "/ticket/": {
+          target: "https://ct.womovie.cn", // 后端API的真实地址
+          changeOrigin: true, // 是否允许跨域
+          rewrite: path => path.replace(/^\/ticket/, "/ticket/") // 重写路径，去除/api前缀
+        },
         // 猎人
         "/sp": {
           target: "https://api.s.zjlrmovie.cn", // 后端API的真实地址
@@ -50,7 +56,7 @@ export default ({ command, mode }: ConfigEnv): UserConfigExport => {
           rewrite: path => path.replace(/^\/seller-api/, "/seller-api") // 重写路径，去除/api前缀
         },
         "/yp-api": {
-          target: "ttps://seller.taototo.cn", // 后端API的真实地址
+          target: "https://seller.taototo.cn", // 后端API的真实地址
           changeOrigin: true, // 是否允许跨域
           rewrite: path => path.replace(/^\/yp-api/, "/yp-api") // 重写路径，去除/api前缀
         },

@@ -108,6 +108,9 @@ const GET_CHENXING_LIST = () => cinemaStore.getChenxingList;
 // 凤凰新版系列影院集合
 const GET_FENGHUANG_LIST = () => cinemaStore.getFenghuangList;
 
+// 金逸系列影院集合
+const GET_JINYI_LIST = () => cinemaStore.getJinyiList;
+
 // 获取某个影线配置信息
 const GET_APP_INFO = app_name =>
   cinemaStore.allAppList.find(item => item.app_name === app_name);
@@ -125,7 +128,8 @@ const APP_TYPE_OBJ = {
   sfc_applet: "乐影",
   lma_applet: "卢米埃",
   chenxing_applet: "辰星小程序",
-  fenghuang_applet: "凤凰云智新版小程序"
+  fenghuang_applet: "凤凰云智新版小程序",
+  jinyi_applet: "金逸小程序"
 };
 
 window.APP_TYPE_LIST = GET_APP_TYPE_LIST();
@@ -297,6 +301,7 @@ export {
   GET_H5_UME_LIST,
   GET_CHENXING_LIST,
   GET_FENGHUANG_LIST,
+  GET_JINYI_LIST,
   GET_SFC_APP_LIST,
   GET_APP_LIST,
   GET_ALL_APP_LIST,

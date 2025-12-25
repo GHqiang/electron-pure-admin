@@ -127,7 +127,11 @@
           />
         </el-form-item>
         <el-form-item
-          v-if="['ume_h5', 'fenghuang_applet'].includes(formData.app_type_code)"
+          v-if="
+            ['ume_h5', 'fenghuang_applet', 'jinyi_applet'].includes(
+              formData.app_type_code
+            )
+          "
           label="凤凰云智影院标识"
           prop="channelCode"
         >
@@ -288,7 +292,7 @@ let formData = reactive({
   channelName: "",
   appId: "",
   api_version: "",
-  api_v: '',
+  api_v: "",
   status: "1",
   is_out_use: "1",
   remark: ""
@@ -334,7 +338,11 @@ const rules = {
     { required: true, message: "辰星C端系列影院appId不能为空", trigger: "blur" }
   ],
   api_v: [
-    { required: true, message: "辰星3.0C端系列影院api版本不能为空", trigger: "blur" }
+    {
+      required: true,
+      message: "辰星3.0C端系列影院api版本不能为空",
+      trigger: "blur"
+    }
   ]
 };
 
