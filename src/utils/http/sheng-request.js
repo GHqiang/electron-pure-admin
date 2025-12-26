@@ -13,7 +13,7 @@ import {
 const instance = axios.create({
   //   baseURL: process.env.VITE_API_BASE_URL,
   baseURL: "",
-  timeout: 15 * 1000
+  timeout: 25 * 1000
 });
 
 const NODE_ENV = process.env.NODE_ENV;
