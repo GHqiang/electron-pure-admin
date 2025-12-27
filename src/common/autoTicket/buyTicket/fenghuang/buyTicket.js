@@ -499,12 +499,26 @@ export default class BuyTicket {
         const canUseCardNoList = canUseCardList.map(item => item.cardNo);
         let payInfo;
         // 纯用卡场景从这里获取支付信息
-        if (!isUseCard) {
+        if (!isUseCard && promotions?.length) {
           // 取优惠金额一样的优惠信息
-          let promotionInfo = promotions?.find(
-            item =>
-              item.discountedAmount === calcRes.settlement.totalDiscountedAmount
-          );
+          let promotionInfo = promotions
+            .filter(
+              item =>
+                item.discountedAmount ===
+                calcRes.settlement.totalDiscountedAmount
+            )
+            .find(item => {
+              let itemCardNo;
+              if (item.promotionType == "MEMBER_CARD") {
+                itemCardNo = item.promoCode;
+              } else {
+                itemCardNo = item.cardNo;
+              }
+              const itemCardBalance =
+                canUseCardList?.find(itemA => itemA.cardNo == itemCardNo)
+                  ?.cardAmount || 0;
+              return itemCardBalance * 100 >= paymentAmount;
+            });
           let promotionCardNo;
           if (promotionInfo) {
             if (promotionInfo.promotionType == "MEMBER_CARD") {
@@ -522,6 +536,17 @@ export default class BuyTicket {
                 payInfo
               });
             }
+          } else {
+            this.logger.errorSave("纯用卡且有优惠列表场景无卡可用", {
+              promotions
+            });
+            // 转单或换号处理
+            const transparams = {
+              cinemaLinkId,
+              lockOrderId,
+              session_id: this.currentSessionId
+            };
+            return await this.transferOrChangePhone(transparams, buyTicketInfo);
           }
         }
 
