@@ -18,9 +18,14 @@ const createApi = ({ app_name }) => {
     axios.get("/ticket/channelCode/cinema/cinema_id/movies/", { params });
 
   // 获取电影放映场次（返回的是所有电影的场次列表）
-  const getMoviePlayDate = params =>
+  const getMoviePlayTime = params =>
     axios.get("/ticket/channelCode/cinema/cinema_id/shows/", { params });
 
+  // 获取电影座位分区
+  const getMovieSeatPriceList = params =>
+    axios.get(" /ticket/channelCode/cinema/cinema_id/hall/info/", {
+      params
+    });
   // 获取座位布局
   const getMoviePlaySeat = params =>
     axios.get(" /ticket/channelCode/cinema/cinema_id/hall/saleable/", {
@@ -123,7 +128,8 @@ const createApi = ({ app_name }) => {
   return {
     getCinemaList,
     getMoviePlayInfo,
-    getMoviePlayDate, // 获取电影放映场次
+    getMoviePlayTime, // 获取电影放映场次
+    getMovieSeatPriceList,
     getMoviePlaySeat,
     lockSeat,
     unlockSeat,

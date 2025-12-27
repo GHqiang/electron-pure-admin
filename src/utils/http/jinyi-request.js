@@ -139,17 +139,22 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           item => item.app_name === app_name && item.mobile && item.session_id
         );
         let targetInfo = targetLoginList?.[0] || "";
-        let token =
-          targetInfo?.session_id || "f46a96c4e1da57a35f30cffbbdf3fe2e";
+        let token = targetInfo?.session_id || "";
 
+        let channelCode = GET_APP_INFO(app_name)?.channelCode || "";
+        let cinema_id =
+          (config.method == "post" ? config.data : config.params)?.cinema_id ||
+          "";
+        let session_id =
+          (config.method == "post" ? config.data : config.params)?.session_id ||
+          "";
+
+        if (session_id) {
+          token = session_id;
+        }
         if (token) {
           config.headers.token = `${token}`;
         }
-
-        let channelCode = GET_APP_INFO(app_name)?.channelCode || "GM2024cinema";
-        let cinema_id =
-          (config.method == "post" ? config.data : config.params)?.cinema_id ||
-          "400343";
 
         config.url =
           (IS_DEV ? "" : "https://ct.womovie.cn") +
@@ -174,7 +179,8 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       let whitelistSp = [];
 
       let isErrorByLieRen =
-        response.config.url.indexOf(`/ticket/`) !== -1 && data.ret !== 0;
+        response.config.url.indexOf(`/ticket/`) !== -1 &&
+        data.msg !== "successfully";
 
       if (
         isErrorByLieRen &&

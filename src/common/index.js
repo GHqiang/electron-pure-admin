@@ -92,10 +92,10 @@ const APP_API_OBJ = {
   ...JINYI_API_OBJ,
   lma: createLmaApi({
     app_name: "lma"
+  }),
+  guangmeiwenhua: createJinyiApi({
+    app_name: "guangmeiwenhua"
   })
-  // jinyi: createJinyiApi({
-  //   app_name: "jinyi"
-  // })
 };
 window.APP_API_OBJ = APP_API_OBJ;
 const PLAT_API_OBJ = {

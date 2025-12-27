@@ -485,11 +485,7 @@ const isLoginByAppName = (app_name, userId) => {
 const getCinemaLoginInfoList = userId => {
   let user_id = userId || tokens?.userInfo?.user_id;
   const phone = tokens?.userInfo?.phone;
-  if (user_id == 1) {
-    user_id = 9;
-    // user_id = 10;
-  }
-  // console.log("user_id1", user_id);
+  console.log("user_id", tokens?.userInfo?.user_id, phone);
   let loginInfoList = window.localStorage.getItem("loginInfoList");
   if (loginInfoList) {
     loginInfoList = JSON.parse(loginInfoList);
@@ -499,6 +495,10 @@ const getCinemaLoginInfoList = userId => {
       loginInfoList = loginInfoList.filter(item =>
         item.app_name != "cqhx" ? item.mobile != "15237761435" : true
       );
+    }
+    if (user_id == 1) {
+      user_id = 9;
+      // user_id = 10;
     }
     loginInfoList = loginInfoList.filter(item =>
       !item.link_user_id ? true : item.link_user_id == user_id
