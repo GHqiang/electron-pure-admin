@@ -87,8 +87,9 @@ export default class SeatManage {
       .replaceAll(" ", ",")
       .replaceAll("列", "座");
     const selectSeatList = seatName.split(",");
+    console.log("selectSeatList", selectSeatList);
     const targetRow = seatList.filter(item =>
-      selectSeatList.some(itemA => item.seatName.includes(itemA.row + "排"))
+      selectSeatList.some(itemA => itemA.includes(item.row + "排"))
     );
     this.logger.infoSave("目标列座位信息", {
       targetRow,
@@ -213,13 +214,13 @@ export default class SeatManage {
    * @private
    */
   getLockSeatParams(data) {
-    const { cinema_id, schedule_id, seat_no, session_id } = data;
+    const { cinema_id, schedule_id, seatCodes, session_id } = data;
     return {
       cinema_id,
       // seatlable	10084:2:12:35061501#08#04|10085:3:12:35061501#07#04,
 
       schedule_id,
-      seatlable: seat_no.join("|"),
+      seatlable: seatCodes.join("|"),
       session_id
     };
   }

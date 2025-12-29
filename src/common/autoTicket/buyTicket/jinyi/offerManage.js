@@ -547,7 +547,7 @@ class getFenghuangOfferPrice {
     cardList.sort((a, b) => a.card_discount - b.card_discount);
 
     const bestCard = cardList[0];
-    const discount = bestCard?.card_discount;
+    const discount = bestCard?.card_discount || 100;
     const member_price = (basePrice * 100 * discount) / 10000;
 
     return {

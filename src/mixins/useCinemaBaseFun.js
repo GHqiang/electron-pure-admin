@@ -396,6 +396,11 @@ export default function useCinemaBaseFun() {
           pageInit: false,
           fenghuangToken: session_id
         };
+      } else if (JINYI_LIST.value.includes(app_name)) {
+        params = {
+          cinema_id: GET_APP_INFO(app_name)?.cinemaLinkId,
+          session_id
+        };
       } else if (CHENXING_LIST.value.includes(app_name)) {
         params = {
           session_id
@@ -449,17 +454,15 @@ export default function useCinemaBaseFun() {
           cardList
         });
       } else if (JINYI_LIST.value.includes(app_name)) {
-        cardList = res.solid_card || [];
-        // 待联调
-        // cardList = cardList
-        //   .filter(
-        //     item => item.cardType !== "BENEFIT" && item.cardStatus === "ENABLED"
-        //   )
-        //   .map(item => ({
-        //     card_id: item.cardNo,
-        //     card_num: item.cardNo,
-        //     balance: (item.balance || 0) / 100 + ""
-        //   }));
+        cardList = res.data?.solid_card || [];
+        console.log("cardList", cardList);
+        cardList = cardList
+          .filter(item => item.card_status === "USABLE")
+          .map(item => ({
+            card_id: item.card_id,
+            card_num: item.card_no_show,
+            balance: (item.card_balance || 0) + ""
+          }));
       } else if (CHENXING_LIST.value.includes(app_name)) {
         let api_version = GET_APP_INFO(app_name)?.api_version || "";
         if (api_version === "3.0C") {

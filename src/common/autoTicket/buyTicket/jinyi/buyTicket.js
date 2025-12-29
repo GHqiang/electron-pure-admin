@@ -225,7 +225,7 @@ export default class BuyTicket {
         // 换号出票操作（取消上个号的订单）
         // 取消订单释放座位参数
         let unlockSeatInfo = {
-          cinemaLinkId: buyTicketInfo.cinemaLinkId,
+          cinema_id: buyTicketInfo.cinema_id,
           lockOrderId: buyTicketInfo.lockOrderId,
           order_num: buyTicketInfo.order_num,
           session_id:
@@ -267,9 +267,8 @@ export default class BuyTicket {
       // 锁定座位前延迟一秒
       // await mockDelay(1);
       const {
-        cinemaLinkId,
-        scheduleId,
-        scheduleKey,
+        cinema_id,
+        schedule_id,
         targetShow,
         targetSeatCodes,
         areaInfoList
@@ -277,12 +276,64 @@ export default class BuyTicket {
       this.logger.infoSave("座位价格相关信息", {
         areaInfoList
       });
+      let seatPayTotalPrice = 0; // 座位总价格
+      let seatlableList = [];
+      try {
+        let defaultPrice = areaInfoList.find(
+          item => item.area_name == "默认区"
+        )?.area_price;
+        const areaInfoListPrice = areaInfoList
+          .filter(item => item.area_name != "默认区")
+          ?.map(item =>
+            Object.entries(item.seats)
+              .map(itemA => itemA[1])
+              .map(itemB =>
+                itemB.detail.map(itemC => ({
+                  ...itemC,
+                  area_price: item.area_price,
+                  area_no: item.area_no
+                }))
+              )
+          )
+          .flat()
+          .flat();
+        console.log("areaInfoListPrice", areaInfoListPrice, defaultPrice);
+        targetSeatCodes.forEach(item => {
+          const price = areaInfoListPrice.find(
+            itemA => itemA.seat_no == item.seat_no
+          )?.area_price;
+          seatPayTotalPrice += price || defaultPrice;
+        });
+        console.log("座位总价格", seatPayTotalPrice);
+        seatlableList = targetSeatCodes.map(item => {
+          let targetSeatInfo = areaInfoListPrice.find(
+            itemA => itemA.seat_no == item.seat_no
+          );
+          if (!targetSeatInfo) {
+            targetSeatInfo = areaInfoList.find(
+              item => item.area_name == "默认区"
+            );
+          }
+          return (
+            targetSeatInfo.area_no +
+            ":" +
+            item.row +
+            ":" +
+            item.col +
+            ":" +
+            item.seat_no
+          );
+        });
+      } catch (error) {
+        console.log("座位价格逻辑执行异常", error);
+      }
+
+      console.log("seatlableList", seatlableList);
       // 3、锁定座位
       let lockSeatParams = {
-        cinemaLinkId,
-        scheduleId,
-        scheduleKey,
-        seatCodes: targetSeatCodes.map(item => item.seatCode),
+        cinema_id,
+        schedule_id,
+        seatCodes: seatlableList,
         lockseat,
         plat_name,
         order_number,
@@ -292,23 +343,9 @@ export default class BuyTicket {
       if (!lockRes) {
         return await this.orderManage.transferOrder();
       }
-      buyTicketInfo.lockOrderId = lockRes.lockOrderId;
+      buyTicketInfo.lockOrderId = lockRes.data?.order_id;
       const { lockOrderId } = buyTicketInfo;
       // 4、使用优惠券或者会员卡（仅判断是否有可用卡及券）
-      // 座位支付总价格
-      let seatPayTotalPrice = await this.cardQuanManage.getSeatPrice({
-        cinemaLinkId,
-        scheduleId,
-        scheduleKey,
-        seats: JSON.stringify(
-          targetSeatCodes.map(item => ({
-            areaId: item.areaId,
-            seatCode: item.seatCode
-          }))
-        ),
-        fenghuangToken: this.currentSessionId
-      });
-      seatPayTotalPrice = seatPayTotalPrice / 100;
       const cardQuanRes = await this.cardQuanManage.useQuanOrCard({
         buyTicketInfo,
         offerRule: this.offerRule,
@@ -350,11 +387,9 @@ export default class BuyTicket {
       let quan_code = useQuan.map(item => item.couponCode);
       const calcRes = await this.orderManage.pripriceCalculation({
         ...buyTicketInfo,
-        promotions: useQuan.map(item => ({
-          promotionType: "COUPON",
-          promoCode: item.couponCode,
-          productType: "TICKET"
-        })),
+        cinema_id,
+        card_id: canUseCardList[0]?.card_id,
+        lockOrderId,
         session_id: this.currentSessionId
       });
       if (!calcRes) {
@@ -368,7 +403,7 @@ export default class BuyTicket {
         return await this.transferOrChangePhone(transparams, buyTicketInfo);
       }
       // 实际支付价格
-      let paymentAmount = calcRes?.settlement?.totalDiscountedPrice;
+      let paymentAmount = calcRes?.data?.ticket_total_price;
       // 原价
       let totalOriginalPrice = calcRes?.settlement?.totalOriginalPrice;
       // 券码不存在标识（不在可用券50个内，但是个人中心有）
@@ -593,7 +628,6 @@ export default class BuyTicket {
         cardNum,
         lockOrderId,
         cinemaLinkId,
-        scheduleKey,
         scheduleId,
         lockOrderId,
         seats: JSON.stringify(

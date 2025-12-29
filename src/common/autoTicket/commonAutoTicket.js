@@ -59,20 +59,20 @@ class OrderAutoTicketQueue {
       city_name: "南京",
       cinema_addr: "雨花台区软件大道109号雨花客厅E-PARK北区3层",
       ticket_num: 1,
-      cinema_name: "幸福蓝海国际影城江宁金鹰店",
-      hall_name: "7号激光厅",
-      film_name: "震耳欲聋",
+      cinema_name: "金逸影城(光美美一城店)",
+      hall_name: "1号激光厅",
+      film_name: "阿凡达3",
       film_img:
         "https://gw.alicdn.com/tfscom/i4/O1CN01e8PcvF1NESAgdEsnM_!!6000000001538-0-alipicbeacon.jpg_120x120.jpg",
-      show_time: "2025-10-14 16:15:00",
+      show_time: "2025-12-30 19:00:00",
       rewards: 0,
       is_urgent: false,
       cinema_group: "",
-      cinema_code: "32017411",
+      cinema_code: "35061501",
       order_number: "2025071815072984896",
       offer_end_time: 1734849690000,
-      app_name: "xingfulanhai",
-      appName: "xingfulanhai",
+      app_name: "guangmeiwenhua",
+      appName: "guangmeiwenhua",
       lockseat: "1排1座"
     };
 

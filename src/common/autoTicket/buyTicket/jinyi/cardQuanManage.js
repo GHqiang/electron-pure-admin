@@ -45,13 +45,10 @@ export default class CardQuanManage {
     try {
       const { appFlag } = this;
       const { supplier_end_price, ticket_num, plat_name } = this.order;
-      const { cinemaLinkId } = buyTicketInfo;
+      const { cinema_id } = buyTicketInfo;
       const cardParams = {
-        cinemaLinkId,
-        pageNumber: 1,
-        pageSize: 20,
-        pageInit: false,
-        fenghuangToken: session_id
+        cinema_id,
+        session_id
       };
       // 1、获取卡券列表
       let cardList = await this.getCardList(cardParams);
@@ -313,19 +310,21 @@ export default class CardQuanManage {
     try {
       this.logger.infoSave("获取会员卡列表参数", params);
       const res = await this.appApi.getCardList(params);
-      let cardList = res.memberCards || [];
+      let cardList = res.data?.solid_card || [];
+      cardList = cardList.filter(item => item.card_status === "USABLE");
       if (!cardList.length) {
         this.logger.errorSave("获取会员卡列表为空");
       }
       cardList = cardList.map(item => ({
         ...item,
-        cardAmount: (item.balance || 0) / 100
+        cardAmount: item.card_balance || 0,
+        cardNo: item.card_no_show
       }));
       this.logger.infoSave("获取会员卡列表返回", {
         cardList: cardList.map(item => ({
           cardAmount: item.cardAmount,
           cardNo: item.cardNo,
-          cardName: item.cardName
+          card_id: item.card_id
         }))
       });
       return cardList;
@@ -379,7 +378,9 @@ export default class CardQuanManage {
       }
       // 支付金额
       let payAmount = seatPayTotalPrice;
-      let cardData = cardList.filter(item => item.cardAmount >= payAmount);
+      // let cardData = cardList.filter(item => item.cardAmount >= payAmount);
+      // 测试是不做余额限制判断
+      let cardData = cardList;
       if (!cardList.length || !cardData?.length) {
         let maxCardAmount = cardList.sort(
           (a, b) => b.cardAmount - a.cardAmount
@@ -747,7 +748,7 @@ export default class CardQuanManage {
   }
 
   // 异步更新券库存-报价时
-  async syncUpdateQuanStock({ cinemaLinkId, quanTypeList }) {
+  async syncUpdateQuanStock({ cinema_id, quanTypeList }) {
     if (!quanTypeList?.length) return;
     const { app_name } = this.order;
     let logger = new Logger({
@@ -810,7 +811,7 @@ export default class CardQuanManage {
           const { session_id, mobile } = targetLoginList[i];
           const quanListAll = await this.getQuanListByPhone({
             session_id,
-            cinemaLinkId,
+            cinema_id,
             logger
           });
 

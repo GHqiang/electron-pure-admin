@@ -120,27 +120,22 @@ export default class OrderManage {
 
   // 计算价格
   async pripriceCalculation(data) {
-    let {
-      cinemaLinkId,
-      scheduleId,
-      scheduleKey,
-      targetSeatCodes,
-      lockOrderId,
-      promotions,
-      session_id
-    } = data;
+    let { cinema_id, card_id, lockOrderId, promotions, session_id } = data;
     let params = {
-      cinemaLinkId,
-      scheduleId,
-      scheduleKey,
-      lockOrderId,
-      seats: JSON.stringify(
-        targetSeatCodes.map(item => ({
-          areaId: item.areaId,
-          seatCode: item.seatCode
-        }))
-      ),
-      fenghuangToken: session_id
+      session_id,
+      cinema_id,
+      order_id: lockOrderId,
+      discount_id: 0,
+      discount_type: "MARKETING",
+      card_id: card_id,
+      pay_type: "MEMBER",
+      rewards: [],
+      use_rewards: "Y",
+      use_limit_cards: "N",
+      limit_cards: [],
+      voucher_code: "",
+      voucher_code_type: "",
+      ticket_pack_goods: ""
     };
     let res;
     try {
