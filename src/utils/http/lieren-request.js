@@ -23,17 +23,18 @@ const IS_DEV = NODE_ENV === "development";
 // 请求拦截器
 instance.interceptors.request.use(
   config => {
-    if (config.url.indexOf("/sp/") !== -1) {
+    if (config.url.indexOf("/lieren/") !== -1) {
       // 猎人平台接口添加token
       // console.log("tokens.lierenToken", tokens.lierenToken);
-      const token = tokens.lierenToken || "";
-      if (token) {
-        config.headers.Authorization = `${token}`;
+      config.headers.AK = tokens.userInfo?.lieren_ak;
+      config.headers.SK = tokens.userInfo?.lieren_sk;
+      if (IS_DEV) {
+        config.url = config.url.replace("lieren", "svpi/lieren-ser");
+      } else {
+        config.url =
+          "https://api-rb.zjlrmovie.cn" +
+          config.url.replace("lieren", "lieren-ser");
       }
-      // 生产环境不会跨域
-      config.url = IS_DEV
-        ? config.url
-        : "https://api.s.zjlrmovie.cn" + config.url;
     }
     // console.log('请求config', config)
     return config;
@@ -53,7 +54,7 @@ instance.interceptors.response.use(
     let whitelistSp = [];
 
     let isErrorByLieRen =
-      response.config.url.indexOf("/sp/") !== -1 && data.code !== 1;
+      response.config.url.indexOf("/lieren-ser/") !== -1 && data.code !== 1;
     if (
       isErrorByLieRen &&
       !whitelistSp.some(item => response.config.url.includes(item))

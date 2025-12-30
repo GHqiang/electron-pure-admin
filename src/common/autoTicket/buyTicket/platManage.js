@@ -34,7 +34,11 @@ export default class PlatCommon {
     try {
       // 1、解锁座位
       if (plat_name === "lieren") {
-        unlockRes = await this.unlockSeat({ plat_name, order_id: id, inx: 1 });
+        unlockRes = await this.unlockSeat({
+          plat_name,
+          order_number,
+          inx: 1
+        });
       } else if (plat_name === "sheng") {
         await this.startDeliver({
           plat_name,
@@ -177,7 +181,7 @@ export default class PlatCommon {
       let params;
       if (plat_name === "lieren") {
         params = {
-          order_id
+          order_number: orderCode
         };
       } else if (plat_name === "sheng") {
         params = {
@@ -296,15 +300,13 @@ export default class PlatCommon {
     let params;
     if (plat_name === "lieren") {
       params = {
-        // order_id: id || 5548629,
-        // qupiao2: "[{\"result\":\"2024031154980669\",\"yzm\":\"\"}]"
-        order_id,
-        qupiao2: JSON.stringify([
+        order_number,
+        result: [
           {
-            result: qrcode.split("|")[0],
+            qpm: qrcode.split("|")[0],
             yzm: qrcode.split("|")?.[1] || ""
           }
-        ]),
+        ],
         ticket_type: 2 // 取票方式
         // 1，猫眼淘票票取票机取票。
         // 2，影院专用取票机或前台取票。
@@ -628,7 +630,7 @@ export default class PlatCommon {
       let params;
       if (plat_name === "lieren") {
         params = {
-          id,
+          order_number,
           confirm: 1
         };
       } else if (plat_name === "sheng") {

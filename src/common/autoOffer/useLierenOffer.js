@@ -294,9 +294,8 @@ class OrderAutoOfferQueue {
   }
 
   // 提交报价
-  async submitOffer({ id, price }) {
+  async submitOffer(params) {
     const { conPrefix } = this;
-    let params = { id, price };
     try {
       console.log(conPrefix + "提交报价参数", params);
       if (isTestOrder) {
@@ -365,7 +364,10 @@ class OrderAutoOfferQueue {
       offerRule.offer_end_amount = endPrice;
       console.warn("动态调价后的最终报价", endPrice, offerRule);
       logger.logUpload();
-      const res = await this.submitOffer({ id: order.id, price: endPrice });
+      const res = await this.submitOffer({
+        order_number: order.order_number,
+        price: endPrice
+      });
       return { res, offerRule };
     } catch (error) {
       console.error(conPrefix + "单个报价异常", error);

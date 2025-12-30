@@ -5,22 +5,26 @@
 import axios from "@/utils/http/lieren-request";
 
 // 查询报价记录
-const queryOfferRecord = params => axios.post("/sp/order", params);
+const queryOfferRecord = params =>
+  axios.post("/lieren/openapi/order/record", params);
 
 // 获取待报价/出票列表
-const stayTicketingList = params => axios.post("/sp/order", params);
+const stayTicketingList = params =>
+  axios.post("/lieren/openapi/order/grab", params);
 
 // 提交报价
-const submitOffer = params => axios.post("/sp/offer", params);
+const submitOffer = params => axios.post("/lieren/openapi/order/offer", params);
 
 // 解锁座位
-const unlockSeat = params => axios.post("/sp/unlock", params);
+const unlockSeat = params => axios.post("/lieren/openapi/order/unlock", params);
 
 // 提交取票码
-const submitTicketCode = params => axios.post("/sp/submit", params);
+const submitTicketCode = params =>
+  axios.post("/lieren/openapi/order/submit", params);
 
 // 转单（座位被锁异常等）
-const transferOrder = params => axios.post("/sp/transfer", params);
+const transferOrder = params =>
+  axios.post("/lieren/openapi/order/transfer", params);
 
 export default {
   queryOfferRecord, // 查询报价记录
