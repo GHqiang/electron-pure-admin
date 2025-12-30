@@ -32,7 +32,7 @@ instance.interceptors.request.use(
         config.url = config.url.replace("lieren", "svpi/lieren-ser");
       } else {
         config.url =
-          "https://api-rb.zjlrmovie.cn" +
+          "http://47.113.191.173:3000" +
           config.url.replace("lieren", "lieren-ser");
       }
     }
