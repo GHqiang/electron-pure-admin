@@ -8,7 +8,11 @@ import axios from "@/utils/http/lieren-request";
 const queryOfferRecord = params =>
   axios.post("/lieren/openapi/order/record", params);
 
-// 获取待报价/出票列表
+// 获取待报价列表
+const queryStayOfferList = params =>
+  axios.post("/lieren/openapi/order/grab", params);
+
+// 获取待出票列表
 const stayTicketingList = params =>
   axios.post("/lieren/openapi/order/grab", params);
 
@@ -28,7 +32,8 @@ const transferOrder = params =>
 
 export default {
   queryOfferRecord, // 查询报价记录
-  stayTicketingList, // 获取待报价/出票列表
+  queryStayOfferList, // 获取待报价列表
+  stayTicketingList, // 获取待出票列表
   submitOffer, // 提交报价
   unlockSeat, // 解锁座位
   submitTicketCode, // 提交取票码

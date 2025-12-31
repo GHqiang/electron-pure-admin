@@ -389,15 +389,9 @@ class OrderAutoOfferQueue {
   async getStayOfferList() {
     const { conPrefix } = this;
     try {
-      let params = {
-        page: 1,
-        limit: 100,
-        sort: "id",
-        desc: "desc",
-        type: 0
-      };
+      let params = {};
       // console.log(conPrefix + "获取待报价订单列表参数", params);
-      const res = await lierenApi.stayTicketingList(params);
+      const res = await lierenApi.queryStayOfferList(params);
       let mockRes = {
         success: true,
         code: 1,

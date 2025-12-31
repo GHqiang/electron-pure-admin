@@ -191,13 +191,7 @@ class OrderAutoFetchQueue {
   // 获取猎人待出票订单列表
   async lierenOrderFetch() {
     try {
-      let params = {
-        page: 1,
-        limit: 100,
-        sort: "id",
-        desc: "desc",
-        type: 2
-      };
+      let params = {};
       // console.log(conPrefix + "获取猎人待出票订单列表参数", params);
       const res = await lierenApi.stayTicketingList(params);
       let mockRes = {
