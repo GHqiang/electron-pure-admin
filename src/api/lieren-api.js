@@ -14,7 +14,7 @@ const queryStayOfferList = params =>
 
 // 获取待出票列表
 const stayTicketingList = params =>
-  axios.post("/lieren/openapi/order/grab", params);
+  axios.post("/lieren/openapi/order/bid", params);
 
 // 提交报价
 const submitOffer = params => axios.post("/lieren/openapi/order/offer", params);
@@ -30,7 +30,23 @@ const submitTicketCode = params =>
 const transferOrder = params =>
   axios.post("/lieren/openapi/order/transfer", params);
 
+// 添加修改规则
+const ruleAdd = params => axios.post("/lieren/openapi/rule/add", params);
+
+// 删除规则
+const ruleDel = params => axios.post("/lieren/openapi/rule/del", params);
+
+// 查看规则列表
+const ruleList = params => axios.post("/lieren/openapi/rule/list", params);
+
+// 修改规则状态
+const ruleState = params => axios.post("/lieren/openapi/rule/state", params);
+
 export default {
+  ruleAdd,
+  ruleDel,
+  ruleList,
+  ruleState,
   queryOfferRecord, // 查询报价记录
   queryStayOfferList, // 获取待报价列表
   stayTicketingList, // 获取待出票列表

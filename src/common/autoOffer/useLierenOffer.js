@@ -22,6 +22,8 @@ import getOfferPriceFun from "./commonOfferHandle.js";
 // 平台toke列表
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
+import { dictTable } from "@/store/dictTable";
+const dictStore = dictTable();
 
 let isTestOrder = false; //是否是测试订单
 // 创建一个订单自动报价队列类
@@ -364,9 +366,14 @@ class OrderAutoOfferQueue {
       offerRule.offer_end_amount = endPrice;
       console.warn("动态调价后的最终报价", endPrice, offerRule);
       logger.logUpload();
+      let rule_id;
+      if (dictStore.dictInfo?.lierenTestRuleId) {
+        rule_id = dictStore.dictInfo?.lierenTestRuleId;
+      }
       const res = await this.submitOffer({
         order_number: order.order_number,
-        price: endPrice
+        price: endPrice,
+        rule_id
       });
       return { res, offerRule };
     } catch (error) {
