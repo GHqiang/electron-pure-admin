@@ -501,24 +501,10 @@ export default class BuyTicket {
         // 纯用卡场景从这里获取支付信息
         if (!isUseCard && promotions?.length) {
           // 取优惠金额一样的优惠信息
-          let promotionInfo = promotions
-            .filter(
-              item =>
-                item.discountedAmount ===
-                calcRes.settlement.totalDiscountedAmount
-            )
-            .find(item => {
-              let itemCardNo;
-              if (item.promotionType == "MEMBER_CARD") {
-                itemCardNo = item.promoCode;
-              } else {
-                itemCardNo = item.cardNo;
-              }
-              const itemCardBalance =
-                canUseCardList?.find(itemA => itemA.cardNo == itemCardNo)
-                  ?.cardAmount || 0;
-              return itemCardBalance * 100 >= paymentAmount;
-            });
+          let promotionInfo = promotions?.find(
+            item =>
+              item.discountedAmount === calcRes.settlement.totalDiscountedAmount
+          );
           let promotionCardNo;
           if (promotionInfo) {
             if (promotionInfo.promotionType == "MEMBER_CARD") {
@@ -531,22 +517,31 @@ export default class BuyTicket {
               payInfo = paymentsList?.find(
                 item => item.cardNo === promotionCardNo
               );
+              const cardBalance =
+                canUseCardList?.find(itemA => itemA.cardNo == promotionCardNo)
+                  ?.cardAmount || 0;
               this.logger.infoSave("从优惠信息中取支付信息", {
                 promotionInfo,
                 payInfo
               });
+              // 判断卡余额
+              if (cardBalance * 100 < paymentAmount) {
+                this.logger.errorSave("卡余额不足走转单或者换号", {
+                  cardBalance,
+                  paymentAmount
+                });
+                // 转单或换号处理
+                const transparams = {
+                  cinemaLinkId,
+                  lockOrderId,
+                  session_id: this.currentSessionId
+                };
+                return await this.transferOrChangePhone(
+                  transparams,
+                  buyTicketInfo
+                );
+              }
             }
-          } else {
-            this.logger.errorSave("纯用卡且有优惠列表场景无卡可用", {
-              promotions
-            });
-            // 转单或换号处理
-            const transparams = {
-              cinemaLinkId,
-              lockOrderId,
-              session_id: this.currentSessionId
-            };
-            return await this.transferOrChangePhone(transparams, buyTicketInfo);
           }
         }
 
