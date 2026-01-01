@@ -42,11 +42,14 @@ const ruleList = params => axios.post("/lieren/openapi/rule/list", params);
 // 修改规则状态
 const ruleState = params => axios.post("/lieren/openapi/rule/state", params);
 
+// 院线列表
+const ruleGroup = params => axios.post("/lieren/openapi/rule/group", params);
 export default {
   ruleAdd,
   ruleDel,
   ruleList,
   ruleState,
+  ruleGroup,
   queryOfferRecord, // 查询报价记录
   queryStayOfferList, // 获取待报价列表
   stayTicketingList, // 获取待出票列表

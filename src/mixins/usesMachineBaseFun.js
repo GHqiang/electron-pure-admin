@@ -1,4 +1,5 @@
 import svApi from "@/api/sv-api";
+import lierenApi from "@/api/lieren-api";
 import { computed } from "vue";
 import { getCurrentTime, sendWxPusherMessage } from "@/utils/utils";
 import {
@@ -18,8 +19,57 @@ export default function useCinemaBaseFun() {
   const CHENXING_LIST = computed(() => GET_CHENXING_LIST());
 
   const {
-    userInfo: { rule }
+    userInfo: { rule, user_id }
   } = platTokens();
+
+  // 获取关联的平台规则id，没有就创建一个返回
+  const getRuleIdByPlat = async ({ plat_name, app_name, cinema_group }) => {
+    if (!plat_name || !app_name || !cinema_group) return;
+    try {
+      // 1、拿cinema_group和平台的院线列表比对，如果不包含直接返回空
+      const platRes = await lierenApi.ruleGroup();
+      console.log("platRes", platRes);
+      const platCinemaGroupList = platRes?.data || [];
+      const platCinemaGroupNameList = platCinemaGroupList.map(
+        item => item.name
+      );
+      if (!platCinemaGroupNameList.includes(cinema_group)) return;
+      // 2、获取机器对应的规则id,有的话直接返回
+      const jiqiRes = await svApi.queryLinkPlatRuleId({
+        plat_name,
+        app_name,
+        cinema_group,
+        user_id
+      });
+      console.log("jiqiRes", jiqiRes);
+      let rule_id = jiqiRes?.data?.ruleInfo?.plat_rule_id;
+      if (rule_id) return rule_id;
+      // 3、机器没有的话调平台接口创建一个返回，并在机器那新插入一条记录
+      const ruleAddres = await lierenApi.ruleAdd({
+        name: app_name + "_" + cinema_group, // 规则名称
+        min_price: 10, // 最低价
+        max_price: 500, // 最高价
+        sum_mode: 4, // 报价模式4 会员价
+        price: 1, // 会员价+1
+        cinema_group: cinema_group,
+        state: 1 // 状态开启
+      });
+      console.log("ruleAddres", ruleAddres);
+      rule_id = ruleAddres?.data?.rule_id;
+      if (rule_id) {
+        svApi.addLinkPlatRuleId({
+          plat_name,
+          app_name,
+          cinema_group,
+          user_id,
+          plat_rule_id: rule_id
+        });
+        return rule_id;
+      }
+    } catch (error) {}
+  };
+  window.getRuleIdByPlat = getRuleIdByPlat;
+
   // 获取券类型列表
   const getQuanTypeList = async app_name => {
     try {
@@ -246,6 +296,7 @@ export default function useCinemaBaseFun() {
     }
   };
   return {
+    getRuleIdByPlat, // 获取平台关联的规则id
     getQuanTypeList, // 获取券类型列表
     addCardListHandle, // 同步卡信息时新增卡
     updateCardListHandle, // 同步卡信息时更新余额

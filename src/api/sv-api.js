@@ -244,7 +244,18 @@ const addSpecialNameRecord = params =>
 // 修改特殊匹配
 const updateSpecialNameRecord = params =>
   axios.post("/svpi/specialNameRecord/update", params);
+
+// 查询关联的平台规则id
+const queryLinkPlatRuleId = params =>
+  axios.post("/svpi/platRuleRecord/query", params);
+
+// 新增关联的平台规则id
+const addLinkPlatRuleId = params =>
+  axios.post("/svpi/platRuleRecord/add", params);
+
 const svApi = {
+  queryLinkPlatRuleId,
+  addLinkPlatRuleId,
   queryNameMatchList, // 查询名称映射表
   queryDictList, // 查询字典列表
   login,

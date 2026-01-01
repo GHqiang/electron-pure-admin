@@ -24,6 +24,8 @@ import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
 import { dictTable } from "@/store/dictTable";
 const dictStore = dictTable();
+import usesMachineBaseFun from "@/mixins/usesMachineBaseFun";
+const { getRuleIdByPlat } = usesMachineBaseFun();
 
 let isTestOrder = false; //是否是测试订单
 // 创建一个订单自动报价队列类
@@ -366,9 +368,13 @@ class OrderAutoOfferQueue {
       offerRule.offer_end_amount = endPrice;
       console.warn("动态调价后的最终报价", endPrice, offerRule);
       logger.logUpload();
-      let rule_id, member_price;
-      if (dictStore.dictInfo?.lierenTestRuleId) {
-        rule_id = dictStore.dictInfo?.lierenTestRuleId;
+      const rule_id = await getRuleIdByPlat({
+        plat_name: "lieren",
+        cinema_group: order.cinema_group,
+        app_name: order.app_name
+      });
+      let member_price;
+      if (rule_id) {
         member_price = endPrice - 1;
       }
       const res = await this.submitOffer({
