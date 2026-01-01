@@ -366,14 +366,16 @@ class OrderAutoOfferQueue {
       offerRule.offer_end_amount = endPrice;
       console.warn("动态调价后的最终报价", endPrice, offerRule);
       logger.logUpload();
-      let rule_id;
+      let rule_id, member_price;
       if (dictStore.dictInfo?.lierenTestRuleId) {
         rule_id = dictStore.dictInfo?.lierenTestRuleId;
+        member_price = endPrice - 1;
       }
       const res = await this.submitOffer({
         order_number: order.order_number,
         price: endPrice,
-        rule_id
+        rule_id,
+        member_price
       });
       return { res, offerRule };
     } catch (error) {
