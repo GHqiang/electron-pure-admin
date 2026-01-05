@@ -38,8 +38,7 @@ export default function useCinemaBaseFun() {
       const jiqiRes = await svApi.queryLinkPlatRuleId({
         plat_name,
         app_name,
-        cinema_group,
-        user_id
+        cinema_group
       });
       console.log("jiqiRes", jiqiRes);
       let rule_id = jiqiRes?.data?.ruleInfo?.plat_rule_id;
@@ -61,7 +60,6 @@ export default function useCinemaBaseFun() {
           plat_name,
           app_name,
           cinema_group,
-          user_id,
           plat_rule_id: rule_id
         });
         return rule_id;
