@@ -295,11 +295,16 @@ export default function useCinemaBaseFun() {
   };
 
   // 根据券标识获取对应券类型列表
-  const getQuanValueListByQuanFlag = async ({ app_name, quan_flag }) => {
+  const getQuanValueListByQuanFlag = async ({
+    app_name,
+    quan_flag,
+    quan_desc
+  }) => {
     try {
       const quanTypeParams = {
         app_name,
         quan_flag,
+        quan_desc: quan_desc || undefined,
         isNeedTotalNum: 0,
         queryFields: "quan_value,app_name"
       };

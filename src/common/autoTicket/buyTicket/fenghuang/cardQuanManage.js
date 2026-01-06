@@ -564,6 +564,7 @@ export default class CardQuanManage {
   async getNewQuan({
     quan_value,
     quan_flag,
+    quan_desc,
     black_quans,
     quanNum,
     session_id,
@@ -580,6 +581,7 @@ export default class CardQuanManage {
     // 解决同名不同券类型无法从其他券类型绑券的问题
     const quanValueListStr = await getQuanValueListByQuanFlag({
       quan_flag,
+      quan_desc,
       app_name: appFlag
     });
     if (quanValueListStr) {
