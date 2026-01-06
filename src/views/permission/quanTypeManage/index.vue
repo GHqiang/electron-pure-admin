@@ -340,15 +340,19 @@
       v-model="dialogQueryQuanVisible"
       title="服务器券库存"
       width="800"
+      class="fwq-quan-stock"
     >
       <el-table :data="quanData" border>
         <el-table-column type="index" label="序号" width="120" />
-        <el-table-column property="quan_value" sortable label="券类型">
+        <!-- <el-table-column property="quan_value" sortable label="券类型">
           <template #default="{ row }">
             <span>{{ formatQuanType(row.quan_value) }}</span>
           </template>
-        </el-table-column>
-        <el-table-column property="remaining_count" sortable label="数量" />
+        </el-table-column> -->
+        <el-table-column property="quan_flag" sortable label="券标识" />
+        <el-table-column property="quan_desc" sortable label="券描述" />
+        <el-table-column property="quan_value" sortable label="券类型" />
+        <el-table-column property="quan_stock" sortable label="数量" />
         <el-table-column
           property="real_total_price"
           sortable
@@ -837,64 +841,70 @@ const getQuanInventory = async () => {
   try {
     const params = {
       isNeedTotalNum: 0,
+      is_store: 1,
       queryFields:
-        "id,app_name,quan_value,quan_flag,quan_cost,is_store,quan_fee"
+        "id,app_name,quan_value,quan_flag,quan_desc,quan_cost,quan_fee"
     };
     let quanTypeRes = await svApi.queryQuanTypeList(params);
     let quanTypeList = quanTypeRes.data.quanTypeList || [];
-    quanTypeList = quanTypeList.filter(item => item.is_store == 1);
     console.warn("quanTypeList", quanTypeList);
-
     const res = await svApi.queryQuanInventory();
     console.warn("查询券库存返回", res);
     let quanList = res.data?.quanList;
     let total_num = 0,
       total_price = 0;
-    quanList = quanList.map(item => {
-      let real_total_price = 0;
-      // 根据券类型找到券名称
-      let targetQuanInfo = quanTypeList.find(
-        itemA => itemA.quan_value == item.quan_value
+    let quanDataList = [];
+    quanTypeList.forEach(item => {
+      const { app_name, quan_flag, quan_desc, quan_value } = item;
+      let index = quanDataList.findIndex(
+        itemA => itemA.quan_flag == quan_flag && itemA.quan_desc == quan_desc
       );
-      let quan_flag = targetQuanInfo?.quan_flag;
-      let app_name = targetQuanInfo?.app_name;
-      // 根据券名称找出同名券
+      let quan_stock =
+        quanList.find(item => item.quan_value == quan_value)?.remaining_count ||
+        0;
+      if (index == -1) {
+        quanDataList.push({
+          app_name,
+          quan_value,
+          quan_flag,
+          quan_desc,
+          quan_stock
+        });
+      } else {
+        quanTypeList[index].quan_stock += quan_stock;
+      }
+    });
+    quanDataList = quanDataList.map(item => {
       let targetQuanList = quanTypeList.filter(
-        itemA => itemA.quan_flag == quan_flag && itemA.app_name == app_name
+        itemA =>
+          itemA.quan_flag == item.quan_flag &&
+          itemA.app_name == item.app_name &&
+          itemA.quan_desc == item.quan_desc
       );
       // 找出最大价值的同名券计算券库存
       targetQuanList = targetQuanList.sort((a, b) => a.quan_fee - b.quan_fee);
       let quanInfo = targetQuanList[0];
+      let real_total_price = 0;
       if (quanInfo) {
         const quan_cost_real =
           parseFloat(quanInfo.quan_cost) - (quanInfo.quan_fee || 0);
-        real_total_price =
-          (quan_cost_real * 1000 * item.remaining_count) / 1000;
+        real_total_price = (quan_cost_real * 1000 * item.quan_stock) / 1000;
       }
-      total_num += item.remaining_count;
+      total_num += item.quan_stock;
       total_price += real_total_price;
       return {
         ...item,
         real_total_price
       };
     });
-    quanList.unshift({
-      quan_value: "总余额",
-      remaining_count: total_num,
+    console.warn("quanDataList", quanDataList);
+    quanDataList.unshift({
+      quan_flag: "总余额",
+      quan_stock: total_num,
       real_total_price: total_price
     });
-    const otherQuanList = quanTypeList
-      .filter(
-        item => !quanList.some(itemA => itemA.quan_value == item.quan_value)
-      )
-      .map(item => ({
-        quan_value: item.quan_value,
-        remaining_count: 0,
-        real_total_price: 0
-      }));
-    quanList = [...quanList, ...otherQuanList];
     dialogQueryQuanVisible.value = true;
-    quanData.value = quanList;
+    quanData.value = quanDataList;
   } catch (error) {
     console.warn("查询券库存返回异常", error);
   }
@@ -1113,6 +1123,10 @@ onBeforeMount(async () => {
 });
 </script>
 <style scoped>
+::v-deep(.fwq-quan-stock) {
+  height: 500px !important;
+  overflow-y: auto;
+}
 .red {
   color: red;
   font-weight: bold;
