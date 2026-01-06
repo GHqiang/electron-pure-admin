@@ -41,7 +41,8 @@ import {
 import { APP_API_OBJ } from "@/common/index";
 // 机器基础方法
 import usesMachineBaseFun from "@/mixins/usesMachineBaseFun";
-const { updateQuanBlackInfo } = usesMachineBaseFun();
+const { updateQuanBlackInfo, getQuanValueListByQuanFlag } =
+  usesMachineBaseFun();
 
 let isTestOrder = false; //是否是测试订单
 // 创建一个订单自动出票队列类
@@ -2456,26 +2457,18 @@ class OrderAutoTicketQueue {
     });
     let targetLogger = asyncFlag === 1 ? logger : this.logger;
     let conPrev = asyncFlag === 1 ? "异步绑券_" : "";
-    try {
-      const quanTypeParams = {
-        app_name: appFlag,
+    // 解决同名不同券类型无法从其他券类型绑券的问题
+    const quanValueListStr = await getQuanValueListByQuanFlag({
+      quan_flag,
+      app_name: appFlag
+    });
+    if (quanValueListStr) {
+      targetLogger.infoSave("根据券标识获取对应券类型列表返回", {
+        quanValueListStr,
         quan_flag,
-        isNeedTotalNum: 0,
-        queryFields: "quan_value,app_name"
-      };
-      let quanTypeRes = await svApi.queryQuanTypeList(quanTypeParams);
-      let quanTypeList = quanTypeRes?.data?.quanTypeList || [];
-      quanTypeList = quanTypeList.map(item => item.quan_value);
-      if (quanTypeList.length > 1) {
-        quan_value = quanTypeList.join(";");
-      }
-      targetLogger.infoSave(`${conPrev}根据券标识获取券类型返回`, {
-        quanTypeList
+        quan_value
       });
-    } catch (error) {
-      targetLogger.errorSave(`${conPrev}根据券标识获取券类型返回异常`, {
-        error
-      });
+      quan_value = quanValueListStr;
     }
     let params = {
       quan_value: quan_value,

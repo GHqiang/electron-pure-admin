@@ -396,7 +396,8 @@ export default class BuyTicket {
           this.logger.infoSave("本次出票后券小于10，开始异步绑定券");
           this.cardQuanManage.getNewQuan({
             cinemaLinkId,
-            quanValue: offerRule.quan_value,
+            quan_value: offerRule.quan_value,
+            quan_flag: offerRule.quan_flag,
             black_quans: offerRule.black_quans,
             quanNum: 10 - (quanStock - Number(ticket_num)),
             session_id: this.currentSessionId,

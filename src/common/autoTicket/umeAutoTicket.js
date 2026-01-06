@@ -38,7 +38,8 @@ import {
 import { APP_API_OBJ } from "@/common/index";
 // 机器基础方法
 import usesMachineBaseFun from "@/mixins/usesMachineBaseFun";
-const { updateQuanBlackInfo } = usesMachineBaseFun();
+const { updateQuanBlackInfo, getQuanValueListByQuanFlag } =
+  usesMachineBaseFun();
 let isTestOrder = false; //是否是测试订单
 // 创建一个订单自动出票队列类
 class OrderAutoTicketQueue {
@@ -1077,7 +1078,8 @@ class OrderAutoTicketQueue {
           this.getNewQuan({
             cinemaCode,
             cinemaLinkId,
-            quanValue: offerRule.quan_value,
+            quan_value: offerRule.quan_value,
+            quan_flag: offerRule.quan_flag,
             black_quans: offerRule.black_quans,
             quanNum: 10 - (quanList.length - Number(ticket_num)),
             session_id:
@@ -2273,7 +2275,8 @@ class OrderAutoTicketQueue {
   async getNewQuan({
     cinemaCode,
     cinemaLinkId,
-    quanValue: quan_value,
+    quan_value,
+    quan_flag,
     black_quans,
     quanNum,
     session_id,
@@ -2287,6 +2290,19 @@ class OrderAutoTicketQueue {
     });
     let targetLogger = asyncFlag === 1 ? logger : this.logger;
     let conPrev = asyncFlag === 1 ? "异步绑券_" : "";
+    // 解决同名不同券类型无法从其他券类型绑券的问题
+    const quanValueListStr = await getQuanValueListByQuanFlag({
+      quan_flag,
+      app_name: appFlag
+    });
+    if (quanValueListStr) {
+      targetLogger.infoSave("根据券标识获取对应券类型列表返回", {
+        quanValueListStr,
+        quan_flag,
+        quan_value
+      });
+      quan_value = quanValueListStr;
+    }
     let params = {
       quan_value,
       app_name: appFlag,

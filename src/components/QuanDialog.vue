@@ -179,8 +179,8 @@
         </el-form-item>
         <el-form-item label="是否入库" prop="is_store">
           <el-radio-group v-model="formData.is_store">
-            <el-radio value="1" size="large">是</el-radio>
-            <el-radio value="2" size="large">否</el-radio>
+            <el-radio value="1" size="small">是</el-radio>
+            <el-radio value="2" size="small">否</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="备注" prop="remark">

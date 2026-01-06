@@ -24,6 +24,10 @@ import Logger from "@/common/logger";
 // 平台管理类
 import PlatManage from "@/common/autoTicket/buyTicket/platManage";
 
+// 机器基础方法
+import usesMachineBaseFun from "@/mixins/usesMachineBaseFun";
+const { getQuanValueListByQuanFlag } = usesMachineBaseFun();
+
 // 机器登录用户信息
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
@@ -1409,6 +1413,7 @@ class OrderAutoTicketQueue {
           this.logger.infoSave("用券前个人中心目标券不够，从服务端获取");
           let newQuanList = await this.getNewQuan({
             quan_value,
+            quan_flag,
             lmaToken,
             black_quans,
             diffNum,
@@ -1826,6 +1831,19 @@ class OrderAutoTicketQueue {
     });
     let targetLogger = asyncFlag === 1 ? logger : this.logger;
     let conPrev = asyncFlag === 1 ? "异步绑券_" : "";
+    // 解决同名不同券类型无法从其他券类型绑券的问题
+    const quanValueListStr = await getQuanValueListByQuanFlag({
+      quan_flag,
+      app_name: appFlag
+    });
+    if (quanValueListStr) {
+      targetLogger.infoSave("根据券标识获取对应券类型列表返回", {
+        quanValueListStr,
+        quan_flag,
+        quan_value
+      });
+      quan_value = quanValueListStr;
+    }
     let params = {
       quan_value,
       app_name: appFlag,

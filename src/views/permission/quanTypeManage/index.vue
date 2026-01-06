@@ -621,8 +621,10 @@ const queryQuanBalanceTotal = async () => {
         itemA => itemA.quan_flag == item.quan_flag
       );
       if (!quanInfo) {
+        // 找出最大价值的同名券计算券余额价值
         let targetQuanList = quanTypeList.filter(
-          itemA => itemA.quan_flag == item.quan_flag
+          itemA =>
+            itemA.quan_flag == item.quan_flag && itemA.app_name == item.app_name
         );
         targetQuanList = targetQuanList.sort((a, b) => a.quan_fee - b.quan_fee);
         let quanInfo = targetQuanList[0];
@@ -850,13 +852,17 @@ const getQuanInventory = async () => {
       total_price = 0;
     quanList = quanList.map(item => {
       let real_total_price = 0;
+      // 根据券类型找到券名称
       let targetQuanInfo = quanTypeList.find(
         itemA => itemA.quan_value == item.quan_value
       );
       let quan_flag = targetQuanInfo?.quan_flag;
+      let app_name = targetQuanInfo?.app_name;
+      // 根据券名称找出同名券
       let targetQuanList = quanTypeList.filter(
-        itemA => itemA.quan_flag == quan_flag
+        itemA => itemA.quan_flag == quan_flag && itemA.app_name == app_name
       );
+      // 找出最大价值的同名券计算券库存
       targetQuanList = targetQuanList.sort((a, b) => a.quan_fee - b.quan_fee);
       let quanInfo = targetQuanList[0];
       if (quanInfo) {

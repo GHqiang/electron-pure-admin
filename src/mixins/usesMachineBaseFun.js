@@ -293,7 +293,24 @@ export default function useCinemaBaseFun() {
       });
     }
   };
+
+  // 根据券标识获取对应券类型列表
+  const getQuanValueListByQuanFlag = async ({ app_name, quan_flag }) => {
+    try {
+      const quanTypeParams = {
+        app_name,
+        quan_flag,
+        isNeedTotalNum: 0,
+        queryFields: "quan_value,app_name"
+      };
+      let quanTypeRes = await svApi.queryQuanTypeList(quanTypeParams);
+      let quanTypeList = quanTypeRes?.data?.quanTypeList || [];
+      quanTypeList = quanTypeList.map(item => item.quan_value);
+      return quanTypeList.join(";");
+    } catch (error) {}
+  };
   return {
+    getQuanValueListByQuanFlag, // 根据券标识获取对应券类型列表
     getRuleIdByPlat, // 获取平台关联的规则id
     getQuanTypeList, // 获取券类型列表
     addCardListHandle, // 同步卡信息时新增卡
