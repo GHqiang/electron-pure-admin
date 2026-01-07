@@ -183,6 +183,12 @@
             <el-radio value="2" size="small">否</el-radio>
           </el-radio-group>
         </el-form-item>
+        <el-form-item label="是否基础券" prop="is_base_quan">
+          <el-radio-group v-model="formData.is_base_quan">
+            <el-radio :value="1" size="small">是</el-radio>
+            <el-radio :value="2" size="small">否</el-radio>
+          </el-radio-group>
+        </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input
             v-model="formData.remark"
@@ -246,6 +252,7 @@ let formData = reactive({
   ],
   black_quans: "",
   is_store: "2",
+  is_base_quan: 2,
   remark: "",
   linkCinemaIds: []
 });
@@ -301,6 +308,7 @@ const resetForm = el => {
   ];
   formData.black_quans = "";
   formData.is_store = "2";
+  formData.is_base_quan = 2;
   formData.remark = "";
 };
 
@@ -337,6 +345,7 @@ const open = async quanInfo => {
         formData.black_quans = formInfo.black_quans;
         formData.remark = formInfo.remark;
         formData.is_store = formInfo.is_store;
+        formData.is_base_quan = formInfo.is_base_quan;
         formData.linkCinemaIds = formInfo.linkCinemaIds
           ? formInfo.linkCinemaIds.split(",")
           : [];

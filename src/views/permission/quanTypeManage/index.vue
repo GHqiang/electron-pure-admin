@@ -344,11 +344,7 @@
     >
       <el-table :data="quanData" border>
         <el-table-column type="index" label="序号" width="80" />
-        <el-table-column property="quan_value" sortable label="券名称">
-          <template #default="{ row }">
-            <span>{{ formatQuanType(row.quan_value) }}</span>
-          </template>
-        </el-table-column>
+        <el-table-column property="quan_name" sortable label="券名称" />
         <el-table-column property="quan_flag" sortable label="券标识" />
         <el-table-column property="quan_desc" sortable label="券描述" />
         <el-table-column property="quan_value" sortable label="券类型" />
@@ -843,7 +839,7 @@ const getQuanInventory = async () => {
       isNeedTotalNum: 0,
       is_store: 1,
       queryFields:
-        "id,app_name,quan_value,quan_flag,quan_desc,quan_cost,quan_fee"
+        "id,app_name,quan_name,quan_value,quan_flag,quan_desc,quan_cost,quan_fee,is_base_quan"
     };
     let quanTypeRes = await svApi.queryQuanTypeList(params);
     let quanTypeList = quanTypeRes.data.quanTypeList || [];
@@ -855,7 +851,14 @@ const getQuanInventory = async () => {
       total_price = 0;
     let quanDataList = [];
     quanTypeList.forEach(item => {
-      const { app_name, quan_flag, quan_desc, quan_value } = item;
+      const {
+        app_name,
+        quan_name,
+        is_base_quan,
+        quan_flag,
+        quan_desc,
+        quan_value
+      } = item;
       let index = quanDataList.findIndex(
         itemA => itemA.quan_flag == quan_flag && itemA.quan_desc == quan_desc
       );
@@ -865,6 +868,7 @@ const getQuanInventory = async () => {
       if (index == -1) {
         quanDataList.push({
           app_name,
+          quan_name,
           quan_value,
           quan_flag,
           quan_desc,
@@ -872,6 +876,11 @@ const getQuanInventory = async () => {
         });
       } else {
         quanDataList[index].quan_stock += quan_stock;
+        // 同名券合并后按照基础券的券名称显示
+        if (is_base_quan == 1) {
+          quanDataList[index].quan_value = quan_value;
+          quanDataList[index].quan_name = quan_name;
+        }
       }
     });
     quanDataList = quanDataList.map(item => {
