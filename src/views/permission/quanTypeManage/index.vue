@@ -1124,7 +1124,7 @@ onBeforeMount(async () => {
 </script>
 <style scoped>
 ::v-deep(.fwq-quan-stock) {
-  height: 500px !important;
+  height: 1000px !important;
   overflow-y: auto;
 }
 .red {
