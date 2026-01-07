@@ -343,12 +343,12 @@
       class="fwq-quan-stock"
     >
       <el-table :data="quanData" border>
-        <el-table-column type="index" label="序号" width="120" />
-        <!-- <el-table-column property="quan_value" sortable label="券类型">
+        <el-table-column type="index" label="序号" width="80" />
+        <el-table-column property="quan_value" sortable label="券名称">
           <template #default="{ row }">
             <span>{{ formatQuanType(row.quan_value) }}</span>
           </template>
-        </el-table-column> -->
+        </el-table-column>
         <el-table-column property="quan_flag" sortable label="券标识" />
         <el-table-column property="quan_desc" sortable label="券描述" />
         <el-table-column property="quan_value" sortable label="券类型" />
@@ -871,7 +871,7 @@ const getQuanInventory = async () => {
           quan_stock
         });
       } else {
-        quanTypeList[index].quan_stock += quan_stock;
+        quanDataList[index].quan_stock += quan_stock;
       }
     });
     quanDataList = quanDataList.map(item => {
