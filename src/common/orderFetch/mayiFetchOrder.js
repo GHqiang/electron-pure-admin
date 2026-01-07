@@ -113,7 +113,7 @@ class OrderAutoFetchQueue {
       ];
       logUpload(
         {
-          plat_name: "lieren",
+          plat_name: "mayi",
           app_name: "",
           order_number: "",
           type: 2

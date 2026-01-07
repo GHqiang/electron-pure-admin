@@ -117,7 +117,7 @@ class OrderAutoFetchQueue {
       ];
       logUpload(
         {
-          plat_name: "lieren",
+          plat_name: "mangguo",
           app_name: "",
           order_number: "",
           type: 2

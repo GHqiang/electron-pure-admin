@@ -26,6 +26,8 @@ instance.interceptors.request.use(
     if (config.url.indexOf("/lieren/") !== -1) {
       // 猎人平台接口添加token
       // console.log("tokens.lierenToken", tokens.lierenToken);
+      // config.headers.AK = window.lieren_ak || tokens.userInfo?.lieren_ak;
+      // config.headers.SK = window.lieren_sk || tokens.userInfo?.lieren_sk;
       config.headers.AK = tokens.userInfo?.lieren_ak;
       config.headers.SK = tokens.userInfo?.lieren_sk;
       if (IS_DEV) {
