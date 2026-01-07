@@ -325,6 +325,12 @@ class getUmeOfferPrice {
         getQuanListByPhone: this.getQuanListByPhone.bind(this),
         logger: this.logger
       });
+      this.logger.infoSave("根据影院获取券类型列表返回", {
+        quanTypeList: appQuanTypeList?.map(
+          ({ quanStockListByPhone, ...item }) => item
+        ),
+        useMobileList
+      });
       if (fixedAmountRuleList.length) {
         // 校验其库存，进行过滤
         if (appQuanTypeList?.length) {

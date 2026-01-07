@@ -398,6 +398,12 @@ class getSfcOfferPrice {
           },
           logger: this.logger
         });
+        this.logger.infoSave("根据影院获取券类型列表返回", {
+          quanTypeList: appQuanTypeList?.map(
+            ({ quanStockListByPhone, ...item }) => item
+          ),
+          useMobileList
+        });
         // 校验其库存，进行过滤
         if (appQuanTypeList?.length) {
           fixedAmountRuleList = fixedAmountRuleList.filter(item => {

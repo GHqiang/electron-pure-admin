@@ -335,6 +335,12 @@ class getLmaOfferPrice {
           getQuanListByPhone: this.getQuanListByPhone.bind(this),
           logger: this.logger
         });
+        this.logger.infoSave("根据影院获取券类型列表返回", {
+          quanTypeList: appQuanTypeList?.map(
+            ({ quanStockListByPhone, ...item }) => item
+          ),
+          useMobileList
+        });
         if (appQuanTypeList?.length) {
           fixedAmountRuleList = fixedAmountRuleList.filter(item => {
             // 查找是否有目标券可以出的
