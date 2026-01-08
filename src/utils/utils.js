@@ -485,7 +485,7 @@ const isLoginByAppName = (app_name, userId) => {
 const getCinemaLoginInfoList = userId => {
   let user_id = userId || tokens?.userInfo?.user_id;
   const phone = tokens?.userInfo?.phone;
-  console.log("user_id", tokens?.userInfo?.user_id, phone);
+  // console.log("user_id", tokens?.userInfo?.user_id, phone);
   let loginInfoList = window.localStorage.getItem("loginInfoList");
   if (loginInfoList) {
     loginInfoList = JSON.parse(loginInfoList);

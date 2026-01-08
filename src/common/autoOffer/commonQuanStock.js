@@ -35,10 +35,10 @@ export async function syncUpdateQuanStock({
       let inx = item.quanStockListByPhone.findIndex(
         itemA => itemA.quan_stock === item.quan_stock
       );
-      console.log("inx", inx);
+      // console.log("inx", inx);
       if (inx != -1) {
         let update_time = item.quanStockListByPhone[inx].update_time;
-        console.log("update_time", update_time);
+        // console.log("update_time", update_time);
 
         return !update_time
           ? true
