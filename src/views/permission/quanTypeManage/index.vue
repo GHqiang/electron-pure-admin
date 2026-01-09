@@ -345,9 +345,9 @@
       <el-table :data="quanData" border>
         <el-table-column type="index" label="序号" width="80" />
         <el-table-column property="quan_name" sortable label="券名称" />
-        <el-table-column property="quan_flag" sortable label="券标识" />
+        <!-- <el-table-column property="quan_flag" sortable label="券标识" />
         <el-table-column property="quan_desc" sortable label="券描述" />
-        <el-table-column property="quan_value" sortable label="券类型" />
+        <el-table-column property="quan_value" sortable label="券类型" /> -->
         <el-table-column property="quan_stock" sortable label="数量" />
         <el-table-column
           property="real_total_price"
