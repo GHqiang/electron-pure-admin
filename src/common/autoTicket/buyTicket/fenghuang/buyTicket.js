@@ -398,6 +398,7 @@ export default class BuyTicket {
             cinemaLinkId,
             quan_value: offerRule.quan_value,
             quan_flag: offerRule.quan_flag,
+            quan_desc: offerRule.quan_desc,
             black_quans: offerRule.black_quans,
             quanNum: 10 - (quanStock - Number(ticket_num)),
             session_id: this.currentSessionId,

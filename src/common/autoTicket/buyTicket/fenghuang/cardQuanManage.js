@@ -588,7 +588,8 @@ export default class CardQuanManage {
       logger.infoSave("根据券标识获取对应券类型列表返回", {
         quanValueListStr,
         quan_flag,
-        quan_value
+        quan_value,
+        quan_desc
       });
       quan_value = quanValueListStr;
     }
@@ -663,7 +664,7 @@ export default class CardQuanManage {
       await mockDelay(0.1);
       logger.infoSave("绑定券参数", params);
       const res = await this.appApi.bandQuan(params);
-      logger.infoSave("绑定券返回", res);
+      logger.infoSave("绑定券返回", { res });
       return { coupon_num };
     } catch (error) {
       logger.errorSave("绑定新券异常", formatErrInfo(error));
