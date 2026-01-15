@@ -712,14 +712,14 @@ class getSfcOfferPrice {
 
   // 获取座位布局
   async getSeatLayout(data) {
+    let { city_id, cinema_id, show_id } = data || {};
+    let params = {
+      city_id: city_id,
+      cinema_id: cinema_id,
+      show_id: show_id,
+      width: "240"
+    };
     try {
-      let { city_id, cinema_id, show_id } = data || {};
-      let params = {
-        city_id: city_id,
-        cinema_id: cinema_id,
-        show_id: show_id,
-        width: "240"
-      };
       console.log("获取座位布局参数", params);
       const res = await this.appApi.getMoviePlaySeat(params);
       console.log("获取座位布局返回", res);
