@@ -650,7 +650,7 @@ const handleCurrentChange = val => {
 const sfcDialogRef = ref(null);
 
 // 删除单行规则
-const deleteRow = (index, row) => {
+const deleteRow = row => {
   ElMessageBox.confirm("确定要删除该记录吗?", "提示", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
