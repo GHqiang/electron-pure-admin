@@ -194,7 +194,8 @@ import mangguoApi from "@/api/mangguo-api";
 import yangcongApi from "@/api/yangcong-api";
 
 // 平台报价执行队列
-import lierenOfferQueue from "@/common/autoOffer/useLierenOffer";
+import { offerQueueFactory } from "@/common/factories/QueueFactory.js";
+// import lierenOfferQueue from "@/common/autoOffer/useLierenOffer";
 import shengOfferQueue from "@/common/autoOffer/useShengOffer";
 import mangguoOfferQueue from "@/common/autoOffer/useMangguoOffer";
 import mayiOfferQueue from "@/common/autoOffer/useMayiOffer";
@@ -298,7 +299,7 @@ const syncYangcongCinemaList = async (list = [], pageNum = 1) => {
 };
 // 平台报价队列集合
 let platOfferQueueObj = {
-  lieren: lierenOfferQueue,
+  lieren: offerQueueFactory.getOfferQueue("lieren"),
   mangguo: mangguoOfferQueue,
   mayi: mayiOfferQueue,
   yangcong: yangcongOfferQueue,
