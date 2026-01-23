@@ -40,7 +40,7 @@ export default class ShengOrderFetcher extends BaseOrderFetcher {
       const offerList = await this.getOfferList();
       
       // 数据转换
-      const processedList = stayList
+      const processedList = rawStayList
         .map(item => {
           const {
             id,
@@ -59,7 +59,9 @@ export default class ShengOrderFetcher extends BaseOrderFetcher {
 
           let cinema_group = label?.[0]?.name || cinema?.label?.[0]?.name || "";
           if (!cinema_group) {
-            const targetObj = offerList.find(item => item.order_number === code);
+            const targetObj = offerList.find(
+              item => item.order_number === code
+            );
             cinema_group = targetObj?.cinema_group || "";
           }
 
