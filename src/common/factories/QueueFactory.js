@@ -2,6 +2,15 @@
 // 根据平台名称创建报价队列，根据影院标识创建出票队列
 
 import LierenOfferQueue from "../platform/queues/LierenOfferQueue.js";
+import HahaOfferQueue from "../platform/queues/HahaOfferQueue.js";
+import MangguoOfferQueue from "../platform/queues/MangguoOfferQueue.js";
+import MayiOfferQueue from "../platform/queues/MayiOfferQueue.js";
+import YangcongOfferQueue from "../platform/queues/YangcongOfferQueue.js";
+import YinghuasuanOfferQueue from "../platform/queues/YinghuasuanOfferQueue.js";
+import ShoutuOfferQueue from "../platform/queues/ShoutuOfferQueue.js";
+import MahuaOfferQueue from "../platform/queues/MahuaOfferQueue.js";
+import ShengOfferQueue from "../platform/queues/ShengOfferQueue.js";
+// import ShangzhanOfferQueue from "../platform/queues/ShangzhanOfferQueue.js";
 import {
   GET_UME_LIST,
   GET_H5_UME_LIST,
@@ -23,13 +32,17 @@ class OfferQueueFactory {
     // 报价队列类映射
     this.offerQueueClasses = new Map();
 
-    // 注册已知的报价队列类
+    // 注册所有平台的报价队列类
     this.registerOfferQueue("lieren", LierenOfferQueue);
-
-    // 其他平台报价队列将在后续阶段注册
-    // this.registerOfferQueue("haha", HahaOfferQueue);
-    // this.registerOfferQueue("mangguo", MangguoOfferQueue);
-    // ...
+    this.registerOfferQueue("haha", HahaOfferQueue);
+    this.registerOfferQueue("mangguo", MangguoOfferQueue);
+    this.registerOfferQueue("mayi", MayiOfferQueue);
+    this.registerOfferQueue("yangcong", YangcongOfferQueue);
+    this.registerOfferQueue("yinghuasuan", YinghuasuanOfferQueue);
+    this.registerOfferQueue("shoutu", ShoutuOfferQueue);
+    this.registerOfferQueue("mahua", MahuaOfferQueue);
+    this.registerOfferQueue("sheng", ShengOfferQueue);
+    // this.registerOfferQueue("shangzhan", ShangzhanOfferQueue);
   }
 
   /**
@@ -47,10 +60,21 @@ class OfferQueueFactory {
   /**
    * 创建报价队列
    * @param {string} platName - 平台名称
+   * @param {boolean} isTestOrder - 是否为测试订单模式
    * @returns {BaseOfferQueue} 报价队列实例
    */
-  createOfferQueue(platName) {
-    // 检查缓存
+  createOfferQueue(platName, isTestOrder = false) {
+    // 如果指定了 isTestOrder，不使用缓存，直接创建新实例
+    // 因为不同的 isTestOrder 值需要不同的实例
+    if (isTestOrder) {
+      const QueueClass = this.offerQueueClasses.get(platName);
+      if (!QueueClass) {
+        throw new Error(`不支持的平台报价队列: ${platName}`);
+      }
+      return new QueueClass(isTestOrder);
+    }
+
+    // 检查缓存（仅对非测试模式使用缓存）
     if (this.offerQueues.has(platName)) {
       return this.offerQueues.get(platName);
     }
@@ -62,9 +86,9 @@ class OfferQueueFactory {
     }
 
     // 创建实例
-    const queue = new QueueClass();
+    const queue = new QueueClass(isTestOrder);
 
-    // 缓存实例
+    // 缓存实例（仅缓存非测试模式的实例）
     this.offerQueues.set(platName, queue);
 
     return queue;
@@ -73,11 +97,12 @@ class OfferQueueFactory {
   /**
    * 获取报价队列（如果不存在则创建）
    * @param {string} platName - 平台名称
+   * @param {boolean} isTestOrder - 是否为测试订单模式
    * @returns {BaseOfferQueue|null} 报价队列实例
    */
-  getOfferQueue(platName) {
+  getOfferQueue(platName, isTestOrder = false) {
     try {
-      return this.createOfferQueue(platName);
+      return this.createOfferQueue(platName, isTestOrder);
     } catch (error) {
       console.error(`获取报价队列失败: ${platName}`, error);
       return null;

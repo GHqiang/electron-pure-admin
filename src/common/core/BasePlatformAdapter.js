@@ -14,13 +14,14 @@ export default class BasePlatformAdapter {
    * @param {string} platName - 平台名称
    * @param {Object} apiInstance - 平台API实例
    * @param {Logger} logger - 日志实例
+   * @param {boolean} isTestOrder - 是否为测试订单模式
    */
-  constructor(platName, apiInstance, logger) {
+  constructor(platName, apiInstance, logger, isTestOrder = false) {
     this.platName = platName;
     this.api = apiInstance;
     this.logger = logger || new Logger({ logType: 1 });
+    this.isTestOrder = isTestOrder;
     this.config = getPlatformConfig(platName);
-    
     if (!this.config) {
       throw new Error(`未找到平台配置: ${platName}`);
     }
@@ -61,12 +62,12 @@ export default class BasePlatformAdapter {
     try {
       const params = this.config.params.unlockParams(order);
       this.logger.infoSave("解锁座位参数", params);
-      
+
       const apiMethod = this.api[this.config.api.unlockSeat];
       if (!apiMethod) {
         throw new Error(`API方法不存在: ${this.config.api.unlockSeat}`);
       }
-      
+
       const res = await apiMethod.call(this.api, params);
       this.logger.infoSave("解锁座位成功", res);
       return res;
@@ -85,7 +86,7 @@ export default class BasePlatformAdapter {
     if (!this.config.features.needConfirmOrder) {
       return { msg: "无需确认接单" };
     }
-    
+
     // 子类实现具体逻辑
     return this.doConfirmOrder(order);
   }
@@ -111,12 +112,12 @@ export default class BasePlatformAdapter {
     try {
       const params = this.config.params.submitParams(order, qrcode);
       this.logger.infoSave("提交取票码参数", params);
-      
+
       const apiMethod = this.api[this.config.api.submitTicket];
       if (!apiMethod) {
         throw new Error(`API方法不存在: ${this.config.api.submitTicket}`);
       }
-      
+
       const res = await apiMethod.call(this.api, params);
       this.logger.infoSave("提交取票码返回", res);
       return res;
@@ -137,12 +138,12 @@ export default class BasePlatformAdapter {
     try {
       const params = this.config.params.transferParams(order, reason);
       this.logger.warn("转单参数", params);
-      
+
       const apiMethod = this.api[this.config.api.transferOrder];
       if (!apiMethod) {
         throw new Error(`API方法不存在: ${this.config.api.transferOrder}`);
       }
-      
+
       const res = await apiMethod.call(this.api, params);
       this.logger.infoSave("转单成功", { res });
       return res;
@@ -161,13 +162,13 @@ export default class BasePlatformAdapter {
    */
   async handleUnlockError(error, order, retryCount) {
     const errorMsg = error?.msg || error?.message || "";
-    
+
     // 已解锁的情况
     if (errorMsg.includes("已经解锁") || errorMsg.includes("已解锁")) {
       this.logger.infoSave("座位已解锁", { error });
       return { msg: "已解锁" };
     }
-    
+
     // 无需解锁的情况
     if (
       errorMsg.includes("暂无锁座记录") ||
@@ -178,7 +179,7 @@ export default class BasePlatformAdapter {
       this.logger.infoSave("座位无需解锁", { error });
       return { msg: "无需解锁" };
     }
-    
+
     // 座位没有被锁
     if (errorMsg === "当前订单座位没有被锁") {
       this.logger.infoSave("座位没有被锁", { error });
@@ -192,7 +193,7 @@ export default class BasePlatformAdapter {
       await new Promise(resolve => setTimeout(resolve, 3000));
       return this.unlockSeat(order, retryCount - 1);
     }
-    
+
     // 重试次数用完，抛出错误
     this.logger.errorSave("解锁座位失败，重试次数已用完", { error });
     return Promise.reject(error);

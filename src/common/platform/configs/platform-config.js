@@ -9,6 +9,7 @@
  * @property {Object} features - 平台特性配置
  * @property {boolean} features.hasTransferFee - 是否有转单手续费
  * @property {number} features.priceStep - 价格步进（0.1 或 1）
+ * @property {boolean} features.isNeedRuleId - 是否需要规则ID
  * @property {boolean} features.supportAsyncSubmit - 是否支持异步提交
  * @property {boolean} features.unlockBeforeTicket - 出票前是否需要解锁
  * @property {boolean} features.needConfirmOrder - 是否需要确认接单
@@ -41,6 +42,7 @@ export const PLATFORM_CONFIGS = {
     features: {
       hasTransferFee: false,
       priceStep: 1,
+      isNeedRuleId: true, // 是否需要规则ID
       supportAsyncSubmit: false,
       unlockBeforeTicket: true,
       needConfirmOrder: false
@@ -183,8 +185,8 @@ export const PLATFORM_CONFIGS = {
         remark: reason || "渠道无法出票"
       }),
       offerParams: (order, price) => ({
-        order_number: order.order_number,
-        price
+        order_id: order.id,
+        price: price * 100 // 芒果平台价格需要乘以100
       })
     },
     transformOrder: order => ({
@@ -582,53 +584,47 @@ export function getAllPlatformNames() {
  */
 export function validatePlatformConfig(config) {
   if (!config) return false;
-  
-  const requiredFields = [
-    'name',
-    'displayName',
-    'features',
-    'api',
-    'params'
-  ];
-  
+
+  const requiredFields = ["name", "displayName", "features", "api", "params"];
+
   for (const field of requiredFields) {
     if (!config[field]) {
       console.error(`平台配置缺少必需字段: ${field}`);
       return false;
     }
   }
-  
+
   // 验证features
   const requiredFeatures = [
-    'hasTransferFee',
-    'priceStep',
-    'unlockBeforeTicket',
-    'needConfirmOrder'
+    "hasTransferFee",
+    "priceStep",
+    "unlockBeforeTicket",
+    "needConfirmOrder"
   ];
-  
+
   for (const feature of requiredFeatures) {
     if (config.features[feature] === undefined) {
       console.error(`平台配置features缺少必需字段: ${feature}`);
       return false;
     }
   }
-  
+
   // 验证api
   const requiredApis = [
-    'getOrderList',
-    'submitOffer',
-    'unlockSeat',
-    'submitTicket',
-    'transferOrder'
+    "getOrderList",
+    "submitOffer",
+    "unlockSeat",
+    "submitTicket",
+    "transferOrder"
   ];
-  
+
   for (const api of requiredApis) {
     if (!config.api[api]) {
       console.error(`平台配置api缺少必需字段: ${api}`);
       return false;
     }
   }
-  
+
   return true;
 }
 

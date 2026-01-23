@@ -1,34 +1,33 @@
-// 猎人平台报价队列
-// 继承BaseOfferQueue，实现猎人平台特定的逻辑
+// 洋葱平台报价队列
+// 继承BaseOfferQueue，实现洋葱平台特定的逻辑
 
 import BaseOfferQueue from "../../core/BaseOfferQueue.js";
-import LierenAdapter from "../adapters/LierenAdapter.js";
+import YangcongAdapter from "../adapters/YangcongAdapter.js";
 import {
   getCinemaFlag,
   getCinemaLoginInfoList,
   getCurrentTime,
   logUpload,
-  mockDelay,
-  formatErrInfo
+  mockDelay
 } from "@/utils/utils.js";
-import { LIERENR_REWARDS, GET_APP_INFO } from "@/common/constant.js";
+import { GET_APP_INFO } from "@/common/constant.js";
 import Logger from "../../logger.js";
-import usesMachineBaseFun from "@/mixins/usesMachineBaseFun.js";
+import { useYangcongCinemaList } from "@/store/specialNameRule.js";
 
-const { getRuleIdByPlat } = usesMachineBaseFun();
-
+const yangcongCinemaListObj = useYangcongCinemaList();
+window.yangcongCinemaListObj = yangcongCinemaListObj;
 /**
- * 猎人平台报价队列
+ * 洋葱平台报价队列
  */
-export default class LierenOfferQueue extends BaseOfferQueue {
+export default class YangcongOfferQueue extends BaseOfferQueue {
   /**
    * 构造函数
    * @param {boolean} isTestOrder - 是否为测试订单模式
    */
   constructor(isTestOrder = false) {
     const logger = new Logger({ logType: 1 });
-    const adapter = new LierenAdapter(logger, isTestOrder);
-    super(adapter, "lieren", isTestOrder);
+    const adapter = new YangcongAdapter(logger, isTestOrder);
+    super(adapter, "yangcong", isTestOrder);
   }
 
   /**
@@ -43,11 +42,50 @@ export default class LierenOfferQueue extends BaseOfferQueue {
       // 获取待报价列表
       const stayList = await this.getStayOfferList();
       if (!stayList?.length) return;
-
-      // 过滤和转换订单
+      console.log("stayList", stayList);
+      // 转换订单格式
       const processedList = stayList
+        .map(item => {
+          const {
+            tradeno,
+            unitPrice,
+            supportMaxBaojia,
+            cityName,
+            cinemaAddress,
+            quantity,
+            cinemaName,
+            hallName,
+            movieName,
+            logoUrl,
+            playTime,
+            cinemaId,
+            cinemaChain // 品牌名 上影上海、上影二线等
+          } = item;
+          return {
+            plat_name: "yangcong",
+            id: tradeno,
+            tpp_price: unitPrice,
+            supplier_max_price: supportMaxBaojia,
+            city_name: cityName,
+            cinema_addr: cinemaAddress,
+            ticket_num: quantity,
+            cinema_name: cinemaName,
+            hall_name: hallName,
+            film_name: movieName,
+            film_img: logoUrl,
+            show_time: playTime,
+            rewards: 0, // 洋葱无奖励，只有快捷
+            is_urgent: "", // 1紧急 0非紧急
+            cinema_group: cinemaChain,
+            cinema_code: yangcongCinemaListObj.getCinemaCode(cinemaName), // 影院id
+            order_number: tradeno,
+            // 转为截止时间戳，原值： "2024-09-22 21:02:55"
+            offer_end_time: +new Date(item.orderExpireTime)
+          };
+        })
         .filter(item => {
           const appFlag = getCinemaFlag(item);
+          console.log("appFlag", appFlag, item);
           // 如果没有对应登录信息先过滤掉
           const appLoginInfo = getCinemaLoginInfoList().find(
             loginItem =>
@@ -61,14 +99,12 @@ export default class LierenOfferQueue extends BaseOfferQueue {
           const app_name = getCinemaFlag(item);
           return {
             ...item,
-            plat_name: "lieren",
             app_name,
             appName: app_name,
-            app_type_code: GET_APP_INFO(app_name)?.app_type_code,
-            rewards: LIERENR_REWARDS[item.order_urgent] || 0, // 0-普通 1-加急 2-特急 3-vip
-            offer_end_time: item.sytime * 1000 // 转为时间戳
+            app_type_code: GET_APP_INFO(app_name)?.app_type_code
           };
         });
+      console.log("processedList", processedList);
 
       if (!processedList?.length) return;
 
@@ -76,14 +112,14 @@ export default class LierenOfferQueue extends BaseOfferQueue {
       const newOrders = processedList.filter(
         item => !this.handledOrders.has(item.order_number)
       );
-
+      console.log("newOrders", newOrders);
       if (!newOrders?.length) return;
 
       // 处理新订单
       newOrders.forEach(item => {
         this.handleNewOrder(
           item,
-          stayList.find(itemA => itemA.order_number === item.order_number)
+          stayList.find(itemA => itemA.tradeno === item.order_number)
         );
       });
     } catch (error) {
@@ -104,7 +140,7 @@ export default class LierenOfferQueue extends BaseOfferQueue {
       console.error("获取待报价列表异常", error);
       logUpload(
         {
-          plat_name: "lieren",
+          plat_name: "yangcong",
           type: 1
         },
         [
@@ -119,23 +155,6 @@ export default class LierenOfferQueue extends BaseOfferQueue {
         ]
       );
       return [];
-    }
-  }
-  /**
-   * 获取规则ID
-   * @param {Object} order - 订单信息
-   * @returns {Promise<string|number|null>} 规则ID
-   */
-  async getRuleId(order) {
-    try {
-      return await getRuleIdByPlat({
-        plat_name: "lieren",
-        cinema_group: order.cinema_group,
-        app_name: order.app_name
-      });
-    } catch (error) {
-      this.logger.errorSave("获取规则ID异常", { error, order });
-      return null;
     }
   }
 }

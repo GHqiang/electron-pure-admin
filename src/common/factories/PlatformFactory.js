@@ -2,8 +2,20 @@
 // 根据平台名称创建对应的适配器实例，管理实例缓存
 
 import LierenAdapter from "../platform/adapters/LierenAdapter.js";
+import HahaAdapter from "../platform/adapters/HahaAdapter.js";
+import MangguoAdapter from "../platform/adapters/MangguoAdapter.js";
+import MayiAdapter from "../platform/adapters/MayiAdapter.js";
+import YangcongAdapter from "../platform/adapters/YangcongAdapter.js";
+import YinghuasuanAdapter from "../platform/adapters/YinghuasuanAdapter.js";
+import ShoutuAdapter from "../platform/adapters/ShoutuAdapter.js";
+import MahuaAdapter from "../platform/adapters/MahuaAdapter.js";
+import ShengAdapter from "../platform/adapters/ShengAdapter.js";
+// import ShangzhanAdapter from "../platform/adapters/ShangzhanAdapter.js";
 import Logger from "../logger.js";
-import { getPlatformConfig, getAllPlatformNames } from "../platform/configs/platform-config.js";
+import {
+  getPlatformConfig,
+  getAllPlatformNames
+} from "../platform/configs/platform-config.js";
 
 /**
  * 平台适配器工厂
@@ -15,14 +27,18 @@ class PlatformFactory {
     this.adapters = new Map();
     // 适配器类映射
     this.adapterClasses = new Map();
-    
-    // 注册已知的适配器类
+
+    // 注册所有平台的适配器类
     this.registerAdapter("lieren", LierenAdapter);
-    
-    // 其他平台适配器将在后续阶段注册
-    // this.registerAdapter("haha", HahaAdapter);
-    // this.registerAdapter("mangguo", MangguoAdapter);
-    // ...
+    this.registerAdapter("haha", HahaAdapter);
+    this.registerAdapter("mangguo", MangguoAdapter);
+    this.registerAdapter("mayi", MayiAdapter);
+    this.registerAdapter("yangcong", YangcongAdapter);
+    this.registerAdapter("yinghuasuan", YinghuasuanAdapter);
+    this.registerAdapter("shoutu", ShoutuAdapter);
+    this.registerAdapter("mahua", MahuaAdapter);
+    this.registerAdapter("sheng", ShengAdapter);
+    // this.registerAdapter("shangzhan", ShangzhanAdapter);
   }
 
   /**
@@ -34,12 +50,12 @@ class PlatformFactory {
     if (!AdapterClass) {
       throw new Error(`适配器类不能为空: ${platName}`);
     }
-    
+
     // 验证适配器类是否继承自BasePlatformAdapter
     if (!AdapterClass.prototype || !AdapterClass.prototype.constructor) {
       throw new Error(`无效的适配器类: ${platName}`);
     }
-    
+
     this.adapterClasses.set(platName, AdapterClass);
   }
 

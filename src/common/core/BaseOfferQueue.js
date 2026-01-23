@@ -19,10 +19,12 @@ export default class BaseOfferQueue {
    * 构造函数
    * @param {Object} platformAdapter - 平台适配器实例
    * @param {string} platName - 平台名称
+   * @param {boolean} isTestOrder - 是否为测试订单模式
    */
-  constructor(platformAdapter, platName) {
+  constructor(platformAdapter, platName, isTestOrder = false) {
     this.platformAdapter = platformAdapter;
     this.platName = platName;
+    this.isTestOrder = isTestOrder;
     this.queue = [];
     this.isRunning = false;
     this.isOfferRunning = false;
@@ -221,9 +223,11 @@ export default class BaseOfferQueue {
       });
       offerRule.offer_end_amount = finalPrice;
 
-      // 获取规则ID(适配猎人需要特殊处理)
-      const rule_id = await this.getRuleId(order);
-      let member_price;
+      // 按平台配置决定是否需要获取规则ID
+      let rule_id, member_price;
+      if (this.platformAdapter.config.features.isNeedRuleId) {
+        rule_id = await this.getRuleId(order);
+      }
       if (rule_id) {
         member_price = finalPrice - 1;
       }

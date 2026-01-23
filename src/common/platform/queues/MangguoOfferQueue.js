@@ -1,34 +1,30 @@
-// 猎人平台报价队列
-// 继承BaseOfferQueue，实现猎人平台特定的逻辑
+// 芒果平台报价队列
+// 继承BaseOfferQueue，实现芒果平台特定的逻辑
 
 import BaseOfferQueue from "../../core/BaseOfferQueue.js";
-import LierenAdapter from "../adapters/LierenAdapter.js";
+import MangguoAdapter from "../adapters/MangguoAdapter.js";
 import {
   getCinemaFlag,
   getCinemaLoginInfoList,
   getCurrentTime,
   logUpload,
-  mockDelay,
-  formatErrInfo
+  mockDelay
 } from "@/utils/utils.js";
-import { LIERENR_REWARDS, GET_APP_INFO } from "@/common/constant.js";
+import { GET_APP_INFO } from "@/common/constant.js";
 import Logger from "../../logger.js";
-import usesMachineBaseFun from "@/mixins/usesMachineBaseFun.js";
-
-const { getRuleIdByPlat } = usesMachineBaseFun();
 
 /**
- * 猎人平台报价队列
+ * 芒果平台报价队列
  */
-export default class LierenOfferQueue extends BaseOfferQueue {
+export default class MangguoOfferQueue extends BaseOfferQueue {
   /**
    * 构造函数
    * @param {boolean} isTestOrder - 是否为测试订单模式
    */
   constructor(isTestOrder = false) {
     const logger = new Logger({ logType: 1 });
-    const adapter = new LierenAdapter(logger, isTestOrder);
-    super(adapter, "lieren", isTestOrder);
+    const adapter = new MangguoAdapter(logger, isTestOrder);
+    super(adapter, "mangguo", isTestOrder);
   }
 
   /**
@@ -44,8 +40,48 @@ export default class LierenOfferQueue extends BaseOfferQueue {
       const stayList = await this.getStayOfferList();
       if (!stayList?.length) return;
 
-      // 过滤和转换订单
+      // 转换订单格式
       const processedList = stayList
+        .map(item => {
+          const {
+            id,
+            maoyan_price,
+            supplier_max_price,
+            city_name,
+            relation_to_cinema,
+            ticket_num,
+            cinema_name,
+            hall_name,
+            film_name,
+            film_img,
+            show_time,
+            is_urgent,
+            order_number,
+            cinemaid,
+            line_name // 品牌名 上影上海、上影二线等
+          } = item;
+          return {
+            plat_name: "mangguo",
+            id: id,
+            tpp_price: maoyan_price,
+            supplier_max_price: supplier_max_price,
+            city_name: city_name,
+            cinema_addr: relation_to_cinema?.cinema_addr || "",
+            ticket_num: ticket_num,
+            cinema_name: cinema_name,
+            hall_name: hall_name,
+            film_name: film_name,
+            film_img: film_img,
+            show_time: show_time,
+            rewards: 0, // 芒果无奖励，只有快捷
+            is_urgent: is_urgent, // 1紧急 0非紧急
+            cinema_group: line_name,
+            cinema_code: relation_to_cinema?.cinema_code || "", // 影院id
+            order_number: order_number,
+            // 转为截止时间戳，原值： 180 倒计时(单位秒)
+            offer_end_time: +new Date() + item.quote_countdown * 1000
+          };
+        })
         .filter(item => {
           const appFlag = getCinemaFlag(item);
           // 如果没有对应登录信息先过滤掉
@@ -61,12 +97,9 @@ export default class LierenOfferQueue extends BaseOfferQueue {
           const app_name = getCinemaFlag(item);
           return {
             ...item,
-            plat_name: "lieren",
             app_name,
             appName: app_name,
-            app_type_code: GET_APP_INFO(app_name)?.app_type_code,
-            rewards: LIERENR_REWARDS[item.order_urgent] || 0, // 0-普通 1-加急 2-特急 3-vip
-            offer_end_time: item.sytime * 1000 // 转为时间戳
+            app_type_code: GET_APP_INFO(app_name)?.app_type_code
           };
         });
 
@@ -83,7 +116,7 @@ export default class LierenOfferQueue extends BaseOfferQueue {
       newOrders.forEach(item => {
         this.handleNewOrder(
           item,
-          stayList.find(itemA => itemA.order_number === item.order_number)
+          stayList.find(itemA => itemA.order_number == item.order_number)
         );
       });
     } catch (error) {
@@ -104,7 +137,7 @@ export default class LierenOfferQueue extends BaseOfferQueue {
       console.error("获取待报价列表异常", error);
       logUpload(
         {
-          plat_name: "lieren",
+          plat_name: "mangguo",
           type: 1
         },
         [
@@ -119,23 +152,6 @@ export default class LierenOfferQueue extends BaseOfferQueue {
         ]
       );
       return [];
-    }
-  }
-  /**
-   * 获取规则ID
-   * @param {Object} order - 订单信息
-   * @returns {Promise<string|number|null>} 规则ID
-   */
-  async getRuleId(order) {
-    try {
-      return await getRuleIdByPlat({
-        plat_name: "lieren",
-        cinema_group: order.cinema_group,
-        app_name: order.app_name
-      });
-    } catch (error) {
-      this.logger.errorSave("获取规则ID异常", { error, order });
-      return null;
     }
   }
 }
