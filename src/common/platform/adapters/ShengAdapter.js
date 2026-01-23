@@ -65,6 +65,47 @@ export default class ShengAdapter extends BasePlatformAdapter {
   }
 
   /**
+   * 获取待出票订单列表
+   * @param {Object} params - 查询参数
+   * @returns {Promise<Array>} 订单列表
+   */
+  async fetchTicketOrderList(params = {}) {
+    try {
+      const params1 = {
+        page: 1,
+        status: "2", // 2表示未接单的订单
+        supplierCode: tokens.shengToken,
+        ...params
+      };
+      const params2 = {
+        page: 1,
+        status: "5", // 5表示已接单的订单
+        supplierCode: tokens.shengToken,
+        ...params
+      };
+
+      const [res1, res2] = await Promise.allSettled([
+        this.api.stayTicketingList(params1),
+        this.api.stayTicketingList(params2)
+      ]);
+
+      const list1 = res1.status === "fulfilled" ? res1.value?.data?.rows || [] : [];
+      const list2 = res2.status === "fulfilled" ? res2.value?.data?.rows || [] : [];
+
+      // 合并两个列表并去重
+      const combinedList = [...list1, ...list2];
+      const list = combinedList.filter((item, index, self) => {
+        return index === self.findIndex(t => t.code === item.code);
+      });
+
+      return list;
+    } catch (error) {
+      this.logger.errorSave("获取待出票订单列表异常", { error });
+      return [];
+    }
+  }
+
+  /**
    * 确认接单（省APP平台需要确认接单）
    * @param {Object} _order - 订单信息
    * @returns {Promise<Object>} 接单结果

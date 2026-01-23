@@ -79,6 +79,30 @@ export default class ShoutuAdapter extends BasePlatformAdapter {
   }
 
   /**
+   * 获取待出票订单列表
+   * @param {Object} params - 查询参数
+   * @returns {Promise<Array>} 订单列表
+   */
+  async fetchTicketOrderList(params = {}) {
+    try {
+      const res = await this.api.stayTicketingList({
+        pageNo: 1,
+        pageSize: 10,
+        isImportantUser: 0,
+        sortField: '',
+        sortType: '',
+        orderType: '',
+        queryStatus: 3,
+        ...params
+      });
+      return res?.data?.page?.list || [];
+    } catch (error) {
+      this.logger.errorSave("获取待出票订单列表异常", { error });
+      return [];
+    }
+  }
+
+  /**
    * 确认接单（守兔平台需要确认接单）
    * @param {Object} order - 订单信息
    * @returns {Promise<Object>} 接单结果

@@ -40,6 +40,25 @@ export default class MangguoAdapter extends BasePlatformAdapter {
   }
 
   /**
+   * 获取待出票订单列表
+   * @param {Object} params - 查询参数
+   * @returns {Promise<Array>} 订单列表
+   */
+  async fetchTicketOrderList(params = {}) {
+    try {
+      const res = await this.api.stayTicketingList({
+        page_size: 12,
+        order_type: "1",
+        ...params
+      });
+      return res?.data?.list || [];
+    } catch (error) {
+      this.logger.errorSave("获取待出票订单列表异常", { error });
+      return [];
+    }
+  }
+
+  /**
    * 提交报价
    * @param {Object} params - 报价参数
    * @returns {Promise<Object>} 提交结果

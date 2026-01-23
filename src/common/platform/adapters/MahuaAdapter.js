@@ -71,6 +71,30 @@ export default class MahuaAdapter extends BasePlatformAdapter {
   }
 
   /**
+   * 获取待出票订单列表
+   * @param {Object} params - 查询参数
+   * @returns {Promise<Array>} 订单列表
+   */
+  async fetchTicketOrderList(params = {}) {
+    try {
+      const res = await this.api.stayTicketingList({
+        pageNo: 1,
+        pageSize: 10,
+        tag: "0",
+        nowId: "",
+        getOrderId: "",
+        movieName: "",
+        cinemaName: "",
+        ...params
+      });
+      return res?.rtnData || [];
+    } catch (error) {
+      this.logger.errorSave("获取待出票订单列表异常", { error });
+      return [];
+    }
+  }
+
+  /**
    * 确认接单（麻花平台需要确认接单）
    * @param {Object} _order - 订单信息
    * @returns {Promise<Object>} 接单结果

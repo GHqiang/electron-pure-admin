@@ -1,11 +1,10 @@
-// 猎人平台订单获取
-// 继承BaseOrderFetcher，实现猎人平台特定的订单获取逻辑
+// 芒果平台订单获取
+// 继承BaseOrderFetcher，实现芒果平台特定的订单获取逻辑
 
 import BaseOrderFetcher from "../../core/BaseOrderFetcher.js";
-import LierenAdapter from "../adapters/LierenAdapter.js";
+import MangguoAdapter from "../adapters/MangguoAdapter.js";
 import Logger from "../../logger.js";
 import { getCinemaFlag, getCurrentTime, logUpload } from "@/utils/utils.js";
-import { LIERENR_REWARDS } from "@/common/constant.js";
 import svApi from "@/api/sv-api.js";
 import { platTokens } from "@/store/platTokens.js";
 
@@ -15,17 +14,17 @@ const {
 } = tokens;
 
 /**
- * 猎人平台订单获取
+ * 芒果平台订单获取
  */
-export default class LierenOrderFetcher extends BaseOrderFetcher {
+export default class MangguoOrderFetcher extends BaseOrderFetcher {
   /**
    * 构造函数
    * @param {boolean} isTestOrder - 是否为测试订单模式
    */
   constructor(isTestOrder = false) {
     const logger = new Logger({ logType: 1 });
-    const adapter = new LierenAdapter(logger, isTestOrder);
-    super(adapter, "lieren", isTestOrder);
+    const adapter = new MangguoAdapter(logger, isTestOrder);
+    super(adapter, "mangguo", isTestOrder);
   }
 
   /**
@@ -34,18 +33,54 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
    */
   async fetchOrders() {
     try {
-      const stayList = await this.lierenOrderFetch();
+      const rawStayList = await this.mangguoOrderFetch();
 
-      if (!stayList?.length) return;
+      if (!rawStayList?.length) return;
 
-      // 添加平台标识
-      const processedList = stayList.map(item => ({
-        ...item,
-        plat_name: "lieren"
-      }));
+      // 数据转换
+      const processedList = rawStayList
+        .map(item => {
+          const {
+            id,
+            maoyan_price,
+            supplier_end_price,
+            city_name,
+            relation_to_cinema,
+            relation_to_seat,
+            ticket_num,
+            cinema_name,
+            hall_name,
+            film_name,
+            film_img,
+            show_time,
+            is_urgent,
+            order_number,
+            line_name
+          } = item;
 
-      // 先过滤出来目前已上架影院的，然后添加影院标识
-      const filteredList = processedList
+          return {
+            id,
+            tpp_price: maoyan_price,
+            supplier_end_price,
+            city_name,
+            cinema_addr: relation_to_cinema?.cinema_addr || "",
+            ticket_num,
+            cinema_name,
+            hall_name,
+            film_name,
+            film_img,
+            show_time,
+            rewards: 0,
+            is_urgent,
+            cinema_group: line_name,
+            cinema_code: relation_to_cinema?.cinema_code,
+            order_number,
+            lockseat: relation_to_seat
+              ?.map(itemA => itemA.position_seat.replace(/\s+/g, ""))
+              .join(" ") || "",
+            plat_name: "mangguo"
+          };
+        })
         .filter(item => getCinemaFlag(item))
         .map(item => {
           const app_name = getCinemaFlag(item);
@@ -57,13 +92,13 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
         });
 
       // 过滤新订单
-      const newOrders = this.filterNewOrders(filteredList);
+      const newOrders = this.filterNewOrders(processedList);
 
       // 记录日志
       const logList = [
         {
           opera_time: getCurrentTime(),
-          des: `${name}：猎人获取待出票列表返回`,
+          des: `${name}：芒果获取待出票列表返回`,
           level: "info",
           info: {
             stayList: newOrders
@@ -73,7 +108,7 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
 
       logUpload(
         {
-          plat_name: "lieren",
+          plat_name: "mangguo",
           app_name: "",
           order_number: "",
           type: 2
@@ -100,10 +135,13 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
           const logList = [
             {
               opera_time: getCurrentTime(),
-              des: "猎人新的待出票订单",
+              des: "芒果新的待出票订单",
               level: "info",
               info: {
-                newOrder: item
+                newOrder: item,
+                oldOrder: rawStayList.find(
+                  order => order.order_number === item.order_number
+                )
               }
             }
           ];
@@ -135,10 +173,10 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
   }
 
   /**
-   * 获取猎人待出票订单列表
+   * 获取芒果待出票订单列表
    * @returns {Promise<Array>} 订单列表
    */
-  async lierenOrderFetch() {
+  async mangguoOrderFetch() {
     try {
       const params = {};
       const res = await this.platformAdapter.fetchTicketOrderList(params);
@@ -151,19 +189,13 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
           )
       );
 
-      // 添加奖励信息
-      const processedList = filteredList.map(item => ({
-        ...item,
-        rewards: LIERENR_REWARDS[item.order_urgent] || 0 // 0-普通 1-加急 2-特急 3-vip
-      }));
-
       // 记录平台订单
-      this.recordPlatformOrders(processedList);
+      this.recordPlatformOrders(filteredList);
 
-      return processedList;
+      return filteredList;
     } catch (error) {
-      console.error("获取猎人待出票列表异常", error);
-      this.logger.errorSave("获取猎人待出票列表异常", { error });
+      console.error("获取芒果待出票列表异常", error);
+      this.logger.errorSave("获取芒果待出票列表异常", { error });
       return [];
     }
   }
@@ -176,7 +208,7 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
     try {
       const ticketRes = await svApi.queryTicketList({
         user_id: tokens.userInfo?.user_id,
-        plat_name: "lieren",
+        plat_name: "mangguo",
         page_num: 1,
         page_size: 30,
         isNeedTotalNum: 0,
@@ -184,8 +216,8 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
       });
       return ticketRes.data.ticketList || [];
     } catch (error) {
-      console.error("获取猎人历史出票记录异常", error);
-      this.logger.errorSave("获取猎人历史出票记录异常", { error });
+      console.error("获取芒果历史出票记录异常", error);
+      this.logger.errorSave("获取芒果历史出票记录异常", { error });
       return [];
     }
   }

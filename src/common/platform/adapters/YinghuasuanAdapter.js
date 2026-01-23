@@ -33,6 +33,56 @@ export default class YinghuasuanAdapter extends BasePlatformAdapter {
   }
 
   /**
+   * 获取待确认订单列表
+   * @param {Object} params - 查询参数
+   * @returns {Promise<Array>} 订单列表
+   */
+  async fetchStayConfirmList(params = {}) {
+    try {
+      const res = await this.api.queryStayConfirmList(params);
+      const list = res?.data || [];
+      // type:订单类型，invitation表示竞价成功的订单。intention表示意向订单，属于各种承包获得的订单
+      return list.filter(item => item.type === "invitation");
+    } catch (error) {
+      this.logger.errorSave("获取待确认订单列表异常", { error });
+      return [];
+    }
+  }
+
+  /**
+   * 确认接单
+   * @param {Object} params - 确认接单参数 { type: "invitation", in_id: xxx }
+   * @returns {Promise<Object>} 确认结果
+   */
+  async confirmOrder(params) {
+    try {
+      const res = await this.api.confirmOrder({
+        type: "invitation",
+        in_id: params.in_id
+      });
+      return res;
+    } catch (error) {
+      this.logger.errorSave("确认接单异常", { error, params });
+      return { error };
+    }
+  }
+
+  /**
+   * 获取待出票订单列表
+   * @param {Object} params - 查询参数
+   * @returns {Promise<Array>} 订单列表
+   */
+  async fetchTicketOrderList(params = {}) {
+    try {
+      const res = await this.api.stayTicketingList(params);
+      return res?.data || [];
+    } catch (error) {
+      this.logger.errorSave("获取待出票订单列表异常", { error });
+      return [];
+    }
+  }
+
+  /**
    * 提交报价
    * @param {Object} params - 报价参数
    * @returns {Promise<Object>} 提交结果

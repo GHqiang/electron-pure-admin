@@ -1,11 +1,10 @@
-// 猎人平台订单获取
-// 继承BaseOrderFetcher，实现猎人平台特定的订单获取逻辑
+// 洋葱平台订单获取
+// 继承BaseOrderFetcher，实现洋葱平台特定的订单获取逻辑
 
 import BaseOrderFetcher from "../../core/BaseOrderFetcher.js";
-import LierenAdapter from "../adapters/LierenAdapter.js";
+import YangcongAdapter from "../adapters/YangcongAdapter.js";
 import Logger from "../../logger.js";
 import { getCinemaFlag, getCurrentTime, logUpload } from "@/utils/utils.js";
-import { LIERENR_REWARDS } from "@/common/constant.js";
 import svApi from "@/api/sv-api.js";
 import { platTokens } from "@/store/platTokens.js";
 
@@ -15,17 +14,17 @@ const {
 } = tokens;
 
 /**
- * 猎人平台订单获取
+ * 洋葱平台订单获取
  */
-export default class LierenOrderFetcher extends BaseOrderFetcher {
+export default class YangcongOrderFetcher extends BaseOrderFetcher {
   /**
    * 构造函数
    * @param {boolean} isTestOrder - 是否为测试订单模式
    */
   constructor(isTestOrder = false) {
     const logger = new Logger({ logType: 1 });
-    const adapter = new LierenAdapter(logger, isTestOrder);
-    super(adapter, "lieren", isTestOrder);
+    const adapter = new YangcongAdapter(logger, isTestOrder);
+    super(adapter, "yangcong", isTestOrder);
   }
 
   /**
@@ -34,18 +33,50 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
    */
   async fetchOrders() {
     try {
-      const stayList = await this.lierenOrderFetch();
+      const rawStayList = await this.yangcongOrderFetch();
 
-      if (!stayList?.length) return;
+      if (!rawStayList?.length) return;
 
-      // 添加平台标识
-      const processedList = stayList.map(item => ({
-        ...item,
-        plat_name: "lieren"
-      }));
+      // 数据转换
+      const processedList = rawStayList
+        .map(item => {
+          const {
+            tradeno,
+            unitPrice,
+            baojia,
+            cityName,
+            cinemaAddress,
+            seatNames,
+            quantity,
+            cinemaName,
+            hallName,
+            movieName,
+            logoUrl,
+            playTime,
+            cinemaChain
+          } = item;
 
-      // 先过滤出来目前已上架影院的，然后添加影院标识
-      const filteredList = processedList
+          return {
+            id: tradeno,
+            tpp_price: unitPrice,
+            supplier_end_price: baojia,
+            city_name: cityName,
+            cinema_addr: cinemaAddress,
+            ticket_num: quantity,
+            cinema_name: cinemaName,
+            hall_name: hallName,
+            film_name: movieName,
+            film_img: logoUrl,
+            show_time: playTime,
+            rewards: 0,
+            is_urgent: "",
+            cinema_group: cinemaChain,
+            cinema_code: "",
+            order_number: tradeno,
+            lockseat: seatNames ? seatNames.split("|").join(" ") : "",
+            plat_name: "yangcong"
+          };
+        })
         .filter(item => getCinemaFlag(item))
         .map(item => {
           const app_name = getCinemaFlag(item);
@@ -57,29 +88,7 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
         });
 
       // 过滤新订单
-      const newOrders = this.filterNewOrders(filteredList);
-
-      // 记录日志
-      const logList = [
-        {
-          opera_time: getCurrentTime(),
-          des: `${name}：猎人获取待出票列表返回`,
-          level: "info",
-          info: {
-            stayList: newOrders
-          }
-        }
-      ];
-
-      logUpload(
-        {
-          plat_name: "lieren",
-          app_name: "",
-          order_number: "",
-          type: 2
-        },
-        logList
-      );
+      const newOrders = this.filterNewOrders(processedList);
 
       // 如果不是测试订单，从远端过滤已出票的订单
       if (newOrders?.length && !this.isTestOrder) {
@@ -100,10 +109,13 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
           const logList = [
             {
               opera_time: getCurrentTime(),
-              des: "猎人新的待出票订单",
+              des: "洋葱新的待出票订单",
               level: "info",
               info: {
-                newOrder: item
+                newOrder: item,
+                oldOrder: rawStayList.find(
+                  order => order.tradeno === item.order_number
+                )
               }
             }
           ];
@@ -135,10 +147,10 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
   }
 
   /**
-   * 获取猎人待出票订单列表
+   * 获取洋葱待出票订单列表
    * @returns {Promise<Array>} 订单列表
    */
-  async lierenOrderFetch() {
+  async yangcongOrderFetch() {
     try {
       const params = {};
       const res = await this.platformAdapter.fetchTicketOrderList(params);
@@ -146,24 +158,16 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
       // 过滤已记录的订单
       const filteredList = res.filter(
         item =>
-          !this.platOrderList.some(
-            itemA => itemA.order_number === item.order_number
-          )
+          !this.platOrderList.some(itemA => itemA.tradeno === item.tradeno)
       );
 
-      // 添加奖励信息
-      const processedList = filteredList.map(item => ({
-        ...item,
-        rewards: LIERENR_REWARDS[item.order_urgent] || 0 // 0-普通 1-加急 2-特急 3-vip
-      }));
-
       // 记录平台订单
-      this.recordPlatformOrders(processedList);
+      this.recordPlatformOrders(filteredList);
 
-      return processedList;
+      return filteredList;
     } catch (error) {
-      console.error("获取猎人待出票列表异常", error);
-      this.logger.errorSave("获取猎人待出票列表异常", { error });
+      console.error("获取洋葱待出票列表异常", error);
+      this.logger.errorSave("获取洋葱待出票列表异常", { error });
       return [];
     }
   }
@@ -176,7 +180,7 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
     try {
       const ticketRes = await svApi.queryTicketList({
         user_id: tokens.userInfo?.user_id,
-        plat_name: "lieren",
+        plat_name: "yangcong",
         page_num: 1,
         page_size: 30,
         isNeedTotalNum: 0,
@@ -184,8 +188,8 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
       });
       return ticketRes.data.ticketList || [];
     } catch (error) {
-      console.error("获取猎人历史出票记录异常", error);
-      this.logger.errorSave("获取猎人历史出票记录异常", { error });
+      console.error("获取洋葱历史出票记录异常", error);
+      this.logger.errorSave("获取洋葱历史出票记录异常", { error });
       return [];
     }
   }

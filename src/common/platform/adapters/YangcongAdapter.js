@@ -33,6 +33,21 @@ export default class YangcongAdapter extends BasePlatformAdapter {
   }
 
   /**
+   * 获取待出票订单列表
+   * @param {Object} params - 查询参数
+   * @returns {Promise<Array>} 订单列表
+   */
+  async fetchTicketOrderList(params = {}) {
+    try {
+      const res = await this.api.stayTicketingList(params);
+      return res?.data || [];
+    } catch (error) {
+      this.logger.errorSave("获取待出票订单列表异常", { error });
+      return [];
+    }
+  }
+
+  /**
    * 提交报价
    * @param {Object} params - 报价参数
    * @returns {Promise<Object>} 提交结果

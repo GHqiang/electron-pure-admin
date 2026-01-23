@@ -60,6 +60,29 @@ export default class HahaAdapter extends BasePlatformAdapter {
   }
 
   /**
+   * 获取待出票订单列表
+   * @param {Object} params - 查询参数
+   * @returns {Promise<Array>} 订单列表
+   */
+  async fetchTicketOrderList(params = {}) {
+    try {
+      const res = await this.api.stayTicketingList({
+        pageNo: 1,
+        pageSize: 10,
+        total: 0,
+        tab: 0,
+        type: 1,
+        mold: 1,
+        ...params
+      });
+      return res?.data || [];
+    } catch (error) {
+      this.logger.errorSave("获取待出票订单列表异常", { error });
+      return [];
+    }
+  }
+
+  /**
    * 确认接单（哈哈平台需要确认接单）
    * @param {Object} order - 订单信息
    * @returns {Promise<Object>} 接单结果

@@ -1,11 +1,16 @@
-// 猎人平台订单获取
-// 继承BaseOrderFetcher，实现猎人平台特定的订单获取逻辑
+// 哈哈平台订单获取
+// 继承BaseOrderFetcher，实现哈哈平台特定的订单获取逻辑
 
 import BaseOrderFetcher from "../../core/BaseOrderFetcher.js";
-import LierenAdapter from "../adapters/LierenAdapter.js";
+import HahaAdapter from "../adapters/HahaAdapter.js";
 import Logger from "../../logger.js";
-import { getCinemaFlag, getCurrentTime, logUpload } from "@/utils/utils.js";
-import { LIERENR_REWARDS } from "@/common/constant.js";
+import {
+  getCinemaFlag,
+  getCinemaCode,
+  getCurrentTime,
+  logUpload,
+  removeLeadingZeros
+} from "@/utils/utils.js";
 import svApi from "@/api/sv-api.js";
 import { platTokens } from "@/store/platTokens.js";
 
@@ -15,17 +20,17 @@ const {
 } = tokens;
 
 /**
- * 猎人平台订单获取
+ * 哈哈平台订单获取
  */
-export default class LierenOrderFetcher extends BaseOrderFetcher {
+export default class HahaOrderFetcher extends BaseOrderFetcher {
   /**
    * 构造函数
    * @param {boolean} isTestOrder - 是否为测试订单模式
    */
   constructor(isTestOrder = false) {
     const logger = new Logger({ logType: 1 });
-    const adapter = new LierenAdapter(logger, isTestOrder);
-    super(adapter, "lieren", isTestOrder);
+    const adapter = new HahaAdapter(logger, isTestOrder);
+    super(adapter, "haha", isTestOrder);
   }
 
   /**
@@ -34,52 +39,73 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
    */
   async fetchOrders() {
     try {
-      const stayList = await this.lierenOrderFetch();
+      const rawStayList = await this.hahaOrderFetch();
 
-      if (!stayList?.length) return;
+      if (!rawStayList?.length) return;
 
-      // 添加平台标识
-      const processedList = stayList.map(item => ({
-        ...item,
-        plat_name: "lieren"
-      }));
+      // 数据转换
+      const processedList = rawStayList
+        .map(item => {
+          const {
+            id,
+            maoyan_price,
+            price,
+            city,
+            seatInfo,
+            num,
+            cinemaName,
+            ting,
+            movie,
+            image,
+            time,
+            orderNumber,
+            b_id
+          } = item;
 
-      // 先过滤出来目前已上架影院的，然后添加影院标识
-      const filteredList = processedList
+          const lockseat = seatInfo
+            ? seatInfo
+                .split(",")
+                .map(itemA => removeLeadingZeros(itemA + "座"))
+                .join(" ")
+            : "";
+
+          return {
+            id,
+            tpp_price: maoyan_price,
+            supplier_end_price: Number(price),
+            city_name: city,
+            cinema_addr: "",
+            ticket_num: num,
+            cinema_name: cinemaName,
+            hall_name: ting,
+            film_name: movie,
+            film_img: image,
+            show_time: time,
+            rewards: 0,
+            is_urgent: 0,
+            cinema_group: "",
+            cinema_code: "",
+            order_number: orderNumber,
+            lockseat,
+            bid: b_id,
+            plat_name: "haha"
+          };
+        })
         .filter(item => getCinemaFlag(item))
         .map(item => {
           const app_name = getCinemaFlag(item);
+          const cinema_code = getCinemaCode(item);
           return {
             ...item,
+            cinema_code,
             app_name,
             appName: app_name
           };
-        });
+        })
+        .filter(item => item.cinema_code); // 过滤掉没有cinema_code的订单
 
       // 过滤新订单
-      const newOrders = this.filterNewOrders(filteredList);
-
-      // 记录日志
-      const logList = [
-        {
-          opera_time: getCurrentTime(),
-          des: `${name}：猎人获取待出票列表返回`,
-          level: "info",
-          info: {
-            stayList: newOrders
-          }
-        }
-      ];
-
-      logUpload(
-        {
-          plat_name: "lieren",
-          app_name: "",
-          order_number: "",
-          type: 2
-        },
-        logList
-      );
+      const newOrders = this.filterNewOrders(processedList);
 
       // 如果不是测试订单，从远端过滤已出票的订单
       if (newOrders?.length && !this.isTestOrder) {
@@ -100,7 +126,7 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
           const logList = [
             {
               opera_time: getCurrentTime(),
-              des: "猎人新的待出票订单",
+              des: "哈哈新的待出票订单",
               level: "info",
               info: {
                 newOrder: item
@@ -135,35 +161,26 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
   }
 
   /**
-   * 获取猎人待出票订单列表
+   * 获取哈哈待出票订单列表
    * @returns {Promise<Array>} 订单列表
    */
-  async lierenOrderFetch() {
+  async hahaOrderFetch() {
     try {
       const params = {};
       const res = await this.platformAdapter.fetchTicketOrderList(params);
 
       // 过滤已记录的订单
       const filteredList = res.filter(
-        item =>
-          !this.platOrderList.some(
-            itemA => itemA.order_number === item.order_number
-          )
+        item => !this.platOrderList.some(itemA => itemA.id === item.id)
       );
 
-      // 添加奖励信息
-      const processedList = filteredList.map(item => ({
-        ...item,
-        rewards: LIERENR_REWARDS[item.order_urgent] || 0 // 0-普通 1-加急 2-特急 3-vip
-      }));
-
       // 记录平台订单
-      this.recordPlatformOrders(processedList);
+      this.recordPlatformOrders(filteredList);
 
-      return processedList;
+      return filteredList;
     } catch (error) {
-      console.error("获取猎人待出票列表异常", error);
-      this.logger.errorSave("获取猎人待出票列表异常", { error });
+      console.error("获取哈哈待出票列表异常", error);
+      this.logger.errorSave("获取哈哈待出票列表异常", { error });
       return [];
     }
   }
@@ -176,7 +193,7 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
     try {
       const ticketRes = await svApi.queryTicketList({
         user_id: tokens.userInfo?.user_id,
-        plat_name: "lieren",
+        plat_name: "haha",
         page_num: 1,
         page_size: 30,
         isNeedTotalNum: 0,
@@ -184,8 +201,8 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
       });
       return ticketRes.data.ticketList || [];
     } catch (error) {
-      console.error("获取猎人历史出票记录异常", error);
-      this.logger.errorSave("获取猎人历史出票记录异常", { error });
+      console.error("获取哈哈历史出票记录异常", error);
+      this.logger.errorSave("获取哈哈历史出票记录异常", { error });
       return [];
     }
   }
