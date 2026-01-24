@@ -1,4 +1,5 @@
 import getSfcOfferPrice from "./sfcOffer";
+import getSfcOfferPriceNew from "../autoTicket/buyTicket/sfc/offerManage.js";
 import getChenxingOfferPrice from "../autoTicket/buyTicket/chenxing/offerManage.js";
 import getFenghuangOfferPrice from "../autoTicket/buyTicket/fenghuang/offerManage.js";
 import getJinyiOfferPrice from "../autoTicket/buyTicket/jinyi/offerManage.js";
@@ -25,7 +26,7 @@ const getOfferPriceFun = params => {
   } else if (appFlag == "lma") {
     return new getLmaOfferPriceNew(params);
   } else if (GET_SFC_APP_LIST().includes(appFlag)) {
-    return new getSfcOfferPrice(params);
+    return new getSfcOfferPriceNew(params);
   } else if (GET_CHENXING_LIST().includes(appFlag)) {
     return new getChenxingOfferPrice(params);
   } else if (GET_FENGHUANG_LIST().includes(appFlag)) {
