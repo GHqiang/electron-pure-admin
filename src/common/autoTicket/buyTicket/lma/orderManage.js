@@ -63,7 +63,7 @@ export default class LmaOrderManage {
 
   // 创建订单（LMA锁座即创建订单，此方法保留接口兼容）
   async createOrder(params) {
-    // LMA的锁座即创建订单，此方法在buyTicket.js的lockSeatHandle中已处理
+    // LMA的锁座即创建订单，锁座逻辑在 seatManage.lockseatByApp 中已处理
     // 保留此方法用于接口兼容
     return params;
   }
