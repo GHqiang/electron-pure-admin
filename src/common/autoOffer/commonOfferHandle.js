@@ -5,6 +5,7 @@ import getJinyiOfferPrice from "../autoTicket/buyTicket/jinyi/offerManage.js";
 import getUmeOfferPrice from "./umeOffer";
 import getH5UmeOfferPrice from "./h5umeOffer.js";
 import getLmaOfferPrice from "./lmaOffer";
+import getLmaOfferPriceNew from "../autoTicket/buyTicket/lma/offerManage.js"; // 新实现
 import {
   GET_UME_LIST,
   GET_H5_UME_LIST,
@@ -22,7 +23,7 @@ const getOfferPriceFun = params => {
   } else if (GET_H5_UME_LIST().includes(appFlag)) {
     return new getH5UmeOfferPrice(params);
   } else if (appFlag == "lma") {
-    return new getLmaOfferPrice(params);
+    return new getLmaOfferPriceNew(params);
   } else if (GET_SFC_APP_LIST().includes(appFlag)) {
     return new getSfcOfferPrice(params);
   } else if (GET_CHENXING_LIST().includes(appFlag)) {
