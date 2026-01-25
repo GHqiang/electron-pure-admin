@@ -193,33 +193,14 @@ import shengApi from "@/api/sheng-api";
 import mangguoApi from "@/api/mangguo-api";
 import yangcongApi from "@/api/yangcong-api";
 
-// 平台报价执行队列
-import { offerQueueFactory } from "@/common/factories/QueueFactory.js";
-// import lierenOfferQueue from "@/common/autoOffer/useLierenOffer";
-import shengOfferQueue from "@/common/autoOffer/useShengOffer";
-import mangguoOfferQueue from "@/common/autoOffer/useMangguoOffer";
-import mayiOfferQueue from "@/common/autoOffer/useMayiOffer";
-import yangcongOfferQueue from "@/common/autoOffer/useYangcongOffer";
-import yinghuasuanOfferQueue from "@/common/autoOffer/useYinghuasuanOffer";
-import shangzhanOfferQueue from "@/common/autoOffer/useShangzhanOffer";
-import hahaOfferQueue from "@/common/autoOffer/useHahaOffer";
-import shoutuOfferQueue from "@/common/autoOffer/useShoutuOffer";
-import mahuaOfferQueue from "@/common/autoOffer/useMahuaOffer";
-
-// 平台待出票订单执行队列
-import lierenFetchOrder from "@/common/orderFetch/lierenFetchOrder";
-import shengFetchOrder from "@/common/orderFetch/shengFetchOrder";
-import mangguoFetchOrder from "@/common/orderFetch/mangguoFetchOrder";
-import mayiFetchOrder from "@/common/orderFetch/mayiFetchOrder";
-import yangcongFetchOrder from "@/common/orderFetch/yangcongFetchOrder";
-import yinghuasuanFetchOrder from "@/common/orderFetch/yinghuasuanFetchOrder";
-import shangzhanFetchOrder from "@/common/orderFetch/shangzhanFetchOrder";
-import hahaFetchOrder from "@/common/orderFetch/hahaFetchOrder";
-import shoutuFetchOrder from "@/common/orderFetch/shoutuFetchOrder";
-import mahuaFetchOrder from "@/common/orderFetch/mahuaFetchOrder";
+// 统一使用工厂类创建队列
+import {
+  offerQueueFactory,
+  fetchOrderQueueFactory
+} from "@/common/factories/QueueFactory.js";
 
 import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
-import createTucketQueueFun from "@/common/autoTicket/comTicketHandle";
+import createTicketQueueFun from "@/common/autoTicket/comTicketHandle";
 import { ORDER_FORM, GET_APP_LIST, IN_RULE_LIST } from "@/common/constant";
 const APP_LIST = computed(() => GET_APP_LIST());
 
@@ -297,39 +278,26 @@ const syncYangcongCinemaList = async (list = [], pageNum = 1) => {
     ElMessage.warning("同步洋葱影院列表失败");
   }
 };
-// 平台报价队列集合
-let platOfferQueueObj = {
-  lieren: offerQueueFactory.getOfferQueue("lieren"),
-  mangguo: mangguoOfferQueue,
-  mayi: mayiOfferQueue,
-  yangcong: yangcongOfferQueue,
-  yinghuasuan: yinghuasuanOfferQueue,
-  shangzhan: shangzhanOfferQueue,
-  haha: hahaOfferQueue,
-  sheng: shengOfferQueue,
-  shoutu: shoutuOfferQueue,
-  mahua: mahuaOfferQueue
-};
 
-// 平台获取待出票订单队列集合
-let platFetchOrderQueueObj = {
-  lieren: lierenFetchOrder,
-  mangguo: mangguoFetchOrder,
-  mayi: mayiFetchOrder,
-  yangcong: yangcongFetchOrder,
-  yinghuasuan: yinghuasuanFetchOrder,
-  shangzhan: shangzhanFetchOrder,
-  haha: hahaFetchOrder,
-  sheng: shengFetchOrder,
-  shoutu: shoutuFetchOrder,
-  mahua: mahuaFetchOrder
-};
+// 平台报价队列集合 - 通过工厂类创建
+let platOfferQueueObj = {};
+Object.keys(ORDER_FORM).forEach(plat_name => {
+  platOfferQueueObj[plat_name] = offerQueueFactory.getOfferQueue(plat_name);
+});
+
+// 平台获取待出票订单队列集合 - 通过工厂类创建
+let platFetchOrderQueueObj = {};
+Object.keys(ORDER_FORM).forEach(plat_name => {
+  platFetchOrderQueueObj[plat_name] =
+    fetchOrderQueueFactory.getFetchOrderQueue(plat_name);
+});
 
 // 平台出票队列集合
+// 注意：出票队列在构造函数中会添加事件监听器，不能重新初始化，否则会导致重复订阅
 let appTicketQueueObj = {};
-console.warn("appTicketQueueObj", 1);
-Object.keys(APP_LIST.value).forEach(item => {
-  appTicketQueueObj[item] = createTucketQueueFun(item);
+// 初始化出票队列（只初始化一次，避免重复订阅事件）
+Object.keys(APP_LIST.value).forEach(app_name => {
+  appTicketQueueObj[app_name] = createTicketQueueFun(app_name);
 });
 window.appTicketQueueObj = appTicketQueueObj;
 
@@ -373,6 +341,7 @@ let isStartTicket = true; // 自动出票队列
 // 一键启动
 const oneClickStart = () => {
   // 删除没有登录信息的队列
+  // 注意：不能重新初始化出票队列，否则会导致事件监听器重复订阅
   let loginInfoList = getCinemaLoginInfoList();
   Object.keys(APP_LIST.value).forEach(item => {
     let obj = loginInfoList.find(
@@ -380,6 +349,11 @@ const oneClickStart = () => {
     );
     if (!obj) {
       delete appTicketQueueObj[item];
+    } else {
+      // 如果队列不存在，则创建（只创建新的，不重新初始化已存在的）
+      if (!appTicketQueueObj[item]) {
+        appTicketQueueObj[item] = createTicketQueueFun(item);
+      }
     }
   });
 
@@ -399,8 +373,8 @@ const oneClickStart = () => {
         } else {
           tableDataStore.toggleEnable(item.id);
           setPlatFunObj[item.platName](item.platToken);
-          isStartOffer && platOfferQueueObj[item.platName].start();
-          isStartFetch && platFetchOrderQueueObj[item.platName].start();
+          isStartOffer && platOfferQueueObj[item.platName]?.start();
+          isStartFetch && platFetchOrderQueueObj[item.platName]?.start();
           // 1分钟同步1次中标价
           // const { platName, syncPageSize } = item;
           // if (syncPageSize && syncPricePlatList.includes(platName)) {
@@ -454,8 +428,8 @@ const oneClickStop = () => {
       console.warn("一键停止自动报价队列");
       tableDataStore.items.forEach(item => {
         item.isEnabled = false;
-        isStartOffer && platOfferQueueObj[item.platName].stop();
-        isStartFetch && platFetchOrderQueueObj[item.platName].stop();
+        isStartOffer && platOfferQueueObj[item.platName]?.stop();
+        isStartFetch && platFetchOrderQueueObj[item.platName]?.stop();
         // 清空同步中标价的定时器
         clearInterval(syncIntervalObj[item.platName]);
         syncIntervalObj[item.platName] = null;
@@ -495,8 +469,8 @@ const singleStartOrStop = ({ id, platToken, platName, syncPageSize }, flag) => {
     }
     tableDataStore.toggleEnable(id);
     setPlatFunObj[platName](platToken);
-    isStartOffer && platOfferQueueObj[platName].start();
-    isStartFetch && platFetchOrderQueueObj[platName].start();
+    isStartOffer && platOfferQueueObj[platName]?.start();
+    isStartFetch && platFetchOrderQueueObj[platName]?.start();
     // 1分钟同步1次中标价
     // if (syncPageSize && syncPricePlatList.includes(platName)) {
     //   syncPriceHandle(platName, syncPageSize);
@@ -506,6 +480,7 @@ const singleStartOrStop = ({ id, platToken, platName, syncPageSize }, flag) => {
     //   );
     // }
     // 删除没有登录信息的队列
+    // 注意：不能重新初始化出票队列，否则会导致事件监听器重复订阅
     let loginInfoList = getCinemaLoginInfoList();
     Object.keys(APP_LIST.value).forEach(item => {
       let obj = loginInfoList.find(
@@ -513,6 +488,11 @@ const singleStartOrStop = ({ id, platToken, platName, syncPageSize }, flag) => {
       );
       if (!obj) {
         delete appTicketQueueObj[item];
+      } else {
+        // 如果队列不存在，则创建（只创建新的，不重新初始化已存在的）
+        if (!appTicketQueueObj[item]) {
+          appTicketQueueObj[item] = createTicketQueueFun(item);
+        }
       }
     });
     // 其它没有一个启动的再启动
@@ -524,8 +504,8 @@ const singleStartOrStop = ({ id, platToken, platName, syncPageSize }, flag) => {
   } else {
     // 单个停止
     tableDataStore.toggleEnable(id);
-    isStartOffer && platOfferQueueObj[platName].stop();
-    isStartFetch && platFetchOrderQueueObj[platName].stop();
+    isStartOffer && platOfferQueueObj[platName]?.stop();
+    isStartFetch && platFetchOrderQueueObj[platName]?.stop();
     // 清空同步中标价的定时器
     clearInterval(syncIntervalObj[platName]);
     syncIntervalObj[platName] = null;

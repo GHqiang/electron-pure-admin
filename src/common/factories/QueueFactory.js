@@ -10,17 +10,19 @@ import YinghuasuanOfferQueue from "../platform/queues/YinghuasuanOfferQueue.js";
 import ShoutuOfferQueue from "../platform/queues/ShoutuOfferQueue.js";
 import MahuaOfferQueue from "../platform/queues/MahuaOfferQueue.js";
 import ShengOfferQueue from "../platform/queues/ShengOfferQueue.js";
-// import ShangzhanOfferQueue from "../platform/queues/ShangzhanOfferQueue.js";
-import {
-  GET_UME_LIST,
-  GET_H5_UME_LIST,
-  GET_SFC_APP_LIST
-} from "../constant.js";
-import createSfcTicketQueue from "../autoTicket/sfcAutoTicket.js";
-import createUmeTicketQueue from "../autoTicket/umeAutoTicket.js";
-import createCommonTicketQueue from "../autoTicket/commonAutoTicket.js";
-import createH5UmeTicketQueue from "../autoTicket/h5umeAutoTicket.js";
-import createLmaTicketQueue from "../autoTicket/lmaAutoTicket.js";
+import ShangzhanOfferQueue from "../platform/queues/ShangzhanOfferQueue.js";
+
+// 获取订单队列
+import lierenFetchOrder from "../orderFetch/lierenFetchOrder.js";
+import shengFetchOrder from "../orderFetch/shengFetchOrder.js";
+import mangguoFetchOrder from "../orderFetch/mangguoFetchOrder.js";
+import mayiFetchOrder from "../orderFetch/mayiFetchOrder.js";
+import yangcongFetchOrder from "../orderFetch/yangcongFetchOrder.js";
+import yinghuasuanFetchOrder from "../orderFetch/yinghuasuanFetchOrder.js";
+import shangzhanFetchOrder from "../orderFetch/shangzhanFetchOrder.js";
+import hahaFetchOrder from "../orderFetch/hahaFetchOrder.js";
+import shoutuFetchOrder from "../orderFetch/shoutuFetchOrder.js";
+import mahuaFetchOrder from "../orderFetch/mahuaFetchOrder.js";
 
 /**
  * 报价队列工厂
@@ -42,7 +44,7 @@ class OfferQueueFactory {
     this.registerOfferQueue("shoutu", ShoutuOfferQueue);
     this.registerOfferQueue("mahua", MahuaOfferQueue);
     this.registerOfferQueue("sheng", ShengOfferQueue);
-    // this.registerOfferQueue("shangzhan", ShangzhanOfferQueue);
+    this.registerOfferQueue("shangzhan", ShangzhanOfferQueue);
   }
 
   /**
@@ -123,37 +125,88 @@ class OfferQueueFactory {
 }
 
 /**
- * 出票队列工厂
+ * 获取订单队列工厂
  */
-class TicketQueueFactory {
+class FetchOrderQueueFactory {
+  constructor() {
+    // 获取订单队列实例缓存
+    this.fetchOrderQueues = new Map();
+    // 获取订单队列映射
+    this.fetchOrderQueueMap = new Map();
+
+    // 注册所有平台的获取订单队列
+    this.registerFetchOrderQueue("lieren", lierenFetchOrder);
+    this.registerFetchOrderQueue("sheng", shengFetchOrder);
+    this.registerFetchOrderQueue("mangguo", mangguoFetchOrder);
+    this.registerFetchOrderQueue("mayi", mayiFetchOrder);
+    this.registerFetchOrderQueue("yangcong", yangcongFetchOrder);
+    this.registerFetchOrderQueue("yinghuasuan", yinghuasuanFetchOrder);
+    this.registerFetchOrderQueue("shangzhan", shangzhanFetchOrder);
+    this.registerFetchOrderQueue("haha", hahaFetchOrder);
+    this.registerFetchOrderQueue("shoutu", shoutuFetchOrder);
+    this.registerFetchOrderQueue("mahua", mahuaFetchOrder);
+  }
+
   /**
-   * 创建出票队列
-   * @param {string} appFlag - 影院标识
-   * @returns {BaseTicketQueue} 出票队列实例
+   * 注册获取订单队列
+   * @param {string} platName - 平台名称
+   * @param {Object} fetchOrderQueue - 获取订单队列实例
    */
-  createTicketQueue(appFlag) {
-    // 根据影院类型创建不同的出票队列
-    if (GET_UME_LIST().includes(appFlag)) {
-      return createUmeTicketQueue(appFlag);
-    } else if (GET_H5_UME_LIST().includes(appFlag)) {
-      return createH5UmeTicketQueue(appFlag);
-    } else if (appFlag === "lma") {
-      return createLmaTicketQueue(appFlag);
-    } else if (GET_SFC_APP_LIST().includes(appFlag)) {
-      return createSfcTicketQueue(appFlag);
+  registerFetchOrderQueue(platName, fetchOrderQueue) {
+    if (!fetchOrderQueue) {
+      throw new Error(`获取订单队列不能为空: ${platName}`);
+    }
+    this.fetchOrderQueueMap.set(platName, fetchOrderQueue);
+  }
+
+  /**
+   * 获取订单队列（如果不存在则从缓存获取）
+   * @param {string} platName - 平台名称
+   * @returns {Object|null} 获取订单队列实例
+   */
+  getFetchOrderQueue(platName) {
+    try {
+      // 检查缓存
+      if (this.fetchOrderQueues.has(platName)) {
+        return this.fetchOrderQueues.get(platName);
+      }
+
+      // 从映射中获取
+      const queue = this.fetchOrderQueueMap.get(platName);
+      if (!queue) {
+        console.warn(`不支持的平台获取订单队列: ${platName}`);
+        return null;
+      }
+
+      // 缓存实例
+      this.fetchOrderQueues.set(platName, queue);
+
+      return queue;
+    } catch (error) {
+      console.error(`获取订单队列失败: ${platName}`, error);
+      return null;
+    }
+  }
+
+  /**
+   * 清除缓存
+   * @param {string} [platName] - 平台名称，如果提供则只清除该平台，否则清除所有
+   */
+  clearFetchOrderQueueCache(platName = null) {
+    if (platName) {
+      this.fetchOrderQueues.delete(platName);
     } else {
-      // 统一公共订单执行队列
-      return createCommonTicketQueue(appFlag);
+      this.fetchOrderQueues.clear();
     }
   }
 }
 
 // 导出单例实例
 const offerQueueFactory = new OfferQueueFactory();
-const ticketQueueFactory = new TicketQueueFactory();
+const fetchOrderQueueFactory = new FetchOrderQueueFactory();
 
-export { offerQueueFactory, ticketQueueFactory };
+export { offerQueueFactory, fetchOrderQueueFactory };
 export default {
   offerQueueFactory,
-  ticketQueueFactory
+  fetchOrderQueueFactory
 };

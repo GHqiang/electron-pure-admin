@@ -3,7 +3,7 @@
 
 import { getCurrentTime, formatErrInfo } from "@/utils/utils.js";
 import Logger from "../logger.js";
-import StrategyFactory from "../autoTicket/buyTicket/index.js";
+import StrategyFactory from "@/common/autoTicket/buyTicket/index";
 
 /**
  * 出票队列基类
@@ -13,10 +13,12 @@ export default class BaseTicketQueue {
   /**
    * 构造函数
    * @param {string} appFlag - 影院标识
+   * @param {boolean} isTestOrder - 是否为测试订单模式
    * @param {Object} platformAdapter - 平台适配器实例（可选）
    */
-  constructor(appFlag, platformAdapter = null) {
+  constructor(appFlag, isTestOrder = false, platformAdapter = null) {
     this.appFlag = appFlag;
+    this.isTestOrder = isTestOrder;
     this.platformAdapter = platformAdapter;
     this.queue = [];
     this.isRunning = false;
@@ -25,7 +27,7 @@ export default class BaseTicketQueue {
     this.eventName = `newOrder_${appFlag}`;
     this.isStart = false;
     this.logger = new Logger({ logType: 3 });
-    
+
     // 监听新订单事件
     window.addEventListener(this.eventName, this.handleNewOrder.bind(this));
   }
@@ -47,10 +49,10 @@ export default class BaseTicketQueue {
    */
   handleNewOrder(event) {
     if (!this.isStart) return;
-    
+
     const isAgain = event.detail?.isAgain;
     let order = event.detail;
-    
+
     if (isAgain) {
       order = event.detail?.order;
     }
@@ -86,7 +88,7 @@ export default class BaseTicketQueue {
 
     // 添加新订单到队列
     this.queue.push(order);
-    
+
     if (!this.isRunning) {
       this.startProcessingQueue();
     }
@@ -97,20 +99,20 @@ export default class BaseTicketQueue {
    */
   async startProcessingQueue() {
     this.isRunning = true;
-    
+
     while (this.queue.length > 0 && this.isRunning) {
       const order = this.queue.shift();
-      
+
       if (order) {
         const logger = new Logger({ logType: 3 });
-        
+
         if (!order.isAgain && this.prevOrderNumber === order.order_number) {
           logger.warn("当前订单重复执行,直接执行下个");
         } else {
           logger.init(order);
           const res = await this.orderHandle(order, logger);
           this.prevOrderNumber = order.order_number;
-          
+
           logger.infoSave(
             `单个订单自动出票结束，状态-${res?.submitRes ? "成功" : "失败"}`,
             { res }
@@ -122,7 +124,7 @@ export default class BaseTicketQueue {
         }
       }
     }
-    
+
     this.isRunning = false;
   }
 
@@ -137,14 +139,14 @@ export default class BaseTicketQueue {
       logger.infoSave(
         `订单开始出票，订单号-${order.order_number}，上个订单号-${this.prevOrderNumber}`
       );
-      
+
       if (this.isRunning) {
         const buyTicket = StrategyFactory.createSeatStrategy(
           order,
           logger,
           this.isTestOrder
         );
-        
+
         const res = await buyTicket.singleTicket();
         // result: { profit, submitRes, qrcode, quan_code, card_id, cardNum, quanType, offerRule, mobile }
         return res;
@@ -184,7 +186,7 @@ export default class BaseTicketQueue {
   testSendNewOrder(order) {
     this.isTestOrder = true;
     this.start();
-    
+
     const newOrder = order || this.getDefaultTestOrder();
     const eventName = `newOrder_${this.appFlag}`;
     const newOrderEvent = new CustomEvent(eventName, { detail: newOrder });
