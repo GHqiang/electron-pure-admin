@@ -4,6 +4,7 @@ import FenghuangBuyTicket from "./fenghuang/buyTicket";
 import JINYIBuyTicket from "./jinyi/buyTicket";
 import LmaBuyTicket from "./lma/buyTicket"; // LMA新实现
 import SfcBuyTicket from "./sfc/buyTicket"; // SFC模块化实现
+import UmeBuyTicket from "./ume/buyTicket"; // UME模块化实现
 import { GET_APP_INFO } from "@/common/constant";
 
 // 支持的影院策略映射
@@ -12,7 +13,8 @@ const STRATEGY_MAP = {
   fenghuang_applet: FenghuangBuyTicket,
   jinyi_applet: JINYIBuyTicket,
   lma: LmaBuyTicket,
-  sfc_applet: SfcBuyTicket
+  sfc_applet: SfcBuyTicket,
+  ume_applet: UmeBuyTicket
 };
 
 // 策略工厂
