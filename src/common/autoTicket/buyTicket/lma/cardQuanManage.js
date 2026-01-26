@@ -513,6 +513,14 @@ export default class LmaCardQuanManage {
         });
       }
 
+      if (targetQuanList?.length < ticket_num) {
+        let quanDiffMsg = isGetNewQuan
+          ? "目标券从数据库获取后仍不足"
+          : "目标券不足";
+        this.logger.errorSave(quanDiffMsg, { targetQuanList });
+        return { error: quanDiffMsg };
+      }
+
       if (targetQuanList?.length - ticket_num < 10 && is_store == "1") {
         this.logger.infoSave("本次出票后券小于10，开始异步绑定券");
         this.getNewQuan({
@@ -526,14 +534,6 @@ export default class LmaCardQuanManage {
           plat_name,
           order_number
         });
-      }
-
-      if (targetQuanList?.length < ticket_num) {
-        let quanDiffMsg = isGetNewQuan
-          ? "目标券从数据库获取后仍不足"
-          : "目标券不足";
-        this.logger.errorSave(quanDiffMsg, { targetQuanList });
-        return { error: quanDiffMsg };
       }
 
       targetQuanList = targetQuanList.slice(0, ticket_num);
