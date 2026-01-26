@@ -345,13 +345,13 @@ class getUmeOfferPrice extends BaseOfferPrice {
     const {
       cost_price,
       supplier_max_price,
-      price,
       rewards,
       offerType,
       offerList,
       plat_name,
       offerRule
     } = params;
+    let price = params.price;
 
     try {
       // 1. 利润加价处理
