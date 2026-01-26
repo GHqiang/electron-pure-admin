@@ -3,6 +3,7 @@ import {
   getCurrentTime,
   couponInfoSpecial,
   getCinemaLoginInfoList,
+  formatErrInfo,
   logUpload
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
@@ -152,7 +153,7 @@ export async function syncUpdateQuanStock({
       }
     }
   } catch (error) {
-    logger.infoSave("异步更新券库存异常", { error: formattedError(error) });
+    logger.infoSave("异步更新券库存异常", { error: formatErrInfo(error) });
   } finally {
     logger.logUpload();
   }
@@ -165,7 +166,7 @@ async function singleUpdateQuanStock(obj) {
     const res = await svApi.updateQuanType(params);
     logger.infoSave("单个更新券库存返回", { res, params });
   } catch (error) {
-    logger.infoSave("单个更新券库存异常", { error: formattedError(error) });
+    logger.infoSave("单个更新券库存异常", { error: formatErrInfo(error) });
   }
 }
 
@@ -231,7 +232,7 @@ export async function getQuanTypeListByApp({
     return quanTypeList;
   } catch (error) {
     logger.errorSave("根据影院获取券类型列表返回异常", {
-      error: formattedError(error)
+      error: formatErrInfo(error)
     });
   }
 }

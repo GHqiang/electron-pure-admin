@@ -623,6 +623,8 @@ class getH5UmeOfferPrice extends BaseOfferPrice {
 
       return quanData.map(item => ({
         ...item,
+        coupon_info: item.name, // 确保有 coupon_info 字段，用于异步更新券库存时的匹配
+        coupon_num: item.couponCode, // 确保有 coupon_num 字段
         endDateTime: item.expireTime
       }));
     } catch (error) {
