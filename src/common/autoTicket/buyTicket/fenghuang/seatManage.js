@@ -1,3 +1,16 @@
+/**
+ * 凤凰座位管理模块
+ *
+ * 职责：
+ * - 获取座位布局信息
+ * - 过滤目标座位
+ * - 锁定座位（支持重试和辅助锁座）
+ *
+ * 所属流程：出票流程
+ *
+ * @module fenghuang/seatManage
+ */
+
 // 锁座重试常量配置
 const LOCK_RETRY_CONFIG = {
   lieren: [10, 5],
@@ -14,9 +27,7 @@ const LOCK_RETRY_CONFIG = {
 // 辅助锁座触发原因
 const ASSIST_LOCK_ERRORS = ["座位旁边不要留空", "座位中间不要留空"];
 
-// 统一座位管理
 import { APP_API_OBJ } from "@/common/index";
-// 订单管理模块
 import {
   formatErrInfo, // 格式化错误信息
   trial // 重试方法
@@ -24,6 +35,10 @@ import {
 // 帮助锁定座位实例对象
 import assistLockSeatObj from "@/common/autoTicket/lockSeatQueue";
 
+/**
+ * 凤凰座位管理类
+ * 负责座位布局获取、目标座位过滤和座位锁定
+ */
 export default class SeatManage {
   constructor(order, logger) {
     this.order = order;

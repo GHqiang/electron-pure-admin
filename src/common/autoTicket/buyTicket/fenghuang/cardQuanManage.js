@@ -1,4 +1,18 @@
-// 卡券使用模块（适配所有影院）
+/**
+ * 凤凰卡券管理模块
+ *
+ * 职责：
+ * - 获取会员卡列表
+ * - 获取优惠券列表
+ * - 获取座位价格
+ * - 使用优惠券或会员卡
+ * - 更新券库存
+ * - 绑定新券
+ *
+ * 所属流程：出票流程
+ *
+ * @module fenghuang/cardQuanManage
+ */
 import {
   getCurrentTime,
   formatTimeOfTime,
@@ -28,6 +42,11 @@ import { platTokens } from "@/store/platTokens";
 const {
   userInfo: { rule }
 } = platTokens();
+
+/**
+ * 凤凰卡券管理类
+ * 负责会员卡和优惠券的获取、使用和库存管理
+ */
 export default class CardQuanManage {
   constructor(order, logger) {
     this.order = order;
@@ -552,7 +571,7 @@ export default class CardQuanManage {
       logger = this.logger;
     }
     try {
-      logger.infoSave("单个更新券库存入参", params);
+      // logger.infoSave("单个更新券库存入参", params);
       const res = await svApi.updateQuanType(params);
       logger.infoSave("单个更新券库存返回", res);
     } catch (error) {
@@ -787,10 +806,10 @@ export default class CardQuanManage {
         let inx = item.quanStockListByPhone.findIndex(
           itemA => itemA.quan_stock === item.quan_stock
         );
-        console.log("inx", inx);
+        // console.log("inx", inx);
         if (inx != -1) {
           let update_time = item.quanStockListByPhone[inx].update_time;
-          console.log("update_time", update_time);
+          // console.log("update_time", update_time);
 
           return !update_time
             ? true
@@ -835,6 +854,17 @@ export default class CardQuanManage {
             logger
           });
 
+          // 打印该手机号获取的总券数
+          logger.infoSave(`手机号 ${mobile} 获取券总数`, {
+            mobile,
+            totalQuanCount: quanListAll.length,
+            quanList: quanListAll.map(q => ({
+              couponName: q.couponName,
+              couponDesc: q.couponDesc,
+              couponCode: q.couponCode
+            }))
+          });
+
           quanTypeListParams.forEach(item => {
             let targetQuanList = quanListAll.filter(
               itemA =>
@@ -846,10 +876,15 @@ export default class CardQuanManage {
                     couponInfoSpecial(itemA.couponDesc)
                   : true)
             );
-            console.log(item.quan_flag, "targetQuanList", targetQuanList);
+
+            // 打印分类后的券数量
+            logger.infoSave(
+              `手机号 ${mobile} 券类型 ${item.quan_flag} 分类后数量`,
+              targetQuanList.length
+            );
+
             let quanStock = targetQuanList.length;
             let quanStockList = item.quanStockList;
-            console.log("quanStockList", quanStockList);
             let inx = quanStockList.findIndex(itemB => itemB.phone === mobile);
             let endDateTime = targetQuanList.sort(
               (a, b) => new Date(a.endDateTime) - new Date(b.endDateTime)
@@ -870,22 +905,59 @@ export default class CardQuanManage {
             }
           });
         }
-        console.log("quanTypeListParams", quanTypeListParams);
+
         let updateTypeList = quanTypeListParams.map(item => ({
           id: item.id,
+          quanFlag: item.quan_flag,
+          quanDesc: item.quan_desc,
           quanStockList: item.quanStockList,
           update_time: getCurrentTime()
         }));
-        console.log("updateTypeList", updateTypeList);
-        logger.infoSave("最终要更新的券类型列表", { updateTypeList });
+
+        // 打印最终要更新的券类型汇总信息
+        logger.infoSave("最终要更新的券类型列表汇总", {
+          updateTypeList: updateTypeList.map(item => ({
+            id: item.id,
+            quanFlag: item.quanFlag,
+            quanDesc: item.quanDesc,
+            phoneCount: item.quanStockList.length,
+            stockByPhone: item.quanStockList.map(stock => ({
+              phone: stock.phone,
+              quan_stock: stock.quan_stock,
+              real_quan_stock: stock.real_quan_stock,
+              update_time: stock.update_time
+            }))
+          }))
+        });
+
         for (let index = 0; index < updateTypeList.length; index++) {
           const item = updateTypeList[index];
+          // 打印单个更新前的信息
+          logger.infoSave(`开始更新券类型库存`, {
+            id: item.id,
+            quanFlag: item.quanFlag,
+            quanDesc: item.quanDesc,
+            updateTime: item.update_time,
+            stockByPhone: item.quanStockList.map(stock => ({
+              phone: stock.phone,
+              quan_stock: stock.quan_stock,
+              real_quan_stock: stock.real_quan_stock
+            }))
+          });
+
           // 单个更新
           await this.singleUpdateQuanStock({
             id: item.id,
             quanStockList: JSON.stringify(item.quanStockList),
             update_time: item.update_time,
             logger
+          });
+
+          // 打印单个更新后的信息
+          logger.infoSave(`完成更新券类型库存`, {
+            id: item.id,
+            quanFlag: item.quanFlag,
+            quanDesc: item.quanDesc
           });
         }
       }
@@ -903,19 +975,19 @@ export default class CardQuanManage {
         session_id,
         logger
       });
-      console.log("quanData", quanData);
-      logger.infoSave("连续获取券返回", {
+      logger.infoSave("获取手机号全部优惠券完成", {
+        totalCount: quanData?.length || 0,
         quanData: quanData.map(item => ({
           couponName: item.couponName,
           couponDesc: item.couponDesc,
           couponCode: item.couponCode,
           endDateTime: item.endDateTime
-          // couponValue: item.couponValue
         }))
       });
       return quanData || [];
     } catch (error) {
       logger.errorSave("获取优惠券列表异常", error);
+      return [];
     }
   }
 

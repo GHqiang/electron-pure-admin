@@ -799,12 +799,12 @@ class getFenghuangOfferPrice {
 }
 
 // 测试报价实例的方法
-window.fenghuangOfferObj = (plat_name, app_name) => {
+window.jinyiOfferObj = (plat_name, app_name) => {
   return new getFenghuangOfferPrice({ appFlag: app_name, plat_name });
 };
 // 测试方法
 window.testOffer = order =>
-  fenghuangOfferObj("mayi", "guangmeiwenhua").getEndOfferPrice({
+  jinyiOfferObj("mayi", "guangmeiwenhua").getEndOfferPrice({
     order: order || {
       plat_name: "mayi",
       id: "12412221440316515",
