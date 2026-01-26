@@ -213,10 +213,11 @@ class SfcBuyTicket extends BaseBuyTicket {
     }
 
     const transferWithUnlock = async unlockInfo => {
-      return await this.orderManage.transferOrder({
-        ...unlockInfo,
-        session_id: this.currentParamsList[this.currentParamsInx]?.session_id
-      });
+      const base = unlockInfo || {};
+      const session_id =
+        base.session_id ??
+        this.currentParamsList[this.currentParamsInx]?.session_id;
+      return await this.orderManage.transferOrder({ ...base, session_id });
     };
 
     const unlockInfo = () => ({
@@ -625,6 +626,10 @@ class SfcBuyTicket extends BaseBuyTicket {
         if (pay_money > real_member_price) {
           const diff = subDecimal(pay_money, real_member_price);
           if (diff < profit) {
+            this.logger.infoSave(
+              "用完卡发现支付金额大于会员价*票数，利润需减去差值",
+              { pay_money, real_member_price, profit }
+            );
             profit = subDecimal(profit, diff);
           } else {
             this.logger.errorSave("用完卡发现无利润，走转单", {

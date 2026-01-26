@@ -677,7 +677,8 @@ export default class SfcOrderManage {
       const { order_num } = unlockSeatInfo;
       const currentParams = this.getCurrentParams();
       const current = currentParams?.list?.[currentParams?.inx] || {};
-      const session_id = current.session_id;
+      const session_id =
+        unlockSeatInfo.session_id ?? current.session_id;
       if (order_num) {
         await this.cancelOrder({ ...unlockSeatInfo, session_id });
       } else {

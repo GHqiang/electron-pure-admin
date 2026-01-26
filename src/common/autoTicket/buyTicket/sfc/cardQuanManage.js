@@ -887,17 +887,29 @@ export default class SfcCardQuanManage {
       card_id = sorted[0]?.member_id;
       cardNum = sorted[0]?.member_id;
     }
+    // 手续费（与旧版 useCard 一致）：中标价 * 1%，NO_FEE_PLAT_LIST 平台为 0
+    let shouxufei = ((supplier_end_price || 0) * 100) / 10000;
+    if (NO_FEE_PLAT_LIST.includes(plat_name)) {
+      shouxufei = 0;
+    }
     let profit =
       (supplier_end_price || 0) -
       (member_price || 0) -
-      (supplier_end_price || 0) * 0.01;
+      shouxufei;
     profit = Number(profit) * (ticket_num || 0);
-    if (rewards > 0)
-      profit +=
-        ((supplier_end_price || 0) * (ticket_num || 0) * rewards) / 10000;
+    if (rewards > 0) {
+      const rewardPrice =
+        (Number(supplier_end_price || 0) * 100 * Number(ticket_num || 0) * rewards) /
+        10000;
+      profit += rewardPrice;
+    }
     profit = Number(profit).toFixed(2);
-    if (profit < 0 && !TEST_NEW_PLAT_LIST.includes(plat_name))
+    if (profit < 0 && !TEST_NEW_PLAT_LIST.includes(plat_name)) {
+      this.logger.errorSave("使用会员卡计算价格后最终利润为负", {
+        profit
+      });
       return { card_id: "", profit: 0 };
+    }
     return { card_id, cardNum, profit, priceInfo };
   }
 
