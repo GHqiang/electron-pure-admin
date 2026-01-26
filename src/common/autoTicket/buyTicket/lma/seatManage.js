@@ -30,7 +30,7 @@ export default class LmaSeatManage {
     let params = {
       cinema_id,
       session_id: show_id,
-      lmaToken
+      ...(lmaToken && { lmaToken })
     };
     try {
       console.log("获取座位布局参数", params);

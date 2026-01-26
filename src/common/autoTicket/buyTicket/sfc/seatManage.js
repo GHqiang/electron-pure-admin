@@ -39,7 +39,7 @@ export default class SfcSeatManage {
       city_id: city_id,
       cinema_id: cinema_id,
       show_id: show_id,
-      session_id,
+      ...(session_id && { session_id }),
       width: "240"
     };
     try {

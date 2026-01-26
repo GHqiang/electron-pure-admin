@@ -94,7 +94,7 @@ export default class UmeOrderManage {
           channelCode: "QD0000001",
           lockFlag: lockOrderId
         },
-        session_id
+        ...(session_id && { session_id })
       };
       console.log("获取最优卡券列表组合参数", params);
       const res = await this.appApi.getCardQuanList(params);

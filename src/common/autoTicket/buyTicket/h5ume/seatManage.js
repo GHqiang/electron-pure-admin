@@ -51,7 +51,7 @@ export default class H5UmeSeatManage {
         apiVersion: "1.0",
         empCode: "",
         leaseCode: "",
-        session_id
+        ...(session_id && { umeToken: session_id })
       };
       this.logger.info("获取座位布局参数", params);
       const res = await this.appApi.getMoviePlaySeat(params);
@@ -95,7 +95,7 @@ export default class H5UmeSeatManage {
       });
       this.logger.info("targeSeatList", targeSeatList);
       let seatIds = targeSeatList.map(item => ({ seatId: item.seatId }));
-      
+
       // 座位价格信息
       let areaTotalPrice = 0;
       targeSeatList.forEach(item => {
@@ -106,13 +106,13 @@ export default class H5UmeSeatManage {
           areaTotalPrice += targetItem.areaSettlePrice || 0;
         }
       });
-      
+
       this.logger.infoSave("目标座位相关信息", {
         targeSeatList,
         areaInfoList,
         areaTotalPrice
       });
-      
+
       if (seatIds?.length != ticket_num) {
         this.logger.errorSave("获取目标座位失败", {
           seatList,
