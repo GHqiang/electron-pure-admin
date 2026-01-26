@@ -4,7 +4,12 @@
 import BaseOrderFetcher from "../../core/BaseOrderFetcher.js";
 import YinghuasuanAdapter from "../adapters/YinghuasuanAdapter.js";
 import Logger from "../../logger.js";
-import { getCinemaFlag, getCurrentTime, logUpload, mockDelay } from "@/utils/utils.js";
+import {
+  getCinemaFlag,
+  getCurrentTime,
+  logUpload,
+  mockDelay
+} from "@/utils/utils.js";
 import svApi from "@/api/sv-api.js";
 import { platTokens } from "@/store/platTokens.js";
 
@@ -38,7 +43,7 @@ export default class YinghuasuanOrderFetcher extends BaseOrderFetcher {
       // 影划算特殊逻辑：先获取待确认列表并确认接单
       await this.getStayConfirmOrderAndSure();
       await mockDelay(1);
-      
+
       // 然后获取待出票列表
       const rawStayList = await this.yinghuasuanOrderFetch();
 
@@ -138,7 +143,7 @@ export default class YinghuasuanOrderFetcher extends BaseOrderFetcher {
           const confirmItem = this.confirmOrderList.find(
             itemA => itemA.offer_order_number === item.order_number
           );
-          const originalOrder = rawStayList.find(
+          const oldOrder = rawStayList.find(
             itemA => itemA.record_id === confirmItem?.in_id
           );
 
@@ -149,7 +154,7 @@ export default class YinghuasuanOrderFetcher extends BaseOrderFetcher {
               level: "info",
               info: {
                 newOrder: item,
-                oldOrder: originalOrder
+                oldOrder: oldOrder
               }
             }
           ];
@@ -188,7 +193,7 @@ export default class YinghuasuanOrderFetcher extends BaseOrderFetcher {
     try {
       // 获取待确认订单列表
       let list = await this.platformAdapter.fetchStayConfirmList({});
-      
+
       // 从已接单列表里过滤
       list = list.filter(
         item => !this.confirmOrderList.some(itemA => itemA.in_id === item.in_id)

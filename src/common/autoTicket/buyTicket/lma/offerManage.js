@@ -362,13 +362,16 @@ class getLmaOfferPrice extends BaseOfferPrice {
     const rewardPrice =
       rewards > 0 ? (adjustedPrice * 100 * rewards) / 10000 : 0;
 
+    // 出票成本（加手续费）
+    let pay_cost_price = cost_price + shouxufei;
+
     // 最大卡券成本（即成本必须低于它才有利润）
     let maxCostPrice =
       (adjustedPrice * 1000 + rewardPrice * 1000 - shouxufei * 1000) / 1000;
     offerRule.maxCostPrice = maxCostPrice;
 
     // 真实成本(卡券成本+手续费-奖励费用)
-    const real_cost_price = (cost_price + shouxufei - rewardPrice).toFixed(2);
+    const real_cost_price = (pay_cost_price - rewardPrice).toFixed(2);
 
     // 预计利润（最终报价-真实成本）
     const expectProfit = (adjustedPrice - real_cost_price).toFixed(2);
@@ -384,14 +387,16 @@ class getLmaOfferPrice extends BaseOfferPrice {
       return null;
     }
 
-    // 记录详细计算信息
+    // 记录详细计算信息（LMA 不使用利润加价，单店加价金额恒为 0）
     this.logger.infoSave("lma计算报价相关信息", {
       rule_price: `规则计算报价：${adjustedPrice}`,
+      profitAddPrice: "单店加价金额：0",
       supplier_max_price: `平台最高限价：${supplier_max_price}`,
       cardQuanCost: `卡券成本：${cost_price}`,
       maxCostPrice: `最大卡券成本（低于该值才有利润）：${maxCostPrice}`,
       price: `最终报价：${adjustedPrice}`,
       shouxufei: `手续费（最终报价*1%）：${shouxufei}`,
+      cost_price: `出票成本（卡券成本+手续费）：${pay_cost_price}`,
       rewardPrice: `奖励金额(最终报价*奖励百分比-${rewards})：${rewardPrice}`,
       real_cost_price: `真实成本（出票成本-奖励金额）：${real_cost_price}`,
       expectProfit: `预计利润（最终报价-真实成本）：${expectProfit}`

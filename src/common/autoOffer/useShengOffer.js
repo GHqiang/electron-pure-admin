@@ -57,7 +57,7 @@ class OrderAutoOfferQueue {
   }
 
   // 处理新订单
-  handleNewOrder(item, originalOrder) {
+  handleNewOrder(item, oldOrder) {
     // 增加报价截止时间判断，小于等于1秒则不处理
     if (
       item.offer_end_time &&
@@ -82,7 +82,7 @@ class OrderAutoOfferQueue {
         level: "info",
         info: {
           newOrder: item,
-          originalOrder
+          oldOrder
         }
       }
     ];
@@ -241,10 +241,10 @@ class OrderAutoOfferQueue {
       // );
       if (!newOrders?.length) return [];
       newOrders.forEach(item => {
-        const originalOrder = stayList.find(
+        const oldOrder = stayList.find(
           itemA => itemA.orderCode === item.order_number
         );
-        this.handleNewOrder(item, originalOrder);
+        this.handleNewOrder(item, oldOrder);
       });
     } catch (error) {
       console.error(conPrefix + "获取待报价订单异常", error);
