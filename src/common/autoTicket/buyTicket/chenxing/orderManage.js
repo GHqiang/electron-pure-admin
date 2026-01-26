@@ -1,4 +1,18 @@
-// 订单管理模块
+/**
+ * 晨星订单管理模块
+ *
+ * 职责：
+ * - 计算价格
+ * - 创建订单
+ * - 订单购买
+ * - 获取取票码并上传
+ * - 转单处理
+ * - 取消订单/释放座位
+ *
+ * 所属流程：出票流程
+ *
+ * @module chenxing/orderManage
+ */
 import {
   formatErrInfo, // 格式化错误信息
   sendWxPusherMessage,
@@ -11,6 +25,11 @@ import { GET_APP_INFO } from "@/common/constant";
 import svApi from "@/api/sv-api";
 // 统一日志类
 import Logger from "@/common/logger";
+
+/**
+ * 晨星订单管理类
+ * 负责订单相关的所有操作：价格计算、订单创建、购买、取票码获取等
+ */
 export default class OrderManage {
   constructor(order, logger, platManage, isTestOrder) {
     this.logger = logger; // 日志模块

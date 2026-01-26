@@ -1,4 +1,20 @@
-// sfc报价逻辑
+/**
+ * 晨星报价管理模块
+ *
+ * 职责：
+ * - 继承 BaseOfferPrice 基类，实现晨星系列报价逻辑
+ * - 报价规则匹配、会员价获取、成本价计算、最终报价计算
+ *
+ * 所属流程：报价流程
+ *
+ * 依赖模块：
+ * - BaseOfferPrice: 报价基类，提供模板方法
+ * - CardQuanManage: 卡券管理模块
+ * - CinemaManage: 影院管理模块
+ * - SeatManage: 座位管理模块
+ *
+ * @module chenxing/offerManage
+ */
 import {
   getCurrentDay,
   offerRuleMatch,
@@ -18,116 +34,47 @@ import {
   ONE_STEP_PLAT_LIST
 } from "@/common/constant.js";
 import { platTokens } from "@/store/platTokens";
+import Logger from "@/common/logger.js";
+import BaseOfferPrice from "@/common/core/BaseOfferPrice.js";
+import CardQuanManage from "./cardQuanManage";
+import CinemaManage from "./cinemaManage";
+import SeatManage from "./seatManage";
+
 const {
   userInfo: { rule, user_id }
 } = platTokens();
 
-// 卡券管理类
-import CardQuanManage from "./cardQuanManage";
-// 统一日志类
-import Logger from "@/common/logger";
-// 影院管理类
-import CinemaManage from "./cinemaManage";
-// 座位管理类
-import SeatManage from "./seatManage";
-
 // 是否是测试订单
 let isTestOrder = false;
-class getChenxingOfferPrice {
+
+/**
+ * 晨星报价管理类
+ * 继承 BaseOfferPrice，实现晨星系列报价逻辑
+ */
+class getChenxingOfferPrice extends BaseOfferPrice {
   constructor({ appFlag, plat_name }) {
-    this.appFlag = appFlag; // 影线标识
-    this.plat_name = plat_name; // 平台标识
+    super({ appFlag, plat_name });
     this.api_version = GET_APP_INFO(appFlag)?.api_version;
   }
-  // 初始化依赖模块
+
+  /**
+   * 初始化依赖模块
+   * @param {Object} order - 订单信息对象
+   */
   initModules(order) {
     this.logger = new Logger({ logType: 1 }); // 日志管理模块
     this.logger.init(order);
     this.cardQuanManage = new CardQuanManage(order, this.logger); // 卡券管理模块
-    this.cinemaManage = new CinemaManage(order, this.logger); // 影院管理模块
+    // 报价场景下，offerRule和currentParamsList可以为undefined
+    this.cinemaManage = new CinemaManage(order, this.logger, undefined, undefined); // 影院管理模块
     this.seatManage = new SeatManage(order, this.logger); // 座位管理模块
   }
 
-  // 获取最终报价信息（唯一暴漏给外包用的方法）
-  async getEndOfferPrice({ order, offerList }) {
-    try {
-      // 1. 初始化模块
-      this.initModules(order);
-
-      // 2. 获取最终匹配的报价规则
-      let offerRule = await this.getEndMatchOfferRule(order);
-      if (!offerRule) return this.buildErrorResponse();
-      this.logger.infoSave("最终匹配到的报价规则", offerRule);
-      // 3. 获取成本价
-      const cost_price = await this.getCostPrice(offerRule);
-      if (!cost_price) {
-        this.logger.errorSave("获取成本价失败");
-        return this.buildErrorResponse(offerRule);
-      }
-      offerRule.cost_price = cost_price; // 成本价
-
-      // 4. 计算最终报价
-      const endPrice = await this.calculateFinalPrice({
-        cost_price,
-        supplier_max_price: order.supplier_max_price,
-        price: this.getOfferBasePrice(offerRule),
-        rewards: order.rewards,
-        offerType: offerRule.offerType,
-        offerList,
-        offerRule
-      });
-
-      if (!endPrice) return this.buildErrorResponse(offerRule);
-
-      // 5. 组装返回结果
-      offerRule.offer_end_amount = endPrice;
-      this.logger.infoSave(`最终报价金额：${endPrice}`);
-      // 增加一个quanValue的过滤，依据最大券成本过滤
-      if (
-        offerRule.offerType === "1" &&
-        offerRule?.maxCostPrice &&
-        this.quanInfoList?.length > 1
-      ) {
-        offerRule.quanValue = offerRule.quanValue
-          .split(",")
-          .filter(item => {
-            let targetQuanCost = this.quanInfoList.find(
-              quanInfo => quanInfo.quan_value === item
-            )?.quan_cost;
-            return targetQuanCost < offerRule?.maxCostPrice;
-          })
-          .join();
-      }
-      return this.buildSuccessResponse(endPrice, offerRule, order.order_number);
-    } catch (error) {
-      this.logger.errorSave("获取最终报价信息方法执行异常", error);
-      return this.buildErrorResponse();
-    }
-  }
-
-  // 获取基础报价金额
-  getOfferBasePrice(offerRule) {
-    return Number(offerRule.offerAmount || offerRule.memberOfferAmount);
-  }
-
-  // 构建错误响应
-  buildErrorResponse(offerRule) {
-    const { err_msg, err_info } = this.logger.getLastErrMsgAndInfo();
-    this.logger.logUpload();
-    return { err_msg, err_info, endPrice: null, offerRule };
-  }
-
-  // 构建成功响应
-  buildSuccessResponse(endPrice, offerRule, orderNumber) {
-    this.logger.logUpload();
-    return {
-      endPrice,
-      offerRule,
-      order_number: orderNumber
-    };
-  }
-
-  // 获取最终匹配的报价规则
+  /**
+   * 获取最终匹配的报价规则
+   * @param {Object} order - 待报价订单信息
+   * @returns {Promise<Object|null>} 匹配到的报价规则对象或null
+   */
   async getEndMatchOfferRule(order) {
     try {
       // 1. 初始规则匹配
@@ -171,42 +118,11 @@ class getChenxingOfferPrice {
     }
   }
 
-  // 按电影类型过滤规则
-  filterByFilmType(rules, mediaType) {
-    const filmTypeFlag = rules.some(item => !!item.film_type?.length);
-    if (!filmTypeFlag) return rules;
-
-    const filmType = mediaType?.toUpperCase();
-    return filmType
-      ? rules.filter(item =>
-          item.film_type?.some(itemA => filmType.includes(itemA))
-        )
-      : rules;
-  }
-
-  // 处理规则匹配失败
-  handleRuleMatchError(result, order) {
-    this.logger.errorSave("报价规则匹配后规则为空", {
-      error: result.error,
-      order
-    });
-  }
-
-  // 处理空规则列表情况
-  handleEmptyRuleList(context, extraInfo = {}) {
-    const errorMsgs = {
-      filmType: "过滤电影格式后匹配报价规则为空",
-      finalRule: "最终匹配到的报价规则为空"
-    };
-
-    this.logger.errorSave(errorMsgs[context] || "空规则列表", {
-      ...extraInfo,
-      context
-    });
-    return null;
-  }
-
-  // 获取成本价
+  /**
+   * 获取成本价
+   * @param {Object} offerRule - 报价规则对象
+   * @returns {Promise<number|null>} 成本价，获取失败返回 null
+   */
   async getCostPrice(offerRule) {
     const { offerType, quanValue, memberCostPrice } = offerRule;
 
@@ -229,7 +145,11 @@ class getChenxingOfferPrice {
     }
   }
 
-  // 计算最终报价
+  /**
+   * 计算最终报价
+   * @param {Object} params - 计算参数
+   * @returns {Promise<number|null>} 最终报价金额，计算失败或利润不足返回 null
+   */
   async calculateFinalPrice(params) {
     const {
       cost_price,
@@ -281,156 +201,14 @@ class getChenxingOfferPrice {
     }
   }
 
-  // 应用动态调价
-  applyDynamicPricing(basePrice, offerList) {
-    const adjustPrice = window.localStorage.getItem("adjustPrice");
-    if (!adjustPrice) return basePrice;
-
-    // try {
-    //   const adjustConfig = JSON.parse(adjustPrice);
-    //   const countRes = calcCount(adjustConfig.lierenMachineOfferList || []);
-
-    //   if (countRes.inCount >= adjustConfig.inCount) {
-    //     return basePrice + Number(adjustConfig.inPrice);
-    //   } else if (countRes.outCount >= adjustConfig.outCount) {
-    //     return basePrice - Number(adjustConfig.outPrice);
-    //   }
-    // } catch (error) {
-    //   this.logger.error("动态调价处理异常", error);
-    // }
-    return basePrice;
-  }
-
-  // 应用利润加价(节日)
-  applyProfitAddition(price, offerType) {
-    if (offerType !== "1" && !GROUP_LIST.includes(this.appFlag)) {
-      let profitAddPrice = window.localStorage.getItem("profitAddPrice");
-      profitAddPrice = profitAddPrice ? Number(profitAddPrice) : 0;
-      this.logger.infoSave(`应用利润加价：${profitAddPrice}`);
-      return price + profitAddPrice;
-    }
-    return price;
-  }
-
-  // 应用夜间顶价
-  applyNightMaxPrice(price, supplier_max_price) {
-    const isNightMaxPriceEnabled =
-      localStorage.getItem("isOpenisNightMaxPrice") == 1;
-    const currentHour = new Date().getHours();
-
-    if (isNightMaxPriceEnabled && currentHour >= 1 && currentHour <= 6) {
-      this.logger.infoSave("开启夜间顶价");
-      return Number(supplier_max_price);
-    }
-    return price;
-  }
-
-  // 格式化最终价格
-  formatFinalPrice(price, plat_name) {
-    return price;
-  }
-
-  // 超限检查
-  handleOverrunCheck(price, supplier_max_price, offerType) {
-    if (price > Number(supplier_max_price)) {
-      const isOverrunOfferEnabled =
-        window.localStorage.getItem("isOverrunOffer") === "1";
-      if (!isOverrunOfferEnabled) {
-        this.logger.errorSave(
-          `最终报价${price}超过平台限价${supplier_max_price}且超限报价关闭`
-        );
-        return;
-      }
-
-      // 调整价格至平台限价
-      return this.adjustToMaxPrice(price, supplier_max_price);
-    }
-    return price;
-  }
-  // 调整至平台限价
-  adjustToMaxPrice(price, supplier_max_price) {
-    if (["mayi", "yangcong"].includes(this.plat_name)) {
-      price = Math.floor(supplier_max_price);
-    } else {
-      price = roundToHalf(
-        supplier_max_price,
-        ONE_STEP_PLAT_LIST.includes(this.plat_name) ? 0.1 : 0.5,
-        "down"
-      );
-    }
-    this.logger.infoSave("调整最终报价为平台限价", { price });
-    return price;
-  }
-
-  // 成本利润计算
-  calculateCostProfit({
-    adjustedPrice,
-    cost_price,
-    rewards,
-    supplier_max_price,
-    offerRule
-  }) {
-    // 手续费
-    let shouxufei = (adjustedPrice * 100) / 10000;
-    if (NO_FEE_PLAT_LIST.includes(this.plat_name)) {
-      shouxufei = 0;
-    }
-    // 奖励费用
-    const rewardPrice =
-      rewards > 0 ? (adjustedPrice * 100 * rewards) / 10000 : 0;
-
-    // 最大卡券成本（即成本必须低于它才有利润）
-    let maxCostPrice =
-      (adjustedPrice * 1000 + rewardPrice * 1000 - shouxufei * 1000) / 1000;
-    offerRule.maxCostPrice = maxCostPrice;
-
-    // 真实成本(卡券成本+手续费-奖励费用)
-    const real_cost_price = (cost_price + shouxufei - rewardPrice).toFixed(2);
-    // 预计利润（最终报价-真实成本）
-    const expectProfit = (adjustedPrice - real_cost_price).toFixed(2);
-
-    // 利润校验
-    if (
-      adjustedPrice <= real_cost_price &&
-      !TEST_NEW_PLAT_LIST.includes(this.plat_name)
-    ) {
-      this.logger.errorSave(
-        `最终报价${adjustedPrice}低于真实成本${real_cost_price}`
-      );
-      return null;
-    }
-
-    // 记录详细计算信息
-    this.recordCalculationDetails({
-      adjustedPrice,
-      cost_price,
-      maxCostPrice: offerRule.maxCostPrice,
-      rewards,
-      shouxufei,
-      rewardPrice,
-      real_cost_price,
-      expectProfit,
-      supplier_max_price
-    });
-
-    return adjustedPrice;
-  }
-
-  // 记录计算详情
-  recordCalculationDetails(details) {
-    this.logger.infoSave("chenxing计算报价相关信息", {
-      rule_price: `规则计算报价：${details.adjustedPrice}`,
-      cardQuanCost: `卡券成本：${details.cost_price}`,
-      maxCostPrice: `最大卡券成本（低于该值才有利润）：${details.maxCostPrice}`,
-      price: `最终报价：${details.adjustedPrice}`,
-      shouxufei: `手续费（最终报价*1%）：${details.shouxufei}`,
-      rewardPrice: `奖励金额（${details.rewards}%）：${details.rewardPrice}`,
-      real_cost_price: `真实成本：${details.real_cost_price}`,
-      expectProfit: `预计利润：${details.expectProfit}`
-    });
-  }
-
-  // 获取会员价
+  /**
+   * 获取会员价
+   * @param {Object} params - 参数对象
+   * @param {Object} params.order - 订单信息
+   * @param {Object} params.movieData - 电影数据（可选）
+   * @param {Object} params.minAddAmountRule - 最小加价规则（可选）
+   * @returns {Promise<Object|null>} 会员价信息或null
+   */
   async getMemberPrice({ order, movieData, minAddAmountRule }) {
     try {
       const movieInfo = movieData || (await this.getMovieInfo());
@@ -501,7 +279,7 @@ class getChenxingOfferPrice {
           basePrice = areaInfoList
             .map(item => item.areaPrice)
             .sort((a, b) => b - a)?.[0];
-          if (minAddAmountRule.memberPriceRule == "2") {
+          if (minAddAmountRule?.memberPriceRule == "2") {
             basePrice = this.getMostSeatPrice(
               targetSeatRes.seatData,
               areaInfoList
@@ -525,7 +303,215 @@ class getChenxingOfferPrice {
     }
   }
 
-  // 获取最多座位价格
+  /**
+   * 按电影类型过滤规则
+   * @private
+   */
+  filterByFilmType(rules, mediaType) {
+    const filmTypeFlag = rules.some(item => !!item.film_type?.length);
+    if (!filmTypeFlag) return rules;
+
+    const filmType = mediaType?.toUpperCase();
+    return filmType
+      ? rules.filter(item =>
+          item.film_type?.some(itemA => filmType.includes(itemA))
+        )
+      : rules;
+  }
+
+  /**
+   * 处理规则匹配失败
+   * @private
+   */
+  handleRuleMatchError(result, order) {
+    this.logger.errorSave("报价规则匹配后规则为空", {
+      error: result.error,
+      order
+    });
+  }
+
+  /**
+   * 处理空规则列表情况
+   * @private
+   */
+  handleEmptyRuleList(context, extraInfo = {}) {
+    const errorMsgs = {
+      filmType: "过滤电影格式后匹配报价规则为空",
+      finalRule: "最终匹配到的报价规则为空"
+    };
+
+    this.logger.errorSave(errorMsgs[context] || "空规则列表", {
+      ...extraInfo,
+      context
+    });
+    return null;
+  }
+
+  /**
+   * 应用动态调价
+   * @private
+   */
+  applyDynamicPricing(basePrice, offerList) {
+    const adjustPrice = window.localStorage.getItem("adjustPrice");
+    if (!adjustPrice) return basePrice;
+    return basePrice;
+  }
+
+  /**
+   * 应用利润加价(节日)
+   * @private
+   */
+  applyProfitAddition(price, offerType) {
+    if (offerType !== "1" && !GROUP_LIST.includes(this.appFlag)) {
+      let profitAddPrice = window.localStorage.getItem("profitAddPrice");
+      profitAddPrice = profitAddPrice ? Number(profitAddPrice) : 0;
+      this.logger.infoSave(`应用利润加价：${profitAddPrice}`);
+      return price + profitAddPrice;
+    }
+    return price;
+  }
+
+  /**
+   * 应用夜间顶价
+   * @private
+   */
+  applyNightMaxPrice(price, supplier_max_price) {
+    const isNightMaxPriceEnabled =
+      localStorage.getItem("isOpenisNightMaxPrice") == 1;
+    const currentHour = new Date().getHours();
+
+    if (isNightMaxPriceEnabled && currentHour >= 1 && currentHour <= 6) {
+      this.logger.infoSave("开启夜间顶价");
+      return Number(supplier_max_price);
+    }
+    return price;
+  }
+
+  /**
+   * 格式化最终价格
+   * @private
+   */
+  formatFinalPrice(price, plat_name) {
+    return price;
+  }
+
+  /**
+   * 超限检查
+   * @private
+   */
+  handleOverrunCheck(price, supplier_max_price, offerType) {
+    if (price > Number(supplier_max_price)) {
+      const isOverrunOfferEnabled =
+        window.localStorage.getItem("isOverrunOffer") === "1";
+      if (!isOverrunOfferEnabled) {
+        this.logger.errorSave(
+          `最终报价${price}超过平台限价${supplier_max_price}且超限报价关闭`
+        );
+        return;
+      }
+
+      // 调整价格至平台限价
+      return this.adjustToMaxPrice(price, supplier_max_price);
+    }
+    return price;
+  }
+
+  /**
+   * 调整至平台限价
+   * @private
+   */
+  adjustToMaxPrice(price, supplier_max_price) {
+    if (["mayi", "yangcong"].includes(this.plat_name)) {
+      price = Math.floor(supplier_max_price);
+    } else {
+      price = roundToHalf(
+        supplier_max_price,
+        ONE_STEP_PLAT_LIST.includes(this.plat_name) ? 0.1 : 0.5,
+        "down"
+      );
+    }
+    this.logger.infoSave("调整最终报价为平台限价", { price });
+    return price;
+  }
+
+  /**
+   * 成本利润计算
+   * @private
+   */
+  calculateCostProfit({
+    adjustedPrice,
+    cost_price,
+    rewards,
+    supplier_max_price,
+    offerRule
+  }) {
+    // 手续费
+    let shouxufei = (adjustedPrice * 100) / 10000;
+    if (NO_FEE_PLAT_LIST.includes(this.plat_name)) {
+      shouxufei = 0;
+    }
+    // 奖励费用
+    const rewardPrice =
+      rewards > 0 ? (adjustedPrice * 100 * rewards) / 10000 : 0;
+
+    // 最大卡券成本（即成本必须低于它才有利润）
+    let maxCostPrice =
+      (adjustedPrice * 1000 + rewardPrice * 1000 - shouxufei * 1000) / 1000;
+    offerRule.maxCostPrice = maxCostPrice;
+
+    // 真实成本(卡券成本+手续费-奖励费用)
+    const real_cost_price = (cost_price + shouxufei - rewardPrice).toFixed(2);
+    // 预计利润（最终报价-真实成本）
+    const expectProfit = (adjustedPrice - real_cost_price).toFixed(2);
+
+    // 利润校验
+    if (
+      adjustedPrice <= real_cost_price &&
+      !TEST_NEW_PLAT_LIST.includes(this.plat_name)
+    ) {
+      this.logger.errorSave(
+        `最终报价${adjustedPrice}低于真实成本${real_cost_price}`
+      );
+      return null;
+    }
+
+    // 记录详细计算信息
+    this.recordCalculationDetails({
+      adjustedPrice,
+      cost_price,
+      maxCostPrice: offerRule.maxCostPrice,
+      rewards,
+      shouxufei,
+      rewardPrice,
+      real_cost_price,
+      expectProfit,
+      supplier_max_price
+    });
+
+    return adjustedPrice;
+  }
+
+  /**
+   * 记录计算详情
+   * @private
+   */
+  recordCalculationDetails(details) {
+    this.logger.infoSave("chenxing计算报价相关信息", {
+      rule_price: `规则计算报价：${details.adjustedPrice}`,
+      cardQuanCost: `卡券成本：${details.cost_price}`,
+      maxCostPrice: `最大卡券成本（低于该值才有利润）：${details.maxCostPrice}`,
+      price: `最终报价：${details.adjustedPrice}`,
+      shouxufei: `手续费（最终报价*1%）：${details.shouxufei}`,
+      rewardPrice: `奖励金额（${details.rewards}%）：${details.rewardPrice}`,
+      real_cost_price: `真实成本：${details.real_cost_price}`,
+      expectProfit: `预计利润：${details.expectProfit}`
+    });
+  }
+
+  /**
+   * 获取最多座位价格
+   * @private
+   */
   getMostSeatPrice(seat_data, areaList) {
     try {
       // 过滤出来未售座位然后计算分区剩余座位占比，0-未售
@@ -545,13 +531,6 @@ class getChenxingOfferPrice {
       this.logger.infoSave("座位分区剩余座位占比情况", areaRatioList);
       let mostSeatPrice = areaRatioList[0]?.areaPrice;
       return mostSeatPrice;
-      // // 默认取最高价格，最高座位占比不足百分之3时取次最高价格
-      // if (areaList[0].numRatio <= 3 && areaList[1]?.settlePrice) {
-      //   maxSeatPrice = areaList[1].settlePrice;
-      // }
-      // if (areaList[1].numRatio <= 3 && areaList[2]?.settlePrice) {
-      //   maxSeatPrice = areaList[2].settlePrice;
-      // }
     } catch (error) {
       this.logger.infoSave(
         "座位分区剩余座位占比计算失败",
@@ -559,7 +538,11 @@ class getChenxingOfferPrice {
       );
     }
   }
-  // 获取可用会员卡列表
+
+  /**
+   * 获取可用会员卡列表
+   * @private
+   */
   async fetchAvailableCards(order, cinemaCode) {
     const { ticket_num, app_name } = order;
     const useMobileList = getCinemaLoginInfoList()
@@ -593,6 +576,7 @@ class getChenxingOfferPrice {
 
   /**
    * 检查使用限制
+   * @private
    */
   checkUsageLimit(item, ticketNum) {
     const { use_limit_day, use_limit_month, daily_usage, month_usage } = item;
@@ -604,6 +588,7 @@ class getChenxingOfferPrice {
 
   /**
    * 检查影院关联
+   * @private
    */
   checkCinemaLink(item, cinemaCode) {
     return (
@@ -611,7 +596,10 @@ class getChenxingOfferPrice {
     );
   }
 
-  // 计算最优折扣
+  /**
+   * 计算最优折扣
+   * @private
+   */
   calculateBestDiscount(cardList, basePrice) {
     cardList = cardList.map(item => ({
       ...item,
@@ -630,12 +618,13 @@ class getChenxingOfferPrice {
       member_price: Number(member_price.toFixed(2))
     };
   }
+
   /**
    * 获取最低报价规则（核心报价策略）
    * @param {Array} ruleList 报价规则列表
    * @param {Object} order 订单信息
    * @param {Object} movieInfo 电影信息
-   * @returns {Object} 最优报价规则
+   * @returns {Promise<Object>} 最优报价规则
    */
   async getMinAmountOfferRule(ruleList, order, movieInfo) {
     try {
@@ -725,7 +714,10 @@ class getChenxingOfferPrice {
     }
   }
 
-  // 获取真实加价金额
+  /**
+   * 获取真实加价金额
+   * @private
+   */
   getRealAddMount({ real_member_price, addMountRule }) {
     try {
       let comparePrice = addMountRule[0];
@@ -743,6 +735,7 @@ class getChenxingOfferPrice {
 
   /**
    * 过滤会员日报价规则
+   * @private
    */
   filterMemberDayRules(rules) {
     return rules
@@ -754,6 +747,7 @@ class getChenxingOfferPrice {
 
   /**
    * 过滤普通报价规则
+   * @private
    */
   filterGeneralRules(rules) {
     return rules.filter(item => !item.memberDay && item.offerType !== "3");
@@ -761,6 +755,7 @@ class getChenxingOfferPrice {
 
   /**
    * 拆分规则类型
+   * @private
    */
   splitRuleTypes(rules) {
     return {
@@ -775,6 +770,7 @@ class getChenxingOfferPrice {
 
   /**
    * 校验券库存
+   * @private
    */
   async validateQuanStock({ rules, movieInfo, ticketNum }) {
     if (!rules.length) return [];
@@ -793,6 +789,7 @@ class getChenxingOfferPrice {
 
   /**
    * 应用券库存过滤
+   * @private
    */
   applyQuanStockFilter(rules, quanTypes, ticketNum) {
     return rules.filter(rule => {
@@ -807,6 +804,7 @@ class getChenxingOfferPrice {
 
   /**
    * 处理加价规则
+   * @private
    */
   processAddRule(addRule, memberPriceRes) {
     const processedRule = { ...addRule };
@@ -826,6 +824,7 @@ class getChenxingOfferPrice {
 
   /**
    * 记录会员价计算详情
+   * @private
    */
   recordMemberPriceDetails(rule) {
     this.logger.infoSave("会员报价最终信息", {
@@ -840,6 +839,7 @@ class getChenxingOfferPrice {
 
   /**
    * 对比定价策略
+   * @private
    */
   comparePricingStrategies({ bestFixAddRule, bestFixedRule }) {
     if (!bestFixAddRule) return bestFixedRule;
@@ -856,6 +856,7 @@ class getChenxingOfferPrice {
 
   /**
    * 记录价格对比日志
+   * @private
    */
   logPriceComparison(addRule, fixedRule, selectedType) {
     this.logger.infoSave(`${selectedType}报价策略选择`, {
@@ -863,7 +864,11 @@ class getChenxingOfferPrice {
       fixedOfferAmount: fixedRule.offerAmount
     });
   }
-  // 获取电影信息
+
+  /**
+   * 获取电影信息
+   * @private
+   */
   async getMovieInfo() {
     const buyTicketInfo = await this.cinemaManage.getBuyPrevCinemaInfo({
       flag: 1
@@ -873,35 +878,121 @@ class getChenxingOfferPrice {
       ? { ...(targetShow || {}), cinemaCode, cinemaId, filmId }
       : null;
   }
+
+  /**
+   * 验证报价订单
+   * @param {Object} orderJson - 订单信息对象
+   * @returns {Promise<Object>} 验证结果 { valid, errMsg, steps, offerRule?, movieInfo?, memberPriceRes?, costPrice? }
+   */
+  async validateOfferOrder(orderJson) {
+    const result = {
+      valid: false,
+      errMsg: "",
+      steps: {}
+    };
+
+    try {
+      // 1. 验证订单格式
+      const requiredFields = [
+        "plat_name",
+        "app_name",
+        "city_name",
+        "cinema_name",
+        "cinema_code",
+        "film_name",
+        "hall_name",
+        "show_time",
+        "ticket_num",
+        "supplier_max_price"
+      ];
+      const missingFields = requiredFields.filter(field => !orderJson[field]);
+      if (missingFields.length > 0) {
+        result.errMsg = `缺少必填字段：${missingFields.join(", ")}`;
+        return result;
+      }
+
+      if (
+        typeof orderJson.ticket_num !== "number" ||
+        orderJson.ticket_num <= 0
+      ) {
+        result.errMsg = "ticket_num 必须是大于0的数字";
+        return result;
+      }
+      if (
+        typeof orderJson.supplier_max_price !== "number" ||
+        orderJson.supplier_max_price <= 0
+      ) {
+        result.errMsg = "supplier_max_price 必须是大于0的数字";
+        return result;
+      }
+
+      result.steps.orderFormat = true;
+
+      // 2. 初始化模块
+      this.initModules(orderJson);
+
+      // 3. 验证报价规则匹配
+      const offerRule = await this.getEndMatchOfferRule(orderJson);
+      if (!offerRule) {
+        result.errMsg = "报价规则匹配失败，无法匹配到可用规则";
+        result.steps.offerRuleMatch = false;
+        return result;
+      }
+      result.steps.offerRuleMatch = true;
+      result.offerRule = offerRule;
+
+      // 4. 验证电影信息获取
+      const movieInfo = await this.getMovieInfo();
+      if (!movieInfo) {
+        result.errMsg = "获取电影放映信息失败";
+        result.steps.movieInfo = false;
+        return result;
+      }
+      result.steps.movieInfo = true;
+      result.movieInfo = movieInfo;
+
+      // 5. 验证会员价获取（如果是会员价加价规则）
+      const offerType = offerRule.offerType || offerRule.offer_type;
+      if (offerType === "2") {
+        const memberPriceRes = await this.getMemberPrice({
+          order: orderJson,
+          movieData: movieInfo,
+          minAddAmountRule: offerRule
+        });
+        if (memberPriceRes === -1 || memberPriceRes == null) {
+          result.errMsg = "获取会员价失败";
+          result.steps.memberPrice = false;
+          return result;
+        }
+        result.steps.memberPrice = true;
+        result.memberPriceRes = memberPriceRes;
+      }
+
+      // 6. 验证成本价获取
+      const costPrice = await this.getCostPrice(offerRule);
+      if (!costPrice) {
+        result.errMsg = "获取成本价失败";
+        return result;
+      }
+      result.costPrice = costPrice;
+
+      result.valid = true;
+      return result;
+    } catch (error) {
+      result.errMsg = `验证过程异常：${formatErrInfo(error)}`;
+      return result;
+    } finally {
+      console.log("验证结果：", result);
+    }
+  }
 }
 
 // 测试报价实例的方法
 window.chenxingOfferObj = (plat_name, app_name) => {
   return new getChenxingOfferPrice({ appFlag: app_name, plat_name });
 };
-// 测试方法
-// window.chenxingOfferObj("mayi", "xingfulanhai").getEndOfferPrice({
-//   order: {
-//     plat_name: "mayi",
-//     id: "12412221440316515",
-//     tpp_price: 42,
-//     supplier_max_price: 39,
-//     city_name: "南京",
-//     cinema_addr: "雨花台区软件大道109号雨花客厅E-PARK北区3层",
-//     ticket_num: 1,
-//     cinema_name: "幸福蓝海国际影城江宁金鹰店",
-//     hall_name: "7号激光厅",
-//     film_name: "震耳欲聋",
-//     film_img:
-//       "https://gw.alicdn.com/tfscom/i4/O1CN01e8PcvF1NESAgdEsnM_!!6000000001538-0-alipicbeacon.jpg_120x120.jpg",
-//     show_time: "2025-10-14 16:15:00",
-//     rewards: 0,
-//     is_urgent: false,
-//     cinema_group: "AMG海上明珠",
-//     cinema_code: 32017411,
-//     order_number: "12412221440316515",
-//     offer_end_time: 1734849690000,
-//     app_name: "xingfulanhai"
-//   }
-// });
+// 订单报价管理校验：
+// window.chenxingOfferObj("mayi", "xingfulanhai").validateOfferOrder(orderJson)
+// 获取订单最终报价：
+// window.chenxingOfferObj("mayi", "xingfulanhai").getEndOfferPrice({ order: orderJson, offerList: [] })
 export default getChenxingOfferPrice;

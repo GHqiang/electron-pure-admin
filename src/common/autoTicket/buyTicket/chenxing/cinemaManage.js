@@ -1,3 +1,17 @@
+/**
+ * 晨星影院管理模块
+ *
+ * 职责：
+ * - 获取城市影院列表
+ * - 获取目标影院信息
+ * - 获取影片放映信息
+ * - 获取目标场次
+ * - 根据可用卡/券调整登录信息顺序
+ *
+ * 所属流程：出票流程
+ *
+ * @module chenxing/cinemaManage
+ */
 import {
   convertFullwidthToHalfwidth,
   getTargetCinemaCommon,
@@ -16,6 +30,11 @@ import { platTokens } from "@/store/platTokens";
 const {
   userInfo: { rule }
 } = platTokens();
+
+/**
+ * 晨星影院管理类
+ * 负责获取购票前的影院、影片、场次等信息
+ */
 export default class CinemaManage {
   constructor(order, logger, offerRule, currentParamsList) {
     this.order = order;
