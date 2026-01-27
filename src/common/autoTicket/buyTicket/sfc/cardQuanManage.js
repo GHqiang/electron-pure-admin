@@ -934,7 +934,12 @@ export default class SfcCardQuanManage {
     ticket_num
   }) {
     const { appFlag } = this;
-    let logger = new Logger({ logType: 3 });
+    let logger = this.logger;
+    // 异步绑券
+    if (asyncFlag === 1) {
+      logger = new Logger({ logType: 3 });
+      logger.init(this.order);
+    }
     let targetLogger = asyncFlag === 1 ? logger : this.logger;
     let conPrev = asyncFlag === 1 ? "异步绑券_" : "";
     let quanValueListStr = await getQuanValueListByQuanFlag({
@@ -972,7 +977,7 @@ export default class SfcCardQuanManage {
       }
       let bandQuanList = [];
       for (const quan of quanList) {
-        console.log(`正在尝试绑定券 ${quan.coupon_num}...`);
+        targetLogger.info(`正在尝试绑定券 ${quan.coupon_num}...`);
         const couponNumRes = await this.bandQuan({
           city_id,
           cinema_id,
@@ -982,10 +987,9 @@ export default class SfcCardQuanManage {
           appFlag
         });
         const coupon_num = couponNumRes?.coupon_num;
+        targetLogger.infoSave(`${conPrev}绑定券返回`, couponNumRes);
         if (couponNumRes?.errMsg) {
           targetLogger.errorSave(`${conPrev}绑定券异常`, couponNumRes);
-        } else {
-          targetLogger.infoSave(`${conPrev}绑定券返回`, couponNumRes);
         }
         if (coupon_num) {
           bandQuanList.push({ coupon_num });
@@ -1018,8 +1022,7 @@ export default class SfcCardQuanManage {
       });
     } finally {
       if (asyncFlag) {
-        targetLogger.init({ plat_name, order_number, app_name: appFlag });
-        targetLogger.logUpload();
+        logger.logUpload();
       }
     }
   }

@@ -840,9 +840,12 @@ export default class LmaCardQuanManage {
     order_number
   }) {
     const { appFlag } = this;
-    let logger = new Logger({
-      logType: 3
-    });
+    let logger = this.logger;
+    // 异步绑券
+    if (asyncFlag === 1) {
+      logger = new Logger({ logType: 3 });
+      logger.init(this.order);
+    }
     let targetLogger = asyncFlag === 1 ? logger : this.logger;
     let conPrev = asyncFlag === 1 ? "异步绑券_" : "";
     // 解决同名不同券类型无法从其他券类型绑券的问题
@@ -880,19 +883,19 @@ export default class LmaCardQuanManage {
 
       let quanList = quanRes?.data?.quanList || [];
       if (asyncFlag != 1 && (!quanList?.length || quanList?.length < diffNum)) {
-        console.error(`数据库${quan_value}面额券不足`);
+        targetLogger.error(`数据库${quan_value}面额券不足`);
         return;
       }
       let bandQuanList = [];
       for (const quan of quanList) {
-        console.log(`正在尝试绑定券 ${quan.coupon_num}...`);
+        targetLogger.info(`正在尝试绑定券 ${quan.coupon_num}...`);
         const couponNumRes = await this.appApi.bandQuan({
           lmaToken,
           code: quan.coupon_num,
           channel_type: "2"
         });
-        targetLogger.infoSave(`绑定券返回`, couponNumRes);
         const coupon_num = couponNumRes?.coupon_num;
+        targetLogger.infoSave(`${conPrev}绑定券返回`, couponNumRes);
         if (couponNumRes?.errMsg) {
           targetLogger.errorSave(`${conPrev}绑定券异常`, couponNumRes);
         }
@@ -921,9 +924,7 @@ export default class LmaCardQuanManage {
       });
     } finally {
       if (asyncFlag) {
-        targetLogger.init({ plat_name, order_number, app_name: appFlag });
-        // 上送异步绑券日志
-        targetLogger.logUpload();
+        logger.logUpload();
       }
     }
   }

@@ -848,9 +848,12 @@ export default class H5UmeCardQuanManage {
     order_number
   }) {
     const { appFlag } = this;
-    let logger = new Logger({
-      logType: 3
-    });
+    let logger = this.logger;
+    // 异步绑券
+    if (asyncFlag === 1) {
+      logger = new Logger({ logType: 3 });
+      logger.init(this.order);
+    }
     let targetLogger = asyncFlag === 1 ? logger : this.logger;
     let conPrev = asyncFlag === 1 ? "异步绑券_" : "";
     // 解决同名不同券类型无法从其他券类型绑券的问题
@@ -887,13 +890,13 @@ export default class H5UmeCardQuanManage {
 
       let quanList = quanRes.data?.quanList || [];
       if (!quanList?.length && asyncFlag != 1) {
-        this.logger.error(`数据库${quan_value}面额券不足`);
+        targetLogger.error(`数据库${quan_value}面额券不足`);
         return;
       }
       // quanList = quanList.map(item => item.coupon_num.trim());
       let bandQuanList = [];
       for (const quan of quanList) {
-        this.logger.info(`正在尝试绑定券 ${quan.coupon_num}...`);
+        targetLogger.info(`正在尝试绑定券 ${quan.coupon_num}...`);
         const couponNumRes = await this.bandQuan({
           cinemaLinkId,
           coupon_num: quan.coupon_num,
@@ -921,9 +924,7 @@ export default class H5UmeCardQuanManage {
       });
     } finally {
       if (asyncFlag) {
-        targetLogger.init({ plat_name, order_number, app_name: appFlag });
-        // 上送异步绑券日志
-        targetLogger.logUpload();
+        logger.logUpload();
       }
     }
   }
