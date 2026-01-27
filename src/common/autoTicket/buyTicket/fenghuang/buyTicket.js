@@ -111,15 +111,6 @@ class FenghuangBuyTicket extends BaseBuyTicket {
    * 获取订单报价规则
    */
   async getOrderOfferRule() {
-    // 测试专用
-    if (this.isTestOrder) {
-      this.offerRule = {
-        offer_type: "2",
-        member_price: "18",
-        real_member_price: 19.9
-      };
-      return;
-    }
     const { app_name, order_number, plat_name, offer_order_number } =
       this.order;
     try {
@@ -282,7 +273,8 @@ class FenghuangBuyTicket extends BaseBuyTicket {
       }
       this.currentSessionId =
         this.currentParamsList[this.currentParamsInx]?.session_id || "";
-      this.currentPhone = this.currentParamsList[this.currentParamsInx]?.mobile || "";
+      this.currentPhone =
+        this.currentParamsList[this.currentParamsInx]?.mobile || "";
       this.currentMemberPwd =
         this.currentParamsList[this.currentParamsInx]?.member_pwd || "";
       const {
@@ -606,7 +598,7 @@ class FenghuangBuyTicket extends BaseBuyTicket {
           return await this.transferOrChangePhone(transparams, buyTicketInfo);
         }
       }
-      
+
       // 测试模式下不创建订单（因为创建订单时已经支付），打印创建订单参数并释放座位
       if (this.isTestOrder) {
         const createOrderParams = {
@@ -824,3 +816,12 @@ const updateCardDayUse = ({
   });
   logger.logUpload();
 };
+
+window.fenghuangTicketObj = (order, isTestOrder = false) => {
+  const logger = new Logger({ logType: 3 });
+  return new FenghuangBuyTicket(order, logger, isTestOrder);
+};
+// 订单出票管理相关方法组装校验：
+// window.fenghuangTicketObj(order, true).validateTicketOrder()
+// 订单一键出票测试：
+// window.fenghuangTicketObj(order, true).singleTicket()

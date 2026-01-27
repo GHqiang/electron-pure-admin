@@ -271,7 +271,8 @@ class ChenxingBuyTicket extends BaseBuyTicket {
       }
       this.currentSessionId =
         this.currentParamsList[this.currentParamsInx]?.session_id || "";
-      this.currentPhone = this.currentParamsList[this.currentParamsInx]?.mobile || "";
+      this.currentPhone =
+        this.currentParamsList[this.currentParamsInx]?.mobile || "";
       const {
         cinemaCode,
         cinemaId,
@@ -512,7 +513,8 @@ class ChenxingBuyTicket extends BaseBuyTicket {
         if (order_num) {
           try {
             this.logger.infoSave("测试模式：开始取消订单", unlockSeatInfo);
-            const cancelRes = await this.orderManage.cancelOrder(unlockSeatInfo);
+            const cancelRes =
+              await this.orderManage.cancelOrder(unlockSeatInfo);
             this.logger.infoSave("测试模式：取消订单返回", {
               res: cancelRes,
               params: unlockSeatInfo
@@ -528,7 +530,8 @@ class ChenxingBuyTicket extends BaseBuyTicket {
         } else {
           try {
             this.logger.infoSave("测试模式：开始释放座位", unlockSeatInfo);
-            const releaseRes = await this.orderManage.releaseSeat(unlockSeatInfo);
+            const releaseRes =
+              await this.orderManage.releaseSeat(unlockSeatInfo);
             this.logger.infoSave("测试模式：释放座位返回", {
               res: releaseRes,
               params: unlockSeatInfo
@@ -751,3 +754,12 @@ const updateCardDayUse = ({
   });
   logger.logUpload();
 };
+
+window.chenxingTicketObj = (order, isTestOrder = false) => {
+  const logger = new Logger({ logType: 3 });
+  return new ChenxingBuyTicket(order, logger, isTestOrder);
+};
+// 订单出票管理相关方法组装校验：
+// window.chenxingTicketObj(order, true).validateTicketOrder()
+// 订单一键出票测试：
+// window.chenxingTicketObj(order, true).singleTicket()
