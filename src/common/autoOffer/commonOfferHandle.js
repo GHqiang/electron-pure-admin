@@ -29,9 +29,10 @@ const getOfferPriceFun = params => {
     return new getChenxingOfferPriceNew(params);
   } else if (GET_FENGHUANG_LIST().includes(appFlag)) {
     return new getFenghuangOfferPriceNew(params);
-  } else if (GET_JINYI_LIST().includes(appFlag)) {
-    return new getJinyiOfferPrice(params);
   }
+  // else if (GET_JINYI_LIST().includes(appFlag)) {
+  //   return new getJinyiOfferPrice(params);
+  // }
 };
 
 export default getOfferPriceFun;

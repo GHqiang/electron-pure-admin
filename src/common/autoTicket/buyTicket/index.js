@@ -12,7 +12,7 @@ import { GET_APP_INFO } from "@/common/constant";
 const STRATEGY_MAP = {
   chenxing_applet: ChenxingBuyTicket,
   fenghuang_applet: FenghuangBuyTicket,
-  jinyi_applet: JINYIBuyTicket,
+  // jinyi_applet: JINYIBuyTicket,
   lma: LmaBuyTicket,
   sfc_applet: SfcBuyTicket,
   ume_applet: UmeBuyTicket,
