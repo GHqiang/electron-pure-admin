@@ -108,10 +108,11 @@ const res = await buyTicket.singleTicket();
 // 失败：undefined 或 { offerRule, transferParams }
 ```
 
-**测试模式（不购买）**：`isTestOrder === true` 时，会执行到锁座、创建订单、价格计算后：
-- 打印完整的购买参数（包含订单信息、价格、卡券信息等）
-- 如果有 `orderHeaderId`，调用 `cancelOrder()` 取消订单释放座位
-- 如果没有 `orderHeaderId`，记录警告日志
+**测试模式（不购买）**：`isTestOrder === true` 时，会执行到锁座、价格计算后：
+- **用券场景**：在创建订单前进行特殊处理，不创建订单，直接打印购买参数并释放座位（因为用券时创建订单就等于支付成功）
+- **用卡场景**：执行到创建订单后，打印完整的购买参数（包含订单信息、价格、卡券信息等）
+  - 如果有 `orderId`，调用 `cancelOrder()` 取消订单释放座位
+  - 如果没有 `orderId` 但有 `lockOrderId`，调用 `releaseSeat()` 释放座位
 - 不调用购买、上传取票码接口
 
 **校验不锁座/不购买**：
@@ -188,6 +189,16 @@ const result = await buyTicket.validateTicketOrder();
 - **用券限制**：在 `cardQuanManage.useQuanOrCard()` 中，检查优惠券的库存和黑名单限制。
 - **已用券过滤**：在 `cardQuanManage.queryUsedQuanList()` 中，查询并过滤已使用的优惠券。
 
+### 4.11 用券场景创建订单即支付成功（重要）
+
+- **特殊逻辑**：H5UME 系列在用券场景下（`offerRule.offer_type === "1" && useQuan?.length`），**创建订单接口就等于支付成功**，不需要再调用 `buyTicket()` 购买接口。
+- **实现位置**：在 `buyTicket.js` 的 `oneClickBuyTicket()` 方法中，创建订单后判断如果是纯用券场景，会跳过购买步骤，直接进入获取取票码流程。
+- **测试模式特殊处理**：
+  - 在测试模式下（`isTestOrder === true`），针对用券场景会在**创建订单前**进行特殊处理
+  - 不调用创建订单接口（避免实际创建订单），直接打印购买参数并释放座位
+  - 这样可以避免在测试时创建实际订单，因为用券场景下创建订单就等于支付成功
+- **代码位置**：`buyTicket.js` 第 812-873 行（测试模式用券场景处理）和第 1054-1058 行（纯用券跳过购买）
+
 ---
 
 ## 五、模块依赖关系
@@ -228,6 +239,7 @@ orderManage.js
 2. **座位布局参数**：在报价阶段调用 `seatManage.getSeatLayout()` 时，`session_id` 可能为空，需要在调用时传入空字符串。
 
 3. **测试模式**：出票测试模式下（`isTestOrder === true`），会执行到锁座和价格计算，但不会实际购买和上传取票码，便于调试和验证。
+   - **用券场景特殊处理**：测试模式下用券场景会在创建订单前处理，不创建订单直接释放座位，避免实际创建订单（因为用券时创建订单就等于支付成功）。
 
 4. **错误处理**：所有模块均使用统一的 `Logger` 进行日志记录，错误信息通过 `formatErrInfo` 格式化后保存。
 

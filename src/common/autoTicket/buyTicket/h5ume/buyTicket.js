@@ -809,6 +809,76 @@ export default class H5UmeBuyTicket extends BaseBuyTicket {
           )
         });
       }
+      // 测试模式下，纯用券场景特殊处理：创建订单就等于支付成功，所以在创建订单前处理
+      if (
+        this.isTestOrder &&
+        offerRule.offer_type === "1" &&
+        useQuan?.length &&
+        !card_id
+      ) {
+        const buyParams = {
+          orderHeaderId: lockOrderId,
+          session_id: this.currentParamsList[this.currentParamsInx]?.session_id,
+          appFlag: this.appFlag,
+          cinemaLinkId,
+          scheduleId,
+          scheduleKey,
+          tickets,
+          totalPrice: total_price || areaTotalPrice,
+          payAmount,
+          payments,
+          orderInfo: {
+            order_number,
+            plat_name,
+            supplier_end_price,
+            ticket_num,
+            card_id,
+            quan_code: quan_code || undefined,
+            paymentAmount: payAmount,
+            profit,
+            rewards
+          }
+        };
+        console.log("========== 测试模式（用券场景）：购买参数 ==========");
+        console.log(JSON.stringify(buyParams, null, 2));
+        this.logger.infoSave(
+          "测试模式（用券场景）：购买参数（创建订单前）",
+          buyParams
+        );
+        console.log(
+          "测试模式（用券场景）：用券时创建订单即支付成功，跳过创建订单，直接释放座位"
+        );
+
+        // 释放座位
+        if (lockOrderId) {
+          try {
+            const releaseParams = {
+              cinemaLinkId,
+              lockOrderId,
+              session_id:
+                this.currentParamsList[this.currentParamsInx]?.session_id
+            };
+            this.logger.infoSave(
+              "测试模式（用券场景）：开始释放座位",
+              releaseParams
+            );
+            const releaseRes =
+              await this.orderManage.releaseSeat(releaseParams);
+            this.logger.infoSave("测试模式（用券场景）：释放座位返回", {
+              res: releaseRes,
+              params: releaseParams
+            });
+            console.log("测试模式（用券场景）：释放座位成功", releaseRes);
+          } catch (error) {
+            this.logger.errorSave("测试模式（用券场景）：释放座位异常", {
+              error: formatErrInfo(error)
+            });
+            console.error("测试模式（用券场景）：释放座位失败", error);
+          }
+        }
+
+        return { offerRule };
+      }
       // 7、创建订单
       const createOrderRes = await this.orderManage.createOrder({
         cinemaLinkId,
@@ -845,7 +915,7 @@ export default class H5UmeBuyTicket extends BaseBuyTicket {
       this.logger.infoSave("创建订单成功");
 
       // 测试模式下不购买，打印购买参数并取消订单释放座位（对齐 SFC、UME、LMA）
-      if (this.isTestOrder) {
+      if (this.isTestOrder && card_id) {
         const buyParams = {
           orderId,
           orderHeaderId: lockOrderId,
@@ -881,7 +951,6 @@ export default class H5UmeBuyTicket extends BaseBuyTicket {
               "测试模式：开始取消订单释放座位",
               cancelParams
             );
-            console.log("测试模式：开始取消订单释放座位", cancelParams);
             const cancelRes = await this.orderManage.cancelOrder(cancelParams);
             this.logger.infoSave("测试模式：取消订单返回", {
               res: cancelRes,

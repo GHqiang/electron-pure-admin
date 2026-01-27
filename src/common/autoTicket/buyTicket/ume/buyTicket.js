@@ -958,7 +958,6 @@ export default class UmeBuyTicket extends BaseBuyTicket {
               "测试模式：开始取消订单释放座位",
               cancelParams
             );
-            console.log("测试模式：开始取消订单释放座位", cancelParams);
             const cancelRes = await this.orderManage.cancelOrder(cancelParams);
             this.logger.infoSave("测试模式：取消订单返回", {
               res: cancelRes,
