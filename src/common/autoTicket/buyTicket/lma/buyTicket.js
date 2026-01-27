@@ -123,63 +123,7 @@ export default class LmaBuyTicket extends BaseBuyTicket {
       this.currentParamsList[this.currentParamsInx]?.mobile || "";
   }
 
-  /**
-   * 获取订单报价规则
-   *
-   * 从报价记录中获取该订单对应的报价规则，设置到 this.offerRule
-   *
-   * @returns {Promise<void>}
-   */
-  async getOrderOfferRule() {
-    const { app_name, order_number, plat_name, offer_order_number } =
-      this.order;
-    try {
-      // 获取该订单的报价记录，按对应报价规则出票
-      const offerRes = await svApi.queryOfferInfo({
-        user_id: tokens.userInfo.user_id,
-        order_status: "1",
-        app_name,
-        order_number: plat_name != "mahua" ? order_number : offer_order_number,
-        plat_name
-      });
-      this.offerRule = offerRes?.data?.offerInfo;
-    } catch (error) {
-      this.logger.errorSave("获取该订单报价记录异常", { error });
-    }
-  }
-
-  /**
-   * 校验报价规则是否需要出票
-   *
-   * 检查 this.offerRule 是否存在且允许出票：
-   * - rule_status="3" 表示仅报价，不允许出票
-   * - quan_value="jinbaojia" 表示仅报价券，不允许出票
-   *
-   * @returns {boolean} true=允许出票，false=不允许出票（会发送微信通知）
-   */
-  checkOfferRuleRes() {
-    const { offerRule } = this;
-    if (
-      !offerRule ||
-      offerRule?.rule_status === "3" ||
-      offerRule?.quan_value === "jinbaojia"
-    ) {
-      let str = "获取该订单报价记录失败，微信通知手动出票";
-      if (offerRule?.rule_status === "3") {
-        str = "该订单报价规则为仅报价，需手动出票";
-      } else if (offerRule?.quan_value === "jinbaojia") {
-        str = "该订单报价规则用券类型为仅报价券，需手动出票";
-      }
-      this.logger.errorSave(str, { offerRule });
-      sendWxPusherMessage({
-        orderInfo: this.order,
-        transferTip: "此处不转单，直接跳过，需手动出票",
-        failReason: str
-      });
-      return false;
-    }
-    return true;
-  }
+  // getOrderOfferRule 和 checkOfferRuleRes 已提取到基类 BaseBuyTicket
 
   /**
    * 一键买票核心流程
