@@ -197,6 +197,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           config.data = paramsHandle(config.data, app_name);
           config.session_id = config.data?.session_id || token;
         }
+        config.headers["version"] = api_version;
 
         // 处理URL
         if (!IS_DEV) {
@@ -213,6 +214,8 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         } else {
           if (api_version == "C") {
             config.url = config.url.replace("chenxing", "svpi/chenxing-ser");
+          } else if (api_version == "3.0C") {
+            config.url = "/svpi/chenxing-ser" + config.url;
           }
         }
       }
