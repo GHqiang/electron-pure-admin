@@ -1,4 +1,22 @@
-// 买票主流程
+/**
+ * 金逸出票主流程模块
+ *
+ * 职责：
+ * - 继承 BaseBuyTicket 基类，实现金逸系列出票逻辑
+ * - 出票流程编排：登录信息获取、报价规则获取、影院/场次/座位解析、卡券使用、锁座、购买、取票码上传
+ *
+ * 所属流程：出票流程
+ *
+ * 依赖模块：
+ * - BaseBuyTicket: 出票基类，提供模板方法
+ * - CinemaManage: 影院管理模块
+ * - SeatManage: 座位管理模块
+ * - OrderManage: 订单管理模块
+ * - CardQuanManage: 卡券管理模块
+ * - PlatManage: 平台管理模块
+ *
+ * @module jinyi/buyTicket
+ */
 import {
   mockDelay, // 模拟延时
   formatErrInfo, // 格式化错误信息
@@ -18,83 +36,53 @@ import { platTokens } from "@/store/platTokens";
 const {
   userInfo: { user_id }
 } = platTokens();
+import BaseBuyTicket from "@/common/core/BaseBuyTicket.js";
 import SeatManage from "./seatManage";
 import OrderManage from "./orderManage";
 import CinemaManage from "./cinemaManage";
 import CardQuanManage from "./cardQuanManage";
 import PlatManage from "../platManage";
-export default class BuyTicket {
+
+/**
+ * 金逸出票类
+ * 继承 BaseBuyTicket，实现金逸系列出票逻辑
+ */
+class JinyiBuyTicket extends BaseBuyTicket {
+  /**
+   * 构造函数
+   * @param {Object} order - 订单信息
+   * @param {Logger} logger - 日志实例
+   * @param {boolean} isTestOrder - 是否为测试订单模式
+   */
   constructor(order, logger, isTestOrder) {
-    this.appFlag = order.app_name; // 影线标识
-    this.order = order; // 订单信息
-    this.isTestOrder = isTestOrder; // 是否是测试订单
-    this.currentParamsList = [];
-    this.currentParamsInx = 0;
-    this.currentSessionId = "";
-    this.currentPhone = "";
-    this.logger = logger; // 日志模块
-    this.platManage = new PlatManage(order, logger, isTestOrder); // 平台管理模块
-    this.seatManage = new SeatManage(order, logger, isTestOrder); // 座位管理模块
-    this.orderManage = new OrderManage(
-      order,
-      logger,
-      this.platManage,
-      isTestOrder
-    ); // 订单管理模块
-  }
-  // 单个订单出票（向外暴漏的唯一方法）
-  async singleTicket() {
-    try {
-      this.logger.infoSave("单个待出票订单信息", this.order);
-      // 1、获取影院登录信息并设置当前token
-      await this.getCinemaLoginInfo();
-      // 2、获取该订单报价规则
-      await this.getOrderOfferRule();
-      this.logger.infoSave("订单报价记录信息", {
-        offerRule: JSON.parse(JSON.stringify(this.offerRule))
-      });
-      // 3、校验报价规则是否允许出票
-      const isNeedBuyTicket = this.checkOfferRuleRes();
-      if (!isNeedBuyTicket) {
-        this.logger.infoSave("校验报价规则不允许出票");
-        return {
-          offerRule: this.offerRule
-        };
-      }
-      this.logger.infoSave("校验报价规则允许出票");
-      // 4、平台解锁座位(重新出票不需要解锁座位)
-      if (!this.isTestOrder && !this.order.isAgain) {
-        this.logger.infoSave("开始准备解锁座位");
-        const unlockRes = await this.platManage.unlockSeatByPlat();
-        if (!unlockRes) {
-          this.logger.infoSave("平台解锁失败准备走转单逻辑");
-          this.logger.error("平台解锁失败走转单逻辑");
-          // 转单逻辑待补充
-          return await this.orderManage.transferOrder();
-        }
-      }
-      this.offerRule.lockseat = this.order.lockseat;
-      // 5、一键买票
-      await mockDelay(1); // 解锁成功后延迟1秒再执行
-      const result = await this.oneClickBuyTicket({
-        ...this.order,
-        otherParams: {
-          offerRule: this.offerRule
-        }
-      });
-      // result: { profit, submitRes, qrcode, quan_code, card_id, offerRule, mobile } || undefined
-      if (result) {
-        console.warn("单个订单出票完成");
-        return result;
-      } else {
-        console.warn("单个订单出票失败");
-      }
-    } catch (error) {
-      this.logger.errorSave("单个订单出票执行出错", formatErrInfo(error));
-    }
+    super(order, logger, isTestOrder);
+    this.usableCardList = []; // 可用会员卡列表
+    this.currentMemberPwd = ""; // 当前会员密码
   }
 
-  // 1、获取影院登录信息并设置当前token
+  /**
+   * 初始化依赖模块
+   * 在 BaseBuyTicket 构造函数中会自动调用此方法
+   * 注意：cinemaManage 和 cardQuanManage 需要延迟初始化（首次调用 oneClickBuyTicket 时），
+   * 因为它们需要 offerRule 和 currentParamsList，这些在 getOrderOfferRule() 之后才可用
+   */
+  initModules() {
+    this.platManage = new PlatManage(this.order, this.logger, this.isTestOrder);
+    this.seatManage = new SeatManage(this.order, this.logger, this.isTestOrder);
+    this.orderManage = new OrderManage(
+      this.order,
+      this.logger,
+      this.platManage,
+      this.isTestOrder
+    );
+    // cinemaManage 和 cardQuanManage 延迟初始化
+  }
+
+  /**
+   * 获取影院登录信息并设置当前token
+   * 从 getCinemaLoginInfoList() 获取该影院的登录信息列表
+   * 设置 this.currentParamsList 和 this.currentParamsInx = 0
+   */
   getCinemaLoginInfo() {
     this.currentParamsList = getCinemaLoginInfoList().filter(
       item =>
@@ -107,12 +95,23 @@ export default class BuyTicket {
       currentParamsList: this.currentParamsList
     });
     this.currentParamsInx = 0;
-    this.currentSessionId =
-      this.currentParamsList[this.currentParamsInx].session_id;
-    this.currentPhone = this.currentParamsList[this.currentParamsInx].mobile;
+    if (this.currentParamsList.length > 0) {
+      this.currentSessionId =
+        this.currentParamsList[this.currentParamsInx].session_id;
+      this.currentPhone = this.currentParamsList[this.currentParamsInx].mobile;
+      this.currentMemberPwd =
+        this.currentParamsList[this.currentParamsInx].member_pwd;
+    } else {
+      this.currentSessionId = "";
+      this.currentPhone = "";
+      this.currentMemberPwd = "";
+    }
   }
 
-  // 2、获取订单报价规则
+  /**
+   * 获取订单报价规则
+   * 从报价记录中获取该订单对应的报价规则，设置到 this.offerRule
+   */
   async getOrderOfferRule() {
     // 测试专用
     if (this.isTestOrder) {
@@ -127,7 +126,7 @@ export default class BuyTicket {
     const { app_name, order_number, plat_name, offer_order_number } =
       this.order;
     try {
-      // 1、获取该订单的报价记录，按对应报价规则出票
+      // 获取该订单的报价记录，按对应报价规则出票
       const offerRes = await svApi.queryOfferInfo({
         user_id: user_id,
         order_status: "1",
@@ -140,7 +139,11 @@ export default class BuyTicket {
       this.logger.errorSave("获取该订单报价记录异常", { error });
     }
   }
-  // 3、校验报价规则是否需要出票
+
+  /**
+   * 校验报价规则是否需要出票
+   * @returns {boolean} 是否允许出票
+   */
   checkOfferRuleRes() {
     const { offerRule } = this;
     if (
@@ -166,11 +169,25 @@ export default class BuyTicket {
     return true;
   }
 
-  // 一键买票核心流程
-  async oneClickBuyTicket(changePhoneBuyParams) {
+  /**
+   * 一键买票核心流程
+   * @param {Object} item - 参数对象（兼容旧格式 changePhoneBuyParams）
+   * @param {Object} item.otherParams - 其他参数（新格式）
+   * @param {Object} item.otherParams.offerRule - 报价规则（新格式）
+   * @returns {Promise<Object|undefined>} 出票结果或undefined
+   */
+  async oneClickBuyTicket(item) {
     const { appFlag } = this;
+    // 兼容旧格式：如果传入的是 changePhoneBuyParams 格式，则直接使用
+    // 新格式：item 包含 otherParams.offerRule
+    let changePhoneBuyParams = item;
+    if (item.otherParams?.offerRule) {
+      // 新格式：从 otherParams 中提取 offerRule 并合并到主对象
+      changePhoneBuyParams = { ...item };
+      // offerRule 已经在基类的 singleTicket 中设置到 this.offerRule
+    }
+
     let buyTicketInfo = JSON.parse(JSON.stringify(changePhoneBuyParams)); // 换号购买参数
-    // this.logger.infoSave("即将开始一键买票信息", this.order);
     if (buyTicketInfo && this.currentParamsInx) {
       this.logger.infoSave("换号出票携带参数信息", buyTicketInfo);
     }
@@ -186,16 +203,22 @@ export default class BuyTicket {
     if (!rewards || Number(rewards) == 0) {
       rewards = this.offerRule?.rewards || 0;
     }
-    this.cardQuanManage = new CardQuanManage(this.order, this.logger); // 卡券管理模块
+
+    // 延迟初始化 cardQuanManage 和 cinemaManage（首次调用时）
+    if (!this.cardQuanManage) {
+      this.cardQuanManage = new CardQuanManage(this.order, this.logger);
+    }
     try {
       if (this.currentParamsInx === 0) {
         // 影院信息模块（获取购票前相关信息）
-        this.cinemaManage = new CinemaManage(
-          this.order,
-          this.logger,
-          this.offerRule,
-          this.currentParamsList
-        );
+        if (!this.cinemaManage) {
+          this.cinemaManage = new CinemaManage(
+            this.order,
+            this.logger,
+            this.offerRule,
+            this.currentParamsList
+          );
+        }
 
         // 1、获取购票前的影院信息
         buyTicketInfo = await this.cinemaManage.getBuyPrevCinemaInfo({
@@ -268,7 +291,9 @@ export default class BuyTicket {
       // await mockDelay(1);
       const {
         cinema_id,
+        cinemaLinkId,
         schedule_id,
+        scheduleId,
         targetShow,
         targetSeatCodes,
         areaInfoList
@@ -743,7 +768,11 @@ export default class BuyTicket {
     }
   }
 }
-// 更新卡当天使用量
+
+export default JinyiBuyTicket;
+
+/**
+ * 更新卡当天使用量
 const updateCardDayUse = ({
   app_name,
   card_id,

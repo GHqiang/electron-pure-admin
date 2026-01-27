@@ -44,9 +44,6 @@ const {
   userInfo: { rule, user_id }
 } = platTokens();
 
-// 是否是测试订单
-let isTestOrder = false;
-
 /**
  * 晨星报价管理类
  * 继承 BaseOfferPrice，实现晨星系列报价逻辑
@@ -66,7 +63,12 @@ class getChenxingOfferPrice extends BaseOfferPrice {
     this.logger.init(order);
     this.cardQuanManage = new CardQuanManage(order, this.logger); // 卡券管理模块
     // 报价场景下，offerRule和currentParamsList可以为undefined
-    this.cinemaManage = new CinemaManage(order, this.logger, undefined, undefined); // 影院管理模块
+    this.cinemaManage = new CinemaManage(
+      order,
+      this.logger,
+      undefined,
+      undefined
+    ); // 影院管理模块
     this.seatManage = new SeatManage(order, this.logger); // 座位管理模块
   }
 
@@ -79,7 +81,7 @@ class getChenxingOfferPrice extends BaseOfferPrice {
     try {
       // 1. 初始规则匹配
       const matchRuleListRes = offerRuleMatch(order);
-      if (!matchRuleListRes.matchRuleList?.length && !isTestOrder) {
+      if (!matchRuleListRes.matchRuleList?.length) {
         this.handleRuleMatchError(matchRuleListRes, order);
         return null;
       }
@@ -91,14 +93,6 @@ class getChenxingOfferPrice extends BaseOfferPrice {
       // 2. 电影格式过滤
       const movieInfo = await this.getMovieInfo();
       if (!movieInfo) return null;
-      if (isTestOrder) {
-        // 测试订单获取会员价
-        const memberPriceRes = await this.getMemberPrice({
-          order,
-          movieData: movieInfo
-        });
-        console.log("测试订单获取会员价", memberPriceRes, movieInfo);
-      }
 
       matchRuleList = this.filterByFilmType(matchRuleList, movieInfo.media);
       if (!matchRuleList.length) return this.handleEmptyRuleList("filmType");
@@ -230,7 +224,7 @@ class getChenxingOfferPrice extends BaseOfferPrice {
       // 获取可用卡列表
       const cardList = await this.fetchAvailableCards(order, cinemaCode);
       this.logger.infoSave("获取到可用卡列表", { cardList });
-      if (!cardList.length && !isTestOrder) return null;
+      if (!cardList.length) return null;
 
       // 从座位信息里获取优惠活动列表
       let seatParams = {

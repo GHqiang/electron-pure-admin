@@ -1,4 +1,20 @@
-// sfc报价逻辑
+/**
+ * 金逸报价管理模块
+ *
+ * 职责：
+ * - 继承 BaseOfferPrice 基类，实现金逸系列报价逻辑
+ * - 报价规则匹配、会员价获取、成本价计算、最终报价计算
+ *
+ * 所属流程：报价流程
+ *
+ * 依赖模块：
+ * - BaseOfferPrice: 报价基类，提供模板方法
+ * - CardQuanManage: 卡券管理模块
+ * - CinemaManage: 影院管理模块
+ * - SeatManage: 座位管理模块
+ *
+ * @module jinyi/offerManage
+ */
 import {
   getCurrentDay,
   offerRuleMatch,
@@ -17,109 +33,41 @@ import {
   ONE_STEP_PLAT_LIST
 } from "@/common/constant.js";
 import { platTokens } from "@/store/platTokens";
+import Logger from "@/common/logger.js";
+import BaseOfferPrice from "@/common/core/BaseOfferPrice.js";
+import CardQuanManage from "./cardQuanManage";
+import CinemaManage from "./cinemaManage";
+import SeatManage from "./seatManage";
+
 const {
   userInfo: { rule, user_id }
 } = platTokens();
 
-// 卡券管理类
-import CardQuanManage from "./cardQuanManage";
-// 统一日志类
-import Logger from "@/common/logger";
-// 影院管理类
-import CinemaManage from "./cinemaManage";
-// 座位管理类
-import SeatManage from "./seatManage";
-
-// 是否是测试订单
-let isTestOrder = true;
-class getFenghuangOfferPrice {
+/**
+ * 金逸报价管理类
+ * 继承 BaseOfferPrice，实现金逸系列报价逻辑
+ */
+class getJinyiOfferPrice extends BaseOfferPrice {
   constructor({ appFlag, plat_name }) {
-    this.appFlag = appFlag; // 影线标识
-    this.plat_name = plat_name; // 平台标识
+    super({ appFlag, plat_name });
   }
-  // 初始化依赖模块
+
+  /**
+   * 初始化依赖模块
+   * @param {Object} order - 订单信息对象
+   */
   initModules(order) {
     this.logger = new Logger({ logType: 1 }); // 日志管理模块
     this.logger.init(order);
     this.cardQuanManage = new CardQuanManage(order, this.logger); // 卡券管理模块
-    this.cinemaManage = new CinemaManage(order, this.logger); // 影院管理模块
+    // 报价场景下，offerRule和currentParamsList可以为undefined
+    this.cinemaManage = new CinemaManage(
+      order,
+      this.logger,
+      undefined,
+      undefined
+    ); // 影院管理模块
     this.seatManage = new SeatManage(order, this.logger); // 座位管理模块
-  }
-
-  // 获取最终报价信息（唯一暴漏给外包用的方法）
-  async getEndOfferPrice({ order, offerList }) {
-    try {
-      // 1. 初始化模块
-      this.initModules(order);
-
-      // 2. 获取最终匹配的报价规则
-      let offerRule = await this.getEndMatchOfferRule(order);
-      if (!offerRule) return this.buildErrorResponse();
-      this.logger.infoSave("最终匹配到的报价规则", offerRule);
-      // 3. 获取成本价
-      const cost_price = await this.getCostPrice(offerRule);
-      if (!cost_price) return this.buildErrorResponse(offerRule);
-      offerRule.cost_price = cost_price; // 成本价
-
-      // 4. 计算最终报价
-      const endPrice = await this.calculateFinalPrice({
-        cost_price,
-        supplier_max_price: order.supplier_max_price,
-        price: this.getOfferBasePrice(offerRule),
-        rewards: order.rewards,
-        offerType: offerRule.offerType,
-        offerList,
-        offerRule
-      });
-
-      if (!endPrice) return this.buildErrorResponse(offerRule);
-
-      // 5. 组装返回结果
-      offerRule.offer_end_amount = endPrice;
-      this.logger.infoSave(`最终报价金额：${endPrice}`);
-      // 增加一个quanValue的过滤，依据最大券成本过滤
-      if (
-        offerRule.offerType === "1" &&
-        offerRule?.maxCostPrice &&
-        this.quanInfoList?.length > 1
-      ) {
-        offerRule.quanValue = offerRule.quanValue
-          .split(",")
-          .filter(item => {
-            let targetQuanCost = this.quanInfoList.find(
-              quanInfo => quanInfo.quan_value === item
-            )?.quan_cost;
-            return targetQuanCost < offerRule?.maxCostPrice;
-          })
-          .join();
-      }
-      return this.buildSuccessResponse(endPrice, offerRule, order.order_number);
-    } catch (error) {
-      this.logger.errorSave("获取最终报价信息方法执行异常", error);
-      return this.buildErrorResponse();
-    }
-  }
-
-  // 获取基础报价金额
-  getOfferBasePrice(offerRule) {
-    return Number(offerRule.offerAmount || offerRule.memberOfferAmount);
-  }
-
-  // 构建错误响应
-  buildErrorResponse(offerRule) {
-    const { err_msg, err_info } = this.logger.getLastErrMsgAndInfo();
-    this.logger.logUpload();
-    return { err_msg, err_info, endPrice: null, offerRule };
-  }
-
-  // 构建成功响应
-  buildSuccessResponse(endPrice, offerRule, orderNumber) {
-    this.logger.logUpload();
-    return {
-      endPrice,
-      offerRule,
-      order_number: orderNumber
-    };
   }
 
   // 获取最终匹配的报价规则
@@ -128,7 +76,7 @@ class getFenghuangOfferPrice {
       // 1. 初始规则匹配
       const matchRuleListRes = offerRuleMatch(order);
       console.log("初始规则匹配", matchRuleListRes);
-      if (!matchRuleListRes?.matchRuleList?.length && !isTestOrder) {
+      if (!matchRuleListRes?.matchRuleList?.length) {
         this.handleRuleMatchError(matchRuleListRes, order);
         return null;
       }
@@ -140,14 +88,6 @@ class getFenghuangOfferPrice {
       // 2. 电影格式过滤
       const movieInfo = await this.getMovieInfo();
       if (!movieInfo) return null;
-      if (isTestOrder) {
-        // 测试订单获取会员价
-        const memberPriceRes = await this.getMemberPrice({
-          order,
-          movieData: movieInfo
-        });
-        console.log("测试订单获取会员价", memberPriceRes, movieInfo);
-      }
 
       matchRuleList = this.filterByFilmType(matchRuleList, movieInfo.show_type);
       if (!matchRuleList.length) return this.handleEmptyRuleList("filmType");
@@ -440,7 +380,7 @@ class getFenghuangOfferPrice {
       // 获取可用卡列表
       const cardList = await this.fetchAvailableCards(order, cinema_id);
       this.logger.infoSave("获取到可用卡列表", { cardList });
-      if (!cardList.length && !isTestOrder) return null;
+      if (!cardList.length) return null;
       // this.logger.infoSave("从座位信息获取会员价");
       let useCardMobileList = cardList?.map(item => item.mobile) || [];
       // 获取该影院的可用手机号列表
@@ -788,7 +728,10 @@ class getFenghuangOfferPrice {
       fixedOfferAmount: fixedRule.offerAmount
     });
   }
-  // 获取电影信息
+
+  /**
+   * 获取电影信息
+   */
   async getMovieInfo() {
     const buyTicketInfo = await this.cinemaManage.getBuyPrevCinemaInfo({
       flag: 1
@@ -796,37 +739,171 @@ class getFenghuangOfferPrice {
     const { targetShow, cinema_id, film_id } = buyTicketInfo || {};
     return buyTicketInfo ? { ...(targetShow || {}), cinema_id, film_id } : null;
   }
+
+  /**
+   * 验证待报价订单JSON
+   *
+   * 用于验证待报价订单的格式和核心方法的可执行性，不实际进行报价
+   *
+   * @param {Object} orderJson - 待报价订单JSON
+   * @param {string} orderJson.plat_name - 平台名称（必填）
+   * @param {string} orderJson.app_name - 影院标识（必填）
+   * @param {string} [orderJson.order_number] - 订单号（可选）
+   * @param {string} orderJson.city_name - 城市名称（必填）
+   * @param {string} orderJson.cinema_name - 影院名称（必填）
+   * @param {string|number} orderJson.cinema_code - 影院编码（必填）
+   * @param {string} orderJson.film_name - 电影名称（必填）
+   * @param {string} orderJson.hall_name - 影厅名称（必填）
+   * @param {string} orderJson.show_time - 放映时间，格式：YYYY-MM-DD HH:mm:ss（必填）
+   * @param {number} orderJson.ticket_num - 票数（必填）
+   * @param {number} orderJson.supplier_max_price - 平台最高限价（必填）
+   * @param {number} [orderJson.rewards] - 奖励百分比，默认0（可选）
+   *
+   * @returns {Promise<Object>} 验证结果：
+   *   - valid: boolean，是否通过验证
+   *   - errMsg: string，错误信息（验证失败时）
+   *   - steps: Object，验证步骤结果（可选）
+   *     - orderFormat: boolean，订单格式验证
+   *     - offerRuleMatch: boolean，报价规则匹配
+   *     - movieInfo: boolean，电影信息获取
+   *     - memberPrice: boolean，会员价获取（如果适用）
+   *   - offerRule: Object，匹配到的报价规则（如果匹配成功）
+   *   - movieInfo: Object，电影信息（如果获取成功）
+   *   - costPrice: number，成本价（如果获取成功）
+   */
+  async validateOfferOrder(orderJson) {
+    const result = {
+      valid: false,
+      errMsg: "",
+      steps: {}
+    };
+
+    try {
+      // 1. 验证订单格式
+      const requiredFields = [
+        "plat_name",
+        "app_name",
+        "city_name",
+        "cinema_name",
+        "cinema_code",
+        "film_name",
+        "hall_name",
+        "show_time",
+        "ticket_num",
+        "supplier_max_price"
+      ];
+      const missingFields = requiredFields.filter(field => !orderJson[field]);
+      if (missingFields.length > 0) {
+        result.errMsg = `缺少必填字段：${missingFields.join(", ")}`;
+        return result;
+      }
+
+      if (
+        typeof orderJson.ticket_num !== "number" ||
+        orderJson.ticket_num <= 0
+      ) {
+        result.errMsg = "ticket_num 必须是大于0的数字";
+        return result;
+      }
+      if (
+        typeof orderJson.supplier_max_price !== "number" ||
+        orderJson.supplier_max_price <= 0
+      ) {
+        result.errMsg = "supplier_max_price 必须是大于0的数字";
+        return result;
+      }
+
+      result.steps.orderFormat = true;
+
+      // 2. 初始化模块
+      this.initModules(orderJson);
+
+      // 3. 验证报价规则匹配
+      const offerRule = await this.getEndMatchOfferRule(orderJson);
+      if (!offerRule) {
+        result.errMsg = "报价规则匹配失败，无法匹配到可用规则";
+        result.steps.offerRuleMatch = false;
+        return result;
+      }
+      result.steps.offerRuleMatch = true;
+      result.offerRule = offerRule;
+
+      // 4. 验证电影信息获取
+      const movieInfo = await this.getMovieInfo();
+      if (!movieInfo) {
+        result.errMsg = "获取电影放映信息失败";
+        result.steps.movieInfo = false;
+        return result;
+      }
+      result.steps.movieInfo = true;
+      result.movieInfo = movieInfo;
+
+      // 5. 验证会员价获取（如果是会员价加价规则）
+      const offerType = offerRule.offerType || offerRule.offer_type;
+      if (offerType === "2") {
+        const memberPriceRes = await this.getMemberPrice({
+          order: orderJson,
+          movieData: movieInfo,
+          minAddAmountRule: offerRule
+        });
+        if (memberPriceRes === -1 || memberPriceRes == null) {
+          result.errMsg = "获取会员价失败";
+          result.steps.memberPrice = false;
+          return result;
+        }
+        result.steps.memberPrice = true;
+        result.memberPriceRes = memberPriceRes;
+      }
+
+      // 6. 验证成本价获取
+      const costPrice = await this.getCostPrice(offerRule);
+      if (!costPrice) {
+        result.errMsg = "获取成本价失败";
+        return result;
+      }
+      result.costPrice = costPrice;
+
+      result.valid = true;
+      return result;
+    } catch (error) {
+      result.errMsg = `验证过程异常：${formatErrInfo(error)}`;
+      return result;
+    } finally {
+      console.log("验证结果：", result);
+    }
+  }
 }
+
+export default getJinyiOfferPrice;
 
 // 测试报价实例的方法
 window.jinyiOfferObj = (plat_name, app_name) => {
-  return new getFenghuangOfferPrice({ appFlag: app_name, plat_name });
+  return new getJinyiOfferPrice({ appFlag: app_name, plat_name });
 };
-// 测试方法
-window.testOffer = order =>
-  jinyiOfferObj("mayi", "guangmeiwenhua").getEndOfferPrice({
-    order: order || {
-      plat_name: "mayi",
-      id: "12412221440316515",
-      tpp_price: 42,
-      supplier_max_price: 39,
-      city_name: "重庆",
-      cinema_addr: "雨花台区软件大道109号雨花客厅E-PARK北区3层",
-      ticket_num: 1,
-      cinema_name: "金逸影城(光美美一城店)",
-      hall_name: "1号激光厅",
-      film_name: "阿凡达3",
-      film_img:
-        "https://gw.alicdn.com/tfscom/i4/O1CN01e8PcvF1NESAgdEsnM_!!6000000001538-0-alipicbeacon.jpg_120x120.jpg",
-      show_time: "2025-12-30 19:00:00",
-      rewards: 0,
-      is_urgent: false,
-      cinema_group: "",
-      cinema_code: "35061501",
-      order_number: "12412221440316515",
-      offer_end_time: 1734849690000,
-      app_name: "guangmeiwenhua"
-    }
-  });
 
-export default getFenghuangOfferPrice;
+// {
+//   plat_name: "mayi",
+//   id: "12412221440316515",
+//   tpp_price: 42,
+//   supplier_max_price: 39,
+//   city_name: "重庆",
+//   cinema_addr: "雨花台区软件大道109号雨花客厅E-PARK北区3层",
+//   ticket_num: 1,
+//   cinema_name: "金逸影城(光美美一城店)",
+//   hall_name: "1号激光厅",
+//   film_name: "阿凡达3",
+//   film_img:
+//     "https://gw.alicdn.com/tfscom/i4/O1CN01e8PcvF1NESAgdEsnM_!!6000000001538-0-alipicbeacon.jpg_120x120.jpg",
+//   show_time: "2025-12-30 19:00:00",
+//   rewards: 0,
+//   is_urgent: false,
+//   cinema_group: "",
+//   cinema_code: "35061501",
+//   order_number: "12412221440316515",
+//   offer_end_time: 1734849690000,
+//   app_name: "guangmeiwenhua"
+// }
+// 订单报价管理校验：
+// window.jinyiOfferObj("mayi", "guangmeiwenhua").validateOfferOrder(orderJson)
+// 获取订单最终报价：
+// window.jinyiOfferObj("mayi", "guangmeiwenhua").getEndOfferPrice({ order: orderJson, offerList: [] })

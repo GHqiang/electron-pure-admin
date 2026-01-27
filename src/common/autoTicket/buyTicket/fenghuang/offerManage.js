@@ -43,9 +43,6 @@ const {
   userInfo: { rule, user_id }
 } = platTokens();
 
-// 是否是测试订单
-let isTestOrder = false;
-
 /**
  * 凤凰报价管理类
  * 继承 BaseOfferPrice，实现凤凰系列报价逻辑
@@ -83,7 +80,7 @@ class getFenghuangOfferPrice extends BaseOfferPrice {
       // 1. 初始规则匹配
       const matchRuleListRes = offerRuleMatch(order);
       console.log("初始规则匹配", matchRuleListRes);
-      if (!matchRuleListRes?.matchRuleList?.length && !isTestOrder) {
+      if (!matchRuleListRes?.matchRuleList?.length) {
         this.handleRuleMatchError(matchRuleListRes, order);
         return null;
       }
@@ -95,14 +92,6 @@ class getFenghuangOfferPrice extends BaseOfferPrice {
       // 2. 电影格式过滤
       const movieInfo = await this.getMovieInfo();
       if (!movieInfo) return null;
-      if (isTestOrder) {
-        // 测试订单获取会员价
-        const memberPriceRes = await this.getMemberPrice({
-          order,
-          movieData: movieInfo
-        });
-        console.log("测试订单获取会员价", memberPriceRes, movieInfo);
-      }
 
       matchRuleList = this.filterByFilmType(
         matchRuleList,
@@ -228,7 +217,7 @@ class getFenghuangOfferPrice extends BaseOfferPrice {
       // 获取可用卡列表
       const cardList = await this.fetchAvailableCards(order, cinemaLinkId);
       this.logger.infoSave("获取到可用卡列表", { cardList });
-      if (!cardList.length && !isTestOrder) return null;
+      if (!cardList.length) return null;
       // this.logger.infoSave("从座位信息获取会员价");
       let useCardMobileList = cardList?.map(item => item.mobile) || [];
       // 获取该影院的可用手机号列表
