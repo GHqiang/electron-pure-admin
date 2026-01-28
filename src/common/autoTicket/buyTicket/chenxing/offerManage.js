@@ -830,121 +830,12 @@ class getChenxingOfferPrice extends BaseOfferPrice {
       ? { ...(targetShow || {}), cinemaCode, cinemaId, filmId }
       : null;
   }
-
-  /**
-   * 验证报价订单
-   * @param {Object} orderJson - 订单信息对象
-   * @returns {Promise<Object>} 验证结果 { valid, errMsg, steps, offerRule?, movieInfo?, memberPriceRes?, costPrice? }
-   */
-  async validateOfferOrder(orderJson) {
-    const result = {
-      valid: false,
-      errMsg: "",
-      steps: {}
-    };
-
-    try {
-      // 1. 验证订单格式
-      const requiredFields = [
-        "plat_name",
-        "app_name",
-        "city_name",
-        "cinema_name",
-        "cinema_code",
-        "film_name",
-        "hall_name",
-        "show_time",
-        "ticket_num",
-        "supplier_max_price"
-      ];
-      const missingFields = requiredFields.filter(field => !orderJson[field]);
-      if (missingFields.length > 0) {
-        result.errMsg = `缺少必填字段：${missingFields.join(", ")}`;
-        return result;
-      }
-
-      if (
-        typeof orderJson.ticket_num !== "number" ||
-        orderJson.ticket_num <= 0
-      ) {
-        result.errMsg = "ticket_num 必须是大于0的数字";
-        return result;
-      }
-      if (
-        typeof orderJson.supplier_max_price !== "number" ||
-        orderJson.supplier_max_price <= 0
-      ) {
-        result.errMsg = "supplier_max_price 必须是大于0的数字";
-        return result;
-      }
-
-      result.steps.orderFormat = true;
-
-      // 2. 初始化模块
-      this.initModules(orderJson);
-
-      // 3. 验证报价规则匹配
-      const offerRule = await this.getEndMatchOfferRule(orderJson);
-      if (!offerRule) {
-        result.errMsg = "报价规则匹配失败，无法匹配到可用规则";
-        result.steps.offerRuleMatch = false;
-        return result;
-      }
-      result.steps.offerRuleMatch = true;
-      result.offerRule = offerRule;
-
-      // 4. 验证电影信息获取
-      const movieInfo = await this.getMovieInfo();
-      if (!movieInfo) {
-        result.errMsg = "获取电影放映信息失败";
-        result.steps.movieInfo = false;
-        return result;
-      }
-      result.steps.movieInfo = true;
-      result.movieInfo = movieInfo;
-
-      // 5. 验证会员价获取（如果是会员价加价规则）
-      const offerType = offerRule.offerType || offerRule.offer_type;
-      if (offerType === "2") {
-        const memberPriceRes = await this.getMemberPrice({
-          order: orderJson,
-          movieData: movieInfo,
-          minAddAmountRule: offerRule
-        });
-        if (memberPriceRes === -1 || memberPriceRes == null) {
-          result.errMsg = "获取会员价失败";
-          result.steps.memberPrice = false;
-          return result;
-        }
-        result.steps.memberPrice = true;
-        result.memberPriceRes = memberPriceRes;
-      }
-
-      // 6. 验证成本价获取
-      const costPrice = await this.getCostPrice(offerRule);
-      if (!costPrice) {
-        result.errMsg = "获取成本价失败";
-        return result;
-      }
-      result.costPrice = costPrice;
-
-      result.valid = true;
-      return result;
-    } catch (error) {
-      result.errMsg = `验证过程异常：${formatErrInfo(error)}`;
-      return result;
-    } finally {
-      console.log("验证结果：", result);
-    }
-  }
 }
 
 // 测试报价实例的方法
 window.chenxingOfferObj = (plat_name, app_name) => {
   return new getChenxingOfferPrice({ appFlag: app_name, plat_name });
 };
-// 订单报价管理校验：
-// window.chenxingOfferObj("mayi", "xingfulanhai").validateOfferOrder(orderJson)
 // 获取订单最终报价：
 // window.chenxingOfferObj("mayi", "xingfulanhai").getEndOfferPrice({ order: orderJson, offerList: [] })
 export default getChenxingOfferPrice;

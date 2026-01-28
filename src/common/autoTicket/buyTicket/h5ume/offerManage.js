@@ -976,127 +976,12 @@ class getH5UmeOfferPrice extends BaseOfferPrice {
       return [];
     }
   }
-
-  /**
-   * 验证订单报价（不实际报价，仅校验）
-   * @param {Object} orderJson - 订单信息
-   * @returns {Promise<Object>} 验证结果
-   */
-  async validateOfferOrder(orderJson) {
-    const result = {
-      valid: false,
-      errMsg: "",
-      steps: {}
-    };
-
-    try {
-      // 1. 验证订单格式
-      const requiredFields = [
-        "plat_name",
-        "app_name",
-        "city_name",
-        "cinema_name",
-        "cinema_code",
-        "film_name",
-        "hall_name",
-        "show_time",
-        "ticket_num",
-        "supplier_max_price"
-      ];
-      const missingFields = requiredFields.filter(field => !orderJson[field]);
-      if (missingFields.length > 0) {
-        result.errMsg = `缺少必填字段：${missingFields.join(", ")}`;
-        return result;
-      }
-
-      // 验证字段类型
-      if (
-        typeof orderJson.ticket_num !== "number" ||
-        orderJson.ticket_num <= 0
-      ) {
-        result.errMsg = "ticket_num 必须是大于0的数字";
-        return result;
-      }
-      if (
-        typeof orderJson.supplier_max_price !== "number" ||
-        orderJson.supplier_max_price <= 0
-      ) {
-        result.errMsg = "supplier_max_price 必须是大于0的数字";
-        return result;
-      }
-
-      result.steps.orderFormat = true;
-
-      // 2. 初始化模块
-      this.initModules(orderJson);
-
-      // 3. 验证报价规则匹配
-      const offerRule = await this.getEndMatchOfferRule(orderJson);
-      if (!offerRule) {
-        result.errMsg = "报价规则匹配失败，无法匹配到可用规则";
-        result.steps.offerRuleMatch = false;
-        return result;
-      }
-      result.steps.offerRuleMatch = true;
-      result.offerRule = offerRule;
-
-      // 4. 验证电影信息获取
-      // 判断规则里是否有指定电影格式的（2D/3D）
-      let matchRuleList = [offerRule]; // 使用匹配到的规则作为参考
-      let filmTypeFlag = matchRuleList.some(item => !!item?.film_type?.length);
-      const movieInfo = await this.getMovieInfo(
-        orderJson,
-        filmTypeFlag,
-        matchRuleList
-      );
-      if (!movieInfo) {
-        result.errMsg = "获取电影放映信息失败";
-        result.steps.movieInfo = false;
-        return result;
-      }
-      result.steps.movieInfo = true;
-      result.movieInfo = movieInfo;
-
-      // 5. 验证会员价获取（如果是会员价加价规则）
-      if (offerRule.offerType === "2" || offerRule.offer_type === "2") {
-        const memberPriceRes = await this.getMemberPrice({
-          order: orderJson,
-          movieData: movieInfo
-        });
-        if (memberPriceRes === -1 || !memberPriceRes) {
-          result.errMsg = "获取会员价失败";
-          result.steps.memberPrice = false;
-          return result;
-        }
-        result.steps.memberPrice = true;
-        result.memberPriceRes = memberPriceRes;
-      }
-
-      // 6. 验证成本价获取
-      const costPrice = await this.getCostPrice(offerRule);
-      if (!costPrice) {
-        result.errMsg = "获取成本价失败";
-        return result;
-      }
-      result.costPrice = costPrice;
-
-      result.valid = true;
-      return result;
-    } catch (error) {
-      result.errMsg = `验证过程异常：${formatErrInfo(error)}`;
-      return result;
-    } finally {
-      console.log("验证结果：", result);
-    }
-  }
 }
 
 // 测试报价实例的方法
 window.h5UmeOfferObj = (plat_name, app_name) => {
   return new getH5UmeOfferPrice({ appFlag: app_name, plat_name });
 };
-// 订单报价管理校验：
-// window.h5UmeOfferObj("mayi", "hsmzyc").validateOfferOrder(orderJson)
 // 获取订单最终报价：
 // window.h5UmeOfferObj("mayi", "hsmzyc").getEndOfferPrice({ order: orderJson, offerList: [] })
 export default getH5UmeOfferPrice;
