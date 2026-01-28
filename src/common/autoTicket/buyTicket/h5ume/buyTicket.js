@@ -1138,7 +1138,5 @@ window.h5UmeTicketObj = (order, isTestOrder = false) => {
   const logger = new Logger({ logType: 3 });
   return new H5UmeBuyTicket(order, logger, isTestOrder);
 };
-// 订单出票管理相关方法组装校验：
-// window.h5UmeTicketObj(order, true).validateTicketOrder()
 // 订单一键出票测试：
 // window.h5UmeTicketObj(order, true).singleTicket()

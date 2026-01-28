@@ -773,7 +773,5 @@ window.fenghuangTicketObj = (order, isTestOrder = false) => {
   const logger = new Logger({ logType: 3 });
   return new FenghuangBuyTicket(order, logger, isTestOrder);
 };
-// 订单出票管理相关方法组装校验：
-// window.fenghuangTicketObj(order, true).validateTicketOrder()
 // 订单一键出票测试：
 // window.fenghuangTicketObj(order, true).singleTicket()

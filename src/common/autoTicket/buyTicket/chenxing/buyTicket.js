@@ -710,7 +710,5 @@ window.chenxingTicketObj = (order, isTestOrder = false) => {
   const logger = new Logger({ logType: 3 });
   return new ChenxingBuyTicket(order, logger, isTestOrder);
 };
-// 订单出票管理相关方法组装校验：
-// window.chenxingTicketObj(order, true).validateTicketOrder()
 // 订单一键出票测试：
 // window.chenxingTicketObj(order, true).singleTicket()
