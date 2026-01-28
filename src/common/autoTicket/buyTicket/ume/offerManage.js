@@ -289,42 +289,7 @@ class getUmeOfferPrice extends BaseOfferPrice {
       return this.buildErrorResponse();
     }
   }
-
-  /**
-   * 获取成本价
-   *
-   * @param {Object} offerRule - 报价规则对象
-   * @param {string} offerRule.offerType - 报价类型，"1"=固定报价（券），"2"=会员价加价
-   * @param {string} [offerRule.quanValue] - 券类型值（offerType="1"时必填）
-   * @param {number} [offerRule.memberCostPrice] - 会员成本价（offerType="2"时必填）
-   *
-   * @returns {Promise<number|null>} 成本价，获取失败返回 null
-   */
-  async getCostPrice(offerRule) {
-    // 兼容 camelCase 和 snake_case 两种字段名格式
-    const offerType = offerRule.offerType || offerRule.offer_type;
-    const quanValue = offerRule.quanValue || offerRule.quan_value;
-    const memberCostPrice =
-      offerRule.memberCostPrice || offerRule.member_cost_price;
-
-    if (offerType === "1") {
-      this.quanInfoList = [];
-      const quanInfo = await this.cardQuanManage.getQuanInfo(
-        quanValue,
-        this.appFlag
-      );
-      // 只用多种券类型才会返回数组
-      // 这里取一个最小成本价去计算判断能否报价
-      if (Array.isArray(quanInfo)) {
-        this.quanInfoList = quanInfo;
-        const quan_cost = Math.min(...quanInfo.map(item => +item.quan_cost));
-        return quan_cost;
-      }
-      return quanInfo?.quan_cost;
-    } else {
-      return Number(memberCostPrice);
-    }
-  }
+  // 成本价逻辑沿用 BaseOfferPrice.getCostPrice 默认实现
 
   /**
    * 计算最终报价
@@ -698,30 +663,7 @@ class getUmeOfferPrice extends BaseOfferPrice {
     }
   }
 
-  /**
-   * 获取真实加价金额
-   * @param {Object} params - 参数对象
-   * @param {number} params.real_member_price - 真实会员价
-   * @param {Array} params.addMountRule - 加价规则数组
-   * @returns {number|null} 真实加价金额
-   */
-  getRealAddMount({ real_member_price, addMountRule }) {
-    try {
-      let comparePrice = addMountRule[0];
-      let realAddMount = calculateMarkup(
-        comparePrice,
-        real_member_price,
-        addMountRule.slice(1)
-      );
-      console.log("realAddMount", realAddMount);
-      return realAddMount;
-    } catch (error) {
-      this.logger.errorSave("获取真实加价金额异常", {
-        error: formatErrInfo(error)
-      });
-      return null;
-    }
-  }
+  // 获取真实加价金额逻辑沿用 BaseOfferPrice.getRealAddMount 默认实现
 
   /**
    * 获取会员价

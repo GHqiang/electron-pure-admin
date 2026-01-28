@@ -132,45 +132,7 @@ class getH5UmeOfferPrice extends BaseOfferPrice {
       return null;
     }
   }
-
-  /**
-   * 获取成本价
-   * @param {Object} offerRule - 报价规则
-   * @returns {Promise<number|null>} 成本价或null
-   */
-  async getCostPrice(offerRule) {
-    try {
-      const { offerType, quanValue, memberCostPrice = 0 } = offerRule;
-      let cost_price;
-      if (offerType === "1") {
-        const quanInfo = await this.cardQuanManage.getQuanInfo(
-          quanValue,
-          this.appFlag
-        );
-        cost_price = quanInfo?.quan_cost;
-        // 只用多种券类型才会返回数组
-        // 这里取一个最小成本价去计算判断能否报价
-        if (Array.isArray(quanInfo)) {
-          this.quanInfoList = quanInfo;
-          cost_price = Math.min(
-            ...this.quanInfoList.map(item => +item.quan_cost)
-          );
-        }
-      } else {
-        cost_price = Number(memberCostPrice);
-      }
-      if (!cost_price) {
-        this.logger.errorSave("获取出票成本价格失败");
-        return null;
-      }
-      return cost_price;
-    } catch (error) {
-      this.logger.errorSave("获取成本价异常", {
-        error: formatErrInfo(error)
-      });
-      return null;
-    }
-  }
+  // 成本价逻辑沿用 BaseOfferPrice.getCostPrice 默认实现
 
   /**
    * 获取会员价
@@ -573,30 +535,7 @@ class getH5UmeOfferPrice extends BaseOfferPrice {
     }
   }
 
-  /**
-   * 获取真实加价金额
-   * @param {Object} params - 参数对象
-   * @param {number} params.real_member_price - 真实会员价
-   * @param {Array} params.addMountRule - 加价规则数组
-   * @returns {number} 真实加价金额
-   */
-  getRealAddMount({ real_member_price, addMountRule }) {
-    try {
-      let comparePrice = addMountRule[0];
-      let realAddMount = calculateMarkup(
-        comparePrice,
-        real_member_price,
-        addMountRule.slice(1)
-      );
-      console.log("realAddMount", realAddMount);
-      return realAddMount;
-    } catch (error) {
-      this.logger.errorSave("获取真实加价金额异常", {
-        error: formatErrInfo(error)
-      });
-      return null;
-    }
-  }
+  // 获取真实加价金额逻辑沿用 BaseOfferPrice.getRealAddMount 默认实现
 
   /**
    * 获取优惠券列表（报价时使用）

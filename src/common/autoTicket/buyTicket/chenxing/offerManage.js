@@ -112,32 +112,7 @@ class getChenxingOfferPrice extends BaseOfferPrice {
     }
   }
 
-  /**
-   * 获取成本价
-   * @param {Object} offerRule - 报价规则对象
-   * @returns {Promise<number|null>} 成本价，获取失败返回 null
-   */
-  async getCostPrice(offerRule) {
-    const { offerType, quanValue, memberCostPrice } = offerRule;
-
-    if (offerType === "1") {
-      this.quanInfoList = [];
-      const quanInfo = await this.cardQuanManage.getQuanInfo(
-        quanValue,
-        this.appFlag
-      );
-      // 只用多种券类型才会返回数组
-      // 这里取一个最小成本价去计算判断能否报价
-      if (Array.isArray(quanInfo)) {
-        this.quanInfoList = quanInfo;
-        const quan_cost = Math.min(...quanInfo.map(item => +item.quan_cost));
-        return quan_cost;
-      }
-      return quanInfo?.quan_cost;
-    } else {
-      return Number(memberCostPrice);
-    }
-  }
+  // 成本价逻辑沿用 BaseOfferPrice.getCostPrice 默认实现
 
   /**
    * 计算最终报价
@@ -708,24 +683,7 @@ class getChenxingOfferPrice extends BaseOfferPrice {
     }
   }
 
-  /**
-   * 获取真实加价金额
-   * @private
-   */
-  getRealAddMount({ real_member_price, addMountRule }) {
-    try {
-      let comparePrice = addMountRule[0];
-      let realAddMount = calculateMarkup(
-        comparePrice,
-        real_member_price,
-        addMountRule.slice(1)
-      );
-      console.log("realAddMount", realAddMount);
-      return realAddMount;
-    } catch (error) {
-      this.logger.errorSave("获取真实加价金额异常", error);
-    }
-  }
+  // 获取真实加价金额逻辑沿用 BaseOfferPrice.getRealAddMount 默认实现
 
   /**
    * 过滤会员日报价规则

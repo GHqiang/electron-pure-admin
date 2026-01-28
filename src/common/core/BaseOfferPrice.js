@@ -1,7 +1,7 @@
 // 报价基类
 // 提取所有影院系列报价的公共逻辑
 
-import { formatErrInfo } from "@/utils/utils.js";
+import { formatErrInfo, calculateMarkup } from "@/utils/utils.js";
 import Logger from "../logger.js";
 
 /**
@@ -19,6 +19,8 @@ export default class BaseOfferPrice {
     this.appFlag = appFlag; // 影线标识
     this.plat_name = plat_name; // 平台标识
     this.logger = null; // 日志实例，在initModules中初始化
+    // 用于存放当前报价规则下查询到的券类型信息（供 maxCostPrice 过滤使用）
+    this.quanInfoList = [];
   }
 
   /**
@@ -154,12 +156,46 @@ export default class BaseOfferPrice {
   }
 
   /**
-   * 获取成本价（子类实现）
+   * 获取成本价（默认实现，绝大多数系列通用）
+   * 约定：
+   * - 固定报价（券）：通过子类注入的 this.cardQuanManage.getQuanInfo 查询券成本
+   *   - 多券类型时取最小 quan_cost，并写入 this.quanInfoList，供后续过滤使用
+   * - 会员价加价：直接使用 memberCostPrice
+   *
+   * 子类若有特殊需求（例如第三方返回结构特殊），可以覆写本方法。
+   *
    * @param {Object} offerRule - 报价规则
    * @returns {Promise<number|null>} 成本价或null
    */
   async getCostPrice(offerRule) {
-    throw new Error(`影院系列 ${this.appFlag} 未实现 getCostPrice 方法`);
+    const offerType = offerRule.offerType;
+    const quanValue = offerRule.quanValue;
+    const memberCostPrice = offerRule.memberCostPrice || 0;
+
+    if (offerType === "1") {
+      this.quanInfoList = [];
+      if (!this.cardQuanManage?.getQuanInfo) {
+        this.logger?.errorSave?.(
+          "getCostPrice: 固定报价但未注入 cardQuanManage.getQuanInfo"
+        );
+        return null;
+      }
+      const quanInfo = await this.cardQuanManage.getQuanInfo(
+        quanValue,
+        this.appFlag
+      );
+      // 多券类型时取最小成本价
+      if (Array.isArray(quanInfo)) {
+        this.quanInfoList = quanInfo;
+        const quan_cost = Math.min(
+          ...quanInfo.map(item => Number(item.quan_cost || 0))
+        );
+        return quan_cost;
+      }
+      return quanInfo?.quan_cost ?? null;
+    }
+
+    return Number(memberCostPrice) || null;
   }
 
   /**
@@ -187,5 +223,40 @@ export default class BaseOfferPrice {
    */
   async calculateFinalPrice(params) {
     throw new Error(`影院系列 ${this.appFlag} 未实现 calculateFinalPrice 方法`);
+  }
+
+  /**
+   * 获取真实加价金额（默认实现，绝大多数系列通用）
+   *
+   * 说明：
+   * - 使用通用的 calculateMarkup 工具函数
+   * - addMountRule 格式与历史规则保持一致，例如：["30", ">=+2", "<+1"]
+   *
+   * @param {Object} params
+   * @param {number} params.real_member_price - 真实会员价
+   * @param {Array<string>} params.addMountRule - 加价规则数组
+   * @returns {number|null}
+   */
+  getRealAddMount({ real_member_price, addMountRule }) {
+    try {
+      const comparePrice = addMountRule?.[0];
+      if (!comparePrice || !Array.isArray(addMountRule)) return null;
+      const realAddMount = calculateMarkup(
+        comparePrice,
+        real_member_price,
+        addMountRule.slice(1)
+      );
+      this.logger?.infoSave?.("getRealAddMount 计算结果", {
+        real_member_price,
+        addMountRule,
+        realAddMount
+      });
+      return realAddMount;
+    } catch (error) {
+      this.logger?.errorSave?.("获取真实加价金额异常", {
+        error: formatErrInfo(error)
+      });
+      return null;
+    }
   }
 }
