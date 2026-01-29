@@ -20,10 +20,8 @@ import {
   roundToHalf,
   formatErrInfo,
   getCinemaLoginInfoList,
-  calcCount,
   getCurrentDay,
-  isDateInCurrentMonth,
-  calculateMarkup
+  isDateInCurrentMonth
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
@@ -31,6 +29,7 @@ import {
   GET_SFC_APP_LIST,
   GROUP_LIST,
   TEST_NEW_PLAT_LIST,
+  NO_FEE_PLAT_LIST,
   ONE_STEP_PLAT_LIST
 } from "@/common/constant.js";
 import { platTokens } from "@/store/platTokens";
@@ -40,6 +39,14 @@ import BaseOfferPrice from "@/common/core/BaseOfferPrice.js";
 import SfcCardQuanManage from "./cardQuanManage.js";
 import SfcCinemaManage from "./cinemaManage.js";
 import SfcSeatManage from "./seatManage.js";
+import {
+  applyDynamicPricing,
+  applyProfitAddition,
+  applyNightMaxPrice,
+  handleOverrunCheck,
+  calcOfferCostProfitParts
+} from "../common/offerHelper";
+import { calculateMostSeatPrice } from "../common/seatPriceHelper";
 
 const tokens = platTokens();
 
@@ -177,36 +184,6 @@ class getSfcOfferPrice extends BaseOfferPrice {
   }
 
   /**
-   * 获取成本价
-   * @param {Object} offerRule - 报价规则对象
-   * @returns {Promise<number|null>} 成本价，获取失败返回 null
-   */
-  async getCostPrice(offerRule) {
-    const offerType = offerRule.offerType || offerRule.offer_type;
-    const quanValue = offerRule.quanValue || offerRule.quan_value;
-    const memberCostPrice =
-      offerRule.memberCostPrice || offerRule.member_cost_price;
-
-    if (offerType === "1") {
-      this.quanInfoList = [];
-      const quanInfo = await this.cardQuanManage.getQuanInfo(
-        quanValue,
-        this.appFlag
-      );
-      // 只用多种券类型才会返回数组
-      // 这里取一个最小成本价去计算判断能否报价
-      if (Array.isArray(quanInfo)) {
-        this.quanInfoList = quanInfo;
-        const quan_cost = Math.min(...quanInfo.map(item => +item.quan_cost));
-        return quan_cost;
-      }
-      return quanInfo?.quan_cost;
-    } else {
-      return Number(memberCostPrice);
-    }
-  }
-
-  /**
    * 计算最终报价
    * @param {Object} params - 计算参数
    * @returns {Promise<number|null>} 最终报价金额，计算失败或利润不足返回 null
@@ -224,22 +201,35 @@ class getSfcOfferPrice extends BaseOfferPrice {
 
     try {
       // 1. 动态调价处理
-      let adjustedPrice = this.applyDynamicPricing(price, offerList);
+      let adjustedPrice = applyDynamicPricing({
+        basePrice: price,
+        offerList,
+        logger: this.logger
+      });
 
       // 2. 利润加价处理
-      adjustedPrice = this.applyProfitAddition(adjustedPrice, offerType);
+      adjustedPrice = applyProfitAddition({
+        price: adjustedPrice,
+        offerType,
+        appFlag: this.appFlag,
+        groupList: GROUP_LIST,
+        logger: this.logger
+      });
 
       // 3. 夜间顶价处理
-      adjustedPrice = this.applyNightMaxPrice(
-        adjustedPrice,
-        supplier_max_price
-      );
+      adjustedPrice = applyNightMaxPrice({
+        price: adjustedPrice,
+        supplier_max_price,
+        logger: this.logger
+      });
 
       // 4. 超限检查处理
-      adjustedPrice = await this.handleOverrunCheck(
-        adjustedPrice,
-        supplier_max_price
-      );
+      adjustedPrice = await handleOverrunCheck({
+        price: adjustedPrice,
+        supplier_max_price,
+        plat_name: this.plat_name,
+        logger: this.logger
+      });
       if (!adjustedPrice) {
         return null;
       }
@@ -261,120 +251,6 @@ class getSfcOfferPrice extends BaseOfferPrice {
   }
 
   /**
-   * 应用动态调价
-   * @param {number} basePrice - 基础报价
-   * @param {Array} offerList - 历史报价列表
-   * @returns {number} 调整后的价格
-   */
-  applyDynamicPricing(basePrice, offerList) {
-    const adjustPrice = window.localStorage.getItem("adjustPrice");
-    if (!adjustPrice) return basePrice;
-
-    try {
-      const adjustConfig = JSON.parse(adjustPrice);
-      const lierenMachineOfferList = offerList || [];
-      const countRes = calcCount(lierenMachineOfferList);
-      const { inCount, outCount, inPrice, outPrice } = adjustConfig;
-
-      if (countRes.inCount && inPrice && countRes.inCount >= inCount) {
-        const newPrice = basePrice + Number(inPrice);
-        this.logger.infoSave(`动态调价后的价格-${newPrice}, 增加了-${inPrice}`);
-        return newPrice;
-      } else if (
-        countRes.outCount &&
-        outPrice &&
-        countRes.outCount >= outCount
-      ) {
-        const newPrice = basePrice - Number(outPrice);
-        this.logger.infoSave(
-          `动态调价后的价格-${newPrice}, 降低了-${outPrice}`
-        );
-        return newPrice;
-      }
-    } catch (error) {
-      this.logger.errorSave("动态调价处理异常", error);
-    }
-    return basePrice;
-  }
-
-  /**
-   * 应用利润加价(节日)
-   * @param {number} price - 当前价格
-   * @param {string} offerType - 报价类型
-   * @returns {number} 调整后的价格
-   */
-  applyProfitAddition(price, offerType) {
-    let profitAddPrice = 0;
-    if (offerType !== "1" && !GROUP_LIST.includes(this.appFlag)) {
-      profitAddPrice = window.localStorage.getItem("profitAddPrice");
-      profitAddPrice = profitAddPrice ? Number(profitAddPrice) : 0;
-      price = price + profitAddPrice;
-    }
-    return price;
-  }
-
-  /**
-   * 应用夜间顶价
-   * @param {number} price - 当前价格
-   * @param {number} supplier_max_price - 平台最高限价
-   * @returns {number} 调整后的价格
-   */
-  applyNightMaxPrice(price, supplier_max_price) {
-    const isNightMaxPriceEnabled =
-      localStorage.getItem("isOpenisNightMaxPrice") == 1;
-    const currentHour = new Date().getHours();
-
-    if (isNightMaxPriceEnabled && currentHour >= 1 && currentHour <= 6) {
-      this.logger.infoSave("开启夜间顶价");
-      return Number(supplier_max_price);
-    }
-    return price;
-  }
-
-  /**
-   * 超限检查
-   * @param {number} price - 当前价格
-   * @param {number} supplier_max_price - 平台最高限价
-   * @returns {Promise<number|null>} 调整后的价格或null（不允许报价）
-   */
-  async handleOverrunCheck(price, supplier_max_price) {
-    if (price > Number(supplier_max_price)) {
-      const isOverrunOfferEnabled =
-        window.localStorage.getItem("isOverrunOffer") === "1";
-      if (!isOverrunOfferEnabled) {
-        this.logger.errorSave(
-          `最终报价${price}超过平台限价${supplier_max_price}，超限报价处于关闭状态不进行报价`
-        );
-        return null;
-      }
-
-      // 调整价格至平台限价
-      return this.adjustToMaxPrice(price, supplier_max_price);
-    }
-    return price;
-  }
-
-  /**
-   * 调整至平台限价
-   * @param {number} price - 当前价格
-   * @param {number} supplier_max_price - 平台最高限价
-   * @returns {number} 调整后的价格
-   */
-  adjustToMaxPrice(price, supplier_max_price) {
-    if (["mayi", "yangcong"].includes(this.plat_name)) {
-      price = Math.floor(supplier_max_price);
-    } else {
-      price = roundToHalf(
-        supplier_max_price,
-        ONE_STEP_PLAT_LIST.includes(this.plat_name) ? 0.1 : 0.5,
-        "down"
-      );
-    }
-    this.logger.infoSave("调整最终报价为平台限价四舍五入去整");
-    return price;
-  }
-
-  /**
    * 成本利润计算
    * @param {Object} params - 计算参数
    * @returns {number|null} 最终报价或null（利润不足）
@@ -386,20 +262,21 @@ class getSfcOfferPrice extends BaseOfferPrice {
     supplier_max_price,
     offerRule
   }) {
-    // 手续费
-    const shouxufei = (adjustedPrice * 100) / 10000;
-
-    // 奖励费用
-    const rewardPrice =
-      rewards > 0 ? (adjustedPrice * 100 * rewards) / 10000 : 0;
-    // 卡券成本
-    let cardQuanCost = cost_price;
-    // 出票成本（加手续费）
-    let pay_cost_price = cost_price + shouxufei;
-    // 真实成本（减奖励费）
-    const real_cost_price = (pay_cost_price - rewardPrice).toFixed(2);
-    // 预计利润（最终报价-真实成本）
-    let expectProfit = (adjustedPrice - real_cost_price).toFixed(2);
+    const parts = calcOfferCostProfitParts({
+      adjustedPrice,
+      cost_price,
+      rewards,
+      plat_name: this.plat_name,
+      noFeePlatList: NO_FEE_PLAT_LIST
+    });
+    const {
+      shouxufei,
+      rewardPrice,
+      pay_cost_price,
+      real_cost_price,
+      expectProfit,
+      maxCostPrice
+    } = parts;
 
     if (
       adjustedPrice <= real_cost_price &&
@@ -411,8 +288,6 @@ class getSfcOfferPrice extends BaseOfferPrice {
     }
 
     // 最大卡券成本（即成本必须低于它才有利润）
-    let maxCostPrice =
-      (adjustedPrice * 1000 + rewardPrice * 1000 - shouxufei * 1000) / 1000;
     offerRule.maxCostPrice = maxCostPrice;
 
     this.logger.infoSave("sfc计算报价相关信息", {
@@ -420,7 +295,7 @@ class getSfcOfferPrice extends BaseOfferPrice {
       profitAddPrice:
         "单店加价金额：" + (adjustedPrice - this.getOfferBasePrice(offerRule)),
       supplier_max_price: "平台最高限价：" + supplier_max_price,
-      cardQuanCost: "卡券成本：" + cardQuanCost,
+      cardQuanCost: "卡券成本：" + cost_price,
       maxCostPrice: "最大卡券成本（低于该值才有利润）：" + maxCostPrice,
       price: "最终报价：" + adjustedPrice,
       shouxufei: "手续费（最终报价*1%）：" + shouxufei,
@@ -723,31 +598,6 @@ class getSfcOfferPrice extends BaseOfferPrice {
   }
 
   /**
-   * 获取真实加价金额
-   * @param {Object} params - 参数对象
-   * @param {number} params.real_member_price - 真实会员价
-   * @param {Array} params.addMountRule - 加价规则数组
-   * @returns {number|null} 真实加价金额
-   */
-  getRealAddMount({ real_member_price, addMountRule }) {
-    try {
-      let comparePrice = addMountRule[0];
-      let realAddMount = calculateMarkup(
-        comparePrice,
-        real_member_price,
-        addMountRule.slice(1)
-      );
-      console.log("realAddMount", realAddMount);
-      return realAddMount;
-    } catch (error) {
-      this.logger.errorSave("获取真实加价金额异常", {
-        error: formatErrInfo(error)
-      });
-      return null;
-    }
-  }
-
-  /**
    * 获取会员价
    * @param {Object} params - 参数对象
    * @param {Object} params.order - 订单信息
@@ -932,155 +782,18 @@ class getSfcOfferPrice extends BaseOfferPrice {
    * @returns {number} 最多座位的价格
    */
   getMostSeatPrice(seat_data, areaList) {
-    try {
-      // 过滤出来未售座位然后计算分区剩余座位占比，0-未售
-      let seatList = seat_data.filter(item => item[2] == 0);
-
-      let areaRatioList = areaList.map(item => {
-        return {
-          ...item,
-          numRatio: Math.floor(
-            (seatList.filter(itemA => itemA[itemA.length - 1] == item.area_id)
-              .length *
-              100) /
-              seatList.length
-          )
-        };
-      });
-      areaRatioList.sort((a, b) => b.numRatio - a.numRatio);
-      this.logger.infoSave("座位分区剩余座位占比情况", { areaRatioList });
-      let mostSeatPrice = areaRatioList[0]?.settlePrice;
-      return mostSeatPrice;
-    } catch (error) {
-      this.logger.infoSave("座位分区剩余座位占比计算失败", {
-        error: formatErrInfo(error)
-      });
-      return null;
-    }
-  }
-
-  /**
-   * 验证待报价订单JSON
-   *
-   * 用于验证待报价订单的格式和核心方法的可执行性，不实际进行报价
-   *
-   * @param {Object} orderJson - 待报价订单JSON
-   * @param {string} orderJson.plat_name - 平台名称（必填）
-   * @param {string} orderJson.app_name - 影院标识（必填）
-   * @param {string} [orderJson.order_number] - 订单号（可选）
-   * @param {string} orderJson.city_name - 城市名称（必填）
-   * @param {string} orderJson.cinema_name - 影院名称（必填）
-   * @param {string|number} orderJson.cinema_code - 影院编码（必填）
-   * @param {string} orderJson.film_name - 电影名称（必填）
-   * @param {string} orderJson.hall_name - 影厅名称（必填）
-   * @param {string} orderJson.show_time - 放映时间，格式：YYYY-MM-DD HH:mm:ss（必填）
-   * @param {number} orderJson.ticket_num - 票数（必填）
-   * @param {number} orderJson.supplier_max_price - 平台最高限价（必填）
-   * @param {number} [orderJson.rewards] - 奖励百分比，默认0（可选）
-   *
-   * @returns {Promise<Object>} 验证结果：
-   *   - valid: boolean，是否通过验证
-   *   - errMsg: string，错误信息（验证失败时）
-   *   - steps: Object，验证步骤结果（可选）
-   *     - orderFormat: boolean，订单格式验证
-   *     - offerRuleMatch: boolean，报价规则匹配
-   *     - movieInfo: boolean，电影信息获取
-   *     - memberPrice: boolean，会员价获取（如果适用）
-   *   - offerRule: Object，匹配到的报价规则（如果匹配成功）
-   */
-  async validateOfferOrder(orderJson) {
-    const result = {
-      valid: false,
-      errMsg: "",
-      steps: {}
-    };
-
-    try {
-      const requiredFields = [
-        "plat_name",
-        "app_name",
-        "city_name",
-        "cinema_name",
-        "cinema_code",
-        "film_name",
-        "hall_name",
-        "show_time",
-        "ticket_num",
-        "supplier_max_price"
-      ];
-      const missingFields = requiredFields.filter(field => !orderJson[field]);
-      if (missingFields.length > 0) {
-        result.errMsg = `缺少必填字段：${missingFields.join(", ")}`;
-        return result;
-      }
-
-      if (
-        typeof orderJson.ticket_num !== "number" ||
-        orderJson.ticket_num <= 0
-      ) {
-        result.errMsg = "ticket_num 必须是大于0的数字";
-        return result;
-      }
-      if (
-        typeof orderJson.supplier_max_price !== "number" ||
-        orderJson.supplier_max_price <= 0
-      ) {
-        result.errMsg = "supplier_max_price 必须是大于0的数字";
-        return result;
-      }
-
-      result.steps.orderFormat = true;
-
-      this.initModules(orderJson);
-
-      const offerRule = await this.getEndMatchOfferRule(orderJson);
-      if (!offerRule) {
-        result.errMsg = "报价规则匹配失败，无法匹配到可用规则";
-        result.steps.offerRuleMatch = false;
-        return result;
-      }
-      result.steps.offerRuleMatch = true;
-      result.offerRule = offerRule;
-
-      const movieInfo = await this.cinemaManage.getMovieInfo(orderJson);
-      if (!movieInfo) {
-        result.errMsg = "获取电影放映信息失败";
-        result.steps.movieInfo = false;
-        return result;
-      }
-      result.steps.movieInfo = true;
-      result.movieInfo = movieInfo;
-
-      const offerType = offerRule.offerType || offerRule.offer_type;
-      if (offerType === "2") {
-        const memberPriceRes = await this.getMemberPrice({
-          order: orderJson,
-          movieData: movieInfo
-        });
-        if (memberPriceRes === -1 || memberPriceRes == null) {
-          result.errMsg = "获取会员价失败";
-          result.steps.memberPrice = false;
-          return result;
-        }
-        result.steps.memberPrice = true;
-        result.memberPriceRes = memberPriceRes;
-      }
-
-      const costPrice = await this.getCostPrice(offerRule);
-      if (!costPrice) {
-        result.errMsg = "获取成本价失败";
-        return result;
-      }
-      result.costPrice = costPrice;
-
-      result.valid = true;
-      return result;
-    } catch (error) {
-      result.errMsg = `验证过程异常：${formatErrInfo(error)}`;
-      return result;
-    } finally {
-      console.log("验证结果：", result);
-    }
+    return calculateMostSeatPrice({
+      seatList: seat_data,
+      areaList,
+      extractors: {
+        // SFC：数组结构 seat = [seat_id, x, status, ?, ?, area_id...]
+        isSeatAvailable: seat => seat?.[2] == 0,
+        getSeatAreaId: seat => seat?.[seat.length - 1],
+        getAreaId: area => area?.area_id,
+        getAreaPrice: area => area?.settlePrice
+      },
+      logger: this.logger
+    });
   }
 }
 
@@ -1088,8 +801,6 @@ class getSfcOfferPrice extends BaseOfferPrice {
 window.sfcOfferObj = (plat_name, app_name) => {
   return new getSfcOfferPrice({ appFlag: app_name, plat_name });
 };
-// 订单报价管理校验：
-// window.sfcOfferObj("mayi", "hbchyxd").validateOfferOrder(orderJson)
 // 获取订单最终报价：
 // window.sfcOfferObj("mayi", "hbchyxd").getEndOfferPrice({ order: orderJson, offerList: [] })
 export default getSfcOfferPrice;

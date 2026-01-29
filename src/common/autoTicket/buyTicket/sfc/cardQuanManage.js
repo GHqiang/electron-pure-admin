@@ -14,9 +14,6 @@
 import {
   formatErrInfo,
   getCurrentTime,
-  getCurrentDay,
-  isDateInCurrentMonth,
-  getCinemaLoginInfoList,
   couponInfoSpecial,
   mockDelay,
   getOfferRuleById
@@ -31,6 +28,13 @@ import svApi from "@/api/sv-api";
 import Logger from "@/common/logger";
 import { platTokens } from "@/store/platTokens";
 import usesMachineBaseFun from "@/mixins/usesMachineBaseFun";
+import {
+  getQuanInfoCommon,
+  getUsableCardListCommon,
+  getQuanTypeListByAppCommon,
+  getSortPhoneByQuanTypeListCommon,
+  updateQuanStockCommon
+} from "../common/cardQuanHelper";
 
 const tokens = platTokens();
 const { getQuanValueListByQuanFlag } = usesMachineBaseFun();
@@ -54,19 +58,7 @@ export default class SfcCardQuanManage {
    * @returns {Promise<Object|Array|null>} 券类型信息或null
    */
   async getQuanInfo(quan_value, app_name) {
-    try {
-      const res = await svApi.queryQuanTypeInfo({
-        quan_value,
-        app_name
-      });
-      this.logger.infoSave("获取券类型信息返回", { res });
-      return res.data.quanInfo || null;
-    } catch (error) {
-      this.logger.errorSave("获取券类型信息异常", {
-        error: formatErrInfo(error)
-      });
-      return null;
-    }
+    return getQuanInfoCommon({ quan_value, app_name, logger: this.logger });
   }
 
   /**
@@ -210,54 +202,12 @@ export default class SfcCardQuanManage {
    * @returns {Promise<Array>} 可用卡列表
    */
   async getUsableCardList(cinema_id, ticket_num) {
-    try {
-      const res = await svApi.queryCardList({
-        app_name: this.appFlag,
-        rule: tokens.userInfo?.rule,
-        status: "1",
-        isNeedTotalNum: 0,
-        queryFields:
-          "card_num,card_id,balance,mobile,default_card,card_discount,linkCinemaIds,use_limit_day,use_limit_month,daily_usage,monthly_usage,usage_date"
-      });
-      let list = res?.data?.cardList || [];
-      list = list.map(item => ({
-        ...item,
-        daily_usage:
-          item.usage_date !== getCurrentDay() ? 0 : item.daily_usage || 0,
-        month_usage: !isDateInCurrentMonth(item.usage_date)
-          ? 0
-          : item.monthly_usage || 0
-      }));
-      const useMobileList = (getCinemaLoginInfoList() || [])
-        .filter(i => i.app_name === this.appFlag && i.mobile && i.session_id)
-        .map(i => i.mobile);
-      let cardListByMobile = list.filter(i => useMobileList.includes(i.mobile));
-      cardListByMobile = cardListByMobile.filter(item => {
-        const { use_limit_day, use_limit_month, daily_usage, month_usage } =
-          item;
-        if (!use_limit_day && !use_limit_month) return true;
-        return (
-          (use_limit_day ? ticket_num <= use_limit_day - daily_usage : true) &&
-          (use_limit_month ? ticket_num <= use_limit_month - month_usage : true)
-        );
-      });
-      cardListByMobile = cardListByMobile.filter(item =>
-        !item.linkCinemaIds
-          ? true
-          : item.linkCinemaIds.split(",").some(id => id == cinema_id)
-      );
-      cardListByMobile.sort((a, b) => {
-        if (a.linkCinemaIds && !b.linkCinemaIds) return -1;
-        if (!a.linkCinemaIds && b.linkCinemaIds) return 1;
-        return 0;
-      });
-      return cardListByMobile;
-    } catch (error) {
-      this.logger.errorSave("获取会员卡维护列表异常", {
-        error: formatErrInfo(error)
-      });
-      return [];
-    }
+    return getUsableCardListCommon({
+      appFlag: this.appFlag,
+      cinema_id,
+      ticket_num,
+      logger: this.logger
+    });
   }
 
   /**
@@ -274,61 +224,14 @@ export default class SfcCardQuanManage {
     quan_value,
     ticket_num
   ) {
-    try {
-      const params = {
-        app_name,
-        isNeedTotalNum: 0,
-        queryFields:
-          "id,app_name,quan_value,quan_flag,black_quans,quanStockList"
-      };
-      const quanTypeRes = await svApi.queryQuanTypeList(params);
-      let quanTypeList = quanTypeRes?.data?.quanTypeList || [];
-      const quanValueList = (quan_value || "").split(",").filter(Boolean);
-      let targetQuanList = quanTypeList.filter(i =>
-        quanValueList.includes(i.quan_value)
-      );
-      const useMobileList = (getCinemaLoginInfoList() || [])
-        .filter(i => i.app_name === app_name && i.mobile && i.session_id)
-        .map(i => i.mobile);
-      targetQuanList.forEach(item => {
-        let raw = item?.quanStockList;
-        if (raw) {
-          raw = typeof raw === "string" ? JSON.parse(raw) : raw;
-          raw = (raw || []).map(a => ({ ...a, quan_stock: a.quan_stock || 0 }));
-          raw = raw.filter(
-            a => useMobileList.includes(a.phone) && a.quan_stock >= ticket_num
-          );
-          item.quanStockList = raw;
-        }
-      });
-      targetQuanList = targetQuanList.filter(
-        i => (i.quanStockList || []).length > 0
-      );
-      const phoneSet = new Set();
-      const out = [];
-      const sorted = [...targetQuanList].sort(
-        (a, b) =>
-          quanValueList.indexOf(a.quan_value) -
-          quanValueList.indexOf(b.quan_value)
-      );
-      for (const item of sorted) {
-        const list = (item.quanStockList || []).sort(
-          (a, b) => (b.quan_stock || 0) - (a.quan_stock || 0)
-        );
-        for (const s of list) {
-          if (!phoneSet.has(s.phone)) {
-            phoneSet.add(s.phone);
-            out.push(s.phone);
-          }
-        }
-      }
-      return out;
-    } catch (error) {
-      this.logger.errorSave("getSortPhoneByQuanTypeList异常", {
-        error: formatErrInfo(error)
-      });
-      return [];
-    }
+    // quan_flag 在“按券类型排序手机号”这条路径上不参与排序规则，这里保留参数仅为兼容签名
+    void quan_flag;
+    return getSortPhoneByQuanTypeListCommon({
+      app_name,
+      quan_value,
+      ticket_num,
+      logger: this.logger
+    });
   }
 
   /**
@@ -612,38 +515,11 @@ export default class SfcCardQuanManage {
   }
 
   async getQuanTypeListByApp({ appFlag: app_name, mobile }) {
-    const params = {
+    return getQuanTypeListByAppCommon({
       app_name,
-      isNeedTotalNum: 0,
-      queryFields: "id,app_name,quan_value,quan_flag,black_quans,quanStockList"
-    };
-    try {
-      let quanTypeRes = await svApi.queryQuanTypeList(params);
-      let quanTypeList = quanTypeRes?.data?.quanTypeList || [];
-      quanTypeList.forEach(item => {
-        item.quanStockList = item.quanStockList
-          ? JSON.parse(item.quanStockList)
-          : [];
-        const quanStockListByPhone = item.quanStockList.filter(
-          itemA => itemA.phone === mobile
-        );
-        item.quan_stock = item.quan_stock || 0;
-        if (quanStockListByPhone?.length) {
-          let maxNum = 0;
-          quanStockListByPhone.forEach(itemA => {
-            if (+itemA.quan_stock > maxNum) {
-              maxNum = +itemA.quan_stock;
-            }
-          });
-          item.quan_stock = maxNum;
-        }
-      });
-      this.logger.infoSave("根据影院获取券类型列表返回", { quanTypeList });
-      return quanTypeList;
-    } catch (error) {
-      this.logger.errorSave("根据影院获取券类型列表返回异常", { error });
-      return [];
-    }
+      mobile,
+      logger: this.logger
+    });
   }
 
   async _getQuanListForPay({
@@ -892,14 +768,14 @@ export default class SfcCardQuanManage {
     if (NO_FEE_PLAT_LIST.includes(plat_name)) {
       shouxufei = 0;
     }
-    let profit =
-      (supplier_end_price || 0) -
-      (member_price || 0) -
-      shouxufei;
+    let profit = (supplier_end_price || 0) - (member_price || 0) - shouxufei;
     profit = Number(profit) * (ticket_num || 0);
     if (rewards > 0) {
       const rewardPrice =
-        (Number(supplier_end_price || 0) * 100 * Number(ticket_num || 0) * rewards) /
+        (Number(supplier_end_price || 0) *
+          100 *
+          Number(ticket_num || 0) *
+          rewards) /
         10000;
       profit += rewardPrice;
     }
@@ -1132,51 +1008,9 @@ export default class SfcCardQuanManage {
    * 更新券库存（出票用）
    */
   async updateQuanStock(_params) {
-    try {
-      const { ticket_num, quan_stock, quan_flag, phone, app_name, quan_value } =
-        _params || {};
-      const res = await svApi.queryQuanTypeList({
-        app_name,
-        isNeedTotalNum: 0,
-        queryFields: "id,quan_flag,app_name,quan_value,quanStockList"
-      });
-      const list = (res?.data?.quanTypeList || []).filter(
-        i => i.quan_flag == quan_flag
-      );
-      for (const item of list) {
-        let raw = item.quanStockList;
-        if (!raw) continue;
-        raw = typeof raw === "string" ? JSON.parse(raw) : raw;
-        const idx = raw.findIndex(i => i.phone === phone);
-        if (idx < 0) continue;
-        const prev = raw[idx];
-        raw[idx] = {
-          ...prev,
-          quan_stock:
-            quan_stock !== undefined
-              ? quan_stock
-              : (prev.quan_stock || 0) - (ticket_num || 0),
-          real_quan_stock:
-            quan_stock !== undefined
-              ? quan_stock
-              : (prev.real_quan_stock || prev.quan_stock || 0) -
-                (ticket_num || 0),
-          update_time: getCurrentTime()
-        };
-        const update = {
-          id: item.id,
-          quanStockList: JSON.stringify(raw),
-          update_time: getCurrentTime()
-        };
-        if (
-          quan_value &&
-          (quan_value.split(",") || []).includes(item.quan_value)
-        )
-          update.end_use_time = getCurrentTime();
-        await svApi.updateQuanType(update);
-      }
-    } catch (e) {
-      this.logger.errorSave("updateQuanStock异常", { error: formatErrInfo(e) });
-    }
+    await updateQuanStockCommon({
+      ..._params,
+      logger: this.logger
+    });
   }
 }

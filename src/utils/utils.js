@@ -1829,6 +1829,8 @@ const isNextDay = (show_date, start_time, app_type) => {
     num = 5;
   } else if (app_type === "lma") {
     num = 3;
+  } else {
+    return;
   }
   var i = (show_date = show_date.replace(/-/g, "/")) + " " + start_time + ":00",
     r = (new Date(i).getTime(), parseInt(start_time.split(":")[0]));
