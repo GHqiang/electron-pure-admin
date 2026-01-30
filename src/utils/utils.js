@@ -2740,7 +2740,34 @@ const getMovieInfoFromFilmName = ({ filmName, movieData }) => {
 };
 window.getMovieInfoFromFilmName = getMovieInfoFromFilmName;
 
+// 辰星3.0C特殊规则名称解析，是数字则返回数字
+function parseNumericRule(ruleName) {
+  // 1. 参数类型检查
+  if (typeof ruleName !== "string") {
+    return undefined;
+  }
+
+  // 2. 检查字符串格式：数字_数字
+  if (!/^\d+_\d+$/.test(ruleName)) {
+    return undefined;
+  }
+
+  // 3. 替换下划线为点
+  const replaced = ruleName.replace("_", ".");
+
+  // 4. 转换为数字
+  const number = parseFloat(replaced);
+
+  // 5. 验证是否为有效数字
+  if (isNaN(number) || !isFinite(number)) {
+    return undefined;
+  }
+
+  return number;
+}
+
 export {
+  parseNumericRule,
   getMovieInfoFromFilmName, // 根据影片名获取电影信息
   requestViaMain, // 渲染进程通知主线程进行请求
   removeParenthesesContent, // 移除括号及括号内的内容
