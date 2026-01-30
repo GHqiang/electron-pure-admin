@@ -23,7 +23,8 @@ import {
   formatErrInfo,
   isDateInCurrentMonth,
   getCinemaLoginInfoList,
-  calculateMarkup
+  calculateMarkup,
+  parseNumericRule
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import {
@@ -220,8 +221,19 @@ class getChenxingOfferPrice extends BaseOfferPrice {
         let cinemaPlanDto = targetSeatRes.cinemaPlanDto || {};
         serviceAddFee = cinemaPlanDto?.serviceAddFee;
         this.logger.infoSave("获取到可用优惠列表", {
-          discountList,
+          discountList: JSON.parse(JSON.stringify(discountList)),
           cinemaPlanDto
+        });
+        discountList = discountList.filter(item => {
+          let isSpecial1 = item.ruleGroupName?.includes("会员日活动");
+          let isSpecial2 =
+            item.price - item.cinemaPayAmount ==
+            parseNumericRule(item.ruleName);
+          // 过滤掉特殊的会员日活动和特价活动
+          return !isSpecial1 && !isSpecial2;
+        });
+        this.logger.infoSave("过滤会员日活动后可用优惠列表", {
+          discountList: JSON.parse(JSON.stringify(discountList))
         });
         if (discountList.length) {
           // 取最低价
