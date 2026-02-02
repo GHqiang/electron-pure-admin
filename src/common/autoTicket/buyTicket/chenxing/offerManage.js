@@ -258,7 +258,11 @@ class getChenxingOfferPrice extends BaseOfferPrice {
         if (areaInfoList.length) {
           // 取最高价
           basePrice = areaInfoList
-            .map(item => item.areaPrice)
+            .map(
+              item =>
+                item.ticketPriceInfo?.standPrice +
+                item.ticketPriceInfo?.addPrice
+            )
             .sort((a, b) => b - a)?.[0];
           if (minAddAmountRule?.memberPriceRule == "2") {
             basePrice = this.getMostSeatPrice(
