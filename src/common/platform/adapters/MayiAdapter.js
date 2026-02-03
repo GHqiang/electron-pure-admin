@@ -19,15 +19,26 @@ export default class MayiAdapter extends BasePlatformAdapter {
 
   /**
    * 获取待报价订单列表
+   * 兼容接口返回 res.data / res.records / res 为数组的情况
    * @param {Object} params - 查询参数
    * @returns {Promise<Array>} 订单列表
    */
   async fetchOrderList(params = {}) {
     try {
       const res = await this.api.queryStayOfferList(params);
-      return res?.data || [];
+      const list = res?.data ?? res?.records ?? (Array.isArray(res) ? res : []);
+      if (!list?.length) {
+        this.logger.infoSave("蚂蚁获取待报价订单列表为空", {
+          hasRes: !!res,
+          keys: res && typeof res === "object" ? Object.keys(res) : []
+        });
+      }
+      return list;
     } catch (error) {
-      this.logger.errorSave("获取待报价订单列表异常", { error });
+      this.logger.errorSave("获取待报价订单列表异常", {
+        error,
+        tip: "请检查队列管理页是否已设置蚂蚁的「平台Token」「平台子Token」「平台userUUID」并保存后重新一键启动"
+      });
       return [];
     }
   }

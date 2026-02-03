@@ -373,6 +373,8 @@ const oneClickStart = () => {
         } else {
           tableDataStore.toggleEnable(item.id);
           setPlatFunObj[item.platName](item.platToken);
+          // 各平台若有子 Token / userUUID，一键启动时同步写入 localStorage（与保存编辑逻辑一致）
+          syncPlatExtraTokens(item);
           isStartOffer && platOfferQueueObj[item.platName]?.start();
           isStartFetch && platFetchOrderQueueObj[item.platName]?.start();
           // 1分钟同步1次中标价
@@ -671,25 +673,33 @@ const startEdit = row => {
   editingRowId.value = row.id;
   editingRow.value = { ...row };
 };
+/**
+ * 将平台子 Token / userUUID 同步到 localStorage（与保存编辑时一致）
+ * 供一键启动与保存编辑共用，保证各平台接口能拿到正确配置
+ */
+const syncPlatExtraTokens = ({ platName, platSubToken, userUUID }) => {
+  const sub = platSubToken ?? "";
+  const uuid = userUUID ?? "";
+  if (platName === "shoutu") {
+    localStorage.setItem("shoutuPlatSubToken", sub);
+    localStorage.setItem("shoutuPlatUserUUID", uuid);
+  } else if (platName === "mahua") {
+    localStorage.setItem("mahuPlatSubToken", sub);
+  } else if (platName === "yinghuasuan") {
+    localStorage.setItem("yinghuasuanPlatUserUUID", uuid);
+  } else if (platName === "mayi") {
+    localStorage.setItem("mayiPlatSubToken", sub);
+    localStorage.setItem("mayiPlatUserUUID", uuid);
+  }
+};
+
 // 保存编辑
 const saveEdit = id => {
   if (id === editingRowId.value) {
     tableDataStore.saveEdit(editingRow.value);
     const { platToken, platSubToken, userUUID, platName } = editingRow.value;
     platToken && setPlatFunObj[platName](platToken);
-    if (platName == "shoutu") {
-      localStorage.setItem("shoutuPlatSubToken", platSubToken);
-      localStorage.setItem("shoutuPlatUserUUID", userUUID);
-    } else if (platName == "mahua") {
-      // 续期token
-      localStorage.setItem("mahuPlatSubToken", platSubToken);
-    } else if (platName == "yinghuasuan") {
-      // 续期token
-      localStorage.setItem("yinghuasuanPlatUserUUID", userUUID);
-    } else if (platName == "mayi") {
-      localStorage.setItem("mayiPlatSubToken", platSubToken);
-      localStorage.setItem("mayiPlatUserUUID", userUUID);
-    }
+    syncPlatExtraTokens({ platName, platSubToken, userUUID });
     editingRowId.value = null;
   }
 };
