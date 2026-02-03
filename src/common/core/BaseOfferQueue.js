@@ -233,15 +233,14 @@ export default class BaseOfferQueue {
       }
 
       // 提交报价
-      const res = await this.platformAdapter.submitOffer(
-        this.platformAdapter.config.params.offerParams(
-          order,
-          finalPrice,
-          rule_id,
-          member_price
-        )
+      const offerParams = this.platformAdapter.config.params.offerParams(
+        order,
+        finalPrice,
+        rule_id,
+        member_price
       );
-
+      const res = await this.platformAdapter.submitOffer(offerParams);
+      this.logger.infoSave("提交报价结果", { res, offerParams });
       return { res, offerRule };
     } catch (error) {
       this.logger.errorSave("单个报价异常", { error, order });
