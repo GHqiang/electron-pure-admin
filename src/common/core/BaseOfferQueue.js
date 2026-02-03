@@ -82,8 +82,11 @@ export default class BaseOfferQueue {
    * @param {Object} oldOrder - 旧订单信息（可选）
    */
   handleNewOrder(item, oldOrder = null) {
-    // 增加报价截止时间判断，小于等于1秒则不处理
+    // 增加报价截止时间判断，小于等于1秒则不处理（部分平台如蚂蚁旧版不做此判断，通过 skipOfferEndTimeCheck 跳过）
+    const skipCheck =
+      this.platformAdapter?.config?.features?.skipOfferEndTimeCheck === true;
     if (
+      !skipCheck &&
       item.offer_end_time &&
       item.offer_end_time - new Date().getTime() <= MIN_ALLOW_OFFER_SJC
     ) {

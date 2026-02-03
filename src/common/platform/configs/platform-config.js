@@ -205,7 +205,9 @@ export const PLATFORM_CONFIGS = {
       priceStep: 0.1,
       supportAsyncSubmit: false,
       unlockBeforeTicket: true,
-      needConfirmOrder: false
+      needConfirmOrder: false,
+      // 与旧版 useMayiOffer 一致：旧版注释掉了报价截止时间判断，不做「小于等于1秒则不处理」
+      skipOfferEndTimeCheck: true
     },
     api: {
       getOrderList: "queryStayOfferList",
