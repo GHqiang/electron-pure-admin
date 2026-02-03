@@ -232,13 +232,14 @@ export default class BaseOfferQueue {
         member_price = finalPrice - 1;
       }
 
-      // 提交报价
-      const offerParams = this.platformAdapter.config.params.offerParams(
+      // 提交报价（部分平台如麻花需要 offerRule 计算 isDirectGetOrder）
+      const offerParams = this.platformAdapter.config.params.offerParams({
         order,
-        finalPrice,
-        rule_id,
-        member_price
-      );
+        price: finalPrice,
+        ruleId: rule_id,
+        memberPrice: member_price,
+        offerRule
+      });
       const res = await this.platformAdapter.submitOffer(offerParams);
       this.logger.infoSave("提交报价结果", { res, offerParams });
       return { res, offerRule };

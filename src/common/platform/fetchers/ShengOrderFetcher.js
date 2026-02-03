@@ -85,7 +85,8 @@ export default class ShengOrderFetcher extends BaseOrderFetcher {
             cinema_code: film.standardId,
             order_number: code,
             supplierCode,
-            lockseat: seats.map(itemA => itemA.name).join(" "),
+            seats: seats || [], // 报价接口需要：seatInfo = JSON.stringify(seats.map(s => ({ seatId: s.seatId, supplierPrice })))
+            lockseat: (seats || []).map(itemA => itemA.name).join(" "),
             plat_name: "sheng"
           };
         })

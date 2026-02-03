@@ -429,7 +429,7 @@ class OrderAutoOfferQueue {
       const res = await this.submitOffer({
         // supplierCode: "ccf7b11cdc944cf1940a149cff4243f9", // 供应商号-付勋
         // supplierCode: "2820ad3f7b644ad898771deee7c324a1", // 供应商号-兜
-        supplierCode: tokens.shengToken,
+        supplierCode: window.localStorage.getItem("shengPlatToken") || "",
         orderCode: order.order_number,
         // 暂时先减1测试
         seatInfo: JSON.stringify(

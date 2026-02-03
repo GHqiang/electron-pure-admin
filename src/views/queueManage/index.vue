@@ -677,7 +677,12 @@ const startEdit = row => {
  * 将平台子 Token / userUUID 同步到 localStorage（与保存编辑时一致）
  * 供一键启动与保存编辑共用，保证各平台接口能拿到正确配置
  */
-const syncPlatExtraTokens = ({ platName, platSubToken, userUUID }) => {
+const syncPlatExtraTokens = ({
+  platName,
+  platToken,
+  platSubToken,
+  userUUID
+}) => {
   const sub = platSubToken ?? "";
   const uuid = userUUID ?? "";
   if (platName === "shoutu") {
@@ -690,6 +695,8 @@ const syncPlatExtraTokens = ({ platName, platSubToken, userUUID }) => {
   } else if (platName === "mayi") {
     localStorage.setItem("mayiPlatSubToken", sub);
     localStorage.setItem("mayiPlatUserUUID", uuid);
+  } else if (platName === "sheng") {
+    localStorage.setItem("shengPlatToken", platToken);
   }
 };
 
@@ -699,7 +706,7 @@ const saveEdit = id => {
     tableDataStore.saveEdit(editingRow.value);
     const { platToken, platSubToken, userUUID, platName } = editingRow.value;
     platToken && setPlatFunObj[platName](platToken);
-    syncPlatExtraTokens({ platName, platSubToken, userUUID });
+    syncPlatExtraTokens({ platName, platToken, platSubToken, userUUID });
     editingRowId.value = null;
   }
 };

@@ -78,7 +78,7 @@ export const PLATFORM_CONFIGS = {
         confirm: 1
       }),
       // 提交报价参数转换
-      offerParams: (order, price, ruleId, memberPrice) => ({
+      offerParams: ({ order, price, ruleId, memberPrice }) => ({
         order_number: order.order_number,
         price,
         rule_id: ruleId,
@@ -133,8 +133,9 @@ export const PLATFORM_CONFIGS = {
         reasonId: 9,
         text: "其他-"
       }),
-      offerParams: (order, price) => ({
-        order_number: order.order_number,
+      // 与旧版 useHahaOffer 一致：接口字段为 id、price
+      offerParams: ({ order, price }) => ({
+        id: order.id,
         price
       })
     },
@@ -184,7 +185,7 @@ export const PLATFORM_CONFIGS = {
         order_id: order.id,
         remark: reason || "渠道无法出票"
       }),
-      offerParams: (order, price) => ({
+      offerParams: ({ order, price }) => ({
         order_id: order.id,
         price: price * 100 // 芒果平台价格需要乘以100
       })
@@ -234,8 +235,9 @@ export const PLATFORM_CONFIGS = {
         reason: "",
         type: "no_match_seat"
       }),
-      offerParams: (order, price) => ({
-        order_number: order.order_number,
+      // 与旧版 useMayiOffer 一致：接口字段为 tradeno(order.id)、price
+      offerParams: ({ order, price }) => ({
+        tradeno: order.id,
         price
       })
     },
@@ -277,8 +279,9 @@ export const PLATFORM_CONFIGS = {
       transferParams: (order, reason) => ({
         tradeno: order.id
       }),
-      offerParams: (order, price) => ({
-        order_number: order.order_number,
+      // 与旧版 useYangcongOffer 一致：接口字段为 tradeno(order.order_number)、price
+      offerParams: ({ order, price }) => ({
+        tradeno: order.order_number,
         price
       })
     },
@@ -309,9 +312,9 @@ export const PLATFORM_CONFIGS = {
     params: {
       orderIdKey: "id",
       orderNumberKey: "order_sn",
+      // 与旧版 platManage.unlockSeat 一致：仅传 order_sn（旧版不向接口传 inx）
       unlockParams: order => ({
-        order_sn: order.order_sn,
-        inx: 1
+        order_sn: order.order_sn
       }),
       submitParams: (order, qrcode) => ({
         order_sn: order.order_sn,
@@ -326,9 +329,10 @@ export const PLATFORM_CONFIGS = {
         is_appeal: 2,
         extra_close_cause: "无最优座位"
       }),
-      offerParams: (order, price) => ({
-        order_number: order.order_number,
-        price
+      // 与旧版 useYinghuasuanOffer 一致：接口字段为 invitation_id(order.id)、quote_price
+      offerParams: ({ order, price }) => ({
+        invitation_id: String(order.id),
+        quote_price: String(price)
       })
     },
     transformOrder: order => ({
@@ -388,8 +392,10 @@ export const PLATFORM_CONFIGS = {
         clientType: 2,
         reason: reason || ""
       }),
-      offerParams: (order, price) => ({
-        order_number: order.order_number,
+      // 与旧版 useShoutuOffer 一致：接口字段为 orderUUID(order.id)、userUUID、price
+      offerParams: ({ order, price }) => ({
+        orderUUID: order.id,
+        userUUID: window.localStorage?.getItem("shoutuPlatUserUUID") || "",
         price
       })
     },
@@ -451,9 +457,12 @@ export const PLATFORM_CONFIGS = {
         note: reason || "优惠库存不足",
         reason: ""
       }),
-      offerParams: (order, price) => ({
-        order_number: order.order_number,
-        price
+      // 与旧版 useMahuaOffer 一致：接口需要 putOrderId、biddingPrice、isDirectGetOrder（由适配器根据 offerRule 计算）
+      offerParams: ({ order, price, ruleId, memberPrice, offerRule }) => ({
+        order_id: order.id,
+        price: String(price),
+        offerRule,
+        order
       })
     },
     transformOrder: order => ({
@@ -498,9 +507,16 @@ export const PLATFORM_CONFIGS = {
         supplierCode: order.supplierCode,
         reason: reason || "价格过低无法出票"
       }),
-      offerParams: (order, price) => ({
-        order_number: order.order_number,
-        price
+      // 与旧版 useShengOffer 一致：接口 /supplier/setGrabPrice 需要 supplierCode、orderCode、seatInfo
+      offerParams: ({ order, price }) => ({
+        supplierCode: window.localStorage.getItem("shengPlatToken") || "",
+        orderCode: order.order_number,
+        seatInfo: JSON.stringify(
+          (order.seats || []).map(seat => ({
+            seatId: seat.seatId,
+            supplierPrice: price
+          }))
+        )
       })
     },
     transformOrder: order => ({
@@ -548,9 +564,14 @@ export const PLATFORM_CONFIGS = {
         order_status: "3",
         cancel_reason: reason || "价格过低无法出票"
       }),
-      offerParams: (order, price) => ({
-        order_number: order.order_number,
-        price
+      // 与旧版 useShangzhanOffer 一致：接口需要 order_sn、seat_data(area_id, quoted)、bidd_notify
+      offerParams: ({ order, price }) => ({
+        order_sn: order.order_number,
+        seat_data: {
+          area_id: order.order_detail?.[0]?.area_id,
+          quoted: Number(price).toFixed()
+        },
+        bidd_notify: ""
       })
     },
     transformOrder: order => ({

@@ -3,6 +3,8 @@
 
 import BasePlatformAdapter from "../../core/BasePlatformAdapter.js";
 import mahuaApi from "@/api/mahua-api.js";
+import { subDecimal, addDecimal } from "@/utils/utils.js";
+import { NO_FEE_PLAT_LIST } from "@/common/constant.js";
 
 /**
  * 麻花平台适配器
@@ -47,21 +49,67 @@ export default class MahuaAdapter extends BasePlatformAdapter {
   }
 
   /**
+   * 与旧版 useMahuaOffer.getProfit 一致：计算预计利润，用于 isDirectGetOrder
+   */
+  _getProfit(offerRule, order) {
+    if (!offerRule || !order) return 0;
+    const { cost_price, offer_end_amount } = offerRule;
+    const { plat_name, rewards = 0, ticket_num } = order;
+    let shouxufei = (offer_end_amount * 100) / 10000;
+    if (NO_FEE_PLAT_LIST && NO_FEE_PLAT_LIST.includes(plat_name)) {
+      shouxufei = 0;
+    }
+    const rewardPrice =
+      rewards > 0 ? (offer_end_amount * 100 * rewards) / 10000 : 0;
+    return (
+      (subDecimal(
+        addDecimal(offer_end_amount, rewardPrice),
+        addDecimal(cost_price, shouxufei)
+      ) *
+        ticket_num)
+    );
+  }
+
+  /**
    * 提交报价
+   * 若 params 为 config 传入的 { order_id, price, offerRule, order }，则转换为接口所需 putOrderId、biddingPrice、isDirectGetOrder
    * @param {Object} params - 报价参数
    * @returns {Promise<Object>} 提交结果
    */
   async submitOffer(params) {
     try {
-      this.logger.infoSave("提交报价参数", params);
+      let apiParams = params;
+      if (
+        params &&
+        params.order_id != null &&
+        params.offerRule != null &&
+        params.order != null
+      ) {
+        apiParams = {
+          putOrderId: params.order_id,
+          biddingPrice: params.price,
+          isDirectGetOrder: 0
+        };
+        const minGrabProfitValue =
+          typeof window !== "undefined"
+            ? window.localStorage?.getItem("minGrabProfit")
+            : null;
+        if (minGrabProfitValue) {
+          const expectProfit = this._getProfit(params.offerRule, params.order);
+          if (Number(expectProfit) >= Number(minGrabProfitValue)) {
+            apiParams.isDirectGetOrder = 1;
+          }
+        }
+      }
+      this.logger.infoSave("提交报价参数", apiParams);
 
       // 检查测试订单标志
       if (this.isTestOrder) {
-        this.logger.infoSave("测试单暂不进行报价", { params });
+        this.logger.infoSave("测试单暂不进行报价", { params: apiParams });
         return { code: 1, msg: "测试单" };
       }
 
-      const res = await this.api.submitOffer(params);
+      const res = await this.api.submitOffer(apiParams);
       this.logger.infoSave("提交报价返回", res);
       return res;
     } catch (error) {
