@@ -94,6 +94,7 @@ export default class ShengOfferQueue extends BaseOfferQueue {
             order_number: orderCode,
             supplierCode: supplierCode,
             seatInfo: seatInfo,
+            seats: seatInfo, // 座位信息
             // 转为截止时间戳
             offer_end_time: +new Date(order.biddingEndTime)
           };
