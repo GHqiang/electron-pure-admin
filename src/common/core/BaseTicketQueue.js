@@ -4,6 +4,9 @@
 import { getCurrentTime, formatErrInfo } from "@/utils/utils.js";
 import Logger from "../logger.js";
 import StrategyFactory from "@/common/autoTicket/buyTicket/index";
+import svApi from "@/api/sv-api";
+import { platTokens } from "@/store/platTokens";
+import { GET_APP_TYPE_LIST } from "@/common/constant";
 
 /**
  * 出票队列基类
@@ -154,20 +157,141 @@ export default class BaseTicketQueue {
         logger.warn("订单出票队列已停止");
       }
     } catch (error) {
-      logger.error("订单执行出票异常", error);
-      throw error;
+      logger.errorSave("订单执行出票异常", { error });
     }
   }
 
   /**
-   * 保存出票记录（子类实现）
+   * 保存出票记录（默认实现：写入/更新远端出票记录；子类可覆盖）
    * @param {Object} order - 订单信息
-   * @param {Object} ticketRes - 出票结果
+   * @param {Object} ticketRes - 出票结果 { submitRes, profit, qrcode, quan_code, card_id, cardNum, offerRule, mobile }
    * @param {Logger} logger - 日志实例
    * @returns {Promise<void>}
    */
   async saveTicketRecord(order, ticketRes, logger) {
-    throw new Error(`影院 ${this.appFlag} 未实现 saveTicketRecord 方法`);
+    try {
+      const { userInfo: { rule, user_id } = {} } = platTokens() || {};
+      const res = ticketRes || {};
+      const {
+        submitRes,
+        offerRule,
+        profit = "",
+        qrcode = "",
+        quan_code = "",
+        card_id = "",
+        cardNum = "",
+        mobile = ""
+      } = res;
+      let { err_msg: errMsg, err_info: errInfo } =
+        logger.getLastErrMsgAndInfo() || {};
+      if (submitRes) {
+        errMsg = "";
+        errInfo = "";
+      }
+
+      if (order.isAgain) {
+        const order_status = submitRes ? 1 : 2;
+        if (order_status === 1) {
+          await svApi.updateTicketRecord({
+            whereObj: {
+              order_number: order.order_number,
+              plat_name: order.plat_name,
+              user_id
+            },
+            updateObj: {
+              order_status: 1,
+              profit: res?.profit ?? "",
+              qrcode: res?.qrcode ?? "",
+              quan_type: res?.quanType ?? "",
+              quan_value: offerRule?.quan_value ?? "",
+              quan_code: res?.quan_code ?? "",
+              card_id: res?.card_id ?? "",
+              card_num: res?.cardNum ?? "",
+              mobile: res?.mobile,
+              err_msg: "重新出票成功"
+            }
+          });
+        } else {
+          await svApi.updateTicketRecord({
+            whereObj: {
+              order_number: order.order_number,
+              plat_name: order.plat_name,
+              user_id
+            },
+            updateObj: { order_status: 2, err_msg: "重新出票失败" }
+          });
+        }
+        return;
+      }
+
+      const {
+        plat_name,
+        id: order_id,
+        order_number,
+        ticket_num,
+        cinema_group,
+        city_name,
+        cinema_addr,
+        cinema_name,
+        hall_name,
+        film_name,
+        lockseat,
+        show_time,
+        supplier_end_price,
+        tpp_price,
+        cinema_code,
+        plat_order_sn
+      } = order;
+
+      const order_status =
+        offerRule?.rule_status === "3" ? "4" : submitRes ? "1" : "2";
+      const serOrderInfo = {
+        plat_name,
+        app_name: this.appFlag,
+        order_id,
+        plat_order_sn,
+        order_number,
+        tpp_price,
+        supplier_end_price,
+        supplier_max_price: offerRule?.supplier_max_price ?? "",
+        city_name,
+        cinema_addr,
+        ticket_num,
+        cinema_name,
+        hall_name,
+        film_name,
+        lockseat: lockseat ?? offerRule?.lockseat,
+        show_time,
+        cinema_group,
+        offer_type: offerRule?.offer_type ?? "",
+        cinema_code,
+        quan_value: offerRule?.quan_value ?? "",
+        order_status,
+        processing_time: getCurrentTime(),
+        profit,
+        qrcode,
+        quan_code,
+        card_id,
+        card_num: cardNum,
+        err_msg: submitRes ? "" : errMsg ?? "",
+        err_info: submitRes ? "" : errInfo ?? "",
+        rewards: offerRule?.rewards ?? 0,
+        transfer_fee: res?.transferParams?.transfer_fee ?? "",
+        mobile,
+        rule
+      };
+      const targetAppInfo = GET_APP_TYPE_LIST().find(item =>
+        item.app_name_list.includes(serOrderInfo.app_name)
+      );
+      if (targetAppInfo) {
+        serOrderInfo.app_type = targetAppInfo.app_type_code;
+      }
+      await svApi.addTicketRecord(serOrderInfo);
+    } catch (error) {
+      logger.errorSave("保存出票记录异常", { error });
+    } finally {
+      logger.logUpload();
+    }
   }
 
   /**
