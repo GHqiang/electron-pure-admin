@@ -52,21 +52,21 @@ export default class LierenAdapter extends BasePlatformAdapter {
    * @param {Object} params - 报价参数
    * @returns {Promise<Object>} 提交结果
    */
-  async submitOffer(params) {
+  async submitOffer(params, options = {}) {
+    const log = this._getLogger(options);
     try {
-      this.logger.infoSave("提交报价参数", params);
+      log.infoSave("提交报价参数", params);
 
-      // 检查测试订单标志
       if (this.isTestOrder) {
-        this.logger.infoSave("测试单暂不进行报价", { params });
+        log.infoSave("测试单暂不进行报价", { params });
         return { code: 1, msg: "测试单" };
       }
 
       const res = await this.api.submitOffer(params);
-      this.logger.infoSave("提交报价返回", res);
+      log.infoSave("提交报价返回", res);
       return res;
     } catch (error) {
-      this.logger.errorSave("提交报价异常", { error, params });
+      log.errorSave("提交报价异常", { error, params });
     }
   }
 

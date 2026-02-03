@@ -74,9 +74,11 @@ export default class MahuaAdapter extends BasePlatformAdapter {
    * 提交报价
    * 若 params 为 config 传入的 { order_id, price, offerRule, order }，则转换为接口所需 putOrderId、biddingPrice、isDirectGetOrder
    * @param {Object} params - 报价参数
+   * @param {Object} [options] - 可选，{ logger?: Logger } 传入则使用调用方 logger
    * @returns {Promise<Object>} 提交结果
    */
-  async submitOffer(params) {
+  async submitOffer(params, options = {}) {
+    const log = this._getLogger(options);
     try {
       let apiParams = params;
       if (
@@ -101,19 +103,18 @@ export default class MahuaAdapter extends BasePlatformAdapter {
           }
         }
       }
-      this.logger.infoSave("提交报价参数", apiParams);
+      log.infoSave("提交报价参数", apiParams);
 
-      // 检查测试订单标志
       if (this.isTestOrder) {
-        this.logger.infoSave("测试单暂不进行报价", { params: apiParams });
+        log.infoSave("测试单暂不进行报价", { params: apiParams });
         return { code: 1, msg: "测试单" };
       }
 
       const res = await this.api.submitOffer(apiParams);
-      this.logger.infoSave("提交报价返回", res);
+      log.infoSave("提交报价返回", res);
       return res;
     } catch (error) {
-      this.logger.errorSave("提交报价异常", { error, params });
+      log.errorSave("提交报价异常", { error, params });
     }
   }
 

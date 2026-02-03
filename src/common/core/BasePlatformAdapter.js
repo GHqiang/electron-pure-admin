@@ -28,6 +28,15 @@ export default class BasePlatformAdapter {
   }
 
   /**
+   * 获取当前调用应使用的 logger：若调用方传入 options.logger 则使用调用方的，便于日志统一上传
+   * @param {Object} [options] - 可选，{ logger?: Logger }
+   * @returns {Logger}
+   */
+  _getLogger(options = {}) {
+    return options?.logger ?? this.logger;
+  }
+
+  /**
    * 获取待报价/出票订单列表
    * 子类必须实现此方法
    * @param {Object} params - 查询参数
@@ -52,16 +61,17 @@ export default class BasePlatformAdapter {
    * 提供默认实现，子类可覆盖
    * @param {Object} order - 订单信息
    * @param {number} retryCount - 重试次数
+   * @param {Object} [options] - 可选，{ logger?: Logger } 传入则使用调用方 logger，便于日志统一上传
    * @returns {Promise<Object>} 解锁结果
    */
-  async unlockSeat(order, retryCount = 3) {
+  async unlockSeat(order, retryCount = 3, options = {}) {
     if (!this.config.features.unlockBeforeTicket) {
       return { msg: "无需解锁" };
     }
-
+    const log = this._getLogger(options);
     try {
       const params = this.config.params.unlockParams(order);
-      this.logger.infoSave("解锁座位参数", params);
+      log.infoSave("解锁座位参数", params);
 
       const apiMethod = this.api[this.config.api.unlockSeat];
       if (!apiMethod) {
@@ -69,10 +79,10 @@ export default class BasePlatformAdapter {
       }
 
       const res = await apiMethod.call(this.api, params);
-      this.logger.infoSave("解锁座位成功", res);
+      log.infoSave("解锁座位成功", res);
       return res;
     } catch (error) {
-      return this.handleUnlockError(error, order, retryCount);
+      return this.handleUnlockError(error, order, retryCount, options);
     }
   }
 
@@ -106,12 +116,14 @@ export default class BasePlatformAdapter {
    * 提供默认实现，子类可覆盖
    * @param {Object} order - 订单信息
    * @param {string} qrcode - 取票码
+   * @param {Object} [options] - 可选，{ logger?: Logger } 传入则使用调用方 logger
    * @returns {Promise<Object>} 提交结果
    */
-  async submitTicketCode(order, qrcode) {
+  async submitTicketCode(order, qrcode, options = {}) {
+    const log = this._getLogger(options);
     try {
       const params = this.config.params.submitParams(order, qrcode);
-      this.logger.infoSave("提交取票码参数", params);
+      log.infoSave("提交取票码参数", params);
 
       const apiMethod = this.api[this.config.api.submitTicket];
       if (!apiMethod) {
@@ -119,10 +131,10 @@ export default class BasePlatformAdapter {
       }
 
       const res = await apiMethod.call(this.api, params);
-      this.logger.infoSave("提交取票码返回", res);
+      log.infoSave("提交取票码返回", res);
       return res;
     } catch (error) {
-      this.logger.errorSave("提交取票码异常", { error });
+      log.errorSave("提交取票码异常", { error });
     }
   }
 
@@ -131,12 +143,14 @@ export default class BasePlatformAdapter {
    * 提供默认实现，子类可覆盖
    * @param {Object} order - 订单信息
    * @param {string} reason - 转单原因
+   * @param {Object} [options] - 可选，{ logger?: Logger } 传入则使用调用方 logger
    * @returns {Promise<Object>} 转单结果
    */
-  async transferOrder(order, reason = "价格过低无法出票") {
+  async transferOrder(order, reason = "价格过低无法出票", options = {}) {
+    const log = this._getLogger(options);
     try {
       const params = this.config.params.transferParams(order, reason);
-      this.logger.warn("转单参数", params);
+      log.warn("转单参数", params);
 
       const apiMethod = this.api[this.config.api.transferOrder];
       if (!apiMethod) {
@@ -144,10 +158,10 @@ export default class BasePlatformAdapter {
       }
 
       const res = await apiMethod.call(this.api, params);
-      this.logger.infoSave("转单成功", { res });
+      log.infoSave("转单成功", { res });
       return res;
     } catch (error) {
-      this.logger.errorSave("转单异常", { error });
+      log.errorSave("转单异常", { error });
     }
   }
 
@@ -156,14 +170,16 @@ export default class BasePlatformAdapter {
    * @param {Error} error - 错误对象
    * @param {Object} order - 订单信息
    * @param {number} retryCount - 剩余重试次数
+   * @param {Object} [options] - 可选，{ logger?: Logger }
    * @returns {Promise<Object>} 处理结果
    */
-  async handleUnlockError(error, order, retryCount) {
+  async handleUnlockError(error, order, retryCount, options = {}) {
+    const log = this._getLogger(options);
     const errorMsg = error?.msg || error?.message || "";
 
     // 已解锁的情况
     if (errorMsg.includes("已经解锁") || errorMsg.includes("已解锁")) {
-      this.logger.infoSave("座位已解锁", { error });
+      log.infoSave("座位已解锁", { error });
       return { msg: "已解锁" };
     }
 
@@ -174,26 +190,24 @@ export default class BasePlatformAdapter {
       errorMsg.includes("无需解锁") ||
       errorMsg.includes("该座位未锁座成功，故无法解锁")
     ) {
-      this.logger.infoSave("座位无需解锁", { error });
+      log.infoSave("座位无需解锁", { error });
       return { msg: "无需解锁" };
     }
 
     // 座位没有被锁
     if (errorMsg === "当前订单座位没有被锁") {
-      this.logger.infoSave("座位没有被锁", { error });
+      log.infoSave("座位没有被锁", { error });
       return { msg: "座位没有被锁" };
     }
 
     // 重试逻辑
     if (retryCount > 0) {
-      this.logger.warn(`解锁失败，剩余重试次数: ${retryCount}`, { error });
-      // 延迟后重试
+      log.warn(`解锁失败，剩余重试次数: ${retryCount}`, { error });
       await new Promise(resolve => setTimeout(resolve, 3000));
-      return this.unlockSeat(order, retryCount - 1);
+      return this.unlockSeat(order, retryCount - 1, options);
     }
 
-    // 重试次数用完，抛出错误
-    this.logger.errorSave("解锁座位失败，重试次数已用完", { error });
+    log.errorSave("解锁座位失败，重试次数已用完", { error });
     return Promise.reject(error);
   }
 

@@ -240,8 +240,10 @@ export default class BaseOfferQueue {
         memberPrice: member_price,
         offerRule
       });
-      const res = await this.platformAdapter.submitOffer(offerParams);
-      this.logger.infoSave("提交报价结果", { res, offerParams });
+      const res = await this.platformAdapter.submitOffer(offerParams, {
+        logger: this.logger
+      });
+      // this.logger.infoSave("提交报价结果", { res, offerParams });
       return { res, offerRule };
     } catch (error) {
       this.logger.errorSave("单个报价异常", { error, order });
