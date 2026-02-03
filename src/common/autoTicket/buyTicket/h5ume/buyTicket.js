@@ -1120,7 +1120,8 @@ export default class H5UmeBuyTicket extends BaseBuyTicket {
         quan_code,
         card_id,
         cardNum,
-        offerRule
+        offerRule,
+        mobile: this.currentParamsList[this.currentParamsInx]?.mobile || ""
       };
     } catch (error) {
       this.logger.errorSave("一键买票异常", { error: formatErrInfo(error) });

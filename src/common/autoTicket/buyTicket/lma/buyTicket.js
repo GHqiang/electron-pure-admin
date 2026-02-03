@@ -892,7 +892,8 @@ export default class LmaBuyTicket extends BaseBuyTicket {
         quan_code,
         card_id,
         cardNum,
-        offerRule
+        offerRule,
+        mobile: this.currentParamsList[this.currentParamsInx]?.mobile || ""
       };
     } catch (error) {
       this.logger.errorSave("一键买票异常", { error });

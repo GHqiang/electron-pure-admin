@@ -714,7 +714,8 @@ class SfcBuyTicket extends BaseBuyTicket {
         card_id,
         cardNum,
         quanType,
-        offerRule
+        offerRule,
+        mobile: this.currentPhone || this.currentParamsList[this.currentParamsInx]?.mobile || ""
       };
     } catch (error) {
       this.logger.errorSave("一键买票异常", { error: formatErrInfo(error) });
