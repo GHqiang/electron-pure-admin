@@ -123,7 +123,6 @@ export default class BasePlatformAdapter {
       return res;
     } catch (error) {
       this.logger.errorSave("提交取票码异常", { error });
-      throw error;
     }
   }
 
@@ -149,7 +148,6 @@ export default class BasePlatformAdapter {
       return res;
     } catch (error) {
       this.logger.errorSave("转单异常", { error });
-      throw error;
     }
   }
 

@@ -60,7 +60,6 @@ export default class ShengAdapter extends BasePlatformAdapter {
       return res;
     } catch (error) {
       this.logger.errorSave("提交报价异常", { error, params });
-      throw error;
     }
   }
 
@@ -89,8 +88,10 @@ export default class ShengAdapter extends BasePlatformAdapter {
         this.api.stayTicketingList(params2)
       ]);
 
-      const list1 = res1.status === "fulfilled" ? res1.value?.data?.rows || [] : [];
-      const list2 = res2.status === "fulfilled" ? res2.value?.data?.rows || [] : [];
+      const list1 =
+        res1.status === "fulfilled" ? res1.value?.data?.rows || [] : [];
+      const list2 =
+        res2.status === "fulfilled" ? res2.value?.data?.rows || [] : [];
 
       // 合并两个列表并去重
       const combinedList = [...list1, ...list2];

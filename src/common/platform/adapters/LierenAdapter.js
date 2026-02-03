@@ -67,7 +67,6 @@ export default class LierenAdapter extends BasePlatformAdapter {
       return res;
     } catch (error) {
       this.logger.errorSave("提交报价异常", { error, params });
-      throw error;
     }
   }
 

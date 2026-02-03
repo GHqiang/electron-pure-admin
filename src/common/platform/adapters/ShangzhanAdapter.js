@@ -73,7 +73,6 @@ export default class ShangzhanAdapter extends BasePlatformAdapter {
       return res;
     } catch (error) {
       this.logger.errorSave("提交报价异常", { error, params });
-      throw error;
     }
   }
 }

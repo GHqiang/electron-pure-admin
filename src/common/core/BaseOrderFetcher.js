@@ -68,7 +68,6 @@ export default class BaseOrderFetcher {
       this.logger.infoSave("发送新订单消息", { order, eventName });
     } catch (error) {
       this.logger.errorSave("发送新订单消息异常", { error, order });
-      throw error;
     }
   }
 

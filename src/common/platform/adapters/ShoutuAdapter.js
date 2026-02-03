@@ -74,7 +74,6 @@ export default class ShoutuAdapter extends BasePlatformAdapter {
       return res;
     } catch (error) {
       this.logger.errorSave("提交报价异常", { error, params });
-      throw error;
     }
   }
 
@@ -89,9 +88,9 @@ export default class ShoutuAdapter extends BasePlatformAdapter {
         pageNo: 1,
         pageSize: 10,
         isImportantUser: 0,
-        sortField: '',
-        sortType: '',
-        orderType: '',
+        sortField: "",
+        sortType: "",
+        orderType: "",
         queryStatus: 3,
         ...params
       });

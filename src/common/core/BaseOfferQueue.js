@@ -244,7 +244,6 @@ export default class BaseOfferQueue {
       return { res, offerRule };
     } catch (error) {
       this.logger.errorSave("单个报价异常", { error, order });
-      throw error;
     }
   }
 
