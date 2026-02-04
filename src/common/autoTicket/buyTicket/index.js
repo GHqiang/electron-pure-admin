@@ -13,7 +13,7 @@ const STRATEGY_MAP = {
   chenxing_applet: ChenxingBuyTicket,
   fenghuang_applet: FenghuangBuyTicket,
   // jinyi_applet: JINYIBuyTicket,
-  lma: LmaBuyTicket,
+  lma_applet: LmaBuyTicket,
   sfc_applet: SfcBuyTicket,
   ume_applet: UmeBuyTicket,
   ume_h5: UmeH5BuyTicket
