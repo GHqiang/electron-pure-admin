@@ -47,8 +47,19 @@
               @click="exportCinemeCodeMatch"
               >导出映射维护信息</el-button
             >
-            <el-button type="primary" @click="checkCinemaUpdate">
+            <el-button
+              v-if="IN_RULE_LIST.includes(rule)"
+              type="primary"
+              @click="checkCinemaUpdate"
+            >
               检查影院变更
+            </el-button>
+            <el-button
+              v-if="IN_RULE_LIST.includes(rule)"
+              type="primary"
+              @click="openAddDialog"
+            >
+              手动新增
             </el-button>
             <el-upload
               v-if="IN_RULE_LIST.includes(rule)"
@@ -173,6 +184,78 @@
     </el-container>
 
     <CinemaMatchDialog ref="sfcDialogRef" @submit="saveCinema" />
+
+    <!-- 手动新增影院映射 -->
+    <el-dialog
+      v-model="addDialogVisible"
+      title="手动新增影院映射"
+      width="520px"
+      :close-on-click-modal="false"
+      @close="resetAddForm"
+    >
+      <el-form
+        ref="addFormRef"
+        :model="addForm"
+        :rules="addFormRules"
+        label-width="120px"
+      >
+        <el-form-item label="影线" prop="app_name">
+          <el-select
+            v-model="addForm.app_name"
+            placeholder="请选择影线"
+            filterable
+            style="width: 100%"
+            @change="onAddFormAppChange"
+          >
+            <el-option
+              v-for="(label, value) in APP_LIST"
+              :key="value"
+              :label="label"
+              :value="value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="影院名称" prop="app_cinema_name">
+          <el-input
+            v-model="addForm.app_cinema_name"
+            placeholder="请输入影院名称"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="影院唯一标识" prop="app_cinema_code">
+          <el-input
+            v-model="addForm.app_cinema_code"
+            placeholder="如 city_id_cinema_id 或 cinema_code"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="平台影院编码" prop="plat_cinema_code">
+          <el-input
+            v-model="addForm.plat_cinema_code"
+            placeholder="请输入平台影院编码"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="平台影院名称" prop="plat_cinema_name">
+          <el-input
+            v-model="addForm.plat_cinema_name"
+            type="textarea"
+            :rows="2"
+            placeholder="选填，多个用#分隔"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="addDialogVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="addSubmitLoading"
+          @click="submitAddCinema"
+        >
+          确定新增
+        </el-button>
+      </template>
+    </el-dialog>
 
     <!-- 影院变更结果弹框：新增（可同步 / 需导出）、删除 -->
     <el-dialog
@@ -425,6 +508,30 @@ const diffDeleteTableRef = ref(null);
 const selectedNewSyncList = ref([]);
 const selectedNewManualList = ref([]);
 const selectedDeleteList = ref([]);
+
+// 手动新增
+const addDialogVisible = ref(false);
+const addFormRef = ref(null);
+const addSubmitLoading = ref(false);
+const addForm = reactive({
+  app_name: "",
+  app_cinema_name: "",
+  app_cinema_code: "",
+  plat_cinema_code: "",
+  plat_cinema_name: ""
+});
+const addFormRules = {
+  app_name: [{ required: true, message: "请选择影线", trigger: "change" }],
+  app_cinema_name: [
+    { required: true, message: "请输入影院名称", trigger: "blur" }
+  ],
+  app_cinema_code: [
+    { required: true, message: "请输入影院唯一标识", trigger: "blur" }
+  ],
+  plat_cinema_code: [
+    { required: true, message: "请输入平台影院编码", trigger: "blur" }
+  ]
+};
 
 // 弹框表格全选 / 全不选
 const handleSelectAll = type => {
@@ -1328,6 +1435,62 @@ const deleteRow = row => {
         message: "删除取消"
       });
     });
+};
+
+// 打开手动新增弹框
+const openAddDialog = () => {
+  resetAddForm();
+  addDialogVisible.value = true;
+};
+
+const onAddFormAppChange = () => {
+  // 可选：根据 app_name 预填说明
+};
+
+const resetAddForm = () => {
+  addForm.app_name = "";
+  addForm.app_cinema_name = "";
+  addForm.app_cinema_code = "";
+  addForm.plat_cinema_code = "";
+  addForm.plat_cinema_name = "";
+  addFormRef.value?.clearValidate();
+};
+
+// 提交手动新增
+const submitAddCinema = async () => {
+  if (!addFormRef.value) return;
+  const valid = await addFormRef.value.validate().catch(() => false);
+  if (!valid) return;
+  const app_name = addForm.app_name;
+  const appInfo = GET_APP_INFO(app_name);
+  if (!appInfo) {
+    ElMessage.warning("未找到该影线配置");
+    return;
+  }
+  addSubmitLoading.value = true;
+  try {
+    const item = {
+      app_name: appInfo.app_name,
+      app_label: appInfo.app_label,
+      app_type_code: appInfo.app_type_code,
+      app_type_name: appInfo.app_type_name,
+      app_cinema_name: addForm.app_cinema_name.trim(),
+      app_cinema_code: addForm.app_cinema_code.trim(),
+      plat_cinema_code: addForm.plat_cinema_code.trim(),
+      plat_cinema_name: (addForm.plat_cinema_name || "").trim(),
+      update_time: getCurrentTime()
+    };
+    await svApi.batchAddCinemaMatch({ addList: [item] });
+    ElMessage.success("新增成功");
+    addDialogVisible.value = false;
+    resetAddForm();
+    searchData();
+  } catch (e) {
+    console.warn("手动新增影院映射异常", e);
+    ElMessage.warning(e?.message || "新增失败，请重试");
+  } finally {
+    addSubmitLoading.value = false;
+  }
 };
 
 // 编辑影院信息
