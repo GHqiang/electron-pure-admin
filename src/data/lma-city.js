@@ -14,11 +14,11 @@ const citys = [
   //   city_name: "重庆",
   //   ver_time: "0"
   // },
-  {
-    city_id: "4",
-    city_name: "淮安",
-    ver_time: "0"
-  },
+  // {
+  //   city_id: "4",
+  //   city_name: "淮安",
+  //   ver_time: "0"
+  // },
   {
     city_id: "5",
     city_name: "杭州",

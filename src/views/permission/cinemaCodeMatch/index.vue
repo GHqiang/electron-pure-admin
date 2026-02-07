@@ -47,6 +47,9 @@
               @click="exportCinemeCodeMatch"
               >导出映射维护信息</el-button
             >
+            <el-button type="primary" @click="checkCinemaUpdate">
+              检查影院变更
+            </el-button>
             <el-upload
               v-if="IN_RULE_LIST.includes(rule)"
               ref="uploadRef"
@@ -170,6 +173,174 @@
     </el-container>
 
     <CinemaMatchDialog ref="sfcDialogRef" @submit="saveCinema" />
+
+    <!-- 影院变更结果弹框：新增（可同步 / 需导出）、删除 -->
+    <el-dialog
+      v-model="diffDialogVisible"
+      title="影院变更结果"
+      width="900px"
+      destroy-on-close
+    >
+      <div v-if="diffNewSyncList.length">
+        <div style="margin-bottom: 8px; font-weight: 600">
+          可自动同步的新增影院（{{ diffNewSyncList.length }} 条）
+          <el-button
+            size="small"
+            type="primary"
+            style="margin-left: 12px"
+            @click="handleSyncNewCinema"
+          >
+            执行新增同步
+          </el-button>
+          <el-button
+            size="small"
+            text
+            style="margin-left: 8px"
+            @click="handleSelectAll('newSync')"
+          >
+            全选
+          </el-button>
+          <el-button size="small" text @click="handleClearSelection('newSync')">
+            全不选
+          </el-button>
+        </div>
+        <el-table
+          ref="diffNewSyncTableRef"
+          :data="diffNewSyncList"
+          size="small"
+          border
+          max-height="200"
+          @selection-change="rows => (selectedNewSyncList = rows)"
+        >
+          <el-table-column type="selection" width="50" />
+          <el-table-column prop="app_label" label="影线名称" min-width="120" />
+          <el-table-column
+            prop="app_cinema_name"
+            label="影院名称"
+            min-width="180"
+          />
+          <el-table-column
+            prop="app_cinema_code"
+            label="影院唯一标识"
+            min-width="140"
+          />
+          <el-table-column
+            prop="app_type_name"
+            label="应用类型"
+            min-width="120"
+          />
+        </el-table>
+      </div>
+
+      <div v-if="diffNewManualList.length" style="margin-top: 16px">
+        <div style="margin-bottom: 8px; font-weight: 600">
+          需导出维护后再导入的新增影院（{{ diffNewManualList.length }} 条）
+          <el-button
+            size="small"
+            type="primary"
+            style="margin-left: 12px"
+            @click="handleExportManualNew"
+          >
+            导出维护模板
+          </el-button>
+          <el-button
+            size="small"
+            text
+            style="margin-left: 8px"
+            @click="handleSelectAll('newManual')"
+          >
+            全选
+          </el-button>
+          <el-button
+            size="small"
+            text
+            @click="handleClearSelection('newManual')"
+          >
+            全不选
+          </el-button>
+        </div>
+        <el-table
+          ref="diffNewManualTableRef"
+          :data="diffNewManualList"
+          size="small"
+          border
+          max-height="200"
+          @selection-change="rows => (selectedNewManualList = rows)"
+        >
+          <el-table-column type="selection" width="50" />
+          <el-table-column prop="app_label" label="影线名称" min-width="120" />
+          <el-table-column
+            prop="app_cinema_name"
+            label="影院名称"
+            min-width="180"
+          />
+          <el-table-column
+            prop="app_cinema_code"
+            label="影院唯一标识"
+            min-width="140"
+          />
+          <el-table-column
+            prop="app_type_name"
+            label="应用类型"
+            min-width="120"
+          />
+        </el-table>
+        <p style="margin-top: 6px; color: #999; font-size: 12px">
+          提示：导出后请在 Excel 中填写平台影院编码 plat_cinema_code，
+          然后使用上方「导入映射维护信息」按钮导入即可。
+        </p>
+      </div>
+
+      <div v-if="diffDeleteList.length" style="margin-top: 16px">
+        <div style="margin-bottom: 8px; font-weight: 600">
+          可删除的影院映射（{{ diffDeleteList.length }} 条）
+          <el-button
+            size="small"
+            type="danger"
+            style="margin-left: 12px"
+            @click="handleDeleteCinemaMatch"
+          >
+            删除这些映射
+          </el-button>
+          <el-button
+            size="small"
+            text
+            style="margin-left: 8px"
+            @click="handleSelectAll('delete')"
+          >
+            全选
+          </el-button>
+          <el-button size="small" text @click="handleClearSelection('delete')">
+            全不选
+          </el-button>
+        </div>
+        <el-table
+          ref="diffDeleteTableRef"
+          :data="diffDeleteList"
+          size="small"
+          border
+          max-height="200"
+          @selection-change="rows => (selectedDeleteList = rows)"
+        >
+          <el-table-column type="selection" width="50" />
+          <el-table-column prop="app_label" label="影线名称" min-width="120" />
+          <el-table-column
+            prop="app_cinema_name"
+            label="影院名称"
+            min-width="180"
+          />
+          <el-table-column
+            prop="app_cinema_code"
+            label="影院唯一标识"
+            min-width="140"
+          />
+        </el-table>
+      </div>
+
+      <template #footer>
+        <el-button @click="diffDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -201,7 +372,9 @@ import {
   getCinemaLoginInfoList
 } from "@/utils/utils";
 import { useCinemaCodeMatchList } from "@/store/specialNameRule";
+import { useCinemaList } from "@/store/cinemaList";
 const cinemaCodeMatchObj = useCinemaCodeMatchList();
+const cinemaListStore = useCinemaList();
 // 树节点属性映射
 const defaultProps = {
   children: "children",
@@ -238,6 +411,64 @@ const tableData = ref([]);
 const currentPage = ref(1);
 const pageSize = ref(10);
 const totalNum = ref(0);
+
+// 影院变更结果弹框
+const diffDialogVisible = ref(false);
+const diffNewSyncList = ref([]);
+const diffNewManualList = ref([]);
+const diffDeleteList = ref([]);
+
+// 影院变更结果表格多选
+const diffNewSyncTableRef = ref(null);
+const diffNewManualTableRef = ref(null);
+const diffDeleteTableRef = ref(null);
+const selectedNewSyncList = ref([]);
+const selectedNewManualList = ref([]);
+const selectedDeleteList = ref([]);
+
+// 弹框表格全选 / 全不选
+const handleSelectAll = type => {
+  let listRef = null;
+  let tableRef = null;
+  let selectedRef = null;
+  if (type === "newSync") {
+    listRef = diffNewSyncList;
+    tableRef = diffNewSyncTableRef;
+    selectedRef = selectedNewSyncList;
+  } else if (type === "newManual") {
+    listRef = diffNewManualList;
+    tableRef = diffNewManualTableRef;
+    selectedRef = selectedNewManualList;
+  } else if (type === "delete") {
+    listRef = diffDeleteList;
+    tableRef = diffDeleteTableRef;
+    selectedRef = selectedDeleteList;
+  }
+  if (!tableRef?.value || !listRef?.value) return;
+  tableRef.value.clearSelection();
+  listRef.value.forEach(row => {
+    tableRef.value.toggleRowSelection(row, true);
+  });
+  selectedRef.value = [...listRef.value];
+};
+
+const handleClearSelection = type => {
+  let tableRef = null;
+  let selectedRef = null;
+  if (type === "newSync") {
+    tableRef = diffNewSyncTableRef;
+    selectedRef = selectedNewSyncList;
+  } else if (type === "newManual") {
+    tableRef = diffNewManualTableRef;
+    selectedRef = selectedNewManualList;
+  } else if (type === "delete") {
+    tableRef = diffDeleteTableRef;
+    selectedRef = selectedDeleteList;
+  }
+  if (!tableRef?.value) return;
+  tableRef.value.clearSelection();
+  selectedRef.value = [];
+};
 
 // 表单查询数据
 const formData = reactive({
@@ -477,7 +708,32 @@ const exportCinemeCodeMatch = async () => {
 
 const uploadRef = ref(null);
 
-// 同步映射维护信息
+// 生成影院唯一标识（与本地映射表比对用，统一转字符串避免 number/string 不一致）
+const getAppCinemaCode = (item, app_type_code) => {
+  if (["ume_applet", "chenxing_applet"].includes(app_type_code)) {
+    return item.cinema_code != null ? String(item.cinema_code) : "";
+  }
+  // 不能同步的系列：city_id+影院id 与本地 app_cinema_code 对应
+  const cityId = item.city_id != null ? String(item.city_id) : "";
+  const cinemaId = item.cinema_id != null ? String(item.cinema_id) : "";
+  return cityId && cinemaId ? `${cityId}_${cinemaId}` : "";
+};
+
+// 构建本地影院映射索引
+const buildLocalCinemaIndex = cinemaList => {
+  const indexMap = {};
+  (cinemaList || []).forEach(item => {
+    const { app_name, app_cinema_code } = item;
+    if (!app_name || !app_cinema_code) return;
+    if (!indexMap[app_name]) {
+      indexMap[app_name] = {};
+    }
+    indexMap[app_name][app_cinema_code] = item;
+  });
+  return indexMap;
+};
+
+// 同步映射维护信息，返回 true 表示成功写入，false 表示未写入或失败
 const syncCinemaMatch = async cinema_list => {
   const loading = ElLoading.service({
     lock: true,
@@ -509,14 +765,16 @@ const syncCinemaMatch = async cinema_list => {
         type: "warning",
         message: "同步失败，根据库里去重后没有可以同步的映射列表"
       });
-    } else {
-      await svApi.batchAddCinemaMatch({ addList });
-      ElMessage({
-        type: "success",
-        message: "同步成功，可查询检查"
-      });
+      loading.close();
+      return false;
     }
+    await svApi.batchAddCinemaMatch({ addList });
+    ElMessage({
+      type: "success",
+      message: "同步成功，可查询检查"
+    });
     loading.close();
+    return true;
   } catch (error) {
     console.error("同步映射维护信息异常", error);
     ElMessage({
@@ -524,6 +782,7 @@ const syncCinemaMatch = async cinema_list => {
       message: "同步失败，请联系技术解决"
     });
     loading.close();
+    return false;
   }
 };
 // 导入映射维护信息
@@ -599,6 +858,402 @@ const importCinemaMatch = async (uploadFile, uploadFiles) => {
     });
     loading.close();
     uploadRef.value?.clearFiles();
+  }
+};
+
+// 检查影院新增/删除
+const checkCinemaUpdate = async () => {
+  const startTime = getCurrentTime();
+  console.log("开始检查影院新增/删除，时间：", startTime);
+  const loading = ElLoading.service({
+    lock: true,
+    text: "检查影院变更中…",
+    background: "rgba(0, 0, 0, 0.7)"
+  });
+  try {
+    // 1. 用 Pinia 可用影院列表，再按登录信息过滤：无登录的不查
+    const loginInfoList = getCinemaLoginInfoList().filter(
+      item => item && item.session_id && item.app_name
+    );
+    if (!loginInfoList.length) {
+      console.warn("当前无已登录影院，跳过检查");
+      loading.close();
+      return;
+    }
+    const canAppList = cinemaListStore.canAppList || [];
+    const availableList = canAppList.filter(item =>
+      loginInfoList.some(login => login.app_name === item.app_name)
+    );
+    const appNameSet = new Set(availableList.map(item => item.app_name));
+    const appNameList = Array.from(appNameSet);
+    if (!appNameList.length) {
+      console.warn("可用且已登录的影线为空，跳过检查");
+      loading.close();
+      return;
+    }
+
+    // 2. 本地映射只参与可用数据（排除已禁用），构建索引
+    const res = await svApi.queryCinemaMatchList({});
+    let cinemaList = res?.data?.cinemaList || [];
+    cinemaList = cinemaList.filter(item => item.status != 3);
+    const localIndex = buildLocalCinemaIndex(cinemaList);
+
+    const CAN_SYNC_APP_TYPES = ["ume_applet", "chenxing_applet"];
+    const diffList = [];
+
+    for (let i = 0; i < appNameList.length; i++) {
+      const app_name = appNameList[i];
+      try {
+        const appInfo = GET_APP_INFO(app_name);
+        const app_type_code = appInfo?.app_type_code || "";
+        const app_type_name = appInfo?.app_type_name || "";
+        const app_label = appInfo?.app_label || "";
+
+        console.log("开始检查影线影院变更", app_name, app_label);
+
+        // 远端影院列表（LMA 用任一城市即返回全量故保留 break，此处统一用 getCinemaList；失败或空时不判定删除）
+        let list = [];
+        try {
+          list = (await getCinemaList(app_name)) || [];
+        } catch (e) {
+          console.warn("获取远端影院列表失败，跳过该影线对比", app_name, e);
+          continue;
+        }
+
+        const isCanSync = CAN_SYNC_APP_TYPES.includes(app_type_code);
+        const localRows = localIndex[app_name] || {};
+        const localMapByAppCode = localRows; // 本地按 app_cinema_code 索引（不能同步用）
+        const localByPlatCode = {}; // 本地按 plat_cinema_code 索引（能同步用）
+        Object.values(localRows).forEach(row => {
+          if (row.plat_cinema_code) {
+            localByPlatCode[row.plat_cinema_code] = row;
+          }
+        });
+
+        if (isCanSync) {
+          // 能同步的系列：远端 cinema_code 与 本地 plat_cinema_code 匹配
+          const remoteByCode = {};
+          list.forEach(item => {
+            const code = item.cinema_code;
+            if (!code) return;
+            remoteByCode[code] = item;
+          });
+          // 新增：远端有该 code，本地没有 plat_cinema_code 等于该 code 的
+          Object.keys(remoteByCode).forEach(code => {
+            if (!localByPlatCode[code]) {
+              const remoteItem = remoteByCode[code];
+              diffList.push({
+                changeType: "新增",
+                app_name,
+                app_label,
+                app_type_code,
+                app_type_name,
+                app_cinema_code: code,
+                app_cinema_name:
+                  remoteItem.cinema_name ||
+                  remoteItem.app_cinema_name ||
+                  remoteItem.name ||
+                  ""
+              });
+            }
+          });
+          // 删除：仅当远端非空时，本地有 plat_cinema_code 但远端没有该 code 的
+          if (list.length > 0) {
+            Object.keys(localByPlatCode).forEach(platCode => {
+              if (!remoteByCode[platCode]) {
+                const localItem = localByPlatCode[platCode];
+                diffList.push({
+                  changeType: "删除",
+                  id: localItem.id,
+                  app_name,
+                  app_label: localItem.app_label || app_label,
+                  app_type_code: localItem.app_type_code || app_type_code,
+                  app_type_name: localItem.app_type_name || app_type_name,
+                  app_cinema_code: localItem.app_cinema_code || platCode,
+                  app_cinema_name: localItem.app_cinema_name || ""
+                });
+              }
+            });
+          }
+        } else {
+          // 不能同步的系列：远端 city_id+影院id 与 本地 app_cinema_code 匹配
+          const remoteMap = {};
+          list.forEach(item => {
+            const app_cinema_code = getAppCinemaCode(item, app_type_code);
+            if (!app_cinema_code) return;
+            remoteMap[app_cinema_code] = item;
+          });
+          // 新增：远端有该 app_cinema_code，本地无
+          Object.keys(remoteMap).forEach(code => {
+            if (!localMapByAppCode[code]) {
+              const remoteItem = remoteMap[code];
+              diffList.push({
+                changeType: "新增",
+                app_name,
+                app_label,
+                app_type_code,
+                app_type_name,
+                app_cinema_code: code,
+                app_cinema_name:
+                  remoteItem.cinema_name ||
+                  remoteItem.app_cinema_name ||
+                  remoteItem.name ||
+                  ""
+              });
+            }
+          });
+          // 删除：仅当远端非空时，本地有 app_cinema_code 但远端无
+          if (list.length > 0) {
+            Object.keys(localMapByAppCode).forEach(code => {
+              if (!remoteMap[code]) {
+                const localItem = localMapByAppCode[code];
+                diffList.push({
+                  changeType: "删除",
+                  id: localItem.id,
+                  app_name,
+                  app_label: localItem.app_label || app_label,
+                  app_type_code: localItem.app_type_code || app_type_code,
+                  app_type_name: localItem.app_type_name || app_type_name,
+                  app_cinema_code: code,
+                  app_cinema_name: localItem.app_cinema_name || ""
+                });
+              }
+            });
+          }
+        }
+
+        if (
+          list.length === 0 &&
+          (isCanSync
+            ? Object.keys(localByPlatCode).length
+            : Object.keys(localMapByAppCode).length) > 0
+        ) {
+          console.warn(
+            "影线远端影院列表为空，不参与删除对比，避免误删",
+            app_name,
+            app_label
+          );
+        }
+      } catch (err) {
+        console.warn("检查影线影院变更异常", app_name, err);
+      }
+    }
+
+    if (!diffList.length) {
+      console.log(
+        "本次检查未发现影院新增或删除，时间：",
+        startTime,
+        "，共检查影线数量：",
+        appNameList.length
+      );
+      ElMessage.info("本次检查未发现影院新增或删除");
+      loading.close();
+      return;
+    }
+
+    console.log(
+      "本次检查发现影院变更明细（新增/删除）：共",
+      diffList.length,
+      "条记录"
+    );
+    try {
+      console.table(diffList);
+    } catch (e) {
+      console.log("影院变更明细：", diffList);
+    }
+
+    const addedList = diffList.filter(d => d.changeType === "新增");
+    const deletedList = diffList.filter(d => d.changeType === "删除");
+
+    const canSyncNew = addedList.filter(d =>
+      CAN_SYNC_APP_TYPES.includes(d.app_type_code)
+    );
+    const cannotSyncNew = addedList.filter(
+      d => !CAN_SYNC_APP_TYPES.includes(d.app_type_code)
+    );
+
+    diffNewSyncList.value = canSyncNew;
+    diffNewManualList.value = cannotSyncNew;
+    diffDeleteList.value = deletedList;
+
+    // 默认全选
+    selectedNewSyncList.value = [...canSyncNew];
+    selectedNewManualList.value = [...cannotSyncNew];
+    selectedDeleteList.value = [...deletedList];
+
+    diffDialogVisible.value = true;
+    nextTick(() => {
+      if (diffNewSyncTableRef.value) {
+        diffNewSyncTableRef.value.toggleAllSelection();
+      }
+      if (diffNewManualTableRef.value) {
+        diffNewManualTableRef.value.toggleAllSelection();
+      }
+      if (diffDeleteTableRef.value) {
+        diffDeleteTableRef.value.toggleAllSelection();
+      }
+    });
+    loading.close();
+  } catch (error) {
+    console.warn("检查影院新增/删除整体流程异常", error);
+    loading.close();
+  }
+};
+
+// 执行新增同步（可自动同步的影院）
+const handleSyncNewCinema = async () => {
+  const targets = selectedNewSyncList.value.length
+    ? selectedNewSyncList.value
+    : [];
+  if (!targets.length) {
+    ElMessage.info("请先勾选需要同步的新增影院");
+    return;
+  }
+  const addList = targets.map(d => ({
+    app_label: d.app_label,
+    app_name: d.app_name,
+    app_type_code: d.app_type_code,
+    app_type_name: d.app_type_name,
+    app_cinema_name: d.app_cinema_name,
+    app_cinema_code: d.app_cinema_code,
+    plat_cinema_code: d.app_cinema_code
+  }));
+  const ok = await syncCinemaMatch(addList);
+  if (!ok) {
+    ElMessage.warning("同步未成功，列表未清空，可重试或检查后再次同步");
+    return;
+  }
+  ElMessage.success(`已自动同步 ${targets.length} 条新增影院映射`);
+  // 剔除已处理的数据
+  diffNewSyncList.value = diffNewSyncList.value.filter(
+    item => !targets.includes(item)
+  );
+  selectedNewSyncList.value = [];
+  searchData();
+  if (
+    !diffNewSyncList.value.length &&
+    !diffNewManualList.value.length &&
+    !diffDeleteList.value.length
+  ) {
+    diffDialogVisible.value = false;
+  }
+};
+
+// 导出需手动维护的新增影院模板
+const handleExportManualNew = () => {
+  const targets = selectedNewManualList.value.length
+    ? selectedNewManualList.value
+    : [];
+  if (!targets.length) {
+    ElMessage.info("请先勾选需要导出的新增影院");
+    return;
+  }
+  const header = [
+    "app_type_code",
+    "app_type_name",
+    "app_name",
+    "app_label",
+    "app_cinema_name",
+    "app_cinema_code",
+    "plat_cinema_code"
+  ];
+  const rows = targets.map(d => [
+    d.app_type_code,
+    d.app_type_name,
+    d.app_name,
+    d.app_label,
+    d.app_cinema_name,
+    d.app_cinema_code,
+    ""
+  ]);
+  const tableData = [header, ...rows];
+  const fileName = `需维护平台code影院列表_${getCurrentTime()}.xlsx`;
+  createExcelDown(tableData, fileName);
+  ElMessage.success("导出成功，请在表格中维护平台影院编码后再导入");
+  // 剔除已处理的数据
+  diffNewManualList.value = diffNewManualList.value.filter(
+    item => !targets.includes(item)
+  );
+  selectedNewManualList.value = [];
+  if (
+    !diffNewSyncList.value.length &&
+    !diffNewManualList.value.length &&
+    !diffDeleteList.value.length
+  ) {
+    diffDialogVisible.value = false;
+  }
+};
+
+// 删除映射表中已下线的影院
+const handleDeleteCinemaMatch = async () => {
+  const targets = selectedDeleteList.value.length
+    ? selectedDeleteList.value
+    : [];
+  if (!targets.length) {
+    ElMessage.info("请先勾选需要删除的影院映射");
+    return;
+  }
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除这 ${targets.length} 条影院映射吗？`,
+      "确认删除",
+      {
+        confirmButtonText: "确定删除",
+        cancelButtonText: "取消",
+        type: "warning",
+        showClose: false,
+        closeOnClickModal: false,
+        closeOnPressEscape: false
+      }
+    );
+    // 删除前打印，便于删除后对照
+    console.log(
+      "即将删除的影院映射（共 " + targets.length + " 条）：",
+      targets.map(d => ({
+        影线: d.app_label,
+        影院名称: d.app_cinema_name,
+        影院唯一标识: d.app_cinema_code,
+        映射表id: d.id
+      }))
+    );
+    try {
+      console.table(
+        targets.map(d => ({
+          影线: d.app_label,
+          影院名称: d.app_cinema_name,
+          影院唯一标识: d.app_cinema_code,
+          映射表id: d.id
+        }))
+      );
+    } catch (e) {
+      // 部分环境 console.table 不支持则忽略
+    }
+    let deleted = 0;
+    for (const d of targets) {
+      if (d.id != null && d.id !== undefined && d.id !== "") {
+        await svApi.deleteById({ id: d.id });
+        deleted++;
+      }
+    }
+    ElMessage.success(`已删除 ${deleted} 条影院映射`);
+    // 剔除已处理的数据
+    diffDeleteList.value = diffDeleteList.value.filter(
+      item => !targets.includes(item)
+    );
+    selectedDeleteList.value = [];
+    searchData();
+    if (
+      !diffNewSyncList.value.length &&
+      !diffNewManualList.value.length &&
+      !diffDeleteList.value.length
+    ) {
+      diffDialogVisible.value = false;
+    }
+  } catch (e) {
+    if (e !== "cancel") {
+      console.warn("删除映射异常", e);
+    }
+    ElMessage.info("已取消删除");
   }
 };
 

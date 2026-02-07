@@ -117,13 +117,16 @@ export default function useCinemaBaseFun() {
       for (let index = 0; index < cityList.length; index++) {
         const item = cityList[index];
         let list = await getCinemaListByCityId(app_name, item.city_id);
-        list = list.map(itemA => {
-          return {
-            ...itemA,
-            city_name: item.city_name,
-            city_id: item.city_id
-          };
-        });
+        // 卢米埃：返回即全量影院（lma-cinema.js），每条自带 city_id/cinema_id，不再用循环城市覆盖
+        list = list.map(itemA =>
+          app_name === "lma"
+            ? { ...itemA }
+            : {
+                ...itemA,
+                city_name: item.city_name,
+                city_id: item.city_id
+              }
+        );
         if (list.length > 0) {
           allCinemaList = allCinemaList.concat(list);
         }
@@ -204,13 +207,15 @@ export default function useCinemaBaseFun() {
           }));
         }
       } else if (app_name === "lma") {
+        // 卢米埃：接口返回全量影院（见 src/data/lma-cinema.js），每条自带 city_id、cinema_id，直接沿用
         const res = await cinemaApi.getCinemaList(city_id);
         cinemaList = res.data.list || [];
         cinemaList = cinemaList.map(item => ({
           ...item,
           cinema_id: item.cinema_id,
           cinema_name: item.cinema_name,
-          cinema_code: "" //同步影院code时使用
+          city_id: item.city_id,
+          cinema_code: ""
         }));
       } else {
         // sfc系列

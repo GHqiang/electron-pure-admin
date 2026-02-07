@@ -58,12 +58,12 @@ const cinemas = [
   //   address: "重庆市江北区北滨路368号金源购物广场4楼",
   // },
   // 4-淮安
-  {
-    cinema_id: "1005",
-    cinema_name: "卢米埃淮安新亚影城",
-    city_id: "4",
-    address: "淮安市淮海东路142号中央国际新亚广场七层"
-  },
+  // {
+  //   cinema_id: "1005",
+  //   cinema_name: "卢米埃淮安新亚影城",
+  //   city_id: "4",
+  //   address: "淮安市淮海东路142号中央国际新亚广场七层"
+  // },
   // 5-杭州
   {
     cinema_id: "1001",
@@ -204,12 +204,12 @@ const cinemas = [
     city_id: "17",
     address: "上海市杨浦区控江路1628号紫荆广场5楼"
   },
-  {
-    cinema_id: "1031",
-    cinema_name: "卢米埃上海大融城影城",
-    city_id: "17",
-    address: "上海市嘉定区宝安公路3386号大融城4楼卢米埃影城"
-  },
+  // {
+  //   cinema_id: "1031",
+  //   cinema_name: "卢米埃上海大融城影城",
+  //   city_id: "17",
+  //   address: "上海市嘉定区宝安公路3386号大融城4楼卢米埃影城"
+  // },
   // 18-长沙
   {
     cinema_id: "1027",
@@ -218,12 +218,12 @@ const cinemas = [
     address: "湖南省长沙市岳麓区金星路383号河西王府井6层"
   },
   // 19-深圳
-  {
-    cinema_id: "1028",
-    cinema_name: "卢米埃深圳华强北IMAX影城",
-    city_id: "19",
-    address: "深圳市福田区华强北中航路中航城天虹购物中心4楼卢米埃影城"
-  },
+  // {
+  //   cinema_id: "1028",
+  //   cinema_name: "卢米埃深圳华强北IMAX影城",
+  //   city_id: "19",
+  //   address: "深圳市福田区华强北中航路中航城天虹购物中心4楼卢米埃影城"
+  // },
   {
     cinema_id: "1033",
     cinema_name: "卢米埃深圳汇港IMAX影城",
