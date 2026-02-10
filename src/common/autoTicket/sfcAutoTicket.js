@@ -560,6 +560,11 @@ class OrderAutoTicketQueue {
       if (!rewards || Number(rewards) == 0) {
         rewards = offerRule?.rewards || 0;
       }
+      // 记录当前使用的手机号，出票失败消息会带上（最后失败的手机号）
+      if (this.order && this.currentParamsList?.[this.currentParamsInx]) {
+        this.order.last_fail_phone =
+          this.currentParamsList[this.currentParamsInx].mobile || "";
+      }
       if (this.currentParamsInx === 0) {
         // 2、获取城市列表
         const cityListRes = await getCityList({ appFlag });

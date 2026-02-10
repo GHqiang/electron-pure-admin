@@ -301,6 +301,9 @@
 </template>
 
 <script setup>
+defineOptions({
+  name: "cardList"
+});
 import {
   ref,
   reactive,

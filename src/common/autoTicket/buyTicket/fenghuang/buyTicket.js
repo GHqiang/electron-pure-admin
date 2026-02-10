@@ -229,6 +229,10 @@ class FenghuangBuyTicket extends BaseBuyTicket {
         this.currentParamsList[this.currentParamsInx]?.mobile || "";
       this.currentMemberPwd =
         this.currentParamsList[this.currentParamsInx]?.member_pwd || "";
+      // 记录当前使用的手机号，出票失败消息会带上（最后失败的手机号）
+      if (this.order) {
+        this.order.last_fail_phone = this.currentPhone || "";
+      }
       const {
         cinemaLinkId,
         scheduleId,

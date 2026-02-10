@@ -473,6 +473,11 @@ class OrderAutoTicketQueue {
       rewards = offerRule?.rewards || 0;
     }
     try {
+      // 记录当前使用的手机号，出票失败消息会带上（最后失败的手机号）
+      if (this.order && this.currentParamsList?.[this.currentParamsInx]) {
+        this.order.last_fail_phone =
+          this.currentParamsList[this.currentParamsInx].mobile || "";
+      }
       this.logger.info("一键买票待下单信息", item);
       if (this.currentParamsInx === 0) {
         // 3、获取城市影城列表

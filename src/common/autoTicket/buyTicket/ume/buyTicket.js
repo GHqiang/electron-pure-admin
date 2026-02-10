@@ -230,6 +230,11 @@ export default class UmeBuyTicket extends BaseBuyTicket {
     if (!rewards || Number(rewards) == 0) {
       rewards = offerRule?.rewards || 0;
     }
+    // 记录当前使用的手机号，出票失败消息会带上（最后失败的手机号）
+    if (this.order) {
+      this.order.last_fail_phone =
+        this.currentParamsList[this.currentParamsInx]?.mobile || "";
+    }
     try {
       if (this.currentParamsInx === 0) {
         // 首次出票：获取影院、电影、场次、座位信息

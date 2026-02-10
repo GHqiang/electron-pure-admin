@@ -510,6 +510,11 @@ class OrderAutoTicketQueue {
       rewards = offerRule?.rewards || 0;
     }
     try {
+      // 记录当前使用的手机号，出票失败消息会带上（最后失败的手机号）
+      if (this.order && this.currentParamsList?.[this.currentParamsInx]) {
+        this.order.last_fail_phone =
+          this.currentParamsList[this.currentParamsInx].mobile || "";
+      }
       if (this.currentParamsInx === 0) {
         // 2、获取目标城市影院列表
         let cityCinemaList = await this.getCityCinemaList();

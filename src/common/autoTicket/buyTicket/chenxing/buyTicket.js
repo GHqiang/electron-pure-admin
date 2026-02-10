@@ -224,6 +224,10 @@ class ChenxingBuyTicket extends BaseBuyTicket {
         this.currentParamsList[this.currentParamsInx]?.session_id || "";
       this.currentPhone =
         this.currentParamsList[this.currentParamsInx]?.mobile || "";
+      // 记录当前使用的手机号，出票失败消息会带上（最后失败的手机号）
+      if (this.order) {
+        this.order.last_fail_phone = this.currentPhone || "";
+      }
       const {
         cinemaCode,
         cinemaId,

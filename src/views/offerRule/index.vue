@@ -336,6 +336,9 @@
 </template>
 
 <script setup>
+defineOptions({
+  name: "offerRule"
+});
 import {
   ref,
   reactive,

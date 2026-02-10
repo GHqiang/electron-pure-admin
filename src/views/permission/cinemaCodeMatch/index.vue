@@ -428,6 +428,9 @@
 </template>
 
 <script setup>
+defineOptions({
+  name: "CinemaCodeMatch"
+});
 import { ref, reactive, computed, onBeforeMount, nextTick, watch } from "vue";
 import svApi from "@/api/sv-api";
 import { ElMessage, ElLoading, ElMessageBox } from "element-plus";

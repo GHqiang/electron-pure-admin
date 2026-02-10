@@ -6,6 +6,9 @@
 </template>
 
 <script setup>
+defineOptions({
+  name: "ticketRecord"
+});
 import HistoryTicketRecord from "@/components/HistoryTicketRecord.vue";
 </script>
 

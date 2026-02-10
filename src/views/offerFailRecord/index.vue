@@ -6,6 +6,9 @@
 </template>
 
 <script setup>
+defineOptions({
+  name: "offerFailRecord"
+});
 import HistoryOfferRecord from "@/components/HistoryOfferRecord.vue";
 </script>
 

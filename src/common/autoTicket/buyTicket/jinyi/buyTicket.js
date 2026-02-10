@@ -228,6 +228,10 @@ class JinyiBuyTicket extends BaseBuyTicket {
       this.currentPhone = this.currentParamsList[this.currentParamsInx].mobile;
       this.currentMemberPwd =
         this.currentParamsList[this.currentParamsInx].member_pwd;
+      // 记录当前使用的手机号，出票失败消息会带上（最后失败的手机号）
+      if (this.order) {
+        this.order.last_fail_phone = this.currentPhone || "";
+      }
       // 锁定座位前延迟一秒
       // await mockDelay(1);
       const {

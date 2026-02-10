@@ -236,6 +236,9 @@
 </template>
 
 <script setup>
+defineOptions({
+  name: "loginList"
+});
 import { ref, reactive, computed, onBeforeMount, nextTick, watch } from "vue";
 import svApi from "@/api/sv-api";
 import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
@@ -343,7 +346,7 @@ const setLocalLoginList = async () => {
     first: item.first,
     is_xiaohao: item.is_xiaohao,
     link_user_id: item.link_user_id,
-    update_time: item.update_time,
+    update_time: item.update_time
   }));
   userInfoAndTokens.setLoginInfoList(
     loginRecords.filter(item => item.is_xiaohao != 1)

@@ -219,6 +219,9 @@
   </div>
 </template>
 <script setup>
+defineOptions({
+  name: "todayStatistics"
+});
 import { ref, reactive, onBeforeMount, computed } from "vue";
 import { ElLoading } from "element-plus";
 import svApi from "@/api/sv-api";

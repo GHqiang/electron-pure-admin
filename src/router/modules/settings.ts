@@ -13,7 +13,8 @@ export default {
       name: "todayStatistics",
       component: () => import("@/views/todayStatistics/index.vue"),
       meta: {
-        title: "统计分析"
+        title: "统计分析",
+        keepAlive: true
       }
     },
     {
@@ -21,7 +22,8 @@ export default {
       name: "loginList",
       component: () => import("@/views/appLogin/appLoginSet.vue"),
       meta: {
-        title: "影院登录"
+        title: "影院登录",
+        keepAlive: true
       }
     },
     {
@@ -29,7 +31,8 @@ export default {
       name: "cardList",
       component: () => import("@/views/appBalanceQuery/cardList.vue"),
       meta: {
-        title: "会员卡列表"
+        title: "会员卡列表",
+        keepAlive: true
       }
     },
     {
@@ -37,7 +40,8 @@ export default {
       name: "QuanTypeManage",
       component: () => import("@/views/permission/quanTypeManage/index.vue"),
       meta: {
-        title: "券类型列表"
+        title: "券类型列表",
+        keepAlive: true
       }
     },
     {
@@ -45,7 +49,8 @@ export default {
       name: "offerRule",
       component: () => import("@/views/offerRule/index.vue"),
       meta: {
-        title: "报价规则"
+        title: "报价规则",
+        keepAlive: true
       }
     },
     {
@@ -72,7 +77,8 @@ export default {
       name: "CinemaCodeMatch",
       component: () => import("@/views/permission/cinemaCodeMatch/index.vue"),
       meta: {
-        title: "影院映射"
+        title: "影院映射",
+        keepAlive: true
       }
     },
 
@@ -100,7 +106,8 @@ export default {
       name: "offerRecord",
       component: () => import("@/views/offerRecord/index.vue"),
       meta: {
-        title: "报价记录"
+        title: "报价记录",
+        keepAlive: true
       }
     },
     {
@@ -108,7 +115,8 @@ export default {
       name: "ticketRecord",
       component: () => import("@/views/ticketRecord/index.vue"),
       meta: {
-        title: "出票记录"
+        title: "出票记录",
+        keepAlive: true
       }
     },
     {
@@ -116,9 +124,10 @@ export default {
       name: "offerFailRecord",
       component: () => import("@/views/offerFailRecord/index.vue"),
       meta: {
-        title: "未报价记录"
+        title: "未报价记录",
+        keepAlive: true
       }
-    },
+    }
     // {
     //   path: "/set/balanceQuery",
     //   name: "balanceQuery",

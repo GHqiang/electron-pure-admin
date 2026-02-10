@@ -553,7 +553,8 @@ const sendWxPusherMessage = async ({
     show_time,
     lockseat,
     hall_name,
-    supplier_end_price
+    supplier_end_price,
+    last_fail_phone // 最后失败的手机号（出票失败时使用的账号）
   } = orderInfo || {};
   const url = "https://wxpusher.zjiecode.com/api/manager/message/send";
   const headers = {
@@ -581,6 +582,7 @@ const sendWxPusherMessage = async ({
   中标价：${supplier_end_price}; <br/>
   原因：${failReason};<br/>
   提示：${transferTip};<br/>
+  最后失败手机号：${last_fail_phone || "-"};<br/>
   </p>`;
 
   if (msgType === 1) {
