@@ -56,8 +56,7 @@ export default class HahaOfferQueue extends BaseOfferQueue {
             movieName,
             image,
             time,
-            order_id,
-            cinemaId
+            order_id
           } = item;
           return {
             plat_name: "haha",

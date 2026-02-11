@@ -9,9 +9,6 @@ import svApi from "@/api/sv-api.js";
 import { platTokens } from "@/store/platTokens.js";
 
 const tokens = platTokens();
-const {
-  userInfo: { name }
-} = tokens;
 
 /**
  * 洋葱平台订单获取

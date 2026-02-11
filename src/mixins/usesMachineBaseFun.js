@@ -2,24 +2,16 @@ import svApi from "@/api/sv-api";
 import lierenApi from "@/api/lieren-api";
 import { computed } from "vue";
 import { getCurrentTime, sendWxPusherMessage } from "@/utils/utils";
-import {
-  GET_APP_LIST,
-  GET_UME_LIST,
-  GET_H5_UME_LIST,
-  GET_CHENXING_LIST,
-  GET_APP_INFO
-} from "@/common/constant";
+import { GET_APP_LIST, GET_UME_LIST, GET_APP_INFO } from "@/common/constant";
 import { platTokens } from "@/store/platTokens";
 
 // 机器相关方法接口
 export default function useCinemaBaseFun() {
   const APP_LIST = computed(() => GET_APP_LIST());
   const UME_LIST = computed(() => GET_UME_LIST());
-  const H5_UME_LIST = computed(() => GET_H5_UME_LIST());
-  const CHENXING_LIST = computed(() => GET_CHENXING_LIST());
 
   const {
-    userInfo: { rule, user_id }
+    userInfo: { rule }
   } = platTokens();
 
   // 获取关联的平台规则id，没有就创建一个返回

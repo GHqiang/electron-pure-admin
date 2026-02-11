@@ -47,10 +47,10 @@ export default class YinghuasuanOfferQueue extends BaseOfferQueue {
             invitation_id: id,
             net_price: tpp_price,
             max_price: supplier_max_price,
-            deal_price, // 立即成交价格
+            // deal_price, // 立即成交价格
             allow_last_time, // 该字段大于0，属于限时单，需要在该字段的时间戳前出票
-            seckill_point, // 秒杀所需积分
-            quick_reward, // 1代表有额外奖励
+            // seckill_point, // 秒杀所需积分
+            // quick_reward, // 1代表有额外奖励
             city_name,
             cinema_address: cinema_addr,
             seat_num: ticket_num,
@@ -59,9 +59,7 @@ export default class YinghuasuanOfferQueue extends BaseOfferQueue {
             film_name,
             film_pic: film_img,
             show_time,
-            cinemaid,
-            standard_id,
-            tag_name // 品牌名 上影-上海、上影二线等
+            standard_id
           } = item;
           return {
             plat_name: "yinghuasuan",

@@ -1,7 +1,7 @@
 // 订单获取基类
 // 提取所有平台订单获取的公共逻辑
 
-import { getCurrentTime, logUpload, mockDelay } from "@/utils/utils.js";
+import { mockDelay } from "@/utils/utils.js";
 import Logger from "../logger.js";
 
 /**

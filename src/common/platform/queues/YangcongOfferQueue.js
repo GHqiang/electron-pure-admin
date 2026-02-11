@@ -58,7 +58,6 @@ export default class YangcongOfferQueue extends BaseOfferQueue {
             movieName,
             logoUrl,
             playTime,
-            cinemaId,
             cinemaChain // 品牌名 上影上海、上影二线等
           } = item;
           return {

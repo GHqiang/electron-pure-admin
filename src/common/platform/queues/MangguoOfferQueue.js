@@ -57,7 +57,6 @@ export default class MangguoOfferQueue extends BaseOfferQueue {
             show_time,
             is_urgent,
             order_number,
-            cinemaid,
             line_name // 品牌名 上影上海、上影二线等
           } = item;
           return {

@@ -96,6 +96,7 @@ const createApi = ({ app_name }) => {
   return {
     getCityList,
     getCinemaList,
+    getDiffVersion,
     getMoviePlayInfo,
     getMoviePlayDate, // 获取电影放映场次
     getMoviePlaySeat,
@@ -110,7 +111,8 @@ const createApi = ({ app_name }) => {
     cannelOneOrder,
     getOrderList,
     buyTicket,
-    bandQuan
+    bandQuan,
+    getOrderInfo
   };
 };
 export default createApi;

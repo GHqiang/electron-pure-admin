@@ -1,7 +1,7 @@
 <template>
   <div class="login-container">
     <el-button-group
-      v-for="(item, inx) in appList"
+      v-for="item in appList"
       :key="item.appName"
       class="m-r-10 m-t-10"
     >

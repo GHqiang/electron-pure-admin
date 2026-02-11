@@ -2,7 +2,6 @@
 // 提取所有影院系列报价的公共逻辑
 
 import { formatErrInfo, calculateMarkup } from "@/utils/utils.js";
-import Logger from "../logger.js";
 
 /**
  * 报价基类

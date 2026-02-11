@@ -15,9 +15,6 @@ import svApi from "@/api/sv-api.js";
 import { platTokens } from "@/store/platTokens.js";
 
 const tokens = platTokens();
-const {
-  userInfo: { name }
-} = tokens;
 
 /**
  * 哈哈平台订单获取

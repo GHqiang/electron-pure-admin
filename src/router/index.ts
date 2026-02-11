@@ -10,7 +10,6 @@ import {
   ascending,
   getTopMenu,
   initRouter,
-  isOneOfArray,
   getHistoryMode,
   findRouteByPath,
   handleAliveRoute,
@@ -97,7 +96,7 @@ export function resetRouter() {
 /** 路由白名单 */
 const whiteList = ["/login"];
 
-const { VITE_HIDE_HOME } = import.meta.env;
+// const { VITE_HIDE_HOME } = import.meta.env;
 
 router.beforeEach((to: ToRouteType, _from, next) => {
   if (to.meta?.keepAlive) {

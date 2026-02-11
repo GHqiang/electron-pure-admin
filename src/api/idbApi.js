@@ -2,7 +2,7 @@
  * @description: indexDB封装api列表
  */
 
-import { openDB, deleteDB } from "idb";
+import { openDB } from "idb";
 // console.log('openDB', openDB)
 // 数据库和数据表定义
 const DATABASE_NAME = "orderManagement";

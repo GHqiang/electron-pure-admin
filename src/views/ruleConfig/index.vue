@@ -19,8 +19,8 @@
       }}</el-button>
 
       <el-button
-        type="primary"
         v-if="IN_RULE_LIST.includes(rule)"
+        type="primary"
         @click="isAdjustPrice = !isAdjustPrice"
         >{{ !isAdjustPrice ? "开启动态调价" : "关闭动态调价" }}</el-button
       >
@@ -33,7 +33,7 @@
 
     <div style="margin-top: 50px">
       <el-divider content-position="left">设置类规则</el-divider>
-      <div class="flex-yc" v-if="IN_RULE_LIST.includes(rule)">
+      <div v-if="IN_RULE_LIST.includes(rule)" class="flex-yc">
         <el-input
           v-model="minAdjustPriceProfit"
           type="number"

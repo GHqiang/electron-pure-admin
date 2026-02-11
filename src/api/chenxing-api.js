@@ -4,9 +4,6 @@
 
 import createAxios from "@/utils/http/chenxing-request";
 import { GET_APP_INFO } from "@/common/constant";
-import { requestViaMain } from "@/utils/utils"; // 你已封装的主进程请求方法
-import { paramsHandle } from "@/utils/http/chenxing-request"; // 确保你已导出 paramsHandle
-const IS_DEV = process.env.NODE_ENV === "development";
 const createApi = ({ app_name }) => {
   // 启用新版本服务影院列表
   let axios = createAxios({
@@ -145,34 +142,6 @@ const createApi = ({ app_name }) => {
     }
     apiFunObj[funName] = async (params = {}) => {
       return axios.post(path, params || {});
-      // 判断是否需要走主进程代理
-      // if (IS_DEV && api_version === "3.0C") {
-      //   // 1. 处理参数（复用原有逻辑）
-      //   const processedParams = paramsHandle(params, app_name);
-
-      //   // 2. 构造完整 URL
-      //   const fullUrl = "https://capi.oristarcloud.com" + path;
-
-      //   // 3. 调用主进程代理（所有 3.0C 接口目前都是 POST）
-      //   try {
-      //     const result = await requestViaMain({
-      //       url: fullUrl,
-      //       method: "POST",
-      //       headers: {
-      //         "Content-Type": "application/json"
-      //       },
-      //       data: processedParams,
-      //       timeout: 20000
-      //     });
-      //     return result; // 注意：requestViaMain 已经返回 .data
-      //   } catch (error) {
-      //     // 统一错误格式，便于上层 ElMessage 捕获
-      //     return Promise.reject(error);
-      //   }
-      // } else {
-      //   // 走原 axios 流程
-      //   return axios.post(path, params || {});
-      // }
     };
   });
   // console.log("apiFunObj", apiFunObj);

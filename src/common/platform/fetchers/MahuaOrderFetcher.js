@@ -5,16 +5,10 @@ import BaseOrderFetcher from "../../core/BaseOrderFetcher.js";
 import MahuaAdapter from "../adapters/MahuaAdapter.js";
 import Logger from "../../logger.js";
 import { getCinemaFlag, getCurrentTime, logUpload } from "@/utils/utils.js";
-import { useCinemaCodeMatchList } from "@/store/specialNameRule.js";
 import svApi from "@/api/sv-api.js";
 import { platTokens } from "@/store/platTokens.js";
 
-const cinemaCodeMatchObj = useCinemaCodeMatchList();
-
 const tokens = platTokens();
-const {
-  userInfo: { name }
-} = tokens;
 
 /**
  * 麻花平台订单获取

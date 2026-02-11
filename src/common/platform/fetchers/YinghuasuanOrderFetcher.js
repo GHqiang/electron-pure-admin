@@ -14,9 +14,6 @@ import svApi from "@/api/sv-api.js";
 import { platTokens } from "@/store/platTokens.js";
 
 const tokens = platTokens();
-const {
-  userInfo: { name }
-} = tokens;
 
 /**
  * 影划算平台订单获取
@@ -49,9 +46,6 @@ export default class YinghuasuanOrderFetcher extends BaseOrderFetcher {
 
       if (!rawStayList?.length) return;
 
-      // 获取报价记录
-      const offerList = await this.getOfferList();
-
       // 数据转换
       const processedList = rawStayList
         .map(item => {
@@ -72,7 +66,7 @@ export default class YinghuasuanOrderFetcher extends BaseOrderFetcher {
           if (!demands) return null;
 
           const {
-            quick_reward,
+            // quick_reward,
             city_name,
             cinema_address: cinema_addr,
             seat_num: ticket_num,

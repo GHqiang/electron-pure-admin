@@ -3,7 +3,6 @@
 
 import BasePlatformAdapter from "../../core/BasePlatformAdapter.js";
 import mayiApi from "@/api/mayi-api.js";
-import { logUpload } from "@/utils/utils";
 /**
  * 蚂蚁平台适配器
  */
@@ -28,22 +27,6 @@ export default class MayiAdapter extends BasePlatformAdapter {
       const res = await this.api.queryStayOfferList(params);
       const list = res?.data || [];
       console.log("蚂蚁获取待报价列表返回", list);
-      // logUpload(
-      //   {
-      //     plat_name: "mayi",
-      //     type: 1
-      //   },
-      //   [
-      //     {
-      //       opera_time: getCurrentTime(),
-      //       des: "蚂蚁获取待报价列表返回",
-      //       level: "info",
-      //       info: {
-      //         res
-      //       }
-      //     }
-      //   ]
-      // );
       return list;
     } catch (error) {
       this.logger.errorSave("获取待报价订单列表异常", {

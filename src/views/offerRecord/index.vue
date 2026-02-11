@@ -1,7 +1,7 @@
 <template>
   <div class="auto-offer">
     <el-divider content-position="center">报价记录</el-divider>
-    <HistoryOfferRecord :orderStatus="1"></HistoryOfferRecord>
+    <HistoryOfferRecord :orderStatus="1" />
   </div>
 </template>
 

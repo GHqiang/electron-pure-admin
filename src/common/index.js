@@ -24,7 +24,6 @@ import {
   GET_JINYI_LIST,
   GET_APP_INFO
 } from "@/common/constant";
-import { getCinemaLoginInfoList } from "@/utils/utils";
 const SFC_API_OBJ = {};
 const UME_API_OBJ = {};
 const H5_UME_API_OBJ = {};
@@ -52,14 +51,6 @@ GET_FENGHUANG_LIST().forEach(item => {
   FENGHUANG_API_OBJ[item] = createFenghuangApi({
     app_name: item
   });
-  // 通过测试这块好像可以先不执行
-  // let loginInfoList = getCinemaLoginInfoList();
-  // let isLogin = loginInfoList.find(
-  //   itemA => itemA.app_name === item && itemA.session_id
-  // );
-  // if (isLogin) {
-  //   FENGHUANG_API_OBJ[item].getCinemaList();
-  // }
 });
 GET_JINYI_LIST().forEach(item => {
   JINYI_API_OBJ[item] = createJinyiApi({

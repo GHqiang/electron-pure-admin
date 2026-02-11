@@ -3,7 +3,6 @@
 
 import platformFactory from "../../factories/PlatformFactory.js";
 import LierenAdapter from "../../platform/adapters/LierenAdapter.js";
-import Logger from "../../logger.js";
 
 describe("PlatformFactory", () => {
   beforeEach(() => {

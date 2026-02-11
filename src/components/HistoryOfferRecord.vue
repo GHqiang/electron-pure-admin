@@ -67,7 +67,7 @@
           <el-option label="失败" value="2" />
         </el-select>
       </el-form-item> -->
-      <el-form-item label="是否中标" v-if="orderStatus == 1">
+      <el-form-item v-if="orderStatus == 1" label="是否中标">
         <el-select
           v-model="formData.is_deal"
           placeholder="是否中标"
@@ -108,14 +108,14 @@
           filterable
         >
           <el-option
-            v-for="(item, index) in quanType"
+            v-for="item in quanType"
             :key="item.id"
             :label="item.quan_name"
             :value="item.quan_value"
           />
         </el-select>
       </el-form-item>
-      <el-form-item label="失败原因" v-if="orderStatus == 2">
+      <el-form-item v-if="orderStatus == 2" label="失败原因">
         <el-input
           v-model="formData.err_msg"
           placeholder="请输入报价失败原因"

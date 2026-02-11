@@ -8,8 +8,7 @@ import {
   getCinemaLoginInfoList,
   getCurrentTime,
   logUpload,
-  mockDelay,
-  formatErrInfo
+  mockDelay
 } from "@/utils/utils.js";
 import { LIERENR_REWARDS, GET_APP_INFO } from "@/common/constant.js";
 import Logger from "../../logger.js";

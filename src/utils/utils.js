@@ -674,11 +674,11 @@ const cryptoFunctions = {
     // 示例加密后的字符串
     const str = encodeStr; /* 省略了原始的长字符串 */
 
-    // 将十六进制字符串转换为CryptoJS字节数组
-    const encryptedHexStr = CryptoJS.enc.Hex.parse(str);
+    // // 将十六进制字符串转换为CryptoJS字节数组
+    // const encryptedHexStr = CryptoJS.enc.Hex.parse(str);
 
-    // 将字节数组转换为Base64字符串
-    const srcs = CryptoJS.enc.Base64.stringify(encryptedHexStr);
+    // // 将字节数组转换为Base64字符串
+    // const srcs = CryptoJS.enc.Base64.stringify(encryptedHexStr);
 
     // 解密字符串
     // 注意：这里需要提供正确的密钥（key）和初始化向量（iv）
@@ -1016,7 +1016,7 @@ const getTargetCinemaCommon = ({ app_name, plat_cinema_code, cinema_list }) => {
     return cinema_list.find(item => item.cinemaCode == plat_cinema_code);
   } else {
     // 拆开用cinemaId匹配
-    const [city_id, cinema_id] = matchInfo?.app_cinema_code?.split("_") || [];
+    const [, cinema_id] = matchInfo?.app_cinema_code?.split("_") || [];
     return cinema_list.find(item => item.cinemaId == cinema_id);
   }
 };
@@ -1146,7 +1146,7 @@ const offerRuleMatch = order => {
     console.warn("匹配报价规则开始", order);
     const {
       city_name,
-      cinema_name,
+      // cinema_name,
       cinema_code,
       hall_name,
       film_name,
@@ -1154,7 +1154,7 @@ const offerRuleMatch = order => {
       ticket_num,
       plat_name,
       appName,
-      app_name //该字段主要是为了方便测试
+      app_name // 该字段主要是为了方便测试
     } = order;
     let shadowLineName = appName || app_name;
     console.log("报价订单影线", shadowLineName, plat_name);
@@ -2189,23 +2189,16 @@ const uploadBlobImage = async ({
     });
     logger?.infoSave("取票码图片上传异常", error);
     // 增强错误处理
-    let errorMessage = "上传失败";
-
     if (error.response) {
       // 服务器返回了错误响应
       console.error("服务器错误:", error.response.data);
-      errorMessage =
-        error.response.data?.message || `服务器错误: ${error.response.status}`;
     } else if (error.request) {
       // 请求已发送但无响应
       console.error("无响应:", error.request);
-      errorMessage = "服务器无响应";
     } else {
       // 请求配置错误
       console.error("请求错误:", error.message);
     }
-
-    // throw new Error(errorMessage);
   }
 };
 
@@ -2293,7 +2286,7 @@ const dynamicPrice = async ({ order, offerRule, logger }) => {
       realAddMount, // 真实加价金额
       cost_price // 卡券成本
     } = offerRule;
-    const { plat_name, cinema_code, supplier_max_price, app_name } = order;
+    const { plat_name, cinema_code, supplier_max_price } = order;
 
     // 是否开启动态调价
     let isOpenAdjustPrice = localStorage.getItem("isAdjustPrice") == 1;

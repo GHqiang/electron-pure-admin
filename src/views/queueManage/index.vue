@@ -29,7 +29,7 @@
 
     <el-table :data="platQueueList" border show-overflow-tooltip>
       <el-table-column prop="platName" label="平台名称">
-        <template #default="{ row, $index }">
+        <template #default="{ row }">
           <span v-if="row.id !== editingRowId">{{
             ORDER_FORM[row.platName]
           }}</span>
@@ -49,7 +49,7 @@
         </template>
       </el-table-column>
       <el-table-column prop="getInterval" label="订单获取间隔">
-        <template #default="{ row, $index }">
+        <template #default="{ row }">
           <span v-if="row.id !== editingRowId">{{ row.getInterval }}</span>
           <el-input-number
             v-else
@@ -64,7 +64,7 @@
         width="160"
         label="同步频率(条数/1分钟)"
       >
-        <template #default="{ row, $index }">
+        <template #default="{ row }">
           <span v-if="row.id !== editingRowId">{{ row.syncPageSize }}</span>
           <el-input-number
             v-else
@@ -75,7 +75,7 @@
         </template>
       </el-table-column>
       <el-table-column prop="platToken" label="平台Token">
-        <template #default="{ row, $index }">
+        <template #default="{ row }">
           <span v-if="row.id !== editingRowId">{{ row.platToken }}</span>
           <el-input
             v-else
@@ -85,7 +85,7 @@
         </template>
       </el-table-column>
       <el-table-column prop="platSubToken" label="平台子Token">
-        <template #default="{ row, $index }">
+        <template #default="{ row }">
           <span v-if="row.id !== editingRowId">{{ row.platSubToken }}</span>
           <el-input
             v-if="
@@ -98,7 +98,7 @@
         </template>
       </el-table-column>
       <el-table-column prop="userUUID" label="平台userUUID">
-        <template #default="{ row, $index }">
+        <template #default="{ row }">
           <span v-if="row.id !== editingRowId">{{ row.userUUID }}</span>
           <el-input
             v-if="

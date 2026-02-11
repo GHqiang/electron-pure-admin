@@ -4,7 +4,7 @@
 import { MIN_ALLOW_OFFER_SJC, GET_APP_TYPE_LIST } from "@/common/constant.js";
 import Logger from "../logger.js";
 import getOfferPriceFun from "../autoOffer/commonOfferHandle.js";
-import { dynamicPrice, getCurrentTime, formatErrInfo } from "@/utils/utils.js";
+import { dynamicPrice, getCurrentTime } from "@/utils/utils.js";
 import svApi from "@/api/sv-api.js";
 import { platTokens } from "@/store/platTokens.js";
 

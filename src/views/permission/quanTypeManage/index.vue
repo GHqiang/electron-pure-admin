@@ -34,7 +34,7 @@
               style="width: 194px"
             >
               <el-option
-                v-for="(item, index) in quanType"
+                v-for="item in quanType"
                 :key="item.id"
                 :label="item.quan_name"
                 :value="item.quan_value"
@@ -129,7 +129,7 @@
                   style="width: 150px; vertical-align: middle"
                 >
                   <el-option
-                    v-for="(item, index) in quanType"
+                    v-for="item in quanType"
                     :key="item.id"
                     :label="item.quan_name"
                     :value="item.quan_value"
@@ -151,7 +151,7 @@
                   filterable
                 >
                   <el-option
-                    v-for="(item, index) in quanType"
+                    v-for="item in quanType"
                     :key="item.id"
                     :label="item.quan_name"
                     :value="item.quan_value"

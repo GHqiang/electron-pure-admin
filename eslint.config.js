@@ -63,6 +63,8 @@ export default defineFlatConfig([
       "no-unused-vars": [
         "error",
         {
+          args: "none",
+          caughtErrors: "none",
           argsIgnorePattern: "^_",
           varsIgnorePattern: "^_"
         }
@@ -108,10 +110,27 @@ export default defineFlatConfig([
       "@typescript-eslint/no-unused-vars": [
         "error",
         {
+          args: "none",
+          caughtErrors: "none",
           argsIgnorePattern: "^_",
           varsIgnorePattern: "^_"
         }
       ]
+    }
+  },
+  {
+    files: [
+      "src/common/autoOffer/**",
+      "src/common/autoTicket/**",
+      "src/common/orderFetch/**",
+      "src/utils/http/**",
+      "src/utils/fenghuang-payToken.js",
+      "src/utils/aes.js",
+      "src/utils/md5.js"
+    ],
+    rules: {
+      "no-unused-vars": "off",
+      "@typescript-eslint/no-unused-vars": "off"
     }
   },
   {

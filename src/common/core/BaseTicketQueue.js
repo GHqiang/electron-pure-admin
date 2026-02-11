@@ -1,7 +1,7 @@
 // 出票队列基类
 // 提取所有平台出票队列的公共逻辑
 
-import { getCurrentTime, formatErrInfo } from "@/utils/utils.js";
+import { getCurrentTime } from "@/utils/utils.js";
 import Logger from "../logger.js";
 import StrategyFactory from "@/common/autoTicket/buyTicket/index";
 import svApi from "@/api/sv-api";

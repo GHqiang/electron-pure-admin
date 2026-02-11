@@ -1,7 +1,7 @@
 <template>
   <div class="auto-ticket">
     <el-divider content-position="center">订单出票记录</el-divider>
-    <HistoryTicketRecord></HistoryTicketRecord>
+    <HistoryTicketRecord />
   </div>
 </template>
 

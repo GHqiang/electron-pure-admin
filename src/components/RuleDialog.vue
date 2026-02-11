@@ -365,7 +365,7 @@
             clearable
           >
             <el-option
-              v-for="(item, index) in quanType"
+              v-for="item in quanType"
               :key="item.id"
               :label="item.quan_name"
               :value="item.quan_value"
@@ -417,7 +417,7 @@
                 clearable
               >
                 <el-option
-                  v-for="(item, index) in quanType"
+                  v-for="item in quanType"
                   :key="item.id"
                   :label="item.quan_name"
                   :value="item.quan_value"

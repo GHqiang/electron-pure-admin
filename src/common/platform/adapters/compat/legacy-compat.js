@@ -2,7 +2,6 @@
 // 此文件用于向后兼容，确保现有代码可以正常工作
 
 import { offerQueueFactory } from "../../factories/QueueFactory.js";
-import LierenOfferQueue from "../queues/LierenOfferQueue.js";
 import LierenOrderFetcher from "../fetchers/LierenOrderFetcher.js";
 
 // 兼容原有的报价队列导出

@@ -6,7 +6,6 @@ import {
   mockDelay,
   sendWxPusherMessage
 } from "@/utils/utils.js";
-import Logger from "../logger.js";
 import svApi from "@/api/sv-api";
 import { platTokens } from "@/store/platTokens";
 
@@ -25,7 +24,7 @@ export default class BaseBuyTicket {
   /**
    * 构造函数
    * @param {Object} order - 订单信息
-   * @param {Logger} logger - 日志实例
+   * @param {Object} logger - 日志实例
    * @param {boolean} isTestOrder - 是否为测试订单模式
    */
   constructor(order, logger, isTestOrder) {

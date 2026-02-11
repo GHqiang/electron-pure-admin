@@ -7,18 +7,18 @@ export default defineFakeRoute([
     method: "post",
     response: ({ body }) => {
       return {
-          success: true,
-          data: {
-            avatar: "https://avatars.githubusercontent.com/u/44761321",
-            username: body.username,
-            nickname: body.username,
-            // 一个用户可能有多个角色
-            roles: ["admin"],
-            accessToken: "eyJhbGciOiJIUzUxMiJ9.admin",
-            refreshToken: "eyJhbGciOiJIUzUxMiJ9.adminRefresh",
-            expires: "2030/10/30 00:00:00"
-          }
-        };
+        success: true,
+        data: {
+          avatar: "https://avatars.githubusercontent.com/u/44761321",
+          username: body.username,
+          nickname: body.username,
+          // 一个用户可能有多个角色
+          roles: ["admin"],
+          accessToken: "eyJhbGciOiJIUzUxMiJ9.admin",
+          refreshToken: "eyJhbGciOiJIUzUxMiJ9.adminRefresh",
+          expires: "2030/10/30 00:00:00"
+        }
+      };
       // if (body.username === "admin") {
       //   return {
       //     success: true,
