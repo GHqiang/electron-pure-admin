@@ -246,6 +246,10 @@ export default class BaseOfferQueue {
       const res = await this.platformAdapter.submitOffer(offerParams, {
         logger: this.logger
       });
+      // 赋值报价返回的待确认订单id，以便出票时好反推出来报价订单号
+      if (order.plat_name === "yinghuasuan" && res?.data?.quote_id) {
+        order.order_id = res?.data?.quote_id;
+      }
       // this.logger.infoSave("提交报价结果", { res, offerParams });
       return { res, offerRule };
     } catch (error) {
