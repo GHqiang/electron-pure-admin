@@ -192,7 +192,9 @@ export function calcOfferCostProfitParts({
     rewards > 0 ? (Number(adjustedPrice || 0) * 100 * rewards) / 10000 : 0;
   const pay_cost_price = Number(cost_price || 0) + Number(shouxufei || 0);
   const real_cost_price = (pay_cost_price - rewardPrice).toFixed(2);
-  const expectProfit = (Number(adjustedPrice || 0) - Number(real_cost_price)).toFixed(2);
+  const expectProfit = (
+    Number(adjustedPrice || 0) - Number(real_cost_price)
+  ).toFixed(2);
 
   const maxCostPrice =
     (Number(adjustedPrice || 0) * 1000 +
@@ -222,4 +224,3 @@ export function calcOfferCostProfitParts({
     maxCostPrice
   };
 }
-

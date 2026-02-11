@@ -241,16 +241,16 @@ class OrderAutoFetchQueue {
       let params = {
         pageNo: 1,
         pageSize: 10,
-        appealStatus: '',
-        interceptStatus: '',
-        startInitPrice: '',
-        endInitPrice: '',
-        isImportUser: '',
-        isAllowChangeSeats: '',
+        appealStatus: "",
+        interceptStatus: "",
+        startInitPrice: "",
+        endInitPrice: "",
+        isImportUser: "",
+        isAllowChangeSeats: "",
         isImportantUser: 0,
-        sortField: '',
-        sortType: '',
-        orderType: '',
+        sortField: "",
+        sortType: "",
+        orderType: "",
         queryStatus: 3
       };
       // console.log(conPrefix + "获取守兔待出票订单列表参数", params);

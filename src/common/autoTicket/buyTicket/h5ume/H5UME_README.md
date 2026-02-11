@@ -28,14 +28,14 @@ src/common/autoTicket/buyTicket/h5ume/
 
 ## 二、文件职责与核心方法
 
-| 文件                  | 职责         | 核心方法                                                                                                                                    |
-| --------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| **offerManage.js**    | 报价逻辑管理 | `getEndOfferPrice()`, `getEndMatchOfferRule()`, `getCostPrice()`, `calculateFinalPrice()`, `getMemberPrice()`, `validateOfferOrder()`    |
-| **buyTicket.js**      | 出票流程编排 | `singleTicket()`, `oneClickBuyTicket()`, `getCinemaLoginInfo()`, `getOrderOfferRule()`, `checkOfferRuleRes()`, `validateTicketOrder()`    |
-| **cardQuanManage.js** | 卡券管理     | `getQuanInfo()`, `getQuanListByPhone()`, `useQuanOrCard()`, `getUsableCardList()`, `getSortedPhones()`, `updateQuanStock()`                |
-| **cinemaManage.js**   | 影院与场次   | `getCityCinemaList()`, `getBuyPrevCinemaInfo()`, `getMoviePlayInfo()`, `getMoviePlayDate()`, `getMoviePlayTime()`                          |
-| **seatManage.js**     | 座位         | `getSeatLayout()`, `getTargetSeat()`, `lockSeatHandle()`                                                                                    |
-| **orderManage.js**    | 订单与支付   | `getOptimalCardQuanCompose()`, `createOrder()`, `buyTicket()`, `getPayResult()`, `lastHandle()`, `transferOrder()`, `cancelOrder()`        |
+| 文件                  | 职责         | 核心方法                                                                                                                               |
+| --------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **offerManage.js**    | 报价逻辑管理 | `getEndOfferPrice()`, `getEndMatchOfferRule()`, `getCostPrice()`, `calculateFinalPrice()`, `getMemberPrice()`, `validateOfferOrder()`  |
+| **buyTicket.js**      | 出票流程编排 | `singleTicket()`, `oneClickBuyTicket()`, `getCinemaLoginInfo()`, `getOrderOfferRule()`, `checkOfferRuleRes()`, `validateTicketOrder()` |
+| **cardQuanManage.js** | 卡券管理     | `getQuanInfo()`, `getQuanListByPhone()`, `useQuanOrCard()`, `getUsableCardList()`, `getSortedPhones()`, `updateQuanStock()`            |
+| **cinemaManage.js**   | 影院与场次   | `getCityCinemaList()`, `getBuyPrevCinemaInfo()`, `getMoviePlayInfo()`, `getMoviePlayDate()`, `getMoviePlayTime()`                      |
+| **seatManage.js**     | 座位         | `getSeatLayout()`, `getTargetSeat()`, `lockSeatHandle()`                                                                               |
+| **orderManage.js**    | 订单与支付   | `getOptimalCardQuanCompose()`, `createOrder()`, `buyTicket()`, `getPayResult()`, `lastHandle()`, `transferOrder()`, `cancelOrder()`    |
 
 ---
 
@@ -109,6 +109,7 @@ const res = await buyTicket.singleTicket();
 ```
 
 **测试模式（不购买）**：`isTestOrder === true` 时，会执行到锁座、价格计算后：
+
 - **用券场景**：在创建订单前进行特殊处理，不创建订单，直接打印购买参数并释放座位（因为用券时创建订单就等于支付成功）
 - **用卡场景**：执行到创建订单后，打印完整的购买参数（包含订单信息、价格、卡券信息等）
   - 如果有 `orderId`，调用 `cancelOrder()` 取消订单释放座位
@@ -239,6 +240,7 @@ orderManage.js
 2. **座位布局参数**：在报价阶段调用 `seatManage.getSeatLayout()` 时，`session_id` 可能为空，需要在调用时传入空字符串。
 
 3. **测试模式**：出票测试模式下（`isTestOrder === true`），会执行到锁座和价格计算，但不会实际购买和上传取票码，便于调试和验证。
+
    - **用券场景特殊处理**：测试模式下用券场景会在创建订单前处理，不创建订单直接释放座位，避免实际创建订单（因为用券时创建订单就等于支付成功）。
 
 4. **错误处理**：所有模块均使用统一的 `Logger` 进行日志记录，错误信息通过 `formatErrInfo` 格式化后保存。

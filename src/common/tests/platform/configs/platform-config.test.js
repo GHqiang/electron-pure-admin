@@ -31,7 +31,7 @@ describe("PlatformConfig", () => {
   test("每个平台配置应该包含必需字段", () => {
     Object.keys(PLATFORM_CONFIGS).forEach(platName => {
       const config = PLATFORM_CONFIGS[platName];
-      
+
       expect(config.name).toBe(platName);
       expect(config.displayName).toBeDefined();
       expect(config.features).toBeDefined();
@@ -44,12 +44,12 @@ describe("PlatformConfig", () => {
     Object.keys(PLATFORM_CONFIGS).forEach(platName => {
       const config = PLATFORM_CONFIGS[platName];
       const features = config.features;
-      
+
       expect(features.hasTransferFee).toBeDefined();
       expect(features.priceStep).toBeDefined();
       expect(features.unlockBeforeTicket).toBeDefined();
       expect(features.needConfirmOrder).toBeDefined();
-      
+
       expect(typeof features.hasTransferFee).toBe("boolean");
       expect(typeof features.priceStep).toBe("number");
       expect(typeof features.unlockBeforeTicket).toBe("boolean");
@@ -61,7 +61,7 @@ describe("PlatformConfig", () => {
     Object.keys(PLATFORM_CONFIGS).forEach(platName => {
       const config = PLATFORM_CONFIGS[platName];
       const api = config.api;
-      
+
       expect(api.getOrderList).toBeDefined();
       expect(api.submitOffer).toBeDefined();
       expect(api.unlockSeat).toBeDefined();
@@ -74,7 +74,7 @@ describe("PlatformConfig", () => {
     Object.keys(PLATFORM_CONFIGS).forEach(platName => {
       const config = PLATFORM_CONFIGS[platName];
       const params = config.params;
-      
+
       expect(params.orderIdKey).toBeDefined();
       expect(params.orderNumberKey).toBeDefined();
       expect(typeof params.unlockParams).toBe("function");
@@ -87,7 +87,7 @@ describe("PlatformConfig", () => {
     const config = getPlatformConfig("lieren");
     expect(config).toBeDefined();
     expect(config.name).toBe("lieren");
-    
+
     const invalidConfig = getPlatformConfig("invalid");
     expect(invalidConfig).toBeNull();
   });
@@ -102,7 +102,7 @@ describe("PlatformConfig", () => {
   test("validatePlatformConfig应该正确验证配置", () => {
     const validConfig = getPlatformConfig("lieren");
     expect(validatePlatformConfig(validConfig)).toBe(true);
-    
+
     expect(validatePlatformConfig(null)).toBe(false);
     expect(validatePlatformConfig({})).toBe(false);
   });
@@ -110,16 +110,16 @@ describe("PlatformConfig", () => {
   test("参数转换函数应该正确工作", () => {
     const config = getPlatformConfig("lieren");
     const order = { order_number: "test001", id: 123 };
-    
+
     // 测试unlockParams
     const unlockParams = config.params.unlockParams(order);
     expect(unlockParams.order_number).toBe("test001");
-    
+
     // 测试submitParams
     const submitParams = config.params.submitParams(order, "123456|789");
     expect(submitParams.order_number).toBe("test001");
     expect(submitParams.result).toBeDefined();
-    
+
     // 测试transferParams
     const transferParams = config.params.transferParams(order, "测试原因");
     expect(transferParams.order_number).toBe("test001");

@@ -111,7 +111,8 @@ export default class H5UmeOrderManage {
       card_id,
       isTimeoutRetry = 1 // 默认超时重试
     } = data;
-    const { session_id, mobile } = this.getCurrentParams?.()?.list?.[this.getCurrentParams?.()?.inx] || {};
+    const { session_id, mobile } =
+      this.getCurrentParams?.()?.list?.[this.getCurrentParams?.()?.inx] || {};
     try {
       let params = {
         cinemaLinkId,
@@ -434,7 +435,8 @@ export default class H5UmeOrderManage {
    */
   async checkQuan(data) {
     try {
-      const { session_id } = this.getCurrentParams?.()?.list?.[this.getCurrentParams?.()?.inx] || {};
+      const { session_id } =
+        this.getCurrentParams?.()?.list?.[this.getCurrentParams?.()?.inx] || {};
       let params = {
         ...data,
         umeToken: session_id
@@ -479,7 +481,9 @@ export default class H5UmeOrderManage {
     const { appFlag } = this;
     try {
       let qrcode;
-      const session_id = this.getCurrentParams?.()?.list?.[this.getCurrentParams?.()?.inx]?.session_id;
+      const session_id =
+        this.getCurrentParams?.()?.list?.[this.getCurrentParams?.()?.inx]
+          ?.session_id;
       try {
         // 获取订单结果
         qrcode = await this.getPayResult({
@@ -638,13 +642,16 @@ export default class H5UmeOrderManage {
   async transferOrder(unlockSeatInfo) {
     this.logger.infoSave("开始准备转单", unlockSeatInfo);
     if (unlockSeatInfo) {
-      const { cinemaLinkId, lockOrderId, orderId, session_id: unlockSessionId } =
-        unlockSeatInfo || {};
+      const {
+        cinemaLinkId,
+        lockOrderId,
+        orderId,
+        session_id: unlockSessionId
+      } = unlockSeatInfo || {};
       const current = this.getCurrentParams?.();
       const list = current?.list;
       const inx = current?.inx;
-      const session_id =
-        unlockSessionId ?? list?.[inx]?.session_id;
+      const session_id = unlockSessionId ?? list?.[inx]?.session_id;
       // 1、释放座位(仅锁座id存在时)
       if (!orderId) {
         await this.releaseSeat({ cinemaLinkId, lockOrderId, session_id });

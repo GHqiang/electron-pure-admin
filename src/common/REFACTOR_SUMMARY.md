@@ -5,6 +5,7 @@
 ### 阶段一：基础设施搭建 ✅
 
 1. **平台配置中心** (`src/common/platform/configs/platform-config.js`)
+
    - 定义了10个平台的完整配置
    - 包含平台特性、API接口、参数转换函数
    - 支持配置验证和扩展
@@ -18,10 +19,12 @@
 ### 阶段二：平台适配器实现 ✅
 
 1. **LierenAdapter** (`src/common/platform/adapters/LierenAdapter.js`)
+
    - 实现了猎人平台的所有API调用
    - 继承BasePlatformAdapter，复用公共逻辑
 
 2. **LierenOfferQueue** (`src/common/platform/queues/LierenOfferQueue.js`)
+
    - 实现了猎人平台的报价队列
    - 继承BaseOfferQueue，大幅减少代码量
 
@@ -32,6 +35,7 @@
 ### 阶段三：工厂模式实现 ✅
 
 1. **PlatformFactory** (`src/common/factories/PlatformFactory.js`)
+
    - 统一管理平台适配器实例
    - 支持动态注册新平台
    - 实例缓存机制
@@ -43,6 +47,7 @@
 ### 阶段四：测试和文档 ✅
 
 1. **测试文件**
+
    - `BasePlatformAdapter.test.js` - 适配器基类测试
    - `platform-config.test.js` - 配置测试
    - `PlatformFactory.test.js` - 工厂测试
@@ -82,6 +87,7 @@
 ### 短期（1-2周）
 
 1. **完善猎人平台实现**
+
    - 完整测试新架构的猎人平台功能
    - 确保与旧实现功能对等
    - 修复发现的bug
@@ -93,6 +99,7 @@
 ### 中期（1个月）
 
 1. **完全切换到新架构**
+
    - 在queueManage/index.vue中使用新架构
    - 逐步替换旧代码
    - 保持兼容性
@@ -134,6 +141,7 @@
 ## 联系方式
 
 如有问题，请参考：
+
 - `MIGRATION_GUIDE.md` - 迁移指南
 - `USAGE_EXAMPLES.md` - 使用示例
 - `tests/README.md` - 测试说明

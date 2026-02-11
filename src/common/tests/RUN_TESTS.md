@@ -94,6 +94,7 @@ yarn test --verbose
 ## 测试文件位置
 
 测试文件位于：
+
 ```
 src/common/tests/
 ├── core/
@@ -118,7 +119,8 @@ src/common/tests/
 
 **错误**: `SyntaxError: Unexpected token 'export'`
 
-**解决**: 
+**解决**:
+
 1. 确保已安装 `@babel/preset-env`
 2. 检查 `babel.config.js` 是否存在
 3. 确保 `jest.config.js` 中配置了正确的transform

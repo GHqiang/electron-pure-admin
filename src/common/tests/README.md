@@ -76,6 +76,7 @@ src/common/tests/
 ### 测试文件命名
 
 测试文件应该以 `.test.js` 结尾，例如：
+
 - `LierenAdapter.test.js`
 - `LierenOfferQueue.test.js`
 
@@ -98,12 +99,12 @@ describe("LierenAdapter", () => {
         data: [{ id: 1 }]
       })
     };
-    
+
     mockLogger = {
       infoSave: jest.fn(),
       errorSave: jest.fn()
     };
-    
+
     // 创建测试实例
     adapter = new LierenAdapter(mockLogger);
     adapter.api = mockApi; // 注入mock

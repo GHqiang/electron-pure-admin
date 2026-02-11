@@ -18,12 +18,12 @@
 
 ### 1.3 getEndPrice / calculateFinalPrice 核心计算 ✅
 
-| 步骤       | 旧版 h5umeOffer `getEndPrice` (501–589) | 重构 h5ume/offerManage `calculateFinalPrice` (278–372) |
-|------------|----------------------------------------|--------------------------------------------------------|
-| 利润加价   | `offerType !== "1"` 且 `!GROUP_LIST.includes(appFlag)` 时 `price += profitAddPrice` | 同 |
-| 夜间顶价   | `isOpenisNightMaxPrice == 1` 且 `1 <= hour <= 6` → `price = supplier_max_price` | 同 |
-| 超限       | `isOverrunOffer !== "1"` 不报价；否则 **仅 `["mayi"]`** 取整，其它 `roundToHalf`（ONE_STEP 用 0.1） | 同；无 yangcong |
-| 手续费/奖励/成本/利润校验 | 同 UME：`shouxufei`、`rewardPrice`、`real_cost_price`、`maxCostPrice`、`TEST_NEW_PLAT_LIST` | 同 |
+| 步骤                      | 旧版 h5umeOffer `getEndPrice` (501–589)                                                             | 重构 h5ume/offerManage `calculateFinalPrice` (278–372) |
+| ------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| 利润加价                  | `offerType !== "1"` 且 `!GROUP_LIST.includes(appFlag)` 时 `price += profitAddPrice`                 | 同                                                     |
+| 夜间顶价                  | `isOpenisNightMaxPrice == 1` 且 `1 <= hour <= 6` → `price = supplier_max_price`                     | 同                                                     |
+| 超限                      | `isOverrunOffer !== "1"` 不报价；否则 **仅 `["mayi"]`** 取整，其它 `roundToHalf`（ONE_STEP 用 0.1） | 同；无 yangcong                                        |
+| 手续费/奖励/成本/利润校验 | 同 UME：`shouxufei`、`rewardPrice`、`real_cost_price`、`maxCostPrice`、`TEST_NEW_PLAT_LIST`         | 同                                                     |
 
 **结论**：公式、GROUP_LIST、NO_FEE_PLAT_LIST、TEST_NEW_PLAT_LIST、ONE_STEP_PLAT_LIST 与旧版一致。`calculateFinalPrice` 使用 `let { ... price }` 解构，对 `price` 再赋值无 const 问题。日志为 `"umeh5计算报价相关信息"`，与旧版一致。
 
@@ -118,12 +118,12 @@
 
 ### 3.3 完全一致的逻辑 ✅
 
-1. 报价流程、getEndMatchOfferRule、getMinAmountOfferRule、成本价与 `quanValue` 过滤  
-2. getEndPrice / calculateFinalPrice 公式（利润加价、夜间顶价、超限仅 mayi、手续费、奖励、利润校验）  
-3. 利润计算（用券、用卡）、`balance` / `cardNumber`、`quan_fee` 卡过滤、`isTestOrder`  
-4. 支付校验、`quan_fee_total`、`real_member_total_price`、会员价两分支、换号 `otherParams`  
-5. 转单调用处与参数（`lockOrderId` / `orderId`）；释放座位与取消订单两条路径  
-6. 灵活用券、异步绑券、updateCardDayUse、购买失败与超时处理  
+1. 报价流程、getEndMatchOfferRule、getMinAmountOfferRule、成本价与 `quanValue` 过滤
+2. getEndPrice / calculateFinalPrice 公式（利润加价、夜间顶价、超限仅 mayi、手续费、奖励、利润校验）
+3. 利润计算（用券、用卡）、`balance` / `cardNumber`、`quan_fee` 卡过滤、`isTestOrder`
+4. 支付校验、`quan_fee_total`、`real_member_total_price`、会员价两分支、换号 `otherParams`
+5. 转单调用处与参数（`lockOrderId` / `orderId`）；释放座位与取消订单两条路径
+6. 灵活用券、异步绑券、updateCardDayUse、购买失败与超时处理
 
 ---
 
@@ -132,7 +132,7 @@
 ### 修复：测试模式与旧版对齐（可选）
 
 **文件**：`src/common/autoTicket/buyTicket/h5ume/buyTicket.js`  
-**位置**：约 848–924 行  
+**位置**：约 848–924 行
 
 若需与旧版严格一致，可移除测试模式下的打印购买参数及 `cancelOrder` / `releaseSeat` 逻辑，改为直接 `return { offerRule }`。  
 **优先级**：低；当前改进行为更利于测试不占座。

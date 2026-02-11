@@ -43,7 +43,7 @@ src/common/
 ```javascript
 export const PLATFORM_CONFIGS = {
   // ... 现有配置
-  
+
   // 新平台配置
   newplatform: {
     name: "newplatform",
@@ -168,9 +168,9 @@ export default class NewPlatformOfferQueue extends BaseOfferQueue {
         .filter(item => {
           const appFlag = getCinemaFlag(item);
           const appLoginInfo = getCinemaLoginInfoList().find(
-            loginItem => 
-              loginItem.app_name === appFlag && 
-              loginItem.mobile && 
+            loginItem =>
+              loginItem.app_name === appFlag &&
+              loginItem.mobile &&
               loginItem.session_id
           );
           return appLoginInfo && appFlag;
@@ -214,12 +214,13 @@ export default class NewPlatformOfferQueue extends BaseOfferQueue {
     try {
       const serOrderInfo = {
         plat_name: "newplatform",
-        app_name: order.app_name || offerResult?.offerRule?.shadowLineName || "",
+        app_name:
+          order.app_name || offerResult?.offerRule?.shadowLineName || "",
         order_id: order.id,
         order_number: order.order_number,
         // ... 其他字段
         order_status: offerResult?.res ? "1" : "2",
-        processing_time: getCurrentTime(),
+        processing_time: getCurrentTime()
         // ...
       };
 

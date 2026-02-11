@@ -214,10 +214,10 @@ describe("LierenOfferQueue", () => {
   test("应该能够启动和停止队列", async () => {
     // 启动队列（测试模式）
     const startPromise = queue.start(true);
-    
+
     // 立即停止
     queue.stop();
-    
+
     await startPromise;
     expect(queue.isRunning).toBe(false);
   });
@@ -227,7 +227,7 @@ describe("LierenOfferQueue", () => {
       order_number: "test001",
       offer_end_time: Date.now() + 10000
     };
-    
+
     queue.handleNewOrder(order);
     expect(queue.handledOrders.has("test001")).toBe(true);
     expect(queue.queue.length).toBeGreaterThan(0);

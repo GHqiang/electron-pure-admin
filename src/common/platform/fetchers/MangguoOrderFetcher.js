@@ -75,9 +75,10 @@ export default class MangguoOrderFetcher extends BaseOrderFetcher {
             cinema_group: line_name,
             cinema_code: relation_to_cinema?.cinema_code,
             order_number,
-            lockseat: relation_to_seat
-              ?.map(itemA => itemA.position_seat.replace(/\s+/g, ""))
-              .join(" ") || "",
+            lockseat:
+              relation_to_seat
+                ?.map(itemA => itemA.position_seat.replace(/\s+/g, ""))
+                .join(" ") || "",
             plat_name: "mangguo"
           };
         })

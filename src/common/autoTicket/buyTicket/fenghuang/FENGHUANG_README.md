@@ -27,13 +27,13 @@ src/common/autoTicket/buyTicket/fenghuang/
 
 ## 二、文件职责与核心方法
 
-| 文件                  | 职责         | 核心方法                                                                                                                               |
-| --------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
-| **offerManage.js**    | 报价逻辑管理 | `getEndOfferPrice()`, `getEndMatchOfferRule()`, `getCostPrice()`, `calculateFinalPrice()`, `getMemberPrice()`, `getSeatPriceByTicket()`, `validateOfferOrder()` |
-| **buyTicket.js**      | 出票流程编排 | `singleTicket()`, `oneClickBuyTicket()`, `getCinemaLoginInfo()`, `getOrderOfferRule()`, `checkOfferRuleRes()`, `transferOrChangePhone()` |
-| **cardQuanManage.js** | 卡券管理     | `getQuanInfo()`, `getQuanListByPhone()`, `useQuanOrCard()`, `getUsableCardList()`, `getSeatPrice()`, `getSortPhoneByQuanTypeList()`, `syncUpdateQuanStock()`, `updateQuanStock()` |
-| **cinemaManage.js**   | 影院与场次   | `getCityCinemaList()`, `getBuyPrevCinemaInfo()`, `getMoviePlayInfo()`, `getMoviePlayTime()`, `getTargetShow()`, `getTargetMovie()`, `cinemaLinkCardHandle()` |
-| **seatManage.js**     | 座位         | `getSeatLayout()`, `getTargetSeat()`, `lockSeatHandle()`, `lockseatByApp()`, `retryLockSeat()`, `assistLockSeat()`                    |
+| 文件                  | 职责         | 核心方法                                                                                                                                                                                            |
+| --------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **offerManage.js**    | 报价逻辑管理 | `getEndOfferPrice()`, `getEndMatchOfferRule()`, `getCostPrice()`, `calculateFinalPrice()`, `getMemberPrice()`, `getSeatPriceByTicket()`, `validateOfferOrder()`                                     |
+| **buyTicket.js**      | 出票流程编排 | `singleTicket()`, `oneClickBuyTicket()`, `getCinemaLoginInfo()`, `getOrderOfferRule()`, `checkOfferRuleRes()`, `transferOrChangePhone()`                                                            |
+| **cardQuanManage.js** | 卡券管理     | `getQuanInfo()`, `getQuanListByPhone()`, `useQuanOrCard()`, `getUsableCardList()`, `getSeatPrice()`, `getSortPhoneByQuanTypeList()`, `syncUpdateQuanStock()`, `updateQuanStock()`                   |
+| **cinemaManage.js**   | 影院与场次   | `getCityCinemaList()`, `getBuyPrevCinemaInfo()`, `getMoviePlayInfo()`, `getMoviePlayTime()`, `getTargetShow()`, `getTargetMovie()`, `cinemaLinkCardHandle()`                                        |
+| **seatManage.js**     | 座位         | `getSeatLayout()`, `getTargetSeat()`, `lockSeatHandle()`, `lockseatByApp()`, `retryLockSeat()`, `assistLockSeat()`                                                                                  |
 | **orderManage.js**    | 订单与支付   | `pripriceCalculation()`, `createOrder()`, `getOrderInfoByOrderList()`, `getQrcodeUploadByPlat()`, `getPayResult()`, `asyncFetchQrcodeSubmit()`, `transferOrder()`, `releaseSeat()`, `cancelOrder()` |
 
 ---
@@ -101,6 +101,7 @@ const res = await buyTicket.singleTicket();
 ```
 
 **测试模式（不购买）**：`isTestOrder === true` 时，会执行到锁座、价格计算后：
+
 - 打印完整的创建订单参数（包含订单信息、价格、卡券信息、支付信息等）
 - **不创建订单**（因为创建订单时已经支付）
 - 调用 `releaseSeat()` 释放座位
@@ -138,10 +139,11 @@ const res = await buyTicket.singleTicket();
 
 ```javascript
 // 获取当前会员密码
-this.currentMemberPwd = this.currentParamsList[this.currentParamsInx]?.member_pwd || "";
+this.currentMemberPwd =
+  this.currentParamsList[this.currentParamsInx]?.member_pwd || "";
 
 // 生成支付令牌
-payToken: window.getPayToken(this.currentMemberPwd)
+payToken: window.getPayToken(this.currentMemberPwd);
 ```
 
 ### 4.3 测试模式处理
@@ -242,7 +244,7 @@ this.currentParamsList = getCinemaLoginInfoList().filter(
     item.app_name === this.appFlag &&
     item.mobile &&
     item.session_id &&
-    item.member_pwd  // 必须要有会员密码
+    item.member_pwd // 必须要有会员密码
 );
 ```
 

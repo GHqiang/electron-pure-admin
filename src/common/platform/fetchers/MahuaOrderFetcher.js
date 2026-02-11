@@ -194,7 +194,8 @@ export default class MahuaOrderFetcher extends BaseOrderFetcher {
         page_num: 1,
         page_size: 50,
         isNeedTotalNum: 0,
-        queryFields: "order_number,app_name,cinema_code,show_time,cinema_name,hall_name,film_name,ticket_num"
+        queryFields:
+          "order_number,app_name,cinema_code,show_time,cinema_name,hall_name,film_name,ticket_num"
       });
       return res.data.offerList || [];
     } catch (error) {

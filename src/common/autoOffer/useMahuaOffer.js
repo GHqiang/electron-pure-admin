@@ -325,19 +325,25 @@ class OrderAutoOfferQueue {
 
   // 预计利润
   getProfit(offerRule, order) {
-    const { cost_price, offer_end_amount } = offerRule
-    const { plat_name, rewards = 0, ticket_num } = order
+    const { cost_price, offer_end_amount } = offerRule;
+    const { plat_name, rewards = 0, ticket_num } = order;
     let shouxufei = (offer_end_amount * 100) / 10000;
     if (NO_FEE_PLAT_LIST.includes(plat_name)) {
       shouxufei = 0;
     }
     // 奖励费用
-    const rewardPrice = rewards > 0 ? (offer_end_amount * 100 * rewards) / 10000 : 0;
+    const rewardPrice =
+      rewards > 0 ? (offer_end_amount * 100 * rewards) / 10000 : 0;
     // console.log('offer_end_amount', offer_end_amount, rewardPrice, cost_price, shouxufei)
-    return subDecimal(
-      addDecimal(offer_end_amount, rewardPrice),
-      addDecimal(cost_price, shouxufei)
-    ).toFixed(2) * 10000 * ticket_num / 10000;
+    return (
+      (subDecimal(
+        addDecimal(offer_end_amount, rewardPrice),
+        addDecimal(cost_price, shouxufei)
+      ).toFixed(2) *
+        10000 *
+        ticket_num) /
+      10000
+    );
   }
   // 提交报价
   async submitOffer({ order_id, price, offerRule, order }) {
@@ -347,12 +353,10 @@ class OrderAutoOfferQueue {
       biddingPrice: price,
       isDirectGetOrder: 0 // 是否抢单
     };
-    let minGrabProfitValue = window.localStorage.getItem(
-      "minGrabProfit"
-    );
+    let minGrabProfitValue = window.localStorage.getItem("minGrabProfit");
     let expectProfit = this.getProfit(offerRule, order);
-    if(minGrabProfitValue && +expectProfit >= +minGrabProfitValue) {
-      params.isDirectGetOrder = 1
+    if (minGrabProfitValue && +expectProfit >= +minGrabProfitValue) {
+      params.isDirectGetOrder = 1;
     }
     try {
       console.log(conPrefix + "提交报价参数", params);

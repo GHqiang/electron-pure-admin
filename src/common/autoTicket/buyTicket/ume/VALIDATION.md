@@ -25,15 +25,15 @@
 
 ### 1.4 getEndPrice / calculateFinalPrice 核心计算 ✅
 
-| 步骤       | 旧版 umeOffer `getEndPrice` (554–648)        | 重构 ume/offerManage `calculateFinalPrice` + `calculateCostProfit` |
-|------------|----------------------------------------------|--------------------------------------------------------------------|
-| 利润加价   | `offerType !== "1"` 且 `!GROUP_LIST.includes(appFlag)` 时 `price += profitAddPrice` | 同条件、同逻辑 |
-| 夜间顶价   | `isOpenisNightMaxPrice == 1` 且 `1 <= hour <= 6` → `price = supplier_max_price`     | 同 |
-| 超限       | `price > supplier_max_price` 且 `isOverrunOffer !== "1"` 不报价；否则 mayi/yangcong 取整，其它 `roundToHalf`（ONE_STEP 用 0.1） | 同 |
-| 手续费     | `shouxufei = (price * 100) / 10000`；`NO_FEE_PLAT_LIST` 置 0                       | 同 |
-| 奖励       | `rewardPrice = (price * 100 * rewards) / 10000`（rewards>0）                       | 同 |
-| 成本与利润 | `pay_cost_price = cost_price + shouxufei`；`real_cost_price = (pay_cost_price - rewardPrice).toFixed(2)`；`maxCostPrice` 公式同 | 同 |
-| 利润校验   | `price <= real_cost_price` 且非 `TEST_NEW_PLAT_LIST` 则不报价                      | 同 |
+| 步骤       | 旧版 umeOffer `getEndPrice` (554–648)                                                                                           | 重构 ume/offerManage `calculateFinalPrice` + `calculateCostProfit` |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| 利润加价   | `offerType !== "1"` 且 `!GROUP_LIST.includes(appFlag)` 时 `price += profitAddPrice`                                             | 同条件、同逻辑                                                     |
+| 夜间顶价   | `isOpenisNightMaxPrice == 1` 且 `1 <= hour <= 6` → `price = supplier_max_price`                                                 | 同                                                                 |
+| 超限       | `price > supplier_max_price` 且 `isOverrunOffer !== "1"` 不报价；否则 mayi/yangcong 取整，其它 `roundToHalf`（ONE_STEP 用 0.1） | 同                                                                 |
+| 手续费     | `shouxufei = (price * 100) / 10000`；`NO_FEE_PLAT_LIST` 置 0                                                                    | 同                                                                 |
+| 奖励       | `rewardPrice = (price * 100 * rewards) / 10000`（rewards>0）                                                                    | 同                                                                 |
+| 成本与利润 | `pay_cost_price = cost_price + shouxufei`；`real_cost_price = (pay_cost_price - rewardPrice).toFixed(2)`；`maxCostPrice` 公式同 | 同                                                                 |
+| 利润校验   | `price <= real_cost_price` 且非 `TEST_NEW_PLAT_LIST` 则不报价                                                                   | 同                                                                 |
 
 **结论**：公式、GROUP_LIST、NO_FEE_PLAT_LIST、TEST_NEW_PLAT_LIST、ONE_STEP_PLAT_LIST 使用与旧版一致。
 
@@ -161,11 +161,11 @@
 
 ### 5.3 完全一致的逻辑 ✅
 
-1. 报价流程与 wanxiangh5、getEndMatchOfferRule、getMinAmountOfferRule、成本价与 `quanValue` 过滤  
-2. getEndPrice / calculateFinalPrice 公式（利润加价、夜间顶价、超限、手续费、奖励、利润校验）  
-3. 利润计算（用券、用卡）、支付校验、会员价两分支  
-4. 卡券无法使用与换号、灵活用券、useQuanOrCard 返回与 catch  
-5. 转单与取消、更新卡使用量、购买失败与超时处理  
+1. 报价流程与 wanxiangh5、getEndMatchOfferRule、getMinAmountOfferRule、成本价与 `quanValue` 过滤
+2. getEndPrice / calculateFinalPrice 公式（利润加价、夜间顶价、超限、手续费、奖励、利润校验）
+3. 利润计算（用券、用卡）、支付校验、会员价两分支
+4. 卡券无法使用与换号、灵活用券、useQuanOrCard 返回与 catch
+5. 转单与取消、更新卡使用量、购买失败与超时处理
 
 ---
 
@@ -174,7 +174,7 @@
 ### 修复：测试模式与旧版对齐（可选）
 
 **文件**：`src/common/autoTicket/buyTicket/ume/buyTicket.js`  
-**位置**：约 922–981 行  
+**位置**：约 922–981 行
 
 若需与旧版严格一致，可移除测试模式下的打印购买参数与取消订单逻辑，改为直接 `return { offerRule }`。  
 **优先级**：低；当前改进行为更利于测试不占座。

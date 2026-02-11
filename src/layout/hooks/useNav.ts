@@ -82,8 +82,8 @@ export function useNav() {
   /** 退出登录 */
   function logout() {
     useUserStoreHook().logOut();
-    window.localStorage.removeItem('selfToken')
-    window.localStorage.removeItem('userInfo')
+    window.localStorage.removeItem("selfToken");
+    window.localStorage.removeItem("userInfo");
     window.localStorage.removeItem("user-info");
   }
 

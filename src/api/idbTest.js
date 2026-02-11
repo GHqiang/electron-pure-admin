@@ -66,4 +66,3 @@
 //       const finalOrders = await idbApi.getAllOrderRecords();
 //       console.log('Final orders:', finalOrders);
 // }
-

@@ -1,7 +1,11 @@
 // 出票基类
 // 提取所有影院系列出票的公共逻辑
 
-import { formatErrInfo, mockDelay, sendWxPusherMessage } from "@/utils/utils.js";
+import {
+  formatErrInfo,
+  mockDelay,
+  sendWxPusherMessage
+} from "@/utils/utils.js";
 import Logger from "../logger.js";
 import svApi from "@/api/sv-api";
 import { platTokens } from "@/store/platTokens";
@@ -11,7 +15,7 @@ const tokens = platTokens();
 /**
  * 出票基类
  * 所有影院系列的出票类都应继承此类
- * 
+ *
  * 说明：
  * - 影院系列（app_type_code）：如 chenxing_applet、sfc_applet、ume_applet 等，代表一类影院的出票逻辑
  * - 具体影院（appFlag/app_name）：每个系列下的不同影院，如辰星系列下的 guangmeiwenhua、yaolai 等
@@ -126,7 +130,8 @@ export default class BaseBuyTicket {
    * @returns {Promise<void>}
    */
   async getOrderOfferRule() {
-    const { app_name, order_number, plat_name, offer_order_number } = this.order;
+    const { app_name, order_number, plat_name, offer_order_number } =
+      this.order;
     try {
       // 获取该订单的报价记录，按对应报价规则出票
       const offerRes = await svApi.queryOfferInfo({
@@ -270,12 +275,7 @@ export default class BaseBuyTicket {
    * @param {number} params.profit 当前利润（元）
    * @returns {{ok: boolean, profit: number, reason?: string}}
    */
-  validateCardPriceAndProfit({
-    offerRule,
-    ticket_num,
-    paymentAmount,
-    profit
-  }) {
+  validateCardPriceAndProfit({ offerRule, ticket_num, paymentAmount, profit }) {
     const res = { ok: true, profit };
     if (!offerRule || offerRule.offer_type === "1") return res;
 
@@ -334,9 +334,8 @@ export default class BaseBuyTicket {
     });
 
     if (currentParamsInx === currentParamsList.length - 1) {
-      const transferParams = await this.orderManage.transferOrder(
-        unlockOrCancelParams
-      );
+      const transferParams =
+        await this.orderManage.transferOrder(unlockOrCancelParams);
       return { offerRule: this.offerRule, transferParams };
     } else {
       this.logger.infoSave("非最后一次账号，走换号逻辑");

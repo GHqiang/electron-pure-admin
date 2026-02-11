@@ -1,15 +1,15 @@
 /**
  * LMA座位管理模块
- * 
+ *
  * 职责：
  * - 获取座位布局信息
  * - 解析目标座位
  * - 锁定座位（创建订单）
- * 
+ *
  * 所属流程：报价流程、出票流程
- * 
+ *
  * 依赖模块：无（独立模块）
- * 
+ *
  * @module lma/seatManage
  */
 import { formatErrInfo, trial } from "@/utils/utils";
@@ -39,7 +39,7 @@ export default class LmaSeatManage {
       if (res.code !== "0") {
         return { error: "获取座位布局失败", seatData: [], label_arr: [] };
       }
-      
+
       let seatData = res.data?.seat_arr || [];
       // 转换数据保持和上面取值一致，过滤出来可选座位
       seatData = seatData
@@ -52,7 +52,7 @@ export default class LmaSeatManage {
           };
         });
       console.log("seatData", seatData);
-      
+
       return {
         seatData,
         label_arr: res.data?.label_arr || [],
@@ -76,17 +76,17 @@ export default class LmaSeatManage {
         .replaceAll("座", "号")
         .replaceAll("列", "号");
       let selectSeatList = seatName.split(",");
-      
+
       // 过滤出目标座位
       let targetSeatList = seatList.filter(item =>
         selectSeatList.includes(item.seat_info)
       );
-      
+
       this.logger.infoSave("目标座位相关信息", {
         targetSeatList,
         label_arr
       });
-      
+
       // 构建座位数组
       let seat_arr = targetSeatList.map(item => {
         // 去除自填充值
@@ -99,7 +99,7 @@ export default class LmaSeatManage {
           fixIcon: "/images/weixiu.png"
         };
       });
-      
+
       if (seat_arr?.length != ticket_num) {
         this.logger.errorSave("获取目标座位失败", {
           seatList,
@@ -109,7 +109,7 @@ export default class LmaSeatManage {
         });
         return { error: "获取目标座位失败", seat_arr: [] };
       }
-      
+
       return { seat_arr };
     } catch (error) {
       this.logger.errorSave("获取目标座位异常", { error });
@@ -118,7 +118,15 @@ export default class LmaSeatManage {
   }
 
   // 锁座
-  async lockseatByApp({ cinema_id, show_id, short_code, seat_arr, lmaToken, quan_code, inx = 1 }) {
+  async lockseatByApp({
+    cinema_id,
+    show_id,
+    short_code,
+    seat_arr,
+    lmaToken,
+    quan_code,
+    inx = 1
+  }) {
     try {
       let params = {
         cinema_id: cinema_id,

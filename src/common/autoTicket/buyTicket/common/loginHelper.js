@@ -1,7 +1,7 @@
 /**
  * 登录信息获取与排序工具
  * 统一封装各影院系列登录账号的获取和排序逻辑
- * 
+ *
  * 说明：
  * - 影院系列（app_type_code）：如 chenxing_applet、sfc_applet、ume_applet 等
  * - 具体影院（appFlag/app_name）：每个系列下的不同影院

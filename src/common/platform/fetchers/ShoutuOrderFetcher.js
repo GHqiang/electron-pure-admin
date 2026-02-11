@@ -4,7 +4,12 @@
 import BaseOrderFetcher from "../../core/BaseOrderFetcher.js";
 import ShoutuAdapter from "../adapters/ShoutuAdapter.js";
 import Logger from "../../logger.js";
-import { getCinemaFlag, getCurrentTime, logUpload, removeParenthesesContent } from "@/utils/utils.js";
+import {
+  getCinemaFlag,
+  getCurrentTime,
+  logUpload,
+  removeParenthesesContent
+} from "@/utils/utils.js";
 import svApi from "@/api/sv-api.js";
 import { platTokens } from "@/store/platTokens.js";
 
@@ -69,7 +74,9 @@ export default class ShoutuOrderFetcher extends BaseOrderFetcher {
             cinema_group: "",
             cinema_code,
             order_number,
-            lockseat: lockseat ? removeParenthesesContent(lockseat).replaceAll("号", "座") : "",
+            lockseat: lockseat
+              ? removeParenthesesContent(lockseat).replaceAll("号", "座")
+              : "",
             plat_name: "shoutu"
           };
         })

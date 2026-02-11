@@ -48,6 +48,7 @@
 ### 2.1 利润计算 ✅
 
 **用券利润计算**：
+
 - **旧版**：`lmaAutoTicket.js` 950-967行
   ```javascript
   if (offerRule.offer_type !== "1") {
@@ -58,7 +59,8 @@
     profit = (profit * 100 * ticket_num) / 100;
   }
   if (rewards > 0) {
-    rewardPrice = (Number(supplier_end_price) * Number(ticket_num) * 100 * rewards) / 10000;
+    rewardPrice =
+      (Number(supplier_end_price) * Number(ticket_num) * 100 * rewards) / 10000;
     profit += rewardPrice;
   }
   profit = profit.toFixed(2);
@@ -109,6 +111,7 @@
 ### 3.1 用券流程
 
 #### lmaIsUseQuan逻辑 ✅
+
 - **旧版**：`lmaAutoTicket.js` 1331-1336行
   ```javascript
   let lmaIsUseQuanValue = window.localStorage.getItem("lmaIsUseQuan");
@@ -121,6 +124,7 @@
 **结论**：逻辑一致。
 
 #### 异步绑券触发条件 ✅
+
 - **旧版**：`lmaAutoTicket.js` 1456行，`targetQuanList?.length - ticket_num < 10 && is_store == "1"`
 - **重构后**：`lma/cardQuanManage.js` 516行，条件完全一致
 
@@ -132,13 +136,13 @@
   1. 先检查 `targetQuanList?.length < ticket_num`，如果不足直接返回错误
   2. 然后检查异步绑券条件
   3. 最后 `targetQuanList.slice(0, ticket_num)`
-  
 - **重构后**：`lma/cardQuanManage.js` 516-539行
   1. 先检查异步绑券条件
   2. 然后检查 `targetQuanList?.length < ticket_num`，如果不足直接返回错误
   3. 最后 `targetQuanList.slice(0, ticket_num)`
 
 **差异分析**：
+
 - 如果券数量刚好等于 `ticket_num`，旧版会先检查不足（不满足），然后检查异步绑券（满足条件会触发异步绑券），最后返回券
 - 重构后会先检查异步绑券（满足条件会触发异步绑券），然后检查不足（不满足），最后返回券
 - **实际影响**：如果 `targetQuanList.length === ticket_num` 且 `is_store == "1"`，旧版和重构后都会触发异步绑券，但顺序不同。这个差异**不影响最终结果**，因为异步绑券是异步操作，不影响当前出票流程。
@@ -148,6 +152,7 @@
 ### 3.2 用卡流程 ✅
 
 #### member_total_price计算
+
 - **旧版**：`lmaAutoTicket.js` 1203-1206行
   ```javascript
   let member_total_price = (real_member_price * 100 * ticket_num) / 100;
@@ -160,6 +165,7 @@
 **结论**：逻辑一致。
 
 #### 活跃卡优先逻辑 ✅
+
 - 旧版和重构后的逻辑一致，都是优先使用活跃卡，余额不足时换卡。
 
 ## 四、错误处理对比
@@ -167,11 +173,13 @@
 ### 4.1 测试模式处理 ⚠️
 
 - **旧版**：`lmaAutoTicket.js` 1024-1026行
+
   ```javascript
   if (isTestOrder) {
     return { offerRule };
   }
   ```
+
   - 不购买，不取消订单，不释放座位
 
 - **重构后**：`lma/buyTicket.js` 785-837行
@@ -189,6 +197,7 @@
   - 打印购买参数，**取消订单释放座位**
 
 **差异分析**：
+
 - 旧版测试模式不取消订单，可能导致座位被占用
 - 重构后测试模式会取消订单释放座位，这是**改进**，但行为与旧版不一致
 
@@ -197,6 +206,7 @@
 ### 4.2 转单逻辑 ✅
 
 - **旧版**：`lmaAutoTicket.js` 272-310行
+
   - 使用 `cancelOrder` 函数取消订单
   - `cancelOrder` 内部调用 `APP_API_OBJ[appFlag].cannelOneOrder`
   - 获取转单原因，检查自动转单开关，调用平台转单

@@ -28,14 +28,14 @@ src/common/autoTicket/buyTicket/ume/
 
 ## 二、文件职责与核心方法
 
-| 文件                  | 职责         | 核心方法                                                                                                                                    |
-| --------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| **offerManage.js**    | 报价逻辑管理 | `getEndOfferPrice()`, `getEndMatchOfferRule()`, `getCostPrice()`, `calculateFinalPrice()`, `getMemberPrice()`, `validateOfferOrder()`    |
-| **buyTicket.js**      | 出票流程编排 | `singleTicket()`, `oneClickBuyTicket()`, `getCinemaLoginInfo()`, `getOrderOfferRule()`, `checkOfferRuleRes()`, `validateTicketOrder()`    |
-| **cardQuanManage.js** | 卡券管理     | `getQuanInfo()`, `getQuanListByPhone()`, `useQuanOrCard()`, `getUsableCardList()`, `getSortedPhones()`, `updateQuanStock()`                |
-| **cinemaManage.js**   | 影院与场次   | `getCityCinemaList()`, `getBuyPrevCinemaInfo()`, `getMoviePlayInfo()`, `getMoviePlayDate()`, `getMoviePlayTime()`                          |
-| **seatManage.js**     | 座位         | `getSeatLayout()`, `getTargetSeat()`, `lockSeatHandle()`                                                                                    |
-| **orderManage.js**    | 订单与支付   | `getOptimalCardQuanCompose()`, `createOrder()`, `buyTicket()`, `getPayResult()`, `lastHandle()`, `transferOrder()`, `cancelOrder()`        |
+| 文件                  | 职责         | 核心方法                                                                                                                               |
+| --------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **offerManage.js**    | 报价逻辑管理 | `getEndOfferPrice()`, `getEndMatchOfferRule()`, `getCostPrice()`, `calculateFinalPrice()`, `getMemberPrice()`, `validateOfferOrder()`  |
+| **buyTicket.js**      | 出票流程编排 | `singleTicket()`, `oneClickBuyTicket()`, `getCinemaLoginInfo()`, `getOrderOfferRule()`, `checkOfferRuleRes()`, `validateTicketOrder()` |
+| **cardQuanManage.js** | 卡券管理     | `getQuanInfo()`, `getQuanListByPhone()`, `useQuanOrCard()`, `getUsableCardList()`, `getSortedPhones()`, `updateQuanStock()`            |
+| **cinemaManage.js**   | 影院与场次   | `getCityCinemaList()`, `getBuyPrevCinemaInfo()`, `getMoviePlayInfo()`, `getMoviePlayDate()`, `getMoviePlayTime()`                      |
+| **seatManage.js**     | 座位         | `getSeatLayout()`, `getTargetSeat()`, `lockSeatHandle()`                                                                               |
+| **orderManage.js**    | 订单与支付   | `getOptimalCardQuanCompose()`, `createOrder()`, `buyTicket()`, `getPayResult()`, `lastHandle()`, `transferOrder()`, `cancelOrder()`    |
 
 ---
 
@@ -109,6 +109,7 @@ const res = await buyTicket.singleTicket();
 ```
 
 **测试模式（不购买）**：`isTestOrder === true` 时，会执行到锁座、创建订单、价格计算后：
+
 - 打印完整的购买参数（包含订单信息、价格、卡券信息等）
 - 如果有 `orderHeaderId`，调用 `cancelOrder()` 取消订单释放座位
 - 如果没有 `orderHeaderId`，记录警告日志
@@ -165,9 +166,9 @@ const result = await buyTicket.validateTicketOrder();
 ### 4.7 登录信息排序
 
 - **排序策略**：在 `buyTicket.getCinemaLoginInfo()` 中，根据多个优先级对登录信息进行排序：
-    - `first="1"` 的登录信息优先
-    - 当前用户手机号对应的登录信息优先
-    - 有可用卡券的登录信息优先
+  - `first="1"` 的登录信息优先
+  - 当前用户手机号对应的登录信息优先
+  - 有可用卡券的登录信息优先
 - **换号出票**：支持在出票失败时切换到其他登录账号重试。
 
 ### 4.8 订单创建超时重试

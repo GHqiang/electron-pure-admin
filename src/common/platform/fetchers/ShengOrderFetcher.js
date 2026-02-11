@@ -38,7 +38,7 @@ export default class ShengOrderFetcher extends BaseOrderFetcher {
       if (!rawStayList?.length) return;
 
       const offerList = await this.getOfferList();
-      
+
       // 数据转换
       const processedList = rawStayList
         .map(item => {
@@ -110,7 +110,9 @@ export default class ShengOrderFetcher extends BaseOrderFetcher {
           // 判断该订单是否是新订单：报过价且没出过票
           let targetOfferList = offerList.filter(itemA => {
             if (item.appName !== "wanxiang") {
-              return itemA.app_name === item.appName && itemA.order_status === "1";
+              return (
+                itemA.app_name === item.appName && itemA.order_status === "1"
+              );
             } else {
               return (
                 ["wanxiang", "wanxiangh5"].includes(itemA.app_name) &&
@@ -148,7 +150,9 @@ export default class ShengOrderFetcher extends BaseOrderFetcher {
               level: "info",
               info: {
                 newOrder: item,
-                oldOrder: rawStayList.find(itemA => itemA.code === item.order_number)
+                oldOrder: rawStayList.find(
+                  itemA => itemA.code === item.order_number
+                )
               }
             }
           ];

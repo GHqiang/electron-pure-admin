@@ -62,11 +62,10 @@ export default class MahuaAdapter extends BasePlatformAdapter {
     const rewardPrice =
       rewards > 0 ? (offer_end_amount * 100 * rewards) / 10000 : 0;
     return (
-      (subDecimal(
+      subDecimal(
         addDecimal(offer_end_amount, rewardPrice),
         addDecimal(cost_price, shouxufei)
-      ) *
-        ticket_num)
+      ) * ticket_num
     );
   }
 

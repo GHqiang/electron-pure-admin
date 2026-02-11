@@ -4,7 +4,12 @@
 import BaseOrderFetcher from "../../core/BaseOrderFetcher.js";
 import ShangzhanAdapter from "../adapters/ShangzhanAdapter.js";
 import Logger from "../../logger.js";
-import { getCinemaFlag, getCurrentTime, logUpload, parseTimeStr } from "@/utils/utils.js";
+import {
+  getCinemaFlag,
+  getCurrentTime,
+  logUpload,
+  parseTimeStr
+} from "@/utils/utils.js";
 import svApi from "@/api/sv-api.js";
 import { platTokens } from "@/store/platTokens.js";
 

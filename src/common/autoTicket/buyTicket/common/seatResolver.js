@@ -1,7 +1,7 @@
 /**
  * 座位解析工具
  * 统一封装各影院系列的座位匹配逻辑
- * 
+ *
  * 说明：通过 extractor 函数适配不同系列的数据结构差异
  */
 
@@ -30,10 +30,12 @@ export function parseLockseatToNames(lockseat) {
 export function matchSeatsByNames({ seatList, seatNames, seatNameExtractor }) {
   if (!seatList?.length || !seatNames?.length) return [];
 
-  const extractName = seatNameExtractor || (seat => {
-    // 默认尝试常见字段
-    return seat.seatName || seat[5] || seat.name || "";
-  });
+  const extractName =
+    seatNameExtractor ||
+    (seat => {
+      // 默认尝试常见字段
+      return seat.seatName || seat[5] || seat.name || "";
+    });
 
   return seatList.filter(seat => {
     const seatName = extractName(seat);
@@ -66,19 +68,22 @@ export function matchSeatsByRowCol({
   if (!seatList?.length || !lockseat) return [];
 
   const seatNames = parseLockseatToNames(lockseat);
-  const targetSeats = seatNames.map(name => {
-    // 解析 "7排1座" 格式
-    const match = name.match(/(\d+)排(\d+)座/);
-    if (match) {
-      return { row: match[1], col: match[2] };
-    }
-    return null;
-  }).filter(Boolean);
+  const targetSeats = seatNames
+    .map(name => {
+      // 解析 "7排1座" 格式
+      const match = name.match(/(\d+)排(\d+)座/);
+      if (match) {
+        return { row: match[1], col: match[2] };
+      }
+      return null;
+    })
+    .filter(Boolean);
 
   if (targetSeats.length !== ticket_num) return [];
 
   const getRow = rowExtractor || (seat => seat.rowName || seat.row || seat[1]);
-  const getCol = colExtractor || (seat => seat.columnName || seat.col || seat[2]);
+  const getCol =
+    colExtractor || (seat => seat.columnName || seat.col || seat[2]);
 
   return seatList.filter(seat => {
     const seatRow = String(getRow(seat));

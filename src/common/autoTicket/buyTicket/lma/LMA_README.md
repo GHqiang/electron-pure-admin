@@ -19,6 +19,7 @@ src/common/autoTicket/buyTicket/lma/
 ```
 
 **入口**：
+
 - 报价：`commonOfferHandle.js` 对 `appFlag === "lma"` 使用 `getLmaOfferPriceNew`（lma/offerManage），无开关。
 - 出票：`buyTicket/index.js` 通过 `STRATEGY_MAP.lma` 使用 `LmaBuyTicket`。
 
@@ -26,16 +27,17 @@ src/common/autoTicket/buyTicket/lma/
 
 ## 二、文件职责与核心方法
 
-| 文件 | 职责 | 核心方法 |
-|------|------|----------|
-| **offerManage.js** | 报价逻辑管理 | `getEndOfferPrice()`, `getEndMatchOfferRule()`, `getCostPrice()`, `calculateFinalPrice()`, `getMemberPrice()`, `validateOfferOrder()` |
-| **buyTicket.js** | 出票流程编排 | `singleTicket()`, `oneClickBuyTicket()`, `getCinemaLoginInfo()`, `getOrderOfferRule()`, `checkOfferRuleRes()`, `validateTicketOrder()`, `getSortPhoneByQuanTypeList()` |
-| **cardQuanManage.js** | 卡券管理 | `useCardHandle()`, `useQuanHandle()`, `getQuanListByPhone()`, `getQuanInfo()`, `getUsableCardList()`, `updateQuanStock()`, `updateCardDayUse()`, `updateMonthlyLimit()` |
-| **cinemaManage.js** | 影院与场次 | `getBuyPrevCinemaInfo()`, `getCityCinemaList()`, `getMoviePlayInfo()`, `getMoviePlayDate()`, `getMovieInfo()` |
-| **seatManage.js** | 座位 | `getSeatLayout()`, `getTargetSeat()`, `lockseatByApp()` |
-| **orderManage.js** | 订单与支付 | `pripriceCalculation()`, `buyTicket()`, `payOrder()`, `getQrcodeUploadByPlat()`, `transferOrder()`, `asyncFetchQrcodeSubmit()` |
+| 文件                  | 职责         | 核心方法                                                                                                                                                                |
+| --------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **offerManage.js**    | 报价逻辑管理 | `getEndOfferPrice()`, `getEndMatchOfferRule()`, `getCostPrice()`, `calculateFinalPrice()`, `getMemberPrice()`, `validateOfferOrder()`                                   |
+| **buyTicket.js**      | 出票流程编排 | `singleTicket()`, `oneClickBuyTicket()`, `getCinemaLoginInfo()`, `getOrderOfferRule()`, `checkOfferRuleRes()`, `validateTicketOrder()`, `getSortPhoneByQuanTypeList()`  |
+| **cardQuanManage.js** | 卡券管理     | `useCardHandle()`, `useQuanHandle()`, `getQuanListByPhone()`, `getQuanInfo()`, `getUsableCardList()`, `updateQuanStock()`, `updateCardDayUse()`, `updateMonthlyLimit()` |
+| **cinemaManage.js**   | 影院与场次   | `getBuyPrevCinemaInfo()`, `getCityCinemaList()`, `getMoviePlayInfo()`, `getMoviePlayDate()`, `getMovieInfo()`                                                           |
+| **seatManage.js**     | 座位         | `getSeatLayout()`, `getTargetSeat()`, `lockseatByApp()`                                                                                                                 |
+| **orderManage.js**    | 订单与支付   | `pripriceCalculation()`, `buyTicket()`, `payOrder()`, `getQrcodeUploadByPlat()`, `transferOrder()`, `asyncFetchQrcodeSubmit()`                                          |
 
 **简要说明**：
+
 - **offerManage**：规则匹配、会员价、成本价、最终报价；对外 `getEndOfferPrice`、`validateOfferOrder`。
 - **buyTicket**：登录信息、报价规则、影院/场次/座位、卡券、锁座、价格、购买、取票码；对外 `singleTicket`、`validateTicketOrder`。
 - **cardQuanManage**：用卡、用券、券列表、券库存、卡日/月使用量。
@@ -69,7 +71,7 @@ const offerPrice = window.lmaOfferObj("mayi", "lma");
 ```javascript
 const res = await offerPrice.getEndOfferPrice({
   order: orderJson,
-  offerList: []  // 可选，动态调价用
+  offerList: [] // 可选，动态调价用
 });
 // 成功：{ endPrice, offerRule, order_number }
 // 失败：{ err_msg, err_info, endPrice: null, offerRule }
@@ -110,6 +112,7 @@ const res = await buyTicket.singleTicket();
 ```
 
 **测试模式（不购买）**：`isTestOrder === true` 时，`oneClickBuyTicket` 会执行到锁座、价格计算，然后：
+
 1. 打印购买参数（`order_num`, `lmaToken`, `orderInfo` 等）；
 2. 调用 `cannelOneOrder` 取消订单释放座位；
 3. 直接返回 `{ offerRule }`，不调用 `buyTicket`、`getQrcodeUploadByPlat`。
@@ -129,21 +132,25 @@ const result = await buyTicket.validateTicketOrder(orderJson);
 
 ### 4.1 数据源与流程
 
-1. **cinemaManage.getMovieInfo(order)**  
-   - 影院列表 → `getMoviePlayInfo`（放映信息）→ 匹配影片、日期、场次 → 得到目标场次 `targetShow`，即 `movieInfo`。  
+1. **cinemaManage.getMovieInfo(order)**
+
+   - 影院列表 → `getMoviePlayInfo`（放映信息）→ 匹配影片、日期、场次 → 得到目标场次 `targetShow`，即 `movieInfo`。
    - 来源：LMA 放映接口（`getMoviePlayInfo`、`getMoviePlayDate` 等）。
 
 2. **movieInfo 字段**：
+
    - `member_price`：会员价（可能带 `￥`，需 `replace("￥", "")`）。
    - `price`：非会员价（同上）。
    - `cinema_id`：影院 ID。
    - `session_id`：场次 ID，即 `show_id`。
 
-3. **若存在 `show_id`**：  
-   - 调用 `seatManage.getSeatLayout({ cinema_id, show_id, lmaToken: "" })`，取 `label_arr`（分区价）。  
+3. **若存在 `show_id`**：
+
+   - 调用 `seatManage.getSeatLayout({ cinema_id, show_id, lmaToken: "" })`，取 `label_arr`（分区价）。
    - 取分区最高价 `bigPrice`，`member_price = Math.max(member_price, bigPrice)` 作为会员价基准。
 
 4. **兜底**：
+
    - `member_price <= 0` 且存在 `price`：用 `price`（非会员价）作为会员价基准。
    - `member_price === 0`：不报价，返回 `null`。
 
@@ -164,8 +171,8 @@ const result = await buyTicket.validateTicketOrder(orderJson);
 
 ### 4.3 返回值
 
-- **成功**：`{ real_member_price, member_price, discount }`。  
-- **获取电影信息失败**：`-1`。  
+- **成功**：`{ real_member_price, member_price, discount }`。
+- **获取电影信息失败**：`-1`。
 - **其他失败**：`null`。
 
 ---

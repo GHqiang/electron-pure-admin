@@ -27,14 +27,14 @@ src/common/autoTicket/buyTicket/chenxing/
 
 ## 二、文件职责与核心方法
 
-| 文件                  | 职责         | 核心方法                                                                                                                               |
-| --------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
-| **offerManage.js**    | 报价逻辑管理 | `getEndOfferPrice()`, `getEndMatchOfferRule()`, `getCostPrice()`, `calculateFinalPrice()`, `getMemberPrice()`, `validateOfferOrder()` |
-| **buyTicket.js**      | 出票流程编排 | `singleTicket()`, `oneClickBuyTicket()`, `getCinemaLoginInfo()`, `getOrderOfferRule()`, `checkOfferRuleRes()`, `transferOrChangePhone()` |
+| 文件                  | 职责         | 核心方法                                                                                                                                                        |
+| --------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **offerManage.js**    | 报价逻辑管理 | `getEndOfferPrice()`, `getEndMatchOfferRule()`, `getCostPrice()`, `calculateFinalPrice()`, `getMemberPrice()`, `validateOfferOrder()`                           |
+| **buyTicket.js**      | 出票流程编排 | `singleTicket()`, `oneClickBuyTicket()`, `getCinemaLoginInfo()`, `getOrderOfferRule()`, `checkOfferRuleRes()`, `transferOrChangePhone()`                        |
 | **cardQuanManage.js** | 卡券管理     | `getQuanInfo()`, `getQuanListByPhone()`, `useQuanOrCard()`, `getUsableCardList()`, `getSortPhoneByQuanTypeList()`, `syncUpdateQuanStock()`, `updateQuanStock()` |
-| **cinemaManage.js**   | 影院与场次   | `getCityCinemaList()`, `getBuyPrevCinemaInfo()`, `getMoviePlayInfo()`, `getTargetShow()`, `getTargetMovie()`, `cinemaLinkCardHandle()` |
-| **seatManage.js**     | 座位         | `getSeatLayout()`, `getTargetSeat()`, `lockSeatHandle()`, `lockseatByApp()`, `retryLockSeat()`, `assistLockSeat()`                    |
-| **orderManage.js**    | 订单与支付   | `pripriceCalculation()`, `createOrder()`, `buyTicket()`, `getQrcodeUploadByPlat()`, `transferOrder()`, `releaseSeat()`, `cancelOrder()` |
+| **cinemaManage.js**   | 影院与场次   | `getCityCinemaList()`, `getBuyPrevCinemaInfo()`, `getMoviePlayInfo()`, `getTargetShow()`, `getTargetMovie()`, `cinemaLinkCardHandle()`                          |
+| **seatManage.js**     | 座位         | `getSeatLayout()`, `getTargetSeat()`, `lockSeatHandle()`, `lockseatByApp()`, `retryLockSeat()`, `assistLockSeat()`                                              |
+| **orderManage.js**    | 订单与支付   | `pripriceCalculation()`, `createOrder()`, `buyTicket()`, `getQrcodeUploadByPlat()`, `transferOrder()`, `releaseSeat()`, `cancelOrder()`                         |
 
 ---
 
@@ -101,6 +101,7 @@ const res = await buyTicket.singleTicket();
 ```
 
 **测试模式（不购买）**：`isTestOrder === true` 时，会执行到锁座、价格计算后：
+
 - 打印完整的购买参数（包含订单信息、价格、卡券信息等）
 - 如果有 `order_num`，调用 `cancelOrder()` 取消订单释放座位
 - 如果没有 `order_num`，调用 `releaseSeat()` 释放座位
@@ -117,6 +118,7 @@ const res = await buyTicket.singleTicket();
 辰星系列支持两个 API 版本，影响多个模块的数据处理逻辑：
 
 - **3.0C 版本**：
+
   - 城市影院列表：从 `res.data` 获取，字段为 `cityInfoDTO.cityName`、`cinemaResultDTOList`
   - 座位布局：需要 `featureAppNo` 参数
   - 会员价获取：从 `discountList` 获取优惠活动价格，优先取有卡优惠活动最低价
@@ -169,6 +171,7 @@ if (!this.cardQuanManage) {
 会员价获取根据 API 版本采用不同策略：
 
 - **3.0C 版本**：
+
   1. 从座位布局获取 `discountList`（优惠活动列表）和 `cinemaPlanDto`（影院计划信息）
   2. 优先从有卡优惠活动（`cardLevelCode` 存在）中取最低价：`price - cinemaPayAmount + serviceAddFee`
   3. 如果没有有卡优惠，从无卡优惠活动中取最低价：`price - cinemaPayAmount`
@@ -220,7 +223,7 @@ this.currentParamsList = getCinemaLoginInfoList().filter(
     item.app_name === this.appFlag &&
     item.mobile &&
     item.session_id &&
-    item.member_pwd  // 必须要有会员密码
+    item.member_pwd // 必须要有会员密码
 );
 ```
 

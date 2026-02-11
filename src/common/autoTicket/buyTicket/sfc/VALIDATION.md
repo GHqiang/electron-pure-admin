@@ -13,14 +13,14 @@
 
 ### 1.2 核心计算
 
-| 项 | 旧版 | 重构 | 结论 |
-|----|------|------|------|
-| 手续费 | `(price * 100) / 10000` | `calculateCostProfit` 内同式 | 一致 |
-| 奖励费用 | `(price * 100 * rewards) / 10000` | 同 | 一致 |
-| 最大卡券成本 | `(price*1000 + reward*1000 - shouxufei*1000)/1000` | 同 | 一致 |
-| 利润校验 | `price <= real_cost_price` 且非 `TEST_NEW_PLAT` 则未通过 | 同 | 一致 |
-| 动态调价 | `adjustPrice` + `lierenMachineOfferList`（旧版实际常为空） | `applyDynamicPricing` 用 `offerList` | 重构为可用逻辑，行为有差异 |
-| 异常检测 | `isAnomaly` → `getTicketList` → `checkConsecutiveErrors` | 同上，`checkConsecutiveErrors` 修正旧版逻辑 bug | 重构逻辑正确 |
+| 项           | 旧版                                                       | 重构                                            | 结论                       |
+| ------------ | ---------------------------------------------------------- | ----------------------------------------------- | -------------------------- |
+| 手续费       | `(price * 100) / 10000`                                    | `calculateCostProfit` 内同式                    | 一致                       |
+| 奖励费用     | `(price * 100 * rewards) / 10000`                          | 同                                              | 一致                       |
+| 最大卡券成本 | `(price*1000 + reward*1000 - shouxufei*1000)/1000`         | 同                                              | 一致                       |
+| 利润校验     | `price <= real_cost_price` 且非 `TEST_NEW_PLAT` 则未通过   | 同                                              | 一致                       |
+| 动态调价     | `adjustPrice` + `lierenMachineOfferList`（旧版实际常为空） | `applyDynamicPricing` 用 `offerList`            | 重构为可用逻辑，行为有差异 |
+| 异常检测     | `isAnomaly` → `getTicketList` → `checkConsecutiveErrors`   | 同上，`checkConsecutiveErrors` 修正旧版逻辑 bug | 重构逻辑正确               |
 
 ### 1.3 已知差异（保留）
 
@@ -33,21 +33,21 @@
 
 ### 2.1 用券（useQuan）
 
-| 项 | 旧版 | 重构 | 结论 |
-|----|------|------|------|
-| 手续费 | `(supplier_end_price*100)/10000`，`NO_FEE_PLAT_LIST` 置 0 | 同 | 一致 |
-| 利润 | `(supplier_end_price - quan_cost - shouxufei) * useQuans.length` | 同 | 一致 |
-| 奖励 | `+ (supplier*100 * ticket_num * rewards) / 10000` | 同 | 一致 |
-| 负利润 | `profit < 0` 且非 `TEST_NEW_PLAT` 则返回 `{ profit:0, useQuans:[] }` | 同 | 一致 |
+| 项     | 旧版                                                                 | 重构 | 结论 |
+| ------ | -------------------------------------------------------------------- | ---- | ---- |
+| 手续费 | `(supplier_end_price*100)/10000`，`NO_FEE_PLAT_LIST` 置 0            | 同   | 一致 |
+| 利润   | `(supplier_end_price - quan_cost - shouxufei) * useQuans.length`     | 同   | 一致 |
+| 奖励   | `+ (supplier*100 * ticket_num * rewards) / 10000`                    | 同   | 一致 |
+| 负利润 | `profit < 0` 且非 `TEST_NEW_PLAT` 则返回 `{ profit:0, useQuans:[] }` | 同   | 一致 |
 
 ### 2.2 用卡（useCard）
 
-| 项 | 旧版 | 重构 | 结论 |
-|----|------|------|------|
-| 手续费 | `(supplier_end_price*100)/10000`，`NO_FEE_PLAT_LIST` 置 0 | **原缺失** → **已修复** | 一致 |
-| 利润 | `(supplier - member - shouxufei) * ticket_num` | 同（修复后） | 一致 |
-| 奖励 | `+ (supplier*100 * ticket_num * rewards) / 10000` | **原少乘 100** → **已修复** | 一致 |
-| 负利润 | 日志 + 返回 `{ card_id:"", profit:0 }` | **已补日志** | 一致 |
+| 项     | 旧版                                                      | 重构                        | 结论 |
+| ------ | --------------------------------------------------------- | --------------------------- | ---- |
+| 手续费 | `(supplier_end_price*100)/10000`，`NO_FEE_PLAT_LIST` 置 0 | **原缺失** → **已修复**     | 一致 |
+| 利润   | `(supplier - member - shouxufei) * ticket_num`            | 同（修复后）                | 一致 |
+| 奖励   | `+ (supplier*100 * ticket_num * rewards) / 10000`         | **原少乘 100** → **已修复** | 一致 |
+| 负利润 | 日志 + 返回 `{ card_id:"", profit:0 }`                    | **已补日志**                | 一致 |
 
 **已修复点**（`cardQuanManage.useCard`）：
 
@@ -103,24 +103,26 @@
 
 ## 六、特殊场景
 
-| 场景 | 旧版 | 重构 | 结论 |
-|------|------|------|------|
-| `NO_FEE_PLAT_LIST` | 用券/用卡手续费置 0 | 用券/用卡同（useCard 已修） | 一致 |
-| `TEST_NEW_PLAT_LIST` | 允许负利润、报价利润校验放宽 | 同 | 一致 |
-| V3（如 `hbchyxd`） | `is_open_svip`、`getCardAndQuanList`、`member_id`、`pay_type=wallet`、支付密码 | `orderManage` / `cardQuanManage` 同等处理 | 一致 |
+| 场景                 | 旧版                                                                           | 重构                                      | 结论 |
+| -------------------- | ------------------------------------------------------------------------------ | ----------------------------------------- | ---- |
+| `NO_FEE_PLAT_LIST`   | 用券/用卡手续费置 0                                                            | 用券/用卡同（useCard 已修）               | 一致 |
+| `TEST_NEW_PLAT_LIST` | 允许负利润、报价利润校验放宽                                                   | 同                                        | 一致 |
+| V3（如 `hbchyxd`）   | `is_open_svip`、`getCardAndQuanList`、`member_id`、`pay_type=wallet`、支付密码 | `orderManage` / `cardQuanManage` 同等处理 | 一致 |
 
 ---
 
 ## 七、修改文件汇总
 
-1. **`sfc/cardQuanManage.js`**  
+1. **`sfc/cardQuanManage.js`**
+
    - `useCard`：手续费按 `NO_FEE_PLAT_LIST`、奖励公式、负利润日志与旧版对齐。
 
-2. **`sfc/buyTicket.js`**  
-   - 会员价调整：补 `"用完卡发现支付金额大于会员价*票数，利润需减去差值"` 日志。  
+2. **`sfc/buyTicket.js`**
+
+   - 会员价调整：补 `"用完卡发现支付金额大于会员价*票数，利润需减去差值"` 日志。
    - `transferWithUnlock`：保留 `unlockInfo.session_id`，换号转单使用上一号 session。
 
-3. **`sfc/orderManage.js`**  
+3. **`sfc/orderManage.js`**
    - `transferOrder`：优先使用 `unlockSeatInfo.session_id`，再取消/释放。
 
 以上修改均旨在与旧版报价、出票逻辑严格对齐；动态调价、测试模式等有意差异已单独说明。
