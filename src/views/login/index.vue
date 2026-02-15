@@ -155,7 +155,8 @@ const setLocalLoginList = async rule => {
     first: item.first,
     is_xiaohao: item.is_xiaohao,
     link_user_id: item.link_user_id,
-    update_time: item.update_time
+    daily_ticket_count: item.daily_ticket_count,
+    update_time: item.update_time,
   }));
   userInfoAndTokens.setLoginInfoList(
     loginRecords.filter(item => item.is_xiaohao != 1)

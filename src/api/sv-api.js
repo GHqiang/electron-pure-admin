@@ -132,6 +132,9 @@ const addLoginRecord = params => axios.post("/svpi/loginRecord/add", params);
 // 修改登录信息
 const updateLoginRecord = params =>
   axios.post("/svpi/loginRecord/update", params);
+// 查询登录今日出票数（按手机号，用于固定报价时日出票券数达标校验）
+const getLoginDailyTicketUsedCount = params =>
+  axios.post("/svpi/loginRecord/dailyTicketUsed", params);
 
 // 获取影院信息列表
 const getCinemaList = params => axios.get("/svpi/cinemaRecord", { params });
@@ -300,6 +303,7 @@ const svApi = {
   batchDeleteLogin,
   addLoginRecord,
   updateLoginRecord,
+  getLoginDailyTicketUsedCount,
   addTicketOperaLog,
   getCardDailyAndMonthlyTicketCount,
   queryQuanInventory,

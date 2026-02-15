@@ -114,6 +114,16 @@
             <el-radio value="2" size="large">否</el-radio>
           </el-radio-group>
         </el-form-item>
+        <el-form-item label="日出票券数" prop="daily_ticket_count">
+          <el-input-number
+            v-model="formData.daily_ticket_count"
+            placeholder="请输入日出票券数"
+            :min="0"
+            :precision="0"
+            controls-position="right"
+            style="width: 100%"
+          />
+        </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input
             v-model="formData.remark"
@@ -175,7 +185,8 @@ let formData = reactive({
   mobile: "",
   remark: "",
   first: "2",
-  is_xiaohao: "2"
+  is_xiaohao: "2",
+  daily_ticket_count: null
 });
 const validatePhoneNumber = (rule, value, callback) => {
   if (!value) {
@@ -258,6 +269,7 @@ const resetForm = el => {
   formData.remark = "";
   formData.first = "2";
   formData.is_xiaohao = "2";
+  formData.daily_ticket_count = null;
 };
 
 // 影线改变
@@ -286,6 +298,7 @@ const open = async loginInfo => {
         formData.remark = formInfo.remark;
         formData.first = formInfo.first;
         formData.is_xiaohao = formInfo.is_xiaohao == 1 ? "1" : "2";
+        formData.daily_ticket_count = formInfo.daily_ticket_count ?? null;
       } else {
         // 新增
         formData.app_name = formInfo.app_name;

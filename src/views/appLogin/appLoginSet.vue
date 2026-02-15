@@ -155,6 +155,11 @@
           />
           <el-table-column prop="remark" label="备注" min-width="80" />
           <el-table-column
+            prop="daily_ticket_count"
+            label="日出票券数"
+            min-width="110"
+          />
+          <el-table-column
             label="操作"
             fixed="right"
             align="center"
@@ -346,7 +351,8 @@ const setLocalLoginList = async () => {
     first: item.first,
     is_xiaohao: item.is_xiaohao,
     link_user_id: item.link_user_id,
-    update_time: item.update_time
+    update_time: item.update_time,
+    daily_ticket_count: item.daily_ticket_count
   }));
   userInfoAndTokens.setLoginInfoList(
     loginRecords.filter(item => item.is_xiaohao != 1)

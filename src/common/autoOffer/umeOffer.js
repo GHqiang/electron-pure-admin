@@ -23,7 +23,10 @@ import {
 } from "@/common/constant.js";
 // 获取最终报价信息实体类
 import getOfferPriceFun from "./commonOfferHandle.js";
-import { getQuanTypeListByApp } from "./commonQuanStock.js";
+import {
+  getQuanTypeListByApp,
+  filterFixedRulesByDailyTicketCount
+} from "./commonQuanStock.js";
 import Logger from "@/common/logger.js";
 import { platTokens } from "@/store/platTokens";
 const {
@@ -384,6 +387,15 @@ class getUmeOfferPrice {
           this.logger.infoSave("根据券库存过滤后的固定报价规则列表", {
             fixedAmountRuleList
           });
+          if (fixedAmountRuleList.length) {
+            fixedAmountRuleList = await filterFixedRulesByDailyTicketCount({
+              fixedAmountRuleList,
+              appQuanTypeList,
+              useMobileList,
+              order,
+              logger: this.logger
+            });
+          }
         } else {
           fixedAmountRuleList = [];
           this.logger.infoSave(

@@ -236,3 +236,113 @@ export async function getQuanTypeListByApp({
     });
   }
 }
+
+/**
+ * 在券库存过滤之后，按日出票券数限制再过滤固定报价规则
+ * 流程：传入可用手机号，用 quanStockListByPhone 过滤得到真正的可用手机号；
+ *       再调接口获取当天各手机号在该影院的已出票券数，
+ *       用 日出票券数 - 已出票券数 与订单票数对比，不满足的规则过滤掉
+ * @param {Object} params
+ * @param {Array} params.fixedAmountRuleList - 经券库存过滤后的固定报价规则列表
+ * @param {Array} params.appQuanTypeList - 券类型列表（含 quanStockListByPhone）
+ * @param {Array} params.useMobileList - 调用方传入的可用手机号列表（如该影院登录账号手机号）
+ * @param {Object} params.order - 订单 { app_name, ticket_num }
+ * @param {Object} [params.logger] - 日志
+ * @returns {Promise<Array>} 过滤后的固定报价规则列表
+ */
+export async function filterFixedRulesByDailyTicketCount({
+  fixedAmountRuleList,
+  appQuanTypeList,
+  useMobileList,
+  order,
+  logger
+}) {
+  console.log("filterFixedRulesByDailyTicketCount params", {
+    fixedAmountRuleList,
+    appQuanTypeList,
+    useMobileList,
+    order
+  });
+  if (!fixedAmountRuleList?.length) return fixedAmountRuleList;
+  const { app_name, ticket_num } = order;
+  const loginList = getCinemaLoginInfoList().filter(
+    item => item.app_name === app_name && item.mobile && item.session_id
+  );
+  console.log("filterFixedRulesByDailyTicketCount loginList", loginList);
+  // 1. 传入的可用手机号通过 quanStockListByPhone 过滤一遍，得到真正的可用手机号（有对应券且库存>=订单票数）
+  let realAvailableMobiles = (useMobileList || []).filter(mobile => {
+    return fixedAmountRuleList.some(rule => {
+      const quanValues = rule.quanValue?.split(",") || [];
+      return appQuanTypeList.some(itemA => {
+        if (!quanValues.includes(itemA.quan_value)) return false;
+        if (itemA.quan_stock < ticket_num) return false;
+        const byPhone = itemA.quanStockListByPhone || [];
+        return byPhone.some(
+          p => p.phone === mobile && Number(p.quan_stock) >= ticket_num
+        );
+      });
+    });
+  });
+  console.log("realAvailableMobiles", realAvailableMobiles);
+
+  if (!realAvailableMobiles.length) return fixedAmountRuleList;
+  // 2. 用真正的可用手机号列表调接口获取当天各手机号在该影院的已出票券数
+  let todayCountMap = {};
+  try {
+    const usedRes = await svApi.getLoginDailyTicketUsedCount({
+      app_name,
+      mobile_list: realAvailableMobiles
+    });
+    let list = usedRes?.data?.list || [];
+    // list = [{ mobile: "13073795001", daily_count: 7 }];
+    console.log("getLoginDailyTicketUsedCount list", list);
+    list.forEach(it => {
+      const mobile = it.mobile;
+      if (realAvailableMobiles.includes(mobile)) {
+        todayCountMap[mobile] = Number(it.daily_count ?? it.count ?? 0) || 0;
+      }
+    });
+  } catch (e) {
+    logger?.infoSave?.("获取登录今日出票数失败，日出票券数过滤按不限制处理", {
+      error: formatErrInfo(e)
+    });
+  }
+  console.log("todayCountMap", todayCountMap);
+  // 3. 日出票券数 - 已出票券数 >= 订单票数 才满足；不满足的固定报价规则过滤掉
+  const filtered = fixedAmountRuleList.filter(rule => {
+    const quanValues = rule.quanValue?.split(",") || [];
+    const matchingQuanTypes = appQuanTypeList.filter(
+      itemA =>
+        quanValues.includes(itemA.quan_value) && itemA.quan_stock >= ticket_num
+    );
+    console.log("matchingQuanTypes for rule", rule.id, matchingQuanTypes);
+    for (const q of matchingQuanTypes) {
+      console.log(
+        "checking quanStockListByPhone for quanType",
+        q.id,
+        q.quanStockListByPhone
+      );
+      for (const p of q.quanStockListByPhone || []) {
+        if (Number(p.quan_stock) < ticket_num) continue;
+        const mobile = p.phone;
+        const login = loginList.find(l => l.mobile === mobile);
+        const limit = login?.daily_ticket_count;
+        if (limit == null || limit === "" || Number(limit) <= 0) return true;
+        const used = todayCountMap[mobile] ?? 0;
+        const remaining = Number(limit) - used;
+        if (remaining >= ticket_num) return true;
+      }
+    }
+    return false;
+  });
+  if (filtered.length < fixedAmountRuleList.length) {
+    logger?.infoSave?.("按日出票券数过滤后的固定报价规则列表", {
+      before: fixedAmountRuleList.length,
+      after: filtered.length,
+      todayCountMap,
+      realAvailableMobiles
+    });
+  }
+  console.log("filtered", filtered);
+  return filtered;
+}

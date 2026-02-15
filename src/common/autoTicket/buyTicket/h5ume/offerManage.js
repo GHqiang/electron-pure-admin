@@ -36,7 +36,10 @@ import {
   NO_FEE_PLAT_LIST,
   ONE_STEP_PLAT_LIST
 } from "@/common/constant.js";
-import { getQuanTypeListByApp } from "../../../autoOffer/commonQuanStock.js";
+import {
+  getQuanTypeListByApp,
+  filterFixedRulesByDailyTicketCount
+} from "../../../autoOffer/commonQuanStock.js";
 import Logger from "@/common/logger.js";
 import { platTokens } from "@/store/platTokens";
 import BaseOfferPrice from "@/common/core/BaseOfferPrice.js";
@@ -396,6 +399,16 @@ class getH5UmeOfferPrice extends BaseOfferPrice {
           this.logger.infoSave("根据券库存过滤后的固定报价规则列表", {
             fixedAmountRuleList
           });
+          // 券库存过滤后再按日出票券数过滤：用可用手机号调接口取当日已出票数，用 日出票券数-已出票券数 与订单票数对比，不满足的规则过滤掉
+          if (fixedAmountRuleList.length) {
+            fixedAmountRuleList = await filterFixedRulesByDailyTicketCount({
+              fixedAmountRuleList,
+              appQuanTypeList,
+              useMobileList,
+              order,
+              logger: this.logger
+            });
+          }
         } else {
           fixedAmountRuleList = [];
           this.logger.infoSave(

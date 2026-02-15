@@ -37,6 +37,7 @@ import {
 import { platTokens } from "@/store/platTokens";
 import Logger from "@/common/logger.js";
 import BaseOfferPrice from "@/common/core/BaseOfferPrice.js";
+import { filterFixedRulesByDailyTicketCount } from "../../../autoOffer/commonQuanStock.js";
 import CardQuanManage from "./cardQuanManage";
 import CinemaManage from "./cinemaManage";
 import SeatManage from "./seatManage";
@@ -625,9 +626,10 @@ class getChenxingOfferPrice extends BaseOfferPrice {
       const { fixedRules, addAmountRuleList } =
         this.splitRuleTypes(generalRules);
 
-      // 3. 处理固定报价规则的券库存校验
+      // 3. 处理固定报价规则的券库存校验，再按日出票券数过滤
       const validFixedRules = await this.validateQuanStock({
         rules: fixedRules,
+        order,
         movieInfo,
         ticketNum: order.ticket_num
       });
@@ -737,10 +739,10 @@ class getChenxingOfferPrice extends BaseOfferPrice {
   }
 
   /**
-   * 校验券库存
+   * 校验券库存，再按日出票券数过滤
    * @private
    */
-  async validateQuanStock({ rules, movieInfo, ticketNum }) {
+  async validateQuanStock({ rules, order, movieInfo, ticketNum }) {
     if (!rules.length) return [];
 
     const appQuanTypeList = await this.cardQuanManage.getQuanTypeListByApp();
@@ -750,9 +752,28 @@ class getChenxingOfferPrice extends BaseOfferPrice {
       quanTypeList: appQuanTypeList
     });
 
-    return appQuanTypeList?.length
-      ? this.applyQuanStockFilter(rules, appQuanTypeList, ticketNum)
-      : [];
+    if (!appQuanTypeList?.length) return [];
+    let validFixedRules = this.applyQuanStockFilter(
+      rules,
+      appQuanTypeList,
+      ticketNum
+    );
+    if (validFixedRules.length) {
+      const useMobileList = getCinemaLoginInfoList()
+        .filter(
+          item =>
+            item.app_name === order.app_name && item.mobile && item.session_id
+        )
+        .map(item => item.mobile);
+      validFixedRules = await filterFixedRulesByDailyTicketCount({
+        fixedAmountRuleList: validFixedRules,
+        appQuanTypeList,
+        useMobileList,
+        order: { app_name: order.app_name, ticket_num: ticketNum },
+        logger: this.logger
+      });
+    }
+    return validFixedRules;
   }
 
   /**

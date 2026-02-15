@@ -26,7 +26,10 @@ import {
   NO_FEE_PLAT_LIST,
   ONE_STEP_PLAT_LIST
 } from "@/common/constant.js";
-import { getQuanTypeListByApp } from "./commonQuanStock.js";
+import {
+  getQuanTypeListByApp,
+  filterFixedRulesByDailyTicketCount
+} from "./commonQuanStock.js";
 import Logger from "@/common/logger.js";
 import { platTokens } from "@/store/platTokens";
 const {
@@ -345,6 +348,15 @@ class getUmeOfferPrice {
           this.logger.infoSave("根据券库存过滤后的固定报价规则列表", {
             fixedAmountRuleList
           });
+          if (fixedAmountRuleList.length) {
+            fixedAmountRuleList = await filterFixedRulesByDailyTicketCount({
+              fixedAmountRuleList,
+              appQuanTypeList,
+              useMobileList,
+              order,
+              logger: this.logger
+            });
+          }
         } else {
           fixedAmountRuleList = [];
           this.logger.infoSave(
