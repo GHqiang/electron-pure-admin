@@ -377,15 +377,6 @@ const oneClickStart = () => {
           syncPlatExtraTokens(item);
           isStartOffer && platOfferQueueObj[item.platName]?.start();
           isStartFetch && platFetchOrderQueueObj[item.platName]?.start();
-          // 1分钟同步1次中标价
-          // const { platName, syncPageSize } = item;
-          // if (syncPageSize && syncPricePlatList.includes(platName)) {
-          //   syncPriceHandle(platName, syncPageSize);
-          //   syncIntervalObj[platName] = setInterval(
-          //     () => syncPriceHandle(platName, syncPageSize),
-          //     1000 * 60
-          //   );
-          // }
         }
       });
 
@@ -473,14 +464,6 @@ const singleStartOrStop = ({ id, platToken, platName, syncPageSize }, flag) => {
     setPlatFunObj[platName](platToken);
     isStartOffer && platOfferQueueObj[platName]?.start();
     isStartFetch && platFetchOrderQueueObj[platName]?.start();
-    // 1分钟同步1次中标价
-    // if (syncPageSize && syncPricePlatList.includes(platName)) {
-    //   syncPriceHandle(platName, syncPageSize);
-    //   syncIntervalObj[platName] = setInterval(
-    //     () => syncPriceHandle(platName, syncPageSize),
-    //     1000 * 60
-    //   );
-    // }
     // 删除没有登录信息的队列
     // 注意：不能重新初始化出票队列，否则会导致事件监听器重复订阅
     let loginInfoList = getCinemaLoginInfoList();
@@ -532,133 +515,6 @@ const singleStartOrStop = ({ id, platToken, platName, syncPageSize }, flag) => {
       }
     }
   ]);
-};
-
-// 同步中标价
-const syncPriceHandle = async (plat_name, syncPageSize) => {
-  try {
-    console.warn("同步中标价:", plat_name, syncPageSize, getCurrentTime());
-
-    let promiseList = [],
-      syncOrderList = [];
-    if (plat_name === "lieren") {
-      // promiseList.push(
-      //   lierenApi.queryOfferRecord({
-      //     page: 1,
-      //     limit: syncPageSize,
-      //     cinema_name: "",
-      //     sort: "id",
-      //     desc: "desc",
-      //     type: 1
-      //   })
-      // );
-      // const results = await Promise.allSettled(promiseList);
-      // results.forEach(item => {
-      //   let lierenList = item?.value?.data || [];
-      //   // supplier_end_price为0时代表还在竞价中
-      //   lierenList = lierenList
-      //     .filter(
-      //       item =>
-      //         item.offer !== item.supplier_end_price && item.supplier_end_price
-      //     )
-      //     .map(item => ({
-      //       order_number: item.order_number,
-      //       supplier_end_price: item.supplier_end_price,
-      //       plat_name: "lieren"
-      //     }));
-      //   syncOrderList.push(...lierenList);
-      // });
-    } else if (plat_name === "mayi") {
-      // 蚂蚁1页8条，不支持传条数
-      // let lengths = Math.ceil(syncPageSize / 8); // 向上取整
-      // for (var i = 1; i <= lengths; i++) {
-      //   promiseList.push(
-      //     mayiApi.queryOfferRecord({
-      //       pageNo: i
-      //     })
-      //   );
-      // }
-      // const results = await Promise.allSettled(promiseList);
-      // results.forEach(item => {
-      //   let mayiList = item?.value?.data?.records || [];
-      //   mayiList = mayiList
-      //     .filter(item => item.baojiastatusText === "竞价失败")
-      //     .map(item => ({
-      //       order_number: item.tradeno,
-      //       supplier_end_price: item.chengjiaojia,
-      //       plat_name: "mayi"
-      //     }));
-      //   syncOrderList.push(...mayiList);
-      // });
-    } else if (plat_name === "sheng") {
-      // 省1页8条，不支持传条数
-      // let lengths = Math.ceil(syncPageSize / 8); // 向上取整
-      // for (var i = 1; i <= lengths; i++) {
-      //   promiseList.push(
-      //     shengApi.queryOfferRecord({
-      //       status: "2,3,4",
-      //       deliverMinute: "",
-      //       cinemaName: "",
-      //       label: "",
-      //       TOKEN: "a9e29182c4534a169b89b7129a3849c8",
-      //       page: "" + i,
-      //       time: +new Date() + ""
-      //     })
-      //   );
-      // }
-      // const results = await Promise.allSettled(promiseList);
-      // console.warn("省获取报价记录返回", results);
-      // results.forEach(item => {
-      //   let shengList = item?.value?.data?.data?.rows || [];
-      //   // 接口返回区分不了未中标状态及中标价格
-      //   // shengList = shengList
-      //   //   .filter(item => item.baojiastatusText === "竞价失败")
-      //   //   .map(item => ({
-      //   //     order_number: item.tradeno,
-      //   //     supplier_end_price: item.chengjiaojia,
-      //   //     plat_name: "mayi"
-      //   //   }));
-      //   // syncOrderList.push(...shengList);
-      // });
-    } else if (plat_name === "mangguo") {
-      // promiseList.push(
-      //   mangguoApi.queryOfferRecord({
-      //     order_type: 2,
-      //     page: 1,
-      //     page_size: syncPageSize,
-      //     cinema_name: ""
-      //   })
-      // );
-      // const results = await Promise.allSettled(promiseList);
-      // console.warn("芒果获取报价记录返回", results);
-      // results.forEach(item => {
-      //   // 接口返回和预计不准
-      //   let mangguoList = item?.value?.data?.list || [];
-      //   mangguoList = mangguoList
-      //     .filter(
-      //       item =>
-      //         item.offer_amount !== item.supplier_end_price &&
-      //         item.supplier_end_price
-      //     )
-      //     .map(item => ({
-      //       order_number: item.order_number,
-      //       supplier_end_price: item.supplier_end_price,
-      //       plat_name: "mangguo"
-      //     }));
-      //   syncOrderList.push(...mangguoList);
-      // });
-    }
-    console.warn("未中标的报价记录", plat_name, syncOrderList);
-    if (syncOrderList.length) {
-      await svApi.syncDealPrice({
-        syncOrders: syncOrderList,
-        user_id: user_id == 1 ? 9 : user_id
-      });
-      console.warn("同步中标价成功", plat_name);
-    }
-  } catch (error) {
-    console.error("同步中标价异常", error);
-  }
 };
 // 正在编辑id
 const editingRowId = ref(null);

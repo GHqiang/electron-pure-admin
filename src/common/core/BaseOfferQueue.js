@@ -248,9 +248,9 @@ export default class BaseOfferQueue {
       });
       // 赋值报价返回的待确认订单id，以便出票时好反推出来报价订单号
       if (order.plat_name === "yinghuasuan" && res?.data?.quote_id) {
-        order.order_id = res?.data?.quote_id;
+        order.id = res?.data?.quote_id;
       }
-      // this.logger.infoSave("提交报价结果", { res, offerParams });
+      this.logger.infoSave("提交报价结果", { res, order });
       return { res, offerRule };
     } catch (error) {
       this.logger.errorSave("单个报价异常", { error, order });
