@@ -108,14 +108,17 @@ class getJinyiOfferPrice extends BaseOfferPrice {
   }
 
   // 按电影类型过滤规则
-  filterByFilmType(rules, show_type) {
+  filterByFilmType(rules, mediaType) {
+    console.log("mediaType", mediaType, rules);
     const filmTypeFlag = rules.some(item => !!item.film_type?.length);
     if (!filmTypeFlag) return rules;
 
-    const filmType = show_type?.toUpperCase();
+    const filmType = mediaType?.toUpperCase();
     return filmType
       ? rules.filter(item =>
-          item.film_type?.some(itemA => filmType.includes(itemA))
+          item.film_type?.length
+            ? item.film_type.some(itemA => filmType.includes(itemA))
+            : true
         )
       : rules;
   }

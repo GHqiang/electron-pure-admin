@@ -294,13 +294,16 @@ class getChenxingOfferPrice extends BaseOfferPrice {
    * @private
    */
   filterByFilmType(rules, mediaType) {
+    console.log("mediaType", mediaType, rules);
     const filmTypeFlag = rules.some(item => !!item.film_type?.length);
     if (!filmTypeFlag) return rules;
 
     const filmType = mediaType?.toUpperCase();
     return filmType
       ? rules.filter(item =>
-          item.film_type?.some(itemA => filmType.includes(itemA))
+          item.film_type?.length
+            ? item.film_type.some(itemA => filmType.includes(itemA))
+            : true
         )
       : rules;
   }

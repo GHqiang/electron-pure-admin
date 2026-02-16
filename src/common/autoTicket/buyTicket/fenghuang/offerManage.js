@@ -93,7 +93,7 @@ class getFenghuangOfferPrice extends BaseOfferPrice {
       // 2. 电影格式过滤
       const movieInfo = await this.getMovieInfo();
       if (!movieInfo) return null;
-
+      console.log("movieInfo", movieInfo, matchRuleList);
       matchRuleList = this.filterByFilmType(
         matchRuleList,
         movieInfo.filmVersion
@@ -274,13 +274,16 @@ class getFenghuangOfferPrice extends BaseOfferPrice {
    * @private
    */
   filterByFilmType(rules, mediaType) {
+    console.log("mediaType", mediaType, rules);
     const filmTypeFlag = rules.some(item => !!item.film_type?.length);
     if (!filmTypeFlag) return rules;
 
     const filmType = mediaType?.toUpperCase();
     return filmType
       ? rules.filter(item =>
-          item.film_type?.some(itemA => filmType.includes(itemA))
+          item.film_type?.length
+            ? item.film_type.some(itemA => filmType.includes(itemA))
+            : true
         )
       : rules;
   }
@@ -657,6 +660,7 @@ class getFenghuangOfferPrice extends BaseOfferPrice {
    * @returns {Promise<Object>} 最优报价规则
    */
   async getMinAmountOfferRule(ruleList, order, movieInfo) {
+    console.log("获取最低报价规则，初始规则列表", ruleList);
     try {
       // 1. 优先处理会员日报价规则
       const memberDayRules = this.filterMemberDayRules(ruleList);

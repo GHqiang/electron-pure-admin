@@ -727,7 +727,9 @@ class getH5UmeOfferPrice extends BaseOfferPrice {
         let filmType = targetShow.filmVersion.toUpperCase();
         if (
           !matchRuleList.some(item =>
-            item.film_type?.some(itemA => filmType.includes(itemA))
+            item.film_type?.length
+              ? item.film_type.some(itemA => filmType.includes(itemA))
+              : true
           )
         ) {
           return {

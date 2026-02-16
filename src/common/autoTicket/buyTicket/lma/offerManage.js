@@ -121,7 +121,9 @@ class getLmaOfferPrice extends BaseOfferPrice {
       if (
         filmTypeFlag &&
         !matchRuleList.some(item =>
-          item.film_type?.some(itemA => filmType.includes(itemA))
+          item.film_type?.length
+            ? item.film_type.some(itemA => filmType.includes(itemA))
+            : true
         )
       ) {
         this.logger.errorSave("过滤完电影格式后匹配报价规则为空", {

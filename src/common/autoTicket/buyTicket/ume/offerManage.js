@@ -131,7 +131,9 @@ class getUmeOfferPrice extends BaseOfferPrice {
         if (filmType) {
           filmType = filmType.toUpperCase();
           matchRuleList = matchRuleList.filter(item =>
-            item.film_type?.some(itemA => filmType.includes(itemA))
+            item.film_type?.length
+              ? item.film_type.some(itemA => filmType.includes(itemA))
+              : true
           );
         }
       }
