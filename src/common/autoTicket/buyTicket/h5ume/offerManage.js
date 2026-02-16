@@ -822,17 +822,10 @@ class getH5UmeOfferPrice extends BaseOfferPrice {
         console.warn("获取真实会员价异常");
         this.logger.infoSave("获取真实会员价不存在");
       }
-      // 优先使用 getMovieInfoFromFilmName 返回的 displayPrice，如果不存在则使用 maxSeatPrice 计算
-      // maxSeatPrice 此时是总价（单位：分），需要除以 ticket_num 得到单张票价格（单位：分）
-      let displayPrice = movieInfoFromFilm?.displayPrice;
-      if (!displayPrice && maxSeatPrice) {
-        displayPrice = maxSeatPrice / ticket_num; // maxSeatPrice 是总价（分），除以票数得到单张票价格（分）
-      }
       return {
         ...targetShow,
         cinemaLinkId,
-        maxSeatPrice,
-        displayPrice
+        maxSeatPrice
       };
     } catch (error) {
       this.logger.errorSave("获取当前场次电影信息异常", {
