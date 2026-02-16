@@ -34,13 +34,11 @@ export default function useCinemaBaseFun() {
       // 2、获取机器对应的规则id,有的话直接返回
       const jiqiRes = await svApi.queryLinkPlatRuleId({
         plat_name,
-        app_name,
         cinema_group
       });
       console.log("jiqiRes", jiqiRes);
       logger.infoSave("获取平台规则ID返回", {
         plat_name,
-        app_name,
         cinema_group,
         jiqiRes
       });
@@ -48,12 +46,11 @@ export default function useCinemaBaseFun() {
       if (rule_id) return rule_id;
       logger.infoSave("机器没有关联的规则ID，准备创建规则", {
         plat_name,
-        app_name,
         cinema_group
       });
       // 3、机器没有的话调平台接口创建一个返回，并在机器那新插入一条记录
       const ruleAddres = await lierenApi.ruleAdd({
-        name: app_name + "_" + cinema_group, // 规则名称
+        name: "_" + cinema_group, // 规则名称
         min_price: 10, // 最低价
         max_price: 500, // 最高价
         sum_mode: 4, // 报价模式4 会员价
@@ -63,7 +60,6 @@ export default function useCinemaBaseFun() {
       });
       logger.infoSave("创建平台规则返回", {
         plat_name,
-        app_name,
         cinema_group,
         ruleAddres
       });
@@ -72,7 +68,6 @@ export default function useCinemaBaseFun() {
       if (rule_id) {
         svApi.addLinkPlatRuleId({
           plat_name,
-          app_name,
           cinema_group,
           plat_rule_id: rule_id
         });
