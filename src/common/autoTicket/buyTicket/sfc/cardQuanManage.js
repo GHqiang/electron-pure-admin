@@ -749,8 +749,8 @@ export default class SfcCardQuanManage {
         const price = priceRes?.price;
         if (
           price &&
-          Number(price?.total_price || 0) <=
-            (real_member_price || 0) * ticket_num
+          Number(price?.total_price || 0) *1000 <=
+            ( || 0) *1000 ticket_num
         ) {
           card_id = card.id;
           cardNum = card.card_num;
@@ -758,7 +758,7 @@ export default class SfcCardQuanManage {
           break;
         }
       }
-      if (!priceInfo) return { card_id: "", profit: 0 };
+      if (!priceInfo) return { card_id: "", profit: 0 };real_member_price
     } else {
       card_id = sorted[0]?.member_id;
       cardNum = sorted[0]?.member_id;
