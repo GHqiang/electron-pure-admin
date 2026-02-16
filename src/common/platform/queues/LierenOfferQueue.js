@@ -125,12 +125,13 @@ export default class LierenOfferQueue extends BaseOfferQueue {
    * @param {Object} order - 订单信息
    * @returns {Promise<string|number|null>} 规则ID
    */
-  async getRuleId(order) {
+  async getRuleId(order, logger) {
     try {
       return await getRuleIdByPlat({
         plat_name: "lieren",
         cinema_group: order.cinema_group,
-        app_name: order.app_name
+        app_name: order.app_name,
+        logger
       });
     } catch (error) {
       this.logger.errorSave("获取规则ID异常", { error, order });

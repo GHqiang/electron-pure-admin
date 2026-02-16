@@ -15,7 +15,12 @@ export default function useCinemaBaseFun() {
   } = platTokens();
 
   // 获取关联的平台规则id，没有就创建一个返回
-  const getRuleIdByPlat = async ({ plat_name, app_name, cinema_group }) => {
+  const getRuleIdByPlat = async ({
+    plat_name,
+    app_name,
+    cinema_group,
+    logger
+  }) => {
     if (!plat_name || !app_name || !cinema_group) return;
     try {
       // 1、拿cinema_group和平台的院线列表比对，如果不包含直接返回空
@@ -33,8 +38,19 @@ export default function useCinemaBaseFun() {
         cinema_group
       });
       console.log("jiqiRes", jiqiRes);
+      logger.infoSave("获取平台规则ID返回", {
+        plat_name,
+        app_name,
+        cinema_group,
+        jiqiRes
+      });
       let rule_id = jiqiRes?.data?.ruleInfo?.plat_rule_id;
       if (rule_id) return rule_id;
+      logger.infoSave("机器没有关联的规则ID，准备创建规则", {
+        plat_name,
+        app_name,
+        cinema_group
+      });
       // 3、机器没有的话调平台接口创建一个返回，并在机器那新插入一条记录
       const ruleAddres = await lierenApi.ruleAdd({
         name: app_name + "_" + cinema_group, // 规则名称
@@ -44,6 +60,12 @@ export default function useCinemaBaseFun() {
         price: 1, // 会员价+1
         cinema_group: cinema_group,
         state: 1 // 状态开启
+      });
+      logger.infoSave("创建平台规则返回", {
+        plat_name,
+        app_name,
+        cinema_group,
+        ruleAddres
       });
       console.log("ruleAddres", ruleAddres);
       rule_id = ruleAddres?.data?.rule_id;
@@ -56,7 +78,14 @@ export default function useCinemaBaseFun() {
         });
         return rule_id;
       }
-    } catch (error) {}
+    } catch (error) {
+      logger.infoSave("获取规则ID异常", {
+        error,
+        plat_name,
+        app_name,
+        cinema_group
+      });
+    }
   };
   window.getRuleIdByPlat = getRuleIdByPlat;
 

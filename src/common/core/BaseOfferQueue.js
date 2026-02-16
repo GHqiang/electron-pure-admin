@@ -229,7 +229,7 @@ export default class BaseOfferQueue {
       // 按平台配置决定是否需要获取规则ID
       let rule_id, member_price;
       if (this.platformAdapter.config.features.isNeedRuleId) {
-        rule_id = await this.getRuleId(order);
+        rule_id = await this.getRuleId(order, this.logger);
       }
       if (rule_id) {
         member_price = finalPrice - 1;
