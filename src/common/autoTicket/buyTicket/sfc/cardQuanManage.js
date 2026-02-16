@@ -749,8 +749,8 @@ export default class SfcCardQuanManage {
         const price = priceRes?.price;
         if (
           price &&
-          Number(price?.total_price || 0) *1000 <=
-            ( || 0) *1000 ticket_num
+          Number(price?.total_price || 0) * 1000 <=
+            ( || 0) * 1000 * ticket_num
         ) {
           card_id = card.id;
           cardNum = card.card_num;
