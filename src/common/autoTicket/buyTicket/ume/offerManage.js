@@ -415,10 +415,11 @@ class getUmeOfferPrice extends BaseOfferPrice {
     const real_cost_price = (pay_cost_price - rewardPrice).toFixed(2);
     // 预计利润（最终报价-真实成本）
     let expectProfit = (adjustedPrice - real_cost_price).toFixed(2);
-    if (
-      adjustedPrice <= real_cost_price &&
-      !TEST_NEW_PLAT_LIST.includes(this.plat_name)
-    ) {
+    // 使用放大 1000 倍后的整数差值做利润校验，避免浮点精度问题
+    const profitDiff =
+      Math.round(Number(adjustedPrice || 0) * 1000) -
+      Math.round(Number(real_cost_price || 0) * 1000);
+    if (profitDiff <= 0 && !TEST_NEW_PLAT_LIST.includes(this.plat_name)) {
       let str = `最终报价${adjustedPrice}低于真实成本${real_cost_price}`;
       this.logger.errorSave(str);
       return null;

@@ -433,11 +433,11 @@ class getFenghuangOfferPrice extends BaseOfferPrice {
     // 预计利润（最终报价-真实成本）
     const expectProfit = (adjustedPrice - real_cost_price).toFixed(2);
 
-    // 利润校验
-    if (
-      adjustedPrice <= real_cost_price &&
-      !TEST_NEW_PLAT_LIST.includes(this.plat_name)
-    ) {
+    // 利润校验：使用放大 1000 倍后的整数差值，避免浮点精度问题
+    const profitDiff =
+      Math.round(Number(adjustedPrice || 0) * 1000) -
+      Math.round(Number(real_cost_price || 0) * 1000);
+    if (profitDiff <= 0 && !TEST_NEW_PLAT_LIST.includes(this.plat_name)) {
       this.logger.errorSave(
         `最终报价${adjustedPrice}低于真实成本${real_cost_price}`
       );
