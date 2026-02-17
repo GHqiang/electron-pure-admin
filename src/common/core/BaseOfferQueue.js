@@ -168,9 +168,14 @@ export default class BaseOfferQueue {
     const minOfferHandleEndTime = dictStore.dictInfo.minOfferHandleEndTime;
     const limit = this._offerConcurrencyPerSeries ?? 2;
     const now = Date.now();
+    // 某些平台（如蚂蚁）offer_end_time 不准，通过 skipOfferEndTimeCheck 跳过过期判断
+    const skipCheck =
+      this.platformAdapter?.config?.features?.skipOfferEndTimeCheck === true;
     for (let i = 0; i < this.queue.length; i++) {
       const order = this.queue[i];
-      if (order.offer_end_time - now <= minOfferHandleEndTime) continue;
+      if (!skipCheck && order.offer_end_time - now <= minOfferHandleEndTime) {
+        continue;
+      }
       const sk = this.getSeriesKey(order);
       if ((this.runningCountBySeries.get(sk) || 0) >= limit) continue;
       return { order, index: i };
