@@ -1,7 +1,7 @@
 // 报价队列基类
 // 提取所有平台报价队列的公共逻辑
 
-import { MIN_ALLOW_OFFER_SJC, GET_APP_TYPE_LIST } from "@/common/constant.js";
+import { GET_APP_TYPE_LIST } from "@/common/constant.js";
 import Logger from "../logger.js";
 import getOfferPriceFun from "../autoOffer/commonOfferHandle.js";
 import { dynamicPrice, getCurrentTime } from "@/utils/utils.js";
@@ -30,6 +30,8 @@ export default class BaseOfferQueue {
     this.isRunning = false;
     this.isOfferRunning = false;
     this.handledOrders = new Map();
+    /** 按系列统计当前正在执行的订单数，用于同系列并发控制 */
+    this.runningCountBySeries = new Map();
   }
 
   /**
@@ -66,6 +68,28 @@ export default class BaseOfferQueue {
       console.error("获取获取间隔异常", error);
       return 5;
     }
+  }
+
+  /**
+   * 获取订单所属系列 key，用于按系列控制并发（不同系列并行，同系列限并发）
+   * 子类可按需重写，例如改为 app_type_code
+   * @param {Object} order - 订单信息
+   * @returns {string} 系列标识
+   */
+  getSeriesKey(order) {
+    const seriesKey = dictStore.dictInfo.offerConcurrencySeriesKey;
+    if (seriesKey) {
+      return order[seriesKey] || "default";
+    }
+    return order?.app_name ?? "default";
+  }
+
+  /**
+   * 获取每系列并发数上限
+   * @returns {Promise<number>}
+   */
+  async getOfferConcurrencyPerSeries() {
+    return dictStore.dictInfo.offerConcurrencyPerSeries || 2; // 默认每系列限2个订单并发报价
   }
 
   /**
@@ -135,20 +159,60 @@ export default class BaseOfferQueue {
   }
 
   /**
-   * 开始处理队列（通用逻辑）
+   * 从队列中找第一个可执行的订单：未过期且其系列当前运行数未达上限
+   * @returns {{ order: Object, index: number } | null}
+   */
+  findNextOrderToRun() {
+    const minOfferHandleEndTime = dictStore.dictInfo.minOfferHandleEndTime;
+    const limit = this._offerConcurrencyPerSeries ?? 2;
+    const now = Date.now();
+    for (let i = 0; i < this.queue.length; i++) {
+      const order = this.queue[i];
+      if (order.offer_end_time - now <= minOfferHandleEndTime) continue;
+      const sk = this.getSeriesKey(order);
+      if ((this.runningCountBySeries.get(sk) || 0) >= limit) continue;
+      return { order, index: i };
+    }
+    return null;
+  }
+
+  /**
+   * 开始处理队列（按系列有限并发：不同系列并行，同系列限并发）
    */
   async startProcessingQueue() {
     this.isOfferRunning = true;
+    this.runningCountBySeries.clear();
+    this._offerConcurrencyPerSeries = await this.getOfferConcurrencyPerSeries();
 
-    while (this.queue.length > 0 && this.isRunning) {
-      const order = this.queue.shift();
-
-      if (order) {
-        await this.orderHandle(order);
+    const tryStartOne = () => {
+      while (this.isRunning) {
+        const next = this.findNextOrderToRun();
+        if (!next) break;
+        const { order, index } = next;
+        this.queue.splice(index, 1);
+        const sk = this.getSeriesKey(order);
+        this.runningCountBySeries.set(
+          sk,
+          (this.runningCountBySeries.get(sk) || 0) + 1
+        );
+        const p = this.orderHandle(order);
+        p.finally(() => {
+          this.runningCountBySeries.set(
+            sk,
+            Math.max(0, (this.runningCountBySeries.get(sk) || 0) - 1)
+          );
+          tryStartOne();
+        });
       }
-    }
+      const allIdle = [...this.runningCountBySeries.values()].every(
+        c => c === 0
+      );
+      if (this.queue.length === 0 && allIdle) {
+        this.isOfferRunning = false;
+      }
+    };
 
-    this.isOfferRunning = false;
+    tryStartOne();
   }
 
   /**
@@ -159,15 +223,15 @@ export default class BaseOfferQueue {
   async orderHandle(order) {
     try {
       if (this.isRunning) {
-        this.logger = new Logger({ logType: 1 });
-        this.logger.init(order);
+        const logger = new Logger({ logType: 1 });
+        logger.init(order);
         let offerResult;
-        let minOfferHandleEndTime = dictStore.dictInfo.minOfferHandleEndTime;
+        const minOfferHandleEndTime = dictStore.dictInfo.minOfferHandleEndTime;
         if (
           order.offer_end_time - new Date().getTime() <=
           minOfferHandleEndTime
         ) {
-          this.logger.errorSave(
+          logger.errorSave(
             `订单报价截止时间小于等于${minOfferHandleEndTime}毫秒，跳过报价`,
             {
               offer_end_time: order.offer_end_time,
@@ -175,15 +239,16 @@ export default class BaseOfferQueue {
             }
           );
         } else {
-          this.logger.infoSave("开始处理订单", { order });
+          logger.infoSave("开始处理订单", { order });
           offerResult = await this.singleOffer({
             order,
-            offerList: [] // 动态调价暂时不用先传空
+            offerList: [], // 动态调价暂时不用先传空
+            logger
           });
         }
 
-        await this.addOrderHandleRecord(order, offerResult);
-        this.logger.logUpload();
+        await this.addOrderHandleRecord(order, offerResult, logger);
+        logger.logUpload();
         return offerResult;
       } else {
         console.warn("订单报价队列已停止");
@@ -200,7 +265,8 @@ export default class BaseOfferQueue {
    * @param {Array} params.offerList - 报价列表（可选）
    * @returns {Promise<Object>} 报价结果
    */
-  async singleOffer({ order, offerList = [] }) {
+  async singleOffer({ order, offerList = [], logger }) {
+    const log = logger ?? this.logger;
     try {
       // 获取报价价格
       const offerExample = getOfferPriceFun({
@@ -236,18 +302,17 @@ export default class BaseOfferQueue {
       }
 
       // 动态调价处理
-
       const finalPrice = await dynamicPrice({
         order,
         offerRule,
-        logger: this.logger
+        logger: log
       });
       offerRule.offer_end_amount = finalPrice;
 
       // 按平台配置决定是否需要获取规则ID
       let rule_id, member_price;
       if (this.platformAdapter.config.features.isNeedRuleId) {
-        rule_id = await this.getRuleId(order, this.logger);
+        rule_id = await this.getRuleId(order, log);
       }
       if (rule_id) {
         member_price = finalPrice - 1;
@@ -262,16 +327,16 @@ export default class BaseOfferQueue {
         offerRule
       });
       const res = await this.platformAdapter.submitOffer(offerParams, {
-        logger: this.logger
+        logger: log
       });
       // 赋值报价返回的待确认订单id，以便出票时好反推出来报价订单号
       if (order.plat_name === "yinghuasuan" && res?.data?.quote_id) {
         order.id = res?.data?.quote_id;
       }
-      this.logger.infoSave("提交报价结果", { res, order });
+      log.infoSave("提交报价结果", { res, order });
       return { res, offerRule };
     } catch (error) {
-      this.logger.errorSave("单个报价异常", { error, order });
+      log.errorSave("单个报价异常", { error, order });
     }
   }
 
@@ -288,12 +353,14 @@ export default class BaseOfferQueue {
    * 添加订单处理记录
    * @param {Object} order - 订单信息
    * @param {Object} offerResult - 报价结果
+   * @param {Object} logger - 该订单的 logger 实例（并发安全）
    * @returns {Promise<void>}
    */
-  async addOrderHandleRecord(order, offerResult) {
+  async addOrderHandleRecord(order, offerResult, logger) {
+    const log = logger ?? this.logger;
     try {
       // offerResult: { res, offerRule } || { offerRule } || undefined
-      const errInfoObj = this.logger.getLastErrMsgAndInfo();
+      const errInfoObj = log.getLastErrMsgAndInfo();
 
       const serOrderInfo = {
         plat_name: this.platName,
@@ -346,7 +413,7 @@ export default class BaseOfferQueue {
       }
     } catch (error) {
       console.error("添加订单处理记录异常", error);
-      this.logger.errorSave("添加订单处理记录异常", { error });
+      log.errorSave("添加订单处理记录异常", { error });
     }
   }
 
