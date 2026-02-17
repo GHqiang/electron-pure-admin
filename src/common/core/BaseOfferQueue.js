@@ -107,16 +107,18 @@ export default class BaseOfferQueue {
    * @param {Object} oldOrder - 旧订单信息（可选）
    */
   handleNewOrder(item, oldOrder = null) {
-    // 增加报价截止时间判断，小于等于1秒则不处理（部分平台如蚂蚁旧版不做此判断，通过 skipOfferEndTimeCheck 跳过）
+    // 增加报价截止时间判断，小于等于阈值则不处理
+    // 部分平台（如蚂蚁旧版）通过 skipOfferEndTimeCheck 跳过该判断，保持兼容
     const skipCheck =
       this.platformAdapter?.config?.features?.skipOfferEndTimeCheck === true;
-    if (
-      !skipCheck &&
-      item.offer_end_time &&
-      item.offer_end_time - new Date().getTime() <=
-        dictStore.dictInfo.minOfferQueueEndTime
-    ) {
-      return;
+    if (!skipCheck) {
+      if (
+        item.offer_end_time &&
+        item.offer_end_time - new Date().getTime() <=
+          dictStore.dictInfo.minOfferQueueEndTime
+      ) {
+        return;
+      }
     }
 
     console.warn("新的待报价订单", item);
@@ -229,7 +231,8 @@ export default class BaseOfferQueue {
         const minOfferHandleEndTime = dictStore.dictInfo.minOfferHandleEndTime;
         if (
           order.offer_end_time - new Date().getTime() <=
-          minOfferHandleEndTime
+            minOfferHandleEndTime &&
+          order.plat_name !== "mayi"
         ) {
           logger.errorSave(
             `订单报价截止时间小于等于${minOfferHandleEndTime}毫秒，跳过报价`,
