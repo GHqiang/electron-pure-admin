@@ -159,10 +159,19 @@ export default class BaseOfferQueue {
       if (this.isRunning) {
         this.logger = new Logger({ logType: 1 });
         this.logger.init(order);
-        const offerResult = await this.singleOffer({
-          order,
-          offerList: [] // 动态调价暂时不用先传空
-        });
+        let offerResult;
+        if (order.offer_end_time - new Date().getTime() <= 3 * 1000) {
+          this.logger.errorSave("订单报价截止时间小于等于3秒，跳过报价", {
+            offer_end_time: order.offer_end_time,
+            current_time: new Date().getTime()
+          });
+        } else {
+          this.logger.infoSave("开始处理订单", { order });
+          offerResult = await this.singleOffer({
+            order,
+            offerList: [] // 动态调价暂时不用先传空
+          });
+        }
 
         await this.addOrderHandleRecord(order, offerResult);
         this.logger.logUpload();
