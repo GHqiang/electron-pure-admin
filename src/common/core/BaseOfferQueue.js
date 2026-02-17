@@ -7,7 +7,8 @@ import getOfferPriceFun from "../autoOffer/commonOfferHandle.js";
 import { dynamicPrice, getCurrentTime } from "@/utils/utils.js";
 import svApi from "@/api/sv-api.js";
 import { platTokens } from "@/store/platTokens.js";
-
+import { dictTable } from "@/store/dictTable";
+const dictStore = dictTable();
 const tokens = platTokens();
 
 /**
@@ -88,7 +89,8 @@ export default class BaseOfferQueue {
     if (
       !skipCheck &&
       item.offer_end_time &&
-      item.offer_end_time - new Date().getTime() <= MIN_ALLOW_OFFER_SJC
+      item.offer_end_time - new Date().getTime() <=
+        dictStore.dictInfo.minOfferQueueEndTime
     ) {
       return;
     }
@@ -160,11 +162,18 @@ export default class BaseOfferQueue {
         this.logger = new Logger({ logType: 1 });
         this.logger.init(order);
         let offerResult;
-        if (order.offer_end_time - new Date().getTime() <= 3 * 1000) {
-          this.logger.errorSave("订单报价截止时间小于等于3秒，跳过报价", {
-            offer_end_time: order.offer_end_time,
-            current_time: new Date().getTime()
-          });
+        let minOfferHandleEndTime = dictStore.dictInfo.minOfferHandleEndTime;
+        if (
+          order.offer_end_time - new Date().getTime() <=
+          minOfferHandleEndTime
+        ) {
+          this.logger.errorSave(
+            `订单报价截止时间小于等于${minOfferHandleEndTime}毫秒，跳过报价`,
+            {
+              offer_end_time: order.offer_end_time,
+              current_time: new Date().getTime()
+            }
+          );
         } else {
           this.logger.infoSave("开始处理订单", { order });
           offerResult = await this.singleOffer({
