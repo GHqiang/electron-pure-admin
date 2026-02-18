@@ -214,7 +214,16 @@ export default class BaseOfferQueue {
       const allIdle = [...this.runningCountBySeries.values()].every(
         c => c === 0
       );
-      if (this.queue.length === 0 && allIdle) {
+      // 当所有系列都空闲时，无论当前队列中是否还有「暂时不可执行」的订单，
+      // 都认为本轮调度已经结束，释放 isOfferRunning 标记，
+      // 以便后续新订单到来时可以重新触发队列启动，避免队列进入“假运行”阻塞状态。
+      if (allIdle) {
+        if (this.queue.length > 0) {
+          console.warn(
+            "当前无执行中的报价任务，但队列中仍有未满足执行条件的订单，等待下一轮调度",
+            this.queue
+          );
+        }
         this.isOfferRunning = false;
       }
     };
@@ -234,6 +243,8 @@ export default class BaseOfferQueue {
         logger.init(order);
         let offerResult;
         const minOfferHandleEndTime = dictStore.dictInfo.minOfferHandleEndTime;
+        const offerHandleTimeout =
+          dictStore.dictInfo.offerHandleTimeout || 15 * 1000;
         if (
           order.offer_end_time - new Date().getTime() <=
             minOfferHandleEndTime &&
@@ -248,11 +259,27 @@ export default class BaseOfferQueue {
           );
         } else {
           logger.infoSave("开始处理订单", { order });
-          offerResult = await this.singleOffer({
-            order,
-            offerList: [], // 动态调价暂时不用先传空
-            logger
-          });
+          // 为防止下游接口异常导致 Promise 长时间不结束，这里增加整体超时保护，避免队列被单个订单永久阻塞
+          offerResult = await Promise.race([
+            this.singleOffer({
+              order,
+              offerList: [], // 动态调价暂时不用先传空
+              logger
+            }),
+            new Promise((resolve, reject) =>
+              setTimeout(() => {
+                logger.infoSave(
+                  `订单报价处理超时，超过${offerHandleTimeout}ms 未完成`
+                );
+                resolve();
+                // reject(
+                //   new Error(
+                //     `订单报价处理超时，超过${offerHandleTimeout}ms 未完成`
+                //   )
+                // );
+              }, offerHandleTimeout)
+            )
+          ]);
         }
 
         await this.addOrderHandleRecord(order, offerResult, logger);

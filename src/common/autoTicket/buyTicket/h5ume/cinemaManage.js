@@ -79,8 +79,10 @@ export default class H5UmeCinemaManage {
       this.logger.info("获取影院放映列表参数", params);
       const res = await this.appApi.getMoviePlayInfo(params);
       let fimlList = res?.bizValue || [];
+      console.log("获取影院放映列表返回", res);
       return fimlList;
     } catch (error) {
+      console.log("获取影院放映列表返回异常", error);
       this.logger.errorSave("获取电影放映列表异常", {
         error: formatErrInfo(error)
       });
