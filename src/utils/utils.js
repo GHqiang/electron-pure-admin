@@ -2231,6 +2231,37 @@ window.subDecimal = subDecimal;
 window.mulDecimal = mulDecimal;
 window.divDecimal = divDecimal;
 
+/**
+ * 金额比较工具：按指定精度放大为整数后比较，返回 -1/0/1
+ * @param {number|string} a
+ * @param {number|string} b
+ * @param {number} [scale=3] - 小数精度，默认千分位
+ * @returns {number} -1: a<b, 0: a==b, 1: a>b
+ */
+const compareDecimal = (a, b, scale = 3) => {
+  const factor = Decimal(10).pow(scale);
+  const ia = Decimal(a || 0).mul(factor).toNearest(1).toNumber();
+  const ib = Decimal(b || 0).mul(factor).toNearest(1).toNumber();
+  if (ia < ib) return -1;
+  if (ia > ib) return 1;
+  return 0;
+};
+
+/**
+ * 金额四舍五入到指定小数位
+ * 仅用于最终展示/存库，内部计算尽量使用原始数值
+ * @param {number|string} value
+ * @param {number} [scale=2]
+ * @returns {number}
+ */
+const roundPrice = (value, scale = 2) =>
+  Decimal(value || 0)
+    .toDecimalPlaces(scale)
+    .toNumber();
+
+window.compareDecimal = compareDecimal;
+window.roundPrice = roundPrice;
+
 // 连续加法
 const multipleAddDecimal = (...numbers) => {
   // 使用reduce进行累加，注意：初始值为Decimal(0)
