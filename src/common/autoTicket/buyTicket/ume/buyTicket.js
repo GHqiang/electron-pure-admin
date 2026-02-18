@@ -1076,6 +1076,14 @@ export default class UmeBuyTicket extends BaseBuyTicket {
         });
       }
       if (offerRule.offer_type === "1" && useQuan?.length) {
+        this.logger.infoSave("UME 出票成功，准备更新券库存", {
+          ticket_num,
+          quan_stock: quanStock - ticket_num,
+          quan_flag: offerRule.quan_flag,
+          quan_value: offerRule.quan_value,
+          app_name: appFlag,
+          phone: this.curPhone
+        });
         // 更新券库存
         this.cardQuanManage.updateQuanStock({
           quan_stock: quanStock - ticket_num,

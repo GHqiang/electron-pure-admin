@@ -1008,6 +1008,7 @@ export default class SfcCardQuanManage {
    * 更新券库存（出票用）
    */
   async updateQuanStock(_params) {
+    this.logger.infoSave("SFC 更新券库存", _params);
     await updateQuanStockCommon({
       ..._params,
       logger: this.logger
