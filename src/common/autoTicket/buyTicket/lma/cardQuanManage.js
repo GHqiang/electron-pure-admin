@@ -18,7 +18,8 @@ import {
   getCurrentDay,
   isDateInCurrentMonth,
   couponInfoSpecial,
-  getCinemaLoginInfoList
+  getCinemaLoginInfoList,
+  mockDelay
 } from "@/utils/utils";
 import { APP_API_OBJ } from "@/common/index";
 import { GET_APP_INFO, NO_FEE_PLAT_LIST } from "@/common/constant";
@@ -889,10 +890,9 @@ export default class LmaCardQuanManage {
       let bandQuanList = [];
       for (const quan of quanList) {
         targetLogger.info(`正在尝试绑定券 ${quan.coupon_num}...`);
-        const couponNumRes = await this.appApi.bandQuan({
-          lmaToken,
-          code: quan.coupon_num,
-          channel_type: "2"
+        const couponNumRes = await this.bandQuan({
+          coupon_num: quan.coupon_num,
+          lmaToken
         });
         const coupon_num = couponNumRes?.coupon_num;
         targetLogger.infoSave(`${conPrev}绑定券返回`, couponNumRes);
@@ -929,6 +929,51 @@ export default class LmaCardQuanManage {
     }
   }
 
+  // 绑定券
+  async bandQuan({ coupon_num, lmaToken }) {
+    // 由于要用二线城市影院且40券通用，故写死
+    let params = {
+      lmaToken,
+      code: coupon_num,
+      channel_type: "2"
+    };
+    try {
+      await mockDelay(1);
+      const res = await this.appApi.bandQuan(params);
+      // console.log("res", res);
+      // {
+      //   "data":{
+      //     "status": "0",
+      //     "color":"6",
+      //     "voucher_name":"5元影慕满减券",
+      //     "code":"9999980193913910",
+      //     "code_title": "NO. 9999 980l 9391 3910",
+      //     "expire time": "有效期至 2024-10-31",
+      //   },
+      //   "status": true,
+      //   "code":"0"
+      //   "alert":{},
+      //   "msg":"添加成功!",
+      //   "time":"2024-10-24 19:04:44"
+      // }
+      if (res.data?.code && res.msg?.includes("添加成功")) {
+        return {
+          coupon_num
+        };
+      } else {
+        console.error("绑定新券异常", res);
+        return {
+          errMsg: "绑定新券异常:" + JSON.stringify(res)
+        };
+      }
+    } catch (error) {
+      console.error("绑定新券异常", error);
+      return {
+        error,
+        errMsg: "绑定新券异常:" + JSON.stringify(params)
+      };
+    }
+  }
   // 更新月使用量限制
   async updateMonthlyLimit(order, card_id) {
     try {
