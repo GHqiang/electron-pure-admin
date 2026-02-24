@@ -120,7 +120,12 @@ export default function useCinemaBaseFun() {
         // 卢米埃：返回即全量影院（lma-cinema.js），每条自带 city_id/cinema_id，不再用循环城市覆盖
         list = list.map(itemA =>
           app_name === "lma"
-            ? { ...itemA }
+            ? {
+                ...itemA,
+                city_name:
+                  cityList.find(city => city.city_id === itemA.city_id)
+                    ?.city_name || ""
+              }
             : {
                 ...itemA,
                 city_name: item.city_name,
