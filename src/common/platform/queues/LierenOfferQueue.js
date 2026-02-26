@@ -130,6 +130,7 @@ export default class LierenOfferQueue extends BaseOfferQueue {
       return await getRuleIdByPlat({
         plat_name: "lieren",
         cinema_group: order.cinema_group,
+        cinema_code: order.cinema_code,
         app_name: order.app_name,
         logger
       });

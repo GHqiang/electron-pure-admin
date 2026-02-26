@@ -19,6 +19,7 @@ export default function useCinemaBaseFun() {
     plat_name,
     app_name,
     cinema_group,
+    cinema_code,
     logger
   }) => {
     if (!plat_name || !app_name || !cinema_group) return;
@@ -31,36 +32,44 @@ export default function useCinemaBaseFun() {
         item => item.name
       );
       if (!platCinemaGroupNameList.includes(cinema_group)) return;
+      let params = { plat_name };
+      const isZaPai = ["其它自动", "杂牌"].includes(cinema_group);
+      if (isZaPai) {
+        params.cinema_code = cinema_code;
+      } else {
+        params.cinema_group = cinema_group;
+      }
       // 2、获取机器对应的规则id,有的话直接返回
-      const jiqiRes = await svApi.queryLinkPlatRuleId({
-        plat_name,
-        cinema_group
-      });
+      const jiqiRes = await svApi.queryLinkPlatRuleId(params);
       console.log("jiqiRes", jiqiRes);
       logger.infoSave("获取平台规则ID返回", {
         plat_name,
         cinema_group,
+        cinema_code,
         jiqiRes
       });
       let rule_id = jiqiRes?.data?.ruleInfo?.plat_rule_id;
       if (rule_id) return rule_id;
       logger.infoSave("机器没有关联的规则ID，准备创建规则", {
         plat_name,
-        cinema_group
+        cinema_group,
+        cinema_code
       });
       // 3、机器没有的话调平台接口创建一个返回，并在机器那新插入一条记录
       const ruleAddres = await lierenApi.ruleAdd({
-        name: "_" + cinema_group, // 规则名称
+        name: "_" + (isZaPai ? cinema_code : cinema_group), // 规则名称
         min_price: 10, // 最低价
         max_price: 500, // 最高价
         sum_mode: 4, // 报价模式4 会员价
         price: 1, // 会员价+1
-        cinema_group: cinema_group,
+        cinema_group: isZaPai ? undefined : cinema_group,
+        cinema_code: isZaPai ? cinema_code : undefined,
         state: 1 // 状态开启
       });
       logger.infoSave("创建平台规则返回", {
         plat_name,
         cinema_group,
+        cinema_code,
         ruleAddres
       });
       console.log("ruleAddres", ruleAddres);
@@ -69,6 +78,7 @@ export default function useCinemaBaseFun() {
         svApi.addLinkPlatRuleId({
           plat_name,
           cinema_group,
+          cinema_code,
           plat_rule_id: rule_id
         });
         return rule_id;
@@ -78,7 +88,8 @@ export default function useCinemaBaseFun() {
         error,
         plat_name,
         app_name,
-        cinema_group
+        cinema_group,
+        cinema_code
       });
     }
   };
