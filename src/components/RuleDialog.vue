@@ -104,6 +104,7 @@
             filterable
             multiple
             clearable
+            @change="includeCinemaChange"
             placeholder="包含影院"
           >
             <el-option
@@ -126,6 +127,7 @@
             filterable
             multiple
             clearable
+            @change="excludeCinemaChange"
             placeholder="排除影院"
           >
             <el-option
@@ -556,6 +558,8 @@ let formData = reactive({
   excludeCityNames: [], // 排除城市
   includeCinemaNames: [], // 包含影院
   excludeCinemaNames: [], // 排除影院
+  includeCinemaCodes: "", // 包含影院对应的 app_cinema_code 集合,逗号分隔
+  excludeCinemaCodes: "", // 排除影院对应的 app_cinema_code 集合,逗号分隔
   includeHallNames: [], // 包含影厅
   excludeHallNames: [], // 排除影厅
   includeFilmNames: [], // 包含影片
@@ -649,6 +653,8 @@ const resetForm = el => {
   formData.excludeCityNames = []; // 排除城市
   formData.includeCinemaNames = []; // 包含影院
   formData.excludeCinemaNames = []; // 排除影院
+  formData.includeCinemaCodes = ""; // 包含影院code
+  formData.excludeCinemaCodes = ""; // 排除影院code
   formData.includeHallNames = []; // 包含影厅
   formData.excludeHallNames = []; // 排除影厅
   formData.includeFilmNames = []; // 包含影片
@@ -675,6 +681,58 @@ const resetForm = el => {
   formData.autoUseQuanStatus = "2"; // 自动用券状态 1-开启 2-关闭
   formData.autoUseQuanPrice = ""; // 自动用券价格
   formData.auto_quan_value = ""; // 自动用券标识
+};
+
+// 根据当前选中的影院名称，同步对应的 app_cinema_code 集合
+const syncCinemaCodesByNames = () => {
+  try {
+    const app_name = formData.shadowLineName;
+    if (!app_name) {
+      formData.includeCinemaCodes = "";
+      formData.excludeCinemaCodes = "";
+      return;
+    }
+    const appInfo = GET_APP_INFO(app_name);
+    const app_type_code = appInfo?.app_type_code;
+    const list = cinemaList.value || [];
+
+    // 与影院映射维护列表保持一致的 app_cinema_code 生成规则
+    const buildAppCinemaCode = row => {
+      if (!row) return "";
+      // ume / 辰星等有独立 cinema_code 的系列，直接用 cinema_code
+      if (["ume_applet", "chenxing_applet"].includes(app_type_code)) {
+        return row.cinema_code != null ? String(row.cinema_code) : "";
+      }
+      // 其他系列使用 city_id + "_" + cinema_id 组合
+      const cityId =
+        row.city_id != null && row.city_id !== undefined
+          ? String(row.city_id)
+          : "";
+      const cinemaId =
+        row.cinema_id != null && row.cinema_id !== undefined
+          ? String(row.cinema_id)
+          : "";
+      return cityId && cinemaId ? `${cityId}_${cinemaId}` : "";
+    };
+
+    const getCodesByNames = names => {
+      if (!names || !names.length) return "";
+      const codeSet = new Set();
+      names.forEach(name => {
+        const rows = list.filter(row => row.cinema_name === name);
+        rows.forEach(row => {
+          const code = buildAppCinemaCode(row);
+          if (code) codeSet.add(code);
+        });
+      });
+      return Array.from(codeSet).join(",");
+    };
+
+    formData.includeCinemaCodes = getCodesByNames(formData.includeCinemaNames);
+    formData.excludeCinemaCodes = getCodesByNames(formData.excludeCinemaNames);
+  } catch (error) {
+    console.warn("同步影院 app_cinema_code 集合异常", error);
+  }
 };
 
 // 影线改变
@@ -744,6 +802,8 @@ const open = async ruleInfo => {
         formData.excludeCityNames = formInfo.excludeCityNames;
         formData.includeCinemaNames = formInfo.includeCinemaNames;
         formData.excludeCinemaNames = formInfo.excludeCinemaNames;
+        formData.includeCinemaCodes = formInfo.includeCinemaCodes || "";
+        formData.excludeCinemaCodes = formInfo.excludeCinemaCodes || "";
         formData.includeHallNames = formInfo.includeHallNames;
         formData.excludeHallNames = formInfo.excludeHallNames;
         formData.includeFilmNames = formInfo.includeFilmNames;
@@ -771,6 +831,10 @@ const open = async ruleInfo => {
       }
       const quanTypeList = await getQuanTypeList(app_name);
       quanType.value = quanTypeList;
+      // 兼容老数据：如 code 集合为空，则根据名称尝试同步一份
+      if (!formData.includeCinemaCodes || !formData.excludeCinemaCodes) {
+        syncCinemaCodesByNames();
+      }
     }
     loading.close();
     showSfcDialog.value = true;
@@ -815,6 +879,8 @@ const offerTypeChange = val => {
 const saveRule = async () => {
   ruleFormRef.value.validate(async valid => {
     if (valid) {
+      // 保存前根据当前影院名称同步一份 app_cinema_code 集合，避免只存名称
+      syncCinemaCodesByNames();
       // 提交逻辑
       console.log("表单提交的数据:", formData);
       ElMessage.success("必填数据校验成功！");
@@ -872,6 +938,26 @@ const excludeCityChange = value => {
     // }
   } catch (error) {
     console.warn("排查城市改变处理异常", error);
+  }
+};
+
+const includeCinemaChange = value => {
+  try {
+    console.log("包含影院改变", value);
+    syncCinemaCodesByNames();
+    console.log("表单提交的数据:", formData.value);
+  } catch (error) {
+    console.warn("包含影院改变处理异常", error);
+  }
+};
+
+const excludeCinemaChange = value => {
+  try {
+    console.log("排除影院改变", value);
+    syncCinemaCodesByNames();
+    console.log("表单提交的数据:", formData.value);
+  } catch (error) {
+    console.warn("排除影院改变处理异常", error);
   }
 };
 

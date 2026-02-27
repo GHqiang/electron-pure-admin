@@ -1227,19 +1227,67 @@ const offerRuleMatch = order => {
       }
     });
     console.log("匹配城市后的规则列表", cityRuleList);
-    // 4、匹配影院
+    // 4、匹配影院（优先按 app_cinema_code 匹配，名称兜底兼容旧规则）
     let cinemaRuleList = cityRuleList.filter(item => {
-      if (!item.includeCinemaNames.length && !item.excludeCinemaNames.length) {
+      const hasNameInclude =
+        item.includeCinemaNames && item.includeCinemaNames.length;
+      const hasNameExclude =
+        item.excludeCinemaNames && item.excludeCinemaNames.length;
+      const hasCodeInclude = item.includeCinemaCodes;
+      const hasCodeExclude = item.excludeCinemaCodes;
+
+      // 没有任何影院限制时直接通过
+      if (
+        !hasNameInclude &&
+        !hasNameExclude &&
+        !hasCodeInclude &&
+        !hasCodeExclude
+      ) {
         return true;
       }
-      if (item.includeCinemaNames.length) {
+
+      // 1、优先按 app_cinema_code 匹配，避免名称变更导致失败
+      try {
+        const matchInfo = cinemaCodeMatchObj.getCinemaMatchInfo(
+          cinema_code,
+          shadowLineName
+        );
+        console.warn("匹配影院规则", matchInfo);
+        const app_cinema_code = matchInfo?.app_cinema_code;
+        if (app_cinema_code && (hasCodeInclude || hasCodeExclude)) {
+          console.warn("准备按影院code匹配规则");
+          if (hasCodeInclude) {
+            console.warn(
+              "按影院code包含规则",
+              item.includeCinemaCodes,
+              app_cinema_code
+            );
+            return item.includeCinemaCodes.includes(app_cinema_code);
+          }
+          if (hasCodeExclude) {
+            console.warn(
+              "按影院code排除规则",
+              item.excludeCinemaCodes,
+              app_cinema_code
+            );
+            return !item.excludeCinemaCodes.includes(app_cinema_code);
+          }
+        }
+      } catch (err) {
+        console.warn("按 app_cinema_code 匹配影院规则异常", err);
+      }
+
+      // 2、兜底：按影院名称匹配（旧规则兼容）
+      if (hasNameInclude) {
+        console.warn("按影院名称匹配规则，可能存在风险");
         return cinemaMatchHandle({
           app_name: shadowLineName,
           plat_cinema_code: cinema_code,
           cinema_name_list: item.includeCinemaNames
         });
       }
-      if (item.excludeCinemaNames.length) {
+      if (hasNameExclude) {
+        console.warn("按影院名称匹配规则，可能存在风险");
         return !cinemaMatchHandle({
           app_name: shadowLineName,
           plat_cinema_code: cinema_code,
@@ -2240,8 +2288,14 @@ window.divDecimal = divDecimal;
  */
 const compareDecimal = (a, b, scale = 3) => {
   const factor = Decimal(10).pow(scale);
-  const ia = Decimal(a || 0).mul(factor).toNearest(1).toNumber();
-  const ib = Decimal(b || 0).mul(factor).toNearest(1).toNumber();
+  const ia = Decimal(a || 0)
+    .mul(factor)
+    .toNearest(1)
+    .toNumber();
+  const ib = Decimal(b || 0)
+    .mul(factor)
+    .toNearest(1)
+    .toNumber();
   if (ia < ib) return -1;
   if (ia > ib) return 1;
   return 0;

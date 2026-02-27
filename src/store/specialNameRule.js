@@ -79,17 +79,17 @@ export const useCinemaCodeMatchList = defineStore("cinemaCodeMatchList", {
           item.plat_cinema_code === plat_cinema_code &&
           item.app_name === app_name
       );
-    },
-    // 获取影院映射信息根据名称
-    getCinemaMatchInfoByName(app_cinema_name, app_name) {
-      return this.items.find(
-        item =>
-          app_cinema_name &&
-          app_name &&
-          item.app_cinema_name === app_cinema_name &&
-          item.app_name === app_name
-      );
     }
+    // 获取影院映射信息根据名称
+    // getCinemaMatchInfoByName(app_cinema_name, app_name) {
+    //   return this.items.find(
+    //     item =>
+    //       app_cinema_name &&
+    //       app_name &&
+    //       item.app_cinema_name === app_cinema_name &&
+    //       item.app_name === app_name
+    //   );
+    // }
   },
   getters: {
     // 可以添加getters以方便在组件中使用过滤、排序等逻辑
