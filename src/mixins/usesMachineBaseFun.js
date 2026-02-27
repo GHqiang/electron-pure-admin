@@ -4,7 +4,8 @@ import { computed } from "vue";
 import { getCurrentTime, sendWxPusherMessage } from "@/utils/utils";
 import { GET_APP_LIST, GET_UME_LIST, GET_APP_INFO } from "@/common/constant";
 import { platTokens } from "@/store/platTokens";
-
+import { dictTable } from "@/store/dictTable";
+const dictStore = dictTable();
 // 机器相关方法接口
 export default function useCinemaBaseFun() {
   const APP_LIST = computed(() => GET_APP_LIST());
@@ -33,7 +34,9 @@ export default function useCinemaBaseFun() {
       );
       if (!platCinemaGroupNameList.includes(cinema_group)) return;
       let params = { plat_name };
-      const isZaPai = ["其它自动", "杂牌"].includes(cinema_group);
+      const isZaPai = dictStore.dictInfo.lierenZaPaiGroup
+        ?.split(",")
+        .includes(cinema_group);
       if (isZaPai) {
         params.cinema_code = cinema_code;
       } else {
