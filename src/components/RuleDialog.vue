@@ -519,6 +519,7 @@ import {
   GET_APP_INFO,
   GET_APP_TYPE_LIST
 } from "@/common/constant";
+import { cinemNameSpecial } from "@/utils/utils";
 
 const APP_LIST = computed(() => GET_APP_LIST());
 const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
@@ -740,8 +741,11 @@ const syncCinemaCodesByNames = () => {
     const getCodesByNames = names => {
       if (!names || !names.length) return "";
       const codeSet = new Set();
+      // console.log("syncCinemaCodesByNames names", names, list);
       names.forEach(name => {
-        const rows = list.filter(row => row.cinema_name === name);
+        const rows = list.filter(
+          row => cinemNameSpecial(row.cinema_name) === cinemNameSpecial(name)
+        );
         rows.forEach(row => {
           const code = buildAppCinemaCode(row);
           if (code) codeSet.add(code);
