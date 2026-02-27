@@ -17,20 +17,16 @@
         label-width="120px"
       >
         <el-form-item label="影线名称" prop="app_name">
-          <el-select
+          <el-cascader
             v-model="formData.app_name"
+            :options="appCascaderOptions"
+            :props="appCascaderProps"
             placeholder="请选择影线名称"
             filterable
             clearable
+            style="width: 100%"
             @change="shadowLineChange"
-          >
-            <el-option
-              v-for="(keyValue, keyName) in APP_LIST"
-              :key="keyName"
-              :label="keyValue"
-              :value="keyName"
-            />
-          </el-select>
+          />
         </el-form-item>
         <el-form-item label="券名称" prop="quan_name">
           <el-input
@@ -208,12 +204,37 @@
 <script setup>
 import { ref, reactive, computed, toRaw } from "vue";
 import { ElLoading, ElMessage } from "element-plus";
-import { GET_APP_LIST, GET_APP_INFO } from "@/common/constant";
+import {
+  GET_APP_LIST,
+  GET_APP_INFO,
+  GET_APP_TYPE_LIST
+} from "@/common/constant";
 // 影院基础方法
 import useCinemaBaseFun from "@/mixins/useCinemaBaseFun";
 const { getCityList, getAllCinemaList } = useCinemaBaseFun();
 
 const APP_LIST = computed(() => GET_APP_LIST());
+const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
+
+// 影线二级级联配置（系列 -> 影线）
+const appCascaderOptions = computed(() =>
+  APP_TYPE_LIST.value.map((item, inx) => ({
+    id: inx + 1,
+    label: item.app_type_name,
+    value: item.app_type_code,
+    children: item.app_name_list.map((itemA, index) => ({
+      id: index + 1 + (inx + 1) * 100,
+      label: APP_LIST.value[itemA],
+      value: itemA
+    }))
+  }))
+);
+const appCascaderProps = {
+  value: "value",
+  label: "label",
+  children: "children",
+  emitPath: false
+};
 
 const cardFormRef = ref(null);
 // 父传子props

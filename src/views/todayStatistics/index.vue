@@ -33,20 +33,15 @@
         </el-select>
       </el-form-item>
       <el-form-item label="影线名称">
-        <el-select
+        <el-cascader
           v-model="formData.app_name"
-          placeholder="影线名称"
-          style="width: 194px"
+          :options="appCascaderOptions"
+          :props="appCascaderProps"
+          style="width: 220px"
           clearable
           filterable
-        >
-          <el-option
-            v-for="(keyValue, keyName) in APP_LIST"
-            :key="keyName"
-            :label="keyValue"
-            :value="keyName"
-          />
-        </el-select>
+          placeholder="影线名称"
+        />
       </el-form-item>
       <el-form-item label="开始时间">
         <el-date-picker
@@ -230,13 +225,34 @@ const {
   userInfo: { rule, user_id }
 } = platTokens();
 
-import { ORDER_FORM, GET_APP_LIST } from "@/common/constant.js";
+import { ORDER_FORM, GET_APP_LIST, GET_APP_TYPE_LIST } from "@/common/constant.js";
 // 用户列表
 const userList = ref([]);
 // 订单来源
 const orderFormObj = ORDER_FORM;
 // 影线列表
 const APP_LIST = computed(() => GET_APP_LIST());
+const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
+
+// 影线二级级联配置（系列 -> 影线）
+const appCascaderOptions = computed(() =>
+  APP_TYPE_LIST.value.map((item, inx) => ({
+    id: inx + 1,
+    label: item.app_type_name,
+    value: item.app_type_code,
+    children: item.app_name_list.map((itemA, index) => ({
+      id: index + 1 + (inx + 1) * 100,
+      label: APP_LIST.value[itemA],
+      value: itemA
+    }))
+  }))
+);
+const appCascaderProps = {
+  value: "value",
+  label: "label",
+  children: "children",
+  emitPath: false
+};
 
 // 表单查询数据
 const formData = reactive({

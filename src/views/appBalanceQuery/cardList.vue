@@ -80,24 +80,6 @@
           <el-form-item>
             <el-button @click="resetForm">重置</el-button>
             <el-button type="primary" @click="searchData">搜索</el-button>
-            <!-- <el-button type="primary" style="padding-left: 0px">
-          <template #default>
-            <el-select
-              v-model="shadowLine"
-              filterable
-              placeholder="影线名称"
-              style="width: 120px; margin-left: -1px"
-            >
-              <el-option
-                v-for="(keyValue, keyName) in APP_LIST"
-                :key="keyName"
-                :label="keyValue"
-                :value="keyName"
-              />
-            </el-select>
-            <span @click="addCard">新增</span>
-          </template>
-        </el-button> -->
             <el-button
               type="danger"
               :disabled="!hasSelected"

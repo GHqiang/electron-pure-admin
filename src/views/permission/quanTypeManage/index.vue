@@ -83,25 +83,20 @@
           <el-form-item>
             <el-button @click="resetForm">重置</el-button>
             <el-button type="primary" @click="searchData">搜索</el-button>
-            <el-button type="primary" style="padding-left: 0px">
-              <template #default>
-                <el-select
-                  v-model="shadowLine"
-                  filterable
-                  placeholder="影线名称"
-                  style="width: 120px; margin-left: -1px"
-                >
-                  <el-option
-                    v-for="(keyValue, keyName) in APP_LIST"
-                    :key="keyName"
-                    :label="keyValue"
-                    :value="keyName"
-                  />
-                </el-select>
-                <span @click="addQuan">新增</span>
-              </template>
-            </el-button>
+
             <el-button type="primary" @click="expireQuery">临期查询</el-button>
+            <el-button
+              type="primary"
+              style="margin-left: 15px"
+              @click="getQuanInventory"
+              >查询券库存</el-button
+            >
+            <el-button
+              style="margin-left: 15px"
+              type="primary"
+              @click="queryQuanBalanceTotal"
+              >查看券余额</el-button
+            >
             <el-button
               type="danger"
               :disabled="!hasSelected"
@@ -111,9 +106,50 @@
             <el-button type="warning" @click="getUnUseQuanHandle"
               >导出不可用券</el-button
             >
+
+            <!-- 同步券库存 -->
+            <!-- <el-button type="primary" style="padding-left: 0px; margin-left: 15px">
+          <template #default>
+            <el-input
+              v-model="mobile"
+              placeholder="所属账号(手机号)"
+              clearable
+              style="width: 350px; margin-left: -1px"
+            >
+              <template #prepend>
+                <el-select
+                  v-model="syncType"
+                  placeholder="Select"
+                  style="width: 150px"
+                >
+                  <el-option label="凤凰云智除外" value="1" />
+                  <el-option label="仅同步凤凰云智" value="2" />
+                </el-select>
+              </template>
+            </el-input>
+            <span @click="syncQuanInfo">同步券库存</span>
+          </template>
+        </el-button> -->
+          </el-form-item>
+
+          <el-form-item class="special-item">
+            <el-button type="primary" style="padding-left: 0px">
+              <template #default>
+                <el-cascader
+                  v-model="shadowLine"
+                  :options="appCascaderOptions"
+                  :props="appCascaderProps"
+                  filterable
+                  clearable
+                  placeholder="影线名称"
+                  style="width: 210px; margin-left: -1px"
+                />
+                <span @click="addQuan">新增</span>
+              </template>
+            </el-button>
             <el-upload
               ref="uploadRef"
-              style="margin-left: 15px"
+              style="margin-left: 15px; vertical-align: middle"
               class="upload-demo"
               :limit="1"
               :on-change="importQuan"
@@ -164,41 +200,6 @@
                 >
               </template>
             </el-input>
-            <!-- 同步券库存 -->
-            <!-- <el-button type="primary" style="padding-left: 0px; margin-left: 15px">
-          <template #default>
-            <el-input
-              v-model="mobile"
-              placeholder="所属账号(手机号)"
-              clearable
-              style="width: 350px; margin-left: -1px"
-            >
-              <template #prepend>
-                <el-select
-                  v-model="syncType"
-                  placeholder="Select"
-                  style="width: 150px"
-                >
-                  <el-option label="凤凰云智除外" value="1" />
-                  <el-option label="仅同步凤凰云智" value="2" />
-                </el-select>
-              </template>
-            </el-input>
-            <span @click="syncQuanInfo">同步券库存</span>
-          </template>
-        </el-button> -->
-            <el-button
-              type="primary"
-              style="margin-left: 15px"
-              @click="getQuanInventory"
-              >查询券库存</el-button
-            >
-            <el-button
-              style="margin-left: 15px"
-              type="primary"
-              @click="queryQuanBalanceTotal"
-              >查看券余额</el-button
-            >
           </el-form-item>
         </el-form>
         <!-- 表格 -->
@@ -433,6 +434,15 @@ const treeData = APP_TYPE_LIST.value.map((item, inx) => {
     }))
   };
 });
+
+// 影线二级级联配置（系列 -> 影线）
+const appCascaderOptions = treeData;
+const appCascaderProps = {
+  value: "value",
+  label: "label",
+  children: "children",
+  emitPath: false
+};
 // 树过滤
 const filterText = ref("");
 const filterNode = (value, data) => {
@@ -1142,5 +1152,8 @@ onBeforeMount(async () => {
 }
 .tree-list :deep(.el-tree-node.is-current > .el-tree-node__content) {
   background-color: #5fe3de;
+}
+.special-tree :deep(.el-form-item__content) {
+  align-items: baseline;
 }
 </style>

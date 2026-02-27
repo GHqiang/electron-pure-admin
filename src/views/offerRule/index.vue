@@ -102,26 +102,18 @@
           <el-form-item>
             <el-button type="primary" @click="searchData">搜索</el-button>
             <el-button @click="resetForm">重置</el-button>
-            <el-button
-              type="primary"
-              style="padding-left: 0px"
-              @click="addRule"
-            >
+            <el-button type="primary" style="padding-left: 0px">
               <template #default>
-                <el-select
+                <el-cascader
                   v-model="shadowLine"
+                  :options="appCascaderOptions"
+                  :props="appCascaderProps"
                   filterable
+                  clearable
                   placeholder="请选择影线名称"
-                  style="width: 120px; margin-left: -1px"
-                >
-                  <el-option
-                    v-for="(keyValue, keyName) in APP_LIST"
-                    :key="keyName"
-                    :label="keyValue"
-                    :value="keyName"
-                  />
-                </el-select>
-                &nbsp;&nbsp;新增
+                  style="width: 210px; margin-left: -1px"
+                />
+                <span @click="addRule">新增</span>
               </template>
             </el-button>
             <el-button
@@ -388,6 +380,15 @@ const treeData = APP_TYPE_LIST.value.map((item, inx) => {
     }))
   };
 });
+
+// 影线二级级联配置（系列 -> 影线）
+const appCascaderOptions = treeData;
+const appCascaderProps = {
+  value: "value",
+  label: "label",
+  children: "children",
+  emitPath: false
+};
 // 树过滤
 const filterText = ref("");
 const filterNode = (value, data) => {

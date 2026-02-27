@@ -17,20 +17,16 @@
         label-width="120px"
       >
         <el-form-item label="影线名称" prop="app_name">
-          <el-select
+          <el-cascader
             v-model="formData.app_name"
+            :options="appCascaderOptions"
+            :props="appCascaderProps"
             placeholder="请选择影线名称"
             clearable
             filterable
+            style="width: 100%"
             @change="shadowLineChange"
-          >
-            <el-option
-              v-for="(keyValue, keyName) in APP_LIST"
-              :key="keyName"
-              :label="keyValue"
-              :value="keyName"
-            />
-          </el-select>
+          />
         </el-form-item>
         <el-form-item label="所属账号" prop="mobile">
           <el-input
@@ -148,16 +144,38 @@ import {
   GET_H5_UME_LIST,
   GET_FENGHUANG_LIST,
   GET_CHENXING_LIST,
-  GET_APP_INFO
+  GET_APP_INFO,
+  GET_APP_TYPE_LIST
 } from "@/common/constant";
 import { platTokens } from "@/store/platTokens";
 const {
   userInfo: { rule, user_id }
 } = platTokens();
 const APP_LIST = computed(() => GET_APP_LIST());
+const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
 const H5_UME_LIST = computed(() => GET_H5_UME_LIST());
 const FENGHUANG_LIST = computed(() => GET_FENGHUANG_LIST());
 const CHENXING_LIST = computed(() => GET_CHENXING_LIST());
+
+// 影线二级级联配置（系列 -> 影线）
+const appCascaderOptions = computed(() =>
+  APP_TYPE_LIST.value.map((item, inx) => ({
+    id: inx + 1,
+    label: item.app_type_name,
+    value: item.app_type_code,
+    children: item.app_name_list.map((itemA, index) => ({
+      id: index + 1 + (inx + 1) * 100,
+      label: APP_LIST.value[itemA],
+      value: itemA
+    }))
+  }))
+);
+const appCascaderProps = {
+  value: "value",
+  label: "label",
+  children: "children",
+  emitPath: false
+};
 // console.log("H5_UME_LIST", H5_UME_LIST);
 const loginFormRef = ref(null);
 // 父传子props

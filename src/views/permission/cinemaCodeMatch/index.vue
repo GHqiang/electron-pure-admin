@@ -84,19 +84,15 @@
               @click="deleteCinemeCodeMatch"
             >
               <template #default>
-                <el-select
+                <el-cascader
                   v-model="shadowLine"
+                  :options="appCascaderOptions"
+                  :props="appCascaderProps"
                   filterable
-                  placeholder="请选择影线名称"
-                  style="width: 150px; margin-left: -1px"
-                >
-                  <el-option
-                    v-for="(keyValue, keyName) in APP_LIST"
-                    :key="keyName"
-                    :label="keyValue"
-                    :value="keyName"
-                  />
-                </el-select>
+                  clearable
+                  placeholder="请选择影线"
+                  style="width: 210px; margin-left: -1px"
+                />
                 &nbsp;&nbsp;删除
               </template>
             </el-button>
@@ -200,20 +196,16 @@
         label-width="120px"
       >
         <el-form-item label="影线" prop="app_name">
-          <el-select
+          <el-cascader
             v-model="addForm.app_name"
-            placeholder="请选择影线"
+            :options="appCascaderOptions"
+            :props="appCascaderProps"
             filterable
+            clearable
             style="width: 100%"
+            placeholder="请选择影线"
             @change="onAddFormAppChange"
-          >
-            <el-option
-              v-for="(label, value) in APP_LIST"
-              :key="value"
-              :label="label"
-              :value="value"
-            />
-          </el-select>
+          />
         </el-form-item>
         <el-form-item label="影院名称" prop="app_cinema_name">
           <el-input
@@ -479,6 +471,15 @@ const treeData = APP_TYPE_LIST.value.map((item, inx) => {
     }))
   };
 });
+
+// 影线二级级联配置（系列 -> 影线）
+const appCascaderOptions = treeData;
+const appCascaderProps = {
+  value: "value",
+  label: "label",
+  children: "children",
+  emitPath: false
+};
 // 树过滤
 const filterText = ref("");
 const filterNode = (value, data) => {

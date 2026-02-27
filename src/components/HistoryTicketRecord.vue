@@ -19,20 +19,15 @@
         </el-select>
       </el-form-item>
       <el-form-item label="影线名称">
-        <el-select
+        <el-cascader
           v-model="formData.app_name"
-          placeholder="影线名称"
-          style="width: 194px"
+          :options="appCascaderOptions"
+          :props="appCascaderProps"
+          style="width: 260px"
           clearable
           filterable
-        >
-          <el-option
-            v-for="(keyValue, keyName) in APP_LIST"
-            :key="keyName"
-            :label="keyValue"
-            :value="keyName"
-          />
-        </el-select>
+          placeholder="影线名称"
+        />
       </el-form-item>
       <el-form-item label="影院名称">
         <el-input
@@ -306,7 +301,8 @@ import {
   ORDER_FORM,
   GET_APP_LIST,
   TICKET_STATUS,
-  IN_RULE_LIST
+  IN_RULE_LIST,
+  GET_APP_TYPE_LIST
 } from "@/common/constant.js";
 
 // 券类型列表
@@ -317,6 +313,27 @@ const quanType = ref([]);
 const orderFormObj = ORDER_FORM;
 // 影线列表
 const APP_LIST = computed(() => GET_APP_LIST());
+const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
+
+// 影线二级级联配置（系列 -> 影线）
+const appCascaderOptions = computed(() =>
+  APP_TYPE_LIST.value.map((item, inx) => ({
+    id: inx + 1,
+    label: item.app_type_name,
+    value: item.app_type_code,
+    children: item.app_name_list.map((itemA, index) => ({
+      id: index + 1 + (inx + 1) * 100,
+      label: APP_LIST.value[itemA],
+      value: itemA
+    }))
+  }))
+);
+const appCascaderProps = {
+  value: "value",
+  label: "label",
+  children: "children",
+  emitPath: false
+};
 // 报价类型枚举
 const offerTypeObj = {
   1: "日常固定价",
