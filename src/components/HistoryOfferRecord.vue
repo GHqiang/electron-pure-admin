@@ -181,6 +181,7 @@
         </template>
       </el-table-column> -->
       <el-table-column prop="order_number" fixed label="订单号" width="110" />
+      <el-table-column prop="rule_name" label="报价规则" width="100" />
       <el-table-column
         prop="supplier_max_price"
         fixed
