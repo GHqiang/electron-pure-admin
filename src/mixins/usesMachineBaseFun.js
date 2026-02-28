@@ -26,13 +26,14 @@ export default function useCinemaBaseFun() {
     if (!plat_name || !app_name || !cinema_group) return;
     try {
       // 1、拿cinema_group和平台的院线列表比对，如果不包含直接返回空
-      const platRes = await lierenApi.ruleGroup();
-      console.log("platRes", platRes);
-      const platCinemaGroupList = platRes?.data || [];
-      const platCinemaGroupNameList = platCinemaGroupList.map(
-        item => item.name
-      );
-      if (!platCinemaGroupNameList.includes(cinema_group)) return;
+      // const platRes = await lierenApi.ruleGroup();
+      // console.log("platRes", platRes);
+      // const platCinemaGroupList = platRes?.data || [];
+      // const platCinemaGroupNameList = platCinemaGroupList.map(
+      //   item => item.name
+      // );
+      // 暂时注释掉，因为发现“其它"不在platCinemaGroupList中
+      // if (!platCinemaGroupNameList.includes(cinema_group)) return;
       let params = { plat_name };
       const isZaPai = dictStore.dictInfo.lierenZaPaiGroup
         ?.split(",")
