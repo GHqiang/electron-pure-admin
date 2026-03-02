@@ -242,16 +242,6 @@
               <span>{{ scope.row.excludeFilmNames.join() }}</span>
             </template>
           </el-table-column>
-          <!-- <el-table-column
-            prop="ruleStartTime"
-            label="开始放映时间"
-            width="110"
-          />
-          <el-table-column
-            prop="ruleEndTime"
-            label="结束放映时间"
-            width="110"
-          /> -->
           <el-table-column prop="remark" label="备注" width="110" />
           <el-table-column label="操作" fixed="right" align="left" width="350">
             <template #default="scope">
@@ -286,21 +276,6 @@
                 @click="currentDayNoOfferHandle(scope.row)"
                 >当日不报</el-button
               >
-              <!-- <el-button
-                v-if="scope.row.status === '1' && IN_RULE_LIST.includes(rule)"
-                size="small"
-                type="primary"
-                @click="switchOnlyOffer(scope.row, '3')"
-                >仅报价</el-button
-              > -->
-              <!-- <el-button
-                v-if="scope.row.status === '3' && IN_RULE_LIST.includes(rule)"
-                size="small"
-                type="primary"
-                @click="switchOnlyOffer(scope.row, '1')"
-                >关闭仅报价</el-button
-              > -->
-              <!-- <el-button size="small" @click="viewDetails(scope.row)">详情</el-button> -->
             </template>
           </el-table-column>
         </el-table>
@@ -591,26 +566,6 @@ const addRule = () => {
 
 // 处理状态更改
 const handleStatusChange = async row => {
-  // 显示二次确认对话框
-  // const confirmResult = await ElMessageBox.confirm(
-  //   `确定要${row.status === "1" ? "启用" : "禁用"}该报价规则吗?`,
-  //   "提示",
-  //   {
-  //     confirmButtonText: "确定",
-  //     cancelButtonText: "取消",
-  //     type: "warning",
-  //     showClose: false,
-  //     closeOnClickModal: false,
-  //     closeOnPressEscape: false
-  //   }
-  // ).catch(err => err);
-
-  // if (confirmResult !== "confirm") {
-  //   // 用户取消了操作，恢复原状态
-  //   row.status = row.status === "1" ? "2" : "1";
-  //   return;
-  // }
-
   // 更新状态
   try {
     await editStatus(row);
@@ -659,55 +614,6 @@ const currentDayNoOfferHandle = async row => {
       type: "error",
       message: "操作失败"
     });
-  }
-};
-
-// 开启关闭仅报价
-const switchOnlyOffer = async (row, type) => {
-  try {
-    await svApi.updateRuleRecord({
-      id: row.id,
-      status: type === "3" ? "3" : "1",
-      update_time: getCurrentTime()
-    });
-    searchData();
-    ElMessage({
-      type: "success",
-      message: "操作完成"
-    });
-    return;
-    ElMessageBox.confirm(
-      `确定要${type === "3" ? "开启" : "关闭"}仅报价吗?`,
-      "提示",
-      {
-        confirmButtonText: "确定",
-        cancelButtonText: "取消",
-        type: "warning",
-        showClose: false,
-        closeOnClickModal: false,
-        closeOnPressEscape: false
-      }
-    )
-      .then(async () => {
-        await svApi.updateRuleRecord({
-          id: row.id,
-          status: type === "3" ? "3" : "1",
-          update_time: getCurrentTime()
-        });
-        searchData();
-        ElMessage({
-          type: "success",
-          message: "操作完成"
-        });
-      })
-      .catch(() => {
-        ElMessage({
-          type: "info",
-          message: "操作取消"
-        });
-      });
-  } catch (err) {
-    //TODO handle the exception
   }
 };
 
