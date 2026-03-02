@@ -29,7 +29,7 @@ export default class BaseOrderFetcher {
    * 启动队列
    */
   async start() {
-    console.warn("启动订单自动获取队列");
+    console.warn("启动订单自动获取队列", this.platName, this.isTestOrder);
     this.isRunning = true;
     this.orderRecord = [];
     this.platOrderList = [];

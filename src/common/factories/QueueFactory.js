@@ -13,16 +13,16 @@ import ShengOfferQueue from "../platform/queues/ShengOfferQueue.js";
 import ShangzhanOfferQueue from "../platform/queues/ShangzhanOfferQueue.js";
 
 // 获取订单队列
-import lierenFetchOrder from "../orderFetch/lierenFetchOrder.js";
-import shengFetchOrder from "../orderFetch/shengFetchOrder.js";
-import mangguoFetchOrder from "../orderFetch/mangguoFetchOrder.js";
-import mayiFetchOrder from "../orderFetch/mayiFetchOrder.js";
-import yangcongFetchOrder from "../orderFetch/yangcongFetchOrder.js";
-import yinghuasuanFetchOrder from "../orderFetch/yinghuasuanFetchOrder.js";
-import shangzhanFetchOrder from "../orderFetch/shangzhanFetchOrder.js";
-import hahaFetchOrder from "../orderFetch/hahaFetchOrder.js";
-import shoutuFetchOrder from "../orderFetch/shoutuFetchOrder.js";
-import mahuaFetchOrder from "../orderFetch/mahuaFetchOrder.js";
+import lierenFetchOrder from "../platform/fetchers/LierenOrderFetcher.js";
+import shengFetchOrder from "../platform/fetchers/ShengOrderFetcher.js";
+import mangguoFetchOrder from "../platform/fetchers/MangguoOrderFetcher.js";
+import mayiFetchOrder from "../platform/fetchers/MayiOrderFetcher.js";
+import yangcongFetchOrder from "../platform/fetchers/YangcongOrderFetcher.js";
+import yinghuasuanFetchOrder from "../platform/fetchers/YinghuasuanOrderFetcher.js";
+import shangzhanFetchOrder from "../platform/fetchers/ShangzhanOrderFetcher.js";
+import hahaFetchOrder from "../platform/fetchers/HahaOrderFetcher.js";
+import shoutuFetchOrder from "../platform/fetchers/ShoutuOrderFetcher.js";
+import mahuaFetchOrder from "../platform/fetchers/MahuaOrderFetcher.js";
 
 /**
  * 报价队列工厂
@@ -131,8 +131,8 @@ class FetchOrderQueueFactory {
   constructor() {
     // 获取订单队列实例缓存
     this.fetchOrderQueues = new Map();
-    // 获取订单队列映射
-    this.fetchOrderQueueMap = new Map();
+    // 获取订单队列类映射
+    this.fetchOrderQueueClasses = new Map();
 
     // 注册所有平台的获取订单队列
     this.registerFetchOrderQueue("lieren", lierenFetchOrder);
@@ -148,40 +148,62 @@ class FetchOrderQueueFactory {
   }
 
   /**
-   * 注册获取订单队列
+   * 注册获取订单队列类
    * @param {string} platName - 平台名称
-   * @param {Object} fetchOrderQueue - 获取订单队列实例
+   * @param {Class} QueueClass - 获取订单队列类
    */
-  registerFetchOrderQueue(platName, fetchOrderQueue) {
-    if (!fetchOrderQueue) {
+  registerFetchOrderQueue(platName, QueueClass) {
+    if (!QueueClass) {
       throw new Error(`获取订单队列不能为空: ${platName}`);
     }
-    this.fetchOrderQueueMap.set(platName, fetchOrderQueue);
+    this.fetchOrderQueueClasses.set(platName, QueueClass);
   }
 
   /**
-   * 获取订单队列（如果不存在则从缓存获取）
+   * 创建获取订单队列
    * @param {string} platName - 平台名称
+   * @param {boolean} isTestOrder - 是否为测试订单模式
+   * @returns {BaseOrderFetcher} 获取订单队列实例
+   */
+  createFetchOrderQueue(platName, isTestOrder = false) {
+    // 如果指定了 isTestOrder，不使用缓存，直接创建新实例
+    if (isTestOrder) {
+      const QueueClass = this.fetchOrderQueueClasses.get(platName);
+      if (!QueueClass) {
+        throw new Error(`不支持的平台获取订单队列: ${platName}`);
+      }
+      return new QueueClass(isTestOrder);
+    }
+
+    // 检查缓存（仅对非测试模式使用缓存）
+    if (this.fetchOrderQueues.has(platName)) {
+      return this.fetchOrderQueues.get(platName);
+    }
+
+    // 获取队列类
+    const QueueClass = this.fetchOrderQueueClasses.get(platName);
+    if (!QueueClass) {
+      throw new Error(`不支持的平台获取订单队列: ${platName}`);
+    }
+
+    // 创建实例
+    const queue = new QueueClass(isTestOrder);
+
+    // 缓存实例（仅缓存非测试模式的实例）
+    this.fetchOrderQueues.set(platName, queue);
+
+    return queue;
+  }
+
+  /**
+   * 获取订单队列（如果不存在则创建）
+   * @param {string} platName - 平台名称
+   * @param {boolean} isTestOrder - 是否为测试订单模式
    * @returns {Object|null} 获取订单队列实例
    */
-  getFetchOrderQueue(platName) {
+  getFetchOrderQueue(platName, isTestOrder = false) {
     try {
-      // 检查缓存
-      if (this.fetchOrderQueues.has(platName)) {
-        return this.fetchOrderQueues.get(platName);
-      }
-
-      // 从映射中获取
-      const queue = this.fetchOrderQueueMap.get(platName);
-      if (!queue) {
-        console.warn(`不支持的平台获取订单队列: ${platName}`);
-        return null;
-      }
-
-      // 缓存实例
-      this.fetchOrderQueues.set(platName, queue);
-
-      return queue;
+      return this.createFetchOrderQueue(platName, isTestOrder);
     } catch (error) {
       console.error(`获取订单队列失败: ${platName}`, error);
       return null;

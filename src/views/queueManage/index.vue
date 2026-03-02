@@ -206,6 +206,9 @@ import {
   logUpload,
   mockDelay
 } from "@/utils/utils";
+import { platTokens } from "@/store/platTokens";
+// 平台toke列表
+const tokens = platTokens();
 
 const tableDataStore = usePlatTableDataStore();
 const platQueueList = computed(() => tableDataStore.items);
