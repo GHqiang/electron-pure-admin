@@ -63,15 +63,6 @@ export default {
         keepAlive: true
       }
     },
-    // {
-    //   path: "/set/appLogin",
-    //   name: "appLogin",
-    //   component: () => import("@/views/appLogin/index.vue"),
-    //   meta: {
-    //     title: "影院登录"
-    //   }
-    // },
-
     {
       path: "/permission/cinemaCodeMatch/index",
       name: "CinemaCodeMatch",
@@ -81,15 +72,6 @@ export default {
         keepAlive: true
       }
     },
-
-    // {
-    //   path: "/permission/cinemaRecord/index",
-    //   name: "CinemaRecord",
-    //   component: () => import("@/views/permission/cinemaRecord/index.vue"),
-    //   meta: {
-    //     title: "影院列表"
-    //   }
-    // },
     {
       path: "/set/ruleConfig",
       name: "ruleConfig",
@@ -128,29 +110,5 @@ export default {
         keepAlive: true
       }
     }
-    // {
-    //   path: "/set/balanceQuery",
-    //   name: "balanceQuery",
-    //   component: () => import("@/views/appBalanceQuery/index.vue"),
-    //   meta: {
-    //     title: "影院券查询"
-    //   }
-    // },
-    // {
-    //   path: "/set/adjustPrice",
-    //   name: "adjustPrice",
-    //   component: () => import("@/views/adjustPriceSet/index.vue"),
-    //   meta: {
-    //     title: "动态调价"
-    //   }
-    // },
-    // {
-    //   path: "/set/memberPwdSet",
-    //   name: "memberPwdSet",
-    //   component: () => import("@/views/memberPwdSet/index.vue"),
-    //   meta: {
-    //     title: "会员卡密码设置"
-    //   }
-    // },
   ]
 } satisfies RouteConfigsTable;
