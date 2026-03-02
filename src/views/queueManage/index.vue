@@ -184,13 +184,9 @@
 defineOptions({
   name: "queueManage"
 });
-import { ref, computed, onBeforeMount, watch, onBeforeUnmount } from "vue";
+import { ref, computed, onBeforeMount } from "vue";
 import { ElMessageBox, ElMessage } from "element-plus";
 import svApi from "@/api/sv-api";
-import lierenApi from "@/api/lieren-api";
-import mayiApi from "@/api/mayi-api";
-import shengApi from "@/api/sheng-api";
-import mangguoApi from "@/api/mangguo-api";
 import yangcongApi from "@/api/yangcong-api";
 
 // 统一使用工厂类创建队列
@@ -210,19 +206,11 @@ import {
   logUpload,
   mockDelay
 } from "@/utils/utils";
-import { platTokens } from "@/store/platTokens";
-// 平台toke列表
-const tokens = platTokens();
-const {
-  userInfo: { rule, user_id }
-} = tokens;
+
 const tableDataStore = usePlatTableDataStore();
 const platQueueList = computed(() => tableDataStore.items);
 import { useYangcongCinemaList } from "@/store/specialNameRule";
 const yangcongCinemaListObj = useYangcongCinemaList();
-
-// 券类型列表
-const quanType = ref([]);
 
 // 是否显示一键启动
 const isActiveOneClickStart = computed(() => {
@@ -318,21 +306,6 @@ let setPlatFunObj = {
   mahua: tokens.setMahuaPlatToken
 };
 
-// 同步中标价定时器
-let syncIntervalObj = {
-  lieren: null,
-  mangguo: null,
-  mayi: null,
-  yangcong: null,
-  yinghuasuan: null,
-  shangzhan: null,
-  haha: null,
-  sheng: null,
-  shoutu: null
-};
-// 支持同步中标价的平台集合
-let syncPricePlatList = ["lieren", "mayi", "mangguo"];
-
 // 是否启动队列（该为false可进行测试用户）
 let isStartOffer = true; // 报价队列
 let isStartFetch = true; // 待出票获取队列
@@ -423,9 +396,6 @@ const oneClickStop = () => {
         item.isEnabled = false;
         isStartOffer && platOfferQueueObj[item.platName]?.stop();
         isStartFetch && platFetchOrderQueueObj[item.platName]?.stop();
-        // 清空同步中标价的定时器
-        clearInterval(syncIntervalObj[item.platName]);
-        syncIntervalObj[item.platName] = null;
       });
 
       Object.keys(appTicketQueueObj).forEach(item => {
@@ -491,9 +461,6 @@ const singleStartOrStop = ({ id, platToken, platName, syncPageSize }, flag) => {
     tableDataStore.toggleEnable(id);
     isStartOffer && platOfferQueueObj[platName]?.stop();
     isStartFetch && platFetchOrderQueueObj[platName]?.stop();
-    // 清空同步中标价的定时器
-    clearInterval(syncIntervalObj[platName]);
-    syncIntervalObj[platName] = null;
     // 其它没有一个启动的再停止
     if (!otherPlatQueueList.some(item => item.isEnabled)) {
       Object.keys(appTicketQueueObj).forEach(item => {
