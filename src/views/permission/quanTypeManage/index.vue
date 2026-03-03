@@ -1153,6 +1153,9 @@ onBeforeMount(async () => {
 });
 </script>
 <style scoped>
+.special-item :deep(.el-form-item__content) {
+  align-items: baseline;
+}
 .red {
   color: red;
   font-weight: bold;
