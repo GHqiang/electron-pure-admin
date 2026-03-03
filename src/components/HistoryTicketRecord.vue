@@ -2,12 +2,11 @@
 <template>
   <div>
     <!-- 查询表单 -->
-    <el-form :inline="true" class="demo-form-inline">
+    <el-form :inline="true" class="demo-form-inline" label-width="80px">
       <el-form-item label="订单来源">
         <el-select
           v-model="formData.plat_name"
           placeholder="订单来源"
-          style="width: 194px"
           clearable
         >
           <el-option
@@ -23,7 +22,6 @@
           v-model="formData.app_name"
           :options="appCascaderOptions"
           :props="appCascaderProps"
-          style="width: 260px"
           clearable
           filterable
           placeholder="影线名称"
@@ -37,12 +35,7 @@
         />
       </el-form-item>
       <el-form-item label="出票用户">
-        <el-select
-          v-model="formData.user_id"
-          placeholder="出票用户"
-          style="width: 194px"
-          clearable
-        >
+        <el-select v-model="formData.user_id" placeholder="出票用户" clearable>
           <el-option
             v-for="(item, inx) in userList"
             :key="inx"
@@ -55,7 +48,6 @@
         <el-select
           v-model="formData.order_status"
           placeholder="出票状态"
-          style="width: 194px"
           clearable
         >
           <el-option label="成功" value="1" />
@@ -74,7 +66,6 @@
         <el-select
           v-model="formData.quan_value"
           placeholder="用券类型"
-          style="width: 194px"
           clearable
           filterable
         >
@@ -97,7 +88,6 @@
         <el-date-picker
           v-model="formData.start_time"
           type="datetime"
-          style="width: 194px"
           placeholder="请选择开始时间"
           format="YYYY-MM-DD HH:mm:ss"
           value-format="YYYY-MM-DD HH:mm:ss"
@@ -108,7 +98,6 @@
         <el-date-picker
           v-model="formData.end_time"
           type="datetime"
-          style="width: 194px"
           placeholder="请选择结束时间"
           format="YYYY-MM-DD HH:mm:ss"
           value-format="YYYY-MM-DD HH:mm:ss"
@@ -136,7 +125,7 @@
           clearable
         />
       </el-form-item>
-      <el-form-item>
+      <el-form-item style="margin-left: 10px">
         <el-button type="primary" @click="searchData">搜索</el-button>
         <el-button @click="resetForm">重置</el-button>
       </el-form-item>
@@ -167,8 +156,8 @@
             <el-tag
               v-if="scope.row.rewards > 0"
               size="small"
-              type="success"
-              effect="plain"
+              type="danger"
+              effect="dark"
               class="reward-tag"
               >奖</el-tag
             >
@@ -180,12 +169,13 @@
           <span>{{ APP_LIST[scope.row.app_name] }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="状态" fixed width="70">
+      <el-table-column label="状态" fixed width="90">
         <template #default="{ row: { order_status } }">
           <el-tag
             :type="getStatusType(order_status)"
-            size="small"
-            effect="plain"
+            size="medium"
+            effect="dark"
+            class="status-tag"
           >
             {{ TICKET_STATUS[order_status] }}
           </el-tag>
@@ -196,10 +186,10 @@
           <span>{{ plat_order_sn || order_number }}</span>
         </template>
       </el-table-column>
-      <el-table-column fixed label="影院" width="165">
+      <el-table-column fixed label="影院" width="205">
         <template #default="{ row }">
           <el-popover
-            placement="top"
+            placement="right"
             :width="800"
             trigger="hover"
             popper-class="ticket-info-popover"
@@ -228,14 +218,15 @@
         </template>
       </el-table-column>
       <el-table-column prop="user_name" label="出票人" width="85" />
-      <el-table-column prop="mobile" label="出票手机号" width="95" />
-      <el-table-column label="报价类型" width="105">
+      <el-table-column prop="mobile" label="出票手机号" width="125" />
+      <el-table-column label="报价类型" width="120">
         <template #default="scope">
           <el-tag
             v-if="scope.row.offer_type"
             :type="getOfferType(scope.row.offer_type)"
-            size="small"
-            effect="plain"
+            size="medium"
+            effect="dark"
+            class="offer-type-tag"
           >
             {{ offerTypeObj[scope.row.offer_type] || "" }}
           </el-tag>
@@ -244,26 +235,37 @@
       <el-table-column prop="quan_value" label="用券类型" width="85" />
       <el-table-column prop="quan_code" label="优惠券码" width="90" />
       <el-table-column prop="card_num" label="支付卡号" width="90" />
-      <el-table-column label="利润" width="120">
+      <el-table-column label="利润" width="140">
         <template
           #default="{
             row: { profit, original_profit, order_status, transfer_fee }
           }"
         >
-          <el-tag
-            :type="getProfitType(profit, order_status, transfer_fee)"
-            size="small"
-            effect="dark"
-            :class="{ 'line-through': order_status === '3' }"
-            style="font-weight: 600; padding: 0 8px"
-          >
-            {{ transfer_fee && transfer_fee > 0 ? -transfer_fee : profit || 0
-            }}{{
-              original_profit && original_profit !== profit && !transfer_fee
-                ? `(${original_profit})`
-                : ""
-            }}
-          </el-tag>
+          <div class="profit-container">
+            <el-tag
+              :type="getProfitType(profit, order_status, transfer_fee)"
+              size="small"
+              effect="dark"
+              :class="{ 'line-through': order_status === '3' }"
+              style="font-weight: 600; padding: 0 8px"
+            >
+              {{ transfer_fee && transfer_fee > 0 ? -transfer_fee : profit || 0
+              }}{{
+                original_profit && original_profit !== profit && !transfer_fee
+                  ? `(${original_profit})`
+                  : ""
+              }}
+            </el-tag>
+            <el-tag
+              v-if="transfer_fee && transfer_fee > 0"
+              size="small"
+              type="danger"
+              effect="dark"
+              class="transfer-label"
+            >
+              转
+            </el-tag>
+          </div>
         </template>
       </el-table-column>
       <el-table-column prop="processing_time" label="创建时间" width="160" />
@@ -716,6 +718,25 @@ onBeforeUnmount(() => {
 .ticket-info-popover .el-table__footer-wrapper {
   overflow: visible !important;
 }
+
+/* 表单布局调整 */
+.demo-form-inline .el-form-item {
+  width: 20%;
+  margin-right: 0;
+}
+
+.demo-form-inline .el-form-item__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.demo-form-inline .el-input,
+.demo-form-inline .el-select,
+.demo-form-inline ::v-deep .el-cascader,
+.demo-form-inline ::v-deep .el-date-editor.el-input {
+  width: 100%;
+}
+
 .status-success {
   color: #67c23a;
 }
@@ -742,13 +763,50 @@ onBeforeUnmount(() => {
   flex-wrap: wrap;
 }
 .reward-tag {
-  font-size: 10px;
-  padding: 0 6px;
-  height: 20px;
-  line-height: 18px;
-  font-weight: 500;
-  box-shadow: 0 1px 2px rgba(103, 194, 58, 0.3);
-  border: 1px solid #67c23a;
+  font-size: 9px;
+  padding: 0 4px;
+  height: 16px;
+  line-height: 14px;
+  font-weight: 600;
+  border-radius: 2px;
+}
+
+.status-tag {
+  font-weight: 600;
+  padding: 0 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.status-tag:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.offer-type-tag {
+  font-weight: 600;
+  padding: 0 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.offer-type-tag:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(103, 194, 58, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(103, 194, 58, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(103, 194, 58, 0);
+  }
 }
 .line-through {
   text-decoration: line-through;
@@ -763,5 +821,22 @@ onBeforeUnmount(() => {
 .status-icon,
 .offer-icon {
   font-size: 12px;
+}
+
+.profit-container {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: nowrap;
+}
+
+.transfer-label {
+  font-size: 10px;
+  padding: 0 4px;
+  height: 18px;
+  line-height: 16px;
+  font-weight: 600;
+  border: 1px solid #f56c6c;
+  border-radius: 2px;
 }
 </style>
