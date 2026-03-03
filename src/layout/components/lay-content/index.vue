@@ -3,11 +3,20 @@ import LayFrame from "../lay-frame/index.vue";
 import LayFooter from "../lay-footer/index.vue";
 import { useGlobal, isNumber } from "@pureadmin/utils";
 import BackTopIcon from "@/assets/svg/back_top.svg?component";
-import { h, computed, Transition, defineComponent } from "vue";
+import { h, computed, Transition, defineComponent, ref, onMounted } from "vue";
 import { usePermissionStoreHook } from "@/store/modules/permission";
 
 const props = defineProps({
   fixedHeader: Boolean
+});
+
+const scrollbarRef = ref(null);
+const showBacktop = ref(false);
+
+onMounted(() => {
+  if (scrollbarRef.value) {
+    showBacktop.value = true;
+  }
 });
 
 const { $storage, $config } = useGlobal<GlobalPropertiesApi>();
@@ -106,6 +115,7 @@ const transitionMain = defineComponent({
           <template #default="{ Comp, fullPath, frameInfo }">
             <el-scrollbar
               v-if="fixedHeader"
+              ref="scrollbarRef"
               :wrap-style="{
                 display: 'flex',
                 'flex-wrap': 'wrap',
@@ -120,10 +130,7 @@ const transitionMain = defineComponent({
                 'flex-direction': 'column'
               }"
             >
-              <el-backtop
-                title="回到顶部"
-                target=".app-main .el-scrollbar__wrap"
-              >
+              <el-backtop v-if="showBacktop" title="回到顶部">
                 <BackTopIcon />
               </el-backtop>
               <div class="grow">

@@ -160,9 +160,19 @@
         align="center"
         width="60"
       />
-      <el-table-column prop="plat_name" fixed label="订单来源" width="85">
+      <el-table-column prop="plat_name" fixed label="订单来源" width="100">
         <template #default="scope">
-          <span>{{ orderFormObj[scope.row.plat_name] }}</span>
+          <div class="order-source-container">
+            <span>{{ orderFormObj[scope.row.plat_name] }}</span>
+            <el-tag
+              v-if="scope.row.rewards > 0"
+              size="small"
+              type="success"
+              effect="plain"
+              class="reward-tag"
+              >奖</el-tag
+            >
+          </div>
         </template>
       </el-table-column>
       <el-table-column prop="app_name" fixed label="影线名称" width="100">
@@ -170,9 +180,15 @@
           <span>{{ APP_LIST[scope.row.app_name] }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="出票状态" fixed width="90">
+      <el-table-column label="状态" fixed width="70">
         <template #default="{ row: { order_status } }">
-          <span>{{ TICKET_STATUS[order_status] }}</span>
+          <el-tag
+            :type="getStatusType(order_status)"
+            size="small"
+            effect="plain"
+          >
+            {{ TICKET_STATUS[order_status] }}
+          </el-tag>
         </template>
       </el-table-column>
       <el-table-column fixed label="订单号" width="110">
@@ -180,43 +196,77 @@
           <span>{{ plat_order_sn || order_number }}</span>
         </template>
       </el-table-column>
-      <el-table-column
-        prop="supplier_max_price"
-        fixed
-        label="平台限价"
-        width="85"
-      />
-      <el-table-column
-        prop="supplier_end_price"
-        fixed
-        label="中标价"
-        width="85"
-      />
-      <el-table-column prop="user_name" label="出票人" width="85" />
-      <el-table-column prop="mobile" label="出票手机号" width="95" />
-      <el-table-column prop="cinema_name" label="影院" width="240" />
-      <el-table-column prop="hall_name" label="影厅" width="90" />
-      <el-table-column prop="film_name" label="片名" width="110" />
-      <el-table-column prop="lockseat" label="座位" width="110" />
-
-      <el-table-column label="报价类型" width="85">
-        <template #default="scope">
-          <span>{{ offerTypeObj[scope.row.offer_type] || "" }}</span>
+      <el-table-column fixed label="影院" width="165">
+        <template #default="{ row }">
+          <el-popover
+            placement="top"
+            :width="800"
+            trigger="hover"
+            popper-class="ticket-info-popover"
+          >
+            <template #reference>
+              <span>{{ row.cinema_name }}</span>
+            </template>
+            <el-table :data="[row]" border style="width: 100%">
+              <el-table-column prop="hall_name" label="影厅" />
+              <el-table-column prop="film_name" label="片名" />
+              <el-table-column prop="lockseat" label="座位" />
+              <el-table-column prop="show_time" label="放映时间" />
+            </el-table>
+          </el-popover>
         </template>
       </el-table-column>
-      <el-table-column prop="rewards" label="奖励订单" width="85">
+      <el-table-column fixed label="限价/中标价" width="100">
+        <template
+          #default="{ row: { supplier_max_price, supplier_end_price } }"
+        >
+          <span
+            >{{ supplier_max_price || 0 }}/<span class="winning-price">{{
+              supplier_end_price || 0
+            }}</span></span
+          >
+        </template>
+      </el-table-column>
+      <el-table-column prop="user_name" label="出票人" width="85" />
+      <el-table-column prop="mobile" label="出票手机号" width="95" />
+      <el-table-column label="报价类型" width="105">
         <template #default="scope">
-          <span>{{ scope.row.rewards > 0 ? "是" : "否" }}</span>
+          <el-tag
+            v-if="scope.row.offer_type"
+            :type="getOfferType(scope.row.offer_type)"
+            size="small"
+            effect="plain"
+          >
+            {{ offerTypeObj[scope.row.offer_type] || "" }}
+          </el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="quan_value" label="用券类型" width="85" />
       <el-table-column prop="quan_code" label="优惠券码" width="90" />
       <el-table-column prop="card_num" label="支付卡号" width="90" />
-      <el-table-column prop="profit" label="利润" width="80" />
-      <el-table-column prop="original_profit" label="原利润" width="80" />
-      <el-table-column prop="transfer_fee" label="转单手续费" width="100" />
+      <el-table-column label="利润" width="120">
+        <template
+          #default="{
+            row: { profit, original_profit, order_status, transfer_fee }
+          }"
+        >
+          <el-tag
+            :type="getProfitType(profit, order_status, transfer_fee)"
+            size="small"
+            effect="dark"
+            :class="{ 'line-through': order_status === '3' }"
+            style="font-weight: 600; padding: 0 8px"
+          >
+            {{ transfer_fee && transfer_fee > 0 ? -transfer_fee : profit || 0
+            }}{{
+              original_profit && original_profit !== profit && !transfer_fee
+                ? `(${original_profit})`
+                : ""
+            }}
+          </el-tag>
+        </template>
+      </el-table-column>
       <el-table-column prop="processing_time" label="创建时间" width="160" />
-      <el-table-column prop="show_time" label="放映时间" width="160" />
       <el-table-column prop="err_msg" label="失败原因" width="110">
         <template #default="scope">
           <span>{{
@@ -227,14 +277,23 @@
       <el-table-column label="操作" fixed="right" align="center" width="210">
         <template
           #default="{
-            row: { order_status, profit, id, order_number, user_id, lockseat }
+            row: {
+              order_status,
+              profit,
+              id,
+              order_number,
+              user_id: rowUserId,
+              lockseat
+            }
           }"
         >
           <el-button
-            v-if="order_status === '2'"
+            v-if="order_status === '2' && String(user_id) === String(rowUserId)"
             size="small"
             type="primary"
-            @click="againTicket({ order_number, user_id, id, lockseat })"
+            @click="
+              againTicket({ order_number, user_id: rowUserId, id, lockseat })
+            "
             >重新出票</el-button
           >
 
@@ -250,7 +309,7 @@
             v-if="order_status != 1"
             size="small"
             type="primary"
-            @click="queryLog({ order_number, user_id })"
+            @click="queryLog({ order_number, user_id: rowUserId })"
             >查询日志</el-button
           >
         </template>
@@ -339,6 +398,60 @@ const offerTypeObj = {
   1: "日常固定价",
   2: "会员价加价",
   3: "会员日报价"
+};
+
+// 根据订单状态获取标签类型
+const getStatusType = order_status => {
+  switch (order_status) {
+    case "1":
+      return "success";
+    case "2":
+      return "danger";
+    case "3":
+      return "warning";
+    case "4":
+      return "info";
+    case "5":
+      return "primary";
+    default:
+      return "info";
+  }
+};
+
+// 根据报价类型获取标签类型
+const getOfferType = offer_type => {
+  switch (offer_type) {
+    case "1":
+      return "info";
+    case "2":
+      return "primary";
+    case "3":
+      return "success";
+    default:
+      return "info";
+  }
+};
+
+// 根据利润、订单状态和转单手续费获取标签类型
+const getProfitType = (profit, order_status, transfer_fee) => {
+  // 退单状态
+  if (order_status === "3") {
+    return "warning";
+  }
+  // 转单收费
+  if (transfer_fee && transfer_fee > 0) {
+    return "danger";
+  }
+  // 利润为正
+  if (profit > 0) {
+    return "success";
+  }
+  // 利润为负
+  if (profit < 0) {
+    return "danger";
+  }
+  // 无利润
+  return "info";
 };
 
 // 列表数据
@@ -586,3 +699,69 @@ onBeforeUnmount(() => {
   timer = null;
 });
 </script>
+
+<style scoped>
+.ticket-info-popover {
+  max-width: none !important;
+}
+.ticket-info-popover .el-table {
+  margin: 0;
+}
+.ticket-info-popover .el-table__body-wrapper {
+  overflow: visible !important;
+}
+.ticket-info-popover .el-table__header-wrapper {
+  overflow: visible !important;
+}
+.ticket-info-popover .el-table__footer-wrapper {
+  overflow: visible !important;
+}
+.status-success {
+  color: #67c23a;
+}
+.status-failed {
+  color: #f56c6c;
+}
+.status-refunded {
+  color: #e6a23c;
+}
+.status-offer-only {
+  color: #909399;
+}
+.status-retrying {
+  color: #409eff;
+}
+.winning-price {
+  color: #d60a40;
+  font-weight: 600;
+}
+.order-source-container {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.reward-tag {
+  font-size: 10px;
+  padding: 0 6px;
+  height: 20px;
+  line-height: 18px;
+  font-weight: 500;
+  box-shadow: 0 1px 2px rgba(103, 194, 58, 0.3);
+  border: 1px solid #67c23a;
+}
+.line-through {
+  text-decoration: line-through;
+  color: #909399;
+}
+.status-container,
+.offer-type-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.status-icon,
+.offer-icon {
+  font-size: 12px;
+}
+</style>

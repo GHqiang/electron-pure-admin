@@ -32,6 +32,14 @@ import NavHorizontal from "./components/lay-sidebar/NavHorizontal.vue";
 import BackTopIcon from "@/assets/svg/back_top.svg?component";
 
 const appWrapperRef = ref();
+const scrollbarRef = ref(null);
+const showBacktop = ref(false);
+
+onMounted(() => {
+  if (scrollbarRef.value) {
+    showBacktop.value = true;
+  }
+});
 const { isDark } = useDark();
 const { layout } = useLayout();
 const isMobile = deviceDetection();
@@ -184,11 +192,8 @@ const LayHeader = defineComponent({
         <!-- 主体内容 -->
         <LayContent :fixed-header="set.fixedHeader" />
       </div>
-      <el-scrollbar v-else>
-        <el-backtop
-          title="回到顶部"
-          target=".main-container .el-scrollbar__wrap"
-        >
+      <el-scrollbar v-else ref="scrollbarRef">
+        <el-backtop v-if="showBacktop" title="回到顶部">
           <BackTopIcon />
         </el-backtop>
         <LayHeader />
