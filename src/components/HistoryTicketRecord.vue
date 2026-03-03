@@ -189,7 +189,7 @@
       <el-table-column fixed label="影院" width="205">
         <template #default="{ row }">
           <el-popover
-            placement="right"
+            placement="top"
             :width="800"
             trigger="hover"
             popper-class="ticket-info-popover"
