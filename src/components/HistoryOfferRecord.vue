@@ -7,7 +7,6 @@
         <el-select
           v-model="formData.plat_name"
           placeholder="订单来源"
-          style="width: 194px"
           clearable
         >
           <el-option
@@ -23,7 +22,6 @@
           v-model="formData.app_name"
           :options="appCascaderOptions"
           :props="appCascaderProps"
-          style="width: 260px"
           clearable
           filterable
           placeholder="影线名称"
@@ -37,12 +35,7 @@
         />
       </el-form-item>
       <el-form-item label="报价用户">
-        <el-select
-          v-model="formData.user_id"
-          placeholder="报价用户"
-          style="width: 194px"
-          clearable
-        >
+        <el-select v-model="formData.user_id" placeholder="报价用户" clearable>
           <el-option
             v-for="(item, inx) in userList"
             :key="inx"
@@ -63,12 +56,7 @@
         </el-select>
       </el-form-item> -->
       <el-form-item v-if="orderStatus == 1" label="是否中标">
-        <el-select
-          v-model="formData.is_deal"
-          placeholder="是否中标"
-          style="width: 194px"
-          clearable
-        >
+        <el-select v-model="formData.is_deal" placeholder="是否中标" clearable>
           <el-option label="是" value="1" />
           <el-option label="否" value="2" />
         </el-select>
@@ -80,7 +68,6 @@
         <el-select
           v-model="formData.is_price_diff"
           placeholder="报价差异"
-          style="width: 194px"
           clearable
         >
           <el-option label="是" value="1" />
@@ -98,7 +85,6 @@
         <el-select
           v-model="formData.quan_value"
           placeholder="用券类型"
-          style="width: 194px"
           clearable
           filterable
         >
@@ -121,7 +107,6 @@
         <el-date-picker
           v-model="formData.start_time"
           type="datetime"
-          style="width: 194px"
           placeholder="请选择开始时间"
           format="YYYY-MM-DD HH:mm:ss"
           value-format="YYYY-MM-DD HH:mm:ss"
@@ -132,7 +117,6 @@
         <el-date-picker
           v-model="formData.end_time"
           type="datetime"
-          style="width: 194px"
           placeholder="请选择结束时间"
           format="YYYY-MM-DD HH:mm:ss"
           value-format="YYYY-MM-DD HH:mm:ss"
@@ -160,9 +144,19 @@
         align="center"
         width="60"
       />
-      <el-table-column prop="plat_name" fixed label="订单来源" width="85">
+      <el-table-column prop="plat_name" fixed label="订单来源" width="120">
         <template #default="scope">
-          <span>{{ orderFormObj[scope.row.plat_name] }}</span>
+          <div class="order-source-container">
+            <span>{{ orderFormObj[scope.row.plat_name] }}</span>
+            <el-tag
+              v-if="scope.row.rewards > 0"
+              size="small"
+              type="danger"
+              effect="dark"
+              class="reward-tag"
+              >奖</el-tag
+            >
+          </div>
         </template>
       </el-table-column>
       <el-table-column prop="app_name" fixed label="影线名称" width="100">
@@ -176,28 +170,24 @@
         </template>
       </el-table-column> -->
       <el-table-column prop="order_number" fixed label="订单号" width="110" />
-      <el-table-column prop="rule_name" label="报价规则" width="100" />
-      <el-table-column
-        prop="supplier_max_price"
-        fixed
-        label="平台限价"
-        width="85"
-      />
-      <el-table-column
-        v-if="orderStatus == 1"
-        prop="deal_price"
-        fixed
-        label="中标价"
-        width="85"
-      />
-      <el-table-column
-        prop="offer_end_amount"
-        fixed
-        label="我的报价"
-        width="85"
-      >
+      <el-table-column label="报价规则 / 用券类型" width="150">
         <template #default="scope">
-          <span>{{ supplier_end_price_filter(scope.row) }}</span>
+          <span
+            >{{ scope.row.rule_name || "" }}
+            <span v-if="orderStatus == 1">
+              / {{ scope.row.quan_value || "无" }}</span
+            >
+          </span>
+        </template>
+      </el-table-column>
+      <el-table-column fixed label="限价 / 税前成本 " width="130">
+        <template #default="scope">
+          <span>
+            {{ scope.row.supplier_max_price || 0 }}
+            <span v-if="IN_RULE_LIST.includes(rule) && orderStatus == 1">
+              / {{ scope.row.member_price || 0 }}
+            </span>
+          </span>
         </template>
       </el-table-column>
       <el-table-column
@@ -207,27 +197,23 @@
         label="动态调价"
         width="85"
       />
-      <el-table-column
-        v-if="IN_RULE_LIST.includes(rule) && orderStatus == 1"
-        prop="member_price"
-        fixed
-        label="税前成本"
-        width="85"
-      />
-      <el-table-column
+      <!-- <el-table-column
         v-if="IN_RULE_LIST.includes(rule) && orderStatus == 1"
         prop="price_spread"
         fixed
         label="成本价差"
         width="85"
-      />
+      /> -->
       <el-table-column
         v-if="IN_RULE_LIST.includes(rule) && orderStatus == 1"
-        label="预计利润"
-        width="85"
+        label="利润 / 报价"
+        width="100"
       >
         <template #default="{ row }">
-          <span>{{ formatProfit(row) }}</span>
+          <span>{{ formatProfit(row) }} </span>
+          <span v-if="orderStatus == 1" class="winning-price">
+            / {{ supplier_end_price_filter(row) || 0 }}
+          </span>
         </template>
       </el-table-column>
       <el-table-column
@@ -245,20 +231,27 @@
       <el-table-column prop="hall_name" label="影厅" width="90" />
       <el-table-column prop="film_name" label="片名" width="110" />
       <el-table-column prop="ticket_num" label="座位数" width="85" />
+      <el-table-column label="报价类型" width="120">
+        <template #default="scope">
+          <el-tag
+            v-if="scope.row.offer_type"
+            :type="getOfferType(scope.row.offer_type)"
+            size="medium"
+            effect="dark"
+            class="offer-type-tag"
+          >
+            {{ offerTypeObj[scope.row.offer_type] || "" }}
+          </el-tag>
+        </template>
+      </el-table-column>
 
-      <el-table-column label="报价类型" width="100">
-        <template #default="scope">
-          <span>{{ offerTypeObj[scope.row.offer_type] || "" }}</span>
-        </template>
-      </el-table-column>
-      <el-table-column prop="rewards" label="奖励订单" width="90">
-        <template #default="scope">
-          <span>{{ scope.row.rewards > 0 ? "是" : "否" }}</span>
-        </template>
-      </el-table-column>
       <el-table-column prop="processing_time" label="创建时间" width="160" />
-      <el-table-column prop="quan_value" label="用券类型" width="90" />
-      <el-table-column prop="err_msg" label="失败原因" width="230" />
+      <el-table-column
+        v-if="orderStatus != 1"
+        prop="err_msg"
+        label="失败原因"
+        width="230"
+      />
       <el-table-column label="操作" fixed="right" align="center" width="120">
         <template #default="{ row: { order_number, user_id } }">
           <el-button
@@ -545,6 +538,20 @@ const formatProfit = ({
     addDecimal(member_price, shouxufei)
   ).toFixed(2);
 };
+
+// 根据报价类型获取标签类型
+const getOfferType = offer_type => {
+  switch (offer_type) {
+    case "1":
+      return "info";
+    case "2":
+      return "primary";
+    case "3":
+      return "success";
+    default:
+      return "info";
+  }
+};
 // 获取券类型列表
 const getQuanTypeList = async () => {
   try {
@@ -574,3 +581,126 @@ onBeforeUnmount(() => {
   timer = null;
 });
 </script>
+
+<style scoped>
+/* 表单布局调整 */
+.demo-form-inline .el-form-item {
+  width: 20%;
+  margin-right: 0;
+}
+
+.demo-form-inline .el-form-item__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.demo-form-inline .el-input,
+.demo-form-inline .el-select,
+.demo-form-inline ::v-deep .el-cascader,
+.demo-form-inline ::v-deep .el-date-editor.el-input {
+  width: 95%;
+}
+
+.status-success {
+  color: #67c23a;
+}
+.status-failed {
+  color: #f56c6c;
+}
+.status-refunded {
+  color: #e6a23c;
+}
+.status-offer-only {
+  color: #909399;
+}
+.status-retrying {
+  color: #409eff;
+}
+.winning-price {
+  color: #d60a40;
+  font-weight: 600;
+}
+.order-source-container {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.reward-tag {
+  font-size: 9px;
+  padding: 0 4px;
+  height: 16px;
+  line-height: 14px;
+  font-weight: 600;
+  border-radius: 2px;
+}
+
+.status-tag {
+  font-weight: 600;
+  padding: 0 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.status-tag:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.offer-type-tag {
+  font-weight: 600;
+  padding: 0 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.offer-type-tag:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(103, 194, 58, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(103, 194, 58, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(103, 194, 58, 0);
+  }
+}
+.line-through {
+  text-decoration: line-through;
+  color: #909399;
+}
+.status-container,
+.offer-type-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.status-icon,
+.offer-icon {
+  font-size: 12px;
+}
+
+.profit-container {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: nowrap;
+}
+
+.transfer-label {
+  font-size: 10px;
+  padding: 0 4px;
+  height: 18px;
+  line-height: 16px;
+  font-weight: 600;
+  border: 1px solid #f56c6c;
+  border-radius: 2px;
+}
+</style>

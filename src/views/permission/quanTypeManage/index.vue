@@ -24,8 +24,8 @@
       </el-aside>
       <el-main style="margin-left: 15px; padding: 0">
         <!-- 查询表单 -->
-        <el-form :inline="true" class="demo-form-inline">
-          <el-form-item label="券&nbsp;&nbsp;&nbsp;&nbsp;类型">
+        <el-form :inline="true" class="demo-form-inline" label-width="80px">
+          <el-form-item label="券类型">
             <el-select
               v-model="formData.quan_value"
               clearable
@@ -41,25 +41,28 @@
               />
             </el-select>
           </el-form-item>
-          <!-- <el-form-item label="券&nbsp;&nbsp;&nbsp;&nbsp;名称">
+          <!-- <el-form-item label="券名称">
             <el-input
               v-model="formData.quan_name"
               placeholder="请输入券名称"
               clearable
+              style="width: 194px"
             />
           </el-form-item> -->
-          <el-form-item label="券&nbsp;&nbsp;&nbsp;&nbsp;成本">
+          <el-form-item label="券成本">
             <el-input
               v-model="formData.quan_cost"
               placeholder="请输入券成本"
               clearable
+              style="width: 194px"
             />
           </el-form-item>
-          <el-form-item label="券&nbsp;&nbsp;&nbsp;&nbsp;标识">
+          <el-form-item label="券标识">
             <el-input
               v-model="formData.quan_flag"
               placeholder="请输入券标识"
               clearable
+              style="width: 194px"
             />
           </el-form-item>
           <el-form-item label="券手续费">
@@ -67,6 +70,7 @@
               v-model="formData.quan_fee"
               placeholder="请输入券手续费"
               clearable
+              style="width: 194px"
             />
           </el-form-item>
           <el-form-item label="是否入库">
@@ -80,30 +84,38 @@
               <el-option label="否" value="2" />
             </el-select>
           </el-form-item>
-          <el-form-item>
+          <el-form-item style="margin-left: 10px">
             <el-button @click="resetForm">重置</el-button>
             <el-button type="primary" @click="searchData">搜索</el-button>
-
-            <el-button type="primary" @click="expireQuery">临期查询</el-button>
             <el-button
               type="primary"
-              style="margin-left: 15px"
+              style="margin-left: 10px"
+              @click="expireQuery"
+              >临期查询</el-button
+            >
+            <el-button
+              type="primary"
+              style="margin-left: 10px"
               @click="getQuanInventory"
               >查询券库存</el-button
             >
             <el-button
-              style="margin-left: 15px"
+              style="margin-left: 10px"
               type="primary"
               @click="queryQuanBalanceTotal"
               >查看券余额</el-button
             >
             <el-button
               type="danger"
+              style="margin-left: 10px"
               :disabled="!hasSelected"
               @click="batchDelete"
               >批量删除</el-button
             >
-            <el-button type="warning" @click="getUnUseQuanHandle"
+            <el-button
+              type="warning"
+              style="margin-left: 10px"
+              @click="getUnUseQuanHandle"
               >导出不可用券</el-button
             >
 
@@ -341,9 +353,8 @@
       v-model="dialogQueryQuanVisible"
       title="服务器券库存"
       width="800"
-      class="fwq-quan-stock"
     >
-      <el-table :data="quanData" border>
+      <el-table :data="quanData" border max-height="800">
         <el-table-column type="index" label="序号" width="80" />
         <el-table-column property="quan_name" sortable label="券名称" />
         <!-- <el-table-column property="quan_flag" sortable label="券标识" />
@@ -359,7 +370,7 @@
     </el-dialog>
 
     <el-dialog v-model="quanBalanceVisible" width="50%" title="券余额汇总结果">
-      <el-table :data="summaryData" border style="width: 100%">
+      <el-table :data="summaryData" border style="width: 100%" max-height="800">
         <el-table-column prop="appName" label="应用名称" width="180" />
         <el-table-column prop="totalBalance" sortable label="总余额" />
         <el-table-column
@@ -1142,10 +1153,6 @@ onBeforeMount(async () => {
 });
 </script>
 <style scoped>
-::v-deep(.fwq-quan-stock) {
-  height: 1000px !important;
-  overflow-y: auto;
-}
 .red {
   color: red;
   font-weight: bold;

@@ -257,7 +257,7 @@
     />
 
     <el-dialog v-model="cardBalanceVisible" width="60%" title="卡余额汇总结果">
-      <el-table :data="summaryData" border style="width: 100%">
+      <el-table :data="summaryData" border style="width: 100%" max-height="800">
         <el-table-column prop="appName" label="应用名称" width="180" />
         <el-table-column prop="totalBalance" sortable label="总余额" />
         <el-table-column
