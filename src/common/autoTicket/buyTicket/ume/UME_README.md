@@ -128,11 +128,10 @@ const result = await buyTicket.validateTicketOrder();
 
 ## 四、UME 特殊逻辑摘要
 
-### 4.1 wanxiangh5 特殊处理
+### 4.1 报价入口统一（无 wanxiangh5 特殊分流）
 
-- **触发条件**：当报价规则匹配结果中包含 `shadowLineName === "wanxiangh5"` 的规则时，`getEndMatchOfferRule()` 返回字符串 `"wanxiangh5"`。
-- **处理方式**：在 `getEndOfferPrice()` 中检测到 `offerRule === "wanxiangh5"` 时，会调用旧的 `umeOffer.js` 中的报价逻辑进行处理，确保兼容性。
-- **返回结果**：返回结果中包含 `app_name: "wanxiangh5"` 标识。
+- **规则匹配**：`wanxiangh5` 不再触发特殊分流，作为普通规则参与 `getEndMatchOfferRule()` 的匹配与筛选流程。
+- **最终报价**：`getEndOfferPrice()` 统一走 `BaseOfferPrice.getEndOfferPrice` 模板流程：匹配规则 → 成本价 → 最终报价 → 统一返回结构。
 
 ### 4.2 灵活用券机制（autoUseQuanStatus）
 
@@ -222,7 +221,7 @@ orderManage.js
 
 ## 六、注意事项
 
-1. **循环依赖处理**：`offerManage.js` 中对于 `wanxiangh5` 特殊处理，直接导入旧的 `umeOffer.js`，避免与 `commonOfferHandle.js` 形成循环依赖。
+1. **模块依赖**：UME 报价入口已统一走基类模板流程，不再依赖旧版 `umeOffer.js` 的分流逻辑。
 
 2. **返回值格式统一**：`cinemaManage.js` 中的 `getCityCinemaList()`、`getMoviePlayInfo()`、`getMoviePlayTime()` 方法统一返回对象格式 `{ listName: actualList, error?: ... }`，调用方需要正确处理。
 

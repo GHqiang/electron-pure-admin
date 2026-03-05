@@ -2,16 +2,16 @@
 
 ## 一、报价逻辑对比
 
-### 1.1 流程与 wanxiangh5 ✅
+### 1.1 流程（报价入口统一）✅
 
-- **旧版**：`getEndOfferPrice` → `getEndMatchOfferRule`，若返回 `"wanxiangh5"` 则调 `getOfferPriceFun({ appFlag: "wanxiangh5" }).getEndOfferPrice`，否则 `getQuanInfo`/会员成本 → `getEndPrice` → `returnResultHandle`。
-- **重构后**：`getEndOfferPrice` 重写，同样先 `getEndMatchOfferRule`，`"wanxiangh5"` 时调旧 `umeOffer` 的 `getEndOfferPrice`，否则 `getCostPrice` → `calculateFinalPrice` → `buildSuccessResponse`。
+- **旧版**：`getEndOfferPrice` → `getEndMatchOfferRule`，若命中 `wanxiangh5` 则走单独分支，否则进入主流程报价。
+- **当前**：`getEndOfferPrice` 统一走 `BaseOfferPrice.getEndOfferPrice` 模板流程（匹配规则 → 成本价 → 最终报价 → 统一返回结构）；`wanxiangh5` 不再触发特殊分流，按普通规则参与匹配与计算。
 
-**结论**：wanxiangh5 分支与主流程一致，返回结构通过 `buildErrorResponse` / `buildSuccessResponse` 与旧版 `returnResultHandle` 对齐。
+**结论**：已移除 wanxiangh5 特殊分支，返回结构保持基类约定，与其它系列一致。
 
 ### 1.2 getEndMatchOfferRule / getMinAmountOfferRule ✅
 
-- **旧版**：`offerRuleMatch` → 过滤 wanxiangh5 → `getMovieInfo` → 电影格式过滤 → `getMinAmountOfferRule`；失败时 `return`（undefined）。
+- **旧版**：`offerRuleMatch` → `getMovieInfo` → 电影格式过滤 → `getMinAmountOfferRule`；失败时 `return`（undefined）。
 - **重构后**：同流程；失败时 `return null`。调用方均用 `if (!offerRule)` 判断，行为等价。
 
 **结论**：会员日优先、`memberDay` / `offerType === "3"`、`offerType === "1"` / `"2"` 过滤及排序与旧版一致。
@@ -37,19 +37,16 @@
 
 **结论**：公式、GROUP_LIST、NO_FEE_PLAT_LIST、TEST_NEW_PLAT_LIST、ONE_STEP_PLAT_LIST 使用与旧版一致。
 
-### 1.5 calculateFinalPrice 中 price 复用与修复 ✅ 已修复
+### 1.5 calculateFinalPrice 结构对齐 ✅
 
-- **问题**：`calculateFinalPrice` 内 `price` 从 `params` 解构为 `const`，后续又 `price = price + profitAddPrice` 等赋值，会触发 “Assignment to constant variable” 报错。
-- **修复**：改为 `let price = params.price`，不再从解构中声明 `price`，所有对 `price` 的修改与旧版 `getEndPrice` 行为一致。
-
-**状态**：已在 [offerManage.js](offerManage.js) 中修复。
+- **当前**：UME 的 `calculateFinalPrice` 采用与 SFC 等系列一致的骨架（动态调价 → 利润加价 → 夜间顶价 → 超限处理 → 成本/利润校验），并复用通用计算工具，减少系列间漂移风险。
 
 ### 1.6 动态调价与 offerList ✅
 
 - **旧版**：`getEndPrice` 接收 `offerList` 但未使用；无动态调价。
-- **重构后**：`calculateFinalPrice` 接收 `offerList`，同样未使用。
+- **当前**：若本地配置存在 `adjustPrice`，则 `calculateFinalPrice` 会基于 `offerList` 进行动态调价；未配置时行为与旧版一致（不调价）。
 
-**结论**：行为一致，UME 报价无动态调价。
+**结论**：UME 报价已支持与其它系列一致的动态调价能力（受本地配置开关控制）。
 
 ---
 
@@ -153,7 +150,8 @@
 
 ### 5.1 已修复 ✅
 
-1. **calculateFinalPrice 中 price 复用**：原 `const` 解构后对 `price` 再赋值会报错，已改为 `let price = params.price`，与旧版 `getEndPrice` 行为一致。
+1. **报价入口统一**：移除 `wanxiangh5` 特殊分流，`getEndOfferPrice` 与其它系列保持一致，统一走基类模板流程。
+2. **最终报价计算结构对齐**：`calculateFinalPrice` 采用通用骨架与公共工具方法，降低重复与差异风险。
 
 ### 5.2 已知差异（保持现状）⚠️
 
@@ -161,7 +159,7 @@
 
 ### 5.3 完全一致的逻辑 ✅
 
-1. 报价流程与 wanxiangh5、getEndMatchOfferRule、getMinAmountOfferRule、成本价与 `quanValue` 过滤
+1. 报价流程的 getEndMatchOfferRule、getMinAmountOfferRule、成本价与 `quanValue` 过滤
 2. getEndPrice / calculateFinalPrice 公式（利润加价、夜间顶价、超限、手续费、奖励、利润校验）
 3. 利润计算（用券、用卡）、支付校验、会员价两分支
 4. 卡券无法使用与换号、灵活用券、useQuanOrCard 返回与 catch
@@ -183,4 +181,4 @@
 
 **检查完成时间**：2026-01-26  
 **检查范围**：报价逻辑、出票逻辑、利润计算、卡券使用、转单与取消、测试模式及其它  
-**总体结论**：重构后逻辑与旧版一致，已修复 1 处（calculateFinalPrice 的 `price` 复用）。测试模式为刻意改进行为，建议保持。核心功能完全对齐。
+**总体结论**：报价入口与最终报价计算已与其它系列对齐（移除 wanxiangh5 分流、采用通用报价骨架）。测试模式为刻意改进行为，建议保持。

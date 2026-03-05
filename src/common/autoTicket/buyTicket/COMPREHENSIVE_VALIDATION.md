@@ -38,14 +38,14 @@
 **旧版** (`umeOffer.js:59-79`):
 
 - `getEndOfferPrice({ order, offerList })` → `logger.init(order)`
-- 主流程：`getEndMatchOfferRule` → 若返回 `"wanxiangh5"` 则调旧 `umeOffer`，否则 `getQuanInfo`/会员成本 → `getEndPrice` → `returnResultHandle`
+- 主流程：`getEndMatchOfferRule` → `getQuanInfo`/会员成本 → `getEndPrice` → `returnResultHandle`（历史上包含 wanxiangh5 分流）
 
-**重构后** (`ume/offerManage.js:175-204`):
+**当前**（`ume/offerManage.js`）:
 
-- `getEndOfferPrice({ order, offerList })` → 调用基类，wanxiangh5 分支处理
-- 主流程：`getEndMatchOfferRule` → `"wanxiangh5"` 时调旧 `umeOffer.getEndOfferPrice`，否则 `getCostPrice` → `calculateFinalPrice` → `buildSuccessResponse`
+- `getEndOfferPrice({ order, offerList })` → 统一走 `BaseOfferPrice.getEndOfferPrice`
+- 主流程：`getEndMatchOfferRule` → `getCostPrice` → `calculateFinalPrice` → `buildSuccessResponse`
 
-**结论**: ✅ **通过** - wanxiangh5 分支与主流程一致
+**结论**: ✅ **通过** - 与其它系列流程一致（无 wanxiangh5 特殊分流）
 
 #### LMA
 
@@ -94,7 +94,7 @@
 
 **特殊平台逻辑**:
 
-- [x] UME 的 wanxiangh5 分支处理（重构后已对齐）
+- [x] UME 报价入口统一（移除 wanxiangh5 特殊分流）
 
 **结论**: ✅ **通过** - 所有平台的规则匹配逻辑与旧版一致
 
@@ -176,7 +176,7 @@
 
 #### UME
 
-- [x] wanxiangh5 分支处理 ✅
+- [x] 报价入口统一（无 wanxiangh5 分支）✅
 - [x] 超限平台列表（mayi、yangcong）✅
 
 #### LMA
@@ -536,7 +536,7 @@
 - 规则匹配（会员日优先、电影格式过滤）
 - 成本价获取（用券/用卡）
 - 最终报价计算（动态调价、利润加价、夜间顶价、超限、成本利润）
-- 特殊逻辑（SFC 异常检测、UME wanxiangh5、LMA 动态调价修复、H5UME 超限仅 mayi）
+- 特殊逻辑（SFC 异常检测、LMA 动态调价修复、H5UME 超限仅 mayi）
 
 ✅ **出票逻辑**：
 
