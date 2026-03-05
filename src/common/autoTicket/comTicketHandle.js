@@ -1,8 +1,3 @@
-// import createSfcTicketQueue from "./sfcAutoTicket";
-// import createUmeTicketQueue from "./umeAutoTicket";
-// import createH5UmeTicketQueue from "./h5umeAutoTicket";
-// import createLmaTicketQueue from "./lmaAutoTicket";
-// import createCommonTicketQueue from "./commonAutoTicket";
 import BaseTicketQueue from "@/common/core/BaseTicketQueue.js";
 // import { GET_JINYI_LIST } from "@/common/constant";
 // 生成出票队列实体类
