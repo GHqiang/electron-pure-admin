@@ -39,7 +39,7 @@ import {
 import {
   getQuanTypeListByApp,
   filterFixedRulesByDailyTicketCount
-} from "../../../autoOffer/commonQuanStock.js";
+} from "../../commonQuanStock.js";
 import Logger from "@/common/logger.js";
 import { platTokens } from "@/store/platTokens";
 import BaseOfferPrice from "@/common/core/BaseOfferPrice.js";

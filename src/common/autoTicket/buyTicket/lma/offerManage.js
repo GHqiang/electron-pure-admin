@@ -36,7 +36,7 @@ import { platTokens } from "@/store/platTokens";
 import {
   getQuanTypeListByApp,
   filterFixedRulesByDailyTicketCount
-} from "../../../autoOffer/commonQuanStock.js";
+} from "../../commonQuanStock.js";
 import Logger from "@/common/logger.js";
 import BaseOfferPrice from "@/common/core/BaseOfferPrice.js";
 import LmaCardQuanManage from "./cardQuanManage.js";

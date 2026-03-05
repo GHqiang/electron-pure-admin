@@ -35,7 +35,7 @@ import {
 import { platTokens } from "@/store/platTokens";
 import Logger from "@/common/logger.js";
 import BaseOfferPrice from "@/common/core/BaseOfferPrice.js";
-import { filterFixedRulesByDailyTicketCount } from "../../../autoOffer/commonQuanStock.js";
+import { filterFixedRulesByDailyTicketCount } from "../../commonQuanStock.js";
 import CardQuanManage from "./cardQuanManage";
 import CinemaManage from "./cinemaManage";
 import SeatManage from "./seatManage";

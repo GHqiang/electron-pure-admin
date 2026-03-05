@@ -1,10 +1,10 @@
-import getSfcOfferPriceNew from "../autoTicket/buyTicket/sfc/offerManage.js";
-import getChenxingOfferPriceNew from "../autoTicket/buyTicket/chenxing/offerManage.js";
-import getFenghuangOfferPriceNew from "../autoTicket/buyTicket/fenghuang/offerManage.js";
-import getJinyiOfferPrice from "../autoTicket/buyTicket/jinyi/offerManage.js";
-import getUmeOfferPriceNew from "../autoTicket/buyTicket/ume/offerManage.js"; // UME新实现
-import getH5UmeOfferPriceNew from "../autoTicket/buyTicket/h5ume/offerManage.js"; // H5UME新实现
-import getLmaOfferPriceNew from "../autoTicket/buyTicket/lma/offerManage.js"; // LMA新实现
+import getSfcOfferPriceNew from "./buyTicket/sfc/offerManage.js";
+import getChenxingOfferPriceNew from "./buyTicket/chenxing/offerManage.js";
+import getFenghuangOfferPriceNew from "./buyTicket/fenghuang/offerManage.js";
+import getJinyiOfferPrice from "./buyTicket/jinyi/offerManage.js";
+import getUmeOfferPriceNew from "./buyTicket/ume/offerManage.js"; // UME新实现
+import getH5UmeOfferPriceNew from "./buyTicket/h5ume/offerManage.js"; // H5UME新实现
+import getLmaOfferPriceNew from "./buyTicket/lma/offerManage.js"; // LMA新实现
 import {
   GET_UME_LIST,
   GET_H5_UME_LIST,
