@@ -74,7 +74,7 @@ class getJinyiOfferPrice extends BaseOfferPrice {
   async getEndMatchOfferRule(order) {
     try {
       // 1. 初始规则匹配
-      const matchRuleListRes = offerRuleMatch(order);
+      const matchRuleListRes = offerRuleMatch(order, this.logger);
       console.log("初始规则匹配", matchRuleListRes);
       if (!matchRuleListRes?.matchRuleList?.length) {
         this.handleRuleMatchError(matchRuleListRes, order);

@@ -1140,7 +1140,7 @@ const getOfferRuleById = id => {
 };
 
 // 报价规则匹配
-const offerRuleMatch = order => {
+const offerRuleMatch = (order, logger) => {
   // order = order || window.order;
   try {
     console.warn("匹配报价规则开始", order);
@@ -1245,7 +1245,9 @@ const offerRuleMatch = order => {
       ) {
         return true;
       }
-
+      // 是否记录影院匹配日志
+      const isSaveCinemaMatchLog =
+        dictStore.dictInfo?.isRecordCinemaMatchLog == 1;
       // 1、优先按 app_cinema_code 匹配，避免名称变更导致失败
       try {
         const matchInfo = cinemaCodeMatchObj.getCinemaMatchInfo(
@@ -1262,7 +1264,14 @@ const offerRuleMatch = order => {
               item.includeCinemaCodes,
               app_cinema_code
             );
-            return item.includeCinemaCodes.includes(app_cinema_code);
+            const isInclude = item.includeCinemaCodes.includes(app_cinema_code);
+            isSaveCinemaMatchLog &&
+              logger?.infoSave("按影院code匹配包含规则", {
+                isInclude,
+                app_cinema_code,
+                includeCinemaCodes: item.includeCinemaCodes
+              });
+            return isInclude;
           }
           if (hasCodeExclude) {
             console.warn(
@@ -1270,7 +1279,14 @@ const offerRuleMatch = order => {
               item.excludeCinemaCodes,
               app_cinema_code
             );
-            return !item.excludeCinemaCodes.includes(app_cinema_code);
+            const isExclude = item.excludeCinemaCodes.includes(app_cinema_code);
+            isSaveCinemaMatchLog &&
+              logger?.infoSave("按影院code匹配排除规则", {
+                isExclude,
+                app_cinema_code,
+                excludeCinemaCodes: item.excludeCinemaCodes
+              });
+            return !isExclude;
           }
         }
       } catch (err) {
@@ -1280,19 +1296,33 @@ const offerRuleMatch = order => {
       // 2、兜底：按影院名称匹配（旧规则兼容）
       if (hasNameInclude) {
         console.warn("按影院名称匹配规则，可能存在风险");
-        return cinemaMatchHandle({
+        const isInclude = cinemaMatchHandle({
           app_name: shadowLineName,
           plat_cinema_code: cinema_code,
           cinema_name_list: item.includeCinemaNames
         });
+        isSaveCinemaMatchLog &&
+          logger?.infoSave("按影院名称匹配包含规则", {
+            isInclude,
+            plat_cinema_code: cinema_code,
+            cinema_name_list: item.includeCinemaNames
+          });
+        return isInclude;
       }
       if (hasNameExclude) {
         console.warn("按影院名称匹配规则，可能存在风险");
-        return !cinemaMatchHandle({
+        const isExclude = cinemaMatchHandle({
           app_name: shadowLineName,
           plat_cinema_code: cinema_code,
           cinema_name_list: item.excludeCinemaNames
         });
+        isSaveCinemaMatchLog &&
+          logger?.infoSave("按影院名称匹配排除规则", {
+            isExclude,
+            plat_cinema_code: cinema_code,
+            cinema_name_list: item.excludeCinemaNames
+          });
+        return !isExclude;
       }
     });
     console.log("匹配影院后的规则列表", cinemaRuleList);

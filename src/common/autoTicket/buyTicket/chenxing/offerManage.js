@@ -82,7 +82,7 @@ class getChenxingOfferPrice extends BaseOfferPrice {
   async getEndMatchOfferRule(order) {
     try {
       // 1. 初始规则匹配
-      const matchRuleListRes = offerRuleMatch(order);
+      const matchRuleListRes = offerRuleMatch(order, this.logger);
       if (!matchRuleListRes.matchRuleList?.length) {
         this.handleRuleMatchError(matchRuleListRes, order);
         return null;

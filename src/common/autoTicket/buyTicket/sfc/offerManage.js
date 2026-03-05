@@ -110,7 +110,7 @@ class getSfcOfferPrice extends BaseOfferPrice {
    */
   async getEndMatchOfferRule(order) {
     try {
-      const matchRuleListRes = offerRuleMatch(order);
+      const matchRuleListRes = offerRuleMatch(order, this.logger);
       let matchRuleList = matchRuleListRes?.matchRuleList || [];
       if (!matchRuleList?.length) {
         this.logger.errorSave("报价规则匹配后规则为空", {
