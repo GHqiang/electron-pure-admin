@@ -37,12 +37,18 @@ import {
   NO_FEE_PLAT_LIST,
   ONE_STEP_PLAT_LIST
 } from "@/common/constant.js";
+import {
+  applyDynamicPricing,
+  applyProfitAddition,
+  applyNightMaxPrice,
+  handleOverrunCheck,
+  calcOfferCostProfitParts
+} from "../common/offerHelper";
 import { platTokens } from "@/store/platTokens";
 import {
   getQuanTypeListByApp,
   filterFixedRulesByDailyTicketCount
 } from "../../commonQuanStock.js";
-import getUmeOfferPriceOld from "../../../autoOffer/umeOffer.js";
 import Logger from "@/common/logger.js";
 import BaseOfferPrice from "@/common/core/BaseOfferPrice.js";
 import UmeCardQuanManage from "./cardQuanManage.js";
@@ -86,7 +92,7 @@ class getUmeOfferPrice extends BaseOfferPrice {
    * @param {string} order.show_time - 放映时间，格式：YYYY-MM-DD HH:mm:ss
    * @param {number} order.ticket_num - 票数
    *
-   * @returns {Promise<Object|null|string>} 匹配到的报价规则对象，或 "wanxiangh5"（特殊处理），匹配失败返回 null
+   * @returns {Promise<Object|null>} 匹配到的报价规则对象，匹配失败返回 null
    */
   async getEndMatchOfferRule(order) {
     try {
@@ -100,17 +106,6 @@ class getUmeOfferPrice extends BaseOfferPrice {
         return null;
       }
       matchRuleList = JSON.parse(JSON.stringify(matchRuleList));
-
-      // 判断是否有 wanxiangh5 特殊处理
-      let fixedAmountRuleList = matchRuleList.filter(
-        item =>
-          item.offerType === "1" &&
-          item.offerAmount &&
-          item.shadowLineName === "wanxiangh5"
-      );
-      if (fixedAmountRuleList.length) {
-        return "wanxiangh5";
-      }
 
       // 判断规则里是否有指定电影格式的（2D/3D）
       let filmTypeFlag = matchRuleList.some(item => !!item?.film_type?.length);
@@ -179,121 +174,6 @@ class getUmeOfferPrice extends BaseOfferPrice {
     }
   }
 
-  /**
-   * 重写基类的getEndOfferPrice方法，添加UME特殊逻辑（wanxiangh5处理）
-   * @param {Object} params - 参数对象
-   * @param {Object} params.order - 订单信息
-   * @param {Array} params.offerList - 报价列表（可选）
-   * @returns {Promise<Object>} 报价结果 { err_msg, err_info, endPrice, offerRule } 或 { app_name, ...result }
-   */
-  async getEndOfferPrice({ order, offerList }) {
-    try {
-      // 初始化模块
-      this.initModules(order);
-
-      // 获取最终匹配的报价规则
-      let offerRule = await this.getEndMatchOfferRule(order);
-      if (!offerRule) {
-        return this.buildErrorResponse();
-      } else if (offerRule == "wanxiangh5") {
-        // UME特殊逻辑：wanxiangh5 特殊处理
-        let offerExample = new getUmeOfferPriceOld({
-          appFlag: "wanxiangh5",
-          plat_name: this.plat_name
-        });
-        const result = await offerExample.getEndOfferPrice({
-          order: { ...order, app_name: "wanxiangh5" },
-          offerList
-        });
-        return { ...result, app_name: "wanxiangh5" };
-      }
-
-      this.logger.infoSave("最终匹配到的报价规则", { offerRule });
-
-      const {
-        offerAmount,
-        memberOfferAmount,
-        memberCostPrice = 0,
-        quanValue,
-        offerType
-      } = offerRule;
-      let price = Number(offerAmount || memberOfferAmount);
-      if (!price) {
-        this.logger.errorSave("从最终报价规则里获取报价价格失败");
-        return this.buildErrorResponse({ endPrice: null, offerRule });
-      }
-
-      // 成本价
-      let cost_price, quanInfoList;
-      if (offerType === "1") {
-        const quanInfo = await this.cardQuanManage.getQuanInfo(
-          quanValue,
-          this.appFlag
-        );
-        cost_price = quanInfo?.quan_cost;
-        // 只用多种券类型才会返回数组
-        // 这里取一个最小成本价去计算判断能否报价
-        if (Array.isArray(quanInfo)) {
-          quanInfoList = quanInfo;
-          cost_price = Math.min(...quanInfoList.map(item => +item.quan_cost));
-        }
-      } else {
-        cost_price = Number(memberCostPrice);
-      }
-      if (!cost_price) {
-        this.logger.errorSave("获取出票成本价格失败");
-        return this.buildErrorResponse({ endPrice: null, offerRule });
-      }
-      offerRule.cost_price = cost_price; // 成本价
-
-      // 获取最终报价
-      const endPrice = await this.calculateFinalPrice({
-        cost_price,
-        supplier_max_price: order.supplier_max_price,
-        price,
-        rewards: order.rewards,
-        offerType,
-        offerList,
-        plat_name: this.plat_name,
-        offerRule
-      });
-      console.warn("最终报价返回", endPrice);
-      console.warn(
-        "this.logger.logList",
-        JSON.parse(JSON.stringify(this.logger.logList))
-      );
-      if (!endPrice) {
-        return this.buildErrorResponse({ endPrice: null, offerRule });
-      }
-
-      // 最终报价
-      offerRule.offer_end_amount = endPrice;
-
-      // 增加一个quanValue的过滤，依据最大券成本过滤
-      if (
-        offerType === "1" &&
-        offerRule?.maxCostPrice &&
-        quanInfoList?.length > 1
-      ) {
-        offerRule.quanValue = offerRule.quanValue
-          .split(",")
-          .filter(item => {
-            let targetQuanCost = quanInfoList.find(
-              quanInfo => quanInfo.quan_value === item
-            )?.quan_cost;
-            return targetQuanCost < offerRule?.maxCostPrice;
-          })
-          .join();
-      }
-
-      return this.buildSuccessResponse(endPrice, offerRule, order.order_number);
-    } catch (error) {
-      this.logger?.errorSave("获取最终报价信息方法执行异常", {
-        error: formatErrInfo(error)
-      });
-      return this.buildErrorResponse();
-    }
-  }
   // 成本价逻辑沿用 BaseOfferPrice.getCostPrice 默认实现
 
   /**
@@ -306,7 +186,6 @@ class getUmeOfferPrice extends BaseOfferPrice {
    * @param {number} params.rewards - 奖励百分比（0-100）
    * @param {string} params.offerType - 报价类型
    * @param {Array} [params.offerList] - 历史报价列表（用于动态调价）
-   * @param {string} params.plat_name - 平台名称
    * @param {Object} params.offerRule - 报价规则对象（会被修改，添加 maxCostPrice 字段）
    *
    * @returns {Promise<number|null>} 最终报价金额，计算失败或利润不足返回 null
@@ -318,64 +197,51 @@ class getUmeOfferPrice extends BaseOfferPrice {
       rewards,
       offerType,
       offerList,
-      plat_name,
       offerRule
     } = params;
-    let price = params.price;
 
     try {
-      // 1. 利润加价处理
-      let profitAddPrice = 0;
-      if (offerType !== "1" && !GROUP_LIST.includes(this.appFlag)) {
-        profitAddPrice = window.localStorage.getItem("profitAddPrice");
-        profitAddPrice = profitAddPrice ? Number(profitAddPrice) : 0;
-        price = price + profitAddPrice;
+      // 1. 动态调价处理
+      let adjustedPrice = applyDynamicPricing({
+        basePrice: params.price,
+        offerList,
+        logger: this.logger
+      });
+
+      // 2. 利润加价处理
+      adjustedPrice = applyProfitAddition({
+        price: adjustedPrice,
+        offerType,
+        appFlag: this.appFlag,
+        groupList: GROUP_LIST,
+        logger: this.logger
+      });
+
+      // 3. 夜间顶价处理
+      adjustedPrice = applyNightMaxPrice({
+        price: adjustedPrice,
+        supplier_max_price,
+        logger: this.logger
+      });
+
+      // 4. 超限检查处理
+      adjustedPrice = await handleOverrunCheck({
+        price: adjustedPrice,
+        supplier_max_price,
+        plat_name: this.plat_name,
+        logger: this.logger
+      });
+      if (!adjustedPrice) {
+        return null;
       }
 
-      // 2. 夜间顶价处理
-      let isOpenisNightMaxPrice =
-        localStorage.getItem("isOpenisNightMaxPrice") == 1;
-      let currentHour = new Date().getHours();
-      if (isOpenisNightMaxPrice && currentHour >= 1 && currentHour <= 6) {
-        price = Number(supplier_max_price);
-        this.logger.infoSave("开启夜间顶价");
-      }
-
-      // 规则报价
-      let rule_price = price;
-
-      // 3. 超限检查处理
-      if (price > Number(supplier_max_price)) {
-        let isOverrunOffer = window.localStorage.getItem("isOverrunOffer");
-        if (isOverrunOffer !== "1") {
-          this.logger.errorSave(
-            `最终报价${price}超过平台限价${supplier_max_price}，超限报价处于关闭状态不进行报价`
-          );
-          return null;
-        }
-        // 券或者卡开了超限报价调整规则报价为平台限价
-        if (["mayi", "yangcong"].includes(plat_name)) {
-          price = Math.floor(supplier_max_price);
-        } else {
-          // 向下取0.5的倍数
-          price = roundToHalf(
-            supplier_max_price,
-            ONE_STEP_PLAT_LIST.includes(plat_name) ? 0.1 : 0.5,
-            "down"
-          );
-        }
-        this.logger.infoSave("调整最终报价为平台限价四舍五入去整");
-      }
-
-      // 4. 成本利润计算
+      // 5. 成本利润计算
       return this.calculateCostProfit({
-        adjustedPrice: price,
+        adjustedPrice,
         cost_price,
         rewards,
         supplier_max_price,
-        offerRule,
-        rule_price,
-        profitAddPrice
+        offerRule
       });
     } catch (error) {
       this.logger.errorSave("获取最终报价异常", {
@@ -395,26 +261,24 @@ class getUmeOfferPrice extends BaseOfferPrice {
     cost_price,
     rewards,
     supplier_max_price,
-    offerRule,
-    rule_price,
-    profitAddPrice
+    offerRule
   }) {
-    // 手续费
-    let shouxufei = (adjustedPrice * 100) / 10000;
-    if (NO_FEE_PLAT_LIST.includes(this.plat_name)) {
-      shouxufei = 0;
-    }
-    // 奖励费用
-    const rewardPrice =
-      rewards > 0 ? (adjustedPrice * 100 * rewards) / 10000 : 0;
-    // 卡券成本
-    let cardQuanCost = cost_price;
-    // 出票成本（加手续费）
-    let pay_cost_price = cost_price + shouxufei;
-    // 真实成本（减奖励费）
-    const real_cost_price = (pay_cost_price - rewardPrice).toFixed(2);
-    // 预计利润（最终报价-真实成本）
-    let expectProfit = (adjustedPrice - real_cost_price).toFixed(2);
+    const parts = calcOfferCostProfitParts({
+      adjustedPrice,
+      cost_price,
+      rewards,
+      plat_name: this.plat_name,
+      noFeePlatList: NO_FEE_PLAT_LIST
+    });
+    const {
+      shouxufei,
+      rewardPrice,
+      pay_cost_price,
+      real_cost_price,
+      expectProfit,
+      maxCostPrice
+    } = parts;
+
     // 使用放大 1000 倍后的整数差值做利润校验，避免浮点精度问题
     const profitDiff =
       Math.round(Number(adjustedPrice || 0) * 1000) -
@@ -426,15 +290,14 @@ class getUmeOfferPrice extends BaseOfferPrice {
     }
 
     // 最大卡券成本（即成本必须低于它才有利润）
-    let maxCostPrice =
-      (adjustedPrice * 1000 + rewardPrice * 1000 - shouxufei * 1000) / 1000;
     offerRule.maxCostPrice = maxCostPrice;
 
     this.logger.infoSave("ume计算报价相关信息", {
-      rule_price: "规则计算报价：" + rule_price,
-      profitAddPrice: "单店加价金额：" + profitAddPrice,
+      rule_price: "规则计算报价：" + adjustedPrice,
+      profitAddPrice:
+        "单店加价金额：" + (adjustedPrice - this.getOfferBasePrice(offerRule)),
       supplier_max_price: "平台最高限价：" + supplier_max_price,
-      cardQuanCost: "卡券成本：" + cardQuanCost,
+      cardQuanCost: "卡券成本：" + cost_price,
       maxCostPrice: "最大卡券成本（低于该值才有利润）：" + maxCostPrice,
       price: "最终报价：" + adjustedPrice,
       shouxufei: "手续费（最终报价*1%）：" + shouxufei,
