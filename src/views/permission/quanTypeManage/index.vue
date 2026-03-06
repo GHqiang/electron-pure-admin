@@ -49,14 +49,14 @@
               style="width: 194px"
             />
           </el-form-item> -->
-          <el-form-item label="券成本">
+          <!-- <el-form-item label="券成本">
             <el-input
               v-model="formData.quan_cost"
               placeholder="请输入券成本"
               clearable
               style="width: 194px"
             />
-          </el-form-item>
+          </el-form-item> -->
           <el-form-item label="券标识">
             <el-input
               v-model="formData.quan_flag"
@@ -65,14 +65,14 @@
               style="width: 194px"
             />
           </el-form-item>
-          <el-form-item label="券手续费">
+          <!-- <el-form-item label="券手续费">
             <el-input
               v-model="formData.quan_fee"
               placeholder="请输入券手续费"
               clearable
               style="width: 194px"
             />
-          </el-form-item>
+          </el-form-item> -->
           <el-form-item label="是否入库">
             <el-select
               v-model="formData.is_store"
@@ -84,9 +84,9 @@
               <el-option label="否" value="2" />
             </el-select>
           </el-form-item>
-          <el-form-item style="margin-left: 10px">
-            <el-button @click="resetForm">重置</el-button>
+          <el-form-item>
             <el-button type="primary" @click="searchData">搜索</el-button>
+            <el-button @click="resetForm">重置</el-button>
             <el-button
               type="primary"
               style="margin-left: 10px"
@@ -105,6 +105,8 @@
               @click="queryQuanBalanceTotal"
               >查看券余额</el-button
             >
+          </el-form-item>
+          <el-form-item style="margin-left: 10px">
             <el-button
               type="danger"
               style="margin-left: 10px"
@@ -144,7 +146,7 @@
         </el-button> -->
           </el-form-item>
 
-          <el-form-item class="special-item">
+          <el-form-item>
             <el-button type="primary" style="padding-left: 0px">
               <template #default>
                 <el-cascader
@@ -161,7 +163,7 @@
             </el-button>
             <el-upload
               ref="uploadRef"
-              style="margin-left: 15px; vertical-align: middle"
+              style="margin-left: 15px"
               class="upload-demo"
               :limit="1"
               :on-change="importQuan"
@@ -235,10 +237,15 @@
               <span>{{ APP_LIST[row.app_name] }}</span>
             </template>
           </el-table-column>
-          <el-table-column prop="quan_name" label="券名称" min-width="100" />
+          <el-table-column prop="quan_name" label="券名称" min-width="180" />
           <el-table-column prop="quan_value" label="券类型" min-width="100" />
-          <el-table-column prop="quan_cost" label="券成本" min-width="100" />
-          <el-table-column prop="quan_flag" label="券标识" min-width="100" />
+          <el-table-column
+            prop="quan_cost"
+            label="券成本"
+            min-width="70"
+            align="center"
+          />
+          <el-table-column prop="quan_flag" label="券标识" min-width="180" />
           <el-table-column prop="quan_fee" label="券手续费" min-width="100" />
           <el-table-column prop="is_store" label="是否入库" min-width="100">
             <template #default="{ row: { is_store } }">
@@ -249,14 +256,36 @@
           </el-table-column>
           <el-table-column label="券库存" min-width="100">
             <template #default="{ row: { quan_stock, quanStockList } }">
-              <span>{{ quanStockFormat({ quan_stock, quanStockList }) }}</span>
+              <span
+                v-if="quanStockFormat({ quan_stock, quanStockList }) == 0"
+                >{{ quanStockFormat({ quan_stock, quanStockList }) }}</span
+              >
+              <el-tag
+                v-else
+                type="success"
+                size="small"
+                effect="dark"
+                class="transfer-label"
+                style="padding: 0 8px; font-weight: 600"
+              >
+                {{ quanStockFormat({ quan_stock, quanStockList }) }}
+              </el-tag>
             </template>
           </el-table-column>
           <el-table-column
             prop="end_use_time"
             label="最后使用时间"
             min-width="160"
-          />
+          >
+            <template #default="{ row }">
+              <span
+                :class="{ red: isLastUseTimeOver10Days(row) }"
+                title="红色为:最后使用时间距离今天超过10天且库存超过20"
+              >
+                {{ row.end_use_time }}
+              </span>
+            </template>
+          </el-table-column>
           <el-table-column
             prop="black_quans"
             label="黑名单券"
@@ -714,17 +743,35 @@ const editQuan = (row, type) => {
 // 格式化券库存
 const quanStockFormat = ({ quan_stock, quanStockList }) => {
   if (quanStockList?.length) {
-    // 最大数当做券库存
-    let maxNum = 0;
+    // 所有数相加当做券库存
+    let totalNum = 0;
     quanStockList.forEach(item => {
-      if (+item.quan_stock > maxNum) {
-        maxNum = +item.quan_stock;
-      }
+      totalNum += +item.quan_stock || 0;
     });
-    return maxNum;
+    return totalNum;
   } else {
     return quan_stock;
   }
+};
+
+// 判断最后使用时间是否超过10天且库存超过20
+const isLastUseTimeOver10Days = row => {
+  if (!row.end_use_time) return false;
+
+  // 计算最后使用时间距离今天的天数
+  const lastUseTime = new Date(row.end_use_time);
+  const today = new Date();
+  const diffTime = today - lastUseTime;
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  // 计算券库存
+  const stock = quanStockFormat({
+    quan_stock: row.quan_stock,
+    quanStockList: row.quanStockList
+  });
+
+  // 当最后使用时间距离今天超过10天且库存超过20时返回true
+  return diffDays > 10 && stock > 20;
 };
 // 保存券类型
 const saveQuan = async cardInfo => {
@@ -1165,5 +1212,20 @@ onBeforeMount(async () => {
 }
 .special-tree :deep(.el-form-item__content) {
   align-items: baseline;
+}
+.upload-demo {
+  margin-top: 10px;
+}
+
+.demo-form-inline .el-form-item__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.demo-form-inline .el-input,
+.demo-form-inline .el-select,
+.demo-form-inline :deep(.el-cascader),
+.demo-form-inline :deep(.el-date-editor.el-input) {
+  width: 95%;
 }
 </style>

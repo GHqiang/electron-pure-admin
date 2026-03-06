@@ -144,7 +144,7 @@
         align="center"
         width="60"
       />
-      <el-table-column prop="plat_name" fixed label="订单来源" width="120">
+      <el-table-column prop="plat_name" fixed label="订单来源" width="100">
         <template #default="scope">
           <div class="order-source-container">
             <span>{{ orderFormObj[scope.row.plat_name] }}</span>
@@ -184,9 +184,7 @@
         <template #default="scope">
           <span>
             {{ scope.row.supplier_max_price || 0 }}
-            <span v-if="IN_RULE_LIST.includes(rule) && orderStatus == 1">
-              / {{ scope.row.member_price || 0 }}
-            </span>
+            <span> / {{ scope.row.member_price || 0 }} </span>
           </span>
         </template>
       </el-table-column>
@@ -227,10 +225,23 @@
         </template>
       </el-table-column>
       <el-table-column prop="user_name" label="报价人" width="85" />
-      <el-table-column prop="cinema_name" label="影院" width="245" />
+      <el-table-column prop="cinema_name" label="影院" width="205" />
       <el-table-column prop="hall_name" label="影厅" width="90" />
-      <el-table-column prop="film_name" label="片名" width="110" />
-      <el-table-column prop="ticket_num" label="座位数" width="85" />
+      <el-table-column label="座位数/片名" width="150">
+        <template #default="scope">
+          <div class="film-name-container">
+            <el-tag
+              size="small"
+              type="success"
+              effect="dark"
+              class="ticket-num-tag"
+            >
+              {{ scope.row.ticket_num }}
+            </el-tag>
+            <span>{{ scope.row.film_name }}</span>
+          </div>
+        </template>
+      </el-table-column>
       <el-table-column label="报价类型" width="120">
         <template #default="scope">
           <el-tag
@@ -250,7 +261,7 @@
         v-if="orderStatus != 1"
         prop="err_msg"
         label="失败原因"
-        width="230"
+        width="280"
       />
       <el-table-column label="操作" fixed="right" align="center" width="120">
         <template #default="{ row: { order_number, user_id } }">
@@ -267,7 +278,7 @@
     <el-pagination
       v-model:current-page="currentPage"
       v-model:page-size="pageSize"
-      style="margin-top: 10px; display: flex; justify-content: flex-end"
+      style="display: flex; justify-content: flex-end; margin-top: 10px"
       :page-sizes="[10, 20, 30, 50]"
       :background="true"
       layout="total, sizes, prev, pager, next, jumper"
@@ -583,7 +594,20 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-/* 表单布局调整 */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgb(103 194 58 / 40%);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px rgb(103 194 58 / 0%);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgb(103 194 58 / 0%);
+  }
+}
+
 .demo-form-inline .el-form-item {
   width: 20%;
   margin-right: 0;
@@ -604,84 +628,82 @@ onBeforeUnmount(() => {
 .status-success {
   color: #67c23a;
 }
+
 .status-failed {
   color: #f56c6c;
 }
+
 .status-refunded {
   color: #e6a23c;
 }
+
 .status-offer-only {
   color: #909399;
 }
+
 .status-retrying {
   color: #409eff;
 }
+
 .winning-price {
-  color: #d60a40;
   font-weight: 600;
+  color: #d60a40;
 }
+
 .order-source-container {
   display: flex;
-  align-items: center;
-  gap: 5px;
   flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
 }
+
 .reward-tag {
-  font-size: 9px;
-  padding: 0 4px;
   height: 16px;
-  line-height: 14px;
+  padding: 0 4px;
+  font-size: 9px;
   font-weight: 600;
+  line-height: 14px;
   border-radius: 2px;
 }
 
 .status-tag {
-  font-weight: 600;
   padding: 0 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-weight: 600;
   border-radius: 4px;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
   transition: all 0.3s ease;
 }
 
 .status-tag:hover {
+  box-shadow: 0 4px 8px rgb(0 0 0 / 15%);
   transform: scale(1.05);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .offer-type-tag {
-  font-weight: 600;
   padding: 0 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-weight: 600;
   border-radius: 4px;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
   transition: all 0.3s ease;
 }
 
 .offer-type-tag:hover {
+  box-shadow: 0 4px 8px rgb(0 0 0 / 15%);
   transform: scale(1.05);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(103, 194, 58, 0.4);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(103, 194, 58, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(103, 194, 58, 0);
-  }
-}
 .line-through {
-  text-decoration: line-through;
   color: #909399;
+  text-decoration: line-through;
 }
+
 .status-container,
 .offer-type-container {
   display: flex;
-  align-items: center;
   gap: 4px;
+  align-items: center;
 }
+
 .status-icon,
 .offer-icon {
   font-size: 12px;
@@ -689,18 +711,36 @@ onBeforeUnmount(() => {
 
 .profit-container {
   display: flex;
-  align-items: center;
-  gap: 5px;
   flex-wrap: nowrap;
+  gap: 5px;
+  align-items: center;
 }
 
 .transfer-label {
-  font-size: 10px;
-  padding: 0 4px;
   height: 18px;
-  line-height: 16px;
+  padding: 0 4px;
+  font-size: 10px;
   font-weight: 600;
+  line-height: 16px;
   border: 1px solid #f56c6c;
   border-radius: 2px;
 }
+
+.film-name-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+}
+
+.ticket-num-tag {
+  height: 16px;
+  padding: 0 4px;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 14px;
+  border-radius: 2px;
+}
+
+/* 表单布局调整 */
 </style>
