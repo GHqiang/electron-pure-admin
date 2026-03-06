@@ -732,8 +732,8 @@ onBeforeUnmount(() => {
 
 .demo-form-inline .el-input,
 .demo-form-inline .el-select,
-.demo-form-inline :v-deep(.el-cascader),
-.demo-form-inline :v-deep(.el-date-editor.el-input) {
+.demo-form-inline :deep(.el-cascader),
+.demo-form-inline :deep(.el-date-editor.el-input) {
   width: 100%;
 }
 
