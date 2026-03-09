@@ -219,23 +219,7 @@
       </el-table-column>
       <el-table-column prop="user_name" label="出票人" width="85" />
       <el-table-column prop="mobile" label="出票手机号" width="125" />
-      <el-table-column label="报价类型" width="120">
-        <template #default="scope">
-          <el-tag
-            v-if="scope.row.offer_type"
-            :type="getOfferType(scope.row.offer_type)"
-            size="medium"
-            effect="dark"
-            class="offer-type-tag"
-          >
-            {{ offerTypeObj[scope.row.offer_type] || "" }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop="quan_value" label="用券类型" width="85" />
-      <el-table-column prop="quan_code" label="优惠券码" width="90" />
-      <el-table-column prop="card_num" label="支付卡号" width="90" />
-      <el-table-column label="利润" width="140">
+      <el-table-column label="利润" width="80">
         <template
           #default="{
             row: { profit, original_profit, order_status, transfer_fee }
@@ -247,7 +231,7 @@
               size="small"
               effect="dark"
               :class="{ 'line-through': order_status === '3' }"
-              style="font-weight: 600; padding: 0 8px"
+              style="padding: 0 8px; font-weight: 600"
             >
               {{ transfer_fee && transfer_fee > 0 ? -transfer_fee : profit || 0
               }}{{
@@ -268,6 +252,22 @@
           </div>
         </template>
       </el-table-column>
+      <el-table-column label="报价类型" width="120">
+        <template #default="scope">
+          <el-tag
+            v-if="scope.row.offer_type"
+            :type="getOfferType(scope.row.offer_type)"
+            size="medium"
+            effect="dark"
+            class="offer-type-tag"
+          >
+            {{ offerTypeObj[scope.row.offer_type] || "" }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="quan_value" label="用券类型" width="85" />
+      <el-table-column prop="quan_code" label="优惠券码" width="90" />
+      <el-table-column prop="card_num" label="支付卡号" width="90" />
       <el-table-column prop="processing_time" label="创建时间" width="160" />
       <el-table-column prop="err_msg" label="失败原因" width="110">
         <template #default="scope">
@@ -320,7 +320,7 @@
     <el-pagination
       v-model:current-page="currentPage"
       v-model:page-size="pageSize"
-      style="margin-top: 10px; display: flex; justify-content: flex-end"
+      style="display: flex; justify-content: flex-end; margin-top: 10px"
       :page-sizes="[10, 20, 30, 50]"
       :background="true"
       layout="total, sizes, prev, pager, next, jumper"
@@ -703,18 +703,36 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgb(103 194 58 / 40%);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px rgb(103 194 58 / 0%);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgb(103 194 58 / 0%);
+  }
+}
+
 .ticket-info-popover {
   max-width: none !important;
 }
+
 .ticket-info-popover .el-table {
   margin: 0;
 }
+
 .ticket-info-popover .el-table__body-wrapper {
   overflow: visible !important;
 }
+
 .ticket-info-popover .el-table__header-wrapper {
   overflow: visible !important;
 }
+
 .ticket-info-popover .el-table__footer-wrapper {
   overflow: visible !important;
 }
@@ -732,92 +750,90 @@ onBeforeUnmount(() => {
 
 .demo-form-inline .el-input,
 .demo-form-inline .el-select,
-.demo-form-inline :v-deep(.el-cascader),
-.demo-form-inline :v-deep(.el-date-editor.el-input) {
+.demo-form-inline :deep(.el-cascader),
+.demo-form-inline :deep(.el-date-editor.el-input) {
   width: 100%;
 }
 
 .status-success {
   color: #67c23a;
 }
+
 .status-failed {
   color: #f56c6c;
 }
+
 .status-refunded {
   color: #e6a23c;
 }
+
 .status-offer-only {
   color: #909399;
 }
+
 .status-retrying {
   color: #409eff;
 }
+
 .winning-price {
-  color: #d60a40;
   font-weight: 600;
+  color: #d60a40;
 }
+
 .order-source-container {
   display: flex;
-  align-items: center;
-  gap: 5px;
   flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
 }
+
 .reward-tag {
-  font-size: 9px;
-  padding: 0 4px;
   height: 16px;
-  line-height: 14px;
+  padding: 0 4px;
+  font-size: 9px;
   font-weight: 600;
+  line-height: 14px;
   border-radius: 2px;
 }
 
 .status-tag {
-  font-weight: 600;
   padding: 0 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-weight: 600;
   border-radius: 4px;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
   transition: all 0.3s ease;
 }
 
 .status-tag:hover {
+  box-shadow: 0 4px 8px rgb(0 0 0 / 15%);
   transform: scale(1.05);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .offer-type-tag {
-  font-weight: 600;
   padding: 0 10px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-weight: 600;
   border-radius: 4px;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
   transition: all 0.3s ease;
 }
 
 .offer-type-tag:hover {
+  box-shadow: 0 4px 8px rgb(0 0 0 / 15%);
   transform: scale(1.05);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(103, 194, 58, 0.4);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(103, 194, 58, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(103, 194, 58, 0);
-  }
-}
 .line-through {
-  text-decoration: line-through;
   color: #909399;
+  text-decoration: line-through;
 }
+
 .status-container,
 .offer-type-container {
   display: flex;
-  align-items: center;
   gap: 4px;
+  align-items: center;
 }
+
 .status-icon,
 .offer-icon {
   font-size: 12px;
@@ -825,17 +841,17 @@ onBeforeUnmount(() => {
 
 .profit-container {
   display: flex;
-  align-items: center;
-  gap: 5px;
   flex-wrap: nowrap;
+  gap: 5px;
+  align-items: center;
 }
 
 .transfer-label {
-  font-size: 10px;
-  padding: 0 4px;
   height: 18px;
-  line-height: 16px;
+  padding: 0 4px;
+  font-size: 10px;
   font-weight: 600;
+  line-height: 16px;
   border: 1px solid #f56c6c;
   border-radius: 2px;
 }
