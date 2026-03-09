@@ -180,11 +180,22 @@
               <span>{{ formatAddAmount(scope.row) }}</span>
             </template>
           </el-table-column>
-          <el-table-column prop="orderForm" fixed label="订单来源" width="85">
+          <el-table-column
+            label="最后报价时间"
+            prop="last_used_time"
+            width="120"
+          />
+          <el-table-column
+            label="允许报价时间"
+            prop="allow_offer_time"
+            width="120"
+          />
+
+          <!-- <el-table-column prop="orderForm" fixed label="订单来源" width="85">
             <template #default="scope">
               <span>{{ formatPlatName(scope.row) }}</span>
             </template>
-          </el-table-column>
+          </el-table-column> -->
           <el-table-column label="会员日" prop="memberDay" width="85" />
           <el-table-column label="电影格式" prop="film_type" width="85" />
           <!-- <el-table-column label="开场时间限制" prop="timeLimit" width="110" /> -->

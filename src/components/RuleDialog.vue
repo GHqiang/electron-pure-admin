@@ -482,6 +482,9 @@
             >提示：主要是配合当日不报使用，如果想关闭当日不报可置空，如果次日下午才能报，也可调整其时间来实现</span
           >
         </el-form-item>
+        <el-form-item label="最后报价时间">
+          <span>{{ formData.last_used_time }}</span>
+        </el-form-item>
         <el-form-item label="备注">
           <el-input
             v-model="formData.remark"
@@ -592,6 +595,7 @@ let formData = reactive({
   // ruleStartTime: "", // 规则启用时间
   // ruleEndTime: "", // 规则结束时间
   allow_offer_time: "", // 允许报价时间
+  last_used_time: "", // 最后报价时间
   offerType: "1", // 报价类型, 1-固定价 2-会员价加价 3-会员日报价
   weekDay: [], // 启用星期
   seatNum: "", // 座位数
@@ -815,6 +819,7 @@ const open = async ruleInfo => {
         // formData.ruleEndTime = formInfo.ruleEndTime;
         // formData.timeLimit = formInfo.timeLimit;
         formData.allow_offer_time = formInfo.allow_offer_time;
+        formData.last_used_time = formInfo.last_used_time;
         formData.quanValue = formInfo.quanValue;
         formData.weekDay = formInfo.weekDay; // 启用星期
         formData.seatNum = formInfo.seatNum; // 座位数
