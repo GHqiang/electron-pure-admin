@@ -37,7 +37,7 @@ export default class LmaOrderManage {
   }
 
   // 价格计算
-  async pripriceCalculation({ order_str, lmaToken }) {
+  async priceCalculation({ order_str, lmaToken }) {
     let params = {
       order_str,
       lmaToken

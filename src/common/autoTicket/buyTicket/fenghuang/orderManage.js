@@ -138,7 +138,7 @@ export default class OrderManage {
   }
 
   // 计算价格
-  async pripriceCalculation(data) {
+  async priceCalculation(data) {
     let {
       cinemaLinkId,
       scheduleId,

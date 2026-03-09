@@ -34,7 +34,7 @@ src/common/autoTicket/buyTicket/chenxing/
 | **cardQuanManage.js** | 卡券管理     | `getQuanInfo()`, `getQuanListByPhone()`, `useQuanOrCard()`, `getUsableCardList()`, `getSortPhoneByQuanTypeList()`, `syncUpdateQuanStock()`, `updateQuanStock()` |
 | **cinemaManage.js**   | 影院与场次   | `getCityCinemaList()`, `getBuyPrevCinemaInfo()`, `getMoviePlayInfo()`, `getTargetShow()`, `getTargetMovie()`, `cinemaLinkCardHandle()`                          |
 | **seatManage.js**     | 座位         | `getSeatLayout()`, `getTargetSeat()`, `lockSeatHandle()`, `lockseatByApp()`, `retryLockSeat()`, `assistLockSeat()`                                              |
-| **orderManage.js**    | 订单与支付   | `pripriceCalculation()`, `createOrder()`, `buyTicket()`, `getQrcodeUploadByPlat()`, `transferOrder()`, `releaseSeat()`, `cancelOrder()`                         |
+| **orderManage.js**    | 订单与支付   | `priceCalculation()`, `createOrder()`, `buyTicket()`, `getQrcodeUploadByPlat()`, `transferOrder()`, `releaseSeat()`, `cancelOrder()`                         |
 
 ---
 

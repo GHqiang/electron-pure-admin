@@ -119,7 +119,7 @@ export default class OrderManage {
   }
 
   // 计算价格
-  async pripriceCalculation(data) {
+  async priceCalculation(data) {
     let { cinema_id, card_id, lockOrderId, promotions, session_id } = data;
     let params = {
       session_id,

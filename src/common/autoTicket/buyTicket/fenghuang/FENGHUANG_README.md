@@ -34,7 +34,7 @@ src/common/autoTicket/buyTicket/fenghuang/
 | **cardQuanManage.js** | 卡券管理     | `getQuanInfo()`, `getQuanListByPhone()`, `useQuanOrCard()`, `getUsableCardList()`, `getSeatPrice()`, `getSortPhoneByQuanTypeList()`, `syncUpdateQuanStock()`, `updateQuanStock()`                   |
 | **cinemaManage.js**   | 影院与场次   | `getCityCinemaList()`, `getBuyPrevCinemaInfo()`, `getMoviePlayInfo()`, `getMoviePlayTime()`, `getTargetShow()`, `getTargetMovie()`, `cinemaLinkCardHandle()`                                        |
 | **seatManage.js**     | 座位         | `getSeatLayout()`, `getTargetSeat()`, `lockSeatHandle()`, `lockseatByApp()`, `retryLockSeat()`, `assistLockSeat()`                                                                                  |
-| **orderManage.js**    | 订单与支付   | `pripriceCalculation()`, `createOrder()`, `getOrderInfoByOrderList()`, `getQrcodeUploadByPlat()`, `getPayResult()`, `asyncFetchQrcodeSubmit()`, `transferOrder()`, `releaseSeat()`, `cancelOrder()` |
+| **orderManage.js**    | 订单与支付   | `priceCalculation()`, `createOrder()`, `getOrderInfoByOrderList()`, `getQrcodeUploadByPlat()`, `getPayResult()`, `asyncFetchQrcodeSubmit()`, `transferOrder()`, `releaseSeat()`, `cancelOrder()` |
 
 ---
 
@@ -198,7 +198,7 @@ payToken: window.getPayToken(this.currentMemberPwd);
 
 ### 4.7 价格计算与订单创建
 
-- **价格计算**：`pripriceCalculation()` 支持用券计算价格（`priceCalculationByQuan`）
+- **价格计算**：`priceCalculation()` 支持用券计算价格（`priceCalculationByQuan`）
 - **订单创建**：`createOrder()` 包含支付信息，创建即支付
 - **订单号获取**：支持从订单列表获取订单号（`getOrderInfoByOrderList`）
 - **超时处理**：创建订单超时时，会标记 `isTimeout: true`，延迟后从订单列表获取

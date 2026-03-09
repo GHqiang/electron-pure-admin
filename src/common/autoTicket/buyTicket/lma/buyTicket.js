@@ -588,7 +588,7 @@ export default class LmaBuyTicket extends BaseBuyTicket {
       this.logger.infoSave("使用优惠券或者会员卡成功");
 
       // 计算订单价格
-      const priceRes = await this.orderManage.pripriceCalculation({
+      const priceRes = await this.orderManage.priceCalculation({
         order_str,
         lmaToken: this.currentParamsList[this.currentParamsInx].lmaToken
       });

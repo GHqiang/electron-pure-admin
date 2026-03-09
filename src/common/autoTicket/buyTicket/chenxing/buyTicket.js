@@ -350,7 +350,7 @@ class ChenxingBuyTicket extends BaseBuyTicket {
       let real_member_price = offerRule?.real_member_price || 0;
       real_member_price = (real_member_price * 10000 * ticket_num) / 10000;
       let quan_code = useQuan.map(item => item.couponCode);
-      const calcRes = await this.orderManage.pripriceCalculation({
+      const calcRes = await this.orderManage.priceCalculation({
         ...buyTicketInfo,
         cardNum,
         useCardList,

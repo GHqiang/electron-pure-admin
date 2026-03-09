@@ -171,7 +171,7 @@ export default class OrderManage {
     } catch (error) {}
   }
   // 计算价格
-  async pripriceCalculation(data) {
+  async priceCalculation(data) {
     let {
       cinemaCode,
       cinemaId,
@@ -252,7 +252,7 @@ export default class OrderManage {
               )?.[0]?.activityKey;
             this.logger.infoSave("计算价格获取到优惠活动key", { activityKey });
             if (activityKey) {
-              return this.pripriceCalculation({
+              return this.priceCalculation({
                 ...data,
                 activityKey,
                 isTrial: false
@@ -275,7 +275,7 @@ export default class OrderManage {
                 real_member_price
               }
             );
-            return await this.pripriceCalculation({
+            return await this.priceCalculation({
               ...data,
               useCardList: useCardList.slice(1)
             });

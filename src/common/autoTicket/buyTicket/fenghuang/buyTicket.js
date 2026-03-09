@@ -315,7 +315,7 @@ class FenghuangBuyTicket extends BaseBuyTicket {
       }
       // 5、计算价格
       let quan_code = useQuan.map(item => item.couponCode);
-      const calcRes = await this.orderManage.pripriceCalculation({
+      const calcRes = await this.orderManage.priceCalculation({
         ...buyTicketInfo,
         promotions: useQuan.map(item => ({
           promotionType: "COUPON",

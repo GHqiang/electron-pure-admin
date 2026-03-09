@@ -34,7 +34,7 @@ src/common/autoTicket/buyTicket/lma/
 | **cardQuanManage.js** | 卡券管理     | `useCardHandle()`, `useQuanHandle()`, `getQuanListByPhone()`, `getQuanInfo()`, `getUsableCardList()`, `updateQuanStock()`, `updateCardDayUse()`, `updateMonthlyLimit()` |
 | **cinemaManage.js**   | 影院与场次   | `getBuyPrevCinemaInfo()`, `getCityCinemaList()`, `getMoviePlayInfo()`, `getMoviePlayDate()`, `getMovieInfo()`                                                           |
 | **seatManage.js**     | 座位         | `getSeatLayout()`, `getTargetSeat()`, `lockseatByApp()`                                                                                                                 |
-| **orderManage.js**    | 订单与支付   | `pripriceCalculation()`, `buyTicket()`, `payOrder()`, `getQrcodeUploadByPlat()`, `transferOrder()`, `asyncFetchQrcodeSubmit()`                                          |
+| **orderManage.js**    | 订单与支付   | `priceCalculation()`, `buyTicket()`, `payOrder()`, `getQrcodeUploadByPlat()`, `transferOrder()`, `asyncFetchQrcodeSubmit()`                                          |
 
 **简要说明**：
 
@@ -43,7 +43,7 @@ src/common/autoTicket/buyTicket/lma/
 - **cardQuanManage**：用卡、用券、券列表、券库存、卡日/月使用量。
 - **cinemaManage**：影院列表、放映信息、放映日期、场次匹配；报价用 `getMovieInfo`，出票用 `getBuyPrevCinemaInfo` + `getMoviePlayInfo` + `getMoviePlayDate`。
 - **seatManage**：座位布局、目标座位、锁座（锁座即创建订单）。
-- **orderManage**：`pripriceCalculation` 调 `get_order` 取支付价；`buyTicket` 调购买接口；`payOrder` 取取票码 `booking_id`；`getQrcodeUploadByPlat` 上传取票码；`transferOrder` 取消订单 + 平台转单。
+- **orderManage**：`priceCalculation` 调 `get_order` 取支付价；`buyTicket` 调购买接口；`payOrder` 取取票码 `booking_id`；`getQrcodeUploadByPlat` 上传取票码；`transferOrder` 取消订单 + 平台转单。
 
 ---
 
@@ -182,7 +182,7 @@ const result = await buyTicket.validateTicketOrder(orderJson);
 ### 5.1 时机与流程
 
 - **时机**：锁座成功得到 `order_str` 后，在购买前调用。
-- **调用链**：`buyTicket` → `orderManage.pripriceCalculation({ order_str, lmaToken })` → `appApi.priceCalculation`。
+- **调用链**：`buyTicket` → `orderManage.priceCalculation({ order_str, lmaToken })` → `appApi.priceCalculation`。
 
 ### 5.2 接口与字段
 
