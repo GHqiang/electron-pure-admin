@@ -82,7 +82,8 @@ export default class SfcOrderManage {
       session_id,
       appFlag,
       member_coupon_id,
-      coupon_id
+      coupon_id,
+      isUseCardFail
     } = data;
     let params = {
       city_id: city_id,
@@ -117,10 +118,8 @@ export default class SfcOrderManage {
       if (coupon_id) {
         // 会员卡赠送线上券id（线上券时还要必传card_id，而且创建订单接口也需要特殊处理）
         params.coupon_id = coupon_id;
-        // 8.3.3版本接口变更，线上券是否必传会员卡id由接口参数控制了，之前是默认必传的，现在做兼容处理，如果接口参数控制线上券不必传会员卡id了，那就不传了
-        const sfcOnlineQuanIsUseCard =
-          dictStore.dictInfo.sfcOnlineQuanIsUseCard;
-        if (sfcOnlineQuanIsUseCard === "0") {
+        // 用卡失败时去掉卡号
+        if (isUseCardFail) {
           params.card_id = undefined; // 线上券是否必传会员卡id，0-不必传，1-必传，默认0
           params.quan_code = undefined; // 优惠券编码
           params.goods_coupon_id = "";
@@ -147,7 +146,10 @@ export default class SfcOrderManage {
         this.logger.infoSave(
           "当前价格为会员卡的售票系统补贴价，无法叠加使用线上券，准备去掉card_id重试计算订单价格"
         );
-        return this.priceCalculation({ ...data, card_id: undefined });
+        return this.priceCalculation({
+          ...data,
+          isUseCardFail: true
+        });
       }
       return { error };
     }
