@@ -435,40 +435,6 @@
           </el-select>
           <span style="color: red">提示：控制座位数大于X，不进行报价</span>
         </el-form-item>
-        <!-- <el-form-item label="开场时间限制">
-          <el-input
-            v-model="formData.timeLimit"
-            placeholder="开场时间限制"
-            clearable
-          >
-            <template #append> 单位：小时 </template>
-          </el-input>
-          <span style="color: red"
-            >提示：控制距离开场时间小于X小时，不进行报价</span
-          >
-        </el-form-item> -->
-        <!-- <el-form-item label="开始放映时间">
-          <el-time-select
-            v-model="formData.ruleStartTime"
-            :max-time="formData.ruleEndTime"
-            placeholder="开始放映时间"
-            start="06:30"
-            step="00:15"
-            end="23:30"
-            clearable
-          />
-        </el-form-item>
-        <el-form-item label="结束放映时间">
-          <el-time-select
-            v-model="formData.ruleEndTime"
-            :min-time="formData.ruleStartTime"
-            placeholder="结束放映时间"
-            start="06:30"
-            step="00:15"
-            end="23:30"
-            clearable
-          />
-        </el-form-item> -->
         <el-form-item label="允许报价时间">
           <el-date-picker
             v-model="formData.allow_offer_time"
@@ -590,10 +556,7 @@ let formData = reactive({
   excludeHallNames: [], // 排除影厅
   includeFilmNames: [], // 包含影片
   excludeFilmNames: [], // 排除影片
-  // timeLimit: "", // 开场时间限制
   quanValue: [], // 用券类型
-  // ruleStartTime: "", // 规则启用时间
-  // ruleEndTime: "", // 规则结束时间
   allow_offer_time: "", // 允许报价时间
   last_used_time: "", // 最后报价时间
   offerType: "1", // 报价类型, 1-固定价 2-会员价加价 3-会员日报价
@@ -686,10 +649,7 @@ const resetForm = el => {
   formData.excludeHallNames = []; // 排除影厅
   formData.includeFilmNames = []; // 包含影片
   formData.excludeFilmNames = []; // 排除影片
-  // formData.timeLimit = ""; // 开场时间限制
   formData.quanValue = []; // 用券类型
-  // formData.ruleStartTime = ""; // 规则启用时间
-  // formData.ruleEndTime = ""; // 规则结束时间
   formData.allow_offer_time = "";
   formData.offerType = "1"; // 报价类型, 1-固定价 2-会员价加价 3-会员日报价
   formData.weekDay = []; // 启用星期
@@ -815,9 +775,6 @@ const open = async ruleInfo => {
         formData.ruleName = formInfo.ruleName;
         formData.orderForm = formInfo.orderForm.split(",");
         formData.shadowLineName = formInfo.shadowLineName;
-        // formData.ruleStartTime = formInfo.ruleStartTime;
-        // formData.ruleEndTime = formInfo.ruleEndTime;
-        // formData.timeLimit = formInfo.timeLimit;
         formData.allow_offer_time = formInfo.allow_offer_time;
         formData.last_used_time = formInfo.last_used_time;
         formData.quanValue = formInfo.quanValue;

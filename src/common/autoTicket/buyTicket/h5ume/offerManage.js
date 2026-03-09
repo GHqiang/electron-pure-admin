@@ -78,13 +78,14 @@ class getH5UmeOfferPrice extends BaseOfferPrice {
       const matchRuleListRes = offerRuleMatch(order, this.logger);
       let matchRuleList = matchRuleListRes?.matchRuleList || [];
       if (!matchRuleList?.length) {
-        this.logger.errorSave("报价规则匹配后规则为空", {
+        this.logger.infoSave("报价规则匹配后规则为空", {
           error: matchRuleListRes?.error,
           order
         });
         return null;
       }
       matchRuleList = JSON.parse(JSON.stringify(matchRuleList));
+
       // 判断规则里是否有指定电影格式的（2D/3D）
       let filmTypeFlag = matchRuleList.some(item => !!item?.film_type?.length);
       this.logger.infoSave("开始获取电影放映信息");

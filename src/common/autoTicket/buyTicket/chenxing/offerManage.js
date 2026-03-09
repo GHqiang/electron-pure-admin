@@ -83,14 +83,15 @@ class getChenxingOfferPrice extends BaseOfferPrice {
     try {
       // 1. 初始规则匹配
       const matchRuleListRes = offerRuleMatch(order, this.logger);
-      if (!matchRuleListRes.matchRuleList?.length) {
-        this.handleRuleMatchError(matchRuleListRes, order);
+      let matchRuleList = matchRuleListRes?.matchRuleList || [];
+      if (!matchRuleList?.length) {
+        this.logger.infoSave("报价规则匹配后规则为空", {
+          error: matchRuleListRes?.error,
+          order
+        });
         return null;
       }
-
-      let matchRuleList = JSON.parse(
-        JSON.stringify(matchRuleListRes?.matchRuleList || [])
-      );
+      matchRuleList = JSON.parse(JSON.stringify(matchRuleList));
 
       // 2. 电影格式过滤
       const movieInfo = await this.getMovieInfo();
@@ -306,17 +307,6 @@ class getChenxingOfferPrice extends BaseOfferPrice {
             : true
         )
       : rules;
-  }
-
-  /**
-   * 处理规则匹配失败
-   * @private
-   */
-  handleRuleMatchError(result, order) {
-    this.logger.errorSave("报价规则匹配后规则为空", {
-      error: result.error,
-      order
-    });
   }
 
   /**
