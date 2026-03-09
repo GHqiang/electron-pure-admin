@@ -779,11 +779,11 @@ const getLastUseTimeClass = row => {
     quanStockList: row.quanStockList
   });
 
-  // 最后使用时间超过三个月，不管有没有库存，都用红色
+  // 最后使用时间超过四个月（120天），不管有没有库存，都用黄色
   if (diffDays > 120) {
     return "yellow";
   }
-  // 最后使用时间超过10天且库存超过20，用黄色
+  // 最后使用时间超过10天且库存超过20，用红色
   if (diffDays > 10 && stock > 20) {
     return "red";
   }

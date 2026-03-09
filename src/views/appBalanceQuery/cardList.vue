@@ -904,27 +904,45 @@ const confirmBatchUpdate = async () => {
         background: "rgba(0, 0, 0, 0.7)"
       });
       try {
-        // 逐个修改选中的卡
+        // 逐个修改选中的卡，添加错误处理
         const updatePromises = multipleSelection.value.map(async item => {
-          const cardInfo = {
-            id: item.id,
-            card_discount: batchDiscountForm.card_discount,
-            update_time: getCurrentTime(),
-            rule: rule
-          };
-          await svApi.updateCardRecord(cardInfo);
+          try {
+            const cardInfo = {
+              id: item.id,
+              card_discount: batchDiscountForm.card_discount,
+              update_time: getCurrentTime(),
+              rule: rule
+            };
+            await svApi.updateCardRecord(cardInfo);
+            return { success: true, id: item.id };
+          } catch (error) {
+            console.error(`更新卡${item.id}失败:`, error);
+            return { success: false, id: item.id, error };
+          }
         });
 
         // 等待所有修改完成
-        await Promise.all(updatePromises);
+        const results = await Promise.all(updatePromises);
 
         loading.close();
         batchDiscountVisible.value = false;
-        ElMessage({
-          type: "success",
-          message: `批量修改 ${multipleSelection.value.length} 张卡折扣成功！`
-        });
-        searchData();
+
+        // 统计成功和失败的数量
+        const successCount = results.filter(result => result.success).length;
+        const failCount = results.filter(result => !result.success).length;
+
+        if (successCount > 0) {
+          ElMessage({
+            type: "success",
+            message: `批量修改 ${successCount} 张卡折扣成功！${failCount > 0 ? `其中 ${failCount} 张卡更新失败` : ""}`
+          });
+          searchData();
+        } else {
+          ElMessage({
+            type: "error",
+            message: "批量修改折扣失败"
+          });
+        }
       } catch (error) {
         loading.close();
         console.warn("批量修改折扣异常", error);
