@@ -31,6 +31,8 @@ import svApi from "@/api/sv-api";
 import Logger from "@/common/logger";
 import usesMachineBaseFun from "@/mixins/usesMachineBaseFun";
 import { encode } from "@/utils/sfc-member-password";
+import { dictTable } from "@/store/dictTable";
+const dictStore = dictTable();
 
 const { updateQuanBlackInfo } = usesMachineBaseFun();
 
@@ -115,6 +117,12 @@ export default class SfcOrderManage {
       if (coupon_id) {
         // 会员卡赠送线上券id（线上券时还要必传card_id，而且创建订单接口也需要特殊处理）
         params.coupon_id = coupon_id;
+        // 8.3.3版本接口变更，线上券是否必传会员卡id由接口参数控制了，之前是默认必传的，现在做兼容处理，如果接口参数控制线上券不必传会员卡id了，那就不传了
+        const sfcOnlineQuanIsUseCard =
+          dictStore.dictInfo.sfcOnlineQuanIsUseCard;
+        if (sfcOnlineQuanIsUseCard === "0") {
+          params.card_id = undefined; // 线上券是否必传会员卡id，0-不必传，1-必传，默认0
+        }
       }
       this.logger.infoSave("计算订单价格参数", {
         params
@@ -127,6 +135,18 @@ export default class SfcOrderManage {
       };
     } catch (error) {
       this.logger.errorSave("计算订单价格异常", { error });
+      // { "error": "{\"status\":0,\"errcode\":\"-1\",\"msg\":\"当前价格为会员卡的售票系统补贴价，无法叠加使用线上券，请分开支付\",\"data\":{}}" }
+      // 8.3.3版本疑似线上券不必传card_id了，先做兼容处理，后续等确认了接口变更了再优化掉这个兼容逻辑
+      if (
+        error?.msg?.includes(
+          "当前价格为会员卡的售票系统补贴价，无法叠加使用线上券"
+        )
+      ) {
+        this.logger.infoSave(
+          "当前价格为会员卡的售票系统补贴价，无法叠加使用线上券，准备去掉card_id重试计算订单价格"
+        );
+        return this.priceCalculation({ ...data, card_id: undefined });
+      }
       return { error };
     }
   }

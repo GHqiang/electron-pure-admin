@@ -1,7 +1,7 @@
 // sfc请求拦截器封装
 import axios from "axios";
 import { ElMessage } from "element-plus";
-import { GET_APP_LIST, SFC_APP_VER_OBJ } from "@/common/constant";
+import { GET_APP_LIST, GET_APP_INFO } from "@/common/constant";
 import md5 from "../md5.js";
 import {
   logUpload,
@@ -21,10 +21,12 @@ const createAxios = ({ group, app_name, timeout = 20 }) => {
     timeout: timeout * 1000
   });
   let pver = "7.0",
-    ver = "7.7.3";
-  if (SFC_APP_VER_OBJ[app_name]) {
-    pver = SFC_APP_VER_OBJ[app_name][0];
-    ver = SFC_APP_VER_OBJ[app_name][1];
+    ver = "8.3.3"; // 默认的大部分已由7.7.3升级至8.3.3版本，其余特殊版本走表里维护
+  const apiVersion = GET_APP_INFO(app_name)?.api_v;
+
+  if (apiVersion) {
+    pver = apiVersion.split("_")[0];
+    ver = apiVersion.split("_")[1];
   }
   // 公共请求参数对象，包含一些默认的请求头信息，如group、pver、source、ver等
   var i = {

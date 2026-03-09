@@ -208,6 +208,20 @@
           <span style="color: red">注意：可通过任意接口参数v字段获取</span>
         </el-form-item>
         <el-form-item
+          v-if="formData.app_type_code === 'sfc_applet'"
+          label="乐影api版本"
+          prop="api_v"
+        >
+          <el-input
+            v-model="formData.api_v"
+            placeholder="请输入乐影api版本"
+            clearable
+          />
+          <span style="color: red"
+            >注意：默认不填，特殊的才需要填，可通过任意接口参数pver字段+下划线+ver字段获取</span
+          >
+        </el-form-item>
+        <el-form-item
           v-if="formData.app_type_code === 'fenghuang_applet'"
           label="凤凰appId"
           prop="appId"
