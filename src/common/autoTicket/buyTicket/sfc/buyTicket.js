@@ -498,7 +498,7 @@ class SfcBuyTicket extends BaseBuyTicket {
         }
       }
       if (!priceInfo) {
-        this.logger.errorSave("计算订单价格失败，走转单或换号");
+        this.logger.infoSave("计算订单价格失败，走转单或换号");
         // 使用基类通用方法处理换号/转单
         return await this.fallbackWithChangePhoneOrTransfer({
           reason: "计算订单价格失败",

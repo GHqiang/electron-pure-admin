@@ -1188,45 +1188,61 @@ const offerRuleMatch = (order, logger) => {
         });
     }
     // 1、获取启用的规则列表（只有满足规则才报价）
-    let useRuleList = appOfferRuleList.filter(item =>
-      ["1", "3"].includes(item.status)
+    let useRuleList = appOfferRuleList.filter(
+      item =>
+        ["1", "3"].includes(item.status) &&
+        item.shadowLineName == shadowLineName
     );
-    console.log("启用的规则列表", useRuleList);
+    if (!useRuleList.length) {
+      logger.errorSave("按启用状态筛选后，报价规则为空");
+      return;
+    }
+    console.log("影线启用的规则列表", useRuleList);
     let useOfferRuleList = useRuleList.filter(item =>
       !item.allow_offer_time
         ? true
         : +new Date(item.allow_offer_time) < +new Date()
     );
-    console.log("可报价的规则列表", useOfferRuleList);
-    // 2、获取某个影线的规则列表
-    let shadowLineRuleList = useOfferRuleList.filter(item => {
-      // 万象ume和h5ume都需要用
-      if (shadowLineName != "wanxiang") {
-        return item.shadowLineName === shadowLineName;
-      } else {
-        return ["wanxiang", "wanxiangh5"].includes(item.shadowLineName);
-      }
-    });
-    console.log("影线的规则列表", shadowLineRuleList);
+    if (!useOfferRuleList.length) {
+      logger.errorSave("按允许报价时间筛选后，报价规则为空");
+      return;
+    }
+    console.log("按允许报价时间筛选后的规则列表", useOfferRuleList);
     // 3、匹配城市
-    let cityRuleList = shadowLineRuleList.filter(item => {
-      console.log(
-        "匹配城市",
-        item.includeCityNames,
-        item.excludeCityNames,
-        city_name
-      );
+    let cityRuleList = useOfferRuleList.filter(item => {
       if (!item.includeCityNames.length && !item.excludeCityNames.length) {
         return true;
       }
       if (item.includeCityNames.length) {
-        return item.includeCityNames.join().indexOf(city_name) > -1;
+        const isInclude = item.includeCityNames.join().indexOf(city_name) > -1;
+        console.log(
+          "是否包含城市",
+          isInclude,
+          city_name,
+          item.includeCityNames
+        );
+        return isInclude;
       }
       if (item.excludeCityNames.length) {
-        return item.excludeCityNames.join().indexOf(city_name) === -1;
+        const isExclude =
+          item.excludeCityNames.join().indexOf(city_name) === -1;
+        console.log(
+          "是否排除城市",
+          isExclude,
+          city_name,
+          item.excludeCityNames
+        );
+        return isExclude;
       }
     });
-    console.log("匹配城市后的规则列表", cityRuleList);
+    if (!cityRuleList.length) {
+      logger.errorSave("按城市筛选后，报价规则为空");
+      return;
+    }
+    console.log("按城市筛选后的规则列表", cityRuleList);
+    // 是否记录影院匹配日志
+    const isSaveCinemaMatchLog =
+      dictStore.dictInfo?.isRecordCinemaMatchLog == 1;
     // 4、匹配影院（优先按 app_cinema_code 匹配，名称兜底兼容旧规则）
     let cinemaRuleList = cityRuleList.filter(item => {
       const hasNameInclude =
@@ -1245,25 +1261,16 @@ const offerRuleMatch = (order, logger) => {
       ) {
         return true;
       }
-      // 是否记录影院匹配日志
-      const isSaveCinemaMatchLog =
-        dictStore.dictInfo?.isRecordCinemaMatchLog == 1;
+
       // 1、优先按 app_cinema_code 匹配，避免名称变更导致失败
       try {
         const matchInfo = cinemaCodeMatchObj.getCinemaMatchInfo(
           cinema_code,
           shadowLineName
         );
-        console.warn("匹配影院规则", matchInfo);
         const app_cinema_code = matchInfo?.app_cinema_code;
         if (app_cinema_code && (hasCodeInclude || hasCodeExclude)) {
-          console.warn("准备按影院code匹配规则");
           if (hasCodeInclude) {
-            console.warn(
-              "按影院code包含规则",
-              item.includeCinemaCodes,
-              app_cinema_code
-            );
             const isInclude = item.includeCinemaCodes.includes(app_cinema_code);
             isSaveCinemaMatchLog &&
               logger?.infoSave("按影院code匹配包含规则", {
@@ -1274,11 +1281,6 @@ const offerRuleMatch = (order, logger) => {
             return isInclude;
           }
           if (hasCodeExclude) {
-            console.warn(
-              "按影院code排除规则",
-              item.excludeCinemaCodes,
-              app_cinema_code
-            );
             const isExclude = item.excludeCinemaCodes.includes(app_cinema_code);
             isSaveCinemaMatchLog &&
               logger?.infoSave("按影院code匹配排除规则", {
@@ -1295,7 +1297,7 @@ const offerRuleMatch = (order, logger) => {
 
       // 2、兜底：按影院名称匹配（旧规则兼容）
       if (hasNameInclude) {
-        console.warn("按影院名称匹配规则，可能存在风险");
+        console.error("按影院名称匹配规则，可能存在风险");
         const isInclude = cinemaMatchHandle({
           app_name: shadowLineName,
           plat_cinema_code: cinema_code,
@@ -1310,7 +1312,7 @@ const offerRuleMatch = (order, logger) => {
         return isInclude;
       }
       if (hasNameExclude) {
-        console.warn("按影院名称匹配规则，可能存在风险");
+        console.error("按影院名称匹配规则，可能存在风险");
         const isExclude = cinemaMatchHandle({
           app_name: shadowLineName,
           plat_cinema_code: cinema_code,
@@ -1325,97 +1327,105 @@ const offerRuleMatch = (order, logger) => {
         return !isExclude;
       }
     });
-    console.log("匹配影院后的规则列表", cinemaRuleList);
+    if (!cinemaRuleList.length) {
+      logger.errorSave("按影院筛选后，报价规则为空");
+      return;
+    }
+    console.log("按影院筛选后的规则列表", cinemaRuleList);
     // 5、匹配影厅
     let hallRuleList = cinemaRuleList.filter(item => {
-      console.log(
-        "匹配影厅",
-        item.includeHallNames,
-        item.excludeHallNames,
-        hall_name.toUpperCase()
-      );
       if (!item.includeHallNames.length && !item.excludeHallNames.length) {
         return true;
       }
       if (item.includeHallNames.length) {
-        let isMatch = item.includeHallNames.some(hallName => {
+        let isInclude = item.includeHallNames.some(hallName => {
           return hall_name.toUpperCase().indexOf(hallName.toUpperCase()) > -1;
         });
-        console.log("isMatch1-1", isMatch);
-        return isMatch;
+        console.log(
+          "是否包含影厅",
+          isInclude,
+          hall_name,
+          item.includeHallNames
+        );
+        return isInclude;
       }
       if (item.excludeHallNames.length) {
-        let isMatch = item.excludeHallNames.every(hallName => {
-          return hall_name.toUpperCase().indexOf(hallName.toUpperCase()) === -1;
+        let isInclude = item.excludeHallNames.some(hallName => {
+          return hall_name.toUpperCase().indexOf(hallName.toUpperCase()) > -1;
         });
-        console.log("isMatch1-2", isMatch);
-        return isMatch;
+        let isExclude = !isInclude;
+        console.log(
+          "是否排除影厅",
+          isInclude,
+          hall_name,
+          item.excludeHallNames
+        );
+        return isExclude;
       }
     });
-    console.log("匹配影厅后的规则列表", hallRuleList);
+    if (!hallRuleList.length) {
+      logger.errorSave("按影厅筛选后，报价规则为空");
+      return;
+    }
+    console.log("按影厅筛选后的规则列表", hallRuleList);
     // 6、匹配影片
     let filmRuleList = hallRuleList.filter(item => {
-      console.log(
-        "匹配影片",
-        item.includeFilmNames,
-        item.excludeFilmNames,
-        film_name.toUpperCase()
-      );
       if (!item.includeFilmNames.length && !item.excludeFilmNames.length) {
         return true;
       }
       if (item.includeFilmNames.length) {
-        let isMatch = item.includeFilmNames.some(filmName => {
+        let isInclude = item.includeFilmNames.some(filmName => {
           return (
             convertFullwidthToHalfwidth(film_name) ===
             convertFullwidthToHalfwidth(filmName)
           );
         });
-        console.log("isMatch2-1", isMatch);
-        return isMatch;
+        console.log(
+          "是否包含影片",
+          isInclude,
+          film_name,
+          item.includeFilmNames
+        );
+        return isInclude;
       }
       if (item.excludeFilmNames.length) {
-        let isMatch = item.excludeFilmNames.every(filmName => {
+        let isInclude = item.excludeFilmNames.some(filmName => {
           return (
-            convertFullwidthToHalfwidth(film_name) !==
+            convertFullwidthToHalfwidth(film_name) ===
             convertFullwidthToHalfwidth(filmName)
           );
         });
-        console.log("isMatch2-2", isMatch);
-        return isMatch;
+        let isExclude = !isInclude;
+        console.log(
+          "是否排除影片",
+          isInclude,
+          film_name,
+          item.excludeFilmNames
+        );
+        return isExclude;
       }
     });
-    console.log("匹配影片后的规则列表", filmRuleList);
+    if (!filmRuleList.length) {
+      logger.errorSave("按影片筛选后，报价规则为空");
+      return;
+    }
+    console.log("按影片筛选后的规则列表", filmRuleList);
     // 7、匹配座位数限制
     let seatRuleList = filmRuleList.filter(item => {
       if (!item.seatNum) {
         return true;
       }
-      return Number(item.seatNum) >= Number(ticket_num);
+      const isPass = Number(item.seatNum) >= Number(ticket_num);
+      console.log("座位数是否满足", isPass, ticket_num, item.seatNum);
+      return isPass;
     });
-    console.log("匹配座位数后的规则列表", seatRuleList);
-    // 8、匹配开场时间限制
-    let timeRuleList = seatRuleList.filter(item => {
-      let startTime = show_time.split(" ")[1];
-      if (!item.ruleStartTime && !item.ruleEndTime) {
-        return true;
-      }
-      if (item.ruleStartTime && item.ruleEndTime) {
-        return (
-          isTimeAfter(startTime, item.ruleStartTime + ":00") &&
-          isTimeAfter(item.ruleEndTime + ":00", startTime)
-        );
-      }
-      if (item.ruleStartTime) {
-        return isTimeAfter(startTime, item.ruleStartTime + ":00");
-      }
-      if (item.ruleEndTime) {
-        return isTimeAfter(item.ruleEndTime + ":00", startTime);
-      }
-    });
-    console.log("匹配开场时间后的规则列表", timeRuleList);
+    if (!seatRuleList.length) {
+      logger.errorSave("按座位数筛选后，报价规则为空");
+      return;
+    }
+    console.log("按座位数筛选后的规则列表", seatRuleList);
     // 9、匹配星期几
-    let weekRuleList = timeRuleList.filter(item => {
+    let weekRuleList = seatRuleList.filter(item => {
       const weekdays = [
         "星期日",
         "星期一",
@@ -1428,20 +1438,32 @@ const offerRuleMatch = (order, logger) => {
       const today = new Date(show_time).getDay();
       const dayOfWeek = weekdays[today];
       if (item.weekDay?.length) {
-        return item.weekDay.includes(dayOfWeek);
+        const isPass = item.weekDay.includes(dayOfWeek);
+        console.log("星期几是否满足", isPass, dayOfWeek, item.weekDay);
+        return isPass;
       }
       return true;
     });
-    console.log("匹配星期几后的规则列表", weekRuleList);
+    if (!weekRuleList.length) {
+      logger.errorSave("按星期几筛选后，报价规则为空");
+      return;
+    }
+    console.log("按星期几筛选后的规则列表", weekRuleList);
     // 10、匹配会员日
     let memberDayRuleList = weekRuleList.filter(item => {
       const day = show_time.split(" ")[0].split("-")[2];
       if (item.memberDay) {
-        return Number(item.memberDay) === Number(day);
+        const isPass = item.memberDay == day;
+        console.log("会员日是否满足", isPass, day, item.memberDay);
+        return isPass;
       }
       return true;
     });
-    console.log("匹配会员日后的规则列表", memberDayRuleList);
+    if (!memberDayRuleList.length) {
+      logger.errorSave("按会员日筛选后，报价规则为空");
+      return;
+    }
+    console.log("按会员日筛选后的规则列表", memberDayRuleList);
     return {
       matchRuleList: memberDayRuleList
     };

@@ -355,7 +355,7 @@ class JinyiBuyTicket extends BaseBuyTicket {
       }
       // 5、计算价格
       let quan_code = useQuan.map(item => item.couponCode);
-      const calcRes = await this.orderManage.pripriceCalculation({
+      const calcRes = await this.orderManage.priceCalculation({
         ...buyTicketInfo,
         cinema_id,
         card_id: canUseCardList[0]?.card_id,

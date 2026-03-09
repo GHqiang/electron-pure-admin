@@ -99,7 +99,7 @@ class getUmeOfferPrice extends BaseOfferPrice {
       const matchRuleListRes = offerRuleMatch(order, this.logger);
       let matchRuleList = matchRuleListRes?.matchRuleList || [];
       if (!matchRuleList?.length) {
-        this.logger.errorSave("报价规则匹配后规则为空", {
+        this.logger.infoSave("报价规则匹配后规则为空", {
           error: matchRuleListRes?.error,
           order
         });
@@ -134,10 +134,8 @@ class getUmeOfferPrice extends BaseOfferPrice {
       }
 
       if (!matchRuleList?.length) {
-        this.logger.errorSave("过滤完电影格式后匹配报价规则为空", {
-          filmTypeFlag,
+        this.logger.errorSave("按电影格式存筛选后，报价规则为空", {
           filmType,
-          movieInfo,
           matchRuleList
         });
         return null;
@@ -156,7 +154,7 @@ class getUmeOfferPrice extends BaseOfferPrice {
           item => item.offerType === "1" && item.offerAmount
         );
         if (fixedAmountRuleList.length) {
-          this.logger.errorSave("根据券库存过滤后固定报价规则为空", {
+          this.logger.errorSave("按券库存筛选后，报价规则为空", {
             fixedAmountRuleList
           });
         } else {

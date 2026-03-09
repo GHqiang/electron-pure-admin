@@ -49,13 +49,6 @@ const TICKET_STATUS = {
 // sfc系列v3版本影院
 const sfcV3AppList = ["hbchyxd"];
 
-// sfc系列影院程序版本
-const SFC_APP_VER_OBJ = {
-  hbchyxd: ["8.0", "8.0.8"],
-  ningbo: ["7.0", "7.9.4"],
-  nanguojgh: ["7.0", "7.9.4"]
-};
-
 // 猎人订单类型奖励金额
 const LIERENR_REWARDS = {
   0: 0, // 普通
@@ -144,7 +137,6 @@ export {
   NO_FEE_PLAT_LIST,
   TEST_NEW_PLAT_LIST,
   sfcV3AppList,
-  SFC_APP_VER_OBJ,
   GET_UME_LIST,
   GET_H5_UME_LIST,
   GET_CHENXING_LIST,

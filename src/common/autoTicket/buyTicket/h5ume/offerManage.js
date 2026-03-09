@@ -78,13 +78,14 @@ class getH5UmeOfferPrice extends BaseOfferPrice {
       const matchRuleListRes = offerRuleMatch(order, this.logger);
       let matchRuleList = matchRuleListRes?.matchRuleList || [];
       if (!matchRuleList?.length) {
-        this.logger.errorSave("报价规则匹配后规则为空", {
+        this.logger.infoSave("报价规则匹配后规则为空", {
           error: matchRuleListRes?.error,
           order
         });
         return null;
       }
       matchRuleList = JSON.parse(JSON.stringify(matchRuleList));
+
       // 判断规则里是否有指定电影格式的（2D/3D）
       let filmTypeFlag = matchRuleList.some(item => !!item?.film_type?.length);
       this.logger.infoSave("开始获取电影放映信息");
@@ -97,8 +98,7 @@ class getH5UmeOfferPrice extends BaseOfferPrice {
         return null;
       }
       if (movieInfo?.filmTypeCheckFail) {
-        this.logger.errorSave("过滤完电影格式后匹配报价规则为空", {
-          filmTypeFlag,
+        this.logger.errorSave("按电影格式存筛选后，报价规则为空", {
           filmType: movieInfo.filmType,
           matchRuleList
         });
@@ -117,7 +117,7 @@ class getH5UmeOfferPrice extends BaseOfferPrice {
           item => item.offerType === "1" && item.offerAmount
         );
         if (fixedAmountRuleList.length) {
-          this.logger.errorSave("根据券库存过滤后固定报价规则为空", {
+          this.logger.errorSave("按券库存筛选后，报价规则为空", {
             fixedAmountRuleList
           });
         } else {
