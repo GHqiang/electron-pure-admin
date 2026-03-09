@@ -99,7 +99,13 @@ class getFenghuangOfferPrice extends BaseOfferPrice {
         matchRuleList,
         movieInfo.filmVersion
       );
-      if (!matchRuleList.length) return this.handleEmptyRuleList("filmType");
+      if (!matchRuleList.length) {
+        this.logger.errorSave("按电影格式存筛选后，报价规则为空", {
+          filmType: movieInfo.filmVersion,
+          matchRuleList
+        });
+        return;
+      }
 
       // 3. 获取最低报价规则
       const endRule = await this.getMinAmountOfferRule(
@@ -107,7 +113,20 @@ class getFenghuangOfferPrice extends BaseOfferPrice {
         order,
         movieInfo
       );
-      if (!endRule) return this.handleEmptyRuleList("finalRule");
+      if (!endRule) {
+        // 日常固定报价规则
+        let fixedAmountRuleList = matchRuleList.filter(
+          item => item.offerType === "1" && item.offerAmount
+        );
+        if (fixedAmountRuleList.length) {
+          this.logger.errorSave("按券库存筛选后，报价规则为空", {
+            fixedAmountRuleList
+          });
+        } else {
+          this.logger.errorSave("最终匹配到的报价规则为空");
+        }
+        return;
+      }
 
       return JSON.parse(JSON.stringify(endRule));
     } catch (error) {
@@ -287,23 +306,6 @@ class getFenghuangOfferPrice extends BaseOfferPrice {
             : true
         )
       : rules;
-  }
-
-  /**
-   * 处理空规则列表情况
-   * @private
-   */
-  handleEmptyRuleList(context, extraInfo = {}) {
-    const errorMsgs = {
-      filmType: "过滤电影格式后匹配报价规则为空",
-      finalRule: "最终匹配到的报价规则为空"
-    };
-
-    this.logger.errorSave(errorMsgs[context] || "空规则列表", {
-      ...extraInfo,
-      context
-    });
-    return null;
   }
 
   /**

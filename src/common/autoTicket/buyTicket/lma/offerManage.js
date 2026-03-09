@@ -126,10 +126,8 @@ class getLmaOfferPrice extends BaseOfferPrice {
             : true
         )
       ) {
-        this.logger.errorSave("过滤完电影格式后匹配报价规则为空", {
-          filmTypeFlag,
+        this.logger.errorSave("按电影格式存筛选后，报价规则为空", {
           filmType,
-          movieInfo,
           matchRuleList
         });
         return null;
