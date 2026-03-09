@@ -135,18 +135,18 @@
           @selection-change="handleSelectionChange"
         >
           <el-table-column type="selection" fixed width="55" />
-          <el-table-column prop="ruleName" fixed label="规则名称" width="110" />
-          <el-table-column
+          <el-table-column prop="ruleName" fixed label="规则名称" width="185" />
+          <!-- <el-table-column
             prop="shadowLineName"
             fixed
             label="影线名称"
-            width="85"
+            width="105"
           >
             <template #default="scope">
               <span>{{ APP_LIST[scope.row.shadowLineName] }}</span>
             </template>
-          </el-table-column>
-          <el-table-column label="状态" fixed width="100">
+          </el-table-column> -->
+          <el-table-column label="状态" fixed width="70">
             <template #default="scope">
               <span v-if="scope.row.status === '3'" style="color: red">{{
                 statusObj[scope.row.status]
@@ -160,88 +160,105 @@
               />
             </template>
           </el-table-column>
-          <el-table-column label="报价类型" fixed width="100">
+          <el-table-column label="报价类型" fixed width="110">
             <template #default="scope">
-              <span>{{ offerTypeObj[scope.row.offerType] || "" }}</span>
+              <el-popover
+                placement="top"
+                :width="1200"
+                trigger="hover"
+                popper-class="ticket-info-popover"
+              >
+                <template #reference>
+                  <el-tag
+                    v-if="scope.row.offerType"
+                    :type="getOfferType(scope.row.offerType)"
+                    size="medium"
+                    effect="dark"
+                    class="offer-type-tag"
+                  >
+                    {{ offerTypeObj[scope.row.offerType] || "" }}
+                  </el-tag>
+                </template>
+                <el-table :data="[scope.row]" border style="width: 100%">
+                  <el-table-column
+                    v-if="(scope.row.film_type || []).length > 0"
+                    prop="film_type"
+                    label="电影格式"
+                    :formatter="row => (row.film_type || []).join()"
+                  />
+                  <el-table-column
+                    v-if="(scope.row.includeCityNames || []).length > 0"
+                    prop="includeCityNames"
+                    label="包含城市"
+                    :formatter="row => (row.includeCityNames || []).join()"
+                  />
+                  <el-table-column
+                    v-if="(scope.row.excludeCityNames || []).length > 0"
+                    prop="excludeCityNames"
+                    label="排除城市"
+                    :formatter="row => (row.excludeCityNames || []).join()"
+                  />
+                  <el-table-column
+                    v-if="(scope.row.weekDay || []).length > 0"
+                    prop="weekDay"
+                    label="周几"
+                    :formatter="row => (row.weekDay || []).join()"
+                  />
+                  <el-table-column
+                    v-if="scope.row.seatNum"
+                    prop="seatNum"
+                    label="座位数"
+                  />
+                  <el-table-column
+                    v-if="(scope.row.excludeHallNames || []).length > 0"
+                    prop="excludeHallNames"
+                    label="排除影厅"
+                    :formatter="row => (row.excludeHallNames || []).join()"
+                  />
+                  <el-table-column
+                    v-if="(scope.row.includeHallNames || []).length > 0"
+                    prop="includeHallNames"
+                    label="包含影厅"
+                    :formatter="row => (row.includeHallNames || []).join()"
+                  />
+                  <el-table-column
+                    v-if="(scope.row.excludeFilmNames || []).length > 0"
+                    prop="excludeFilmNames"
+                    label="排除影片"
+                    :formatter="row => (row.excludeFilmNames || []).join()"
+                  />
+                  <el-table-column
+                    v-if="(scope.row.includeFilmNames || []).length > 0"
+                    prop="includeFilmNames"
+                    label="包含影片"
+                    :formatter="row => (row.includeFilmNames || []).join()"
+                  />
+                </el-table>
+              </el-popover>
             </template>
           </el-table-column>
-          <el-table-column label="用券类型" width="85">
+          <el-table-column label="用券类型" width="145">
             <template #default="scope">
-              <span>{{ scope.row.quanValue.join() }}</span>
+              <span>{{ formatQuanType(scope.row.quanValue) }}</span>
             </template>
           </el-table-column>
-          <el-table-column label="报价金额" prop="offerAmount" width="85">
+          <el-table-column label="报价/加价金额" prop="offerAmount" width="140">
             <template #default="scope">
               <span>{{ formatOfferAmount(scope.row) }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="加价金额" prop="addAmount" width="85">
-            <template #default="scope">
               <span>{{ formatAddAmount(scope.row) }}</span>
             </template>
           </el-table-column>
-          <el-table-column prop="orderForm" fixed label="订单来源" width="85">
-            <template #default="scope">
-              <span>{{ formatPlatName(scope.row) }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="会员日" prop="memberDay" width="85" />
-          <el-table-column label="电影格式" prop="film_type" width="85" />
-          <!-- <el-table-column label="开场时间限制" prop="timeLimit" width="110" /> -->
-          <el-table-column label="包含城市" width="110">
-            <template #default="scope">
-              <span>{{ scope.row.includeCityNames.join() }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="排除城市" width="110">
-            <template #default="scope">
-              <span>{{ scope.row.excludeCityNames.join() }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="星期几" width="90">
-            <template #default="scope">
-              <span>{{ scope.row.weekDay.join() }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column label="座位数" prop="seatNum" width="90" />
-          <el-table-column
-            prop="includeCinemaNames"
-            label="包含影院"
-            width="110"
-          >
+          <el-table-column prop="includeCinemaNames" label="包含影院">
             <template #default="scope">
               <span>{{ scope.row.includeCinemaNames.join() }}</span>
             </template>
           </el-table-column>
-          <el-table-column
-            prop="excludeCinemaNames"
-            label="排除影院"
-            width="110"
-          >
+          <el-table-column prop="excludeCinemaNames" label="排除影院">
             <template #default="scope">
               <span>{{ scope.row.excludeCinemaNames.join() }}</span>
             </template>
           </el-table-column>
-          <el-table-column prop="includeHallNames" label="包含影厅" width="110">
-            <template #default="scope">
-              <span>{{ scope.row.includeHallNames.join() }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="excludeHallNames" label="排除影厅" width="110">
-            <template #default="scope">
-              <span>{{ scope.row.excludeHallNames.join() }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="includeFilmNames" label="包含影片" width="110">
-            <template #default="scope">
-              <span>{{ scope.row.includeFilmNames.join() }}</span>
-            </template>
-          </el-table-column>
-          <el-table-column prop="excludeFilmNames" label="排除影片" width="110">
-            <template #default="scope">
-              <span>{{ scope.row.excludeFilmNames.join() }}</span>
-            </template>
-          </el-table-column>
+          <!-- <el-table-column label="开场时间限制" prop="timeLimit" width="110" /> -->
           <el-table-column prop="remark" label="备注" width="110" />
           <el-table-column label="操作" fixed="right" align="left" width="350">
             <template #default="scope">
@@ -401,7 +418,19 @@ const statusObj = {
   5: "当日不报"
   // 4: "删除"
 };
-
+// 根据报价类型获取标签类型
+const getOfferType = offerType => {
+  switch (offerType) {
+    case "1":
+      return "info";
+    case "2":
+      return "primary";
+    case "3":
+      return "success";
+    default:
+      return "default";
+  }
+};
 // 表单查询数据
 const formData = reactive({
   orderForm: "", // 订单来源
@@ -532,6 +561,7 @@ const searchData = async () => {
       item.excludeFilmNames = JSON.parse(item.excludeFilmNames);
       item.platOfferList = JSON.parse(item.platOfferList || "[]");
       item.weekDay = JSON.parse(item.weekDay);
+      item.film_type = item.film_type ? item.film_type?.split(",") : [];
       item.quanValue = item.quanValue ? item.quanValue?.split(",") : [];
     });
     console.log("规则列表===>", ruleRecords);
@@ -698,30 +728,113 @@ const handleSelectionChange = val => {
   multipleSelection.value = val;
 };
 
-// 删除单行规则
-const deleteRow = (index, row) => {
-  ElMessageBox.confirm("确定要删除该规则吗?", "提示", {
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "warning",
-    showClose: false,
-    closeOnClickModal: false,
-    closeOnPressEscape: false
-  })
-    .then(async () => {
-      await svApi.deleteRule({ id: row.id });
-      searchData();
-      ElMessage({
-        type: "success",
-        message: "删除完成"
-      });
-    })
-    .catch(() => {
-      ElMessage({
-        type: "info",
-        message: "删除取消"
-      });
+// 检查规则关联的券
+const checkQuanInRule = async row => {
+  try {
+    if (row.offerType !== "1") return [];
+
+    const quanValueArray = Array.isArray(row.quanValue)
+      ? row.quanValue
+      : row.quanValue
+        ? row.quanValue.split(",")
+        : [];
+    if (quanValueArray.length === 0) return [];
+
+    // 先查询该影院下的所有券，然后在客户端过滤
+    const res = await svApi.queryQuanTypeList({
+      app_name: row.shadowLineName
     });
+
+    const allQuans = res.data.quanTypeList || [];
+    // 过滤出与规则关联的券
+    return allQuans.filter(quan => quanValueArray.includes(quan.quan_value));
+  } catch (error) {
+    console.error("检查规则关联的券异常", error);
+    return [];
+  }
+};
+
+// 删除单行规则
+const deleteRow = async (index, row) => {
+  // 检查规则是否关联了券（仅日常固定价）
+  const relatedQuans = await checkQuanInRule(row);
+
+  if (relatedQuans.length > 0) {
+    let message = `该规则关联了 ${relatedQuans.length} 个券，是否同时删除这些券？`;
+
+    ElMessageBox.confirm(message, "提示", {
+      confirmButtonText: "删除规则和券",
+      cancelButtonText: "仅删除规则",
+      type: "warning",
+      showClose: true,
+      closeOnClickModal: true,
+      closeOnPressEscape: true,
+      distinguishCancelAndClose: true // 添加这个选项
+    })
+      .then(async () => {
+        // 用户点击了"删除规则和券"按钮
+        for (const quan of relatedQuans) {
+          await svApi.deleteQuanType({ id: quan.id });
+        }
+        await svApi.deleteRule({ id: row.id });
+        searchData();
+        ElMessage({
+          type: "success",
+          message: `删除完成，同时删除了 ${relatedQuans.length} 个相关券`
+        });
+      })
+      .catch(async action => {
+        // 当distinguishCancelAndClose为true时，action是一个对象
+        const actionName = typeof action === "object" ? action.name : action;
+        if (actionName === "cancel") {
+          // 用户点击了"仅删除规则"按钮
+          await svApi.deleteRule({ id: row.id });
+          searchData();
+          ElMessage({
+            type: "success",
+            message: "删除完成，相关券未删除"
+          });
+        } else {
+          // 用户点击了关闭按钮、遮罩层或按ESC
+          ElMessage({
+            type: "info",
+            message: "删除取消"
+          });
+        }
+      });
+  } else {
+    // 规则未关联券，直接删除
+    ElMessageBox.confirm("确定要删除该规则吗?", "提示", {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning",
+      distinguishCancelAndClose: true // 这里也需要
+    })
+      .then(async () => {
+        // 点击"确定"按钮
+        await svApi.deleteRule({ id: row.id });
+        searchData();
+        ElMessage({
+          type: "success",
+          message: "删除完成"
+        });
+      })
+      .catch(action => {
+        if (action === "cancel") {
+          // 用户点击了"取消"按钮
+          ElMessage({
+            type: "info",
+            message: "删除取消"
+          });
+        } else {
+          // 用户点击了关闭按钮
+          ElMessage({
+            type: "info",
+            message: "删除取消"
+          });
+        }
+      });
+  }
 };
 
 // 批量删除
@@ -758,7 +871,15 @@ const batchDelete = () => {
       });
   }
 };
-
+const formatQuanType = quanValueList => {
+  if (!quanValueList || !quanValueList.length) return "";
+  return quanValueList
+    .map(quanValue => {
+      const item = quanType.value.find(q => q.quan_value === quanValue);
+      return item ? item.quan_name : quanValue;
+    })
+    .join();
+};
 onBeforeMount(async () => {
   const quanTypeList = await getQuanTypeList();
   quanType.value = quanTypeList;

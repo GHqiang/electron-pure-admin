@@ -84,7 +84,7 @@
               <el-option label="否" value="2" />
             </el-select>
           </el-form-item>
-          <el-form-item>
+          <el-form-item class="demo-form-inline__submit">
             <el-button type="primary" @click="searchData">搜索</el-button>
             <el-button @click="resetForm">重置</el-button>
             <el-button
@@ -145,7 +145,6 @@
           </template>
         </el-button> -->
           </el-form-item>
-
           <el-form-item>
             <el-button type="primary" style="padding-left: 0px">
               <template #default>
@@ -161,6 +160,8 @@
                 <span @click="addQuan">新增</span>
               </template>
             </el-button>
+          </el-form-item>
+          <el-form-item>
             <el-upload
               ref="uploadRef"
               style="margin-left: 15px"
@@ -188,6 +189,8 @@
                 <el-button type="primary">导入券</el-button>
               </template>
             </el-upload>
+          </el-form-item>
+          <el-form-item>
             <el-input
               v-model="exportQuanNum"
               style="width: 320px; margin-left: 15px"
@@ -247,11 +250,17 @@
           />
           <el-table-column prop="quan_flag" label="券标识" min-width="180" />
           <el-table-column prop="quan_fee" label="券手续费" min-width="100" />
-          <el-table-column prop="is_store" label="是否入库" min-width="100">
+          <el-table-column
+            prop="is_store"
+            label="是否入库"
+            min-width="90"
+            align="center"
+          >
             <template #default="{ row: { is_store } }">
-              <span :class="{ red: is_store == 1 }">{{
-                is_store == "1" ? "是 " : "否"
-              }}</span>
+              <el-tag v-if="is_store == '1'" type="success" size="small"
+                >是</el-tag
+              >
+              <el-tag v-else type="info" size="small">否</el-tag>
             </template>
           </el-table-column>
           <el-table-column label="券库存" min-width="100">
@@ -279,22 +288,22 @@
           >
             <template #default="{ row }">
               <span
-                :class="{ red: isLastUseTimeOver10Days(row) }"
-                title="红色为:最后使用时间距离今天超过10天且库存超过20"
+                :class="getLastUseTimeClass(row)"
+                title="红色为:最后使用时间距离今天超过10天且库存超过20,用户是否需要调整报价? 黄色为:最后使用时间超过四个月,该规则是否需要删除?"
               >
                 {{ row.end_use_time }}
               </span>
             </template>
           </el-table-column>
           <el-table-column
-            prop="black_quans"
-            label="黑名单券"
-            min-width="100"
-          />
-          <el-table-column
             prop="update_time"
             label="更新时间"
             min-width="160"
+          />
+          <el-table-column
+            prop="black_quans"
+            label="黑名单券"
+            min-width="100"
           />
           <el-table-column prop="remark" label="备注" min-width="100" />
 
@@ -755,8 +764,8 @@ const quanStockFormat = ({ quan_stock, quanStockList }) => {
 };
 
 // 判断最后使用时间是否超过10天且库存超过20
-const isLastUseTimeOver10Days = row => {
-  if (!row.end_use_time) return false;
+const getLastUseTimeClass = row => {
+  if (!row.end_use_time) return "";
 
   // 计算最后使用时间距离今天的天数
   const lastUseTime = new Date(row.end_use_time);
@@ -770,8 +779,15 @@ const isLastUseTimeOver10Days = row => {
     quanStockList: row.quanStockList
   });
 
-  // 当最后使用时间距离今天超过10天且库存超过20时返回true
-  return diffDays > 10 && stock > 20;
+  // 最后使用时间超过三个月，不管有没有库存，都用红色
+  if (diffDays > 120) {
+    return "yellow";
+  }
+  // 最后使用时间超过10天且库存超过20，用黄色
+  if (diffDays > 10 && stock > 20) {
+    return "red";
+  }
+  return "";
 };
 // 保存券类型
 const saveQuan = async cardInfo => {
@@ -827,37 +843,124 @@ const handleSelectionChange = val => {
   multipleSelection.value = val;
 };
 
-// 删除单行卡
-const deleteRow = (index, row) => {
-  ElMessageBox.confirm("确定要删除该卡吗?", "提示", {
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "warning",
-    showClose: false,
-    closeOnClickModal: false,
-    closeOnPressEscape: false
-  })
-    .then(async () => {
-      await svApi.deleteQuanType({ id: row.id });
-      searchData();
-      ElMessage({
-        type: "success",
-        message: "删除完成"
-      });
-    })
-    .catch(() => {
-      ElMessage({
-        type: "info",
-        message: "删除取消"
-      });
+// 检查券是否在报价规则中被使用
+const checkQuanInRules = async (app_name, quan_value) => {
+  try {
+    const res = await svApi.queryRuleList({
+      shadowLineName: app_name
     });
+    let ruleRecords = res.data.ruleList || [];
+    ruleRecords = ruleRecords.filter(item => {
+      const quanValueArray = item.quanValue ? item.quanValue.split(",") : [];
+      return (
+        item.shadowLineName === app_name && quanValueArray.includes(quan_value)
+      );
+    });
+    return ruleRecords;
+  } catch (error) {
+    console.error("检查券在规则中使用情况异常", error);
+    return [];
+  }
 };
 
-// 批量删除
+// 删除单行券
+const deleteRow = async (index, row) => {
+  // 检查券是否在报价规则中被使用
+  const usedRules = await checkQuanInRules(row.app_name, row.quan_value);
+  console.log("usedRules", usedRules);
+  if (usedRules.length > 0) {
+    // 检查是否有规则包含多个券
+    const multiQuanRules = usedRules.filter(rule => {
+      const quanValueArray = rule.quanValue ? rule.quanValue.split(",") : [];
+      return quanValueArray.length > 1;
+    });
+
+    let message = `该券在 ${usedRules.length} 个报价规则中被使用，是否同时删除这些规则？`;
+    if (multiQuanRules.length > 0) {
+      message += `\n注意：其中 ${multiQuanRules.length} 个规则包含多个券，删除后这些规则将被完全删除。`;
+    }
+
+    ElMessageBox.confirm(message, "提示", {
+      confirmButtonText: "删除券和规则",
+      cancelButtonText: "仅删除券",
+      type: "warning",
+      showClose: true,
+      closeOnClickModal: true,
+      closeOnPressEscape: true,
+      distinguishCancelAndClose: true // 添加这个选项
+    })
+      .then(async () => {
+        // 用户点击了"删除券和规则"按钮
+        for (const rule of usedRules) {
+          await svApi.deleteRule({ id: rule.id });
+        }
+        // 删除券
+        await svApi.deleteQuanType({ id: row.id });
+        searchData();
+        ElMessage({
+          type: "success",
+          message: `删除完成，同时删除了 ${usedRules.length} 个相关规则`
+        });
+      })
+      .catch(action => {
+        // 当distinguishCancelAndClose为true时，action是一个对象
+        const actionName = typeof action === "object" ? action.name : action;
+        if (actionName === "cancel") {
+          // 用户点击了"仅删除券"按钮
+          svApi.deleteQuanType({ id: row.id }).then(() => {
+            searchData();
+            ElMessage({
+              type: "success",
+              message: "删除完成，相关规则未删除"
+            });
+          });
+        } else {
+          // 用户点击了关闭按钮、遮罩层或按ESC
+          ElMessage({
+            type: "info",
+            message: "删除取消"
+          });
+        }
+      });
+  } else {
+    // 券未在规则中使用，直接删除
+    ElMessageBox.confirm("确定要删除该券吗?", "提示", {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning",
+      distinguishCancelAndClose: true // 这里也需要
+    })
+      .then(async () => {
+        // 点击"确定"按钮
+        await svApi.deleteQuanType({ id: row.id });
+        searchData();
+        ElMessage({
+          type: "success",
+          message: "删除完成"
+        });
+      })
+      .catch(action => {
+        if (action === "cancel") {
+          // 用户点击了"取消"按钮
+          ElMessage({
+            type: "info",
+            message: "删除取消"
+          });
+        } else {
+          // 用户点击了关闭按钮
+          ElMessage({
+            type: "info",
+            message: "删除取消"
+          });
+        }
+      });
+  }
+};
+// 批量删除券
 const batchDelete = () => {
   if (multipleSelection.value.length) {
     ElMessageBox.confirm(
-      `批量删除 ${multipleSelection.value.length} 张卡?`,
+      `批量删除 ${multipleSelection.value.length} 张券?`,
       "提示",
       {
         confirmButtonText: "确定",
@@ -1207,6 +1310,10 @@ onBeforeMount(async () => {
   color: red;
   font-weight: bold;
 }
+.yellow {
+  color: orange;
+  font-weight: bold;
+}
 .tree-list :deep(.el-tree-node.is-current > .el-tree-node__content) {
   background-color: #5fe3de;
 }
@@ -1220,12 +1327,5 @@ onBeforeMount(async () => {
 .demo-form-inline .el-form-item__content {
   flex: 1;
   min-width: 0;
-}
-
-.demo-form-inline .el-input,
-.demo-form-inline .el-select,
-.demo-form-inline :deep(.el-cascader),
-.demo-form-inline :deep(.el-date-editor.el-input) {
-  width: 95%;
 }
 </style>

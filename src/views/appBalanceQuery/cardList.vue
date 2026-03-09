@@ -22,7 +22,7 @@
           @node-click="nodeClick"
         />
       </el-aside>
-      <el-main style="margin-left: 15px; padding: 0">
+      <el-main style="padding: 0; margin-left: 15px">
         <!-- 查询表单 -->
         <el-form :inline="true" class="demo-form-inline">
           <el-form-item
@@ -47,13 +47,13 @@
               clearable
             />
           </el-form-item>
-          <el-form-item label="目标余额">
+          <!-- <el-form-item label="目标余额">
             <el-input
               v-model="formData.balance"
               placeholder="请输入目标余额"
               clearable
             />
-          </el-form-item>
+          </el-form-item> -->
           <el-form-item label="所属账号">
             <el-input
               v-model="formData.mobile"
@@ -80,13 +80,27 @@
           <el-form-item>
             <el-button @click="resetForm">重置</el-button>
             <el-button type="primary" @click="searchData">搜索</el-button>
+          </el-form-item>
+          <el-form-item>
             <el-button
               type="danger"
               :disabled="!hasSelected"
               @click="batchDelete"
               >批量删除</el-button
             >
-            <el-button type="primary" style="padding-left: 0px">
+            <el-button
+              type="warning"
+              :disabled="!hasSelected"
+              @click="batchUpdateDiscount"
+              >批量改折扣</el-button
+            >
+            <el-button
+              style="margin-left: 10px"
+              type="primary"
+              @click="queryCardBalanceTotal"
+              >查看卡余额</el-button
+            >
+            <el-button type="primary" style="padding-left: 0">
               <template #default>
                 <el-input
                   v-model="mobile"
@@ -239,7 +253,7 @@
         <el-pagination
           v-model:current-page="currentPage"
           v-model:page-size="pageSize"
-          style="margin-top: 10px; display: flex; justify-content: flex-end"
+          style="display: flex; justify-content: flex-end; margin-top: 10px"
           :page-sizes="[10, 20, 50, 100]"
           :background="true"
           layout="total, sizes, prev, pager, next, jumper"
@@ -255,6 +269,32 @@
       :dialogTitle="dialogTitle"
       @submit="saveCard"
     />
+
+    <el-dialog
+      v-model="batchDiscountVisible"
+      width="40%"
+      title="批量修改卡折扣"
+    >
+      <el-form
+        ref="batchDiscountFormRef"
+        :model="batchDiscountForm"
+        :rules="batchDiscountRules"
+      >
+        <el-form-item label="卡折扣" prop="card_discount">
+          <el-input
+            v-model="batchDiscountForm.card_discount"
+            placeholder="请输入卡折扣（成本/卡金额）"
+            clearable
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="batchDiscountVisible = false">取消</el-button>
+          <el-button type="primary" @click="confirmBatchUpdate">确定</el-button>
+        </span>
+      </template>
+    </el-dialog>
 
     <el-dialog v-model="cardBalanceVisible" width="60%" title="卡余额汇总结果">
       <el-table :data="summaryData" border style="width: 100%" max-height="800">
@@ -705,6 +745,18 @@ const shadowLine = ref("");
 const mobile = ref("");
 const syncType = ref("1");
 
+// 批量修改折扣相关
+const batchDiscountVisible = ref(false);
+const batchDiscountForm = reactive({
+  card_discount: ""
+});
+const batchDiscountFormRef = ref(null);
+const batchDiscountRules = {
+  card_discount: [
+    { required: true, message: "卡折扣不能为空", trigger: "blur" }
+  ]
+};
+
 // 新增卡
 const addCard = () => {
   dialogTitle.value = "新增";
@@ -831,6 +883,59 @@ const batchDelete = () => {
       });
   }
 };
+
+// 批量修改折扣
+const batchUpdateDiscount = () => {
+  if (multipleSelection.value.length) {
+    // 重置表单
+    batchDiscountForm.card_discount = "";
+    // 打开对话框
+    batchDiscountVisible.value = true;
+  }
+};
+
+// 确认批量修改折扣
+const confirmBatchUpdate = async () => {
+  batchDiscountFormRef.value.validate(async valid => {
+    if (valid) {
+      const loading = ElLoading.service({
+        lock: true,
+        text: "批量修改中",
+        background: "rgba(0, 0, 0, 0.7)"
+      });
+      try {
+        // 逐个修改选中的卡
+        const updatePromises = multipleSelection.value.map(async item => {
+          const cardInfo = {
+            id: item.id,
+            card_discount: batchDiscountForm.card_discount,
+            update_time: getCurrentTime(),
+            rule: rule
+          };
+          await svApi.updateCardRecord(cardInfo);
+        });
+
+        // 等待所有修改完成
+        await Promise.all(updatePromises);
+
+        loading.close();
+        batchDiscountVisible.value = false;
+        ElMessage({
+          type: "success",
+          message: `批量修改 ${multipleSelection.value.length} 张卡折扣成功！`
+        });
+        searchData();
+      } catch (error) {
+        loading.close();
+        console.warn("批量修改折扣异常", error);
+        ElMessage({
+          type: "error",
+          message: "批量修改折扣失败"
+        });
+      }
+    }
+  });
+};
 onBeforeMount(async () => {
   await mockDelay(0.1);
   nextTick(() => {
@@ -844,9 +949,10 @@ onBeforeMount(async () => {
 </script>
 <style scoped>
 .red {
-  color: red;
   font-weight: bold;
+  color: red;
 }
+
 .tree-list :deep(.el-tree-node.is-current > .el-tree-node__content) {
   background-color: #5fe3de;
 }
