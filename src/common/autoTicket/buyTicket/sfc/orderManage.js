@@ -122,6 +122,8 @@ export default class SfcOrderManage {
           dictStore.dictInfo.sfcOnlineQuanIsUseCard;
         if (sfcOnlineQuanIsUseCard === "0") {
           params.card_id = undefined; // 线上券是否必传会员卡id，0-不必传，1-必传，默认0
+          params.quan_code = undefined; // 优惠券编码
+          params.goods_coupon_id = "";
         }
       }
       this.logger.infoSave("计算订单价格参数", {
