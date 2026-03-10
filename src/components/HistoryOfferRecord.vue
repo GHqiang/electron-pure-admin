@@ -247,7 +247,7 @@
           <el-tag
             v-if="scope.row.offer_type"
             :type="getOfferType(scope.row.offer_type)"
-            size="medium"
+            size="default"
             effect="dark"
             class="offer-type-tag"
           >

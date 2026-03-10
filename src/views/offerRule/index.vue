@@ -172,7 +172,7 @@
                   <el-tag
                     v-if="scope.row.offerType"
                     :type="getOfferType(scope.row.offerType)"
-                    size="medium"
+                    size="default"
                     effect="dark"
                     class="offer-type-tag"
                   >
@@ -181,10 +181,10 @@
                 </template>
                 <el-table :data="[scope.row]" border style="width: 100%">
                   <el-table-column
-                    v-if="(scope.row.film_type || []).length > 0"
+                    v-if="scope.row.film_type"
                     prop="film_type"
                     label="电影格式"
-                    :formatter="row => (row.film_type || []).join()"
+                    :formatter="row => row.film_type"
                   />
                   <el-table-column
                     v-if="(scope.row.includeCityNames || []).length > 0"
@@ -561,7 +561,6 @@ const searchData = async () => {
       item.excludeFilmNames = JSON.parse(item.excludeFilmNames);
       item.platOfferList = JSON.parse(item.platOfferList || "[]");
       item.weekDay = JSON.parse(item.weekDay);
-      item.film_type = item.film_type ? item.film_type?.split(",") : [];
       item.quanValue = item.quanValue ? item.quanValue?.split(",") : [];
     });
     console.log("规则列表===>", ruleRecords);
@@ -673,6 +672,7 @@ const saveRule = async ruleInfo => {
     ruleInfo.excludeFilmNames = JSON.stringify(ruleInfo.excludeFilmNames);
     ruleInfo.film_type = ruleInfo.film_type || "";
     ruleInfo.allow_offer_time = ruleInfo.allow_offer_time || null;
+    ruleInfo.last_used_time = ruleInfo.last_used_time || null;
     ruleInfo.quanValue = ruleInfo.quanValue?.join(",");
     ruleInfo.orderForm = (ruleInfo.platOfferList || [])
       .map(item => item.platName)

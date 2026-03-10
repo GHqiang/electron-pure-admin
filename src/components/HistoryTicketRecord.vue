@@ -173,7 +173,7 @@
         <template #default="{ row: { order_status } }">
           <el-tag
             :type="getStatusType(order_status)"
-            size="medium"
+            size="default"
             effect="dark"
             class="status-tag"
           >
@@ -257,7 +257,7 @@
           <el-tag
             v-if="scope.row.offer_type"
             :type="getOfferType(scope.row.offer_type)"
-            size="medium"
+            size="default"
             effect="dark"
             class="offer-type-tag"
           >
