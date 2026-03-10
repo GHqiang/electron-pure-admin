@@ -123,12 +123,6 @@
                 <span @click="syncCardInfo">同步卡信息</span>
               </template>
             </el-button>
-            <el-button
-              style="margin-left: 10px"
-              type="primary"
-              @click="queryCardBalanceTotal"
-              >查看卡余额</el-button
-            >
           </el-form-item>
         </el-form>
         <!-- 表格 -->
