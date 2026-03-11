@@ -205,6 +205,11 @@
                     :formatter="row => (row.weekDay || []).join()"
                   />
                   <el-table-column
+                    v-if="scope.row.allow_offer_time"
+                    prop="allow_offer_time"
+                    label="允许报价时间"
+                  />
+                  <el-table-column
                     v-if="scope.row.seatNum"
                     prop="seatNum"
                     label="座位数"
@@ -258,7 +263,20 @@
               <span>{{ scope.row.excludeCinemaNames.join() }}</span>
             </template>
           </el-table-column>
-          <!-- <el-table-column label="开场时间限制" prop="timeLimit" width="110" /> -->
+          <el-table-column
+            prop="last_used_time"
+            label="最后使用时间"
+            min-width="160"
+          >
+            <template #default="{ row }">
+              <span
+                :class="getLastUseTimeClass(row)"
+                title="黄色为:最后使用时间超过四个月,该规则是否需要删除?"
+              >
+                {{ row.last_used_time }}
+              </span>
+            </template>
+          </el-table-column>
           <el-table-column prop="remark" label="备注" width="110" />
           <el-table-column label="操作" fixed="right" align="left" width="350">
             <template #default="scope">
@@ -486,6 +504,22 @@ const setLocalRuleList = async () => {
   }
 };
 
+// 判断最后使用时间是否超过10天且库存超过20
+const getLastUseTimeClass = row => {
+  if (!row.last_used_time) return "";
+
+  // 计算最后使用时间距离今天的天数
+  const lastUseTime = new Date(row.last_used_time);
+  const today = new Date();
+  const diffTime = today - lastUseTime;
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  // 最后使用时间超过四个月（120天）用黄色
+  if (diffDays > 120) {
+    return "yellow";
+  }
+  return "";
+};
 // 格式化订单来源
 const formatPlatName = ({ orderForm, platOfferList }) => {
   return platOfferList?.length
@@ -672,7 +706,7 @@ const saveRule = async ruleInfo => {
     ruleInfo.excludeFilmNames = JSON.stringify(ruleInfo.excludeFilmNames);
     ruleInfo.film_type = ruleInfo.film_type || "";
     ruleInfo.allow_offer_time = ruleInfo.allow_offer_time || null;
-    ruleInfo.last_used_time = ruleInfo.last_used_time || null;
+    ruleInfo.last_used_time = undefined; // 此处不更新该字段
     ruleInfo.quanValue = ruleInfo.quanValue?.join(",");
     ruleInfo.orderForm = (ruleInfo.platOfferList || [])
       .map(item => item.platName)
