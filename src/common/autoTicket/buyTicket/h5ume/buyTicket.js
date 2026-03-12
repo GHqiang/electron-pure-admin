@@ -260,6 +260,10 @@ export default class H5UmeBuyTicket extends BaseBuyTicket {
         this.logger.infoSave(`首次出票手机号-${phone}`);
         this.curPhone = phone;
         this.cardQuanManage.curPhone = phone;
+
+        // 记录当前使用的手机号，出票失败消息会带上（最后失败的手机号）
+        this.order.last_fail_phone = this.curPhone || "";
+
         // 4、获取目标影院放映列表
         const movie_data = await this.cinemaManage.getMoviePlayInfo({
           cinemaLinkId
@@ -417,6 +421,9 @@ export default class H5UmeBuyTicket extends BaseBuyTicket {
         this.curPhone = phone;
         this.cardQuanManage.curPhone = phone;
       }
+
+      // 记录当前使用的手机号，出票失败消息会带上（最后失败的手机号）
+      this.order.last_fail_phone = this.curPhone || "";
       // 4、锁定座位
       let params = {
         cinemaLinkId,

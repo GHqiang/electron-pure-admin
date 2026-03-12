@@ -259,7 +259,8 @@ class SfcBuyTicket extends BaseBuyTicket {
         this.currentPhone =
           this.currentParamsList[this.currentParamsInx]?.mobile;
         this.logger.infoSave(`首次出票手机号-${this.currentPhone}`);
-
+        // 记录当前使用的手机号，出票失败消息会带上（最后失败的手机号）
+        this.order.last_fail_phone = this.currentPhone || "";
         const movieDataRes = await this.cinemaManage.getMoviePlayInfo({
           city_id,
           cinema_id
@@ -364,6 +365,9 @@ class SfcBuyTicket extends BaseBuyTicket {
         if (offerRule?.old_quan_value)
           offerRule.quan_value = offerRule.old_quan_value;
       }
+
+      // 记录当前使用的手机号，出票失败消息会带上（最后失败的手机号）
+      this.order.last_fail_phone = this.currentPhone || "";
 
       const lockParams = {
         order_id,
