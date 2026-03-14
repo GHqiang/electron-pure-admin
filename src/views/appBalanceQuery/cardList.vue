@@ -624,7 +624,7 @@ const syncCardInfo = async () => {
         return {
           id: serCardList.find(
             itemA =>
-              itemA.card_id === item.card_id &&
+              itemA.card_id == item.card_id &&
               itemA.card_num === item.card_num &&
               itemA.app_name === item.app_name
           )?.id,
