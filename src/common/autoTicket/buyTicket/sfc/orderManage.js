@@ -120,8 +120,8 @@ export default class SfcOrderManage {
         params.coupon_id = coupon_id;
         // 用卡失败时去掉卡号
         if (isUseCardFail) {
-          params.card_id = undefined; // 线上券是否必传会员卡id，0-不必传，1-必传，默认0
-          params.quan_code = undefined; // 优惠券编码
+          delete params.card_id;
+          delete params.quan_code;
           params.goods_coupon_id = "";
         }
       }
