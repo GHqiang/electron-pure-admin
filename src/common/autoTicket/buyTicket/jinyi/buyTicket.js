@@ -714,6 +714,12 @@ class JinyiBuyTicket extends BaseBuyTicket {
   }
 }
 
+window.jinyiTicketObj = (order, isTestOrder = false) => {
+  const logger = new Logger({ logType: 3 });
+  return new JinyiBuyTicket(order, logger, isTestOrder);
+};
+// 订单一键出票测试：
+// window.jinyiTicketObj(order, true).singleTicket()
 export default JinyiBuyTicket;
 
 /**

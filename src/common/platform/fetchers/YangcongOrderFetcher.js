@@ -9,7 +9,9 @@ import svApi from "@/api/sv-api.js";
 import { platTokens } from "@/store/platTokens.js";
 
 const tokens = platTokens();
+import { useYangcongCinemaList } from "@/store/specialNameRule.js";
 
+const yangcongCinemaListObj = useYangcongCinemaList();
 /**
  * 洋葱平台订单获取
  */
@@ -68,7 +70,7 @@ export default class YangcongOrderFetcher extends BaseOrderFetcher {
             rewards: 0,
             is_urgent: "",
             cinema_group: cinemaChain,
-            cinema_code: "",
+            cinema_code: yangcongCinemaListObj.getCinemaCode(cinemaName),
             order_number: tradeno,
             lockseat: seatNames ? seatNames.split("|").join(" ") : "",
             plat_name: "yangcong"
