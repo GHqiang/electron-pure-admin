@@ -238,7 +238,7 @@ export default class BaseOfferQueue {
    */
   async orderHandle(order) {
     try {
-      if (this.isRunning) {
+      if (this.isRunning || this.isTestOrder) {
         const logger = new Logger({ logType: 1 });
         logger.init(order);
         let offerResult;
@@ -281,7 +281,7 @@ export default class BaseOfferQueue {
             )
           ]);
         }
-
+        console.warn("订单处理完成", offerResult);
         await this.addOrderHandleRecord(order, offerResult, logger);
         logger.logUpload();
         return offerResult;
@@ -306,7 +306,8 @@ export default class BaseOfferQueue {
       // 获取报价价格
       const offerExample = getOfferPriceFun({
         appFlag: order.app_name,
-        plat_name: this.platName
+        plat_name: this.platName,
+        isTestOrder: this.isTestOrder
       });
 
       if (!offerExample) {
@@ -361,6 +362,10 @@ export default class BaseOfferQueue {
         memberPrice: member_price,
         offerRule
       });
+      if (this.isTestOrder) {
+        log.infoSave("测试单不提交报价", offerParams);
+        return { res: { msg: "测试单暂不报价" }, offerRule };
+      }
       const res = await this.platformAdapter.submitOffer(offerParams, {
         logger: log
       });

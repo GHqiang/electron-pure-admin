@@ -140,3 +140,28 @@ export default class LierenOfferQueue extends BaseOfferQueue {
     }
   }
 }
+
+// 测试平台报价代码
+window.lierenOfferQueue = () => {
+  const testOrder = {
+    plat_name: "lieren",
+    id: "12412221440316515",
+    tpp_price: 42,
+    supplier_max_price: 39,
+    city_name: "南京",
+    cinema_addr: "雨花台区软件大道109号雨花客厅E-PARK北区3层",
+    ticket_num: 1,
+    cinema_name: "金逸影城(光美江宁弘阳IMAX店)",
+    hall_name: "7号MX4D激光厅(儿童需购票)",
+    film_name: "飞驰人生3",
+    show_time: "2026-03-17 21:10:00",
+    rewards: 0,
+    is_urgent: false,
+    cinema_group: "",
+    cinema_code: "32016011",
+    order_number: "12412221440316515",
+    offer_end_time: 1773742065000,
+    app_name: "guangmeiwenhua"
+  };
+  return new LierenOfferQueue(true).orderHandle(testOrder);
+};

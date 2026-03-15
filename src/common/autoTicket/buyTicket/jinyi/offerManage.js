@@ -790,7 +790,7 @@ window.jinyiOfferObj = (plat_name, app_name) => {
 };
 
 const testOrder = {
-  plat_name: "mayi",
+  plat_name: "lieren",
   id: "12412221440316515",
   tpp_price: 42,
   supplier_max_price: 39,
@@ -806,7 +806,7 @@ const testOrder = {
   cinema_group: "",
   cinema_code: "32016011",
   order_number: "12412221440316515",
-  offer_end_time: 1773569265000,
+  offer_end_time: 1773742065000,
   app_name: "guangmeiwenhua"
 };
 
