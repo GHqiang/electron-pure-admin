@@ -431,7 +431,8 @@ import {
   GET_APP_LIST,
   GET_APP_TYPE_LIST,
   GET_APP_INFO,
-  IN_RULE_LIST
+  IN_RULE_LIST,
+  SYNC_CINEMA_CODE_APP_TYPE_LIST
 } from "@/common/constant";
 const APP_LIST = computed(() => GET_APP_LIST());
 const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
@@ -675,7 +676,7 @@ const testSyncCinemaCodeMatch = async () => {
       list = list.map(item => {
         let app_cinema_code = item.cinema_code;
         // 除以下2种外没有cinema_code，用city_id+id组合当唯一标识
-        if (!["ume_applet", "chenxing_applet"].includes(app_type_code)) {
+        if (!SYNC_CINEMA_CODE_APP_TYPE_LIST.includes(app_type_code)) {
           app_cinema_code = item.city_id + "_" + item.cinema_id;
         }
         return {
@@ -735,8 +736,9 @@ const syncCinemeCodeMatch = async isExport => {
 
     // 2、获取可以同步的影院列表
     let syncCinemaList = cinemaList.filter(item => {
-      let canSyncAppTypeCodeList = ["ume_applet", "chenxing_applet"];
-      let isInclude = canSyncAppTypeCodeList.includes(item.app_type_code);
+      let isInclude = SYNC_CINEMA_CODE_APP_TYPE_LIST.includes(
+        item.app_type_code
+      );
       return isExport ? !isInclude : isInclude;
     });
     console.warn("获取可以同步的影院列表", syncCinemaList);
@@ -751,7 +753,7 @@ const syncCinemeCodeMatch = async isExport => {
       list = list.map(item => {
         let app_cinema_code = item.cinema_code;
         // 除以下2种外没有cinema_code，用city_id+id组合当唯一标识
-        if (!["ume_applet", "chenxing_applet"].includes(app_type_code)) {
+        if (!SYNC_CINEMA_CODE_APP_TYPE_LIST.includes(app_type_code)) {
           app_cinema_code = item.city_id + "_" + item.cinema_id;
         }
         return {
@@ -821,7 +823,7 @@ const uploadRef = ref(null);
 
 // 生成影院唯一标识（与本地映射表比对用，统一转字符串避免 number/string 不一致）
 const getAppCinemaCode = (item, app_type_code) => {
-  if (["ume_applet", "chenxing_applet"].includes(app_type_code)) {
+  if (SYNC_CINEMA_CODE_APP_TYPE_LIST.includes(app_type_code)) {
     return item.cinema_code != null ? String(item.cinema_code) : "";
   }
   // 不能同步的系列：city_id+影院id 与本地 app_cinema_code 对应
@@ -1009,7 +1011,6 @@ const checkCinemaUpdate = async () => {
     cinemaList = cinemaList.filter(item => item.status != 3);
     const localIndex = buildLocalCinemaIndex(cinemaList);
 
-    const CAN_SYNC_APP_TYPES = ["ume_applet", "chenxing_applet"];
     const diffList = [];
 
     for (let i = 0; i < appNameList.length; i++) {
@@ -1031,7 +1032,8 @@ const checkCinemaUpdate = async () => {
           continue;
         }
 
-        const isCanSync = CAN_SYNC_APP_TYPES.includes(app_type_code);
+        const isCanSync =
+          SYNC_CINEMA_CODE_APP_TYPE_LIST.includes(app_type_code);
         const localRows = localIndex[app_name] || {};
         const localMapByAppCode = localRows; // 本地按 app_cinema_code 索引（不能同步用）
         const localByPlatCode = {}; // 本地按 plat_cinema_code 索引（能同步用）
@@ -1177,10 +1179,10 @@ const checkCinemaUpdate = async () => {
     const deletedList = diffList.filter(d => d.changeType === "删除");
 
     const canSyncNew = addedList.filter(d =>
-      CAN_SYNC_APP_TYPES.includes(d.app_type_code)
+      SYNC_CINEMA_CODE_APP_TYPE_LIST.includes(d.app_type_code)
     );
     const cannotSyncNew = addedList.filter(
-      d => !CAN_SYNC_APP_TYPES.includes(d.app_type_code)
+      d => !SYNC_CINEMA_CODE_APP_TYPE_LIST.includes(d.app_type_code)
     );
 
     diffNewSyncList.value = canSyncNew;

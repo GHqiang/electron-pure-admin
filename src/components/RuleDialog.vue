@@ -486,7 +486,8 @@ import {
   ORDER_FORM,
   GET_APP_LIST,
   GET_APP_INFO,
-  GET_APP_TYPE_LIST
+  GET_APP_TYPE_LIST,
+  SYNC_CINEMA_CODE_APP_TYPE_LIST
 } from "@/common/constant";
 import { cinemNameSpecial } from "@/utils/utils";
 
@@ -687,7 +688,7 @@ const syncCinemaCodesByNames = () => {
     const buildAppCinemaCode = row => {
       if (!row) return "";
       // ume / 辰星等有独立 cinema_code 的系列，直接用 cinema_code
-      if (["ume_applet", "chenxing_applet"].includes(app_type_code)) {
+      if (SYNC_CINEMA_CODE_APP_TYPE_LIST.includes(app_type_code)) {
         return row.cinema_code != null ? String(row.cinema_code) : "";
       }
       // 其他系列使用 city_id + "_" + cinema_id 组合

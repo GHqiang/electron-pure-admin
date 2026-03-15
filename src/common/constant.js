@@ -127,10 +127,18 @@ const APP_TYPE_OBJ = {
 
 window.APP_TYPE_LIST = GET_APP_TYPE_LIST();
 
+// 可以同步影院code映射的影线类型列表
+const SYNC_CINEMA_CODE_APP_TYPE_LIST = [
+  "ume_applet",
+  "chenxing_applet",
+  "jinyi_applet"
+];
+
 // 内部角色列表
 const IN_RULE_LIST = [2];
 
 export {
+  SYNC_CINEMA_CODE_APP_TYPE_LIST,
   ORDER_FORM,
   TICKET_STATUS,
   ONE_STEP_PLAT_LIST,
