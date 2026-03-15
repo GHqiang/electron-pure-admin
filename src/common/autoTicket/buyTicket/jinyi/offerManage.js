@@ -49,8 +49,9 @@ const {
  * 继承 BaseOfferPrice，实现金逸系列报价逻辑
  */
 class getJinyiOfferPrice extends BaseOfferPrice {
-  constructor({ appFlag, plat_name }) {
+  constructor({ appFlag, plat_name, isTestOrder }) {
     super({ appFlag, plat_name });
+    this.isTestOrder = isTestOrder;
   }
 
   /**
@@ -78,52 +79,54 @@ class getJinyiOfferPrice extends BaseOfferPrice {
       const matchRuleListRes = offerRuleMatch(order, this.logger);
       console.log("初始规则匹配", matchRuleListRes);
       let matchRuleList = matchRuleListRes?.matchRuleList || [];
-      // matchRuleList = [
-      //   {
-      //     id: 1671,
-      //     ruleName: "南京测试",
-      //     orderForm: "lieren",
-      //     app_type: "jinyi_applet",
-      //     shadowLineName: "guangmeiwenhua",
-      //     includeCityNames: ["南京"],
-      //     excludeCityNames: [],
-      //     includeCinemaNames: ["金逸影城（光美江宁弘阳IMAX店）"],
-      //     includeCinemaCodes: "55_400352",
-      //     excludeCinemaNames: [],
-      //     excludeCinemaCodes: "",
-      //     includeHallNames: [],
-      //     excludeHallNames: [],
-      //     includeFilmNames: ["飞驰人生3"],
-      //     excludeFilmNames: [],
-      //     timeLimit: null,
-      //     quanValue: "",
-      //     offerType: "2",
-      //     weekDay: [],
-      //     seatNum: "",
-      //     memberDay: "",
-      //     status: "1",
-      //     update_time: "2026-03-14 10:26:28",
-      //     user_id: "1",
-      //     user_name: "张三",
-      //     platOfferList: [
-      //       {
-      //         platName: "lieren",
-      //         value: "60"
-      //       }
-      //     ],
-      //     addAmount: "60",
-      //     rule: 2,
-      //     autoUseQuanStatus: "2",
-      //     autoUseQuanPrice: "",
-      //     auto_quan_value: "",
-      //     remark: "测试",
-      //     film_type: [],
-      //     memberPriceRule: "",
-      //     allow_offer_time: "",
-      //     last_used_time: "",
-      //     quanValueList: []
-      //   }
-      // ];
+      if (this.isTestOrder && !matchRuleList?.length) {
+        matchRuleList = [
+          {
+            id: 1671,
+            ruleName: "南京测试",
+            orderForm: "lieren",
+            app_type: "jinyi_applet",
+            shadowLineName: "guangmeiwenhua",
+            includeCityNames: ["南京"],
+            excludeCityNames: [],
+            includeCinemaNames: ["金逸影城（光美江宁弘阳IMAX店）"],
+            includeCinemaCodes: "55_400352",
+            excludeCinemaNames: [],
+            excludeCinemaCodes: "",
+            includeHallNames: [],
+            excludeHallNames: [],
+            includeFilmNames: ["飞驰人生3"],
+            excludeFilmNames: [],
+            timeLimit: null,
+            quanValue: "",
+            offerType: "2",
+            weekDay: [],
+            seatNum: "",
+            memberDay: "",
+            status: "1",
+            update_time: "2026-03-14 10:26:28",
+            user_id: "1",
+            user_name: "张三",
+            platOfferList: [
+              {
+                platName: "lieren",
+                value: "60"
+              }
+            ],
+            addAmount: "60",
+            rule: 2,
+            autoUseQuanStatus: "2",
+            autoUseQuanPrice: "",
+            auto_quan_value: "",
+            remark: "测试",
+            film_type: [],
+            memberPriceRule: "",
+            allow_offer_time: "",
+            last_used_time: "",
+            quanValueList: []
+          }
+        ];
+      }
       if (!matchRuleList?.length) {
         this.logger.infoSave("报价规则匹配后规则为空", {
           error: matchRuleListRes?.error,
@@ -779,31 +782,33 @@ export default getJinyiOfferPrice;
 
 // 测试报价实例的方法
 window.jinyiOfferObj = (plat_name, app_name) => {
-  return new getJinyiOfferPrice({ appFlag: app_name, plat_name });
+  return new getJinyiOfferPrice({
+    appFlag: app_name,
+    plat_name,
+    isTestOrder: true
+  });
 };
 
-// {
-//   plat_name: "mayi",
-//   id: "12412221440316515",
-//   tpp_price: 42,
-//   supplier_max_price: 39,
-//   city_name: "南京",
-//   cinema_addr: "雨花台区软件大道109号雨花客厅E-PARK北区3层",
-//   ticket_num: 1,
-//   cinema_name: "金逸影城(光美江宁弘阳IMAX店)",
-//   hall_name: "7号MX4D激光厅(儿童需购票)",
-//   film_name: "飞驰人生3",
-//   film_img:
-//     "https://gw.alicdn.com/tfscom/i4/O1CN01e8PcvF1NESAgdEsnM_!!6000000001538-0-alipicbeacon.jpg_120x120.jpg",
-//   show_time: "2026-03-15 19:00:00",
-//   rewards: 0,
-//   is_urgent: false,
-//   cinema_group: "",
-//   cinema_code: "32016011",
-//   order_number: "12412221440316515",
-//   offer_end_time: 1773569265000,
-//   app_name: "guangmeiwenhua"
-// }
+const testOrder = {
+  plat_name: "mayi",
+  id: "12412221440316515",
+  tpp_price: 42,
+  supplier_max_price: 39,
+  city_name: "南京",
+  cinema_addr: "雨花台区软件大道109号雨花客厅E-PARK北区3层",
+  ticket_num: 1,
+  cinema_name: "金逸影城(光美江宁弘阳IMAX店)",
+  hall_name: "7号MX4D激光厅(儿童需购票)",
+  film_name: "飞驰人生3",
+  show_time: "2026-03-17 21:10:00",
+  rewards: 0,
+  is_urgent: false,
+  cinema_group: "",
+  cinema_code: "32016011",
+  order_number: "12412221440316515",
+  offer_end_time: 1773569265000,
+  app_name: "guangmeiwenhua"
+};
 
 // 获取订单最终报价：
 // window.jinyiOfferObj("mayi", "guangmeiwenhua").getEndOfferPrice({ order: orderJson, offerList: [] })

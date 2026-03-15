@@ -313,6 +313,7 @@ class JinyiBuyTicket extends BaseBuyTicket {
       if (!lockRes) {
         return await this.orderManage.transferOrder();
       }
+      // 锁座id即创建订单id，但是不会真正创建订单，也不会真正锁座，后面不会有释放座位和取消座位的接口
       buyTicketInfo.lockOrderId = lockRes.data?.order_id;
       const { lockOrderId } = buyTicketInfo;
       // 4、使用优惠券或者会员卡（仅判断是否有可用卡及券）
@@ -374,10 +375,6 @@ class JinyiBuyTicket extends BaseBuyTicket {
       }
       // 实际支付价格
       let paymentAmount = calcRes?.data?.ticket_total_price;
-      // 原价
-      let totalOriginalPrice = calcRes?.settlement?.totalOriginalPrice;
-      // 券码不存在标识（不在可用券50个内，但是个人中心有）
-      let quanEmptyFlag = calcRes?.quanEmptyFlag;
       this.logger.infoSave("实际支付价格", { paymentAmount });
       // 校验卡余额是否足够
       let quan_fee = offerRule.quan_fee || 0;
@@ -393,10 +390,6 @@ class JinyiBuyTicket extends BaseBuyTicket {
             ticket_num
           });
         }
-        if (quanEmptyFlag) {
-          paymentAmount = quan_fee_total;
-        }
-        // yaolai绑券逻辑不一样，暂不处理
         if (offerRule.is_store == "1" && quanStock - ticket_num < 10) {
           this.logger.infoSave("本次出票后券小于10，开始异步绑定券");
           this.cardQuanManage.getNewQuan({
@@ -409,10 +402,6 @@ class JinyiBuyTicket extends BaseBuyTicket {
             asyncFlag: 1
           });
         }
-      }
-      if (this.isTestOrder) {
-        this.logger.infoSave("测试单暂不购买");
-        return { offerRule };
       }
       // 支付前校验用券价格
       if (
@@ -480,148 +469,30 @@ class JinyiBuyTicket extends BaseBuyTicket {
       }
       // 7、创建订单
       let card_id, cardNum;
-      let payments = [];
-      let paymentsList = calcRes?.settlement?.payments;
-      // 可能为空没有优惠
-      let promotions = calcRes?.settlement?.promotions || [];
-      let isUseCard = false;
       if (offer_type === "1" && useQuan?.length) {
-        // 可能需要，也可能需要每一项都做此处理
-        if (promotions?.length) {
-          promotions[0].productType = "TICKET";
-        }
-        if (quanEmptyFlag) {
-          promotions = useQuan.map(item => ({
-            discountedAmount:
-              (totalOriginalPrice - quan_fee_total) / ticket_num,
-            promotionType: "COUPON",
-            promoCode: item.couponCode,
-            productType: "TICKET"
-          }));
-        }
-        isUseCard = true;
       }
-      if ((offer_type === "2" && canUseCardList?.length) || isUseCard) {
-        const canUseCardNoList = canUseCardList.map(item => item.cardNo);
-        let payInfo;
-        // 纯用卡场景从这里获取支付信息
-        if (!isUseCard) {
-          // 取优惠金额一样的优惠信息
-          let promotionInfo = promotions?.find(
-            item =>
-              item.discountedAmount === calcRes.settlement.totalDiscountedAmount
-          );
-          let promotionCardNo;
-          if (promotionInfo) {
-            if (promotionInfo.promotionType == "MEMBER_CARD") {
-              promotionCardNo = promotionInfo.promoCode;
-            } else {
-              promotionCardNo = promotionInfo.cardNo;
-            }
-            // 从支付信息中取相关信息
-            if (promotionCardNo) {
-              payInfo = paymentsList?.find(
-                item => item.cardNo === promotionCardNo
-              );
-              this.logger.infoSave("从优惠信息中取支付信息", {
-                promotionInfo,
-                payInfo
-              });
-            }
-          }
-        }
-
-        if (!payInfo) {
-          this.logger.infoSave("从支付列表中取支付信息", {
-            paymentsList,
-            promotions
-          });
-          const sortPaymentsList = paymentsList
-            .filter(item => item.paymentType === "MEMBER_CARD")
-            .sort((a, b) => b.balance - a.balance);
-          payInfo = sortPaymentsList.find(item =>
-            canUseCardNoList.includes(item.cardNo)
-          );
-        }
-        if (!payInfo && canUseCardList?.length) {
-          this.logger.infoSave("从可用卡列表中取支付信息", {
-            canUseCardList
-          });
-          payInfo = {
-            cardNo: canUseCardList?.[0]?.cardNo,
-            paymentType: "MEMBER_CARD"
-          };
-        }
-        if (payInfo) {
-          payInfo.promotionType = "MEMBER_CARD";
-          card_id = payInfo?.cardNo;
-          cardNum = payInfo?.cardNo;
-          payments.push({
-            paymentType: payInfo?.paymentType,
-            payCode: payInfo?.cardNo,
-            payToken: window.getPayToken(this.currentMemberPwd),
-            payAmount: paymentAmount
-          });
-        } else {
-          this.logger.errorSave("无可用卡", {
-            canUseCardList
-          });
-          // 转单或换号处理
-          const transparams = {
-            cinemaLinkId,
-            lockOrderId,
-            session_id: this.currentSessionId
-          };
-          return await this.transferOrChangePhone(transparams, buyTicketInfo);
-        }
+      if (offer_type === "2" && canUseCardList?.length) {
+        card_id = canUseCardList[0]?.card_id;
+        cardNum = canUseCardList[0]?.card_no_show;
       }
-      // 用券接口传参
-      // const useQuanParams = {
-      //   seats: '[{"seatCode":"00000039405-6-12","areaId":"0"}]',
-      //   promotions:
-      //     '[{"promotionType":"COUPON","promoCode":"3J6W0HUSMY","discountedAmount":3390,"productType":"TICKET"}]',
-      //   totalOriginalPrice: 3390,
-      //   totalPayAmount: 0,
-      //   cinemaLinkId: "16480",
-      //   phoneNumber: "15237761435",
-      //   scheduleId: "1000001003189829",
-      //   scheduleKey: "D6AA6334484204A4C36183F5C088D7A6",
-      //   lockOrderId: "2922016480804030269",
-      //   payments:
-      //     '[{"paymentType":"WECHAT_MINI_PROGRAM","payAmount":0,"payConfigId":25782,"payCode":"0f3Z08ll2zxM1g4HkFkl2yRWuH3Z08lb"}]',
-      //   closeOuterId: "ewob7heljfkww3nx",
-      //   outerId: "ewob7heljfkww3nx",
-      //   leaseCode: "sdwlyc",
-      //   channelCode: "SDWLYC_MP_WX_PRO"
-      // };
+      if (this.isTestOrder) {
+        this.logger.infoSave("测试单暂不购买");
+        return { offerRule };
+      }
       const createOrderRes = await this.orderManage.createOrder({
-        cinemaLinkId,
-        cardNum,
+        cinema_id,
         lockOrderId,
-        cinemaLinkId,
-        scheduleId,
-        lockOrderId,
-        seats: JSON.stringify(
-          targetSeatCodes.map(item => ({
-            areaId: item.areaId,
-            seatCode: item.seatCode
-          }))
-        ),
-        totalOriginalPrice: totalOriginalPrice,
-        totalPayAmount: paymentAmount,
-        promotions: JSON.stringify(promotions),
-        payments: JSON.stringify(payments),
         phoneNumber: this.currentPhone,
         session_id: this.currentSessionId
       });
-      let order_num = createOrderRes?.orderId;
+      let order_num = createOrderRes?.order_id;
       if (!order_num) {
         // 从订单列表获取到目标订单
         await mockDelay(3);
         const orderInfo = await this.orderManage.getOrderInfoByOrderList({
           session_id: this.currentSessionId
         });
-        order_num = orderInfo?.orderId;
+        order_num = orderInfo?.order_id;
       }
       if (!order_num) {
         if (createOrderRes?.isTimeout) {
@@ -717,6 +588,27 @@ class JinyiBuyTicket extends BaseBuyTicket {
 window.jinyiTicketObj = (order, isTestOrder = false) => {
   const logger = new Logger({ logType: 3 });
   return new JinyiBuyTicket(order, logger, isTestOrder);
+};
+const testOrder = {
+  id: "12603141304358073",
+  supplier_end_price: 42,
+  city_name: "南京",
+  cinema_addr: "市南区香港中路69号麦凯乐八楼",
+  cinema_name: "金逸影城(光美江宁弘阳IMAX店)",
+  hall_name: "7号MX4D激光厅(儿童需购票)",
+  film_name: "飞驰人生3",
+  show_time: "2026-03-17 21:10:00",
+  cinema_code: "32016011",
+  order_number: "12603141304358073",
+  lockseat: "3排1座",
+  plat_name: "mayi",
+  app_name: "guangmeiwenhua",
+  appName: "guangmeiwenhua",
+  ticket_num: 1,
+  rewards: 0,
+  is_urgent: false,
+  cinema_group: "",
+  offer_end_time: 1773569265000
 };
 // 订单一键出票测试：
 // window.jinyiTicketObj(order, true).singleTicket()

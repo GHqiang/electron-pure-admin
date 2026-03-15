@@ -23,12 +23,13 @@ export default class OrderManage {
   // 转单
   async transferOrder(unlockSeatInfo) {
     this.logger.infoSave("开始准备转单", unlockSeatInfo);
-    if (unlockSeatInfo) {
-      // 1、释放座位(仅锁座id存在时)
-      if (!unlockSeatInfo.order_num) await this.releaseSeat(unlockSeatInfo);
-      // 2、取消订单(创建订单id存在时)
-      if (unlockSeatInfo.order_num) await this.cancelOrder(unlockSeatInfo);
-    }
+    this.logger.infoSave("金逸无释放座位及取消订单接口");
+    // if (unlockSeatInfo) {
+    //   // 1、释放座位(仅锁座id存在时)
+    //   if (!unlockSeatInfo.order_num) await this.releaseSeat(unlockSeatInfo);
+    //   // 2、取消订单(创建订单id存在时)
+    //   if (unlockSeatInfo.order_num) await this.cancelOrder(unlockSeatInfo);
+    // }
 
     // 3、平台转单
     // 获取转单原因
@@ -58,69 +59,18 @@ export default class OrderManage {
 
   // 释放座位
   async releaseSeat(unlockSeatInfo) {
-    const {
-      cinemaLinkId,
-      lockOrderId,
-      session_id,
-      retryCount = 0
-    } = unlockSeatInfo;
-    try {
-      let params = {
-        cinemaLinkId,
-        lockOrderId,
-        pageInit: false,
-        fenghuangToken: session_id
-      };
-      if (retryCount) {
-        delete params.pageInit;
-      }
-      this.logger.infoSave("释放座位参数", params);
-      const res = await this.appApi.releaseSeat(params);
-      this.logger.infoSave("释放座位成功", { res });
-      return res;
-    } catch (error) {
-      this.logger.infoSave("释放座位异常", { error });
-      // 锁座流水号无效，重试2次
-      if (formatErrInfo(error).includes("无效的锁座流水号") && retryCount < 2) {
-        this.logger.infoSave("无效的锁座流水号,准备重试");
-        return await this.releaseSeat({
-          ...unlockSeatInfo,
-          retryCount: retryCount + 1
-        });
-      }
-      sendWxPusherMessage({
-        orderInfo: this.order,
-        transferTip: "释放座位失败，建议手动释放座位，以便后续订单正常出票",
-        failReason: formatErrInfo(error)
-      });
-    }
+    this.logger.infoSave("无释放座位接口", unlockSeatInfo);
+    return { msg: "无释放座位接口" };
   }
   // 取消订单
   async cancelOrder(unlockSeatInfo) {
-    const { cinemaLinkId, order_num, session_id } = unlockSeatInfo;
-    try {
-      let params = {
-        cinemaLinkId,
-        orderId: order_num,
-        fenghuangToken: session_id
-      };
-      this.logger.infoSave("取消订单参数", params);
-      const res = await this.appApi.cancelOrder(params);
-      this.logger.infoSave("取消订单成功", { res });
-      return res;
-    } catch (error) {
-      this.logger.infoSave("取消订单异常", { error });
-      sendWxPusherMessage({
-        orderInfo: this.order,
-        transferTip: "取消订单失败，建议手动取消订单，以便后续订单正常出票",
-        failReason: formatErrInfo(error)
-      });
-    }
+    this.logger.infoSave("无取消订单接口", unlockSeatInfo);
+    return { msg: "无取消订单接口" };
   }
 
   // 计算价格
   async priceCalculation(data) {
-    let { cinema_id, card_id, lockOrderId, promotions, session_id } = data;
+    let { cinema_id, card_id, lockOrderId, session_id } = data;
     let params = {
       session_id,
       cinema_id,
@@ -142,13 +92,6 @@ export default class OrderManage {
       this.logger.infoSave("计算价格参数", JSON.parse(JSON.stringify(params)));
       res = await this.appApi.priceCalculation(params);
       this.logger.infoSave("计算价格返回", res);
-      // 优惠券参数处理
-      if (promotions?.length) {
-        params.promotions = JSON.stringify(promotions);
-        this.logger.infoSave("用券计算价格参数", params);
-        res = await this.appApi.priceCalculationByQuan(params);
-        this.logger.infoSave("用券计算价格返回", res);
-      }
       return res;
     } catch (error) {
       this.logger.errorSave("计算价格异常", error);
@@ -163,65 +106,32 @@ export default class OrderManage {
   // 创建订单
   async createOrder(data) {
     let {
-      cinemaLinkId,
-      scheduleKey,
-      scheduleId,
+      cinema_id,
       lockOrderId,
-      seats,
-      totalOriginalPrice,
-      totalPayAmount,
-      promotions,
-      payments,
       phoneNumber,
-      cardNum,
       session_id,
       retryCount = 0
     } = data;
     try {
-      let outerId = randomNumByLength(16);
       let params = {
-        seats,
-        promotions,
-        totalOriginalPrice,
-        totalPayAmount,
-        cinemaLinkId,
-        phoneNumber,
-        scheduleId,
-        scheduleKey,
-        lockOrderId,
-        payments,
-        outerId,
-        closeOuterId: outerId,
-        fenghuangToken: session_id
+        // order_id	260314205810011160
+        // mobile	15237761435
+        // pay_type	MEMBER
+        cinema_id,
+        pay_type: "MEMBER",
+        order_id: lockOrderId,
+        mobile: phoneNumber,
+        session_id
       };
       this.logger.infoSave("创建订单参数", params);
-      const res = await this.appApi.createOrder(params);
+      const res = await this.appApi.buyTicket(params);
       this.logger.infoSave("创建订单返回", res);
       if (retryCount) {
         this.logger.infoSave("重试后创建订单成功");
       }
-      return res;
+      return { order_id: lockOrderId };
     } catch (error) {
       this.logger.errorSave("创建订单异常", formatErrInfo(error));
-      if (
-        formatErrInfo(error)?.includes("密码") &&
-        formatErrInfo(error)?.includes("错误")
-      ) {
-        if (retryCount) {
-          this.logger.infoSave("发送密码配置错误提醒");
-          sendWxPusherMessage({
-            orderInfo: this.order,
-            msgType: 5,
-            cardNoByPwdError: cardNum,
-            failReason: "密码输入错误，请检查卡号密码是否正确"
-          });
-        } else {
-          return await this.createOrder({
-            ...data,
-            retryCount: retryCount + 1
-          });
-        }
-      }
       if (
         formatErrInfo(error).includes("超时") ||
         formatErrInfo(error).includes("timeout of")
@@ -240,34 +150,22 @@ export default class OrderManage {
   // 从个人中心获取购买订单信息
   async getOrderInfoByOrderList({
     session_id,
+    order_id,
     retryCount = 1,
     isRetry = true // 是否允许重试，异步查询时不允许
   }) {
     const MAX_RETRY_COUNT = 3;
     try {
       const params = {
-        category: "TICKET",
-        pageSize: 10,
-        pageNumber: 1,
-        pageInit: true,
-        fenghuangToken: session_id
+        session_id
       };
       this.logger.infoSave("获取订单列表参数", params);
-      const res = await this.appApi.queryOrderList(params);
-      let orderList = res.orders || [];
+      const res = await this.appApi.getOrderList(params);
+      let orderList = res?.data?.orders || [];
       this.logger.infoSave("获取订单列表返回", {
         orderList: orderList.slice(0, 5)
       });
-      const { film_name, show_time, lockseat } = this.order;
-      let targerOrder = orderList.find(item => {
-        const { filmName, startTime, ticketSeats } = item.ticket || {};
-        return (
-          filmName === film_name &&
-          +new Date(show_time) == startTime &&
-          ticketSeats?.length &&
-          ticketSeats.every(item => lockseat.includes(item.seatName))
-        );
-      });
+      let targerOrder = orderList.find(item => item.order_id === order_id);
       if (targerOrder) {
         this.logger.infoSave("从订单列表获取到目标订单", { targerOrder });
         return targerOrder;
@@ -277,6 +175,7 @@ export default class OrderManage {
         await mockDelay(1);
         return await this.getOrderInfoByOrderList({
           session_id,
+          order_id,
           retryCount: retryCount + 1
         });
       }
@@ -287,6 +186,7 @@ export default class OrderManage {
         await mockDelay(1);
         return await this.getOrderInfoByOrderList({
           session_id,
+          order_id,
           retryCount: retryCount + 1
         });
       }
@@ -337,25 +237,25 @@ export default class OrderManage {
       if (!orderId) {
         const targetOrder = await this.getOrderInfoByOrderList({
           session_id,
+          order_id: orderId,
           isRetry: false
         });
-        if (targetOrder?.ticket?.pickupCode) {
-          return targetOrder?.ticket?.pickupCode;
+        if (targetOrder?.ticket_code) {
+          return targetOrder?.ticket_code;
         }
       } else {
         let params = {
-          orderId,
-          operationType: "TICKET",
-          pageInit: true,
-          fenghuangToken: session_id
+          order_id: orderId,
+          version: "tp_version",
+          session_id
         };
         logger.info("获取支付结果参数", params);
         if (inx == 1) {
           logger.infoSave("获取支付结果参数", params);
         }
-        const res = await this.appApi.queryOrderDetail(params);
+        const res = await this.appApi.getOrderInfo(params);
         logger.infoSave(`第${inx}次获取支付结果返回`, res);
-        qrcode = res?.order?.ticket?.pickupCode;
+        qrcode = res?.data?.ticket_code;
         if (qrcode) {
           return qrcode;
         }

@@ -64,13 +64,23 @@ export default class BaseBuyTicket {
 
       // 2、获取该订单报价规则
       await this.getOrderOfferRule();
+
+      // 调试代码
+      if (this.isTestOrder && !this.offerRule) {
+        this.offerRule = {
+          offer_type: "2",
+          offer_end_amount: "42",
+          member_price: "40",
+          real_member_price: "43",
+        };
+      }
       this.logger.infoSave("订单报价记录信息", {
         offerRule: JSON.parse(JSON.stringify(this.offerRule))
       });
 
       // 3、校验报价规则是否允许出票
       const isNeedBuyTicket = this.checkOfferRuleRes();
-      if (!isNeedBuyTicket) {
+      if (!this.isTestOrder && !isNeedBuyTicket) {
         this.logger.infoSave("校验报价规则不允许出票");
         return {
           offerRule: this.offerRule

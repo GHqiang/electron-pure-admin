@@ -150,12 +150,23 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           "";
 
         if (session_id) {
+          if (config.method == "post") {
+            delete config.data.session_id;
+          } else {
+            delete config.params.session_id;
+          }
           token = session_id;
         }
         if (token) {
           config.headers.token = `${token}`;
         }
-
+        if (config.url.includes("cinema_id")) {
+          if (config.method == "post") {
+            delete config.data.cinema_id;
+          } else {
+            delete config.params.cinema_id;
+          }
+        }
         config.url =
           (IS_DEV ? "" : "https://ct.womovie.cn") +
           config.url
