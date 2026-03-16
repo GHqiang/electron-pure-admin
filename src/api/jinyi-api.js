@@ -195,9 +195,85 @@ const createApi = ({ app_name }) => {
   //   }
   // };
 
-  // 获取会员卡列表
+  // 获取用户信息
+  const getUserInfo = params =>
+    axios.get("/ticket/channelCode/cinema/cinema_id/user/info/", { params });
+
+  //   {
+  //     "ret": 0,
+  //     "sub": 0,
+  //     "msg": "successfully",
+  //     "data": {
+  //         "is_new_user": true,
+  //         "is_risk_user": false,
+  //         "is_auth_expire": false,
+  //         "is_delete": 0,
+  //         "is_bind_mobile": true,
+  //         "is_member": true,
+  //         "identity_show": false,
+  //         "sex": "SECRET",
+  //         "avatar": "",
+  //         "nickname": "",
+  //         "phone": "13*****2313",
+  //         "order_phone": "13073792313",
+  //         "member_info": {
+  //             "solid_card": {
+  //                 "card_id": 432558,
+  //                 "card_no": "25*****9032",
+  //                 "card_no_show": "25135079032",
+  //                 "card_name": "LV1-吃瓜群众",
+  //                 "card_desc": "会员购票享受会员优惠价",
+  //                 "card_status": "USABLE",
+  //                 "tip": "",
+  //                 "expiration_date": "2124-10-31 14:07:24",
+  //                 "expire_day": 36024,
+  //                 "card_grade_id": 632,
+  //                 "card_balance": 0,
+  //                 "card_score": 0,
+  //                 "card_image": "https://res.vistachina.cn/store/cardpic/2016/08/16/1471329845_880",
+  //                 "card_type": "SOLID_STORED_CARD",
+  //                 "is_expire": false,
+  //                 "is_pay_show": false,
+  //                 "is_usable": true,
+  //                 "is_recharge": true,
+  //                 "is_active_show": false,
+  //                 "is_store_money": true,
+  //                 "rewards_num": null,
+  //                 "active_expire_time": "",
+  //                 "open_cinema_name": "金逸影城（光美荟聚IMAX激光店）",
+  //                 "recharge_price_item": [
+  //                     {
+  //                         "id": "446918093648429057",
+  //                         "value": 100
+  //                     },
+  //                     {
+  //                         "id": "446918093648953345",
+  //                         "value": 200
+  //                     },
+  //                     {
+  //                         "id": "446918093649477633",
+  //                         "value": 300
+  //                     },
+  //                     {
+  //                         "id": "446918093649739777",
+  //                         "value": 500
+  //                     },
+  //                     {
+  //                         "id": "463248437392703489",
+  //                         "value": 2026
+  //                     }
+  //                 ],
+  //                 "renewal_price": 0
+  //             },
+  //             "virtual_card": {}
+  //         }
+  //     }
+  // }
+
+  // 获取会员卡列表（由于会员卡列表读不出来，暂时从用户信息那读单卡来用，后面多卡了再调整）
   const getCardList = params =>
-    axios.get("/ticket/channelCode/cinema/cinema_id/user/cards/", { params });
+    axios.get("/ticket/channelCode/cinema/cinema_id/user/info/", { params });
+  // axios.get("/ticket/channelCode/cinema/cinema_id/user/cards/", { params });
   //   {
   //   "ret": 0,
   //   "sub": 0,

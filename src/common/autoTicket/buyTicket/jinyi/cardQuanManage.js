@@ -314,7 +314,20 @@ export default class CardQuanManage {
     try {
       this.logger.infoSave("获取会员卡列表参数", params);
       const res = await this.appApi.getCardList(params);
-      let cardList = res.data?.solid_card || [];
+      // let cardList = res.data?.solid_card || [];
+      let solid_card = res.data?.member_info?.solid_card;
+      solid_card = Array.isArray(solid_card)
+        ? solid_card
+        : solid_card && JSON.stringify(solid_card) !== "{}"
+          ? [solid_card]
+          : [];
+      let virtual_card = res.data?.member_info?.virtual_card;
+      virtual_card = Array.isArray(virtual_card)
+        ? virtual_card
+        : virtual_card && JSON.stringify(virtual_card) !== "{}"
+          ? [virtual_card]
+          : [];
+      let cardList = [...solid_card, ...virtual_card];
       cardList = cardList.filter(item => item.card_status === "USABLE");
       if (!cardList.length) {
         this.logger.errorSave("获取会员卡列表为空");

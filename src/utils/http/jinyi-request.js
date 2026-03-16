@@ -150,9 +150,9 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           "";
 
         if (session_id) {
-          if (config.method == "post") {
+          if (config.method == "post" && config.data?.session_id) {
             delete config.data.session_id;
-          } else {
+          } else if (config.method == "get" && config.params?.session_id) {
             delete config.params.session_id;
           }
           token = session_id;
@@ -161,9 +161,9 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           config.headers.token = `${token}`;
         }
         if (config.url.includes("cinema_id")) {
-          if (config.method == "post") {
+          if (config.method == "post" && config.data?.cinema_id) {
             delete config.data.cinema_id;
-          } else {
+          } else if (config.method == "get" && config.params?.cinema_id) {
             delete config.params.cinema_id;
           }
         }

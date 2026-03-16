@@ -464,7 +464,20 @@ export default function useCinemaBaseFun() {
           cardList
         });
       } else if (JINYI_LIST.value.includes(app_name)) {
-        cardList = res.data?.solid_card || [];
+        // cardList = res.data?.solid_card || [];
+        let solid_card = res.data?.member_info?.solid_card;
+        solid_card = Array.isArray(solid_card)
+          ? solid_card
+          : solid_card && JSON.stringify(solid_card) !== "{}"
+            ? [solid_card]
+            : [];
+        let virtual_card = res.data?.member_info?.virtual_card;
+        virtual_card = Array.isArray(virtual_card)
+          ? virtual_card
+          : virtual_card && JSON.stringify(virtual_card) !== "{}"
+            ? [virtual_card]
+            : [];
+        cardList = [...solid_card, ...virtual_card];
         console.log("cardList", cardList);
         cardList = cardList
           .filter(item => item.card_status === "USABLE")
