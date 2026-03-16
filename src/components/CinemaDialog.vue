@@ -127,11 +127,7 @@
           />
         </el-form-item>
         <el-form-item
-          v-if="
-            ['ume_h5', 'fenghuang_applet', 'jinyi_applet'].includes(
-              formData.app_type_code
-            )
-          "
+          v-if="['ume_h5', 'fenghuang_applet'].includes(formData.app_type_code)"
           label="凤凰云智影院标识"
           prop="channelCode"
         >
@@ -141,6 +137,18 @@
             clearable
           />
         </el-form-item>
+        <el-form-item
+          v-if="formData.app_type_code === 'jinyi_applet'"
+          label="金逸影院标识"
+          prop="channelCode"
+        >
+          <el-input
+            v-model="formData.channelCode"
+            placeholder="请输入金逸影院标识:tenant-short"
+            clearable
+          />
+        </el-form-item>
+
         <el-form-item
           v-if="formData.app_type_code === 'chenxing_applet'"
           label="辰星影院标识"
