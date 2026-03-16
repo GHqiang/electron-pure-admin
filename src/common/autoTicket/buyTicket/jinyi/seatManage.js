@@ -109,7 +109,7 @@ export default class SeatManage {
    */
   async getSeatLayout(params) {
     try {
-      this.logger.info("获取座位布局参数", params);
+      this.logger.infoSave("获取座位布局参数", params);
       const res = await this.appApi.getMoviePlaySeat(params);
       // this.logger.info("获取座位布局返回", res);
       const res1 = await this.appApi.getMovieSeatPriceList(params);

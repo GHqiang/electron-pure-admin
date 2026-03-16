@@ -23,13 +23,13 @@ const createApi = ({ app_name }) => {
 
   // 获取电影座位分区
   const getMovieSeatPriceList = params =>
-    axios.get(" /ticket/channelCode/cinema/cinema_id/hall/info/", {
+    axios.get("/ticket/channelCode/cinema/cinema_id/hall/info/", {
       params
     });
 
   // 获取座位布局
   const getMoviePlaySeat = params =>
-    axios.get(" /ticket/channelCode/cinema/cinema_id/hall/saleable/", {
+    axios.get("/ticket/channelCode/cinema/cinema_id/hall/saleable/", {
       params
     });
 
