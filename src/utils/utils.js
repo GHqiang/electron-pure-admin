@@ -493,11 +493,11 @@ const getCinemaLoginInfoList = userId => {
     if (tokens?.userInfo?.user_id != 1) {
       // 重启华熙有张卡需要使用掉（100面额）
       loginInfoList = loginInfoList.filter(item =>
-        item.app_name != "cqhx" ? item.mobile != "15237761435" : true
+        item.app_name != "jinyiguangmei" ? item.mobile != "15237761435" : true
       );
     }
     if (user_id == 1) {
-      // user_id = 9;
+      user_id = 9;
       // user_id = 10;
     }
     loginInfoList = loginInfoList.filter(item =>

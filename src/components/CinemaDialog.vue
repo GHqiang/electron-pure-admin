@@ -139,6 +139,17 @@
         </el-form-item>
         <el-form-item
           v-if="formData.app_type_code === 'jinyi_applet'"
+          label="金逸影院id"
+          prop="cinemaLinkId"
+        >
+          <el-input
+            v-model="formData.cinemaLinkId"
+            placeholder="请输入金逸影院id:cinema_id"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item
+          v-if="formData.app_type_code === 'jinyi_applet'"
           label="金逸影院标识"
           prop="channelCode"
         >
