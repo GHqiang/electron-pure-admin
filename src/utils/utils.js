@@ -1271,7 +1271,9 @@ const offerRuleMatch = (order, logger) => {
         const app_cinema_code = matchInfo?.app_cinema_code;
         if (app_cinema_code && (hasCodeInclude || hasCodeExclude)) {
           if (hasCodeInclude) {
-            const isInclude = item.includeCinemaCodes.includes(app_cinema_code);
+            const isInclude = item.includeCinemaCodes
+              ?.split(",")
+              ?.includes(app_cinema_code);
             isSaveCinemaMatchLog &&
               logger?.infoSave("按影院code匹配包含规则", {
                 isInclude,
@@ -1281,7 +1283,9 @@ const offerRuleMatch = (order, logger) => {
             return isInclude;
           }
           if (hasCodeExclude) {
-            const isExclude = item.excludeCinemaCodes.includes(app_cinema_code);
+            const isExclude = item.excludeCinemaCodes
+              ?.split(",")
+              ?.includes(app_cinema_code);
             isSaveCinemaMatchLog &&
               logger?.infoSave("按影院code匹配排除规则", {
                 isExclude,
