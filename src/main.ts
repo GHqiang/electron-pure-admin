@@ -1,3 +1,10 @@
+// 为 window 对象添加类型声明
+declare global {
+  interface Window {
+    setupExpireCouponNotification?: () => void;
+  }
+}
+
 import App from "./App.vue";
 import router from "./router";
 import { setupStore } from "@/store";
@@ -73,5 +80,9 @@ getPlatformConfig(app).then(async config => {
   // .use(useEcharts);
   app.mount("#app").$nextTick(() => {
     postMessage({ payload: "removeLoading" }, "*");
+    // 启动临期券通知定时任务
+    if (window.setupExpireCouponNotification) {
+      window.setupExpireCouponNotification();
+    }
   });
 });

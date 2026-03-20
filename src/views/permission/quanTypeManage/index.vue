@@ -847,7 +847,8 @@ const handleSelectionChange = val => {
 const checkQuanInRules = async (app_name, quan_value) => {
   try {
     const res = await svApi.queryRuleList({
-      shadowLineName: app_name
+      shadowLineName: app_name,
+      rule
     });
     let ruleRecords = res.data.ruleList || [];
     ruleRecords = ruleRecords.filter(item => {

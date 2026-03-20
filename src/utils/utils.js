@@ -36,6 +36,8 @@ import { dictTable, nameMatchTable } from "@/store/dictTable";
 const dictStore = dictTable();
 const nameMatchStore = nameMatchTable();
 
+import { getToken } from "@/utils/auth";
+
 // 获取上一天
 function getPreviousDay(dateString) {
   // 将日期字符串转换为Date对象
@@ -641,6 +643,15 @@ const sendWxPusherMessage = async ({
     用户：${userInfo.name}; <br/>
     失效手机号：${expirePhone}; <br/>
     提示：${transferTip};<br/>
+    </p>`;
+  } else if (msgType === 8) {
+    summary = "临期券提醒";
+    // 将换行符替换为 HTML 换行标签
+    const formattedTransferTip = transferTip.replace(/\n/g, "<br/>");
+    content = `<p>
+    时间：${getCurrentTime()}; <br/>
+    用户：${userInfo.name}; <br/>
+    提示：${formattedTransferTip};<br/>
     </p>`;
   }
 
@@ -1522,6 +1533,109 @@ const mockDelay = delayTime => {
   }
 };
 window.mockDelay = mockDelay;
+
+// 定时任务：每天发送临期券通知
+const setupExpireCouponNotification = () => {
+  // 检查用户是否已登录
+  const isUserLoggedIn = () => {
+    try {
+      // 检查是否存在 token
+      const token = getToken();
+      return !!token && !!token.accessToken;
+    } catch (error) {
+      console.error("检查登录状态失败", error);
+      return false;
+    }
+  };
+
+  // 检查是否需要发送通知
+  const checkAndSend = async () => {
+    try {
+      // 检查用户是否已登录
+      if (!isUserLoggedIn()) {
+        console.log("用户未登录，跳过临期券通知");
+        return;
+      }
+
+      // 获取临期券数据
+      const params = {
+        isNeedTotalNum: 0,
+        queryFields: "id,app_name,quan_value,quan_flag,quanStockList"
+      };
+
+      let quanTypeRes = await svApi.queryQuanTypeList(params);
+      let quanTypeList = quanTypeRes?.data?.quanTypeList || [];
+
+      // 解析券库存数据
+      quanTypeList.forEach(item => {
+        item.quanStockList = item.quanStockList
+          ? JSON.parse(item.quanStockList)
+          : [];
+      });
+
+      // 过滤出临期券（15天内过期且有库存）
+      let expireQuanList = quanTypeList
+        .map(item =>
+          item.quanStockList.map(itemA => ({
+            ...itemA,
+            app_name: item.app_name,
+            quan_value: item.quan_value,
+            quan_flag: item.quan_flag
+          }))
+        )
+        .flat()
+        .filter(
+          item =>
+            item.real_quan_stock > 0 &&
+            item.endDateTime &&
+            +new Date(item.endDateTime) - +new Date() < 15 * 24 * 60 * 60 * 1000
+        );
+
+      // 如果有临期券，发送通知
+      if (expireQuanList.length > 0) {
+        // 统计各应用的临期券数量
+        const appExpireMap = {};
+        expireQuanList.forEach(item => {
+          const key = `${item.app_name}: ${item.quan_flag}`;
+          if (!appExpireMap[key]) {
+            appExpireMap[key] = 0;
+          }
+          appExpireMap[key] += item.real_quan_stock;
+        });
+
+        // 构建通知内容
+        let expireDetails = Object.entries(appExpireMap)
+          .map(([appInfo, count]) => `${appInfo}: ${count}张`)
+          .join("<br/>");
+
+        // 发送通知
+        await sendWxPusherMessage({
+          msgType: 8, // 临期券提醒
+          transferTip: `您有 ${expireQuanList.length} 种临期券即将过期，请及时使用<br/>${expireDetails}`,
+          expirePhone: expireQuanList.length // 这里用 expirePhone 字段来传递临期券种类数量
+        });
+
+        console.log("临期券通知发送成功", expireQuanList.length, "种临期券");
+      } else {
+        console.log("暂无临期券");
+      }
+    } catch (error) {
+      console.error("临期券通知发送失败", error);
+    }
+  };
+
+  // 每天执行一次（24小时）
+  const dailyInterval = 24 * 60 * 60 * 1000;
+
+  // 立即执行一次
+  checkAndSend();
+
+  // 设置定时任务
+  setInterval(checkAndSend, dailyInterval);
+};
+
+// 导出函数
+window.setupExpireCouponNotification = setupExpireCouponNotification;
 // 对象深拷贝（获取对象源值）
 const getOrginValue = value => JSON.parse(JSON.stringify(value));
 
