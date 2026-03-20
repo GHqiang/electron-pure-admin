@@ -1631,7 +1631,13 @@ const setupExpireCouponNotification = () => {
   checkAndSend();
 
   // 设置定时任务
-  setInterval(checkAndSend, dailyInterval);
+  const intervalId = setInterval(checkAndSend, dailyInterval);
+
+  // 返回清理函数
+  return () => {
+    clearInterval(intervalId);
+    console.log("临期券通知定时任务已清理");
+  };
 };
 
 // 导出函数
