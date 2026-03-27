@@ -1625,7 +1625,7 @@ const setupExpireCouponNotification = () => {
   };
 
   // 每天执行一次（24小时）
-  const dailyInterval = 24 * 60 * 60 * 1000;
+  const dailyInterval = dictStore.dictInfo.expireCouponMsgPushInterval * 60 * 60 * 1000;
 
   // 立即执行一次
   checkAndSend();
