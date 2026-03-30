@@ -545,9 +545,20 @@ class getJinyiOfferPrice extends BaseOfferPrice {
 
       // 2. 处理普通报价规则
       const generalRules = this.filterGeneralRules(ruleList);
-      const { fixedRules, addAmountRuleList } =
-        this.splitRuleTypes(generalRules);
-
+      let { fixedRules, addAmountRuleList } = this.splitRuleTypes(generalRules);
+      if (movieInfo?.show_type && fixedRules.length) {
+        let film_type = movieInfo.show_type?.toUpperCase();
+        if (film_type) {
+          fixedRules = fixedRules.filter(item =>
+            item.film_type?.length
+              ? item.film_type.some(itemA => film_type.includes(itemA))
+              : true
+          );
+          this.logger.infoSave("根据电影格式过滤后的固定报价规则列表", {
+            fixedRules
+          });
+        }
+      }
       // 3. 处理固定报价规则的券库存校验
       const validFixedRules = await this.validateQuanStock({
         rules: fixedRules,
