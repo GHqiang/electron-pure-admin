@@ -311,6 +311,24 @@ class JinyiBuyTicket extends BaseBuyTicket {
       };
       const lockRes = await this.seatManage.lockseatByApp(lockSeatParams);
       if (!lockRes) {
+        const { errInfo } = this.logger.getLastErrMsgAndInfo();
+        if (
+          plat_name == "lieren" &&
+          dictStore.dictInfo.lierenIsSupportChangeSeat == 1 &&
+          ["座位已被锁定", "座位无效或已被锁定"].some(item =>
+            errInfo.includes(item)
+          )
+        ) {
+          // 走申请座位逻辑
+          const isApplyChangeSeat = await this.platManage.applyChangeSeat(item);
+          return {
+            transferParams: {
+              transfer_fee: 0
+            },
+            offerRule: this.offerRule,
+            isApplyChangeSeat
+          };
+        }
         return await this.orderManage.transferOrder();
       }
       // 锁座id即创建订单id，但是不会真正创建订单，也不会真正锁座，后面不会有释放座位和取消座位的接口

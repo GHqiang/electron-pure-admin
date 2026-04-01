@@ -394,6 +394,25 @@ class SfcBuyTicket extends BaseBuyTicket {
         );
         if (!res) {
           this.logger.infoSave("首次锁定座位失败轮询尝试后仍失败，走转单");
+          const { errInfo } = this.logger.getLastErrMsgAndInfo();
+          if (
+            plat_name == "lieren" &&
+            dictStore.dictInfo.lierenIsSupportChangeSeat == 1 &&
+            ["座位锁定失败", "座位已被锁定或售出"].some(item =>
+              errInfo.includes(item)
+            )
+          ) {
+            // 走申请座位逻辑
+            const isApplyChangeSeat =
+              await this.platManage.applyChangeSeat(item);
+            return {
+              transferParams: {
+                transfer_fee: 0
+              },
+              offerRule: this.offerRule,
+              isApplyChangeSeat
+            };
+          }
           return {
             offerRule,
             transferParams: await transferWithUnlock(unlockInfo())

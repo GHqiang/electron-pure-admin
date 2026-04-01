@@ -263,7 +263,7 @@ class FenghuangBuyTicket extends BaseBuyTicket {
         if (
           plat_name == "lieren" &&
           dictStore.dictInfo.lierenIsSupportChangeSeat == 1 &&
-          [("座位已被锁定", "座位无效或已被锁定")].some(item =>
+          ["座位已被锁定", "座位无效或已被锁定"].some(item =>
             errInfo.includes(item)
           )
         ) {

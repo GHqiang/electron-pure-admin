@@ -470,6 +470,25 @@ export default class H5UmeBuyTicket extends BaseBuyTicket {
           if (isTrial) {
             this.logger.infoSave("首次锁定座位失败轮询尝试后仍失败，走转单");
           }
+          const { errInfo } = this.logger.getLastErrMsgAndInfo();
+          if (
+            plat_name == "lieren" &&
+            dictStore.dictInfo.lierenIsSupportChangeSeat == 1 &&
+            ["该座位已被锁定，锁座失败", "座位已经被抢了，请重新选择吧"].some(
+              item => errInfo.includes(item)
+            )
+          ) {
+            // 走申请座位逻辑
+            const isApplyChangeSeat =
+              await this.platManage.applyChangeSeat(item);
+            return {
+              transferParams: {
+                transfer_fee: 0
+              },
+              offerRule: this.offerRule,
+              isApplyChangeSeat
+            };
+          }
           const transferParams = await this.orderManage.transferOrder({
             cinemaLinkId,
             lockOrderId
