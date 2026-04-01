@@ -45,7 +45,7 @@ export const PLATFORM_CONFIGS = {
       isNeedRuleId: true, // 是否需要规则ID
       supportAsyncSubmit: false,
       unlockBeforeTicket: true,
-      needConfirmOrder: false
+      needConfirmOrder: true
     },
     api: {
       getOrderList: "queryStayOfferList",

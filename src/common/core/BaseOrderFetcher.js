@@ -3,6 +3,8 @@
 
 import { mockDelay } from "@/utils/utils.js";
 import Logger from "../logger.js";
+import { dictTable } from "@/store/dictTable";
+const dictStore = dictTable();
 
 /**
  * 订单获取基类
@@ -59,15 +61,31 @@ export default class BaseOrderFetcher {
       const newOrderEvent = new CustomEvent(eventName, {
         detail: order
       });
-
+      let logger = new Logger({ logType: 2 });
+      logger.init(order);
+      if (
+        order.plat_name === "lieren" &&
+        dictStore.dictInfo.lierenIsSupportConfirmOrder == 1 &&
+        order.is_confirm == 2
+      ) {
+        // 猎人平台且需要确认订单的，先确认订单，再发送事件
+        await this.platformAdapter.confirmOrder(
+          {
+            order_number: order.order_number
+          },
+          { logger }
+        );
+      }
       // 测试模式下，不发送事件
       if (!this.isTestOrder) {
         window.dispatchEvent(newOrderEvent);
       }
 
-      this.logger.infoSave("发送新订单消息", { order, eventName });
+      logger.infoSave("发送新订单消息", { order, eventName });
     } catch (error) {
-      this.logger.errorSave("发送新订单消息异常", { error, order });
+      logger.errorSave("发送新订单消息异常", { error, order });
+    } finally {
+      logger.logUpload();
     }
   }
 
