@@ -156,7 +156,7 @@ const setLocalLoginList = async rule => {
     is_xiaohao: item.is_xiaohao,
     link_user_id: item.link_user_id,
     daily_ticket_count: item.daily_ticket_count,
-    update_time: item.update_time,
+    update_time: item.update_time
   }));
   userInfoAndTokens.setLoginInfoList(
     loginRecords.filter(item => item.is_xiaohao != 1)
@@ -198,6 +198,10 @@ const onLogin = async formEl => {
           router.push(getTopMenuPath).then(() => {
             message("登录成功", { type: "success" });
           });
+          // 登录成功后启动临期券通知定时任务
+          if (window.setupExpireCouponNotification) {
+            window.setupExpireCouponNotification();
+          }
         } else {
           message("登录失败", { type: "error" });
         }
