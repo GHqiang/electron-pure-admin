@@ -8,6 +8,8 @@ import { getCinemaFlag, getCurrentTime, logUpload } from "@/utils/utils.js";
 import { LIERENR_REWARDS } from "@/common/constant.js";
 import svApi from "@/api/sv-api.js";
 import { platTokens } from "@/store/platTokens.js";
+import { dictTable } from "@/store/dictTable";
+const dictStore = dictTable();
 
 const tokens = platTokens();
 const {
@@ -57,8 +59,11 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
         });
 
       // 过滤新订单
-      const newOrders = this.filterNewOrders(filteredList);
-
+      let newOrders = this.filterNewOrders(filteredList);
+      // 支持换座时此处不再单一根据订单号过滤，放到后面根据出票记录过滤
+      if (dictStore.dictInfo.lierenIsSupportChangeSeat == 1) {
+        newOrders = filteredList.slice();
+      }
       // 记录日志
       const logList = [
         {
@@ -84,10 +89,21 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
       // 如果不是测试订单，从远端过滤已出票的订单
       if (newOrders?.length && !this.isTestOrder) {
         const ticketList = await this.getTicketList();
+        // 座位状态：0正常出票 1-申请换座中 2-客服返回有原座 5-供应商取消换座 3-换座成功 4-不支持换座取消中 （座位状态为0，2，3，5时可出票，其他状态请等待座位状态变更）
         const finalOrders = newOrders.filter(item => {
-          const isTicket = ticketList
-            .filter(itemA => itemA.app_name === item.appName)
-            .some(itemA => itemA.order_number === item.order_number);
+          const ticketInfo = ticketList.find(
+            itemA =>
+              itemA.app_name === item.appName &&
+              itemA.order_number === item.order_number
+          );
+          let isTicket = ticketInfo ? true : false;
+          if (ticketInfo && dictStore.dictInfo.lierenIsSupportChangeSeat == 1) {
+            // 如果订单发起过换座申请（订单状态为9），则需要校验座位状态是否可以出票,0235可出票即当做没出过票
+            isTicket =
+              ticketInfo.order_status === 9
+                ? ![(0, 2, 3, 5)].includes(item.seat_status)
+                : true;
+          }
           return !isTicket;
         });
 
@@ -144,12 +160,21 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
       const res = await this.platformAdapter.fetchTicketOrderList(params);
 
       // 过滤已记录的订单
-      const filteredList = res.filter(
+      let filteredList = res.filter(
         item =>
           !this.platOrderList.some(
             itemA => itemA.order_number === item.order_number
           )
       );
+      // 如果支持换座，仅过滤掉座位状态为申请换座中和不支持换座取消中的订单
+      if (dictStore.dictInfo.lierenIsSupportChangeSeat == 1) {
+        // 过滤已记录的订单
+        filteredList = res.filter(
+          item =>
+            // 座位状态：1-申请换座中 4-不支持换座取消中
+            ![1, 4].includes(item.seat_status)
+        );
+      }
 
       // 添加奖励信息
       const processedList = filteredList.map(item => ({

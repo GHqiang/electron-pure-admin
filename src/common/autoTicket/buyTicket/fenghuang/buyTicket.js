@@ -41,6 +41,8 @@ import OrderManage from "./orderManage";
 import CinemaManage from "./cinemaManage";
 import CardQuanManage from "./cardQuanManage";
 import PlatManage from "../platManage";
+import { dictTable } from "@/store/dictTable";
+const dictStore = dictTable();
 
 /**
  * 凤凰出票类
@@ -257,6 +259,24 @@ class FenghuangBuyTicket extends BaseBuyTicket {
       };
       const lockRes = await this.seatManage.lockseatByApp(lockSeatParams);
       if (!lockRes) {
+        const { errInfo } = this.logger.getLastErrMsgAndInfo();
+        if (
+          plat_name == "lieren" &&
+          dictStore.dictInfo.lierenIsSupportChangeSeat == 1 &&
+          [("座位已被锁定", "座位无效或已被锁定")].some(item =>
+            errInfo.includes(item)
+          )
+        ) {
+          // 走申请座位逻辑
+          const isApplyChangeSeat = await this.platManage.applyChangeSeat(item);
+          return {
+            transferParams: {
+              transfer_fee: 0
+            },
+            offerRule: this.offerRule,
+            isApplyChangeSeat
+          };
+        }
         return await this.orderManage.transferOrder();
       }
       buyTicketInfo.lockOrderId = lockRes.lockOrderId;

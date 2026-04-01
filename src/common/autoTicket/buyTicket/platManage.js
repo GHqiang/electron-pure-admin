@@ -622,6 +622,24 @@ export default class PlatCommon {
       };
     }
   }
+  // 申请换座
+  async applyChangeSeat({ order_number, plat_name }) {
+    let params;
+    try {
+      if (plat_name === "lieren") {
+        params = {
+          order_number
+        };
+      }
+      this.logger.info("申请换座入参", params);
+      const res = await PLAT_API_OBJ[plat_name].applySeatChange(params);
+      this.logger.infoSave("申请换座返回", res);
+      return true;
+    } catch (error) {
+      this.logger.errorSave("申请换座异常", { error });
+      return false;
+    }
+  }
 
   // 平台转单
   async orderTransferByPlat(errMsg, errInfo) {

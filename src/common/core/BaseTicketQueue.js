@@ -243,8 +243,11 @@ export default class BaseTicketQueue {
         plat_order_sn
       } = order;
 
-      const order_status =
+      let order_status =
         offerRule?.rule_status === "3" ? "4" : submitRes ? "1" : "2";
+      if (res.isApplyChangeSeat) {
+        order_status = "9"; // 申请换座中
+      }
       const serOrderInfo = {
         plat_name,
         app_name: this.appFlag,
