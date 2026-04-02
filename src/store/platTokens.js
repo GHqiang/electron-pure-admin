@@ -115,6 +115,7 @@ export const platTokens = defineStore("platTokens", {
         // data.user.user_id = 10;
         // data.user.phone = "13937705167";
       }
+      this.userInfo = data.user;
 
       window.localStorage.setItem("selfToken", data.token);
       window.localStorage.setItem("userInfo", JSON.stringify(data.user));
