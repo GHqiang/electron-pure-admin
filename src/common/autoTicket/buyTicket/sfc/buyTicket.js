@@ -55,6 +55,8 @@ import {
 import { resolveCinema } from "../common/cinemaResolver.js";
 import { resolveMovieAndShow } from "../common/movieResolver.js";
 import { getLockSeatRetryConfig } from "../common/retryConfig.js";
+import { dictTable } from "@/store/dictTable";
+const dictStore = dictTable();
 
 const tokens = platTokens();
 
@@ -393,7 +395,6 @@ class SfcBuyTicket extends BaseBuyTicket {
           ""
         );
         if (!res) {
-          this.logger.infoSave("首次锁定座位失败轮询尝试后仍失败，走转单");
           const { errInfo } = this.logger.getLastErrMsgAndInfo();
           if (
             plat_name == "lieren" &&
@@ -413,6 +414,7 @@ class SfcBuyTicket extends BaseBuyTicket {
               isApplyChangeSeat
             };
           }
+          this.logger.infoSave("首次锁定座位失败轮询尝试后仍失败，走转单");
           return {
             offerRule,
             transferParams: await transferWithUnlock(unlockInfo())

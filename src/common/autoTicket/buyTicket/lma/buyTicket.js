@@ -41,6 +41,8 @@ import LmaOrderManage from "./orderManage.js";
 import LmaCinemaManage from "./cinemaManage.js";
 import LmaCardQuanManage from "./cardQuanManage.js";
 import PlatManage from "../platManage.js";
+import { dictTable } from "@/store/dictTable";
+const dictStore = dictTable();
 
 const tokens = platTokens();
 
@@ -543,6 +545,22 @@ export default class LmaBuyTicket extends BaseBuyTicket {
             failReason:
               "发现支付价格大于会员价*票数，疑似卡出满，请检查维护月使用量"
           });
+        }
+        const { errInfo } = this.logger.getLastErrMsgAndInfo();
+        if (
+          plat_name == "lieren" &&
+          dictStore.dictInfo.lierenIsSupportChangeSeat == 1 &&
+          ["座位已被锁定"].some(item => errInfo.includes(item))
+        ) {
+          // 走申请座位逻辑
+          const isApplyChangeSeat = await this.platManage.applyChangeSeat(item);
+          return {
+            transferParams: {
+              transfer_fee: 0
+            },
+            offerRule: this.offerRule,
+            isApplyChangeSeat
+          };
         }
         // catch 时 lockRes 必为 undefined，直接走转单逻辑
         this.logger.infoSave("锁定座位失败走转单");

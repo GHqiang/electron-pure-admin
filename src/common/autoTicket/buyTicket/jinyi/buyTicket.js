@@ -42,6 +42,8 @@ import OrderManage from "./orderManage";
 import CinemaManage from "./cinemaManage";
 import CardQuanManage from "./cardQuanManage";
 import PlatManage from "../platManage";
+import { dictTable } from "@/store/dictTable";
+const dictStore = dictTable();
 
 /**
  * 金逸出票类

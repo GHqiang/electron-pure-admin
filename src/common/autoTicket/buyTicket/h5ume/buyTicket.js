@@ -38,6 +38,8 @@ import H5UmeOrderManage from "./orderManage.js";
 import H5UmeCinemaManage from "./cinemaManage.js";
 import H5UmeCardQuanManage from "./cardQuanManage.js";
 import PlatManage from "../platManage.js";
+import { dictTable } from "@/store/dictTable";
+const dictStore = dictTable();
 
 const tokens = platTokens();
 
@@ -467,9 +469,6 @@ export default class H5UmeBuyTicket extends BaseBuyTicket {
           );
         }
         if (!lockRes) {
-          if (isTrial) {
-            this.logger.infoSave("首次锁定座位失败轮询尝试后仍失败，走转单");
-          }
           const { errInfo } = this.logger.getLastErrMsgAndInfo();
           if (
             plat_name == "lieren" &&
@@ -488,6 +487,9 @@ export default class H5UmeBuyTicket extends BaseBuyTicket {
               offerRule: this.offerRule,
               isApplyChangeSeat
             };
+          }
+          if (isTrial) {
+            this.logger.infoSave("首次锁定座位失败轮询尝试后仍失败，走转单");
           }
           const transferParams = await this.orderManage.transferOrder({
             cinemaLinkId,

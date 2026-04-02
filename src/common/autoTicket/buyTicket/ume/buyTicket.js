@@ -40,6 +40,8 @@ import UmeOrderManage from "./orderManage.js";
 import UmeCinemaManage from "./cinemaManage.js";
 import UmeCardQuanManage from "./cardQuanManage.js";
 import PlatManage from "../platManage.js";
+import { dictTable } from "@/store/dictTable";
+const dictStore = dictTable();
 
 const tokens = platTokens();
 
@@ -583,9 +585,6 @@ export default class UmeBuyTicket extends BaseBuyTicket {
           );
         }
         if (!lockRes) {
-          if (isTrial) {
-            this.logger.infoSave("首次锁定座位失败轮询尝试后仍失败，走转单");
-          }
           const { errInfo } = this.logger.getLastErrMsgAndInfo();
           if (
             plat_name == "lieren" &&
@@ -602,6 +601,9 @@ export default class UmeBuyTicket extends BaseBuyTicket {
               offerRule: this.offerRule,
               isApplyChangeSeat
             };
+          }
+          if (isTrial) {
+            this.logger.infoSave("首次锁定座位失败轮询尝试后仍失败，走转单");
           }
           const transferParams = await this.orderManage.transferOrder({
             cinemaCode,
