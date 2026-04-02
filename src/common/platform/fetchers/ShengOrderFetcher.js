@@ -79,7 +79,7 @@ export default class ShengOrderFetcher extends BaseOrderFetcher {
             rewards: "",
             quick: property,
             cinema_group,
-            cinema_code: film.standardId,
+            cinema_code: cinema.standardId,
             order_number: code,
             supplierCode,
             seats: seats || [], // 报价接口需要：seatInfo = JSON.stringify(seats.map(s => ({ seatId: s.seatId, supplierPrice })))

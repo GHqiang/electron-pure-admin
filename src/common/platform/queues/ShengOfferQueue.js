@@ -67,7 +67,7 @@ export default class ShengOfferQueue extends BaseOfferQueue {
             sourceData: {
               show,
               film,
-              cinema: { label, cinemaId }
+              cinema: { label, standardId }
             }
           } = detail;
 
@@ -90,7 +90,7 @@ export default class ShengOfferQueue extends BaseOfferQueue {
             rewards: rewardsTypeObj?.[property] || 0, // 奖励百分比
             quick: order.quick, // true表示为快捷订单（需12分钟内完成发货），false表示为特惠订单（需45分钟内完成发货）
             cinema_group: cinema_group,
-            cinema_code: cinemaId || "",
+            cinema_code: standardId || "",
             order_number: orderCode,
             supplierCode: supplierCode,
             seatInfo: seatInfo,
