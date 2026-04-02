@@ -109,7 +109,7 @@ export const platTokens = defineStore("platTokens", {
       console.warn("设置自身平台token", data);
       this.selfToken = data.token;
       // 测试使用
-      if ((data.user.user_id = 1)) {
+      if (data.user.user_id == 1) {
         data.user.user_id = 9;
         data.user.phone = "13073792313";
         // data.user.user_id = 10;
