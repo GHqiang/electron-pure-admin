@@ -1536,6 +1536,11 @@ window.mockDelay = mockDelay;
 
 // 定时任务：每天发送临期券通知
 const setupExpireCouponNotification = () => {
+  const pushInterval = dictStore.dictInfo.expireCouponMsgPushInterval;
+  console.log("临期券通知推送间隔（小时）", pushInterval);
+  if (pushInterval <= 0) {
+    return;
+  }
   // 检查用户是否已登录
   const isUserLoggedIn = () => {
     try {
@@ -1625,7 +1630,7 @@ const setupExpireCouponNotification = () => {
   };
 
   // 每天执行一次（24小时）
-  const dailyInterval = dictStore.dictInfo.expireCouponMsgPushInterval * 60 * 60 * 1000;
+  const dailyInterval = pushInterval * 60 * 60 * 1000;
 
   // 立即执行一次
   checkAndSend();
