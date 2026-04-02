@@ -1536,32 +1536,15 @@ window.mockDelay = mockDelay;
 
 // 定时任务：每天发送临期券通知
 const setupExpireCouponNotification = () => {
-  const pushInterval = dictStore.dictInfo.expireCouponMsgPushInterval;
+  let pushInterval = dictStore.dictInfo.expireCouponMsgPushInterval;
   console.log("临期券通知推送间隔（小时）", pushInterval);
   if (pushInterval <= 0) {
     return;
   }
-  // 检查用户是否已登录
-  const isUserLoggedIn = () => {
-    try {
-      // 检查是否存在 token
-      const token = getToken();
-      return !!token && !!token.accessToken;
-    } catch (error) {
-      console.error("检查登录状态失败", error);
-      return false;
-    }
-  };
 
   // 检查是否需要发送通知
   const checkAndSend = async () => {
     try {
-      // 检查用户是否已登录
-      if (!isUserLoggedIn()) {
-        console.log("用户未登录，跳过临期券通知");
-        return;
-      }
-
       // 获取临期券数据
       const params = {
         isNeedTotalNum: 0,
