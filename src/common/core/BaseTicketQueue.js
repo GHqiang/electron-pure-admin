@@ -245,8 +245,11 @@ export default class BaseTicketQueue {
 
       let order_status =
         offerRule?.rule_status === "3" ? "4" : submitRes ? "1" : "2";
+      let change_seat_info;
+      // 如果申请换座了则更新订单的换座信息及状态
       if (res.isApplyChangeSeat) {
         order_status = "9"; // 申请换座中
+        change_seat_info = `申请换座中，原座位：${order.lockseat}`;
       }
       const serOrderInfo = {
         plat_name,

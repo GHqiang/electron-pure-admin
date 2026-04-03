@@ -89,23 +89,43 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
       // 如果不是测试订单，从远端过滤已出票的订单
       if (newOrders?.length && !this.isTestOrder) {
         const ticketList = await this.getTicketList();
-        // 座位状态：0正常出票 1-申请换座中 2-客服返回有原座 5-供应商取消换座 3-换座成功 4-不支持换座取消中 （座位状态为0，2，3，5时可出票，其他状态请等待座位状态变更）
-        const finalOrders = newOrders.filter(item => {
+        // 根据出票记录过滤订单列表，判断是否为新订单或换座成功的订单
+        newOrders = newOrders.map(item => {
           const ticketInfo = ticketList.find(
             itemA =>
-              itemA.app_name === item.appName &&
+              itemA.app_name === item.app_name &&
               itemA.order_number === item.order_number
           );
-          let isTicket = ticketInfo ? true : false;
-          if (ticketInfo && dictStore.dictInfo.lierenIsSupportChangeSeat == 1) {
-            // 如果订单发起过换座申请（订单状态为9），则需要校验座位状态是否可以出票,0235可出票即当做没出过票
-            isTicket =
-              ticketInfo.order_status === 9
-                ? ![(0, 2, 3, 5)].includes(item.seat_status)
-                : true;
+          let isNewOrder, changeSeatSuccess;
+          if (!ticketInfo) {
+            isNewOrder = true;
+          } else {
+            isNewOrder = false;
+            // 9代表申请换座中
+            if (
+              dictStore.dictInfo.lierenIsSupportChangeSeat == 1 &&
+              ticketInfo.order_status == 9
+            ) {
+              // 座位状态：0正常出票 1-申请换座中 2-客服返回有原座 5-供应商取消换座 3-换座成功 4-不支持换座取消中
+              // （座位状态为0，2，3，5时可出票，其他状态请等待座位状态变更）
+              if ([(0, 2, 3, 5)].includes(item.seat_status)) {
+                isNewOrder = true;
+                changeSeatSuccess = true;
+              } else {
+                changeSeatSuccess = false;
+              }
+              // 根据订单座位状态更新出票记录的换座信息
+              this.updateTicketOrderInfo(item);
+            }
           }
-          return !isTicket;
+          return {
+            ...item,
+            isNewOrder,
+            changeSeatSuccess
+          };
         });
+
+        const finalOrders = newOrders.filter(item => item.isNewOrder);
 
         if (!finalOrders?.length) return;
 
@@ -119,7 +139,8 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
               des: "猎人新的待出票订单",
               level: "info",
               info: {
-                newOrder: item
+                newOrder: item,
+                isAgain: item.changeSeatSuccess
               }
             }
           ];
@@ -150,6 +171,67 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
     }
   }
 
+  // 更新出票记录换座信息
+  async updateTicketOrderInfo(order) {
+    try {
+      const ticketRes = await svApi.queryTicketList({
+        user_id: tokens.userInfo?.user_id,
+        plat_name: "lieren",
+        order_number: order.order_number,
+        isNeedTotalNum: 0,
+        queryFields: "change_seat_info,order_status"
+      });
+      const ticketList = ticketRes.data.ticketList || [];
+      let ticketInfo = ticketList[0];
+      if (ticketInfo?.order_status != 9) {
+        // 如果订单状态不是申请换座中，则不更新换座信息
+        return;
+      }
+
+      // 0正常出票 1-申请换座中 2-客服返回有原座 3-换座成功 4-不支持换座取消中 5-供应商取消换座
+      const seat_status = order.seat_status;
+      const seat_status_text = [
+        "正常出票",
+        "申请换座中",
+        "客服返回有原座",
+        "换座成功",
+        "不支持换座取消中",
+        "供应商取消换座"
+      ];
+      // 原先换座信息，用于记录换座结果
+      let change_seat_info = ticketInfo?.change_seat_info || "";
+      if ([0, 2, 3, 5].includes(seat_status)) {
+        change_seat_info += `换座结果：${seat_status}-${seat_status_text[seat_status]}，新座位：${order.lockseat}`;
+        await svApi.updateTicketRecord({
+          whereObj: {
+            order_number: order.order_number,
+            plat_name: order.plat_name,
+            user_id: tokens.userInfo?.user_id
+          },
+          updateObj: {
+            change_seat_info,
+            order_status: 5 // 重新出票中
+          }
+        });
+      } else {
+        // 如果已经更新过换座信息则不再更新换座结果，避免重复更新
+        if (!change_seat_info?.includes("等待换座结果")) {
+          change_seat_info += `换座结果：${seat_status}-${seat_status_text[seat_status]}，等待换座结果`;
+          await svApi.updateTicketRecord({
+            whereObj: {
+              order_number: order.order_number,
+              plat_name: order.plat_name,
+              user_id: tokens.userInfo?.user_id
+            },
+            updateObj: {
+              change_seat_info
+            }
+          });
+        }
+      }
+    } catch (error) {}
+  }
+
   /**
    * 获取猎人待出票订单列表
    * @returns {Promise<Array>} 订单列表
@@ -166,14 +248,10 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
             itemA => itemA.order_number === item.order_number
           )
       );
-      // 如果支持换座，仅过滤掉座位状态为申请换座中和不支持换座取消中的订单
+      // 如果支持换座，先不过滤
       if (dictStore.dictInfo.lierenIsSupportChangeSeat == 1) {
         // 过滤已记录的订单
-        filteredList = res.filter(
-          item =>
-            // 座位状态：1-申请换座中 4-不支持换座取消中
-            ![1, 4].includes(item.seat_status)
-        );
+        filteredList = res.slice(); // 先不过滤，后面根据出票记录过滤
       }
 
       // 添加奖励信息
@@ -203,9 +281,9 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
         user_id: tokens.userInfo?.user_id,
         plat_name: "lieren",
         page_num: 1,
-        page_size: 30,
+        page_size: 100,
         isNeedTotalNum: 0,
-        queryFields: "order_number,app_name"
+        queryFields: "order_number,app_name,order_status"
       });
       return ticketRes.data.ticketList || [];
     } catch (error) {
