@@ -28,17 +28,22 @@ export default class PlatCommon {
       order_number,
       order_sn,
       is_lock_seat,
-      supplierCode
+      supplierCode,
+      lock_if
     } = this.order;
     let unlockRes;
     try {
       // 1、解锁座位
       if (plat_name === "lieren") {
-        unlockRes = await this.unlockSeat({
-          plat_name,
-          order_number,
-          inx: 1
-        });
+        if (lock_if == 1) {
+          unlockRes = { msg: "订单已锁座，无需解锁" };
+        } else {
+          unlockRes = await this.unlockSeat({
+            plat_name,
+            order_number,
+            inx: 1
+          });
+        }
       } else if (plat_name === "sheng") {
         await this.startDeliver({
           plat_name,
