@@ -260,7 +260,7 @@ class ChenxingBuyTicket extends BaseBuyTicket {
       };
       const lockRes = await this.seatManage.lockseatByApp(lockSeatParams);
       if (!lockRes) {
-        const { errInfo } = this.logger.getLastErrMsgAndInfo();
+        const { err_info: errInfo } = this.logger.getLastErrMsgAndInfo();
         if (
           plat_name == "lieren" &&
           dictStore.dictInfo.lierenIsSupportChangeSeat == 1 &&

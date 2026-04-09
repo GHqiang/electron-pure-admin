@@ -469,7 +469,7 @@ export default class H5UmeBuyTicket extends BaseBuyTicket {
           );
         }
         if (!lockRes) {
-          const { errInfo } = this.logger.getLastErrMsgAndInfo();
+          const { err_info: errInfo } = this.logger.getLastErrMsgAndInfo();
           if (
             plat_name == "lieren" &&
             dictStore.dictInfo.lierenIsSupportChangeSeat == 1 &&

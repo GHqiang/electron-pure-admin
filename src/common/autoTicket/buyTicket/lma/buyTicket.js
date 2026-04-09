@@ -546,7 +546,7 @@ export default class LmaBuyTicket extends BaseBuyTicket {
               "发现支付价格大于会员价*票数，疑似卡出满，请检查维护月使用量"
           });
         }
-        const { errInfo } = this.logger.getLastErrMsgAndInfo();
+        const { err_info: errInfo } = this.logger.getLastErrMsgAndInfo();
         if (
           plat_name == "lieren" &&
           dictStore.dictInfo.lierenIsSupportChangeSeat == 1 &&

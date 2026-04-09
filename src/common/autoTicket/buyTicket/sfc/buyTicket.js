@@ -395,7 +395,7 @@ class SfcBuyTicket extends BaseBuyTicket {
           ""
         );
         if (!res) {
-          const { errInfo } = this.logger.getLastErrMsgAndInfo();
+          const { err_info: errInfo } = this.logger.getLastErrMsgAndInfo();
           if (
             plat_name == "lieren" &&
             dictStore.dictInfo.lierenIsSupportChangeSeat == 1 &&
