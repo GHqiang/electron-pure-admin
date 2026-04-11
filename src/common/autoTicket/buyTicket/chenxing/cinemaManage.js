@@ -21,7 +21,8 @@ import {
   isDateInCurrentMonth,
   getPreviousDay,
   findMostRepeatedChars,
-  getMovieInfoFromFilmName
+  getMovieInfoFromFilmName,
+  getOfferRuleById
 } from "@/utils/utils";
 import { APP_API_OBJ } from "@/common/index";
 import { GET_APP_INFO } from "@/common/constant";
@@ -210,10 +211,30 @@ export default class CinemaManage {
 
   // 影院指定卡相关处理(根据可用卡调整登录信息顺序)
   async cinemaLinkCardHandle(cinemaInfo, cardQuanManage) {
-    const { ticket_num } = this.order;
+    const { ticket_num, supplier_end_price, app_name } = this.order;
     try {
       if (cinemaInfo.cinemaCode) {
-        if (this.offerRule.offer_type != 1) {
+        let isUseQuan = this.offerRule?.offer_type == "1";
+        let auto_quan_info;
+        if (this.offerRule?.offer_type != "1") {
+          const ruleInfo = getOfferRuleById(this.offerRule.offer_rule_id);
+          if (ruleInfo) {
+            const { autoUseQuanStatus, autoUseQuanPrice, auto_quan_value } =
+              ruleInfo;
+            if (
+              autoUseQuanStatus === "1" &&
+              supplier_end_price > autoUseQuanPrice &&
+              auto_quan_value
+            ) {
+              auto_quan_info = await cardQuanManage.getQuanInfo(
+                auto_quan_value,
+                app_name
+              );
+            }
+          }
+        }
+        // 非固定报价或者灵活用券时按照卡券优先排序登录信息
+        if (!(isUseQuan || auto_quan_info)) {
           const usableCards = await this.getUsableCardList(
             cinemaInfo.cinemaCode,
             ticket_num
@@ -242,11 +263,15 @@ export default class CinemaManage {
             currentParamsList: this.currentParamsList
           });
         } else {
+          let quan_flag =
+            this.offerRule?.quan_flag || auto_quan_info?.quan_flag;
+          let quan_value =
+            this.offerRule?.quan_value || auto_quan_info?.quan_value;
           const sortMobileList =
             await cardQuanManage.getSortPhoneByQuanTypeList(
               this.appFlag,
-              this.offerRule?.quan_flag,
-              this.offerRule?.quan_value,
+              quan_flag,
+              quan_value,
               ticket_num
             );
           if (sortMobileList?.length) {
