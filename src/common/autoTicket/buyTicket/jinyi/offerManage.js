@@ -86,11 +86,11 @@ class getJinyiOfferPrice extends BaseOfferPrice {
             ruleName: "南京测试",
             orderForm: "lieren",
             app_type: "jinyi_applet",
-            shadowLineName: "guangmeiwenhua",
-            includeCityNames: ["南京"],
+            shadowLineName: "jinyiguangmei",
+            includeCityNames: ["无锡"],
             excludeCityNames: [],
-            includeCinemaNames: ["金逸影城（光美江宁弘阳IMAX店）"],
-            includeCinemaCodes: "55_400352",
+            includeCinemaNames: ["金逸影城（光美荟聚IMAX激光店）"],
+            includeCinemaCodes: "52_400351",
             excludeCinemaNames: [],
             excludeCinemaCodes: "",
             includeHallNames: [],
@@ -433,6 +433,8 @@ class getJinyiOfferPrice extends BaseOfferPrice {
       this.logger.infoSave("获取到座位价格信息列表", {
         areaInfoList
       });
+      // let seatData = targetSeatRes?.seatData || [];
+      console.log("areaInfoList", areaInfoList);
       let basePrice;
       if (areaInfoList.length) {
         // 取最高价
@@ -447,6 +449,70 @@ class getJinyiOfferPrice extends BaseOfferPrice {
           basePrice
         });
       }
+
+      // try {
+      //   let defaultPrice = areaInfoList.find(
+      //     item => item.area_name == "默认区"
+      //   )?.area_price;
+      //   const areaInfoListPrice = areaInfoList
+      //     .filter(item => item.area_name != "默认区")
+      //     ?.map(item =>
+      //       Object.entries(item.seats)
+      //         .map(itemA => itemA[1])
+      //         .map(itemB =>
+      //           itemB.detail.map(itemC => ({
+      //             ...itemC,
+      //             area_price: item.area_price,
+      //             area_no: item.area_no
+      //           }))
+      //         )
+      //     )
+      //     .flat()
+      //     .flat();
+      //   console.log("areaInfoListPrice", areaInfoListPrice, defaultPrice);
+      //   targetSeatCodes.forEach(item => {
+      //     const price = areaInfoListPrice.find(
+      //       itemA => itemA.seat_no == item.seat_no
+      //     )?.area_price;
+      //     seatPayTotalPrice += price || defaultPrice;
+      //   });
+      //   console.log("座位总价格", seatPayTotalPrice);
+      //   seatlableList = targetSeatCodes.map(item => {
+      //     let targetSeatInfo = areaInfoListPrice.find(
+      //       itemA => itemA.seat_no == item.seat_no
+      //     );
+      //     if (!targetSeatInfo) {
+      //       targetSeatInfo = areaInfoList.find(
+      //         item => item.area_name == "默认区"
+      //       );
+      //     }
+      //     return (
+      //       targetSeatInfo.area_no +
+      //       ":" +
+      //       item.row +
+      //       ":" +
+      //       item.col +
+      //       ":" +
+      //       item.seat_no
+      //     );
+      //   });
+      // } catch (error) {
+      //   console.log("座位价格逻辑执行异常", error);
+      // }
+
+      // console.log("seatlableList", seatlableList);
+      // // 3、锁定座位
+      // let lockSeatParams = {
+      //   cinema_id,
+      //   schedule_id,
+      //   seatCodes: seatlableList,
+      //   lockseat,
+      //   plat_name,
+      //   order_number,
+      //   session_id: this.currentSessionId
+      // };
+      // const lockRes = await this.seatManage.lockseatByApp(lockSeatParams);
+
       // 计算最优折扣
       return this.calculateBestDiscount(cardList, basePrice);
     } catch (error) {
@@ -454,6 +520,24 @@ class getJinyiOfferPrice extends BaseOfferPrice {
       return null;
     }
   }
+
+  // getMaxPriceBySeatInfo(areaInfoList) {
+  //   try {
+  //     let areaList;
+  //     for (let i = 0; i < areaInfoList.length; i++) {
+  //       const areaInfo = areaInfoList[i];
+
+  //       const areaList = Object.values(areaInfo.seats)
+  //         .map(item => item.details)
+  //         .flat()
+  //         .filter(item => item.status === 0);
+  //       if (areaList.length && areaInfo.area_name.includes("情侣")) {
+  //         console.log("返回情侣座数组", areaInfo.area_price);
+  //         return areaList;
+  //       }
+  //     }
+  //   } catch (error) {}
+  // }
 
   // 获取可用会员卡列表
   async fetchAvailableCards(order, cinema_id) {
@@ -805,21 +889,21 @@ const testOrder = {
   id: "12412221440316515",
   tpp_price: 42,
   supplier_max_price: 39,
-  city_name: "南京",
+  city_name: "无锡",
   cinema_addr: "雨花台区软件大道109号雨花客厅E-PARK北区3层",
   ticket_num: 1,
-  cinema_name: "金逸影城(光美江宁弘阳IMAX店)",
-  hall_name: "6号激光厅(四楼)",
+  cinema_name: "金逸影城（光美荟聚IMAX激光店）",
+  hall_name: "8号巨幕激光厅",
   film_name: "飞驰人生3",
-  show_time: "2026-04-12 15:40:00",
+  show_time: "2026-03-22 19:10:00",
   rewards: 0,
   is_urgent: false,
   cinema_group: "",
-  cinema_code: "32016011",
+  cinema_code: "32035211",
   order_number: "12412221440316515",
   offer_end_time: 1773742065000,
-  app_name: "guangmeiwenhua"
+  app_name: "jinyiguangmei"
 };
 
 // 获取订单最终报价：
-// window.jinyiOfferObj("mayi", "guangmeiwenhua").getEndOfferPrice({ order: orderJson, offerList: [] })
+// window.jinyiOfferObj("lieren", "jinyiguangmei").getEndOfferPrice({ order: orderJson, offerList: [] })

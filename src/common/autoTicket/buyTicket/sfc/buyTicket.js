@@ -33,7 +33,8 @@ import {
   isNextDay,
   getPreviousDay,
   subDecimal,
-  trial
+  trial,
+  getOfferRuleById
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index";
@@ -229,7 +230,27 @@ class SfcBuyTicket extends BaseBuyTicket {
         }
 
         // 使用公共工具按卡/券排序登录信息
-        if (offerRule?.offer_type !== "1") {
+        let isUseQuan = offerRule?.offer_type == "1";
+        let auto_quan_info;
+        if (offerRule?.offer_type != "1") {
+          const ruleInfo = getOfferRuleById(offerRule.offer_rule_id);
+          if (ruleInfo) {
+            const { autoUseQuanStatus, autoUseQuanPrice, auto_quan_value } =
+              ruleInfo;
+            if (
+              autoUseQuanStatus === "1" &&
+              supplier_end_price > autoUseQuanPrice &&
+              auto_quan_value
+            ) {
+              auto_quan_info = await this.cardQuanManage.getQuanInfo(
+                auto_quan_value,
+                appFlag
+              );
+            }
+          }
+        }
+        // 非固定报价或者灵活用券时按照卡券优先排序登录信息
+        if (!(isUseQuan || auto_quan_info)) {
           const usableCards = await this.cardQuanManage.getUsableCardList?.(
             cinema_id,
             ticket_num
@@ -243,11 +264,13 @@ class SfcBuyTicket extends BaseBuyTicket {
             );
           }
         } else {
+          let quan_flag = offerRule?.quan_flag || auto_quan_info?.quan_flag;
+          let quan_value = offerRule?.quan_value || auto_quan_info?.quan_value;
           const sortMobileList =
             await this.cardQuanManage.getSortPhoneByQuanTypeList?.(
               appFlag,
-              offerRule?.quan_flag,
-              offerRule?.quan_value,
+              quan_flag,
+              quan_value,
               ticket_num
             );
           if (sortMobileList?.length) {
