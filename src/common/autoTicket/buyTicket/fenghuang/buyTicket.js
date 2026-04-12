@@ -467,7 +467,13 @@ class FenghuangBuyTicket extends BaseBuyTicket {
       if (offer_type === "1" && useQuan?.length) {
         // 可能需要，也可能需要每一项都做此处理
         if (promotions?.length) {
-          promotions[0].productType = "TICKET";
+          // promotions[0].productType = "TICKET";
+          promotions = promotions.map(item => {
+            return {
+              ...item,
+              productType: "TICKET"
+            };
+          });
         }
         if (quanEmptyFlag) {
           promotions = useQuan.map(item => ({
