@@ -9,9 +9,7 @@ let canCinemaList = [];
 if (allCinemaList) {
   allCinemaList = JSON.parse(allCinemaList);
   canCinemaList = allCinemaList.filter(item =>
-    IN_RULE_LIST.includes(tokens?.userInfo?.rule)
-      ? item.status == 1
-      : item.status != "3"
+    [2].includes(tokens?.userInfo?.rule) ? item.status == 1 : item.status != "3"
   );
 }
 export const useCinemaList = defineStore("cinemaDataTable", {
