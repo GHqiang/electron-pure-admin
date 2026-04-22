@@ -377,6 +377,14 @@ import { dictTable } from "@/store/dictTable";
 const dictStore = dictTable();
 import { PLAT_API_OBJ } from "@/common/index.js";
 
+// 猎人规则同步相关方法
+import useLierenOfferRuleSyncFun from "@/mixins/useLierenOfferRuleSyncFun";
+const {
+  lierenOfferRuleSyncPlat,
+  lierenOfferRuleDelPlat,
+  lierenOfferRuleEditStatusPlat
+} = useLierenOfferRuleSyncFun();
+
 // 树节点属性映射
 const defaultProps = {
   children: "children",
@@ -651,7 +659,7 @@ const editStatus = async row => {
       status: row.status,
       update_time: getCurrentTime()
     });
-    searchData();
+    await editRuleStatusSyncToPlat(row);
     ElMessage.success("状态更新成功");
   } catch (err) {
     throw new Error("状态更新失败");
@@ -730,14 +738,14 @@ const saveRule = async ruleInfo => {
       console.log("编辑保存规则", ruleInfo);
       await svApi.updateRuleRecord(ruleInfo);
       // 同步规则到平台
-      await syncRuleToPlat(ruleInfo);
+      await saveRuleSyncToPlat(ruleInfo);
       sfcDialogRef.value.closeTck();
       searchData();
     } else {
       console.log("新增保存规则", ruleInfo);
       await svApi.addRuleRecord({ ...ruleInfo, id: undefined });
       // 同步规则到平台
-      await syncRuleToPlat(ruleInfo);
+      await saveRuleSyncToPlat(ruleInfo);
       sfcDialogRef.value.closeTck();
       searchData();
     }
@@ -746,14 +754,23 @@ const saveRule = async ruleInfo => {
   }
 };
 
-// 同步规则到平台
-const syncRuleToPlat = async ruleForm => {
+// 新增/编辑规则同步到平台
+const saveRuleSyncToPlat = async ruleForm => {
   try {
     let ruleInfo = JSON.parse(JSON.stringify(ruleForm));
     // 1、解析规则是否要同步平台
     const fixedOfferToPlatList =
       dictStore.dictInfo.fixedOfferToPlatList?.split(",") || [];
+
+    // 固定报价规则同步配置为空时不同步
     if (fixedOfferToPlatList.length === 0) return;
+
+    // 非固定报价规则先不同步
+    if (ruleInfo.offerType != 1) {
+      console.wanr("非固定报价规则不同步到猎人平台");
+      return;
+    }
+
     let platOfferList = ruleInfo.platOfferList
       ? JSON.parse(ruleInfo.platOfferList)
       : [];
@@ -761,6 +778,8 @@ const syncRuleToPlat = async ruleForm => {
     let lierenOfferRule = platOfferList.find(
       item => item.platName === "lieren"
     );
+
+    // 仅平台选择同步时才同步
     if (lierenOfferRule.isSyncPlat == 1) {
       await lierenOfferRuleSyncPlat(ruleInfo);
     }
@@ -770,95 +789,70 @@ const syncRuleToPlat = async ruleForm => {
   }
 };
 
-// 同步规则到猎人平台
-const lierenOfferRuleSyncPlat = async ruleInfo => {
-  let params;
-  let lierenOffer = ruleInfo.platOfferList.find(
-    item => item.platName === "lieren"
-  );
-  let lierenOfferRule = {
-    ...ruleInfo,
-    offerAmount: lierenOffer.value,
-    platRuleId: lierenOffer.platRuleId,
-    platOfferList: undefined
-  };
-  let city = lierenOfferRule.includeCityNames;
-  if (city) {
-    city = JSON.parse(city).join(",").replaceAll("市", "");
-  }
-  let exclude_city = lierenOfferRule.excludeCityNames;
-  if (exclude_city) {
-    exclude_city = JSON.parse(exclude_city).join(",").replaceAll("市", "");
-  }
-
-  let film = lierenOfferRule.includeFilmNames;
-  if (film) {
-    film = JSON.parse(film).join(",");
-  }
-  let exclude_film = lierenOfferRule.excludeFilmNames;
-  if (exclude_film) {
-    exclude_film = JSON.parse(exclude_film).join(",");
-  }
-
-  let hall = lierenOfferRule.includeHallNames;
-  if (hall) {
-    hall = JSON.parse(hall).join(",");
-  }
-  let exclude_hall = lierenOfferRule.excludeHallNames;
-  if (exclude_hall) {
-    exclude_hall = JSON.parse(exclude_hall).join(",");
-  }
-
-  let lierenMainAccountAkSk = dictStore.dictInfo.lierenMainAccountAkSk;
-  if (lierenMainAccountAkSk) {
-    lierenMainAccountAkSk = JSON.parse(lierenMainAccountAkSk);
-    lierenMainAccountAkSk = lierenMainAccountAkSk[rule] || [];
-  }
+// 删除规则同步到平台
+const delRuleSyncToPlat = async ruleList => {
   try {
-    params = {
-      rule_id: lierenOfferRule.platRuleId,
-      name: lierenOfferRule.ruleName,
-      cinema_group: lierenOfferRule.cinema_group || "", // 院线，多个院线可用“,”号分隔；没有传空
-      cinema_code: lierenOfferRule.cinema_code || "", // 包含影院专资，多个可用“,”号分隔；没有传空
-      exclude_cinema_code: lierenOfferRule.exclude_cinema_code || "", // 排除影院专资，多个可用“,”号分隔；没有传空
-      province: lierenOfferRule.province || "", // 包含省份，多个可用“,”号分隔；没有传空
-      city: city || "", // 包含城市，多个可用“,”号分隔；没有传空
-      exclude_city: exclude_city || "", // 排除城市，多个可用“,”号分隔；没有传空
-      film: film || "", // 影片名称，多个可用“,”号分隔；没有传空
-      exclude_film: exclude_film || "", // 排除影片名称，多个可用“,”号分隔；没有传空
-      hall: hall || "", // 影厅名称，多个可用“,”号分隔；没有传空
-      exclude_hall: exclude_hall || "", // 排除影厅名称，多个可用“,”号分隔；没有传空
-      min_price: lierenOfferRule.min_price || 10, // 最低价，单位分；没有传默认为0
-      max_price: lierenOfferRule.max_price || 500, // 最高价，单位分；没有传默认为500
-      sum_mode: lierenOfferRule.offerType == 1 ? 2 : 4, //  2-固定价（价格值为30时，即报价30）》 3-市场价减价（市场35，价格值为5时35-5=30）》 4-会员价加减（需要报价时提交会员价，价格值为3时，会员价+3。价格值为-3时，会员价-3）
-      price: Number(lierenOfferRule.offerAmount), // 固定价格或者加减价格
-      state: ruleInfo.status == "1" ? 1 : 0, // 规则状态，1-启用，0-禁用
-      // attach_price: 0, // 附加价格，会员价折扣模式报价有效
-      lieren_ak: lierenMainAccountAkSk?.[0] || "",
-      lieren_sk: lierenMainAccountAkSk?.[1] || ""
-    };
-    console.warn("同步规则到猎人平台参数", params);
-    const res = await await PLAT_API_OBJ["lieren"].ruleAdd(params);
-    console.warn("同步规则到猎人平台成功", res);
-    let rule_id = res?.data?.rule_id;
-    if (!lierenOfferRule.platRuleId && rule_id) {
-      // 编辑规则增加关联平台规则id
-      await svApi.updateRuleRecord({
-        id: lierenOfferRule.id,
-        platOfferList: JSON.stringify(
-          ruleInfo.platOfferList.map(item => {
-            if (item.platName === "lieren") {
-              return { ...item, platRuleId: rule_id };
-            }
-            return item;
-          })
-        ),
-        update_time: getCurrentTime()
-      });
-      console.warn("编辑规则-增加关联平台规则id成功");
-    }
+    ruleList = JSON.parse(JSON.stringify(ruleList));
+    // 1、解析规则是否要同步平台
+    const fixedOfferToPlatList =
+      dictStore.dictInfo.fixedOfferToPlatList?.split(",") || [];
+    if (fixedOfferToPlatList.length === 0) return;
+
+    // 先处理猎人的规则删除（因为删除时不区分是批量删除还是单条删除，所以都走这个方法）
+    ruleList = ruleList
+      .map(item => {
+        let lierenOffer = item.platOfferList.find(
+          item => item.platName === "lieren"
+        );
+        let lierenOfferRule = {
+          ...item,
+          offerAmount: lierenOffer.value,
+          platRuleId: lierenOffer.platRuleId,
+          isSyncPlat: lierenOffer.isSyncPlat,
+          platOfferList: undefined
+        };
+        return lierenOfferRule;
+      })
+      .filter(item => item.isSyncPlat == 1); // 只处理同步平台
+
+    // 只处理日常固定价的规则
+    ruleList = ruleList.filter(item => item.offerType == 1);
+    console.warn("待删除同步的规则", ruleList);
+    if (ruleList.length === 0) return;
+
+    const platRuleIdList = ruleList.map(item => item.platRuleId);
+    await lierenOfferRuleDelPlat(platRuleIdList);
+    console.log("删除规则同步到平台成功");
   } catch (error) {
-    console.warn("同步规则到猎人平台异常", error);
+    console.warn("删除规则同步到平台异常", error);
+  }
+};
+
+// 修改规则状态同步到平台
+const editRuleStatusSyncToPlat = async ruleInfo => {
+  try {
+    ruleInfo = JSON.parse(JSON.stringify(ruleInfo));
+    console.warn("待修改同步的规则", ruleInfo);
+    // 1、解析规则是否要同步平台
+    const fixedOfferToPlatList =
+      dictStore.dictInfo.fixedOfferToPlatList?.split(",") || [];
+
+    if (fixedOfferToPlatList.length === 0) return;
+    // 非固定报价规则先不同步
+    if (ruleInfo.offerType != 1) {
+      console.wanr("非固定报价规则不同步到猎人平台");
+      return;
+    }
+
+    let lierenOfferRule = ruleInfo.platOfferList.find(
+      item => item.platName === "lieren"
+    );
+    if (lierenOfferRule.isSyncPlat == 1) {
+      await lierenOfferRuleEditStatusPlat(ruleInfo);
+    }
+    console.log("删除规则同步到平台成功");
+  } catch (error) {
+    console.warn("删除规则同步到平台异常", error);
   }
 };
 
@@ -936,6 +930,7 @@ const deleteRow = async (index, row) => {
           await svApi.deleteQuanType({ id: quan.id });
         }
         await svApi.deleteRule({ id: row.id });
+        await delRuleSyncToPlat([row]);
         searchData();
         ElMessage({
           type: "success",
@@ -1015,6 +1010,7 @@ const batchDelete = () => {
         let ids = multipleSelection.value.map(item => item.id);
         console.log("ids===>", ids);
         await svApi.batchDeleteRule({ delIds: ids });
+        await delRuleSyncToPlat(multipleSelection.value);
         searchData();
         multipleSelection.value = [];
         ElMessage({

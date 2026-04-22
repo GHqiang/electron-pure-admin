@@ -28,6 +28,13 @@ instance.interceptors.request.use(
       // console.log("tokens.lierenToken", tokens.lierenToken);
       config.headers.AK = config.data?.lieren_ak || tokens.userInfo?.lieren_ak;
       config.headers.SK = config.data?.lieren_sk || tokens.userInfo?.lieren_sk;
+
+      if (config.data?.lieren_ak) {
+        delete config.data.lieren_ak;
+      }
+      if (config.data?.lieren_sk) {
+        delete config.data.lieren_sk;
+      }
       // config.headers.AK = window.lieren_ak || tokens.userInfo?.lieren_ak;
       // config.headers.SK = window.lieren_sk || tokens.userInfo?.lieren_sk;
       if (IS_DEV) {
