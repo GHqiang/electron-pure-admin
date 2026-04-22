@@ -71,12 +71,25 @@ export default class LierenAdapter extends BasePlatformAdapter {
   }
 
   /**
-   * 确认接单（猎人平台无需确认接单）
-   * @param {Object} order - 订单信息
-   * @returns {Promise<Object>} 接单结果
+   * 确认接单
+   * @param {Object} params - 确认接单参数 { order_number: order_number }
+   * @returns {Promise<Object>} 确认结果
    */
-  async doConfirmOrder(order) {
-    // 猎人平台无需确认接单
-    return { msg: "无需确认接单" };
+  async confirmOrder(params, options = {}) {
+    const log = this._getLogger(options);
+    try {
+      log.infoSave("确认接单参数", params);
+
+      if (this.isTestOrder) {
+        log.infoSave("测试单暂不进行确认接单", { params });
+        return { code: 1, msg: "测试单暂不进行确认接单" };
+      }
+
+      const res = await this.api.confirmOrder(params);
+      log.infoSave("确认接单返回", res);
+      return res;
+    } catch (error) {
+      log.errorSave("确认接单异常", { error, params });
+    }
   }
 }

@@ -28,7 +28,8 @@ export default class PlatCommon {
       order_number,
       order_sn,
       is_lock_seat,
-      supplierCode
+      supplierCode,
+      lock_if
     } = this.order;
     let unlockRes;
     try {
@@ -39,6 +40,15 @@ export default class PlatCommon {
           order_number,
           inx: 1
         });
+        // if (lock_if == 1) {
+        //   unlockRes = { msg: "订单已锁座，无需解锁" };
+        // } else {
+        //   unlockRes = await this.unlockSeat({
+        //     plat_name,
+        //     order_number,
+        //     inx: 1
+        //   });
+        // }
       } else if (plat_name === "sheng") {
         await this.startDeliver({
           plat_name,
@@ -620,6 +630,24 @@ export default class PlatCommon {
       return {
         error: err_info
       };
+    }
+  }
+  // 申请换座
+  async applyChangeSeat({ order_number, plat_name }) {
+    let params;
+    try {
+      if (plat_name === "lieren") {
+        params = {
+          order_number
+        };
+      }
+      this.logger.info("申请换座入参", params);
+      const res = await PLAT_API_OBJ[plat_name].applySeatChange(params);
+      this.logger.infoSave("申请换座返回", res);
+      return true;
+    } catch (error) {
+      this.logger.errorSave("申请换座异常", { error });
+      return false;
     }
   }
 

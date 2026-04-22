@@ -54,10 +54,16 @@ export default function useCinemaBaseFun() {
       });
       let rule_id = jiqiRes?.data?.ruleInfo?.plat_rule_id;
       if (rule_id) return rule_id;
+      let lierenMainAccountAkSk = dictStore.dictInfo.lierenMainAccountAkSk;
+      if (lierenMainAccountAkSk) {
+        lierenMainAccountAkSk = JSON.parse(lierenMainAccountAkSk);
+        lierenMainAccountAkSk = lierenMainAccountAkSk[rule] || [];
+      }
       logger.infoSave("机器没有关联的规则ID，准备创建规则", {
         plat_name,
         cinema_group,
-        cinema_code
+        cinema_code,
+        lierenMainAccountAkSk
       });
       // 3、机器没有的话调平台接口创建一个返回，并在机器那新插入一条记录
       const ruleAddres = await lierenApi.ruleAdd({
@@ -68,7 +74,9 @@ export default function useCinemaBaseFun() {
         price: 1, // 会员价+1
         cinema_group: isZaPai ? undefined : cinema_group,
         cinema_code: isZaPai ? cinema_code : undefined,
-        state: 1 // 状态开启
+        state: 1, // 状态开启
+        lieren_ak: lierenMainAccountAkSk?.[0] || "",
+        lieren_sk: lierenMainAccountAkSk?.[1] || ""
       });
       logger.infoSave("创建平台规则返回", {
         plat_name,

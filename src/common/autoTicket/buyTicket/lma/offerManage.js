@@ -400,6 +400,19 @@ class getLmaOfferPrice extends BaseOfferPrice {
       let fixedAmountRuleList = otherRuleList.filter(
         item => item.offerType === "1" && item.offerAmount
       );
+      if (movieInfo?.language_type && fixedAmountRuleList.length) {
+        let film_type = movieInfo.language_type?.split("/")?.[0].toUpperCase();
+        if (film_type) {
+          fixedAmountRuleList = fixedAmountRuleList.filter(item =>
+            item.film_type?.length
+              ? item.film_type.some(itemA => film_type.includes(itemA))
+              : true
+          );
+          this.logger.infoSave("根据电影格式过滤后的固定报价规则列表", {
+            fixedAmountRuleList
+          });
+        }
+      }
       if (fixedAmountRuleList.length) {
         // 校验其库存，进行过滤
         let useMobileList = getCinemaLoginInfoList()

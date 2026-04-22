@@ -229,6 +229,9 @@
         <el-form-item
           v-if="formData.app_type_code === 'sfc_applet'"
           label="乐影api版本"
+          :required="false"
+          :rules="[]"
+          prop="api_v"
         >
           <el-input
             v-model="formData.api_v"

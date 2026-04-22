@@ -88,7 +88,7 @@ class getH5UmeOfferPrice extends BaseOfferPrice {
 
       // 判断规则里是否有指定电影格式的（2D/3D）
       let filmTypeFlag = matchRuleList.some(item => !!item?.film_type?.length);
-      this.logger.infoSave("开始获取电影放映信息");
+      this.logger.infoSave("开始获取电影放映信息", { filmTypeFlag });
       let movieInfo; // 电影放映信息
       movieInfo = await this.getMovieInfo(order, filmTypeFlag, matchRuleList);
       if (!movieInfo) {
@@ -368,6 +368,19 @@ class getH5UmeOfferPrice extends BaseOfferPrice {
       let fixedAmountRuleList = otherRuleList.filter(
         item => item.offerType === "1" && item.offerAmount
       );
+      if (movieInfo?.filmVersion && fixedAmountRuleList.length) {
+        let film_type = movieInfo.filmVersion?.toUpperCase();
+        if (film_type) {
+          fixedAmountRuleList = fixedAmountRuleList.filter(item =>
+            item.film_type?.length
+              ? item.film_type.some(itemA => film_type.includes(itemA))
+              : true
+          );
+          this.logger.infoSave("根据电影格式过滤后的固定报价规则列表", {
+            fixedAmountRuleList
+          });
+        }
+      }
       let useMobileList = getCinemaLoginInfoList()
         .filter(
           item =>

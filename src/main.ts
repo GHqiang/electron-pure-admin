@@ -80,9 +80,5 @@ getPlatformConfig(app).then(async config => {
   // .use(useEcharts);
   app.mount("#app").$nextTick(() => {
     postMessage({ payload: "removeLoading" }, "*");
-    // 启动临期券通知定时任务
-    if (window.setupExpireCouponNotification) {
-      window.setupExpireCouponNotification();
-    }
   });
 });

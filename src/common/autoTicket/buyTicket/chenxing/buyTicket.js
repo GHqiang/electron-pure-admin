@@ -260,6 +260,22 @@ class ChenxingBuyTicket extends BaseBuyTicket {
       };
       const lockRes = await this.seatManage.lockseatByApp(lockSeatParams);
       if (!lockRes) {
+        const { err_info: errInfo } = this.logger.getLastErrMsgAndInfo();
+        if (
+          plat_name == "lieren" &&
+          dictStore.dictInfo.lierenIsSupportChangeSeat == 1 &&
+          ["锁座失败", "座位已销售"].some(item => errInfo.includes(item))
+        ) {
+          // 走申请座位逻辑
+          const isApplyChangeSeat = await this.platManage.applyChangeSeat(item);
+          return {
+            transferParams: {
+              transfer_fee: 0
+            },
+            offerRule: this.offerRule,
+            isApplyChangeSeat
+          };
+        }
         return await this.orderManage.transferOrder();
       }
       buyTicketInfo.lockOrderId = lockRes.lockOrderId;

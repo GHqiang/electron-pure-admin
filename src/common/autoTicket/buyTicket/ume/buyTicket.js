@@ -27,7 +27,8 @@ import {
   findMostRepeatedChars,
   getMovieInfoFromFilmName,
   getPreviousDay,
-  trial
+  trial,
+  getOfferRuleById
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index";
@@ -40,6 +41,8 @@ import UmeOrderManage from "./orderManage.js";
 import UmeCinemaManage from "./cinemaManage.js";
 import UmeCardQuanManage from "./cardQuanManage.js";
 import PlatManage from "../platManage.js";
+import { dictTable } from "@/store/dictTable";
+const dictStore = dictTable();
 
 const tokens = platTokens();
 
@@ -281,7 +284,27 @@ export default class UmeBuyTicket extends BaseBuyTicket {
         cinemaLinkId = targetCinema.cinemaLinkId;
         cinemaCode = targetCinema.cinemaCode;
         if (cinemaCode) {
-          if (offerRule.offer_type != 1) {
+          let isUseQuan = offerRule?.offer_type == "1";
+          let auto_quan_info;
+          if (offerRule?.offer_type != "1") {
+            const ruleInfo = getOfferRuleById(offerRule.offer_rule_id);
+            if (ruleInfo) {
+              const { autoUseQuanStatus, autoUseQuanPrice, auto_quan_value } =
+                ruleInfo;
+              if (
+                autoUseQuanStatus === "1" &&
+                supplier_end_price > autoUseQuanPrice &&
+                auto_quan_value
+              ) {
+                auto_quan_info = await this.cardQuanManage.getQuanInfo(
+                  auto_quan_value,
+                  appFlag
+                );
+              }
+            }
+          }
+          // 非固定报价或者灵活用券时按照卡券优先排序登录信息
+          if (!(isUseQuan || auto_quan_info)) {
             const usableCards = await this.cardQuanManage.getUsableCardList(
               cinemaCode,
               ticket_num
@@ -309,11 +332,14 @@ export default class UmeBuyTicket extends BaseBuyTicket {
               currentParamsList: this.currentParamsList
             });
           } else {
+            let quan_flag = offerRule?.quan_flag || auto_quan_info?.quan_flag;
+            let quan_value =
+              offerRule?.quan_value || auto_quan_info?.quan_value;
             const sortMobileList =
-              await this.cardQuanManage.getSortPhoneByQuanTypeList(
+              await this.cardQuanManage.getSortPhoneByQuanTypeList?.(
                 appFlag,
-                offerRule?.quan_flag,
-                offerRule?.quan_value,
+                quan_flag,
+                quan_value,
                 ticket_num
               );
             if (sortMobileList?.length) {
@@ -583,6 +609,23 @@ export default class UmeBuyTicket extends BaseBuyTicket {
           );
         }
         if (!lockRes) {
+          const { err_info: errInfo } = this.logger.getLastErrMsgAndInfo();
+          if (
+            plat_name == "lieren" &&
+            dictStore.dictInfo.lierenIsSupportChangeSeat == 1 &&
+            ["锁座失败", "该座位不能选择"].some(item => errInfo.includes(item))
+          ) {
+            // 走申请座位逻辑
+            const isApplyChangeSeat =
+              await this.platManage.applyChangeSeat(item);
+            return {
+              transferParams: {
+                transfer_fee: 0
+              },
+              offerRule: this.offerRule,
+              isApplyChangeSeat
+            };
+          }
           if (isTrial) {
             this.logger.infoSave("首次锁定座位失败轮询尝试后仍失败，走转单");
           }

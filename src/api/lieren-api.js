@@ -30,6 +30,18 @@ const submitTicketCode = params =>
 const transferOrder = params =>
   axios.post("/lieren/openapi/order/transfer", params);
 
+// 确认接单
+const confirmOrder = params =>
+  axios.post("/lieren/openapi/order/confirm", params);
+
+// 申请换座
+const applySeatChange = params =>
+  axios.post("/lieren/openapi/order/applyForSeatChange", params);
+
+// 订单详情
+const orderDetail = params =>
+  axios.post("/lieren/openapi/order/details", params);
+
 // 添加修改规则
 const ruleAdd = params => axios.post("/lieren/openapi/rule/add", params);
 
@@ -56,5 +68,8 @@ export default {
   submitOffer, // 提交报价
   unlockSeat, // 解锁座位
   submitTicketCode, // 提交取票码
-  transferOrder // 转单
+  transferOrder, // 转单
+  confirmOrder, // 确认接单
+  applySeatChange, // 申请换座
+  orderDetail // 订单详情
 };

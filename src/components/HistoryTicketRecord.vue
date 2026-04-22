@@ -50,9 +50,12 @@
           placeholder="出票状态"
           clearable
         >
-          <el-option label="成功" value="1" />
-          <el-option label="失败" value="2" />
-          <el-option label="已退票" value="3" />
+          <el-option
+            v-for="(label, value) of TICKET_STATUS"
+            :key="value"
+            :label="label"
+            :value="value"
+          />
         </el-select>
       </el-form-item>
       <el-form-item label="订&nbsp;&nbsp;单&nbsp;&nbsp;号">
