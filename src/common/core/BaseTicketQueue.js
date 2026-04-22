@@ -6,13 +6,12 @@ import Logger from "../logger.js";
 import StrategyFactory from "@/common/autoTicket/buyTicket/index";
 import svApi from "@/api/sv-api";
 import { platTokens } from "@/store/platTokens";
+const tokens = platTokens();
 import { GET_APP_TYPE_LIST, LIERENR_REWARDS } from "@/common/constant";
 import { toRaw } from "vue";
 import { useDataTableStore } from "@/store/offerRule";
 const offerRules = useDataTableStore();
 const { offerRuleList } = storeToRefs(offerRules);
-import { platTokens } from "@/store/platTokens";
-const tokens = platTokens();
 /**
  * 出票队列基类
  * 所有平台出票队列都应继承此类
@@ -124,17 +123,13 @@ export default class BaseTicketQueue {
               : item.orderForm.split(",").includes(plat_name)
           )
           .map(itemA => {
-            let offerAmount = itemA.offerAmount || "";
             return {
               ...itemA,
               offerAmount:
                 itemA.offerType === "1"
                   ? itemA.platOfferList?.find(
                       item => item.platName === plat_name
-                    )?.value || offerAmount
-                  : itemA.offerType === "3"
-                    ? offerAmount
-                    : "",
+                    )?.value : "",
               ...(itemA.platOfferList?.find(
                 item => item.platName === plat_name
               ) || {})
@@ -164,6 +159,7 @@ export default class BaseTicketQueue {
         return false;
       }
     } catch (error) {
+      this.logger.errorSave("猎人报价规则检查异常", { error, order });
       return true;
     }
   }
@@ -194,7 +190,7 @@ export default class BaseTicketQueue {
         // member_discount: offerRule?.member_discount,
 
         quan_value: offerRule?.quanValue, // 用券类型
-        rewards: LIERENR_REWARDS[item.order_urgent] || 0, // 0-普通 1-加急 2-特急 3-vip
+        rewards: LIERENR_REWARDS[order.order_urgent] || 0, // 0-普通 1-加急 2-特急 3-vip
 
         order_status: 1,
         processing_time: getCurrentTime(),
