@@ -1194,10 +1194,14 @@ const offerRuleMatch = (order, logger) => {
               itemA.offerType === "2"
                 ? itemA.platOfferList?.find(item => item.platName === plat_name)
                     ?.value || addAmount
-                : ""
+                : "",
+            ...(itemA.platOfferList?.find(
+              item => item.platName === plat_name
+            ) || {})
           };
         });
     }
+
     // 1、获取启用的规则列表（只有满足规则才报价）
     let useRuleList = appOfferRuleList.filter(
       item =>
@@ -1209,6 +1213,24 @@ const offerRuleMatch = (order, logger) => {
       return;
     }
     console.log("影线启用的规则列表", useRuleList);
+    // 1、是否同步平台规则走平台报价过滤
+    // fixedOfferToPlatList：允许固定报价是否走平台的平台类型数组;
+    const fixedOfferToPlatList =
+      dictStore.dictInfo.fixedOfferToPlatList?.split(",") || [];
+    useRuleList = useRuleList.filter(
+      item =>
+        !(
+          item.isSyncPlat == 1 &&
+          item.platRuleId &&
+          item.offerType == 1 &&
+          fixedOfferToPlatList.includes(item.platName)
+        )
+    );
+    if (!useRuleList.length) {
+      logger.errorSave("按固定报价走平台报价筛选后，报价规则为空");
+      return;
+    }
+
     let useOfferRuleList = useRuleList.filter(item =>
       !item.allow_offer_time
         ? true
