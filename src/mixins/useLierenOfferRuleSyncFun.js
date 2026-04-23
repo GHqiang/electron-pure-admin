@@ -81,7 +81,7 @@ export default function useLierenOfferRuleSyncFun() {
         lieren_sk: lierenMainAccountAkSk?.[1] || ""
       };
       console.warn("同步规则到猎人平台参数", params);
-      const res = await await lierenApi.ruleAdd(params);
+      const res = await lierenApi.ruleAdd(params);
       console.warn("同步规则到猎人平台成功", res);
       let rule_id = res?.data?.rule_id;
       if (!lierenOfferRule.platRuleId && rule_id) {
@@ -119,7 +119,7 @@ export default function useLierenOfferRuleSyncFun() {
         lieren_sk: lierenMainAccountAkSk?.[1] || ""
       };
       console.warn("猎人平台规则删除参数", params);
-      const res = await await lierenApi.ruleDel(params);
+      const res = await lierenApi.ruleDel(params);
       console.warn("猎人平台规则删除成功", res);
     } catch (error) {
       console.warn("猎人平台规则删除异常", error);
@@ -151,16 +151,75 @@ export default function useLierenOfferRuleSyncFun() {
         lieren_sk: lierenMainAccountAkSk?.[1] || ""
       };
       console.warn("猎人平台规则状态修改参数", params);
-      const res = await await lierenApi.ruleState(params);
+      const res = await lierenApi.ruleState(params);
       console.warn("猎人平台规则状态修改成功", res);
     } catch (error) {
       console.warn("猎人平台规则状态修改异常", error);
     }
   };
 
+  // 检查并更新同步到猎人的规则状态
+  const checkAndUpdateLierenRuleState = async ruleList => {
+    try {
+      ruleList = JSON.parse(JSON.stringify(ruleList));
+      ruleList = ruleList
+        .filter(
+          item =>
+            item.offerType == 1 &&
+            item.allow_offer_time &&
+            +new Date(item.allow_offer_time) <= +new Date() &&
+            item.platOfferList?.some(
+              subItem => subItem.platName === "lieren" && subItem.platRuleId
+            )
+        )
+        .map(item => {
+          let lierenOffer = item.platOfferList.find(
+            item => item.platName === "lieren"
+          );
+          return {
+            ...item,
+            ...lierenOffer
+          };
+        });
+
+      let lierenMainAccountAkSk = dictStore.dictInfo.lierenMainAccountAkSk;
+      if (lierenMainAccountAkSk) {
+        lierenMainAccountAkSk = JSON.parse(lierenMainAccountAkSk);
+        lierenMainAccountAkSk = lierenMainAccountAkSk[rule] || [];
+      }
+
+      const platRuleIdList = ruleList.map(item => item.platRuleId);
+      if (!platRuleIdList.length) return;
+
+      const lierenRuleRes = await lierenApi.ruleList({
+        rule_id: platRuleIdList,
+        lieren_ak: lierenMainAccountAkSk?.[0] || "",
+        lieren_sk: lierenMainAccountAkSk?.[1] || ""
+      });
+      const lierenRuleList = lierenRuleRes?.data || [];
+      console.warn("同步到猎人平台需启用的规则列表", lierenRuleList);
+
+      // 针对应该重新启用的规则，启用规则并同步到平台
+      lierenRuleList
+        .filter(item => item.state == 0)
+        .forEach(item => {
+          const params = {
+            rule_id: item.rule_id,
+            state: 1,
+            lieren_ak: lierenMainAccountAkSk?.[0] || "",
+            lieren_sk: lierenMainAccountAkSk?.[1] || ""
+          };
+          // console.log("启用规则入参", params);
+          lierenApi.ruleState(params);
+        });
+    } catch (error) {
+      console.warn("检查并更新同步到猎人的规则状态异常", error);
+    }
+  };
   return {
     lierenOfferRuleSyncPlat, // 同步规则到猎人平台（新增/修改）
     lierenOfferRuleDelPlat, // 同步规则到猎人平台（删除）
-    lierenOfferRuleEditStatusPlat // 同步规则到猎人平台（启用禁用）
+    lierenOfferRuleEditStatusPlat, // 同步规则到猎人平台（启用禁用）
+    checkAndUpdateLierenRuleState // 检查并更新同步到猎人的规则状态
   };
 }

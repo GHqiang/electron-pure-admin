@@ -48,6 +48,10 @@ import { dictTable, nameMatchTable } from "@/store/dictTable";
 const dictStore = dictTable();
 const nameMatchStore = nameMatchTable();
 
+// 猎人规则同步相关方法
+import useLierenOfferRuleSyncFun from "@/mixins/useLierenOfferRuleSyncFun";
+const { checkAndUpdateLierenRuleState } = useLierenOfferRuleSyncFun();
+
 defineOptions({
   name: "Login"
 });
@@ -112,6 +116,8 @@ const setLocalRuleList = async rule => {
       item.film_type = item.film_type ? item.film_type?.split(",") : [];
     });
     rules.setRuleList(ruleRecords);
+    // 猎人规则同步检查
+    await checkAndUpdateLierenRuleState(ruleRecords);
   } catch (error) {
     console.warn("进入报价队列页面时设置本地规则数据异常", error);
   }

@@ -375,14 +375,14 @@ const {
 
 import { dictTable } from "@/store/dictTable";
 const dictStore = dictTable();
-import { PLAT_API_OBJ } from "@/common/index.js";
 
 // 猎人规则同步相关方法
 import useLierenOfferRuleSyncFun from "@/mixins/useLierenOfferRuleSyncFun";
 const {
   lierenOfferRuleSyncPlat,
   lierenOfferRuleDelPlat,
-  lierenOfferRuleEditStatusPlat
+  lierenOfferRuleEditStatusPlat,
+  checkAndUpdateLierenRuleState
 } = useLierenOfferRuleSyncFun();
 
 // 树节点属性映射
@@ -512,6 +512,8 @@ const setLocalRuleList = async () => {
       item.quanValueList = item.quanValue ? item.quanValue?.split(",") : [];
     });
     rules.setRuleList(ruleRecords);
+    // 猎人规则同步检查
+    await checkAndUpdateLierenRuleState(ruleRecords);
   } catch (error) {
     console.warn("查询规则列表时设置本地规则数据异常", error);
   }
@@ -659,6 +661,7 @@ const editStatus = async row => {
       status: row.status,
       update_time: getCurrentTime()
     });
+    // 修改规则状态同步到平台
     await editRuleStatusSyncToPlat(row);
     ElMessage.success("状态更新成功");
   } catch (err) {
@@ -680,6 +683,8 @@ const currentDayNoOfferHandle = async row => {
       allow_offer_time: getNextDayTime(), // 允许报价时间下一天
       update_time: getCurrentTime()
     });
+    // 修改规则状态同步到平台
+    await editRuleStatusSyncToPlat({ ...row, status: 2 });
     searchData();
     ElMessage({
       type: "success",
