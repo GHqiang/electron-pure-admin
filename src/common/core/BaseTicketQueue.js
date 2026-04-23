@@ -77,8 +77,7 @@ export default class BaseTicketQueue {
       return;
     }
 
-    let des = "自动出票队列获取到新的待出票订单",
-      lierenRuleCheckRes = true;
+    let des = "自动出票队列获取到新的待出票订单";
     if (!isAgain) {
       this.handledOrders.set(order.plat_name + "_" + order.order_number, 1);
       const fixedOfferToPlatList =
@@ -89,7 +88,7 @@ export default class BaseTicketQueue {
         fixedOfferToPlatList.includes("lieren")
       ) {
         // 根据平台报价规则获取本地报价规则生成报价记录方便走后续流程
-        lierenRuleCheckRes = await this.lierenRuleCheck(order);
+        await this.lierenRuleCheck(order);
       }
     } else {
       des = "自动出票队列获取到重新出票的订单";
@@ -103,13 +102,9 @@ export default class BaseTicketQueue {
       newOrders: order,
       sjc: +new Date()
     });
-    if (!lierenRuleCheckRes) {
-      this.logger.errorSave("猎人报价规则检查失败，不允许出票", order);
-    }
     if (!this.isTestOrder) {
       this.logger.logUpload();
     }
-    if (!lierenRuleCheckRes) return;
     // 添加新订单到队列
     this.queue.push(order);
 
@@ -157,20 +152,21 @@ export default class BaseTicketQueue {
       let targetRule = useRuleList.find(item => item.platRuleId == platRuleId);
       // 只有匹配到规则且是固定报价才会去补全报价记录
       if (targetRule && targetRule.offerType == 1) {
-        this.logger.infoSave("机器找到匹配的报价规则，准备补全报价记录后出票", {
-          platRuleId,
-          targetRule
-        });
-        return await this.lierenOfferRecordAdd(targetRule, order);
+        this.logger.infoSave(
+          "机器找到匹配的固定报价规则，准备补全报价记录后出票",
+          {
+            platRuleId,
+            targetRule
+          }
+        );
+        await this.lierenOfferRecordAdd(targetRule, order);
       } else {
         this.logger.infoSave(
           "机器未找到匹配的报价规则，先允许出票，后面有报价记录校验"
         );
-        return true;
       }
     } catch (error) {
       this.logger.errorSave("猎人报价规则检查异常", { error, order });
-      return true;
     }
   }
 
@@ -223,10 +219,8 @@ export default class BaseTicketQueue {
       this.logger.infoSave("补全猎人报价记录入参", serOrderInfo);
       await svApi.addOfferRecord(serOrderInfo);
       console.warn("猎人固定报价规则添加报价记录成功", serOrderInfo);
-      return true;
     } catch (error) {
       this.logger.errorSave("补全猎人报价记录异常", { error, rule, order });
-      return false;
     }
   }
   /**
