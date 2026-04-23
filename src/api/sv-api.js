@@ -229,6 +229,10 @@ const updateQuanType = params => axios.post("/svpi/quanType/update", params);
 const exportQuanList = params =>
   axios.post("/svpi/quanRecord/batchUpdate", params);
 
+// 更新券记录
+const updateQuanRecord = params =>
+  axios.post("/svpi/quanRecord/update", params);
+
 // 获取特殊匹配列表
 const getSpecialNameList = params =>
   axios.get("/svpi/specialNameRecord", { params });
@@ -319,6 +323,7 @@ const svApi = {
   batchAddQuan,
   batchDeleteQuan,
   exportQuanList,
+  updateQuanRecord,
   getSpecialNameList,
   querySpecialNameList,
   deleteSpecialName,

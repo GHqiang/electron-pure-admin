@@ -38,9 +38,9 @@ export default {
     {
       path: "/permission/quanTypeManage/index",
       name: "QuanTypeManage",
-      component: () => import("@/views/permission/quanTypeManage/index.vue"),
+      component: () => import("@/views/permission/quanManage/index.vue"),
       meta: {
-        title: "券类型列表",
+        title: "券列表",
         keepAlive: true
       }
     },
