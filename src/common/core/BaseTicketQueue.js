@@ -9,6 +9,7 @@ import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
 import { GET_APP_TYPE_LIST, LIERENR_REWARDS } from "@/common/constant";
 import { toRaw } from "vue";
+import { storeToRefs } from "pinia";
 import { useDataTableStore } from "@/store/offerRule";
 const offerRules = useDataTableStore();
 const { offerRuleList } = storeToRefs(offerRules);
@@ -129,7 +130,8 @@ export default class BaseTicketQueue {
                 itemA.offerType === "1"
                   ? itemA.platOfferList?.find(
                       item => item.platName === plat_name
-                    )?.value : "",
+                    )?.value
+                  : "",
               ...(itemA.platOfferList?.find(
                 item => item.platName === plat_name
               ) || {})
