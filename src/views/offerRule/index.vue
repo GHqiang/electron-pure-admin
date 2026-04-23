@@ -787,6 +787,10 @@ const saveRuleSyncToPlat = async ruleForm => {
     // 仅平台选择同步时才同步
     if (lierenOfferRule.isSyncPlat == 1) {
       await lierenOfferRuleSyncPlat(ruleInfo);
+    } else if (lierenOfferRule.isSyncPlat == 2 && lierenOfferRule.platRuleId) {
+      console.log("取消同步了，准备删除平台规则", lierenOfferRule);
+      // 如果之前是同步到平台的，现在取消同步了，则删除平台规则
+      await lierenOfferRuleDelPlat([lierenOfferRule.platRuleId]);
     }
     console.log("同步规则到平台成功");
   } catch (error) {
