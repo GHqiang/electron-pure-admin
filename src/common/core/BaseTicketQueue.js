@@ -13,6 +13,9 @@ import { storeToRefs } from "pinia";
 import { useDataTableStore } from "@/store/offerRule";
 const offerRules = useDataTableStore();
 const { offerRuleList } = storeToRefs(offerRules);
+
+import { dictTable } from "@/store/dictTable";
+const dictStore = dictTable();
 /**
  * 出票队列基类
  * 所有平台出票队列都应继承此类
@@ -78,7 +81,13 @@ export default class BaseTicketQueue {
       lierenRuleCheckRes = true;
     if (!isAgain) {
       this.handledOrders.set(order.plat_name + "_" + order.order_number, 1);
-      if (order.plat_name === "lieren" && order.rule_id) {
+      const fixedOfferToPlatList =
+        dictStore.dictInfo.fixedOfferToPlatList?.split(",") || [];
+      if (
+        order.plat_name === "lieren" &&
+        order.rule_id &&
+        fixedOfferToPlatList.includes("lieren")
+      ) {
         // 根据平台报价规则获取本地报价规则生成报价记录方便走后续流程
         lierenRuleCheckRes = await this.lierenRuleCheck(order);
       }
@@ -146,19 +155,18 @@ export default class BaseTicketQueue {
       );
 
       let targetRule = useRuleList.find(item => item.platRuleId == platRuleId);
-      if (targetRule) {
-        if (targetRule.offerType == 1) {
-          return await this.lierenOfferRecordAdd(targetRule, order);
-        } else {
-          console.warn("非固定报价规则报价，允许走机器出票");
-          return true;
-        }
-      } else {
-        this.logger.errorSave("机器未找到匹配的报价规则，不允许出票", {
+      // 只有匹配到规则且是固定报价才会去补全报价记录
+      if (targetRule && targetRule.offerType == 1) {
+        this.logger.infoSave("机器找到匹配的报价规则，准备补全报价记录后出票", {
           platRuleId,
-          useRuleList
+          targetRule
         });
-        return false;
+        return await this.lierenOfferRecordAdd(targetRule, order);
+      } else {
+        this.logger.infoSave(
+          "机器未找到匹配的报价规则，先允许出票，后面有报价记录校验"
+        );
+        return true;
       }
     } catch (error) {
       this.logger.errorSave("猎人报价规则检查异常", { error, order });
@@ -212,11 +220,12 @@ export default class BaseTicketQueue {
       if (targetInfo) {
         serOrderInfo.app_type = targetInfo.app_type_code;
       }
+      this.logger.infoSave("补全猎人报价记录入参", serOrderInfo);
       await svApi.addOfferRecord(serOrderInfo);
       console.warn("猎人固定报价规则添加报价记录成功", serOrderInfo);
       return true;
     } catch (error) {
-      this.logger.errorSave("lierenOfferRecordAdd异常", { error, rule, order });
+      this.logger.errorSave("补全猎人报价记录异常", { error, rule, order });
       return false;
     }
   }
