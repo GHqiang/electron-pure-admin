@@ -75,7 +75,7 @@ export default class BaseTicketQueue {
     }
 
     let des = "自动出票队列获取到新的待出票订单",
-      lierenRuleCheckRes;
+      lierenRuleCheckRes = true;
     if (!isAgain) {
       this.handledOrders.set(order.plat_name + "_" + order.order_number, 1);
       if (order.plat_name === "lieren" && order.rule_id) {
