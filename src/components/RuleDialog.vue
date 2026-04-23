@@ -326,6 +326,16 @@
                   />
                 </el-select>
               </template>
+              <template #append>
+                <el-select
+                  v-model="domain.isSyncPlat"
+                  placeholder="请选择是否同步平台"
+                  style="width: 200px"
+                >
+                  <el-option label="同步平台" value="1" />
+                  <el-option label="不同步平台" value="2" />
+                </el-select>
+              </template>
             </el-input>
             <el-button
               v-if="index > 0"
@@ -570,7 +580,8 @@ let formData = reactive({
   platOfferList: [
     {
       platName: "lieren",
-      value: ""
+      value: "",
+      isSyncPlat: "1" // 是否同步平台，1-同步 2-不同步
     }
   ], // 平台报价规则
   autoUseQuanStatus: "2", // 自动用券状态 1-开启 2-关闭
@@ -663,7 +674,8 @@ const resetForm = el => {
   formData.platOfferList = [
     {
       platName: "lieren",
-      value: ""
+      value: "",
+      isSyncPlat: "1" // 是否同步平台，1-同步 2-不同步
     }
   ]; // 平台报价规则
   formData.autoUseQuanStatus = "2"; // 自动用券状态 1-开启 2-关闭
@@ -756,7 +768,8 @@ const removeDomain = item => {
 const addDomain = () => {
   formData.platOfferList.push({
     platName: "",
-    value: ""
+    value: "",
+    isSyncPlat: "1" // 是否同步平台，1-同步 2-不同步
   });
 };
 
@@ -843,7 +856,8 @@ const offerTypeChange = val => {
     formData.platOfferList = [
       {
         platName: "lieren",
-        value: ""
+        value: "",
+        isSyncPlat: "1" // 是否同步平台，1-同步 2-不同步
       }
     ]; // 平台报价规则
     formData.autoUseQuanStatus = "2"; // 自动用券状态 1-开启 2-关闭
@@ -856,7 +870,8 @@ const offerTypeChange = val => {
     formData.platOfferList = [
       {
         platName: "lieren",
-        value: ""
+        value: "",
+        isSyncPlat: "1" // 是否同步平台，1-同步 2-不同步
       }
     ]; // 平台报价规则
   } else if (val === "3") {

@@ -6,8 +6,16 @@ import Logger from "../logger.js";
 import StrategyFactory from "@/common/autoTicket/buyTicket/index";
 import svApi from "@/api/sv-api";
 import { platTokens } from "@/store/platTokens";
-import { GET_APP_TYPE_LIST } from "@/common/constant";
+const tokens = platTokens();
+import { GET_APP_TYPE_LIST, LIERENR_REWARDS } from "@/common/constant";
+import { toRaw } from "vue";
+import { storeToRefs } from "pinia";
+import { useDataTableStore } from "@/store/offerRule";
+const offerRules = useDataTableStore();
+const { offerRuleList } = storeToRefs(offerRules);
 
+import { dictTable } from "@/store/dictTable";
+const dictStore = dictTable();
 /**
  * 出票队列基类
  * 所有平台出票队列都应继承此类
@@ -50,7 +58,7 @@ export default class BaseTicketQueue {
    * 处理新订单
    * @param {CustomEvent} event - 订单事件
    */
-  handleNewOrder(event) {
+  async handleNewOrder(event) {
     if (!this.isStart) return;
 
     const isAgain = event.detail?.isAgain;
@@ -72,6 +80,16 @@ export default class BaseTicketQueue {
     let des = "自动出票队列获取到新的待出票订单";
     if (!isAgain) {
       this.handledOrders.set(order.plat_name + "_" + order.order_number, 1);
+      const fixedOfferToPlatList =
+        dictStore.dictInfo.fixedOfferToPlatList?.split(",") || [];
+      if (
+        order.plat_name === "lieren" &&
+        order.rule_id &&
+        fixedOfferToPlatList.includes("lieren")
+      ) {
+        // 根据平台报价规则获取本地报价规则生成报价记录方便走后续流程
+        await this.lierenRuleCheck(order);
+      }
     } else {
       des = "自动出票队列获取到重新出票的订单";
       order.isAgain = true;
@@ -84,11 +102,9 @@ export default class BaseTicketQueue {
       newOrders: order,
       sjc: +new Date()
     });
-
     if (!this.isTestOrder) {
       this.logger.logUpload();
     }
-
     // 添加新订单到队列
     this.queue.push(order);
 
@@ -97,6 +113,116 @@ export default class BaseTicketQueue {
     }
   }
 
+  async lierenRuleCheck(order) {
+    const { plat_name, app_name } = order;
+    try {
+      let platRuleId = order.rule_id;
+      let appOfferRuleList = toRaw(offerRuleList.value);
+      if (appOfferRuleList) {
+        appOfferRuleList = appOfferRuleList
+          .filter(item =>
+            item.platOfferList?.length
+              ? item.platOfferList
+                  .map(item => item.platName)
+                  .includes(plat_name)
+              : item.orderForm.split(",").includes(plat_name)
+          )
+          .map(itemA => {
+            return {
+              ...itemA,
+              offerAmount:
+                itemA.offerType === "1"
+                  ? itemA.platOfferList?.find(
+                      item => item.platName === plat_name
+                    )?.value
+                  : "",
+              ...(itemA.platOfferList?.find(
+                item => item.platName === plat_name
+              ) || {})
+            };
+          });
+      }
+
+      // 1、获取启用的规则列表（只有满足规则才报价）
+      let useRuleList = appOfferRuleList.filter(
+        item =>
+          ["1", "3"].includes(item.status) && item.shadowLineName == app_name
+      );
+
+      let targetRule = useRuleList.find(item => item.platRuleId == platRuleId);
+      // 只有匹配到规则且是固定报价才会去补全报价记录
+      if (targetRule && targetRule.offerType == 1) {
+        this.logger.infoSave(
+          "机器找到匹配的固定报价规则，准备补全报价记录后出票",
+          {
+            platRuleId,
+            targetRule
+          }
+        );
+        await this.lierenOfferRecordAdd(targetRule, order);
+      } else {
+        this.logger.infoSave(
+          "机器未找到匹配的报价规则，先允许出票，后面有报价记录校验"
+        );
+      }
+    } catch (error) {
+      this.logger.errorSave("猎人报价规则检查异常", { error, order });
+    }
+  }
+
+  async lierenOfferRecordAdd(offerRule, order) {
+    try {
+      const serOrderInfo = {
+        plat_name: order.plat_name,
+        app_name: order.app_name,
+        order_id: order.id,
+        order_number: order.order_number,
+        tpp_price: order.tpp_price,
+        supplier_max_price: +order.supplier_end_price + 20, // 假值无参考意义
+        city_name: order.city_name,
+        cinema_addr: order.cinema_addr,
+        ticket_num: order.ticket_num,
+        cinema_name: order.cinema_name,
+        hall_name: order.hall_name,
+        film_name: order.film_name,
+        show_time: order.show_time,
+        cinema_code: order.cinema_code,
+        cinema_group: order.cinema_group,
+        offer_type: offerRule?.offerType,
+        rule_status: offerRule?.status,
+        offer_end_amount: order.supplier_end_price,
+        // member_price: offerRule?.cost_price, // 成本价
+        // real_member_price: offerRule?.real_member_price,
+        // member_discount: offerRule?.member_discount,
+
+        quan_value: offerRule?.quanValue, // 用券类型
+        rewards: LIERENR_REWARDS[order.order_urgent] || 0, // 0-普通 1-加急 2-特急 3-vip
+
+        order_status: 1,
+        processing_time: getCurrentTime(),
+        // err_msg: "",
+        // err_info: "",
+        rule: tokens.userInfo.rule,
+        offer_rule_id: offerRule?.id,
+        plat_rule_id: order.rule_id // 新增一个平台报价规则id用来区分是否走的平台报价
+        // adjust_price: offerResult?.offerRule?.adjustPrice,
+        // price_spread: offerResult?.offerRule?.price_spread
+      };
+
+      const targetInfo = GET_APP_TYPE_LIST().find(item =>
+        item.app_name_list.includes(serOrderInfo.app_name)
+      );
+
+      if (targetInfo) {
+        serOrderInfo.app_type = targetInfo.app_type_code;
+      }
+      this.logger.infoSave("补全猎人报价记录入参", serOrderInfo);
+      await svApi.addOfferRecord(serOrderInfo);
+      console.warn("猎人固定报价规则添加报价记录成功", serOrderInfo);
+    } catch (error) {
+      this.logger.errorSave("补全猎人报价记录异常", { error, rule, order });
+    }
+  }
   /**
    * 开始处理队列
    */

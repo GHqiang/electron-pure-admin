@@ -2,16 +2,22 @@ import { defineStore } from "pinia";
 import { APP_TYPE_OBJ, IN_RULE_LIST } from "@/common/constant";
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
+
+const IS_DEV = process.env.NODE_ENV === "development";
 let allCinemaList = window.localStorage.getItem("allCinemaList");
+let canCinemaList = [];
 if (allCinemaList) {
   allCinemaList = JSON.parse(allCinemaList);
+  canCinemaList = allCinemaList.filter(item =>
+    [2].includes(tokens?.userInfo?.rule) ? item.status == 1 : item.status != "3"
+  );
 }
 export const useCinemaList = defineStore("cinemaDataTable", {
   state: () => {
     return {
       // canAppList: allCinemaList || []
-      canAppList: [], // 可用影院列表
-      allAppList: [] // 全部影院列表
+      canAppList: IS_DEV ? canCinemaList : [], // 可用影院列表
+      allAppList: IS_DEV ? allCinemaList : [] // 全部影院列表
     };
   },
   actions: {
@@ -25,7 +31,9 @@ export const useCinemaList = defineStore("cinemaDataTable", {
       console.warn(`设置影院列表信息`, cinemaList);
       this.canAppList = cinemaList;
       this.allAppList = list;
-      // window.localStorage.setItem("allCinemaList", JSON.stringify(list));
+      if (IS_DEV) {
+        window.localStorage.setItem("allCinemaList", JSON.stringify(list));
+      }
     }
   },
   getters: {
