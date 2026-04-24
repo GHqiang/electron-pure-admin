@@ -374,9 +374,12 @@ export default class BaseOfferQueue {
         order.id = res?.data?.quote_id;
       }
       log.infoSave("提交报价结果", { res, order });
+      if (order.plat_name === "lieren" && res?.message === "已自动报价") {
+        return Promise.reject("猎人自动报价成功，无需再保存报价记录");
+      }
       return { res, offerRule };
     } catch (error) {
-      log.errorSave("单个报价异常", { error, order });
+      log.errorSave("单个报价异常", { error });
     }
   }
 

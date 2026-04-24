@@ -110,7 +110,7 @@ export default function useLierenOfferRuleSyncFun() {
 
       params = {
         rule_id: lierenOfferRule.platRuleId,
-        name: lierenOfferRule.ruleName,
+        name: lierenOfferRule.remark || lierenOfferRule.ruleName, // 规则名称，优先把备注同步过去
         cinema_group: cinema_group || "", // 院线，多个院线可用“,”号分隔；没有传空
         cinema_code: cinema_code || "", // 包含影院专资，多个可用“,”号分隔；没有传空
         exclude_cinema_code: exclude_cinema_code || "", // 排除影院专资，多个可用“,”号分隔；没有传空
