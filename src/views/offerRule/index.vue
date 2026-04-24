@@ -802,11 +802,6 @@ const saveRuleSyncToPlat = async ruleForm => {
 const delRuleSyncToPlat = async ruleList => {
   try {
     ruleList = JSON.parse(JSON.stringify(ruleList));
-    // 1、解析规则是否要同步平台
-    const fixedOfferToPlatList =
-      dictStore.dictInfo.fixedOfferToPlatList?.split(",") || [];
-    if (fixedOfferToPlatList.length === 0) return;
-
     // 先处理猎人的规则删除（因为删除时不区分是批量删除还是单条删除，所以都走这个方法）
     ruleList = ruleList
       .map(item => {

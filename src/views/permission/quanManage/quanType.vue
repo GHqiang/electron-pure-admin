@@ -315,6 +315,10 @@ const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
 
 import { getCurrentTime, parseExcel, formatTimeOfTime } from "@/utils/utils";
 
+// 猎人规则同步相关方法
+import useLierenOfferRuleSyncFun from "@/mixins/useLierenOfferRuleSyncFun";
+const { lierenOfferRuleDelPlat } = useLierenOfferRuleSyncFun();
+
 // 树节点属性映射
 const defaultProps = {
   children: "children",
@@ -740,6 +744,7 @@ const deleteRow = async (index, row) => {
         // 用户点击了"删除券和规则"按钮
         for (const rule of usedRules) {
           await svApi.deleteRule({ id: rule.id });
+          await delRuleSyncToPlat([rule]);
         }
         // 删除券
         await svApi.deleteQuanType({ id: row.id });
@@ -803,6 +808,44 @@ const deleteRow = async (index, row) => {
       });
   }
 };
+// 删除规则同步到平台
+const delRuleSyncToPlat = async ruleList => {
+  try {
+    ruleList = JSON.parse(JSON.stringify(ruleList));
+    // 先处理猎人的规则删除（因为删除时不区分是批量删除还是单条删除，所以都走这个方法）
+    ruleList = ruleList
+      .map(item => {
+        let platOfferList = item.platOfferList;
+        if (platOfferList && !Array.isArray(platOfferList)) {
+          platOfferList = JSON.parse(platOfferList);
+        }
+        let lierenOffer = platOfferList.find(
+          item => item.platName === "lieren"
+        );
+        let lierenOfferRule = {
+          ...item,
+          offerAmount: lierenOffer.value,
+          platRuleId: lierenOffer.platRuleId,
+          isSyncPlat: lierenOffer.isSyncPlat,
+          platOfferList: undefined
+        };
+        return lierenOfferRule;
+      })
+      .filter(item => item.isSyncPlat == 1); // 只处理同步平台
+
+    // 只处理日常固定价的规则
+    ruleList = ruleList.filter(item => item.offerType == 1);
+    console.warn("待删除同步的规则", ruleList);
+    if (ruleList.length === 0) return;
+
+    const platRuleIdList = ruleList.map(item => item.platRuleId);
+    await lierenOfferRuleDelPlat(platRuleIdList);
+    console.log("删除规则同步到平台成功");
+  } catch (error) {
+    console.warn("删除规则同步到平台异常", error);
+  }
+};
+
 // 批量删除券
 const batchDelete = () => {
   if (multipleSelection.value.length) {
