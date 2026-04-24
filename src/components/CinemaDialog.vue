@@ -254,11 +254,19 @@
           />
         </el-form-item>
         <el-form-item label="猎人院线名称" prop="lieren_cinema_group">
-          <el-input
+          <el-select
             v-model="formData.lieren_cinema_group"
-            placeholder="请输入猎人院线名称"
+            placeholder="请选择猎人院线名称"
             clearable
-          />
+            filterable
+          >
+            <el-option
+              v-for="item in lierenCinemaGroupList"
+              :key="item.name"
+              :label="item.name"
+              :value="item.name"
+            />
+          </el-select>
         </el-form-item>
         <!-- <el-form-item label="影院code" prop="cinemaCode">
           <el-input
@@ -301,6 +309,8 @@ import { ref, reactive } from "vue";
 import { ElLoading, ElMessage } from "element-plus";
 import { APP_TYPE_OBJ } from "@/common/constant";
 import { platTokens } from "@/store/platTokens";
+import lierenApi from "@/api/lieren-api";
+
 const {
   userInfo: { rule, user_id }
 } = platTokens();
@@ -429,6 +439,20 @@ const appTypeChange = val => {
   formData.api_v = "";
   formData.channelName = "";
 };
+
+// lieren影院列表
+const lierenCinemaGroupList = ref([]);
+
+const getLierenCinemaGroupList = async () => {
+  try {
+    const res = await lierenApi.ruleGroup();
+    console.log("获取影院分组列表:", res);
+    lierenCinemaGroupList.value = res.data || [];
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 // 打开弹窗
 const open = async cinemaInfo => {
   try {
@@ -440,6 +464,8 @@ const open = async cinemaInfo => {
     console.log("cinemaInfo", cinemaInfo);
     if (cinemaInfo) {
       let formInfo = JSON.parse(JSON.stringify(cinemaInfo));
+      // 获取猎人院线列表，填充到下拉选项中
+      await getLierenCinemaGroupList();
       if (formInfo.id !== undefined) {
         formData.id = formInfo.id;
         formData.app_type_code = formInfo.app_type_code;
