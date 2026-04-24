@@ -8,6 +8,8 @@ const dictStore = dictTable();
 import { useCinemaCodeMatchList } from "@/store/specialNameRule";
 const cinemaCodeMatchObj = useCinemaCodeMatchList();
 
+import { useCinemaList } from "@/store/cinemaList";
+const cinemaListObj = useCinemaList();
 // 格式化影院专资
 const formatCinemaCode = (app_cinema_code_list, app_name) =>
   app_cinema_code_list
@@ -70,6 +72,17 @@ export default function useLierenOfferRuleSyncFun() {
         exclude_cinema_code = exclude_cinema_code.split(",");
         exclude_cinema_code = formatCinemaCode(exclude_cinema_code, app_name);
       }
+      // 院线(包含不存在时必传院线)
+      let cinema_group = lierenOfferRule.cinema_group;
+
+      if (!cinema_group) {
+        cinema_group = cinemaListObj.getLierenCinemaGroup({ app_name });
+      }
+
+      if (!cinema_code && !cinema_group) {
+        console.warn("同步规则到猎人平台失败：缺少院线或包含影院信息");
+        return;
+      }
       // 包含/排除影片
       let film = lierenOfferRule.includeFilmNames;
       if (film) {
@@ -98,7 +111,7 @@ export default function useLierenOfferRuleSyncFun() {
       params = {
         rule_id: lierenOfferRule.platRuleId,
         name: lierenOfferRule.ruleName,
-        cinema_group: lierenOfferRule.cinema_group || "", // 院线，多个院线可用“,”号分隔；没有传空
+        cinema_group: cinema_group || "", // 院线，多个院线可用“,”号分隔；没有传空
         cinema_code: cinema_code || "", // 包含影院专资，多个可用“,”号分隔；没有传空
         exclude_cinema_code: exclude_cinema_code || "", // 排除影院专资，多个可用“,”号分隔；没有传空
         province: lierenOfferRule.province || "", // 包含省份，多个可用“,”号分隔；没有传空
@@ -113,7 +126,7 @@ export default function useLierenOfferRuleSyncFun() {
         sum_mode: lierenOfferRule.offerType == 1 ? 2 : 4, //  2-固定价（价格值为30时，即报价30）》 3-市场价减价（市场35，价格值为5时35-5=30）》 4-会员价加减（需要报价时提交会员价，价格值为3时，会员价+3。价格值为-3时，会员价-3）
         price: Number(lierenOfferRule.offerAmount), // 固定价格或者加减价格
         seats: formatSeats(lierenOfferRule.seatNum), // 座位数，多个可用“,”号分隔；没有传空
-        version_type: lireenOfferRule.film_type, // 影片场次版本 2D或3D
+        version_type: lierenOfferRule.film_type, // 影片场次版本 2D或3D
         state: ruleInfo.status == "1" ? 1 : 0, // 规则状态，1-启用，0-禁用
         // attach_price: 0, // 附加价格，会员价折扣模式报价有效
         lieren_ak: lierenMainAccountAkSk?.[0] || "",

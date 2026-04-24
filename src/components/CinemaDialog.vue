@@ -253,6 +253,13 @@
             clearable
           />
         </el-form-item>
+        <el-form-item label="猎人院线名称" prop="lieren_cinema_group">
+          <el-input
+            v-model="formData.lieren_cinema_group"
+            placeholder="请输入猎人院线名称"
+            clearable
+          />
+        </el-form-item>
         <!-- <el-form-item label="影院code" prop="cinemaCode">
           <el-input
             v-model="formData.cinemaCode"
@@ -328,6 +335,7 @@ let formData = reactive({
   appId: "",
   api_version: "",
   api_v: "",
+  lieren_cinema_group: "",
   status: "1",
   is_out_use: "1",
   remark: ""
@@ -391,6 +399,7 @@ const resetForm = el => {
   formData.app_label = "";
   formData.status = "1";
   formData.is_out_use = "1";
+  formData.lieren_cinema_group = "";
   formData.sfc_group_id = "";
   formData.sfc_open_id = "";
   formData.cinemaLinkId = "";
@@ -449,6 +458,7 @@ const open = async cinemaInfo => {
         formData.status = formInfo.status || "1";
         formData.is_out_use = formInfo.is_out_use || "1";
         formData.remark = formInfo.remark;
+        formData.lieren_cinema_group = formInfo.lieren_cinema_group || "";
         // formData.group_list = formInfo.group_list;
         // formData.flag_list = formInfo.flag_list;
         // formData.black_list = formInfo.black_list;

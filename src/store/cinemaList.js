@@ -34,6 +34,13 @@ export const useCinemaList = defineStore("cinemaDataTable", {
       if (IS_DEV) {
         window.localStorage.setItem("allCinemaList", JSON.stringify(list));
       }
+    },
+    // 获取对应猎人院线
+    getLierenCinemaGroup({ app_name }) {
+      let targetCinema = this.canAppList.find(
+        item => item.app_name === app_name
+      );
+      return targetCinema?.lieren_cinema_group;
     }
   },
   getters: {

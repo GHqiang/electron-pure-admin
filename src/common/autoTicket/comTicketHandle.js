@@ -1,7 +1,7 @@
 import BaseTicketQueue from "@/common/core/BaseTicketQueue.js";
 // import { GET_JINYI_LIST } from "@/common/constant";
 // 生成出票队列实体类
-const createTucketQueueFun = appFlag => {
+const createTicketQueueFun = appFlag => {
   // 模块化重构后的平台使用 BaseTicketQueue（它会通过 StrategyFactory 创建正确的出票实例）
   return new BaseTicketQueue(appFlag);
 
@@ -14,4 +14,4 @@ const createTucketQueueFun = appFlag => {
   // }
 };
 
-export default createTucketQueueFun;
+export default createTicketQueueFun;

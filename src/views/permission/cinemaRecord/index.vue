@@ -111,6 +111,11 @@
           />
           <el-table-column prop="remark" label="备注" min-width="100" />
           <el-table-column
+            prop="lieren_cinema_group"
+            label="猎人院线名称"
+            min-width="150"
+          />
+          <el-table-column
             prop="update_time"
             label="更新时间"
             min-width="150"
