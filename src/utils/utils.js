@@ -3034,7 +3034,22 @@ function parseNumericRule(ruleName) {
   return number;
 }
 
+/**
+ * 将字符串按特殊字符分割，并返回长度最长的子串
+ * @param {string} str 原始字符串
+ * @param {RegExp} delimiterRegex 分割正则（默认包含常见分隔符）
+ * @returns {string} 最长子串
+ */
+function getLongestPart(str, delimiterRegex = /[·:：\s\-_、，,]+/) {
+  const parts = str.split(delimiterRegex).filter(part => part.length > 0);
+  if (parts.length === 0) return "";
+  return parts.reduce((longest, current) =>
+    current.length > longest.length ? current : longest
+  );
+}
+
 export {
+  getLongestPart, // 将字符串按特殊字符分割，并返回长度最长的子串
   parseNumericRule, // 辰星3.0C特殊规则名称解析，是数字则返回数字
   getMovieInfoFromFilmName, // 根据影片名获取电影信息
   requestViaMain, // 渲染进程通知主线程进行请求

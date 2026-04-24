@@ -1,6 +1,10 @@
 import svApi from "@/api/sv-api";
 import lierenApi from "@/api/lieren-api";
-import { getCurrentTime, sendWxPusherMessage } from "@/utils/utils";
+import {
+  getCurrentTime,
+  sendWxPusherMessage,
+  getLongestPart
+} from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
 import { dictTable } from "@/store/dictTable";
 const dictStore = dictTable();
@@ -86,11 +90,17 @@ export default function useLierenOfferRuleSyncFun() {
       // 包含/排除影片
       let film = lierenOfferRule.includeFilmNames;
       if (film) {
-        film = JSON.parse(film).join(",");
+        film = JSON.parse(film)
+          .map(item => getLongestPart(item))
+          .filter(item => item)
+          .join(",");
       }
       let exclude_film = lierenOfferRule.excludeFilmNames;
       if (exclude_film) {
-        exclude_film = JSON.parse(exclude_film).join(",");
+        exclude_film = JSON.parse(exclude_film)
+          .map(item => getLongestPart(item))
+          .filter(item => item)
+          .join(",");
       }
       // 包含/排除影厅
       let hall = lierenOfferRule.includeHallNames;
