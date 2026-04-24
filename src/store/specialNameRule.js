@@ -70,6 +70,14 @@ export const useCinemaCodeMatchList = defineStore("cinemaCodeMatchList", {
       }
       return targetCinema;
     },
+    // 获取影院专资标识
+    getCinemaCodeFlag({ app_cinema_code, app_name }) {
+      let targetCinema = this.items.find(
+        item =>
+          item.app_cinema_code === app_cinema_code && item.app_name === app_name
+      );
+      return targetCinema;
+    },
     // 获取影院映射信息根据code
     getCinemaMatchInfo(plat_cinema_code, app_name) {
       return this.items.find(

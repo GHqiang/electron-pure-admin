@@ -893,15 +893,15 @@ const testOrder = {
   cinema_addr: "雨花台区软件大道109号雨花客厅E-PARK北区3层",
   ticket_num: 1,
   cinema_name: "金逸影城（光美荟聚IMAX激光店）",
-  hall_name: "8号巨幕激光厅",
+  hall_name: "6号ALPD Pro高亮厅",
   film_name: "飞驰人生3",
-  show_time: "2026-03-22 19:10:00",
+  show_time: "2026-04-26 11:00:00",
   rewards: 0,
   is_urgent: false,
   cinema_group: "",
   cinema_code: "32035211",
   order_number: "12412221440316515",
-  offer_end_time: 1773742065000,
+  offer_end_time: 1777172400000,
   app_name: "jinyiguangmei"
 };
 
