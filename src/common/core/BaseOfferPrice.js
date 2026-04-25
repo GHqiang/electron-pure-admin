@@ -2,7 +2,8 @@
 // 提取所有影院系列报价的公共逻辑
 
 import { formatErrInfo, calculateMarkup } from "@/utils/utils.js";
-
+import { dictTable } from "@/store/dictTable";
+const dictStore = dictTable();
 /**
  * 报价基类
  * 所有影院系列的报价类都应继承此类
@@ -49,6 +50,19 @@ export default class BaseOfferPrice {
         return this.buildErrorResponse();
       }
       this.logger.infoSave("最终匹配到的报价规则", offerRule);
+      // 1、是否同步平台规则走平台报价过滤
+      // fixedOfferToPlatList：允许固定报价是否走平台的平台类型数组;
+      const fixedOfferToPlatList =
+        dictStore.dictInfo.fixedOfferToPlatList?.split(",") || [];
+      if (
+        fixedOfferToPlatList.includes(this.plat_name) &&
+        offerRule.offerType === "1" &&
+        offerRule.platOfferList?.find(item => item.platName === plat_name)
+          ?.isSyncPlat == 1
+      ) {
+        this.logger.errorSave("该规则由平台进行报价");
+        return this.buildErrorResponse(offerRule);
+      }
 
       // 3. 获取成本价
       const cost_price = await this.getCostPrice(offerRule);
