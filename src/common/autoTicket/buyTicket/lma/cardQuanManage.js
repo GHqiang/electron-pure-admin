@@ -27,6 +27,7 @@ import svApi from "@/api/sv-api";
 import Logger from "@/common/logger";
 import { platTokens } from "@/store/platTokens";
 import usesMachineBaseFun from "@/mixins/usesMachineBaseFun";
+import { singleUpdateQuanStock } from "@/common/autoTicket/commonQuanStock.js";
 
 const tokens = platTokens();
 const { getQuanValueListByQuanFlag } = usesMachineBaseFun();
@@ -803,28 +804,17 @@ export default class LmaCardQuanManage {
       let updateParams = {
         id: item.id,
         quanStockList: JSON.stringify(quanStockList),
-        update_time: getCurrentTime()
+        update_time: getCurrentTime(),
+        quan_value: item.quan_value,
+        logger: this.logger
       };
       // 增加最后使用时间更新（方便看是否压价）
       if (quan_value?.split(",")?.includes(item.quan_value)) {
         updateParams.end_use_time = getCurrentTime();
       }
       // 单个更新
-      this.singleUpdateQuanStock(updateParams);
+      singleUpdateQuanStock(updateParams);
     });
-  }
-
-  // 单个更新券库存
-  async singleUpdateQuanStock(params) {
-    try {
-      const res = await svApi.updateQuanType(params);
-      this.logger.infoSave("单个更新券库存返回", {
-        res,
-        params
-      });
-    } catch (error) {
-      this.logger.errorSave("单个更新券库存异常", { error, params });
-    }
   }
 
   // 获取新券

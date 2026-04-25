@@ -59,6 +59,7 @@ export async function syncUpdateQuanStock({
         return {
           id: item.id,
           quan_flag: item.quan_flag,
+          quan_value: item.quan_value,
           black_quans: item.black_quans,
           quanStockList: item.quanStockList.map(itemA => ({
             phone: itemA.phone,
@@ -137,6 +138,7 @@ export async function syncUpdateQuanStock({
       console.log("quanTypeListParams", quanTypeListParams);
       let updateTypeList = quanTypeListParams.map(item => ({
         id: item.id,
+        quan_value: item.quan_value,
         quanStockList: item.quanStockList,
         update_time: getCurrentTime()
       }));
@@ -146,6 +148,7 @@ export async function syncUpdateQuanStock({
         // 单个更新
         await singleUpdateQuanStock({
           id: item.id,
+          quan_value: item.quan_value,
           quanStockList: JSON.stringify(item.quanStockList),
           update_time: item.update_time,
           logger
@@ -161,12 +164,15 @@ export async function syncUpdateQuanStock({
 
 // 单个更新券库存
 async function singleUpdateQuanStock(obj) {
-  const { logger, ...params } = obj;
+  const { logger, quan_value, ...params } = obj;
   try {
     const res = await svApi.updateQuanType(params);
     logger.infoSave("单个更新券库存返回", { res, params });
   } catch (error) {
-    logger.infoSave("单个更新券库存异常", { error: formatErrInfo(error) });
+    logger.infoSave("单个更新券库存异常", {
+      error: formatErrInfo(error),
+      params
+    });
   }
 }
 

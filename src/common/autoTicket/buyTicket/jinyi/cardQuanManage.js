@@ -18,6 +18,7 @@ import {
 import svApi from "@/api/sv-api";
 // 统一日志类
 import Logger from "@/common/logger";
+import { singleUpdateQuanStock } from "@/common/autoTicket/commonQuanStock.js";
 
 // 机器基础方法
 import usesMachineBaseFun from "@/mixins/usesMachineBaseFun";
@@ -524,14 +525,16 @@ export default class CardQuanManage {
       let updateParams = {
         id: item.id,
         quanStockList: JSON.stringify(quanStockList),
-        update_time: getCurrentTime()
+        update_time: getCurrentTime(),
+        quan_value: item.quan_value,
+        logger: this.logger
       };
       // 增加最后使用时间更新（方便看是否压价）
       if (quan_value?.split(",")?.includes(item.quan_value)) {
         updateParams.end_use_time = getCurrentTime();
       }
       // 单个更新
-      this.singleUpdateQuanStock(updateParams);
+      singleUpdateQuanStock(updateParams);
     });
   }
 
@@ -556,21 +559,6 @@ export default class CardQuanManage {
       return targetQuanList;
     } catch (error) {
       this.logger.errorSave("获取同类目标券异常", formatErrInfo(error));
-    }
-  }
-
-  // 单个更新券库存
-  async singleUpdateQuanStock(data) {
-    let { logger, ...params } = data;
-    if (!logger) {
-      logger = this.logger;
-    }
-    try {
-      logger.infoSave("单个更新券库存入参", params);
-      const res = await svApi.updateQuanType(params);
-      logger.infoSave("单个更新券库存返回", res);
-    } catch (error) {
-      logger.errorSave("单个更新券库存异常", formatErrInfo(error));
     }
   }
 
@@ -827,6 +815,7 @@ export default class CardQuanManage {
           return {
             id: item.id,
             quan_flag: item.quan_flag,
+            quan_value: item.quan_value,
             quan_desc: item.quan_desc,
             black_quans: item.black_quans,
             quanStockList: item.quanStockList.map(itemA => ({
@@ -884,6 +873,7 @@ export default class CardQuanManage {
         console.log("quanTypeListParams", quanTypeListParams);
         let updateTypeList = quanTypeListParams.map(item => ({
           id: item.id,
+          quan_value: item.quan_value,
           quanStockList: item.quanStockList,
           update_time: getCurrentTime()
         }));
@@ -892,10 +882,11 @@ export default class CardQuanManage {
         for (let index = 0; index < updateTypeList.length; index++) {
           const item = updateTypeList[index];
           // 单个更新
-          await this.singleUpdateQuanStock({
+          await singleUpdateQuanStock({
             id: item.id,
             quanStockList: JSON.stringify(item.quanStockList),
             update_time: item.update_time,
+            quan_value: item.quan_value,
             logger
           });
         }
