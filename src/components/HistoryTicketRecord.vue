@@ -128,6 +128,16 @@
           clearable
         />
       </el-form-item>
+      <el-form-item label="报价来源">
+        <el-select
+          v-model="formData.offer_from"
+          placeholder="报价来源"
+          clearable
+        >
+          <el-option label="平台" :value="1" />
+          <el-option label="机器" :value="2" />
+        </el-select>
+      </el-form-item>
       <el-form-item style="margin-left: 10px">
         <el-button type="primary" @click="searchData">搜索</el-button>
         <el-button @click="resetForm">重置</el-button>
@@ -265,6 +275,18 @@
             class="offer-type-tag"
           >
             {{ offerTypeObj[scope.row.offer_type] || "" }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="报价来源" width="120">
+        <template #default="scope">
+          <el-tag
+            :type="getOfferFromType(scope.row.offer_from)"
+            size="default"
+            effect="dark"
+            class="offer-type-tag"
+          >
+            {{ scope.row.offer_from == 1 ? "平台" : "机器" }}
           </el-tag>
         </template>
       </el-table-column>
@@ -423,6 +445,17 @@ const getStatusType = order_status => {
   }
 };
 
+// 根据报价来源获取标签类型
+const getOfferFromType = offer_from => {
+  switch (offer_from) {
+    case 1:
+      return "warning";
+    case 2:
+      return "primary";
+    default:
+      return "primary";
+  }
+};
 // 根据报价类型获取标签类型
 const getOfferType = offer_type => {
   switch (offer_type) {
@@ -486,7 +519,8 @@ const formData = reactive({
   film_name: "",
   lockseat: "",
   start_time: "",
-  end_time: ""
+  end_time: "",
+  offer_from: "" // 报价来源
 });
 
 if (!IN_RULE_LIST.includes(rule)) {

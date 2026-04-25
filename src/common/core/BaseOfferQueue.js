@@ -436,6 +436,7 @@ export default class BaseOfferQueue {
         rewards: order.rewards,
         rule: tokens.userInfo.rule,
         offer_rule_id: offerResult?.offerRule?.id,
+        offer_from: 2, // 1-平台报价 2-机器报价
         adjust_price: offerResult?.offerRule?.adjustPrice,
         price_spread: offerResult?.offerRule?.price_spread
       };

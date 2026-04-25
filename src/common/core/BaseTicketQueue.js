@@ -204,7 +204,8 @@ export default class BaseTicketQueue {
         // err_info: "",
         rule: tokens.userInfo.rule,
         offer_rule_id: offerRule?.id,
-        plat_rule_id: order.rule_id // 新增一个平台报价规则id用来区分是否走的平台报价
+        plat_rule_id: order.rule_id, // 新增一个平台报价规则id用来区分是否走的平台报价
+        offer_from: 1 // 1-平台报价 2-机器报价
         // adjust_price: offerResult?.offerRule?.adjustPrice,
         // price_spread: offerResult?.offerRule?.price_spread
       };
@@ -410,7 +411,9 @@ export default class BaseTicketQueue {
         rewards: offerRule?.rewards ?? 0,
         transfer_fee: res?.transferParams?.transfer_fee ?? "",
         mobile,
-        rule
+        rule,
+        offer_from: offerRule.plat_rule_id ? 1 : 2, // 1-平台报价 2-机器报价
+        rule_id: offerRule.plat_rule_id || offerRule.offer_rule_id || ""
       };
       const targetAppInfo = GET_APP_TYPE_LIST().find(item =>
         item.app_name_list.includes(serOrderInfo.app_name)

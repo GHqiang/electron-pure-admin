@@ -61,7 +61,7 @@
           <el-option label="否" value="2" />
         </el-select>
       </el-form-item>
-      <el-form-item
+      <!-- <el-form-item
         v-if="IN_RULE_LIST.includes(rule) && orderStatus == 1"
         label="报价差异"
       >
@@ -72,6 +72,16 @@
         >
           <el-option label="是" value="1" />
           <el-option label="否" value="" />
+        </el-select>
+      </el-form-item> -->
+      <el-form-item label="报价来源">
+        <el-select
+          v-model="formData.offer_from"
+          placeholder="报价来源"
+          clearable
+        >
+          <el-option label="平台" :value="1" />
+          <el-option label="机器" :value="2" />
         </el-select>
       </el-form-item>
       <el-form-item label="订&nbsp;&nbsp;单&nbsp;&nbsp;号">
@@ -170,16 +180,6 @@
         </template>
       </el-table-column> -->
       <el-table-column prop="order_number" fixed label="订单号" width="110" />
-      <el-table-column label="报价规则 / 用券类型" width="150">
-        <template #default="scope">
-          <span
-            >{{ scope.row.rule_name || "" }}
-            <span v-if="orderStatus == 1">
-              / {{ scope.row.quan_value || "无" }}</span
-            >
-          </span>
-        </template>
-      </el-table-column>
       <el-table-column fixed label="限价 / 税前成本 " width="130">
         <template #default="scope">
           <span>
@@ -202,6 +202,28 @@
         label="成本价差"
         width="85"
       /> -->
+      <el-table-column label="报价来源" width="120">
+        <template #default="scope">
+          <el-tag
+            :type="getOfferFromType(scope.row.offer_from)"
+            size="default"
+            effect="dark"
+            class="offer-type-tag"
+          >
+            {{ scope.row.offer_from == 1 ? "平台" : "机器" }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="报价规则 / 用券类型" width="150">
+        <template #default="scope">
+          <span
+            >{{ scope.row.rule_name || "" }}
+            <span v-if="orderStatus == 1">
+              / {{ scope.row.quan_value || "无" }}</span
+            >
+          </span>
+        </template>
+      </el-table-column>
       <el-table-column
         v-if="IN_RULE_LIST.includes(rule) && orderStatus == 1"
         label="利润 / 报价"
@@ -389,6 +411,7 @@ const formData = reactive({
   order_status: "", // 报价状态
   is_deal: "", // 是否中标 1-中标 2-未中标
   is_price_diff: "", // 报价差异 1-是
+  offer_from: null, // 报价来源 1-平台 2-机器
   order_number: "", // 报价类型
   err_msg: "", // 失败原因
   quan_value: "", // 用券类型
@@ -532,9 +555,10 @@ const formatProfit = ({
   order_status,
   member_price,
   plat_name,
-  rewards = 0
+  rewards = 0,
+  offer_from
 }) => {
-  if (order_status != 1) {
+  if (order_status != 1 || offer_from == 1) {
     return;
   }
   let shouxufei = (offer_end_amount * 100) / 10000;
@@ -550,6 +574,17 @@ const formatProfit = ({
   ).toFixed(2);
 };
 
+// 根据报价来源获取标签类型
+const getOfferFromType = offer_from => {
+  switch (offer_from) {
+    case 1:
+      return "warning";
+    case 2:
+      return "primary";
+    default:
+      return "primary";
+  }
+};
 // 根据报价类型获取标签类型
 const getOfferType = offer_type => {
   switch (offer_type) {
