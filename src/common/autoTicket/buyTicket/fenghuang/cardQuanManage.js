@@ -529,6 +529,7 @@ export default class CardQuanManage {
       }
       let updateParams = {
         id: item.id,
+        app_name,
         quanStockList: JSON.stringify(quanStockList),
         update_time: getCurrentTime(),
         quan_value: item.quan_value,
@@ -939,6 +940,7 @@ export default class CardQuanManage {
           // 单个更新
           await singleUpdateQuanStock({
             id: item.id,
+            app_name,
             quanStockList: JSON.stringify(item.quanStockList),
             update_time: item.update_time,
             quan_value: item.quan_value,

@@ -985,6 +985,7 @@ export default class UmeCardQuanManage {
       }
       let updateParams = {
         id: item.id,
+        app_name,
         quanStockList: JSON.stringify(quanStockList),
         update_time: getCurrentTime(),
         quan_value: item.quan_value,

@@ -7,7 +7,14 @@ import {
   logUpload
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
+// 猎人规则同步相关方法
+import useLierenOfferRuleSyncFun from "@/mixins/useLierenOfferRuleSyncFun";
+const { lierenOfferRuleSyncPlat } = useLierenOfferRuleSyncFun();
 
+import { platTokens } from "@/store/platTokens";
+const {
+  userInfo: { rule }
+} = platTokens();
 /**
  * 异步更新券库存
  * @param {Object} params - 参数对象
@@ -148,6 +155,7 @@ export async function syncUpdateQuanStock({
         // 单个更新
         await singleUpdateQuanStock({
           id: item.id,
+          app_name,
           quan_value: item.quan_value,
           quanStockList: JSON.stringify(item.quanStockList),
           update_time: item.update_time,
@@ -164,15 +172,98 @@ export async function syncUpdateQuanStock({
 
 // 单个更新券库存
 async function singleUpdateQuanStock(obj) {
-  const { logger, quan_value, ...params } = obj;
+  const { logger, app_name, quan_value, ...params } = obj;
   try {
     const res = await svApi.updateQuanType(params);
     logger.infoSave("单个更新券库存返回", { res, params });
+    // 根据券库存检查猎人固定报价规则更新座位数
+    checkLierenFixedRuleByQuanStock(obj);
   } catch (error) {
     logger.infoSave("单个更新券库存异常", {
       error: formatErrInfo(error),
       params
     });
+  }
+}
+
+// 根据券库存检查猎人固定报价规则更新座位数
+async function checkLierenFixedRuleByQuanStock(obj) {
+  let { logger, id, app_name, quan_value, quanStockList } = obj;
+  try {
+    quanStockList = JSON.parse(quanStockList);
+    let maxQuanStock = quanStockList.reduce((pre, cur) => {
+      return pre.quan_stock > cur.quan_stock ? pre.quan_stock : cur.quan_stock;
+    });
+    logger.infoSave("最大券库存", {
+      id,
+      quan_value,
+      maxQuanStock
+    });
+    if (maxQuanStock >= 4) {
+      logger.infoSave("最大券库存超过4无需处理");
+      return;
+    }
+    let usedRules = await checkQuanInRules(app_name, quan_value);
+    // 一个规则含多个券类型的先不处理，仅过滤一个券类型的规则
+    usedRules = usedRules
+      .map(item => ({
+        ...item,
+        platOfferList: JSON.parse(item.platOfferList)
+      }))
+      .filter(
+        item =>
+          item.status == 1 &&
+          item.quanValue == quan_value &&
+          item.platOfferList.find(offer => offer.platName === "lieren")
+            ?.isSyncPlat == 1
+      );
+    if (!usedRules.length) return;
+    logger.infoSave("该券类型关联的同步到猎人平台的规则", {
+      usedRules
+    });
+    usedRules.forEach(rule => {
+      const lierenRule = { ...ruleInfo, seatNum: maxQuanStock };
+      logger.infoSave("准备同步到猎人的规则", {
+        lierenRule
+      });
+      lierenOfferRuleSyncPlat(lierenRule);
+      const jiqiuRule = {
+        ...ruleInfo,
+        seatNum: maxQuanStock,
+        platOfferList: JSON.stringify(rule.platOfferList)
+      };
+      logger.infoSave("同步修改机器的规则入参", {
+        jiqiuRule
+      });
+      svApi.updateRuleRecord(jiqiuRule);
+    });
+    // 根据quan_value检查都有哪些规则在使用且同步了平台，更新平台规则的座位数
+  } catch (error) {
+    logger.infoSave("根据券库存检查猎人固定报价规则更新座位数", {
+      error: formatErrInfo(error),
+      obj
+    });
+  }
+}
+
+// 检查券是否在报价规则中被使用
+async function checkQuanInRules(app_name, quan_value) {
+  try {
+    const res = await svApi.queryRuleList({
+      shadowLineName: app_name,
+      rule
+    });
+    let ruleRecords = res.data.ruleList || [];
+    ruleRecords = ruleRecords.filter(item => {
+      const quanValueArray = item.quanValue ? item.quanValue.split(",") : [];
+      return (
+        item.shadowLineName === app_name && quanValueArray.includes(quan_value)
+      );
+    });
+    return ruleRecords;
+  } catch (error) {
+    console.error("检查券在规则中使用情况异常", error);
+    return [];
   }
 }
 
