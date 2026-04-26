@@ -152,6 +152,10 @@ export default class BaseTicketQueue {
       let targetRule = useRuleList.find(item => item.platRuleId == platRuleId);
       // 只有匹配到规则且是固定报价才会去补全报价记录
       if (targetRule && targetRule.offerType == 1) {
+        // 补全报价记录的订单在出票时不按用户隔离登录信息
+        if (dictStore.dictInfo.lierenOfferTicketIsSplitUser == 0) {
+          order.need_unsplit_login = true;
+        }
         this.logger.infoSave(
           "机器找到匹配的固定报价规则，准备补全报价记录后出票",
           {
