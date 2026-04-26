@@ -19,7 +19,6 @@
  */
 import {
   formatErrInfo,
-  getCinemaLoginInfoList,
   sendWxPusherMessage,
   getTargetCinemaCommon,
   findMostRepeatedChars,
@@ -86,7 +85,7 @@ export default class H5UmeBuyTicket extends BaseBuyTicket {
    */
   async getCinemaLoginInfo() {
     const { appFlag } = this;
-    const targetLoginList = getCinemaLoginInfoList().filter(
+    const targetLoginList = this.getLoginInfoList().filter(
       item =>
         item.app_name === appFlag &&
         item.mobile &&

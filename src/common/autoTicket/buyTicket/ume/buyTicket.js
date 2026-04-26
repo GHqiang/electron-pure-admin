@@ -20,7 +20,6 @@
 import {
   mockDelay,
   formatErrInfo,
-  getCinemaLoginInfoList,
   sendWxPusherMessage,
   subDecimal,
   getTargetCinemaCommon,
@@ -95,7 +94,7 @@ export default class UmeBuyTicket extends BaseBuyTicket {
    */
   async getCinemaLoginInfo() {
     const { appFlag } = this;
-    let targetLoginList = getCinemaLoginInfoList().filter(
+    let targetLoginList = this.getLoginInfoList().filter(
       item =>
         item.app_name === appFlag &&
         item.mobile &&

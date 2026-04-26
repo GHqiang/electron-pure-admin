@@ -716,7 +716,7 @@ export default class CardQuanManage {
   // 获取影院券类型列表(报价时通过库存判断是否报价使用)
   async getQuanTypeListByApp() {
     const { app_name } = this.order;
-    let useMobileList = getCinemaLoginInfoList()
+    const useMobileList = getCinemaLoginInfoList(!this.order?.need_unsplit_login)
       .filter(
         item => item.app_name === app_name && item.mobile && item.session_id
       )
@@ -775,7 +775,7 @@ export default class CardQuanManage {
       logType: 1
     });
     logger.init(this.order);
-    let targetLoginList = getCinemaLoginInfoList().filter(
+    const targetLoginList = getCinemaLoginInfoList(!this.order?.need_unsplit_login).filter(
       item => item.app_name === app_name && item.mobile && item.session_id
     );
     console.log("targetLoginList", targetLoginList);
@@ -1023,7 +1023,7 @@ export default class CardQuanManage {
       let targetQuanList = quanTypeList.filter(item =>
         quanValueList.includes(item.quan_value)
       );
-      let useMobileList = getCinemaLoginInfoList()
+      const useMobileList = getCinemaLoginInfoList(!this.order?.need_unsplit_login)
         .filter(
           item => item.app_name === app_name && item.mobile && item.session_id
         )

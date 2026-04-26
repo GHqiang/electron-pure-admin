@@ -403,8 +403,13 @@ const newGetCinemaFlagFun = item => {
   }
   return appFlag;
 };
-// 获取影院标识
-const getCinemaFlag = item => {
+/**
+ * 获取影院标识
+ * @param {Object} item - 订单信息
+ * @param {boolean} isSplitUser - 是否分用户
+ * @returns {string} 影院标识
+ */
+const getCinemaFlag = (item, isSplitUser = true) => {
   const app_name = newGetCinemaFlagFun(item);
   if (!app_name) return;
   // 是否禁用h5ume系列报价
@@ -422,7 +427,7 @@ const getCinemaFlag = item => {
   }
 
   // 进行登录信息过滤
-  const isLogin = isLoginByAppName(app_name);
+  const isLogin = isLoginByAppName(app_name, isSplitUser);
   if (isLogin) return app_name;
 };
 
@@ -469,23 +474,32 @@ function convertFullwidthToHalfwidth(str) {
   return result;
 }
 
-// 某个影线是否登录
-const isLoginByAppName = (app_name, userId) => {
-  let user_id = userId || tokens?.userInfo?.user_id;
+/**
+ * 某个影院是否登录
+ * @param {string} app_name - 影院标识
+ * @param {boolean} isSplitUser - 是否分用户
+ * @returns {boolean} 是否登录
+ */
+const isLoginByAppName = (app_name, isSplitUser = true) => {
+  let user_id = tokens?.userInfo?.user_id;
   let loginInfoList = window.localStorage.getItem("loginInfoList");
   if (loginInfoList) {
     loginInfoList = JSON.parse(loginInfoList);
     loginInfoList = loginInfoList.filter(item =>
-      !item.link_user_id ? true : item.link_user_id == user_id
+      !item.link_user_id || !isSplitUser ? true : item.link_user_id == user_id
     );
     const isLogin = !!loginInfoList.find(item => item.app_name === app_name);
     return isLogin;
   }
 };
 
-// 获取影院登录信息列表
-const getCinemaLoginInfoList = userId => {
-  let user_id = userId || tokens?.userInfo?.user_id;
+/**
+ * 获取影院登录信息列表
+ * @param {boolean} isSplitUser - 是否分用户
+ * @returns {Array} 影院登录信息列表
+ */
+const getCinemaLoginInfoList = (isSplitUser = true) => {
+  let user_id = tokens?.userInfo?.user_id;
   const phone = tokens?.userInfo?.phone;
   // console.log("user_id", tokens?.userInfo?.user_id, phone);
   let loginInfoList = window.localStorage.getItem("loginInfoList");
@@ -503,7 +517,7 @@ const getCinemaLoginInfoList = userId => {
       // user_id = 10;
     }
     loginInfoList = loginInfoList.filter(item =>
-      !item.link_user_id ? true : item.link_user_id == user_id
+      !item.link_user_id || !isSplitUser ? true : item.link_user_id == user_id
     );
   }
   if (phone) {

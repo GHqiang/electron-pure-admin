@@ -48,9 +48,9 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
 
       // 先过滤出来目前已上架影院的，然后添加影院标识
       const filteredList = processedList
-        .filter(item => getCinemaFlag(item))
+        .filter(item => getCinemaFlag(item, false))
         .map(item => {
-          const app_name = getCinemaFlag(item);
+          const app_name = getCinemaFlag(item, false);
           return {
             ...item,
             app_name,

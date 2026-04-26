@@ -3,6 +3,7 @@
 
 import {
   formatErrInfo,
+  getCinemaLoginInfoList,
   mockDelay,
   sendWxPusherMessage
 } from "@/utils/utils.js";
@@ -130,6 +131,23 @@ export default class BaseBuyTicket {
    */
   async getCinemaLoginInfo() {
     throw new Error(`影院系列 ${this.appFlag} 未实现 getCinemaLoginInfo 方法`);
+  }
+
+  /**
+   * 是否按用户隔离登录信息
+   * 补全报价记录的订单需要跨用户拿登录信息
+   * @returns {boolean}
+   */
+  shouldSplitLoginByUser() {
+    return !this.order?.need_unsplit_login;
+  }
+
+  /**
+   * 获取当前订单可用的登录信息列表
+   * @returns {Array}
+   */
+  getLoginInfoList() {
+    return getCinemaLoginInfoList(this.shouldSplitLoginByUser());
   }
 
   /**

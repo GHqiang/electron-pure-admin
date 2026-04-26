@@ -25,7 +25,6 @@
  */
 import {
   formatErrInfo,
-  getCinemaLoginInfoList,
   sendWxPusherMessage,
   getTargetCinemaCommon,
   findMostRepeatedChars,
@@ -106,7 +105,7 @@ class SfcBuyTicket extends BaseBuyTicket {
    */
   async getCinemaLoginInfo() {
     const { appFlag } = this;
-    this.currentParamsList = getCinemaLoginInfoList().filter(
+    this.currentParamsList = this.getLoginInfoList().filter(
       item =>
         item.app_name === appFlag &&
         item.mobile &&

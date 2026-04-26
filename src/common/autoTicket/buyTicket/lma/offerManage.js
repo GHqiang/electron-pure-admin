@@ -415,7 +415,7 @@ class getLmaOfferPrice extends BaseOfferPrice {
       }
       if (fixedAmountRuleList.length) {
         // 校验其库存，进行过滤
-        let useMobileList = getCinemaLoginInfoList()
+        const useMobileList = getCinemaLoginInfoList(!order?.need_unsplit_login)
           .filter(
             item =>
               item.app_name === order.app_name && item.mobile && item.session_id
@@ -710,7 +710,7 @@ class getLmaOfferPrice extends BaseOfferPrice {
         }));
         this.logger.infoSave("获取该影院已维护会员卡列表返回", { list });
 
-        let useMobileList = getCinemaLoginInfoList()
+        const useMobileList = getCinemaLoginInfoList(!order?.need_unsplit_login)
           .filter(
             item => item.app_name === app_name && item.mobile && item.session_id
           )

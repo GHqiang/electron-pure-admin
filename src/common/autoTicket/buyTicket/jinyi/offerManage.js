@@ -414,7 +414,7 @@ class getJinyiOfferPrice extends BaseOfferPrice {
       // this.logger.infoSave("从座位信息获取会员价");
       let useCardMobileList = cardList?.map(item => item.mobile) || [];
       // 获取该影院的可用手机号列表
-      let useLoginList = getCinemaLoginInfoList().filter(
+      const useLoginList = getCinemaLoginInfoList(!order?.need_unsplit_login).filter(
         item =>
           item.app_name === order.app_name &&
           item.session_id &&
@@ -542,7 +542,7 @@ class getJinyiOfferPrice extends BaseOfferPrice {
   // 获取可用会员卡列表
   async fetchAvailableCards(order, cinema_id) {
     const { ticket_num, app_name } = order;
-    const useMobileList = getCinemaLoginInfoList()
+    const useMobileList = getCinemaLoginInfoList(!order?.need_unsplit_login)
       .filter(item => item.app_name === app_name && item.mobile)
       .map(item => item.mobile);
 
@@ -771,7 +771,7 @@ class getJinyiOfferPrice extends BaseOfferPrice {
       ticketNum
     );
     if (validFixedRules.length) {
-      const useMobileList = getCinemaLoginInfoList()
+      const useMobileList = getCinemaLoginInfoList(!order?.need_unsplit_login)
         .filter(
           item =>
             item.app_name === order.app_name && item.mobile && item.session_id

@@ -381,7 +381,7 @@ class getH5UmeOfferPrice extends BaseOfferPrice {
           });
         }
       }
-      let useMobileList = getCinemaLoginInfoList()
+      const useMobileList = getCinemaLoginInfoList(!order?.need_unsplit_login)
         .filter(
           item =>
             item.app_name === order.app_name && item.mobile && item.session_id
@@ -865,7 +865,7 @@ class getH5UmeOfferPrice extends BaseOfferPrice {
     const { appFlag } = this;
     let { cinemaLinkId, hallId, scheduleId, scheduleKey, seatIds, session_id } =
       data;
-    let targetLoginList = getCinemaLoginInfoList().filter(
+    const targetLoginList = getCinemaLoginInfoList(!this.order?.need_unsplit_login).filter(
       item =>
         item.app_name === appFlag &&
         item.mobile &&
@@ -955,7 +955,7 @@ class getH5UmeOfferPrice extends BaseOfferPrice {
           : item.monthly_usage || 0
       }));
       this.logger.infoSave("获取该影院已维护会员卡列表返回", { list });
-      let useMobileList = getCinemaLoginInfoList()
+      const useMobileList = getCinemaLoginInfoList(!this.order?.need_unsplit_login)
         .filter(
           item => item.app_name === app_name && item.mobile && item.session_id
         )

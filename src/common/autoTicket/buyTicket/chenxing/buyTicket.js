@@ -17,12 +17,7 @@
  *
  * @module chenxing/buyTicket
  */
-import {
-  formatErrInfo,
-  getCinemaLoginInfoList,
-  sendWxPusherMessage,
-  subDecimal
-} from "@/utils/utils";
+import { formatErrInfo, sendWxPusherMessage, subDecimal } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { GET_APP_INFO } from "@/common/constant";
 // 统一日志类
@@ -80,7 +75,7 @@ class ChenxingBuyTicket extends BaseBuyTicket {
    * 设置 this.currentParamsList 和 this.currentParamsInx = 0
    */
   getCinemaLoginInfo() {
-    this.currentParamsList = getCinemaLoginInfoList().filter(
+    this.currentParamsList = this.getLoginInfoList().filter(
       item =>
         item.app_name === this.appFlag &&
         item.mobile &&

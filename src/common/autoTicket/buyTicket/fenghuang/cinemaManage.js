@@ -340,7 +340,7 @@ export default class CinemaManage {
     this.logger.infoSave("获取该影院已维护会员卡列表返回", { list });
 
     // 获取该影院的可用手机号列表
-    let useMobileList = getCinemaLoginInfoList()
+    let useMobileList = getCinemaLoginInfoList(!this.order.need_unsplit_login)
       .filter(
         item => item.app_name === this.appFlag && item.mobile && item.session_id
       )

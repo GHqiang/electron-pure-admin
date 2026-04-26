@@ -525,7 +525,7 @@ class getChenxingOfferPrice extends BaseOfferPrice {
    */
   async fetchAvailableCards(order, cinemaCode) {
     const { ticket_num, app_name } = order;
-    const useMobileList = getCinemaLoginInfoList()
+    const useMobileList = getCinemaLoginInfoList(!order?.need_unsplit_login)
       .filter(item => item.app_name === app_name && item.mobile)
       .map(item => item.mobile);
 
@@ -764,7 +764,7 @@ class getChenxingOfferPrice extends BaseOfferPrice {
       ticketNum
     );
     if (validFixedRules.length) {
-      const useMobileList = getCinemaLoginInfoList()
+      const useMobileList = getCinemaLoginInfoList(!order?.need_unsplit_login)
         .filter(
           item =>
             item.app_name === order.app_name && item.mobile && item.session_id

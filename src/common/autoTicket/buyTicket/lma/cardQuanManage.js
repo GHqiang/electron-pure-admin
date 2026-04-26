@@ -302,7 +302,7 @@ export default class LmaCardQuanManage {
       }));
       this.logger.infoSave("获取会员卡维护列表返回", { list });
 
-      let useMobileList = getCinemaLoginInfoList()
+      const useMobileList = getCinemaLoginInfoList(!this.order?.need_unsplit_login)
         .filter(
           item => item.app_name === appFlag && item.mobile && item.session_id
         )

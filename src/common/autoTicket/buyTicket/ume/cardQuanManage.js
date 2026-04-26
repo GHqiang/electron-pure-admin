@@ -260,7 +260,7 @@ export default class UmeCardQuanManage {
       this.logger.infoSave("获取该影院已维护会员卡列表返回", {
         list
       });
-      let useMobileList = getCinemaLoginInfoList()
+      const useMobileList = getCinemaLoginInfoList(!this.order?.need_unsplit_login)
         .filter(
           item => item.app_name === appFlag && item.mobile && item.session_id
         )
@@ -372,7 +372,7 @@ export default class UmeCardQuanManage {
       let targetQuanList = quanTypeList.filter(item =>
         quanValueList.includes(item.quan_value)
       );
-      let useMobileList = getCinemaLoginInfoList()
+      const useMobileList = getCinemaLoginInfoList(!this.order?.need_unsplit_login)
         .filter(
           item => item.app_name === app_name && item.mobile && item.session_id
         )

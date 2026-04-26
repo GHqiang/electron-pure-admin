@@ -353,7 +353,7 @@ class getUmeOfferPrice extends BaseOfferPrice {
           });
         }
       }
-      let useMobileList = getCinemaLoginInfoList()
+      const useMobileList = getCinemaLoginInfoList(!order?.need_unsplit_login)
         .filter(
           item =>
             item.app_name === order.app_name && item.mobile && item.session_id
@@ -660,7 +660,7 @@ class getUmeOfferPrice extends BaseOfferPrice {
             : item.monthly_usage || 0
         }));
         this.logger.infoSave("获取该影院已维护会员卡列表返回", { list });
-        let useMobileList = getCinemaLoginInfoList()
+        const useMobileList = getCinemaLoginInfoList(!order?.need_unsplit_login)
           .filter(
             item => item.app_name === app_name && item.mobile && item.session_id
           )

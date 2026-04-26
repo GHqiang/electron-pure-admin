@@ -20,7 +20,6 @@
 import {
   mockDelay, // 模拟延时
   formatErrInfo, // 格式化错误信息
-  getCinemaLoginInfoList,
   sendWxPusherMessage,
   randomNumByLength,
   subDecimal
@@ -86,7 +85,7 @@ class JinyiBuyTicket extends BaseBuyTicket {
    * 设置 this.currentParamsList 和 this.currentParamsInx = 0
    */
   getCinemaLoginInfo() {
-    this.currentParamsList = getCinemaLoginInfoList().filter(
+    this.currentParamsList = this.getLoginInfoList().filter(
       item =>
         item.app_name === this.appFlag &&
         item.mobile &&

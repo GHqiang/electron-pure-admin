@@ -86,7 +86,7 @@ export default class LmaBuyTicket extends BaseBuyTicket {
    */
   async getCinemaLoginInfo() {
     const { appFlag } = this;
-    let targetLoginList = getCinemaLoginInfoList().filter(
+    let targetLoginList = this.getLoginInfoList().filter(
       item =>
         item.app_name === appFlag &&
         item.mobile &&
@@ -943,10 +943,8 @@ export default class LmaBuyTicket extends BaseBuyTicket {
       let targetQuanList = quanTypeList.filter(item =>
         quanValueList.includes(item.quan_value)
       );
-      let useMobileList = getCinemaLoginInfoList()
-        .filter(
-          item => item.app_name === app_name && item.mobile && item.session_id
-        )
+      const useMobileList = this.getLoginInfoList()
+        .filter(item => item.app_name === app_name && item.mobile && item.session_id)
         .map(item => item.mobile);
       this.logger.infoSave("获取影院目标券信息返回", {
         targetQuanList: JSON.parse(JSON.stringify(targetQuanList)),

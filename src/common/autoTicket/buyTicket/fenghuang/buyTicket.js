@@ -19,7 +19,6 @@
  */
 import {
   formatErrInfo,
-  getCinemaLoginInfoList,
   sendWxPusherMessage,
   subDecimal,
   mockDelay
@@ -85,7 +84,7 @@ class FenghuangBuyTicket extends BaseBuyTicket {
    * 设置 this.currentParamsList 和 this.currentParamsInx = 0
    */
   getCinemaLoginInfo() {
-    this.currentParamsList = getCinemaLoginInfoList().filter(
+    this.currentParamsList = this.getLoginInfoList().filter(
       item =>
         item.app_name === this.appFlag &&
         item.mobile &&
