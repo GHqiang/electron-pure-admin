@@ -199,10 +199,6 @@ async function checkLierenFixedRuleByQuanStock(obj) {
       quan_value,
       maxQuanStock
     });
-    if (maxQuanStock >= 4) {
-      logger.infoSave("最大券库存超过4无需处理");
-      return;
-    }
     let usedRules = await checkQuanInRules(app_name, quan_value);
     // 一个规则含多个券类型的先不处理，仅过滤一个券类型的规则
     usedRules = usedRules
@@ -222,14 +218,25 @@ async function checkLierenFixedRuleByQuanStock(obj) {
       usedRules
     });
     usedRules.forEach(rule => {
-      const lierenRule = { ...rule, seatNum: maxQuanStock };
+      // 目标座位数，最大券库存超过4时为4，不超过4时为库存数
+      let targetSeatNum = maxQuanStock >= 4 ? 4 : maxQuanStock;
+      let status = targetSeatNum == 0 ? "2" : "1"; // 券库存为0时规则状态改为关闭
+      if (status == 2) {
+        targetSeatNum = undefined;
+      }
+      const lierenRule = {
+        ...rule,
+        seatNum: rule.seatNum || targetSeatNum,
+        status
+      };
       logger.infoSave("准备同步到猎人的规则", {
         lierenRule
       });
       lierenOfferRuleSyncPlat(lierenRule);
       const jiqiuRule = {
         ...rule,
-        seatNum: maxQuanStock,
+        seatNum: rule.seatNum || targetSeatNum,
+        status,
         platOfferList: JSON.stringify(rule.platOfferList)
       };
       logger.infoSave("同步修改机器的规则入参", {
