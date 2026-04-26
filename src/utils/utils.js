@@ -3062,7 +3062,19 @@ function getLongestPart(str, delimiterRegex = /[·:：\s\-_、，,]+/) {
   );
 }
 
+/**
+ * 判断当前时间（本地时间）是否在x-y 时间段内
+ * @returns {boolean} true 表示在区间内，false 表示不在
+ */
+function isCurrentTimeInRange(x, y) {
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const startMinutes = x * 60; // x:00 = x*60 分钟
+  const endMinutes = y * 60; // y:00 = y*60 分钟
+  return currentMinutes > startMinutes && currentMinutes < endMinutes;
+}
 export {
+  isCurrentTimeInRange, // 判断当前时间（本地时间）是否在x-y 时间段内
   getLongestPart, // 将字符串按特殊字符分割，并返回长度最长的子串
   parseNumericRule, // 辰星3.0C特殊规则名称解析，是数字则返回数字
   getMovieInfoFromFilmName, // 根据影片名获取电影信息

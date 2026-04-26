@@ -1,7 +1,11 @@
 // 报价基类
 // 提取所有影院系列报价的公共逻辑
 
-import { formatErrInfo, calculateMarkup } from "@/utils/utils.js";
+import {
+  formatErrInfo,
+  calculateMarkup,
+  isCurrentTimeInRange
+} from "@/utils/utils.js";
 import { dictTable } from "@/store/dictTable";
 const dictStore = dictTable();
 /**
@@ -54,9 +58,21 @@ export default class BaseOfferPrice {
       // fixedOfferToPlatList：允许固定报价是否走平台的平台类型数组;
       const fixedOfferToPlatList =
         dictStore.dictInfo.fixedOfferToPlatList?.split(",") || [];
+      // 猎人固定报价走平台的时间范围9-23
+      const lierenFixedOfferToPlatTimeRange =
+        dictStore.dictInfo.lierenFixedOfferToPlatTimeRange?.split(",");
+      // 报价走平台时间检查
+      const offferIsToPlatTimeCheck =
+        this.plat_name == "lieren"
+          ? isCurrentTimeInRange(
+              lierenFixedOfferToPlatTimeRange[0],
+              lierenFixedOfferToPlatTimeRange[1]
+            )
+          : true;
       if (
         fixedOfferToPlatList.includes(this.plat_name) &&
         offerRule.offerType === "1" &&
+        offferIsToPlatTimeCheck &&
         offerRule.platOfferList?.find(item => item.platName === this.plat_name)
           ?.isSyncPlat == 1
       ) {
