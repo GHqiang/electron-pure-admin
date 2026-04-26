@@ -57,7 +57,7 @@ export default class BaseOfferPrice {
       if (
         fixedOfferToPlatList.includes(this.plat_name) &&
         offerRule.offerType === "1" &&
-        offerRule.platOfferList?.find(item => item.platName === plat_name)
+        offerRule.platOfferList?.find(item => item.platName === this.plat_name)
           ?.isSyncPlat == 1
       ) {
         this.logger.errorSave("该规则由平台进行报价");

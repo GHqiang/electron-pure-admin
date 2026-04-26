@@ -82,8 +82,57 @@ const fileListTotal: number[] = [];
 /** 获取指定文件夹中所有文件的总大小 */
 const getPackageSize = options => {
   const { folder = "dist", callback, format = true } = options;
+  // #region agent log
+  fetch("http://127.0.0.1:7396/ingest/094c187b-bcee-4e28-85a1-e8a88da1510c", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Debug-Session-Id": "8c7f90"
+    },
+    body: JSON.stringify({
+      sessionId: "8c7f90",
+      runId: "pre-fix",
+      hypothesisId: "H4",
+      location: "build/utils.ts:getPackageSize:85",
+      message: "getPackageSize entry",
+      data: { folder, format },
+      timestamp: Date.now()
+    })
+  }).catch(() => {});
+  // #endregion
   readdir(folder, (err, files: string[]) => {
-    if (err) throw err;
+    if (err) {
+      // #region agent log
+      fetch(
+        "http://127.0.0.1:7396/ingest/094c187b-bcee-4e28-85a1-e8a88da1510c",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Debug-Session-Id": "8c7f90"
+          },
+          body: JSON.stringify({
+            sessionId: "8c7f90",
+            runId: "pre-fix",
+            hypothesisId: "H4",
+            location: "build/utils.ts:getPackageSize:88",
+            message: "readdir failed",
+            data: {
+              folder,
+              errorCode: err?.code,
+              errorMessage: err?.message
+            },
+            timestamp: Date.now()
+          })
+        }
+      ).catch(() => {});
+      // #endregion
+      if (err?.code === "ENOENT") {
+        callback(format ? formatBytes(0) : 0);
+        return;
+      }
+      throw err;
+    }
     let count = 0;
     const checkEnd = () => {
       ++count == files.length &&

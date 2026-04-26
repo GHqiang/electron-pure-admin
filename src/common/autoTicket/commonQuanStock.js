@@ -171,7 +171,7 @@ export async function syncUpdateQuanStock({
 }
 
 // 单个更新券库存
-async function singleUpdateQuanStock(obj) {
+export async function singleUpdateQuanStock(obj) {
   const { logger, app_name, quan_value, ...params } = obj;
   try {
     const res = await svApi.updateQuanType(params);
@@ -192,8 +192,8 @@ async function checkLierenFixedRuleByQuanStock(obj) {
   try {
     quanStockList = JSON.parse(quanStockList);
     let maxQuanStock = quanStockList.reduce((pre, cur) => {
-      return pre.quan_stock > cur.quan_stock ? pre.quan_stock : cur.quan_stock;
-    });
+      return pre.quan_stock > cur.quan_stock ? pre : cur;
+    })?.quan_stock;
     logger.infoSave("最大券库存", {
       id,
       quan_value,
@@ -222,13 +222,13 @@ async function checkLierenFixedRuleByQuanStock(obj) {
       usedRules
     });
     usedRules.forEach(rule => {
-      const lierenRule = { ...ruleInfo, seatNum: maxQuanStock };
+      const lierenRule = { ...rule, seatNum: maxQuanStock };
       logger.infoSave("准备同步到猎人的规则", {
         lierenRule
       });
       lierenOfferRuleSyncPlat(lierenRule);
       const jiqiuRule = {
-        ...ruleInfo,
+        ...rule,
         seatNum: maxQuanStock,
         platOfferList: JSON.stringify(rule.platOfferList)
       };
