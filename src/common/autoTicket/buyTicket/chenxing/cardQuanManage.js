@@ -720,7 +720,9 @@ export default class CardQuanManage {
   // 获取影院券类型列表(报价时通过库存判断是否报价使用)
   async getQuanTypeListByApp() {
     const { app_name } = this.order;
-    const useMobileList = getCinemaLoginInfoList(!this.order?.need_unsplit_login)
+    const useMobileList = getCinemaLoginInfoList(
+      !this.order?.need_unsplit_login
+    )
       .filter(
         item => item.app_name === app_name && item.mobile && item.session_id
       )
@@ -778,7 +780,9 @@ export default class CardQuanManage {
       logType: 1
     });
     logger.init(this.order);
-    const targetLoginList = getCinemaLoginInfoList(!this.order?.need_unsplit_login).filter(
+    const targetLoginList = getCinemaLoginInfoList(
+      !this.order?.need_unsplit_login
+    ).filter(
       item => item.app_name === app_name && item.mobile && item.session_id
     );
     console.log("targetLoginList", targetLoginList);
@@ -922,17 +926,17 @@ export default class CardQuanManage {
         for (let index = 0; index < updateTypeList.length; index++) {
           const item = updateTypeList[index];
           // 打印单个更新前的信息
-          logger.infoSave(`开始更新券类型库存`, {
-            id: item.id,
-            quanFlag: item.quanFlag,
-            quan_value: item.quan_value,
-            updateTime: item.update_time,
-            stockByPhone: item.quanStockList.map(stock => ({
-              phone: stock.phone,
-              quan_stock: stock.quan_stock,
-              real_quan_stock: stock.real_quan_stock
-            }))
-          });
+          // logger.infoSave(`开始更新券类型库存`, {
+          //   id: item.id,
+          //   quanFlag: item.quanFlag,
+          //   quan_value: item.quan_value,
+          //   updateTime: item.update_time,
+          //   stockByPhone: item.quanStockList.map(stock => ({
+          //     phone: stock.phone,
+          //     quan_stock: stock.quan_stock,
+          //     real_quan_stock: stock.real_quan_stock
+          //   }))
+          // });
 
           // 单个更新
           await singleUpdateQuanStock({
@@ -944,12 +948,12 @@ export default class CardQuanManage {
             logger
           });
 
-          // 打印单个更新后的信息
-          logger.infoSave(`完成更新券类型库存`, {
-            id: item.id,
-            quanFlag: item.quanFlag,
-            quan_value: item.quan_value
-          });
+          // // 打印单个更新后的信息
+          // logger.infoSave(`完成更新券类型库存`, {
+          //   id: item.id,
+          //   quanFlag: item.quanFlag,
+          //   quan_value: item.quan_value
+          // });
         }
       }
     } catch (error) {
@@ -1108,7 +1112,9 @@ export default class CardQuanManage {
       let targetQuanList = quanTypeList.filter(item =>
         quanValueList.includes(item.quan_value)
       );
-      const useMobileList = getCinemaLoginInfoList(!this.order?.need_unsplit_login)
+      const useMobileList = getCinemaLoginInfoList(
+        !this.order?.need_unsplit_login
+      )
         .filter(
           item => item.app_name === app_name && item.mobile && item.session_id
         )

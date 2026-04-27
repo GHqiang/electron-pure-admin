@@ -194,11 +194,11 @@ async function checkLierenFixedRuleByQuanStock(obj) {
     let maxQuanStock = quanStockList.reduce((pre, cur) => {
       return pre.quan_stock > cur.quan_stock ? pre : cur;
     })?.quan_stock;
-    logger.infoSave("最大券库存", {
-      id,
-      quan_value,
-      maxQuanStock
-    });
+    // logger.infoSave("最大券库存", {
+    //   id,
+    //   quan_value,
+    //   maxQuanStock
+    // });
     let usedRules = await checkQuanInRules(app_name, quan_value);
     // 一个规则含多个券类型的先不处理，仅过滤一个券类型的规则
     usedRules = usedRules

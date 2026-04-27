@@ -241,6 +241,7 @@ export default class BaseOfferQueue {
       if (this.isRunning || this.isTestOrder) {
         const logger = new Logger({ logType: 1 });
         logger.init(order);
+        const orderHandleStartAt = Date.now();
         let offerResult;
         const minOfferHandleEndTime = dictStore.dictInfo.minOfferHandleEndTime;
         const offerHandleTimeout =
@@ -258,7 +259,13 @@ export default class BaseOfferQueue {
             }
           );
         } else {
-          logger.infoSave("开始处理订单", { order });
+          // logger.infoSave("开始处理订单", { order });
+          logger.infoSave("订单报价链路开始", {
+            order_number: order.order_number,
+            app_name: order.app_name,
+            offerHandleTimeout,
+            orderHandleStartAt
+          });
           // 为防止下游接口异常导致 Promise 长时间不结束，这里增加整体超时保护，避免队列被单个订单永久阻塞
           offerResult = await Promise.race([
             this.singleOffer({
@@ -280,6 +287,14 @@ export default class BaseOfferQueue {
               }, offerHandleTimeout)
             )
           ]);
+          logger.infoSave("订单报价链路竞速结果", {
+            order_number: order.order_number,
+            elapsedMs: Date.now() - orderHandleStartAt,
+            hasOfferResult: !!offerResult,
+            hasSubmitResult: !!offerResult?.res,
+            hasOfferRule: !!offerResult?.offerRule,
+            err_msg: offerResult?.err_msg || ""
+          });
         }
         console.warn("订单处理完成", offerResult);
         await this.addOrderHandleRecord(order, offerResult, logger);
@@ -303,6 +318,11 @@ export default class BaseOfferQueue {
   async singleOffer({ order, offerList = [], logger }) {
     const log = logger ?? this.logger;
     try {
+      log.infoSave("进入 singleOffer", {
+        order_number: order.order_number,
+        app_name: order.app_name,
+        plat_name: order.plat_name
+      });
       // 获取报价价格
       const offerExample = getOfferPriceFun({
         appFlag: order.app_name,
@@ -318,6 +338,13 @@ export default class BaseOfferQueue {
       const result = await offerExample.getEndOfferPrice({
         order,
         offerList
+      });
+      log.infoSave("getEndOfferPrice 返回", {
+        order_number: order.order_number,
+        hasResult: !!result,
+        hasEndPrice: !!result?.endPrice,
+        hasOfferRule: !!result?.offerRule,
+        err_msg: result?.err_msg || ""
       });
 
       // result: {endPrice, offerRule} | {offerRule, err_msg, err_info} | {err_msg, err_info}
@@ -362,6 +389,11 @@ export default class BaseOfferQueue {
         memberPrice: member_price,
         offerRule
       });
+      log.infoSave("准备提交报价", {
+        order_number: order.order_number,
+        finalPrice,
+        hasRuleId: !!rule_id
+      });
       if (this.isTestOrder) {
         log.infoSave("测试单不提交报价", offerParams);
         return { res: { msg: "测试单暂不报价" }, offerRule };
@@ -404,6 +436,12 @@ export default class BaseOfferQueue {
     try {
       // offerResult: { res, offerRule } || { offerRule } || undefined
       const errInfoObj = log.getLastErrMsgAndInfo();
+      log.infoSave("准备写入报价记录", {
+        order_number: order.order_number,
+        hasOfferResult: !!offerResult,
+        hasSubmitResult: !!offerResult?.res,
+        hasOfferRule: !!offerResult?.offerRule
+      });
 
       const serOrderInfo = {
         plat_name: this.platName,
@@ -454,6 +492,10 @@ export default class BaseOfferQueue {
       if (shouldSave) {
         console.warn("数据库存储当前订单报价记录", serOrderInfo);
         await svApi.addOfferRecord(serOrderInfo);
+        log.infoSave("报价记录入库成功", {
+          order_number: order.order_number,
+          order_status: serOrderInfo.order_status
+        });
       }
     } catch (error) {
       console.error("添加订单处理记录异常", error);
