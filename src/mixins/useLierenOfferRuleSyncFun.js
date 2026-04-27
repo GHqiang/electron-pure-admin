@@ -258,22 +258,21 @@ export default function useLierenOfferRuleSyncFun() {
         lieren_ak: lierenMainAccountAkSk?.[0] || "",
         lieren_sk: lierenMainAccountAkSk?.[1] || ""
       });
-      const lierenRuleList = lierenRuleRes?.data || [];
-      console.warn("同步到猎人平台需启用的规则列表", lierenRuleList);
-
+      let lierenRuleList = lierenRuleRes?.data || [];
+      console.warn("同步到猎人平台应该启用的规则列表", lierenRuleList);
+      lierenRuleList = lierenRuleList.filter(item => item.state == 0);
+      console.warn("猎人平台需重新启用的规则列表", lierenRuleList);
       // 针对应该重新启用的规则，启用规则并同步到平台
-      lierenRuleList
-        .filter(item => item.state == 0)
-        .forEach(item => {
-          const params = {
-            rule_id: item.rule_id,
-            state: 1,
-            lieren_ak: lierenMainAccountAkSk?.[0] || "",
-            lieren_sk: lierenMainAccountAkSk?.[1] || ""
-          };
-          // console.log("启用规则入参", params);
-          lierenApi.ruleState(params);
-        });
+      lierenRuleList.forEach(item => {
+        const params = {
+          rule_id: [item.rule_id],
+          state: 1,
+          lieren_ak: lierenMainAccountAkSk?.[0] || "",
+          lieren_sk: lierenMainAccountAkSk?.[1] || ""
+        };
+        // console.log("启用规则入参", params);
+        lierenApi.ruleState(params);
+      });
     } catch (error) {
       console.warn("检查并更新同步到猎人的规则状态异常", error);
     }
