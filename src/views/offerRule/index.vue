@@ -91,7 +91,17 @@
               />
             </el-select>
           </el-form-item>
-
+          <el-form-item label="同步平台">
+            <el-select
+              v-model="formData.is_sync_plat"
+              placeholder="请选择是否同步平台"
+              style="width: 194px"
+              clearable
+            >
+              <el-option label="是" :value="1" />
+              <el-option label="否" :value="0" />
+            </el-select>
+          </el-form-item>
           <el-form-item label="规则备注">
             <el-input
               v-model="formData.remark"
@@ -471,7 +481,8 @@ const formData = reactive({
   status: "", // 状态
   offerType: "", // 报价类型
   quanValue: "", // 用券类型
-  remark: "" // 备注
+  remark: "", // 备注
+  is_sync_plat: null // 是否同步平台 1:是 0:否
 });
 
 formData.rule = rule;
@@ -480,7 +491,7 @@ formData.rule = rule;
 const nodeClick = nodeData => {
   console.log("nodeData", nodeData);
   if (nodeData.id < 100) {
-    formData.app_type = nodeData.value;
+    formData.app_type = "nodeData.value";
     formData.shadowLineName = "";
   } else {
     formData.shadowLineName = nodeData.value;
@@ -747,6 +758,12 @@ const saveRule = async ruleInfo => {
         }))
       )
     };
+    // 是否同步平台
+    ruleInfo.is_sync_plat = ruleInfo.platOfferList.find(
+      item => item.isSyncPlat == 1 && item.platName == "lieren"
+    )
+      ? 1
+      : 0;
     ruleInfo.platOfferList = JSON.stringify(ruleInfo.platOfferList || []);
     if (ruleInfo.id) {
       console.log("编辑保存规则", jiqiRuleInfo);
