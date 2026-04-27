@@ -729,11 +729,6 @@ const saveRule = async ruleInfo => {
     ruleInfo.orderForm = (ruleInfo.platOfferList || [])
       .map(item => item.platName)
       .join();
-    ruleInfo.platOfferList = ruleInfo.platOfferList.map(item => ({
-      ...item,
-      platRuleId: item.isSyncPlat == 1 ? item.platRuleId : undefined // 如果不同步平台则不传platRuleId
-    }));
-    ruleInfo.platOfferList = JSON.stringify(ruleInfo.platOfferList || []);
     ruleInfo.weekDay = JSON.stringify(ruleInfo.weekDay);
     ruleInfo.update_time = getCurrentTime();
     ruleInfo.rule = rule;
@@ -743,16 +738,26 @@ const saveRule = async ruleInfo => {
     if (targetInfo) {
       ruleInfo.app_type = targetInfo.app_type_code;
     }
+    let jiqiRuleInfo = {
+      ...ruleInfo,
+      platOfferList: JSON.stringify(
+        ruleInfo.platOfferList.map(item => ({
+          ...item,
+          platRuleId: item.isSyncPlat == 1 ? item.platRuleId : undefined // 如果不同步平台则不传platRuleId
+        }))
+      )
+    };
+    ruleInfo.platOfferList = JSON.stringify(ruleInfo.platOfferList || []);
     if (ruleInfo.id) {
-      console.log("编辑保存规则", ruleInfo);
-      await svApi.updateRuleRecord(ruleInfo);
+      console.log("编辑保存规则", jiqiRuleInfo);
+      await svApi.updateRuleRecord(jiqiRuleInfo);
       // 同步规则到平台
       await saveRuleSyncToPlat(ruleInfo);
       sfcDialogRef.value.closeTck();
       searchData();
     } else {
-      console.log("新增保存规则", ruleInfo);
-      await svApi.addRuleRecord({ ...ruleInfo, id: undefined });
+      console.log("新增保存规则", jiqiRuleInfo);
+      await svApi.addRuleRecord({ ...jiqiRuleInfo, id: undefined });
       // 同步规则到平台
       await saveRuleSyncToPlat(ruleInfo);
       sfcDialogRef.value.closeTck();
