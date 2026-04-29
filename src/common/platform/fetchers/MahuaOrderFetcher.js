@@ -119,7 +119,7 @@ export default class MahuaOrderFetcher extends BaseOrderFetcher {
               info: {
                 newOrder: item,
                 oldOrder: rawStayList.find(
-                  order => order.order_number === item.order_number
+                  order => order.id === item.order_number
                 )
               }
             }

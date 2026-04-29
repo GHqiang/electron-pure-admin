@@ -237,9 +237,9 @@ export default class BaseOfferQueue {
    * @returns {Promise<Object>} 处理结果
    */
   async orderHandle(order) {
+    const logger = new Logger({ logType: 1 });
     try {
       if (this.isRunning || this.isTestOrder) {
-        const logger = new Logger({ logType: 1 });
         logger.init(order);
         const orderHandleStartAt = Date.now();
         let offerResult;
@@ -304,6 +304,8 @@ export default class BaseOfferQueue {
         console.warn("订单报价队列已停止");
       }
     } catch (error) {
+      logger.errorSave("订单执行报价异常", { error });
+      logger.logUpload();
       console.error("订单执行报价异常", error);
     }
   }

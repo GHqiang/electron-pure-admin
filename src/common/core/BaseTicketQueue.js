@@ -416,8 +416,8 @@ export default class BaseTicketQueue {
         transfer_fee: res?.transferParams?.transfer_fee ?? "",
         mobile,
         rule,
-        offer_from: offerRule.plat_rule_id ? 1 : 2, // 1-平台报价 2-机器报价
-        rule_id: offerRule.plat_rule_id || offerRule.offer_rule_id || ""
+        offer_from: offerRule?.plat_rule_id ? 1 : 2, // 1-平台报价 2-机器报价
+        rule_id: offerRule?.plat_rule_id || offerRule?.offer_rule_id || ""
       };
       const targetAppInfo = GET_APP_TYPE_LIST().find(item =>
         item.app_name_list.includes(serOrderInfo.app_name)
