@@ -226,10 +226,21 @@ async function checkLierenFixedRuleByQuanStock(obj) {
       if (status == 2) {
         targetSeatNum = undefined;
       }
+      if (rule.seatNum == targetSeatNum && rule.status == status) {
+        logger.infoSave("规则座位数和状态与目标一致，无需更新", {
+          ruleId: rule.id,
+          currentSeatNum: rule.seatNum,
+          currentStatus: rule.status,
+          targetSeatNum,
+          targetStatus: status
+        });
+        return;
+      }
       const lierenRule = {
         ...rule,
         seatNum: rule.seatNum || targetSeatNum,
-        status
+        status,
+        allow_offer_time: rule.allow_offer_time || null // 空字符串传到后端会报错，字段类型不匹配，改为null
       };
       logger.infoSave("准备同步到猎人的规则", {
         lierenRule
