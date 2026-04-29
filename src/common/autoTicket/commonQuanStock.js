@@ -55,6 +55,7 @@ export async function syncUpdateQuanStock({
         return true;
       }
     });
+    // isNeedUpdate = true; // 测试先强制更新
     if (!isNeedUpdate) {
       logger.infoSave("不满足更新条件");
     } else {
@@ -82,6 +83,7 @@ export async function syncUpdateQuanStock({
         const quanListAll = await getQuanListByPhone({
           session_id,
           ...extraParams,
+          order,
           logger
         });
 

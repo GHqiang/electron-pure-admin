@@ -486,7 +486,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           //   newTid
           // });
         }
-
+        await mockDelay(0.5);
         return sidRes;
       } catch (error) {
         logger.errorSave("SID续期请求失败", {

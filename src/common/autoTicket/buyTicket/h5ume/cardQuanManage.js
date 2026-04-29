@@ -74,7 +74,13 @@ export default class H5UmeCardQuanManage {
    * @returns {Promise<Array>} 券列表
    */
   async continuousGetQuan(data) {
-    let { session_id, pageNo = 1, pageSize = 100, quanData = [] } = data;
+    let {
+      session_id,
+      pageNo = 1,
+      pageSize = 100,
+      quanData = [],
+      currentMobile
+    } = data;
     let params = {
       state: "USEFUL",
       pageNo,
@@ -82,11 +88,11 @@ export default class H5UmeCardQuanManage {
       umeToken: session_id
     };
     try {
-      this.logger.infoSave("连续获取券参数", params);
+      this.logger.infoSave(currentMobile + "连续获取券参数", params);
       const res = await this.appApi.getQuanList(params);
       let quanList = res.bizValue || [];
 
-      this.logger.infoSave("连续获取券返回", {
+      this.logger.infoSave(currentMobile + "连续获取券返回", {
         quanList: quanList.map(item => ({
           name: item.name,
           couponCode: item.couponCode
@@ -257,7 +263,9 @@ export default class H5UmeCardQuanManage {
       let targetQuanList = quanTypeList.filter(item =>
         quanValueList.includes(item.quan_value)
       );
-      const useMobileList = getCinemaLoginInfoList(!this.order?.need_unsplit_login)
+      const useMobileList = getCinemaLoginInfoList(
+        !this.order?.need_unsplit_login
+      )
         .filter(
           item => item.app_name === app_name && item.mobile && item.session_id
         )
@@ -331,7 +339,9 @@ export default class H5UmeCardQuanManage {
           : item.monthly_usage || 0
       }));
       this.logger.infoSave("获取该影院已维护会员卡列表返回", { list });
-      const useMobileList = getCinemaLoginInfoList(!this.order?.need_unsplit_login)
+      const useMobileList = getCinemaLoginInfoList(
+        !this.order?.need_unsplit_login
+      )
         .filter(
           item => item.app_name === appFlag && item.mobile && item.session_id
         )

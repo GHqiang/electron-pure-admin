@@ -345,7 +345,7 @@ class SfcBuyTicket extends BaseBuyTicket {
           .replaceAll("列", "号");
         const selectSeatList = seatName.split(",");
         const targetList = seatList.filter(s => selectSeatList.includes(s[5]));
-        if (targetList?.length !== ticket_num) {
+        if (targetList?.length != ticket_num) {
           this.logger.errorSave("获取目标座位失败", { targetList, ticket_num });
           return { transferParams: await transferWithUnlock(unlockInfo()) };
         }
