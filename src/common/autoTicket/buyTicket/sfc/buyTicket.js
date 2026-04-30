@@ -33,7 +33,8 @@ import {
   getPreviousDay,
   subDecimal,
   trial,
-  getOfferRuleById
+  getOfferRuleById,
+  mockDelay
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index";
@@ -386,8 +387,12 @@ class SfcBuyTicket extends BaseBuyTicket {
             currentParamsList: this.currentParamsList
           }
         );
-        if (offerRule?.old_quan_value)
+        // 换号时恢复原先券类型
+        if (offerRule?.old_quan_value) {
           offerRule.quan_value = offerRule.old_quan_value;
+        }
+        // 换号时等待1秒，避免被风控检测到一个ip快速换号
+        await mockDelay(1);
       }
 
       // 记录当前使用的手机号，出票失败消息会带上（最后失败的手机号）

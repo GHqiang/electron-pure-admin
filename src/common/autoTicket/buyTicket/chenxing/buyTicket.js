@@ -17,7 +17,12 @@
  *
  * @module chenxing/buyTicket
  */
-import { formatErrInfo, sendWxPusherMessage, subDecimal } from "@/utils/utils";
+import {
+  formatErrInfo,
+  sendWxPusherMessage,
+  subDecimal,
+  mockDelay
+} from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { GET_APP_INFO } from "@/common/constant";
 // 统一日志类
@@ -214,6 +219,8 @@ class ChenxingBuyTicket extends BaseBuyTicket {
         if (this.offerRule?.old_quan_value) {
           this.offerRule.quan_value = this.offerRule.old_quan_value;
         }
+        // 换号时等待1秒，避免被风控检测到一个ip快速换号
+        await mockDelay(1);
       }
       this.currentSessionId =
         this.currentParamsList[this.currentParamsInx]?.session_id || "";

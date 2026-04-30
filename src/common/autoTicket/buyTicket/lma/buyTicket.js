@@ -417,6 +417,8 @@ export default class LmaBuyTicket extends BaseBuyTicket {
           }
         );
         this.curPhone = phone;
+        // 换号时等待1秒，避免被风控检测到一个ip快速换号
+        await mockDelay(1);
       }
 
       let card_id, cardNum;
@@ -944,7 +946,9 @@ export default class LmaBuyTicket extends BaseBuyTicket {
         quanValueList.includes(item.quan_value)
       );
       const useMobileList = this.getLoginInfoList()
-        .filter(item => item.app_name === app_name && item.mobile && item.session_id)
+        .filter(
+          item => item.app_name === app_name && item.mobile && item.session_id
+        )
         .map(item => item.mobile);
       this.logger.infoSave("获取影院目标券信息返回", {
         targetQuanList: JSON.parse(JSON.stringify(targetQuanList)),

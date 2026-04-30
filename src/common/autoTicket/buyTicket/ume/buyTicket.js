@@ -557,6 +557,8 @@ export default class UmeBuyTicket extends BaseBuyTicket {
           offerRule.quan_value = offerRule.old_quan_value;
         }
         this.curPhone = phone;
+        // 换号时等待1秒，避免被风控检测到一个ip快速换号
+        await mockDelay(1);
       }
       // 锁定座位前延迟一秒
       // await mockDelay(1);

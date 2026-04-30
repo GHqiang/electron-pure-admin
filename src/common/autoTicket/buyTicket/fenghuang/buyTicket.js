@@ -223,6 +223,8 @@ class FenghuangBuyTicket extends BaseBuyTicket {
         if (this.offerRule?.old_quan_value) {
           this.offerRule.quan_value = this.offerRule.old_quan_value;
         }
+        // 换号时等待1秒，避免被风控检测到一个ip快速换号
+        await mockDelay(1);
       }
       this.currentSessionId =
         this.currentParamsList[this.currentParamsInx]?.session_id || "";

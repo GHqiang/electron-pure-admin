@@ -445,6 +445,8 @@ export default class H5UmeBuyTicket extends BaseBuyTicket {
         }
         this.curPhone = phone;
         this.cardQuanManage.curPhone = phone;
+        // 换号时等待1秒，避免被风控检测到一个ip快速换号
+        await mockDelay(1);
       }
 
       // 记录当前使用的手机号，出票失败消息会带上（最后失败的手机号）
