@@ -752,9 +752,10 @@ class getLmaOfferPrice extends BaseOfferPrice {
         });
 
         if (!cardList.length) {
-          this.logger.errorSave("影院单卡出票限制，无可用卡", {
+          this.logger.errorSave("该影院没有可用会员卡", {
             ticket_num,
-            cinema_id
+            cinema_id,
+            cinema_name: order.cinema_name
           });
           return null;
         }

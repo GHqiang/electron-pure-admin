@@ -122,7 +122,7 @@ class getChenxingOfferPrice extends BaseOfferPrice {
             fixedAmountRuleList
           });
         } else {
-          this.logger.errorSave("最终匹配到的报价规则为空");
+          this.logger.warnSave("最终匹配到的报价规则为空");
         }
         return;
       }
@@ -220,7 +220,13 @@ class getChenxingOfferPrice extends BaseOfferPrice {
       // 获取可用卡列表
       const cardList = await this.fetchAvailableCards(order, cinemaCode);
       this.logger.infoSave("获取到可用卡列表", { cardList });
-      if (!cardList.length) return null;
+      if (!cardList.length) {
+        this.logger.errorSave("该影院没有可用会员卡", {
+          cinemaCode,
+          cinema_name: order.cinema_name
+        });
+        return;
+      }
 
       // 从座位信息里获取优惠活动列表
       let seatParams = {

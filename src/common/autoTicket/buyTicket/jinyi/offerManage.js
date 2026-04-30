@@ -165,7 +165,7 @@ class getJinyiOfferPrice extends BaseOfferPrice {
             fixedAmountRuleList
           });
         } else {
-          this.logger.errorSave("最终匹配到的报价规则为空");
+          this.logger.warnSave("最终匹配到的报价规则为空");
         }
         return null;
       }
@@ -414,7 +414,9 @@ class getJinyiOfferPrice extends BaseOfferPrice {
       // this.logger.infoSave("从座位信息获取会员价");
       let useCardMobileList = cardList?.map(item => item.mobile) || [];
       // 获取该影院的可用手机号列表
-      const useLoginList = getCinemaLoginInfoList(!order?.need_unsplit_login).filter(
+      const useLoginList = getCinemaLoginInfoList(
+        !order?.need_unsplit_login
+      ).filter(
         item =>
           item.app_name === order.app_name &&
           item.session_id &&

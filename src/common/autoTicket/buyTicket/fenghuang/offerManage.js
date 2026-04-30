@@ -123,7 +123,7 @@ class getFenghuangOfferPrice extends BaseOfferPrice {
             fixedAmountRuleList
           });
         } else {
-          this.logger.errorSave("最终匹配到的报价规则为空");
+          this.logger.warnSave("最终匹配到的报价规则为空");
         }
         return;
       }
@@ -212,11 +212,19 @@ class getFenghuangOfferPrice extends BaseOfferPrice {
       // 获取可用卡列表
       const cardList = await this.fetchAvailableCards(order, cinemaLinkId);
       this.logger.infoSave("获取到可用卡列表", { cardList });
-      if (!cardList.length) return null;
+      if (!cardList.length) {
+        this.logger.errorSave("该影院没有可用会员卡", {
+          cinemaLinkId,
+          cinema_name: order.cinema_name
+        });
+        return;
+      }
       // this.logger.infoSave("从座位信息获取会员价");
       let useCardMobileList = cardList?.map(item => item.mobile) || [];
       // 获取该影院的可用手机号列表
-      const useLoginList = getCinemaLoginInfoList(!order?.need_unsplit_login).filter(
+      const useLoginList = getCinemaLoginInfoList(
+        !order?.need_unsplit_login
+      ).filter(
         item =>
           item.app_name === order.app_name &&
           item.session_id &&

@@ -121,7 +121,7 @@ class getH5UmeOfferPrice extends BaseOfferPrice {
             fixedAmountRuleList
           });
         } else {
-          this.logger.errorSave("最终匹配到的报价规则为空");
+          this.logger.warnSave("最终匹配到的报价规则为空");
         }
         return null;
       }
@@ -187,10 +187,10 @@ class getH5UmeOfferPrice extends BaseOfferPrice {
       console.log("获取会员总价", member_total_price);
       if (member_total_price > 0) {
         if (!cardList.length) {
-          console.error("影院单卡出票限制");
-          this.logger.errorSave("影院单卡出票限制，无可用卡", {
+          this.logger.errorSave("该影院没有可用会员卡", {
             ticket_num,
-            cinemaCode: movieInfo.cinemaCode
+            cinemaCode: movieInfo.cinemaCode,
+            cinema_name: order.cinema_name
           });
           return null;
         }
