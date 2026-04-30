@@ -319,6 +319,7 @@ export default class BaseOfferQueue {
    */
   async singleOffer({ order, offerList = [], logger }) {
     const log = logger ?? this.logger;
+    let offerRule;
     try {
       log.infoSave("进入 singleOffer", {
         order_number: order.order_number,
@@ -355,8 +356,8 @@ export default class BaseOfferQueue {
         return;
       }
 
-      const { endPrice, offerRule, err_msg, err_info, app_name } = result || {};
-
+      const { endPrice, err_msg, err_info, app_name } = result || {};
+      offerRule = result?.offerRule;
       if (!endPrice) {
         return { offerRule, err_msg, err_info };
       }
@@ -409,11 +410,13 @@ export default class BaseOfferQueue {
       }
       log.infoSave("提交报价结果", { res, order });
       if (order.plat_name === "lieren" && res?.message === "已自动报价") {
-        return Promise.reject("猎人自动报价成功，无需再保存报价记录");
+        log.errorSave("猎人已自动报价");
+        return { offerRule };
       }
       return { res, offerRule };
     } catch (error) {
       log.errorSave("单个报价异常", { error });
+      return { offerRule };
     }
   }
 
