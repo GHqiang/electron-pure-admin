@@ -1,5 +1,6 @@
 import svApi from "@/api/sv-api";
 import lierenApi from "@/api/lieren-api";
+import { ElMessage } from "element-plus";
 import {
   getCurrentTime,
   sendWxPusherMessage,
@@ -85,6 +86,11 @@ export default function useLierenOfferRuleSyncFun() {
 
       if (!cinema_code && !cinema_group) {
         console.warn("同步规则到猎人平台失败：缺少院线或包含影院信息");
+        ElMessage({
+          type: "error",
+          message:
+            "同步规则到猎人平台失败：缺少院线或包含影院信息，请检查该影院设置是否配置猎人院线名称"
+        });
         return;
       }
       // 包含/排除影片
