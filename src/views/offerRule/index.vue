@@ -491,7 +491,7 @@ formData.rule = rule;
 const nodeClick = nodeData => {
   console.log("nodeData", nodeData);
   if (nodeData.id < 100) {
-    formData.app_type = "nodeData.value";
+    formData.app_type = nodeData.value;
     formData.shadowLineName = "";
   } else {
     formData.shadowLineName = nodeData.value;
