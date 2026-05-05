@@ -586,7 +586,9 @@ const againTicket = async ({ order_number, user_id, lockseat }) => {
     });
     console.warn("查询操作日志返回", res);
     let logList = res.data?.cardList || [];
-    let ticketLogInfo = logList[0]?.info;
+    let ticketLogInfo = logList.find(
+      item => item.des == "自动出票队列获取到新的待出票订单"
+    )?.info;
     if (ticketLogInfo) {
       ticketLogInfo = JSON.parse(ticketLogInfo);
     }
