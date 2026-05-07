@@ -359,7 +359,10 @@ export default function useCinemaBaseFun() {
         }));
       }
       console.log("获取线上电影列表返回", list);
-      return list;
+      return list.reduce((prev, item) => {
+        if (prev.some(p => p.film_id == item.film_id)) return prev;
+        return [...prev, item];
+      }, []);
     } catch (error) {
       console.warn("获取线上电影列表异常", error);
     }
