@@ -250,7 +250,12 @@ async function checkLierenFixedRuleByQuanStock(obj) {
         ...rule,
         seatNum: rule.seatNum || targetSeatNum,
         status,
-        platOfferList: JSON.stringify(rule.platOfferList)
+        platOfferList: JSON.stringify(rule.platOfferList),
+        is_sync_plat: rule.platOfferList.find(
+          item => item.isSyncPlat == 1 && item.platName == "lieren"
+        )
+          ? 1
+          : 0
       };
       logger.infoSave("同步修改机器的规则入参", {
         jiqiuRule

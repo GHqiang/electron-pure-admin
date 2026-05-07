@@ -164,7 +164,12 @@ export default function useLierenOfferRuleSyncFun() {
               return item;
             })
           ),
-          update_time: getCurrentTime()
+          update_time: getCurrentTime(),
+          is_sync_plat: ruleInfo.platOfferList.find(
+            item => item.isSyncPlat == 1 && item.platName == "lieren"
+          )
+            ? 1
+            : 0
         });
         console.warn("编辑规则-增加关联平台规则id成功");
       }

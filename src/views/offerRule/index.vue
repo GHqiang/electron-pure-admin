@@ -670,6 +670,11 @@ const editStatus = async row => {
     await svApi.updateRuleRecord({
       id: row.id,
       status: row.status,
+      is_sync_plat: row.platOfferList.find(
+        item => item.isSyncPlat == 1 && item.platName == "lieren"
+      )
+        ? 1
+        : 0,
       update_time: getCurrentTime()
     });
     // 修改规则状态同步到平台
@@ -692,6 +697,11 @@ const currentDayNoOfferHandle = async row => {
     await svApi.updateRuleRecord({
       id: row.id,
       allow_offer_time: getNextDayTime(), // 允许报价时间下一天
+      is_sync_plat: row.platOfferList.find(
+        item => item.isSyncPlat == 1 && item.platName == "lieren"
+      )
+        ? 1
+        : 0,
       update_time: getCurrentTime()
     });
     // 修改规则状态同步到平台
