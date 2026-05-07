@@ -42,7 +42,7 @@ export default function useLierenOfferRuleSyncFun() {
     userInfo: { rule }
   } = platTokens();
 
-  // 同步规则到猎人平台（新增/修改）
+  // 同步规则到猎人平台（新增/修改）；成功时返回最新 platOfferList，供调用方落库避免覆盖 platRuleId
   const lierenOfferRuleSyncPlat = async ruleInfo => {
     let params;
 
@@ -50,6 +50,7 @@ export default function useLierenOfferRuleSyncFun() {
       let lierenOffer = ruleInfo.platOfferList.find(
         item => item.platName === "lieren"
       );
+      if (!lierenOffer) return;
       let lierenOfferRule = {
         ...ruleInfo,
         offerAmount: lierenOffer.value,
@@ -152,20 +153,21 @@ export default function useLierenOfferRuleSyncFun() {
       const res = await lierenApi.ruleAdd(params);
       console.warn("同步规则到猎人平台成功", res);
       let rule_id = res?.data?.rule_id;
+      let platOfferList = ruleInfo.platOfferList || [];
+      let finalPlatOfferList = platOfferList.map(item => ({ ...item }));
       if (!lierenOfferRule.platRuleId && rule_id) {
         // 编辑规则增加关联平台规则id
+        finalPlatOfferList = platOfferList.map(item => {
+          if (item.platName === "lieren") {
+            return { ...item, platRuleId: rule_id };
+          }
+          return item;
+        });
         await svApi.updateRuleRecord({
           id: lierenOfferRule.id,
-          platOfferList: JSON.stringify(
-            ruleInfo.platOfferList.map(item => {
-              if (item.platName === "lieren") {
-                return { ...item, platRuleId: rule_id };
-              }
-              return item;
-            })
-          ),
+          platOfferList: JSON.stringify(finalPlatOfferList),
           update_time: getCurrentTime(),
-          is_sync_plat: ruleInfo.platOfferList.find(
+          is_sync_plat: finalPlatOfferList.find(
             item => item.isSyncPlat == 1 && item.platName == "lieren"
           )
             ? 1
@@ -173,8 +175,10 @@ export default function useLierenOfferRuleSyncFun() {
         });
         console.warn("编辑规则-增加关联平台规则id成功");
       }
+      return { platOfferList: finalPlatOfferList };
     } catch (error) {
       console.warn("同步规则到猎人平台异常", error);
+      return undefined;
     }
   };
 
@@ -207,9 +211,13 @@ export default function useLierenOfferRuleSyncFun() {
         lierenMainAccountAkSk = JSON.parse(lierenMainAccountAkSk);
         lierenMainAccountAkSk = lierenMainAccountAkSk[rule] || [];
       }
-      let lierenOffer = ruleInfo.platOfferList.find(
-        item => item.platName === "lieren"
-      );
+      let platList = ruleInfo.platOfferList;
+
+      let lierenOffer = platList.find(item => item.platName === "lieren");
+      if (!lierenOffer?.platRuleId) {
+        console.warn("猎人平台规则状态修改跳过：无 platRuleId");
+        return;
+      }
       let lierenOfferRule = {
         ...ruleInfo,
         offerAmount: lierenOffer.value,
@@ -242,7 +250,10 @@ export default function useLierenOfferRuleSyncFun() {
             item.allow_offer_time &&
             +new Date(item.allow_offer_time) <= +new Date() &&
             item.platOfferList?.some(
-              subItem => subItem.platName === "lieren" && subItem.platRuleId
+              subItem =>
+                subItem.platName === "lieren" &&
+                subItem.platRuleId &&
+                subItem.isSyncPlat == 1
             )
         )
         .map(item => {
@@ -274,16 +285,15 @@ export default function useLierenOfferRuleSyncFun() {
       lierenRuleList = lierenRuleList.filter(item => item.state == 0);
       console.warn("猎人平台需重新启用的规则列表", lierenRuleList);
       // 针对应该重新启用的规则，启用规则并同步到平台
-      lierenRuleList.forEach(item => {
+      for (const item of lierenRuleList) {
         const params = {
           rule_id: [item.rule_id],
           state: 1,
           lieren_ak: lierenMainAccountAkSk?.[0] || "",
           lieren_sk: lierenMainAccountAkSk?.[1] || ""
         };
-        // console.log("启用规则入参", params);
-        lierenApi.ruleState(params);
-      });
+        await lierenApi.ruleState(params);
+      }
     } catch (error) {
       console.warn("检查并更新同步到猎人的规则状态异常", error);
     }

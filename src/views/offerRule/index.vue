@@ -704,8 +704,8 @@ const currentDayNoOfferHandle = async row => {
         : 0,
       update_time: getCurrentTime()
     });
-    // 修改规则状态同步到平台
-    await editRuleStatusSyncToPlat({ ...row, status: 2 });
+    // 与机器「当日不报」一致：猎人侧禁用（status 非 '1' 即关）
+    await editRuleStatusSyncToPlat({ ...row, status: "5" });
     searchData();
     ElMessage({
       type: "success",
@@ -722,7 +722,16 @@ const currentDayNoOfferHandle = async row => {
 // 编辑规则
 const editRule = (row, type) => {
   dialogTitle.value = type === "1" ? "编辑" : "复制新增";
-  sfcDialogRef.value.open(type === "1" ? row : { ...row, id: "" });
+  if (type === "1") {
+    sfcDialogRef.value.open(row);
+  } else {
+    const list = row.platOfferList || [];
+    sfcDialogRef.value.open({
+      ...row,
+      id: "",
+      platOfferList: list.map(p => ({ ...p, platRuleId: undefined }))
+    });
+  }
 };
 
 // 查看规则
@@ -769,7 +778,7 @@ const saveRule = async ruleInfo => {
       )
     };
     // 是否同步平台
-    ruleInfo.is_sync_plat = ruleInfo.platOfferList.find(
+    ruleInfo.is_sync_plat = ruleInfo.platOfferList.some(
       item => item.isSyncPlat == 1 && item.platName == "lieren"
     )
       ? 1
@@ -808,7 +817,7 @@ const saveRuleSyncToPlat = async ruleForm => {
 
     // 非固定报价规则先不同步
     if (ruleInfo.offerType != 1) {
-      console.wanr("非固定报价规则不同步到猎人平台");
+      console.warn("非固定报价规则不同步到猎人平台");
       return;
     }
 
@@ -819,6 +828,7 @@ const saveRuleSyncToPlat = async ruleForm => {
     let lierenOfferRule = platOfferList.find(
       item => item.platName === "lieren"
     );
+    if (!lierenOfferRule) return;
 
     // 仅平台选择同步时才同步
     if (lierenOfferRule.isSyncPlat == 1) {
@@ -841,9 +851,10 @@ const delRuleSyncToPlat = async ruleList => {
     // 先处理猎人的规则删除（因为删除时不区分是批量删除还是单条删除，所以都走这个方法）
     ruleList = ruleList
       .map(item => {
-        let lierenOffer = item.platOfferList.find(
-          item => item.platName === "lieren"
+        let lierenOffer = item.platOfferList?.find(
+          sub => sub.platName === "lieren"
         );
+        if (!lierenOffer) return null;
         let lierenOfferRule = {
           ...item,
           offerAmount: lierenOffer.value,
@@ -880,19 +891,26 @@ const editRuleStatusSyncToPlat = async ruleInfo => {
     if (fixedOfferToPlatList.length === 0) return;
     // 非固定报价规则先不同步
     if (ruleInfo.offerType != 1) {
-      console.wanr("非固定报价规则不同步到猎人平台");
+      console.warn("非固定报价规则不同步到猎人平台");
       return;
     }
 
-    let lierenOfferRule = ruleInfo.platOfferList.find(
-      item => item.platName === "lieren"
-    );
-    if (lierenOfferRule.isSyncPlat == 1) {
-      await lierenOfferRuleEditStatusPlat(ruleInfo);
+    let platList = ruleInfo.platOfferList;
+    if (typeof platList === "string") {
+      platList = JSON.parse(platList || "[]");
     }
-    console.log("删除规则同步到平台成功");
+    const lierenOfferRule = platList.find(item => item.platName === "lieren");
+    if (!lierenOfferRule) return;
+
+    if (lierenOfferRule.isSyncPlat == 1) {
+      await lierenOfferRuleEditStatusPlat({
+        ...ruleInfo,
+        platOfferList: platList
+      });
+    }
+    console.log("修改规则状态同步到猎人平台完成");
   } catch (error) {
-    console.warn("删除规则同步到平台异常", error);
+    console.warn("修改规则状态同步到猎人平台异常", error);
   }
 };
 

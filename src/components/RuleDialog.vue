@@ -847,17 +847,34 @@ const open = async ruleInfo => {
   }
 };
 
+// 切换报价类型时保留猎人 platRuleId，避免再次 ruleAdd 产生重复平台规则
+const preserveLierenPlatOfferFields = () => {
+  const prev = (formData.platOfferList || []).find(
+    p => p.platName === "lieren"
+  );
+  if (!prev) {
+    return { value: "", isSyncPlat: "1" };
+  }
+  return {
+    value: prev.value ?? "",
+    isSyncPlat: prev.isSyncPlat ?? "1",
+    platRuleId: prev.platRuleId
+  };
+};
+
 // 报价类型改变
 const offerTypeChange = val => {
   console.log("val", val);
   if (val === "1") {
     // 日常固定价
     formData.memberDay = "";
+    const lierenPrev = preserveLierenPlatOfferFields();
     formData.platOfferList = [
       {
         platName: "lieren",
-        value: "",
-        isSyncPlat: "1" // 是否同步平台，1-同步 2-不同步
+        value: lierenPrev.value,
+        isSyncPlat: lierenPrev.isSyncPlat,
+        ...(lierenPrev.platRuleId ? { platRuleId: lierenPrev.platRuleId } : {})
       }
     ]; // 平台报价规则
     formData.autoUseQuanStatus = "2"; // 自动用券状态 1-开启 2-关闭
@@ -867,11 +884,13 @@ const offerTypeChange = val => {
     // 会员价加价
     formData.memberDay = "";
     formData.quanValue = [];
+    const lierenPrev = preserveLierenPlatOfferFields();
     formData.platOfferList = [
       {
         platName: "lieren",
-        value: "",
-        isSyncPlat: "1" // 是否同步平台，1-同步 2-不同步
+        value: lierenPrev.value,
+        isSyncPlat: lierenPrev.isSyncPlat,
+        ...(lierenPrev.platRuleId ? { platRuleId: lierenPrev.platRuleId } : {})
       }
     ]; // 平台报价规则
   } else if (val === "3") {

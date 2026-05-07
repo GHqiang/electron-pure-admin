@@ -212,14 +212,15 @@ async function checkLierenFixedRuleByQuanStock(obj) {
         item =>
           item.status == 1 &&
           item.quanValue == quan_value &&
-          item.platOfferList.find(offer => offer.platName === "lieren")
-            ?.isSyncPlat == 1
+          item.platOfferList.some(
+            offer => offer.platName === "lieren" && offer.isSyncPlat == 1
+          )
       );
     if (!usedRules.length) return;
     logger.infoSave("该券类型关联的同步到猎人平台的规则", {
       usedRules
     });
-    usedRules.forEach(rule => {
+    for (const rule of usedRules) {
       // 目标座位数，最大券库存超过4时为4，不超过4时为库存数
       let targetSeatNum = maxQuanStock >= 4 ? 4 : maxQuanStock;
       let status = targetSeatNum == 0 ? "2" : "1"; // 券库存为0时规则状态改为关闭
@@ -234,7 +235,7 @@ async function checkLierenFixedRuleByQuanStock(obj) {
           targetSeatNum,
           targetStatus: status
         });
-        return;
+        continue;
       }
       const lierenRule = {
         ...rule,
@@ -245,14 +246,16 @@ async function checkLierenFixedRuleByQuanStock(obj) {
       logger.infoSave("准备同步到猎人的规则", {
         lierenRule
       });
-      lierenOfferRuleSyncPlat(lierenRule);
+      const syncRes = await lierenOfferRuleSyncPlat(lierenRule);
+
+      const platOfferListForDb = syncRes?.platOfferList ?? rule.platOfferList;
       const jiqiuRule = {
         ...rule,
         seatNum: rule.seatNum || targetSeatNum,
         status,
-        platOfferList: JSON.stringify(rule.platOfferList),
-        is_sync_plat: rule.platOfferList.find(
-          item => item.isSyncPlat == 1 && item.platName == "lieren"
+        platOfferList: JSON.stringify(platOfferListForDb),
+        is_sync_plat: platOfferListForDb.some(
+          o => o.platName === "lieren" && o.isSyncPlat == 1
         )
           ? 1
           : 0
@@ -260,8 +263,8 @@ async function checkLierenFixedRuleByQuanStock(obj) {
       logger.infoSave("同步修改机器的规则入参", {
         jiqiuRule
       });
-      svApi.updateRuleRecord(jiqiuRule);
-    });
+      await svApi.updateRuleRecord(jiqiuRule);
+    }
     // 根据quan_value检查都有哪些规则在使用且同步了平台，更新平台规则的座位数
   } catch (error) {
     logger.infoSave("根据券库存检查猎人固定报价规则更新座位数", {
