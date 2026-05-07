@@ -258,7 +258,7 @@ async function checkLierenFixedRuleByQuanStock(obj) {
           o => o.platName === "lieren" && o.isSyncPlat == 1
         )
           ? 1
-          : 0
+          : 2
       };
       logger.infoSave("同步修改机器的规则入参", {
         jiqiuRule

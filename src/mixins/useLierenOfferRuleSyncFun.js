@@ -171,7 +171,7 @@ export default function useLierenOfferRuleSyncFun() {
             item => item.isSyncPlat == 1 && item.platName == "lieren"
           )
             ? 1
-            : 0
+            : 2
         });
         console.warn("编辑规则-增加关联平台规则id成功");
       }

@@ -99,7 +99,7 @@
               clearable
             >
               <el-option label="是" :value="1" />
-              <el-option label="否" :value="0" />
+              <el-option label="否" :value="2" />
             </el-select>
           </el-form-item>
           <el-form-item label="规则备注">
@@ -482,7 +482,7 @@ const formData = reactive({
   offerType: "", // 报价类型
   quanValue: "", // 用券类型
   remark: "", // 备注
-  is_sync_plat: null // 是否同步平台 1:是 0:否
+  is_sync_plat: null // 是否同步平台 1:是 2:否
 });
 
 formData.rule = rule;
@@ -674,7 +674,7 @@ const editStatus = async row => {
         item => item.isSyncPlat == 1 && item.platName == "lieren"
       )
         ? 1
-        : 0,
+        : 2,
       update_time: getCurrentTime()
     });
     // 修改规则状态同步到平台
@@ -701,7 +701,7 @@ const currentDayNoOfferHandle = async row => {
         item => item.isSyncPlat == 1 && item.platName == "lieren"
       )
         ? 1
-        : 0,
+        : 2,
       update_time: getCurrentTime()
     });
     // 与机器「当日不报」一致：猎人侧禁用（status 非 '1' 即关）
@@ -778,21 +778,21 @@ const saveRule = async ruleInfo => {
       )
     };
     // 是否同步平台
-    ruleInfo.is_sync_plat = ruleInfo.platOfferList.some(
+    jiqiRuleInfo.is_sync_plat = ruleInfo.platOfferList.some(
       item => item.isSyncPlat == 1 && item.platName == "lieren"
     )
       ? 1
-      : 0;
+      : 2;
     ruleInfo.platOfferList = JSON.stringify(ruleInfo.platOfferList || []);
     if (ruleInfo.id) {
-      console.log("编辑保存规则", jiqiRuleInfo);
+      console.log("编辑保存规则", jiqiRuleInfo, ruleInfo);
       await svApi.updateRuleRecord(jiqiRuleInfo);
       // 同步规则到平台
       await saveRuleSyncToPlat(ruleInfo);
       sfcDialogRef.value.closeTck();
       searchData();
     } else {
-      console.log("新增保存规则", jiqiRuleInfo);
+      console.log("新增保存规则", jiqiRuleInfo, ruleInfo);
       await svApi.addRuleRecord({ ...jiqiRuleInfo, id: undefined });
       // 同步规则到平台
       await saveRuleSyncToPlat(ruleInfo);
