@@ -519,7 +519,6 @@ const resetForm = () => {
   formData.plat_name = "";
   formData.app_name = ""; // 影线名称
   formData.cinema_name = ""; // 影院名称
-  formData.order_status = ""; // 状态
   formData.is_deal = ""; // 是否中标
   formData.user_id = ""; // 报价用户
   formData.order_number = ""; // 报价类型
