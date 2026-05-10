@@ -154,8 +154,22 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
             },
             logList
           );
-
-          this.sendNewOrderMsg(item);
+          // 换座成功需发送重新出票消息
+          if (item.changeSeatSuccess) {
+            // 动态生成事件名称
+            const eventName = `newOrder_${item.appName}`;
+            // 创建一个事件对象
+            const newOrderEvent = new CustomEvent(eventName, {
+              detail: {
+                // 将所有数据放入 detail 对象
+                order: item,
+                isAgain: true
+              }
+            });
+            window.dispatchEvent(newOrderEvent);
+          } else {
+            this.sendNewOrderMsg(item);
+          }
           this.recordOrder(item);
         });
       } else {
