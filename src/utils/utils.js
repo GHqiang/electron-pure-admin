@@ -554,7 +554,7 @@ const sendWxPusherMessage = async ({
   transferTip,
   failReason,
   app_name,
-  msgType, // 消息类型 1-登录失效 2-出票队列重复 3-黑名单券更新 5-密码输入错误 6-卡号出满提醒
+  msgType, // 消息类型 1-登录失效 2-出票队列重复 3-黑名单券更新 5-密码输入错误 6-卡号出满提醒 9-日志上传异常
   expirePhone, // 失效手机号
   cardNoByPwdError, // 密码错误卡号
   quan_flag,
@@ -666,6 +666,13 @@ const sendWxPusherMessage = async ({
     时间：${getCurrentTime()}; <br/>
     用户：${userInfo.name}; <br/>
     提示：${formattedTransferTip};<br/>
+    </p>`;
+  } else if (msgType === 9) {
+    summary = "日志上传异常";
+    content = `<p>
+    时间：${getCurrentTime()}; <br/>
+    用户：${userInfo.name}; <br/>
+    提示：${transferTip};<br/>
     </p>`;
   }
 
@@ -1527,12 +1534,13 @@ const offerRuleMatch = (order, logger) => {
 };
 // 测试报价规则匹配
 window.offerRuleMatch = offerRuleMatch;
-// 日志上传
+// 日志上传（仅在接口成功后再移除已上传条目，避免失败时日志被清空导致永久丢失）
 const logUpload = async (order, logList) => {
   try {
     if (!logList.length) return;
 
-    let log_list = logList.slice();
+    const uploadedCount = logList.length;
+    let log_list = logList.slice(0, uploadedCount);
     log_list = log_list.map(item => {
       let info = item.info;
       if (info?.error) {
@@ -1546,7 +1554,6 @@ const logUpload = async (order, logList) => {
     // 解决后端接口里面返回特殊表情接口报错无法入库的问题
     log_list = JSON.stringify(log_list).replace(/[\u{1F600}-\u{1F64F}]/gu, "");
     log_list = JSON.parse(log_list);
-    logList.length = 0; // 清空原数组（堆内存里面的值会被清空）
     // type 1-报价 2-获取订单 3-出票
     const { order_number, app_name, plat_name, type = 3 } = order;
     await svApi.addTicketOperaLog({
@@ -1556,9 +1563,15 @@ const logUpload = async (order, logList) => {
       type,
       log_list
     });
+    // 仅移除本批已入库的日志；await 期间若追加了新日志，会保留在队尾供下次上送
+    logList.splice(0, uploadedCount);
     // log_list 数组对象里的level： error\warn\info
   } catch (error) {
     console.error("日志上送异常", error);
+    await sendWxPusherMessage({
+      msgType: 9, // 日志上送异常
+      transferTip: formatErrInfo(error)
+    });
   }
 };
 

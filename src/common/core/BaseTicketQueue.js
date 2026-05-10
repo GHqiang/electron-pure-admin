@@ -103,7 +103,7 @@ export default class BaseTicketQueue {
       sjc: +new Date()
     });
     if (!this.isTestOrder) {
-      this.logger.logUpload();
+      await this.logger.logUpload();
     }
     // 添加新订单到队列
     this.queue.push(order);
@@ -241,7 +241,14 @@ export default class BaseTicketQueue {
         const logger = new Logger({ logType: 3 });
 
         if (!order.isAgain && this.prevOrderNumber === order.order_number) {
-          logger.warn("当前订单重复执行,直接执行下个");
+          logger.init(order);
+          logger.warnSave("当前订单重复执行,直接执行下个", {
+            prevOrderNumber: this.prevOrderNumber,
+            order_number: order.order_number
+          });
+          if (!this.isTestOrder) {
+            await logger.logUpload();
+          }
         } else {
           logger.init(order);
           const res = await this.orderHandle(order, logger);
@@ -254,6 +261,8 @@ export default class BaseTicketQueue {
 
           if (!this.isTestOrder) {
             await this.saveTicketRecord(order, res, logger);
+          } else {
+            await logger.logUpload();
           }
         }
       }
@@ -429,7 +438,7 @@ export default class BaseTicketQueue {
     } catch (error) {
       logger.errorSave("保存出票记录异常", { error });
     } finally {
-      logger.logUpload();
+      await logger.logUpload();
     }
   }
 

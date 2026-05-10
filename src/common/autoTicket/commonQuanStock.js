@@ -196,11 +196,12 @@ async function checkLierenFixedRuleByQuanStock(obj) {
     let maxQuanStock = quanStockList.reduce((pre, cur) => {
       return pre.quan_stock > cur.quan_stock ? pre : cur;
     })?.quan_stock;
-    // logger.infoSave("最大券库存", {
-    //   id,
-    //   quan_value,
-    //   maxQuanStock
-    // });
+    logger.infoSave("最大券库存", {
+      id,
+      app_name,
+      quan_value,
+      maxQuanStock
+    });
     let usedRules = await checkQuanInRules(app_name, quan_value);
     // 一个规则含多个券类型的先不处理，仅过滤一个券类型的规则
     usedRules = usedRules
@@ -223,24 +224,31 @@ async function checkLierenFixedRuleByQuanStock(obj) {
     for (const rule of usedRules) {
       // 目标座位数，最大券库存超过4时为4，不超过4时为库存数
       let targetSeatNum = maxQuanStock >= 4 ? 4 : maxQuanStock;
-      let status = targetSeatNum == 0 ? "2" : "1"; // 券库存为0时规则状态改为关闭
-      if (status == 2) {
+      let targetStatus = targetSeatNum == 0 ? "2" : "1"; // 券库存为0时规则状态改为关闭
+      if (targetStatus == 2) {
         targetSeatNum = undefined;
       }
-      if (rule.seatNum == targetSeatNum && rule.status == status) {
+      if (rule.seatNum == targetSeatNum && rule.status == targetStatus) {
         logger.infoSave("规则座位数和状态与目标一致，无需更新", {
           ruleId: rule.id,
           currentSeatNum: rule.seatNum,
           currentStatus: rule.status,
           targetSeatNum,
-          targetStatus: status
+          targetStatus
         });
         continue;
       }
+      logger.infoSave("准备更新机器及猎人平台规则的状态或座位数", {
+        ruleId: rule.id,
+        currentSeatNum: rule.seatNum,
+        currentStatus: rule.status,
+        targetSeatNum,
+        targetStatus
+      });
       const lierenRule = {
         ...rule,
-        seatNum: rule.seatNum || targetSeatNum,
-        status,
+        seatNum: targetSeatNum,
+        status: targetStatus,
         allow_offer_time: rule.allow_offer_time || null // 空字符串传到后端会报错，字段类型不匹配，改为null
       };
       logger.infoSave("准备同步到猎人的规则", {
@@ -251,8 +259,8 @@ async function checkLierenFixedRuleByQuanStock(obj) {
       const platOfferListForDb = syncRes?.platOfferList ?? rule.platOfferList;
       const jiqiuRule = {
         ...rule,
-        seatNum: rule.seatNum || targetSeatNum,
-        status,
+        seatNum: targetSeatNum,
+        status: targetStatus,
         platOfferList: JSON.stringify(platOfferListForDb),
         is_sync_plat: platOfferListForDb.some(
           o => o.platName === "lieren" && o.isSyncPlat == 1
@@ -267,10 +275,12 @@ async function checkLierenFixedRuleByQuanStock(obj) {
     }
     // 根据quan_value检查都有哪些规则在使用且同步了平台，更新平台规则的座位数
   } catch (error) {
-    logger.infoSave("根据券库存检查猎人固定报价规则更新座位数", {
+    logger.infoSave("根据券库存检查猎人固定报价规则更新座位数异常", {
       error: formatErrInfo(error),
       obj
     });
+  } finally {
+    logger.logUpload();
   }
 }
 
