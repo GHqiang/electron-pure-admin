@@ -248,8 +248,7 @@ async function checkLierenFixedRuleByQuanStock(obj) {
       const lierenRule = {
         ...rule,
         seatNum: targetSeatNum,
-        status: targetStatus,
-        allow_offer_time: rule.allow_offer_time || null // 空字符串传到后端会报错，字段类型不匹配，改为null
+        status: targetStatus
       };
       logger.infoSave("准备同步到猎人的规则", {
         lierenRule
@@ -261,6 +260,7 @@ async function checkLierenFixedRuleByQuanStock(obj) {
         ...rule,
         seatNum: targetSeatNum,
         status: targetStatus,
+        allow_offer_time: rule.allow_offer_time || null, // 空字符串传到后端会报错，字段类型不匹配，改为null
         platOfferList: JSON.stringify(platOfferListForDb),
         is_sync_plat: platOfferListForDb.some(
           o => o.platName === "lieren" && o.isSyncPlat == 1
@@ -275,9 +275,14 @@ async function checkLierenFixedRuleByQuanStock(obj) {
     }
     // 根据quan_value检查都有哪些规则在使用且同步了平台，更新平台规则的座位数
   } catch (error) {
+    // 勿把整段 obj 写入日志：含 logger 等会导致上送序列化失败或体积过大，异常时整批日志无法入库
     logger.infoSave("根据券库存检查猎人固定报价规则更新座位数异常", {
       error: formatErrInfo(error),
-      obj
+      objSafe: {
+        id: obj?.id,
+        app_name: obj?.app_name,
+        quan_value: obj?.quan_value
+      }
     });
   } finally {
     logger.logUpload();

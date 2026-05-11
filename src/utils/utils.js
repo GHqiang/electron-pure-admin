@@ -1534,6 +1534,60 @@ const offerRuleMatch = (order, logger) => {
 };
 // 测试报价规则匹配
 window.offerRuleMatch = offerRuleMatch;
+
+/**
+ * 将单条日志的 info 转为可 JSON 序列化的纯数据，去掉循环引用及不宜上送字段（如 logger），
+ * 避免 logUpload / axios 整批失败。
+ */
+const sanitizeLogInfoForUpload = info => {
+  if (info === undefined) return undefined;
+  const omitKeys = new Set(["logger", "logList", "parent"]);
+  const seen = new WeakSet();
+  const walk = (v, depth) => {
+    if (depth > 40) return "[MaxDepth]";
+    if (v === null) return null;
+    const t = typeof v;
+    if (t === "string" || t === "number" || t === "boolean") return v;
+    if (t === "bigint") return String(v);
+    if (t === "function" || t === "symbol") return `[${t}]`;
+    if (t !== "object") return String(v);
+    if (v instanceof Error) {
+      return {
+        name: v.name,
+        message: String(v.message),
+        stack: typeof v.stack === "string" ? v.stack.slice(0, 12000) : ""
+      };
+    }
+    if (typeof v?.nodeType === "number") return "[DOMNode]";
+    if (seen.has(v)) return "[Circular]";
+    seen.add(v);
+    if (Array.isArray(v)) {
+      const out = v.map(entry => walk(entry, depth + 1));
+      seen.delete(v);
+      return out;
+    }
+    const out = {};
+    for (const k of Object.keys(v)) {
+      if (omitKeys.has(k)) {
+        out[k] = "[Omitted]";
+        continue;
+      }
+      try {
+        out[k] = walk(v[k], depth + 1);
+      } catch {
+        out[k] = "[Unreadable]";
+      }
+    }
+    seen.delete(v);
+    return out;
+  };
+  try {
+    return walk(info, 0);
+  } catch {
+    return { _sanitizeFailed: true };
+  }
+};
+
 // 日志上传（仅在接口成功后再移除已上传条目，避免失败时日志被清空导致永久丢失）
 const logUpload = async (order, logList) => {
   try {
@@ -1543,12 +1597,15 @@ const logUpload = async (order, logList) => {
     let log_list = logList.slice(0, uploadedCount);
     log_list = log_list.map(item => {
       let info = item.info;
-      if (info?.error) {
-        info.error = formatErrInfo(info.error);
+      if (info != null && typeof info === "object" && "error" in info) {
+        info = {
+          ...info,
+          error: formatErrInfo(info.error)
+        };
       }
       return {
         ...item,
-        info
+        info: sanitizeLogInfoForUpload(info)
       };
     });
     // 解决后端接口里面返回特殊表情接口报错无法入库的问题
