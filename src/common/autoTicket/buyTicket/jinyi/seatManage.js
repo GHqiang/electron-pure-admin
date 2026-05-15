@@ -1,10 +1,10 @@
 // 锁座重试常量配置
 const LOCK_RETRY_CONFIG = {
-  lieren: [3, 5],
-  mangguo: [3, 5],
-  sheng: [3, 5],
-  mayi: [3, 5],
-  yangcong: [3, 5],
+  lieren: [6, 5],
+  mangguo: [6, 5],
+  sheng: [6, 5],
+  mayi: [6, 5],
+  yangcong: [6, 5],
   haha: [6, 5],
   yinghuasuan: [6, 5],
   shangzhan: [6, 5],
