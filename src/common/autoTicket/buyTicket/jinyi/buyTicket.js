@@ -571,6 +571,7 @@ class JinyiBuyTicket extends BaseBuyTicket {
       // 最后处理：获取支付结果上传取票码
       const lastRes = await this.orderManage.getQrcodeUploadByPlat({
         order_num,
+        cinema_id,
         session_id: this.currentSessionId
       });
       if (lastRes?.qrcode && lastRes?.submitRes) {

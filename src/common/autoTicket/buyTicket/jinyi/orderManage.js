@@ -193,7 +193,7 @@ export default class OrderManage {
     }
   }
   // 获取取票码并上传
-  async getQrcodeUploadByPlat({ order_num, session_id }) {
+  async getQrcodeUploadByPlat({ order_num, cinema_id, session_id }) {
     try {
       let qrcode;
       try {
@@ -201,6 +201,7 @@ export default class OrderManage {
         qrcode = await this.getPayResult({
           orderId: order_num,
           session_id,
+          cinema_id,
           logger: this.logger
         });
       } catch (error) {}
@@ -210,6 +211,7 @@ export default class OrderManage {
         );
         this.asyncFetchQrcodeSubmit({
           order_num,
+          cinema_id,
           session_id
         });
         return;
@@ -231,7 +233,7 @@ export default class OrderManage {
 
   // 获取购票信息
   async getPayResult(data) {
-    let { orderId, session_id, logger, inx = 1 } = data || {};
+    let { orderId, session_id, cinema_id, logger, inx = 1 } = data || {};
     let qrcode;
     try {
       if (!orderId) {
@@ -246,6 +248,7 @@ export default class OrderManage {
       } else {
         let params = {
           order_id: orderId,
+          cinema_id,
           version: "tp_version",
           session_id
         };
@@ -267,7 +270,7 @@ export default class OrderManage {
   }
 
   // 异步轮询获取取票码并提交
-  async asyncFetchQrcodeSubmit({ order_num, session_id }) {
+  async asyncFetchQrcodeSubmit({ order_num, cinema_id, session_id }) {
     let logger = new Logger({ logType: 3 });
     logger.init(this.order);
     const { plat_name, order_number } = this.order;
@@ -279,6 +282,7 @@ export default class OrderManage {
         inx =>
           this.getPayResult({
             orderId: order_num,
+            cinema_id,
             session_id,
             logger,
             inx
@@ -302,6 +306,7 @@ export default class OrderManage {
           inx =>
             this.getPayResult({
               orderId: order_num,
+              cinema_id,
               session_id,
               logger,
               inx
