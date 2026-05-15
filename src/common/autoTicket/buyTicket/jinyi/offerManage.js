@@ -521,11 +521,13 @@ class getJinyiOfferPrice extends BaseOfferPrice {
       const maxPriceSeatInfo = areaInfoList
         .sort((a, b) => b.area_price - a.area_price)
         .filter(item => !Array.isArray(item.seats))
-        .find(item =>
-          Object.values(item.seats).some(itemA =>
-            itemA.detail.some(itemB => itemB.status == 0)
-          )
+        .find(
+          item =>
+            Object.values(item.seats).some(itemA =>
+              itemA.detail.some(itemB => itemB.status == 0)
+            ) && item.area_no != 1
         );
+      // 1为默认区，该区的列在其它区下面也会展示，直接用该区area_no会锁座失败
       console.warn("最贵座位列信息", maxPriceSeatInfo);
       if (!maxPriceSeatInfo) return;
       this.logger.infoSave("最贵座位列信息", {
