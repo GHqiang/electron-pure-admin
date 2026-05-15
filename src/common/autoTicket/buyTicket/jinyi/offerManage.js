@@ -39,7 +39,7 @@ import { filterFixedRulesByDailyTicketCount } from "../../commonQuanStock.js";
 import CardQuanManage from "./cardQuanManage";
 import CinemaManage from "./cinemaManage";
 import SeatManage from "./seatManage";
-
+import OrderManage from "./orderManage";
 const {
   userInfo: { rule, user_id }
 } = platTokens();
@@ -70,6 +70,7 @@ class getJinyiOfferPrice extends BaseOfferPrice {
       undefined
     ); // 影院管理模块
     this.seatManage = new SeatManage(order, this.logger); // 座位管理模块
+    this.orderManage = new OrderManage(order, this.logger); // 订单管理模块
   }
 
   // 获取最终匹配的报价规则
@@ -437,84 +438,24 @@ class getJinyiOfferPrice extends BaseOfferPrice {
       });
       // let seatData = targetSeatRes?.seatData || [];
       console.log("areaInfoList", areaInfoList);
+      const max_price = await this.getMaxPriceBySeatInfo({
+        areaInfoList,
+        order,
+        movieInfo,
+        cardList,
+        session_id
+      });
+      console.warn("最贵座位max_price", max_price);
       let basePrice;
-      if (areaInfoList.length) {
-        // 取最高价
-        let areaIdSortList = areaInfoList.sort(
-          (a, b) => b.area_price - a.area_price
-        );
-        this.logger.infoSave("按照座位价格从高到低获取座位", {
-          areaIdSortList
-        });
-        basePrice = areaIdSortList[0].area_price;
+      if (max_price) {
+        basePrice = max_price;
         this.logger.infoSave("最高座位价格当做会员价", {
           basePrice
         });
+      } else {
+        this.logger.errorSave("未获取到最贵座位价格");
+        return;
       }
-
-      // try {
-      //   let defaultPrice = areaInfoList.find(
-      //     item => item.area_name == "默认区"
-      //   )?.area_price;
-      //   const areaInfoListPrice = areaInfoList
-      //     .filter(item => item.area_name != "默认区")
-      //     ?.map(item =>
-      //       Object.entries(item.seats)
-      //         .map(itemA => itemA[1])
-      //         .map(itemB =>
-      //           itemB.detail.map(itemC => ({
-      //             ...itemC,
-      //             area_price: item.area_price,
-      //             area_no: item.area_no
-      //           }))
-      //         )
-      //     )
-      //     .flat()
-      //     .flat();
-      //   console.log("areaInfoListPrice", areaInfoListPrice, defaultPrice);
-      //   targetSeatCodes.forEach(item => {
-      //     const price = areaInfoListPrice.find(
-      //       itemA => itemA.seat_no == item.seat_no
-      //     )?.area_price;
-      //     seatPayTotalPrice += price || defaultPrice;
-      //   });
-      //   console.log("座位总价格", seatPayTotalPrice);
-      //   seatlableList = targetSeatCodes.map(item => {
-      //     let targetSeatInfo = areaInfoListPrice.find(
-      //       itemA => itemA.seat_no == item.seat_no
-      //     );
-      //     if (!targetSeatInfo) {
-      //       targetSeatInfo = areaInfoList.find(
-      //         item => item.area_name == "默认区"
-      //       );
-      //     }
-      //     return (
-      //       targetSeatInfo.area_no +
-      //       ":" +
-      //       item.row +
-      //       ":" +
-      //       item.col +
-      //       ":" +
-      //       item.seat_no
-      //     );
-      //   });
-      // } catch (error) {
-      //   console.log("座位价格逻辑执行异常", error);
-      // }
-
-      // console.log("seatlableList", seatlableList);
-      // // 3、锁定座位
-      // let lockSeatParams = {
-      //   cinema_id,
-      //   schedule_id,
-      //   seatCodes: seatlableList,
-      //   lockseat,
-      //   plat_name,
-      //   order_number,
-      //   session_id: this.currentSessionId
-      // };
-      // const lockRes = await this.seatManage.lockseatByApp(lockSeatParams);
-
       // 计算最优折扣
       return this.calculateBestDiscount(cardList, basePrice);
     } catch (error) {
@@ -523,23 +464,161 @@ class getJinyiOfferPrice extends BaseOfferPrice {
     }
   }
 
-  // getMaxPriceBySeatInfo(areaInfoList) {
-  //   try {
-  //     let areaList;
-  //     for (let i = 0; i < areaInfoList.length; i++) {
-  //       const areaInfo = areaInfoList[i];
+  // 获取相邻情侣座
+  getRandomCoupleSeats(seatData) {
+    try {
+      const rows = seatData.seats;
+      const candidates = [];
 
-  //       const areaList = Object.values(areaInfo.seats)
-  //         .map(item => item.details)
-  //         .flat()
-  //         .filter(item => item.status === 0);
-  //       if (areaList.length && areaInfo.area_name.includes("情侣")) {
-  //         console.log("返回情侣座数组", areaInfo.area_price);
-  //         return areaList;
-  //       }
-  //     }
-  //   } catch (error) {}
-  // }
+      for (const rowKey in rows) {
+        const row = rows[rowKey];
+        const details = row.detail;
+
+        // 建立列号 -> 座位对象的映射，方便 O(1) 查找
+        const colMap = {};
+        details.forEach(seat => {
+          colMap[parseInt(seat.col)] = seat;
+        });
+
+        // 获取所有列号并排序
+        const cols = Object.keys(colMap)
+          .map(Number)
+          .sort((a, b) => a - b);
+
+        // 每两个一组：奇数位与下一个偶数位组成情侣座
+        for (let i = 0; i < cols.length; i++) {
+          const leftCol = cols[i];
+          if (leftCol % 2 === 1) {
+            // 只处理奇数
+            const rightCol = leftCol + 1;
+            if (colMap[rightCol]) {
+              // 存在对应的偶数座位
+              const leftSeat = colMap[leftCol];
+              const rightSeat = colMap[rightCol];
+              // 两个座位都未被占用（status === 0）
+              if (leftSeat.status === 0 && rightSeat.status === 0) {
+                candidates.push([leftSeat, rightSeat]);
+              }
+            }
+          }
+        }
+      }
+
+      if (candidates.length === 0) return null;
+      const randomIndex = Math.floor(Math.random() * candidates.length);
+      return candidates[randomIndex];
+    } catch (error) {
+      this.logger.errorSave("获取相邻情侣座异常", error);
+    }
+  }
+
+  // 获取最贵座位
+  getMaxPriceSeat(areaInfoList) {
+    try {
+      const maxPriceSeatInfo = areaInfoList
+        .sort((a, b) => b.area_price - a.area_price)
+        .filter(item => !Array.isArray(item.seats))
+        .find(item =>
+          Object.values(item.seats).some(itemA =>
+            itemA.detail.some(itemB => itemB.status == 0)
+          )
+        );
+      console.warn("最贵座位列信息", maxPriceSeatInfo);
+      if (!maxPriceSeatInfo) return;
+      this.logger.infoSave("最贵座位列信息", {
+        ...maxPriceSeatInfo,
+        seats: null
+      });
+      let seatlableList;
+      if (!maxPriceSeatInfo.area_name?.includes("情侣")) {
+        seatlableList = maxPriceSeatInfo.area_no + ":";
+        let targetSeatInfo = Object.values(maxPriceSeatInfo.seats)
+          .find(item => item.detail.some(itemA => itemA.status == 0))
+          ?.detail.find(itemA => itemA.status == 0);
+        console.log("targetSeatInfo", targetSeatInfo);
+        seatlableList +=
+          targetSeatInfo.row +
+          ":" +
+          targetSeatInfo.col +
+          ":" +
+          targetSeatInfo.seat_no;
+        this.logger.infoSave("非情侣座最贵座位信息", {
+          maxPriceSeat: [seatlableList]
+        });
+        return [seatlableList];
+      } else {
+        const couple = this.getRandomCoupleSeats(maxPriceSeatInfo);
+        if (couple) {
+          console.log("随机获得的情侣座：", couple);
+          console.log(
+            `座位1: ${couple[0].seat_no}, 座位2: ${couple[1].seat_no}`
+          );
+          const seatlableList = couple.map(
+            item =>
+              maxPriceSeatInfo.area_no +
+              ":" +
+              item.row +
+              ":" +
+              item.col +
+              ":" +
+              item.seat_no
+          );
+          this.logger.infoSave("情侣座最贵座位信息", {
+            maxPriceSeat: seatlableList
+          });
+          return seatlableList;
+        }
+      }
+    } catch (error) {
+      this.logger.errorSave("获取最贵座位异常", error);
+    }
+  }
+  // 获取最贵座位价格
+  async getMaxPriceBySeatInfo({
+    areaInfoList,
+    order,
+    movieInfo,
+    cardList,
+    session_id
+  }) {
+    try {
+      // 1、获取最贵座位列信息
+      const seatlableList = this.getMaxPriceSeat(areaInfoList);
+      console.warn("seatlableList", seatlableList);
+      if (!seatlableList) return;
+      // seatlableList	[10084:2:12:35061501#08#04]
+      // 2、用最贵座位锁定价格
+      let lockSeatParams = {
+        cinema_id: movieInfo.cinema_id,
+        schedule_id: movieInfo.schedule_id,
+        seatCodes: seatlableList,
+        plat_name: order.plat_name,
+        order_number: order.order_number,
+        session_id
+      };
+      console.warn("锁定座位参数lockSeatParams", lockSeatParams);
+      const lockRes = await this.seatManage.lockseatByApp(lockSeatParams);
+      console.warn("锁座结果lockRes", lockRes);
+      let lockOrderId = lockRes?.data?.order_id;
+      if (!lockOrderId) return;
+      // 3、获取锁座价格明细
+      const calcParams = {
+        cinema_id: movieInfo.cinema_id,
+        card_id: cardList[0]?.card_id,
+        lockOrderId,
+        session_id
+      };
+      this.logger.infoSave("获取锁座价格明细参数", calcParams);
+      const calcRes = await this.orderManage.priceCalculation(calcParams);
+      let paymentAmount = calcRes?.data?.ticket_total_price;
+      let ticket_num = calcRes?.data?.ticket_num;
+      if (paymentAmount && ticket_num) {
+        return paymentAmount / ticket_num;
+      }
+    } catch (error) {
+      console.error("获取最贵座位价格异常", error);
+    }
+  }
 
   // 获取可用会员卡列表
   async fetchAvailableCards(order, cinema_id) {
@@ -554,7 +633,7 @@ class getJinyiOfferPrice extends BaseOfferPrice {
       status: "1",
       isNeedTotalNum: 0,
       queryFields:
-        "mobile,card_num,card_discount,linkCinemaIds,use_limit_day,use_limit_month,daily_usage,monthly_usage,usage_date"
+        "mobile,card_num,card_id,card_discount,linkCinemaIds,use_limit_day,use_limit_month,daily_usage,monthly_usage,usage_date"
     });
 
     let list = cardRes.data.cardList || [];
@@ -895,15 +974,15 @@ const testOrder = {
   cinema_addr: "雨花台区软件大道109号雨花客厅E-PARK北区3层",
   ticket_num: 1,
   cinema_name: "金逸影城（光美荟聚IMAX激光店）",
-  hall_name: "6号ALPD Pro高亮厅",
-  film_name: "飞驰人生3",
-  show_time: "2026-04-26 11:00:00",
+  hall_name: "8号巨幕激光厅",
+  film_name: "消失的人",
+  show_time: "2026-05-16 19:30:00",
   rewards: 0,
   is_urgent: false,
   cinema_group: "",
   cinema_code: "32035211",
   order_number: "12412221440316515",
-  offer_end_time: 1777172400000,
+  offer_end_time: 1778931000000,
   app_name: "jinyiguangmei"
 };
 

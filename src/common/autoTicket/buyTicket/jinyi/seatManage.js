@@ -1,15 +1,15 @@
 // 锁座重试常量配置
 const LOCK_RETRY_CONFIG = {
-  lieren: [10, 5],
-  mangguo: [10, 5],
-  sheng: [10, 5],
-  mayi: [10, 5],
-  yangcong: [10, 5],
+  lieren: [3, 5],
+  mangguo: [3, 5],
+  sheng: [3, 5],
+  mayi: [3, 5],
+  yangcong: [3, 5],
   haha: [6, 5],
   yinghuasuan: [6, 5],
   shangzhan: [6, 5],
-  shoutu: [20, 12],
-  mahua: [10, 5]
+  shoutu: [6, 12],
+  mahua: [6, 5]
 };
 // 辅助锁座触发原因
 const ASSIST_LOCK_ERRORS = ["座位旁边不要留空", "座位中间不要留空"];
