@@ -409,7 +409,10 @@ class getJinyiOfferPrice extends BaseOfferPrice {
 
       let { cinema_id, schedule_id, hall_id } = movieInfo;
       // 获取可用卡列表
-      const cardList = await this.fetchAvailableCards(order, cinema_id);
+      const cardList = await this.cinemaManage.getUsableCardList(
+        cinema_id,
+        order.ticket_num
+      );
       this.logger.infoSave("获取到可用卡列表", { cardList });
       if (!cardList.length) return null;
       // this.logger.infoSave("从座位信息获取会员价");
@@ -604,7 +607,7 @@ class getJinyiOfferPrice extends BaseOfferPrice {
       // 3、获取锁座价格明细
       const calcParams = {
         cinema_id: movieInfo.cinema_id,
-        card_id: cardList[0]?.card_id,
+        card_id: cardList[0]?.card_id, // 余额最多的可用卡
         lockOrderId,
         session_id
       };
@@ -619,59 +622,6 @@ class getJinyiOfferPrice extends BaseOfferPrice {
       console.error("获取最贵座位价格异常", error);
     }
   }
-
-  // 获取可用会员卡列表
-  async fetchAvailableCards(order, cinema_id) {
-    const { ticket_num, app_name } = order;
-    const useMobileList = getCinemaLoginInfoList(!order?.need_unsplit_login)
-      .filter(item => item.app_name === app_name && item.mobile)
-      .map(item => item.mobile);
-
-    const cardRes = await svApi.queryCardList({
-      app_name,
-      rule: rule,
-      status: "1",
-      isNeedTotalNum: 0,
-      queryFields:
-        "mobile,card_num,card_id,card_discount,linkCinemaIds,use_limit_day,use_limit_month,daily_usage,monthly_usage,usage_date"
-    });
-
-    let list = cardRes.data.cardList || [];
-    list = list.map(item => ({
-      ...item,
-      daily_usage:
-        item.usage_date !== getCurrentDay() ? 0 : item.daily_usage || 0,
-      month_usage: !isDateInCurrentMonth(item.usage_date)
-        ? 0
-        : item.monthly_usage || 0
-    }));
-    this.logger.infoSave("获取该影院已维护会员卡列表返回", { list });
-    return list
-      .filter(item => useMobileList.includes(item.mobile))
-      .filter(item => this.checkUsageLimit(item, ticket_num))
-      .filter(item => this.checkCinemaLink(item, cinema_id));
-  }
-
-  /**
-   * 检查使用限制
-   */
-  checkUsageLimit(item, ticketNum) {
-    const { use_limit_day, use_limit_month, daily_usage, month_usage } = item;
-    return (
-      (!use_limit_day || ticketNum <= use_limit_day - daily_usage) &&
-      (!use_limit_month || ticketNum <= use_limit_month - month_usage)
-    );
-  }
-
-  /**
-   * 检查影院关联
-   */
-  checkCinemaLink(item, cinema_id) {
-    return (
-      !item.linkCinemaIds || item.linkCinemaIds.split(",").includes(cinema_id)
-    );
-  }
-
   // 计算最优折扣
   calculateBestDiscount(cardList, basePrice) {
     cardList = cardList.map(item => ({

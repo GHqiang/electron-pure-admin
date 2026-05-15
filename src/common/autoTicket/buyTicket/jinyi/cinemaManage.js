@@ -198,6 +198,7 @@ export default class CinemaManage {
         if (usableCards?.length) {
           cinemaInfo.usableCardList = usableCards; // 赋值可用卡列表
         }
+        console.log("usableCards", usableCards);
         if (this.offerRule.offer_type != 1) {
           let cardLinkMobile = usableCards.map(item => item.mobile);
           // 根据可用卡调整登录信息顺序
@@ -324,11 +325,13 @@ export default class CinemaManage {
         : item.linkCinemaIds.split(",").some(itemA => itemA == cinema_id);
     });
     // 设置指定影院的卡优先
-    useCanCardList = useCanCardList.sort((a, b) => {
-      if (a.linkCinemaIds && !b.linkCinemaIds) return -1;
-      if (!a.linkCinemaIds && b.linkCinemaIds) return 1;
-      return 0;
-    });
+    useCanCardList = useCanCardList
+      .sort((a, b) => {
+        if (a.linkCinemaIds && !b.linkCinemaIds) return -1;
+        if (!a.linkCinemaIds && b.linkCinemaIds) return 1;
+        return 0;
+      })
+      .sort((a, b) => (b.balance || 0) - (a.balance || 0));
     this.logger.infoSave("根据制定影院对卡列表进行过滤", {
       useCanCardList: useCanCardList.map(item => item.card_num)
     });

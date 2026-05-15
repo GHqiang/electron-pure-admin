@@ -176,7 +176,7 @@ class JinyiBuyTicket extends BaseBuyTicket {
         this.currentParamsList = buyTicketInfo.currentParamsList;
         const phone = this.currentParamsList[0].mobile;
         this.logger.infoSave(`首次出票手机号-${phone}`);
-        // 库里维护的可用会员卡列表
+        // 库里维护的可用会员卡列表(已按余额倒序)
         this.usableCardList = buyTicketInfo.usableCardList;
         // 2、获取购票座位信息
         const targetSeatRes =
@@ -249,7 +249,6 @@ class JinyiBuyTicket extends BaseBuyTicket {
       this.logger.infoSave("座位价格相关信息", {
         areaInfoList
       });
-      let seatPayTotalPrice = 0; // 座位总价格
       let seatlableList = [];
       try {
         let defaultPrice = areaInfoList.find(
@@ -275,9 +274,7 @@ class JinyiBuyTicket extends BaseBuyTicket {
           const price = areaInfoListPrice.find(
             itemA => itemA.seat_no == item.seat_no
           )?.area_price;
-          seatPayTotalPrice += price || defaultPrice;
         });
-        console.log("座位总价格", seatPayTotalPrice);
         seatlableList = targetSeatCodes.map(item => {
           let targetSeatInfo = areaInfoListPrice.find(
             itemA => itemA.seat_no == item.seat_no
@@ -337,6 +334,18 @@ class JinyiBuyTicket extends BaseBuyTicket {
       // 锁座id即创建订单id，但是不会真正创建订单，也不会真正锁座，后面不会有释放座位和取消座位的接口
       buyTicketInfo.lockOrderId = lockRes.data?.order_id;
       const { lockOrderId } = buyTicketInfo;
+      // 3、获取锁座价格明细
+      const calcParams = {
+        cinema_id,
+        card_id: this.usableCardList?.[0]?.card_id, // 余额最多的可用卡
+        lockOrderId,
+        session_id: this.currentSessionId
+      };
+      this.logger.infoSave("获取锁座价格明细参数", calcParams);
+      const calcResult = await this.orderManage.priceCalculation(calcParams);
+      // 座位支付总价格
+      let seatPayTotalPrice = calcResult?.data?.ticket_total_price;
+      this.logger.infoSave("座位支付总价格", { seatPayTotalPrice });
       // 4、使用优惠券或者会员卡（仅判断是否有可用卡及券）
       const cardQuanRes = await this.cardQuanManage.useQuanOrCard({
         buyTicketInfo,
@@ -611,25 +620,25 @@ window.jinyiTicketObj = (order, isTestOrder = false) => {
   return new JinyiBuyTicket(order, logger, isTestOrder);
 };
 const testOrder = {
-  id: "12603141304358073",
-  supplier_end_price: 42,
+  id: "12412221440316515",
+  supplier_end_price: 36,
   city_name: "南京",
   cinema_addr: "市南区香港中路69号麦凯乐八楼",
-  cinema_name: "金逸影城(光美江宁弘阳IMAX店)",
-  hall_name: "7号MX4D激光厅(儿童需购票)",
-  film_name: "飞驰人生3",
-  show_time: "2026-03-17 21:10:00",
-  cinema_code: "32016011",
-  order_number: "12603141304358073",
+  cinema_name: "金逸影城（光美荟聚IMAX激光店）",
+  hall_name: "8号巨幕激光厅",
+  film_name: "消失的人",
+  show_time: "2026-05-16 19:30:00",
+  cinema_code: "32035211",
+  order_number: "12412221440316515",
   lockseat: "3排1座",
-  plat_name: "mayi",
-  app_name: "guangmeiwenhua",
-  appName: "guangmeiwenhua",
+  plat_name: "lieren",
+  app_name: "jinyiguangmei",
+  appName: "jinyiguangmei",
   ticket_num: 1,
   rewards: 0,
   is_urgent: false,
   cinema_group: "",
-  offer_end_time: 1773569265000
+  offer_end_time: 1778931000000
 };
 // 订单一键出票测试：
 // window.jinyiTicketObj(order, true).singleTicket()

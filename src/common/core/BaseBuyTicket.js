@@ -71,8 +71,8 @@ export default class BaseBuyTicket {
         this.offerRule = {
           offer_type: "2",
           offer_end_amount: "42",
-          member_price: "40",
-          real_member_price: "43"
+          member_price: "32",
+          real_member_price: "38"
         };
       }
       this.logger.infoSave("订单报价记录信息", {
