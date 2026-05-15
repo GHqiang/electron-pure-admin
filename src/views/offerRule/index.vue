@@ -661,6 +661,8 @@ const handleStatusChange = async row => {
   } catch (err) {
     console.warn("状态更新失败, 还原原状态", err);
     row.status = row.status === "1" ? "2" : "1";
+  } finally {
+    searchData();
   }
 };
 
