@@ -596,6 +596,7 @@ class getJinyiOfferPrice extends BaseOfferPrice {
       let lockSeatParams = {
         cinema_id: movieInfo.cinema_id,
         schedule_id: movieInfo.schedule_id,
+        hall_id: movieInfo.hall_id,
         seatCodes: seatlableList,
         plat_name: order.plat_name,
         order_number: order.order_number,

@@ -190,6 +190,7 @@ export default class SeatManage {
 
     try {
       if (inx % 2 === 0) {
+        const params = this.getSeatParams(data);
         await this.getSeatLayout(params);
         await mockDelay(1);
       }
