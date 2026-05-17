@@ -455,9 +455,9 @@ class JinyiBuyTicket extends BaseBuyTicket {
       }
       // 支付前校验用卡价格
       let real_member_price = offerRule?.real_member_price || 0;
-      real_member_price = (real_member_price * 1000) / 10;
+      real_member_price = (real_member_price * 10000 * ticket_num) / 10000;
+      this.logger.infoSave("真实会员价价格", { real_member_price });
       if (offerRule.offer_type !== "1" && canUseCardList?.length) {
-        real_member_price = (real_member_price * 10000 * ticket_num) / 10000;
         if (paymentAmount > real_member_price) {
           if (subDecimal(paymentAmount, real_member_price) < profit) {
             this.logger.infoSave(
@@ -492,8 +492,7 @@ class JinyiBuyTicket extends BaseBuyTicket {
             Number(profit) +
             ((real_member_price * 1000 - paymentAmount * 1000) *
               member_discount) /
-              (1000 * 100) /
-              100;
+              (1000 * 100);
           profit = Number(profit).toFixed(2);
         }
       }
