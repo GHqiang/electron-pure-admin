@@ -16,7 +16,8 @@
         @click="oneClickStop"
         >一键停止</el-button
       >
-      <el-button
+      <!-- 洋葱已返回影院专资，屏蔽同步入口 -->
+      <!-- <el-button
         v-if="isActiveSyncYangcong"
         v-throttle
         type="primary"
@@ -24,7 +25,7 @@
         :loading="syncYangcongLoading"
         @click="syncYangcongCinemaList()"
         >同步洋葱影院列表</el-button
-      >
+      > -->
     </div>
 
     <el-table :data="platQueueList" border show-overflow-tooltip>
