@@ -52,7 +52,8 @@ export default class YangcongOrderFetcher extends BaseOrderFetcher {
             movieName,
             logoUrl,
             playTime,
-            cinemaChain
+            cinemaChain,
+            standardCode
           } = item;
 
           return {
@@ -70,13 +71,13 @@ export default class YangcongOrderFetcher extends BaseOrderFetcher {
             rewards: 0,
             is_urgent: "",
             cinema_group: cinemaChain,
-            cinema_code: yangcongCinemaListObj.getCinemaCode(cinemaName),
+            cinema_code: standardCode,
             order_number: tradeno,
             lockseat: seatNames ? seatNames.split("|").join(" ") : "",
             plat_name: "yangcong"
           };
         })
-        .filter(item => getCinemaFlag(item))
+        .filter(item => item.cinema_code && getCinemaFlag(item))
         .map(item => {
           const app_name = getCinemaFlag(item);
           return {

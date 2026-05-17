@@ -58,7 +58,8 @@ export default class YangcongOfferQueue extends BaseOfferQueue {
             movieName,
             logoUrl,
             playTime,
-            cinemaChain // 品牌名 上影上海、上影二线等
+            cinemaChain, // 品牌名 上影上海、上影二线等
+            standardCode
           } = item;
           return {
             plat_name: "yangcong",
@@ -76,7 +77,7 @@ export default class YangcongOfferQueue extends BaseOfferQueue {
             rewards: 0, // 洋葱无奖励，只有快捷
             is_urgent: "", // 1紧急 0非紧急
             cinema_group: cinemaChain,
-            cinema_code: yangcongCinemaListObj.getCinemaCode(cinemaName), // 影院id
+            cinema_code: standardCode, // 影院id
             order_number: tradeno,
             // 转为截止时间戳，原值： "2024-09-22 21:02:55"
             offer_end_time: +new Date(item.orderExpireTime)
@@ -92,7 +93,7 @@ export default class YangcongOfferQueue extends BaseOfferQueue {
               loginItem.mobile &&
               loginItem.session_id
           );
-          return appLoginInfo && appFlag;
+          return item.cinema_code && appLoginInfo && appFlag;
         })
         .map(item => {
           const app_name = getCinemaFlag(item);
