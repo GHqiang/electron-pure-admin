@@ -42,6 +42,9 @@
 </template>
 
 <script setup>
+defineOptions({
+  name: "QuanTypeManage"
+});
 import { ref, computed, watch } from "vue";
 import QuanType from "./quanType.vue";
 import QuanList from "./quanList.vue";
