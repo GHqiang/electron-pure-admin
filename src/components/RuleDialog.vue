@@ -581,7 +581,7 @@ let formData = reactive({
     {
       platName: "lieren",
       value: "",
-      isSyncPlat: "1" // 是否同步平台，1-同步 2-不同步
+      isSyncPlat: "" // 是否同步平台，1-同步 2-不同步
     }
   ], // 平台报价规则
   autoUseQuanStatus: "2", // 自动用券状态 1-开启 2-关闭
@@ -675,7 +675,7 @@ const resetForm = el => {
     {
       platName: "lieren",
       value: "",
-      isSyncPlat: "1" // 是否同步平台，1-同步 2-不同步
+      isSyncPlat: "" // 是否同步平台，1-同步 2-不同步
     }
   ]; // 平台报价规则
   formData.autoUseQuanStatus = "2"; // 自动用券状态 1-开启 2-关闭
@@ -769,7 +769,7 @@ const addDomain = () => {
   formData.platOfferList.push({
     platName: "",
     value: "",
-    isSyncPlat: "1" // 是否同步平台，1-同步 2-不同步
+    isSyncPlat: "" // 是否同步平台，1-同步 2-不同步
   });
 };
 
@@ -853,11 +853,11 @@ const preserveLierenPlatOfferFields = () => {
     p => p.platName === "lieren"
   );
   if (!prev) {
-    return { value: "", isSyncPlat: "1" };
+    return { value: "", isSyncPlat: "" };
   }
   return {
     value: prev.value ?? "",
-    isSyncPlat: prev.isSyncPlat ?? "1",
+    isSyncPlat: prev.isSyncPlat ?? "",
     platRuleId: prev.platRuleId
   };
 };
