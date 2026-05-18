@@ -1588,47 +1588,142 @@ const sanitizeLogInfoForUpload = info => {
   }
 };
 
-// 日志上传（仅在接口成功后再移除已上传条目，避免失败时日志被清空导致永久丢失）
-const logUpload = async (order, logList) => {
-  try {
-    if (!logList.length) return;
+/**
+ * 日志上传配置常量
+ * @property {number} BATCH_SIZE - 每批上传的日志数量，避免单次数据量过大导致超时
+ * @property {number} MAX_RETRIES - 超时重试最大次数
+ * @property {number} INITIAL_RETRY_DELAY - 初始重试延迟(毫秒)
+ * @property {number} RETRY_MULTIPLIER - 重试延迟倍数（指数退避）
+ * @property {number} WECHAT_PUSH_COOLDOWN - 微信消息推送冷却时间(毫秒)，避免频繁推送骚扰
+ * @note TIMEOUT 已在 sv-request.js 中配置为30秒，此处不再重复定义
+ */
+const LOG_UPLOAD_CONFIG = {
+  BATCH_SIZE: 50,
+  MAX_RETRIES: 3,
+  INITIAL_RETRY_DELAY: 1000,
+  RETRY_MULTIPLIER: 2,
+  WECHAT_PUSH_COOLDOWN: 60000
+};
 
-    const uploadedCount = logList.length;
-    let log_list = logList.slice(0, uploadedCount);
-    log_list = log_list.map(item => {
-      let info = item.info;
-      if (info != null && typeof info === "object" && "error" in info) {
-        info = {
-          ...info,
-          error: formatErrInfo(info.error)
-        };
-      }
-      return {
-        ...item,
-        info: sanitizeLogInfoForUpload(info)
-      };
-    });
-    // 解决后端接口里面返回特殊表情接口报错无法入库的问题
-    log_list = JSON.stringify(log_list).replace(/[\u{1F600}-\u{1F64F}]/gu, "");
-    log_list = JSON.parse(log_list);
-    // type 1-报价 2-获取订单 3-出票
-    const { order_number, app_name, plat_name, type = 3 } = order;
-    await svApi.addTicketOperaLog({
-      plat_name: plat_name || "",
-      app_name: app_name || "",
-      order_number: order_number || "",
-      type,
-      log_list
-    });
-    // 仅移除本批已入库的日志；await 期间若追加了新日志，会保留在队尾供下次上送
-    logList.splice(0, uploadedCount);
-    // log_list 数组对象里的level： error\warn\info
+/**
+ * 微信消息推送时间戳，用于限流控制
+ */
+let lastWechatPushTime = 0;
+
+/**
+ * 判断是否可以发送微信消息（限流控制）
+ * @returns {boolean} - true=可以发送，false=冷却中
+ */
+const canSendWechatMessage = () => {
+  const now = Date.now();
+  if (now - lastWechatPushTime >= LOG_UPLOAD_CONFIG.WECHAT_PUSH_COOLDOWN) {
+    lastWechatPushTime = now;
+    return true;
+  }
+  return false;
+};
+
+/**
+ * 带指数退避重试的日志上传函数
+ * @param {Object} params - 上传参数
+ * @param {number} retries - 当前重试次数（默认0，首次调用）
+ * @returns {Promise} - 上传结果
+ */
+const logUploadWithRetry = async (params, retries = 0) => {
+  // 计算重试延迟：首次1秒，之后指数增长（1s → 2s → 4s）
+  const delay = LOG_UPLOAD_CONFIG.INITIAL_RETRY_DELAY * 
+                Math.pow(LOG_UPLOAD_CONFIG.RETRY_MULTIPLIER, retries);
+  
+  // 非首次调用时，等待延迟后再重试
+  if (retries > 0) {
+    await new Promise(resolve => setTimeout(resolve, delay));
+  }
+
+  try {
+    // 使用封装的API进行上传，支持通过axios配置传递超时参数
+    const res = await svApi.addTicketOperaLog(params);
+    return res;
   } catch (error) {
-    console.error("日志上送异常", error);
-    await sendWxPusherMessage({
-      msgType: 9, // 日志上送异常
-      transferTip: formatErrInfo(error)
-    });
+    // 仅对超时错误进行重试
+    if (retries < LOG_UPLOAD_CONFIG.MAX_RETRIES && 
+        (error.code === "ECONNABORTED" || 
+         (error.message && error.message.includes("timeout")))) {
+      console.warn(`日志上传超时，第 ${retries + 1} 次重试...`);
+      return logUploadWithRetry(params, retries + 1);
+    }
+    // 非超时错误或达到最大重试次数，直接抛出
+    throw error;
+  }
+};
+
+/**
+ * 日志上传主函数（分批上传 + 重试 + 微信消息限流）
+ * @param {Object} order - 订单信息（包含plat_name, app_name, order_number, type）
+ * @param {Array} logList - 待上传的日志列表
+ */
+const logUpload = async (order, logList) => {
+  // 日志列表为空，直接返回
+  if (!logList.length) return;
+
+  const { order_number, app_name, plat_name, type = 3 } = order;
+  let hasError = false;      // 是否发生错误
+  let lastError = null;      // 最后一次错误信息
+
+  // 循环分批上传日志，直到全部上传完成或发生错误
+  while (logList.length > 0) {
+    // 计算本批上传数量（不超过配置的批大小）
+    const batchSize = Math.min(logList.length, LOG_UPLOAD_CONFIG.BATCH_SIZE);
+    const batch = logList.slice(0, batchSize);
+
+    try {
+      // 预处理日志数据：格式化错误信息、清理不可序列化内容
+      const log_list = batch.map(item => {
+        let info = item.info;
+        if (info != null && typeof info === "object" && "error" in info) {
+          info = {
+            ...info,
+            error: formatErrInfo(info.error)
+          };
+        }
+        return {
+          ...item,
+          info: sanitizeLogInfoForUpload(info)
+        };
+      });
+
+      // 移除特殊表情符号，避免后端入库失败
+      const cleanedLogList = JSON.stringify(log_list)
+        .replace(/[\u{1F600}-\u{1F64F}]/gu, "");
+
+      // 调用带重试的上传函数
+      await logUploadWithRetry({
+        plat_name: plat_name || "",
+        app_name: app_name || "",
+        order_number: order_number || "",
+        type,
+        log_list: JSON.parse(cleanedLogList)
+      });
+
+      // 上传成功后，从日志列表中移除已上传的日志
+      logList.splice(0, batchSize);
+    } catch (error) {
+      console.error("日志上送异常", error);
+      hasError = true;
+      lastError = error;
+      break;  // 发生错误时停止继续上传
+    }
+  }
+
+  // 仅在发生错误且不在冷却期时发送微信通知
+  if (hasError && canSendWechatMessage()) {
+    try {
+      await sendWxPusherMessage({
+        msgType: 9,  // 日志上传异常类型
+        transferTip: formatErrInfo(lastError)
+      });
+    } catch (pushError) {
+      console.error("微信消息推送失败", pushError);
+    }
   }
 };
 
