@@ -11,6 +11,8 @@ if (allCinemaList) {
   canCinemaList = allCinemaList.filter(item =>
     [2].includes(tokens?.userInfo?.rule) ? item.status == 1 : item.status != "3"
   );
+} else {
+  allCinemaList = [];
 }
 export const useCinemaList = defineStore("cinemaDataTable", {
   state: () => {
