@@ -748,7 +748,7 @@ export default class SfcCardQuanManage {
               appFlag: this.appFlag
             })
           : null;
-        const price = priceRes?.price;
+        const price = priceRes?.defaultCardPrice || priceRes?.price;
         if (
           price &&
           Number(price?.total_price || 0) * 1000 <=

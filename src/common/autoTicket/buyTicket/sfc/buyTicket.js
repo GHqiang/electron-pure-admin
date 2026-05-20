@@ -501,7 +501,7 @@ class SfcBuyTicket extends BaseBuyTicket {
         profit,
         priceInfo
       } = useRes;
-
+      this.logger.infoSave("使用卡券成功", useRes);
       if (!card_id && !quan_code && !member_coupon_id && !coupon_id) {
         const errInfoObj = this.logger.logList
           ?.filter(l => l.level === "error")
@@ -544,7 +544,7 @@ class SfcBuyTicket extends BaseBuyTicket {
           session_id,
           appFlag
         });
-        priceInfo = priceRes?.price;
+        priceInfo = priceRes?.defaultCardPrice || priceRes?.price;
         if (priceRes?.error) {
           this.logger.errorSave("计算订单价格异常", { error: priceRes?.error });
         }
