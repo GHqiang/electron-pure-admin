@@ -83,6 +83,7 @@ export default class SfcOrderManage {
       appFlag,
       member_coupon_id,
       coupon_id,
+      is_first,
       isUseCardFail
     } = data;
     let params = {
@@ -94,7 +95,7 @@ export default class SfcOrderManage {
       card_id: "",
       additional_goods_info: "", // 附加商品信息
       goods_info: "", // 商品信息
-      is_first: "0", // 是否是首次购买 0-不是 1-是
+      is_first: is_first || "0", // 是否是首次购买 0-不是 1-是
       option_goods_info: "", // 可选的额外商品信息
       update_time: getCurrentTime(),
       session_id

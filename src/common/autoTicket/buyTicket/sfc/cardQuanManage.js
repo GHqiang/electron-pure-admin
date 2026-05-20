@@ -734,7 +734,8 @@ export default class SfcCardQuanManage {
     let cardNum = "";
     let priceInfo = null;
     if (!this.isV3App) {
-      for (const card of sorted) {
+      for (let i = 0; i < sorted.length; i++) {
+        const card = sorted[i];
         const priceRes = this.orderManage
           ? await this.orderManage.priceCalculation({
               city_id,
@@ -743,6 +744,7 @@ export default class SfcCardQuanManage {
               seat_ids,
               card_id: card.id,
               session_id,
+              is_first: i == 0 ? "1" : "0",
               appFlag: this.appFlag
             })
           : null;
