@@ -93,6 +93,84 @@ export default class BaseOfferQueue {
   }
 
   /**
+   * 当前系列并发上限（调度未启动时用字典默认值）
+   * @returns {number}
+   */
+  _getSeriesConcurrencyLimit() {
+    return (
+      this._offerConcurrencyPerSeries ??
+      dictStore.dictInfo.offerConcurrencyPerSeries ??
+      2
+    );
+  }
+
+  /**
+   * 分析单条订单暂不能调度的原因（用于诊断日志）
+   * @param {Object} order
+   * @returns {string[]}
+   */
+  _getOrderBlockReasons(order) {
+    const reasons = [];
+    const skipCheck =
+      this.platformAdapter?.config?.features?.skipOfferEndTimeCheck === true;
+    const minOfferHandleEndTime = dictStore.dictInfo.minOfferHandleEndTime;
+    const now = Date.now();
+    if (
+      !skipCheck &&
+      order.offer_end_time &&
+      order.offer_end_time - now <= minOfferHandleEndTime
+    ) {
+      reasons.push(
+        `距报价截止不足阈值(剩余${order.offer_end_time - now}ms, 阈值${minOfferHandleEndTime}ms)`
+      );
+    }
+    const sk = this.getSeriesKey(order);
+    const limit = this._getSeriesConcurrencyLimit();
+    const running = this.runningCountBySeries.get(sk) || 0;
+    if (running >= limit) {
+      reasons.push(
+        `同系列[${sk}]并发已满(${running}/${limit})，同类型订单报价中`
+      );
+    }
+    const pos = this.queue.findIndex(
+      o => o.order_number === order.order_number
+    );
+    if (pos > 0) {
+      reasons.push(`队列排位第${pos + 1}位(前有${pos}单，按截止时间优先)`);
+    }
+    if (this.isOfferRunning && !reasons.length) {
+      reasons.push("报价调度器运行中，等待执行空位");
+    }
+    return reasons;
+  }
+
+  /**
+   * 构建入队时的调度快照（写入日志便于排查延后原因）
+   * @param {Object} order
+   * @returns {Object}
+   */
+  _buildScheduleSnapshot(order) {
+    const sk = this.getSeriesKey(order);
+    const limit = this._getSeriesConcurrencyLimit();
+    const running = this.runningCountBySeries.get(sk) || 0;
+    const pos = this.queue.findIndex(
+      o => o.order_number === order.order_number
+    );
+    return {
+      order_number: order.order_number,
+      app_name: order.app_name,
+      seriesKey: sk,
+      seriesRunning: running,
+      seriesLimit: limit,
+      isOfferRunning: this.isOfferRunning,
+      queueLength: this.queue.length,
+      queuePosition: pos >= 0 ? pos + 1 : null,
+      blockReasons: this._getOrderBlockReasons(order),
+      runningCountBySeries: Object.fromEntries(this.runningCountBySeries)
+    };
+  }
+
+  /**
    * 获取订单（子类实现）
    * @param {number} fetchDelay - 获取间隔
    * @returns {Promise<void>}
@@ -135,9 +213,17 @@ export default class BaseOfferQueue {
     const logger = new Logger({ logType: 1 });
     logger.init(item);
     logger.infoSave("新的待报价订单", { newOrder: item, oldOrder });
-    logger.logUpload();
+    item._offerEnqueueAt = Date.now();
 
     this.insertOrderIntoQueue(item);
+
+    if (this.isOfferRunning) {
+      item._offerEnqueueBlockReasons = this._getOrderBlockReasons(item);
+      const snapshot = this._buildScheduleSnapshot(item);
+      logger.infoSave("订单入队延后报价", snapshot);
+    }
+
+    logger.logUpload();
 
     if (!this.isOfferRunning && this.isRunning) {
       this.startProcessingQueue();
@@ -194,7 +280,26 @@ export default class BaseOfferQueue {
     const tryStartOne = () => {
       while (this.isRunning) {
         const next = this.findNextOrderToRun();
-        if (!next) break;
+        if (!next) {
+          if (this.queue.length > 0) {
+            const blockedSummary = this.queue.map(order => ({
+              order_number: order.order_number,
+              app_name: order.app_name,
+              seriesKey: this.getSeriesKey(order),
+              blockReasons: this._getOrderBlockReasons(order)
+            }));
+            console.warn("队列订单暂无法调度", {
+              platName: this.platName,
+              queueLength: this.queue.length,
+              runningCountBySeries: Object.fromEntries(
+                this.runningCountBySeries
+              ),
+              seriesLimit: this._getSeriesConcurrencyLimit(),
+              blockedSummary
+            });
+          }
+          break;
+        }
         const { order, index } = next;
         this.queue.splice(index, 1);
         const sk = this.getSeriesKey(order);
@@ -260,12 +365,30 @@ export default class BaseOfferQueue {
           );
         } else {
           // logger.infoSave("开始处理订单", { order });
+          const queueWaitMs = order._offerEnqueueAt
+            ? orderHandleStartAt - order._offerEnqueueAt
+            : null;
           logger.infoSave("订单报价链路开始", {
             order_number: order.order_number,
             app_name: order.app_name,
             offerHandleTimeout,
-            orderHandleStartAt
+            orderHandleStartAt,
+            queueWaitMs,
+            seriesKey: this.getSeriesKey(order),
+            seriesRunning: this.runningCountBySeries.get(
+              this.getSeriesKey(order)
+            ),
+            seriesLimit: this._getSeriesConcurrencyLimit(),
+            runningCountBySeries: Object.fromEntries(this.runningCountBySeries)
           });
+          if (queueWaitMs != null && queueWaitMs >= 1000) {
+            logger.infoSave("订单入队等待结束开始报价", {
+              order_number: order.order_number,
+              queueWaitMs,
+              waitSec: (queueWaitMs / 1000).toFixed(2),
+              blockReasonsAtEnqueue: order._offerEnqueueBlockReasons || []
+            });
+          }
           // 为防止下游接口异常导致 Promise 长时间不结束，这里增加整体超时保护，避免队列被单个订单永久阻塞
           offerResult = await Promise.race([
             this.singleOffer({
