@@ -132,7 +132,8 @@ export default class SfcOrderManage {
       const res = await this.appApi.priceCalculation(params);
       let price = res.data;
       this.logger.infoSave("计算订单价格返回", res);
-      if (card_id && price?.defaultCardPrice?.default_card?.id !== card_id) {
+      const defaultCardId = price?.defaultCardPrice?.default_card?.id;
+      if (card_id && defaultCardId && defaultCardId !== card_id) {
         this.logger.infoSave(
           "计算订单价格返回的用卡id和入参卡id不一致，重新请求"
         );
