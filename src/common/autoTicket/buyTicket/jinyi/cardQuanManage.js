@@ -110,12 +110,12 @@ export default class CardQuanManage {
         this.logger.infoSave("使用优惠券出票", { quanValueList });
         quanList = await this.continuousGetQuan({
           session_id,
+          cinema_id,
           logger: this.logger
         });
         this.logger.infoSave("连续获取券返回", {
           quanData: quanList?.map(item => ({
             couponName: item.couponName,
-            couponDesc: item.couponDesc,
             couponCode: item.couponCode,
             endDateTime: item.endDateTime
             // couponValue: item.couponValue
@@ -168,12 +168,7 @@ export default class CardQuanManage {
         // 根据券标识获取目标券
         let targetQuanList = quanList.filter(
           item =>
-            couponInfoSpecial(item.couponName) ===
-              couponInfoSpecial(quan_flag) &&
-            (quan_desc
-              ? couponInfoSpecial(item.couponDesc) ==
-                couponInfoSpecial(quan_desc)
-              : true)
+            couponInfoSpecial(item.couponName) === couponInfoSpecial(quan_flag)
         );
         // 增加已用完过滤，防止核销延迟导致用券失败
         const usedQuanList = await this.queryUsedQuanList({
@@ -223,7 +218,6 @@ export default class CardQuanManage {
 
         let useQuan = targetQuanList.slice(0, ticket_num).map(item => {
           return {
-            couponType: item.ticketType,
             couponCode: item.couponCode,
             couponName: item.couponName
           };
@@ -358,13 +352,13 @@ export default class CardQuanManage {
       this.logger.infoSave("获取优惠券列表入参", params);
       const res = await this.appApi.getQuanList(params);
       this.logger.infoSave("获取优惠券列表返回", res);
-      let quanList = res.coupons || [];
+      let quanList = res.data || [];
       // let totalCount = res.totalCount || 0;
       quanList = quanList.map(item => ({
         ...item,
-        couponName: item.couponName,
-        couponCode: item.couponCode,
-        endDateTime: item.endTime
+        couponName: item.show_name,
+        couponCode: item.coupon_code,
+        endDateTime: +new Date(item.expire_time)
       }));
       // const { number, size, totalPages, last } = res.data?.pageable;
       if (!quanList?.length) {
@@ -565,6 +559,7 @@ export default class CardQuanManage {
 
   // 获取新券(暂未联调)
   async getNewQuan({
+    cinema_id,
     quan_value,
     quan_flag,
     black_quans,
@@ -625,6 +620,7 @@ export default class CardQuanManage {
           {
             coupon_num: quan.coupon_num,
             session_id,
+            cinema_id,
             appFlag
           },
           logger
@@ -654,17 +650,21 @@ export default class CardQuanManage {
 
   // 绑定券
   async bandQuan(data, logger) {
-    const { coupon_num, session_id } = data;
+    const { coupon_num, cinema_id, session_id } = data;
     let params = {
-      couponCode: coupon_num,
-      pinCode: "",
-      fenghuangToken: session_id
+      voucher_code: coupon_num,
+      fenghuangToken: session_id,
+      cinema_id
     };
     try {
       await mockDelay(0.1);
       logger.infoSave("绑定券参数", params);
       const res = await this.appApi.bandQuan(params);
       logger.infoSave("绑定券返回", res);
+      if (!res.data?.security_verify) {
+        logger.infoSave("绑定新券异常");
+        return;
+      }
       return { coupon_num };
     } catch (error) {
       logger.errorSave("绑定新券异常", formatErrInfo(error));
@@ -716,7 +716,9 @@ export default class CardQuanManage {
   // 获取影院券类型列表(报价时通过库存判断是否报价使用)
   async getQuanTypeListByApp() {
     const { app_name } = this.order;
-    const useMobileList = getCinemaLoginInfoList(!this.order?.need_unsplit_login)
+    const useMobileList = getCinemaLoginInfoList(
+      !this.order?.need_unsplit_login
+    )
       .filter(
         item => item.app_name === app_name && item.mobile && item.session_id
       )
@@ -775,7 +777,9 @@ export default class CardQuanManage {
       logType: 1
     });
     logger.init(this.order);
-    const targetLoginList = getCinemaLoginInfoList(!this.order?.need_unsplit_login).filter(
+    const targetLoginList = getCinemaLoginInfoList(
+      !this.order?.need_unsplit_login
+    ).filter(
       item => item.app_name === app_name && item.mobile && item.session_id
     );
     console.log("targetLoginList", targetLoginList);
@@ -801,6 +805,7 @@ export default class CardQuanManage {
         // }
         return false;
       });
+      // isNeedUpdate = false;
       if (!isNeedUpdate) {
         logger.infoSave("不需要更新券库存");
       } else {
@@ -841,11 +846,7 @@ export default class CardQuanManage {
               itemA =>
                 couponInfoSpecial(item.quan_flag) ===
                   couponInfoSpecial(itemA.couponName) &&
-                !item.black_quans?.includes(itemA.couponCode) &&
-                (item.quan_desc
-                  ? couponInfoSpecial(item.quan_desc) ===
-                    couponInfoSpecial(itemA.couponDesc)
-                  : true)
+                !item.black_quans?.includes(itemA.couponCode)
             );
             console.log(item.quan_flag, "targetQuanList", targetQuanList);
             let quanStock = targetQuanList.length;
@@ -901,17 +902,17 @@ export default class CardQuanManage {
   }
 
   // 获取某个手机号的全部优惠券列表
-  async getQuanListByPhone({ session_id, logger }) {
+  async getQuanListByPhone({ session_id, cinema_id, logger }) {
     try {
       const quanData = await this.continuousGetQuan({
         session_id,
+        cinema_id,
         logger
       });
       console.log("quanData", quanData);
       logger.infoSave("连续获取券返回", {
         quanData: quanData.map(item => ({
           couponName: item.couponName,
-          couponDesc: item.couponDesc,
           couponCode: item.couponCode,
           endDateTime: item.endDateTime
           // couponValue: item.couponValue
@@ -927,26 +928,26 @@ export default class CardQuanManage {
   async continuousGetQuan(data) {
     let {
       session_id,
+      cinema_id,
       pageNumber = 1,
       pageSize = 100,
       quanData = [],
       logger
     } = data;
     let params = {
-      status: "USEFUL",
-      pageNumber,
-      pageSize,
-      fenghuangToken: session_id
+      status: "UNUSED",
+      fenghuangToken: session_id,
+      cinema_id
     };
     try {
       const res = await this.appApi.getQuanList(params);
-      let quanList = res.coupons || [];
+      let quanList = res.data || [];
       // logger.infoSave("获取券返回", { quanList, params });
       quanList = quanList.map(item => ({
         ...item,
-        couponName: item.couponName,
-        couponCode: item.couponCode,
-        endDateTime: item.endTime
+        couponName: item.show_name,
+        couponCode: item.coupon_code,
+        endDateTime: +new Date(item.expire_time)
       }));
       quanData.push(...quanList);
       if (quanList?.length == pageSize) {
@@ -1023,7 +1024,9 @@ export default class CardQuanManage {
       let targetQuanList = quanTypeList.filter(item =>
         quanValueList.includes(item.quan_value)
       );
-      const useMobileList = getCinemaLoginInfoList(!this.order?.need_unsplit_login)
+      const useMobileList = getCinemaLoginInfoList(
+        !this.order?.need_unsplit_login
+      )
         .filter(
           item => item.app_name === app_name && item.mobile && item.session_id
         )

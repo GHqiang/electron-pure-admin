@@ -352,9 +352,19 @@ const createApi = ({ app_name }) => {
       params
     );
 
+  // 获取优惠券列表(v3先用个人中心的优惠券列表)
+  const getQuanList = params =>
+    axios.get("/ticket/channelCode/cinema/cinema_id/vistax/voucher/list", {
+      params
+    });
+  // ?status=
   // 绑定优惠券
   const bandQuan = params =>
-    axios.post("/h5ume/mtop.alipic.lark.own.coupon.bindcoupon", params);
+    axios.get(
+      "/ticket/channelCode/cinema/cinema_id/check/vistax/voucher/pass",
+      { params }
+    );
+  // ?voucher_code=123456
 
   // 解锁座位
   const unlockSeat = params =>
@@ -376,6 +386,7 @@ const createApi = ({ app_name }) => {
     getOrderList,
     getOrderInfo,
     buyTicket,
+    getQuanList,
     bandQuan
   };
 };

@@ -72,7 +72,10 @@ export default class BaseBuyTicket {
           offer_type: "2",
           offer_end_amount: "42",
           member_price: "32",
-          real_member_price: "38"
+          real_member_price: "38",
+          // 上面用卡，下面用券
+          offer_type: "1",
+          quan_value: "guangmeiwuhan"
         };
       }
       this.logger.infoSave("订单报价记录信息", {

@@ -70,7 +70,7 @@ export default class OrderManage {
 
   // 计算价格
   async priceCalculation(data) {
-    let { cinema_id, card_id, lockOrderId, session_id } = data;
+    let { cinema_id, card_id, quan_code, lockOrderId, session_id } = data;
     let params = {
       session_id,
       cinema_id,
@@ -87,6 +87,11 @@ export default class OrderManage {
       voucher_code_type: "",
       ticket_pack_goods: ""
     };
+    if (quan_code) {
+      params.discount_type = "";
+      params.voucher_code = quan_code;
+      params.voucher_code_type = "VISTAX_VOUCHER";
+    }
     let res;
     try {
       this.logger.infoSave("计算价格参数", JSON.parse(JSON.stringify(params)));

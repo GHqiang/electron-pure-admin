@@ -239,7 +239,6 @@ class JinyiBuyTicket extends BaseBuyTicket {
       // await mockDelay(1);
       const {
         cinema_id,
-        cinemaLinkId,
         schedule_id,
         scheduleId,
         targetShow,
@@ -378,18 +377,19 @@ class JinyiBuyTicket extends BaseBuyTicket {
         });
         // 转单或换号处理
         const transparams = {
-          cinemaLinkId,
+          cinema_id,
           lockOrderId,
           session_id: this.currentSessionId
         };
         return await this.transferOrChangePhone(transparams, buyTicketInfo);
       }
       // 5、计算价格
-      let quan_code = useQuan.map(item => item.couponCode);
+      let quan_code = useQuan.map(item => item.couponCode).join(",");
       const calcRes = await this.orderManage.priceCalculation({
         ...buyTicketInfo,
         cinema_id,
         card_id: canUseCardList[0]?.card_id,
+        quan_code,
         lockOrderId,
         session_id: this.currentSessionId
       });
@@ -397,14 +397,14 @@ class JinyiBuyTicket extends BaseBuyTicket {
         this.logger.info("计算价格异常，走转单或换号处理");
         // 转单或换号处理
         const transparams = {
-          cinemaLinkId,
+          cinema_id,
           lockOrderId,
           session_id: this.currentSessionId
         };
         return await this.transferOrChangePhone(transparams, buyTicketInfo);
       }
       // 实际支付价格
-      let paymentAmount = calcRes?.data?.ticket_total_price;
+      let paymentAmount = calcRes?.data?.ticket_payment_total_price;
       this.logger.infoSave("实际支付价格", { paymentAmount });
       // 校验卡余额是否足够
       let quan_fee = offerRule.quan_fee || 0;
@@ -423,7 +423,7 @@ class JinyiBuyTicket extends BaseBuyTicket {
         if (offerRule.is_store == "1" && quanStock - ticket_num < 10) {
           this.logger.infoSave("本次出票后券小于10，开始异步绑定券");
           this.cardQuanManage.getNewQuan({
-            cinemaLinkId,
+            cinema_id,
             quan_value: offerRule.quan_value,
             quan_flag: offerRule.quan_flag,
             black_quans: offerRule.black_quans,
@@ -447,7 +447,7 @@ class JinyiBuyTicket extends BaseBuyTicket {
         });
         // 转单或换号处理
         const transparams = {
-          cinemaLinkId,
+          cinema_id,
           lockOrderId,
           session_id: this.currentSessionId
         };
@@ -480,7 +480,7 @@ class JinyiBuyTicket extends BaseBuyTicket {
             });
             // 转单或换号处理
             const transparams = {
-              cinemaLinkId,
+              cinema_id,
               lockOrderId,
               session_id: this.currentSessionId
             };
@@ -530,7 +530,7 @@ class JinyiBuyTicket extends BaseBuyTicket {
           this.logger.info("创建订单失败，单个订单直接出票结束走转单");
           // 转单或换号处理
           const transparams = {
-            cinemaLinkId,
+            cinema_id,
             lockOrderId,
             session_id: this.currentSessionId
           };
@@ -584,7 +584,7 @@ class JinyiBuyTicket extends BaseBuyTicket {
         profit,
         qrcode: lastRes?.qrcode,
         submitRes: lastRes?.submitRes,
-        quan_code: quan_code?.join(),
+        quan_code: quan_code,
         card_id,
         cardNum,
         offerRule,
@@ -622,15 +622,15 @@ window.jinyiTicketObj = (order, isTestOrder = false) => {
 const testOrder = {
   id: "12412221440316515",
   supplier_end_price: 36,
-  city_name: "南京",
+  city_name: "武汉",
   cinema_addr: "市南区香港中路69号麦凯乐八楼",
-  cinema_name: "金逸影城（光美荟聚IMAX激光店）",
-  hall_name: "8号巨幕激光厅",
+  cinema_name: "金逸影城（光美荟聚IMAX店）",
+  hall_name: "2号激光厅",
   film_name: "消失的人",
-  show_time: "2026-05-16 19:30:00",
-  cinema_code: "32035211",
+  show_time: "2026-05-24 19:35:00",
+  cinema_code: "42018901",
   order_number: "12412221440316515",
-  lockseat: "3排1座",
+  lockseat: "2排1座",
   plat_name: "lieren",
   app_name: "jinyiguangmei",
   appName: "jinyiguangmei",
