@@ -360,9 +360,9 @@ const createApi = ({ app_name }) => {
   // ?status=
   // 绑定优惠券
   const bandQuan = params =>
-    axios.get(
-      "/ticket/channelCode/cinema/cinema_id/check/vistax/voucher/pass",
-      { params }
+    axios.post(
+      "/ticket/channelCode/cinema/cinema_id/vistax/voucher/bind",
+      params
     );
   // ?voucher_code=123456
 

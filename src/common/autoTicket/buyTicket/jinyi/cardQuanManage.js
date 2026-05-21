@@ -653,6 +653,7 @@ export default class CardQuanManage {
     const { coupon_num, cinema_id, session_id } = data;
     let params = {
       voucher_code: coupon_num,
+      voucher_password: "",
       fenghuangToken: session_id,
       cinema_id
     };
@@ -661,10 +662,6 @@ export default class CardQuanManage {
       logger.infoSave("绑定券参数", params);
       const res = await this.appApi.bandQuan(params);
       logger.infoSave("绑定券返回", res);
-      if (!res.data?.security_verify) {
-        logger.infoSave("绑定新券异常");
-        return;
-      }
       return { coupon_num };
     } catch (error) {
       logger.errorSave("绑定新券异常", formatErrInfo(error));
