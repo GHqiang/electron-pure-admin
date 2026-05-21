@@ -130,11 +130,9 @@ export default class SfcOrderManage {
         params
       });
       const res = await this.appApi.priceCalculation(params);
-      let price = res.data?.price;
+      let price = res.data;
       this.logger.infoSave("计算订单价格返回", res);
-      return {
-        price
-      };
+      return price;
     } catch (error) {
       this.logger.errorSave("计算订单价格异常", { error });
       // { "error": "{\"status\":0,\"errcode\":\"-1\",\"msg\":\"当前价格为会员卡的售票系统补贴价，无法叠加使用线上券，请分开支付\",\"data\":{}}" }
