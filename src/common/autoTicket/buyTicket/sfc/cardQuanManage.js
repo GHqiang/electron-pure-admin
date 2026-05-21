@@ -726,8 +726,8 @@ export default class SfcCardQuanManage {
       return { card_id: "", profit: 0 };
     }
     const sorted = list.slice().sort((a, b) => {
-      if (a.default_card === "1" && b.default_card !== "1") return -1;
-      if (a.default_card !== "1" && b.default_card === "1") return 1;
+      // if (a.default_card === "1" && b.default_card !== "1") return -1;
+      // if (a.default_card !== "1" && b.default_card === "1") return 1;
       return (b.balance || 0) - (a.balance || 0);
     });
     let card_id = "";
