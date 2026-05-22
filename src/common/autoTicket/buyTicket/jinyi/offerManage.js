@@ -44,6 +44,9 @@ const {
   userInfo: { rule, user_id }
 } = platTokens();
 
+/** 锁座取会员价时，最贵座位候选上限 */
+const MAX_SEAT_CANDIDATE_COUNT = 10;
+
 /**
  * 金逸报价管理类
  * 继承 BaseOfferPrice，实现金逸系列报价逻辑
@@ -467,8 +470,8 @@ class getJinyiOfferPrice extends BaseOfferPrice {
     }
   }
 
-  // 获取相邻情侣座
-  getRandomCoupleSeats(seatData) {
+  // 获取所有可用相邻情侣座
+  getAllCoupleSeats(seatData) {
     try {
       const rows = seatData.seats;
       const candidates = [];
@@ -477,28 +480,22 @@ class getJinyiOfferPrice extends BaseOfferPrice {
         const row = rows[rowKey];
         const details = row.detail;
 
-        // 建立列号 -> 座位对象的映射，方便 O(1) 查找
         const colMap = {};
         details.forEach(seat => {
           colMap[parseInt(seat.col)] = seat;
         });
 
-        // 获取所有列号并排序
         const cols = Object.keys(colMap)
           .map(Number)
           .sort((a, b) => a - b);
 
-        // 每两个一组：奇数位与下一个偶数位组成情侣座
         for (let i = 0; i < cols.length; i++) {
           const leftCol = cols[i];
           if (leftCol % 2 === 1) {
-            // 只处理奇数
             const rightCol = leftCol + 1;
             if (colMap[rightCol]) {
-              // 存在对应的偶数座位
               const leftSeat = colMap[leftCol];
               const rightSeat = colMap[rightCol];
-              // 两个座位都未被占用（status === 0）
               if (leftSeat.status === 0 && rightSeat.status === 0) {
                 candidates.push([leftSeat, rightSeat]);
               }
@@ -507,76 +504,72 @@ class getJinyiOfferPrice extends BaseOfferPrice {
         }
       }
 
-      if (candidates.length === 0) return null;
-      const randomIndex = Math.floor(Math.random() * candidates.length);
-      return candidates[randomIndex];
+      return candidates;
     } catch (error) {
       this.logger.errorSave("获取相邻情侣座异常", error);
+      return [];
     }
   }
 
-  // 获取最贵座位
-  getMaxPriceSeat(areaInfoList) {
-    try {
-      const maxPriceSeatInfo = areaInfoList
-        .sort((a, b) => b.area_price - a.area_price)
-        .filter(item => !Array.isArray(item.seats))
-        .find(
-          item =>
-            Object.values(item.seats).some(itemA =>
-              itemA.detail.some(itemB => itemB.status == 0)
-            ) && item.area_no != 1
-        );
-      // 1为默认区，该区的列在其它区下面也会展示，直接用该区area_no会锁座失败
-      console.warn("最贵座位列信息", maxPriceSeatInfo);
-      if (!maxPriceSeatInfo) return;
-      this.logger.infoSave("最贵座位列信息", {
-        ...maxPriceSeatInfo,
-        seats: null
-      });
-      let seatlableList;
-      if (!maxPriceSeatInfo.area_name?.includes("情侣")) {
-        seatlableList = maxPriceSeatInfo.area_no + ":";
-        let targetSeatInfo = Object.values(maxPriceSeatInfo.seats)
-          .find(item => item.detail.some(itemA => itemA.status == 0))
-          ?.detail.find(itemA => itemA.status == 0);
-        console.log("targetSeatInfo", targetSeatInfo);
-        seatlableList +=
-          targetSeatInfo.row +
-          ":" +
-          targetSeatInfo.col +
-          ":" +
-          targetSeatInfo.seat_no;
-        this.logger.infoSave("非情侣座最贵座位信息", {
-          maxPriceSeat: [seatlableList]
+  formatSeatLabel(area_no, seat) {
+    return `${area_no}:${seat.row}:${seat.col}:${seat.seat_no}`;
+  }
+
+  // 从指定分区收集所有可用座位候选（用于锁座失败时换座重试）
+  collectSeatsFromArea(areaInfo) {
+    const { area_no, seats } = areaInfo;
+    if (!areaInfo.area_name?.includes("情侣")) {
+      const seatlableListArr = [];
+      Object.values(seats).forEach(row => {
+        row.detail.forEach(seat => {
+          if (seat.status == 0) {
+            seatlableListArr.push([this.formatSeatLabel(area_no, seat)]);
+          }
         });
-        return [seatlableList];
-      } else {
-        const couple = this.getRandomCoupleSeats(maxPriceSeatInfo);
-        if (couple) {
-          console.log("随机获得的情侣座：", couple);
-          console.log(
-            `座位1: ${couple[0].seat_no}, 座位2: ${couple[1].seat_no}`
-          );
-          const seatlableList = couple.map(
-            item =>
-              maxPriceSeatInfo.area_no +
-              ":" +
-              item.row +
-              ":" +
-              item.col +
-              ":" +
-              item.seat_no
-          );
-          this.logger.infoSave("情侣座最贵座位信息", {
-            maxPriceSeat: seatlableList
+      });
+      return seatlableListArr;
+    }
+    const couples = this.getAllCoupleSeats(areaInfo);
+    return couples.map(couple =>
+      couple.map(seat => this.formatSeatLabel(area_no, seat))
+    );
+  }
+
+  // 获取最贵座位候选列表（按分区价格从高到低，锁座失败时依次尝试）
+  getMaxPriceSeatCandidates(areaInfoList) {
+    try {
+      const sortedAreas = areaInfoList
+        .sort((a, b) => b.area_price - a.area_price)
+        .filter(item => !Array.isArray(item.seats) && item.area_no != 1);
+
+      for (const maxPriceSeatInfo of sortedAreas) {
+        const hasAvailable = Object.values(maxPriceSeatInfo.seats).some(itemA =>
+          itemA.detail.some(itemB => itemB.status == 0)
+        );
+        if (!hasAvailable) continue;
+
+        // 1为默认区，该区的列在其它区下面也会展示，直接用该区area_no会锁座失败
+        console.warn("最贵座位列信息", maxPriceSeatInfo);
+        this.logger.infoSave("最贵座位列信息", {
+          ...maxPriceSeatInfo,
+          seats: null
+        });
+
+        const allCandidates = this.collectSeatsFromArea(maxPriceSeatInfo);
+        const candidates = allCandidates.slice(0, MAX_SEAT_CANDIDATE_COUNT);
+        if (candidates.length) {
+          this.logger.infoSave("最贵座位候选列表", {
+            count: candidates.length,
+            totalAvailable: allCandidates.length,
+            maxPriceSeat: candidates
           });
-          return seatlableList;
+          return candidates;
         }
       }
     } catch (error) {
       this.logger.errorSave("获取最贵座位异常", error);
     }
+    return [];
   }
   // 获取最贵座位价格
   async getMaxPriceBySeatInfo({
@@ -587,40 +580,60 @@ class getJinyiOfferPrice extends BaseOfferPrice {
     session_id
   }) {
     try {
-      // 1、获取最贵座位列信息
-      const seatlableList = this.getMaxPriceSeat(areaInfoList);
-      console.warn("seatlableList", seatlableList);
-      if (!seatlableList) return;
-      // seatlableList	[10084:2:12:35061501#08#04]
-      // 2、用最贵座位锁定价格
-      let lockSeatParams = {
-        cinema_id: movieInfo.cinema_id,
-        schedule_id: movieInfo.schedule_id,
-        hall_id: movieInfo.hall_id,
-        seatCodes: seatlableList,
-        plat_name: order.plat_name,
-        order_number: order.order_number,
-        session_id
-      };
-      console.warn("锁定座位参数lockSeatParams", lockSeatParams);
-      const lockRes = await this.seatManage.lockseatByApp(lockSeatParams);
-      console.warn("锁座结果lockRes", lockRes);
-      let lockOrderId = lockRes?.data?.order_id;
-      if (!lockOrderId) return;
-      // 3、获取锁座价格明细
-      const calcParams = {
-        cinema_id: movieInfo.cinema_id,
-        card_id: cardList[0]?.card_id, // 余额最多的可用卡
-        lockOrderId,
-        session_id
-      };
-      this.logger.infoSave("获取锁座价格明细参数", calcParams);
-      const calcRes = await this.orderManage.priceCalculation(calcParams);
-      let paymentAmount = calcRes?.data?.ticket_total_price;
-      let ticket_num = calcRes?.data?.ticket_num;
-      if (paymentAmount && ticket_num) {
-        return paymentAmount / ticket_num;
+      const seatCandidates = this.getMaxPriceSeatCandidates(areaInfoList);
+      console.warn("最贵座位候选", seatCandidates);
+      if (!seatCandidates.length) return;
+
+      for (let i = 0; i < seatCandidates.length; i++) {
+        const seatlableList = seatCandidates[i];
+        try {
+          let lockSeatParams = {
+            cinema_id: movieInfo.cinema_id,
+            schedule_id: movieInfo.schedule_id,
+            hall_id: movieInfo.hall_id,
+            seatCodes: seatlableList,
+            plat_name: order.plat_name,
+            order_number: order.order_number,
+            session_id
+          };
+          this.logger.infoSave(
+            `尝试锁座第${i + 1}/${seatCandidates.length}个座位`,
+            {
+              seatlableList,
+              lockSeatParams
+            }
+          );
+          const lockRes = await this.seatManage.lockseatByApp(lockSeatParams);
+          console.warn("锁座结果lockRes", lockRes);
+          let lockOrderId = lockRes?.data?.order_id;
+          if (!lockOrderId) {
+            this.logger.infoSave(
+              `第${i + 1}个座位锁座失败，尝试下一个最贵座位`,
+              { lockRes, seatlableList }
+            );
+            continue;
+          }
+          const calcParams = {
+            cinema_id: movieInfo.cinema_id,
+            card_id: cardList[0]?.card_id,
+            lockOrderId,
+            session_id
+          };
+          this.logger.infoSave("获取锁座价格明细参数", calcParams);
+          const calcRes = await this.orderManage.priceCalculation(calcParams);
+          let paymentAmount = calcRes?.data?.ticket_total_price;
+          let ticket_num = calcRes?.data?.ticket_num;
+          if (paymentAmount && ticket_num) {
+            return paymentAmount / ticket_num;
+          }
+        } catch (error) {
+          this.logger.infoSave(`第${i + 1}个座位锁座异常，尝试下一个最贵座位`, {
+            error: formatErrInfo(error),
+            seatlableList
+          });
+        }
       }
+      this.logger.errorSave("所有最贵座位候选锁座均失败");
     } catch (error) {
       console.error("获取最贵座位价格异常", error);
     }
