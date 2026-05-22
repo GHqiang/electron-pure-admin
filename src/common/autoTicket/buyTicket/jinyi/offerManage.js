@@ -582,7 +582,10 @@ class getJinyiOfferPrice extends BaseOfferPrice {
     try {
       const seatCandidates = this.getMaxPriceSeatCandidates(areaInfoList);
       console.warn("最贵座位候选", seatCandidates);
-      if (!seatCandidates.length) return;
+      if (!seatCandidates.length) {
+        this.logger.errorSave("未获取到最贵座位候选");
+        return;
+      }
 
       for (let i = 0; i < seatCandidates.length; i++) {
         const seatlableList = seatCandidates[i];
@@ -594,7 +597,8 @@ class getJinyiOfferPrice extends BaseOfferPrice {
             seatCodes: seatlableList,
             plat_name: order.plat_name,
             order_number: order.order_number,
-            session_id
+            session_id,
+            skipRetry: true // 报价锁座不重试，失败直接换下一个候选座
           };
           this.logger.infoSave(
             `尝试锁座第${i + 1}/${seatCandidates.length}个座位`,

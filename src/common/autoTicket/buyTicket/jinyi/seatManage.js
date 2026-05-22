@@ -134,16 +134,21 @@ export default class SeatManage {
   /**
    * 锁定座位
    * @param {Object} params 锁定座位参数
+   * @param {boolean} [params.skipRetry] 为 true 时不重试（报价换座场景由调用方自行尝试下一候选座）
    * @returns {Promise<Object>} 锁定结果
    */
   async lockseatByApp(params) {
+    const { skipRetry, ...lockParams } = params;
     try {
-      let lockRes = await this.lockSeatHandle(params);
+      let lockRes = await this.lockSeatHandle(lockParams);
       return lockRes;
     } catch (error) {
       this.logger.error("座位锁定失败", error);
+      if (skipRetry) {
+        return Promise.reject(error);
+      }
       // 锁座重试
-      return this.retryLockSeat(params);
+      return this.retryLockSeat(lockParams);
     }
   }
 
