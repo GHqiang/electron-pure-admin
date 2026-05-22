@@ -46,6 +46,8 @@ const {
 
 /** 锁座取会员价时，最贵座位候选上限 */
 const MAX_SEAT_CANDIDATE_COUNT = 10;
+/** 默认区 area_no，该区座位在其它区重复展示，不宜用于报价锁座 */
+const DEFAULT_AREA_NO = 1;
 
 /**
  * 金逸报价管理类
@@ -438,12 +440,16 @@ class getJinyiOfferPrice extends BaseOfferPrice {
         session_id
       };
       const targetSeatRes = await this.seatManage.getSeatLayout(seatParams);
-      let areaInfoList = targetSeatRes?.areaInfoList || [];
+      if (!targetSeatRes?.areaInfoList?.length) {
+        this.logger.errorSave("获取座位布局或分区价格为空", {
+          hasSeatData: !!targetSeatRes?.seatData?.length
+        });
+        return null;
+      }
+      let areaInfoList = targetSeatRes.areaInfoList;
       this.logger.infoSave("获取到座位价格信息列表", {
         areaInfoList
       });
-      // let seatData = targetSeatRes?.seatData || [];
-      console.log("areaInfoList", areaInfoList);
       const max_price = await this.getMaxPriceBySeatInfo({
         areaInfoList,
         order,
@@ -470,35 +476,71 @@ class getJinyiOfferPrice extends BaseOfferPrice {
     }
   }
 
+  isSeatAvailable(seat) {
+    const status = seat?.status;
+    return status == 0 || status === "0";
+  }
+
+  isDefaultOfferArea(area) {
+    return area?.area_no == DEFAULT_AREA_NO || area?.area_name === "默认区";
+  }
+
+  isCoupleArea(areaInfo) {
+    return !!areaInfo?.area_name?.includes("情侣");
+  }
+
+  normalizeAreaInfoList(areaInfoList) {
+    if (!areaInfoList) return [];
+    if (Array.isArray(areaInfoList)) return areaInfoList;
+    if (typeof areaInfoList === "object") return Object.values(areaInfoList);
+    return [];
+  }
+
+  getAreaSeatRows(seats) {
+    if (!seats || Array.isArray(seats)) return [];
+    if (typeof seats !== "object") return [];
+    return Object.values(seats).filter(row => Array.isArray(row?.detail));
+  }
+
+  isValidSeatForLabel(seat) {
+    return (
+      seat &&
+      seat.row != null &&
+      seat.col != null &&
+      seat.seat_no != null &&
+      this.isSeatAvailable(seat)
+    );
+  }
+
   // 获取所有可用相邻情侣座
-  getAllCoupleSeats(seatData) {
+  getAllCoupleSeats(areaInfo) {
     try {
-      const rows = seatData.seats;
+      const rows = this.getAreaSeatRows(areaInfo?.seats);
       const candidates = [];
 
-      for (const rowKey in rows) {
-        const row = rows[rowKey];
-        const details = row.detail;
-
+      for (const row of rows) {
+        const details = row.detail || [];
         const colMap = {};
         details.forEach(seat => {
-          colMap[parseInt(seat.col)] = seat;
+          colMap[parseInt(seat.col, 10)] = seat;
         });
 
         const cols = Object.keys(colMap)
           .map(Number)
+          .filter(col => !Number.isNaN(col))
           .sort((a, b) => a - b);
 
         for (let i = 0; i < cols.length; i++) {
           const leftCol = cols[i];
           if (leftCol % 2 === 1) {
             const rightCol = leftCol + 1;
-            if (colMap[rightCol]) {
-              const leftSeat = colMap[leftCol];
-              const rightSeat = colMap[rightCol];
-              if (leftSeat.status === 0 && rightSeat.status === 0) {
-                candidates.push([leftSeat, rightSeat]);
-              }
+            const leftSeat = colMap[leftCol];
+            const rightSeat = colMap[rightCol];
+            if (
+              this.isValidSeatForLabel(leftSeat) &&
+              this.isValidSeatForLabel(rightSeat)
+            ) {
+              candidates.push([leftSeat, rightSeat]);
             }
           }
         }
@@ -515,22 +557,33 @@ class getJinyiOfferPrice extends BaseOfferPrice {
     return `${area_no}:${seat.row}:${seat.col}:${seat.seat_no}`;
   }
 
+  areaHasAvailableSeats(areaInfo) {
+    if (this.isCoupleArea(areaInfo)) {
+      return this.getAllCoupleSeats(areaInfo).length > 0;
+    }
+    return this.getAreaSeatRows(areaInfo.seats).some(row =>
+      row.detail.some(seat => this.isValidSeatForLabel(seat))
+    );
+  }
+
   // 从指定分区收集所有可用座位候选（用于锁座失败时换座重试）
   collectSeatsFromArea(areaInfo) {
     const { area_no, seats } = areaInfo;
-    if (!areaInfo.area_name?.includes("情侣")) {
+    if (!area_no || !seats) return [];
+
+    if (!this.isCoupleArea(areaInfo)) {
       const seatlableListArr = [];
-      Object.values(seats).forEach(row => {
+      this.getAreaSeatRows(seats).forEach(row => {
         row.detail.forEach(seat => {
-          if (seat.status == 0) {
+          if (this.isValidSeatForLabel(seat)) {
             seatlableListArr.push([this.formatSeatLabel(area_no, seat)]);
           }
         });
       });
       return seatlableListArr;
     }
-    const couples = this.getAllCoupleSeats(areaInfo);
-    return couples.map(couple =>
+
+    return this.getAllCoupleSeats(areaInfo).map(couple =>
       couple.map(seat => this.formatSeatLabel(area_no, seat))
     );
   }
@@ -538,39 +591,87 @@ class getJinyiOfferPrice extends BaseOfferPrice {
   // 获取最贵座位候选列表（按分区价格从高到低，锁座失败时依次尝试）
   getMaxPriceSeatCandidates(areaInfoList) {
     try {
-      const sortedAreas = areaInfoList
-        .sort((a, b) => b.area_price - a.area_price)
-        .filter(item => !Array.isArray(item.seats) && item.area_no != 1);
-
-      for (const maxPriceSeatInfo of sortedAreas) {
-        const hasAvailable = Object.values(maxPriceSeatInfo.seats).some(itemA =>
-          itemA.detail.some(itemB => itemB.status == 0)
-        );
-        if (!hasAvailable) continue;
-
-        // 1为默认区，该区的列在其它区下面也会展示，直接用该区area_no会锁座失败
-        console.warn("最贵座位列信息", maxPriceSeatInfo);
-        this.logger.infoSave("最贵座位列信息", {
-          ...maxPriceSeatInfo,
-          seats: null
-        });
-
-        const allCandidates = this.collectSeatsFromArea(maxPriceSeatInfo);
-        const candidates = allCandidates.slice(0, MAX_SEAT_CANDIDATE_COUNT);
-        if (candidates.length) {
-          this.logger.infoSave("最贵座位候选列表", {
-            count: candidates.length,
-            totalAvailable: allCandidates.length,
-            maxPriceSeat: candidates
-          });
-          return candidates;
-        }
+      const normalized = this.normalizeAreaInfoList(areaInfoList);
+      if (!normalized.length) {
+        this.logger.errorSave("座位分区列表为空", { areaInfoList });
+        return [];
       }
+
+      const sortedAreas = normalized
+        .filter(
+          item =>
+            !this.isDefaultOfferArea(item) &&
+            this.getAreaSeatRows(item.seats).length
+        )
+        .sort((a, b) => Number(b.area_price) - Number(a.area_price));
+
+      if (!sortedAreas.length) {
+        this.logger.errorSave("无有效报价座位分区（已排除默认区）", {
+          areaCount: normalized.length
+        });
+        return [];
+      }
+
+      const allCandidates = [];
+      for (const areaInfo of sortedAreas) {
+        if (!this.areaHasAvailableSeats(areaInfo)) continue;
+
+        const areaCandidates = this.collectSeatsFromArea(areaInfo);
+        if (!areaCandidates.length) {
+          this.logger.infoSave("分区标记有座但未收集到候选座", {
+            area_no: areaInfo.area_no,
+            area_name: areaInfo.area_name,
+            isCouple: this.isCoupleArea(areaInfo)
+          });
+          continue;
+        }
+
+        this.logger.infoSave("收集到分区候选座", {
+          area_no: areaInfo.area_no,
+          area_name: areaInfo.area_name,
+          area_price: areaInfo.area_price,
+          count: areaCandidates.length
+        });
+        allCandidates.push(...areaCandidates);
+      }
+
+      const candidates = allCandidates.slice(0, MAX_SEAT_CANDIDATE_COUNT);
+      if (!candidates.length) {
+        this.logger.errorSave("未收集到任何候选座", {
+          areaCount: normalized.length,
+          validAreaCount: sortedAreas.length
+        });
+      } else {
+        this.logger.infoSave("最贵座位候选列表", {
+          count: candidates.length,
+          totalAvailable: allCandidates.length,
+          maxPriceSeat: candidates
+        });
+      }
+      return candidates;
     } catch (error) {
       this.logger.errorSave("获取最贵座位异常", error);
+      return [];
     }
-    return [];
   }
+  // 报价锁座：非最后候选座失败换座；最后候选座允许重试；失败换座不弹全局错误提示
+  async lockSeatForOfferPrice(lockSeatParams, isLastCandidate) {
+    const offerLockParams = {
+      ...lockSeatParams,
+      skipRetry: !isLastCandidate,
+      silentError: true
+    };
+    let lockRes = await this.seatManage.lockseatByApp(offerLockParams);
+    if (!lockRes?.data?.order_id && isLastCandidate) {
+      this.logger.infoSave("最后一个候选座未返回order_id，触发锁座重试");
+      lockRes = await this.seatManage.lockseatByApp({
+        ...offerLockParams,
+        skipRetry: false
+      });
+    }
+    return lockRes;
+  }
+
   // 获取最贵座位价格
   async getMaxPriceBySeatInfo({
     areaInfoList,
@@ -587,34 +688,35 @@ class getJinyiOfferPrice extends BaseOfferPrice {
         return;
       }
 
-      for (let i = 0; i < seatCandidates.length; i++) {
+      const candidateCount = seatCandidates.length;
+      for (let i = 0; i < candidateCount; i++) {
         const seatlableList = seatCandidates[i];
+        const isLastCandidate = i === candidateCount - 1;
         try {
-          let lockSeatParams = {
+          const lockSeatParams = {
             cinema_id: movieInfo.cinema_id,
             schedule_id: movieInfo.schedule_id,
             hall_id: movieInfo.hall_id,
             seatCodes: seatlableList,
             plat_name: order.plat_name,
             order_number: order.order_number,
-            session_id,
-            skipRetry: true // 报价锁座不重试，失败直接换下一个候选座
+            session_id
           };
-          this.logger.infoSave(
-            `尝试锁座第${i + 1}/${seatCandidates.length}个座位`,
-            {
-              seatlableList,
-              lockSeatParams
-            }
+          this.logger.infoSave(`尝试锁座第${i + 1}/${candidateCount}个座位`, {
+            seatlableList,
+            isLastCandidate
+          });
+          const lockRes = await this.lockSeatForOfferPrice(
+            lockSeatParams,
+            isLastCandidate
           );
-          const lockRes = await this.seatManage.lockseatByApp(lockSeatParams);
           console.warn("锁座结果lockRes", lockRes);
           let lockOrderId = lockRes?.data?.order_id;
           if (!lockOrderId) {
-            this.logger.infoSave(
-              `第${i + 1}个座位锁座失败，尝试下一个最贵座位`,
-              { lockRes, seatlableList }
-            );
+            const failMsg = isLastCandidate
+              ? `第${i + 1}个座位（最后候选）锁座失败`
+              : `第${i + 1}个座位锁座失败，尝试下一个候选座`;
+            this.logger.infoSave(failMsg, { lockRes, seatlableList });
             continue;
           }
           const calcParams = {
@@ -631,7 +733,10 @@ class getJinyiOfferPrice extends BaseOfferPrice {
             return paymentAmount / ticket_num;
           }
         } catch (error) {
-          this.logger.infoSave(`第${i + 1}个座位锁座异常，尝试下一个最贵座位`, {
+          const errMsg = isLastCandidate
+            ? `第${i + 1}个座位（最后候选）锁座异常`
+            : `第${i + 1}个座位锁座异常，尝试下一个候选座`;
+          this.logger.infoSave(errMsg, {
             error: formatErrInfo(error),
             seatlableList
           });

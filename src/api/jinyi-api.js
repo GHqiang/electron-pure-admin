@@ -33,9 +33,13 @@ const createApi = ({ app_name }) => {
       params
     });
 
-  // 锁定座位(创建待支付订单)
-  const lockSeat = params =>
-    axios.post("/ticket/channelCode/cinema/cinema_id/order/ticket/", params);
+  // 锁定座位(创建待支付订单)；axiosConfig.silentError 为 true 时不弹全局错误提示
+  const lockSeat = (params, axiosConfig = {}) =>
+    axios.post(
+      "/ticket/channelCode/cinema/cinema_id/order/ticket/",
+      params,
+      axiosConfig
+    );
 
   // 电影票购买https://ct.womovie.cn/ticket/GM2024cinema/cinema/400352/order/payment/
   const buyTicket = params =>

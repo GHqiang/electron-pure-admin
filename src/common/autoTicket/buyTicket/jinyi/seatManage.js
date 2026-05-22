@@ -134,7 +134,7 @@ export default class SeatManage {
   /**
    * 锁定座位
    * @param {Object} params 锁定座位参数
-   * @param {boolean} [params.skipRetry] 为 true 时不重试（报价换座场景由调用方自行尝试下一候选座）
+   * @param {boolean} [params.skipRetry] 为 true 时不重试（报价非最后候选座换座用）；最后候选座传 false 走重试
    * @returns {Promise<Object>} 锁定结果
    */
   async lockseatByApp(params) {
@@ -201,7 +201,8 @@ export default class SeatManage {
       }
 
       this.logger.info("锁定座位参数", params);
-      const res = await this.appApi.lockSeat(params);
+      const axiosConfig = data.silentError ? { silentError: true } : {};
+      const res = await this.appApi.lockSeat(params, axiosConfig);
       this.logger.infoSave(`第${inx}次锁定座位成功`, { res, params });
       return res;
     } catch (error) {

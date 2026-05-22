@@ -37,6 +37,9 @@ const isTimeoutError = error => {
   );
 };
 
+/** 是否跳过全局错误提示（如报价换座锁座失败） */
+const shouldShowErrorMessage = config => !config?.silentError;
+
 /**
  * 判断是否是服务器错误 (5xx)
  */
@@ -193,14 +196,18 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         response.config.url.indexOf(`/ticket/`) !== -1 &&
         data.msg !== "successfully";
 
+      const isLoginExpired = data.msg?.includes("登录信息已失效，请重新登录");
       if (
         isErrorByLieRen &&
         !whitelistSp.some(item => response.config.url.includes(item))
       ) {
         let errMsg = GET_APP_LIST()[app_name] + (data.msg || "请求失败");
-        ElMessage.error(errMsg);
+        // 报价换座等场景传 silentError，登录失效仍提示
+        if (shouldShowErrorMessage(response.config) || isLoginExpired) {
+          ElMessage.error(errMsg);
+        }
 
-        if (data.msg?.includes("登录信息已失效，请重新登录")) {
+        if (isLoginExpired) {
           // 推送登录信息
           let session_id = response?.config?.session_id;
           let targetLoginList = getCinemaLoginInfoList().filter(
@@ -224,9 +231,11 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           case 401:
             break;
           default:
-            ElMessage.error(
-              `请求错误 ${response.status}: ${error.message || error.msg}`
-            );
+            if (shouldShowErrorMessage(config)) {
+              ElMessage.error(
+                `请求错误 ${response.status}: ${error.message || error.msg}`
+              );
+            }
         }
       } else {
         // 网络错误或超时错误
@@ -250,7 +259,11 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         );
 
         // 只有特定错误才显示全局提示，重试的错误不显示
-        if (!isTimeoutError(error) && !isNetworkError(error)) {
+        if (
+          shouldShowErrorMessage(config) &&
+          !isTimeoutError(error) &&
+          !isNetworkError(error)
+        ) {
           ElMessage.error("金逸小程序网络连接异常，请稍后再试");
         }
       }
