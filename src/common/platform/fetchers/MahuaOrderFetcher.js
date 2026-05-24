@@ -41,13 +41,13 @@ export default class MahuaOrderFetcher extends BaseOrderFetcher {
         .map(item => {
           const {
             id,
-            supplier_end_price,
-            city_name,
-            movieCinemaAddress: cinema_address,
-            ticket_num,
-            cinema_name,
-            hall_name,
-            film_name,
+            biddingPrice: supplier_end_price,
+            movieCityName: city_name,
+            movieCinemaAddress: cinema_addr,
+            buyNum: ticket_num,
+            movieCinemaName: cinema_name,
+            movieHallName: hall_name,
+            movieName: film_name,
             movieShowTime: show_time
           } = item;
 
@@ -66,7 +66,7 @@ export default class MahuaOrderFetcher extends BaseOrderFetcher {
             tpp_price: "",
             supplier_end_price,
             city_name,
-            cinema_addr: cinema_address,
+            cinema_addr,
             ticket_num,
             cinema_name,
             hall_name,

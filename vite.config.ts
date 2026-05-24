@@ -78,6 +78,12 @@ export default ({ command, mode }: ConfigEnv): UserConfigExport => {
           changeOrigin: true, // 是否允许跨域
           rewrite: path => path.replace(/^\/mhapi/, "/api") // 重写路径，去除/api前缀
         },
+        // 麻花新版 Open API（测试环境）
+        "/nmhapi": {
+          target: "https://openapi.quanma51.com",
+          changeOrigin: true,
+          rewrite: path => path.replace(/^\/nmhapi/, "")
+        },
        "/newwww": {
           target: "https://piao.mayiufu.com",
           changeOrigin: true,

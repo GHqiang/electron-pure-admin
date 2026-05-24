@@ -29,16 +29,6 @@ export default class MahuaAdapter extends BasePlatformAdapter {
       const res = await this.api.queryStayOfferList({
         pageNum: 1,
         pageLimit: 200,
-        provName: "",
-        cityName: "",
-        cinemaName: "",
-        movieName: "",
-        acceptChangeSeat: "",
-        ticketsNum: "",
-        minPrice: "",
-        maxPrice: "",
-        cinemaClassify: [],
-        cinemaClassifyOfficial: [],
         ...params
       });
       return res?.rtnData || [];
@@ -128,10 +118,6 @@ export default class MahuaAdapter extends BasePlatformAdapter {
         pageNo: 1,
         pageSize: 10,
         tag: "0",
-        nowId: "",
-        getOrderId: "",
-        movieName: "",
-        cinemaName: "",
         ...params
       });
       return res?.rtnData || [];

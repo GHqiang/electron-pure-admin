@@ -55,7 +55,8 @@ export default class MahuaOfferQueue extends BaseOfferQueue {
             movieShowTime: show_time,
             movieCinemaAddress: cinema_addr,
             standardId: cinema_code,
-            biddingEndtime: offer_end_time
+            biddingEndtime: offer_end_time,
+            buySeats: lockseat
           } = item;
           return {
             plat_name: "mahua",
@@ -69,6 +70,7 @@ export default class MahuaOfferQueue extends BaseOfferQueue {
             hall_name: hall_name,
             film_name: film_name,
             show_time: show_time,
+            lockseat,
             rewards: 0, // 麻花无奖励，只有快捷
             is_urgent: 0, // 1紧急 0非紧急
             cinema_group: "",
