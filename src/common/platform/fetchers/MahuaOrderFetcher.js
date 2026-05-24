@@ -34,55 +34,59 @@ export default class MahuaOrderFetcher extends BaseOrderFetcher {
 
       if (!rawStayList?.length) return;
 
-      const offerList = await this.getOfferList();
-
       // 数据转换
-      const processedList = rawStayList
-        .map(item => {
-          const {
-            id,
-            biddingPrice: supplier_end_price,
-            movieCityName: city_name,
-            movieCinemaAddress: cinema_addr,
-            buyNum: ticket_num,
-            movieCinemaName: cinema_name,
-            movieHallName: hall_name,
-            movieName: film_name,
-            movieShowTime: show_time
-          } = item;
+      const processedList = rawStayList.map(item => {
+        const {
+          id,
+          biddingPrice: supplier_end_price,
+          movieCityName: city_name,
+          movieCinemaAddress: cinema_addr,
+          buyNum: ticket_num,
+          movieCinemaName: cinema_name,
+          movieHallName: hall_name,
+          movieName: film_name,
+          movieShowTime: show_time
+        } = item;
 
-          // 对应报价信息
-          const targetOfferInfo = offerList.find(
-            itemA =>
-              itemA.show_time == show_time &&
-              itemA.cinema_name == cinema_name &&
-              itemA.hall_name == hall_name &&
-              itemA.film_name == film_name &&
-              itemA.ticket_num == ticket_num
-          );
+        return {
+          id,
+          tpp_price: "",
+          supplier_end_price,
+          city_name,
+          cinema_addr,
+          ticket_num,
+          cinema_name,
+          hall_name,
+          film_name,
+          show_time,
+          rewards: 0,
+          is_urgent: 0,
+          cinema_group: "",
+          cinema_code: "",
+          offer_order_number: "",
+          order_number: id,
+          lockseat: "",
+          plat_name: "mahua"
+        };
+      });
+      let orderList = [];
 
-          return {
-            id,
-            tpp_price: "",
-            supplier_end_price,
-            city_name,
-            cinema_addr,
-            ticket_num,
-            cinema_name,
-            hall_name,
-            film_name,
-            show_time,
-            rewards: 0,
-            is_urgent: 0,
-            cinema_group: "",
-            cinema_code: targetOfferInfo?.cinema_code,
-            offer_order_number: targetOfferInfo?.order_number,
-            order_number: id,
-            lockseat: "",
-            plat_name: "mahua"
-          };
-        })
-        .filter(item => getCinemaFlag(item))
+      for (let index = 0; index < processedList.length; index++) {
+        const orderItem = processedList[index];
+        const res = await this.platformAdapter.orderDetail({
+          getOrderId: orderItem.id
+        });
+        if (res) {
+          orderList.push({
+            ...orderItem,
+            cinema_code: res.standardId,
+            offer_order_number: res.putOrderId
+          });
+        }
+      }
+
+      orderList = orderList
+        .filter(item => item.cinema_code && getCinemaFlag(item))
         .map(item => {
           const app_name = getCinemaFlag(item);
           return {

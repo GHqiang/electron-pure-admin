@@ -38,6 +38,17 @@ export default class MahuaAdapter extends BasePlatformAdapter {
     }
   }
 
+  // 接单详情
+  async orderDetail(params) {
+    try {
+      const res = await this.api.queryOrderInfo(params);
+      return res?.rtnData;
+    } catch (error) {
+      this.logger.errorSave("麻花获取接单详情异常", { error });
+      return;
+    }
+  }
+
   /**
    * 与旧版 useMahuaOffer.getProfit 一致：计算预计利润，用于 isDirectGetOrder
    */
