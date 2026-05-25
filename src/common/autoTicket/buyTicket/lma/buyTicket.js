@@ -908,7 +908,7 @@ export default class LmaBuyTicket extends BaseBuyTicket {
       // 避免存入数组
       if (quan_code) {
         quan_code = JSON.parse(quan_code)
-          .map.(item => item.code)
+          .map(item => item.code)
           .join(",");
       }
       return {
