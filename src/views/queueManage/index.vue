@@ -197,7 +197,7 @@ import {
 } from "@/common/factories/QueueFactory.js";
 
 import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
-import createTicketQueueFun from "@/common/autoTicket/comTicketHandle";
+import { getTicketQueue } from "@/common/autoTicket/comTicketHandle";
 import { ORDER_FORM, GET_APP_LIST, IN_RULE_LIST } from "@/common/constant";
 const APP_LIST = computed(() => GET_APP_LIST());
 
@@ -284,12 +284,10 @@ Object.keys(ORDER_FORM).forEach(plat_name => {
     fetchOrderQueueFactory.getFetchOrderQueue(plat_name);
 });
 
-// 平台出票队列集合
-// 注意：出票队列在构造函数中会添加事件监听器，不能重新初始化，否则会导致重复订阅
+// 平台出票队列集合（getTicketQueue 为模块级单例，同一 app_name 不会重复注册监听器）
 let appTicketQueueObj = {};
-// 初始化出票队列（只初始化一次，避免重复订阅事件）
 Object.keys(APP_LIST.value).forEach(app_name => {
-  appTicketQueueObj[app_name] = createTicketQueueFun(app_name);
+  appTicketQueueObj[app_name] = getTicketQueue(app_name);
 });
 window.appTicketQueueObj = appTicketQueueObj;
 
@@ -317,20 +315,17 @@ let isStartTicket = true; // 自动出票队列
 
 // 一键启动
 const oneClickStart = () => {
-  // 删除没有登录信息的队列
-  // 注意：不能重新初始化出票队列，否则会导致事件监听器重复订阅
+  // 无登录信息的队列仅 stop 并从活跃集合移除，不销毁单例（避免重复注册监听器）
   let loginInfoList = getCinemaLoginInfoList();
   Object.keys(APP_LIST.value).forEach(item => {
     let obj = loginInfoList.find(
       itemA => itemA.app_name === item && itemA.session_id
     );
     if (!obj) {
+      appTicketQueueObj[item]?.stop();
       delete appTicketQueueObj[item];
-    } else {
-      // 如果队列不存在，则创建（只创建新的，不重新初始化已存在的）
-      if (!appTicketQueueObj[item]) {
-        appTicketQueueObj[item] = createTicketQueueFun(item);
-      }
+    } else if (!appTicketQueueObj[item]) {
+      appTicketQueueObj[item] = getTicketQueue(item);
     }
   });
 
@@ -438,20 +433,16 @@ const singleStartOrStop = ({ id, platToken, platName, syncPageSize }, flag) => {
     setPlatFunObj[platName](platToken);
     isStartOffer && platOfferQueueObj[platName]?.start();
     isStartFetch && platFetchOrderQueueObj[platName]?.start();
-    // 删除没有登录信息的队列
-    // 注意：不能重新初始化出票队列，否则会导致事件监听器重复订阅
     let loginInfoList = getCinemaLoginInfoList();
     Object.keys(APP_LIST.value).forEach(item => {
       let obj = loginInfoList.find(
         itemA => itemA.app_name === item && itemA.session_id
       );
       if (!obj) {
+        appTicketQueueObj[item]?.stop();
         delete appTicketQueueObj[item];
-      } else {
-        // 如果队列不存在，则创建（只创建新的，不重新初始化已存在的）
-        if (!appTicketQueueObj[item]) {
-          appTicketQueueObj[item] = createTicketQueueFun(item);
-        }
+      } else if (!appTicketQueueObj[item]) {
+        appTicketQueueObj[item] = getTicketQueue(item);
       }
     });
     // 其它没有一个启动的再启动

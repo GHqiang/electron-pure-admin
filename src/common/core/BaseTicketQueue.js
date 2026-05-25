@@ -16,6 +16,29 @@ const { offerRuleList } = storeToRefs(offerRules);
 
 import { dictTable } from "@/store/dictTable";
 const dictStore = dictTable();
+
+/** 跨实例去重：防止历史泄漏的重复监听器再次处理同一订单 */
+const globalHandledOrders = new Map();
+const GLOBAL_HANDLED_TTL = 30 * 60 * 1000;
+
+const getGlobalOrderKey = (appFlag, order) =>
+  `${appFlag}::${order.plat_name}::${order.order_number}`;
+
+const isGloballyHandled = (appFlag, order) => {
+  const key = getGlobalOrderKey(appFlag, order);
+  const ts = globalHandledOrders.get(key);
+  if (!ts) return false;
+  if (Date.now() - ts > GLOBAL_HANDLED_TTL) {
+    globalHandledOrders.delete(key);
+    return false;
+  }
+  return true;
+};
+
+const markGloballyHandled = (appFlag, order) => {
+  globalHandledOrders.set(getGlobalOrderKey(appFlag, order), Date.now());
+};
+
 /**
  * 出票队列基类
  * 所有平台出票队列都应继承此类
@@ -38,9 +61,25 @@ export default class BaseTicketQueue {
     this.eventName = `newOrder_${appFlag}`;
     this.isStart = false;
     this.logger = new Logger({ logType: 3 });
+    this._boundHandleNewOrder = this.handleNewOrder.bind(this);
+    this._listenerAttached = false;
+  }
 
-    // 监听新订单事件
-    window.addEventListener(this.eventName, this.handleNewOrder.bind(this));
+  /** 供工厂绑定 window 事件时使用 */
+  getEventHandler() {
+    return this._boundHandleNewOrder;
+  }
+
+  attachListener() {
+    if (this._listenerAttached) return;
+    window.addEventListener(this.eventName, this._boundHandleNewOrder);
+    this._listenerAttached = true;
+  }
+
+  detachListener() {
+    if (!this._listenerAttached) return;
+    window.removeEventListener(this.eventName, this._boundHandleNewOrder);
+    this._listenerAttached = false;
   }
 
   /**
@@ -68,18 +107,21 @@ export default class BaseTicketQueue {
       order = event.detail?.order;
     }
 
-    // 检查是否已经处理过此订单
-    if (
-      !isAgain &&
-      this.handledOrders.has(order.plat_name + "_" + order.order_number)
-    ) {
+  // 检查是否已经处理过此订单（实例内 + 全局，防止重复监听器）
+    const orderKey = order.plat_name + "_" + order.order_number;
+    if (!isAgain && this.handledOrders.has(orderKey)) {
       this.logger.warn("订单已被处理过，忽略重复消息", order);
+      return;
+    }
+    if (!isAgain && isGloballyHandled(this.appFlag, order)) {
+      this.logger.warn("订单已被全局处理过，忽略重复监听器消息", order);
       return;
     }
 
     let des = "自动出票队列获取到新的待出票订单";
     if (!isAgain) {
-      this.handledOrders.set(order.plat_name + "_" + order.order_number, 1);
+      this.handledOrders.set(orderKey, 1);
+      markGloballyHandled(this.appFlag, order);
       const fixedOfferToPlatList =
         dictStore.dictInfo.fixedOfferToPlatList?.split(",") || [];
       if (
@@ -109,7 +151,8 @@ export default class BaseTicketQueue {
     this.queue.push(order);
 
     if (!this.isRunning) {
-      this.startProcessingQueue();
+      this.isRunning = true;
+      void this.startProcessingQueue();
     }
   }
 
@@ -232,8 +275,6 @@ export default class BaseTicketQueue {
    * 开始处理队列
    */
   async startProcessingQueue() {
-    this.isRunning = true;
-
     while (this.queue.length > 0 && this.isRunning) {
       const order = this.queue.shift();
 
@@ -449,6 +490,11 @@ export default class BaseTicketQueue {
     this.isRunning = false;
     this.isStart = false;
     this.logger.warn("自动出票队列停止");
+  }
+
+  destroy() {
+    this.stop();
+    this.detachListener();
   }
 
   /**
