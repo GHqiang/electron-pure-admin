@@ -905,6 +905,12 @@ export default class LmaBuyTicket extends BaseBuyTicket {
         profit = Number(profit).toFixed(2);
       }
 
+      // 避免存入数组
+      if (quan_code) {
+        quan_code = JSON.parse(quan_code)
+          .map.(item => item.code)
+          .join(",");
+      }
       return {
         profit,
         qrcode,
