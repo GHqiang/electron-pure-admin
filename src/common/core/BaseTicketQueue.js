@@ -1,7 +1,7 @@
 // 出票队列基类
 // 提取所有平台出票队列的公共逻辑
 
-import { getCurrentTime } from "@/utils/utils.js";
+import { getCurrentTime, formatErrInfo, logUpload } from "@/utils/utils.js";
 import Logger from "../logger.js";
 import StrategyFactory from "@/common/autoTicket/buyTicket/index";
 import svApi from "@/api/sv-api";
@@ -365,9 +365,27 @@ export default class BaseTicketQueue {
       } = res;
       let { err_msg: errMsg, err_info: errInfo } =
         logger.getLastErrMsgAndInfo() || {};
+      // fallback: 从出票结果中取错误信息（某些场景logger可能已被logUpload清空）
+      if (!errMsg && res?.errMsg) {
+        errMsg = res.errMsg;
+        errInfo = res.errInfo || "";
+      }
       if (submitRes) {
         errMsg = "";
         errInfo = "";
+      }
+
+      // 诊断日志：出票失败时记录logger状态便于排查
+      if (!submitRes && !errMsg) {
+        logUpload({ plat_name: order?.plat_name || "", app_name: this.appFlag, order_number: order?.order_number || "", type: 3 }, [
+          { opera_time: getCurrentTime(), des: "saveTicketRecord-errMsg为空诊断", level: "warn", info: {
+            hasRes: !!ticketRes,
+            resKeys: ticketRes ? Object.keys(ticketRes) : [],
+            logListLen: logger.logList?.length,
+            logErrorCount: logger.logList?.filter(l => l.level === "error")?.length || 0,
+            lastLogEntry: [...(logger.logList || [])].reverse()?.[0] || null
+          }}
+        ]);
       }
 
       if (order.isAgain) {

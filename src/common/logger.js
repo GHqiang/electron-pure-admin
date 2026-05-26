@@ -59,6 +59,7 @@ export default class Logger {
   }
   errorSave(message, meta) {
     this.log(Logger.levels.ERROR, message, true, meta);
+    this._lastErrCache = { message, meta };
   }
   logUpload(logIngo = this) {
     const { plat_name, order_number, app_name, logList } = logIngo;
@@ -76,6 +77,7 @@ export default class Logger {
   }
 
   getLastErrMsg() {
+    if (this._lastErrCache) return this._lastErrCache.message;
     const errInfoObj = this.logList
       .filter(item => item.level === "error")
       .reverse()?.[0];
@@ -83,6 +85,14 @@ export default class Logger {
   }
   getLastErrMsgAndInfo() {
     try {
+      // 优先使用缓存（防止logUpload splice 清空 logList 后丢失）
+      if (this._lastErrCache) {
+        const { message, meta } = this._lastErrCache;
+        return {
+          err_msg: message,
+          err_info: formatErrInfo(meta?.error || meta) || ""
+        };
+      }
       const errInfoObj = this.logList
         .filter(item => item.level === "error")
         .reverse()?.[0];
