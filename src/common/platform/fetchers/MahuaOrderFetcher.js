@@ -70,6 +70,7 @@ export default class MahuaOrderFetcher extends BaseOrderFetcher {
         };
       });
       let orderList = [];
+      const diagnoseLogs = [];
 
       for (let index = 0; index < processedList.length; index++) {
         const orderItem = processedList[index];
@@ -77,14 +78,34 @@ export default class MahuaOrderFetcher extends BaseOrderFetcher {
           getOrderId: orderItem.id
         });
         if (res) {
+          diagnoseLogs.push({
+            opera_time: getCurrentTime(),
+            des: "麻花订单详情返回",
+            level: res.standardId ? "info" : "warn",
+            info: {
+              orderId: orderItem.id,
+              cinema_name: orderItem.cinema_name,
+              standardId: res.standardId,
+              putOrderId: res.putOrderId,
+              fullRes: res
+            }
+          });
           orderList.push({
             ...orderItem,
             cinema_code: res.standardId,
             offer_order_number: res.putOrderId
           });
+        } else {
+          diagnoseLogs.push({
+            opera_time: getCurrentTime(),
+            des: "麻花订单详情接口返回空",
+            level: "warn",
+            info: { orderId: orderItem.id, cinema_name: orderItem.cinema_name }
+          });
         }
       }
 
+      const beforeFilterLen = orderList.length;
       orderList = orderList
         .filter(item => item.cinema_code && getCinemaFlag(item))
         .map(item => {
@@ -95,9 +116,26 @@ export default class MahuaOrderFetcher extends BaseOrderFetcher {
             appName: app_name
           };
         });
+      const afterFilterLen = orderList.length;
+
+      if (beforeFilterLen !== afterFilterLen) {
+        diagnoseLogs.push({
+          opera_time: getCurrentTime(),
+          des: "麻花订单getCinemaFlag过滤",
+          level: "info",
+          info: { 过滤前: beforeFilterLen, 过滤后: afterFilterLen }
+        });
+      }
 
       // 过滤新订单
-      const newOrders = this.filterNewOrders(processedList);
+      const newOrders = this.filterNewOrders(orderList);
+
+      if (diagnoseLogs.length) {
+        logUpload(
+          { plat_name: "mahua", app_name: "", order_number: "", type: 2 },
+          diagnoseLogs
+        );
+      }
 
       // 如果不是测试订单，从远端过滤已出票的订单
       if (newOrders?.length && !this.isTestOrder) {
@@ -144,6 +182,17 @@ export default class MahuaOrderFetcher extends BaseOrderFetcher {
         });
       } else if (newOrders?.length) {
         // 测试订单直接发送
+        logUpload(
+          { plat_name: "mahua", app_name: "", order_number: "", type: 2 },
+          [
+            {
+              opera_time: getCurrentTime(),
+              des: "麻花测试订单直接发送",
+              level: "info",
+              info: { orders: newOrders }
+            }
+          ]
+        );
         newOrders.forEach(item => {
           this.sendNewOrderMsg(item);
           this.recordOrder(item);
