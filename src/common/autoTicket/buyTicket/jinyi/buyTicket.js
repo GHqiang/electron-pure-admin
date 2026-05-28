@@ -334,9 +334,12 @@ class JinyiBuyTicket extends BaseBuyTicket {
       buyTicketInfo.lockOrderId = lockRes.data?.order_id;
       const { lockOrderId } = buyTicketInfo;
       // 3、获取锁座价格明细
+      const targetCardId = this.usableCardList?.filter(
+        item => item.mobile === this.currentPhone
+      )?.[0]?.card_id; // 目标手机号余额最多的可用卡
       const calcParams = {
         cinema_id,
-        card_id: this.usableCardList?.[0]?.card_id, // 余额最多的可用卡
+        card_id: targetCardId,
         lockOrderId,
         session_id: this.currentSessionId
       };

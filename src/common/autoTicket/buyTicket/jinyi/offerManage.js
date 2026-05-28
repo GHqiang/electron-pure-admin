@@ -719,9 +719,20 @@ class getJinyiOfferPrice extends BaseOfferPrice {
             this.logger.infoSave(failMsg, { lockRes, seatlableList });
             continue;
           }
+          // session_id对应的手机号
+          const targetMobile = getCinemaLoginInfoList(
+            !order?.need_unsplit_login
+          )?.find(
+            item =>
+              item.app_name === order.app_name && item.session_id === session_id
+          )?.mobile;
+          // 手机号对应下的余额最多的卡
+          const card_id = cardList.filter(
+            item => item.mobile === targetMobile
+          )?.[0]?.card_id;
           const calcParams = {
             cinema_id: movieInfo.cinema_id,
-            card_id: cardList[0]?.card_id,
+            card_id,
             lockOrderId,
             session_id
           };
