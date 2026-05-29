@@ -656,10 +656,17 @@ export default class PlatCommon {
           confirm: 1
         };
       } else if (plat_name === "sheng") {
+        function getRandomCancelReason() {
+          const reasons = ["r1", "r2", "r3"];
+          const randomIndex = Math.floor(Math.random() * reasons.length);
+          return reasons[randomIndex];
+        }
         params = {
           orderCode: order_number,
           supplierCode: supplierCode,
-          reason: "价格过低无法出票"
+          reason: "价格过低无法出票",
+          // r1.价格报错,错误(自动和手动)r2.不支持用券r3.其他问题
+          cancelReason: getRandomCancelReason()
         };
       } else if (plat_name === "mangguo") {
         params = {

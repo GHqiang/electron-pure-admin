@@ -196,7 +196,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         response.config.url.indexOf(`/ticket/`) !== -1 &&
         data.msg !== "successfully";
 
-      const isLoginExpired = data.msg?.includes("登录信息已失效，请重新登录");
+      const isLoginExpired = data.msg?.includes("获取TOKEN超时");
       if (
         isErrorByLieRen &&
         !whitelistSp.some(item => response.config.url.includes(item))
@@ -208,7 +208,9 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         }
 
         if (isLoginExpired) {
-          // 推送登录信息
+          ElMessage.warning(
+            `${GET_APP_LIST()[app_name]}登录失效，请重新设置登录信息`
+          );
           let session_id = response?.config?.session_id;
           let targetLoginList = getCinemaLoginInfoList().filter(
             item => item.app_name === app_name && item.mobile && item.session_id
@@ -216,6 +218,12 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           let phone = targetLoginList.find(
             item => item.session_id == session_id
           )?.mobile;
+          sendWxPusherMessage({
+            msgType: 1,
+            app_name: GET_APP_LIST()[app_name],
+            expirePhone: phone,
+            transferTip: `${GET_APP_LIST()[app_name]}登录失效，请检查登录信息维护`
+          });
         }
         return Promise.reject(data);
       }
