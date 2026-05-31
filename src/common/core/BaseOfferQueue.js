@@ -39,6 +39,11 @@ export default class BaseOfferQueue {
    * 模板方法，定义队列启动流程
    */
   async start() {
+    // 防止重复启动产生多个并发轮询循环
+    if (this.isRunning) {
+      console.warn("报价队列已在运行中，忽略重复启动");
+      return;
+    }
     this.isRunning = true;
     this.handledOrders = new Map();
     this.queue = [];

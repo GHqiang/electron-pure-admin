@@ -17,26 +17,32 @@ const { offerRuleList } = storeToRefs(offerRules);
 import { dictTable } from "@/store/dictTable";
 const dictStore = dictTable();
 
-/** 跨实例去重：防止历史泄漏的重复监听器再次处理同一订单 */
-const globalHandledOrders = new Map();
+/** 跨实例去重：挂载到 window 确保模块即使被重复加载也共享同一去重 Map */
 const GLOBAL_HANDLED_TTL = 30 * 60 * 1000;
+
+const getGlobalMap = () => {
+  if (!window.__ticketGlobalHandledOrders) {
+    window.__ticketGlobalHandledOrders = new Map();
+  }
+  return window.__ticketGlobalHandledOrders;
+};
 
 const getGlobalOrderKey = (appFlag, order) =>
   `${appFlag}::${order.plat_name}::${order.order_number}`;
 
 const isGloballyHandled = (appFlag, order) => {
   const key = getGlobalOrderKey(appFlag, order);
-  const ts = globalHandledOrders.get(key);
+  const ts = getGlobalMap().get(key);
   if (!ts) return false;
   if (Date.now() - ts > GLOBAL_HANDLED_TTL) {
-    globalHandledOrders.delete(key);
+    getGlobalMap().delete(key);
     return false;
   }
   return true;
 };
 
 const markGloballyHandled = (appFlag, order) => {
-  globalHandledOrders.set(getGlobalOrderKey(appFlag, order), Date.now());
+  getGlobalMap().set(getGlobalOrderKey(appFlag, order), Date.now());
 };
 
 /**
@@ -72,13 +78,32 @@ export default class BaseTicketQueue {
 
   attachListener() {
     if (this._listenerAttached) return;
+    // window 级别防重：即使模块被重复加载产生新实例，也不重复注册同名事件
+    // 使用 Map 记录事件名→handler 函数，确保只有真正注册了监听器的实例才能移除它
+    if (!window.__ticketEventHandlers) {
+      window.__ticketEventHandlers = new Map();
+    }
+    if (window.__ticketEventHandlers.has(this.eventName)) {
+      this.logger.warn(`事件 ${this.eventName} 已被其他实例注册，跳过重复绑定`);
+      // 注意：不设置 _listenerAttached = true，因为本实例并未实际注册监听器
+      // 这样 detachListener 在本实例上是空操作，不会误删其他实例的监听器
+      return;
+    }
     window.addEventListener(this.eventName, this._boundHandleNewOrder);
+    window.__ticketEventHandlers.set(this.eventName, this._boundHandleNewOrder);
     this._listenerAttached = true;
   }
 
   detachListener() {
     if (!this._listenerAttached) return;
-    window.removeEventListener(this.eventName, this._boundHandleNewOrder);
+    // 只有本实例是监听器的实际注册者时才移除（通过函数引用精确比对）
+    if (
+      window.__ticketEventHandlers?.get(this.eventName) ===
+      this._boundHandleNewOrder
+    ) {
+      window.removeEventListener(this.eventName, this._boundHandleNewOrder);
+      window.__ticketEventHandlers.delete(this.eventName);
+    }
     this._listenerAttached = false;
   }
 
@@ -86,6 +111,11 @@ export default class BaseTicketQueue {
    * 启动队列
    */
   async start() {
+    // 防止重复启动导致 handledOrders 被清空，破坏防重机制
+    if (this.isStart) {
+      this.logger.warn(`${this.appFlag}队列已在运行中，忽略重复启动`);
+      return;
+    }
     this.prevOrderNumber = "";
     this.queue = [];
     this.handledOrders = new Map();
@@ -107,7 +137,7 @@ export default class BaseTicketQueue {
       order = event.detail?.order;
     }
 
-  // 检查是否已经处理过此订单（实例内 + 全局，防止重复监听器）
+    // 检查是否已经处理过此订单（实例内 + 全局，防止重复监听器）
     const orderKey = order.plat_name + "_" + order.order_number;
     if (!isAgain && this.handledOrders.has(orderKey)) {
       this.logger.warn("订单已被处理过，忽略重复消息", order);
@@ -377,15 +407,29 @@ export default class BaseTicketQueue {
 
       // 诊断日志：出票失败时记录logger状态便于排查
       if (!submitRes && !errMsg) {
-        logUpload({ plat_name: order?.plat_name || "", app_name: this.appFlag, order_number: order?.order_number || "", type: 3 }, [
-          { opera_time: getCurrentTime(), des: "saveTicketRecord-errMsg为空诊断", level: "warn", info: {
-            hasRes: !!ticketRes,
-            resKeys: ticketRes ? Object.keys(ticketRes) : [],
-            logListLen: logger.logList?.length,
-            logErrorCount: logger.logList?.filter(l => l.level === "error")?.length || 0,
-            lastLogEntry: [...(logger.logList || [])].reverse()?.[0] || null
-          }}
-        ]);
+        logUpload(
+          {
+            plat_name: order?.plat_name || "",
+            app_name: this.appFlag,
+            order_number: order?.order_number || "",
+            type: 3
+          },
+          [
+            {
+              opera_time: getCurrentTime(),
+              des: "saveTicketRecord-errMsg为空诊断",
+              level: "warn",
+              info: {
+                hasRes: !!ticketRes,
+                resKeys: ticketRes ? Object.keys(ticketRes) : [],
+                logListLen: logger.logList?.length,
+                logErrorCount:
+                  logger.logList?.filter(l => l.level === "error")?.length || 0,
+                lastLogEntry: [...(logger.logList || [])].reverse()?.[0] || null
+              }
+            }
+          ]
+        );
       }
 
       if (order.isAgain) {

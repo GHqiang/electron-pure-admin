@@ -197,7 +197,10 @@ import {
 } from "@/common/factories/QueueFactory.js";
 
 import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
-import { getTicketQueue } from "@/common/autoTicket/comTicketHandle";
+import {
+  getTicketQueue,
+  destroyTicketQueue
+} from "@/common/autoTicket/comTicketHandle";
 import { ORDER_FORM, GET_APP_LIST, IN_RULE_LIST } from "@/common/constant";
 const APP_LIST = computed(() => GET_APP_LIST());
 
@@ -315,7 +318,7 @@ let isStartTicket = true; // 自动出票队列
 
 // 一键启动
 const oneClickStart = () => {
-  // 无登录信息的队列仅 stop 并从活跃集合移除，不销毁单例（避免重复注册监听器）
+  // 无登录信息的队列 stop 并销毁，避免窗口残留事件监听器
   let loginInfoList = getCinemaLoginInfoList();
   Object.keys(APP_LIST.value).forEach(item => {
     let obj = loginInfoList.find(
@@ -323,6 +326,7 @@ const oneClickStart = () => {
     );
     if (!obj) {
       appTicketQueueObj[item]?.stop();
+      destroyTicketQueue(item);
       delete appTicketQueueObj[item];
     } else if (!appTicketQueueObj[item]) {
       appTicketQueueObj[item] = getTicketQueue(item);
@@ -440,6 +444,7 @@ const singleStartOrStop = ({ id, platToken, platName, syncPageSize }, flag) => {
       );
       if (!obj) {
         appTicketQueueObj[item]?.stop();
+        destroyTicketQueue(item);
         delete appTicketQueueObj[item];
       } else if (!appTicketQueueObj[item]) {
         appTicketQueueObj[item] = getTicketQueue(item);

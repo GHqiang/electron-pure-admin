@@ -1,7 +1,15 @@
 import BaseTicketQueue from "@/common/core/BaseTicketQueue.js";
 
-/** @type {Map<string, BaseTicketQueue>} 出票队列单例注册表 */
-const ticketQueueRegistry = new Map();
+/**
+ * 获取出票队列单例注册表（挂载到 window 确保模块即使被重复加载也共享同一注册表）
+ * @returns {Map<string, BaseTicketQueue>}
+ */
+const getRegistry = () => {
+  if (!window.__ticketQueueRegistry) {
+    window.__ticketQueueRegistry = new Map();
+  }
+  return window.__ticketQueueRegistry;
+};
 
 /**
  * 获取出票队列单例（不存在则创建并绑定唯一事件监听器）
@@ -9,12 +17,13 @@ const ticketQueueRegistry = new Map();
  * @returns {BaseTicketQueue}
  */
 const getTicketQueue = appFlag => {
-  if (ticketQueueRegistry.has(appFlag)) {
-    return ticketQueueRegistry.get(appFlag);
+  const registry = getRegistry();
+  if (registry.has(appFlag)) {
+    return registry.get(appFlag);
   }
   const queue = new BaseTicketQueue(appFlag);
   queue.attachListener();
-  ticketQueueRegistry.set(appFlag, queue);
+  registry.set(appFlag, queue);
   return queue;
 };
 
@@ -23,10 +32,11 @@ const getTicketQueue = appFlag => {
  * @param {string} appFlag
  */
 const destroyTicketQueue = appFlag => {
-  const queue = ticketQueueRegistry.get(appFlag);
+  const registry = getRegistry();
+  const queue = registry.get(appFlag);
   if (queue) {
     queue.destroy();
-    ticketQueueRegistry.delete(appFlag);
+    registry.delete(appFlag);
   }
 };
 

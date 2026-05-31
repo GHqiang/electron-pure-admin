@@ -31,6 +31,11 @@ export default class BaseOrderFetcher {
    * 启动队列
    */
   async start() {
+    // 防止重复启动产生多个并发轮询循环，导致同一订单被重复派发
+    if (this.isRunning) {
+      console.warn("订单自动获取队列已在运行中，忽略重复启动", this.platName);
+      return;
+    }
     console.warn("启动订单自动获取队列", this.platName, this.isTestOrder);
     this.isRunning = true;
     this.orderRecord = [];
