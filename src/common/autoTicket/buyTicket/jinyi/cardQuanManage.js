@@ -654,7 +654,7 @@ export default class CardQuanManage {
     let params = {
       voucher_code: coupon_num,
       voucher_password: "",
-      fenghuangToken: session_id,
+      session_id,
       cinema_id
     };
     try {
@@ -933,7 +933,7 @@ export default class CardQuanManage {
     } = data;
     let params = {
       status: "UNUSED",
-      fenghuangToken: session_id,
+      session_id,
       cinema_id
     };
     try {
