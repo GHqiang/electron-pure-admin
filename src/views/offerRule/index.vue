@@ -501,7 +501,7 @@ const nodeClick = nodeData => {
   searchData();
 };
 
-// 设置本地的规则列表
+// 设置本地的规则列表（获取全量启用/仅报价规则，供出票流程使用）
 const setLocalRuleList = async () => {
   try {
     const ruleRes = await svApi.queryRuleList({ rule });
@@ -526,6 +526,10 @@ const setLocalRuleList = async () => {
     // 猎人规则同步检查
     await checkAndUpdateLierenRuleState(ruleRecords);
   } catch (error) {
+    ElMessage({
+      type: "error",
+      message: "设置本地报价规则数据异常"
+    });
     console.warn("查询规则列表时设置本地规则数据异常", error);
   }
 };
@@ -627,7 +631,7 @@ const searchData = async () => {
     tableData.value = ruleRecords;
     totalNum.value = res.data.totalNum || 0;
     loading.close();
-    setLocalRuleList();
+    await setLocalRuleList();
   } catch (error) {
     loading.close();
     console.warn("获取规则列表失败", error);

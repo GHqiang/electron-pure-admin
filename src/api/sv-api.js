@@ -75,7 +75,11 @@ const addUseQuanRecord = params => axios.post("/svpi/quanRecord/use", params);
 const getRuleList = params => axios.get("/svpi/ruleRecord", { params });
 // 查询规则列表
 const queryRuleList = params =>
-  axios.get("/svpi/ruleRecord/query", { params, timeout: 60 * 1000 });
+  axios.get("/svpi/ruleRecord/query", {
+    params,
+    timeout: 60 * 1000,
+    headers: { "Cache-Control": "no-cache", Pragma: "no-cache" }
+  });
 // 删除规则
 const deleteRule = params => axios.get("/svpi/ruleRecord/delete", { params });
 // 批量删除规则
