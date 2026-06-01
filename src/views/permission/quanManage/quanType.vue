@@ -971,7 +971,25 @@ const getQuanInventory = async () => {
 const quanType = ref([]);
 let quanTypeFetched = false;
 
+// 获取券类型列表
+const getQuanTypeList = async (force = false) => {
+  if (quanTypeFetched && !force) return;
+  try {
+    const params = {
+      page_num: 1,
+      page_size: 1000
+    };
+    const res = await svApi.queryQuanTypeList(params);
+    let quanTypeList = res.data.quanTypeList || [];
+    quanType.value = quanTypeList;
+    quanTypeFetched = true;
+  } catch (error) {
+    console.error("获取券类型列表异常", error);
+  }
+};
+
 onBeforeMount(async () => {
+  await getQuanTypeList();
   await searchData();
 });
 </script>
