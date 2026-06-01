@@ -143,6 +143,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         );
         let targetInfo = targetLoginList?.[0] || "";
         let token = targetInfo?.session_id || "";
+        let currentPhone = targetInfo?.mobile || "";
 
         let channelCode = GET_APP_INFO(app_name)?.channelCode || "";
         let cinema_id =
@@ -159,7 +160,17 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             delete config.params.session_id;
           }
           token = session_id;
+          // 查找当前 session_id 对应的手机号
+          const sessionInfo = targetLoginList.find(
+            item => item.session_id == session_id
+          );
+          if (sessionInfo?.mobile) {
+            currentPhone = sessionInfo.mobile;
+          }
         }
+        // 保存手机号到 config 中，供响应拦截器使用
+        config.__phone = currentPhone;
+        config.__session_id = token;
         if (token) {
           config.headers.token = `${token}`;
         }
@@ -211,13 +222,8 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           ElMessage.warning(
             `${GET_APP_LIST()[app_name]}登录失效，请重新设置登录信息`
           );
-          let session_id = response?.config?.session_id;
-          let targetLoginList = getCinemaLoginInfoList().filter(
-            item => item.app_name === app_name && item.mobile && item.session_id
-          );
-          let phone = targetLoginList.find(
-            item => item.session_id == session_id
-          )?.mobile;
+          // 直接从 config 中获取之前保存的手机号
+          let phone = response?.config?.__phone || "";
           sendWxPusherMessage({
             msgType: 1,
             app_name: GET_APP_LIST()[app_name],
