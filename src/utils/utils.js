@@ -659,7 +659,7 @@ const sendWxPusherMessage = async ({
     提示：${transferTip};<br/>
     </p>`;
   } else if (msgType === 8) {
-    summary = "临期券提醒";
+    summary = "号内券临期提醒";
     // 将换行符替换为 HTML 换行标签
     const formattedTransferTip = transferTip.replace(/\n/g, "<br/>");
     content = `<p>
@@ -669,6 +669,13 @@ const sendWxPusherMessage = async ({
     </p>`;
   } else if (msgType === 9) {
     summary = "日志上传异常";
+    content = `<p>
+    时间：${getCurrentTime()}; <br/>
+    用户：${userInfo.name}; <br/>
+    提示：${transferTip};<br/>
+    </p>`;
+  } else if (msgType === 10) {
+    summary = "服务器券临期提醒";
     content = `<p>
     时间：${getCurrentTime()}; <br/>
     用户：${userInfo.name}; <br/>
@@ -1631,9 +1638,10 @@ const canSendWechatMessage = () => {
  */
 const logUploadWithRetry = async (params, retries = 0) => {
   // 计算重试延迟：首次1秒，之后指数增长（1s → 2s → 4s）
-  const delay = LOG_UPLOAD_CONFIG.INITIAL_RETRY_DELAY * 
-                Math.pow(LOG_UPLOAD_CONFIG.RETRY_MULTIPLIER, retries);
-  
+  const delay =
+    LOG_UPLOAD_CONFIG.INITIAL_RETRY_DELAY *
+    Math.pow(LOG_UPLOAD_CONFIG.RETRY_MULTIPLIER, retries);
+
   // 非首次调用时，等待延迟后再重试
   if (retries > 0) {
     await new Promise(resolve => setTimeout(resolve, delay));
@@ -1645,9 +1653,11 @@ const logUploadWithRetry = async (params, retries = 0) => {
     return res;
   } catch (error) {
     // 仅对超时错误进行重试
-    if (retries < LOG_UPLOAD_CONFIG.MAX_RETRIES && 
-        (error.code === "ECONNABORTED" || 
-         (error.message && error.message.includes("timeout")))) {
+    if (
+      retries < LOG_UPLOAD_CONFIG.MAX_RETRIES &&
+      (error.code === "ECONNABORTED" ||
+        (error.message && error.message.includes("timeout")))
+    ) {
       console.warn(`日志上传超时，第 ${retries + 1} 次重试...`);
       return logUploadWithRetry(params, retries + 1);
     }
@@ -1666,8 +1676,8 @@ const logUpload = async (order, logList) => {
   if (!logList.length) return;
 
   const { order_number, app_name, plat_name, type = 3 } = order;
-  let hasError = false;      // 是否发生错误
-  let lastError = null;      // 最后一次错误信息
+  let hasError = false; // 是否发生错误
+  let lastError = null; // 最后一次错误信息
 
   // 循环分批上传日志，直到全部上传完成或发生错误
   while (logList.length > 0) {
@@ -1692,8 +1702,10 @@ const logUpload = async (order, logList) => {
       });
 
       // 移除特殊表情符号，避免后端入库失败
-      const cleanedLogList = JSON.stringify(log_list)
-        .replace(/[\u{1F600}-\u{1F64F}]/gu, "");
+      const cleanedLogList = JSON.stringify(log_list).replace(
+        /[\u{1F600}-\u{1F64F}]/gu,
+        ""
+      );
 
       // 调用带重试的上传函数
       await logUploadWithRetry({
@@ -1710,7 +1722,7 @@ const logUpload = async (order, logList) => {
       console.error("日志上送异常", error);
       hasError = true;
       lastError = error;
-      break;  // 发生错误时停止继续上传
+      break; // 发生错误时停止继续上传
     }
   }
 
@@ -1718,7 +1730,7 @@ const logUpload = async (order, logList) => {
   if (hasError && canSendWechatMessage()) {
     try {
       await sendWxPusherMessage({
-        msgType: 9,  // 日志上传异常类型
+        msgType: 9, // 日志上传异常类型
         transferTip: formatErrInfo(lastError)
       });
     } catch (pushError) {

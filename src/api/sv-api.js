@@ -229,6 +229,10 @@ const updateQuanType = params => axios.post("/svpi/quanType/update", params);
 const exportQuanList = params =>
   axios.post("/svpi/quanRecord/batchUpdate", params);
 
+// 查询临期券
+const queryExpiringQuan = params =>
+  axios.get("/svpi/quanRecord/expiring", { params });
+
 // 更新券记录
 const updateQuanRecord = params =>
   axios.post("/svpi/quanRecord/update", params);
@@ -323,6 +327,7 @@ const svApi = {
   batchAddQuan,
   batchDeleteQuan,
   exportQuanList,
+  queryExpiringQuan,
   updateQuanRecord,
   getSpecialNameList,
   querySpecialNameList,

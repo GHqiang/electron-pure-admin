@@ -259,7 +259,9 @@ const formData = reactive({
   quan_status: "1",
   coupon_num: "",
   export_count: null,
-  isNeedTotalNum: 1
+  isNeedTotalNum: 1,
+  app_type: "",
+  app_name: ""
 });
 
 // 券类型列表
@@ -286,8 +288,9 @@ const searchData = async () => {
   });
   try {
     let formInfo = JSON.parse(JSON.stringify(formData));
-    // 排除export_count字段，因为它不是数据库字段
-    const { export_count, ...filteredFormInfo } = formInfo;
+    // 排除export_count和app_type字段，因为它们不是数据库字段
+    const { export_count, app_type, ...filteredFormInfo } = formInfo;
+
     const filteredEntries = Object.entries(filteredFormInfo).filter(
       ([key, value]) => {
         return value !== null && value !== undefined && value !== "";
@@ -304,6 +307,7 @@ const searchData = async () => {
     let quanList = res.data.quanList || [];
     tableData.value = quanList;
     totalNum.value = res.data.totalNum || 0;
+
     loading.close();
   } catch (error) {
     loading.close();
@@ -315,78 +319,149 @@ const searchData = async () => {
 // 导出券
 const exportQuanHandle = async () => {
   try {
-    if (!formData.quan_value) {
+    if (!formData.quan_status) {
+      ElMessage.error("请选择券状态");
+      return;
+    }
+
+    // 状态映射：1-可用券导出后变4, 3-不可用券导出后变5
+    const exportTypeMap = {
+      1: {
+        exportStatus: 4,
+        label: "可用券",
+        needQuanType: true,
+        needCount: true
+      },
+      3: {
+        exportStatus: 5,
+        label: "不可用券",
+        needQuanType: false,
+        needCount: false
+      }
+    };
+    const exportConfig = exportTypeMap[formData.quan_status];
+
+    if (!exportConfig) {
+      ElMessage.error("该状态的券不支持导出");
+      return;
+    }
+
+    // 可用券需要选择券类型和数量
+    if (exportConfig.needQuanType && !formData.quan_value) {
       ElMessage.error("请选择券类型");
       return;
     }
-    if (!formData.export_count || formData.export_count <= 0) {
+    if (
+      exportConfig.needCount &&
+      (!formData.export_count || formData.export_count <= 0)
+    ) {
       ElMessage.error("请输入有效的导出数量");
       return;
     }
 
     // 根据选择的券类型获取对应的影线
-    const selectedQuanType = quanType.value.find(
-      item => item.quan_value === formData.quan_value
-    );
-    if (!selectedQuanType) {
-      ElMessage.error("未找到选择的券类型信息");
-      return;
+    let app_name = "";
+    let queryQuanValue = formData.quan_value;
+    if (exportConfig.needQuanType) {
+      const selectedQuanType = quanType.value.find(
+        item => item.quan_value === formData.quan_value
+      );
+      if (!selectedQuanType) {
+        ElMessage.error("未找到选择的券类型信息");
+        return;
+      }
+      app_name = selectedQuanType.app_name;
     }
-    const app_name = selectedQuanType.app_name;
 
     const loading = ElLoading.service({
+      lock: true,
+      text: "正在查询券列表...",
+      background: "rgba(0, 0, 0, 0.7)"
+    });
+
+    // 构建查询参数
+    const queryParams = {
+      quan_status: formData.quan_status,
+      queryFields: "id,app_name,coupon_num,quan_value,create_time,use_time"
+    };
+    if (app_name) queryParams.app_name = app_name;
+    if (queryQuanValue) queryParams.quan_value = queryQuanValue;
+    if (exportConfig.needCount) {
+      queryParams.page_num = 1;
+      queryParams.page_size = formData.export_count;
+    }
+
+    // 调用接口获取券列表
+    let res = await svApi.queryQuanList(queryParams);
+    let quanList = res.data.quanList || [];
+
+    if (quanList.length === 0) {
+      loading.close();
+      ElMessage.warning(`没有${exportConfig.label}可导出`);
+      return;
+    }
+
+    // 限制导出数量（仅可用券）
+    const exportList = exportConfig.needCount
+      ? quanList.slice(0, formData.export_count)
+      : quanList;
+
+    loading.close();
+
+    // 二次确认
+    const confirmResult = await ElMessageBox.confirm(
+      `确定要导出 ${exportList.length} 张${exportConfig.label}吗？`,
+      "确认导出",
+      {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning"
+      }
+    ).catch(() => null);
+
+    if (confirmResult !== "confirm") {
+      ElMessage.info("已取消导出");
+      return;
+    }
+
+    const exportLoading = ElLoading.service({
       lock: true,
       text: "正在导出券...",
       background: "rgba(0, 0, 0, 0.7)"
     });
 
-    // 调用接口获取券列表
-    let res = await svApi.queryQuanList({
-      app_name: app_name,
-      quan_value: formData.quan_value,
-      quan_status: "1", // 只导出可用券
-      page_num: 1,
-      page_size: formData.export_count
-    });
-
-    let quanList = res.data.quanList || [];
-    if (quanList.length === 0) {
-      loading.close();
-      ElMessage.warning("没有可用券可导出");
-      return;
-    }
-
-    // 限制导出数量
-    const exportList = quanList.slice(0, formData.export_count);
     const coupon_num_list = exportList.map(item => item.coupon_num);
 
     // 调用导出接口更新状态
-    let params = {
+    let updateParams = {
       coupon_num_list,
-      quan_value: formData.quan_value,
-      app_name: app_name,
-      quan_status: 4 // 正常券已导出
+      quan_status: exportConfig.exportStatus
     };
+    if (app_name) updateParams.app_name = app_name;
+    if (queryQuanValue) updateParams.quan_value = queryQuanValue;
 
-    await svApi.exportQuanList(params);
+    await svApi.exportQuanList(updateParams);
 
     // 准备导出数据
     let exportData = exportList.map(item => [
       item.coupon_num,
       item.quan_value,
-      item.create_time
+      item.create_time,
+      item.use_time
     ]);
-    exportData.unshift(["券号", "券类型", "入库时间"]);
+    exportData.unshift(["券号", "券类型", "入库时间", "绑定使用时间"]);
 
     // 生成文件名
     const today = getCurrentDay();
-    let fileName = `${formData.quan_value}_${exportData.length - 1}张_${today}.xlsx`;
+    let fileName = exportConfig.needCount
+      ? `${formData.quan_value}_${exportData.length - 1}张_${today}.xlsx`
+      : `不可用券_${exportData.length - 1}张_${today}.xlsx`;
 
     // 下载Excel
     createExcelDown(exportData, fileName);
 
-    loading.close();
-    ElMessage.success("导出成功！");
+    exportLoading.close();
+    ElMessage.success(`${exportConfig.label}导出成功！`);
 
     // 重新搜索数据，更新列表
     searchData();
@@ -396,14 +471,15 @@ const exportQuanHandle = async () => {
   }
 };
 
-// 监听属性变化
+// 监听左侧树选择变化，自动刷新券列表
 watch(
-  [() => props.appType, () => props.appName],
+  () => [props.appType, props.appName],
   ([newAppType, newAppName]) => {
+    formData.app_type = newAppType;
     formData.app_name = newAppName;
+    currentPage.value = 1;
     searchData();
-  },
-  { immediate: true }
+  }
 );
 
 const handleSizeChange = val => {
@@ -421,6 +497,7 @@ const resetForm = () => {
   formData.quan_value = "";
   formData.quan_status = "1";
   formData.coupon_num = "";
+  formData.expire_days = null;
   currentPage.value = 1;
   pageSize.value = 10;
 };
@@ -461,6 +538,23 @@ const importQuan = async file => {
         item => item.quan_value == formData.quan_value
       );
       console.warn("要导入的券类型信息", quanTypeInfo);
+
+      // 检查是否有缺少有效日期的行
+      const rowsWithoutExpire = tableDate.filter(item => {
+        const expire_time = item[1] ? String(item[1]).trim() : "";
+        const coupon_num = item[0] ? String(item[0]).trim() : "";
+        return coupon_num && !expire_time;
+      });
+
+      if (rowsWithoutExpire.length > 0) {
+        loading.close();
+        ElMessage({
+          type: "warning",
+          message: `导入失败，有 ${rowsWithoutExpire.length} 行缺少有效日期，请填写完整后再导入`
+        });
+        return;
+      }
+
       tableDate = tableDate
         .map(item => {
           const expire_time = item[1] ? String(item[1]).trim() : "";
@@ -470,10 +564,10 @@ const importQuan = async file => {
             quan_value: quanTypeInfo.quan_value,
             quan_status: "1",
             create_time: getCurrentDay(),
-            ...(expire_time && { expire_time })
+            expire_time
           };
         })
-        .filter(item => item.coupon_num);
+        .filter(item => item.coupon_num && item.expire_time);
       console.warn("最终组装好要上传的数据", tableDate);
       // 先查一下库里面的券过滤一下，如果存在该券已使用就不执行导入了
       let params = {
@@ -526,20 +620,7 @@ const handleSelectionChange = val => {
   multipleSelection.value = val;
 };
 
-// 获取券类型列表
-const getQuanTypeList = async () => {
-  try {
-    const params = {
-      page_num: 1,
-      page_size: 1000
-    };
-    const res = await svApi.queryQuanTypeList(params);
-    let quanTypeList = res.data.quanTypeList || [];
-    quanType.value = quanTypeList;
-  } catch (error) {
-    console.error("获取券类型列表异常", error);
-  }
-};
+let quanTypeFetched = false;
 
 // 修改券状态
 const editQuanStatus = row => {
@@ -585,17 +666,28 @@ const updateQuanStatus = async () => {
   }
 };
 
-// 判断券是否即将到期（低于2个月）
+// 判断券是否即将到期（45天内）
 const isExpireWarning = expireTime => {
+  if (!expireTime) return false;
   const now = new Date();
   const expireDate = new Date(expireTime);
   const diffTime = expireDate - now;
-  const diffMonths = diffTime / (1000 * 60 * 60 * 24 * 30);
-  return diffMonths < 2 && diffMonths > 0;
+  const diffDays = diffTime / (1000 * 60 * 60 * 24);
+  return diffDays <= 45 && diffDays > 0;
 };
 
+// 监听左侧树选择变化，自动刷新券列表
+watch(
+  () => [props.appType, props.appName],
+  ([newAppType, newAppName]) => {
+    formData.app_type = newAppType;
+    formData.app_name = newAppName;
+    currentPage.value = 1;
+    searchData();
+  }
+);
+
 onBeforeMount(async () => {
-  await getQuanTypeList();
   searchData();
 });
 </script>
