@@ -363,18 +363,6 @@ const formData = reactive({
   is_store: ""
 });
 
-// 树节点点击
-const nodeClick = nodeData => {
-  console.log("nodeData", nodeData);
-  if (nodeData.id < 100) {
-    formData.app_type = nodeData.value;
-    formData.app_name = "";
-  } else {
-    formData.app_name = nodeData.value;
-    formData.app_type = "";
-  }
-  searchData();
-};
 // 搜索数据
 const searchData = async () => {
   const loading = ElLoading.service({
@@ -423,8 +411,7 @@ watch(
     formData.app_type = newAppType;
     formData.app_name = newAppName;
     searchData();
-  },
-  { immediate: true }
+  }
 );
 
 const quanExpireVisible = ref(false);
@@ -982,9 +969,11 @@ const getQuanInventory = async () => {
 
 // 券类型列表
 const quanType = ref([]);
+let quanTypeFetched = false;
 
 // 获取券类型列表
-const getQuanTypeList = async () => {
+const getQuanTypeList = async (force = false) => {
+  if (quanTypeFetched && !force) return;
   try {
     const params = {
       page_num: 1,
@@ -992,17 +981,16 @@ const getQuanTypeList = async () => {
     };
     const res = await svApi.queryQuanTypeList(params);
     let quanTypeList = res.data.quanTypeList || [];
-    // console.log("券类型列表===>", quanTypeList);
     quanType.value = quanTypeList;
+    quanTypeFetched = true;
   } catch (error) {
     console.error("获取券类型列表异常", error);
   }
 };
+
 onBeforeMount(async () => {
   await getQuanTypeList();
-  nextTick(() => {
-    searchData();
-  });
+  await searchData();
 });
 </script>
 

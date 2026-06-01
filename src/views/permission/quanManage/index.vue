@@ -28,6 +28,7 @@
           v-model="activeTab"
           type="border-card"
           style="height: 100%; min-height: 800px"
+          lazy
         >
           <el-tab-pane label="券类型列表" name="quanType">
             <QuanType :app-type="appType" :app-name="appName" />
@@ -46,9 +47,12 @@ defineOptions({
   name: "QuanTypeManage"
 });
 import { ref, computed, watch } from "vue";
+import { ElMessage } from "element-plus";
 import QuanType from "./quanType.vue";
 import QuanList from "./quanList.vue";
 import { GET_APP_LIST, GET_APP_TYPE_LIST } from "@/common/constant";
+import { sendWxPusherMessage } from "@/utils/utils";
+import svApi from "@/api/sv-api";
 const APP_LIST = computed(() => GET_APP_LIST());
 const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
 
@@ -102,6 +106,42 @@ const nodeClick = nodeData => {
     appType.value = "";
   }
 };
+
+// 查询临期券
+const checkExpiringQuan = async () => {
+  try {
+    const res = await svApi.queryExpiringQuan({ days: 30 });
+    const quanList = res.data.quanList || [];
+    if (quanList.length > 0) {
+      // 构建消息内容
+      const tipContent = quanList
+        .map(item => `${item.quan_name}：${item.count}张`)
+        .join("<br/>");
+
+      // 发送微信通知
+      await sendWxPusherMessage({
+        msgType: 10, // 服务器券到期提醒
+        transferTip: tipContent
+      });
+
+      // 同时页面提示
+      ElMessage({
+        type: "warning",
+        message: `检测到30天内${quanList.length}种临期券，请及时处理！`,
+        duration: 5000
+      });
+    }
+  } catch (error) {
+    console.error("查询临期券异常", error);
+  }
+};
+
+// 监听tab切换
+watch(activeTab, newTab => {
+  if (newTab === "quanList") {
+    checkExpiringQuan();
+  }
+});
 </script>
 
 <style scoped>

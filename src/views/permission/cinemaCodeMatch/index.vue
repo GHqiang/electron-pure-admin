@@ -207,18 +207,36 @@
             @change="onAddFormAppChange"
           />
         </el-form-item>
-        <el-form-item label="影院名称" prop="app_cinema_name">
+        <el-form-item label="选择影院" prop="cinema_id">
+          <el-select
+            v-model="addForm.cinema_id"
+            :disabled="!addForm.app_name"
+            filterable
+            clearable
+            style="width: 100%"
+            placeholder="请选择影院"
+            @change="onAddFormCinemaChange"
+          >
+            <el-option
+              v-for="item in cinemaListOptions"
+              :key="item.cinema_id"
+              :label="item.cinema_name"
+              :value="item.cinema_id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="影院名称">
           <el-input
             v-model="addForm.app_cinema_name"
-            placeholder="请输入影院名称"
-            clearable
+            disabled
+            placeholder="自动填充"
           />
         </el-form-item>
-        <el-form-item label="影院唯一标识" prop="app_cinema_code">
+        <el-form-item label="影院唯一标识">
           <el-input
             v-model="addForm.app_cinema_code"
-            placeholder="如 city_id_cinema_id 或 cinema_code"
-            clearable
+            disabled
+            placeholder="自动填充"
           />
         </el-form-item>
         <el-form-item label="平台影院编码" prop="plat_cinema_code">
@@ -520,6 +538,7 @@ const addFormRef = ref(null);
 const addSubmitLoading = ref(false);
 const addForm = reactive({
   app_name: "",
+  cinema_id: "",
   app_cinema_name: "",
   app_cinema_code: "",
   plat_cinema_code: "",
@@ -527,16 +546,14 @@ const addForm = reactive({
 });
 const addFormRules = {
   app_name: [{ required: true, message: "请选择影线", trigger: "change" }],
-  app_cinema_name: [
-    { required: true, message: "请输入影院名称", trigger: "blur" }
-  ],
-  app_cinema_code: [
-    { required: true, message: "请输入影院唯一标识", trigger: "blur" }
-  ],
+  cinema_id: [{ required: true, message: "请选择影院", trigger: "change" }],
   plat_cinema_code: [
     { required: true, message: "请输入平台影院编码", trigger: "blur" }
   ]
 };
+
+// 影院列表（用于选择）
+const cinemaListOptions = ref([]);
 
 // 弹框表格全选 / 全不选
 const handleSelectAll = type => {
@@ -1449,16 +1466,64 @@ const openAddDialog = () => {
   addDialogVisible.value = true;
 };
 
-const onAddFormAppChange = () => {
-  // 可选：根据 app_name 预填说明
+const onAddFormAppChange = async () => {
+  // 清空之前选择的影院
+  addForm.cinema_id = "";
+  addForm.app_cinema_name = "";
+  addForm.app_cinema_code = "";
+
+  if (!addForm.app_name) {
+    cinemaListOptions.value = [];
+    return;
+  }
+
+  // 加载该影线的影院列表
+  try {
+    const list = await getCinemaList(addForm.app_name);
+    const appInfo = GET_APP_INFO(addForm.app_name);
+
+    cinemaListOptions.value = list.map(item => {
+      let app_cinema_code = item.cinema_code;
+      if (!SYNC_CINEMA_CODE_APP_TYPE_LIST.includes(appInfo?.app_type_code)) {
+        app_cinema_code = item.city_id + "_" + item.cinema_id;
+      }
+      return {
+        cinema_id: item.cinema_id,
+        cinema_name: item.cinema_name,
+        app_cinema_code: app_cinema_code
+      };
+    });
+  } catch (error) {
+    console.warn("加载影院列表失败", error);
+    cinemaListOptions.value = [];
+  }
+};
+
+const onAddFormCinemaChange = () => {
+  if (!addForm.cinema_id) {
+    addForm.app_cinema_name = "";
+    addForm.app_cinema_code = "";
+    return;
+  }
+
+  const cinema = cinemaListOptions.value.find(
+    item => item.cinema_id === addForm.cinema_id
+  );
+
+  if (cinema) {
+    addForm.app_cinema_name = cinema.cinema_name;
+    addForm.app_cinema_code = cinema.app_cinema_code;
+  }
 };
 
 const resetAddForm = () => {
   addForm.app_name = "";
+  addForm.cinema_id = "";
   addForm.app_cinema_name = "";
   addForm.app_cinema_code = "";
   addForm.plat_cinema_code = "";
   addForm.plat_cinema_name = "";
+  cinemaListOptions.value = [];
   addFormRef.value?.clearValidate();
 };
 
