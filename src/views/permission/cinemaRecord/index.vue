@@ -366,6 +366,109 @@ const handleSelectionChange = val => {
   multipleSelection.value = val;
 };
 
+// 检查影院是否可以删除
+const checkCinemaCanDelete = async app_name => {
+  try {
+    const res = await svApi.queryQuanList({
+      quan_status: 1,
+      isNeedTotalNum: 1,
+      app_name: app_name,
+      page_num: 1,
+      page_size: 10
+    });
+
+    const quanTypeList = res.data?.quanTypeList || [];
+    let hasQuanInAccount = false;
+
+    for (const item of quanTypeList) {
+      const quanStockList = item.quanStockList
+        ? JSON.parse(item.quanStockList)
+        : [];
+      for (const stockItem of quanStockList) {
+        if (stockItem.quan_stock && stockItem.quan_stock > 0) {
+          hasQuanInAccount = true;
+          break;
+        }
+      }
+      if (hasQuanInAccount) break;
+    }
+
+    if (hasQuanInAccount) {
+      return { canDelete: false, message: "号内有券" };
+    }
+
+    const lmaRes = await svApi.queryQuanList({
+      quan_status: 1,
+      isNeedTotalNum: 1,
+      app_name: app_name,
+      page_num: 1,
+      page_size: 10
+    });
+
+    const totalNum = lmaRes.data?.totalNum || 0;
+    if (totalNum > 0) {
+      return { canDelete: false, message: "服务器有券" };
+    }
+
+    return { canDelete: true, message: "" };
+  } catch (error) {
+    console.error("检查影院删除条件异常", error);
+    return { canDelete: false, message: "检查失败" };
+  }
+};
+
+// 获取影院相关的券类型列表
+const getQuanTypeListByCinema = async app_name => {
+  try {
+    const res = await svApi.queryQuanTypeList({
+      app_name: app_name,
+      isNeedTotalNum: 0
+    });
+    return res.data?.quanTypeList || [];
+  } catch (error) {
+    console.error("获取券类型列表异常", error);
+    return [];
+  }
+};
+
+// 删除影院及关联数据
+const deleteCinemaWithCheck = async (id, app_name) => {
+  const checkResult = await checkCinemaCanDelete(app_name);
+  if (!checkResult.canDelete) {
+    ElMessage({
+      type: "warning",
+      message: checkResult.message
+    });
+    return false;
+  }
+
+  const loading = ElLoading.service({
+    lock: true,
+    text: "删除中",
+    background: "rgba(0, 0, 0, 0.7)"
+  });
+
+  try {
+    const quanTypeList = await getQuanTypeListByCinema(app_name);
+    if (quanTypeList.length > 0) {
+      const quanTypeIds = quanTypeList.map(item => item.id);
+      await svApi.batchDeleteQuanType({ delIds: quanTypeIds });
+    }
+
+    await svApi.deleteCinemaWithRelated({ id, app_name });
+    loading.close();
+    return true;
+  } catch (error) {
+    loading.close();
+    console.error("删除影院异常", error);
+    ElMessage({
+      type: "error",
+      message: "删除失败"
+    });
+    return false;
+  }
+};
+
 // 删除单行影院信息
 const deleteRow = (index, row) => {
   ElMessageBox.confirm("确定要删除该影院信息吗?", "提示", {
@@ -377,12 +480,14 @@ const deleteRow = (index, row) => {
     closeOnPressEscape: false
   })
     .then(async () => {
-      await svApi.deleteCinema({ id: row.id });
-      searchData();
-      ElMessage({
-        type: "success",
-        message: "删除完成"
-      });
+      const success = await deleteCinemaWithCheck(row.id, row.app_name);
+      if (success) {
+        searchData();
+        ElMessage({
+          type: "success",
+          message: "删除完成"
+        });
+      }
     })
     .catch(() => {
       ElMessage({
@@ -408,9 +513,12 @@ const batchDelete = () => {
       }
     )
       .then(async () => {
-        let ids = multipleSelection.value.map(item => item.id);
-        console.log("ids===>", ids);
-        await svApi.batchDeleteCinema({ delIds: ids });
+        for (const row of multipleSelection.value) {
+          const success = await deleteCinemaWithCheck(row.id, row.app_name);
+          if (!success) {
+            break;
+          }
+        }
         searchData();
         multipleSelection.value = [];
         ElMessage({
