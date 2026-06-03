@@ -78,7 +78,7 @@ export default class SeatManage {
           targetSeats,
           ticket_num: this.order.ticket_num
         });
-        return;
+        return { errorCode: "TARGET_SEAT_FAILED" };
       }
 
       return {

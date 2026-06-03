@@ -52,7 +52,7 @@ export default class SeatManage {
       const targetSeats = this.filterTargetSeats(seatList);
       if (targetSeats.length != this.order.ticket_num) {
         this.logger.errorSave("获取目标座位失败");
-        return;
+        return { errorCode: "TARGET_SEAT_FAILED" };
       }
 
       return {

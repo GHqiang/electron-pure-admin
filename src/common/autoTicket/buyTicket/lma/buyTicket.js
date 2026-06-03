@@ -395,8 +395,33 @@ export default class LmaBuyTicket extends BaseBuyTicket {
           label_arr,
           ticket_num
         });
-        if (targetSeatRes?.error || !targetSeatRes?.seat_arr) {
+        if (targetSeatRes?.errorCode === "TARGET_SEAT_FAILED") {
           this.logger.errorSave("获取目标座位失败", {
+            error: targetSeatRes?.error
+          });
+          // 获取目标座位失败，猎人订单走申请换座
+          if (
+            plat_name === "lieren" &&
+            dictStore.dictInfo.lierenIsSupportChangeSeat === 1
+          ) {
+            this.logger.infoSave("获取目标座位失败，猎人订单走申请换座逻辑");
+            const isApplyChangeSeat =
+              await this.platManage.applyChangeSeat(item);
+            return {
+              transferParams: { transfer_fee: 0 },
+              offerRule: this.offerRule,
+              isApplyChangeSeat
+            };
+          }
+          const transferParams = await this.orderManage.transferOrder(
+            null,
+            this.currentParamsList[this.currentParamsInx]?.lmaToken
+          );
+          return { transferParams };
+        }
+        if (targetSeatRes?.error || !targetSeatRes?.seat_arr) {
+          // getTargetSeat异常，直接转单
+          this.logger.errorSave("获取目标座位异常", {
             error: targetSeatRes?.error
           });
           const transferParams = await this.orderManage.transferOrder(

@@ -107,7 +107,11 @@ export default class LmaSeatManage {
           seat_arr,
           ticket_num
         });
-        return { error: "获取目标座位失败", seat_arr: [] };
+        return {
+          errorCode: "TARGET_SEAT_FAILED",
+          error: "获取目标座位失败",
+          seat_arr: []
+        };
       }
 
       return { seat_arr };

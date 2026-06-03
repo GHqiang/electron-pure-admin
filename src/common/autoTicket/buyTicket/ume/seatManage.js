@@ -108,6 +108,7 @@ export default class UmeSeatManage {
           seatName
         });
         return {
+          errorCode: "TARGET_SEAT_FAILED",
           error: "获取目标座位失败",
           targeSeatList: []
         };

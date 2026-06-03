@@ -348,6 +348,20 @@ class SfcBuyTicket extends BaseBuyTicket {
         const targetList = seatList.filter(s => selectSeatList.includes(s[5]));
         if (targetList?.length != ticket_num) {
           this.logger.errorSave("获取目标座位失败", { targetList, ticket_num });
+          // 猎人订单：申请换座
+          if (
+            plat_name === "lieren" &&
+            dictStore.dictInfo.lierenIsSupportChangeSeat === 1
+          ) {
+            this.logger.infoSave("获取目标座位失败，猎人订单走申请换座逻辑");
+            const isApplyChangeSeat =
+              await this.platManage.applyChangeSeat(item);
+            return {
+              transferParams: { transfer_fee: 0 },
+              offerRule: this.offerRule,
+              isApplyChangeSeat
+            };
+          }
           return { transferParams: await transferWithUnlock(unlockInfo()) };
         }
         seat_ids = targetList.map(s => s[0]).join(",");

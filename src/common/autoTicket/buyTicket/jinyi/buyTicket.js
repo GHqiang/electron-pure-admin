@@ -182,6 +182,24 @@ class JinyiBuyTicket extends BaseBuyTicket {
         const targetSeatRes =
           await this.seatManage.getTargetSeat(buyTicketInfo);
         if (!targetSeatRes) {
+          // 座位列表为空，直接转单
+          return await this.orderManage.transferOrder();
+        }
+        if (targetSeatRes.errorCode === "TARGET_SEAT_FAILED") {
+          // 获取目标座位失败，猎人订单走申请换座
+          if (
+            plat_name === "lieren" &&
+            dictStore.dictInfo.lierenIsSupportChangeSeat === 1
+          ) {
+            this.logger.infoSave("获取目标座位失败，猎人订单走申请换座逻辑");
+            const isApplyChangeSeat =
+              await this.platManage.applyChangeSeat(item);
+            return {
+              transferParams: { transfer_fee: 0 },
+              offerRule: this.offerRule,
+              isApplyChangeSeat
+            };
+          }
           return await this.orderManage.transferOrder();
         }
         buyTicketInfo.targetSeatCodes = targetSeatRes.seatCodes;
