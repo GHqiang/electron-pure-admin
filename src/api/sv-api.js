@@ -156,6 +156,9 @@ const addCinemaRecord = params => axios.post("/svpi/cinemaRecord/add", params);
 // 修改影院信息
 const updateCinemaRecord = params =>
   axios.post("/svpi/cinemaRecord/update", params);
+// 删除影院及关联数据
+const deleteCinemaWithRelated = params =>
+  axios.post("/svpi/cinemaRecord/deleteWithRelated", params);
 
 // 查询影院映射信息列表
 const queryCinemaMatchList = params =>
@@ -345,6 +348,7 @@ const svApi = {
   batchDeleteCinema,
   addCinemaRecord,
   updateCinemaRecord,
+  deleteCinemaWithRelated,
   queryCinemaMatchList,
   deleteCinemaMatch,
   batchDeleteCinemaMatch,
