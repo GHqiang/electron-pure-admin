@@ -129,8 +129,11 @@ export default class LierenOfferQueue extends BaseOfferQueue {
    */
   async getRuleId(order, logger, offerRule) {
     try {
-      // 固定报价规则不返回规则id
-      if (offerRule.offerType == "1") {
+      // 固定报价规则且已设置同步猎人平台时不返回规则id
+      const isSyncToLieren =
+        offerRule.platOfferList?.find(item => item.platName === "lieren")
+          ?.isSyncPlat == 1;
+      if (offerRule.offerType == "1" && isSyncToLieren) {
         return null;
       }
       return await getRuleIdByPlat({
