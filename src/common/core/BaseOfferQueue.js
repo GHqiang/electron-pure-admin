@@ -656,9 +656,6 @@ export default class BaseOfferQueue {
         processing_time: getCurrentTime(),
         err_msg: offerResult?.err_msg || errInfoObj?.err_msg || "",
         err_info: offerResult?.err_info || errInfoObj?.err_info || "",
-        err_type: getOfferFailType(
-          offerResult?.err_msg || errInfoObj?.err_msg || ""
-        ),
         rewards: order.rewards,
         rule: tokens.userInfo.rule,
         offer_rule_id: offerResult?.offerRule?.id,
@@ -673,6 +670,11 @@ export default class BaseOfferQueue {
 
       if (targetInfo) {
         serOrderInfo.app_type = targetInfo.app_type_code;
+      }
+
+      // 仅失败时上送失败原因分类
+      if (serOrderInfo.order_status != 1) {
+        serOrderInfo.err_type = getOfferFailType(serOrderInfo.err_msg);
       }
 
       // 检查测试订单标志
