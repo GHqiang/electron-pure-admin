@@ -1,7 +1,7 @@
 // 报价队列基类
 // 提取所有平台报价队列的公共逻辑
 
-import { GET_APP_TYPE_LIST } from "@/common/constant.js";
+import { GET_APP_TYPE_LIST, getOfferFailType } from "@/common/constant.js";
 import Logger from "../logger.js";
 import getOfferPriceFun from "../autoTicket/commonOfferHandle.js";
 import { dynamicPrice, getCurrentTime } from "@/utils/utils.js";
@@ -656,6 +656,9 @@ export default class BaseOfferQueue {
         processing_time: getCurrentTime(),
         err_msg: offerResult?.err_msg || errInfoObj?.err_msg || "",
         err_info: offerResult?.err_info || errInfoObj?.err_info || "",
+        err_type: getOfferFailType(
+          offerResult?.err_msg || errInfoObj?.err_msg || ""
+        ),
         rewards: order.rewards,
         rule: tokens.userInfo.rule,
         offer_rule_id: offerResult?.offerRule?.id,

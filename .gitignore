@@ -19,6 +19,7 @@ tests/**/coverage/
 *.ntvs*
 *.njsproj
 *.sln
+.claude/
 tsconfig.tsbuildinfo
 
 dist-electron

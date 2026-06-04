@@ -113,6 +113,20 @@
           clearable
         />
       </el-form-item>
+      <el-form-item v-if="orderStatus == 2" label="失败类型">
+        <el-select
+          v-model="formData.err_type"
+          placeholder="请选择失败类型"
+          clearable
+        >
+          <el-option
+            v-for="(label, value) in OFFER_FAIL_TYPE"
+            :key="value"
+            :label="label"
+            :value="Number(value)"
+          />
+        </el-select>
+      </el-form-item>
       <el-form-item label="开始时间">
         <el-date-picker
           v-model="formData.start_time"
@@ -285,6 +299,23 @@
         label="失败原因"
         width="280"
       />
+      <el-table-column
+        v-if="orderStatus != 1"
+        prop="err_type"
+        label="失败类型"
+        width="140"
+      >
+        <template #default="scope">
+          <el-tag
+            v-if="scope.row.err_type"
+            size="default"
+            type="danger"
+            effect="dark"
+          >
+            {{ OFFER_FAIL_TYPE[scope.row.err_type] || "" }}
+          </el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="操作" fixed="right" align="center" width="120">
         <template #default="{ row: { order_number, user_id } }">
           <el-button
@@ -343,7 +374,8 @@ import {
   GET_APP_LIST,
   IN_RULE_LIST,
   NO_FEE_PLAT_LIST,
-  GET_APP_TYPE_LIST
+  GET_APP_TYPE_LIST,
+  OFFER_FAIL_TYPE
 } from "@/common/constant.js";
 import { addDecimal, subDecimal } from "@/utils/utils";
 // 券类型列表
@@ -414,6 +446,7 @@ const formData = reactive({
   offer_from: null, // 报价来源 1-平台 2-机器
   order_number: "", // 报价类型
   err_msg: "", // 失败原因
+  err_type: "", // 失败类型
   quan_value: "", // 用券类型
   start_time: "",
   end_time: ""
@@ -523,6 +556,7 @@ const resetForm = () => {
   formData.user_id = ""; // 报价用户
   formData.order_number = ""; // 报价类型
   formData.err_msg = ""; // 最终报价
+  formData.err_type = ""; // 失败类型
   formData.quan_value = ""; // 是否报价
   formData.start_time = getTodayTime(+new Date());
   formData.end_time = getTodayTime(+new Date() + 1 * 24 * 60 * 60 * 1000);

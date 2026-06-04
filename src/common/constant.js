@@ -138,6 +138,61 @@ const SYNC_CINEMA_CODE_APP_TYPE_LIST = [
 // 内部角色列表
 const IN_RULE_LIST = [2];
 
+// 报价失败原因分类
+const OFFER_FAIL_TYPE = {
+  1: "超限价",
+  2: "该影院无规则",
+  3: "有规则但未开启",
+  4: "券无库存",
+  5: "无可用卡",
+  6: "该影厅未包含规则",
+  7: "官网拉取数据失败",
+  8: "平台已报价",
+  9: "座位数不符",
+  10: "低于成本价",
+  11: "订单张数超出促销数",
+  12: "提交异常"
+};
+
+/**
+ * 根据 err_msg 自动推断报价失败原因分类
+ * @param {string} err_msg - 失败原因描述
+ * @returns {number|null} 分类编号，无法匹配时返回 null
+ */
+const getOfferFailType = err_msg => {
+  if (!err_msg) return null;
+  // 超限价
+  if (/超过平台限价|超限报价|超过平台限价不报价/.test(err_msg)) return 1;
+  // 该影院无规则
+  if (/按影院筛选后.*报价规则为空/.test(err_msg)) return 2;
+  // 有规则但未开启
+  if (/按启用状态筛选后.*报价规则为空/.test(err_msg)) return 3;
+  // 券无库存
+  if (/按券库存筛选后.*报价规则为空/.test(err_msg)) return 4;
+  // 无可用卡
+  if (/该影院没有可用会员卡/.test(err_msg)) return 5;
+  // 该影厅未包含规则
+  if (/按影厅筛选后.*报价规则为空/.test(err_msg)) return 6;
+  // 官网拉取数据失败
+  if (
+    /获取目标影片信息失败|获取目标影院失败|获取目标城市影院列表失败|匹配影片放映场次失败|获取电影放映信息返回空|获取电影放映信息异常/.test(
+      err_msg
+    )
+  )
+    return 7;
+  // 平台已报价
+  if (/猎人已自动报价|该规则由平台进行报价/.test(err_msg)) return 8;
+  // 座位数不符
+  if (/按座位数筛选后.*报价规则为空/.test(err_msg)) return 9;
+  // 低于成本价
+  if (/低于真实成本|最终报价.*低于真实成本/.test(err_msg)) return 10;
+  // 订单张数超出促销数
+  if (/促销票数低于订单票数/.test(err_msg)) return 11;
+  // 提交异常
+  if (/提交报价异常/.test(err_msg)) return 12;
+  return null;
+};
+
 export {
   SYNC_CINEMA_CODE_APP_TYPE_LIST,
   ORDER_FORM,
@@ -164,5 +219,7 @@ export {
   GROUP_LIST,
   IN_RULE_LIST,
   CINEMA_STATUS_OBJ,
-  MIN_ALLOW_OFFER_SJC
+  MIN_ALLOW_OFFER_SJC,
+  OFFER_FAIL_TYPE,
+  getOfferFailType
 };
