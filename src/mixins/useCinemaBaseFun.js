@@ -456,6 +456,12 @@ export default function useCinemaBaseFun() {
         };
       } else if (app_name === "lma") {
         params.lmaToken = session_id;
+      } else if (app_name === "wanda") {
+        params = {
+          category: 1,
+          json: true,
+          wanda_token: session_id
+        };
       } else {
         params.session_id = session_id;
       }
@@ -558,6 +564,16 @@ export default function useCinemaBaseFun() {
         }));
         const card_list = await getLmaOtherCardBalance(cardList, session_id);
         cardList = card_list;
+      } else if (app_name === "wanda") {
+        // user_card/list.api 返回: { data: { res: { items: [{ cardNo, balance, status, available, categoryName }] } } }
+        const items = res?.data?.res?.items || [];
+        cardList = items
+          .filter(item => item.available !== false && item.status === 8)
+          .map(item => ({
+            card_id: item.cardNo || "",
+            card_num: item.cardNo || "",
+            balance: (item.balance || 0) + ""
+          }));
       } else {
         // sfc系列
         if (app_name === "hbchyxd") {

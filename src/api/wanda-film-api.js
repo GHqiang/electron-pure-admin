@@ -305,6 +305,10 @@ const createApi = ({ app_name }) => {
   const getCardDetail = (params, config = {}) =>
     axios.get("/wanda-film/card/card/get_card.api", { params, ...config });
 
+  /** 获取会员卡列表（同步用，对应 card/user_card/list.api） */
+  const getCardList = (params, config = {}) =>
+    axios.get("/wanda-film/card/card/user_card/list.api", { params, ...config });
+
   /** 卡主题列表 */
   const getCardThemeList = (params, config = {}) =>
     axios.get("/wanda-film/card/card/theme/list.api", { params, ...config });
@@ -371,6 +375,7 @@ const createApi = ({ app_name }) => {
     verifyImgCode,
     // 卡券
     getCardDetail,
+    getCardList,
     getCardThemeList,
     bindCard,
     getCouponGoodsList,
