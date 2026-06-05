@@ -960,7 +960,7 @@ const excludeCityChange = value => {
     //   );
     // }
   } catch (error) {
-    console.warn("排查城市改变处理异常", error);
+    console.warn("排除城市改变处理异常", error);
   }
 };
 

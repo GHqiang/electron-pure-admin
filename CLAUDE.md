@@ -49,18 +49,19 @@ yarn lint             # 代码规范检查（eslint + prettier + stylelint）
 
 执行以下场景时，**先用 Read 工具读取对应的全局 skill 文件**，然后严格遵循其定义的流程：
 
-| 场景 | Skill 文件路径 |
-|------|---------------|
-| 新功能设计、需求分析 | `C:/Users/24675/.agents/skills/brainstorming/SKILL.md` |
-| 编写实现计划 | `C:/Users/24675/.agents/skills/writing-plans/SKILL.md` |
-| 按计划执行实现 | `C:/Users/24675/.agents/skills/executing-plans/SKILL.md` |
-| 遇到 bug、测试失败、异常行为 | `C:/Users/24675/.agents/skills/systematic-debugging/SKILL.md` |
-| 测试驱动开发 | `C:/Users/24675/.agents/skills/test-driven-development/SKILL.md` |
-| 代码修改完成后验证 | `C:/Users/24675/.agents/skills/verification-before-completion/SKILL.md` |
-| 发起代码评审 | `C:/Users/24675/.agents/skills/requesting-code-review/SKILL.md` |
-| 处理代码评审反馈 | `C:/Users/24675/.agents/skills/receiving-code-review/SKILL.md` |
+| 场景                         | Skill 文件路径                                                          |
+| ---------------------------- | ----------------------------------------------------------------------- |
+| 新功能设计、需求分析         | `C:/Users/24675/.agents/skills/brainstorming/SKILL.md`                  |
+| 编写实现计划                 | `C:/Users/24675/.agents/skills/writing-plans/SKILL.md`                  |
+| 按计划执行实现               | `C:/Users/24675/.agents/skills/executing-plans/SKILL.md`                |
+| 遇到 bug、测试失败、异常行为 | `C:/Users/24675/.agents/skills/systematic-debugging/SKILL.md`           |
+| 测试驱动开发                 | `C:/Users/24675/.agents/skills/test-driven-development/SKILL.md`        |
+| 代码修改完成后验证           | `C:/Users/24675/.agents/skills/verification-before-completion/SKILL.md` |
+| 发起代码评审                 | `C:/Users/24675/.agents/skills/requesting-code-review/SKILL.md`         |
+| 处理代码评审反馈             | `C:/Users/24675/.agents/skills/receiving-code-review/SKILL.md`          |
 
 **使用规则**：
+
 - 遇到匹配场景时，主动读取对应 SKILL.md 并按其流程执行，无需用户提醒
 - 如果场景同时匹配多个 skill（如新功能开发同时涉及 brainstorming + writing-plans），按顺序依次执行
 - 读取 skill 后向用户说明："正在使用 [skill名称] 处理当前任务"
@@ -68,6 +69,15 @@ yarn lint             # 代码规范检查（eslint + prettier + stylelint）
 ## 交付规范
 
 ### 变更记录
+
+每轮代码修改完成后，在 `doc/changes/` 目录下产出变更文档：
+
+- 文件名格式：`YYYY-MM-DD-<简短功能描述>.md`
+- 内容包含：修改文件清单、核心变更说明、测试结果、回归风险评估
+
+## 配套后端项目
+
+后端项目在`auto-ticket-service/`目录下, 其根目录也有说明文档`CLAUDE.md`。
 
 每轮代码修改完成后，在 `doc/changes/` 目录下产出变更文档：
 

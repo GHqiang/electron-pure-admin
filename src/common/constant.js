@@ -123,7 +123,8 @@ const APP_TYPE_OBJ = {
   lma_applet: "卢米埃",
   chenxing_applet: "辰星小程序",
   fenghuang_applet: "凤凰云智新版小程序",
-  jinyi_applet: "金逸小程序"
+  jinyi_applet: "金逸小程序",
+  wanda_applet: "万达小程序"
 };
 
 window.APP_TYPE_LIST = GET_APP_TYPE_LIST();

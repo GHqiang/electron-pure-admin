@@ -30,7 +30,7 @@ export default ({ command, mode }: ConfigEnv): UserConfigExport => {
       host: "0.0.0.0",
       // 本地跨域代理 https://cn.vitejs.dev/config/server-options.html#server-proxy
       proxy: {
-        // 机器
+        // 机器（通用后端代理）
         "/svpi": {
           target: "http://47.113.191.173:3000", // 后端API的真实地址
           // target: "http://localhost:3000", // 后端API的真实地址

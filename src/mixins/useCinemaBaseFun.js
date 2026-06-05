@@ -94,6 +94,13 @@ export default function useCinemaBaseFun() {
           city_name: item.city_name,
           city_id: item.city_id
         }));
+      } else if (app_name === "wanda") {
+        const res = await cinemaApi.getCityList();
+        list = res?.data?.city || [];
+        list = list.map(item => ({
+          city_name: item.name,
+          city_id: item.id
+        }));
       } else {
         // sfc系列
         const res = await cinemaApi.getCityList({});
@@ -117,14 +124,16 @@ export default function useCinemaBaseFun() {
       for (let index = 0; index < cityList.length; index++) {
         const item = cityList[index];
         let list = await getCinemaListByCityId(app_name, item.city_id);
-        // 卢米埃：返回即全量影院（lma-cinema.js），每条自带 city_id/cinema_id，不再用循环城市覆盖
+        // 卢米埃/万达：数据自带 city_id，用 cityList 查找真实城市名称
         list = list.map(itemA =>
-          app_name === "lma"
+          app_name === "lma" || app_name === "wanda"
             ? {
                 ...itemA,
                 city_name:
                   cityList.find(city => city.city_id === itemA.city_id)
-                    ?.city_name || ""
+                    ?.city_name ||
+                  itemA.city_name ||
+                  ""
               }
             : {
                 ...itemA,
@@ -135,7 +144,8 @@ export default function useCinemaBaseFun() {
         if (list.length > 0) {
           allCinemaList = allCinemaList.concat(list);
         }
-        if (app_name === "lma") {
+        // 卢米埃/万达：一次获取全量影院，无需继续遍历
+        if (app_name === "lma" || app_name === "wanda") {
           break;
         }
       }
@@ -146,7 +156,11 @@ export default function useCinemaBaseFun() {
   };
 
   // 根据城市获取影院列表
-  const getCinemaListByCityId = async (app_name, city_id) => {
+  const getCinemaListByCityId = async (
+    app_name,
+    city_id,
+    forceRealCity = false
+  ) => {
     const cinemaApi = APP_API_OBJ[app_name];
     try {
       console.log("根据城市获取影院列表", app_name, city_id);
@@ -221,6 +235,18 @@ export default function useCinemaBaseFun() {
           cinema_name: item.cinema_name,
           city_id: item.city_id,
           cinema_code: ""
+        }));
+      } else if (app_name === "wanda") {
+        // 调后端映射接口，一次获取全量影院+城市信息
+        const res = await cinemaApi.getCinemaListWithCity();
+        cinemaList = res?.data?.cinemaInfoList || [];
+        cinemaList = cinemaList.map(item => ({
+          ...item,
+          cinema_id: item.storeId,
+          cinema_name: item.cinemaName,
+          city_id: item.city_id,
+          city_name: item.city_name,
+          cinema_code: "" //同步影院code时使用
         }));
       } else {
         // sfc系列
@@ -341,6 +367,16 @@ export default function useCinemaBaseFun() {
           ...item,
           film_id: item.film_code,
           film_name: item.title
+        }));
+      } else if (app_name === "wanda") {
+        const res = await cinemaApi.getMoviePlayInfo({
+          cityId: oneCity.city_id
+        });
+        list = res?.data?.movie_data || [];
+        list = list.map(item => ({
+          ...item,
+          film_id: item.film_id,
+          film_name: item.film_name
         }));
       } else {
         // sfc系列
@@ -656,5 +692,11 @@ export default function useCinemaBaseFun() {
     }
   };
 
-  return { getCityList, getAllCinemaList, getFilmList, getCardListByApp };
+  return {
+    getCityList,
+    getAllCinemaList,
+    getCinemaListByCityId,
+    getFilmList,
+    getCardListByApp
+  };
 }

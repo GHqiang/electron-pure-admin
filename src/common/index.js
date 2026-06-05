@@ -15,6 +15,7 @@ import createH5UmeApi from "@/api/h5ume-api";
 import createChenxingApi from "@/api/chenxing-api";
 import createFenghuangApi from "@/api/fenghuang-api";
 import createJinyiApi from "@/api/jinyi-api";
+import createWandaApi from "@/api/wanda-film-api";
 import {
   GET_UME_LIST,
   GET_H5_UME_LIST,
@@ -30,6 +31,7 @@ const H5_UME_API_OBJ = {};
 const CHENXING_API_OBJ = {};
 const FENGHUANG_API_OBJ = {};
 const JINYI_API_OBJ = {};
+const WANDA_API_OBJ = {};
 
 GET_SFC_APP_LIST().forEach(item => {
   SFC_API_OBJ[item] = createSfcApi({
@@ -81,6 +83,9 @@ const APP_API_OBJ = {
   ...CHENXING_API_OBJ,
   ...FENGHUANG_API_OBJ,
   ...JINYI_API_OBJ,
+  wanda: createWandaApi({
+    app_name: "wanda"
+  }),
   lma: createLmaApi({
     app_name: "lma"
   }),
