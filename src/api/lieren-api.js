@@ -56,12 +56,18 @@ const ruleState = params => axios.post("/lieren/openapi/rule/state", params);
 
 // 院线列表
 const ruleGroup = params => axios.post("/lieren/openapi/rule/group", params);
+
+// 影院列表
+const cinemaList = params =>
+  axios.post("/lieren/openapi/rule/cinemaList", params);
+
 export default {
   ruleAdd,
   ruleDel,
   ruleList,
   ruleState,
   ruleGroup,
+  cinemaList,
   queryOfferRecord, // 查询报价记录
   queryStayOfferList, // 获取待报价列表
   stayTicketingList, // 获取待出票列表
