@@ -21,6 +21,8 @@ tests/**/coverage/
 *.sln
 .claude/
 tsconfig.tsbuildinfo
-
+.gitignore
 dist-electron
 release
+auto-ticket-service/*
+applet-source-code

@@ -25,16 +25,30 @@ export const useDataTableStoreBySpecialName = defineStore(
     }
   }
 );
+
+const IS_DEV = process.env.NODE_ENV === "development";
+let cinemaCodeMatchListAll;
+let cinemaCodeMatchList = window.localStorage.getItem("cinemaCodeMatchList");
+if (cinemaCodeMatchList) {
+  cinemaCodeMatchListAll = JSON.parse(cinemaCodeMatchList);
+}
+
 export const useCinemaCodeMatchList = defineStore("cinemaCodeMatchList", {
   state: () => {
     return {
-      items: []
+      items: cinemaCodeMatchListAll || []
     };
   },
   actions: {
     // 设置规则列表
     setCinemaCodeMatchList(list) {
       console.warn(`设置影院映射列表信息`, list);
+      if (IS_DEV) {
+        window.localStorage.setItem(
+          "cinemaCodeMatchList",
+          JSON.stringify(list)
+        );
+      }
       this.items = list;
     },
     // 获取影院标识
