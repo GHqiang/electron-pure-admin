@@ -4,9 +4,9 @@
  * URL 格式: /wanda-film/{baseAlias}/path/to/api
  * baseAlias 说明:
  *   misc    → https://misc-api-prd-mx.wandafilm.com    (通用服务)
- *   cinema  → https://cinema-api-prd-mx.wandafilm.com  (影院/电影)
+ *   cinema  → https://cinema-api-prd-mx.wandafilm.com  (影院/电影/排期)
  *   user    → https://user-api-prd-mx.wandafilm.com    (用户)
- *   ticket  → https://ticket-api-prd-mx.wandafilm.com  (票务)
+ *   ticket  → https://front-gateway-c.wandafilm.com     (票务:座位/订单, 统一网关)
  *   payment → https://payment-api-prd-mx.wandafilm.com (支付)
  *   card    → https://card-api-prd-mx.wandafilm.com    (会员卡)
  *   coupon  → https://coupon-api-prd-mx.wandafilm.com  (优惠券)
@@ -130,14 +130,14 @@ const createApi = ({ app_name }) => {
 
   /** 影院排期列表 */
   const getShowtimeByCinema = (params, config = {}) =>
-    axios.get("/wanda-film/ticket/showtime/by_cinema.api", {
+    axios.get("/wanda-film/cinema/showtime/by_cinema.api", {
       params,
       ...config
     });
 
   /** 影片排期（按影院/影片/日期） */
   const getShowtimeByCinemaFilmDate = (params, config = {}) =>
-    axios.get("/wanda-film/ticket/showtime/by_cinema_film_date.api", {
+    axios.get("/wanda-film/cinema/showtime/by_cinema_film_date.api", {
       params,
       ...config
     });
@@ -307,7 +307,10 @@ const createApi = ({ app_name }) => {
 
   /** 获取会员卡列表（同步用，对应 card/user_card/list.api） */
   const getCardList = (params, config = {}) =>
-    axios.get("/wanda-film/card/card/user_card/list.api", { params, ...config });
+    axios.get("/wanda-film/card/card/user_card/list.api", {
+      params,
+      ...config
+    });
 
   /** 卡主题列表 */
   const getCardThemeList = (params, config = {}) =>
@@ -327,6 +330,13 @@ const createApi = ({ app_name }) => {
   /** 领取优惠券 */
   const gainCoupon = (data, config = {}) =>
     axios.post("/wanda-film/coupon/coupon/present/gain.api", data, config);
+
+  /** 优惠券到期提醒列表 */
+  const getCouponExpireAndEffective = (params, config = {}) =>
+    axios.get("/wanda-film/coupon/coupon/expireandeffective.api", {
+      params,
+      ...config
+    });
 
   return {
     // 通用服务
@@ -379,7 +389,8 @@ const createApi = ({ app_name }) => {
     getCardThemeList,
     bindCard,
     getCouponGoodsList,
-    gainCoupon
+    gainCoupon,
+    getCouponExpireAndEffective
   };
 };
 

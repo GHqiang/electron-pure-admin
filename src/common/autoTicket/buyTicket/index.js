@@ -3,6 +3,7 @@ import ChenxingBuyTicket from "./chenxing/buyTicket";
 import FenghuangBuyTicket from "./fenghuang/buyTicket";
 import JINYIBuyTicket from "./jinyi/buyTicket";
 import LmaBuyTicket from "./lma/buyTicket"; // LMA新实现
+import WandaBuyTicket from "./wanda/buyTicket";
 import SfcBuyTicket from "./sfc/buyTicket"; // SFC模块化实现
 import UmeBuyTicket from "./ume/buyTicket"; // UME模块化实现
 import UmeH5BuyTicket from "./h5ume/buyTicket"; // UME模块化实现
@@ -14,6 +15,7 @@ const STRATEGY_MAP = {
   fenghuang_applet: FenghuangBuyTicket,
   jinyi_applet: JINYIBuyTicket,
   lma_applet: LmaBuyTicket,
+  wanda_applet: WandaBuyTicket,
   sfc_applet: SfcBuyTicket,
   ume_applet: UmeBuyTicket,
   ume_h5: UmeH5BuyTicket

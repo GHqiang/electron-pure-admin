@@ -31,18 +31,31 @@ const createAxios = ({ app_name, timeout = 25 }) => {
           item => item.app_name === app_name && item.mobile && item.session_id
         );
         let session_id = targetLoginList?.[0]?.session_id || "";
+        if (config.data?.wanda_token) {
+          console.warn("config.data?.wanda_token", config.data?.wanda_token);
+          session_id = config.data.wanda_token;
+          delete config.data.wanda_token;
+        }
+        if (config.params?.wanda_token) {
+          console.warn(
+            "config.params?.wanda_token",
+            config.params?.wanda_token
+          );
+          session_id = config.params.wanda_token;
+          delete config.params.wanda_token;
+        }
         let tid = targetLoginList?.[0]?.tid || "";
-        // 传递万达用户令牌
-        config.headers["user-token"] =
-          config.data?.wanda_token || session_id || "";
+        if (session_id) {
+          tid =
+            targetLoginList.find(item => item.session_id === session_id)?.tid ||
+            tid;
+        }
+        // 传递万达用户令牌：X-RY-TOKEN	P6A22AEE986AEC3237CDAC4FDYYNHYKIIYWYHWIZFHWPH
+        config.headers["user-token"] = session_id || "";
         // "P6A2168BD9E6DC4301B4D5B34YYNHYKIIYWYHWIFHNDPH";
-        config.headers["user-identifier"] =
-          config.data?.wanda_identifier || tid || "";
+        // X-RY-USER	YYAHYOZZYW
+        config.headers["user-identifier"] = tid || "";
         // "YYAHYOZZYW";
-
-        // 清理前端自定义参数（不发给后端）
-        if (config.data?.wanda_token) delete config.data.wanda_token;
-        if (config.data?.wanda_identifier) delete config.data.wanda_identifier;
 
         // 环境适配：开发环境通过 vite proxy，生产环境直连后端
         if (IS_DEV) {

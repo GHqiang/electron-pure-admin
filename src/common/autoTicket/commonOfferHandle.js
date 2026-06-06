@@ -5,6 +5,7 @@ import getJinyiOfferPrice from "./buyTicket/jinyi/offerManage.js";
 import getUmeOfferPriceNew from "./buyTicket/ume/offerManage.js"; // UME新实现
 import getH5UmeOfferPriceNew from "./buyTicket/h5ume/offerManage.js"; // H5UME新实现
 import getLmaOfferPriceNew from "./buyTicket/lma/offerManage.js"; // LMA新实现
+import getWandaOfferPrice from "./buyTicket/wanda/offerManage.js";
 import {
   GET_UME_LIST,
   GET_H5_UME_LIST,
@@ -23,6 +24,8 @@ const getOfferPriceFun = params => {
     return new getH5UmeOfferPriceNew(params);
   } else if (appFlag == "lma") {
     return new getLmaOfferPriceNew(params);
+  } else if (appFlag === "wanda") {
+    return new getWandaOfferPrice(params);
   } else if (GET_SFC_APP_LIST().includes(appFlag)) {
     return new getSfcOfferPriceNew(params);
   } else if (GET_CHENXING_LIST().includes(appFlag)) {
