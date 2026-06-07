@@ -312,6 +312,13 @@ const createApi = ({ app_name }) => {
       ...config
     });
 
+  // 支付界面会员卡列表，需传参订单id：orderId: xxx, json: true
+  const getPayCardList = (params, config = {}) =>
+    axios.get("/wanda-film/card/pay/list.api", {
+      params,
+      ...config
+    });
+
   /** 卡主题列表 */
   const getCardThemeList = (params, config = {}) =>
     axios.get("/wanda-film/card/card/theme/list.api", { params, ...config });
@@ -334,6 +341,17 @@ const createApi = ({ app_name }) => {
   /** 优惠券到期提醒列表 */
   const getCouponExpireAndEffective = (params, config = {}) =>
     axios.get("/wanda-film/coupon/coupon/expireandeffective.api", {
+      params,
+      ...config
+    });
+
+  // ============================================================
+  // 6. 活动权益
+  // ============================================================
+
+  /** 获取可用活动权益/券 */
+  const getActivityCoupon = (params, config = {}) =>
+    axios.get("/wanda-film/activity/mkt/activity/secret/list.api", {
       params,
       ...config
     });
@@ -386,11 +404,14 @@ const createApi = ({ app_name }) => {
     // 卡券
     getCardDetail,
     getCardList,
+    getPayCardList, // 支付界面会员卡列表
     getCardThemeList,
     bindCard,
     getCouponGoodsList,
     gainCoupon,
-    getCouponExpireAndEffective
+    getCouponExpireAndEffective,
+    // 活动权益
+    getActivityCoupon
   };
 };
 

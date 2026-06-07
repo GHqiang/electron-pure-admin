@@ -66,16 +66,16 @@ export default class BaseBuyTicket {
       // 2、获取该订单报价规则
       await this.getOrderOfferRule();
 
-      // 调试代码
+      // 调试代码-出票报价规则测试
       if (this.isTestOrder && !this.offerRule) {
         this.offerRule = {
           offer_type: "2",
-          offer_end_amount: "42",
-          member_price: "32",
-          real_member_price: "38",
+          offer_end_amount: "35",
+          member_price: "31",
+          real_member_price: "33"
           // 上面用卡，下面用券
-          offer_type: "1",
-          quan_value: "guangmeiwuhan"
+          // offer_type: "1",
+          // quan_value: "guangmeiwuhan"
         };
       }
       this.logger.infoSave("订单报价记录信息", {
