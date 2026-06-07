@@ -85,20 +85,23 @@ export default class WandaCinemaManage {
    */
   async getBuyPrevCinemaInfo({ cinema_code, city_name }) {
     try {
+      // 1. 获取城市列表
       const cityList = await this.getCityList();
       if (!cityList?.length) {
-        this.logger.errorSave("获取万达城市列表为空");
+        this.logger.errorSave("获取城市列表为空");
         return { error: "获取城市列表为空" };
       }
 
+      // 2. 根据城市名称获取城市ID
       let city_id = cityList.find(
         item => item.name.indexOf(city_name) !== -1
       )?.id;
       if (!city_id) {
-        this.logger.errorSave("获取万达城市ID失败", { city_name, cityList });
+        this.logger.errorSave("获取城市ID失败", { city_name, cityList });
         return { error: "获取城市ID失败" };
       }
 
+      // 3. 获取城市影院列表
       const cinemaListRes = await this.getCityCinemaList({ city_id });
       const cinemaList = cinemaListRes?.cinemaList || [];
       if (!cinemaList.length) {
@@ -108,7 +111,7 @@ export default class WandaCinemaManage {
         return { error: cinemaListRes?.error || "获取城市影院列表为空" };
       }
 
-      // 通过编码映射匹配目标影院
+      // 4. 根据影院编码匹配目标影院
       let cinemaIdRes = getTargetCinemaCommon({
         app_name: this.appFlag,
         plat_cinema_code: cinema_code,
@@ -126,7 +129,7 @@ export default class WandaCinemaManage {
 
       return { cinema_id, city_id };
     } catch (error) {
-      this.logger.errorSave("获取万达购票前影院信息异常", { error });
+      this.logger.errorSave("获取购票前影院信息异常", { error });
       return { error: formatErrInfo(error) };
     }
   }
@@ -204,6 +207,7 @@ export default class WandaCinemaManage {
    */
   async getMovieInfo(item) {
     try {
+      // 1、获取城市列表拿到城市ID
       const {
         city_name,
         cinema_code,
@@ -237,6 +241,7 @@ export default class WandaCinemaManage {
         cinema_name: itemA.cinemaName
       }));
 
+      // 3、根据影院编码匹配目标影院
       let cinemaIdRes = getTargetCinemaCommon({
         app_name: this.appFlag,
         plat_cinema_code: cinema_code,
@@ -260,14 +265,14 @@ export default class WandaCinemaManage {
         filmName: film_name,
         movieData: movieList.map(m => ({
           ...m,
-          filmName: m.film_name || m.nameCN
+          filmName: m.film_name
         }))
       });
       if (!matchedMovie) {
         this.logger.errorSave("获取万达目标影片信息失败", { film_name });
         return null;
       }
-      const targetFilmId = matchedMovie.film_id || matchedMovie.movieId;
+      const targetFilmId = matchedMovie.film_id;
       this.logger.infoSave("匹配到万达电影", { film_name, targetFilmId });
 
       // 4、通过 by_cinema.api 获取该影院所有排期，按 filmId 过滤
@@ -318,9 +323,9 @@ export default class WandaCinemaManage {
         return null;
       }
       const media = targetShow.filmList?.[0]?.version;
-      const show_id = targetShow.hallId;
+      const show_id = targetShow.showtimeId;
       const member_price = targetShow.salesPrice; // 会员价 可能会不准确，需要从座位里获取最高价格
-      const nonmember_price = null;
+      const nonmember_price = null; // 非会员价
       const movieInfo = {
         ...targetShow,
         city_id,

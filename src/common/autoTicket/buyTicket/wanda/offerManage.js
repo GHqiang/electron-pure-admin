@@ -2,8 +2,16 @@
  * 万达报价管理模块
  *
  * 职责：
- * - 继承 BaseOfferPrice，实现万达系列的报价逻辑
- * - 报价规则匹配、会员价获取、成本价计算
+ * - 继承 BaseOfferPrice 基类，实现 万达系列报价逻辑
+ * - 报价规则匹配、会员价获取、成本价计算、最终报价计算
+ *
+ * 所属流程：报价流程
+ *
+ * 依赖模块：
+ * - BaseOfferPrice: 报价基类，提供模板方法
+ * - WandaCardQuanManage: 卡券管理模块
+ * - WandaCinemaManage: 影院管理模块
+ * - WandaSeatManage: 座位管理模块
  *
  * @module wanda/offerManage
  */
@@ -17,8 +25,17 @@ import {
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
-import { NO_FEE_PLAT_LIST, ONE_STEP_PLAT_LIST } from "@/common/constant.js";
+import {
+  GROUP_LIST,
+  TEST_NEW_PLAT_LIST,
+  NO_FEE_PLAT_LIST,
+  ONE_STEP_PLAT_LIST
+} from "@/common/constant.js";
 import { platTokens } from "@/store/platTokens";
+import {
+  getQuanTypeListByApp,
+  filterFixedRulesByDailyTicketCount
+} from "../../commonQuanStock.js";
 import Logger from "@/common/logger.js";
 import BaseOfferPrice from "@/common/core/BaseOfferPrice.js";
 import WandaCardQuanManage from "./cardQuanManage.js";
@@ -43,9 +60,10 @@ class WandaOfferPrice extends BaseOfferPrice {
 
   /**
    * 初始化依赖模块
+   * @param {Object} order - 订单信息对象
    */
   initModules(order) {
-    this.logger = new Logger({ logType: 1 });
+    this.logger = new Logger({ logType: 1 }); // 日志管理模块
     this.logger.init(order);
     this.cardQuanManage = new WandaCardQuanManage(order, this.logger);
     this.cinemaManage = new WandaCinemaManage(order, this.logger);
@@ -54,6 +72,8 @@ class WandaOfferPrice extends BaseOfferPrice {
 
   /**
    * 获取最终匹配的报价规则
+   * @param {Object} order - 待报价订单信息
+   * @returns {Promise<Object|null>} 匹配到的报价规则对象或null
    */
   async getEndMatchOfferRule(order) {
     try {
@@ -106,7 +126,20 @@ class WandaOfferPrice extends BaseOfferPrice {
         movieInfo
       );
       console.warn("最终匹配到的报价规则", endRule);
-      if (!endRule) return null;
+      if (!endRule) {
+        // 日常固定报价规则
+        let fixedAmountRuleList = matchRuleList.filter(
+          item => item.offerType === "1" && item.offerAmount
+        );
+        if (fixedAmountRuleList.length) {
+          this.logger.errorSave("按券库存筛选后，报价规则为空", {
+            fixedAmountRuleList
+          });
+        } else {
+          this.logger.warnSave("最终匹配到的报价规则为空");
+        }
+        return null;
+      }
       endRule = JSON.parse(JSON.stringify(endRule));
       return endRule;
     } catch (error) {
@@ -118,7 +151,9 @@ class WandaOfferPrice extends BaseOfferPrice {
   }
 
   /**
-   * 计算最终报价（对齐 SFC 管线：动态调价 → 利润加价 → 夜间顶价 → 超限检查 → 成本利润）
+   * 计算最终报价
+   * @param {Object} params - 计算参数
+   * @returns {Promise<number|null>} 最终报价金额，计算失败或利润不足返回 null
    */
   async calculateFinalPrice(params) {
     const {
@@ -144,7 +179,7 @@ class WandaOfferPrice extends BaseOfferPrice {
         price: adjustedPrice,
         offerType,
         appFlag: this.appFlag,
-        groupList: [],
+        groupList: GROUP_LIST,
         logger: this.logger
       });
 
@@ -184,6 +219,8 @@ class WandaOfferPrice extends BaseOfferPrice {
 
   /**
    * 成本利润计算
+   * @param {Object} params - 计算参数
+   * @returns {number|null} 最终报价或null（利润不足）
    */
   calculateCostProfit({
     adjustedPrice,
@@ -212,13 +249,13 @@ class WandaOfferPrice extends BaseOfferPrice {
     const profitDiff =
       Math.round(Number(adjustedPrice || 0) * 1000) -
       Math.round(Number(real_cost_price || 0) * 1000);
-    if (profitDiff <= 0) {
+    if (profitDiff <= 0 && !TEST_NEW_PLAT_LIST.includes(this.plat_name)) {
       let str = `最终报价${adjustedPrice}低于真实成本${real_cost_price}`;
       this.logger.errorSave(str);
       return null;
     }
 
-    // 最大卡券成本（基类 getEndOfferPrice 依赖它过滤券类型）
+    // 最大卡券成本（即成本必须低于它才有利润）
     offerRule.maxCostPrice = maxCostPrice;
 
     this.logger.infoSave("万达计算报价相关信息", {
@@ -240,11 +277,16 @@ class WandaOfferPrice extends BaseOfferPrice {
   }
 
   /**
-   * 重写基类的 getEndOfferPrice，对齐 SFC 返回结构
+   * 重写基类的 getEndOfferPrice
    * 确保始终包含 err_msg 和 err_info
+   * @param {Object} params - 参数对象
+   * @param {Object} params.order - 订单信息
+   * @param {Array} params.offerList - 报价列表（可选）
+   * @returns {Promise<Object>} 报价结果 { err_msg, err_info, endPrice, offerRule }
    */
   async getEndOfferPrice({ order, offerList }) {
     try {
+      // 调用基类方法
       const result = await super.getEndOfferPrice({ order, offerList });
 
       // 确保返回结构一致：成功时补充 err_msg/err_info
@@ -253,6 +295,8 @@ class WandaOfferPrice extends BaseOfferPrice {
           this.logger?.getLastErrMsgAndInfo() || {};
         return { ...result, err_msg, err_info };
       }
+
+      // 错误情况：buildErrorResponse已包含err_msg和err_info
       return result;
     } catch (error) {
       this.logger?.errorSave("获取最终报价异常", error);
@@ -269,62 +313,118 @@ class WandaOfferPrice extends BaseOfferPrice {
    */
   async getMinAmountOfferRule(ruleList, order, movieInfo) {
     try {
-      // 1. 优先处理会员日报价规则
-      const memberDayRules = ruleList.filter(
+      // 1、有会员日报价规则命中优先使用会员日报价规则
+      let onlyMemberDayRuleList = ruleList.filter(
         item => item.memberDay && item.offerType === "3" && item.offerAmount
       );
-      memberDayRules.sort((a, b) => a.offerAmount - b.offerAmount);
-      if (memberDayRules.length) {
+      // 报价从低到高排序
+      onlyMemberDayRuleList.sort(
+        (itemA, itemB) => itemA.offerAmount - itemB.offerAmount
+      );
+      console.log("命中会员日报价规则从小往大排序", onlyMemberDayRuleList);
+      if (onlyMemberDayRuleList.length) {
         this.logger.infoSave("命中会员日报价规则");
-        return memberDayRules[0];
+        return onlyMemberDayRuleList[0];
       }
 
-      // 2. 处理普通报价规则
-      const otherRules = ruleList.filter(
+      // 2、比对那个报价更低，就用那个规则出
+      let otherRuleList = ruleList.filter(
         item => !item.memberDay && item.offerType !== "3"
       );
+      console.warn("排除会员日后的其它规则", otherRuleList);
 
       // 固定报价规则（offerType=1）
-      let fixedRules = otherRules.filter(
+      let fixedAmountRuleList = otherRuleList.filter(
         item => item.offerType === "1" && item.offerAmount
       );
-      // 根据电影格式过滤固定报价规则
-      if (movieInfo?.media != null && fixedRules.length) {
-        const filmType = String(movieInfo.media).toUpperCase();
-        if (filmType) {
-          fixedRules = fixedRules.filter(item =>
+      if (movieInfo?.media && fixedAmountRuleList.length) {
+        let film_type = movieInfo.media?.toUpperCase();
+        if (film_type) {
+          fixedAmountRuleList = fixedAmountRuleList.filter(item =>
             item.film_type?.length
-              ? item.film_type.some(itemA => filmType.includes(itemA))
+              ? item.film_type.some(itemA => film_type.includes(itemA))
               : true
           );
           this.logger.infoSave("根据电影格式过滤后的固定报价规则列表", {
-            fixedRules
+            fixedAmountRuleList
           });
         }
       }
-
-      // 3. 如果有固定报价规则，按金额排序取最低
-      if (fixedRules.length) {
-        fixedRules.sort((a, b) => a.offerAmount - b.offerAmount);
-        return fixedRules[0];
+      if (fixedAmountRuleList.length) {
+        const useMobileList = getCinemaLoginInfoList(!order?.need_unsplit_login)
+          .filter(
+            item =>
+              item.app_name === order.app_name && item.mobile && item.session_id
+          )
+          .map(item => item.mobile);
+        const appQuanTypeList = await getQuanTypeListByApp({
+          order,
+          getQuanListByPhone: this.cardQuanManage.getQuanListByPhone.bind(
+            this.cardQuanManage
+          ),
+          extraParams: {
+            city_id: movieInfo.city_id,
+            cinema_id: movieInfo.cinema_id
+          },
+          logger: this.logger
+        });
+        this.logger.infoSave("根据影院获取券类型列表返回", {
+          quanTypeList: appQuanTypeList?.map(
+            ({ quanStockListByPhone, ...item }) => item
+          ),
+          useMobileList
+        });
+        // 校验其库存，进行过滤
+        if (appQuanTypeList?.length) {
+          fixedAmountRuleList = fixedAmountRuleList.filter(item => {
+            // 查找是否有目标券可以出的
+            return appQuanTypeList.some(
+              itemA =>
+                item.quanValue?.split(",")?.includes(itemA.quan_value) &&
+                itemA?.quan_stock >= order.ticket_num
+            );
+          });
+          this.logger.infoSave("根据券库存过滤后的固定报价规则列表", {
+            fixedAmountRuleList
+          });
+          if (fixedAmountRuleList.length) {
+            fixedAmountRuleList = await filterFixedRulesByDailyTicketCount({
+              fixedAmountRuleList,
+              appQuanTypeList,
+              useMobileList,
+              order,
+              logger: this.logger
+            });
+          }
+        } else {
+          fixedAmountRuleList = [];
+          this.logger.infoSave(
+            "根据影院获取券类型列表为空，固定报价规则列表进行置空处理",
+            {
+              appQuanTypeList
+            }
+          );
+        }
       }
+      let mixFixedAmountRule = fixedAmountRuleList.sort(
+        (itemA, itemB) => itemA.offerAmount - itemB.offerAmount
+      )?.[0];
 
-      // 会员价加价规则（offerType=2）
-      const addAmountRules = otherRules.filter(
+      // 会员价加价报价规则
+      let addAmountRuleList = otherRuleList.filter(
         item => item.offerType === "2" && item.addAmount
       );
-
-      // 4. 会员价加价规则（offerType=2）需要比较会员价和固定价
-      let mixFixedAmountRule = fixedRules.length ? fixedRules[0] : null;
-      let minAddAmountRule = addAmountRules[0];
-      // 如果addAmount设置比较特殊，优先取单一addAmount的规则
+      let minAddAmountRule = addAmountRuleList?.[0];
+      // 如果addAmount设置比较特殊，严谨来说只能有且仅有一条规则或者其规则再首位时才能生效；如：30;>=+2;<+1
       if (
-        addAmountRules.length > 1 &&
-        addAmountRules.every(item => item?.addAmount?.split(";")?.length === 1)
+        addAmountRuleList?.length > 1 &&
+        addAmountRuleList.every(
+          item => item?.addAmount?.split(";")?.length === 1
+        )
       ) {
-        minAddAmountRule = addAmountRules.sort(
-          (a, b) => a.addAmount - b.addAmount
-        )[0];
+        minAddAmountRule = addAmountRuleList.sort(
+          (itemA, itemB) => itemA.addAmount - itemB.addAmount
+        )?.[0];
       }
 
       if (minAddAmountRule) {
@@ -342,8 +442,8 @@ class WandaOfferPrice extends BaseOfferPrice {
           minAddAmountRule
         });
         if (memberPriceRes === -1 || memberPriceRes === -3) {
-          this.logger.infoSave("获取会员价失败，返回固定报价规则");
-          return mixFixedAmountRule;
+          console.error("获取电影放映信息或者座位信息失败直接返回null");
+          return null;
         }
         if (!memberPriceRes) {
           this.logger.infoSave(
@@ -363,7 +463,7 @@ class WandaOfferPrice extends BaseOfferPrice {
             addMountRule: minAddAmountRule.addMountRule
           });
           if (!realAddMount) {
-            this.logger.warnSave("获取真实加价金额失败，返回最小固定报价规则", {
+            this.logger.warnSave("获取真实加价金额失败,返回最小固定报价规则", {
               real_member_price: memberPriceRes.real_member_price,
               addMountRule: minAddAmountRule.addMountRule
             });
@@ -373,9 +473,9 @@ class WandaOfferPrice extends BaseOfferPrice {
         }
         // 最小折扣
         minAddAmountRule.member_discount = memberPriceRes.discount;
-        // 会员成本价（真实会员价*折扣）
+        // 会员成本价(真实会员价*折扣价)
         minAddAmountRule.memberCostPrice = memberPriceRes.member_price;
-        // 会员成本价取整
+        // 会员成本价不为0.5的整数倍时进0.5
         minAddAmountRule.round_member_price = roundToHalf(
           minAddAmountRule.memberCostPrice,
           ONE_STEP_PLAT_LIST.includes(order.plat_name) ? 0.1 : 0.5
@@ -399,7 +499,7 @@ class WandaOfferPrice extends BaseOfferPrice {
             "会员预计报价：" + minAddAmountRule.memberOfferAmount
         });
       } else {
-        this.logger.infoSave("最小加价规则不存在，返回最小固定报价规则", {
+        this.logger.infoSave("最小加价规则不存在,返回最小固定报价规则", {
           fixedOfferAmount: mixFixedAmountRule?.offerAmount
         });
         return mixFixedAmountRule;
@@ -438,12 +538,18 @@ class WandaOfferPrice extends BaseOfferPrice {
   }
 
   /**
-   * 获取会员价（对齐 SFC 实现）
+   * 获取会员价
+   * @param {Object} params - 参数对象
+   * @param {Object} params.order - 订单信息
+   * @param {Object} params.movieData - 电影数据（可选）
+   * @param {Object} params.minAddAmountRule - 加价规则
+   * @returns {Promise<Object|null|number>} 会员价信息或null或错误码
    */
   async getMemberPrice({ order, movieData, minAddAmountRule }) {
     try {
-      console.log("准备获取万达会员价", order);
+      console.log("准备获取会员价", order);
       const { ticket_num, app_name } = order;
+      // 获取当前场次电影信息，防止接口重复掉
       let movieInfo = movieData;
 
       if (!movieInfo) {
@@ -451,7 +557,7 @@ class WandaOfferPrice extends BaseOfferPrice {
       }
       console.log("待报价订单当前场次电影相关信息", movieInfo);
       if (!movieInfo) {
-        console.error("获取当前场次电影信息失败，不再进行报价");
+        console.error("获取当前场次电影信息失败", "不再进行报价");
         return -1;
       }
 
@@ -524,8 +630,10 @@ class WandaOfferPrice extends BaseOfferPrice {
         let list = cardRes.data.cardList || [];
         list = list.map(item => ({
           ...item,
+          // 使用日非当天的就是0
           daily_usage:
             item.usage_date !== getCurrentDay() ? 0 : item.daily_usage || 0,
+          // 使用日非当月的就是0
           month_usage: !isDateInCurrentMonth(item.usage_date)
             ? 0
             : item.monthly_usage || 0
@@ -612,25 +720,6 @@ class WandaOfferPrice extends BaseOfferPrice {
       });
       return null;
     }
-  }
-
-  /**
-   * 获取真实加价金额（处理 >=+2;<+1 这种多段加价）
-   */
-  getRealAddMount({ real_member_price, addMountRule }) {
-    for (const rule of addMountRule) {
-      const match = rule.match(/^([><=]+)\+(\d+)$/);
-      if (match) {
-        const op = match[1];
-        const val = Number(match[2]);
-        if (op === ">=" && real_member_price >= val) return val;
-        if (op === ">" && real_member_price > val) return val;
-        if (op === "<=" && real_member_price <= val) return val;
-        if (op === "<" && real_member_price < val) return val;
-        if (op === "=" && real_member_price === val) return val;
-      }
-    }
-    return null;
   }
 
   /**

@@ -25,27 +25,26 @@ export default class WandaSeatManage {
    * 获取座位图
    * @param {Object} data - 参数对象
    * @param {string|number} data.dId - 场次ID
-   * @param {string} [data.json] - 固定 true
-   * @returns {Promise<Object|null>} { area: [...], 或 null }
+   * @param {string} data.session_id - 会话ID
+   * @returns {Promise<Object>} { area: [...], 或 null }
    */
   async getSeatLayout(data) {
-    let { dId, ...rest } = data || {};
+    let { dId, session_id } = data || {};
     let params = {
       dId: dId,
       json: true,
-      ...rest
+      ...(session_id && { wanda_token: session_id })
     };
     try {
-      console.log("获取万达座位参数", params);
+      this.logger.infoSave("获取座位布局参数", params);
       const res = await this.appApi.getRealTimeSeat(params);
       console.log("获取万达座位返回", res);
-      return res?.data?.realtimeSeats || null;
+      return res?.data?.realtimeSeats;
     } catch (error) {
       this.logger.errorSave("获取万达座位图异常", {
         error: formatErrInfo(error),
         dId
       });
-      return null;
     }
   }
 
@@ -76,6 +75,10 @@ export default class WandaSeatManage {
       const seat_ids = targetSeats
         .map(s => `${s.seatId},${s.salesPrice || 0},undefined,0`)
         .join("|");
+      this.logger.infoSave("解析目标座位成功", {
+        seat_ids,
+        lockseat
+      });
       return { seat_ids };
     } catch (error) {
       this.logger.errorSave("获取目标座位异常", {
@@ -102,15 +105,14 @@ export default class WandaSeatManage {
         retailerCode: "MX",
         mobile,
         seatId: seat_ids,
-        json
+        json,
+        ...(session_id && { wanda_token: session_id })
       };
       if (inx === 1) {
         this.logger.infoSave(`第${inx}次锁定座位参数`, { params });
       }
       // 万达通过创建订单来实现锁座
-      const res = await this.appApi.createOrder(params, {
-        data: { wanda_token: session_id }
-      });
+      const res = await this.appApi.createOrder(params);
       this.logger.infoSave(`第${inx}次锁定座位返回`, { res });
       return res;
     } catch (error) {
