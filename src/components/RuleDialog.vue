@@ -100,8 +100,8 @@
             filterable
             multiple
             clearable
-            @change="includeCinemaChange"
             placeholder="包含影院"
+            @change="includeCinemaChange"
           >
             <el-option
               v-for="item in cinemaListFilter"
@@ -123,8 +123,8 @@
             filterable
             multiple
             clearable
-            @change="excludeCinemaChange"
             placeholder="排除影院"
+            @change="excludeCinemaChange"
           >
             <el-option
               v-for="item in cinemaListFilter"
@@ -349,6 +349,20 @@
               class="mt-2"
               @click.prevent="addDomain"
               >新增</el-button
+            >
+            <el-button
+              v-if="index === formData.platOfferList.length - 1"
+              class="mt-2"
+              type="success"
+              @click.prevent="batchAddDomains"
+              >批量新增</el-button
+            >
+            <el-button
+              v-if="index === formData.platOfferList.length - 1"
+              class="mt-2"
+              type="primary"
+              @click.prevent="batchSetPrice"
+              >批量设置价格</el-button
             >
           </el-form-item>
         </template>
@@ -770,6 +784,40 @@ const addDomain = () => {
     platName: "",
     value: "",
     isSyncPlat: "" // 是否同步平台，1-同步 2-不同步
+  });
+};
+
+// 批量新增：添加所有剩余平台（价格为空）
+const batchAddDomains = () => {
+  const existingPlatNames = formData.platOfferList.map(item => item.platName);
+  const allPlatNames = Object.keys(orderFormObj.value);
+  const remainingPlats = allPlatNames.filter(
+    platName => !existingPlatNames.includes(platName)
+  );
+  remainingPlats.forEach(platName => {
+    formData.platOfferList.push({
+      platName: platName,
+      value: "",
+      isSyncPlat: ""
+    });
+  });
+};
+
+// 批量设置价格：先添加所有剩余平台，再将猎人价格同步给其他所有平台
+const batchSetPrice = () => {
+  const lierenItem = formData.platOfferList.find(
+    item => item.platName === "lieren"
+  );
+  if (!lierenItem || !lierenItem.value) {
+    ElMessage.warning("批量设置以猎人价格同步，请先填写猎人价格");
+    return;
+  }
+  batchAddDomains();
+  const lierenPrice = lierenItem.value;
+  formData.platOfferList.forEach(item => {
+    if (item.platName !== "lieren") {
+      item.value = lierenPrice;
+    }
   });
 };
 

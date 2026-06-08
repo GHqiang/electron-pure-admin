@@ -12,7 +12,7 @@ const ORDER_FORM = {
   mayi: "蚂蚁",
   yangcong: "洋葱",
   yinghuasuan: "影划算",
-  shangzhan: "商展",
+  // shangzhan: "商展",
   haha: "哈哈",
   shoutu: "守兔",
   mahua: "麻花"
