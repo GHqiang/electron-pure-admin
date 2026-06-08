@@ -214,36 +214,21 @@ class WandaBuyTicket extends BaseBuyTicket {
           return { transferParams: await transferWithUnlock(unlockInfo()) };
         }
 
-        // 指定座位 or 自动选座
-        if (lockseat) {
-          // 订单指定了座位：用 lockseat 匹配
-          const allSeats = [];
-          (seatLayout.area || []).forEach(area => {
-            (area.seat || []).forEach(s => allSeats.push(s));
-          });
-          const targetSeatRes = await this.seatManage.getTargetSeat({
-            lockseat,
-            seatList: allSeats,
-            ticket_num
-          });
-          if (targetSeatRes?.error || !targetSeatRes?.seat_ids) {
-            this.logger.errorSave("获取目标座位失败", { lockseat, ticket_num });
-            return { transferParams: await transferWithUnlock(unlockInfo()) };
-          }
-          seat_ids = targetSeatRes.seat_ids;
-        } else {
-          // 自动选座
-          const targetSeats = await this.seatManage.autoSelectSeat(
-            seatLayout,
-            ticket_num || 1
-          );
-          if (!targetSeats.length) {
-            return { transferParams: await transferWithUnlock(unlockInfo()) };
-          }
-          seat_ids = targetSeats
-            .map(s => `${s.seatId},${s.salesPrice},undefined,0`)
-            .join("|");
+        // 订单指定了座位：用 lockseat 匹配
+        const allSeats = [];
+        (seatLayout.area || []).forEach(area => {
+          (area.seat || []).forEach(s => allSeats.push(s));
+        });
+        const targetSeatRes = await this.seatManage.getTargetSeat({
+          lockseat,
+          seatList: allSeats,
+          ticket_num
+        });
+        if (targetSeatRes?.error || !targetSeatRes?.seat_ids) {
+          this.logger.errorSave("获取目标座位失败", { lockseat, ticket_num });
+          return { transferParams: await transferWithUnlock(unlockInfo()) };
         }
+        seat_ids = targetSeatRes.seat_ids;
       } else {
         // ========== 换号重试：先释放旧座位 ==========
         const prevSession =
