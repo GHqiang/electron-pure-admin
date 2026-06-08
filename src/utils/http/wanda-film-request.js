@@ -32,15 +32,15 @@ const createAxios = ({ app_name, timeout = 25 }) => {
         );
         let session_id = targetLoginList?.[0]?.session_id || "";
         if (config.data?.wanda_token) {
-          console.warn("config.data?.wanda_token", config.data?.wanda_token);
+          // console.warn("config.data?.wanda_token", config.data?.wanda_token);
           session_id = config.data.wanda_token;
           delete config.data.wanda_token;
         }
         if (config.params?.wanda_token) {
-          console.warn(
-            "config.params?.wanda_token",
-            config.params?.wanda_token
-          );
+          // console.warn(
+          //   "config.params?.wanda_token",
+          //   config.params?.wanda_token
+          // );
           session_id = config.params.wanda_token;
           delete config.params.wanda_token;
         }
