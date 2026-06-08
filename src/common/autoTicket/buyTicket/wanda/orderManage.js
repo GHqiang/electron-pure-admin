@@ -6,12 +6,19 @@
  * - priceCalculation: 查询订单全价 (queryOrderStatus → totalPrice)
  * - buyTicket: 合并支付 (merge_payment.api, 含卡券 requestInfo)
  * - payOrder: 轮询取票码 (queryOrderStatus → ticketCode)
- * - cancelOrder / releaseSeat / transferOrder / queryOrderByUserId
+ * - cancelOrder / transferOrder / queryOrderByUserId
  *
  * @module wanda/orderManage
  */
-import { formatErrInfo, mockDelay } from "@/utils/utils";
+import {
+  formatErrInfo,
+  mockDelay,
+  trial,
+  sendWxPusherMessage
+} from "@/utils/utils";
 import { APP_API_OBJ } from "@/common/index";
+import svApi from "@/api/sv-api";
+import Logger from "@/common/logger";
 
 export default class WandaOrderManage {
   constructor(order, logger, platManage, isTestOrder, getCurrentParams) {
@@ -240,36 +247,149 @@ export default class WandaOrderManage {
   }
 
   /**
-   * 释放座位 = 取消订单
-   * @param {Object} params - 参数对象
-   * @param {string} params.orderId - 订单 ID
-   * @param {string} params.session_id - 会话 ID
-   * @return {boolean} 是否成功释放座位（取消订单成功）
+   * 转单
    */
-  async releaseSeat({ orderId, session_id }) {
+  async transferOrder(unlockSeatInfo = {}) {
     try {
-      if (!orderId) return true;
-      return await this.cancelOrder({ orderId, session_id });
+      this.logger.infoSave("开始准备转单", unlockSeatInfo);
+      if (unlockSeatInfo) {
+        const { orderId } = unlockSeatInfo;
+        const currentParams = this.getCurrentParams();
+        const current = currentParams?.list?.[currentParams?.inx] || {};
+        const session_id = unlockSeatInfo.session_id ?? current.session_id;
+        if (orderId) {
+          await this.cancelOrder({ orderId, session_id });
+        }
+      }
+      // 3、平台转单
+      // 获取转单原因
+      const errInfoObj = this.logger.logList
+        .filter(item => item.level === "error")
+        .reverse()?.[0];
+      let errMsg = errInfoObj?.des || "";
+      let errInfo = formatErrInfo(errInfoObj?.info?.error) || "";
+      let isAutoTransfer = window.localStorage.getItem("isAutoTransfer"); // 自动转单是否开启
+      // 关闭自动转单只针对座位异常生效
+      let des = "自动转单处于关闭状态，只取消订单释放座位，需手动出票或转单";
+      if (this.order.isAgain) {
+        des = "重新出票失败，不转单只取消订单释放座位，需手动出票或转单";
+      }
+      if (this.isTestOrder || isAutoTransfer !== "1" || this.order.isAgain) {
+        this.logger.infoSave("自动转单处于关闭状态");
+        sendWxPusherMessage({
+          orderInfo: this.order,
+          transferTip: des,
+          failReason: `${errMsg}——${errInfo}`
+        });
+        return;
+      }
+      return await this.platManage.orderTransferByPlat(errMsg, errInfo);
     } catch (error) {
-      this.logger.errorSave("万达释放座位异常", {
+      this.logger.errorSave("万达转单异常", { error: formatErrInfo(error) });
+      return null;
+    }
+  }
+
+  /**
+   * 最后处理：获取取票码并上传，失败则异步轮询
+   */
+  async lastHandle({ orderId, session_id, orderInfo }) {
+    try {
+      const payOrderRes = await this.payOrder({
+        orderId,
+        session_id,
+        retryTimes: 3,
+        delaySeconds: 1
+      });
+      if (payOrderRes?.ticketCode) {
+        this.logger.infoSave("同步获取取票码成功");
+        const submitRes = await this.platManage.submitTicketCode(
+          orderInfo?.order_number,
+          payOrderRes.ticketCode
+        );
+        return { submitRes, qrcode: payOrderRes.ticketCode };
+      }
+
+      // 同步获取失败，启动异步轮询
+      this.logger.errorSave("获取订单支付结果，取票码不存在，启动异步轮询");
+      sendWxPusherMessage({
+        orderInfo,
+        transferTip: "此处不转单，需关注该订单，适时手动上传取票码",
+        failReason: "获取订单支付结果，取票码不存在，准备开始异步轮询获取"
+      });
+      this.asyncFetchQrcodeSubmit({ orderId, session_id, orderInfo });
+    } catch (error) {
+      this.logger.errorSave("万达 lastHandle 异常", {
         error: formatErrInfo(error)
       });
     }
   }
 
   /**
-   * 转单
+   * 异步轮询获取取票码并提交
+   * 每 20 秒轮询一次，先试 9 次（3 分钟），失败再试 21 次（7 分钟）
    */
-  async transferOrder(extra = {}) {
-    return;
+  async asyncFetchQrcodeSubmit({ orderId, session_id, orderInfo }) {
+    const asyncLogger = new Logger({ logType: 3 });
+    asyncLogger.init({
+      plat_name: orderInfo?.plat_name,
+      order_number: orderInfo?.order_number,
+      app_name: this.appFlag
+    });
+    asyncLogger.errorSave("万达异步轮询获取取票码开始执行");
+
+    const pollFn = () =>
+      this.queryOrderStatus({ orderId, session_id }).then(res => {
+        if (!res) return null;
+        const { subTicketOrderStatus = [] } = res;
+        const subOrder = subTicketOrderStatus[0];
+        if (res.orderStatus === 40 || subOrder?.orderStatus === 40) {
+          return subOrder?.ticketCode || res.ticketCode;
+        }
+        return null;
+      });
+
     try {
-      return await this.platManage.orderTransferByPlat(
-        extra?.reason || "出票失败",
-        extra
+      // 第一阶段：9 次 × 20 秒 = 3 分钟
+      let ticketCode = await trial(pollFn, 9, 20, "", 3 * 60);
+
+      if (!ticketCode) {
+        sendWxPusherMessage({
+          orderInfo,
+          transferTip: "此处不转单，需关注该订单，适时手动上传取票码",
+          failReason: "系统延迟轮询 3 分钟后获取取票码仍失败"
+        });
+        asyncLogger.errorSave("系统延迟轮询 3 分钟后获取取票码仍失败");
+
+        // 第二阶段：21 次 × 20 秒 = 7 分钟
+        ticketCode = await trial(pollFn, 21, 20, "", 7 * 60);
+      }
+
+      if (!ticketCode) {
+        asyncLogger.errorSave("系统延迟轮询 10 分钟后获取取票码仍失败");
+        asyncLogger.logUpload();
+        svApi.updateTicketRecord({
+          whereObj: {
+            order_number: orderInfo?.order_number,
+            plat_name: orderInfo?.plat_name
+          },
+          updateObj: { err_msg: "系统延迟轮询 10 分钟后获取取票码仍失败" }
+        });
+        return;
+      }
+
+      await this.platManage.submitTicketCode(
+        orderInfo?.order_number,
+        ticketCode
       );
+      asyncLogger.infoSave("异步轮询获取取票码成功并已上传");
+      // 上送异步轮询获取取票码成功日志
+      asyncLogger.logUpload();
     } catch (error) {
-      this.logger.errorSave("万达转单异常", { error: formatErrInfo(error) });
-      return null;
+      asyncLogger.errorSave("万达异步轮询异常", {
+        error: formatErrInfo(error)
+      });
+      asyncLogger.logUpload();
     }
   }
 }
