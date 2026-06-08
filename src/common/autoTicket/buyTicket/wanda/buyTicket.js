@@ -77,48 +77,27 @@ class WandaBuyTicket extends BaseBuyTicket {
 
   async oneClickBuyTicket(item) {
     const { appFlag } = this;
-    const {
+    let {
       order_number,
-      city_name,
-      cinema_name,
-      cinema_code,
-      hall_name,
-      film_name,
-      show_time,
       lockseat,
       ticket_num,
       supplier_end_price,
-      rewards: rewardsFromItem,
+      rewards,
       plat_name,
       otherParams
     } = item;
 
-    let {
-      offerRule,
-      city_id,
-      cinema_id,
-      show_id,
-      seat_ids,
-      start_day,
-      start_time,
-      order_num
-    } = otherParams || {};
+    // 换号出票需要用到的字段
+    let { offerRule, city_id, cinema_id, show_id, seat_ids, order_num } =
+      otherParams || {};
 
-    const order_number_key = order_number;
-    let rewards = rewardsFromItem;
     if (!rewards || Number(rewards) === 0) {
       rewards = offerRule?.rewards || 0;
     }
 
     // 转单工具函数（带解锁信息）
     const transferWithUnlock = async unlockInfo => {
-      const base = unlockInfo || {};
-      return await this.orderManage.transferOrder({
-        ...base,
-        session_id:
-          base.session_id ??
-          this.currentParamsList[this.currentParamsInx]?.session_id
-      });
+      return await this.orderManage.transferOrder(unlockInfo);
     };
 
     const unlockInfo = () => ({
@@ -136,6 +115,7 @@ class WandaBuyTicket extends BaseBuyTicket {
         const movieInfo = await this.cinemaManage.getMovieInfo(this.order);
         console.log("获取电影排期信息", movieInfo);
         if (!movieInfo) {
+          this.logger.errorSave("获取电影排期信息异常");
           return { transferParams: await transferWithUnlock({}) };
         }
         city_id = movieInfo.city_id;
@@ -177,6 +157,10 @@ class WandaBuyTicket extends BaseBuyTicket {
               this.currentParamsList[this.currentParamsInx]?.session_id || "";
             this.currentPhone =
               this.currentParamsList[this.currentParamsInx]?.mobile || "";
+            this.logger.infoSave("按可用会员卡手机号排序登录信息", {
+              currentParamsList: this.currentParamsList,
+              usableCards
+            });
           }
         } else {
           const quan_flag = offerRule?.quan_flag || auto_quan_info?.quan_flag;
@@ -198,6 +182,12 @@ class WandaBuyTicket extends BaseBuyTicket {
               this.currentParamsList[this.currentParamsInx]?.session_id || "";
             this.currentPhone =
               this.currentParamsList[this.currentParamsInx]?.mobile || "";
+            this.logger.infoSave("按可用优惠券手机号排序登录信息", {
+              currentParamsList: this.currentParamsList,
+              quan_flag,
+              quan_value,
+              ticket_num
+            });
           }
         }
         this.logger.infoSave(`首次出票手机号-${this.currentPhone}`);
@@ -234,12 +224,14 @@ class WandaBuyTicket extends BaseBuyTicket {
         const prevSession =
           this.currentParamsList[this.currentParamsInx - 1]?.session_id;
         const unlockSeatInfo = { cinema_id, show_id, session_id: prevSession };
-        const isCancel = await this.orderManage.releaseSeat(
+        const isCancel = await this.orderManage.cancelOrder(
           unlockSeatInfo,
           order_num
         );
         if (!isCancel) {
-          this.logger.infoSave("上个号取消订单释放座位失败，直接走转单");
+          this.logger.infoSave(
+            "上个号取消订单释放座位失败，发送消息通知并直接走转单"
+          );
           return {
             offerRule,
             transferParams: await transferWithUnlock(unlockSeatInfo)
@@ -273,51 +265,34 @@ class WandaBuyTicket extends BaseBuyTicket {
           transferParams: await transferWithUnlock(unlockInfo())
         };
       }
-      let wandaOrderId = orderRes.orderId;
-      console.log("createOrder 返回 orderId", wandaOrderId);
+      order_num = orderRes.orderId;
+      console.log("createOrder 返回 orderId", order_num);
 
-      // 兜底：orderId 为 "0" 时通过 queryByUserId 获取真实 orderId
-      if (!wandaOrderId || wandaOrderId === "0") {
-        this.logger.infoSave(
-          "createOrder 返回 orderId 为 0，尝试通过 queryOrderStatus 获取"
-        );
-        // 轮询 queryOrderStatus 等待状态变为非 10，此时 orderId 通常已生成
-        let recoveredOrderId = null;
-        for (let i = 0; i < 5; i++) {
-          await mockDelay(1);
-          const statusRes = await this.orderManage.queryOrderStatus({
-            orderId: "0",
-            session_id: this.currentSessionId
+      if (!order_num) {
+        this.logger.errorSave("订单创建失败");
+        // 无可用卡券，尝试换号
+        if (this.currentParamsInx < this.currentParamsList.length - 1) {
+          this.logger.infoSave("非最后一次创建订单失败，走换号");
+          this.currentParamsInx++;
+          return await this.oneClickBuyTicket({
+            ...item,
+            otherParams: {
+              offerRule,
+              city_id,
+              cinema_id,
+              show_id,
+              seat_ids
+            }
           });
-          if (statusRes?.orderId && statusRes.orderId !== "0") {
-            recoveredOrderId = statusRes.orderId;
-            break;
-          }
-          // 也尝试用当前订单号查
-          if (statusRes?.orderStatus && statusRes.orderStatus !== 10) {
-            const orderRes = await this.orderManage.queryOrderByUserId({
-              orderId: wandaOrderId,
-              session_id: this.currentSessionId
-            });
-            recoveredOrderId = orderRes?.orderInf?.[0]?.orderId;
-            if (recoveredOrderId) break;
-          }
         }
-        if (recoveredOrderId) {
-          wandaOrderId = recoveredOrderId;
-          this.logger.infoSave("兜底获取到真实 orderId", { wandaOrderId });
-        } else {
-          this.logger.errorSave("无法获取真实 orderId，走转单");
-          return {
-            offerRule: this.offerRule,
-            transferParams: await transferWithUnlock(unlockInfo())
-          };
-        }
+        return {
+          offerRule: this.offerRule,
+          transferParams: await transferWithUnlock(unlockInfo())
+        };
       }
-
       // ========== 获取锁座后订单价格（从 Wanda 订单取真实全价） ==========
       const priceRes = await this.orderManage.priceCalculation({
-        orderId: wandaOrderId,
+        orderId: order_num,
         session_id: this.currentSessionId
       });
       const priceInfo = priceRes || {};
@@ -326,7 +301,7 @@ class WandaBuyTicket extends BaseBuyTicket {
       seatTotalPrice = seatTotalPrice / 100;
       this.logger.infoSave("订单价格", {
         seatTotalPrice,
-        orderPrice: priceInfo
+        orderPrice: JSON.stringify(priceInfo)
       });
 
       // ========== 使用卡券 ==========
@@ -340,8 +315,8 @@ class WandaBuyTicket extends BaseBuyTicket {
         offerRule,
         rewards,
         plat_name,
-        orderId: wandaOrderId,
-        order_number: order_number_key,
+        orderId: order_num,
+        order_number,
         currentParamsList: this.currentParamsList,
         currentParamsInx: this.currentParamsInx,
         order: this.order,
@@ -369,12 +344,26 @@ class WandaBuyTicket extends BaseBuyTicket {
         this.logger.errorSave(errMsg ? `${str}-${errMsg}` : str);
         // 无可用卡券，尝试换号
         if (this.currentParamsInx < this.currentParamsList.length - 1) {
+          this.logger.infoSave("非最后一次用卡用券失败，走换号");
           this.currentParamsInx++;
-          return await this.oneClickBuyTicket(item);
+          return await this.oneClickBuyTicket({
+            ...item,
+            otherParams: {
+              offerRule,
+              city_id,
+              cinema_id,
+              show_id,
+              seat_ids,
+              order_num
+            }
+          });
         }
         return {
           offerRule: this.offerRule,
-          transferParams: await transferWithUnlock(unlockInfo())
+          transferParams: await transferWithUnlock({
+            orderId: order_num,
+            session_id: this.currentSessionId
+          })
         };
       }
 
@@ -412,11 +401,15 @@ class WandaBuyTicket extends BaseBuyTicket {
         paymentAmount: pay_money,
         useQuan: useRes?.useQuan || []
       });
+      this.logger.infoSave("用券价格校验结果", { couponCheck, cardCheck });
       if (!couponCheck.ok) {
         this.logger.errorSave(couponCheck.reason, { pay_money, ticket_num });
         return {
           offerRule,
-          transferParams: await transferWithUnlock(unlockInfo())
+          transferParams: await transferWithUnlock({
+            orderId: order_num,
+            session_id: this.currentSessionId
+          })
         };
       }
 
@@ -428,11 +421,15 @@ class WandaBuyTicket extends BaseBuyTicket {
           paymentAmount: pay_money,
           profit
         });
+        this.logger.infoSave("用卡价格校验结果", { pay_money, cardCheck });
         if (!cardCheck.ok) {
           this.logger.errorSave(cardCheck.reason, { pay_money, ticket_num });
           return {
             offerRule,
-            transferParams: await transferWithUnlock(unlockInfo())
+            transferParams: await transferWithUnlock({
+              orderId: order_num,
+              session_id: this.currentSessionId
+            })
           };
         }
         profit = cardCheck.profit;
@@ -441,7 +438,7 @@ class WandaBuyTicket extends BaseBuyTicket {
       // ========== 测试模式：取消订单释放座位 ==========
       if (this.isTestOrder) {
         this.logger.infoSave("测试模式：打印参数并取消订单", {
-          wandaOrderId,
+          order_num,
           show_id,
           seat_ids,
           seatTotalPrice,
@@ -454,7 +451,7 @@ class WandaBuyTicket extends BaseBuyTicket {
           requestInfo: useRes.requestInfo
         });
         await this.orderManage.cancelOrder({
-          orderId: wandaOrderId,
+          orderId: order_num,
           session_id: this.currentSessionId
         });
         return { offerRule: this.offerRule };
@@ -462,7 +459,7 @@ class WandaBuyTicket extends BaseBuyTicket {
 
       // ========== 购买订单（合并支付） ==========
       const payRes = await this.orderManage.buyTicket({
-        orderId: wandaOrderId,
+        orderId: order_num,
         mobilePhone: this.currentPhone,
         cinemaId: cinema_id,
         requestInfo: useRes.requestInfo || {},
@@ -472,23 +469,21 @@ class WandaBuyTicket extends BaseBuyTicket {
         this.logger.errorSave("万达合并支付失败，走转单");
         return {
           offerRule: this.offerRule,
-          transferParams: await transferWithUnlock(unlockInfo())
+          transferParams: await transferWithUnlock({
+            orderId: order_num,
+            session_id: this.currentSessionId
+          })
         };
       }
 
-      // ========== 获取取票码 ==========
-      const payOrderRes = await this.orderManage.payOrder({
-        orderId: wandaOrderId,
-        session_id: this.currentSessionId
+      // ========== 获取取票码（同步 + 异步轮询） ==========
+      const lastRes = await this.orderManage.lastHandle({
+        orderId: order_num,
+        session_id: this.currentSessionId,
+        orderInfo: this.order
       });
-      if (!payOrderRes?.ticketCode) {
-        this.logger.errorSave("获取取票码失败，走转单");
-        return {
-          offerRule: this.offerRule,
-          transferParams: await transferWithUnlock(unlockInfo())
-        };
-      }
-      const ticketCode = payOrderRes.ticketCode;
+
+      const ticketCode = lastRes?.qrcode;
 
       // ========== 后处理 ==========
       if (offerRule?.offer_type !== "1" && card_id) {
@@ -497,7 +492,7 @@ class WandaBuyTicket extends BaseBuyTicket {
             app_name: this.appFlag,
             card_id,
             plat_name,
-            order_number: order_number_key,
+            order_number,
             add_count: ticket_num
           })
           .catch(e =>
@@ -517,14 +512,9 @@ class WandaBuyTicket extends BaseBuyTicket {
           .catch(e => this.logger.errorSave("更新券库存异常", { error: e }));
       }
 
-      // ========== 上传取票码 ==========
-      const submitRes = await this.platManage.submitTicketCode(
-        order_number_key,
-        ticketCode
-      );
       return {
         profit,
-        submitRes,
+        submitRes: lastRes?.submitRes,
         qrcode: ticketCode,
         offerRule: this.offerRule,
         mobile: this.currentPhone,
@@ -534,10 +524,12 @@ class WandaBuyTicket extends BaseBuyTicket {
       };
     } catch (error) {
       this.logger.errorSave("一键买票异常", { error: error?.message });
-      return {
-        offerRule,
-        transferParams: await transferWithUnlock(unlockInfo())
-      };
+      sendWxPusherMessage({
+        orderInfo: item,
+        transferTip: "一键买票异常，请及时联系技术",
+        failReason: formatErrInfo(error)
+      });
+      return { offerRule };
     }
   }
 }
