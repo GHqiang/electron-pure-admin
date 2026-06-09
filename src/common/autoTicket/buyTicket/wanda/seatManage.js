@@ -9,10 +9,27 @@
  *
  * @module wanda/seatManage
  */
-import { formatErrInfo } from "@/utils/utils";
 import { APP_API_OBJ } from "@/common/index";
+import {
+  formatErrInfo, // 格式化错误信息
+  trial // 重试方法
+} from "@/utils/utils";
 
-export default class WandaSeatManage {
+// 锁座重试常量配置
+const LOCK_RETRY_CONFIG = {
+  lieren: [10, 5],
+  mangguo: [10, 5],
+  sheng: [10, 5],
+  mayi: [10, 5],
+  yangcong: [10, 5],
+  haha: [6, 5],
+  yinghuasuan: [6, 5],
+  shangzhan: [6, 5],
+  shoutu: [20, 12],
+  mahua: [10, 5]
+};
+
+export default class SeatManage {
   constructor(order, logger, isTestOrder) {
     this.order = order;
     this.appFlag = order.app_name;
@@ -20,76 +37,124 @@ export default class WandaSeatManage {
     this.isTestOrder = isTestOrder;
     this.appApi = APP_API_OBJ[order.app_name];
   }
+  /**
+   * 获取目标座位(出票用)
+   * @param {Object} buyTicketInfo 购票信息
+   * @returns {Promise<{seatCodes: Array, discountList: Array}>} 目标座位信息及优惠活动信息
+   */
+  async getTargetSeat(buyTicketInfo) {
+    try {
+      const params = this.getSeatParams(buyTicketInfo);
+      const seatListRes = await this.getSeatLayout(params);
+      this.logger.info("获取到座位信息", { seatListRes });
+      const { seatData: seatList = [], areaInfoList } = seatListRes || {};
+
+      if (!seatList?.length) {
+        this.logger.errorSave("座位列表为空");
+        return;
+      }
+
+      const targetSeats = this.filterTargetSeats(seatList);
+      if (targetSeats.length != this.order.ticket_num) {
+        this.logger.errorSave("获取目标座位失败");
+        return { errorCode: "TARGET_SEAT_FAILED" };
+      }
+
+      return {
+        seatCodes: targetSeats,
+        areaInfoList
+      };
+    } catch (error) {
+      this.logger.errorSave("获取目标座位异常", formatErrInfo(error));
+    }
+  }
 
   /**
-   * 获取座位图
-   * @param {Object} data - 参数对象
-   * @param {string|number} data.dId - 场次ID
-   * @param {string} data.session_id - 会话ID
-   * @returns {Promise<Object>} { area: [...], 或 null }
+   * 获取座位列表参数
+   * @private
    */
-  async getSeatLayout(data) {
-    let { dId, session_id } = data || {};
+  getSeatParams(buyTicketInfo) {
+    const { show_id, session_id } = buyTicketInfo;
     let params = {
-      dId: dId,
+      dId: show_id,
       json: true,
       ...(session_id && { wanda_token: session_id })
     };
+    return params;
+  }
+
+  /**
+   * 过滤目标座位
+   * @private
+   */
+  filterTargetSeats(seatList) {
+    const seatName = this.order.lockseat
+      .replaceAll(" ", ",")
+      .replaceAll("列", "座");
+    const selectSeatList = seatName.split(",");
+    console.log("selectSeatList", selectSeatList);
+    return seatList.filter(item => selectSeatList.includes(item.name));
+  }
+
+  /**
+   * 获取座位布局(报价用)
+   * @param {Object} params 请求参数
+   * @returns {Promise<{seatData: Array, areaInfoList: Array}>}
+   */
+  async getSeatLayout(params) {
     try {
       this.logger.infoSave("获取座位布局参数", params);
       const res = await this.appApi.getRealTimeSeat(params);
-      console.log("获取万达座位返回", res);
-      return res?.data?.realtimeSeats;
-    } catch (error) {
-      this.logger.errorSave("获取万达座位图异常", {
-        error: formatErrInfo(error),
-        dId
-      });
-    }
-  }
+      // this.logger.info("获取座位布局返回", res);
+      const realtimeSeats = res?.data?.realtimeSeats || {};
+      let areaInfoList = realtimeSeats?.area?.map(item => item.areaPrice);
+      let seatData =
+        realtimeSeats?.area
+          ?.map(item =>
+            item.seat.map(itemS => ({ ...itemS, ...item.areaPrice }))
+          )
+          ?.flat() || [];
 
-  /**
-   * 获取目标座位（按 lockseat 字符串解析）
-   * Wanda 的 lockseat 格式: "5排6座" 或 "5排6座,5排7座"
-   * @param {Object} params - 参数对象
-   * @param {string} params.lockseat - 座位信息
-   * @param {Array} params.seatList - 座位列表（从 getSeatLayout 获取）
-   * @param {number} params.ticket_num - 票数
-   * @returns {Object} { seat_ids, error? }
-   */
-  async getTargetSeat({ lockseat, seatList, ticket_num }) {
-    try {
-      // Wanda 座位数据格式：{ seatId, name(如"5排6座"), coordy, coordx, row, column, ... }
-      const targetSeats = seatList.filter(
-        s => s.status == 1 && lockseat.indexOf(s.name) !== -1
-      );
-      if (targetSeats.length !== ticket_num) {
-        this.logger.errorSave("获取目标座位失败", {
-          targetSeats,
-          ticket_num,
-          lockseat
-        });
-        return { error: "获取目标座位失败", seat_ids: "" };
+      if (!seatData.length) {
+        this.logger.errorSave("获取座位布局为空");
       }
-      // 组装 seatId,price,undefined,0|...
-      const seat_ids = targetSeats
-        .map(s => `${s.seatId},${s.salesPrice || 0},undefined,0`)
-        .join("|");
-      this.logger.infoSave("解析目标座位成功", {
-        seat_ids,
-        lockseat
-      });
-      return { seat_ids };
+
+      return { seatData, areaInfoList, area: realtimeSeats?.area };
     } catch (error) {
-      this.logger.errorSave("获取目标座位异常", {
-        error: formatErrInfo(error)
-      });
-      return { error: formatErrInfo(error), seat_ids: "" };
+      this.logger.errorSave("获取座位布局异常", formatErrInfo(error));
     }
   }
 
   /**
-   * 锁定座位（万达通过 createOrder 锁座，本方法用于对接 SFC 统一接口）
+   * 锁定座位(出票用)
+   * @param {Object} params 锁定座位参数
+   * @returns {Promise<Object>} 锁定结果
+   */
+  async lockseatByApp(params) {
+    try {
+      let lockRes = await this.lockSeatHandle(params);
+      return lockRes;
+    } catch (error) {
+      this.logger.error("座位锁定失败", error);
+      // 锁座重试
+      return this.retryLockSeat(params);
+    }
+  }
+
+  /**
+   * 重试锁定座位
+   * @private
+   */
+  async retryLockSeat(params) {
+    const platName = this.order.plat_name;
+    const [retryCount, delay] = LOCK_RETRY_CONFIG[platName] || [6, 5];
+
+    this.logger.info("座位锁定失败准备重试");
+    return trial(inx => this.lockSeatHandle(params, inx), retryCount, delay);
+  }
+
+  /**
+   * 锁定座位（万达通过 createOrder 锁座）
    * @param {Object} data - 参数对象
    * @param {string|number} data.dId - 场次ID
    * @param {string} data.seat_ids - 座位ID字符串
@@ -98,33 +163,41 @@ export default class WandaSeatManage {
    * @returns {Promise<Object>} 锁座结果
    */
   async lockSeatHandle(data, inx = 1) {
-    let { dId, seat_ids, mobile, session_id, json = true } = data || {};
+    const params = this.getLockSeatParams(data);
+
     try {
-      let params = {
-        dId,
-        retailerCode: "MX",
-        mobile,
-        seatId: seat_ids,
-        json,
-        ...(session_id && { wanda_token: session_id })
-      };
-      if (inx === 1) {
-        this.logger.infoSave(`第${inx}次锁定座位参数`, { params });
+      if (inx % 2 === 0) {
+        await mockDelay(1);
       }
-      // 万达通过创建订单来实现锁座
+
+      this.logger.info("锁定座位参数", params);
       const res = await this.appApi.createOrder(params);
-      this.logger.infoSave(`第${inx}次锁定座位返回`, { res });
+      this.logger.infoSave(`第${inx}次锁定座位成功`, { res, params });
       return res;
     } catch (error) {
-      this.logger.errorSave(`第${inx}次锁定座位异常`, {
-        error: formatErrInfo(error)
-      });
+      this.logger.errorSave(`第${inx}次锁定座位异常`, { error, params });
       return Promise.reject(error);
     }
   }
 
   /**
-   * 自动选座
+   * 获取锁定座位参数
+   * @private
+   */
+  getLockSeatParams(data) {
+    let { dId, seatId, mobile, session_id, json = true } = data || {};
+    return {
+      dId,
+      retailerCode: "MX",
+      mobile,
+      seatId,
+      json,
+      ...(session_id && { wanda_token: session_id })
+    };
+  }
+
+  /**
+   * 自动选座（暂时无用）
    * 返回: [{ seatId, salesPrice, ...seat }] 或空数组
    */
   async autoSelectSeat(seatData, ticketNum) {
@@ -192,12 +265,5 @@ export default class WandaSeatManage {
 
     // 无连续座位时，直接取前 ticketNum 个
     return availableSeats.slice(0, ticketNum);
-  }
-
-  /**
-   * 获取座位价格
-   */
-  getSeatPrice(seatInfo) {
-    return seatInfo?.salesPrice || 0;
   }
 }

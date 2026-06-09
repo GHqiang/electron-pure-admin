@@ -311,13 +311,22 @@ const createApi = ({ app_name }) => {
       params,
       ...config
     });
+  //  const params = {
+  //    category: 1,
+  //    json: true,
+  //    wanda_token: session_id
+  //  };
 
-  // 支付界面会员卡列表，需传参订单id：orderId: xxx, json: true
+  // 支付界面会员卡列表，需传参订单id：orderId: xxx, json: true，直接可通过
   const getPayCardList = (params, config = {}) =>
-    axios.get("/wanda-film/card/pay/list.api", {
+    axios.get("/wanda-film/card/card/pay/list.api", {
       params,
       ...config
     });
+  // const params = {
+  //   orderId,
+  //   wanda_token: session_id
+  // };
 
   /** 卡主题列表 */
   const getCardThemeList = (params, config = {}) =>
@@ -333,6 +342,33 @@ const createApi = ({ app_name }) => {
       params,
       ...config
     });
+
+  /** 优惠券列表 */
+  const getQuanList = (params, config = {}) =>
+    axios.get("/wanda-film/coupon/coupon/member/grouplist.api", {
+      params,
+      ...config
+    });
+  // // 最多返回50个不支持分页
+  // const params = {
+  //   expireStatus: "N",
+  //   json: true,
+  //   wanda_token: session_id
+  // };
+
+  /** 绑定优惠券 */
+  const bindQuan = (params, config = {}) =>
+    axios.get("/wanda-film/coupon//coupon/bind.api", {
+      params,
+      ...config
+    });
+
+  // data: {
+  //   voucher_number: "券码",
+  //   is_scratch: true,        // 是否需要密码
+  //   scratch_number: "刮开密码", // 无密码传 ""
+  //   sale_subject: "Wanda"     // 固定值
+  // }
 
   /** 领取优惠券 */
   const gainCoupon = (data, config = {}) =>
@@ -352,6 +388,13 @@ const createApi = ({ app_name }) => {
   /** 获取可用活动权益/券 */
   const getActivityCoupon = (params, config = {}) =>
     axios.get("/wanda-film/activity/mkt/activity/secret/list.api", {
+      params,
+      ...config
+    });
+
+  /** 获取可用影票券（购票时选择） */
+  const getTicketCouponList = (params, config = {}) =>
+    axios.get("/wanda-film/activity/mkt/activity/secret/ncoupons.api", {
       params,
       ...config
     });
@@ -408,10 +451,13 @@ const createApi = ({ app_name }) => {
     getCardThemeList,
     bindCard,
     getCouponGoodsList,
+    getQuanList,
+    bindQuan,
     gainCoupon,
     getCouponExpireAndEffective,
     // 活动权益
-    getActivityCoupon
+    getActivityCoupon,
+    getTicketCouponList
   };
 };
 

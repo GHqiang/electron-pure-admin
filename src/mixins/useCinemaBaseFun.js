@@ -572,7 +572,7 @@ export default function useCinemaBaseFun() {
           .map(item => ({
             card_id: item.cardNo || "",
             card_num: item.cardNo || "",
-            balance: (item.balance || 0) + ""
+            balance: (item.balance || 0) / 100 + ""
           }));
       } else {
         // sfc系列

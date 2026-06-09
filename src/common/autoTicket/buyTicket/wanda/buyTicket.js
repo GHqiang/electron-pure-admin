@@ -8,16 +8,23 @@
  *
  * @module wanda/buyTicket
  */
-import { mockDelay, getOfferRuleById, subDecimal } from "@/utils/utils";
-import { APP_API_OBJ } from "@/common/index";
+import {
+  mockDelay,
+  getOfferRuleById,
+  sendWxPusherMessage,
+  subDecimal
+} from "@/utils/utils";
 import Logger from "@/common/logger";
 import svApi from "@/api/sv-api";
 import BaseBuyTicket from "@/common/core/BaseBuyTicket.js";
-import WandaSeatManage from "./seatManage.js";
-import WandaOrderManage from "./orderManage.js";
-import WandaCinemaManage from "./cinemaManage.js";
-import WandaCardQuanManage from "./cardQuanManage.js";
+import SeatManage from "./seatManage.js";
+import OrderManage from "./orderManage.js";
+import CinemaManage from "./cinemaManage.js";
+import CardQuanManage from "./cardQuanManage.js";
 import PlatManage from "../platManage.js";
+import { dictTable } from "@/store/dictTable";
+const dictStore = dictTable();
+
 import {
   sortLoginByCardPhones,
   sortLoginByQuanPhones
@@ -26,41 +33,30 @@ import {
 class WandaBuyTicket extends BaseBuyTicket {
   constructor(order, logger, isTestOrder) {
     super(order, logger, isTestOrder);
-    this.appApi = APP_API_OBJ[this.appFlag];
-    this.usableCardList = [];
+    this.usableCardList = []; // 可用会员卡列表
   }
 
   initModules() {
     this.platManage = new PlatManage(this.order, this.logger, this.isTestOrder);
-    this.cinemaManage = new WandaCinemaManage(this.order, this.logger);
-    this.seatManage = new WandaSeatManage(
-      this.order,
-      this.logger,
-      this.isTestOrder
-    );
-    const getCurrentParams = () => ({
-      list: this.currentParamsList,
-      inx: this.currentParamsInx
-    });
-    this.orderManage = new WandaOrderManage(
+    this.seatManage = new SeatManage(this.order, this.logger, this.isTestOrder);
+    this.orderManage = new OrderManage(
       this.order,
       this.logger,
       this.platManage,
-      this.isTestOrder,
-      getCurrentParams
+      this.isTestOrder
     );
-    this.cardQuanManage = new WandaCardQuanManage(
-      this.order,
-      this.logger,
-      this.orderManage
-    );
+    // cinemaManage 和 cardQuanManage 延迟初始化
   }
 
-  async getCinemaLoginInfo() {
-    const { appFlag } = this;
+  /**
+   * 获取影院登录信息并设置当前token
+   * 从 getCinemaLoginInfoList() 获取该影院的登录信息列表
+   * 设置 this.currentParamsList 和 this.currentParamsInx = 0
+   */
+  getCinemaLoginInfo() {
     this.currentParamsList = this.getLoginInfoList().filter(
       item =>
-        item.app_name === appFlag &&
+        item.app_name === this.appFlag &&
         item.mobile &&
         item.session_id &&
         item.member_pwd
@@ -69,458 +65,527 @@ class WandaBuyTicket extends BaseBuyTicket {
       currentParamsList: this.currentParamsList
     });
     this.currentParamsInx = 0;
-    this.currentSessionId =
-      this.currentParamsList[this.currentParamsInx]?.session_id || "";
-    this.currentPhone =
-      this.currentParamsList[this.currentParamsInx]?.mobile || "";
+    if (this.currentParamsList.length > 0) {
+      this.currentSessionId =
+        this.currentParamsList[this.currentParamsInx].session_id;
+      this.currentPhone = this.currentParamsList[this.currentParamsInx].mobile;
+    } else {
+      this.currentSessionId = "";
+      this.currentPhone = "";
+    }
   }
 
+  // getOrderOfferRule 和 checkOfferRuleRes 已提取到基类 BaseBuyTicket
+
+  /**
+   * 一键买票核心流程
+   * @param {Object} item - 参数对象（兼容旧格式 changePhoneBuyParams）
+   * @param {Object} item.otherParams - 其他参数（新格式）
+   * @param {Object} item.otherParams.offerRule - 报价规则（新格式）
+   * @returns {Promise<Object|undefined>} 出票结果或undefined
+   */
   async oneClickBuyTicket(item) {
     const { appFlag } = this;
+    // 兼容旧格式：如果传入的是 changePhoneBuyParams 格式，则直接使用
+    // 新格式：item 包含 otherParams.offerRule
+    let changePhoneBuyParams = item;
+    if (item.otherParams?.offerRule) {
+      // 新格式：从 otherParams 中提取 offerRule 并合并到主对象
+      changePhoneBuyParams = { ...item };
+      // offerRule 已经在基类的 singleTicket 中设置到 this.offerRule
+    }
+
+    let buyTicketInfo = JSON.parse(JSON.stringify(changePhoneBuyParams)); // 换号购买参数
+    if (buyTicketInfo && this.currentParamsInx) {
+      this.logger.infoSave("换号出票携带参数信息", buyTicketInfo);
+    }
     let {
       order_number,
       lockseat,
       ticket_num,
       supplier_end_price,
       rewards,
-      plat_name,
-      otherParams
-    } = item;
+      plat_name
+    } = this.order;
+    // 如果待出票订单里没有就去报价记录里拿
+    if (!rewards || Number(rewards) == 0) {
+      rewards = this.offerRule?.rewards || 0;
+    }
+
+    // 延迟初始化 cardQuanManage 和 cinemaManage（首次调用时）
+    if (!this.cardQuanManage) {
+      this.cardQuanManage = new CardQuanManage(this.order, this.logger);
+    }
 
     // 换号出票需要用到的字段
     let { offerRule, city_id, cinema_id, show_id, seat_ids, order_num } =
-      otherParams || {};
-
-    if (!rewards || Number(rewards) === 0) {
-      rewards = offerRule?.rewards || 0;
-    }
-
-    // 转单工具函数（带解锁信息）
-    const transferWithUnlock = async unlockInfo => {
-      return await this.orderManage.transferOrder(unlockInfo);
-    };
-
-    const unlockInfo = () => ({
-      cinema_id,
-      show_id,
-      session_id: this.currentParamsList[this.currentParamsInx]?.session_id
-    });
+      buyTicketInfo || {};
 
     try {
       this.logger.infoSave("一键买票待下单信息", item);
 
       // ========== 首次出票：解析影院/影片/座位 ==========
       if (this.currentParamsInx === 0) {
-        // 获取电影排期信息
-        const movieInfo = await this.cinemaManage.getMovieInfo(this.order);
-        console.log("获取电影排期信息", movieInfo);
-        if (!movieInfo) {
-          this.logger.errorSave("获取电影排期信息异常");
-          return { transferParams: await transferWithUnlock({}) };
-        }
-        city_id = movieInfo.city_id;
-        cinema_id = movieInfo.cinema_id;
-        show_id = movieInfo.showtimeId;
-
-        // 🔑 按可用卡券排序登录信息
-        const isUseQuan = offerRule?.offer_type == "1";
-        let auto_quan_info;
-        if (offerRule?.offer_type != "1") {
-          const ruleInfo = getOfferRuleById(offerRule?.offer_rule_id);
-          if (ruleInfo) {
-            const { autoUseQuanStatus, autoUseQuanPrice, auto_quan_value } =
-              ruleInfo;
-            if (
-              autoUseQuanStatus === "1" &&
-              supplier_end_price > autoUseQuanPrice &&
-              auto_quan_value
-            ) {
-              auto_quan_info = await this.cardQuanManage.getQuanInfo(
-                auto_quan_value,
-                appFlag
-              );
-            }
-          }
-        }
-        if (!(isUseQuan || auto_quan_info)) {
-          const usableCards = await this.cardQuanManage.getCardList(
-            this.currentParamsList[this.currentParamsInx]
+        // 影院信息模块（获取购票前相关信息）
+        if (!this.cinemaManage) {
+          this.cinemaManage = new CinemaManage(
+            this.order,
+            this.logger,
+            this.offerRule,
+            this.currentParamsList
           );
-          if (usableCards?.length) {
-            this.usableCardList = usableCards;
-            const cardLinkMobile = usableCards.map(c => c.mobile);
-            this.currentParamsList = sortLoginByCardPhones(
-              this.currentParamsList,
-              cardLinkMobile
-            );
-            this.currentSessionId =
-              this.currentParamsList[this.currentParamsInx]?.session_id || "";
-            this.currentPhone =
-              this.currentParamsList[this.currentParamsInx]?.mobile || "";
-            this.logger.infoSave("按可用会员卡手机号排序登录信息", {
-              currentParamsList: this.currentParamsList,
-              usableCards
-            });
-          }
-        } else {
-          const quan_flag = offerRule?.quan_flag || auto_quan_info?.quan_flag;
-          const quan_value =
-            offerRule?.quan_value || auto_quan_info?.quan_value;
-          const sortMobileList =
-            await this.cardQuanManage.getSortPhoneByQuanTypeList?.(
-              appFlag,
-              quan_flag,
-              quan_value,
-              ticket_num
-            );
-          if (sortMobileList?.length) {
-            this.currentParamsList = sortLoginByQuanPhones(
-              this.currentParamsList,
-              sortMobileList
-            );
-            this.currentSessionId =
-              this.currentParamsList[this.currentParamsInx]?.session_id || "";
-            this.currentPhone =
-              this.currentParamsList[this.currentParamsInx]?.mobile || "";
-            this.logger.infoSave("按可用优惠券手机号排序登录信息", {
-              currentParamsList: this.currentParamsList,
-              quan_flag,
-              quan_value,
-              ticket_num
-            });
-          }
         }
-        this.logger.infoSave(`首次出票手机号-${this.currentPhone}`);
+        // 1、获取购票前的影院信息
+        buyTicketInfo = await this.cinemaManage.getBuyPrevCinemaInfo({
+          cardQuanManage: this.cardQuanManage
+        });
+        if (!buyTicketInfo) {
+          this.logger.infoSave("获取购票前的影院信息失败");
+          return await this.orderManage.transferOrder();
+        }
+        this.logger.infoSave("获取购票前的影院信息返回", buyTicketInfo);
+        this.logger.info("targetShow===>", buyTicketInfo.targetShow);
+        // 由于登录信息顺序会被cinemaManage.js调整，故需要重新赋值
+        this.currentParamsList = buyTicketInfo.currentParamsList;
+        const phone = this.currentParamsList[0].mobile;
+        this.logger.infoSave(`首次出票手机号-${phone}`);
+        buyTicketInfo.session_id = this.currentParamsList[0].session_id;
 
-        // 获取座位布局
-        const sessionId =
-          this.currentParamsList[this.currentParamsInx]?.session_id;
-        const seatLayout = await this.seatManage.getSeatLayout({
-          dId: show_id,
-          json: true
-        });
-        if (!seatLayout) {
-          this.logger.errorSave("获取座位布局异常");
-          return { transferParams: await transferWithUnlock(unlockInfo()) };
-        }
+        // 库里维护的可用会员卡列表(已按余额倒序)
+        this.usableCardList = buyTicketInfo.usableCardList;
 
-        // 订单指定了座位：用 lockseat 匹配
-        const allSeats = [];
-        (seatLayout.area || []).forEach(area => {
-          (area.seat || []).forEach(s => allSeats.push(s));
-        });
-        const targetSeatRes = await this.seatManage.getTargetSeat({
-          lockseat,
-          seatList: allSeats,
-          ticket_num
-        });
-        if (targetSeatRes?.error || !targetSeatRes?.seat_ids) {
-          this.logger.errorSave("获取目标座位失败", { lockseat, ticket_num });
-          return { transferParams: await transferWithUnlock(unlockInfo()) };
+        city_id = buyTicketInfo.city_id;
+        cinema_id = buyTicketInfo.cinema_id; // 影院id,同storeId
+        show_id = buyTicketInfo.show_id; // 场次id同showtimeId
+
+        // 2、获取购票座位信息
+        const targetSeatRes =
+          await this.seatManage.getTargetSeat(buyTicketInfo);
+        if (!targetSeatRes) {
+          // 座位列表为空，直接转单
+          return await this.orderManage.transferOrder();
         }
-        seat_ids = targetSeatRes.seat_ids;
+        if (targetSeatRes.errorCode === "TARGET_SEAT_FAILED") {
+          // 获取目标座位失败，猎人订单走申请换座
+          if (
+            plat_name === "lieren" &&
+            dictStore.dictInfo.lierenIsSupportChangeSeat === 1
+          ) {
+            this.logger.infoSave("获取目标座位失败，猎人订单走申请换座逻辑");
+            const isApplyChangeSeat =
+              await this.platManage.applyChangeSeat(item);
+            return {
+              transferParams: { transfer_fee: 0 },
+              offerRule: this.offerRule,
+              isApplyChangeSeat
+            };
+          }
+          return await this.orderManage.transferOrder();
+        }
+        buyTicketInfo.targetSeatCodes = targetSeatRes.seatCodes;
+
+        buyTicketInfo.areaInfoList = targetSeatRes.areaInfoList;
+        // 锁座-创建订单座位编码
+        buyTicketInfo.seat_ids = targetSeatRes.seatCodes
+          .map(s => `${s.seatId},${s.salesPrice || 0},undefined,0`)
+          .join("|");
+        // 座位区域和座位号，用卡用券时要用
+        buyTicketInfo.partition = targetSeatRes.seatCodes
+          .map(s => `${s.areaCode}-${s.seatId}`)
+          .join("|");
       } else {
         // ========== 换号重试：先释放旧座位 ==========
-        const prevSession =
-          this.currentParamsList[this.currentParamsInx - 1]?.session_id;
-        const unlockSeatInfo = { cinema_id, show_id, session_id: prevSession };
-        const isCancel = await this.orderManage.cancelOrder(
-          unlockSeatInfo,
-          order_num
-        );
+        // 换号出票操作（取消上个号的订单）
+        // 取消订单释放座位参数
+        let unlockSeatInfo = {
+          orderId: buyTicketInfo.order_num,
+          session_id:
+            this.currentParamsList[this.currentParamsInx - 1].session_id
+        };
+        let isCancel;
+        if (buyTicketInfo.order_num) {
+          isCancel = await this.orderManage.cancelOrder(unlockSeatInfo);
+        }
         if (!isCancel) {
           this.logger.infoSave(
             "上个号取消订单释放座位失败，发送消息通知并直接走转单"
           );
-          return {
-            offerRule,
-            transferParams: await transferWithUnlock(unlockSeatInfo)
-          };
+          return await this.orderManage.transferOrder();
         }
-        this.currentPhone =
-          this.currentParamsList[this.currentParamsInx]?.mobile;
+        // 取消订单释放座位成功后请求对应值，以免下次换号时携带过去
+        buyTicketInfo.order_num = "";
+        const phone = this.currentParamsList[this.currentParamsInx].mobile;
         this.logger.infoSave(
-          `第${this.currentParamsInx}次换号出票手机号-${this.currentPhone}`,
+          `第${this.currentParamsInx}次换号出票手机号-${phone}`,
           {
-            currentParamsInx: this.currentParamsInx
+            currentParamsInx: this.currentParamsInx,
+            currentParamsList: this.currentParamsList
           }
         );
+        // 换号时恢复原先券类型
+        if (this.offerRule.old_quan_value) {
+          this.offerRule.quan_value = this.offerRule.old_quan_value;
+        }
+        // 换号时等待1秒，避免被风控检测到一个ip快速换号
         await mockDelay(1);
       }
-
-      // 记录当前手机号
-      this.order.last_fail_phone = this.currentPhone || "";
-
+      this.currentSessionId =
+        this.currentParamsList[this.currentParamsInx].session_id;
+      this.currentPhone = this.currentParamsList[this.currentParamsInx].mobile;
+      // 记录当前使用的手机号，出票失败消息会带上（最后失败的手机号）
+      if (this.order) {
+        this.order.last_fail_phone = this.currentPhone || "";
+      }
+      console.warn("锁座前的buyTicketInfo", buyTicketInfo);
       // ========== 创建订单（锁座+创建订单） ==========
-      const orderRes = await this.orderManage.createOrder({
-        dId: show_id,
+      const lockSeatParams = {
+        dId: buyTicketInfo.show_id,
         retailerCode: "MX",
         mobile: this.currentPhone,
-        seatId: seat_ids,
+        seatId: buyTicketInfo.seat_ids,
         session_id: this.currentSessionId
-      });
-      if (!orderRes) {
-        return {
-          offerRule,
-          transferParams: await transferWithUnlock(unlockInfo())
-        };
-      }
-      order_num = orderRes.orderId;
-      console.log("createOrder 返回 orderId", order_num);
-
-      if (!order_num) {
-        this.logger.errorSave("订单创建失败");
-        // 无可用卡券，尝试换号
-        if (this.currentParamsInx < this.currentParamsList.length - 1) {
-          this.logger.infoSave("非最后一次创建订单失败，走换号");
-          this.currentParamsInx++;
-          return await this.oneClickBuyTicket({
-            ...item,
-            otherParams: {
-              offerRule,
-              city_id,
-              cinema_id,
-              show_id,
-              seat_ids
-            }
-          });
-        }
-        return {
-          offerRule: this.offerRule,
-          transferParams: await transferWithUnlock(unlockInfo())
-        };
-      }
-      // ========== 获取锁座后订单价格（从 Wanda 订单取真实全价） ==========
-      const priceRes = await this.orderManage.priceCalculation({
-        orderId: order_num,
-        session_id: this.currentSessionId
-      });
-      const priceInfo = priceRes || {};
-
-      let seatTotalPrice = priceInfo.total_price || 0;
-      seatTotalPrice = seatTotalPrice / 100;
-      this.logger.infoSave("订单价格", {
-        seatTotalPrice,
-        orderPrice: JSON.stringify(priceInfo)
-      });
-
-      // ========== 使用卡券 ==========
-      const useRes = await this.cardQuanManage.useQuanOrCard({
-        cinema_id,
-        show_id,
-        seat_ids,
-        seatTotalPrice,
-        ticket_num,
-        supplier_end_price,
-        offerRule,
-        rewards,
-        plat_name,
-        orderId: order_num,
-        order_number,
-        currentParamsList: this.currentParamsList,
-        currentParamsInx: this.currentParamsInx,
-        order: this.order,
-        logger: this.logger,
-        appFlag: this.appFlag,
-        curPhone: this.currentPhone,
-        usableCardList: this.usableCardList,
-        session_id: this.currentSessionId
-      });
-
-      // 无可用卡券：走换号或转单
-      if (
-        !useRes ||
-        (!useRes.card_id &&
-          !useRes.quan_code &&
-          !useRes.member_coupon_id &&
-          !useRes.coupon_id)
-      ) {
-        const errInfoObj = this.logger.logList
-          ?.filter(l => l.level === "error")
-          .reverse()?.[0];
-        const errMsg = errInfoObj?.des || "";
-        const str =
-          offerRule?.offer_type === "1" ? "无可用优惠券" : "无可用会员卡";
-        this.logger.errorSave(errMsg ? `${str}-${errMsg}` : str);
-        // 无可用卡券，尝试换号
-        if (this.currentParamsInx < this.currentParamsList.length - 1) {
-          this.logger.infoSave("非最后一次用卡用券失败，走换号");
-          this.currentParamsInx++;
-          return await this.oneClickBuyTicket({
-            ...item,
-            otherParams: {
-              offerRule,
-              city_id,
-              cinema_id,
-              show_id,
-              seat_ids,
-              order_num
-            }
-          });
-        }
-        return {
-          offerRule: this.offerRule,
-          transferParams: await transferWithUnlock({
-            orderId: order_num,
-            session_id: this.currentSessionId
-          })
-        };
-      }
-
-      let {
-        card_id,
-        cardNum,
-        quan_code,
-        coupon_id,
-        member_coupon_id,
-        profit,
-        priceInfo: usePriceInfo
-      } = useRes;
-      // useQuanOrCard 可能返回自己的 priceInfo，优先使用
-      if (usePriceInfo) {
-        priceInfo.total_price =
-          usePriceInfo.total_price || priceInfo.total_price;
-        priceInfo.price = usePriceInfo.price || priceInfo.price;
-      }
-      this.logger.infoSave("使用卡券成功", {
-        card_id,
-        quan_code,
-        profit,
-        priceInfo
-      });
-
-      // ========== 价格校验 ==========
-      const pay_money = Number(priceInfo.total_price || priceInfo.price || 0);
-      this.logger.infoSave("订单支付金额", { pay_money });
-
-      // ========== 价格校验 ==========
-      // 用券价格校验
-      const couponCheck = this.validateCouponPrice({
-        offerRule,
-        ticket_num,
-        paymentAmount: pay_money,
-        useQuan: useRes?.useQuan || []
-      });
-      this.logger.infoSave("用券价格校验结果", { couponCheck, cardCheck });
-      if (!couponCheck.ok) {
-        this.logger.errorSave(couponCheck.reason, { pay_money, ticket_num });
-        return {
-          offerRule,
-          transferParams: await transferWithUnlock({
-            orderId: order_num,
-            session_id: this.currentSessionId
-          })
-        };
-      }
-
-      // 用卡价格与利润校验
-      if (offerRule?.offer_type !== "1" && card_id) {
-        const cardCheck = this.validateCardPriceAndProfit({
-          offerRule,
-          ticket_num,
-          paymentAmount: pay_money,
-          profit
-        });
-        this.logger.infoSave("用卡价格校验结果", { pay_money, cardCheck });
-        if (!cardCheck.ok) {
-          this.logger.errorSave(cardCheck.reason, { pay_money, ticket_num });
+      };
+      const lockRes = await this.seatManage.lockseatByApp(lockSeatParams);
+      if (!lockRes) {
+        const { err_info: errInfo } = this.logger.getLastErrMsgAndInfo();
+        if (
+          plat_name == "lieren" &&
+          dictStore.dictInfo.lierenIsSupportChangeSeat == 1 &&
+          ["座位已被锁定", "座位无效或已被锁定"].some(item =>
+            errInfo.includes(item)
+          )
+        ) {
+          // 走申请座位逻辑
+          const isApplyChangeSeat = await this.platManage.applyChangeSeat(item);
           return {
-            offerRule,
-            transferParams: await transferWithUnlock({
-              orderId: order_num,
-              session_id: this.currentSessionId
-            })
+            transferParams: {
+              transfer_fee: 0
+            },
+            offerRule: this.offerRule,
+            isApplyChangeSeat
           };
         }
-        profit = cardCheck.profit;
+        return await this.orderManage.transferOrder();
+      }
+      // 锁座id即创建订单id
+      buyTicketInfo.order_num = lockRes.data?.orderId;
+      order_num = lockRes.data?.orderId;
+      console.log("createOrder 返回 orderId", order_num);
+      if (!order_num) {
+        this.logger.infoSave("订单锁座-创建失败");
+        // 转单或换号处理
+        const transparams = {
+          session_id: this.currentSessionId
+        };
+        return await this.transferOrChangePhone(transparams, buyTicketInfo);
       }
 
-      // ========== 测试模式：取消订单释放座位 ==========
-      if (this.isTestOrder) {
-        this.logger.infoSave("测试模式：打印参数并取消订单", {
-          order_num,
-          show_id,
-          seat_ids,
-          seatTotalPrice,
-          mobile: this.currentPhone,
-          profit,
+      // ========== 获取锁座后订单价格（从 Wanda 订单取真实全价） ==========
+      // 3、获取锁座价格明细;
+      const calcParams = {
+        orderId: order_num,
+        session_id: this.currentSessionId
+      };
+      const calcResult = await this.orderManage.priceCalculation(calcParams);
+      if (!calcResult) {
+        this.logger.info("获取锁座价格明细异常，走转单或换号处理");
+        // 转单或换号处理
+        const transparams = {
+          orderId: order_num,
+          session_id: this.currentSessionId
+        };
+        return await this.transferOrChangePhone(transparams, buyTicketInfo);
+      }
+      // 座位支付总价格：订单总价 = 卖品 + 票款
+      let seatPayTotalPrice = calcResult.ticketAmount + calcResult.snackAmount;
+
+      seatPayTotalPrice = seatPayTotalPrice / 100;
+
+      let channelFee =
+        buyTicketInfo.targetSeatCodes
+          .map(item => item.channelFee)
+          .reduce((acc, cur) => acc + cur, 0) / 100;
+
+      this.logger.infoSave("座位支付总价格和渠道费", {
+        seatPayTotalPrice,
+        channelFee
+      });
+
+      // 4、使用优惠券或者会员卡（仅判断是否有可用卡及券）
+      const cardQuanRes = await this.cardQuanManage.useQuanOrCard({
+        buyTicketInfo,
+        offerRule: this.offerRule,
+        seatPayTotalPrice,
+        rewards,
+        session_id: this.currentSessionId,
+        currentPhone: this.currentPhone,
+        usableCardList: this.usableCardList
+      });
+      this.logger.infoSave("用卡用券返回", cardQuanRes);
+      let {
+        canUseCardList = [], // 可用会员卡列表
+        useQuan = [],
+        profit = 0,
+        quanStock
+      } = cardQuanRes || {};
+      // 由于offerRule可能被useQuanOrCard调整，后续使用地方需注意
+      offerRule = this.offerRule;
+      const { offer_type } = offerRule;
+
+      if (!canUseCardList?.length && !useQuan?.length) {
+        let errMsg = this.logger.getLastErrMsg();
+        let str = offer_type === "1" ? "无可用优惠券" : "无可用会员卡";
+        if (errMsg) {
+          str = str + "-" + errMsg;
+        }
+        this.logger.errorSave(str, {
           supplier_end_price,
-          card_id,
-          quan_code,
-          pay_money,
-          requestInfo: useRes.requestInfo
+          ticket_num
         });
+        // 转单或换号处理
+        const transparams = {
+          orderId: order_num,
+          session_id: this.currentSessionId
+        };
+        return await this.transferOrChangePhone(transparams, buyTicketInfo);
+      }
+      // 5、计算最终支付价格（对照小程序 calcRealPayPrice，统一用元）
+      const orderPrice = seatPayTotalPrice; // 元（已 /100）
+
+      let couponDeduction = 0; // 券抵扣额(元)
+      let cardPayPrice = 0; // 卡支付额(元)
+
+      if (offer_type === "1" && useQuan?.length) {
+        // 兑换券全抵扣，支付额 = 0 + 手续费
+        couponDeduction = orderPrice;
+      }
+
+      if (offer_type !== "1" && canUseCardList?.length) {
+        // balance 是分 → 元
+        const cardBalance = (canUseCardList[0]?.balance || 0) / 100;
+        const remaining = orderPrice - couponDeduction;
+        cardPayPrice = Math.min(cardBalance, remaining);
+      }
+
+      let paymentAmount = orderPrice - couponDeduction - cardPayPrice;
+      if (paymentAmount < 0) paymentAmount = 0;
+
+      // 券码（后续 merge_payment 用）
+      let quan_code = useQuan.map(item => item.couponCode).join(",");
+
+      this.logger.infoSave("最终支付价格计算", {
+        orderPrice,
+        couponDeduction,
+        cardPayPrice,
+        paymentAmount,
+        unit: "元"
+      });
+      // 校验卡余额是否足够
+      let quan_fee = offerRule.quan_fee || 0;
+      quan_fee = Number(quan_fee);
+      let quan_fee_total = (quan_fee * 1000 * ticket_num * 100) / 1000;
+      // 6、校验是否可以创建订单
+      // 用券时总价为0
+      if (offer_type === "1") {
+        if (offerRule.quan_fee > 0) {
+          this.logger.infoSave("券补钱总价计算相关信息", {
+            quan_fee: offerRule.quan_fee,
+            paymentAmount,
+            ticket_num
+          });
+        }
+        if (offerRule.is_store == "1" && quanStock - ticket_num < 10) {
+          this.logger.infoSave("本次出票后券小于10，开始异步绑定券");
+          this.cardQuanManage.getNewQuan({
+            cinema_id,
+            quan_value: offerRule.quan_value,
+            quan_flag: offerRule.quan_flag,
+            black_quans: offerRule.black_quans,
+            quanNum: 10 - (quanStock - Number(ticket_num)),
+            session_id: this.currentSessionId,
+            asyncFlag: 1
+          });
+        }
+      }
+      // 支付前校验用券价格
+      if (
+        offer_type === "1" &&
+        useQuan?.length &&
+        paymentAmount > quan_fee_total
+      ) {
+        this.logger.errorSave("用完券发现支付金额大于券手续费*票数，走转单", {
+          paymentAmount,
+          quan_fee_total,
+          quan_fee,
+          ticket_num
+        });
+        // 转单或换号处理
+        const transparams = {
+          orderId: order_num,
+          session_id: this.currentSessionId
+        };
+        return await this.transferOrChangePhone(transparams, buyTicketInfo);
+      }
+      // 支付前校验用卡价格
+      let real_member_price = offerRule?.real_member_price || 0;
+      real_member_price = (real_member_price * 10000 * ticket_num) / 10000;
+      this.logger.infoSave("真实会员价价格", { real_member_price });
+      if (offerRule.offer_type !== "1" && canUseCardList?.length) {
+        // 用卡场景利润计算时实际支付金额应等于卡抵扣金额
+        paymentAmount = cardPayPrice;
+        if (paymentAmount > real_member_price) {
+          if (subDecimal(paymentAmount, real_member_price) < profit) {
+            this.logger.infoSave(
+              "用完卡发现支付金额大于会员价*票数，利润需减去差值",
+              {
+                paymentAmount,
+                real_member_price,
+                profit
+              }
+            );
+            profit = subDecimal(
+              profit,
+              subDecimal(paymentAmount, real_member_price)
+            );
+          } else {
+            this.logger.errorSave("用完卡发现无利润，走转单", {
+              paymentAmount,
+              real_member_price,
+              ticket_num
+            });
+            // 转单或换号处理
+            const transparams = {
+              orderId: order_num,
+              session_id: this.currentSessionId
+            };
+            return await this.transferOrChangePhone(transparams, buyTicketInfo);
+          }
+        } else if (paymentAmount < real_member_price) {
+          let member_discount = offerRule?.member_discount || 100;
+          profit =
+            Number(profit) +
+            ((real_member_price * 1000 - paymentAmount * 1000) *
+              member_discount) /
+              (1000 * 100);
+          profit = Number(profit).toFixed(2);
+        }
+      }
+      console.warn("经过支付价格校验后的利润", profit);
+      // 7、创建订单
+      let card_id, cardNum;
+      if (offer_type === "1" && useQuan?.length) {
+      }
+      if (offer_type === "2" && canUseCardList?.length) {
+        card_id = canUseCardList[0]?.card_id;
+        cardNum = canUseCardList[0]?.card_no_show;
+      }
+      // 支付参数：券+卡可组合（如券抵扣不完，卡补差额；或券手续费走卡）
+      const requestInfo = {};
+
+      if (useQuan?.length) {
+        requestInfo.selectCoupon = useQuan.map(q => ({
+          code: q.couponCode,
+          type: "coupon"
+        }));
+        if (requestInfo.selectCoupon.length === 1) {
+          requestInfo.selectCoupon = requestInfo.selectCoupon[0];
+        }
+      }
+
+      if (canUseCardList?.length) {
+        // 用卡：券抵扣后剩余部分由卡支付
+        const bestCard = canUseCardList[0];
+        requestInfo.selectCards = [
+          {
+            cardNo: bestCard.cardNo,
+            payAmount: Math.round(cardPayPrice * 100) // 元 → 分
+          }
+        ];
+      }
+
+      const payParams = {
+        orderId: order_num,
+        mobilePhone: this.currentPhone,
+        cinemaId: cinema_id,
+        requestInfo: JSON.stringify(requestInfo),
+        session_id: this.currentSessionId
+      };
+
+      this.logger.infoSave("支付参数", { ...payParams, requestInfo });
+      if (this.isTestOrder) {
         await this.orderManage.cancelOrder({
           orderId: order_num,
           session_id: this.currentSessionId
         });
-        return { offerRule: this.offerRule };
+        this.logger.infoSave("测试单暂不购买");
+        return { offerRule };
       }
-
-      // ========== 购买订单（合并支付） ==========
-      const payRes = await this.orderManage.buyTicket({
-        orderId: order_num,
-        mobilePhone: this.currentPhone,
-        cinemaId: cinema_id,
-        requestInfo: useRes.requestInfo || {},
-        session_id: this.currentSessionId
-      });
-      if (!payRes) {
-        this.logger.errorSave("万达合并支付失败，走转单");
-        return {
-          offerRule: this.offerRule,
-          transferParams: await transferWithUnlock({
+      const createOrderRes = await this.orderManage.createOrder(payParams);
+      order_num = createOrderRes?.order_id;
+      if (!order_num) {
+        if (createOrderRes?.isTimeout) {
+          this.logger.infoSave("支付订单超时当成功处理");
+        } else {
+          this.logger.info("创建订单失败，单个订单直接出票结束走转单");
+          // 转单或换号处理
+          const transparams = {
             orderId: order_num,
             session_id: this.currentSessionId
-          })
-        };
+          };
+          const transferParams =
+            await this.orderManage.transferOrder(transparams);
+          return { offerRule, transferParams };
+        }
       }
-
-      // ========== 获取取票码（同步 + 异步轮询） ==========
-      const lastRes = await this.orderManage.lastHandle({
-        orderId: order_num,
-        session_id: this.currentSessionId,
-        orderInfo: this.order
+      this.logger.infoSave("创建订单支付成功", {
+        order_num,
+        profit,
+        card_id,
+        offerRule
       });
-
-      const ticketCode = lastRes?.qrcode;
-
-      // ========== 后处理 ==========
-      if (offerRule?.offer_type !== "1" && card_id) {
-        await svApi
-          .updateCardDayUse?.({
-            app_name: this.appFlag,
-            card_id,
-            plat_name,
-            order_number,
-            add_count: ticket_num
-          })
-          .catch(e =>
-            this.logger.errorSave("更新卡日使用量异常", { error: e })
-          );
+      buyTicketInfo.order_num = order_num;
+      if (card_id) {
+        // 更新卡使用量
+        await updateCardDayUse({
+          app_name: appFlag,
+          card_id,
+          plat_name,
+          order_number,
+          add_count: ticket_num
+        });
       }
-      if (offerRule?.offer_type === "1" && offerRule?.is_store != 1) {
-        await this.cardQuanManage
-          .updateQuanStock?.({
-            ticket_num,
-            quan_flag: offerRule?.quan_flag,
-            quan_value: offerRule?.quan_value,
-            app_name: this.appFlag,
-            phone: this.currentPhone,
-            isPay: 1
-          })
-          .catch(e => this.logger.errorSave("更新券库存异常", { error: e }));
+      if (offerRule.offer_type === "1" && useQuan?.length) {
+        // 更新券库存
+        this.cardQuanManage.updateQuanStock({
+          quan_stock: quanStock - ticket_num,
+          quan_flag: offerRule.quan_flag,
+          quan_desc: offerRule.quan_desc,
+          quan_value: offerRule.quan_value,
+          app_name: appFlag,
+          phone: this.currentPhone
+        });
       }
-
+      // 最后处理：获取支付结果上传取票码
+      const lastRes = await this.orderManage.getQrcodeUploadByPlat({
+        order_num,
+        session_id: this.currentSessionId
+      });
+      if (lastRes?.qrcode && lastRes?.submitRes) {
+        this.logger.infoSave("订单最后处理成功:获取取票码并上传");
+      }
+      console.log("一键买票完成");
+      if (profit) {
+        profit = Number(profit).toFixed(2);
+      }
       return {
         profit,
+        qrcode: lastRes?.qrcode,
         submitRes: lastRes?.submitRes,
-        qrcode: ticketCode,
-        offerRule: this.offerRule,
-        mobile: this.currentPhone,
+        quan_code: quan_code,
         card_id,
-        quan_code,
-        cardNum
+        cardNum,
+        offerRule,
+        mobile: this.currentPhone
       };
     } catch (error) {
       this.logger.errorSave("一键买票异常", { error: error?.message });
@@ -530,6 +595,19 @@ class WandaBuyTicket extends BaseBuyTicket {
         failReason: formatErrInfo(error)
       });
       return { offerRule };
+    }
+  }
+
+  // 转单或换号处理
+  async transferOrChangePhone(params, buyTicketInfo) {
+    const { offerRule, currentParamsInx, currentParamsList } = this;
+    if (currentParamsInx === currentParamsList.length - 1) {
+      const transferParams = await this.orderManage.transferOrder(params);
+      return { offerRule, transferParams };
+    } else {
+      this.logger.infoSave("非最后一次用卡用券失败，走换号");
+      this.currentParamsInx++;
+      return await this.oneClickBuyTicket(buyTicketInfo);
     }
   }
 }
@@ -563,3 +641,38 @@ const testOrder = {
 // window.wandaTicketObj(order, true).singleTicket()
 
 export default WandaBuyTicket;
+/**
+ * 更新卡当天使用量
+ *
+ * */
+const updateCardDayUse = ({
+  app_name,
+  card_id,
+  plat_name,
+  order_number,
+  add_count
+}) => {
+  let error;
+  try {
+    svApi.updateDayUsage({
+      app_name: app_name,
+      card_id: card_id,
+      add_count,
+      plat_name
+    });
+  } catch (err) {
+    error = err;
+  }
+  let logger = new Logger({ logType: 3 });
+  logger.init({
+    plat_name,
+    app_name,
+    order_number
+  });
+  logger.infoSave("订单用卡购买后更新当天使用量", {
+    app_name,
+    card_id,
+    error
+  });
+  logger.logUpload();
+};

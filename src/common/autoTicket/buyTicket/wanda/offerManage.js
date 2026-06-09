@@ -471,7 +471,6 @@ class WandaOfferPrice extends BaseOfferPrice {
 
     const appQuanTypeList = await this.cardQuanManage.getQuanTypeListByApp();
     this.cardQuanManage.syncUpdateQuanStock({
-      cinema_id: movieInfo.cinema_id,
       quanTypeList: appQuanTypeList
     });
 
@@ -620,12 +619,12 @@ class WandaOfferPrice extends BaseOfferPrice {
           json: true
         });
         if (!seatInfo) return -3;
-
-        const areas = seatInfo.area || [];
+        console.warn("获取座位布局返回", seatInfo);
+        const areaInfoList = seatInfo.areaInfoList || [];
         let basePrice = member_price || 0;
-        if (areas.length) {
-          const areaList = areas
-            .map(a => ({ price: a.areaPrice?.salesPrice || 0 }))
+        if (areaInfoList.length) {
+          const areaList = areaInfoList
+            .map(a => ({ price: a?.salesPrice || 0 }))
             .sort((a, b) => b.price - a.price);
           basePrice = areaList[0]?.price || 0;
 
