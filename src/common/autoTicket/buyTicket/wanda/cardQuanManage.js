@@ -117,7 +117,7 @@ export default class CardQuanManage {
           session_id,
           buyTicketInfo
         });
-        this.logger.infoSave("连续获取券返回", {
+        this.logger.infoSave("可用优惠券列表", {
           quanData: quanList?.map(item => ({
             couponName: item.couponName,
             couponCode: item.couponCode,
