@@ -185,46 +185,56 @@ export default class OrderManage {
     }
   }
 
-  // 获取购票信息
+  // 获取购票信息（最多重试 3 次，间隔 1 秒）
   async getPayResult(data) {
     let { orderId, session_id, logger, inx = 1 } = data || {};
-    let qrcode;
-    try {
-      let params = {
-        orderId,
-        wanda_token: session_id
-      };
-      logger.info("获取支付结果参数", params);
-      if (inx == 1) {
-        logger.infoSave("获取支付结果参数", params);
-      }
-      // 用 query_by_userid 获取订单详情（含取票码 electronicCode）
-      const res = await this.appApi.queryOrderByUserId(params);
-      logger.infoSave(`第${inx}次获取支付结果返回`, res);
+    const maxRetry = 3;
+    for (let i = 0; i < maxRetry; i++) {
+      let qrcode;
+      try {
+        let params = { orderId, wanda_token: session_id };
+        if (inx == 1 && i === 0) {
+          logger.infoSave("获取支付结果参数", params);
+        } else {
+          logger.info(`获取支付结果第${i + 1}次尝试`, params);
+        }
+        // 用 query_by_userid 获取订单详情（含取票码 electronicCode）
+        const res = await this.appApi.queryOrderByUserId(params);
+        if (i === 0) {
+          logger.infoSave(`第${inx}次获取支付结果返回`, res);
+        }
 
-      const orderInf = res?.data?.orderInf || res?.orderInf || [];
-      const orderInfo =
-        orderInf.find(o => o.orderId === orderId) || orderInf[0] || {};
-      const { orderStatus, subTicketOrderInfo = [] } = orderInfo;
-      const subOrder = subTicketOrderInfo[0];
+        const orderInf = res?.data?.orderInf || res?.orderInf || [];
+        const orderInfo =
+          orderInf.find(o => o.orderId === orderId) || orderInf[0] || {};
+        const { orderStatus, subTicketOrderInfo = [] } = orderInfo;
+        const subOrder = subTicketOrderInfo[0];
 
-      // orderStatus >= 40 表示支付已发起/完成，可尝试获取取票码
-      if (orderStatus && orderStatus == 100) {
-        qrcode =
-          subOrder?.electronicCode?.[0] ||
-          subOrder?.snackExchangeCode ||
-          subOrder?.verifyCode ||
-          "";
+        if (orderStatus && orderStatus == 100) {
+          qrcode =
+            subOrder?.electronicCode?.[0] ||
+            subOrder?.snackExchangeCode ||
+            subOrder?.verifyCode ||
+            "";
+        }
+        if (orderStatus === 30) {
+          logger.errorSave("万达出票失败", { orderStatus, subOrder });
+          return Promise.reject("万达出票失败");
+        }
+        if (qrcode) {
+          logger.infoSave("获取取票码成功", { qrcode });
+          return qrcode;
+        }
+      } catch (error) {
+        logger.errorSave(
+          `第${inx}次获取订单支付结果异常`,
+          formatErrInfo(error)
+        );
       }
-      if (orderStatus === 30) {
-        logger.errorSave("万达出票失败", { orderStatus, subOrder });
+      // 未获取到则等待 1 秒后重试
+      if (i < maxRetry - 1) {
+        await mockDelay(1);
       }
-      if (qrcode) {
-        logger.infoSave("获取取票码成功", { qrcode });
-        return qrcode;
-      }
-    } catch (error) {
-      logger.errorSave(`第${inx}次获取订单支付结果异常`, formatErrInfo(error));
     }
     return Promise.reject("获取支付结果不存在");
   }
