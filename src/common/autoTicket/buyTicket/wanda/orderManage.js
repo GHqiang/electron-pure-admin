@@ -5,6 +5,7 @@ import {
   trial,
   sendWxPusherMessage
 } from "@/utils/utils";
+import { wandaAesDecrypt } from "@/utils/wandaAesDecrypt";
 import { APP_API_OBJ } from "@/common/index";
 import svApi from "@/api/sv-api";
 import Logger from "@/common/logger";
@@ -144,8 +145,27 @@ export default class OrderManage {
     try {
       this.logger.infoSave("购买订单参数", params);
       const res = await this.appApi.mergePayment(params);
-      this.logger.infoSave("购买订单返回", res);
-      return res?.data || null;
+
+      // merge_payment 返回 data 是 AES-ECB 密文，需解密
+      let resData = res;
+      if (res && typeof res.data === "string" && res.code === 0) {
+        const decrypted = wandaAesDecrypt(res.data);
+        if (decrypted) {
+          try {
+            resData = { ...res, data: JSON.parse(decrypted) };
+          } catch (e) {
+            this.logger.errorSave("解密支付结果JSON失败", {
+              error: e?.message
+            });
+          }
+        }
+      }
+
+      this.logger.infoSave("购买订单返回", resData);
+      return {
+        success: resData.data?.bizCode === 0,
+        tradeNo: resData.data?.tradeNo
+      };
     } catch (error) {
       this.logger.errorSave("购买订单异常", {
         error: formatErrInfo(error)
@@ -178,19 +198,29 @@ export default class OrderManage {
       if (inx == 1) {
         logger.infoSave("获取支付结果参数", params);
       }
-      const res = await this.appApi.queryOrderStatus(params);
+      // 用 query_by_userid 获取订单详情（含取票码 electronicCode）
+      const res = await this.appApi.queryOrderByUserId(params);
       logger.infoSave(`第${inx}次获取支付结果返回`, res);
 
-      const { orderStatus, subTicketOrderStatus = [] } = res;
-      const subOrder = subTicketOrderStatus[0];
-      if (orderStatus === 40 || subOrder?.orderStatus === 40) {
-        qrcode = subOrder?.ticketCode || statusRes.ticketCode;
+      const orderInf = res?.data?.orderInf || res?.orderInf || [];
+      const orderInfo =
+        orderInf.find(o => o.orderId === orderId) || orderInf[0] || {};
+      const { orderStatus, subTicketOrderInfo = [] } = orderInfo;
+      const subOrder = subTicketOrderInfo[0];
+
+      // orderStatus >= 40 表示支付已发起/完成，可尝试获取取票码
+      if (orderStatus && orderStatus == 100) {
+        qrcode =
+          subOrder?.electronicCode?.[0] ||
+          subOrder?.snackExchangeCode ||
+          subOrder?.verifyCode ||
+          "";
       }
-      if (orderStatus === 30 || subOrder?.orderStatus === 30) {
-        this.logger.errorSave("万达出票失败", { orderStatus, subOrder });
-        return null;
+      if (orderStatus === 30) {
+        logger.errorSave("万达出票失败", { orderStatus, subOrder });
       }
       if (qrcode) {
+        logger.infoSave("获取取票码成功", { qrcode });
         return qrcode;
       }
     } catch (error) {

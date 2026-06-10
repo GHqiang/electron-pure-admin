@@ -431,25 +431,24 @@ class WandaBuyTicket extends BaseBuyTicket {
       real_member_price = (real_member_price * 10000 * ticket_num) / 10000;
       this.logger.infoSave("真实会员价价格", { real_member_price });
       if (offerRule.offer_type !== "1" && canUseCardList?.length) {
-        // 用卡场景利润计算时实际支付金额应等于卡抵扣金额
-        paymentAmount = cardPayPrice;
-        if (paymentAmount > real_member_price) {
-          if (subDecimal(paymentAmount, real_member_price) < profit) {
+        // 用卡场景利润计算时实际支付金额应等于卡抵扣金额，直接用卡抵扣金额对比计算就行
+        if (cardPayPrice > real_member_price) {
+          if (subDecimal(cardPayPrice, real_member_price) < profit) {
             this.logger.infoSave(
               "用完卡发现支付金额大于会员价*票数，利润需减去差值",
               {
-                paymentAmount,
+                cardPayPrice,
                 real_member_price,
                 profit
               }
             );
             profit = subDecimal(
               profit,
-              subDecimal(paymentAmount, real_member_price)
+              subDecimal(cardPayPrice, real_member_price)
             );
           } else {
             this.logger.errorSave("用完卡发现无利润，走转单", {
-              paymentAmount,
+              cardPayPrice,
               real_member_price,
               ticket_num
             });
@@ -460,11 +459,11 @@ class WandaBuyTicket extends BaseBuyTicket {
             };
             return await this.transferOrChangePhone(transparams, buyTicketInfo);
           }
-        } else if (paymentAmount < real_member_price) {
+        } else if (cardPayPrice < real_member_price) {
           let member_discount = offerRule?.member_discount || 100;
           profit =
             Number(profit) +
-            ((real_member_price * 1000 - paymentAmount * 1000) *
+            ((real_member_price * 1000 - cardPayPrice * 1000) *
               member_discount) /
               (1000 * 100);
           profit = Number(profit).toFixed(2);
@@ -476,53 +475,75 @@ class WandaBuyTicket extends BaseBuyTicket {
       if (offer_type === "1" && useQuan?.length) {
       }
       if (offer_type === "2" && canUseCardList?.length) {
-        card_id = canUseCardList[0]?.card_id;
-        cardNum = canUseCardList[0]?.card_no_show;
+        card_id = canUseCardList[0]?.cardNo;
+        cardNum = canUseCardList[0]?.cardNo;
       }
-      // 支付参数：券+卡可组合（如券抵扣不完，卡补差额；或券手续费走卡）
+      // 支付参数：对照 APP 端 merge_payment 抓包格式
       const requestInfo = {};
 
-      if (useQuan?.length) {
-        requestInfo.selectCoupon = useQuan.map(q => ({
-          code: q.couponCode,
-          type: "coupon"
-        }));
-        if (requestInfo.selectCoupon.length === 1) {
-          requestInfo.selectCoupon = requestInfo.selectCoupon[0];
-        }
-      }
+      // activity 区块：小程序走 ticket-api-prd-mx（微信云，支持 %uXXXX 编码），
+      // 但本系统通过 front-gateway-c 代理，%uXXXX 中文编码会导致 500。
+      // 测试验证不带 activity 可正常完成卡支付，故跳过。
+      // 如需 activity（如 detailtype=2 积分抵扣），须将 merge_payment 路由到 ticket-api-prd-mx。
 
+      // storedCardPayments：来自 card/pay/list.api 的储值卡
       if (canUseCardList?.length) {
-        // 用卡：券抵扣后剩余部分由卡支付
-        const bestCard = canUseCardList[0];
-        requestInfo.selectCards = [
-          {
-            cardNo: bestCard.cardNo,
-            payAmount: Math.round(cardPayPrice * 100) // 元 → 分
-          }
-        ];
+        requestInfo.storedCardPayments = canUseCardList.map(card => ({
+          paymentType: 1,
+          cardNumber: card.cardNo,
+          ticketType: card.cardTypeCode || "",
+          ticketTypeName: card.cardTypeName || "",
+          paymentPrice: Math.round(cardPayPrice * 100)
+        }));
       }
 
+      // cardPayment：储值卡支付（与 storedCardPayments 并行）
+      if (canUseCardList?.length) {
+        const bestCard = canUseCardList[0];
+        requestInfo.cardPayment = {
+          paymentType: 1,
+          cardNumber: bestCard.cardNo,
+          ticketType: bestCard.cardTypeCode || "",
+          ticketTypeName: bestCard.cardTypeName || "",
+          paymentPrice: Math.round(cardPayPrice * 100)
+        };
+      }
+
+      // ticketVoucher：券
+      if (useQuan?.length) {
+        requestInfo.ticketVoucher = {
+          voucher: useQuan.map(q => q.couponCode).join(","),
+          discountPrice: Math.round(couponDeduction * 100)
+        };
+      }
+
+      // externalPayment: 仅当第三方支付额 > 0（不传 paymentType，走默认支付方式）
+      if (paymentAmount > 0) {
+        requestInfo.externalPayment = {
+          paymentPrice: Math.round(paymentAmount * 100)
+        };
+      }
+
+      requestInfo.orderId = String(order_num);
+
+      // merge_payment 使用当前登录用户的 session_id（小程序凭证）
       const payParams = {
         orderId: order_num,
         mobilePhone: this.currentPhone,
         cinemaId: cinema_id,
-        requestInfo: JSON.stringify(requestInfo),
+        requestInfo, // orderManage.createOrder 内部会 JSON.stringify
         session_id: this.currentSessionId
       };
 
       this.logger.infoSave("支付参数", { ...payParams, requestInfo });
-      if (this.isTestOrder) {
-        await this.orderManage.cancelOrder({
-          orderId: order_num,
-          session_id: this.currentSessionId
-        });
-        this.logger.infoSave("测试单暂不购买");
-        return { offerRule };
-      }
+      // if (this.isTestOrder) {
+      //   this.logger.infoSave("测试单暂不购买");
+      //   return { offerRule };
+      // }
       const createOrderRes = await this.orderManage.createOrder(payParams);
-      order_num = createOrderRes?.order_id;
-      if (!order_num) {
+      // 支付成功判断：bizCode === 0
+      if (!createOrderRes?.success) {
+        console.warn("购买失败先取消");
         if (createOrderRes?.isTimeout) {
           this.logger.infoSave("支付订单超时当成功处理");
         } else {
@@ -541,9 +562,11 @@ class WandaBuyTicket extends BaseBuyTicket {
         order_num,
         profit,
         card_id,
+        tradeNo: createOrderRes?.tradeNo,
         offerRule
       });
-      buyTicketInfo.order_num = order_num;
+      // 交易流水号
+      buyTicketInfo.tradeNo = createOrderRes?.tradeNo;
       if (card_id) {
         // 更新卡使用量
         await updateCardDayUse({

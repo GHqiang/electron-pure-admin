@@ -1105,4 +1105,42 @@ export default class CardQuanManage {
       });
     }
   }
+
+  /**
+   * 获取活动权益数据（list.api），用于 merge_payment 的 requestInfo.activity(目前场景用不到)
+   */
+  async getActivityData({ session_id, buyTicketInfo }) {
+    try {
+      const params = {
+        did: buyTicketInfo.show_id,
+        partition: buyTicketInfo.partition,
+        able: true,
+        orderId: buyTicketInfo.order_num,
+        wanda_token: session_id
+      };
+      this.logger.infoSave("获取活动权益数据入参", params);
+      const res = await this.appApi.getActivityCoupon(params);
+      let resData = res;
+      if (res && typeof res.data === "string" && res.code === 0) {
+        const d = this._decrypt(res.data);
+        if (d) resData = { ...res, data: JSON.parse(d) };
+      }
+      const groups = resData.data?.res || [];
+      this.logger.infoSave("获取活动权益数据返回", groups);
+      const items = groups.flatMap(g => g.groupItems || []);
+      this.activityData = items; // 存实例上，buyTicket 里取
+      return items;
+    } catch (e) {
+      this.logger.infoSave("获取活动权益异常", formatErrInfo(e));
+      return [];
+    }
+  }
+
+  _decrypt(hex) {
+    try {
+      return wandaAesDecrypt(hex);
+    } catch (e) {
+      return null;
+    }
+  }
 }
