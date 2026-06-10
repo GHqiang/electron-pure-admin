@@ -354,10 +354,30 @@ class WandaBuyTicket extends BaseBuyTicket {
 
       let couponDeduction = 0; // 券抵扣额(元)
       let cardPayPrice = 0; // 卡支付额(元)
+      // 用券手续费，即补钱金额
+      let quan_fee = offerRule.quan_fee || 0;
+      quan_fee = Number(quan_fee);
+      let quan_fee_total = (quan_fee * 1000 * ticket_num * 100) / 1000;
 
       if (offer_type === "1" && useQuan?.length) {
         // 兑换券全抵扣，支付额 = 0 + 手续费
         couponDeduction = orderPrice;
+        // 如果券需要补钱，券抵扣金额就是订单总价-补钱金额
+        if (quan_fee_total) {
+          couponDeduction = orderPrice - quan_fee_total;
+          const maxCardBalance = (canUseCardList[0]?.balance || 0) / 100;
+          // 用券补钱场景卡抵扣金额
+          cardPayPrice = Math.min(cardBalance, quan_fee_total);
+          if (quan_fee_total > maxCardBalance) {
+            this.logger.errorSave("最大卡余额不够支付券手续费");
+            // 转单或换号处理
+            const transparams = {
+              orderId: order_num,
+              session_id: this.currentSessionId
+            };
+            return await this.transferOrChangePhone(transparams, buyTicketInfo);
+          }
+        }
       }
 
       if (offer_type !== "1" && canUseCardList?.length) {
@@ -370,7 +390,7 @@ class WandaBuyTicket extends BaseBuyTicket {
       let paymentAmount = orderPrice - couponDeduction - cardPayPrice;
       if (paymentAmount < 0) paymentAmount = 0;
 
-      // 券码（后续 merge_payment 用）
+      // 券码,保存出票记录用
       let quan_code = useQuan.map(item => item.couponCode).join(",");
 
       this.logger.infoSave("最终支付价格计算", {
@@ -380,10 +400,6 @@ class WandaBuyTicket extends BaseBuyTicket {
         paymentAmount,
         unit: "元"
       });
-      // 校验卡余额是否足够
-      let quan_fee = offerRule.quan_fee || 0;
-      quan_fee = Number(quan_fee);
-      let quan_fee_total = (quan_fee * 1000 * ticket_num * 100) / 1000;
       // 6、校验是否可以创建订单
       // 用券时总价为0
       if (offer_type === "1") {
@@ -472,9 +488,7 @@ class WandaBuyTicket extends BaseBuyTicket {
       console.warn("经过支付价格校验后的利润", profit);
       // 7、创建订单
       let card_id, cardNum;
-      if (offer_type === "1" && useQuan?.length) {
-      }
-      if (offer_type === "2" && canUseCardList?.length) {
+      if (offer_type === "2" && canUseCardList?.length && cardPayPrice > 0) {
         card_id = canUseCardList[0]?.cardNo;
         cardNum = canUseCardList[0]?.cardNo;
       }
@@ -486,8 +500,8 @@ class WandaBuyTicket extends BaseBuyTicket {
       // 测试验证不带 activity 可正常完成卡支付，故跳过。
       // 如需 activity（如 detailtype=2 积分抵扣），须将 merge_payment 路由到 ticket-api-prd-mx。
 
-      // storedCardPayments：来自 card/pay/list.api 的储值卡
-      if (canUseCardList?.length) {
+      // storedCardPayments：仅当实际用卡支付时（cardPayPrice > 0），纯券时不加
+      if (canUseCardList?.length && cardPayPrice > 0) {
         requestInfo.storedCardPayments = canUseCardList.map(card => ({
           paymentType: 1,
           cardNumber: card.cardNo,
@@ -497,8 +511,8 @@ class WandaBuyTicket extends BaseBuyTicket {
         }));
       }
 
-      // cardPayment：储值卡支付（与 storedCardPayments 并行）
-      if (canUseCardList?.length) {
+      // cardPayment：仅当实际用卡支付时（cardPayPrice > 0），纯券时不加
+      if (canUseCardList?.length && cardPayPrice > 0) {
         const bestCard = canUseCardList[0];
         requestInfo.cardPayment = {
           paymentType: 1,
@@ -535,11 +549,16 @@ class WandaBuyTicket extends BaseBuyTicket {
         session_id: this.currentSessionId
       };
 
-      this.logger.infoSave("支付参数", { ...payParams, requestInfo });
-      // if (this.isTestOrder) {
-      //   this.logger.infoSave("测试单暂不购买");
-      //   return { offerRule };
-      // }
+      this.logger.infoSave("支付参数", payParams);
+      if (this.isTestOrder) {
+        // 直接取消订单，方便测试
+        await this.orderManage.cancelOrder({
+          orderId: order_num,
+          session_id: this.currentSessionId
+        });
+        this.logger.infoSave("测试单暂不购买");
+        return { offerRule };
+      }
       const createOrderRes = await this.orderManage.createOrder(payParams);
       // 支付成功判断：bizCode === 0
       if (!createOrderRes?.success) {

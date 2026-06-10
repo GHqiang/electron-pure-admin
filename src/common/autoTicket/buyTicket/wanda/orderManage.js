@@ -23,7 +23,6 @@ export default class OrderManage {
   // 转单
   async transferOrder(unlockSeatInfo) {
     this.logger.infoSave("开始准备转单", unlockSeatInfo);
-    this.logger.infoSave("金逸无释放座位及取消订单接口");
     if (unlockSeatInfo) {
       // 2、取消订单(创建订单id存在时)
       if (unlockSeatInfo.orderId) await this.cancelOrder(unlockSeatInfo);
