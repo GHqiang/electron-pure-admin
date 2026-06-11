@@ -31,7 +31,7 @@
         <el-form-item label="所属账号" prop="mobile">
           <el-input
             v-model="formData.mobile"
-            placeholder="请输入该卡绑定的手机号"
+            placeholder="请输入手机号"
             clearable
           />
         </el-form-item>
@@ -53,12 +53,44 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="Session ID" prop="session_id">
-          <el-input
-            v-model="formData.session_id"
-            placeholder="请输入Session ID"
-            clearable
-          />
+        <el-form-item label="Session ID / Token" prop="session_id">
+          <template #default>
+            <el-input
+              v-model="formData.session_id"
+              placeholder="请输入 Session ID（详见提示）"
+              clearable
+            />
+            <div
+              style="
+                color: #909399;
+                font-size: 12px;
+                margin-top: 4px;
+                line-height: 1.6;
+              "
+            >
+              <template v-if="formData.app_name == 'wanda'">
+                对应请求头 <b>X-RY-TOKEN</b>（万达 API 也称 <b>user-token</b>）
+              </template>
+              <template v-else-if="CHENXING_LIST.includes(formData.app_name)">
+                对应请求参数 <b>k</b>（登录接口返回的 token 字段）
+              </template>
+              <template
+                v-else-if="
+                  [...H5_UME_LIST, ...FENGHUANG_LIST].includes(
+                    formData.app_name
+                  )
+                "
+              >
+                对应 URL 参数 <b>sid</b>（登录接口返回的 sessionId）
+              </template>
+              <template v-else-if="formData.app_name == 'lma'">
+                对应 Cookie 中的 <b>ig_session</b> 值（卢米埃请求头 lmatoken）
+              </template>
+              <template v-else>
+                对应请求的 <b>session_id</b> 字段（SFC/UME/金逸 系列）
+              </template>
+            </div>
+          </template>
         </el-form-item>
         <el-form-item
           v-if="
@@ -70,28 +102,46 @@
         >
           <el-input
             v-model="formData.tid"
-            placeholder="请输入tenantId"
+            placeholder="请输入 tenantId"
             clearable
           />
-          <span style="color: red">注意：仅辰星3.0C端影院需要，C端不需要</span>
+          <span style="color: #e6a23c; font-size: 12px">
+            抓包找请求参数 <b>tenantId</b>（仅辰星 3.0C 需要，C 端不需要）
+          </span>
         </el-form-item>
         <el-form-item
           v-if="[...H5_UME_LIST, ...FENGHUANG_LIST].includes(formData.app_name)"
-          label="续期tid"
+          label="续期 Token"
           prop="tid"
         >
           <el-input
             v-model="formData.tid"
-            placeholder="请输入续期tid"
+            placeholder="请输入续期 Token"
             clearable
-          >
-            <template #append>注意：仅凤凰云智系列需要维护</template>
-          </el-input>
+          />
+          <span style="color: #e6a23c; font-size: 12px">
+            抓包找 <b>refreshToken</b> 字段，用于 sid 过期时自动续期
+          </span>
+        </el-form-item>
+        <el-form-item
+          v-if="formData.app_name == 'wanda'"
+          label="X-RY-USER"
+          prop="tid"
+        >
+          <el-input
+            v-model="formData.tid"
+            placeholder="请输入 X-RY-USER"
+            clearable
+          />
+          <span style="color: #e6a23c; font-size: 12px">
+            对应请求头 <b>X-RY-USER</b>（万达也称
+            <b>user-identifier</b>，通常为一串大写字母）
+          </span>
         </el-form-item>
         <el-form-item label="会员卡密码" prop="member_pwd">
           <el-input
             v-model="formData.member_pwd"
-            placeholder="请输入会员卡密码"
+            placeholder="请输入会员卡支付密码"
             clearable
           />
         </el-form-item>
