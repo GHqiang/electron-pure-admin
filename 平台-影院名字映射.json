@@ -1,0 +1,5288 @@
+[
+  {
+    "id": 403,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "11051311",
+    "appName": "北京寰映影城合生汇店"
+  },
+  {
+    "id": 831,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "11051401",
+    "appName": "北京CBD万达广场店"
+  },
+  {
+    "id": 1861,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "11052721",
+    "appName": "北京万达影城望京店"
+  },
+  {
+    "id": 4421,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "11053201",
+    "appName": "北京万达影城四惠店"
+  },
+  {
+    "id": 1831,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "11055111",
+    "appName": "北京东坝万达广场店"
+  },
+  {
+    "id": 40,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "11071001",
+    "appName": "北京石景山万达广场店"
+  },
+  {
+    "id": 481,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "11071061",
+    "appName": "北京槐房万达广场店"
+  },
+  {
+    "id": 418,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "11071081",
+    "appName": "北京丰台万达广场店"
+  },
+  {
+    "id": 22,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "11071331",
+    "appName": "北京丰台西铁营万达广场店"
+  },
+  {
+    "id": 1372,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "11072251",
+    "appName": "北京寰映影城丰台春风里店"
+  },
+  {
+    "id": 80,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "11080551",
+    "appName": "北京万达影城通州银兴光魔店"
+  },
+  {
+    "id": 11,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "11080581",
+    "appName": "北京通州万达广场店"
+  },
+  {
+    "id": 612,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "11081301",
+    "appName": "北京万达影城天通苑龙德广场店"
+  },
+  {
+    "id": 629,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "11092491",
+    "appName": "北京寰映影城京西大悦城店"
+  },
+  {
+    "id": 484,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "11111731",
+    "appName": "北京万达影城房山店"
+  },
+  {
+    "id": 1003,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "11132011",
+    "appName": "北京乐多港万达广场店"
+  },
+  {
+    "id": 317,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "11142761",
+    "appName": "北京寰映影城昌平合生汇店"
+  },
+  {
+    "id": 699,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "11151341",
+    "appName": "北京怀柔万达广场店"
+  },
+  {
+    "id": 504,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "11181961",
+    "appName": "北京延庆万达广场店"
+  },
+  {
+    "id": 321,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "12041401",
+    "appName": "天津河东万达广场店"
+  },
+  {
+    "id": 619,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "12050621",
+    "appName": "天津万达影城中铁诺德奥纳店"
+  },
+  {
+    "id": 188,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "12070791",
+    "appName": "天津生态城万达广场店"
+  },
+  {
+    "id": 300,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "12071061",
+    "appName": "天津塘沽万达广场店"
+  },
+  {
+    "id": 315,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "12100671",
+    "appName": "天津东丽万达广场店"
+  },
+  {
+    "id": 2321,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "12110871",
+    "appName": "天津西青万达广场店"
+  },
+  {
+    "id": 177,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "12111071",
+    "appName": "天津万达影城西青社会山广场店"
+  },
+  {
+    "id": 955,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "12140641",
+    "appName": "天津武清福源道万达广场店"
+  },
+  {
+    "id": 230,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "12140761",
+    "appName": "天津万达影城武清威尼都广场店"
+  },
+  {
+    "id": 517,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "12250010",
+    "appName": "天津蓟州万达广场店"
+  },
+  {
+    "id": 2380,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "13011451",
+    "appName": "辛集万达广场店"
+  },
+  {
+    "id": 364,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "13012011",
+    "appName": "石家庄长安万达广场店"
+  },
+  {
+    "id": 343,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "13013601",
+    "appName": "石家庄裕华万达广场店"
+  },
+  {
+    "id": 1642,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "13022901",
+    "appName": "保定万达影城万博广场店"
+  },
+  {
+    "id": 1869,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "13028101",
+    "appName": "保定嘉德国际万达广场店"
+  },
+  {
+    "id": 684,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "13028301",
+    "appName": "保定未来石万达广场店"
+  },
+  {
+    "id": 1907,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "13029301",
+    "appName": "保定万达影城钟楼淳田广场店"
+  },
+  {
+    "id": 4,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "13029501",
+    "appName": "定州万达广场店"
+  },
+  {
+    "id": 788,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "13043901",
+    "appName": "承德双桥万达广场店"
+  },
+  {
+    "id": 1006,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "13052201",
+    "appName": "唐山路南万达广场店"
+  },
+  {
+    "id": 1170,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "13054401",
+    "appName": "唐山万达影城凤城国贸店"
+  }
+]
+[
+  {
+    "id": 730,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "13057101",
+    "appName": "唐山丰润万达广场店"
+  },
+  {
+    "id": 726,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "13061701",
+    "appName": "廊坊万达广场店"
+  },
+  {
+    "id": 1660,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "13062601",
+    "appName": "固安万达影城华夏幸福广场店"
+  },
+  {
+    "id": 183,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "13075001",
+    "appName": "黄骅万达影城金宝方圆荟店"
+  },
+  {
+    "id": 1981,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "13075401",
+    "appName": "任丘万达广场店"
+  },
+  {
+    "id": 790,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "13093901",
+    "appName": "邢台万达广场店"
+  },
+  {
+    "id": 1143,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "13094901",
+    "appName": "邢台万达影城逗号立方店"
+  },
+  {
+    "id": 1450,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "13108301",
+    "appName": "邯郸万达广场店"
+  },
+  {
+    "id": 27,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "13352401",
+    "appName": "秦皇岛万达广场店"
+  },
+  {
+    "id": 2356,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "14012461",
+    "appName": "太原龙湖万达广场店"
+  },
+  {
+    "id": 1226,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "14014951",
+    "appName": "太原万达影城多彩城店"
+  },
+  {
+    "id": 1560,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "14020301",
+    "appName": "大同万达影城华林新天地店"
+  },
+  {
+    "id": 1123,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "14020701",
+    "appName": "大同万达影城凯德广场店"
+  },
+  {
+    "id": 438,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "14023611",
+    "appName": "大同万达广场店"
+  },
+  {
+    "id": 1424,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "14024721",
+    "appName": "大同万达影城中央公园店"
+  },
+  {
+    "id": 1856,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "14053941",
+    "appName": "长治万达广场店"
+  },
+  {
+    "id": 1167,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "14060901",
+    "appName": "晋城万达影城凤展广场店"
+  },
+  {
+    "id": 1322,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "14084031",
+    "appName": "运城万达广场店"
+  },
+  {
+    "id": 1172,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "14094341",
+    "appName": "朔州万达广场店"
+  },
+  {
+    "id": 1194,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "14094401",
+    "appName": "怀仁万达影城仁人时代广场店"
+  },
+  {
+    "id": 1383,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "14114331",
+    "appName": "孝义万达广场店"
+  },
+  {
+    "id": 4389,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "14243551",
+    "appName": "晋中万达广场店"
+  },
+  {
+    "id": 623,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "15010401",
+    "appName": "包头青山万达广场店"
+  },
+  {
+    "id": 538,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "15010802",
+    "appName": "呼和浩特万达影城美特好店"
+  },
+  {
+    "id": 416,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "15010809",
+    "appName": "呼和浩特万达广场店"
+  },
+  {
+    "id": 1883,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "15011931",
+    "appName": "呼和浩特回民区万达广场店"
+  },
+  {
+    "id": 1344,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "15012011",
+    "appName": "呼和浩特万达影城喜悦广场店"
+  },
+  {
+    "id": 464,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "15012881",
+    "appName": "呼和浩特寰映影城振华广场店"
+  },
+  {
+    "id": 647,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "15012891",
+    "appName": "呼和浩特万达影城凯德诺和木勒店"
+  },
+  {
+    "id": 1564,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "15022021",
+    "appName": "包头万达影城正翔广场店"
+  },
+  {
+    "id": 510,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "15022321",
+    "appName": "包头九原万达广场店"
+  },
+  {
+    "id": 940,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "15022731",
+    "appName": "包头万达影城维多利摩尔城店"
+  },
+  {
+    "id": 1341,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "15032651",
+    "appName": "鄂尔多斯万达广场店"
+  },
+  {
+    "id": 1779,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "15040821",
+    "appName": "赤峰万达广场店"
+  },
+  {
+    "id": 968,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "15041571",
+    "appName": "通辽万达影城欧亚广场店"
+  },
+  {
+    "id": 471,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "15053001",
+    "appName": "赤峰松山万达广场店"
+  },
+  {
+    "id": 1991,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "15070810",
+    "appName": "满洲里万达广场店"
+  },
+  {
+    "id": 854,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "15072901",
+    "appName": "乌兰察布万达广场店"
+  },
+  {
+    "id": 4382,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "15111531",
+    "appName": "乌海万达广场店"
+  },
+  {
+    "id": 817,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "15222641",
+    "appName": "兴安盟万达广场店"
+  }
+]
+[
+  {
+    "id": 456,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "21011311",
+    "appName": "沈阳全运路万达广场店"
+  },
+  {
+    "id": 348,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "21011511",
+    "appName": "沈阳沈北万达广场店"
+  },
+  {
+    "id": 2324,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "21013201",
+    "appName": "沈阳太原街万达广场店"
+  },
+  {
+    "id": 546,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "21013401",
+    "appName": "沈阳铁西万达广场店"
+  },
+  {
+    "id": 829,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "21015401",
+    "appName": "沈阳北一路万达广场店"
+  },
+  {
+    "id": 24,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "21016601",
+    "appName": "沈阳奥体万达广场店"
+  },
+  {
+    "id": 1298,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "21020461",
+    "appName": "大连万达影城友好广场港汇店"
+  },
+  {
+    "id": 889,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "21020531",
+    "appName": "大连经开万达广场店"
+  },
+  {
+    "id": 2028,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "21020601",
+    "appName": "大连万达影城和平广场奥纳店"
+  },
+  {
+    "id": 1318,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "21020691",
+    "appName": "大连普兰店万达广场店"
+  },
+  {
+    "id": 1206,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "21020711",
+    "appName": "大连庄河万达广场店"
+  },
+  {
+    "id": 491,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "21020731",
+    "appName": "大连甘井子万达广场店"
+  },
+  {
+    "id": 346,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "21020771",
+    "appName": "大连万达影城金州瑞柏中心店"
+  },
+  {
+    "id": 931,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "21020891",
+    "appName": "大连万达影城泉水店"
+  },
+  {
+    "id": 1411,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "21020931",
+    "appName": "瓦房店万达影城世纪广场店"
+  },
+  {
+    "id": 129,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "21021501",
+    "appName": "大连万达影城华府店"
+  },
+  {
+    "id": 1497,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "21021601",
+    "appName": "大连万达影城华南奥纳店"
+  },
+  {
+    "id": 218,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "21024001",
+    "appName": "大连高新万达广场店"
+  },
+  {
+    "id": 988,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "21024101",
+    "appName": "大连万达影城一方广场店"
+  },
+  {
+    "id": 1886,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "21024401",
+    "appName": "大连万达影城乐都汇店"
+  },
+  {
+    "id": 2308,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "21030361",
+    "appName": "鞍山万达广场店"
+  },
+  {
+    "id": 1201,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "21040801",
+    "appName": "抚顺万达广场店"
+  },
+  {
+    "id": 242,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "21050161",
+    "appName": "本溪万达广场店"
+  },
+  {
+    "id": 650,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "21060801",
+    "appName": "丹东万达广场店"
+  },
+  {
+    "id": 319,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "21070171",
+    "appName": "锦州万达广场店"
+  },
+  {
+    "id": 959,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "21080121",
+    "appName": "营口万达广场店"
+  },
+  {
+    "id": 1281,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "21080171",
+    "appName": "营口鲅鱼圈万达广场店"
+  },
+  {
+    "id": 1288,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "21090121",
+    "appName": "阜新万达广场店"
+  },
+  {
+    "id": 1035,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "21100141",
+    "appName": "辽阳万达广场店"
+  },
+  {
+    "id": 398,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "21110141",
+    "appName": "盘锦万达广场店"
+  },
+  {
+    "id": 405,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "21130121",
+    "appName": "朝阳万达广场店"
+  },
+  {
+    "id": 226,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "22020801",
+    "appName": "吉林万达影城财富广场店"
+  },
+  {
+    "id": 1413,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "22021701",
+    "appName": "吉林万达影城欧亚广场店"
+  },
+  {
+    "id": 1290,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "22023201",
+    "appName": "吉林昌邑万达广场店"
+  },
+  {
+    "id": 4384,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "22032301",
+    "appName": "延吉万达广场店"
+  },
+  {
+    "id": 345,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "22041801",
+    "appName": "四平万达广场店"
+  },
+  {
+    "id": 299,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "22042701",
+    "appName": "四平万达影城颐高产业园店"
+  },
+  {
+    "id": 1398,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "22051201",
+    "appName": "梅河口万达影城维港城店"
+  },
+  {
+    "id": 352,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "22051601",
+    "appName": "通化万达广场店"
+  },
+  {
+    "id": 1984,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "22091601",
+    "appName": "白山万达广场店"
+  }
+]
+[
+  {
+    "id": 763,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "22110101",
+    "appName": "长春万达影城欧亚大卖场店"
+  },
+  {
+    "id": 1313,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "22110201",
+    "appName": "长春重庆路万达广场店"
+  },
+  {
+    "id": 1553,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "22110601",
+    "appName": "长春万达影城赛德广场店"
+  },
+  {
+    "id": 1055,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "22111301",
+    "appName": "长春红旗街万达广场店"
+  },
+  {
+    "id": 1479,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "22112501",
+    "appName": "长春宽城万达广场店"
+  },
+  {
+    "id": 1482,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "22113401",
+    "appName": "长春万达影城欧亚广场店"
+  },
+  {
+    "id": 125,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "22114601",
+    "appName": "长春万达影城繁荣路力旺中心店"
+  },
+  {
+    "id": 1596,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "22115801",
+    "appName": "长春车城万达广场店"
+  },
+  {
+    "id": 1213,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "22115901",
+    "appName": "长春万达影城栖乐荟广场店"
+  },
+  {
+    "id": 1875,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "22116401",
+    "appName": "长春万达影城环球店"
+  },
+  {
+    "id": 722,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "22117001",
+    "appName": "长春寰映影城摩天活力城店"
+  },
+  {
+    "id": 445,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "22117901",
+    "appName": "长春万达影城钜城华億广场店"
+  },
+  {
+    "id": 3299,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "23011011",
+    "appName": "万达影城(哈东万达IMAXGT双激光店)"
+  },
+  {
+    "id": 838,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "23011221",
+    "appName": "哈尔滨万达影城阿城店(2张票停车3H）"
+  },
+  {
+    "id": 2368,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "23011401",
+    "appName": "哈尔滨万达影城悦荟广场店"
+  },
+  {
+    "id": 2365,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "23012201",
+    "appName": "哈尔滨香坊万达广场店"
+  },
+  {
+    "id": 4386,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "23012541",
+    "appName": "哈尔滨万达文化旅游城店"
+  },
+  {
+    "id": 908,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "23012571",
+    "appName": "哈尔滨万达影城松雷广场店（赠停车2小时）"
+  },
+  {
+    "id": 2019,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "23012671",
+    "appName": "哈尔滨万达影城五常金街时代广场店"
+  },
+  {
+    "id": 1026,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "23012701",
+    "appName": "哈尔滨万达影城乐松广场店"
+  },
+  {
+    "id": 2305,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "23012931",
+    "appName": "寰映影城（万达院线旗下高端品牌店）"
+  },
+  {
+    "id": 2348,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "23014901",
+    "appName": "哈尔滨哈西万达广场店"
+  },
+  {
+    "id": 453,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "23020321",
+    "appName": "齐齐哈尔万达广场店"
+  },
+  {
+    "id": 1358,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "23032001",
+    "appName": "牡丹江万达广场店"
+  },
+  {
+    "id": 1155,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "23040311",
+    "appName": "佳木斯万达广场店"
+  },
+  {
+    "id": 895,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "23050888",
+    "appName": "大庆让胡路万达广场店"
+  },
+  {
+    "id": 501,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "23050901",
+    "appName": "大庆萨尔图万达广场店"
+  },
+  {
+    "id": 247,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "23069951",
+    "appName": "鸡西万达广场店"
+  },
+  {
+    "id": 1911,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "23122118",
+    "appName": "绥化万达广场店"
+  },
+  {
+    "id": 103,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "31032301",
+    "appName": "上海寰映影城大融城店"
+  },
+  {
+    "id": 223,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "31038601",
+    "appName": "上海寰映影城大宁久光店"
+  },
+  {
+    "id": 97,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "31062301",
+    "appName": "上海寰映影城太阳宫店"
+  },
+  {
+    "id": 116,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "31082101",
+    "appName": "上海万达影城虹桥店"
+  },
+  {
+    "id": 14,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "31082601",
+    "appName": "上海万达影城金虹桥店"
+  },
+  {
+    "id": 4291,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "31083201",
+    "appName": "上海寰映影城荟聚店"
+  },
+  {
+    "id": 114,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "31090701",
+    "appName": "上海五角场万达广场店"
+  },
+  {
+    "id": 741,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "31114601",
+    "appName": "上海万达影城颛桥龙盛广场店"
+  },
+  {
+    "id": 271,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "31116401",
+    "appName": "上海闵行颛桥万达广场店"
+  },
+  {
+    "id": 196,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "31117801",
+    "appName": "上海浦江万达广场店"
+  },
+  {
+    "id": 366,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "31117901",
+    "appName": "上海马桥万达广场店"
+  }
+]
+[
+  {
+    "id": 304,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "31132901",
+    "appName": "上海周浦万达广场店"
+  },
+  {
+    "id": 105,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "31137001",
+    "appName": "上海临港万达广场店"
+  },
+  {
+    "id": 168,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "31137301",
+    "appName": "上海万达影城天和广场店"
+  },
+  {
+    "id": 156,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "31143101",
+    "appName": "上海万达影城奉贤蓝湾店"
+  },
+  {
+    "id": 108,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "31152501",
+    "appName": "上海金山万达广场店"
+  },
+  {
+    "id": 73,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "31164101",
+    "appName": "上海松江万达广场店"
+  },
+  {
+    "id": 355,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "31174101",
+    "appName": "上海青浦万达茂店"
+  },
+  {
+    "id": 280,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "31182001",
+    "appName": "上海江桥万达广场店"
+  },
+  {
+    "id": 184,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "31184401",
+    "appName": "上海中信泰富万达广场店"
+  },
+  {
+    "id": 26,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "31193601",
+    "appName": "上海宝山万达广场店"
+  },
+  {
+    "id": 2301,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "31195101",
+    "appName": "上海万达影城宝乐汇店"
+  },
+  {
+    "id": 388,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "31200101",
+    "appName": "上海崇明万达广场店"
+  },
+  {
+    "id": 2314,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32011801",
+    "appName": "南京万达影城新街口印象汇店"
+  },
+  {
+    "id": 375,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32012001",
+    "appName": "南京建邺万达广场店"
+  },
+  {
+    "id": 135,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32015501",
+    "appName": "南京江宁万达广场店"
+  },
+  {
+    "id": 2322,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32019011",
+    "appName": "南京万达影城江宁太阳城店"
+  },
+  {
+    "id": 759,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32019271",
+    "appName": "南京仙林万达茂店"
+  },
+  {
+    "id": 877,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32019321",
+    "appName": "南京溧水万达广场店"
+  },
+  {
+    "id": 2319,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32019331",
+    "appName": "南京万达影城六合欢乐港店"
+  },
+  {
+    "id": 2341,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32019461",
+    "appName": "南京万达影城浦口白马店"
+  },
+  {
+    "id": 1613,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32020311",
+    "appName": "苏州万达影城花园里广场店"
+  },
+  {
+    "id": 1346,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32020911",
+    "appName": "苏州万达影城美京广场店"
+  },
+  {
+    "id": 1948,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32021211",
+    "appName": "昆山经开万达广场店"
+  },
+  {
+    "id": 158,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32021801",
+    "appName": "苏州平江万达广场店"
+  },
+  {
+    "id": 943,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32023111",
+    "appName": "苏州万达影城邻瑞广场店"
+  },
+  {
+    "id": 1269,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32023301",
+    "appName": "苏州万达影城世茂广场店"
+  },
+  {
+    "id": 1137,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32023501",
+    "appName": "昆山万达影城世茂广场店"
+  },
+  {
+    "id": 1960,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32023801",
+    "appName": "苏州万达影城SM广场店"
+  },
+  {
+    "id": 181,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32024601",
+    "appName": "太仓万达广场店"
+  },
+  {
+    "id": 567,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32029051",
+    "appName": "苏州吴中万达广场店"
+  },
+  {
+    "id": 118,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32029501",
+    "appName": "常熟万达广场店"
+  },
+  {
+    "id": 594,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32029511",
+    "appName": "昆山万达广场店"
+  },
+  {
+    "id": 308,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32029821",
+    "appName": "张家港万达广场店"
+  },
+  {
+    "id": 1025,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32029831",
+    "appName": "苏州万达影城奥体中心店"
+  },
+  {
+    "id": 879,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32029901",
+    "appName": "苏州万达影城新湖广场店"
+  },
+  {
+    "id": 2352,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32029911",
+    "appName": "苏州万达影城复悦城店"
+  },
+  {
+    "id": 95,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32032701",
+    "appName": "无锡滨湖万达广场店"
+  },
+  {
+    "id": 110,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32033801",
+    "appName": "江阴万达广场店"
+  },
+  {
+    "id": 89,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32033901",
+    "appName": "无锡万达影城哥伦布广场店"
+  },
+  {
+    "id": 295,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32034301",
+    "appName": "宜兴万达广场店"
+  }
+]
+[
+  {
+    "id": 194,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32034501",
+    "appName": "无锡惠山万达广场店"
+  },
+  {
+    "id": 1587,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32036211",
+    "appName": "江阴万达影城五洲广场店"
+  },
+  {
+    "id": 635,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32039391",
+    "appName": "无锡万达影城融创茂店"
+  },
+  {
+    "id": 330,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32039511",
+    "appName": "无锡新吴万达广场店"
+  },
+  {
+    "id": 645,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32039521",
+    "appName": "江阴寰映影城八佰伴店"
+  },
+  {
+    "id": 548,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32041801",
+    "appName": "常州新北万达广场店"
+  },
+  {
+    "id": 190,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32043511",
+    "appName": "常州武进万达广场店"
+  },
+  {
+    "id": 556,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32045911",
+    "appName": "常州溧阳万达广场店"
+  },
+  {
+    "id": 1819,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32046111",
+    "appName": "常州万达影城弘阳广场店"
+  },
+  {
+    "id": 2360,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32047231",
+    "appName": "常州万达影城金坛新天地广场店"
+  },
+  {
+    "id": 2340,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32051801",
+    "appName": "镇江万达广场店"
+  },
+  {
+    "id": 2351,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32055751",
+    "appName": "镇江万达影城美的广场店"
+  },
+  {
+    "id": 2337,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32064511",
+    "appName": "扬州邗江万达广场店"
+  },
+  {
+    "id": 2327,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32067081",
+    "appName": "扬州邗江蜀冈万达广场店"
+  },
+  {
+    "id": 2328,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32072001",
+    "appName": "徐州云龙万达广场店"
+  },
+  {
+    "id": 2318,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32073811",
+    "appName": "徐州铜山万达广场店"
+  },
+  {
+    "id": 2369,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32076281",
+    "appName": "徐州睢宁万达广场店"
+  },
+  {
+    "id": 1328,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32076371",
+    "appName": "徐州贾汪万达广场店"
+  },
+  {
+    "id": 2320,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32084711",
+    "appName": "盐城万达广场店"
+  },
+  {
+    "id": 2304,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32090701",
+    "appName": "淮安万达广场店（IMAX激光）"
+  },
+  {
+    "id": 4388,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32092411",
+    "appName": "淮安万达影城九升购物中心店"
+  },
+  {
+    "id": 2363,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32093511",
+    "appName": "淮安万达影城玖珑汇广场店"
+  },
+  {
+    "id": 2362,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32094611",
+    "appName": "淮安楚州万达广场店"
+  },
+  {
+    "id": 1311,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32104011",
+    "appName": "南通万达影城世茂广场店"
+  },
+  {
+    "id": 2302,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32104211",
+    "appName": "南通万达影城星光耀广场店"
+  },
+  {
+    "id": 2343,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32105211",
+    "appName": "南通港闸万达广场店"
+  },
+  {
+    "id": 2317,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32109031",
+    "appName": "南通通州万达广场店"
+  },
+  {
+    "id": 2438,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32109401",
+    "appName": "南通海安万达广场店"
+  },
+  {
+    "id": 2312,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32111911",
+    "appName": "连云港万达广场店"
+  },
+  {
+    "id": 4391,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32113721",
+    "appName": "连云港灌云万达广场店"
+  },
+  {
+    "id": 2346,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32122911",
+    "appName": "宿迁万达广场店"
+  },
+  {
+    "id": 2355,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32123231",
+    "appName": "宿迁沭阳万达广场店"
+  },
+  {
+    "id": 2353,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32131301",
+    "appName": "泰州万达广场店"
+  },
+  {
+    "id": 2367,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32135511",
+    "appName": "泰州泰兴万达广场店"
+  },
+  {
+    "id": 2342,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "32136871",
+    "appName": "泰州寰映影城中骏世界城店"
+  },
+  {
+    "id": 1453,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33015601",
+    "appName": "杭州万达影城钱江新城店"
+  },
+  {
+    "id": 1120,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33017741",
+    "appName": "杭州万达影城崇贤上亿店"
+  },
+  {
+    "id": 148,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33017931",
+    "appName": "杭州余杭万达广场店"
+  },
+  {
+    "id": 283,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33018001",
+    "appName": "杭州拱墅万达广场店"
+  },
+  {
+    "id": 246,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33018101",
+    "appName": "杭州万达影城水晶城店"
+  }
+]
+[
+  {
+    "id": 64,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33018991",
+    "appName": "杭州富阳万达广场店"
+  },
+  {
+    "id": 1544,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33019341",
+    "appName": "杭州万达影城上亿奥特莱斯店"
+  },
+  {
+    "id": 1988,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33022211",
+    "appName": "湖州万达影城长兴利时广场店"
+  },
+  {
+    "id": 622,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33023301",
+    "appName": "湖州万达广场店"
+  },
+  {
+    "id": 2326,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33033601",
+    "appName": "嘉兴万达广场店"
+  },
+  {
+    "id": 1858,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33036301",
+    "appName": "嘉兴龙鼎万达广场店"
+  },
+  {
+    "id": 359,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33041401",
+    "appName": "宁波鄞州万达广场店"
+  },
+  {
+    "id": 1668,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33041451",
+    "appName": "宁波象山万达广场店"
+  },
+  {
+    "id": 627,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33041511",
+    "appName": "宁波寰映影城阪急店"
+  },
+  {
+    "id": 527,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33042101",
+    "appName": "宁波江北万达广场店"
+  },
+  {
+    "id": 50,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33045001",
+    "appName": "余姚万达广场店"
+  },
+  {
+    "id": 1302,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33046011",
+    "appName": "宁波奉化万达广场店"
+  },
+  {
+    "id": 1171,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33051001",
+    "appName": "绍兴万达影城世茂广场店"
+  },
+  {
+    "id": 179,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33052001",
+    "appName": "绍兴柯桥万达广场店"
+  },
+  {
+    "id": 1890,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33052801",
+    "appName": "绍兴万达影城柯桥厚品店"
+  },
+  {
+    "id": 1625,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33054101",
+    "appName": "绍兴上虞万达广场店"
+  },
+  {
+    "id": 1999,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33055901",
+    "appName": "诸暨万达广场店"
+  },
+  {
+    "id": 857,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33059501",
+    "appName": "绍兴寰映影城大悦城店"
+  },
+  {
+    "id": 1097,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33065101",
+    "appName": "台州万达广场店"
+  },
+  {
+    "id": 1835,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33068401",
+    "appName": "台州万达影城中盛广场店"
+  },
+  {
+    "id": 1362,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33069001",
+    "appName": "台州万达影城路桥吾悦广场店"
+  },
+  {
+    "id": 870,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33073201",
+    "appName": "温州龙湾万达广场店"
+  },
+  {
+    "id": 459,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33074831",
+    "appName": "温州万达影城柳市现代广场店"
+  },
+  {
+    "id": 1142,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33074901",
+    "appName": "温州平阳万达广场店"
+  },
+  {
+    "id": 1555,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33082111",
+    "appName": "丽水龙泉万达广场店"
+  },
+  {
+    "id": 933,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33093401",
+    "appName": "金华万达广场店"
+  },
+  {
+    "id": 770,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33094211",
+    "appName": "金华永康万达广场店"
+  },
+  {
+    "id": 1478,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33095301",
+    "appName": "义乌万达广场店"
+  },
+  {
+    "id": 749,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "33112501",
+    "appName": "衢州柯城万达广场店"
+  },
+  {
+    "id": 621,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "34010041",
+    "appName": "合肥万达影城万科广场店"
+  },
+  {
+    "id": 257,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "34010140",
+    "appName": "合肥北城万达广场店"
+  },
+  {
+    "id": 2306,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "34010911",
+    "appName": "合肥万达影城弘盛广场店"
+  },
+  {
+    "id": 41,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "34011301",
+    "appName": "合肥包河万达广场店"
+  },
+  {
+    "id": 774,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "34012601",
+    "appName": "合肥天鹅湖万达广场店"
+  },
+  {
+    "id": 341,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "34013001",
+    "appName": "合肥万达影城之心城光魔店"
+  },
+  {
+    "id": 206,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "34016601",
+    "appName": "合肥瑶海万达广场店"
+  },
+  {
+    "id": 2303,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "34016801",
+    "appName": "合肥万达影城文化旅游城店"
+  },
+  {
+    "id": 121,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "34018601",
+    "appName": "合肥万达影城宝利丰广场店"
+  },
+  {
+    "id": 1263,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "34018801",
+    "appName": "合肥万达影城禹洲中央广场店"
+  },
+  {
+    "id": 222,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "34019701",
+    "appName": "巢湖万达广场店"
+  }
+]
+[
+  {
+    "id": 160,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "34021001",
+    "appName": "芜湖镜湖万达广场店"
+  },
+  {
+    "id": 2334,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "34030801",
+    "appName": "蚌埠万达广场店"
+  },
+  {
+    "id": 2026,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "34033201",
+    "appName": "蚌埠淮上万达广场店"
+  },
+  {
+    "id": 233,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "34041501",
+    "appName": "淮南万达广场店"
+  },
+  {
+    "id": 2358,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "34051501",
+    "appName": "马鞍山万达广场店"
+  },
+  {
+    "id": 1381,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "34063101",
+    "appName": "滁州万达广场店"
+  },
+  {
+    "id": 368,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "34091601",
+    "appName": "宿州万达广场店"
+  },
+  {
+    "id": 1388,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "34092801",
+    "appName": "宿州CBD万达广场店"
+  },
+  {
+    "id": 1850,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "34093301",
+    "appName": "宿州砀山万达广场店"
+  },
+  {
+    "id": 1204,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "34101501",
+    "appName": "阜阳颍州万达广场店"
+  },
+  {
+    "id": 910,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "34102501",
+    "appName": "阜阳颍泉万达广场店"
+  },
+  {
+    "id": 593,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "34121001",
+    "appName": "淮北万达广场店"
+  },
+  {
+    "id": 209,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "34132401",
+    "appName": "六安万达广场店"
+  },
+  {
+    "id": 601,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "34133401",
+    "appName": "六安舒城万达广场店"
+  },
+  {
+    "id": 1243,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "34141901",
+    "appName": "宣城宣州万达广场店"
+  },
+  {
+    "id": 961,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "34151201",
+    "appName": "亳州万达广场店"
+  },
+  {
+    "id": 2005,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "34151901",
+    "appName": "亳州谯城万达广场店"
+  },
+  {
+    "id": 1941,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "34152301",
+    "appName": "亳州蒙城万达广场店"
+  },
+  {
+    "id": 1958,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "34152701",
+    "appName": "亳州利辛万达广场店"
+  },
+  {
+    "id": 1933,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35010581",
+    "appName": "福州寰映影城融侨店"
+  },
+  {
+    "id": 1121,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35010681",
+    "appName": "福州万达影城祥禾天地店"
+  },
+  {
+    "id": 1188,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35010691",
+    "appName": "福州万达影城集祥天地店"
+  },
+  {
+    "id": 220,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35011702",
+    "appName": "福州金融街万达广场店"
+  },
+  {
+    "id": 395,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35012201",
+    "appName": "福州仓山万达广场店"
+  },
+  {
+    "id": 17,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35013871",
+    "appName": "福清万达广场店"
+  },
+  {
+    "id": 1825,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35013901",
+    "appName": "福清福和万达广场店"
+  },
+  {
+    "id": 12,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35021401",
+    "appName": "厦门万达影城SM广场店"
+  },
+  {
+    "id": 23,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35022301",
+    "appName": "厦门湖里万达广场店"
+  },
+  {
+    "id": 332,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35023001",
+    "appName": "厦门集美万达广场店"
+  },
+  {
+    "id": 2349,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35023911",
+    "appName": "厦门寰映影城美岁城店"
+  },
+  {
+    "id": 827,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35024101",
+    "appName": "厦门寰映影城棕榈城店"
+  },
+  {
+    "id": 228,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35024111",
+    "appName": "厦门灌口万达广场店"
+  },
+  {
+    "id": 214,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35024151",
+    "appName": "厦门寰映影城海上世界店"
+  },
+  {
+    "id": 238,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35024171",
+    "appName": "厦门鹭港广场店"
+  },
+  {
+    "id": 779,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35024591",
+    "appName": "厦门万达影城世茂海峡广场店"
+  },
+  {
+    "id": 44,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35024871",
+    "appName": "厦门杏林万达广场店"
+  },
+  {
+    "id": 4372,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35024901",
+    "appName": "厦门寰映影城集美银泰店"
+  },
+  {
+    "id": 990,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35031301",
+    "appName": "宁德万达广场店"
+  },
+  {
+    "id": 686,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35040601",
+    "appName": "莆田万达广场店"
+  },
+  {
+    "id": 560,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35043991",
+    "appName": "莆田万达影城涵江水韵城店"
+  }
+]
+[
+  {
+    "id": 631,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35044009",
+    "appName": "莆田秀屿万达广场店"
+  },
+  {
+    "id": 1348,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35050801",
+    "appName": "晋江万达影城SM广场店"
+  },
+  {
+    "id": 2310,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35051901",
+    "appName": "泉州万达广场店"
+  },
+  {
+    "id": 400,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35052001",
+    "appName": "晋江万达广场激光IMAX店"
+  },
+  {
+    "id": 972,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35054031",
+    "appName": "泉州万达影城开元盛世广场店"
+  },
+  {
+    "id": 744,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35054091",
+    "appName": "泉州万达影城新天城市广场店"
+  },
+  {
+    "id": 512,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35054181",
+    "appName": "泉州万达影城万科里店"
+  },
+  {
+    "id": 1282,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35054191",
+    "appName": "泉州城东万达广场店"
+  },
+  {
+    "id": 811,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35054201",
+    "appName": "泉州万达影城南安中骏世界城店"
+  },
+  {
+    "id": 1530,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35054231",
+    "appName": "泉州安溪万达广场店"
+  },
+  {
+    "id": 2414,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35054301",
+    "appName": "泉州万达影城安溪润丰广场店"
+  },
+  {
+    "id": 3297,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35054351",
+    "appName": "泉州万达影城石狮泰禾广场店（特许）"
+  },
+  {
+    "id": 525,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35054361",
+    "appName": "泉州万达影城永春中闽百汇店"
+  },
+  {
+    "id": 605,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35054431",
+    "appName": "泉州德化万达广场店"
+  },
+  {
+    "id": 1485,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35054631",
+    "appName": "石狮万达影城世茂广场店"
+  },
+  {
+    "id": 913,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35054791",
+    "appName": "惠安万达影城禹州广场店"
+  },
+  {
+    "id": 1115,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35061201",
+    "appName": "漳州万达广场店"
+  },
+  {
+    "id": 587,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35064801",
+    "appName": "漳州台商区万达广场店"
+  },
+  {
+    "id": 1558,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35071501",
+    "appName": "龙岩万达影城万阳城厚品店"
+  },
+  {
+    "id": 1041,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35073841",
+    "appName": "龙岩万达广场店"
+  },
+  {
+    "id": 1370,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35073910",
+    "appName": "龙岩上杭万达广场店"
+  },
+  {
+    "id": 1092,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35084761",
+    "appName": "三明万达广场店"
+  },
+  {
+    "id": 1576,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "35093841",
+    "appName": "南平万达广场店"
+  },
+  {
+    "id": 31,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "36011001",
+    "appName": "南昌红谷滩万达广场店"
+  },
+  {
+    "id": 1332,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "36012501",
+    "appName": "南昌万达影城世茂广场店"
+  },
+  {
+    "id": 608,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "36013021",
+    "appName": "南昌新建城万达广场店"
+  },
+  {
+    "id": 2325,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "36015201",
+    "appName": "南昌万达文化旅游城店"
+  },
+  {
+    "id": 728,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "36016401",
+    "appName": "南昌西湖万达广场店"
+  },
+  {
+    "id": 673,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "36017901",
+    "appName": "南昌青山湖万达广场店"
+  },
+  {
+    "id": 872,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "36043601",
+    "appName": "九江万达影城十里老街店"
+  },
+  {
+    "id": 240,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "36044801",
+    "appName": "九江万达广场店"
+  },
+  {
+    "id": 1111,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "36072021",
+    "appName": "赣州于都万达广场店"
+  },
+  {
+    "id": 1084,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "36072071",
+    "appName": "赣州经开万达广场店"
+  },
+  {
+    "id": 677,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "36075701",
+    "appName": "赣州巨亿万达广场店"
+  },
+  {
+    "id": 796,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "36090381",
+    "appName": "宜春万达广场店"
+  },
+  {
+    "id": 1897,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "36096301",
+    "appName": "宜春丰城万达广场店"
+  },
+  {
+    "id": 761,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "36100261",
+    "appName": "抚州万达广场店"
+  },
+  {
+    "id": 329,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "36114101",
+    "appName": "上饶万达广场店"
+  },
+  {
+    "id": 1250,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "36120011",
+    "appName": "南昌八一万达广场店"
+  },
+  {
+    "id": 291,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37021801",
+    "appName": "济南魏家庄万达广场店"
+  }
+]
+[
+  {
+    "id": 611,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37023201",
+    "appName": "济南万达影城世茂广场店"
+  },
+  {
+    "id": 891,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37027161",
+    "appName": "济南高新万达广场店"
+  },
+  {
+    "id": 1165,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37027521",
+    "appName": "济南万达影城融创茂店"
+  },
+  {
+    "id": 499,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37033201",
+    "appName": "青岛台东路万达广场店"
+  },
+  {
+    "id": 767,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37033801",
+    "appName": "青岛CBD万达广场店"
+  },
+  {
+    "id": 53,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37035901",
+    "appName": "青岛李沧万达广场店"
+  },
+  {
+    "id": 4387,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37037281",
+    "appName": "青岛港湾万达广场店"
+  },
+  {
+    "id": 2359,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37037371",
+    "appName": "青岛东方影都万达茂店"
+  },
+  {
+    "id": 447,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37037521",
+    "appName": "青岛城阳万达广场店"
+  },
+  {
+    "id": 1327,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37037641",
+    "appName": "青岛万达影城世茂店"
+  },
+  {
+    "id": 752,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37037781",
+    "appName": "青岛西海岸万达广场店"
+  },
+  {
+    "id": 1403,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37047041",
+    "appName": "淄博万达影城茂业广场店"
+  },
+  {
+    "id": 659,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37057041",
+    "appName": "烟台芝罘万达广场店"
+  },
+  {
+    "id": 825,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37057101",
+    "appName": "烟台开发区万达广场店"
+  },
+  {
+    "id": 1853,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37057331",
+    "appName": "烟台万达影城牟平丰金广场店"
+  },
+  {
+    "id": 138,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37064501",
+    "appName": "潍坊万达广场店"
+  },
+  {
+    "id": 232,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37067251",
+    "appName": "潍坊寿光万达广场店"
+  },
+  {
+    "id": 850,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37077001",
+    "appName": "济宁太白路万达广场店"
+  },
+  {
+    "id": 1566,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37087411",
+    "appName": "临沂兰山万达广场店"
+  },
+  {
+    "id": 1359,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37087461",
+    "appName": "临沂滨河万达广场店"
+  },
+  {
+    "id": 1935,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37087511",
+    "appName": "临沂金雀山万达广场店"
+  },
+  {
+    "id": 1557,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37097071",
+    "appName": "枣庄万达广场店"
+  },
+  {
+    "id": 1919,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37097161",
+    "appName": "滕州万达广场店"
+  },
+  {
+    "id": 4383,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37107011",
+    "appName": "泰安万达广场店"
+  },
+  {
+    "id": 49,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37112201",
+    "appName": "威海万达影城九龙广场店"
+  },
+  {
+    "id": 384,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37117211",
+    "appName": "威海万达影城荣成九龙城店"
+  },
+  {
+    "id": 1393,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37117251",
+    "appName": "威海环翠万达广场店"
+  },
+  {
+    "id": 2331,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37127071",
+    "appName": "东营万达广场店"
+  },
+  {
+    "id": 2361,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37127121",
+    "appName": "东营东城万达广场店"
+  },
+  {
+    "id": 173,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37131801",
+    "appName": "德州万达影城新天地广场店"
+  },
+  {
+    "id": 533,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37137041",
+    "appName": "德州万达广场店"
+  },
+  {
+    "id": 360,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37137201",
+    "appName": "德州齐河万达广场店"
+  },
+  {
+    "id": 1859,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37147171",
+    "appName": "菏泽万达广场店"
+  },
+  {
+    "id": 458,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37157071",
+    "appName": "滨州万达广场店"
+  },
+  {
+    "id": 1147,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37167091",
+    "appName": "日照万达广场店"
+  },
+  {
+    "id": 1928,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37177011",
+    "appName": "莱芜万达影城茂业广场店"
+  },
+  {
+    "id": 835,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "37187251",
+    "appName": "聊城万达广场店"
+  },
+  {
+    "id": 1036,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "41011381",
+    "appName": "万达影城（公园茂CINITY店）"
+  },
+  {
+    "id": 683,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "41011621",
+    "appName": "万达影城（濮阳万达广场PRIME店）"
+  },
+  {
+    "id": 1821,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "41011821",
+    "appName": "万达影城（高新万达广场PRIME店）"
+  }
+]
+[
+  {
+    "id": 1008,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "41012601",
+    "appName": "万达影城（中原万达广场IMAX激光店）"
+  },
+  {
+    "id": 423,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "41013501",
+    "appName": "万达影城（二七万达广场IMAX激光店）"
+  },
+  {
+    "id": 615,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "41017801",
+    "appName": "万达影城（惠济万达广场IMAX店）"
+  },
+  {
+    "id": 664,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "41023101",
+    "appName": "万达影城（开封万达广场IMAX店）"
+  },
+  {
+    "id": 917,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "41030701",
+    "appName": "万达影城（洛阳万达广场IMAX激光店）"
+  },
+  {
+    "id": 170,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "41032701",
+    "appName": "万达影城（泉舜广场PRIME店）"
+  },
+  {
+    "id": 1402,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "41036401",
+    "appName": "万达影城（洛阳偃师万达广场店）"
+  },
+  {
+    "id": 1512,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "41043601",
+    "appName": "万达影城（平顶山万达广场IMAX店）"
+  },
+  {
+    "id": 1079,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "41044401",
+    "appName": "万达影城（平顶山中骏世界城店）"
+  },
+  {
+    "id": 692,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "41052401",
+    "appName": "万达影城（安阳万达广场IMAX店）"
+  },
+  {
+    "id": 137,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "41062001",
+    "appName": "万达影城（鹤壁万达广场IMAX店）"
+  },
+  {
+    "id": 679,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "41074101",
+    "appName": "万达影城（新乡万达广场IMAX店）"
+  },
+  {
+    "id": 562,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "41083001",
+    "appName": "万达影城（焦作万达广场IMAX店）"
+  },
+  {
+    "id": 1304,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "41102401",
+    "appName": "万达影城（许昌万达广场PRIME店）"
+  },
+  {
+    "id": 3309,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "41113201",
+    "appName": "临颍万达影城金佰汇时代广场店"
+  },
+  {
+    "id": 976,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "41121601",
+    "appName": "万达影城（三门峡万达广场IMAX店）"
+  },
+  {
+    "id": 806,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "41134201",
+    "appName": "万达影城（南阳中泰广场IMAX店）"
+  },
+  {
+    "id": 598,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "41143901",
+    "appName": "万达影城（商丘睢阳万达广场IMAX店）"
+  },
+  {
+    "id": 1095,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "41145001",
+    "appName": "万达影城（商丘港汇万达CINITY店）"
+  },
+  {
+    "id": 1998,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "41163701",
+    "appName": "万达影城（周口泰和城PRIME店）"
+  },
+  {
+    "id": 2032,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "41164301",
+    "appName": "万达影城（鹿邑万顺达PRIME店）"
+  },
+  {
+    "id": 999,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "41164701",
+    "appName": "万达影城（开元万达广场PRIME店）"
+  },
+  {
+    "id": 411,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "42017781",
+    "appName": "万达影城（汉阳万达广场PRIME店）"
+  },
+  {
+    "id": 1546,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "42017791",
+    "appName": "万达影城（阳逻万达广场IMAX店）"
+  },
+  {
+    "id": 2110,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "42017801",
+    "appName": "万达影城（群星城CINITY LED店）"
+  },
+  {
+    "id": 2103,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "42017901",
+    "appName": "万达影城（东西湖中心广场XLAND店）"
+  },
+  {
+    "id": 2050,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "42018011",
+    "appName": "寰映影城（国金天地CINITY店）"
+  },
+  {
+    "id": 2111,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "42018231",
+    "appName": "万达影城（汉街万达广场IMAX激光店）"
+  },
+  {
+    "id": 2071,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "42018801",
+    "appName": "万达影城（江夏MALL-XLAND店）"
+  },
+  {
+    "id": 1906,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "42019871",
+    "appName": "万达影城（金银湖万达广场IMAX店）"
+  },
+  {
+    "id": 2072,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "42021801",
+    "appName": "万达影城（黄石港万达广场IMAX店）"
+  },
+  {
+    "id": 2109,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "42023001",
+    "appName": "万达影城（黄石团城山CINITY店）"
+  },
+  {
+    "id": 2079,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "42031901",
+    "appName": "万达影城（荆州万达广场IMAX店）"
+  },
+  {
+    "id": 2077,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "42032001",
+    "appName": "万达影城（人信汇广场XLAND店）"
+  },
+  {
+    "id": 1912,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "42040801",
+    "appName": "万达影城（钟祥中百购物中心店）"
+  },
+  {
+    "id": 2065,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "42041401",
+    "appName": "万达影城（荆门万达广场IMAX店）"
+  },
+  {
+    "id": 2067,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "42051501",
+    "appName": "万达影城（伍家岗万达广场IMAX店）"
+  },
+  {
+    "id": 2087,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "42054401",
+    "appName": "万达影城（夷陵万达广场IMAX店）"
+  },
+  {
+    "id": 2478,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "42055001",
+    "appName": "宜昌宜都万达广场店"
+  },
+  {
+    "id": 2048,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "42062701",
+    "appName": "万达影城（麻城摩尔城XLAND店）"
+  }
+]
+[
+  {
+    "id": 2068,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "42063301",
+    "appName": "万达影城（黄冈万达广场IMAX店）"
+  },
+  {
+    "id": 2093,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "42063701",
+    "appName": "万达影城（武穴万达广场PRIME店）"
+  },
+  {
+    "id": 2100,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "42073401",
+    "appName": "万达影城（孝感万达广场PRIME店）"
+  },
+  {
+    "id": 1059,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "42083401",
+    "appName": "万达影城（咸宁万达广场RRIME店）"
+  },
+  {
+    "id": 2082,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "42092701",
+    "appName": "万达影城（十堰万达广场IMAX店）"
+  },
+  {
+    "id": 2106,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "42101001",
+    "appName": "万达影城（襄阳万达广场IMAX激光店）"
+  },
+  {
+    "id": 1569,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "42122701",
+    "appName": "万达影城（天门万达广场PRIME店）"
+  },
+  {
+    "id": 2108,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "42151501",
+    "appName": "万达影城（随州万达广场CINITY店）"
+  },
+  {
+    "id": 2049,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "42170101",
+    "appName": "万达影城（江汉路PRIME激光店）"
+  },
+  {
+    "id": 2094,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "42170501",
+    "appName": "万达影城（菱角湖万达广场IMAX店）"
+  },
+  {
+    "id": 2116,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "42171201",
+    "appName": "万达影城（汉阳汉商银座4DX店）"
+  },
+  {
+    "id": 2096,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "42171401",
+    "appName": "万达影城（经开万达广场IMAX激光店）"
+  },
+  {
+    "id": 1337,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "43010411",
+    "appName": "万达影城（浏阳北正西广场XLAND店）"
+  },
+  {
+    "id": 1231,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "43012501",
+    "appName": "万达影城（步步高广场XLAND店）"
+  },
+  {
+    "id": 867,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "43013411",
+    "appName": "万达影城（中茂城IMAX店）"
+  },
+  {
+    "id": 2086,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "43013701",
+    "appName": "万达影城（开福万达广场IMAX店）"
+  },
+  {
+    "id": 2091,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "43017311",
+    "appName": "寰映影城（荟聚IMAX激光店）"
+  },
+  {
+    "id": 2088,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "43017801",
+    "appName": "万达影城（梅溪湖步步高IMAX店）"
+  },
+  {
+    "id": 1677,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "43018501",
+    "appName": "万达影城（华创广场CINITY店）"
+  },
+  {
+    "id": 836,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "43019001",
+    "appName": "万达影城（中海环宇城店）"
+  },
+  {
+    "id": 2114,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "43023301",
+    "appName": "万达影城（株洲云龙万达广场PRIME店）"
+  },
+  {
+    "id": 1973,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "43031301",
+    "appName": "万达影城（湘潭易俗河同丰广场店）"
+  },
+  {
+    "id": 2080,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "43032201",
+    "appName": "万达影城（湘潭万达广场IMAX店）"
+  },
+  {
+    "id": 2073,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "43043201",
+    "appName": "万达影城（衡阳万达广场IMAX店）"
+  },
+  {
+    "id": 2112,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "43044901",
+    "appName": "万达影城（衡阳酃湖万达广场PRIME店）"
+  },
+  {
+    "id": 1983,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "43052901",
+    "appName": "万达影城（邵阳大汉悦IMAX店）"
+  },
+  {
+    "id": 2090,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "43060701",
+    "appName": "万达影城（岳阳步步高广场店）"
+  },
+  {
+    "id": 2069,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "43072501",
+    "appName": "万达影城（益阳万达广场IMAX店）"
+  },
+  {
+    "id": 2152,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "43080202",
+    "appName": "万达影城（解放路IMAX激光店）"
+  },
+  {
+    "id": 2081,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "43083401",
+    "appName": "万达影城（常德欢乐城XLAND店）"
+  },
+  {
+    "id": 2084,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "43083501",
+    "appName": "万达影城（常德万达广场IMAX店）"
+  },
+  {
+    "id": 1561,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "43085301",
+    "appName": "万达影城（汉寿万达广场PRIME店）"
+  },
+  {
+    "id": 2101,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "43092201",
+    "appName": "万达影城（娄底五江广场XLAND店）"
+  },
+  {
+    "id": 736,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "43101401",
+    "appName": "万达影城（郴州生源广场IMAX店）"
+  },
+  {
+    "id": 310,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "43114001",
+    "appName": "万达影城（永州万达广场CINITY店）"
+  },
+  {
+    "id": 2104,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "43123201",
+    "appName": "万达影城（怀化万达广场CINITY店）"
+  },
+  {
+    "id": 25,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44001031",
+    "appName": "广州番禺万达广场店"
+  },
+  {
+    "id": 207,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44001151",
+    "appName": "广州萝岗万达广场店"
+  },
+  {
+    "id": 651,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44001241",
+    "appName": "广州南沙万达广场店"
+  },
+  {
+    "id": 1082,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44001421",
+    "appName": "广州万达影城海珠佳永广场店"
+  }
+]
+[
+  {
+    "id": 79,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44001541",
+    "appName": "广州万达影城万胜围店"
+  },
+  {
+    "id": 1113,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44001791",
+    "appName": "广州万达影城永和里享家店"
+  },
+  {
+    "id": 392,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44001831",
+    "appName": "广州万达影城亚运城广场店"
+  },
+  {
+    "id": 858,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44002071",
+    "appName": "广州新塘万达广场店"
+  },
+  {
+    "id": 1508,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44002251",
+    "appName": "广州万达影城天河智慧城广百广场店"
+  },
+  {
+    "id": 127,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44002381",
+    "appName": "广州万达影城花都融创茂店"
+  },
+  {
+    "id": 1017,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44002561",
+    "appName": "广州万达影城番禺奥园广场店"
+  },
+  {
+    "id": 13,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44002621",
+    "appName": "广州海珠万达广场店"
+  },
+  {
+    "id": 715,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44002831",
+    "appName": "广州南岗万达广场店"
+  },
+  {
+    "id": 153,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44003081",
+    "appName": "广州寰映影城天河环贸店"
+  },
+  {
+    "id": 1574,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44003111",
+    "appName": "广州寰映影城金茂广场店"
+  },
+  {
+    "id": 460,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44003151",
+    "appName": "广州寰时影城白云时光汇广场店"
+  },
+  {
+    "id": 202,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44006401",
+    "appName": "广州白云万达广场店"
+  },
+  {
+    "id": 1103,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44010026",
+    "appName": "深圳光明万达广场店"
+  },
+  {
+    "id": 276,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44010028",
+    "appName": "深圳寰映影城福田中洲湾店"
+  },
+  {
+    "id": 580,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44010051",
+    "appName": "深圳寰映影城深圳湾睿印店"
+  },
+  {
+    "id": 2329,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44011181",
+    "appName": "深圳万达影城龙华汇海广场店"
+  },
+  {
+    "id": 1065,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44012331",
+    "appName": "深圳万达影城坂田雅园店"
+  },
+  {
+    "id": 1548,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44013031",
+    "appName": "深圳万达影城盐田壹海城店"
+  },
+  {
+    "id": 1156,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44013371",
+    "appName": "深圳万达影城宝安勤诚达店"
+  },
+  {
+    "id": 396,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44013611",
+    "appName": "深圳龙岗万达广场店"
+  },
+  {
+    "id": 2242,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44013711",
+    "appName": "深圳寰映影城罗湖天河城店"
+  },
+  {
+    "id": 1901,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44030801",
+    "appName": "普宁万达影城商品城店"
+  },
+  {
+    "id": 234,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44032301",
+    "appName": "汕头万达影城潮阳中华路店"
+  },
+  {
+    "id": 526,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44033601",
+    "appName": "汕头金平万达广场店"
+  },
+  {
+    "id": 2054,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44034801",
+    "appName": "汕头万达影城万欣广场店（特许）"
+  },
+  {
+    "id": 2034,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44051701",
+    "appName": "韶关万达影城百年东街店"
+  },
+  {
+    "id": 637,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44062301",
+    "appName": "梅州万达广场店"
+  },
+  {
+    "id": 922,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44073401",
+    "appName": "揭阳榕城万达广场店"
+  },
+  {
+    "id": 582,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44080301",
+    "appName": "惠州万达影城新天地广场店"
+  },
+  {
+    "id": 414,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44084801",
+    "appName": "惠州万达影城陈江天益城店"
+  },
+  {
+    "id": 589,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44085401",
+    "appName": "惠州大亚湾万达广场店"
+  },
+  {
+    "id": 2336,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44087861",
+    "appName": "惠州万达影城隆生金山湖店"
+  },
+  {
+    "id": 731,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44087931",
+    "appName": "惠州万达影城陈江五一新天地店"
+  },
+  {
+    "id": 996,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44093001",
+    "appName": "河源东源万达广场店"
+  },
+  {
+    "id": 675,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44101081",
+    "appName": "东莞虎门万达广场店"
+  },
+  {
+    "id": 643,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44101101",
+    "appName": "万达影城华南MALL-IMAXGT激光店"
+  },
+  {
+    "id": 1634,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44101351",
+    "appName": "东莞万达影城南城蜂汇店"
+  },
+  {
+    "id": 1651,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44101461",
+    "appName": "东莞虎门万达广场店"
+  },
+  {
+    "id": 1030,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44101751",
+    "appName": "东莞万达影城首铸万科广场店"
+  }
+]
+[
+  {
+    "id": 289,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44104801",
+    "appName": "东莞长安万达广场店"
+  },
+  {
+    "id": 250,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44106301",
+    "appName": "东莞东城万达广场店"
+  },
+  {
+    "id": 1964,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44107101",
+    "appName": "东莞万达影城大岭山领尚店"
+  },
+  {
+    "id": 758,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44108801",
+    "appName": "东莞厚街万达广场店"
+  },
+  {
+    "id": 1021,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44109401",
+    "appName": "东莞万达影城厚街万科城市广场店"
+  },
+  {
+    "id": 966,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44109701",
+    "appName": "东莞万达影城莞城旗峰店"
+  },
+  {
+    "id": 1533,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44115501",
+    "appName": "中山万达影城大信新都汇店"
+  },
+  {
+    "id": 1604,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44119501",
+    "appName": "中山万达影城古镇华丰汇广场店"
+  },
+  {
+    "id": 985,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44122501",
+    "appName": "江门万达广场店"
+  },
+  {
+    "id": 1000,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44124901",
+    "appName": "江门新会万达广场店"
+  },
+  {
+    "id": 1855,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44126011",
+    "appName": "江门台山万达广场店"
+  },
+  {
+    "id": 1157,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44126301",
+    "appName": "江门江海万达广场店"
+  },
+  {
+    "id": 426,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44131141",
+    "appName": "佛山金沙洲万达广场店"
+  },
+  {
+    "id": 273,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44131541",
+    "appName": "佛山寰映影城禅城DNA广场店"
+  },
+  {
+    "id": 671,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44131781",
+    "appName": "佛山万达影城北滘悦然广场店"
+  },
+  {
+    "id": 1866,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44131961",
+    "appName": "佛山万达影城大良悦然广场店"
+  },
+  {
+    "id": 313,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44135501",
+    "appName": "佛山南海万达广场店"
+  },
+  {
+    "id": 1200,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44139201",
+    "appName": "佛山三水万达广场店"
+  },
+  {
+    "id": 585,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44139401",
+    "appName": "佛山万达影城越秀悦汇广场店"
+  },
+  {
+    "id": 2323,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44139601",
+    "appName": "佛山万达影城华夏嘉纳店"
+  },
+  {
+    "id": 751,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44152501",
+    "appName": "湛江万达广场店"
+  },
+  {
+    "id": 539,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44153501",
+    "appName": "湛江万达影城华都汇广场店"
+  },
+  {
+    "id": 1810,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44163821",
+    "appName": "茂名电白万达广场店"
+  },
+  {
+    "id": 577,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44173401",
+    "appName": "肇庆鼎湖万达广场店"
+  },
+  {
+    "id": 9,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44181601",
+    "appName": "清远万达广场店"
+  },
+  {
+    "id": 495,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44212001",
+    "appName": "广州增城万达广场店"
+  },
+  {
+    "id": 590,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "44221301",
+    "appName": "深圳万达影城海雅广场店"
+  },
+  {
+    "id": 161,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "45010371",
+    "appName": "南宁青秀万达广场店"
+  },
+  {
+    "id": 1277,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "45010451",
+    "appName": "南宁安吉万达广场店"
+  },
+  {
+    "id": 617,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "45010561",
+    "appName": "南宁万达茂店"
+  },
+  {
+    "id": 140,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "45010571",
+    "appName": "南宁江南万达广场店"
+  },
+  {
+    "id": 2335,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "45010691",
+    "appName": "南宁万达影城嘉佑城店"
+  },
+  {
+    "id": 1448,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "45011071",
+    "appName": "南宁万达影城万科广场店"
+  },
+  {
+    "id": 2330,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "45011801",
+    "appName": "南宁万达影城印象城店"
+  },
+  {
+    "id": 325,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "45020151",
+    "appName": "柳州城中万达广场店"
+  },
+  {
+    "id": 1310,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "45020211",
+    "appName": "柳州柳南万达广场店"
+  },
+  {
+    [
+  {
+    "id": 380,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "45050141",
+    "appName": "北海万达广场店"
+  },
+  {
+    "id": 1888,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "45050171",
+    "appName": "北海万达影城南洋国际广场店"
+  },
+  {
+    "id": 4376,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "45050221",
+    "appName": "北海万达影城和佳广场店"
+  },
+  {
+    "id": 1340,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "45060341",
+    "appName": "玉林万达广场店"
+  },
+  {
+    "id": 1976,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "45060431",
+    "appName": "玉林万达影城博白绿珠城市公园店（加盟）"
+  },
+  {
+    "id": 1943,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "45090121",
+    "appName": "防城港万达影城嘉乐城店"
+  },
+  {
+    "id": 1990,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "45100071",
+    "appName": "贵港万达影城步步高店"
+  },
+  {
+    "id": 570,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "45100091",
+    "appName": "贵港万达广场店"
+  },
+  {
+    "id": 2316,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "46021701",
+    "appName": "海口万达影城海航日月广场店"
+  },
+  {
+    "id": 1396,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "46022101",
+    "appName": "海口秀英万达广场店"
+  },
+  {
+    "id": 1931,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "46060201",
+    "appName": "海口万达影城中电广场店"
+  },
+  {
+    "id": 123,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "46120301",
+    "appName": "海南东方万达广场店"
+  },
+  {
+    "id": 1950,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50010171",
+    "appName": "重庆万达影城万州高笋塘店"
+  },
+  {
+    "id": 337,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50010181",
+    "appName": "重庆万州万达广场店"
+  },
+  {
+    "id": 1578,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50020141",
+    "appName": "重庆涪陵万达广场店"
+  },
+  {
+    "id": 1474,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50030251",
+    "appName": "重庆万达影城解放碑店"
+  },
+  {
+    "id": 1364,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50030311",
+    "appName": "重庆万达影城大坪店"
+  },
+  {
+    "id": 1305,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50040091",
+    "appName": "重庆大渡口万达广场店"
+  },
+  {
+    "id": 1954,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50040301",
+    "appName": "重庆万达影城大渡口店"
+  },
+  {
+    "id": 662,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50050901",
+    "appName": "重庆万达影城大融城店"
+  },
+  {
+    "id": 544,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50060191",
+    "appName": "重庆沙坪坝万达广场店"
+  },
+  {
+    "id": 1223,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50060241",
+    "appName": "重庆万达影城融创茂店"
+  },
+  {
+    "id": 1971,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50070131",
+    "appName": "重庆万达影城二郎店"
+  },
+  {
+    "id": 886,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50080501",
+    "appName": "重庆南坪万达广场店"
+  },
+  {
+    "id": 610,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50090091",
+    "appName": "重庆北碚万达广场店"
+  },
+  {
+    "id": 2347,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50120351",
+    "appName": "重庆万达影城金科大竹林店"
+  },
+  {
+    "id": 1670,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50120431",
+    "appName": "重庆万达影城财富购物中心店"
+  },
+  {
+    "id": 1330,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50121301",
+    "appName": "重庆万达影城SM广场店"
+  },
+  {
+    "id": 688,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50130111",
+    "appName": "重庆巴南区万达广场店"
+  },
+  {
+    "id": 1985,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50130251",
+    "appName": "重庆巴南区万达广场店"
+  },
+  {
+    "id": 634,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50160171",
+    "appName": "重庆江津万达广场店"
+  },
+  {
+    "id": 1938,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50170071",
+    "appName": "重庆万达影城合川步步高店"
+  },
+  {
+    "id": 656,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50180071",
+    "appName": "重庆永川万达广场店"
+  },
+  {
+    "id": 1894,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50180141",
+    "appName": "重庆万达影城华茂国际中心店"
+  },
+  {
+    "id": 1431,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50190091",
+    "appName": "重庆南川万达广场店"
+  },
+  {
+    "id": 2339,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50220031",
+    "appName": "重庆綦江万达广场店"
+  },
+  {
+    "id": 1490,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50240051",
+    "appName": "重庆铜梁万达广场店"
+  },
+  {
+    "id": 200,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51010021",
+    "appName": "成都万达影城财富又一城店"
+  },
+  {
+    "id": 1215,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51010551",
+    "appName": "成都万达影城欧城广场店"
+  },
+  {
+    "id": 1219,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51010561",
+    "appName": "成都青羊万达广场店"
+  }
+]
+    "id": 1027,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "45030321",
+    "appName": "桂林七星万达广场店"
+  },
+  {
+    "id": 465,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "45030521",
+    "appName": "桂林叠彩万达广场店"
+  },
+  {
+    "id": 1249,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "45030611",
+    "appName": "桂林临桂万达广场店"
+  },
+  {
+    "id": 1334,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "45040271",
+    "appName": "梧州万达广场店"
+  }
+]
+[
+  {
+    "id": 380,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "45050141",
+    "appName": "北海万达广场店"
+  },
+  {
+    "id": 1888,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "45050171",
+    "appName": "北海万达影城南洋国际广场店"
+  },
+  {
+    "id": 4376,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "45050221",
+    "appName": "北海万达影城和佳广场店"
+  },
+  {
+    "id": 1340,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "45060341",
+    "appName": "玉林万达广场店"
+  },
+  {
+    "id": 1976,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "45060431",
+    "appName": "玉林万达影城博白绿珠城市公园店（加盟）"
+  },
+  {
+    "id": 1943,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "45090121",
+    "appName": "防城港万达影城嘉乐城店"
+  },
+  {
+    "id": 1990,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "45100071",
+    "appName": "贵港万达影城步步高店"
+  },
+  {
+    "id": 570,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "45100091",
+    "appName": "贵港万达广场店"
+  },
+  {
+    "id": 2316,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "46021701",
+    "appName": "海口万达影城海航日月广场店"
+  },
+  {
+    "id": 1396,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "46022101",
+    "appName": "海口秀英万达广场店"
+  },
+  {
+    "id": 1931,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "46060201",
+    "appName": "海口万达影城中电广场店"
+  },
+  {
+    "id": 123,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "46120301",
+    "appName": "海南东方万达广场店"
+  },
+  {
+    "id": 1950,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50010171",
+    "appName": "重庆万达影城万州高笋塘店"
+  },
+  {
+    "id": 337,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50010181",
+    "appName": "重庆万州万达广场店"
+  },
+  {
+    "id": 1578,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50020141",
+    "appName": "重庆涪陵万达广场店"
+  },
+  {
+    "id": 1474,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50030251",
+    "appName": "重庆万达影城解放碑店"
+  },
+  {
+    "id": 1364,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50030311",
+    "appName": "重庆万达影城大坪店"
+  },
+  {
+    "id": 1305,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50040091",
+    "appName": "重庆大渡口万达广场店"
+  },
+  {
+    "id": 1954,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50040301",
+    "appName": "重庆万达影城大渡口店"
+  },
+  {
+    "id": 662,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50050901",
+    "appName": "重庆万达影城大融城店"
+  },
+  {
+    "id": 544,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50060191",
+    "appName": "重庆沙坪坝万达广场店"
+  },
+  {
+    "id": 1223,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50060241",
+    "appName": "重庆万达影城融创茂店"
+  },
+  {
+    "id": 1971,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50070131",
+    "appName": "重庆万达影城二郎店"
+  },
+  {
+    "id": 886,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50080501",
+    "appName": "重庆南坪万达广场店"
+  },
+  {
+    "id": 610,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50090091",
+    "appName": "重庆北碚万达广场店"
+  },
+  {
+    "id": 2347,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50120351",
+    "appName": "重庆万达影城金科大竹林店"
+  },
+  {
+    "id": 1670,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50120431",
+    "appName": "重庆万达影城财富购物中心店"
+  },
+  {
+    "id": 1330,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50121301",
+    "appName": "重庆万达影城SM广场店"
+  },
+  {
+    "id": 688,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50130111",
+    "appName": "重庆巴南区万达广场店"
+  },
+  {
+    "id": 1985,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50130251",
+    "appName": "重庆巴南区万达广场店"
+  },
+  {
+    "id": 634,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50160171",
+    "appName": "重庆江津万达广场店"
+  },
+  {
+    "id": 1938,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50170071",
+    "appName": "重庆万达影城合川步步高店"
+  },
+  {
+    "id": 656,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50180071",
+    "appName": "重庆永川万达广场店"
+  },
+  {
+    "id": 1894,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50180141",
+    "appName": "重庆万达影城华茂国际中心店"
+  },
+  {
+    "id": 1431,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50190091",
+    "appName": "重庆南川万达广场店"
+  },
+  {
+    "id": 2339,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50220031",
+    "appName": "重庆綦江万达广场店"
+  },
+  {
+    "id": 1490,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "50240051",
+    "appName": "重庆铜梁万达广场店"
+  },
+  {
+    "id": 200,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51010021",
+    "appName": "成都万达影城财富又一城店"
+  },
+  {
+    "id": 1215,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51010551",
+    "appName": "成都万达影城欧城广场店"
+  },
+  {
+    "id": 1219,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51010561",
+    "appName": "成都青羊万达广场店"
+  }
+]
+[
+  {
+    "id": 1929,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51010691",
+    "appName": "成都双流万达广场店"
+  },
+  {
+    "id": 172,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51011011",
+    "appName": "成都万达影城崇州唐人街店"
+  },
+  {
+    "id": 1211,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51011161",
+    "appName": "成都蜀都万达广场店"
+  },
+  {
+    "id": 809,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51015301",
+    "appName": "成都金牛万达广场店"
+  },
+  {
+    "id": 697,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51015881",
+    "appName": "成都崇州万达广场店"
+  },
+  {
+    "id": 225,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51015971",
+    "appName": "成都金堂万达广场店"
+  },
+  {
+    "id": 1967,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51016031",
+    "appName": "成都武侯万达广场店"
+  },
+  {
+    "id": 1632,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51016311",
+    "appName": "成都龙泉驿万达广场店"
+  },
+  {
+    "id": 204,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51016461",
+    "appName": "成都万达影城四六八广场店"
+  },
+  {
+    "id": 437,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51017031",
+    "appName": "成都万达影城都江堰融创茂店"
+  },
+  {
+    "id": 666,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51017091",
+    "appName": "成都青白江万达广场店"
+  },
+  {
+    "id": 256,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51017181",
+    "appName": "成都寰映影城龙泉驿世茂广场店"
+  },
+  {
+    "id": 847,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51017601",
+    "appName": "成都万达影城SM广场店"
+  },
+  {
+    "id": 142,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51017621",
+    "appName": "成都寰映影城大魔方广场店"
+  },
+  {
+    "id": 513,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51017801",
+    "appName": "成都锦华万达广场店"
+  },
+  {
+    "id": 695,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51017901",
+    "appName": "成都万达影城金沙广场店"
+  },
+  {
+    "id": 1316,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51018301",
+    "appName": "成都万达影城红牌楼广场店"
+  },
+  {
+    "id": 2007,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51019901",
+    "appName": "成都万达影城新都和顺广场店"
+  },
+  {
+    "id": 732,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51020031",
+    "appName": "绵阳万达影城乐荟城广场店"
+  },
+  {
+    "id": 1104,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51028801",
+    "appName": "绵阳万达影城长虹国际城店"
+  },
+  {
+    "id": 995,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51029501",
+    "appName": "绵阳涪城万达广场店"
+  },
+  {
+    "id": 262,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51029671",
+    "appName": "绵阳经开万达广场店"
+  },
+  {
+    "id": 266,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51030041",
+    "appName": "德阳万达广场店"
+  },
+  {
+    "id": 1996,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51037601",
+    "appName": "德阳万达影城凯旋城店"
+  },
+  {
+    "id": 269,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51040291",
+    "appName": "自贡万达广场店"
+  },
+  {
+    "id": 833,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51055621",
+    "appName": "内江威远万达广场店"
+  },
+  {
+    "id": 1029,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51058181",
+    "appName": "内江万达影城资中中铁广场店"
+  },
+  {
+    "id": 572,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51059970",
+    "appName": "内江万达广场店"
+  },
+  {
+    "id": 1486,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51066161",
+    "appName": "宜宾万达广场店"
+  },
+  {
+    "id": 412,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51078931",
+    "appName": "泸州万达广场店"
+  },
+  {
+    "id": 515,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51079811",
+    "appName": "泸州万达影城步步高广场店"
+  },
+  {
+    "id": 1093,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51080601",
+    "appName": "资阳万达广场店"
+  },
+  {
+    "id": 743,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51083241",
+    "appName": "资阳万达影城安岳时代广场店"
+  },
+  {
+    "id": 578,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51088211",
+    "appName": "成都万达影城简阳旭海广场店"
+  },
+  {
+    "id": 1909,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51096421",
+    "appName": "南充临江万达广场店"
+  },
+  {
+    "id": 1925,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51113511",
+    "appName": "巴中经开万达广场店"
+  },
+  {
+    "id": 1089,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51130161",
+    "appName": "眉山三苏路万达广场店"
+  },
+  {
+    "id": 1019,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51130511",
+    "appName": "眉山万达影城仁寿中铁广场店"
+  },
+  {
+    "id": 694,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51130711",
+    "appName": "眉山万达广场店"
+  },
+  {
+    "id": 536,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51139981",
+    "appName": "眉山仁寿万达广场店"
+  }
+]
+[
+  {
+    "id": 254,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51140061",
+    "appName": "乐山万达广场店"
+  },
+  {
+    "id": 264,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51159961",
+    "appName": "广元万达广场店"
+  },
+  {
+    "id": 260,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51160161",
+    "appName": "遂宁万达广场店"
+  },
+  {
+    "id": 1408,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51176121",
+    "appName": "雅安万达广场店"
+  },
+  {
+    "id": 1228,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51180381",
+    "appName": "西昌万达广场店"
+  },
+  {
+    "id": 849,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51197771",
+    "appName": "攀枝花万达广场店"
+  },
+  {
+    "id": 1945,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "51200891",
+    "appName": "资阳万达影城梅西店"
+  },
+  {
+    "id": 1168,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "52012101",
+    "appName": "贵阳万达影城银海元隆广场店"
+  },
+  {
+    "id": 34,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "52012401",
+    "appName": "贵阳万达影城中大广场店"
+  },
+  {
+    "id": 947,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "52014601",
+    "appName": "贵阳观山湖万达广场店"
+  },
+  {
+    "id": 892,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "52016601",
+    "appName": "贵阳云岩万达广场店"
+  },
+  {
+    "id": 1980,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "52017101",
+    "appName": "贵阳数博万达广场店"
+  },
+  {
+    "id": 3300,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "52019901",
+    "appName": "贵阳万达影城中京国际广场店"
+  },
+  {
+    "id": 935,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "52022201",
+    "appName": "六盘水万达广场店"
+  },
+  {
+    "id": 2051,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "52262501",
+    "appName": "丹寨万达影城旅游小镇店"
+  },
+  {
+    "id": 992,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "52272601",
+    "appName": "都匀万达广场店"
+  },
+  {
+    "id": 1499,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "53010061",
+    "appName": "昆明呈贡万达广场店"
+  },
+  {
+    "id": 1326,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "53010161",
+    "appName": "安宁万达广场店"
+  },
+  {
+    "id": 881,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "53011801",
+    "appName": "昆明万达影城南亚风情店"
+  },
+  {
+    "id": 1054,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "53012301",
+    "appName": "昆明万达影城正义坊店"
+  },
+  {
+    "id": 386,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "53014001",
+    "appName": "昆明万达影城同德广场店"
+  },
+  {
+    "id": 1320,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "53014101",
+    "appName": "昆明西山万达广场店"
+  },
+  {
+    "id": 35,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "53014201",
+    "appName": "昆明万达影城云路广场店"
+  },
+  {
+    "id": 981,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "53019601",
+    "appName": "昆明万达影城滇池后海店"
+  },
+  {
+    "id": 952,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "53033001",
+    "appName": "曲靖万达影城金都国际广场店"
+  },
+  {
+    "id": 1871,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "53040701",
+    "appName": "玉溪万达影城红塔厚品店"
+  },
+  {
+    "id": 10,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "53280501",
+    "appName": "西双版纳万达影城融创茂店"
+  },
+  {
+    "id": 1010,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "53320101",
+    "appName": "丽江万达影城古城合合店"
+  },
+  {
+    "id": 977,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "54016391",
+    "appName": "拉萨万达广场店"
+  },
+  {
+    "id": 1892,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "54016411",
+    "appName": "拉萨柳梧万达广场店"
+  },
+  {
+    "id": 144,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "61011051",
+    "appName": "西安万达影城龙城铭园店"
+  },
+  {
+    "id": 357,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "61011201",
+    "appName": "西安碑林万达广场店"
+  },
+  {
+    "id": 575,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "61011601",
+    "appName": "西安民乐园万达广场店"
+  },
+  {
+    "id": 2338,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "61011991",
+    "appName": "西安寰映影城荟聚店"
+  },
+  {
+    "id": 948,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "61013301",
+    "appName": "西安万达影城开元广场店"
+  },
+  {
+    "id": 1001,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "61013501",
+    "appName": "西安大明宫万达广场店"
+  },
+  {
+    "id": 1144,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "61015601",
+    "appName": "西安万达影城乐派广场店"
+  },
+  {
+    "id": 1469,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "61016501",
+    "appName": "西安万达影城大寨路店"
+  },
+  {
+    "id": 713,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "61019701",
+    "appName": "西安高新万达广场店"
+  },
+  {
+    "id": 1145,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "61041701",
+    "appName": "咸阳丽彩万达广场店"
+  }
+]
+[
+  {
+    "id": 832,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "61044001",
+    "appName": "杨凌万达广场店"
+  },
+  {
+    "id": 1427,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "61062701",
+    "appName": "延安万达广场店"
+  },
+  {
+    "id": 1986,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "61063401",
+    "appName": "延安红街店"
+  },
+  {
+    "id": 2366,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "61070101",
+    "appName": "汉中万达影城万邦广场店"
+  },
+  {
+    "id": 1807,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "61072401",
+    "appName": "汉中万达影城竹园华府店"
+  },
+  {
+    "id": 814,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "61082401",
+    "appName": "安康万达广场店"
+  },
+  {
+    "id": 883,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "61093201",
+    "appName": "榆林万达广场店"
+  },
+  {
+    "id": 1815,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "61101701",
+    "appName": "商洛万达广场店"
+  },
+  {
+    "id": 1174,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "62012501",
+    "appName": "兰州城关万达广场店"
+  },
+  {
+    "id": 957,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "62016101",
+    "appName": "兰州万达影城安宁中海环宇城店"
+  },
+  {
+    "id": 1903,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "62016201",
+    "appName": "兰州万达影城西固金城中心店"
+  },
+  {
+    "id": 2025,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "62017201",
+    "appName": "兰州万达茂店"
+  },
+  {
+    "id": 1131,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "62031501",
+    "appName": "天水秦州万达广场店"
+  },
+  {
+    "id": 535,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "62071701",
+    "appName": "定西万达广场店"
+  },
+  {
+    "id": 784,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "62141501",
+    "appName": "酒泉万达广场店"
+  },
+  {
+    "id": 801,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "63010151",
+    "appName": "西宁海湖万达广场店"
+  },
+  {
+    "id": 294,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "63010221",
+    "appName": "西宁万达影城中发源时代广场店"
+  },
+  {
+    "id": 970,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "63010331",
+    "appName": "西宁中惠万达广场店"
+  },
+  {
+    "id": 563,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "63010341",
+    "appName": "西宁北川万达广场店"
+  },
+  {
+    "id": 530,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "64010241",
+    "appName": "银川西夏万达广场店"
+  },
+  {
+    "id": 603,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "64010402",
+    "appName": "银川万达影城东方红广场店"
+  },
+  {
+    "id": 718,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "64011201",
+    "appName": "银川金凤万达广场店"
+  },
+  {
+    "id": 6,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "64020081",
+    "appName": "石嘴山万达广场店"
+  },
+  {
+    "id": 915,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "64030191",
+    "appName": "吴忠万达广场店"
+  },
+  {
+    "id": 4385,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "65010641",
+    "appName": "乌鲁木齐万达广场店"
+  },
+  {
+    "id": 1442,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "65010661",
+    "appName": "乌鲁木齐德港万达广场店"
+  },
+  {
+    "id": 1517,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "65013061",
+    "appName": "乌鲁木齐德汇万达广场店"
+  },
+  {
+    "id": 1860,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "65014011",
+    "appName": "乌鲁木齐高新区万达广场店"
+  },
+  {
+    "id": 2036,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "65400431",
+    "appName": "霍尔果斯万达广场店"
+  },
+  {
+    "id": 1292,
+    "cinemaId": "WanDaFilm",
+    "cinemaName": "万达影院",
+    "cinemaCode": "65901091",
+    "appName": "石河子万达广场店"
+  }
+]
