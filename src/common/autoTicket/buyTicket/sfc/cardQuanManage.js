@@ -28,6 +28,7 @@ import svApi from "@/api/sv-api";
 import Logger from "@/common/logger";
 import { platTokens } from "@/store/platTokens";
 import usesMachineBaseFun from "@/mixins/usesMachineBaseFun";
+import { syncCardBalanceToSv } from "@/common/autoTicket/buyTicket/common/cardBalanceSync";
 import {
   getQuanInfoCommon,
   getUsableCardListCommon,
@@ -630,6 +631,17 @@ export default class SfcCardQuanManage {
       const res = await api?.({ city_id, cinema_id, session_id });
       let list = res?.data?.card_data || [];
       if (this.isV3App && res?.data?.member_info) list = [res.data.member_info];
+
+      // 同步实时余额到 SV 数据库（非阻塞，失败不影响主流程）
+      syncCardBalanceToSv({
+        appFlag: this.appFlag,
+        cardList: list,
+        logger: this.logger,
+        getCardNum: item => (this.isV3App ? item.member_id : item.card_num),
+        getBalance: item => item.balance,
+        balanceDivisor: 1
+      }).catch(e => this.logger.warn?.("同步SFC卡余额异常(不影响主流程)", e));
+
       if (!this.isV3App && (this.usableCardList || []).length) {
         list = list.filter(i =>
           (this.usableCardList || []).some(c => c.card_num === i.card_num)

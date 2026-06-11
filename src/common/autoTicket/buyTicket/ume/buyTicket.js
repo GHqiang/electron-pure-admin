@@ -40,6 +40,7 @@ import UmeOrderManage from "./orderManage.js";
 import UmeCinemaManage from "./cinemaManage.js";
 import UmeCardQuanManage from "./cardQuanManage.js";
 import PlatManage from "../platManage.js";
+import { syncCardBalanceToSv } from "@/common/autoTicket/buyTicket/common/cardBalanceSync";
 import { dictTable } from "@/store/dictTable";
 const dictStore = dictTable();
 
@@ -699,6 +700,17 @@ export default class UmeBuyTicket extends BaseBuyTicket {
       }
       let cardList = cardQuanListRes?.cards || [];
       cardList = JSON.parse(JSON.stringify(cardList));
+
+      // 同步实时余额到 SV 数据库（非阻塞，失败不影响主流程）
+      syncCardBalanceToSv({
+        appFlag: this.appFlag,
+        cardList,
+        logger: this.logger,
+        getCardNum: item => item.cardNo,
+        getBalance: item => item.cardAmount,
+        balanceDivisor: 100 // 以分为单位，需要除以100
+      }).catch(e => this.logger.warn?.("同步UME卡余额异常(不影响主流程)", e));
+
       if (cardList?.length && offerRule.offer_type != "1") {
         // 过滤出来维护在可用卡里面里面的卡
         if (this.usableCardList?.length) {

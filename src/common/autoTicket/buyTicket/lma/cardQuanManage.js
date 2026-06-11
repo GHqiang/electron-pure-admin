@@ -28,6 +28,7 @@ import Logger from "@/common/logger";
 import { platTokens } from "@/store/platTokens";
 import usesMachineBaseFun from "@/mixins/usesMachineBaseFun";
 import { singleUpdateQuanStock } from "@/common/autoTicket/commonQuanStock.js";
+import { syncCardBalanceToSv } from "@/common/autoTicket/buyTicket/common/cardBalanceSync";
 
 const tokens = platTokens();
 const { getQuanValueListByQuanFlag } = usesMachineBaseFun();
@@ -266,6 +267,22 @@ export default class LmaCardQuanManage {
         gold: res.data?.gold,
         money_str: res.data?.money_str
       });
+
+      // 同步实时余额到 SV 数据库（非阻塞，失败不影响主流程）
+      // LMA money_str 格式如 "￥123.45"，需提取数字
+      syncCardBalanceToSv({
+        appFlag: this.appFlag,
+        cardList,
+        logger: this.logger,
+        getCardNum: item => item.card_number,
+        getBalance: item => {
+          if (!item.money_str) return null;
+          const num = parseFloat(item.money_str.replace(/[^\d.]/g, ""));
+          return isNaN(num) ? null : num;
+        },
+        balanceDivisor: 1
+      }).catch(e => this.logger.warn?.("同步LMA卡余额异常(不影响主流程)", e));
+
       return {
         cardList,
         cardRes: res.data,

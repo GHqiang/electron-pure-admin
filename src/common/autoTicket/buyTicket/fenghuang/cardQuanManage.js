@@ -33,6 +33,7 @@ import svApi from "@/api/sv-api";
 // 统一日志类
 import Logger from "@/common/logger";
 import { singleUpdateQuanStock } from "@/common/autoTicket/commonQuanStock.js";
+import { syncCardBalanceToSv } from "@/common/autoTicket/buyTicket/common/cardBalanceSync";
 
 // 机器基础方法
 import usesMachineBaseFun from "@/mixins/usesMachineBaseFun";
@@ -352,6 +353,17 @@ export default class CardQuanManage {
           cardName: item.cardName
         }))
       });
+
+      // 同步实时余额到 SV 数据库（非阻塞，失败不影响主流程）
+      syncCardBalanceToSv({
+        appFlag: this.appFlag,
+        cardList,
+        logger: this.logger,
+        getCardNum: item => item.cardNo,
+        getBalance: item => item.cardAmount,
+        balanceDivisor: 1 // 凤凰余额以分为单位,上面已经除过100了
+      }).catch(e => this.logger.warn?.("同步凤凰卡余额异常(不影响主流程)", e));
+
       return cardList;
     } catch (error) {
       this.logger.errorSave("获取会员卡列表异常", error);

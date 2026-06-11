@@ -110,6 +110,9 @@ const updateCardRecord = params =>
 // 更新卡余额
 const updateCardBalance = params =>
   axios.post("/svpi/cardRecord/updateBalance", params);
+// 批量更新卡余额
+const batchUpdateCardBalance = params =>
+  axios.post("/svpi/cardRecord/batchUpdateBalance", params);
 // 批量新增卡
 const batchAddCardRecord = params =>
   axios.post("/svpi/cardRecord/batchAdd", params);
@@ -309,6 +312,7 @@ const svApi = {
   addCardRecord,
   updateCardRecord,
   updateCardBalance,
+  batchUpdateCardBalance,
   batchAddCardRecord,
   batchUpdateCardRecord,
   updateDayUsage,
