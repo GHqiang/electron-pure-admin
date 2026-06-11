@@ -19,7 +19,8 @@ export const useCinemaList = defineStore("cinemaDataTable", {
     return {
       // canAppList: allCinemaList || []
       canAppList: IS_DEV ? canCinemaList : [], // 可用影院列表
-      allAppList: IS_DEV ? allCinemaList : [] // 全部影院列表
+      allAppList: IS_DEV ? allCinemaList : [], // 全部影院列表
+      wandaCinemaList: [] // 万达影院列表（用于院线匹配）
     };
   },
   actions: {
@@ -36,6 +37,10 @@ export const useCinemaList = defineStore("cinemaDataTable", {
       if (IS_DEV) {
         window.localStorage.setItem("allCinemaList", JSON.stringify(list));
       }
+    },
+    // 设置万达影院列表
+    setWandaCinemaList(list) {
+      this.wandaCinemaList = list || [];
     },
     // 获取对应猎人院线
     getLierenCinemaGroup({ app_name }) {

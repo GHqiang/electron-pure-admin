@@ -28,6 +28,9 @@ import { useDataTableStore } from "@/store/offerRule";
 const offerRules = useDataTableStore();
 const { offerRuleList } = storeToRefs(offerRules);
 
+import { useCinemaList } from "@/store/cinemaList.js";
+const cinemaListStore = useCinemaList();
+
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
 // console.log("user_id", user_id);
@@ -513,7 +516,7 @@ const getCinemaLoginInfoList = (isSplitUser = true) => {
       );
     }
     if (user_id == 1) {
-      user_id = 9;
+      // user_id = 9;
       // user_id = 10;
     }
     loginInfoList = loginInfoList.filter(item =>
@@ -1269,6 +1272,30 @@ const offerRuleMatch = (order, logger) => {
       return;
     }
     console.log("按允许报价时间筛选后的规则列表", useOfferRuleList);
+    // 2、匹配院线
+    if (order.app_name == "wanda") {
+      const wandaCinemaList = cinemaListStore.wandaCinemaList || [];
+      const matchInfo = cinemaCodeMatchObj.getCinemaMatchInfo(
+        cinema_code,
+        shadowLineName
+      );
+      const app_cinema_code = matchInfo?.app_cinema_code;
+      const [city_id, store_id] = (app_cinema_code || "").split("_");
+      const targetCinema = wandaCinemaList.find(
+        item => item.store_id == store_id && item.city_id == city_id
+      );
+      // 是否直营
+      const is_direct = targetCinema?.is_direct;
+      useOfferRuleList = useOfferRuleList.filter(item => {
+        if (is_direct === 1 && item.cinema_group) {
+          return item.cinema_group.includes("万达");
+        }
+        if (is_direct === 0 && item.cinema_group) {
+          return item.cinema_group.includes("万达特许");
+        }
+        return true;
+      });
+    }
     // 3、匹配城市
     let cityRuleList = useOfferRuleList.filter(item => {
       if (!item.includeCityNames.length && !item.excludeCityNames.length) {

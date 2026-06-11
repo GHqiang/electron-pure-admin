@@ -47,6 +47,21 @@
         <el-form-item label="规则名称" prop="ruleName">
           <el-input v-model="formData.ruleName" clearable />
         </el-form-item>
+        <el-form-item
+          label="包含院线"
+          v-if="formData.shadowLineName == 'wanda'"
+        >
+          <el-select
+            v-model="formData.cinema_group"
+            multiple
+            clearable
+            placeholder="包含院线"
+            @change="includeCinemaGroupChange"
+          >
+            <el-option label="万达" value="万达" />
+            <el-option label="万达特许" value="万达特许" />
+          </el-select>
+        </el-form-item>
         <!-- // 报价规则：一线普通厅41、二线37、特殊厅会员卡 会员价加2，（特殊厅需要先查会员价） -->
         <el-form-item label="包含城市">
           <el-select
@@ -571,6 +586,7 @@ let formData = reactive({
   ruleName: "", // 规则名称
   orderForm: [], // 订单来源
   shadowLineName: "sfc", // 影线名称
+  cinema_group: [], // 包含院线
   includeCityNames: [], // 包含城市
   excludeCityNames: [], // 排除城市
   includeCinemaNames: [], // 包含影院
@@ -643,17 +659,30 @@ const excludeCityList = computed(() => {
 
 // 包含/排除影院列表
 const cinemaListFilter = computed(() => {
+  let cinemaFilterList = JSON.parse(JSON.stringify(cinemaList.value));
+  // 包含影线过滤
+  if (formData.cinema_group?.length) {
+    cinemaFilterList = cinemaFilterList.filter(item => {
+      const cinema_group_str = formData.cinema_group.join();
+      if (cinema_group_str == "万达") {
+        return item.featureFacNames?.includes("直营");
+      } else if (cinema_group_str == "万达特许") {
+        return !item.featureFacNames?.includes("直营");
+      }
+      return true;
+    });
+  }
   if (formData.includeCityNames.length) {
-    return cinemaList.value.filter(item =>
+    cinemaFilterList = cinemaFilterList.filter(item =>
       formData.includeCityNames.includes(item.city_name)
     );
   } else if (formData.excludeCityNames.length) {
-    return cinemaList.value.filter(
+    cinemaFilterList = cinemaFilterList.filter(
       item => !formData.excludeCityNames.includes(item.city_name)
     );
-  } else {
-    return cinemaList.value;
   }
+  console.warn("cinemaFilterList", cinemaFilterList.length);
+  return cinemaFilterList;
 });
 
 // 重置表单
@@ -665,6 +694,7 @@ const resetForm = el => {
     formData.orderForm = []; // 订单来源
     formData.shadowLineName = ""; // 影线
   }
+  formData.cinema_group = []; // 包含院线
   formData.includeCityNames = []; // 包含城市
   formData.excludeCityNames = []; // 排除城市
   formData.includeCinemaNames = []; // 包含影院
@@ -849,6 +879,9 @@ const open = async ruleInfo => {
         formData.status = formInfo.status;
         formData.offerType = formInfo.offerType;
         formData.includeCityNames = formInfo.includeCityNames;
+        if (formInfo.cinema_group) {
+          formData.cinema_group = formInfo.cinema_group?.split(",");
+        }
         formData.excludeCityNames = formInfo.excludeCityNames;
         formData.includeCinemaNames = formInfo.includeCinemaNames;
         formData.excludeCinemaNames = formInfo.excludeCinemaNames;
@@ -976,6 +1009,14 @@ const cancel = el => {
   resetForm();
 };
 
+// 包含院线改变
+const includeCinemaGroupChange = value => {
+  try {
+    console.log("包含院线改变", value, formData.cinema_group);
+  } catch (error) {
+    console.warn("包含院线改变处理异常", error);
+  }
+};
 // 包含城市改变
 const includeCityChange = value => {
   try {

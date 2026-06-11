@@ -83,6 +83,16 @@ const setLocalCinemaList = async rule => {
   useCinemaListObj.setCinemaInfoList(cinemaList);
 };
 
+// 设置万达影院列表（用于报价规则院线匹配）
+const setLocalWandaCinemaList = async () => {
+  try {
+    const res = await svApi.getWandaCinemaList();
+    useCinemaListObj.setWandaCinemaList(res.data?.cinemaList || []);
+  } catch (error) {
+    console.warn("设置万达影院列表异常", error);
+  }
+};
+
 // 设置本地的影院映射列表
 const setLocalCinemaCodeMatchList = async () => {
   try {
@@ -192,6 +202,7 @@ const onLogin = async formEl => {
           });
           let rule = loginRes.data?.user.rule;
           await setLocalCinemaList(rule);
+          await setLocalWandaCinemaList();
           await setLocalCinemaCodeMatchList();
           await setLocalLoginList(rule);
           await setLocalRuleList(rule);

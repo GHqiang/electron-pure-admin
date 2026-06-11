@@ -143,6 +143,10 @@ const updateLoginRecord = params =>
 const getLoginDailyTicketUsedCount = params =>
   axios.post("/svpi/loginRecord/dailyTicketUsed", params);
 
+// 获取万达影院信息列表
+const getWandaCinemaList = params =>
+  axios.get("/svpi/wanda-film-ser/cinema/list", { params });
+
 // 获取影院信息列表
 const getCinemaList = params => axios.get("/svpi/cinemaRecord", { params });
 // 查询影院信息列表
@@ -346,6 +350,7 @@ const svApi = {
   batchDeleteSpecialName,
   addSpecialNameRecord,
   updateSpecialNameRecord,
+  getWandaCinemaList,
   getCinemaList,
   queryCinemaList,
   deleteCinema,

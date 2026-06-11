@@ -750,6 +750,7 @@ const querRule = (row, type) => {
 const saveRule = async ruleInfo => {
   try {
     ruleInfo = JSON.parse(JSON.stringify(ruleInfo));
+    ruleInfo.cinema_group = ruleInfo.cinema_group?.join();
     ruleInfo.includeCityNames = JSON.stringify(ruleInfo.includeCityNames);
     ruleInfo.excludeCityNames = JSON.stringify(ruleInfo.excludeCityNames);
     ruleInfo.includeCinemaNames = JSON.stringify(ruleInfo.includeCinemaNames);
