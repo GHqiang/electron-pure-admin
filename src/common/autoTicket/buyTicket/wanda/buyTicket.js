@@ -23,6 +23,7 @@ import CinemaManage from "./cinemaManage.js";
 import CardQuanManage from "./cardQuanManage.js";
 import PlatManage from "../platManage.js";
 import { dictTable } from "@/store/dictTable";
+import { syncCardAfterPayment } from "@/common/autoTicket/buyTicket/common/cardBalanceSync";
 const dictStore = dictTable();
 
 import {
@@ -595,6 +596,19 @@ class WandaBuyTicket extends BaseBuyTicket {
           order_number,
           add_count: ticket_num
         });
+        // 同步出票后的卡余额
+        const oldBalance =
+          (canUseCardList?.find(item => item.cardNo == card_id)?.balance || 0) /
+          100; // 元
+        syncCardAfterPayment({
+          appFlag: this.appFlag,
+          cardId: card_id,
+          cardBalance: oldBalance,
+          paymentAmount: cardPayPrice,
+          logger: this.logger
+        }).catch(e =>
+          this.logger.warn?.("出票后同步万达卡余额异常(不影响主流程)", e)
+        );
       }
       if (offerRule.offer_type === "1" && useQuan?.length) {
         // 更新券库存

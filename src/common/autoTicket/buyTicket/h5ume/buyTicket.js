@@ -38,7 +38,10 @@ import H5UmeOrderManage from "./orderManage.js";
 import H5UmeCinemaManage from "./cinemaManage.js";
 import H5UmeCardQuanManage from "./cardQuanManage.js";
 import PlatManage from "../platManage.js";
-import { syncCardBalanceToSv } from "@/common/autoTicket/buyTicket/common/cardBalanceSync";
+import {
+  syncCardBalanceToSv,
+  syncCardAfterPayment
+} from "@/common/autoTicket/buyTicket/common/cardBalanceSync";
 import { dictTable } from "@/store/dictTable";
 const dictStore = dictTable();
 
@@ -1161,6 +1164,19 @@ export default class H5UmeBuyTicket extends BaseBuyTicket {
             add_count: ticket_num,
             plat_name
           });
+          const cardBalance = cardList?.find(
+            item => item.cardNumber == card_id
+          )?.balance;
+          // 同步出票后的卡余额
+          syncCardAfterPayment({
+            appFlag: this.appFlag,
+            cardId: card_id,
+            cardBalance: cardBalance / 100,
+            paymentAmount: payAmount,
+            logger: this.logger
+          }).catch(e =>
+            this.logger.warn?.("出票后同步H5UME卡余额异常(不影响主流程)", e)
+          );
         }
       } else {
         buyTicketRes = {

@@ -800,7 +800,7 @@ export default class SfcCardQuanManage {
       });
       return { card_id: "", profit: 0 };
     }
-    return { card_id, cardNum, profit, priceInfo };
+    return { card_id, cardNum, profit, priceInfo, cardList };
   }
 
   /**

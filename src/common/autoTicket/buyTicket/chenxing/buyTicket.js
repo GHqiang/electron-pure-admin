@@ -38,6 +38,7 @@ import OrderManage from "./orderManage";
 import CinemaManage from "./cinemaManage";
 import CardQuanManage from "./cardQuanManage";
 import PlatManage from "../platManage";
+import { syncCardAfterPayment } from "@/common/autoTicket/buyTicket/common/cardBalanceSync";
 import { dictTable } from "@/store/dictTable";
 const dictStore = dictTable();
 
@@ -409,6 +410,10 @@ class ChenxingBuyTicket extends BaseBuyTicket {
       }
       card_id = calcRes?.cardNum;
       cardNum = calcRes?.cardNum;
+      // 用卡余额
+      let cardBalance = useCardList.find(
+        item => item.cardNo == cardNum
+      )?.cardAmount;
       // 实际支付价格
       const paymentAmount = calcRes?.priceDetail?.totalRealPayAmount;
       this.logger.infoSave("实际支付价格", { paymentAmount });
@@ -639,6 +644,16 @@ class ChenxingBuyTicket extends BaseBuyTicket {
           order_number,
           add_count: ticket_num
         });
+        // 同步出票后的卡余额（paymentAmount 为卡实际支付额）
+        syncCardAfterPayment({
+          appFlag: this.appFlag,
+          cardId: card_id,
+          cardBalance,
+          paymentAmount,
+          logger: this.logger
+        }).catch(e =>
+          this.logger.warn?.("出票后同步辰星卡余额异常(不影响主流程)", e)
+        );
       }
       if (offerRule.offer_type === "1" && useQuan?.length) {
         this.logger.infoSave("辰星 出票成功，准备更新券库存", {

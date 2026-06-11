@@ -74,3 +74,62 @@ export async function syncCardBalanceToSv({
     });
   }
 }
+
+/**
+ * 出票后同步单张卡的余额（用卡支付后更新余额）
+ *
+ * 用法：各系列 buyTicket 支付成功后调用
+ *
+ *   syncCardAfterPayment({
+ *     appFlag: this.appFlag,
+ *     cardId,
+ *     cardBalance,      // 卡余额（如 100.00）
+ *     paymentAmount,      // 卡支付余额（如 30.00）
+ *     logger: this.logger
+ *   }).catch(e => this.logger.warn?.("出票后同步余额异常", e));
+ *
+ * @param {Object} params
+ * @param {string} params.appFlag    - 影院标识（app_name）
+ * @param {string} params.cardId    - 卡id（对应 SV 库 card_id）
+ * @param {number} params.cardBalance - 卡余额
+ * @param {number} params.paymentAmount - 卡支付余额
+ * @param {Object} [params.logger]   - 可选 logger
+ */
+export async function syncCardAfterPayment({
+  appFlag,
+  cardId,
+  cardBalance,
+  paymentAmount,
+  logger
+}) {
+  if (!appFlag || !cardId || !cardBalance || !paymentAmount) {
+    logger?.infoSave?.("出票后同步单张卡余额参数不足", {
+      appFlag,
+      cardId,
+      cardBalance,
+      paymentAmount
+    });
+    return;
+  }
+
+  const balance = Math.max(0, cardBalance - paymentAmount).toFixed(2);
+  const params = {
+    card_id: cardId,
+    app_name: appFlag,
+    balance: balance
+  };
+  try {
+    const res = await svApi.updateCardBalance(params);
+    logger?.infoSave?.("出票后同步单张卡余额返回", {
+      res,
+      params
+    });
+  } catch (error) {
+    logger?.warn?.("出票后会员卡余额同步失败(不影响主流程)", {
+      appFlag,
+      cardId,
+      balance,
+      error: formatErrInfo(error)
+    });
+  }
+}

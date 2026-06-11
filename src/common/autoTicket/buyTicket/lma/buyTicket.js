@@ -41,6 +41,7 @@ import LmaOrderManage from "./orderManage.js";
 import LmaCinemaManage from "./cinemaManage.js";
 import LmaCardQuanManage from "./cardQuanManage.js";
 import PlatManage from "../platManage.js";
+import { syncCardAfterPayment } from "@/common/autoTicket/buyTicket/common/cardBalanceSync";
 import { dictTable } from "@/store/dictTable";
 const dictStore = dictTable();
 
@@ -874,11 +875,18 @@ export default class LmaBuyTicket extends BaseBuyTicket {
 
       // 更新卡余额
       if (card_id && card_balance) {
-        this.orderManage.updateCardBalance({
-          card_id,
-          card_balance: card_balance?.replace("￥", "") || 0,
-          paymentAmount
-        });
+        const oldBalance = parseFloat(
+          (card_balance || "").replace("￥", "") || "0"
+        );
+        syncCardAfterPayment({
+          appFlag: this.appFlag,
+          cardId: card_id, // lma card_id和card_num是一个值
+          cardBalance: oldBalance,
+          paymentAmount,
+          logger: this.logger
+        }).catch(e =>
+          this.logger.warn?.("出票后同步LMA卡余额异常(不影响主流程)", e)
+        );
       }
 
       // 最后处理：获取支付结果上传取票码

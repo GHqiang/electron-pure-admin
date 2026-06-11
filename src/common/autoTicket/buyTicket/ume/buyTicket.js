@@ -40,7 +40,10 @@ import UmeOrderManage from "./orderManage.js";
 import UmeCinemaManage from "./cinemaManage.js";
 import UmeCardQuanManage from "./cardQuanManage.js";
 import PlatManage from "../platManage.js";
-import { syncCardBalanceToSv } from "@/common/autoTicket/buyTicket/common/cardBalanceSync";
+import {
+  syncCardBalanceToSv,
+  syncCardAfterPayment
+} from "@/common/autoTicket/buyTicket/common/cardBalanceSync";
 import { dictTable } from "@/store/dictTable";
 const dictStore = dictTable();
 
@@ -1143,6 +1146,10 @@ export default class UmeBuyTicket extends BaseBuyTicket {
       this.logger.infoSave("订单购买成功");
       // 此处是为了解决创建订单时card_id是cardNo，更新卡使用量是用的card_id是cardInstanceId，要和后台会员卡列表维护那的id保持一致
       if (card_id) {
+        // 先通过cardNo匹配拿到余额
+        let cardBalance =
+          cardList?.find(item => item.cardNo == card_id)?.cardAmount || 0;
+        // 此处重新赋值才对应sv库里的card_id
         card_id =
           cardList.find(item => item.cardNo === card_id)?.cardInstanceId || "";
         // 更新卡使用量
@@ -1152,6 +1159,16 @@ export default class UmeBuyTicket extends BaseBuyTicket {
           add_count: ticket_num,
           plat_name
         });
+        // 同步出票后的卡余额
+        syncCardAfterPayment({
+          appFlag: this.appFlag,
+          cardId: card_id,
+          cardBalance: cardBalance / 100,
+          paymentAmount: paymentAmount,
+          logger: this.logger
+        }).catch(e =>
+          this.logger.warn?.("出票后同步UME卡余额异常(不影响主流程)", e)
+        );
       }
       if (offerRule.offer_type === "1" && useQuan?.length) {
         this.logger.infoSave("UME 出票成功，准备更新券库存", {

@@ -40,6 +40,7 @@ import OrderManage from "./orderManage";
 import CinemaManage from "./cinemaManage";
 import CardQuanManage from "./cardQuanManage";
 import PlatManage from "../platManage";
+import { syncCardAfterPayment } from "@/common/autoTicket/buyTicket/common/cardBalanceSync";
 import { dictTable } from "@/store/dictTable";
 const dictStore = dictTable();
 
@@ -711,6 +712,18 @@ class FenghuangBuyTicket extends BaseBuyTicket {
           order_number,
           add_count: ticket_num
         });
+        // 同步出票后的卡余额
+        const cardBalance =
+          canUseCardList?.find(item => item.cardNo == card_id)?.cardAmount || 0; // 元
+        syncCardAfterPayment({
+          appFlag: this.appFlag,
+          cardId: card_id,
+          cardBalance,
+          paymentAmount,
+          logger: this.logger
+        }).catch(e =>
+          this.logger.warn?.("出票后同步凤凰卡余额异常(不影响主流程)", e)
+        );
       }
       if (offerRule.offer_type === "1" && useQuan?.length) {
         this.logger.infoSave("凤凰 出票成功，准备更新券库存", {

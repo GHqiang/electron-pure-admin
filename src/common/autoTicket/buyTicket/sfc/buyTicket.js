@@ -48,6 +48,7 @@ import SfcOrderManage from "./orderManage.js";
 import SfcCinemaManage from "./cinemaManage.js";
 import SfcCardQuanManage from "./cardQuanManage.js";
 import PlatManage from "../platManage.js";
+import { syncCardAfterPayment } from "@/common/autoTicket/buyTicket/common/cardBalanceSync";
 // 使用公共工具
 import {
   sortLoginByCardPhones,
@@ -513,7 +514,8 @@ class SfcBuyTicket extends BaseBuyTicket {
         coupon_id,
         member_coupon_id,
         profit,
-        priceInfo
+        priceInfo,
+        cardList
       } = useRes;
       this.logger.infoSave("使用卡券成功", useRes);
       if (!card_id && !quan_code && !member_coupon_id && !coupon_id) {
@@ -737,6 +739,19 @@ class SfcBuyTicket extends BaseBuyTicket {
           order_number: order_number_key,
           add_count: ticket_num
         });
+        let cardBalance = cardList?.find(
+          item => (this.isV3App ? item.member_id : item.id) == card_id
+        )?.balance;
+        // 同步出票后的卡余额
+        syncCardAfterPayment({
+          appFlag: this.appFlag,
+          cardId: card_id,
+          cardBalance: cardBalance,
+          paymentAmount: pay_money,
+          logger: this.logger
+        }).catch(e =>
+          this.logger.warn?.("出票后同步SFC卡余额异常(不影响主流程)", e)
+        );
       }
       if (offerRule?.offer_type === "1" && offerRule?.is_store != 1) {
         await this.cardQuanManage.updateQuanStock?.({
