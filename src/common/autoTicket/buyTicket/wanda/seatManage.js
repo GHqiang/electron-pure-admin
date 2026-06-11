@@ -12,7 +12,8 @@
 import { APP_API_OBJ } from "@/common/index";
 import {
   formatErrInfo, // 格式化错误信息
-  trial // 重试方法
+  trial, // 重试方法
+  sendWxPusherMessage
 } from "@/utils/utils";
 
 // 锁座重试常量配置
@@ -115,8 +116,13 @@ export default class SeatManage {
           )
           ?.flat() || [];
 
-      if (!seatData.length) {
-        this.logger.errorSave("获取座位布局为空");
+      if (!seatData?.length || !areaInfoList?.length) {
+        this.logger.errorSave("获取座位布局异常", { res });
+        sendWxPusherMessage({
+          orderInfo: this.order,
+          transferTip: "万达出现获取座位布局为空，请及时联系开发排查日志",
+          failReason: formatErrInfo(error)
+        });
       }
 
       return { seatData, areaInfoList, area: realtimeSeats?.area };

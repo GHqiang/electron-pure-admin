@@ -640,6 +640,10 @@ class WandaOfferPrice extends BaseOfferPrice {
           });
           basePrice = Math.max(member_price || 0, basePrice);
         }
+        if (!areaInfoList?.length || !seatInfo?.seatData?.length) {
+          this.logger.errorSave("获取座位布局异常，先不报价");
+          return;
+        }
         basePrice = basePrice / 100;
         // 计算最优折扣
         return this.calculateBestDiscount(cardList, basePrice);
