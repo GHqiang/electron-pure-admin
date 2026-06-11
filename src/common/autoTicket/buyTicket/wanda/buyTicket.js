@@ -401,6 +401,15 @@ class WandaBuyTicket extends BaseBuyTicket {
         paymentAmount,
         unit: "元"
       });
+      if (+cardPayPrice < +paymentAmount) {
+        this.logger.errorSave("会员卡余额不足");
+        // 转单或换号处理
+        const transparams = {
+          orderId: order_num,
+          session_id: this.currentSessionId
+        };
+        return await this.transferOrChangePhone(transparams, buyTicketInfo);
+      }
       // 6、校验是否可以创建订单
       // 用券时总价为0
       if (offer_type === "1") {
