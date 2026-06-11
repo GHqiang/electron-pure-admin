@@ -715,6 +715,12 @@ class FenghuangBuyTicket extends BaseBuyTicket {
         // 同步出票后的卡余额
         const cardBalance =
           canUseCardList?.find(item => item.cardNo == card_id)?.cardAmount || 0; // 元
+        this.logger.infoSave("支付卡信息", {
+          cardId: card_id,
+          cardNo: card_id,
+          cardBalance,
+          paymentAmount
+        });
         syncCardAfterPayment({
           appFlag: this.appFlag,
           cardId: card_id,

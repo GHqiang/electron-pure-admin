@@ -742,6 +742,12 @@ class SfcBuyTicket extends BaseBuyTicket {
         let cardBalance = cardList?.find(
           item => (this.isV3App ? item.member_id : item.id) == card_id
         )?.balance;
+        this.logger.infoSave("支付卡信息", {
+          cardId: card_id,
+          cardNo: cardNum,
+          cardBalance: cardBalance,
+          paymentAmount: pay_money
+        });
         // 同步出票后的卡余额
         syncCardAfterPayment({
           appFlag: this.appFlag,

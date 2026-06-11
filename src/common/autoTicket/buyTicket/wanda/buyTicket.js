@@ -600,6 +600,12 @@ class WandaBuyTicket extends BaseBuyTicket {
         const oldBalance =
           (canUseCardList?.find(item => item.cardNo == card_id)?.balance || 0) /
           100; // 元
+        this.logger.infoSave("支付卡信息", {
+          cardId: card_id,
+          cardNo: card_id,
+          cardBalance: oldBalance,
+          paymentAmount: cardPayPrice
+        });
         syncCardAfterPayment({
           appFlag: this.appFlag,
           cardId: card_id,

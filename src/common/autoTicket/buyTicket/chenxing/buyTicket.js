@@ -644,6 +644,12 @@ class ChenxingBuyTicket extends BaseBuyTicket {
           order_number,
           add_count: ticket_num
         });
+        this.logger.infoSave("支付卡信息", {
+          cardId: card_id,
+          cardNo: card_id,
+          cardBalance,
+          paymentAmount
+        });
         // 同步出票后的卡余额（paymentAmount 为卡实际支付额）
         syncCardAfterPayment({
           appFlag: this.appFlag,

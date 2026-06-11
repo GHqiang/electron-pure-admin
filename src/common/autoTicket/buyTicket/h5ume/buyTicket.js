@@ -1167,6 +1167,12 @@ export default class H5UmeBuyTicket extends BaseBuyTicket {
           const cardBalance = cardList?.find(
             item => item.cardNumber == card_id
           )?.balance;
+          this.logger.infoSave("支付卡信息", {
+            cardId: card_id,
+            cardNo: card_id,
+            cardBalance: cardBalance / 100,
+            paymentAmount: payAmount
+          });
           // 同步出票后的卡余额
           syncCardAfterPayment({
             appFlag: this.appFlag,

@@ -859,6 +859,24 @@ export default class LmaBuyTicket extends BaseBuyTicket {
           order_number,
           add_count: ticket_num
         });
+        const oldBalance = parseFloat(
+          (card_balance || "").replace("￥", "") || "0"
+        );
+        this.logger.infoSave("支付卡信息", {
+          cardId: card_id, // lma card_id和card_num是一个值
+          cardNo: card_id,
+          cardBalance: oldBalance,
+          paymentAmount
+        });
+        syncCardAfterPayment({
+          appFlag: this.appFlag,
+          cardId: card_id, // lma card_id和card_num是一个值
+          cardBalance: oldBalance,
+          paymentAmount,
+          logger: this.logger
+        }).catch(e =>
+          this.logger.warn?.("出票后同步LMA卡余额异常(不影响主流程)", e)
+        );
       }
 
       // 更新非入库券的券库存
@@ -871,22 +889,6 @@ export default class LmaBuyTicket extends BaseBuyTicket {
           phone: this.curPhone,
           isPay: 1
         });
-      }
-
-      // 更新卡余额
-      if (card_id && card_balance) {
-        const oldBalance = parseFloat(
-          (card_balance || "").replace("￥", "") || "0"
-        );
-        syncCardAfterPayment({
-          appFlag: this.appFlag,
-          cardId: card_id, // lma card_id和card_num是一个值
-          cardBalance: oldBalance,
-          paymentAmount,
-          logger: this.logger
-        }).catch(e =>
-          this.logger.warn?.("出票后同步LMA卡余额异常(不影响主流程)", e)
-        );
       }
 
       // 最后处理：获取支付结果上传取票码

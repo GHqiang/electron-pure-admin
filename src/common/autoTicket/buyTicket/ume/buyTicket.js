@@ -1149,6 +1149,7 @@ export default class UmeBuyTicket extends BaseBuyTicket {
         // 先通过cardNo匹配拿到余额
         let cardBalance =
           cardList?.find(item => item.cardNo == card_id)?.cardAmount || 0;
+        const cardNum = card_id;
         // 此处重新赋值才对应sv库里的card_id
         card_id =
           cardList.find(item => item.cardNo === card_id)?.cardInstanceId || "";
@@ -1158,6 +1159,12 @@ export default class UmeBuyTicket extends BaseBuyTicket {
           card_id: card_id,
           add_count: ticket_num,
           plat_name
+        });
+        this.logger.infoSave("支付卡信息", {
+          cardId: card_id,
+          cardNo: cardNum,
+          cardBalance: cardBalance / 100,
+          paymentAmount
         });
         // 同步出票后的卡余额
         syncCardAfterPayment({

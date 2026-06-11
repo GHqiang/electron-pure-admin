@@ -581,6 +581,12 @@ class JinyiBuyTicket extends BaseBuyTicket {
         const cardBalance = canUseCardList?.find(
           item => item.card_id == card_id
         )?.cardAmount;
+        this.logger.infoSave("支付卡信息", {
+          cardId: card_id,
+          cardNo: cardNum,
+          cardBalance,
+          paymentAmount
+        });
         syncCardAfterPayment({
           appFlag: this.appFlag,
           cardId: card_id,
