@@ -146,24 +146,41 @@ export default class OrderManage {
       const res = await this.appApi.mergePayment(params);
 
       // merge_payment 返回 data 是 AES-ECB 密文，需解密
+      // 单座卡支付通常返回密文（同步扣款），多座返回明文 JSON（异步授权）
       let resData = res;
+      let isDecrypted = false;
       if (res && typeof res.data === "string" && res.code === 0) {
         const decrypted = wandaAesDecrypt(res.data);
         if (decrypted) {
           try {
             resData = { ...res, data: JSON.parse(decrypted) };
+            isDecrypted = true;
           } catch (e) {
             this.logger.errorSave("解密支付结果JSON失败", {
-              error: e?.message
+              error: e?.message,
+              rawData: res.data?.substring(0, 200)
             });
           }
+        } else {
+          this.logger.errorSave("AES解密返回空", {
+            rawData: res.data?.substring(0, 200)
+          });
         }
       }
 
-      this.logger.infoSave("购买订单返回", resData);
+      const bizCode = resData.data?.bizCode;
+      const bizMsg = resData.data?.bizMsg;
+      const tradeNo = resData.data?.tradeNo;
+      this.logger.infoSave("购买订单返回", {
+        isDecrypted,
+        bizCode,
+        bizMsg,
+        tradeNo,
+        resData
+      });
       return {
-        success: resData.data?.bizCode === 0,
-        tradeNo: resData.data?.tradeNo
+        success: bizCode === 0,
+        tradeNo
       };
     } catch (error) {
       this.logger.errorSave("购买订单异常", {
@@ -185,6 +202,7 @@ export default class OrderManage {
   }
 
   // 获取购票信息（最多重试 3 次，间隔 1 秒）
+  // 注意：此方法只负责查取票码，支付轮询已上提到 getQrcodeUploadByPlat 中一次性完成
   async getPayResult(data) {
     let { orderId, session_id, logger, inx = 1 } = data || {};
     const maxRetry = 3;
@@ -220,6 +238,12 @@ export default class OrderManage {
           logger.errorSave("万达出票失败", { orderStatus, subOrder });
           return Promise.reject("万达出票失败");
         }
+        // 记录非终态（如40=待付款），方便排查支付未完成的原因
+        if (orderStatus && orderStatus !== 100 && orderStatus !== 30) {
+          logger.info(
+            `获取支付结果第${i + 1}次: orderStatus=${orderStatus}（非终态，继续等待）`
+          );
+        }
         if (qrcode) {
           logger.infoSave("获取取票码成功", { qrcode });
           return qrcode;
@@ -239,13 +263,235 @@ export default class OrderManage {
   }
 
   /**
-   * 最后处理：获取取票码并上传，失败则异步轮询
+   * ★ 对照小程序 loopCheckOrderStatus + checkCouponStatus 支付轮询流程
+   *
+   * 小程序逻辑（pages/ticket/order/confirm/index.js）：
+   * 1. merge_payment 成功后调用 loopCheckOrderStatus
+   * 2. loopCheckOrderStatus 每 600ms 轮询 query_pay_info_upgrade.api，直到 paymentStatus=30
+   * 3. 储值卡（无 prepayParams）→ 直接进入 checkCouponStatus
+   * 4. checkCouponStatus 每 600ms 轮询 query_pay_deal_result.api，直到 status=2（成功）
+   *
+   * 注意：query_pay_info_upgrade 不只是"查询"，它会实际触发储值卡支付状态的升级。
+   * 不调这个接口，卡永远不会被扣款（orderStatus 永远停在 40 待付款）。
+   *
+   * @param {Object} params
+   * @param {string} params.orderId - 订单 ID
+   * @param {string} params.tradeNo - merge_payment 返回的交易流水号
+   * @param {Object} params.logger - 日志对象
    */
-  async getQrcodeUploadByPlat({ order_num, session_id }) {
+  async _waitForPayment({ orderId, tradeNo, logger }) {
+    // ─── 阶段1：轮询 query_pay_info_upgrade，等待 paymentStatus === 30 ───
+    logger.infoSave("[支付轮询-阶段1] 开始轮询 query_pay_info_upgrade", {
+      orderId,
+      tradeNo
+    });
+    const maxRetry1 = 30; // 30次 × 1秒 = 30秒（小程序30秒超时）
+    let paymentReady = false;
+
+    for (let i = 0; i < maxRetry1; i++) {
+      try {
+        const res = await this.appApi.queryPayInfoUpgrade({ orderId, tradeNo });
+        const paymentStatus = res?.data?.res?.paymentStatus;
+        logger.info(
+          `[支付轮询-阶段1] 第${i + 1}次: paymentStatus=${paymentStatus}`
+        );
+
+        // 首次调用记录完整返回体，方便排查字段缺失问题
+        if (i === 0) {
+          logger.infoSave("[支付轮询-阶段1] 首次查询返回", {
+            orderId,
+            tradeNo,
+            response: res?.data
+          });
+        }
+
+        if (paymentStatus === 30) {
+          // 支付准备就绪
+          paymentReady = true;
+          logger.infoSave("[支付轮询-阶段1] paymentStatus=30，支付准备就绪", {
+            orderId,
+            tradeNo,
+            response: res?.data?.res
+          });
+
+          // 判断是否有微信支付 prepayParams（储值卡支付时为空）
+          const prepayParams = res?.data?.res?.payment?.prepayParams;
+          if (prepayParams && prepayParams.length > 0) {
+            logger.infoSave(
+              "[支付轮询-阶段1] 检测到微信支付 prepayParams，但当前仅支持储值卡",
+              { orderId, tradeNo, prepayParams }
+            );
+            // 微信支付路径需要前端调起 wx.requestPayment，本项目不支持，直接报错
+            throw new Error("检测到微信支付流程，当前仅支持储值卡支付");
+          }
+          // 储值卡：prepayParams 为空，直接进入阶段2
+          logger.infoSave(
+            `[支付轮询-阶段1] 储值卡路径（无prepayParams），进入阶段2（共轮询${i + 1}次）`
+          );
+          break;
+        }
+
+        if (paymentStatus === 20) {
+          // 支付失败
+          const errInfo =
+            res?.data?.res?.paymentErrorInfo || "支付失败(状态20)";
+          logger.errorSave("[支付轮询-阶段1] 支付失败 paymentStatus=20", {
+            orderId,
+            tradeNo,
+            errInfo,
+            response: res?.data?.res
+          });
+          throw new Error(`支付失败: ${errInfo}`);
+        }
+
+        // paymentStatus === 10（处理中）或其他值，继续等待
+        // 记录非预期状态值，方便发现新的状态码
+        if (
+          paymentStatus !== undefined &&
+          ![10, 20, 30].includes(paymentStatus)
+        ) {
+          logger.infoSave(
+            `[支付轮询-阶段1] 第${i + 1}次: 未预期的 paymentStatus=${paymentStatus}`,
+            { orderId, tradeNo, response: res?.data?.res }
+          );
+        }
+      } catch (error) {
+        if (error.message?.includes("支付失败")) throw error;
+        logger.errorSave(`[支付轮询-阶段1] 查询异常`, {
+          orderId,
+          tradeNo,
+          error: error?.message || error
+        });
+      }
+
+      if (i < maxRetry1 - 1) {
+        await mockDelay(1); // 间隔1秒（小程序用600ms，这里用1秒更稳妥）
+      }
+    }
+
+    if (!paymentReady) {
+      throw new Error(
+        `[支付轮询-阶段1] 超时(${maxRetry1}秒)，paymentStatus未变为30`
+      );
+    }
+
+    // ─── 阶段2：轮询 query_pay_deal_result，等待 status === 2（成功） ───
+    logger.infoSave("[支付轮询-阶段2] 开始轮询 query_pay_deal_result", {
+      orderId,
+      tradeNo
+    });
+    const maxRetry2 = 30; // 30次 × 1秒 = 30秒
+    let dealSuccess = false;
+
+    for (let i = 0; i < maxRetry2; i++) {
+      try {
+        const res = await this.appApi.queryPayDealResult({ orderId, tradeNo });
+        const status = res?.data?.res?.status;
+        logger.info(`[支付轮询-阶段2] 第${i + 1}次: status=${status}`);
+
+        // 首次调用记录完整返回体
+        if (i === 0) {
+          logger.infoSave("[支付轮询-阶段2] 首次查询返回", {
+            orderId,
+            tradeNo,
+            response: res?.data
+          });
+        }
+
+        if (status === 2) {
+          // ★ 支付成功
+          dealSuccess = true;
+          logger.infoSave(
+            `[支付轮询-阶段2] 支付结果确认成功 status=2（共轮询${i + 1}次）`,
+            { orderId, tradeNo, response: res?.data?.res }
+          );
+          break;
+        }
+
+        if (status === 3) {
+          // 支付失败
+          const errorType = res?.data?.res?.errorType;
+          logger.errorSave("[支付轮询-阶段2] 支付结果失败 status=3", {
+            orderId,
+            tradeNo,
+            errorType,
+            response: res?.data?.res
+          });
+          throw new Error(`支付结果失败: errorType=${errorType}`);
+        }
+
+        // status === 1（处理中），继续等待
+      } catch (error) {
+        if (error.message?.includes("支付结果失败")) throw error;
+        logger.errorSave(`[支付轮询-阶段2] 查询异常`, {
+          orderId,
+          tradeNo,
+          error: error?.message || error
+        });
+      }
+
+      if (i < maxRetry2 - 1) {
+        await mockDelay(1);
+      }
+    }
+
+    if (!dealSuccess) {
+      throw new Error(`[支付轮询-阶段2] 超时(${maxRetry2}秒)，status未变为2`);
+    }
+
+    logger.infoSave("[支付轮询] 全部完成，订单已支付", { orderId, tradeNo });
+  }
+
+  /**
+   * 最后处理：获取取票码并上传，失败则异步轮询
+   *
+   * 流程分层：
+   * 1. _waitForPayment —— 一次性支付轮询（对照小程序 loopCheckOrderStatus + checkCouponStatus）
+   * 2. getPayResult —— 查取票码（3次×1秒快速重试）
+   * 3. asyncFetchQrcodeSubmit —— 异步长轮询取票码（3分钟+7分钟），不再触碰支付
+   */
+  async getQrcodeUploadByPlat({ order_num, tradeNo, session_id }) {
     try {
+      // ── 第1层：一次性支付轮询（tradeNo 在此消费，后续不再重复）──
+      if (tradeNo) {
+        try {
+          this.logger.infoSave("[支付轮询] 开始一次性支付确认", {
+            orderId: order_num,
+            tradeNo
+          });
+          await this._waitForPayment({
+            orderId: order_num,
+            tradeNo,
+            logger: this.logger
+          });
+          this.logger.infoSave("[支付轮询] 支付确认完成，开始获取取票码", {
+            orderId: order_num
+          });
+        } catch (e) {
+          this.logger.errorSave("[支付轮询] 支付确认失败", {
+            orderId: order_num,
+            tradeNo,
+            error: e?.message || e
+          });
+          sendWxPusherMessage({
+            orderInfo: this.order,
+            transferTip: "支付确认失败，需人工核查订单是否已扣款",
+            failReason: `[支付轮询] ${e?.message || "未知错误"}`
+          });
+          // 支付失败不继续，直接返回
+          return;
+        }
+      } else {
+        // 无 tradeNo 时说明 merge_payment 未返回交易流水号（可能是同步扣款已完成）
+        this.logger.infoSave(
+          "[支付轮询] 无 tradeNo，跳过支付轮询（可能为同步扣款场景）",
+          { orderId: order_num }
+        );
+      }
+
+      // ── 第2层：快速查取票码 ──
       let qrcode;
       try {
-        // 9、获取订单结果
         qrcode = await this.getPayResult({
           orderId: order_num,
           session_id,
@@ -277,14 +523,16 @@ export default class OrderManage {
     }
   }
 
-  // 异步轮询获取取票码并提交
+  // 异步轮询获取取票码并提交（只轮询取票码，不重复触发支付）
   async asyncFetchQrcodeSubmit({ order_num, session_id }) {
     let logger = new Logger({ logType: 3 });
     logger.init(this.order);
     const { plat_name, order_number } = this.order;
     let conPrefix = "";
     try {
-      logger.infoSave("异步轮询获取取票码并提交方法开始执行");
+      logger.infoSave("异步轮询获取取票码并提交方法开始执行", {
+        orderId: order_num
+      });
       // 每搁20秒查一次，查9次，3分钟
       let qrcode = await trial(
         inx =>

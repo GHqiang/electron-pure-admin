@@ -596,6 +596,12 @@ class WandaBuyTicket extends BaseBuyTicket {
       });
       // 交易流水号
       buyTicketInfo.tradeNo = createOrderRes?.tradeNo;
+      if (!createOrderRes?.tradeNo) {
+        this.logger.infoSave(
+          "[支付] merge_payment 未返回 tradeNo（可能为同步扣款，无需轮询）",
+          { order_num }
+        );
+      }
       if (card_id) {
         // 更新卡使用量
         await updateCardDayUse({
@@ -636,9 +642,10 @@ class WandaBuyTicket extends BaseBuyTicket {
           phone: this.currentPhone
         });
       }
-      // 最后处理：获取支付结果上传取票码
+      // 最后处理：获取支付结果上传取票码（传入 tradeNo 以触发储值卡支付轮询）
       const lastRes = await this.orderManage.getQrcodeUploadByPlat({
         order_num,
+        tradeNo: createOrderRes?.tradeNo,
         session_id: this.currentSessionId
       });
       if (lastRes?.qrcode && lastRes?.submitRes) {
