@@ -521,17 +521,11 @@ class WandaBuyTicket extends BaseBuyTicket {
         }));
       }
 
-      // cardPayment：仅当实际用卡支付时（cardPayPrice > 0），纯券时不加
-      if (canUseCardList?.length && cardPayPrice > 0) {
-        const bestCard = canUseCardList[0];
-        requestInfo.cardPayment = {
-          paymentType: 1,
-          cardNumber: bestCard.cardNo,
-          ticketType: bestCard.cardTypeCode || "",
-          ticketTypeName: bestCard.cardTypeName || "",
-          paymentPrice: Math.round(cardPayPrice * 100)
-        };
-      }
+      // ★ 对照小程序 confirm/index.js:1829：
+      // cardPayment 只在有活动优惠（activity）时才设置，纯卡支付只传 storedCardPayments。
+      // 当前 activity 区块已跳过，故 cardPayment 不传。
+      // 如需支持 activity 积分抵扣等场景，在此处 conditionally 添加：
+      // if (activitySelected) { requestInfo.cardPayment = { ... }; }
 
       // ticketVoucher：券
       if (useQuan?.length) {

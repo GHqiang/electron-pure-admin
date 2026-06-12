@@ -409,8 +409,18 @@ export default class OrderManage {
         }
 
         if (status === 3) {
-          // 支付失败
+          // ★ 对照小程序：status=3 + errorType=0 对储值卡 = 支付成功
+          // 小程序 checkCouponStatus 中 status=3 时 redirect 到订单详情页，并非报错
           const errorType = res?.data?.res?.errorType;
+          if (errorType === 0) {
+            dealSuccess = true;
+            logger.infoSave(
+              `[支付轮询-阶段2] 储值卡支付成功 status=3 errorType=0（共轮询${i + 1}次）`,
+              { orderId, tradeNo, response: res?.data?.res }
+            );
+            break;
+          }
+          // errorType ≠ 0 才是真正的支付失败
           logger.errorSave("[支付轮询-阶段2] 支付结果失败 status=3", {
             orderId,
             tradeNo,
