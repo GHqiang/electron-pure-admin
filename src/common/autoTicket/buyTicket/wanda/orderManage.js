@@ -95,20 +95,43 @@ export default class OrderManage {
    */
   async priceCalculation({ orderId, session_id }) {
     let params = { orderId, wanda_token: session_id };
-    try {
-      const res = await this.appApi.queryOrderByUserId(params);
-      this.logger.infoSave("查询用户订单返回", { res, params });
-      const orderRes = res?.data || {};
-      if (!orderRes?.orderInf?.length) return null;
-      // this.logger.infoSave("查询订单详情", orderRes);
-      const orderInfo =
-        orderRes.orderInf.find(item => item.orderId === orderId) || {};
-      this.logger.infoSave("计算价格返回", orderInfo);
-      return orderInfo;
-    } catch (error) {
-      this.logger.errorSave("万达计算订单价格异常", {
-        error: formatErrInfo(error)
-      });
+    // 锁座后 Wanda 后端有索引延迟，queryOrderByUserId 可能立即返回空，加重试
+    const maxRetry = 3;
+    for (let i = 0; i < maxRetry; i++) {
+      try {
+        const res = await this.appApi.queryOrderByUserId(params);
+        if (i === 0) {
+          this.logger.infoSave("查询用户订单返回", { res, params });
+        }
+        const orderRes = res?.data || {};
+        if (!orderRes?.orderInf?.length) {
+          if (i < maxRetry - 1) {
+            this.logger.info(
+              `查询用户订单为空（bizCode=${orderRes.bizCode}），${i + 1}秒后重试...`
+            );
+            await mockDelay(1);
+            continue;
+          }
+          this.logger.errorSave("查询用户订单重试后仍为空", {
+            orderId,
+            bizCode: orderRes.bizCode
+          });
+          return null;
+        }
+        const orderInfo =
+          orderRes.orderInf.find(item => item.orderId === orderId) || {};
+        this.logger.infoSave("计算价格返回", orderInfo);
+        return orderInfo;
+      } catch (error) {
+        if (i < maxRetry - 1) {
+          this.logger.info(`查询用户订单异常，${i + 1}秒后重试...`);
+          await mockDelay(1);
+          continue;
+        }
+        this.logger.errorSave("万达计算订单价格异常", {
+          error: formatErrInfo(error)
+        });
+      }
     }
   }
 
