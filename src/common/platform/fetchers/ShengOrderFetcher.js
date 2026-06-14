@@ -7,6 +7,8 @@ import Logger from "../../logger.js";
 import { getCinemaFlag, getCurrentTime, logUpload } from "@/utils/utils.js";
 import svApi from "@/api/sv-api.js";
 import { platTokens } from "@/store/platTokens.js";
+import { dictTable } from "@/store/dictTable";
+const dictStore = dictTable();
 
 const tokens = platTokens();
 
@@ -51,6 +53,7 @@ export default class ShengOrderFetcher extends BaseOrderFetcher {
 
           const {
             quantity,
+            changeSeat, // 电影票需要 是否换附近座位 0，不换（允许联系客户换座），1可以换，2不换（不允许联系客户换座）
             sourceData: { show, film, cinema, label, seats }
           } = detail;
 
@@ -82,7 +85,9 @@ export default class ShengOrderFetcher extends BaseOrderFetcher {
             cinema_code: cinema.standardId,
             order_number: code,
             supplierCode,
-            seats: seats || [], // 报价接口需要：seatInfo = JSON.stringify(seats.map(s => ({ seatId: s.seatId, supplierPrice })))
+            changeSeatApplyStatus: item.changeSeatApplyStatus, // 申请换座状态：1-拒绝，2-同意(换座成功)
+            changeSeat,
+            seats: seats || [],
             lockseat: (seats || []).map(itemA => itemA.name).join(" "),
             plat_name: "sheng"
           };
@@ -98,41 +103,64 @@ export default class ShengOrderFetcher extends BaseOrderFetcher {
         });
 
       // 过滤新订单
-      const newOrders = this.filterNewOrders(processedList);
+      let newOrders = this.filterNewOrders(processedList);
+      // 支持换座时不再单一根据订单号过滤，放到后面根据出票记录过滤
+      if (dictStore.dictInfo.supportChangeSeatPlatList.includes("sheng")) {
+        newOrders = processedList.slice();
+      }
 
       // 如果不是测试订单，从远端过滤已出票的订单
       if (newOrders?.length && !this.isTestOrder) {
         const ticketList = await this.getTicketList();
-        const finalOrders = newOrders.filter(item => {
-          // 判断该订单是否是新订单：报过价且没出过票
-          let targetOfferList = offerList.filter(itemA => {
-            if (item.appName !== "wanxiang") {
-              return (
-                itemA.app_name === item.appName && itemA.order_status === "1"
-              );
-            } else {
-              return (
-                ["wanxiang", "wanxiangh5"].includes(itemA.app_name) &&
-                itemA.order_status === "1"
-              );
-            }
-          });
-          let targetTicketList = ticketList.filter(itemA => {
-            if (item.appName !== "wanxiang") {
-              return itemA.app_name === item.appName;
-            } else {
-              return ["wanxiang", "wanxiangh5"].includes(itemA.app_name);
-            }
-          });
-          let isOffer = targetOfferList.some(
-            itemA => itemA.order_number === item.order_number
+
+        // 根据出票记录过滤订单列表，判断是否为新订单或换座成功的订单
+        newOrders = newOrders.map(item => {
+          const ticketInfo = ticketList.find(
+            itemA =>
+              itemA.app_name === item.app_name &&
+              itemA.order_number === item.order_number
           );
-          let isTicket = targetTicketList.some(
-            itemA => itemA.order_number === item.order_number
-          );
-          // 报过价没出过票就是新订单
-          return isOffer && !isTicket;
+          let isNewOrder, changeSeatSuccess;
+          if (!ticketInfo) {
+            isNewOrder = true;
+            // 对于支持换座的平台，报价记录已有且出票记录无的，需要区分是否换座订单
+            if (
+              dictStore.dictInfo.supportChangeSeatPlatList.includes("sheng")
+            ) {
+              const targetOffer = offerList.find(
+                itemA => itemA.order_number === item.order_number
+              );
+              // 有报价记录说明是老订单（非新订单）
+              if (targetOffer) {
+                isNewOrder = false;
+              }
+            }
+          } else {
+            isNewOrder = false;
+            // 9代表申请换座中
+            if (
+              dictStore.dictInfo.supportChangeSeatPlatList.includes("sheng") &&
+              ticketInfo.order_status == 9
+            ) {
+              // changeSeatApplyStatus: 1-拒绝，2-同意(换座成功，seats是换座后座位)
+              if (item.changeSeatApplyStatus === 2) {
+                isNewOrder = true;
+                changeSeatSuccess = true;
+              } else {
+                changeSeatSuccess = false;
+              }
+              // 根据换座状态更新出票记录的换座信息
+              this.updateTicketOrderInfo(item);
+            }
+          }
+          return {
+            ...item,
+            isNewOrder,
+            changeSeatSuccess
+          };
         });
+
+        const finalOrders = newOrders.filter(item => item.isNewOrder);
 
         if (!finalOrders?.length) return;
 
@@ -147,9 +175,7 @@ export default class ShengOrderFetcher extends BaseOrderFetcher {
               level: "info",
               info: {
                 newOrder: item,
-                oldOrder: rawStayList.find(
-                  itemA => itemA.code === item.order_number
-                )
+                isAgain: item.changeSeatSuccess
               }
             }
           ];
@@ -164,7 +190,19 @@ export default class ShengOrderFetcher extends BaseOrderFetcher {
             logList
           );
 
-          this.sendNewOrderMsg(item);
+          // 换座成功需发送重新出票消息
+          if (item.changeSeatSuccess) {
+            const eventName = `newOrder_${item.appName}`;
+            const newOrderEvent = new CustomEvent(eventName, {
+              detail: {
+                order: item,
+                isAgain: true
+              }
+            });
+            window.dispatchEvent(newOrderEvent);
+          } else {
+            this.sendNewOrderMsg(item);
+          }
           this.recordOrder(item);
         });
       } else if (newOrders?.length) {
@@ -190,9 +228,13 @@ export default class ShengOrderFetcher extends BaseOrderFetcher {
       const res = await this.platformAdapter.fetchTicketOrderList(params);
 
       // 过滤已记录的订单
-      const filteredList = res.filter(
+      let filteredList = res.filter(
         item => !this.platOrderList.some(itemA => itemA.code === item.code)
       );
+      // 如果支持换座，先不过滤，后面根据出票记录过滤
+      if (dictStore.dictInfo.supportChangeSeatPlatList.includes("sheng")) {
+        filteredList = res.slice();
+      }
 
       // 记录平台订单
       this.recordPlatformOrders(filteredList);
@@ -228,6 +270,64 @@ export default class ShengOrderFetcher extends BaseOrderFetcher {
   }
 
   /**
+   * 更新出票记录换座信息
+   * @param {Object} order - 订单信息（含 changeSeatApplyStatus）
+   */
+  async updateTicketOrderInfo(order) {
+    try {
+      const ticketRes = await svApi.queryTicketList({
+        user_id: tokens.userInfo?.user_id,
+        plat_name: "sheng",
+        order_number: order.order_number,
+        isNeedTotalNum: 0,
+        queryFields: "change_seat_info,order_status"
+      });
+      const ticketList = ticketRes.data.ticketList || [];
+      let ticketInfo = ticketList[0];
+      if (ticketInfo?.order_status != 9) {
+        return;
+      }
+
+      // changeSeatApplyStatus: 1-拒绝，2-同意(换座成功)
+      const status = order.changeSeatApplyStatus;
+      const statusText = { 1: "拒绝换座", 2: "同意换座" };
+      let change_seat_info = ticketInfo?.change_seat_info || "";
+
+      if (status === 2) {
+        // 换座成功：更新座位并标记重新出票
+        change_seat_info += `换座结果：${status}-${statusText[status]}，新座位：${order.lockseat}`;
+        await svApi.updateTicketRecord({
+          whereObj: {
+            order_number: order.order_number,
+            plat_name: order.plat_name,
+            user_id: tokens.userInfo?.user_id
+          },
+          updateObj: {
+            change_seat_info,
+            lockseat: order.lockseat,
+            order_status: 5 // 重新出票中
+          }
+        });
+      } else {
+        // 换座被拒绝
+        if (!change_seat_info?.includes("换座结果")) {
+          change_seat_info += `换座结果：${status}-${statusText[status]}，原座位：${order.lockseat}`;
+          await svApi.updateTicketRecord({
+            whereObj: {
+              order_number: order.order_number,
+              plat_name: order.plat_name,
+              user_id: tokens.userInfo?.user_id
+            },
+            updateObj: {
+              change_seat_info
+            }
+          });
+        }
+      }
+    } catch (error) {}
+  }
+
+  /**
    * 获取出票记录
    * @returns {Promise<Array>} 出票记录列表
    */
@@ -239,7 +339,7 @@ export default class ShengOrderFetcher extends BaseOrderFetcher {
         page_num: 1,
         page_size: 30,
         isNeedTotalNum: 0,
-        queryFields: "order_number,app_name"
+        queryFields: "order_number,app_name,order_status"
       });
       return ticketRes.data.ticketList || [];
     } catch (error) {
