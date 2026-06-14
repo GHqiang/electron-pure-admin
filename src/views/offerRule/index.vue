@@ -793,15 +793,24 @@ const saveRule = async ruleInfo => {
     ruleInfo.platOfferList = JSON.stringify(ruleInfo.platOfferList || []);
     if (ruleInfo.id) {
       console.log("编辑保存规则", jiqiRuleInfo, ruleInfo);
+      // 先同步规则到平台（含删除），成功后再落库，避免平台操作失败时本地状态不一致
+      const syncResult = await saveRuleSyncToPlat(ruleInfo);
+      // 若同步返回了新的 platOfferList（含首次同步获得的 platRuleId），需更新 jiqiRuleInfo 避免覆盖
+      if (syncResult?.platOfferList) {
+        jiqiRuleInfo.platOfferList = JSON.stringify(syncResult.platOfferList);
+      }
       await svApi.updateRuleRecord(jiqiRuleInfo);
-      // 同步规则到平台
-      await saveRuleSyncToPlat(ruleInfo);
       sfcDialogRef.value.closeTck();
       searchData();
     } else {
       console.log("新增保存规则", jiqiRuleInfo, ruleInfo);
-      await svApi.addRuleRecord({ ...jiqiRuleInfo, id: undefined });
-      // 同步规则到平台
+      const addRes = await svApi.addRuleRecord({ ...jiqiRuleInfo, id: undefined });
+      // 同步规则到平台（新增场景需要落库后的 id 来关联 platRuleId）
+      // sv-request 响应拦截器已剥离 axios 外层，addRes 即 successRes 返回体
+      const newId = addRes?.data?.id;
+      if (newId) {
+        ruleInfo = { ...ruleInfo, id: newId };
+      }
       await saveRuleSyncToPlat(ruleInfo);
       sfcDialogRef.value.closeTck();
       searchData();
@@ -813,42 +822,39 @@ const saveRule = async ruleInfo => {
 
 // 新增/编辑规则同步到平台
 const saveRuleSyncToPlat = async ruleForm => {
-  try {
-    let ruleInfo = JSON.parse(JSON.stringify(ruleForm));
-    // 1、解析规则是否要同步平台
-    const fixedOfferToPlatList =
-      dictStore.dictInfo.fixedOfferToPlatList?.split(",") || [];
+  let ruleInfo = JSON.parse(JSON.stringify(ruleForm));
+  // 1、解析规则是否要同步平台
+  const fixedOfferToPlatList =
+    dictStore.dictInfo.fixedOfferToPlatList?.split(",") || [];
 
-    // 固定报价规则同步配置为空时不同步
-    if (fixedOfferToPlatList.length === 0) return;
+  // 固定报价规则同步配置为空时不同步
+  if (fixedOfferToPlatList.length === 0) return;
 
-    // 非固定报价规则先不同步
-    if (ruleInfo.offerType != 1) {
-      console.warn("非固定报价规则不同步到猎人平台");
-      return;
-    }
-
-    let platOfferList = ruleInfo.platOfferList
-      ? JSON.parse(ruleInfo.platOfferList)
-      : [];
-    ruleInfo.platOfferList = platOfferList;
-    let lierenOfferRule = platOfferList.find(
-      item => item.platName === "lieren"
-    );
-    if (!lierenOfferRule) return;
-
-    // 仅平台选择同步时才同步
-    if (lierenOfferRule.isSyncPlat == 1) {
-      await lierenOfferRuleSyncPlat(ruleInfo);
-    } else if (lierenOfferRule.isSyncPlat == 2 && lierenOfferRule.platRuleId) {
-      console.log("取消同步了，准备删除平台规则", lierenOfferRule);
-      // 如果之前是同步到平台的，现在取消同步了，则删除平台规则
-      await lierenOfferRuleDelPlat([lierenOfferRule.platRuleId]);
-    }
-    console.log("同步规则到平台成功");
-  } catch (error) {
-    console.warn("同步规则到平台异常", error);
+  // 非固定报价规则先不同步
+  if (ruleInfo.offerType != 1) {
+    console.warn("非固定报价规则不同步到猎人平台");
+    return;
   }
+
+  let platOfferList = ruleInfo.platOfferList
+    ? JSON.parse(ruleInfo.platOfferList)
+    : [];
+  ruleInfo.platOfferList = platOfferList;
+  let lierenOfferRule = platOfferList.find(
+    item => item.platName === "lieren"
+  );
+  if (!lierenOfferRule) return;
+
+  // 仅平台选择同步时才同步
+  if (lierenOfferRule.isSyncPlat == 1) {
+    return await lierenOfferRuleSyncPlat(ruleInfo);
+  } else if (lierenOfferRule.isSyncPlat == 2 && lierenOfferRule.platRuleId) {
+    console.log("取消同步了，准备删除平台规则", lierenOfferRule);
+    // 如果之前是同步到平台的，现在取消同步了，则删除平台规则
+    // 注意：此处不 catch，让异常传播到 saveRule 以阻断后续落库，避免 platRuleId 丢失无法重试
+    await lierenOfferRuleDelPlat([lierenOfferRule.platRuleId]);
+  }
+  console.log("同步规则到平台成功");
 };
 
 // 删除规则同步到平台

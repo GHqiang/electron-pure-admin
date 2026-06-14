@@ -199,7 +199,8 @@ export default function useLierenOfferRuleSyncFun() {
       const res = await lierenApi.ruleDel(params);
       console.warn("猎人平台规则删除成功", res);
     } catch (error) {
-      console.warn("猎人平台规则删除异常", error);
+      console.error("猎人平台规则删除异常", error);
+      throw error;
     }
   };
 
