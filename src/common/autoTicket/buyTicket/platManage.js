@@ -632,7 +632,10 @@ export default class PlatCommon {
     try {
       // 省平台：仅 changeSeat === 1 时允许申请换座
       if (plat_name === "sheng" && this.order.changeSeat !== 1) {
-        this.logger.info("省平台订单不允许换座，changeSeat:", this.order.changeSeat);
+        this.logger.info(
+          "省平台订单不允许换座，changeSeat:",
+          this.order.changeSeat
+        );
         return false;
       }
       if (plat_name === "lieren") {
