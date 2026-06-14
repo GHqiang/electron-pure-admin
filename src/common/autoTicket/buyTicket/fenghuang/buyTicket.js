@@ -189,8 +189,7 @@ class FenghuangBuyTicket extends BaseBuyTicket {
         if (targetSeatRes.errorCode === "TARGET_SEAT_FAILED") {
           // 获取目标座位失败，猎人订单走申请换座
           if (
-            plat_name === "lieren" &&
-            dictStore.dictInfo.lierenIsSupportChangeSeat === 1
+            dictStore.dictInfo.supportChangeSeatPlatList.includes(plat_name)
           ) {
             this.logger.infoSave("获取目标座位失败，猎人订单走申请换座逻辑");
             const isApplyChangeSeat =
@@ -281,8 +280,7 @@ class FenghuangBuyTicket extends BaseBuyTicket {
       if (!lockRes) {
         const { err_info: errInfo } = this.logger.getLastErrMsgAndInfo();
         if (
-          plat_name == "lieren" &&
-          dictStore.dictInfo.lierenIsSupportChangeSeat == 1 &&
+          dictStore.dictInfo.supportChangeSeatPlatList.includes(plat_name) &&
           ["座位已被锁定", "座位无效或已被锁定"].some(item =>
             errInfo.includes(item)
           )

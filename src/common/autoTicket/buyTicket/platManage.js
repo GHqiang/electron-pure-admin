@@ -627,12 +627,17 @@ export default class PlatCommon {
     }
   }
   // 申请换座
-  async applyChangeSeat({ order_number, plat_name }) {
+  async applyChangeSeat({ order_number, supplierCode, plat_name }) {
     let params;
     try {
       if (plat_name === "lieren") {
         params = {
           order_number
+        };
+      } else if (plat_name == "sheng") {
+        params = {
+          orderCode: order_number,
+          supplierCode: supplierCode
         };
       }
       this.logger.info("申请换座入参", params);

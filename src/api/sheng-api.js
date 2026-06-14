@@ -34,6 +34,9 @@ const transferOrder = params =>
 const stayTicketingList = params =>
   axios.post("/supplier/listGrabOrder", params);
 
+// 申请换座
+const applySeatChange = params => axios.post("/supplier/listGrabOrder", params);
+
 export default {
   queryOfferRecord, // 查询报价记录
   queryStayOfferList, // 查询待报价列表
@@ -42,5 +45,6 @@ export default {
   confirmOrder, // 确认接货
   submitTicketCode, // 提交取票码
   transferOrder, // 转单
-  stayTicketingList // 查询中签订单
+  stayTicketingList, // 查询中签订单
+  applySeatChange // 申请换座
 };

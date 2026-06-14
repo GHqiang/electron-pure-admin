@@ -520,8 +520,7 @@ export default class UmeBuyTicket extends BaseBuyTicket {
           });
           // 获取目标座位失败，猎人订单走申请换座
           if (
-            plat_name === "lieren" &&
-            dictStore.dictInfo.lierenIsSupportChangeSeat === 1
+            dictStore.dictInfo.supportChangeSeatPlatList.includes(plat_name)
           ) {
             this.logger.infoSave("获取目标座位失败，猎人订单走申请换座逻辑");
             const isApplyChangeSeat =
@@ -638,8 +637,7 @@ export default class UmeBuyTicket extends BaseBuyTicket {
         if (!lockRes) {
           const { err_info: errInfo } = this.logger.getLastErrMsgAndInfo();
           if (
-            plat_name == "lieren" &&
-            dictStore.dictInfo.lierenIsSupportChangeSeat == 1 &&
+            dictStore.dictInfo.supportChangeSeatPlatList.includes(plat_name) &&
             ["锁座失败", "该座位不能选择"].some(item => errInfo.includes(item))
           ) {
             // 走申请座位逻辑

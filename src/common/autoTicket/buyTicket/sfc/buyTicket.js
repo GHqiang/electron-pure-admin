@@ -351,8 +351,7 @@ class SfcBuyTicket extends BaseBuyTicket {
           this.logger.errorSave("获取目标座位失败", { targetList, ticket_num });
           // 猎人订单：申请换座
           if (
-            plat_name === "lieren" &&
-            dictStore.dictInfo.lierenIsSupportChangeSeat === 1
+            dictStore.dictInfo.supportChangeSeatPlatList.includes(plat_name)
           ) {
             this.logger.infoSave("获取目标座位失败，猎人订单走申请换座逻辑");
             const isApplyChangeSeat =
@@ -439,8 +438,7 @@ class SfcBuyTicket extends BaseBuyTicket {
         if (!res) {
           const { err_info: errInfo } = this.logger.getLastErrMsgAndInfo();
           if (
-            plat_name == "lieren" &&
-            dictStore.dictInfo.lierenIsSupportChangeSeat == 1 &&
+            dictStore.dictInfo.supportChangeSeatPlatList.includes(plat_name) &&
             ["座位锁定失败", "座位已被锁定或售出"].some(item =>
               errInfo.includes(item)
             )
