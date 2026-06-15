@@ -132,6 +132,18 @@
               @click="batchDelete"
               >批量删除</el-button
             >
+            <el-button
+              type="primary"
+              :loading="checking"
+              @click="handleCheckLierenRuleSync"
+              >规则同步检查</el-button
+            >
+            <el-button
+              type="success"
+              :loading="fixing"
+              @click="handleFixLierenRule"
+              >规则同步修复</el-button
+            >
           </el-form-item>
         </el-form>
         <!-- 表格 -->
@@ -395,6 +407,62 @@ const {
   checkAndUpdateLierenRuleState
 } = useLierenOfferRuleSyncFun();
 
+// 猎人规则一致性检查（挂载到 window 供控制台调用，同时支持按钮点击）
+import useCheckLierenRuleSync from "@/mixins/useCheckLierenRuleSync";
+const { checkLierenRuleSync } = useCheckLierenRuleSync();
+const checking = ref(false);
+const handleCheckLierenRuleSync = async () => {
+  checking.value = true;
+  try {
+    const result = await checkLierenRuleSync();
+    if (result?.inconsistent > 0) {
+      ElMessage({
+        type: "warning",
+        message: `发现 ${result.inconsistent} 条规则不一致，请查看控制台详情，点击"规则同步修复"进行修复`,
+        duration: 8000
+      });
+    } else {
+      ElMessage({ type: "success", message: "所有规则一致，无需修复" });
+    }
+  } finally {
+    checking.value = false;
+  }
+};
+
+const fixing = ref(false);
+const handleFixLierenRule = async () => {
+  fixing.value = true;
+  try {
+    // 重新拉取全量规则（不限制状态），传给检查更新方法
+    const ruleRes = await svApi.queryRuleList({ rule });
+    let ruleRecords = ruleRes.data.ruleList || [];
+    ruleRecords.forEach(item => {
+      item.includeCityNames = JSON.parse(item.includeCityNames);
+      item.excludeCityNames = JSON.parse(item.excludeCityNames);
+      item.includeCinemaNames = JSON.parse(item.includeCinemaNames);
+      item.excludeCinemaNames = JSON.parse(item.excludeCinemaNames);
+      item.includeHallNames = JSON.parse(item.includeHallNames);
+      item.excludeHallNames = JSON.parse(item.excludeHallNames);
+      item.includeFilmNames = JSON.parse(item.includeFilmNames);
+      item.excludeFilmNames = JSON.parse(item.excludeFilmNames);
+      item.platOfferList = JSON.parse(item.platOfferList || "[]");
+      item.weekDay = JSON.parse(item.weekDay);
+      item.film_type = item.film_type ? item.film_type?.split(",") : [];
+      item.quanValueList = item.quanValue ? item.quanValue?.split(",") : [];
+    });
+    await checkAndUpdateLierenRuleState(ruleRecords);
+    ElMessage({
+      type: "success",
+      message: "规则同步修复完成，请查看控制台详情"
+    });
+  } catch (error) {
+    ElMessage({ type: "error", message: "规则同步修复异常" });
+    console.warn("规则同步修复异常", error);
+  } finally {
+    fixing.value = false;
+  }
+};
+
 // 树节点属性映射
 const defaultProps = {
   children: "children",
@@ -507,7 +575,6 @@ const setLocalRuleList = async () => {
     const ruleRes = await svApi.queryRuleList({ rule });
     // console.log("ruleRes", ruleRes);
     let ruleRecords = ruleRes.data.ruleList || [];
-    ruleRecords = ruleRecords.filter(item => ["1", "3"].includes(item.status));
     ruleRecords.forEach(item => {
       item.includeCityNames = JSON.parse(item.includeCityNames);
       item.excludeCityNames = JSON.parse(item.excludeCityNames);
@@ -522,9 +589,11 @@ const setLocalRuleList = async () => {
       item.film_type = item.film_type ? item.film_type?.split(",") : [];
       item.quanValueList = item.quanValue ? item.quanValue?.split(",") : [];
     });
-    rules.setRuleList(ruleRecords);
-    // 猎人规则同步检查
-    await checkAndUpdateLierenRuleState(ruleRecords);
+    // 可用的规则列表
+    const useRuleRecords = ruleRecords.filter(item =>
+      ["1", "3"].includes(item.status)
+    );
+    rules.setRuleList(useRuleRecords);
   } catch (error) {
     ElMessage({
       type: "error",
@@ -804,7 +873,10 @@ const saveRule = async ruleInfo => {
       searchData();
     } else {
       console.log("新增保存规则", jiqiRuleInfo, ruleInfo);
-      const addRes = await svApi.addRuleRecord({ ...jiqiRuleInfo, id: undefined });
+      const addRes = await svApi.addRuleRecord({
+        ...jiqiRuleInfo,
+        id: undefined
+      });
       // 同步规则到平台（新增场景需要落库后的 id 来关联 platRuleId）
       // sv-request 响应拦截器已剥离 axios 外层，addRes 即 successRes 返回体
       const newId = addRes?.data?.id;
@@ -840,9 +912,7 @@ const saveRuleSyncToPlat = async ruleForm => {
     ? JSON.parse(ruleInfo.platOfferList)
     : [];
   ruleInfo.platOfferList = platOfferList;
-  let lierenOfferRule = platOfferList.find(
-    item => item.platName === "lieren"
-  );
+  let lierenOfferRule = platOfferList.find(item => item.platName === "lieren");
   if (!lierenOfferRule) return;
 
   // 仅平台选择同步时才同步

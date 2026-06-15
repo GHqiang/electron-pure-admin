@@ -193,9 +193,12 @@ async function checkLierenFixedRuleByQuanStock(obj) {
   let { logger, id, app_name, quan_value, quanStockList } = obj;
   try {
     quanStockList = JSON.parse(quanStockList);
-    let maxQuanStock = quanStockList.reduce((pre, cur) => {
-      return pre.quan_stock > cur.quan_stock ? pre : cur;
-    })?.quan_stock;
+    let maxQuanStock = 0;
+    if (quanStockList.length > 0) {
+      maxQuanStock = quanStockList.reduce((pre, cur) => {
+        return pre.quan_stock > cur.quan_stock ? pre : cur;
+      })?.quan_stock || 0;
+    }
     logger.infoSave("最大券库存", {
       id,
       app_name,
@@ -211,6 +214,7 @@ async function checkLierenFixedRuleByQuanStock(obj) {
       }))
       .filter(
         item =>
+          item.offerType == 1 && // 只有固定价规则才根据券库存更新座位数
           item.status == 1 &&
           item.quanValue == quan_value &&
           item.platOfferList.some(
@@ -254,8 +258,15 @@ async function checkLierenFixedRuleByQuanStock(obj) {
         lierenRule
       });
       const syncRes = await lierenOfferRuleSyncPlat(lierenRule);
+      // 同步失败时不更新本地 DB，避免两边不一致
+      if (!syncRes) {
+        logger.infoSave("猎人平台同步返回空，跳过本地更新", {
+          ruleId: rule.id
+        });
+        continue;
+      }
 
-      const platOfferListForDb = syncRes?.platOfferList ?? rule.platOfferList;
+      const platOfferListForDb = syncRes.platOfferList || rule.platOfferList;
       const jiqiuRule = {
         ...rule,
         seatNum: targetSeatNum,

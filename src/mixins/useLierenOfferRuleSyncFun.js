@@ -240,16 +240,18 @@ export default function useLierenOfferRuleSyncFun() {
     }
   };
 
-  // 检查并更新同步到猎人的规则状态
+  // 检查并更新同步到猎人的规则状态（双向：启用该启的、禁用该禁的）
   const checkAndUpdateLierenRuleState = async ruleList => {
+    console.warn(
+      "检查并更新同步到猎人的规则状态（双向：启用该启的、禁用该禁的）"
+    );
     try {
       ruleList = JSON.parse(JSON.stringify(ruleList));
+      // 筛选：固定报价 + 已同步猎人的规则（去掉 allow_offer_time 限制，全覆盖）
       ruleList = ruleList
         .filter(
           item =>
             item.offerType == 1 &&
-            item.allow_offer_time &&
-            +new Date(item.allow_offer_time) <= +new Date() &&
             item.platOfferList?.some(
               subItem =>
                 subItem.platName === "lieren" &&
@@ -266,7 +268,7 @@ export default function useLierenOfferRuleSyncFun() {
             ...lierenOffer
           };
         });
-
+      console.warn("平台选择同步的固定价规则", ruleList);
       let lierenMainAccountAkSk = dictStore.dictInfo.lierenMainAccountAkSk;
       if (lierenMainAccountAkSk) {
         lierenMainAccountAkSk = JSON.parse(lierenMainAccountAkSk);
@@ -277,23 +279,108 @@ export default function useLierenOfferRuleSyncFun() {
       if (!platRuleIdList.length) return;
 
       const lierenRuleRes = await lierenApi.ruleList({
-        rule_id: platRuleIdList,
         lieren_ak: lierenMainAccountAkSk?.[0] || "",
         lieren_sk: lierenMainAccountAkSk?.[1] || ""
       });
       let lierenRuleList = lierenRuleRes?.data || [];
-      console.warn("同步到猎人平台应该启用的规则列表", lierenRuleList);
-      lierenRuleList = lierenRuleList.filter(item => item.state == 0);
-      console.warn("猎人平台需重新启用的规则列表", lierenRuleList);
-      // 针对应该重新启用的规则，启用规则并同步到平台
-      for (const item of lierenRuleList) {
-        const params = {
-          rule_id: [item.rule_id],
-          state: 1,
-          lieren_ak: lierenMainAccountAkSk?.[0] || "",
-          lieren_sk: lierenMainAccountAkSk?.[1] || ""
-        };
-        await lierenApi.ruleState(params);
+      lierenRuleList = lierenRuleList.filter(item => item.sum_mode == 2);
+      console.warn("猎人的固定价规则", lierenRuleList);
+
+      // 建立本地 platRuleId → 本地规则的映射
+      const localRuleMap = new Map();
+      for (const item of ruleList) {
+        localRuleMap.set(String(item.platRuleId), item);
+      }
+
+      let enableCount = 0;
+      let disableCount = 0;
+      let seatsFixCount = 0;
+
+      for (const platRule of lierenRuleList) {
+        const localRule = localRuleMap.get(String(platRule.rule_id));
+        if (!localRule) continue;
+
+        // 计算猎人端应有的状态：
+        // - 当日不报生效中（allow_offer_time 未到）→ 禁用(0)
+        // - 本地正常(1) → 启用(1)；本地禁用/仅报价(2/3) → 禁用(0)
+        const isNoOfferActive =
+          localRule.allow_offer_time &&
+          +new Date(localRule.allow_offer_time) > +new Date();
+        const expectedState = isNoOfferActive
+          ? 0
+          : localRule.status == "1"
+            ? 1
+            : 0;
+
+        // 计算猎人端应有的座位数
+        const expectedSeats = formatSeats(localRule.seatNum);
+
+        const stateMismatch = platRule.state !== expectedState;
+        const seatsMismatch = (platRule.seats || "") !== expectedSeats;
+
+        if (stateMismatch || seatsMismatch) {
+          console.warn(
+            `猎人规则不一致: platRuleId=${platRule.rule_id}` +
+              (stateMismatch
+                ? ` 状态 ${platRule.state}→${expectedState}`
+                : "") +
+              (seatsMismatch
+                ? ` 座位 "${platRule.seats || ""}"→"${expectedSeats}"`
+                : "")
+          );
+
+          // 完整同步（ruleAdd），同时修复状态和座位数
+          // localRule 中的 JSON 数组字段已被 setLocalRuleList 解析过，需还原为 JSON 字符串
+          // 因为 lierenOfferRuleSyncPlat 内部会对这些字段做 JSON.parse
+          const jsonFields = [
+            "includeCityNames",
+            "excludeCityNames",
+            "includeFilmNames",
+            "excludeFilmNames",
+            "includeHallNames",
+            "excludeHallNames"
+          ];
+          const ruleForSync = { ...localRule };
+          for (const field of jsonFields) {
+            if (Array.isArray(ruleForSync[field])) {
+              ruleForSync[field] = JSON.stringify(ruleForSync[field]);
+            }
+          }
+          // film_type 被 setLocalRuleList 拆成数组，需还原为逗号分隔字符串
+          if (Array.isArray(ruleForSync.film_type)) {
+            ruleForSync.film_type = ruleForSync.film_type.join(",");
+          }
+          const syncRes = await lierenOfferRuleSyncPlat(ruleForSync);
+          if (!syncRes) {
+            console.warn(
+              `完整同步返回空: platRuleId=${platRule.rule_id}，回退到仅同步状态`
+            );
+            // 回退：至少把状态同步过去
+            const params = {
+              rule_id: [platRule.rule_id],
+              state: expectedState,
+              lieren_ak: lierenMainAccountAkSk?.[0] || "",
+              lieren_sk: lierenMainAccountAkSk?.[1] || ""
+            };
+            await lierenApi.ruleState(params);
+          }
+
+          if (expectedState === 1) {
+            enableCount++;
+          } else {
+            disableCount++;
+          }
+          if (seatsMismatch) seatsFixCount++;
+        } else {
+          console.warn("平台和本地状态和座位数完全一致，无需更新");
+        }
+      }
+
+      if (enableCount > 0 || disableCount > 0 || seatsFixCount > 0) {
+        console.warn(
+          `猎人规则双向同步完成: 启用 ${enableCount} 条, 禁用 ${disableCount} 条` +
+            (seatsFixCount > 0 ? `, 修复座位 ${seatsFixCount} 条` : "")
+        );
       }
     } catch (error) {
       console.warn("检查并更新同步到猎人的规则状态异常", error);

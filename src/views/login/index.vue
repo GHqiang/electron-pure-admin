@@ -111,7 +111,6 @@ const setLocalRuleList = async rule => {
     });
     // console.log("ruleRes", ruleRes);
     let ruleRecords = ruleRes.data.ruleList || [];
-    ruleRecords = ruleRecords.filter(item => ["1", "3"].includes(item.status));
     ruleRecords.forEach(item => {
       item.includeCityNames = JSON.parse(item.includeCityNames);
       item.excludeCityNames = JSON.parse(item.excludeCityNames);
@@ -125,7 +124,11 @@ const setLocalRuleList = async rule => {
       item.weekDay = JSON.parse(item.weekDay);
       item.film_type = item.film_type ? item.film_type?.split(",") : [];
     });
-    rules.setRuleList(ruleRecords);
+    // 可用的规则列表
+    const useRuleRecords = ruleRecords.filter(item =>
+      ["1", "3"].includes(item.status)
+    );
+    rules.setRuleList(useRuleRecords);
     // 猎人规则同步检查
     await checkAndUpdateLierenRuleState(ruleRecords);
   } catch (error) {
