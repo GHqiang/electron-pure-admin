@@ -24,5 +24,6 @@ tsconfig.tsbuildinfo
 .gitignore
 dist-electron
 release
+auto-ticket-service/
 auto-ticket-service/*
 applet-source-code
