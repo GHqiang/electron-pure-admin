@@ -178,6 +178,7 @@ export default function useLierenOfferRuleSyncFun() {
       return { platOfferList: finalPlatOfferList };
     } catch (error) {
       console.warn("同步规则到猎人平台异常", error);
+      ElMessage.error("同步规则到猎人平台失败，请稍后重试");
       return undefined;
     }
   };
@@ -237,6 +238,7 @@ export default function useLierenOfferRuleSyncFun() {
       console.warn("猎人平台规则状态修改成功", res);
     } catch (error) {
       console.warn("猎人平台规则状态修改异常", error);
+      ElMessage.error("修改猎人平台规则状态失败");
     }
   };
 
