@@ -222,7 +222,7 @@ export default class LmaCinemaManage {
       this.logger.infoSave("获取电影放映信息从而获取会员价", {
         targetShow
       });
-      return { ...targetShow, cinema_id, short_code };
+      return { ...movieInfo, ...targetShow, cinema_id, short_code };
     } catch (error) {
       this.logger.errorSave("获取当前场次电影信息异常", {
         error: formatErrInfo(error)

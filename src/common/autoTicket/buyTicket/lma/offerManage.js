@@ -116,6 +116,14 @@ class getLmaOfferPrice extends BaseOfferPrice {
         return null;
       }
 
+      // 校验电影标签，影展类不进行报价
+      const feature = movieInfo.feature;
+      console.log("feature", feature, movieInfo);
+      if (feature?.includes("影展")) {
+        this.logger.errorSave("该电影标签为影展，直接不报");
+        return null;
+      }
+
       // 校验电影格式，减少后续接口请求
       let filmType = movieInfo.language_type?.split("/")?.[0].toUpperCase();
       if (
