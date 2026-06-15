@@ -112,6 +112,7 @@ async function checkLierenRuleSync(opts = {}) {
     console.log(
       `   本地共 ${allLocalRules.length} 条，同步猎人: ${localSynced.length} 条`
     );
+    console.warn("本地同步平台的规则", localSynced);
 
     const localById = new Map();
     for (const r of localSynced) {
@@ -162,6 +163,8 @@ async function checkLierenRuleSync(opts = {}) {
     console.log(
       `   猎人平台共 ${allPlatRules.length} 条（仅 sum_mode=2 固定价）`
     );
+
+    console.warn("猎人平台的固定价规则", allPlatRules);
 
     const platById = new Map();
     for (const lr of allPlatRules) {
