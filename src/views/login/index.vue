@@ -208,8 +208,8 @@ const onLogin = async formEl => {
           await setLocalWandaCinemaList();
           await setLocalCinemaCodeMatchList();
           await setLocalLoginList(rule);
-          await setLocalRuleList(rule);
           await setDictTableList(rule);
+          await setLocalRuleList(rule);
           await setNameTableList(rule);
           // 获取后端路由
           await initRouter(rule);

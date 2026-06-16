@@ -38,9 +38,20 @@ const formatSeats = seatNum => {
 
 // 机器相关方法接口
 export default function useLierenOfferRuleSyncFun() {
-  const {
-    userInfo: { rule }
-  } = platTokens();
+  const tokens = platTokens();
+
+  // 获取猎人 AK/SK：优先当前 rule，若无配置则回退到字典中第一个可用规则
+  const _getLierenAkSk = () => {
+    const rule = tokens.userInfo?.rule;
+    const raw = dictStore.dictInfo.lierenMainAccountAkSk;
+    if (!raw) return [];
+    try {
+      const map = JSON.parse(raw);
+      return map[rule] || map[Object.keys(map)[0]] || [];
+    } catch {
+      return [];
+    }
+  };
 
   // 同步规则到猎人平台（新增/修改）；成功时返回最新 platOfferList，供调用方落库避免覆盖 platRuleId
   const lierenOfferRuleSyncPlat = async ruleInfo => {
@@ -119,11 +130,7 @@ export default function useLierenOfferRuleSyncFun() {
         exclude_hall = JSON.parse(exclude_hall).join(",");
       }
 
-      let lierenMainAccountAkSk = dictStore.dictInfo.lierenMainAccountAkSk;
-      if (lierenMainAccountAkSk) {
-        lierenMainAccountAkSk = JSON.parse(lierenMainAccountAkSk);
-        lierenMainAccountAkSk = lierenMainAccountAkSk[rule] || [];
-      }
+      let lierenMainAccountAkSk = _getLierenAkSk();
 
       params = {
         rule_id: lierenOfferRule.platRuleId,
@@ -186,11 +193,7 @@ export default function useLierenOfferRuleSyncFun() {
   // 同步规则到猎人平台（删除）
   const lierenOfferRuleDelPlat = async platRuleIdList => {
     try {
-      let lierenMainAccountAkSk = dictStore.dictInfo.lierenMainAccountAkSk;
-      if (lierenMainAccountAkSk) {
-        lierenMainAccountAkSk = JSON.parse(lierenMainAccountAkSk);
-        lierenMainAccountAkSk = lierenMainAccountAkSk[rule] || [];
-      }
+      let lierenMainAccountAkSk = _getLierenAkSk();
       const params = {
         rule_id: platRuleIdList,
         lieren_ak: lierenMainAccountAkSk?.[0] || "",
@@ -208,11 +211,7 @@ export default function useLierenOfferRuleSyncFun() {
   // 同步规则到猎人平台（启用禁用）
   const lierenOfferRuleEditStatusPlat = async ruleInfo => {
     try {
-      let lierenMainAccountAkSk = dictStore.dictInfo.lierenMainAccountAkSk;
-      if (lierenMainAccountAkSk) {
-        lierenMainAccountAkSk = JSON.parse(lierenMainAccountAkSk);
-        lierenMainAccountAkSk = lierenMainAccountAkSk[rule] || [];
-      }
+      let lierenMainAccountAkSk = _getLierenAkSk();
       let platList = ruleInfo.platOfferList;
 
       let lierenOffer = platList.find(item => item.platName === "lieren");
@@ -271,10 +270,10 @@ export default function useLierenOfferRuleSyncFun() {
           };
         });
       console.warn("平台选择同步的固定价规则", ruleList);
-      let lierenMainAccountAkSk = dictStore.dictInfo.lierenMainAccountAkSk;
-      if (lierenMainAccountAkSk) {
-        lierenMainAccountAkSk = JSON.parse(lierenMainAccountAkSk);
-        lierenMainAccountAkSk = lierenMainAccountAkSk[rule] || [];
+      const lierenMainAccountAkSk = _getLierenAkSk();
+      if (!lierenMainAccountAkSk.length) {
+        console.warn("未配置猎人 AK/SK，跳过猎人规则同步检查");
+        return;
       }
 
       const platRuleIdList = ruleList.map(item => item.platRuleId);
