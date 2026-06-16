@@ -123,18 +123,6 @@ export default class ShengOrderFetcher extends BaseOrderFetcher {
           let isNewOrder, changeSeatSuccess;
           if (!ticketInfo) {
             isNewOrder = true;
-            // 对于支持换座的平台，报价记录已有且出票记录无的，需要区分是否换座订单
-            if (
-              dictStore.dictInfo.supportChangeSeatPlatList.includes("sheng")
-            ) {
-              const targetOffer = offerList.find(
-                itemA => itemA.order_number === item.order_number
-              );
-              // 有报价记录说明是老订单（非新订单）
-              if (targetOffer) {
-                isNewOrder = false;
-              }
-            }
           } else {
             isNewOrder = false;
             // 9代表申请换座中

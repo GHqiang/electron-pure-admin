@@ -266,7 +266,7 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
           )
       );
       // 如果支持换座，先不过滤
-      if (dictStore.dictInfo.supportChangeSeatPlatList.includes(plat_name)) {
+      if (dictStore.dictInfo.supportChangeSeatPlatList.includes("lieren")) {
         // 过滤已记录的订单
         filteredList = res.slice(); // 先不过滤，后面根据出票记录过滤
       }
