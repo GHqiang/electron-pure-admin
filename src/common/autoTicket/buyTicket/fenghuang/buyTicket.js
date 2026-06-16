@@ -717,13 +717,13 @@ class FenghuangBuyTicket extends BaseBuyTicket {
           cardId: card_id,
           cardNo: card_id,
           cardBalance,
-          paymentAmount
+          paymentAmount: paymentAmount / 100
         });
         syncCardAfterPayment({
           appFlag: this.appFlag,
           cardId: card_id,
           cardBalance,
-          paymentAmount,
+          paymentAmount: paymentAmount / 100,
           logger: this.logger
         }).catch(e =>
           this.logger.warn?.("出票后同步凤凰卡余额异常(不影响主流程)", e)

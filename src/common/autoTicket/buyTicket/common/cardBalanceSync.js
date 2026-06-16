@@ -39,7 +39,10 @@ export async function syncCardBalanceToSv({
   getBalance = item => item.cardAmount,
   balanceDivisor = 1
 }) {
-  if (!appFlag || !cardList?.length) return;
+  if (!appFlag || !cardList?.length) {
+    logger.infoSave("同步多张卡余额参数不足", { appFlag, cardList });
+    return;
+  }
 
   // 构建批量更新数据
   const balanceList = [];

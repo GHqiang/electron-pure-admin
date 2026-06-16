@@ -701,11 +701,12 @@ export default class SfcCardQuanManage {
         card_id: card_id || "",
         cardNum,
         profit: profit || 0,
-        priceInfo
+        priceInfo,
+        cardList
       };
     } catch (e) {
       this.logger.errorSave("useCardHandle异常", { error: formatErrInfo(e) });
-      return { card_id: "", profit: 0, priceInfo: null };
+      return { card_id: "", profit: 0, priceInfo: null, cardList: [] };
     }
   }
 
