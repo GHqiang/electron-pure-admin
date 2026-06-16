@@ -61,7 +61,7 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
       // 过滤新订单
       let newOrders = this.filterNewOrders(filteredList);
       // 支持换座时此处不再单一根据订单号过滤，放到后面根据出票记录过滤
-      if (dictStore.dictInfo.supportChangeSeatPlatList.includes(plat_name)) {
+      if (dictStore.dictInfo.supportChangeSeatPlatList.includes("lieren")) {
         newOrders = filteredList.slice();
       }
       // 记录日志
@@ -103,9 +103,7 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
             isNewOrder = false;
             // 9代表申请换座中
             if (
-              dictStore.dictInfo.supportChangeSeatPlatList.includes(
-                plat_name
-              ) &&
+              dictStore.dictInfo.supportChangeSeatPlatList.includes("lieren") &&
               ticketInfo.order_status == 9
             ) {
               // 座位状态：0正常出票 1-申请换座中 2-客服返回有原座 5-供应商取消换座 3-换座成功 4-不支持换座取消中
