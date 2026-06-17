@@ -627,15 +627,12 @@ export default class PlatCommon {
     }
   }
   // 申请换座
-  async applyChangeSeat({ order_number, supplierCode, plat_name }) {
+  async applyChangeSeat({ order_number, supplierCode, plat_name, logger }) {
     let params;
     try {
       // 省平台：仅 changeSeat === 1 时允许申请换座
       if (plat_name === "sheng" && this.order.changeSeat !== 1) {
-        this.logger.info(
-          "省平台订单不允许换座，changeSeat:",
-          this.order.changeSeat
-        );
+        logger.info("省平台订单不允许换座，changeSeat:", this.order.changeSeat);
         return false;
       }
       if (plat_name === "lieren") {
@@ -648,12 +645,12 @@ export default class PlatCommon {
           supplierCode: supplierCode
         };
       }
-      this.logger.info("申请换座入参", params);
+      logger.info("申请换座入参", params);
       const res = await PLAT_API_OBJ[plat_name].applySeatChange(params);
-      this.logger.infoSave("申请换座返回", res);
+      logger.infoSave("申请换座返回", res);
       return true;
     } catch (error) {
-      this.logger.errorSave("申请换座异常", { error });
+      logger.errorSave("申请换座异常", { error });
       return false;
     }
   }

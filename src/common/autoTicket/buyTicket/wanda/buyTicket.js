@@ -171,14 +171,18 @@ class WandaBuyTicket extends BaseBuyTicket {
           if (
             dictStore.dictInfo.supportChangeSeatPlatList.includes(plat_name)
           ) {
-            this.logger.infoSave("获取目标座位失败，猎人订单走申请换座逻辑");
-            const isApplyChangeSeat =
-              await this.platManage.applyChangeSeat(item);
-            return {
-              transferParams: { transfer_fee: 0 },
-              offerRule: this.offerRule,
-              isApplyChangeSeat
-            };
+            this.logger.infoSave("获取目标座位失败，订单走申请换座逻辑");
+            const isApplyChangeSeat = await this.platManage.applyChangeSeat({
+              ...item,
+              logger: this.logger
+            });
+            if (isApplyChangeSeat) {
+              return {
+                transferParams: { transfer_fee: 0 },
+                offerRule: this.offerRule,
+                isApplyChangeSeat
+              };
+            }
           }
           return await this.orderManage.transferOrder();
         }
@@ -255,14 +259,19 @@ class WandaBuyTicket extends BaseBuyTicket {
           )
         ) {
           // 走申请座位逻辑
-          const isApplyChangeSeat = await this.platManage.applyChangeSeat(item);
-          return {
-            transferParams: {
-              transfer_fee: 0
-            },
-            offerRule: this.offerRule,
-            isApplyChangeSeat
-          };
+          const isApplyChangeSeat = await this.platManage.applyChangeSeat({
+            ...item,
+            logger: this.logger
+          });
+          if (isApplyChangeSeat) {
+            return {
+              transferParams: {
+                transfer_fee: 0
+              },
+              offerRule: this.offerRule,
+              isApplyChangeSeat
+            };
+          }
         }
         return await this.orderManage.transferOrder();
       }

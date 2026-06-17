@@ -522,14 +522,18 @@ export default class UmeBuyTicket extends BaseBuyTicket {
           if (
             dictStore.dictInfo.supportChangeSeatPlatList.includes(plat_name)
           ) {
-            this.logger.infoSave("获取目标座位失败，猎人订单走申请换座逻辑");
-            const isApplyChangeSeat =
-              await this.platManage.applyChangeSeat(item);
-            return {
-              transferParams: { transfer_fee: 0 },
-              offerRule: this.offerRule,
-              isApplyChangeSeat
-            };
+            this.logger.infoSave("获取目标座位失败，订单走申请换座逻辑");
+            const isApplyChangeSeat = await this.platManage.applyChangeSeat({
+              ...item,
+              logger: this.logger
+            });
+            if (isApplyChangeSeat) {
+              return {
+                transferParams: { transfer_fee: 0 },
+                offerRule: this.offerRule,
+                isApplyChangeSeat
+              };
+            }
           }
           const transferParams = await this.orderManage.transferOrder(null);
           return { transferParams };
@@ -641,15 +645,19 @@ export default class UmeBuyTicket extends BaseBuyTicket {
             ["锁座失败", "该座位不能选择"].some(item => errInfo.includes(item))
           ) {
             // 走申请座位逻辑
-            const isApplyChangeSeat =
-              await this.platManage.applyChangeSeat(item);
-            return {
-              transferParams: {
-                transfer_fee: 0
-              },
-              offerRule: this.offerRule,
-              isApplyChangeSeat
-            };
+            const isApplyChangeSeat = await this.platManage.applyChangeSeat({
+              ...item,
+              logger: this.logger
+            });
+            if (isApplyChangeSeat) {
+              return {
+                transferParams: {
+                  transfer_fee: 0
+                },
+                offerRule: this.offerRule,
+                isApplyChangeSeat
+              };
+            }
           }
           if (isTrial) {
             this.logger.infoSave("首次锁定座位失败轮询尝试后仍失败，走转单");

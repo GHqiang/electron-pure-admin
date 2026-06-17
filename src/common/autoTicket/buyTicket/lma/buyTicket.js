@@ -404,14 +404,18 @@ export default class LmaBuyTicket extends BaseBuyTicket {
           if (
             dictStore.dictInfo.supportChangeSeatPlatList.includes(plat_name)
           ) {
-            this.logger.infoSave("获取目标座位失败，猎人订单走申请换座逻辑");
-            const isApplyChangeSeat =
-              await this.platManage.applyChangeSeat(item);
-            return {
-              transferParams: { transfer_fee: 0 },
-              offerRule: this.offerRule,
-              isApplyChangeSeat
-            };
+            this.logger.infoSave("获取目标座位失败，订单走申请换座逻辑");
+            const isApplyChangeSeat = await this.platManage.applyChangeSeat({
+              ...item,
+              logger: this.logger
+            });
+            if (isApplyChangeSeat) {
+              return {
+                transferParams: { transfer_fee: 0 },
+                offerRule: this.offerRule,
+                isApplyChangeSeat
+              };
+            }
           }
           const transferParams = await this.orderManage.transferOrder(
             null,
@@ -579,14 +583,19 @@ export default class LmaBuyTicket extends BaseBuyTicket {
           ["座位已被锁定"].some(item => errInfo.includes(item))
         ) {
           // 走申请座位逻辑
-          const isApplyChangeSeat = await this.platManage.applyChangeSeat(item);
-          return {
-            transferParams: {
-              transfer_fee: 0
-            },
-            offerRule: this.offerRule,
-            isApplyChangeSeat
-          };
+          const isApplyChangeSeat = await this.platManage.applyChangeSeat({
+            ...item,
+            logger: this.logger
+          });
+          if (isApplyChangeSeat) {
+            return {
+              transferParams: {
+                transfer_fee: 0
+              },
+              offerRule: this.offerRule,
+              isApplyChangeSeat
+            };
+          }
         }
         // catch 时 lockRes 必为 undefined，直接走转单逻辑
         this.logger.infoSave("锁定座位失败走转单");
