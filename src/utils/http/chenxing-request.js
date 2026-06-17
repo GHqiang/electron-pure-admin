@@ -1,7 +1,6 @@
 // src/utils/axiosInstance.js
 
 import axios from "axios";
-import axiosRetry from "axios-retry";
 import { ElMessage } from "element-plus";
 import { GET_APP_INFO } from "@/common/constant";
 
@@ -12,6 +11,7 @@ import {
   getCurrentTime,
   formatErrInfo
 } from "@/utils/utils";
+import { handleNetworkRetry } from "./retry-helper";
 
 const getToken = async (app_name, IS_DEV) => {
   try {
@@ -139,19 +139,6 @@ const createAxios = ({ app_name, timeout = 20 }) => {
   let isRefreshingToken = false;
   let tokenRefreshQueue = [];
 
-  // 配置axios-retry
-  axiosRetry(instance, {
-    retries: 3, // 最大重试次数
-    retryDelay: retryCount => {
-      return retryCount * 1000; // 每次重试的延迟时间，这里设置为1秒、2秒、3秒
-    },
-    retryCondition: error => {
-      // 仅在网络错误或5xx错误时重试
-      return axiosRetry.isNetworkError(error) || error.code === "ECONNABORTED"; // 明确添加超时错误（由axios配置timeout触发）;
-      // || (error.response && error.response.status >= 500)
-    }
-  });
-
   // 请求拦截器
   instance.interceptors.request.use(
     async config => {
@@ -276,6 +263,21 @@ const createAxios = ({ app_name, timeout = 20 }) => {
     },
     async error => {
       const { response } = error;
+
+      // 尝试网络重试（无白名单限制，与原来 axios-retry 行为一致）
+      const retryResult = await handleNetworkRetry(
+        error,
+        error.config,
+        instance,
+        {
+          maxRetries: 3,
+          whitelist: [] // 空数组表示所有接口都允许重试
+        }
+      );
+      if (retryResult) {
+        return retryResult;
+      }
+
       if (response) {
         switch (response.status) {
           case 401:

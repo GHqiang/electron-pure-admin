@@ -10,6 +10,7 @@ import {
   getCinemaLoginInfoList,
   formatErrInfo
 } from "@/utils/utils";
+import { handleNetworkRetry } from "./retry-helper";
 import { GET_APP_LIST } from "@/common/constant";
 
 const createAxios = ({ app_name, timeout = 20 }) => {
@@ -152,10 +153,17 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         }
         let isOften = data?.msg?.includes("操作过于频繁");
         if (isOften) {
-          // 等待一段时间后重试
-          await mockDelay(3);
-          // 重试请求
-          return instance(response?.config);
+          // 限制重试次数，避免无限重试
+          const oftenRetryCount = response?.config?._oftenRetryCount || 0;
+          if (oftenRetryCount < 3) {
+            response.config._oftenRetryCount = oftenRetryCount + 1;
+            console.warn(`操作过于频繁，第${oftenRetryCount + 1}次重试...`);
+            // 等待一段时间后重试
+            await mockDelay(3);
+            // 重试请求
+            return instance(response?.config);
+          }
+          console.warn("操作过于频繁，重试次数已达上限");
         }
 
         let errMsg = "卢米埃" + (data.message || data.msg || "请求失败");
@@ -173,34 +181,27 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         return Promise.reject(error);
       }
 
-      // 初始化 retryCount 如果它不存在
-      if (config.retryCount === undefined) {
-        config.retryCount = 0;
-      }
+      // 支持接口调用时自定义控制最大重试次数
       const maxRetries = config.maxRetries || 3;
-      const retryDelay = config.retryDelay || 1; // 1 second
-      // 重试接口名单
+      // 重试接口名单（仅查询类接口）
       let retrieUrls = [
         "/index/film",
         "/index/sell_session",
         "/ibuypro/index",
         "/imember/index",
-        "/icoupon/index"
+        "/icoupon/index",
+        "/iorder/get_order",
+        "/ihistory/ticket_info",
+        "/ihistory/ticket"
       ];
-      let isRetry = shouldRetry(error, config, maxRetries, retrieUrls);
-      // console.log("isRetry", isRetry, config);
-      if (isRetry) {
-        // 检查是否需要重试
-        config.retryCount = config.retryCount + 1;
-        console.log(`请求失败，正在进行第 ${config.retryCount} 次重试...`);
-
-        // 等待一段时间后重试
-        await mockDelay(retryDelay);
-
-        // 重试请求
-        return instance(config);
+      const retryResult = await handleNetworkRetry(error, config, instance, {
+        maxRetries: config.maxRetries || 3,
+        whitelist: retrieUrls
+      });
+      if (retryResult) {
+        return retryResult;
       }
-      // 仍旧重试失败增加日志上送
+      // 重试耗尽，继续原有错误处理
       if (config.retryCount) {
         // logUpload(
         //   {
@@ -261,32 +262,6 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       return Promise.reject(error);
     }
   );
-
-  // 判断是否需要重试
-  const shouldRetry = (error, config, maxRetries, retrieUrls) => {
-    try {
-      let isCountCheck = config.retryCount < maxRetries;
-      let isUrlCheck = retrieUrls.some(item => config.url.includes(item));
-      let isErrorCheck = false;
-      // 检查错误类型
-      if (axios.isAxiosError(error)) {
-        const message = error.message.toLowerCase();
-        isErrorCheck =
-          message.includes("timeout of") || message.includes("network error");
-      }
-      // console.log(
-      //   "isCountCheck",
-      //   isCountCheck,
-      //   "isUrlCheck",
-      //   isUrlCheck,
-      //   isErrorCheck
-      // );
-      return isCountCheck && isUrlCheck && isErrorCheck;
-    } catch (e) {
-      //TODO handle the exception
-      return false;
-    }
-  };
 
   return instance;
 };

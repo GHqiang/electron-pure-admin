@@ -11,6 +11,16 @@ import {
   formatErrInfo
 } from "@/utils/utils";
 import { GET_APP_LIST } from "@/common/constant";
+import { handleNetworkRetry } from "./retry-helper";
+
+// 允许重试的接口白名单（查询类接口）
+const retryWhitelist = [
+  "/wanda-film/cinema", // 影院信息
+  "/wanda-film/film", // 电影信息
+  "/wanda-film/schedule", // 场次信息
+  "/wanda-film/seat", // 座位信息
+  "/wanda-film/order/query" // 订单查询
+];
 
 const createAxios = ({ app_name, timeout = 25 }) => {
   // 创建 axios 实例
@@ -103,7 +113,18 @@ const createAxios = ({ app_name, timeout = 25 }) => {
       }
       return data;
     },
-    error => {
+    async error => {
+      const config = error.config;
+
+      // 尝试网络重试（仅白名单接口）
+      const retryResult = await handleNetworkRetry(error, config, instance, {
+        maxRetries: 3,
+        whitelist: retryWhitelist
+      });
+      if (retryResult) {
+        return retryResult;
+      }
+
       const { response } = error;
       if (response && response.status) {
         switch (response.status) {

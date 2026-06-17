@@ -7,11 +7,11 @@ import { GET_APP_LIST } from "@/common/constant";
 import {
   getCinemaLoginInfoList,
   sendWxPusherMessage,
-  mockDelay,
   logUpload,
   getCurrentTime,
   formatErrInfo
 } from "@/utils/utils";
+import { handleNetworkRetry } from "./retry-helper";
 // 机器登录用户信息
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
@@ -163,12 +163,8 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         return Promise.reject(error);
       }
 
-      // 初始化 retryCount 如果它不存在
-      if (config.retryCount === undefined) {
-        config.retryCount = 0;
-      }
+      // 支持接口调用时自定义控制最大重试次数
       const maxRetries = config.maxRetries || 3;
-      const retryDelay = config.retryDelay || 1; // 1 second
       // 重试接口名单
       let retrieUrls = [
         "/cinCinemaInfoService/findCinCityToApp",
@@ -178,20 +174,14 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         "/cinSyncService/findSeatMapInfo",
         "/optimalCombinatService/getOptimalCombination"
       ];
-      let isRetry = shouldRetry(error, config, maxRetries, retrieUrls);
-      // console.log("isRetry", isRetry, config);
-      if (isRetry) {
-        // 检查是否需要重试
-        config.retryCount = config.retryCount + 1;
-        console.log(`请求失败，正在进行第 ${config.retryCount} 次重试...`);
-
-        // 等待一段时间后重试
-        await mockDelay(retryDelay);
-
-        // 重试请求
-        return instance(config);
+      const retryResult = await handleNetworkRetry(error, config, instance, {
+        maxRetries: config.maxRetries || 3,
+        whitelist: retrieUrls
+      });
+      if (retryResult) {
+        return retryResult;
       }
-      // 仍旧重试失败增加日志上送
+      // 重试耗尽，继续原有错误处理
       if (config.retryCount) {
         // logUpload(
         //   {
@@ -239,7 +229,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           [
             {
               opera_time: getCurrentTime(),
-              des: "凤凰小程序网络连接异常",
+              des: "UME小程序网络连接异常",
               level: "error",
               info: {
                 error: formatErrInfo(error)
@@ -247,37 +237,11 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             }
           ]
         );
-        ElMessage.error("凤凰小程序网络连接异常，请稍后再试");
+        ElMessage.error("UME小程序网络连接异常，请稍后再试");
       }
       return Promise.reject(error);
     }
   );
-
-  // 判断是否需要重试
-  const shouldRetry = (error, config, maxRetries, retrieUrls) => {
-    try {
-      let isCountCheck = config.retryCount < maxRetries;
-      let isUrlCheck = retrieUrls.some(item => config.url.includes(item));
-      let isErrorCheck = false;
-      // 检查错误类型
-      if (axios.isAxiosError(error)) {
-        const message = error.message.toLowerCase();
-        isErrorCheck =
-          message.includes("timeout of") || message.includes("network error");
-      }
-      // console.log(
-      //   "isCountCheck",
-      //   isCountCheck,
-      //   "isUrlCheck",
-      //   isUrlCheck,
-      //   isErrorCheck
-      // );
-      return isCountCheck && isUrlCheck && isErrorCheck;
-    } catch (e) {
-      //TODO handle the exception
-      return false;
-    }
-  };
 
   return instance;
 };

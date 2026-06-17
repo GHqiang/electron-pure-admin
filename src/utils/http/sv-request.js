@@ -1,7 +1,6 @@
 // src/utils/axiosInstance.js
 
 import axios from "axios";
-import axiosRetry from "axios-retry";
 import { ElMessage } from "element-plus";
 import {
   sendWxPusherMessage,
@@ -9,6 +8,7 @@ import {
   getCurrentTime,
   formatErrInfo
 } from "@/utils/utils";
+import { handleNetworkRetry } from "./retry-helper";
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
 // 创建axios实例
@@ -20,19 +20,6 @@ const instance = axios.create({
 
 const NODE_ENV = process.env.NODE_ENV;
 const IS_DEV = NODE_ENV === "development";
-
-// 配置axios-retry
-axiosRetry(instance, {
-  retries: 3, // 最大重试次数
-  retryDelay: retryCount => {
-    return retryCount * 1000; // 每次重试的延迟时间，这里设置为1秒、2秒、3秒
-  },
-  retryCondition: error => {
-    // 仅在网络错误或5xx错误时重试
-    return axiosRetry.isNetworkError(error);
-    // || (error.response && error.response.status >= 500)
-  }
-});
 
 // 请求拦截器
 instance.interceptors.request.use(
@@ -96,9 +83,24 @@ instance.interceptors.response.use(
     }
     return data;
   },
-  error => {
-    // 对HTTP错误码进行处理
+  async error => {
     const { response } = error;
+
+    // 尝试网络重试（无白名单限制，与原来 axios-retry 行为一致）
+    const retryResult = await handleNetworkRetry(
+      error,
+      error.config,
+      instance,
+      {
+        maxRetries: 3,
+        whitelist: [] // 空数组表示所有接口都允许重试
+      }
+    );
+    if (retryResult) {
+      return retryResult;
+    }
+
+    // 对HTTP错误码进行处理
     if (response && response.status) {
       switch (response.status) {
         case 401:

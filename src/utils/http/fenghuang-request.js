@@ -10,6 +10,7 @@ import {
   sendWxPusherMessage,
   formatErrInfo
 } from "@/utils/utils";
+import { handleNetworkRetry } from "./retry-helper";
 import { md5 } from "./crypto"; // 从原代码中提取的 MD5 函数（见下文）
 window.md51 = md5;
 // 机器登录用户信息
@@ -108,6 +109,24 @@ const noProxyUrlList = [
 // 是否不需要代理
 const checkUrlNoNeedProxy = url => {
   return noProxyUrlList.some(item => url?.toLowerCase().includes(item));
+};
+
+// 允许重试的接口白名单（仅查询类 MTOP 接口）
+const retryWhitelist = [
+  "citycinemas.get", // 影院列表
+  "cinemafilms.get", // 电影信息
+  "filmschedules.get", // 场次信息
+  "scheduleseats.get", // 座位信息
+  "scheduleseatprices.get", // 座位价格
+  "membercards.get", // 会员卡列表
+  "membercarddetail.get", // 会员卡详情
+  "mycoupon.get", // 优惠券列表
+  "order.detail.get", // 订单详情
+  "orders.get" // 订单列表
+];
+// 检查接口是否允许重试
+const checkUrlCanRetry = url => {
+  return retryWhitelist.some(item => url?.toLowerCase().includes(item));
 };
 
 const urlObj = {
@@ -489,42 +508,23 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       }
       return data?.data;
     },
-    error => {
+    async error => {
+      const config = error.config;
+
+      // 网络错误自动重试逻辑（仅白名单接口允许重试）
+      const retryResult = await handleNetworkRetry(error, config, instance, {
+        maxRetries: 3,
+        whitelist: retryWhitelist
+      });
+      if (retryResult) {
+        return retryResult;
+      }
+
       // 错误上报逻辑
       console.error("请求失败:", error);
       return Promise.reject(error);
     }
   );
-
-  // 判断是否需要重试
-  const shouldRetry = (error, config, maxRetries, retrieUrls) => {
-    try {
-      let isCountCheck = config.retryCount < maxRetries;
-      let isUrlCheck = retrieUrls.some(item =>
-        config.url?.toLowerCase().includes(item)
-      );
-      let isErrorCheck = false;
-      // 检查错误类型
-      if (axios.isAxiosError(error)) {
-        const message = error.message?.toLowerCase();
-        isErrorCheck =
-          message.includes("timeout") ||
-          message.includes("network error") ||
-          message.includes("Request failed with status code 408");
-      }
-      // console.log(
-      //   "isCountCheck",
-      //   isCountCheck,
-      //   "isUrlCheck",
-      //   isUrlCheck,
-      //   isErrorCheck
-      // );
-      return isCountCheck && isUrlCheck && isErrorCheck;
-    } catch (e) {
-      //TODO handle the exception
-      return false;
-    }
-  };
 
   return instance;
 };
