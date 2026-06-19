@@ -21,6 +21,78 @@ const instance = axios.create({
 const NODE_ENV = process.env.NODE_ENV;
 const IS_DEV = NODE_ENV === "development";
 
+// ========== 服务健康检测 ==========
+// 服务不可用状态码：502(网关错误) 503(服务不可用) 504(网关超时) 429(请求过多/负载满)
+const SERVICE_DOWN_STATUS_CODES = [502, 503, 504, 429];
+// 连续失败阈值，超过此数认为服务已挂
+const SERVICE_DOWN_THRESHOLD = 10;
+// 通知冷却时间（毫秒），避免短时间内重复发送微信消息
+const NOTIFY_COOLDOWN_MS = 5 * 60 * 1000;
+
+let serviceDownCount = 0;
+let lastNotifyTime = 0;
+let hasLoggedOut = false; // 防止重复触发退出登录
+
+/**
+ * 检测是否为服务不可用的状态码
+ * @param {number} status - HTTP 状态码
+ * @returns {boolean}
+ */
+const isServiceDownStatus = status => {
+  return SERVICE_DOWN_STATUS_CODES.includes(status);
+};
+
+/**
+ * 触发服务不可用处理：退出登录 + 发送微信通知
+ * @param {number} status - 触发的 HTTP 状态码
+ * @param {string} statusText - 状态描述
+ */
+const handleServiceDown = (status, statusText) => {
+  // 防止重复触发
+  if (hasLoggedOut) return;
+  hasLoggedOut = true;
+
+  const now = Date.now();
+  const statusDesc = {
+    502: "Bad Gateway（网关错误）",
+    503: "Service Unavailable（服务不可用）",
+    504: "Gateway Timeout（网关超时）",
+    429: "Too Many Requests（负载已满）"
+  };
+  const desc = statusDesc[status] || `HTTP ${status}`;
+  const errorMsg = `机器服务异常：${desc}，连续失败${serviceDownCount}次，系统自动退出登录`;
+
+  console.error(`[服务健康检测] ${errorMsg}`);
+
+  // 发送微信通知（带冷却时间）
+  if (now - lastNotifyTime > NOTIFY_COOLDOWN_MS) {
+    lastNotifyTime = now;
+    sendWxPusherMessage({
+      msgType: 9, // 9-日志上传异常
+      app_name: "机器服务",
+      transferTip: errorMsg
+    }).catch(err => {
+      console.error("[服务健康检测] 微信通知发送失败:", err);
+    });
+  }
+
+  // 退出登录：清除本地状态并刷新页面
+  ElMessage({
+    type: "error",
+    message: "机器服务已断开，系统将自动退出登录",
+    center: true,
+    duration: 5 * 1000,
+    onClose: () => {
+      console.warn("[服务健康检测] 清除token并刷新页面");
+      tokens.removeSelfPlatToken();
+      window.localStorage.removeItem("selfToken");
+      window.localStorage.removeItem("userInfo");
+      window.localStorage.removeItem("user-info");
+      location.reload();
+    }
+  });
+};
+
 // 请求拦截器
 instance.interceptors.request.use(
   config => {
@@ -48,6 +120,10 @@ instance.interceptors.request.use(
 // 响应拦截器
 instance.interceptors.response.use(
   response => {
+    // 请求成功，重置服务不可用计数器
+    serviceDownCount = 0;
+    hasLoggedOut = false;
+
     // 对响应进行统一处理
     const data = response.data;
     let whitelistSp = [];
@@ -102,6 +178,24 @@ instance.interceptors.response.use(
 
     // 对HTTP错误码进行处理
     if (response && response.status) {
+      // 检测服务不可用状态码
+      if (isServiceDownStatus(response.status)) {
+        serviceDownCount++;
+        console.warn(
+          `[服务健康检测] 检测到服务异常 HTTP ${response.status}，连续失败次数：${serviceDownCount}/${SERVICE_DOWN_THRESHOLD}`
+        );
+
+        if (serviceDownCount >= SERVICE_DOWN_THRESHOLD) {
+          handleServiceDown(response.status, response.statusText);
+        }
+
+        // 仍然走原有的错误处理逻辑
+        ElMessage.error(
+          `服务异常 (${response.status})，第${serviceDownCount}次失败`
+        );
+        return Promise.reject(error);
+      }
+
       switch (response.status) {
         case 401:
           //   // 未授权，处理登出逻辑
