@@ -20,6 +20,93 @@ export default class OrderManage {
     this.isTestOrder = isTestOrder; // 是否是测试订单
   }
 
+  /**
+   * 等待订单就绪（对照小程序 orderstatus + modefiyPhone）
+   *
+   * 小程序流程（selectseat/index.js:758）：
+   * 1. create_order.api 后轮询 order_status.api，每500ms直到 orderStatus !== 10
+   * 2. 手机号不同时调用 confirm_order.api 绑定手机
+   * 3. orderStatus === 40（待付款）表示订单可查询
+   *
+   * @param {Object} params
+   * @param {string} params.orderId - 订单ID
+   * @param {string} params.session_id - 会话ID
+   * @param {string} params.mobilePhone - 目标手机号（绑定用）
+   * @returns {Promise<boolean>} 订单是否就绪
+   */
+  async waitForOrderReady({ orderId, session_id, mobilePhone = "" }) {
+    const maxRetry = 30; // 30次 × 0.5秒 = 15秒（小程序12秒超时）
+
+    for (let i = 0; i < maxRetry; i++) {
+      try {
+        const params = { orderId, wanda_token: session_id };
+        const res = await this.appApi.queryOrderStatus(params);
+
+        if (i === 0) {
+          this.logger.infoSave("订单状态轮询首次返回", { res, orderId });
+        }
+
+        const orderStatus = res?.data?.orderStatus;
+
+        if (orderStatus === 10) {
+          // 10 = 处理中，继续轮询
+          if ((i + 1) % 5 === 0) {
+            this.logger.info(
+              `订单状态轮询第${i + 1}次: orderStatus=10（处理中，继续等待）`
+            );
+          }
+          await mockDelay(0.5);
+          continue;
+        }
+
+        // orderStatus !== 10，订单已就绪
+        this.logger.infoSave(
+          `订单状态就绪: orderStatus=${orderStatus}，共轮询${i + 1}次`
+        );
+
+        // 参照小程序 selectseat/index.js:771：手机号不同时调用 confirm_order.api
+        if (mobilePhone) {
+          try {
+            const confirmParams = {
+              orderId,
+              mobilePhone,
+              wanda_token: session_id
+            };
+            const confirmRes = await this.appApi.confirmOrder(confirmParams);
+            this.logger.infoSave("绑定订单手机号返回", {
+              confirmRes,
+              orderId,
+              mobilePhone
+            });
+          } catch (err) {
+            this.logger.warn?.("绑定订单手机号异常（不影响主流程）", {
+              error: formatErrInfo(err),
+              orderId
+            });
+          }
+        }
+
+        return true;
+      } catch (error) {
+        if (i < maxRetry - 1) {
+          this.logger.info(`订单状态查询异常，${0.5}秒后重试...`, {
+            error: formatErrInfo(error)
+          });
+          await mockDelay(0.5);
+          continue;
+        }
+        this.logger.errorSave("订单状态轮询异常", {
+          orderId,
+          error: formatErrInfo(error)
+        });
+        return false;
+      }
+    }
+
+    this.logger.errorSave("订单状态轮询超时", { orderId, maxRetry });
+    return false;
+  }
+
   // 转单
   async transferOrder(unlockSeatInfo) {
     this.logger.infoSave("开始准备转单", unlockSeatInfo);

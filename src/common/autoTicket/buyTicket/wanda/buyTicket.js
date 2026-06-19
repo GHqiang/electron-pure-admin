@@ -288,6 +288,25 @@ class WandaBuyTicket extends BaseBuyTicket {
         return await this.transferOrChangePhone(transparams, buyTicketInfo);
       }
 
+      // ★ 对照小程序 orderstatus：轮询 order_status.api 直到订单就绪
+      // 小程序在 create_order.api 后立即轮询 order_status.api（500ms间隔），
+      // 等待 orderStatus 从 10（处理中）变为其他值（如 40=待付款），
+      // 然后视情况调用 confirm_order.api 绑定手机号。
+      // 跳过此步骤直接 query_by_userid.api 会查不到订单。
+      const orderReady = await this.orderManage.waitForOrderReady({
+        orderId: order_num,
+        session_id: this.currentSessionId
+        // mobilePhone: this.currentPhone // 先不传，暂时不调绑定手机号接口
+      });
+      if (!orderReady) {
+        this.logger.infoSave("订单就绪等待失败，走转单或换号处理");
+        const transparams = {
+          orderId: order_num,
+          session_id: this.currentSessionId
+        };
+        return await this.transferOrChangePhone(transparams, buyTicketInfo);
+      }
+
       // ========== 获取锁座后订单价格（从 Wanda 订单取真实全价） ==========
       // 3、获取锁座价格明细;
       const calcParams = {
