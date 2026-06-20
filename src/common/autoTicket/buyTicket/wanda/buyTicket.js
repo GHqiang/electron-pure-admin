@@ -241,33 +241,28 @@ class WandaBuyTicket extends BaseBuyTicket {
         this.order.last_fail_phone = this.currentPhone || "";
       }
       console.warn("锁座前的buyTicketInfo", buyTicketInfo);
-      // ========== 创建订单（锁座+创建订单） ==========
-      const lockSeatParams = {
+      // ========== 创建订单（锁座 + 验证订单状态 + 重试） ==========
+      // 全部锁座+验证+重试逻辑已封装到 orderManage.lockAndCreateOrder
+      const lockResult = await this.orderManage.lockAndCreateOrder({
         dId: buyTicketInfo.show_id,
-        retailerCode: "MX",
         mobile: this.currentPhone,
         seatId: buyTicketInfo.seat_ids,
         session_id: this.currentSessionId
-      };
-      const lockRes = await this.seatManage.lockseatByApp(lockSeatParams);
-      if (!lockRes) {
-        const { err_info: errInfo } = this.logger.getLastErrMsgAndInfo();
-        if (
-          dictStore.dictInfo.supportChangeSeatPlatList.includes(plat_name) &&
-          ["座位已被锁定", "座位无效或已被锁定"].some(item =>
-            errInfo.includes(item)
-          )
-        ) {
-          // 走申请座位逻辑
+      });
+
+      if (!lockResult.success) {
+        // 锁座验证全部失败 → 等价于获取目标座位失败
+        // 省和猎人走申请换座，其它平台直接转单
+        this.logger.infoSave("锁座验证全部失败，视为获取目标座位失败");
+        if (dictStore.dictInfo.supportChangeSeatPlatList.includes(plat_name)) {
+          this.logger.infoSave("获取目标座位失败，订单走申请换座逻辑");
           const isApplyChangeSeat = await this.platManage.applyChangeSeat({
             ...item,
             logger: this.logger
           });
           if (isApplyChangeSeat) {
             return {
-              transferParams: {
-                transfer_fee: 0
-              },
+              transferParams: { transfer_fee: 0 },
               offerRule: this.offerRule,
               isApplyChangeSeat
             };
@@ -275,37 +270,9 @@ class WandaBuyTicket extends BaseBuyTicket {
         }
         return await this.orderManage.transferOrder();
       }
-      // 锁座id即创建订单id
-      buyTicketInfo.order_num = lockRes.data?.orderId;
-      order_num = lockRes.data?.orderId;
-      console.log("createOrder 返回 orderId", order_num);
-      if (!order_num) {
-        this.logger.infoSave("订单锁座-创建失败");
-        // 转单或换号处理
-        const transparams = {
-          session_id: this.currentSessionId
-        };
-        return await this.transferOrChangePhone(transparams, buyTicketInfo);
-      }
 
-      // ★ 对照小程序 orderstatus：轮询 order_status.api 直到订单就绪
-      // 小程序在 create_order.api 后立即轮询 order_status.api（500ms间隔），
-      // 等待 orderStatus 从 10（处理中）变为其他值（如 40=待付款），
-      // 然后视情况调用 confirm_order.api 绑定手机号。
-      // 跳过此步骤直接 query_by_userid.api 会查不到订单。
-      const orderReady = await this.orderManage.waitForOrderReady({
-        orderId: order_num,
-        session_id: this.currentSessionId
-        // mobilePhone: this.currentPhone // 先不传，暂时不调绑定手机号接口
-      });
-      if (!orderReady) {
-        this.logger.infoSave("订单就绪等待失败，走转单或换号处理");
-        const transparams = {
-          orderId: order_num,
-          session_id: this.currentSessionId
-        };
-        return await this.transferOrChangePhone(transparams, buyTicketInfo);
-      }
+      order_num = lockResult.order_num;
+      buyTicketInfo.order_num = order_num;
 
       // ========== 获取锁座后订单价格（从 Wanda 订单取真实全价） ==========
       // 3、获取锁座价格明细;

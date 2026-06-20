@@ -21,6 +21,86 @@ export default class OrderManage {
   }
 
   /**
+   * 锁座并验证订单状态（含重试）
+   *
+   * 仅返回 orderId 不算成功，需轮询 order_status.api 确认
+   * subTicketOrderStatus[0].orderStatus === 40 才算锁座成功
+   * 失败自动取消订单后重新锁座
+   *
+   * @param {Object} params
+   * @param {string} params.dId - 场次ID
+   * @param {string} params.mobile - 手机号
+   * @param {string} params.seatId - 座位ID串
+   * @param {string} params.session_id - 会话ID
+   * @returns {Promise<{success: boolean, order_num: string}>}
+   */
+  async lockAndCreateOrder({ dId, mobile, seatId, session_id }) {
+    const maxRetry = 3; // 最多重试 3 次
+    let lastOrderNum = "";
+
+    for (let attempt = 0; attempt < maxRetry; attempt++) {
+      if (attempt > 0) {
+        this.logger.infoSave(`锁座验证失败，第${attempt + 1}次重新锁座`);
+        // 取消上次失败的订单（订单可能已回滚，忽略取消失败）
+        if (lastOrderNum) {
+          await this.cancelOrder({
+            orderId: lastOrderNum,
+            session_id
+          }).catch(() => {});
+        }
+        await mockDelay(1);
+      }
+
+      // Step 1: 锁座（直接调 appApi.createOrder，不走 seatManage 的额外重试）
+      let lockRes;
+      try {
+        lockRes = await this.appApi.createOrder({
+          dId,
+          retailerCode: "MX",
+          mobile,
+          seatId,
+          json: true
+        });
+      } catch (error) {
+        this.logger.errorSave(`第${attempt + 1}次锁座异常`, {
+          error: formatErrInfo(error)
+        });
+        continue;
+      }
+
+      const order_num = lockRes?.data?.orderId;
+      this.logger.infoSave(`createOrder 第${attempt + 1}次返回`, {
+        orderId: order_num,
+        bizCode: lockRes?.data?.bizCode,
+        bizMsg: lockRes?.data?.bizMsg
+      });
+
+      if (!order_num) {
+        this.logger.infoSave(`第${attempt + 1}次锁座-orderId为空`);
+        continue;
+      }
+      lastOrderNum = order_num;
+
+      // Step 2: 轮询 order_status.api 验证订单是否真正就绪
+      const ready = await this.waitForOrderReady({
+        orderId: order_num,
+        session_id
+      });
+
+      if (ready) {
+        return { success: true, order_num };
+      }
+
+      this.logger.infoSave(
+        `第${attempt + 1}次锁座后订单状态异常(orderStatus≠40)`
+      );
+    }
+
+    // 全部重试失败 → 等价于获取目标座位失败
+    return { success: false, order_num: "" };
+  }
+
+  /**
    * 等待订单就绪（对照小程序 orderstatus + modefiyPhone）
    *
    * 小程序流程（selectseat/index.js:758）：
@@ -47,6 +127,8 @@ export default class OrderManage {
         }
 
         const orderStatus = res?.data?.orderStatus;
+        const subOrderStatus =
+          res?.data?.subTicketOrderStatus?.[0]?.orderStatus;
 
         if (orderStatus === 10) {
           // 10 = 处理中，继续轮询
@@ -59,10 +141,22 @@ export default class OrderManage {
           continue;
         }
 
-        // orderStatus !== 10，订单已就绪
+        // ★ 对照小程序 selectseat/index.js:771-782：
+        //   orderStatus !== 10 表示处理完成，需进一步检查子订单状态
+        //   - subTicketOrderStatus[0].orderStatus === 40 → 待付款，可查询
+        //   - subTicketOrderStatus[0].orderStatus === 20 → 锁座失败
+        //   - subTicketOrderStatus 为空 → 锁座失败（订单被回滚）
+        //   只有 40 才表示订单真正就绪可查询
+        const orderReady = subOrderStatus === 40;
         this.logger.infoSave(
-          `订单状态就绪: orderStatus=${orderStatus}，共轮询${i + 1}次`
+          `订单处理完成: orderStatus=${orderStatus}, subOrderStatus=${subOrderStatus}，` +
+            `${orderReady ? "订单就绪" : "锁座失败"}，共轮询${i + 1}次`
         );
+
+        if (!orderReady) {
+          // 锁座失败，不继续
+          return false;
+        }
 
         // 参照小程序 selectseat/index.js:771：手机号不同时调用 confirm_order.api
         if (mobilePhone) {

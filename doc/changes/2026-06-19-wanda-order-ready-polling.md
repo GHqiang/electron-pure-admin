@@ -26,7 +26,9 @@
 **`orderManage.js`** — 新增 `waitForOrderReady()` 方法：
 
 - 轮询 `order_status.api` 最多 30 次（间隔 0.5s，共 15s，小程序 12s 超时）
-- 订单就绪后调用 `confirm_order.api` 绑定手机号
+- **判定条件**：仅 `subTicketOrderStatus[0].orderStatus === 40`（待付款）视为就绪
+- `orderStatus=20` 或 `subTicketOrderStatus` 为空视为锁座失败，返回 `false`
+- 订单就绪后可选用 `confirm_order.api` 绑定手机号
 - 返回 `boolean` 表示订单是否就绪
 
 **`buyTicket.js`** — 在 `if (!order_num)` 检查之后、`priceCalculation` 之前插入：
@@ -34,18 +36,17 @@
 ```javascript
 const orderReady = await this.orderManage.waitForOrderReady({
   orderId: order_num,
-  session_id: this.currentSessionId,
-  mobilePhone: this.currentPhone
+  session_id: this.currentSessionId
 });
 if (!orderReady) {
-  // 转单或换号处理
+  // 转单或换号处理（含取消订单释放座位）
 }
 ```
 
 ### 使用的 API
 
 - `queryOrderStatus`（`order_status.api`）— 已有定义但之前未调用
-- `confirmOrder`（`confirm_order.api`）— 已有定义但之前未调用
+- `confirmOrder`（`confirm_order.api`）— 已有定义（暂未启用，后续可按需开启）
 
 ## 测试结果
 
