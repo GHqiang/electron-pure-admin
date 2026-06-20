@@ -1,5 +1,14 @@
 ## 版本更新记录
 
+### 6.3.53版本
+
+1、解决万达订单锁座成功后查不到订单的问题：
+
+- orderManage 新增 lockAndCreateOrder() 封装锁座+order_status验证+取消重试；
+- 仅 subTicketOrderStatus[0].orderStatus===40 才算锁座成功；
+- 验证失败自动取消订单重新锁座（最多3次）；
+- 全部重试失败视为获取目标座位失败，省/猎人走申请换座，其它平台转单；
+
 ### 6.3.52版本
 
 1、尝试解决万达订单锁座（create_order.api）成功后，根据返回的 orderId 调用query_by_userid.api 查不到订单的问题；
