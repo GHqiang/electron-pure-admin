@@ -18,7 +18,8 @@ export default defineFlatConfig([
       "public/*",
       "src/assets/**",
       "dist-electron/*",
-      "src/**/iconfont/**"
+      "src/**/iconfont/**",
+      "auto-ticket-service/**"
     ],
     languageOptions: {
       globals: {
