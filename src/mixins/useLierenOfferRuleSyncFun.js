@@ -292,14 +292,24 @@ export default function useLierenOfferRuleSyncFun() {
       for (const item of ruleList) {
         localRuleMap.set(String(item.platRuleId), item);
       }
+      // 建立猎人 rule_id 集合（用于反向检查本地有、猎人无的规则）
+      const platRuleIdSet = new Set(lierenRuleList.map(r => String(r.rule_id)));
 
       let enableCount = 0;
       let disableCount = 0;
       let seatsFixCount = 0;
 
+      // ── 收集需要标记的孤儿规则 ──
+      const platOnlyRules = []; // 猎人平台有、本地无
+      const localOnlyRules = []; // 本地同步了、猎人平台无
+
       for (const platRule of lierenRuleList) {
         const localRule = localRuleMap.get(String(platRule.rule_id));
-        if (!localRule) continue;
+        if (!localRule) {
+          // ⚠ 猎人平台有该规则但本地未同步（可能是手动在平台创建或被删后残留）
+          platOnlyRules.push(platRule);
+          continue;
+        }
 
         // 计算猎人端应有的状态：
         // - 当日不报生效中（allow_offer_time 未到）→ 禁用(0)
@@ -376,6 +386,76 @@ export default function useLierenOfferRuleSyncFun() {
           console.warn("平台和本地状态和座位数完全一致，无需更新");
         }
       }
+
+      // ── 反向检查：本地有、猎人无的规则 ──
+      for (const [platRuleId, localRule] of localRuleMap) {
+        if (!platRuleIdSet.has(platRuleId)) {
+          localOnlyRules.push({ platRuleId, localRule });
+        }
+      }
+
+      // ── 报告并修复孤儿规则 ──
+      if (platOnlyRules.length > 0) {
+        console.warn(
+          `⚠ 猎人平台有但本地未同步的规则（platOnly）: ${platOnlyRules.length} 条，将自动禁用`,
+          platOnlyRules.map(r => ({
+            rule_id: r.rule_id,
+            name: r.name,
+            state: r.state === 1 ? "启用" : "禁用",
+            seats: r.seats || "(空)"
+          }))
+        );
+        // 自动禁用猎人侧孤儿规则（避免不可控的报价行为）
+        for (const platRule of platOnlyRules) {
+          try {
+            await lierenApi.ruleState({
+              rule_id: [platRule.rule_id],
+              state: 0,
+              lieren_ak: lierenMainAccountAkSk?.[0] || "",
+              lieren_sk: lierenMainAccountAkSk?.[1] || ""
+            });
+            disableCount++;
+            console.warn(
+              `  已禁用猎人孤儿规则: rule_id=${platRule.rule_id} name="${platRule.name || ""}"`
+            );
+          } catch (err) {
+            console.error(
+              `  禁用猎人孤儿规则失败: rule_id=${platRule.rule_id}`,
+              err.message
+            );
+          }
+        }
+      }
+
+      if (localOnlyRules.length > 0) {
+        console.warn(
+          `⚠ 本地已同步但猎人平台不存在的规则（localOnly）: ${localOnlyRules.length} 条，需手动检查`,
+          localOnlyRules.map(r => ({
+            platRuleId: r.platRuleId,
+            ruleName: r.localRule.ruleName,
+            shadowLine: r.localRule.shadowLineName,
+            status: r.localRule.status
+          }))
+        );
+        // 不自动修复（可能需要重新同步或清除本地 platRuleId），只记录警告
+      }
+
+      // ── 汇总 ──
+      const totalPlatRules = lierenRuleList.length;
+      const totalLocalSynced = ruleList.length;
+      const totalMatched = totalPlatRules - platOnlyRules.length;
+      console.warn(
+        `猎人规则同步统计: ` +
+          `本地已同步 ${totalLocalSynced} 条, ` +
+          `猎人平台固定价 ${totalPlatRules} 条, ` +
+          `双向匹配 ${totalMatched} 条` +
+          (platOnlyRules.length > 0
+            ? `, ⚠猎人孤儿 ${platOnlyRules.length} 条`
+            : "") +
+          (localOnlyRules.length > 0
+            ? `, ⚠本地孤儿 ${localOnlyRules.length} 条`
+            : "")
+      );
 
       if (enableCount > 0 || disableCount > 0 || seatsFixCount > 0) {
         console.warn(
