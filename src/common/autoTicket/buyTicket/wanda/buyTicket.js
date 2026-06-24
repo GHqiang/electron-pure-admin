@@ -253,7 +253,7 @@ class WandaBuyTicket extends BaseBuyTicket {
       if (!lockResult.success) {
         // 锁座验证全部失败 → 等价于获取目标座位失败
         // 省和猎人走申请换座，其它平台直接转单
-        this.logger.infoSave("锁座验证全部失败，视为获取目标座位失败");
+        this.logger.errorSave("锁座验证全部失败，视为获取目标座位失败");
         if (dictStore.dictInfo.supportChangeSeatPlatList.includes(plat_name)) {
           this.logger.infoSave("获取目标座位失败，订单走申请换座逻辑");
           const isApplyChangeSeat = await this.platManage.applyChangeSeat({
