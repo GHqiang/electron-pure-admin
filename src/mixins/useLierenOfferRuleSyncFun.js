@@ -4,7 +4,8 @@ import { ElMessage } from "element-plus";
 import {
   getCurrentTime,
   sendWxPusherMessage,
-  getLongestPart
+  getLongestPart,
+  formatErrInfo
 } from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
 import { dictTable } from "@/store/dictTable";
@@ -39,6 +40,7 @@ const formatSeats = seatNum => {
 // 机器相关方法接口
 export default function useLierenOfferRuleSyncFun() {
   const tokens = platTokens();
+  const rule = tokens.userInfo?.rule || "";
 
   // 获取猎人 AK/SK：优先当前 rule，若无配置则回退到字典中第一个可用规则
   const _getLierenAkSk = () => {
@@ -159,6 +161,29 @@ export default function useLierenOfferRuleSyncFun() {
       console.warn("同步规则到猎人平台参数", params);
       const res = await lierenApi.ruleAdd(params);
       console.warn("同步规则到猎人平台成功", res);
+      // 记录同步成功日志
+      svApi
+        .addRuleOperationLog({
+          rule_id: ruleInfo.id,
+          rule_name: ruleInfo.ruleName,
+          shadow_line_name: ruleInfo.shadowLineName,
+          operation_type: "sync_add_update",
+          new_status: ruleInfo.status,
+          new_seat_num: ruleInfo.seatNum,
+          plat_name: "lieren",
+          trigger_source: lierenOfferRule.platRuleId
+            ? "rule_edit_save"
+            : "rule_add_save",
+          change_reason: lierenOfferRule.platRuleId
+            ? "更新猎人平台规则"
+            : "新增猎人平台规则",
+          success: 1,
+          operator: rule,
+          ext_data: JSON.stringify({
+            platRuleId: rule_id || lierenOfferRule.platRuleId
+          })
+        })
+        .catch(() => {});
       let rule_id = res?.data?.rule_id;
       let platOfferList = ruleInfo.platOfferList || [];
       let finalPlatOfferList = platOfferList.map(item => ({ ...item }));
@@ -185,6 +210,20 @@ export default function useLierenOfferRuleSyncFun() {
       return { platOfferList: finalPlatOfferList };
     } catch (error) {
       console.warn("同步规则到猎人平台异常", error);
+      // 记录同步失败日志
+      svApi
+        .addRuleOperationLog({
+          rule_id: ruleInfo.id,
+          rule_name: ruleInfo.ruleName,
+          shadow_line_name: ruleInfo.shadowLineName,
+          operation_type: "sync_add_update",
+          plat_name: "lieren",
+          trigger_source: ruleInfo.id ? "rule_edit_save" : "rule_add_save",
+          success: 0,
+          error_msg: formatErrInfo(error),
+          operator: rule
+        })
+        .catch(() => {});
       ElMessage.error("同步规则到猎人平台失败，请稍后重试");
       return undefined;
     }
@@ -202,8 +241,33 @@ export default function useLierenOfferRuleSyncFun() {
       console.warn("猎人平台规则删除参数", params);
       const res = await lierenApi.ruleDel(params);
       console.warn("猎人平台规则删除成功", res);
+      // 记录删除同步成功日志
+      svApi
+        .addRuleOperationLog({
+          rule_id: null,
+          operation_type: "sync_delete",
+          plat_name: "lieren",
+          trigger_source: "rule_delete",
+          change_reason: `批量删除猎人平台规则(${platRuleIdList.length}条)`,
+          success: 1,
+          operator: rule,
+          ext_data: JSON.stringify({ platRuleIdList })
+        })
+        .catch(() => {});
     } catch (error) {
       console.error("猎人平台规则删除异常", error);
+      // 记录删除同步失败日志
+      svApi
+        .addRuleOperationLog({
+          operation_type: "sync_delete",
+          plat_name: "lieren",
+          trigger_source: "rule_delete",
+          success: 0,
+          error_msg: formatErrInfo(error),
+          operator: rule,
+          ext_data: JSON.stringify({ platRuleIdList })
+        })
+        .catch(() => {});
       throw error;
     }
   };
@@ -235,8 +299,46 @@ export default function useLierenOfferRuleSyncFun() {
       console.warn("猎人平台规则状态修改参数", params);
       const res = await lierenApi.ruleState(params);
       console.warn("猎人平台规则状态修改成功", res);
+      // 记录状态同步成功日志
+      svApi
+        .addRuleOperationLog({
+          rule_id: ruleInfo.id,
+          rule_name: ruleInfo.ruleName,
+          shadow_line_name: ruleInfo.shadowLineName,
+          operation_type: "sync_status",
+          new_status: ruleInfo.status,
+          plat_name: "lieren",
+          trigger_source:
+            ruleInfo.status === "5" ? "no_offer_today" : "manual_toggle",
+          change_reason:
+            ruleInfo.status === "5"
+              ? "当日不报，同步禁用"
+              : ruleInfo.status === "1"
+                ? "用户启用规则，同步启用"
+                : "用户禁用规则，同步禁用",
+          success: 1,
+          operator: rule,
+          ext_data: JSON.stringify({ platRuleId: lierenOffer.platRuleId })
+        })
+        .catch(() => {});
     } catch (error) {
       console.warn("猎人平台规则状态修改异常", error);
+      // 记录状态同步失败日志
+      svApi
+        .addRuleOperationLog({
+          rule_id: ruleInfo.id,
+          rule_name: ruleInfo.ruleName,
+          shadow_line_name: ruleInfo.shadowLineName,
+          operation_type: "sync_status",
+          new_status: ruleInfo.status,
+          plat_name: "lieren",
+          trigger_source:
+            ruleInfo.status === "5" ? "no_offer_today" : "manual_toggle",
+          success: 0,
+          error_msg: formatErrInfo(error),
+          operator: rule
+        })
+        .catch(() => {});
       ElMessage.error("修改猎人平台规则状态失败");
     }
   };
@@ -382,6 +484,35 @@ export default function useLierenOfferRuleSyncFun() {
             disableCount++;
           }
           if (seatsMismatch) seatsFixCount++;
+          // 记录双向同步修复日志
+          svApi
+            .addRuleOperationLog({
+              rule_id: localRule.id,
+              rule_name: localRule.ruleName,
+              shadow_line_name: localRule.shadowLineName,
+              operation_type: "sync_bidirectional",
+              old_status: platRule.state === 1 ? "1" : "2",
+              new_status: expectedState === 1 ? "1" : "2",
+              plat_name: "lieren",
+              trigger_source: "login_sync",
+              change_reason: stateMismatch
+                ? expectedState === 0
+                  ? isNoOfferActive
+                    ? "当日不报生效中"
+                    : `本地status=${localRule.status}`
+                  : "本地已启用，同步启用"
+                : `座位数不一致(${platRule.seats || ""}→${expectedSeats})`,
+              success: syncRes ? 1 : 0,
+              operator: rule,
+              ext_data: JSON.stringify({
+                platRuleId: platRule.rule_id,
+                expectedState,
+                expectedSeats,
+                localStatus: localRule.status,
+                allowOfferTime: localRule.allow_offer_time
+              })
+            })
+            .catch(() => {});
         } else {
           console.warn("平台和本地状态和座位数完全一致，无需更新");
         }
@@ -425,6 +556,25 @@ export default function useLierenOfferRuleSyncFun() {
             );
           }
         }
+        // 记录平台孤儿规则批量禁用日志
+        svApi
+          .batchAddRuleOperationLog({
+            logs: platOnlyRules.map(r => ({
+              rule_id: null,
+              rule_name: r.name,
+              shadow_line_name: r.cinema_group || r.cinema_code || "",
+              operation_type: "sync_bidirectional",
+              old_status: r.state === 1 ? "1" : "2",
+              new_status: "2",
+              plat_name: "lieren",
+              trigger_source: "login_sync",
+              change_reason: "猎人平台孤儿规则（本地未同步），自动禁用",
+              success: 1,
+              operator: rule,
+              ext_data: JSON.stringify({ platRuleId: r.rule_id })
+            }))
+          })
+          .catch(() => {});
       }
 
       if (localOnlyRules.length > 0) {

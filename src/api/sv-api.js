@@ -90,6 +90,12 @@ const addRuleRecord = params => axios.post("/svpi/ruleRecord/add", params);
 // 修改规则
 const updateRuleRecord = params =>
   axios.post("/svpi/ruleRecord/update", params);
+// 新增规则操作日志
+const addRuleOperationLog = params =>
+  axios.post("/svpi/ruleOperationLog/add", params);
+// 批量新增规则操作日志
+const batchAddRuleOperationLog = params =>
+  axios.post("/svpi/ruleOperationLog/batchAdd", params);
 
 // 获取卡列表
 const getCardList = params => axios.get("/svpi/cardRecord", { params });
@@ -309,6 +315,8 @@ const svApi = {
   batchDeleteRule,
   addRuleRecord,
   updateRuleRecord,
+  addRuleOperationLog,
+  batchAddRuleOperationLog,
   getCardList,
   queryCardList,
   deleteCard,

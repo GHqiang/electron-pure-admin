@@ -752,6 +752,21 @@ const editStatus = async row => {
         : 2,
       update_time: getCurrentTime()
     });
+    // 记录状态变更日志
+    svApi
+      .addRuleOperationLog({
+        rule_id: row.id,
+        rule_name: row.ruleName,
+        shadow_line_name: row.shadowLineName,
+        operation_type: "status_change",
+        old_status: row.status === "1" ? "2" : "1",
+        new_status: row.status,
+        trigger_source: "manual_toggle",
+        change_reason: "用户手动切换规则状态",
+        success: 1,
+        operator: rule
+      })
+      .catch(() => {});
     // 修改规则状态同步到平台
     await editRuleStatusSyncToPlat(row);
     ElMessage.success("状态更新成功");
@@ -869,6 +884,21 @@ const saveRule = async ruleInfo => {
         jiqiRuleInfo.platOfferList = JSON.stringify(syncResult.platOfferList);
       }
       await svApi.updateRuleRecord(jiqiRuleInfo);
+      // 记录规则编辑日志
+      svApi
+        .addRuleOperationLog({
+          rule_id: ruleInfo.id,
+          rule_name: ruleInfo.ruleName,
+          shadow_line_name: ruleInfo.shadowLineName,
+          operation_type: "rule_update",
+          new_status: jiqiRuleInfo.status,
+          new_seat_num: jiqiRuleInfo.seatNum,
+          trigger_source: "form_save",
+          change_reason: "用户编辑保存规则",
+          success: 1,
+          operator: rule
+        })
+        .catch(() => {});
       sfcDialogRef.value.closeTck();
       searchData();
     } else {
@@ -883,6 +913,21 @@ const saveRule = async ruleInfo => {
       if (newId) {
         ruleInfo = { ...ruleInfo, id: newId };
       }
+      // 记录规则新增日志
+      svApi
+        .addRuleOperationLog({
+          rule_id: newId || null,
+          rule_name: ruleInfo.ruleName,
+          shadow_line_name: ruleInfo.shadowLineName,
+          operation_type: "rule_create",
+          new_status: jiqiRuleInfo.status,
+          new_seat_num: jiqiRuleInfo.seatNum,
+          trigger_source: "form_save",
+          change_reason: "用户新增规则",
+          success: 1,
+          operator: rule
+        })
+        .catch(() => {});
       await saveRuleSyncToPlat(ruleInfo);
       sfcDialogRef.value.closeTck();
       searchData();

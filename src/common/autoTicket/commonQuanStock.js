@@ -195,9 +195,10 @@ async function checkLierenFixedRuleByQuanStock(obj) {
     quanStockList = JSON.parse(quanStockList);
     let maxQuanStock = 0;
     if (quanStockList.length > 0) {
-      maxQuanStock = quanStockList.reduce((pre, cur) => {
-        return pre.quan_stock > cur.quan_stock ? pre : cur;
-      })?.quan_stock || 0;
+      maxQuanStock =
+        quanStockList.reduce((pre, cur) => {
+          return pre.quan_stock > cur.quan_stock ? pre : cur;
+        })?.quan_stock || 0;
     }
     logger.infoSave("最大券库存", {
       id,
@@ -283,6 +284,28 @@ async function checkLierenFixedRuleByQuanStock(obj) {
         jiqiuRule
       });
       await svApi.updateRuleRecord(jiqiuRule);
+      // 记录状态变更日志（券库存触发）
+      svApi
+        .addRuleOperationLog({
+          rule_id: rule.id,
+          rule_name: rule.ruleName,
+          shadow_line_name: rule.shadowLineName || app_name,
+          operation_type: "status_change",
+          old_status: rule.status,
+          new_status: targetStatus,
+          old_seat_num: rule.seatNum,
+          new_seat_num: targetSeatNum != null ? String(targetSeatNum) : null,
+          trigger_source:
+            targetStatus === "2" ? "quan_stock_zero" : "quan_stock_update",
+          change_reason:
+            targetStatus === "2"
+              ? `券库存归零(maxQuanStock=0, quan_value=${quan_value})，自动禁用`
+              : `券库存变化(maxQuanStock=${maxQuanStock})，更新座位数`,
+          success: 1,
+          operator: rule,
+          ext_data: JSON.stringify({ quan_value, maxQuanStock })
+        })
+        .catch(() => {});
     }
     // 根据quan_value检查都有哪些规则在使用且同步了平台，更新平台规则的座位数
   } catch (error) {
