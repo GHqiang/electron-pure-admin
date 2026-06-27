@@ -9,6 +9,7 @@ import YangcongAdapter from "../platform/adapters/YangcongAdapter.js";
 import YinghuasuanAdapter from "../platform/adapters/YinghuasuanAdapter.js";
 import ShoutuAdapter from "../platform/adapters/ShoutuAdapter.js";
 import MahuaAdapter from "../platform/adapters/MahuaAdapter.js";
+import PiaoShengAdapter from "../platform/adapters/PiaoShengAdapter.js";
 import ShengAdapter from "../platform/adapters/ShengAdapter.js";
 // import ShangzhanAdapter from "../platform/adapters/ShangzhanAdapter.js";
 import Logger from "../logger.js";
@@ -37,6 +38,7 @@ class PlatformFactory {
     this.registerAdapter("yinghuasuan", YinghuasuanAdapter);
     this.registerAdapter("shoutu", ShoutuAdapter);
     this.registerAdapter("mahua", MahuaAdapter);
+    this.registerAdapter("piaosheng", PiaoShengAdapter);
     this.registerAdapter("sheng", ShengAdapter);
     // this.registerAdapter("shangzhan", ShangzhanAdapter);
   }

@@ -2596,6 +2596,8 @@ const uploadBlobImage = async ({
       headers.Token = tokens.shoutuToken;
     } else if (plat_name === "mahua") {
       headers.Token = tokens.mahuaToken;
+    } else if (plat_name === "piaosheng") {
+      headers.Token = tokens.piaoShengToken;
     }
     // 使用正确的Axios配置发送请求
     const response = await axios.post(url, formData, { headers });
@@ -2626,6 +2628,8 @@ const uploadBlobImage = async ({
     } else if (plat_name == "shoutu") {
       return res?.data?.url;
     } else if (plat_name == "mahua") {
+      return res?.rtnData?.imgUrl;
+    } else if (plat_name == "piaosheng") {
       return res?.rtnData?.imgUrl;
     } else if (plat_name == "mayi") {
       return res?.data?.picUrl;

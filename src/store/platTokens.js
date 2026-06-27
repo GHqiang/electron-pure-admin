@@ -17,6 +17,7 @@ export const platTokens = defineStore("platTokens", {
     shangzhanToken: "",
     shoutuToken: "", // 守兔平台token
     mahuaToken: "", // 麻花平台token
+    piaoShengToken: "", // 票圣平台token
     // eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJzb20uempscm1vdmllLmNuIiwiYXVkIjoic29tLnpqbHJtb3ZpZS5jbiIsImlhdCI6MTcxNTM0NDk2MywibmJmIjoxNzE1MzQ0OTYzLCJleHAiOjE3MTc3NjQxNjMsImRhdGEiOnsiaWQiOjcxNDYzMiwidXNlcm5hbWUiOjcxNDYzMiwic3RhdHVzIjoxLCJvcGVuaWQiOiJvUXpFZjQ3a1ZLQ3F6bzRPSXl1ZHBZVllwX2g0In19.mwidYdjsGHIEnDxWlihB2LVdCtt0o1v_rrdbvSbSe50
     selfToken: "", // 平台自身token
     userInfo:
@@ -86,6 +87,12 @@ export const platTokens = defineStore("platTokens", {
       console.warn("设置麻花平台token", data);
       window.localStorage.setItem("mahuaToken", data);
       this.mahuaToken = data;
+    },
+    // 设置票圣平台token
+    setPiaoShengPlatToken(data) {
+      console.warn("设置票圣平台token", data);
+      window.localStorage.setItem("piaoShengToken", data);
+      this.piaoShengToken = data;
     },
     // 设置影划算平台token
     setYinghuasuanPlatToken(data) {

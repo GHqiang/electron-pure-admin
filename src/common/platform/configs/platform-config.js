@@ -407,6 +407,71 @@ export const PLATFORM_CONFIGS = {
     })
   },
 
+  // 票圣平台配置
+  piaosheng: {
+    name: "piaosheng",
+    displayName: "票圣",
+    features: {
+      hasTransferFee: false,
+      priceStep: 0.1,
+      supportAsyncSubmit: false,
+      unlockBeforeTicket: false, // 票圣不需要解锁
+      needConfirmOrder: true
+    },
+    api: {
+      getOrderList: "queryStayOfferList",
+      submitOffer: "submitOffer",
+      unlockSeat: "unlockSeat",
+      submitTicket: "submitTicketCode",
+      transferOrder: "transferOrder"
+    },
+    params: {
+      orderIdKey: "id",
+      orderNumberKey: "order_number",
+      unlockParams: order => ({
+        // 票圣平台特殊处理，不需要解锁
+        getOrderId: order.id
+      }),
+      submitParams: (order, qrcode) => ({
+        getOrderId: order.id,
+        imgInfo: [
+          {
+            url: "",
+            info: qrcode,
+            code: qrcode.split("|")?.[1] || "",
+            ticketPassword: "",
+            getTicketType: 0,
+            maySeats: order.lockseat?.split(" ").map(item => ({
+              show: true,
+              maySeats: item
+            })),
+            realmaySeats: order.lockseat?.split(" ").map(item => ({
+              show: true,
+              maySeats: item
+            })),
+            seats: order.lockseat?.split(" ") || [],
+            entryType: 0
+          }
+        ]
+      }),
+      transferParams: (order, reason) => ({
+        getOrderId: order.id,
+        note: reason || "优惠库存不足",
+        reason: ""
+      }),
+      offerParams: ({ order, price, ruleId, memberPrice, offerRule }) => ({
+        order_id: order.id,
+        price: String(price),
+        offerRule,
+        order
+      })
+    },
+    transformOrder: order => ({
+      ...order,
+      plat_name: "piaosheng"
+    })
+  },
+
   // 麻花平台配置
   mahua: {
     name: "mahua",

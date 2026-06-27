@@ -19,6 +19,7 @@ describe("PlatformConfig", () => {
       "yinghuasuan",
       "shoutu",
       "mahua",
+      "piaosheng",
       "sheng",
       "shangzhan"
     ];

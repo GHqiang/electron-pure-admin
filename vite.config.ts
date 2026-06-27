@@ -84,6 +84,12 @@ export default ({ command, mode }: ConfigEnv): UserConfigExport => {
           changeOrigin: true,
           rewrite: path => path.replace(/^\/nmhapi/, "")
         },
+        // 票圣 Open API
+        "/psapi": {
+          target: "https://openapi.piaosheng.top",
+          changeOrigin: true,
+          rewrite: path => path.replace(/^\/psapi/, "")
+        },
        "/newwww": {
           target: "https://piao.mayiufu.com",
           changeOrigin: true,

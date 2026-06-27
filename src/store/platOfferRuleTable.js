@@ -72,6 +72,14 @@ export const usePlatTableDataStore = defineStore("platforms", {
       }
       window.localStorage.setItem("platQueueRule", JSON.stringify(this.items));
     },
+    // 保存票圣新续期token
+    savePiaoShengNewRefreshToken({ platToken, platSubToken }) {
+      const index = this.items.findIndex(item => item.platName === "piaosheng");
+      if (index > -1) {
+        this.items[index] = { ...this.items[index], platToken, platSubToken };
+      }
+      window.localStorage.setItem("platQueueRule", JSON.stringify(this.items));
+    },
     deleteItem(id) {
       // 模拟删除逻辑
       this.items = this.items.filter(item => item.id !== id);

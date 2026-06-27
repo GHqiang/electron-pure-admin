@@ -168,7 +168,10 @@ export default class BaseBuyTicket {
         user_id: tokens.userInfo?.user_id || tokens.userInfo?.user_id,
         order_status: "1",
         app_name,
-        order_number: plat_name !== "mahua" ? order_number : offer_order_number,
+        order_number:
+          plat_name !== "mahua" && plat_name !== "piaosheng"
+            ? order_number
+            : offer_order_number,
         plat_name
       });
       this.offerRule = offerRes?.data?.offerInfo;

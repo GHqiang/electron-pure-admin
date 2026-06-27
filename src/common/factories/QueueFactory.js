@@ -9,6 +9,7 @@ import YangcongOfferQueue from "../platform/queues/YangcongOfferQueue.js";
 import YinghuasuanOfferQueue from "../platform/queues/YinghuasuanOfferQueue.js";
 import ShoutuOfferQueue from "../platform/queues/ShoutuOfferQueue.js";
 import MahuaOfferQueue from "../platform/queues/MahuaOfferQueue.js";
+import PiaoShengOfferQueue from "../platform/queues/PiaoShengOfferQueue.js";
 import ShengOfferQueue from "../platform/queues/ShengOfferQueue.js";
 import ShangzhanOfferQueue from "../platform/queues/ShangzhanOfferQueue.js";
 
@@ -23,6 +24,7 @@ import shangzhanFetchOrder from "../platform/fetchers/ShangzhanOrderFetcher.js";
 import hahaFetchOrder from "../platform/fetchers/HahaOrderFetcher.js";
 import shoutuFetchOrder from "../platform/fetchers/ShoutuOrderFetcher.js";
 import mahuaFetchOrder from "../platform/fetchers/MahuaOrderFetcher.js";
+import piaoshengFetchOrder from "../platform/fetchers/PiaoShengOrderFetcher.js";
 
 /**
  * 报价队列工厂
@@ -43,6 +45,7 @@ class OfferQueueFactory {
     this.registerOfferQueue("yinghuasuan", YinghuasuanOfferQueue);
     this.registerOfferQueue("shoutu", ShoutuOfferQueue);
     this.registerOfferQueue("mahua", MahuaOfferQueue);
+    this.registerOfferQueue("piaosheng", PiaoShengOfferQueue);
     this.registerOfferQueue("sheng", ShengOfferQueue);
     this.registerOfferQueue("shangzhan", ShangzhanOfferQueue);
   }
@@ -145,6 +148,7 @@ class FetchOrderQueueFactory {
     this.registerFetchOrderQueue("haha", hahaFetchOrder);
     this.registerFetchOrderQueue("shoutu", shoutuFetchOrder);
     this.registerFetchOrderQueue("mahua", mahuaFetchOrder);
+    this.registerFetchOrderQueue("piaosheng", piaoshengFetchOrder);
   }
 
   /**

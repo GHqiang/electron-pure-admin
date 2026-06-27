@@ -15,17 +15,30 @@ const ORDER_FORM = {
   // shangzhan: "商展",
   haha: "哈哈",
   shoutu: "守兔",
-  mahua: "麻花"
+  mahua: "麻花",
+  piaosheng: "票圣"
 };
 
 // 最小允许报价时间差(报价结束时间距离当前时间差)
 const MIN_ALLOW_OFFER_SJC = 1 * 1000;
 
 // 无手续费平台
-const NO_FEE_PLAT_LIST = ["yinghuasuan", "haha", "shoutu", "mahua"];
+const NO_FEE_PLAT_LIST = [
+  "yinghuasuan",
+  "haha",
+  "shoutu",
+  "mahua",
+  "piaosheng"
+];
 
 // 0.1步进报价平台
-const ONE_STEP_PLAT_LIST = ["yinghuasuan", "haha", "shoutu", "mahua"];
+const ONE_STEP_PLAT_LIST = [
+  "yinghuasuan",
+  "haha",
+  "shoutu",
+  "mahua",
+  "piaosheng"
+];
 
 // 测试新平台列表
 const TEST_NEW_PLAT_LIST = ["shangzhan"];

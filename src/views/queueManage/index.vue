@@ -513,6 +513,8 @@ const syncPlatExtraTokens = ({
     localStorage.setItem("shoutuPlatUserUUID", uuid);
   } else if (platName === "mahua") {
     localStorage.setItem("mahuPlatSubToken", sub);
+  } else if (platName === "piaosheng") {
+    localStorage.setItem("piaoshengPlatSubToken", sub);
   } else if (platName === "yinghuasuan") {
     localStorage.setItem("yinghuasuanPlatUserUUID", uuid);
   } else if (platName === "mayi") {
