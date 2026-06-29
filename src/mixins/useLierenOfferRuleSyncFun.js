@@ -180,7 +180,7 @@ export default function useLierenOfferRuleSyncFun() {
           success: 1,
           operator: rule,
           ext_data: JSON.stringify({
-            platRuleId: rule_id || lierenOfferRule.platRuleId
+            platRuleId: res?.data?.rule_id || lierenOfferRule.platRuleId
           })
         })
         .catch(() => {});
