@@ -136,6 +136,7 @@ export default class SfcSeatManage {
    * @param {string} data.start_time - 开始时间
    * @param {string} data.session_id - 会话ID
    * @param {number} [data.inx=1] - 重试次数
+   * @param {number} [data.logLevel=1] - 日志级别
    * @returns {Promise<Object>} 锁座结果
    */
   async lockSeatHandle(data, inx = 1) {
@@ -146,7 +147,8 @@ export default class SfcSeatManage {
       seat_ids,
       start_day,
       start_time,
-      session_id
+      session_id,
+      logLevel
     } = data || {};
     try {
       let params = {
@@ -171,9 +173,12 @@ export default class SfcSeatManage {
       });
       return res;
     } catch (error) {
-      this.logger.errorSave(`第${inx}次锁定座位异常`, {
-        error
-      });
+      this.logger[logLevel != 1 ? "errorSave" : "infoSave"](
+        `第${inx}次锁定座位异常`,
+        {
+          error
+        }
+      );
       return Promise.reject(error);
     }
   }

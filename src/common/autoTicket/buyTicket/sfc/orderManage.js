@@ -782,7 +782,8 @@ export default class SfcOrderManage {
         seat_ids,
         start_day,
         start_time,
-        session_id
+        session_id,
+        logLevel: 1
       };
       this.logger.warn("转单时释放座位传参", lockParams);
       const res = await this.seatManage.lockSeatHandle(lockParams); // 锁定座位
