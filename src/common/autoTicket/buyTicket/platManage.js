@@ -645,7 +645,7 @@ export default class PlatCommon {
           supplierCode: supplierCode
         };
       }
-      logger.info("申请换座入参", params);
+      logger.infoSave("申请换座入参", params);
       const res = await PLAT_API_OBJ[plat_name].applySeatChange(params);
       logger.infoSave("申请换座返回", res);
       return true;

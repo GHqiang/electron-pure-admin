@@ -394,7 +394,7 @@ class WandaBuyTicket extends BaseBuyTicket {
         paymentAmount,
         unit: "元"
       });
-      if (+cardPayPrice < +paymentAmount) {
+      if (offer_type === "2" && paymentAmount > 0) {
         this.logger.errorSave("会员卡余额不足");
         // 转单或换号处理
         const transparams = {
