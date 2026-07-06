@@ -392,7 +392,7 @@ import { useDataTableStore } from "@/store/offerRule";
 const rules = useDataTableStore();
 import { platTokens } from "@/store/platTokens";
 const {
-  userInfo: { rule }
+  userInfo: { rule, name }
 } = platTokens();
 
 import { dictTable } from "@/store/dictTable";
@@ -450,7 +450,7 @@ const handleFixLierenRule = async () => {
       item.film_type = item.film_type ? item.film_type?.split(",") : [];
       item.quanValueList = item.quanValue ? item.quanValue?.split(",") : [];
     });
-    await checkAndUpdateLierenRuleState(ruleRecords);
+    await checkAndUpdateLierenRuleState(ruleRecords, "manual_fix");
     ElMessage({
       type: "success",
       message: "规则同步修复完成，请查看控制台详情"
@@ -752,7 +752,7 @@ const editStatus = async row => {
         : 2,
       update_time: getCurrentTime()
     });
-    // 记录状态变更日志
+    // 记录状态变更日志（el-switch v-model 已先改了 row.status，翻转推算旧值）
     svApi
       .addRuleOperationLog({
         rule_id: row.id,
@@ -764,7 +764,7 @@ const editStatus = async row => {
         trigger_source: "manual_toggle",
         change_reason: "用户手动切换规则状态",
         success: 1,
-        operator: rule
+        operator: name
       })
       .catch(() => {});
     // 修改规则状态同步到平台
@@ -794,6 +794,19 @@ const currentDayNoOfferHandle = async row => {
         : 2,
       update_time: getCurrentTime()
     });
+    // 记录时间变更日志（当日不报不改状态，只改 allow_offer_time）
+    svApi
+      .addRuleOperationLog({
+        rule_id: row.id,
+        rule_name: row.ruleName,
+        shadow_line_name: row.shadowLineName,
+        operation_type: "allow_offer_time_change",
+        trigger_source: "time_change",
+        change_reason: "用户点击当日不报",
+        success: 1,
+        operator: name
+      })
+      .catch(() => {});
     // 与机器「当日不报」一致：猎人侧禁用（status 非 '1' 即关）
     await editRuleStatusSyncToPlat({ ...row, status: "5" });
     searchData();
@@ -883,20 +896,30 @@ const saveRule = async ruleInfo => {
       if (syncResult?.platOfferList) {
         jiqiRuleInfo.platOfferList = JSON.stringify(syncResult.platOfferList);
       }
+      // 保存前从表格数据查旧状态
+      let oldStatus = null;
+      let oldSeatNum = null;
+      const oldRow = tableData.value.find(item => item.id === ruleInfo.id);
+      if (oldRow) {
+        oldStatus = oldRow.status;
+        oldSeatNum = oldRow.seatNum;
+      }
       await svApi.updateRuleRecord(jiqiRuleInfo);
-      // 记录规则编辑日志
+      // 记录规则编辑日志（含变更前后状态）
       svApi
         .addRuleOperationLog({
           rule_id: ruleInfo.id,
           rule_name: ruleInfo.ruleName,
           shadow_line_name: ruleInfo.shadowLineName,
           operation_type: "rule_update",
+          old_status: oldStatus,
           new_status: jiqiRuleInfo.status,
+          old_seat_num: oldSeatNum,
           new_seat_num: jiqiRuleInfo.seatNum,
           trigger_source: "form_save",
           change_reason: "用户编辑保存规则",
           success: 1,
-          operator: rule
+          operator: name
         })
         .catch(() => {});
       sfcDialogRef.value.closeTck();
@@ -925,7 +948,7 @@ const saveRule = async ruleInfo => {
           trigger_source: "form_save",
           change_reason: "用户新增规则",
           success: 1,
-          operator: rule
+          operator: name
         })
         .catch(() => {});
       await saveRuleSyncToPlat(ruleInfo);

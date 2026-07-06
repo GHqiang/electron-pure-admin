@@ -1,4 +1,4 @@
-import svApi from "@/api/sv-api";
+﻿import svApi from "@/api/sv-api";
 import lierenApi from "@/api/lieren-api";
 import { ElMessage } from "element-plus";
 import {
@@ -40,7 +40,6 @@ const formatSeats = seatNum => {
 // 机器相关方法接口
 export default function useLierenOfferRuleSyncFun() {
   const tokens = platTokens();
-  const rule = tokens.userInfo?.rule || "";
 
   // 获取猎人 AK/SK：优先当前 rule，若无配置则回退到字典中第一个可用规则
   const _getLierenAkSk = () => {
@@ -161,6 +160,22 @@ export default function useLierenOfferRuleSyncFun() {
       console.warn("同步规则到猎人平台参数", params);
       const res = await lierenApi.ruleAdd(params);
       console.warn("同步规则到猎人平台成功", res);
+      let oldStatus = null,
+        oldSeatNum = null;
+      if (lierenOfferRule.platRuleId) {
+        try {
+          const listRes = await lierenApi.ruleList({
+            rule_id: [lierenOfferRule.platRuleId],
+            lieren_ak: lierenMainAccountAkSk?.[0] || "",
+            lieren_sk: lierenMainAccountAkSk?.[1] || ""
+          });
+          const oldRes = listRes?.data?.[0];
+          if (oldRes) {
+            oldStatus = oldRes.state;
+            oldSeatNum = oldRes.seats;
+          }
+        } catch (error) {}
+      }
       // 记录同步成功日志
       svApi
         .addRuleOperationLog({
@@ -168,6 +183,8 @@ export default function useLierenOfferRuleSyncFun() {
           rule_name: ruleInfo.ruleName,
           shadow_line_name: ruleInfo.shadowLineName,
           operation_type: "sync_add_update",
+          old_status: oldStatus,
+          old_seat_num: oldSeatNum,
           new_status: ruleInfo.status,
           new_seat_num: ruleInfo.seatNum,
           plat_name: "lieren",
@@ -178,7 +195,7 @@ export default function useLierenOfferRuleSyncFun() {
             ? "更新猎人平台规则"
             : "新增猎人平台规则",
           success: 1,
-          operator: rule,
+          operator: tokens.userInfo?.name || "",
           ext_data: JSON.stringify({
             platRuleId: res?.data?.rule_id || lierenOfferRule.platRuleId
           })
@@ -221,7 +238,7 @@ export default function useLierenOfferRuleSyncFun() {
           trigger_source: ruleInfo.id ? "rule_edit_save" : "rule_add_save",
           success: 0,
           error_msg: formatErrInfo(error),
-          operator: rule
+          operator: tokens.userInfo?.name || ""
         })
         .catch(() => {});
       ElMessage.error("同步规则到猎人平台失败，请稍后重试");
@@ -250,7 +267,7 @@ export default function useLierenOfferRuleSyncFun() {
           trigger_source: "rule_delete",
           change_reason: `批量删除猎人平台规则(${platRuleIdList.length}条)`,
           success: 1,
-          operator: rule,
+          operator: tokens.userInfo?.name || "",
           ext_data: JSON.stringify({ platRuleIdList })
         })
         .catch(() => {});
@@ -264,7 +281,7 @@ export default function useLierenOfferRuleSyncFun() {
           trigger_source: "rule_delete",
           success: 0,
           error_msg: formatErrInfo(error),
-          operator: rule,
+          operator: tokens.userInfo?.name || "",
           ext_data: JSON.stringify({ platRuleIdList })
         })
         .catch(() => {});
@@ -317,7 +334,7 @@ export default function useLierenOfferRuleSyncFun() {
                 ? "用户启用规则，同步启用"
                 : "用户禁用规则，同步禁用",
           success: 1,
-          operator: rule,
+          operator: tokens.userInfo?.name || "",
           ext_data: JSON.stringify({ platRuleId: lierenOffer.platRuleId })
         })
         .catch(() => {});
@@ -336,7 +353,7 @@ export default function useLierenOfferRuleSyncFun() {
             ruleInfo.status === "5" ? "no_offer_today" : "manual_toggle",
           success: 0,
           error_msg: formatErrInfo(error),
-          operator: rule
+          operator: tokens.userInfo?.name || ""
         })
         .catch(() => {});
       ElMessage.error("修改猎人平台规则状态失败");
@@ -344,7 +361,7 @@ export default function useLierenOfferRuleSyncFun() {
   };
 
   // 检查并更新同步到猎人的规则状态（双向：启用该启的、禁用该禁的）
-  const checkAndUpdateLierenRuleState = async ruleList => {
+  const checkAndUpdateLierenRuleState = async (ruleList, triggerSource = "login_sync") => {
     console.warn(
       "检查并更新同步到猎人的规则状态（双向：启用该启的、禁用该禁的）"
     );
@@ -493,8 +510,10 @@ export default function useLierenOfferRuleSyncFun() {
               operation_type: "sync_bidirectional",
               old_status: platRule.state === 1 ? "1" : "2",
               new_status: expectedState === 1 ? "1" : "2",
+              old_seat_num: platRule.seats || null,
+              new_seat_num: expectedSeats || null,
               plat_name: "lieren",
-              trigger_source: "login_sync",
+              trigger_source: triggerSource,
               change_reason: stateMismatch
                 ? expectedState === 0
                   ? isNoOfferActive
@@ -503,7 +522,7 @@ export default function useLierenOfferRuleSyncFun() {
                   : "本地已启用，同步启用"
                 : `座位数不一致(${platRule.seats || ""}→${expectedSeats})`,
               success: syncRes ? 1 : 0,
-              operator: rule,
+              operator: tokens.userInfo?.name || "",
               ext_data: JSON.stringify({
                 platRuleId: platRule.rule_id,
                 expectedState,
@@ -567,10 +586,10 @@ export default function useLierenOfferRuleSyncFun() {
               old_status: r.state === 1 ? "1" : "2",
               new_status: "2",
               plat_name: "lieren",
-              trigger_source: "login_sync",
+              trigger_source: triggerSource,
               change_reason: "猎人平台孤儿规则（本地未同步），自动禁用",
               success: 1,
-              operator: rule,
+              operator: tokens.userInfo?.name || "",
               ext_data: JSON.stringify({ platRuleId: r.rule_id })
             }))
           })

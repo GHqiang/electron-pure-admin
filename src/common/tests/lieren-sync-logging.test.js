@@ -1,0 +1,303 @@
+/**
+ * 测试猎人同步函数的日志埋点是否正确
+ * 通过 mock 外部 API，验证各场景下 addRuleOperationLog 的调用参数
+ */
+import useLierenOfferRuleSyncFun from "@/mixins/useLierenOfferRuleSyncFun";
+
+// Mock 外部依赖
+jest.mock("@/utils/utils", () => ({
+  getCurrentTime: jest.fn(() => "2026-07-06 12:00:00"),
+  sendWxPusherMessage: jest.fn(),
+  getLongestPart: jest.fn(s => s),
+  formatErrInfo: jest.fn(e => (e instanceof Error ? e.message : String(e)))
+}));
+
+jest.mock("@/api/sv-api", () => ({
+  __esModule: true,
+  default: {
+    addRuleOperationLog: jest.fn(() => Promise.resolve({ code: 1 })),
+    batchAddRuleOperationLog: jest.fn(() => Promise.resolve({ code: 1 })),
+    updateRuleRecord: jest.fn(() => Promise.resolve({ code: 1 }))
+  }
+}));
+
+jest.mock("@/api/lieren-api", () => ({
+  __esModule: true,
+  default: {
+    ruleAdd: jest.fn(),
+    ruleDel: jest.fn(),
+    ruleState: jest.fn(),
+    ruleList: jest.fn()
+  }
+}));
+
+jest.mock("@/store/platTokens", () => ({
+  platTokens: jest.fn(() => ({
+    userInfo: { rule: "testUser", name: "测试员" }
+  }))
+}));
+
+jest.mock("@/store/dictTable", () => ({
+  dictTable: jest.fn(() => ({
+    dictInfo: {
+      lierenMainAccountAkSk: JSON.stringify({ testUser: ["ak123", "sk456"] }),
+      fixedOfferToPlatList: "lieren"
+    }
+  }))
+}));
+
+jest.mock("@/store/specialNameRule", () => ({
+  useCinemaCodeMatchList: jest.fn(() => ({
+    getCinemaCodeFlag: jest.fn(() => ({ plat_cinema_code: "CD001" }))
+  }))
+}));
+
+jest.mock("@/store/cinemaList", () => ({
+  useCinemaList: jest.fn(() => ({
+    getLierenCinemaGroup: jest.fn(() => "万达")
+  }))
+}));
+
+jest.mock("element-plus", () => ({
+  ElMessage: { error: jest.fn(), success: jest.fn() }
+}));
+
+import svApi from "@/api/sv-api";
+import lierenApi from "@/api/lieren-api";
+import { platTokens } from "@/store/platTokens";
+
+const {
+  lierenOfferRuleSyncPlat,
+  lierenOfferRuleDelPlat,
+  lierenOfferRuleEditStatusPlat,
+  checkAndUpdateLierenRuleState
+} = useLierenOfferRuleSyncFun();
+
+// 构造一个标准的测试规则
+function makeRuleInfo(overrides = {}) {
+  return {
+    id: 1001,
+    ruleName: "测试规则",
+    shadowLineName: "sfc",
+    status: "1",
+    seatNum: "4",
+    offerType: "1",
+    offerAmount: "35",
+    includeCityNames: JSON.stringify(["北京", "上海"]),
+    excludeCityNames: JSON.stringify([]),
+    includeCinemaCodes: "1_100",
+    excludeCinemaCodes: "",
+    includeFilmNames: JSON.stringify([]),
+    excludeFilmNames: JSON.stringify([]),
+    includeHallNames: JSON.stringify([]),
+    excludeHallNames: JSON.stringify([]),
+    platOfferList: [
+      { platName: "lieren", value: "35", isSyncPlat: "1", platRuleId: 999 }
+    ],
+    film_type: "2D",
+    ...overrides
+  };
+}
+
+beforeEach(() => {
+  jest.clearAllMocks();
+});
+
+// ========================== D: sync_add_update ==========================
+describe("D — lierenOfferRuleSyncPlat (sync_add_update)", () => {
+  const ruleInfo = makeRuleInfo();
+
+  test("成功时记录 sync_add_update 日志，含 old/new status+seat", async () => {
+    // Mock lierenApi 返回
+    lierenApi.ruleAdd.mockResolvedValue({ data: { rule_id: 999 } });
+    // Mock 查询旧状态返回
+    lierenApi.ruleList.mockResolvedValue({
+      data: [{ rule_id: 999, state: 1, seats: "1,2,3" }]
+    });
+
+    await lierenOfferRuleSyncPlat(ruleInfo);
+
+    // 验证日志调用
+    const args = svApi.addRuleOperationLog.mock.calls[0][0];
+    expect(args.operation_type).toBe("sync_add_update");
+    expect(args.rule_id).toBe(1001);
+    expect(args.old_status).toBe(1); // 平台旧状态
+    expect(args.old_seat_num).toBe("1,2,3");
+    expect(args.new_status).toBe("1");
+    expect(args.new_seat_num).toBe("4");
+    expect(args.trigger_source).toBe("rule_edit_save");
+    expect(args.success).toBe(1);
+    expect(args.operator).toBe("测试员");
+  });
+
+  test("失败时记录 sync_add_update 错误日志", async () => {
+    lierenApi.ruleAdd.mockRejectedValue(new Error("网络超时"));
+
+    await lierenOfferRuleSyncPlat(ruleInfo);
+
+    const args = svApi.addRuleOperationLog.mock.calls[0][0];
+    expect(args.operation_type).toBe("sync_add_update");
+    expect(args.success).toBe(0);
+    expect(args.error_msg).toBeTruthy();
+  });
+
+  test("新增规则（无 platRuleId）trigger_source 为 rule_add_save", async () => {
+    const newRule = makeRuleInfo();
+    newRule.platOfferList[0].platRuleId = undefined;
+
+    lierenApi.ruleAdd.mockResolvedValue({ data: { rule_id: 1000 } });
+    lierenApi.ruleList.mockResolvedValue({ data: [] });
+
+    await lierenOfferRuleSyncPlat(newRule);
+
+    const args = svApi.addRuleOperationLog.mock.calls[0][0];
+    expect(args.trigger_source).toBe("rule_add_save");
+  });
+});
+
+// ========================== E: sync_status ==========================
+describe("E — lierenOfferRuleEditStatusPlat (sync_status)", () => {
+  test("手动切换时记录 sync_status，trigger_source=manual_toggle", async () => {
+    const ruleInfo = makeRuleInfo({ status: "2" });
+    lierenApi.ruleState.mockResolvedValue({ code: 1 });
+
+    await lierenOfferRuleEditStatusPlat(ruleInfo);
+
+    const args = svApi.addRuleOperationLog.mock.calls[0][0];
+    expect(args.operation_type).toBe("sync_status");
+    expect(args.new_status).toBe("2");
+    expect(args.trigger_source).toBe("manual_toggle");
+    expect(args.change_reason).toBe("用户禁用规则，同步禁用");
+  });
+
+  test("启用时 change_reason 正确", async () => {
+    const ruleInfo = makeRuleInfo({ status: "1" });
+    lierenApi.ruleState.mockResolvedValue({ code: 1 });
+
+    await lierenOfferRuleEditStatusPlat(ruleInfo);
+
+    const args = svApi.addRuleOperationLog.mock.calls[0][0];
+    expect(args.change_reason).toBe("用户启用规则，同步启用");
+  });
+
+  test("当日不报时 trigger_source=no_offer_today", async () => {
+    const ruleInfo = makeRuleInfo({ status: "5" });
+    lierenApi.ruleState.mockResolvedValue({ code: 1 });
+
+    await lierenOfferRuleEditStatusPlat(ruleInfo);
+
+    const args = svApi.addRuleOperationLog.mock.calls[0][0];
+    expect(args.trigger_source).toBe("no_offer_today");
+    expect(args.change_reason).toBe("当日不报，同步禁用");
+  });
+
+  test("无 platRuleId 时跳过", async () => {
+    const ruleInfo = makeRuleInfo();
+    ruleInfo.platOfferList[0].platRuleId = undefined;
+
+    await lierenOfferRuleEditStatusPlat(ruleInfo);
+
+    expect(svApi.addRuleOperationLog).not.toHaveBeenCalled();
+  });
+});
+
+// ========================== F: sync_delete ==========================
+describe("F — lierenOfferRuleDelPlat (sync_delete)", () => {
+  test("成功时记录 sync_delete 日志", async () => {
+    lierenApi.ruleDel.mockResolvedValue({ code: 1 });
+
+    await lierenOfferRuleDelPlat([999, 1000]);
+
+    const args = svApi.addRuleOperationLog.mock.calls[0][0];
+    expect(args.operation_type).toBe("sync_delete");
+    expect(args.trigger_source).toBe("rule_delete");
+    expect(args.success).toBe(1);
+    expect(args.change_reason).toContain("2条");
+  });
+
+  test("失败时记录错误并重新抛出", async () => {
+    lierenApi.ruleDel.mockRejectedValue(new Error("删除失败"));
+
+    await expect(lierenOfferRuleDelPlat([999])).rejects.toThrow("删除失败");
+
+    const args = svApi.addRuleOperationLog.mock.calls[0][0];
+    expect(args.operation_type).toBe("sync_delete");
+    expect(args.success).toBe(0);
+    expect(args.error_msg).toBeTruthy();
+  });
+});
+
+// ========================== G: sync_bidirectional ==========================
+describe("G — checkAndUpdateLierenRuleState (sync_bidirectional)", () => {
+  const ruleList = [
+    {
+      id: 1001,
+      ruleName: "规则A",
+      shadowLineName: "sfc",
+      status: "1",
+      seatNum: "4",
+      offerType: "1",
+      allow_offer_time: null,
+      platOfferList: [
+        { platName: "lieren", isSyncPlat: "1", platRuleId: "999" }
+      ]
+    }
+  ];
+
+  test("状态不一致时记录 sync_bidirectional 修复日志", async () => {
+    // 猎人平台返回：状态为 0（禁用），座位空
+    lierenApi.ruleList.mockResolvedValue({
+      data: [{ rule_id: "999", state: 0, seats: "", sum_mode: 2 }]
+    });
+    // ruleAdd 成功
+    lierenApi.ruleAdd.mockResolvedValue({ data: { rule_id: "999" } });
+
+    await checkAndUpdateLierenRuleState(ruleList);
+
+    // 先有 sync_add_update 日志（由内部 lierenOfferRuleSyncPlat 触发），再有 sync_bidirectional
+    const syncBidirectionalLog = svApi.addRuleOperationLog.mock.calls
+      .map(c => c[0])
+      .find(log => log.operation_type === "sync_bidirectional");
+    expect(syncBidirectionalLog).toBeDefined();
+    expect(syncBidirectionalLog.rule_id).toBe(1001);
+    expect(syncBidirectionalLog.old_status).toBe("2"); // 平台是 0 → "2"
+    expect(syncBidirectionalLog.new_status).toBe("1"); // 本地是 "1" → 修复为 "1"
+    expect(syncBidirectionalLog.old_seat_num).toBe(null); // "" || null → null
+    expect(syncBidirectionalLog.new_seat_num).toBe("1,2,3,4"); // 修复后
+    expect(syncBidirectionalLog.trigger_source).toBe("login_sync"); // 默认值
+  });
+
+  test("手动修复时 trigger_source=manual_fix", async () => {
+    lierenApi.ruleList.mockResolvedValue({
+      data: [{ rule_id: "999", state: 0, seats: "", sum_mode: 2 }]
+    });
+    lierenApi.ruleAdd.mockResolvedValue({ data: { rule_id: "999" } });
+
+    await checkAndUpdateLierenRuleState(ruleList, "manual_fix");
+
+    const syncBidirectionalLog = svApi.addRuleOperationLog.mock.calls
+      .map(c => c[0])
+      .find(log => log.operation_type === "sync_bidirectional");
+    expect(syncBidirectionalLog.trigger_source).toBe("manual_fix");
+  });
+
+  test("孤儿规则（平台有本地无）记录 sync_bidirectional 禁用日志", async () => {
+    // 本地没有同步到猎人的规则
+    // 但平台有固定价规则
+    lierenApi.ruleList.mockResolvedValue({
+      data: [{ rule_id: "888", state: 1, seats: "1,2", sum_mode: 2 }]
+    });
+    lierenApi.ruleState.mockResolvedValue({ code: 1 });
+
+    await checkAndUpdateLierenRuleState(ruleList);
+
+    // batchAddRuleOperationLog 被调用
+    expect(svApi.batchAddRuleOperationLog).toHaveBeenCalled();
+    const batchArgs = svApi.batchAddRuleOperationLog.mock.calls[0][0];
+    const log = batchArgs.logs[0];
+    expect(log.operation_type).toBe("sync_bidirectional");
+    expect(log.old_status).toBe("1");
+    expect(log.new_status).toBe("2");
+    expect(log.trigger_source).toBe("login_sync");
+  });
+});

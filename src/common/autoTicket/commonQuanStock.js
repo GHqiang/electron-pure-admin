@@ -13,7 +13,7 @@ const { lierenOfferRuleSyncPlat } = useLierenOfferRuleSyncFun();
 
 import { platTokens } from "@/store/platTokens";
 const {
-  userInfo: { rule }
+  userInfo: { rule, name }
 } = platTokens();
 /**
  * 异步更新券库存
@@ -290,7 +290,7 @@ async function checkLierenFixedRuleByQuanStock(obj) {
           rule_id: rule.id,
           rule_name: rule.ruleName,
           shadow_line_name: rule.shadowLineName || app_name,
-          operation_type: "status_change",
+          operation_type: "quan_stock_change",
           old_status: rule.status,
           new_status: targetStatus,
           old_seat_num: rule.seatNum,
@@ -302,7 +302,7 @@ async function checkLierenFixedRuleByQuanStock(obj) {
               ? `券库存归零(maxQuanStock=0, quan_value=${quan_value})，自动禁用`
               : `券库存变化(maxQuanStock=${maxQuanStock})，更新座位数`,
           success: 1,
-          operator: rule,
+          operator: name,
           ext_data: JSON.stringify({ quan_value, maxQuanStock })
         })
         .catch(() => {});

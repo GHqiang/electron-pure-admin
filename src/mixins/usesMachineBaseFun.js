@@ -12,7 +12,7 @@ export default function useCinemaBaseFun() {
   const UME_LIST = computed(() => GET_UME_LIST());
 
   const {
-    userInfo: { rule }
+    userInfo: { rule, name }
   } = platTokens();
 
   // 获取关联的平台规则id，没有就创建一个返回
@@ -86,6 +86,18 @@ export default function useCinemaBaseFun() {
       });
       console.log("ruleAddres", ruleAddres);
       rule_id = ruleAddres?.data?.rule_id;
+      svApi
+        .addRuleOperationLog({
+          rule_id: rule_id,
+          shadow_line_name: app_name,
+          operation_type: "getRuleIdByPlat",
+          plat_name: "lieren",
+          trigger_source: "add_member_price_rule",
+          change_reason: "新增猎人平台会员价规则",
+          success: 1,
+          operator: name
+        })
+        .catch(() => {});
       if (rule_id) {
         svApi.addLinkPlatRuleId({
           plat_name,
