@@ -630,8 +630,8 @@ export default class PlatCommon {
   async applyChangeSeat({ order_number, supplierCode, plat_name, logger }) {
     let params;
     try {
-      // 省平台：仅 changeSeat === 1 时允许申请换座
-      if (plat_name === "sheng" && this.order.changeSeat !== 1) {
+      // 省平台：仅 changeSeat === 0 时允许申请换座
+      if (plat_name === "sheng" && this.order.changeSeat !== 0) {
         logger.info("省平台订单不允许换座，changeSeat:", this.order.changeSeat);
         return false;
       }
