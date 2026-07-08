@@ -14,7 +14,7 @@
         ref="loginFormRef"
         :model="formData"
         :rules="rules"
-        label-width="120px"
+        label-width="180px"
       >
         <el-form-item label="影线名称" prop="app_name">
           <el-cascader
@@ -53,7 +53,7 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="Session ID / Token" prop="session_id">
+        <el-form-item :label="sessionIdLabel" prop="session_id">
           <template #default>
             <el-input
               v-model="formData.session_id"
@@ -68,72 +68,67 @@
                 line-height: 1.6;
               "
             >
-              <template v-if="formData.app_name == 'wanda'">
-                对应请求头 <b>X-RY-TOKEN</b>（万达 API 也称 <b>user-token</b>）
+              <template v-if="currentAppType == 'ume_applet'">
+                <span>登录后任意接口中，标头-'certificate字段'</span>
               </template>
-              <template v-else-if="CHENXING_LIST.includes(formData.app_name)">
-                对应请求参数 <b>k</b>（登录接口返回的 token 字段）
+              <template v-if="currentAppType == 'ume_h5'">
+                <span class="fce6"
+                  >登录时确认登录按钮点击后，XX.auth.login2/
+                  接口返回的sid和tid字段
+                </span>
               </template>
-              <template
-                v-else-if="
-                  [...H5_UME_LIST, ...FENGHUANG_LIST].includes(
-                    formData.app_name
-                  )
-                "
-              >
-                对应 URL 参数 <b>sid</b>（登录接口返回的 sessionId）
+              <template v-if="currentAppType == 'sfc_applet'">
+                <span class="fce6"
+                  >登录后任意接口中，查询字符串-'session_id字段'
+                </span>
               </template>
-              <template v-else-if="formData.app_name == 'lma'">
-                对应 Cookie 中的 <b>ig_session</b> 值（卢米埃请求头 lmatoken）
+              <template v-if="currentAppType == 'lma_applet'">
+                <span class="fce6"
+                  >登录后任意接口中，标头-'cookie字段(ig_session=后面的值)'
+                </span>
               </template>
-              <template v-else>
-                对应请求的 <b>session_id</b> 字段（SFC/UME/金逸 系列）
+              <template v-if="currentAppType == 'chenxing_applet'">
+                <span class="fce6"
+                  >登录后任意接口中，json文本中-'k字段'(3.0C版本额外需要tenantId字段，也在这里取值)
+                </span>
+              </template>
+              <template v-if="currentAppType == 'fenghuang_applet'">
+                <span class="fce6"
+                  >登录时确认登录按钮点击后，XX.account.authn.login/
+                  接口返回的accessToken和refreshToken字段
+                </span>
+              </template>
+              <template v-if="currentAppType == 'jinyi_applet'">
+                <span class="fce6">登录后任意接口中，标头-'token字段' </span>
+              </template>
+              <template v-if="currentAppType == 'wanda_applet'">
+                <span class="fce6"
+                  >登录后任意接口中，标头-'x-ry-token字段'
+                </span>
               </template>
             </div>
           </template>
         </el-form-item>
         <el-form-item
-          v-if="
-            CHENXING_LIST.includes(formData.app_name) &&
-            GET_APP_INFO(formData.app_name).api_version == '3.0C'
-          "
-          label="tenantId"
+          v-if="showTenantId || showH5UmeTid || showRefreshToken || showXryUser"
+          :label="extraFieldLabel"
           prop="tid"
         >
           <el-input
             v-model="formData.tid"
-            placeholder="请输入 tenantId"
+            :placeholder="'请输入 ' + extraFieldLabel"
             clearable
           />
-          <span style="color: #e6a23c; font-size: 12px">
+          <span v-if="showTenantId" class="fce6">
             抓包找请求参数 <b>tenantId</b>（仅辰星 3.0C 需要，C 端不需要）
           </span>
-        </el-form-item>
-        <el-form-item
-          v-if="[...H5_UME_LIST, ...FENGHUANG_LIST].includes(formData.app_name)"
-          label="续期 Token"
-          prop="tid"
-        >
-          <el-input
-            v-model="formData.tid"
-            placeholder="请输入续期 Token"
-            clearable
-          />
-          <span style="color: #e6a23c; font-size: 12px">
+          <span v-if="showH5UmeTid" class="fce6">
+            登录时确认登录按钮点击后，<b>XX.auth.login2/</b> 接口返回的 tid 字段
+          </span>
+          <span v-if="showRefreshToken" class="fce6">
             抓包找 <b>refreshToken</b> 字段，用于 sid 过期时自动续期
           </span>
-        </el-form-item>
-        <el-form-item
-          v-if="formData.app_name == 'wanda'"
-          label="X-RY-USER"
-          prop="tid"
-        >
-          <el-input
-            v-model="formData.tid"
-            placeholder="请输入 X-RY-USER"
-            clearable
-          />
-          <span style="color: #e6a23c; font-size: 12px">
+          <span v-if="showXryUser" class="fce6">
             对应请求头 <b>X-RY-USER</b>（万达也称
             <b>user-identifier</b>，通常为一串大写字母）
           </span>
@@ -206,6 +201,43 @@ const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
 const H5_UME_LIST = computed(() => GET_H5_UME_LIST());
 const FENGHUANG_LIST = computed(() => GET_FENGHUANG_LIST());
 const CHENXING_LIST = computed(() => GET_CHENXING_LIST());
+const currentAppType = computed(
+  () => GET_APP_INFO(formData.app_name)?.app_type_code || ""
+);
+const currentAppInfo = computed(() => GET_APP_INFO(formData.app_name) || {});
+const showTenantId = computed(
+  () =>
+    CHENXING_LIST.value.includes(formData.app_name) &&
+    currentAppInfo.value.api_version == "3.0C"
+);
+const showH5UmeTid = computed(() =>
+  H5_UME_LIST.value.includes(formData.app_name)
+);
+const showRefreshToken = computed(() =>
+  FENGHUANG_LIST.value.includes(formData.app_name)
+);
+const showXryUser = computed(() => formData.app_name == "wanda");
+
+const sessionIdLabel = computed(() => {
+  const map = {
+    ume_applet: "Certificate",
+    ume_h5: "SID",
+    sfc_applet: "Session ID",
+    lma_applet: "Cookie",
+    chenxing_applet: "k 字段",
+    fenghuang_applet: "accessToken",
+    jinyi_applet: "Token",
+    wanda_applet: "x-ry-token"
+  };
+  return map[currentAppType.value] || "Session ID / Token";
+});
+const extraFieldLabel = computed(() => {
+  if (showTenantId.value) return "tenantId";
+  if (showH5UmeTid.value) return "TID";
+  if (showRefreshToken.value) return "refreshToken";
+  if (showXryUser.value) return "X-RY-USER";
+  return "";
+});
 
 // 影线二级级联配置（系列 -> 影线）
 const appCascaderOptions = computed(() =>
@@ -415,3 +447,9 @@ defineExpose({
   closeTck
 });
 </script>
+<style scoped>
+.fce6 {
+  color: #e6a23c;
+  font-size: 12px;
+}
+</style>
