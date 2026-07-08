@@ -752,23 +752,33 @@ const editStatus = async row => {
         : 2,
       update_time: getCurrentTime()
     });
-    // 记录状态变更日志（el-switch v-model 已先改了 row.status，翻转推算旧值）
-    svApi
-      .addRuleOperationLog({
-        rule_id: row.id,
-        rule_name: row.ruleName,
-        shadow_line_name: row.shadowLineName,
-        operation_type: "status_change",
-        old_status: row.status === "1" ? "2" : "1",
-        new_status: row.status,
-        trigger_source: "manual_toggle",
-        change_reason: "用户手动切换规则状态",
-        success: 1,
-        operator: name
-      })
-      .catch(() => {});
     // 修改规则状态同步到平台
     await editRuleStatusSyncToPlat(row);
+    // 若未同步到平台则记录状态变更日志；已同步的由 sync_status 日志覆盖，避免重复
+    const _fixedOfferToPlatList =
+      dictStore.dictInfo.fixedOfferToPlatList?.split(",") || [];
+    const _syncedToLieren =
+      _fixedOfferToPlatList.length > 0 &&
+      row.offerType == 1 &&
+      row.platOfferList?.find(
+        item => item.platName === "lieren" && item.isSyncPlat == 1
+      );
+    if (!_syncedToLieren) {
+      svApi
+        .addRuleOperationLog({
+          rule_id: row.id,
+          rule_name: row.ruleName,
+          shadow_line_name: row.shadowLineName,
+          operation_type: "status_change",
+          old_status: row.status === "1" ? "2" : "1",
+          new_status: row.status,
+          trigger_source: "manual_toggle",
+          change_reason: "用户手动切换规则状态",
+          success: 1,
+          operator: name
+        })
+        .catch(() => {});
+    }
     ElMessage.success("状态更新成功");
   } catch (err) {
     throw new Error("状态更新失败");
