@@ -104,7 +104,7 @@ const setLocalCinemaCodeMatchList = async () => {
   }
 };
 // 设置本地的规则列表
-const setLocalRuleList = async rule => {
+const setLocalRuleList = async (rule, user_id) => {
   try {
     const ruleRes = await svApi.queryRuleList({
       rule
@@ -129,6 +129,8 @@ const setLocalRuleList = async rule => {
       ["1", "3"].includes(item.status)
     );
     rules.setRuleList(useRuleRecords);
+    // 开发者账号暂不同步猎人规则状态
+    if (user_id == 1) return;
     // 猎人规则同步检查
     await checkAndUpdateLierenRuleState(ruleRecords);
   } catch (error) {
@@ -197,19 +199,20 @@ const onLogin = async formEl => {
             name: ruleForm.username,
             pwd: ruleForm.password
           });
-          console.log("loginRes", loginRes);
+          console.log("loginRes", JSON.parse(JSON.stringify(loginRes)));
+          let rule = loginRes.data?.user?.rule;
+          let user_id = loginRes.data?.user?.user_id;
           tokens.setSelfPlatToken(loginRes.data);
           await svApi.updateUser({
             login_time: getCurrentTime(),
             version: Version
           });
-          let rule = loginRes.data?.user.rule;
           await setLocalCinemaList(rule);
           await setLocalWandaCinemaList();
           await setLocalCinemaCodeMatchList();
           await setLocalLoginList(rule);
           await setDictTableList(rule);
-          await setLocalRuleList(rule);
+          await setLocalRuleList(rule, user_id);
           await setNameTableList(rule);
           // 获取后端路由
           await initRouter(rule);
