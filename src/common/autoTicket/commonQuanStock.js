@@ -130,32 +130,34 @@ export async function syncUpdateQuanStock({
           )?.[0]?.endDateTime;
 
           // 券列表返回空时，若旧库存 > 0 则保留旧值（可能是登录超时等异常），若旧库存已为 0 则正常归零
+          let isUseOldStock = false;
           if (targetQuanList.length === 0) {
-            const oldStock =
-              inx !== -1 ? quanStockList[inx]?.quan_stock : 0;
+            const oldStock = inx !== -1 ? quanStockList[inx]?.quan_stock : 0;
             if (oldStock > 0) {
               logger.infoSave(
                 `跳过更新库存：${mobile} 获取券列表返回空但旧库存为${oldStock}(可能登录超时)，保留旧值`,
                 { mobile, quan_value: item.quan_value, oldStock }
               );
-              continue;
+              isUseOldStock = true;
             }
             // 旧库存已为0，正常归零
           }
-
-          if (inx != -1) {
-            quanStockList[inx].quan_stock = quanStock;
-            quanStockList[inx].real_quan_stock = targetQuanList.length;
-            quanStockList[inx].update_time = getCurrentTime();
-            quanStockList[inx].endDateTime = endDateTime;
-          } else {
-            quanStockList.push({
-              phone: mobile,
-              quan_stock: quanStock,
-              real_quan_stock: targetQuanList.length,
-              update_time: getCurrentTime(),
-              endDateTime
-            });
+          // 若不使用旧库存，则更新券库存列表
+          if (!isUseOldStock) {
+            if (inx != -1) {
+              quanStockList[inx].quan_stock = quanStock;
+              quanStockList[inx].real_quan_stock = targetQuanList.length;
+              quanStockList[inx].update_time = getCurrentTime();
+              quanStockList[inx].endDateTime = endDateTime;
+            } else {
+              quanStockList.push({
+                phone: mobile,
+                quan_stock: quanStock,
+                real_quan_stock: targetQuanList.length,
+                update_time: getCurrentTime(),
+                endDateTime
+              });
+            }
           }
         });
       }
