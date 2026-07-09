@@ -128,6 +128,21 @@ export async function syncUpdateQuanStock({
           let endDateTime = targetQuanList.sort(
             (a, b) => new Date(a.endDateTime) - new Date(b.endDateTime)
           )?.[0]?.endDateTime;
+
+          // 券列表返回空时，若旧库存 > 0 则保留旧值（可能是登录超时等异常），若旧库存已为 0 则正常归零
+          if (targetQuanList.length === 0) {
+            const oldStock =
+              inx !== -1 ? quanStockList[inx]?.quan_stock : 0;
+            if (oldStock > 0) {
+              logger.infoSave(
+                `跳过更新库存：${mobile} 获取券列表返回空但旧库存为${oldStock}(可能登录超时)，保留旧值`,
+                { mobile, quan_value: item.quan_value, oldStock }
+              );
+              continue;
+            }
+            // 旧库存已为0，正常归零
+          }
+
           if (inx != -1) {
             quanStockList[inx].quan_stock = quanStock;
             quanStockList[inx].real_quan_stock = targetQuanList.length;
@@ -215,8 +230,7 @@ async function checkLierenFixedRuleByQuanStock(obj) {
       }))
       .filter(
         item =>
-          item.offerType == 1 && // 只有固定价规则才根据券库存更新座位数
-          item.status == 1 &&
+          item.offerType == 1 &&
           item.quanValue == quan_value &&
           item.platOfferList.some(
             offer => offer.platName === "lieren" && offer.isSyncPlat == 1
@@ -303,7 +317,16 @@ async function checkLierenFixedRuleByQuanStock(obj) {
               : `券库存变化(maxQuanStock=${maxQuanStock})，更新座位数`,
           success: 1,
           operator: name,
-          ext_data: JSON.stringify({ quan_value, maxQuanStock })
+          ext_data: JSON.stringify({
+            quan_value,
+            maxQuanStock,
+            id,
+            stockByPhone: quanStockList.map(s => ({
+              phone: s.phone?.slice(-4),
+              stock: s.quan_stock,
+              real: s.real_quan_stock
+            }))
+          })
         })
         .catch(() => {});
     }
