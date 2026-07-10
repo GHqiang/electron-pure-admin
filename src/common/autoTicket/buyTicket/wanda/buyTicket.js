@@ -351,7 +351,8 @@ class WandaBuyTicket extends BaseBuyTicket {
       // 用券手续费，即补钱金额
       let quan_fee = offerRule.quan_fee || 0;
       quan_fee = Number(quan_fee);
-      let quan_fee_total = (quan_fee * 1000 * ticket_num * 100) / 1000;
+      // 与 cardQuanManage.js 保持一致，quan_fee 已是元，乘以票数即为总补钱金额（元）
+      let quan_fee_total = (quan_fee * 1000 * ticket_num) / 1000;
 
       if (offer_type === "1" && useQuan?.length) {
         // 兑换券全抵扣，支付额 = 0 + 手续费
@@ -361,7 +362,7 @@ class WandaBuyTicket extends BaseBuyTicket {
           couponDeduction = orderPrice - quan_fee_total;
           const maxCardBalance = (canUseCardList[0]?.balance || 0) / 100;
           // 用券补钱场景卡抵扣金额
-          cardPayPrice = Math.min(cardBalance, quan_fee_total);
+          cardPayPrice = Math.min(maxCardBalance, quan_fee_total);
           if (quan_fee_total > maxCardBalance) {
             this.logger.errorSave("最大卡余额不够支付券手续费");
             // 转单或换号处理
@@ -504,14 +505,18 @@ class WandaBuyTicket extends BaseBuyTicket {
       // 如需 activity（如 detailtype=2 积分抵扣），须将 merge_payment 路由到 ticket-api-prd-mx。
 
       // storedCardPayments：仅当实际用卡支付时（cardPayPrice > 0），纯券时不加
+      // 只取余额最高的卡（canUseCardList 已按余额倒序），避免多卡重复扣款
       if (canUseCardList?.length && cardPayPrice > 0) {
-        requestInfo.storedCardPayments = canUseCardList.map(card => ({
-          paymentType: 1,
-          cardNumber: card.cardNo,
-          ticketType: card.cardTypeCode || "",
-          ticketTypeName: card.cardTypeName || "",
-          paymentPrice: Math.round(cardPayPrice * 100)
-        }));
+        const payCard = canUseCardList[0];
+        requestInfo.storedCardPayments = [
+          {
+            paymentType: 1,
+            cardNumber: payCard.cardNo,
+            ticketType: payCard.cardTypeCode || "",
+            ticketTypeName: payCard.cardTypeName || "",
+            paymentPrice: Math.round(cardPayPrice * 100)
+          }
+        ];
       }
 
       // ★ 对照小程序 confirm/index.js:1829：
@@ -520,12 +525,23 @@ class WandaBuyTicket extends BaseBuyTicket {
       // 如需支持 activity 积分抵扣等场景，在此处 conditionally 添加：
       // if (activitySelected) { requestInfo.cardPayment = { ... }; }
 
-      // ticketVoucher：券
+      // ticketVoucher：券（对照小程序 convertDataStructure）
       if (useQuan?.length) {
+        const quan = useQuan[0];
+        // discountPrice 不能超过订单总价（分），否则 merge_payment 返回 93330020
+        const maxDiscount = Math.round(orderPrice * 100);
+        const rawDiscount = quan.price || Math.round(couponDeduction * 100);
+        const discountPrice = Math.min(rawDiscount, maxDiscount);
         requestInfo.ticketVoucher = {
-          voucher: useQuan.map(q => q.couponCode).join(","),
-          discountPrice: Math.round(couponDeduction * 100)
+          voucher: useQuan.map(q => q.allotseat || q.couponCode).join(","),
+          discountPrice
         };
+        this.logger.infoSave("券抵扣金额（已封顶）", {
+          rawDiscount,
+          maxDiscount,
+          discountPrice,
+          orderPrice
+        });
       }
 
       // externalPayment: 仅当第三方支付额 > 0（不传 paymentType，走默认支付方式）
@@ -682,20 +698,21 @@ window.wandaTicketObj = (order, isTestOrder = false) => {
   return new WandaBuyTicket(order, logger, isTestOrder);
 };
 const testOrder = {
-  id: 21147810,
-  order_number: "2026060721255948231",
-  ticket_num: 1,
+  id: "12607100956217463",
+  supplier_end_price: 32,
   city_name: "南京",
-  cinema_name: "万达影城(江宁太阳城CINITY店)",
-  hall_name: "口味王-1号激光厅",
-  film_name: "火遮眼",
-  show_time: "2026-06-11 18:30",
-  lockseat: "4排1座",
-  cinema_code: "32019011",
-  supplier_end_price: 35,
+  cinema_addr: "太仓市上海东路188号万达广场四楼",
+  ticket_num: 1,
+  cinema_name: "南京万达影城江宁太阳城店",
+  hall_name: "7号激光厅",
+  film_name: "功夫女足",
+  show_time: "2026-07-12 12:30:00",
   rewards: 0,
-  cinema_group: "万达",
-  end_time: 1780839976,
+  is_urgent: 0,
+  cinema_group: "c_wanda",
+  cinema_code: "32019011",
+  order_number: "12607100956217461",
+  lockseat: "3排1座",
   plat_name: "mayi",
   app_name: "wanda",
   appName: "wanda",

@@ -69,13 +69,13 @@ export default class BaseBuyTicket {
       // 调试代码-出票报价规则测试
       if (this.isTestOrder && !this.offerRule) {
         this.offerRule = {
-          offer_type: "2",
-          offer_end_amount: "35",
-          member_price: "33",
-          real_member_price: "33"
+          // offer_type: "2",
+          // offer_end_amount: "35",
+          // member_price: "33",
+          // real_member_price: "33"
           // 上面用卡，下面用券
-          // offer_type: "1",
-          // quan_value: "wanda_quan"
+          offer_type: "1",
+          quan_value: "wanda_quan"
         };
       }
       this.logger.infoSave("订单报价记录信息", {

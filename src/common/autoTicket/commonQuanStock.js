@@ -289,6 +289,7 @@ async function checkLierenFixedRuleByQuanStock(obj) {
         seatNum: targetSeatNum,
         status: targetStatus,
         allow_offer_time: rule.allow_offer_time || null, // 空字符串传到后端会报错，字段类型不匹配，改为null
+        last_used_time: rule.last_used_time || null, // 同上，空字符串不能写入 MySQL datetime
         platOfferList: JSON.stringify(platOfferListForDb),
         is_sync_plat: platOfferListForDb.some(
           o => o.platName === "lieren" && o.isSyncPlat == 1

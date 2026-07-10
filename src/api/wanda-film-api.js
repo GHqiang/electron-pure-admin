@@ -399,6 +399,24 @@ const createApi = ({ app_name }) => {
       ...config
     });
 
+  /** 预选影票券（获取 allotseat，供 to_pay 使用） */
+  const selectCoupon = (params, config = {}) =>
+    axios.get("/wanda-film/activity/mkt/activity/secret/selectcoupon.api", {
+      params,
+      ...config
+    });
+
+  /** App 端用券支付（对应 encryption/to_pay.api，非 merge_payment） */
+  const encryptionToPay = (data, config = {}) =>
+    axios.post("/wanda-film/ticket/order/encryption/to_pay.api", data, config);
+
+  /** 激活/使用优惠券（预选后确认，对照小程序 confirmCouponApi；服务端代理用 GET，与 selectcoupon 一致） */
+  const conponUse = (params, config = {}) =>
+    axios.get("/wanda-film/activity/mkt/activity/secret/conponuse.api", {
+      params,
+      ...config
+    });
+
   return {
     // 通用服务
     getCityList,
@@ -457,7 +475,10 @@ const createApi = ({ app_name }) => {
     getCouponExpireAndEffective,
     // 活动权益
     getActivityCoupon,
-    getTicketCouponList
+    getTicketCouponList,
+    selectCoupon,
+    encryptionToPay,
+    conponUse
   };
 };
 

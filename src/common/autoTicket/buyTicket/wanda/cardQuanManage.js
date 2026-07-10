@@ -224,9 +224,41 @@ export default class CardQuanManage {
         let useQuan = targetQuanList.slice(0, ticket_num).map(item => {
           return {
             couponCode: item.couponCode,
-            couponName: item.couponName
+            couponName: item.couponName,
+            price: item.price // 券面值（分），来自 ncoupons.api，用于 merge_payment discountPrice
           };
         });
+
+        // 预选券：先 selectcoupon 获取 allotseat，再 conponuse 确认获取实际抵扣价（对照小程序完整流程）
+        const selectRes = await this.selectCoupon({
+          session_id,
+          buyTicketInfo,
+          couponCodes: useQuan.map(q => q.couponCode),
+          orderId: order_num
+        });
+        if (selectRes?.allotseat) {
+          // allotseat 写入每条 useQuan；price 优先使用 conponuse 返回的实际抵扣价（分），fallback 到 salePrice 或原始 price
+          // 封顶到座位总价（分），防止 discountPrice 超限导致 merge_payment 93330020
+          const maxDiscountFen = Math.round(seatPayTotalPrice * 100);
+          const rawPrice =
+            selectRes.conponPrice || selectRes.salePrice || useQuan[0]?.price;
+          const finalPrice = Math.min(rawPrice, maxDiscountFen);
+          useQuan = useQuan.map(q => ({
+            ...q,
+            allotseat: selectRes.allotseat,
+            price: finalPrice
+          }));
+        } else {
+          this.logger.errorSave("预选券失败，无 allotseat 返回");
+          if (is_auto_use_quan) {
+            offerRule.quan_value = "";
+            return await this.useCardHandle(useCardParms);
+          }
+          return {
+            useQuan: [],
+            profit: 0
+          };
+        }
         // 手续费
         let shouxufei = (supplier_end_price * 100) / 10000;
         if (NO_FEE_PLAT_LIST.includes(plat_name)) {
@@ -664,7 +696,7 @@ export default class CardQuanManage {
     try {
       await mockDelay(0.1);
       logger.infoSave("绑定券参数", params);
-      const res = await this.appApi.bandQuan(params);
+      const res = await this.appApi.bindQuan(params);
       logger.infoSave("绑定券返回", res);
       return { coupon_num };
     } catch (error) {
@@ -981,6 +1013,126 @@ export default class CardQuanManage {
     } catch (error) {
       this.logger.infoSave("获取影票券列表异常", formatErrInfo(error));
       return [];
+    }
+  }
+
+  // 预选券：先调 selectcoupon.api 获取 allotseat，再调 conponuse.api 确认并获取实际抵扣价（对照小程序完整流程）
+  async selectCoupon({ session_id, buyTicketInfo, couponCodes, orderId }) {
+    const { show_id, partition } = buyTicketInfo;
+    const selectParams = {
+      did: show_id,
+      partition,
+      coupons: couponCodes.join(","),
+      wanda_token: session_id
+    };
+    try {
+      // Step 1: selectcoupon.api → 获取 allotseat
+      this.logger.infoSave("预选券入参", selectParams);
+      const res = await this.appApi.selectCoupon(selectParams);
+
+      let resData = res;
+      if (res && typeof res.data === "string" && res.code === 0) {
+        const d = wandaAesDecrypt(res.data);
+        if (d) {
+          try {
+            resData = { ...res, data: JSON.parse(d) };
+          } catch (e) {
+            this.logger.errorSave("解密预选券JSON失败", { error: e?.message });
+            return null;
+          }
+        }
+      }
+
+      const allotseat = resData.data?.res?.allotseat || "";
+      const coupons = resData.data?.res?.coupons || "";
+
+      if (!allotseat) {
+        this.logger.errorSave("预选券返回 allotseat 为空");
+        return null;
+      }
+
+      // 从 allotseat JSON 中提取券面值（salePrice）作为 fallback
+      let salePrice = 0;
+      try {
+        const allotObj = JSON.parse(allotseat);
+        const dtItems = allotObj.dtItemList || [];
+        salePrice = dtItems.reduce(
+          (sum, item) => sum + (item.salePrice || 0),
+          0
+        );
+      } catch (e) {
+        this.logger.warn?.("解析 allotseat 提取 salePrice 失败", {
+          error: e?.message
+        });
+      }
+
+      // Step 2: conponuse.api → 确认用券，获取实际抵扣价 price（对照小程序 confirmCouponApi）
+      let conponPrice = salePrice;
+      if (orderId) {
+        const useParams = {
+          did: show_id,
+          partition,
+          allotseat,
+          orderId: String(orderId),
+          wanda_token: session_id
+        };
+        try {
+          this.logger.infoSave("确认用券入参", useParams);
+          const useRes = await this.appApi.conponUse(useParams);
+
+          let useData = useRes;
+          if (useRes && typeof useRes.data === "string" && useRes.code === 0) {
+            const ud = wandaAesDecrypt(useRes.data);
+            if (ud) {
+              try {
+                useData = { ...useRes, data: JSON.parse(ud) };
+              } catch (e) {
+                this.logger.errorSave("解密确认用券JSON失败", {
+                  error: e?.message
+                });
+              }
+            }
+          }
+
+          const able = useData.data?.res?.able;
+          const price = useData.data?.res?.price; // 实际抵扣金额（分），对应小程序 endneedChannel=true 时的 discountPrice
+          this.logger.infoSave("确认用券返回", {
+            bizCode: useData.data?.bizCode,
+            able,
+            price,
+            cards: useData.data?.res?.cards,
+            channelPrice: useData.data?.res?.channelPrice
+          });
+
+          if (able && price !== undefined) {
+            conponPrice = price;
+          } else if (!able) {
+            this.logger.errorSave("确认用券返回 able=false", {
+              msg: useData.data?.res?.msg
+            });
+          }
+        } catch (e) {
+          this.logger.errorSave("确认用券异常，回退使用 salePrice", {
+            error: e?.message
+          });
+        }
+      } else {
+        this.logger.warn?.(
+          "未传 orderId，跳过 conponuse 确认，使用 salePrice 作为 discountPrice"
+        );
+      }
+
+      this.logger.infoSave("预选券最终返回", {
+        allotseat,
+        coupons,
+        salePrice,
+        conponPrice
+      });
+
+      return { allotseat, coupons, salePrice, conponPrice };
+    } catch (error) {
+      this.logger.errorSave("预选券异常", formatErrInfo(error));
+      return null;
     }
   }
 
