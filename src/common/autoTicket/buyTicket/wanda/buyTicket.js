@@ -532,15 +532,20 @@ class WandaBuyTicket extends BaseBuyTicket {
         const maxDiscount = Math.round(orderPrice * 100);
         const rawDiscount = quan.price || Math.round(couponDeduction * 100);
         const discountPrice = Math.min(rawDiscount, maxDiscount);
+        // allotseat 存在时直接用（selectcoupon 一次性选所有券，allotseat 已涵盖全部票）；
+        // 不存在时兜底用券码拼接（与原逻辑一致）
+        const voucher =
+          useQuan[0].allotseat || useQuan.map(q => q.couponCode).join(",");
         requestInfo.ticketVoucher = {
-          voucher: useQuan.map(q => q.allotseat || q.couponCode).join(","),
+          voucher,
           discountPrice
         };
         this.logger.infoSave("券抵扣金额（已封顶）", {
           rawDiscount,
           maxDiscount,
           discountPrice,
-          orderPrice
+          orderPrice,
+          ticketNum: ticket_num
         });
       }
 
