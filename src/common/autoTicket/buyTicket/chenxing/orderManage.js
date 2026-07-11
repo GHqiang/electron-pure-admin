@@ -425,7 +425,8 @@ export default class OrderManage {
     cinemaId,
     cardNum,
     order_num,
-    session_id
+    session_id,
+    profit
   }) {
     try {
       let qrcode;
@@ -449,7 +450,8 @@ export default class OrderManage {
           cinemaId,
           cardNum,
           order_num,
-          session_id
+          session_id,
+          profit
         });
         return;
       }
@@ -514,7 +516,8 @@ export default class OrderManage {
     cinemaId,
     cardNum,
     order_num,
-    session_id
+    session_id,
+    profit
   }) {
     let logger = new Logger({ logType: 3 });
     logger.init(this.order);
@@ -585,7 +588,8 @@ export default class OrderManage {
         order_number,
         plat_name,
         flag: 2,
-        logger
+        logger,
+        profit
       });
       logger.logUpload();
     } catch (error) {
@@ -595,7 +599,14 @@ export default class OrderManage {
   }
 
   // 上传取票码
-  async submitQrcode({ qrcode, order_number, plat_name, flag, logger }) {
+  async submitQrcode({
+    qrcode,
+    order_number,
+    plat_name,
+    flag,
+    logger,
+    profit
+  }) {
     try {
       // 10、提交取票码
       const submitRes = await this.platManage.submitTicketCode({
@@ -625,7 +636,8 @@ export default class OrderManage {
           updateObj: {
             qrcode,
             order_status: "1",
-            err_msg: "系统延迟后轮询获取提交取票码成功"
+            err_msg: "系统延迟后轮询获取提交取票码成功",
+            ...(profit ? { profit } : {})
           }
         });
       }

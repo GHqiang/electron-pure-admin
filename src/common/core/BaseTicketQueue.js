@@ -461,7 +461,11 @@ export default class BaseTicketQueue {
               plat_name: order.plat_name,
               user_id
             },
-            updateObj: { order_status: 2, err_msg: "重新出票失败" }
+            updateObj: {
+              order_status: 2,
+              err_msg: "重新出票失败",
+              ...(res?.profit ? { profit: res.profit } : {})
+            }
           });
         }
         return;

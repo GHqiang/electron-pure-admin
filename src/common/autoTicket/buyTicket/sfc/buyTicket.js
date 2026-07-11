@@ -788,7 +788,8 @@ class SfcBuyTicket extends BaseBuyTicket {
         plat_name,
         session_id: this.currentParamsList[this.currentParamsInx]?.session_id,
         orderInfo: item,
-        lockseat
+        lockseat,
+        profit
       });
 
       if (lastRes?.qrcode && lastRes?.submitRes) {

@@ -494,7 +494,8 @@ export default class SfcOrderManage {
     plat_name,
     session_id,
     orderInfo,
-    lockseat
+    lockseat,
+    profit
   }) {
     try {
       let qrcode;
@@ -531,7 +532,8 @@ export default class SfcOrderManage {
           order_number,
           supplierCode,
           orderInfo,
-          lockseat
+          lockseat,
+          profit
         });
         return;
       }
@@ -572,7 +574,8 @@ export default class SfcOrderManage {
     app_name,
     plat_name,
     order_number,
-    orderInfo
+    orderInfo,
+    profit
   }) {
     let logger = new Logger({ logType: 3 });
     logger.init({ plat_name, order_number, app_name });
@@ -638,7 +641,8 @@ export default class SfcOrderManage {
         qrcode,
         orderInfo,
         flag: 2,
-        logger
+        logger,
+        profit
       });
       // 上送异步轮询获取取票码成功日志
       logger.logUpload();
@@ -658,7 +662,7 @@ export default class SfcOrderManage {
    * @param {Object} data.orderInfo - 订单信息
    * @returns {Promise<Object>} submitRes
    */
-  async submitQrcode({ qrcode, flag, logger, orderInfo }) {
+  async submitQrcode({ qrcode, flag, logger, orderInfo, profit }) {
     const { plat_name, order_number } = orderInfo;
     try {
       // 10、提交取票码
@@ -689,7 +693,8 @@ export default class SfcOrderManage {
           updateObj: {
             qrcode,
             order_status: "1",
-            err_msg: "系统延迟后轮询获取提交取票码成功"
+            err_msg: "系统延迟后轮询获取提交取票码成功",
+            ...(profit ? { profit } : {})
           }
         });
       }

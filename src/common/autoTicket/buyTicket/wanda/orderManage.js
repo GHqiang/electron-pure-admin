@@ -664,7 +664,7 @@ export default class OrderManage {
    * 2. getPayResult —— 查取票码（3次×1秒快速重试）
    * 3. asyncFetchQrcodeSubmit —— 异步长轮询取票码（3分钟+7分钟），不再触碰支付
    */
-  async getQrcodeUploadByPlat({ order_num, tradeNo, session_id }) {
+  async getQrcodeUploadByPlat({ order_num, tradeNo, session_id, profit }) {
     try {
       // ── 第1层：一次性支付轮询（tradeNo 在此消费，后续不再重复）──
       if (tradeNo) {
@@ -718,7 +718,8 @@ export default class OrderManage {
         );
         this.asyncFetchQrcodeSubmit({
           order_num,
-          session_id
+          session_id,
+          profit
         });
         return;
       }
@@ -738,7 +739,7 @@ export default class OrderManage {
   }
 
   // 异步轮询获取取票码并提交（只轮询取票码，不重复触发支付）
-  async asyncFetchQrcodeSubmit({ order_num, session_id }) {
+  async asyncFetchQrcodeSubmit({ order_num, session_id, profit }) {
     let logger = new Logger({ logType: 3 });
     logger.init(this.order);
     const { plat_name, order_number } = this.order;
@@ -804,7 +805,8 @@ export default class OrderManage {
         order_number,
         plat_name,
         flag: 2,
-        logger
+        logger,
+        profit
       });
       logger.logUpload();
     } catch (error) {
@@ -814,7 +816,14 @@ export default class OrderManage {
   }
 
   // 上传取票码
-  async submitQrcode({ qrcode, order_number, plat_name, flag, logger }) {
+  async submitQrcode({
+    qrcode,
+    order_number,
+    plat_name,
+    flag,
+    logger,
+    profit
+  }) {
     try {
       // 10、提交取票码
       const submitRes = await this.platManage.submitTicketCode({
@@ -844,7 +853,8 @@ export default class OrderManage {
           updateObj: {
             qrcode,
             order_status: "1",
-            err_msg: "系统延迟后轮询获取提交取票码成功"
+            err_msg: "系统延迟后轮询获取提交取票码成功",
+            ...(profit ? { profit } : {})
           }
         });
       }

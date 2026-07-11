@@ -224,7 +224,8 @@ export default class LmaOrderManage {
     app_name,
     plat_name,
     order_number,
-    orderInfo
+    orderInfo,
+    profit
   }) {
     let logger = new Logger({ logType: 3 });
     logger.init({ plat_name, order_number, app_name });
@@ -298,7 +299,8 @@ export default class LmaOrderManage {
         updateObj: {
           qrcode,
           order_status: "1",
-          err_msg: "系统延迟后轮询获取提交取票码成功"
+          err_msg: "系统延迟后轮询获取提交取票码成功",
+          ...(profit ? { profit } : {})
         }
       });
     } catch (error) {

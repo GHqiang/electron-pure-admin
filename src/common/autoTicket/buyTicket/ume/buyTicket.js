@@ -1213,7 +1213,8 @@ export default class UmeBuyTicket extends BaseBuyTicket {
         plat_name,
         orderInfo: item,
         lockseat,
-        session_id: this.currentParamsList[this.currentParamsInx].session_id
+        session_id: this.currentParamsList[this.currentParamsInx].session_id,
+        profit
       });
       if (lastRes?.qrcode && lastRes?.submitRes) {
         this.logger.info("订单最后处理成功:获取取票码并上传");

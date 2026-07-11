@@ -654,7 +654,8 @@ class WandaBuyTicket extends BaseBuyTicket {
       const lastRes = await this.orderManage.getQrcodeUploadByPlat({
         order_num,
         tradeNo: createOrderRes?.tradeNo,
-        session_id: this.currentSessionId
+        session_id: this.currentSessionId,
+        profit
       });
       if (lastRes?.qrcode && lastRes?.submitRes) {
         this.logger.infoSave("订单最后处理成功:获取取票码并上传");

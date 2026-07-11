@@ -926,7 +926,8 @@ export default class LmaBuyTicket extends BaseBuyTicket {
           app_name: appFlag,
           plat_name,
           order_number,
-          orderInfo: item
+          orderInfo: item,
+          profit
         });
         return { offerRule };
       }
