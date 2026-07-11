@@ -50,10 +50,11 @@ export default class YinghuasuanOrderFetcher extends BaseOrderFetcher {
       const processedList = rawStayList
         .map(item => {
           // 待出票列表的record_id和待确认列表的in_id一致
-          const order_number = this.confirmOrderList.find(
+          const confirmOrder = this.confirmOrderList.find(
             itemA => itemA.in_id == item.record_id
-          )?.offer_order_number;
-
+          );
+          const order_number = confirmOrder?.offer_order_number;
+          const confirmOrderRes = confirmOrder?.confirmOrderRes;
           const {
             quote_price: supplier_end_price,
             order_sn,
@@ -99,7 +100,8 @@ export default class YinghuasuanOrderFetcher extends BaseOrderFetcher {
             is_lock_seat,
             lockseat: seat_no ? seat_no.split(",").join(" ") : "",
             plat_name: "yinghuasuan",
-            record_id // 保留用于日志
+            record_id, // 保留用于日志
+            confirmOrderRes // 保留用于日志
           };
         })
         .filter(item => item && getCinemaFlag(item) && item.order_number)
@@ -219,13 +221,34 @@ export default class YinghuasuanOrderFetcher extends BaseOrderFetcher {
             in_id: item.in_id,
             bro_id: item.bro_id,
             quote_price: item.quote_price,
-            offer_order_number: offerRecord?.order_number
+            offer_order_number: offerRecord?.order_number,
+            confirmOrderRes: res // 接单结果
           });
 
           // 防止数据太大占用系统内存
           if (this.confirmOrderList.length > 30) {
             this.confirmOrderList = this.confirmOrderList.slice(20);
           }
+        } else {
+          logUpload(
+            {
+              plat_name: "yinghuasuan",
+              app_name: "",
+              order_number: "",
+              type: 2
+            },
+            [
+              {
+                opera_time: getCurrentTime(),
+                des: "影划算确认接单异常",
+                level: "error",
+                info: {
+                  in_id: item.in_id,
+                  confirmOrderRes: res
+                }
+              }
+            ]
+          );
         }
       }
     } catch (error) {
@@ -271,7 +294,7 @@ export default class YinghuasuanOrderFetcher extends BaseOrderFetcher {
         plat_name: "yinghuasuan",
         order_status: 1,
         page_num: 1,
-        page_size: 100,
+        page_size: 300,
         isNeedTotalNum: 0,
         queryFields: "order_id,order_number,app_name"
       });
