@@ -358,7 +358,7 @@ const createApi = ({ app_name }) => {
 
   /** 绑定优惠券 */
   const bindQuan = (params, config = {}) =>
-    axios.get("/wanda-film/coupon//coupon/bind.api", {
+    axios.get("/wanda-film/coupon/coupon/bind.api", {
       params,
       ...config
     });
