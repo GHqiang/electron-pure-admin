@@ -90,7 +90,11 @@ export default class BaseOrderFetcher {
     } catch (error) {
       logger.errorSave("发送新订单消息异常", { error, order });
     } finally {
-      logger.logUpload();
+      try {
+        await logger.logUpload();
+      } catch (e) {
+        // logUpload 失败不影响调用方
+      }
     }
   }
 
