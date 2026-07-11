@@ -41,8 +41,9 @@ export default class SeatManage {
    * @returns {Promise<{seatCodes: Array, discountList: Array}>} 目标座位信息及优惠活动信息
    */
   async getTargetSeat(buyTicketInfo) {
-    // 目标座位获取重试配置
-    const RETRY_DELAYS = [1, 1.5, 2]; // 重试延时（秒），共 3 次
+    // 目标座位获取重试配置（服务端偶发返回不完整，每 2 秒重试一次，最多 10 次）
+    const RETRY_DELAY = 2;
+    const RETRY_MAX = 10;
 
     try {
       const params = this.getSeatParams(buyTicketInfo);
@@ -60,14 +61,14 @@ export default class SeatManage {
       let targetSeats = this.filterTargetSeats(seatList);
 
       // 目标座位不足时重试查询
-      for (let i = 0; i < RETRY_DELAYS.length; i++) {
+      for (let i = 0; i < RETRY_MAX; i++) {
         if (targetSeats.length == this.order.ticket_num) {
           break;
         }
         this.logger.infoSave(
           `目标座位数量不足(期望${this.order.ticket_num}实际${targetSeats.length})，第${i + 1}次重试查询`
         );
-        await mockDelay(RETRY_DELAYS[i]);
+        await mockDelay(RETRY_DELAY);
         seatListRes = await this.getSeatLayout(params);
         const retryData = seatListRes?.seatData || [];
         if (retryData.length) {
