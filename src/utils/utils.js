@@ -2535,7 +2535,7 @@ const yinghuasuanCheckImg = async data => {
     const { logList, logger, ...params } = data;
     const url =
       "https://merchant-api.yinghuasuan.com/broker/v1/order/local_img_ocr";
-    let headers = { Authorization: `${tokens.yinghuasuanToken}` };
+    let headers = { Authorization: `${tokens.yinghuasuanRealToken}` };
     const res = await axios.post(url, params, {
       headers
     });
