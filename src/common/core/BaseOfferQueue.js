@@ -417,9 +417,9 @@ export default class BaseOfferQueue {
         let offerResult;
         const minOfferHandleEndTime = dictStore.dictInfo.minOfferHandleEndTime;
         const offerHandleTimeout =
-          this.platformAdapter?.config?.features?.offerHandleTimeout ??
-          dictStore.dictInfo.offerHandleTimeout ||
-          15 * 1000;
+          this.platformAdapter?.config?.features?.offerHandleTimeout != null
+            ? this.platformAdapter.config.features.offerHandleTimeout
+            : dictStore.dictInfo.offerHandleTimeout || 15 * 1000;
         if (
           order.offer_end_time - new Date().getTime() <=
             minOfferHandleEndTime &&
