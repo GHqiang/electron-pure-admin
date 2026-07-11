@@ -148,6 +148,20 @@ export default class BaseTicketQueue {
       return;
     }
 
+    // 发送ACK确认事件，告知消息发送方已收到新订单消息
+    const ackEventName = `newOrderAck_${this.appFlag}_${order.order_number}`;
+    const ackEvent = new CustomEvent(ackEventName, {
+      detail: {
+        appFlag: this.appFlag,
+        orderNumber: order.order_number,
+        platName: order.plat_name,
+        isStart: this.isStart,
+        queueLength: this.queue.length,
+        timestamp: Date.now()
+      }
+    });
+    window.dispatchEvent(ackEvent);
+
     let des = "自动出票队列获取到新的待出票订单";
     if (!isAgain) {
       this.handledOrders.set(orderKey, 1);

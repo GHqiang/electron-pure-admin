@@ -1,7 +1,7 @@
 // 订单获取基类
 // 提取所有平台订单获取的公共逻辑
 
-import { mockDelay } from "@/utils/utils.js";
+import { mockDelay, sendWxPusherMessage } from "@/utils/utils.js";
 import Logger from "../logger.js";
 import { dictTable } from "@/store/dictTable";
 const dictStore = dictTable();
@@ -60,14 +60,16 @@ export default class BaseOrderFetcher {
    * @param {Object} order - 订单信息
    */
   async sendNewOrderMsg(order) {
+    let logger;
     try {
+      logger = new Logger({ logType: 2 });
+      logger.init(order);
+
       // 动态生成事件名称
       const eventName = `newOrder_${order.appName}`;
       const newOrderEvent = new CustomEvent(eventName, {
         detail: order
       });
-      let logger = new Logger({ logType: 2 });
-      logger.init(order);
       if (
         order.plat_name === "lieren" &&
         dictStore.dictInfo.lierenIsSupportConfirmOrder == 1 &&
@@ -81,17 +83,67 @@ export default class BaseOrderFetcher {
           { logger }
         );
       }
-      // 测试模式下，不发送事件
+      // 测试模式下，不发送事件，不启动ACK机制
       if (!this.isTestOrder) {
+        // ACK确认机制：监听出票队列的确认回复，5秒超时则告警
+        const ackEventName = `newOrderAck_${order.appName}_${order.order_number}`;
+        let ackReceived = false;
+
+        const handleAck = ackEvent => {
+          ackReceived = true;
+          logger.infoSave("出票队列消息确认已收到", {
+            ackDetail: ackEvent.detail
+          });
+          window.removeEventListener(ackEventName, handleAck);
+        };
+        window.addEventListener(ackEventName, handleAck);
+
+        setTimeout(() => {
+          if (!ackReceived) {
+            window.removeEventListener(ackEventName, handleAck);
+            logger.warnSave("出票队列消息未收到确认（超时5秒）", { order });
+
+            // 排查分析：诊断队列状态和登录信息
+            const queueState = window.appTicketQueueObj?.[order.appName];
+            const loginInfoList =
+              window.getCinemaLoginInfoList?.(false) || [];
+            const hasLogin = loginInfoList.some(
+              item => item.app_name === order.appName
+            );
+
+            let analysis = "";
+            if (!queueState) {
+              analysis =
+                "【排查结论】该影院出票队列实例不存在，可能未在队列管理页面启动出票队列，请前往启动。";
+            } else if (!queueState.isStart) {
+              analysis =
+                "【排查结论】该影院出票队列未启动（isStart=false），请在队列管理页面重启该影院出票队列。";
+            } else if (!hasLogin) {
+              analysis =
+                "【排查结论】该影院登录信息缺失（无session_id），请检查登录状态并重新登录。";
+            } else {
+              analysis =
+                "【排查结论】出票队列实例存在且已启动、登录信息正常，但未在5秒内收到ACK确认，可能window事件监听器异常，建议重启该影院出票队列。";
+            }
+
+            sendWxPusherMessage({
+              app_name: order.appName,
+              orderInfo: order,
+              msgType: 11,
+              transferTip: analysis
+            });
+          }
+        }, 5000);
+
         window.dispatchEvent(newOrderEvent);
       }
 
       logger.infoSave("发送新订单消息", { order, eventName });
     } catch (error) {
-      logger.errorSave("发送新订单消息异常", { error, order });
+      logger?.errorSave("发送新订单消息异常", { error, order });
     } finally {
       try {
-        await logger.logUpload();
+        await logger?.logUpload();
       } catch (e) {
         // logUpload 失败不影响调用方
       }

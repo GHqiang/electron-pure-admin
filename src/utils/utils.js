@@ -557,7 +557,7 @@ const sendWxPusherMessage = async ({
   transferTip,
   failReason,
   app_name,
-  msgType, // 消息类型 1-登录失效 2-出票队列重复 3-黑名单券更新 5-密码输入错误 6-卡号出满提醒 9-日志上传异常
+  msgType, // 消息类型 1-登录失效 2-出票队列重复 3-黑名单券更新 5-密码输入错误 6-卡号出满提醒 9-日志上传异常 11-出票队列消息未确认
   expirePhone, // 失效手机号
   cardNoByPwdError, // 密码错误卡号
   quan_flag,
@@ -683,6 +683,23 @@ const sendWxPusherMessage = async ({
     时间：${getCurrentTime()}; <br/>
     用户：${userInfo.name}; <br/>
     提示：${transferTip};<br/>
+    </p>`;
+  } else if (msgType === 11) {
+    summary = "出票队列消息未确认";
+    content = `<p>
+    时间：${getCurrentTime()}; <br/>
+    用户：${userInfo.name}; <br/>
+    平台：${plat_name}; <br/>
+    单号：${order_number}; <br/>
+    城市：${city_name}; <br/>
+    影院标识：${app_name || orderInfo?.app_name}; <br/>
+    影院名称：${cinema_name}; <br/>
+    影厅：${hall_name}; <br/>
+    片名：${film_name}; <br/>
+    场次：${show_time}; <br/>
+    座位：${lockseat}; <br/>
+    中标价：${supplier_end_price}; <br/>
+    ${transferTip};<br/>
     </p>`;
   }
 
