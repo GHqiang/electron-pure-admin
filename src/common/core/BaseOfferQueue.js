@@ -417,7 +417,9 @@ export default class BaseOfferQueue {
         let offerResult;
         const minOfferHandleEndTime = dictStore.dictInfo.minOfferHandleEndTime;
         const offerHandleTimeout =
-          dictStore.dictInfo.offerHandleTimeout || 15 * 1000;
+          this.platformAdapter?.config?.features?.offerHandleTimeout ??
+          dictStore.dictInfo.offerHandleTimeout ||
+          15 * 1000;
         if (
           order.offer_end_time - new Date().getTime() <=
             minOfferHandleEndTime &&
@@ -447,14 +449,18 @@ export default class BaseOfferQueue {
             );
           }
           // 为防止下游接口异常导致 Promise 长时间不结束，这里增加整体超时保护，避免队列被单个订单永久阻塞
+          // 使用共享标志让 singleOffer 在超时后能及时中止，防止 stale Promise 继续提交报价到平台
+          const timeoutFlag = { value: false };
           offerResult = await Promise.race([
             this.singleOffer({
               order,
               offerList: [], // 动态调价暂时不用先传空
-              logger
+              logger,
+              timeoutFlag
             }),
             new Promise((resolve, reject) =>
               setTimeout(() => {
+                timeoutFlag.value = true;
                 logger.infoSave(
                   `订单报价处理超时，超过${offerHandleTimeout}ms 未完成`
                 );
@@ -497,7 +503,7 @@ export default class BaseOfferQueue {
    * @param {Array} params.offerList - 报价列表（可选）
    * @returns {Promise<Object>} 报价结果
    */
-  async singleOffer({ order, offerList = [], logger }) {
+  async singleOffer({ order, offerList = [], logger, timeoutFlag }) {
     const log = logger ?? this.logger;
     let offerRule;
     try {
@@ -522,6 +528,13 @@ export default class BaseOfferQueue {
         order,
         offerList
       });
+
+      // 超时检查：getEndOfferPrice 耗时过长已超时，不再继续后续提交流程
+      if (timeoutFlag?.value) {
+        log.infoSave("getEndOfferPrice 完成后检测到已超时，跳过提交报价");
+        return { offerRule: result?.offerRule, err_msg: "报价处理超时，已跳过提交" };
+      }
+
       log.infoSave("getEndOfferPrice 返回", {
         order_number: order.order_number,
         hasResult: !!result,
@@ -577,6 +590,13 @@ export default class BaseOfferQueue {
         finalPrice,
         hasRuleId: !!rule_id
       });
+
+      // 最终防线：提交前再次检查超时标志
+      if (timeoutFlag?.value) {
+        log.infoSave("提交报价前检测到已超时，放弃提交");
+        return { offerRule, err_msg: "报价处理超时，已放弃提交" };
+      }
+
       if (this.isTestOrder) {
         log.infoSave("测试单不提交报价", offerParams);
         return { res: { msg: "测试单暂不报价" }, offerRule };

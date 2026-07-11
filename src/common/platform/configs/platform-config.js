@@ -481,7 +481,8 @@ export const PLATFORM_CONFIGS = {
       priceStep: 0.1,
       supportAsyncSubmit: false,
       unlockBeforeTicket: false, // 麻花不需要解锁
-      needConfirmOrder: true
+      needConfirmOrder: true,
+      offerHandleTimeout: 120 * 1000 // 报价超时阈值（ms），麻花部分订单锁座候选多，需更长超时
     },
     api: {
       getOrderList: "queryStayOfferList",
