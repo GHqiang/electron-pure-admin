@@ -98,15 +98,55 @@ export default class BaseOfferQueue {
   }
 
   /**
-   * 当前系列并发上限（调度未启动时用字典默认值）
+   * 获取指定系列的并发上限
+   * 优先使用 bigChainSeriesConcurrency 字典字段中的专属配置，
+   * 未配置时回退到全局 offerConcurrencyPerSeries
+   * 无参调用时返回全局默认值（向后兼容）
+   * @param {string} [sk] - 系列标识（app_name / app_type_code 等）
    * @returns {number}
    */
-  _getSeriesConcurrencyLimit() {
-    return (
+  _getSeriesConcurrencyLimit(sk) {
+    const baseLimit =
       this._offerConcurrencyPerSeries ??
       dictStore.dictInfo.offerConcurrencyPerSeries ??
-      2
-    );
+      2;
+
+    // 解析大连锁专属并发配置
+    const bigChainConfig = dictStore.dictInfo.bigChainSeriesConcurrency;
+    if (bigChainConfig) {
+      try {
+        const configMap =
+          typeof bigChainConfig === "string"
+            ? JSON.parse(bigChainConfig)
+            : bigChainConfig;
+        if (sk && configMap[sk] && typeof configMap[sk] === "number") {
+          return configMap[sk];
+        }
+      } catch (e) {
+        console.warn("解析 bigChainSeriesConcurrency 失败，使用全局默认值", e);
+      }
+    }
+
+    return baseLimit;
+  }
+
+  /**
+   * 判断指定系列是否为大连锁系列（在 bigChainSeriesConcurrency 中有专属配置）
+   * @param {string} sk - 系列标识
+   * @returns {boolean}
+   */
+  _isBigChainSeries(sk) {
+    try {
+      const bigChainConfig = dictStore.dictInfo.bigChainSeriesConcurrency;
+      if (!bigChainConfig) return false;
+      const configMap =
+        typeof bigChainConfig === "string"
+          ? JSON.parse(bigChainConfig)
+          : bigChainConfig;
+      return sk && typeof configMap[sk] === "number";
+    } catch {
+      return false;
+    }
   }
 
   /**
@@ -153,7 +193,7 @@ export default class BaseOfferQueue {
    */
   _getSeriesBlockReasons(order) {
     const sk = this.getSeriesKey(order);
-    const limit = Number(this._getSeriesConcurrencyLimit()) || 2;
+    const limit = Number(this._getSeriesConcurrencyLimit(sk)) || 2;
     const running = this.runningCountBySeries.get(sk) || 0;
     const reasons = [];
     const now = Date.now();
@@ -167,8 +207,9 @@ export default class BaseOfferQueue {
     }
 
     if (running >= limit) {
+      const isBigChain = this._isBigChainSeries(sk);
       reasons.push(
-        `【同系列阻塞】${sk} 已有 ${running} 单正在报价，达到并发上限 ${limit}，本单需等同系列报完`
+        `【同系列阻塞】${sk}${isBigChain ? "(大连锁)" : ""} 已有 ${running} 单正在报价，达到并发上限 ${limit}，本单需等同系列报完`
       );
     }
 
@@ -213,7 +254,7 @@ export default class BaseOfferQueue {
    */
   _buildScheduleSnapshot(order) {
     const sk = this.getSeriesKey(order);
-    const limit = Number(this._getSeriesConcurrencyLimit()) || 2;
+    const limit = Number(this._getSeriesConcurrencyLimit(sk)) || 2;
     const running = this.runningCountBySeries.get(sk) || 0;
     const aheadSameSeries = this._getRunnableSameSeriesAhead(order);
     const globalPos = this.queue.findIndex(
@@ -226,6 +267,7 @@ export default class BaseOfferQueue {
       // 系列标识: sk,
       本系列正在报价数: running,
       本系列并发上限: limit,
+      本系列是否大连锁: this._isBigChainSeries(sk),
       // 同系列阻塞原因: this._getSeriesBlockReasons(order),
       同系列前方排队订单: aheadSameSeries,
       // 调度器是否在运行: this.isOfferRunning,
@@ -321,7 +363,6 @@ export default class BaseOfferQueue {
    */
   findNextOrderToRun() {
     const minOfferHandleEndTime = dictStore.dictInfo.minOfferHandleEndTime;
-    const limit = this._offerConcurrencyPerSeries ?? 2;
     const now = Date.now();
     // 某些平台（如蚂蚁）offer_end_time 不准，通过 skipOfferEndTimeCheck 跳过过期判断
     const skipCheck =
@@ -332,7 +373,8 @@ export default class BaseOfferQueue {
         continue;
       }
       const sk = this.getSeriesKey(order);
-      if ((this.runningCountBySeries.get(sk) || 0) >= limit) continue;
+      const seriesLimit = this._getSeriesConcurrencyLimit(sk);
+      if ((this.runningCountBySeries.get(sk) || 0) >= seriesLimit) continue;
       return { order, index: i };
     }
     return null;
@@ -532,7 +574,10 @@ export default class BaseOfferQueue {
       // 超时检查：getEndOfferPrice 耗时过长已超时，不再继续后续提交流程
       if (timeoutFlag?.value) {
         log.infoSave("getEndOfferPrice 完成后检测到已超时，跳过提交报价");
-        return { offerRule: result?.offerRule, err_msg: "报价处理超时，已跳过提交" };
+        return {
+          offerRule: result?.offerRule,
+          err_msg: "报价处理超时，已跳过提交"
+        };
       }
 
       log.infoSave("getEndOfferPrice 返回", {
