@@ -19,7 +19,8 @@ import { APP_API_OBJ } from "@/common/index";
 // 订单管理模块
 import {
   formatErrInfo, // 格式化错误信息
-  trial // 重试方法
+  trial, // 重试方法
+  mockDelay // 模拟延时
 } from "@/utils/utils";
 // 帮助锁定座位实例对象
 import assistLockSeatObj from "@/common/autoTicket/lockSeatQueue";
@@ -33,25 +34,50 @@ export default class SeatManage {
   }
 
   /**
-   * 获取目标座位
+   * 获取目标座位（含重试机制）
+   * 金逸 API 偶发返回座位数据不完整（目标列缺失部分座位），
+   * 通过重试查询应对服务端数据延迟加载。
    * @param {Object} buyTicketInfo 购票信息
    * @returns {Promise<{seatCodes: Array, discountList: Array}>} 目标座位信息及优惠活动信息
    */
   async getTargetSeat(buyTicketInfo) {
+    // 目标座位获取重试配置
+    const RETRY_DELAYS = [1, 1.5, 2]; // 重试延时（秒），共 3 次
+
     try {
       const params = this.getSeatParams(buyTicketInfo);
-      const seatListRes = await this.getSeatLayout(params);
+
+      // 首次查询
+      let seatListRes = await this.getSeatLayout(params);
       this.logger.info("获取到座位信息", { seatListRes });
-      const { seatData: seatList = [], areaInfoList } = seatListRes || {};
+      let { seatData: seatList = [], areaInfoList } = seatListRes || {};
 
       if (!seatList?.length) {
         this.logger.errorSave("座位列表为空");
         return;
       }
 
-      const targetSeats = this.filterTargetSeats(seatList);
+      let targetSeats = this.filterTargetSeats(seatList);
+
+      // 目标座位不足时重试查询
+      for (let i = 0; i < RETRY_DELAYS.length; i++) {
+        if (targetSeats.length == this.order.ticket_num) {
+          break;
+        }
+        this.logger.infoSave(
+          `目标座位数量不足(期望${this.order.ticket_num}实际${targetSeats.length})，第${i + 1}次重试查询`
+        );
+        await mockDelay(RETRY_DELAYS[i]);
+        seatListRes = await this.getSeatLayout(params);
+        const retryData = seatListRes?.seatData || [];
+        if (retryData.length) {
+          targetSeats = this.filterTargetSeats(retryData);
+          areaInfoList = seatListRes?.areaInfoList || areaInfoList;
+        }
+      }
+
       if (targetSeats.length != this.order.ticket_num) {
-        this.logger.errorSave("获取目标座位失败");
+        this.logger.errorSave("获取目标座位失败（已重试）");
         return { errorCode: "TARGET_SEAT_FAILED" };
       }
 
