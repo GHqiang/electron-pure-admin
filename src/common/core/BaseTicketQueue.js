@@ -137,18 +137,8 @@ export default class BaseTicketQueue {
       order = event.detail?.order;
     }
 
-    // 检查是否已经处理过此订单（实例内 + 全局，防止重复监听器）
-    const orderKey = order.plat_name + "_" + order.order_number;
-    if (!isAgain && this.handledOrders.has(orderKey)) {
-      this.logger.warn("订单已被处理过，忽略重复消息", order);
-      return;
-    }
-    if (!isAgain && isGloballyHandled(this.appFlag, order)) {
-      this.logger.warn("订单已被全局处理过，忽略重复监听器消息", order);
-      return;
-    }
-
-    // 发送ACK确认事件，告知消息发送方已收到新订单消息
+    // ACK 必须在重复检查之前发送：即使订单被拦截不重复出票，
+    // 也要告知消息发送方"已收到"，避免 BaseOrderFetcher 超时告警
     const ackEventName = `newOrderAck_${this.appFlag}_${order.order_number}`;
     const ackEvent = new CustomEvent(ackEventName, {
       detail: {
@@ -161,6 +151,17 @@ export default class BaseTicketQueue {
       }
     });
     window.dispatchEvent(ackEvent);
+
+    // 检查是否已经处理过此订单（实例内 + 全局，防止重复监听器）
+    const orderKey = order.plat_name + "_" + order.order_number;
+    if (!isAgain && this.handledOrders.has(orderKey)) {
+      this.logger.warn("订单已被处理过，忽略重复消息", order);
+      return;
+    }
+    if (!isAgain && isGloballyHandled(this.appFlag, order)) {
+      this.logger.warn("订单已被全局处理过，忽略重复监听器消息", order);
+      return;
+    }
 
     let des = "自动出票队列获取到新的待出票订单";
     if (!isAgain) {
