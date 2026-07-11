@@ -258,7 +258,7 @@ export default class PlatCommon {
         };
       }
 
-      this.logger.info("解锁座位入参", params);
+      this.logger.infoSave("解锁座位入参", params);
       const res = await PLAT_API_OBJ[plat_name].unlockSeat(params);
       this.logger.infoSave(`第${inx}次解锁座位成功`, res);
       return res;
