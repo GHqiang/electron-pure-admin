@@ -32,6 +32,8 @@ export default class BaseOfferQueue {
     this.handledOrders = new Map();
     /** 按系列统计当前正在执行的订单数，用于同系列并发控制 */
     this.runningCountBySeries = new Map();
+    /** 平台已报价缓存：避免对已由平台自动报价的订单重复走查询链 */
+    this._platformQuotedCache = { data: [], fetchedAt: 0 };
   }
 
   /**
@@ -310,7 +312,17 @@ export default class BaseOfferQueue {
     }
 
     console.warn("新的待报价订单", item);
-    this.handledOrders.set(item.order_number, 1);
+
+    // 去重检查：订单已在 handledOrders 或队列中，跳过
+    const orderKey = `${item.plat_name}_${item.order_number}`;
+    if (this.handledOrders.has(orderKey)) {
+      return;
+    }
+    // 也检查是否已在队列中（兜底：handledOrders 被淘汰时也能拦住）
+    if (this.queue.some(o => o.order_number === item.order_number)) {
+      return;
+    }
+    this.handledOrders.set(orderKey, 1);
 
     // 如果 handledOrders 的大小超过了容量上限（字典可配，默认500），则移除最早添加的条目
     const handledOrdersCapacity =
@@ -477,6 +489,33 @@ export default class BaseOfferQueue {
             }
           );
         } else {
+          // 平台同步报价检查：查最近50条报价记录，若当前订单已被平台报价则跳过
+          const platformQuoteRecord = await this._checkPlatformAlreadyQuoted(
+            order,
+            logger
+          );
+          if (platformQuoteRecord) {
+            logger.infoSave("平台已报价，跳过报价流程");
+            await this.addOrderHandleRecord(
+              order,
+              {
+                offerRule: {},
+                err_msg: "平台已报价"
+              },
+              logger,
+              {
+                offer_duration: Date.now() - orderHandleStartAt,
+                queue_wait_ms: order._offerEnqueueAt
+                  ? orderHandleStartAt - order._offerEnqueueAt
+                  : null,
+                offer_from: 1,
+                plat_rule_id: platformQuoteRecord.rule_id || null
+              }
+            );
+            logger.logUpload();
+            return;
+          }
+
           // logger.infoSave("开始处理订单", { order });
           const queueWaitMs = order._offerEnqueueAt
             ? orderHandleStartAt - order._offerEnqueueAt
@@ -682,6 +721,50 @@ export default class BaseOfferQueue {
   }
 
   /**
+   * 检查平台是否已对该订单报价（避免重复走城市/影院/会员价等查询链）
+   * 仅对 fixedOfferToPlatList 字典中配置的平台生效，每 30s 刷新一次缓存
+   * @param {Object} order - 订单信息
+   * @param {Object} logger - 日志实例
+   * @returns {Promise<Object|null>} 匹配到的报价记录或 null
+   */
+  async _checkPlatformAlreadyQuoted(order, logger) {
+    try {
+      const fixedOfferToPlatList =
+        dictStore.dictInfo.fixedOfferToPlatList?.split(",") || [];
+      if (!fixedOfferToPlatList.includes(order.plat_name)) return null;
+
+      const now = Date.now();
+      if (now - this._platformQuotedCache.fetchedAt > 30000) {
+        const res = await this.platformAdapter.api.queryOfferRecord({
+          page: 1,
+          limit: 50
+        });
+        this._platformQuotedCache.data = res?.data || [];
+        this._platformQuotedCache.fetchedAt = now;
+        logger.infoSave("刷新平台已报价缓存", {
+          count: this._platformQuotedCache.data.length
+        });
+      }
+
+      const matchedRecord = this._platformQuotedCache.data.find(
+        r => r.order_number === order.order_number
+      );
+      if (matchedRecord) {
+        logger.infoSave("平台已报价-命中", {
+          order_number: order.order_number,
+          rule_id: matchedRecord.rule_id
+        });
+      }
+      return matchedRecord || null;
+    } catch (error) {
+      logger.infoSave("检查平台报价状态异常，放行继续报价", {
+        error: error?.message
+      });
+      return null; // 异常时放行，不阻塞报价
+    }
+  }
+
+  /**
    * 添加订单处理记录
    * @param {Object} order - 订单信息
    * @param {Object} offerResult - 报价结果
@@ -732,12 +815,16 @@ export default class BaseOfferQueue {
         rewards: order.rewards,
         rule: tokens.userInfo.rule,
         offer_rule_id: offerResult?.offerRule?.id,
-        offer_from: 2, // 1-平台报价 2-机器报价
+        offer_from: extra.offer_from ?? 2, // 1-平台报价 2-机器报价
         adjust_price: offerResult?.offerRule?.adjustPrice,
         price_spread: offerResult?.offerRule?.price_spread,
         offer_duration: extra.offer_duration ?? null,
         queue_wait_ms: extra.queue_wait_ms ?? null
       };
+      // 仅平台报价时才上送 plat_rule_id
+      if (extra.offer_from == 1 && extra.plat_rule_id) {
+        serOrderInfo.plat_rule_id = extra.plat_rule_id;
+      }
 
       const targetInfo = GET_APP_TYPE_LIST().find(item =>
         item.app_name_list.includes(serOrderInfo.app_name)
