@@ -69,7 +69,14 @@ export default class WandaCinemaManage {
       }
 
       // 2、获取城市影院列表 → 匹配目标影院
-      const { cinemaList } = await this.getCityCinemaList({ city_id });
+      //    与步骤4（按城市获取影片列表）无依赖，并行执行以节省 1 次网络往返
+      //    出票场景的卡券处理（步骤3）依赖影院匹配结果，串行在影院列表之后
+      const cinemaListPromise = this.getCityCinemaList({ city_id });
+      const movieDataPromise = this.getMoviePlayInfo({ city_id });
+      const [{ cinemaList }, movieData] = await Promise.all([
+        cinemaListPromise,
+        movieDataPromise
+      ]);
       if (!cinemaList?.length) {
         this.logger.errorSave("获取万达城市影院列表为空", { city_id });
         return;
@@ -96,8 +103,7 @@ export default class WandaCinemaManage {
         cinemaInfo.currentParamsList = this.currentParamsList;
       }
 
-      // 4、按城市获取影片列表 → 匹配目标影片
-      const movieData = await this.getMoviePlayInfo({ city_id });
+      // 4、影片列表已在步骤2并行获取，此处仅做匹配
       const movieList = movieData?.movieData || [];
       if (!movieList?.length) {
         this.logger.errorSave("获取万达电影放映信息返回空", { city_id });

@@ -312,8 +312,10 @@ export default class BaseOfferQueue {
     console.warn("新的待报价订单", item);
     this.handledOrders.set(item.order_number, 1);
 
-    // 如果 handledOrders 的大小超过了100，则移除最早添加的条目
-    if (this.handledOrders.size > 100) {
+    // 如果 handledOrders 的大小超过了容量上限（字典可配，默认500），则移除最早添加的条目
+    const handledOrdersCapacity =
+      Number(dictStore.dictInfo.handledOrdersCapacity) || 500;
+    if (this.handledOrders.size > handledOrdersCapacity) {
       const firstKey = this.handledOrders.keys().next().value;
       if (firstKey !== undefined) {
         this.handledOrders.delete(firstKey);
@@ -525,7 +527,12 @@ export default class BaseOfferQueue {
           });
         }
         console.warn("订单处理完成", offerResult);
-        await this.addOrderHandleRecord(order, offerResult, logger);
+        await this.addOrderHandleRecord(order, offerResult, logger, {
+          offer_duration: Date.now() - orderHandleStartAt,
+          queue_wait_ms: order._offerEnqueueAt
+            ? orderHandleStartAt - order._offerEnqueueAt
+            : null
+        });
         logger.logUpload();
         return offerResult;
       } else {
@@ -679,9 +686,10 @@ export default class BaseOfferQueue {
    * @param {Object} order - 订单信息
    * @param {Object} offerResult - 报价结果
    * @param {Object} logger - 该订单的 logger 实例（并发安全）
+   * @param {Object} [extra] - 额外字段（如 offer_duration 报价链路耗时ms）
    * @returns {Promise<void>}
    */
-  async addOrderHandleRecord(order, offerResult, logger) {
+  async addOrderHandleRecord(order, offerResult, logger, extra = {}) {
     const log = logger ?? this.logger;
     try {
       // offerResult: { res, offerRule } || { offerRule } || undefined
@@ -726,7 +734,9 @@ export default class BaseOfferQueue {
         offer_rule_id: offerResult?.offerRule?.id,
         offer_from: 2, // 1-平台报价 2-机器报价
         adjust_price: offerResult?.offerRule?.adjustPrice,
-        price_spread: offerResult?.offerRule?.price_spread
+        price_spread: offerResult?.offerRule?.price_spread,
+        offer_duration: extra.offer_duration ?? null,
+        queue_wait_ms: extra.queue_wait_ms ?? null
       };
 
       const targetInfo = GET_APP_TYPE_LIST().find(item =>
