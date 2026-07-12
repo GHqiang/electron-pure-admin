@@ -20,6 +20,7 @@ tests/**/coverage/
 *.njsproj
 *.sln
 .claude/
+.zcode/
 tsconfig.tsbuildinfo
 .gitignore
 dist-electron
