@@ -162,7 +162,7 @@ class SfcBuyTicket extends BaseBuyTicket {
     } = otherParams || {};
 
     const order_number_key =
-      plat_name !== "mahua"
+      plat_name !== "mahua" && plat_name !== "piaosheng"
         ? order_number
         : item.offer_order_number || order_number;
     let rewards = rewardsFromItem;
