@@ -32,6 +32,8 @@ export default class BaseOfferQueue {
     this.handledOrders = new Map();
     /** 按系列统计当前正在执行的订单数，用于同系列并发控制 */
     this.runningCountBySeries = new Map();
+    /** 按系列记录当前正在执行的订单号集合，与 runningCountBySeries 同步维护，用于诊断日志 */
+    this.runningOrdersBySeries = new Map();
     /** 平台已报价缓存：避免对已由平台自动报价的订单重复走查询链 */
     this._platformQuotedCache = { data: [], fetchedAt: 0 };
     /** 拉单防重入标志：防止 fetchOrders 并发执行 */
@@ -141,7 +143,7 @@ export default class BaseOfferQueue {
    * 获取每系列并发数上限
    * @returns {Promise<number>}
    */
-  async getOfferConcurrencyPerSeries() {
+  getOfferConcurrencyPerSeries() {
     return dictStore.dictInfo.offerConcurrencyPerSeries || 2; // 默认每系列限2个订单并发报价
   }
 
@@ -176,6 +178,43 @@ export default class BaseOfferQueue {
     }
 
     return baseLimit;
+  }
+
+  /**
+   * 记录某系列正在执行的订单号（与 runningCountBySeries 同步维护）
+   * @param {string} sk - 系列标识
+   * @param {string} orderNumber - 订单号
+   */
+  _addRunningOrder(sk, orderNumber) {
+    if (!this.runningOrdersBySeries.has(sk)) {
+      this.runningOrdersBySeries.set(sk, new Set());
+    }
+    this.runningOrdersBySeries.get(sk).add(orderNumber);
+  }
+
+  /**
+   * 移除某系列已完成的订单号（与 runningCountBySeries 同步维护）
+   * @param {string} sk - 系列标识
+   * @param {string} orderNumber - 订单号
+   */
+  _removeRunningOrder(sk, orderNumber) {
+    const set = this.runningOrdersBySeries.get(sk);
+    if (set) {
+      set.delete(orderNumber);
+      if (set.size === 0) {
+        this.runningOrdersBySeries.delete(sk);
+      }
+    }
+  }
+
+  /**
+   * 获取某系列正在执行的订单号列表（用于诊断日志）
+   * @param {string} sk - 系列标识
+   * @returns {string[]} 订单号数组，无则空数组
+   */
+  _getRunningOrders(sk) {
+    const set = this.runningOrdersBySeries.get(sk);
+    return set ? [...set] : [];
   }
 
   /**
@@ -314,12 +353,16 @@ export default class BaseOfferQueue {
       // 订单号: order.order_number,
       // 系列标识: sk,
       本系列正在报价数: running,
+      本系列正在报价订单号: this._getRunningOrders(sk),
       本系列并发上限: limit,
       本系列是否大连锁: this._isBigChainSeries(sk),
       // 同系列阻塞原因: this._getSeriesBlockReasons(order),
-      同系列前方排队订单: aheadSameSeries,
+      同系列前方排队订单: aheadSameSeries
       // 调度器是否在运行: this.isOfferRunning,
-      各系列正在报价数: Object.fromEntries(this.runningCountBySeries)
+      // 各系列正在报价数: Object.fromEntries(this.runningCountBySeries),
+      // 各系列正在报价订单号: Object.fromEntries(
+      //   [...this.runningOrdersBySeries.entries()].map(([k, v]) => [k, [...v]])
+      // )
       // 全局队列仅供参考: {
       //   总队列长度: this.queue.length,
       //   本单在总队列排位: globalPos >= 0 ? globalPos + 1 : null,
@@ -393,31 +436,46 @@ export default class BaseOfferQueue {
       const limit = this._getSeriesConcurrencyLimit(sk);
       const running = this.runningCountBySeries.get(sk) || 0;
       if (running < limit) {
-        // 从队列移除并立即开跑，不等 finish 回调唤醒
+        // 路径①：本系列畅通，立即派出
         const idx = this.queue.findIndex(
           o => o.order_number === item.order_number
         );
         if (idx !== -1) this.queue.splice(idx, 1);
         this.runningCountBySeries.set(sk, running + 1);
+        this._addRunningOrder(sk, item.order_number);
         const p = this.orderHandle(item);
         p.finally(() => {
           this.runningCountBySeries.set(
             sk,
             Math.max(0, (this.runningCountBySeries.get(sk) || 0) - 1)
           );
+          this._removeRunningOrder(sk, item.order_number);
           // 订单完成后批量唤醒队列中其他畅通订单（含 allIdle 检查与 isOfferRunning 释放）
           this._dispatchBatch();
         });
         // 立即派出当前单后，批量扫队列把所有畅通的一起派
-        // 覆盖场景：tryStartOne 尚在 await getOfferConcurrencyPerSeries 未执行时，
+        // 覆盖场景：tryStartOne 尚在 getOfferConcurrencyPerSeries 未执行时，
         // 队列中已有其他畅通订单可一并派出
         this._dispatchBatch();
       } else {
+        // 路径②：本系列阻塞，进队列等待
         item._offerEnqueueBlockReasons = this._getSeriesBlockReasons(item);
         item._offerEnqueueDelaySummary = this._buildSeriesDelaySummary(item);
         const snapshot = this._buildScheduleSnapshot(item);
-        logger.infoSave(`订单入队-同系列调度诊断`, snapshot);
+        snapshot.调度路径 = "②本系列阻塞";
+        logger.infoSave(`订单入队-调度诊断`, snapshot);
       }
+    } else {
+      // 路径③：调度器空闲，触发 startProcessingQueue
+      const sk = this.getSeriesKey(item);
+      const limit = this._getSeriesConcurrencyLimit(sk);
+      logger.infoSave("订单入队-调度诊断", {
+        调度路径: "③触发调度器启动",
+        系列标识: sk,
+        本系列并发上限: limit,
+        队列长度: this.queue.length,
+        说明: "调度器空闲，触发 startProcessingQueue"
+      });
     }
 
     logger.logUpload();
@@ -476,10 +534,11 @@ export default class BaseOfferQueue {
   /**
    * 开始处理队列（按系列有限并发：不同系列并行，同系列限并发）
    */
-  async startProcessingQueue() {
+  startProcessingQueue() {
     this.isOfferRunning = true;
     this.runningCountBySeries.clear();
-    this._offerConcurrencyPerSeries = await this.getOfferConcurrencyPerSeries();
+    this.runningOrdersBySeries.clear();
+    this._offerConcurrencyPerSeries = this.getOfferConcurrencyPerSeries();
     this._dispatchBatch();
   }
 
@@ -525,18 +584,18 @@ export default class BaseOfferQueue {
         sk,
         (this.runningCountBySeries.get(sk) || 0) + 1
       );
+      this._addRunningOrder(sk, order.order_number);
       const p = this.orderHandle(order);
       p.finally(() => {
         this.runningCountBySeries.set(
           sk,
           Math.max(0, (this.runningCountBySeries.get(sk) || 0) - 1)
         );
+        this._removeRunningOrder(sk, order.order_number);
         this._dispatchBatch();
       });
     }
-    const allIdle = [...this.runningCountBySeries.values()].every(
-      c => c === 0
-    );
+    const allIdle = [...this.runningCountBySeries.values()].every(c => c === 0);
     // 当所有系列都空闲时，无论当前队列中是否还有「暂时不可执行」的订单，
     // 都认为本轮调度已经结束，释放 isOfferRunning 标记，
     // 以便后续新订单到来时可以重新触发队列启动，避免队列进入“假运行”阻塞状态。
@@ -582,10 +641,12 @@ export default class BaseOfferQueue {
           );
         } else {
           // 平台同步报价检查：查最近50条报价记录，若当前订单已被平台报价则跳过
+          const platformCheckStartAt = Date.now();
           const platformQuoteRecord = await this._checkPlatformAlreadyQuoted(
             order,
             logger
           );
+          const platformCheckDurationMs = Date.now() - platformCheckStartAt;
           if (platformQuoteRecord) {
             logger.infoSave("平台已报价，跳过报价流程");
             await this.addOrderHandleRecord(
@@ -616,7 +677,8 @@ export default class BaseOfferQueue {
           const seriesRunning = this.runningCountBySeries.get(sk) || 0;
           logger.infoSave("订单报价链路开始", {
             入队到开跑耗时ms: queueWaitMs,
-            本系列正在报价数: seriesRunning
+            本系列正在报价数: seriesRunning,
+            本系列正在报价订单号: this._getRunningOrders(sk)
           });
           if (queueWaitMs != null && queueWaitMs >= 1000) {
             logger.infoSave(
@@ -625,6 +687,7 @@ export default class BaseOfferQueue {
           }
           // 超时保护：超过 offerHandleTimeout 直接结束，不再等待报价结果
           // 若 submitOffer 已在超时前发出，singleOffer 内部会在完成后自行补写成功报价记录
+          const singleOfferStartAt = Date.now();
           const timeoutFlag = { value: false };
           offerResult = await Promise.race([
             this.singleOffer({
@@ -643,9 +706,12 @@ export default class BaseOfferQueue {
               }, offerHandleTimeout)
             )
           ]);
+          const singleOfferDurationMs = Date.now() - singleOfferStartAt;
           logger.infoSave("订单报价链路竞速结果", {
             order_number: order.order_number,
-            elapsedMs: Date.now() - orderHandleStartAt,
+            总耗时ms: Date.now() - orderHandleStartAt,
+            平台已报价检查耗时ms: platformCheckDurationMs,
+            报价执行净耗时ms: singleOfferDurationMs,
             hasOfferResult: !!offerResult,
             hasSubmitResult: !!offerResult?.res,
             hasOfferRule: !!offerResult?.offerRule,
