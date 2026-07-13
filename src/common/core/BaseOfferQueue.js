@@ -623,8 +623,8 @@ export default class BaseOfferQueue {
               `订单等待${(queueWaitMs / 1000).toFixed(1)}秒后开始报价`
             );
           }
-          // 为防止下游接口异常导致 Promise 长时间不结束，这里增加整体超时保护，避免队列被单个订单永久阻塞
-          // 使用共享标志让 singleOffer 在超时后能及时中止，防止 stale Promise 继续提交报价到平台
+          // 超时保护：超过 offerHandleTimeout 直接结束，不再等待报价结果
+          // 若 submitOffer 已在超时前发出，singleOffer 内部会在完成后自行补写成功报价记录
           const timeoutFlag = { value: false };
           offerResult = await Promise.race([
             this.singleOffer({
@@ -633,18 +633,13 @@ export default class BaseOfferQueue {
               logger,
               timeoutFlag
             }),
-            new Promise((resolve, reject) =>
+            new Promise(resolve =>
               setTimeout(() => {
                 timeoutFlag.value = true;
                 logger.infoSave(
                   `订单报价处理超时，超过${offerHandleTimeout}ms 未完成`
                 );
                 resolve();
-                // reject(
-                //   new Error(
-                //     `订单报价处理超时，超过${offerHandleTimeout}ms 未完成`
-                //   )
-                // );
               }, offerHandleTimeout)
             )
           ]);
@@ -792,10 +787,23 @@ export default class BaseOfferQueue {
         order.id = res?.data?.quote_id;
       }
       log.infoSave("提交报价结果", { res, order });
+
+      // 猎人特殊处理：已自动报价视为失败，直接返回
       if (order.plat_name === "lieren" && res?.message === "已自动报价") {
         log.errorSave("猎人已自动报价");
         return { offerRule };
       }
+
+      // 超时兜底：若 submitOffer 在超时后才返回，但提交本身成功了，
+      // 此时 orderHandle 的 Promise.race 已超时结算并写入失败记录，
+      // 这里补写一条成功报价记录到 offer_record 表，确保出票流程能查到
+      if (timeoutFlag?.value && res) {
+        log.infoSave("提交报价在超时后完成，补写成功报价记录");
+        await this.addOrderHandleRecord(order, { res, offerRule }, logger, {
+          offer_from: 2
+        });
+      }
+
       return { res, offerRule };
     } catch (error) {
       log.errorSave("单个报价异常", { error });
