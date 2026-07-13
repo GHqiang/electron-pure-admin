@@ -85,57 +85,79 @@ export default class BaseOrderFetcher {
       }
       // 测试模式下，不发送事件，不启动ACK机制
       if (!this.isTestOrder) {
-        // ACK确认机制：监听出票队列的确认回复，5秒超时则告警
-        const ackEventName = `newOrderAck_${order.appName}_${order.order_number}`;
-        let ackReceived = false;
+        // 已确认送达的订单不再重复发送（避免Fetcher轮询时同一订单反复dispatch/ACK刷屏）
+        if (!window.__ackConfirmedOrders) {
+          window.__ackConfirmedOrders = new Map();
+        }
+        const ackConfirmedKey = `${order.appName}_${order.order_number}`;
+        // 重新出票(isAgain)不拦截，必须允许再次发送
+        if (!order.isAgain && window.__ackConfirmedOrders.has(ackConfirmedKey)) {
+          logger.infoSave("订单已确认送达，跳过重复发送", { order });
+        } else {
+          // ACK确认机制：监听出票队列的确认回复，5秒超时则告警
+          const ackEventName = `newOrderAck_${order.appName}_${order.order_number}`;
+          let ackReceived = false;
 
-        const handleAck = ackEvent => {
-          ackReceived = true;
-          logger.infoSave("出票队列消息确认已收到", {
-            ackDetail: ackEvent.detail
-          });
-          window.removeEventListener(ackEventName, handleAck);
-        };
-        window.addEventListener(ackEventName, handleAck);
-
-        setTimeout(() => {
-          if (!ackReceived) {
-            window.removeEventListener(ackEventName, handleAck);
-            logger.warnSave("出票队列消息未收到确认（超时5秒）", { order });
-
-            // 排查分析：诊断队列状态和登录信息
-            const queueState = window.appTicketQueueObj?.[order.appName];
-            const loginInfoList =
-              window.getCinemaLoginInfoList?.(false) || [];
-            const hasLogin = loginInfoList.some(
-              item => item.app_name === order.appName
-            );
-
-            let analysis = "";
-            if (!queueState) {
-              analysis =
-                "【排查结论】该影院出票队列实例不存在，可能未在队列管理页面启动出票队列，请前往启动。";
-            } else if (!queueState.isStart) {
-              analysis =
-                "【排查结论】该影院出票队列未启动（isStart=false），请在队列管理页面重启该影院出票队列。";
-            } else if (!hasLogin) {
-              analysis =
-                "【排查结论】该影院登录信息缺失（无session_id），请检查登录状态并重新登录。";
-            } else {
-              analysis =
-                "【排查结论】出票队列实例存在且已启动、登录信息正常，但未在5秒内收到ACK确认，可能window事件监听器异常，建议重启该影院出票队列。";
+          const handleAck = ackEvent => {
+            ackReceived = true;
+            window.__ackConfirmedOrders.set(ackConfirmedKey, Date.now());
+            // 定期清理过期记录（超过30分钟的清除）
+            if (!window.__ackCleanupTimer) {
+              window.__ackCleanupTimer = setInterval(() => {
+                const now = Date.now();
+                for (const [key, ts] of window.__ackConfirmedOrders) {
+                  if (now - ts > 30 * 60 * 1000) {
+                    window.__ackConfirmedOrders.delete(key);
+                  }
+                }
+              }, 10 * 60 * 1000);
             }
-
-            sendWxPusherMessage({
-              app_name: order.appName,
-              orderInfo: order,
-              msgType: 11,
-              transferTip: analysis
+            logger.infoSave("出票队列消息确认已收到", {
+              ackDetail: ackEvent.detail
             });
-          }
-        }, 5000);
+            window.removeEventListener(ackEventName, handleAck);
+          };
+          window.addEventListener(ackEventName, handleAck);
 
-        window.dispatchEvent(newOrderEvent);
+          setTimeout(() => {
+            if (!ackReceived) {
+              window.removeEventListener(ackEventName, handleAck);
+              logger.warnSave("出票队列消息未收到确认（超时5秒）", { order });
+
+              // 排查分析：诊断队列状态和登录信息
+              const queueState = window.appTicketQueueObj?.[order.appName];
+              const loginInfoList =
+                window.getCinemaLoginInfoList?.(false) || [];
+              const hasLogin = loginInfoList.some(
+                item => item.app_name === order.appName
+              );
+
+              let analysis = "";
+              if (!queueState) {
+                analysis =
+                  "【排查结论】该影院出票队列实例不存在，可能未在队列管理页面启动出票队列，请前往启动。";
+              } else if (!queueState.isStart) {
+                analysis =
+                  "【排查结论】该影院出票队列未启动（isStart=false），请在队列管理页面重启该影院出票队列。";
+              } else if (!hasLogin) {
+                analysis =
+                  "【排查结论】该影院登录信息缺失（无session_id），请检查登录状态并重新登录。";
+              } else {
+                analysis =
+                  "【排查结论】出票队列实例存在且已启动、登录信息正常，但未在5秒内收到ACK确认，可能window事件监听器异常，建议重启该影院出票队列。";
+              }
+
+              sendWxPusherMessage({
+                app_name: order.appName,
+                orderInfo: order,
+                msgType: 11,
+                transferTip: analysis
+              });
+            }
+          }, 5000);
+
+          window.dispatchEvent(newOrderEvent);
+        }
       }
 
       logger.infoSave("发送新订单消息", { order, eventName });
