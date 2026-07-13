@@ -34,11 +34,18 @@ export default class BaseOfferQueue {
     this.runningCountBySeries = new Map();
     /** 平台已报价缓存：避免对已由平台自动报价的订单重复走查询链 */
     this._platformQuotedCache = { data: [], fetchedAt: 0 };
+    /** 拉单防重入标志：防止 fetchOrders 并发执行 */
+    this.isFetching = false;
+    /** 拉单定时器引用，stop 时清理 */
+    this._fetchTimer = null;
   }
 
   /**
    * 启动队列
    * 模板方法，定义队列启动流程
+   *
+   * 拉单与调度解耦：拉单由独立定时器驱动，不再阻塞调度器。
+   * 调度器由 handleNewOrder 在新订单入队时按需启动（空闲时触发 startProcessingQueue）。
    */
   async start() {
     // 防止重复启动产生多个并发轮询循环
@@ -50,10 +57,49 @@ export default class BaseOfferQueue {
     this.handledOrders = new Map();
     this.queue = [];
 
-    while (this.isRunning) {
-      const fetchDelay = await this.getFetchInterval();
-      await this.fetchOrders(fetchDelay);
-    }
+    // 拉单独立定时触发，不阻塞调度器
+    this._startFetchLoop();
+  }
+
+  /**
+   * 启动拉单循环（非阻塞，与调度器解耦）
+   *
+   * 每隔 getFetchInterval() 秒触发一次拉单。
+   * 用 isFetching 标志防止 fetchOrders 并发执行：
+   *   - 若上一次拉单尚未完成，本轮跳过，仅调度下一轮
+   *   - 子类 fetchOrders 内部的 mockDelay 由调用方传 0 跳过，间隔由定时器控制
+   */
+  _startFetchLoop() {
+    const tick = () => {
+      if (!this.isRunning) return;
+
+      // 防重入：上一次拉单未完成则跳过本轮，仅调度下一轮
+      if (!this.isFetching) {
+        this.isFetching = true;
+        // 传 0 跳过子类内部的 mockDelay，拉单间隔由定时器控制
+        this.fetchOrders(0)
+          .catch(e => console.error("拉单异常", e))
+          .finally(() => {
+            this.isFetching = false;
+          });
+      }
+
+      // 无论本轮是否执行拉单，都调度下一轮（间隔支持运行时字典调整）
+      this.getFetchInterval().then(
+        delay => {
+          if (!this.isRunning) return;
+          this._fetchTimer = setTimeout(tick, delay * 1000);
+        },
+        () => {
+          // getFetchInterval 内部已有 try/catch，此处兜底防止调度链断裂
+          if (!this.isRunning) return;
+          this._fetchTimer = setTimeout(tick, 5 * 1000);
+        }
+      );
+    };
+
+    // 立即执行第一次拉单
+    tick();
   }
 
   /**
@@ -342,10 +388,36 @@ export default class BaseOfferQueue {
     this.insertOrderIntoQueue(item);
 
     if (this.isOfferRunning) {
-      item._offerEnqueueBlockReasons = this._getSeriesBlockReasons(item);
-      item._offerEnqueueDelaySummary = this._buildSeriesDelaySummary(item);
-      const snapshot = this._buildScheduleSnapshot(item);
-      logger.infoSave(`订单入队-同系列调度诊断`, snapshot);
+      // 调度器运行中：本系列不阻塞则立即派出，不等 finish 回调唤醒
+      const sk = this.getSeriesKey(item);
+      const limit = this._getSeriesConcurrencyLimit(sk);
+      const running = this.runningCountBySeries.get(sk) || 0;
+      if (running < limit) {
+        // 从队列移除并立即开跑，不等 finish 回调唤醒
+        const idx = this.queue.findIndex(
+          o => o.order_number === item.order_number
+        );
+        if (idx !== -1) this.queue.splice(idx, 1);
+        this.runningCountBySeries.set(sk, running + 1);
+        const p = this.orderHandle(item);
+        p.finally(() => {
+          this.runningCountBySeries.set(
+            sk,
+            Math.max(0, (this.runningCountBySeries.get(sk) || 0) - 1)
+          );
+          // 订单完成后批量唤醒队列中其他畅通订单（含 allIdle 检查与 isOfferRunning 释放）
+          this._dispatchBatch();
+        });
+        // 立即派出当前单后，批量扫队列把所有畅通的一起派
+        // 覆盖场景：tryStartOne 尚在 await getOfferConcurrencyPerSeries 未执行时，
+        // 队列中已有其他畅通订单可一并派出
+        this._dispatchBatch();
+      } else {
+        item._offerEnqueueBlockReasons = this._getSeriesBlockReasons(item);
+        item._offerEnqueueDelaySummary = this._buildSeriesDelaySummary(item);
+        const snapshot = this._buildScheduleSnapshot(item);
+        logger.infoSave(`订单入队-同系列调度诊断`, snapshot);
+      }
     }
 
     logger.logUpload();
@@ -356,19 +428,26 @@ export default class BaseOfferQueue {
   }
 
   /**
-   * 插入队列（按截止时间排序）
+   * 插入队列（按 offer_end_time 升序，二分查找插入位置）
+   * 队列保持升序不变量：所有已入队元素的 offer_end_time 单调不降
    * @param {Object} order - 订单信息
    */
   insertOrderIntoQueue(order) {
-    const index = this.queue.findIndex(
-      item => order.offer_end_time < item.offer_end_time
-    );
-
-    if (index === -1) {
-      this.queue.push(order);
-    } else {
-      this.queue.splice(index, 0, order);
+    // 二分查找第一个 offer_end_time > order.offer_end_time 的位置
+    // 与原 findIndex 语义一致：相等时插入到后方（稳定排序）
+    let lo = 0,
+      hi = this.queue.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (order.offer_end_time < this.queue[mid].offer_end_time) {
+        hi = mid;
+      } else {
+        lo = mid + 1;
+      }
     }
+    // lo == hi 即插入位置：splice 在该处插入
+    // 注：offer_end_time 为 undefined 时比较结果为 false，会落到 lo=hi=queue.length（末尾），与原 findIndex 行为一致
+    this.queue.splice(lo, 0, order);
   }
 
   /**
@@ -401,62 +480,75 @@ export default class BaseOfferQueue {
     this.isOfferRunning = true;
     this.runningCountBySeries.clear();
     this._offerConcurrencyPerSeries = await this.getOfferConcurrencyPerSeries();
+    this._dispatchBatch();
+  }
 
-    const tryStartOne = () => {
-      while (this.isRunning) {
-        const next = this.findNextOrderToRun();
-        if (!next) {
-          if (this.queue.length > 0) {
-            const blockedSummary = this.queue.map(order => ({
-              订单号: order.order_number,
-              系列: this.getSeriesKey(order),
-              同系列调度结论: this._buildSeriesDelaySummary(order)
-            }));
-            console.warn("队列暂无可调度订单(按同系列诊断)", {
-              说明: "以下为队列内各单同系列阻塞情况",
-              platName: this.platName,
-              队列长度: this.queue.length,
-              各系列正在报价数: Object.fromEntries(this.runningCountBySeries),
-              每系列并发上限: this._getSeriesConcurrencyLimit(),
-              blockedSummary
-            });
-          }
-          break;
+  /**
+   * 批量派出队列中所有可执行的订单
+   * 同步 while 循环：不断调用 findNextOrderToRun 直到无可执行订单
+   * 每个 orderHandle 完成后在 finally 中继续调用本方法唤醒下一轮
+   * 全部系列空闲时释放 isOfferRunning 标志
+   *
+   * 注意：若 isOfferRunning 为 false（如被 finally 释放）但有可派订单，
+   * 本方法会重新置 true，防止 handleNewOrder 误判调度器空闲而重复触发
+   * startProcessingQueue（其内部 runningCountBySeries.clear() 会导致计数错乱）
+   */
+  _dispatchBatch() {
+    if (!this.isRunning) return;
+    if (!this.isOfferRunning) {
+      this.isOfferRunning = true;
+    }
+    while (this.isRunning) {
+      const next = this.findNextOrderToRun();
+      if (!next) {
+        if (this.queue.length > 0) {
+          const blockedSummary = this.queue.map(order => ({
+            订单号: order.order_number,
+            系列: this.getSeriesKey(order),
+            同系列调度结论: this._buildSeriesDelaySummary(order)
+          }));
+          console.warn("队列暂无可调度订单(按同系列诊断)", {
+            说明: "以下为队列内各单同系列阻塞情况",
+            platName: this.platName,
+            队列长度: this.queue.length,
+            各系列正在报价数: Object.fromEntries(this.runningCountBySeries),
+            每系列并发上限: this._getSeriesConcurrencyLimit(),
+            blockedSummary
+          });
         }
-        const { order, index } = next;
-        this.queue.splice(index, 1);
-        const sk = this.getSeriesKey(order);
+        break;
+      }
+      const { order, index } = next;
+      this.queue.splice(index, 1);
+      const sk = this.getSeriesKey(order);
+      this.runningCountBySeries.set(
+        sk,
+        (this.runningCountBySeries.get(sk) || 0) + 1
+      );
+      const p = this.orderHandle(order);
+      p.finally(() => {
         this.runningCountBySeries.set(
           sk,
-          (this.runningCountBySeries.get(sk) || 0) + 1
+          Math.max(0, (this.runningCountBySeries.get(sk) || 0) - 1)
         );
-        const p = this.orderHandle(order);
-        p.finally(() => {
-          this.runningCountBySeries.set(
-            sk,
-            Math.max(0, (this.runningCountBySeries.get(sk) || 0) - 1)
-          );
-          tryStartOne();
-        });
+        this._dispatchBatch();
+      });
+    }
+    const allIdle = [...this.runningCountBySeries.values()].every(
+      c => c === 0
+    );
+    // 当所有系列都空闲时，无论当前队列中是否还有「暂时不可执行」的订单，
+    // 都认为本轮调度已经结束，释放 isOfferRunning 标记，
+    // 以便后续新订单到来时可以重新触发队列启动，避免队列进入“假运行”阻塞状态。
+    if (allIdle) {
+      if (this.queue.length > 0) {
+        console.warn(
+          "当前无执行中的报价任务，但队列中仍有未满足执行条件的订单，等待下一轮调度",
+          this.queue
+        );
       }
-      const allIdle = [...this.runningCountBySeries.values()].every(
-        c => c === 0
-      );
-      // 当所有系列都空闲时，无论当前队列中是否还有「暂时不可执行」的订单，
-      // 都认为本轮调度已经结束，释放 isOfferRunning 标记，
-      // 以便后续新订单到来时可以重新触发队列启动，避免队列进入“假运行”阻塞状态。
-      if (allIdle) {
-        if (this.queue.length > 0) {
-          console.warn(
-            "当前无执行中的报价任务，但队列中仍有未满足执行条件的订单，等待下一轮调度",
-            this.queue
-          );
-        }
-        this.isOfferRunning = false;
-      }
-    };
-
-    tryStartOne();
+      this.isOfferRunning = false;
+    }
   }
 
   /**
@@ -860,6 +952,11 @@ export default class BaseOfferQueue {
    */
   stop() {
     this.isRunning = false;
+    // 清理拉单定时器，防止停止后仍触发拉单
+    if (this._fetchTimer) {
+      clearTimeout(this._fetchTimer);
+      this._fetchTimer = null;
+    }
     console.warn("主动停止订单自动报价队列");
   }
 
