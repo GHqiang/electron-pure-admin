@@ -1,7 +1,7 @@
 // 订单获取基类
 // 提取所有平台订单获取的公共逻辑
 
-import { mockDelay, sendWxPusherMessage } from "@/utils/utils.js";
+import { mockDelay, sendWxPusherMessage, formatErrInfo } from "@/utils/utils.js";
 import Logger from "../logger.js";
 import { dictTable } from "@/store/dictTable";
 const dictStore = dictTable();
@@ -76,12 +76,39 @@ export default class BaseOrderFetcher {
         order.is_confirm == 2
       ) {
         // 猎人平台且需要确认订单的，先确认订单，再发送事件
-        await this.platformAdapter.confirmOrder(
-          {
-            order_number: order.order_number
-          },
-          { logger }
-        );
+        // 确认失败时重试3次，仍失败则微信推送提醒
+        let confirmSuccess = false;
+        const maxConfirmRetries = 3;
+        for (let attempt = 1; attempt <= maxConfirmRetries; attempt++) {
+          try {
+            await this.platformAdapter.confirmOrder(
+              {
+                order_number: order.order_number
+              },
+              { logger }
+            );
+            confirmSuccess = true;
+            break;
+          } catch (confirmError) {
+            logger.warnSave(
+              `确认接单第${attempt}次失败`,
+              { error: formatErrInfo(confirmError), order }
+            );
+            if (attempt < maxConfirmRetries) {
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+          }
+        }
+        if (!confirmSuccess) {
+          sendWxPusherMessage({
+            app_name: order.appName,
+            orderInfo: order,
+            msgType: 5,
+            failReason: `猎人平台确认接单失败，已重试${maxConfirmRetries}次，请手动处理`,
+            transferTip: "请检查猎人平台该订单是否需要手动确认接单"
+          }).catch(() => {});
+          // 确认失败不阻断出票，订单继续走后续流程
+        }
       }
       // 测试模式下，不发送事件，不启动ACK机制
       if (!this.isTestOrder) {
@@ -152,7 +179,7 @@ export default class BaseOrderFetcher {
                 orderInfo: order,
                 msgType: 11,
                 transferTip: analysis
-              });
+              }).catch(() => {});
             }
           }, 5000);
 
