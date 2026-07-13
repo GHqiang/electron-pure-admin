@@ -106,6 +106,15 @@ export default class PlatCommon {
           order_id: id,
           inx: 1
         });
+      } else if (plat_name === "piaosheng") {
+        console.warn("票圣准备接单", { orderId: id });
+        await this.startDeliver({ plat_name, orderId: id });
+        await mockDelay(1);
+        unlockRes = await this.unlockSeat({
+          plat_name,
+          order_id: id,
+          inx: 1
+        });
       }
       this.logger.infoSave("订单首次解锁座位完成");
       return unlockRes;
@@ -127,7 +136,8 @@ export default class PlatCommon {
         haha: [3, 3],
         yinghuasuan: [3, 3],
         shoutu: [3, 3],
-        mahua: [3, 3]
+        mahua: [3, 3],
+        piaosheng: [3, 3]
       };
       unlockRes = await trial(
         inx => this.unlockSeat({ ...params, inx }),
@@ -166,6 +176,10 @@ export default class PlatCommon {
           orderUUID
         };
       } else if (plat_name === "mahua") {
+        params = {
+          orderId
+        };
+      } else if (plat_name === "piaosheng") {
         params = {
           orderId
         };
@@ -243,6 +257,19 @@ export default class PlatCommon {
         }
         return {
           msg: "麻花订单无需解锁"
+        };
+      } else if (plat_name === "piaosheng") {
+        if (!this.order.lockseat) {
+          // 获取锁座信息
+          const res = await PLAT_API_OBJ[plat_name].queryOrderInfo({
+            getOrderId: order_id
+          });
+          let buySeats = res?.rtnData?.buySeats;
+          this.logger.infoSave("票圣接单后获取座位信息返回", res);
+          this.order.lockseat = buySeats?.split(",").join(" ");
+        }
+        return {
+          msg: "票圣订单无需解锁"
         };
         // const result = await PLAT_API_OBJ[plat_name].getIsUnlock({
         //   orderId: order_id
@@ -595,6 +622,46 @@ export default class PlatCommon {
           }
         ]
       };
+    } else if (plat_name === "piaosheng") {
+      const blob = await generateTicketImage({ ...this.order, qrcode });
+      const fileUrl = await uploadBlobImage({
+        blob,
+        url: "https://openapi.piaosheng.top/api/user-server/user/common/img/uploadAndIdentify",
+        params: {},
+        plat_name,
+        logger
+      });
+      if (!fileUrl) {
+        logger.infoSave("票圣获取取票码图片失败,需手动上传");
+        sendWxPusherMessage({
+          orderInfo: this.order,
+          transferTip: "票圣获取取票码图片失败,需手动上传",
+          failReason: "票圣获取取票码图片失败,需手动上传"
+        });
+        return { code: 1, msg: "票圣获取取票码图片失败,需手动上传" };
+      }
+      params = {
+        getOrderId: order_id,
+        imgInfo: [
+          {
+            url: fileUrl,
+            info: qrcode,
+            code: qrcode.split("|")?.[1] || "",
+            ticketPassword: "",
+            getTicketType: 0,
+            maySeats: lockseat.split(" ").map(item => ({
+              show: true,
+              maySeats: item
+            })),
+            realmaySeats: lockseat.split(" ").map(item => ({
+              show: true,
+              maySeats: item
+            })),
+            seats: lockseat.split(" "),
+            entryType: 0
+          }
+        ]
+      };
     }
     try {
       logger.infoSave("提交出票码参数", params);
@@ -722,6 +789,12 @@ export default class PlatCommon {
           reason: "" // 出票失败原因
         };
       } else if (plat_name === "mahua") {
+        params = {
+          getOrderId: id,
+          note: "优惠库存不足",
+          reason: ""
+        };
+      } else if (plat_name === "piaosheng") {
         params = {
           getOrderId: id,
           note: "优惠库存不足",
