@@ -308,7 +308,8 @@ let setPlatFunObj = {
   haha: tokens.setHahaPlatToken,
   sheng: tokens.setShengPlatToken,
   shoutu: tokens.setShoutuPlatToken,
-  mahua: tokens.setMahuaPlatToken
+  mahua: tokens.setMahuaPlatToken,
+  piaosheng: tokens.setPiaoShengPlatToken
 };
 
 // 是否启动队列（该为false可进行测试用户）
@@ -380,7 +381,10 @@ const oneClickStart = () => {
         ElMessage.warning("有平台token未设置，请先设置再启动");
       }
     })
-    .catch(() => {});
+    .catch(error => {
+      console.error("一键启动队列失败", error);
+      ElMessage.error("一键启动队列失败，请检查控制台日志");
+    });
 };
 
 // 一键停止
@@ -527,12 +531,16 @@ const syncPlatExtraTokens = ({
 
 // 保存编辑
 const saveEdit = id => {
-  if (id === editingRowId.value) {
-    tableDataStore.saveEdit(editingRow.value);
-    const { platToken, platSubToken, userUUID, platName } = editingRow.value;
-    platToken && setPlatFunObj[platName](platToken);
-    syncPlatExtraTokens({ platName, platToken, platSubToken, userUUID });
-    editingRowId.value = null;
+  try {
+    if (id === editingRowId.value) {
+      tableDataStore.saveEdit(editingRow.value);
+      const { platToken, platSubToken, userUUID, platName } = editingRow.value;
+      platToken && setPlatFunObj[platName](platToken);
+      syncPlatExtraTokens({ platName, platToken, platSubToken, userUUID });
+      editingRowId.value = null;
+    }
+  } catch (error) {
+    ElMessage.error("保存编辑失败，请检查输入内容是否正确");
   }
 };
 // 删除
