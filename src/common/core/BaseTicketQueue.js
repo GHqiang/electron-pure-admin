@@ -189,15 +189,16 @@ export default class BaseTicketQueue {
       newOrders: order,
       sjc: +new Date()
     });
-    if (!this.isTestOrder) {
-      await this.logger.logUpload();
-    }
-    // 添加新订单到队列
+    // 添加新订单到队列（优先入队启动出票，日志上传不阻塞出票流程）
     this.queue.push(order);
 
     if (!this.isRunning) {
       this.isRunning = true;
       void this.startProcessingQueue();
+    }
+    // 日志上传异步执行，不阻塞出票
+    if (!this.isTestOrder) {
+      this.logger.logUpload().catch(() => {});
     }
   }
 
