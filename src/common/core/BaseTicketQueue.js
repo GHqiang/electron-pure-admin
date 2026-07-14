@@ -1,7 +1,12 @@
 // 出票队列基类
 // 提取所有平台出票队列的公共逻辑
 
-import { getCurrentTime, formatErrInfo, logUpload } from "@/utils/utils.js";
+import {
+  getCurrentTime,
+  formatErrInfo,
+  logUpload,
+  sendWxPusherMessage
+} from "@/utils/utils.js";
 import Logger from "../logger.js";
 import StrategyFactory from "@/common/autoTicket/buyTicket/index";
 import svApi from "@/api/sv-api";
@@ -190,7 +195,22 @@ export default class BaseTicketQueue {
       sjc: +new Date()
     });
     // 添加新订单到队列（优先入队启动出票，日志上传不阻塞出票流程）
+    // 入队前打戳，用于计算队列等待耗时
+    order._ticketEnqueueAt = Date.now();
     this.queue.push(order);
+
+    // 调度诊断：让排查时能看到"本单前面排了几单、调度器是否在跑"
+    this.logger.infoSave("出票订单入队-调度诊断", {
+      订单号: order.order_number,
+      调度路径: this.isRunning ? "排队等待" : "立即启动调度器",
+      队列长度: this.queue.length,
+      本单在队列位置: this.queue.length,
+      调度器是否运行: this.isRunning,
+      上一单订单号: this.prevOrderNumber || null,
+      说明: this.isRunning
+        ? "调度器运行中，本单排队等待，前单完成后自动取出"
+        : "调度器空闲，将立即启动 startProcessingQueue"
+    });
 
     if (!this.isRunning) {
       this.isRunning = true;
@@ -338,7 +358,12 @@ export default class BaseTicketQueue {
           }
         } else {
           logger.init(order);
+          const orderHandleStartAt = Date.now();
+          const queueWaitMs = order._ticketEnqueueAt
+            ? orderHandleStartAt - order._ticketEnqueueAt
+            : null;
           const res = await this.orderHandle(order, logger);
+          const ticketHandleDurationMs = Date.now() - orderHandleStartAt;
           this.prevOrderNumber = order.order_number;
 
           logger.infoSave(
@@ -346,8 +371,19 @@ export default class BaseTicketQueue {
             { res }
           );
 
+          logger.infoSave("出票链路耗时统计", {
+            订单号: order.order_number,
+            队列等待耗时ms: queueWaitMs,
+            出票执行耗时ms: ticketHandleDurationMs,
+            总耗时ms:
+              queueWaitMs != null ? ticketHandleDurationMs + queueWaitMs : null
+          });
+
           if (!this.isTestOrder) {
-            await this.saveTicketRecord(order, res, logger);
+            await this.saveTicketRecord(order, res, logger, {
+              ticket_queue_wait_ms: queueWaitMs,
+              ticket_handle_duration_ms: ticketHandleDurationMs
+            });
           } else {
             await logger.logUpload();
           }
@@ -365,10 +401,17 @@ export default class BaseTicketQueue {
    * @returns {Promise<Object>} 处理结果
    */
   async orderHandle(order, logger) {
+    const ticketHandleStartAt = Date.now();
+    const queueWaitMs = order._ticketEnqueueAt
+      ? ticketHandleStartAt - order._ticketEnqueueAt
+      : null;
     try {
-      logger.infoSave(
-        `订单开始出票，订单号-${order.order_number}，上个订单号-${this.prevOrderNumber}`
-      );
+      logger.infoSave(`订单开始出票`, {
+        订单号: order.order_number,
+        上个订单号: this.prevOrderNumber,
+        队列等待耗时ms: queueWaitMs,
+        队列前方剩余: this.queue.length
+      });
 
       if (this.isRunning) {
         const buyTicket = StrategyFactory.createSeatStrategy(
@@ -377,7 +420,35 @@ export default class BaseTicketQueue {
           this.isTestOrder
         );
 
+        // 超时提醒：字典 ticketHandleTimeout > 0 时启用
+        // 超时不中断 singleTicket，仅发微信告警提醒人工介入，队列继续等待结果
+        const ticketHandleTimeout =
+          Number(dictStore.dictInfo.ticketHandleTimeout) || 0;
+        let timeoutTimer = null;
+        if (ticketHandleTimeout > 0) {
+          timeoutTimer = setTimeout(() => {
+            logger.errorSave("订单出票超时提醒", {
+              订单号: order.order_number,
+              超时阈值ms: ticketHandleTimeout,
+              已耗时ms: Date.now() - ticketHandleStartAt,
+              影院: order.cinema_name
+            });
+            sendWxPusherMessage({
+              orderInfo: order,
+              failReason: `出票执行超时，已耗时${Date.now() - ticketHandleStartAt}ms（阈值${ticketHandleTimeout}ms）`,
+              transferTip: "出票超时提醒，请人工跟踪该订单状态"
+            }).catch(e => console.error("超时微信告警发送失败", e));
+          }, ticketHandleTimeout);
+        }
+
         const res = await buyTicket.singleTicket();
+        if (timeoutTimer) clearTimeout(timeoutTimer);
+
+        logger.infoSave("订单出票执行完成", {
+          订单号: order.order_number,
+          出票执行耗时ms: Date.now() - ticketHandleStartAt,
+          是否成功: !res?.err_msg
+        });
         // result: { profit, submitRes, qrcode, quan_code, card_id, cardNum, quanType, offerRule, mobile }
         return res;
       } else {
@@ -393,9 +464,10 @@ export default class BaseTicketQueue {
    * @param {Object} order - 订单信息
    * @param {Object} ticketRes - 出票结果 { submitRes, profit, qrcode, quan_code, card_id, cardNum, offerRule, mobile }
    * @param {Logger} logger - 日志实例
+   * @param {Object} [extra={}] - 额外耗时字段 { ticket_queue_wait_ms, ticket_handle_duration_ms }
    * @returns {Promise<void>}
    */
-  async saveTicketRecord(order, ticketRes, logger) {
+  async saveTicketRecord(order, ticketRes, logger, extra = {}) {
     try {
       const { userInfo: { rule, user_id } = {} } = platTokens() || {};
       const res = ticketRes || {};
@@ -549,7 +621,9 @@ export default class BaseTicketQueue {
         mobile,
         rule,
         offer_from: offerRule?.plat_rule_id ? 1 : 2, // 1-平台报价 2-机器报价
-        rule_id: offerRule?.plat_rule_id || offerRule?.offer_rule_id || ""
+        rule_id: offerRule?.plat_rule_id || offerRule?.offer_rule_id || "",
+        ticket_queue_wait_ms: extra.ticket_queue_wait_ms ?? null,
+        ticket_handle_duration_ms: extra.ticket_handle_duration_ms ?? null
       };
       const targetAppInfo = GET_APP_TYPE_LIST().find(item =>
         item.app_name_list.includes(serOrderInfo.app_name)
