@@ -144,6 +144,12 @@
               @click="handleFixLierenRule"
               >规则同步修复</el-button
             >
+            <el-button
+              type="warning"
+              :loading="batchSyncing"
+              @click="handleBatchSyncNewPlat"
+              >批量同步新平台</el-button
+            >
           </el-form-item>
         </el-form>
         <!-- 表格 -->
@@ -351,6 +357,77 @@
       </el-main>
     </el-container>
 
+    <!-- 批量同步新平台弹框 -->
+    <el-dialog
+      v-model="batchSyncDialogVisible"
+      title="批量同步新平台报价"
+      width="520px"
+      :close-on-click-modal="false"
+    >
+      <el-form :model="batchSyncForm" label-width="100px">
+        <el-form-item label="参考平台" required>
+          <el-select
+            v-model="batchSyncForm.sourcePlat"
+            placeholder="请选择参考平台"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="(keyValue, keyName) in orderFormObj"
+              :key="keyName"
+              :label="keyValue"
+              :value="keyName"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="目标平台" required>
+          <el-select
+            v-model="batchSyncForm.targetPlat"
+            placeholder="请选择目标平台"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="(keyValue, keyName) in orderFormObj"
+              :key="keyName"
+              :label="keyValue"
+              :value="keyName"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="筛选范围">
+          <el-radio-group v-model="batchSyncForm.filterType">
+            <el-radio value="all">不限（全部规则）</el-radio>
+            <el-radio value="current">
+              当前筛选：{{
+                formData.shadowLineName
+                  ? APP_LIST[formData.shadowLineName]
+                  : formData.app_type || "未选择"
+              }}
+            </el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-alert
+          type="warning"
+          :closable="false"
+          show-icon
+          style="margin-top: 8px"
+        >
+          <template #title>
+            将参考平台的报价<b>原样复制</b>到目标平台，仅处理启用/仅报价状态、已有参考平台但无目标平台的规则
+          </template>
+        </el-alert>
+      </el-form>
+      <template #footer>
+        <el-button @click="batchSyncDialogVisible = false">取消</el-button>
+        <el-button
+          type="primary"
+          :loading="batchSyncing"
+          @click="confirmBatchSyncPlat"
+        >
+          开始同步
+        </el-button>
+      </template>
+    </el-dialog>
+
     <RuleDialog
       ref="sfcDialogRef"
       :dialogTitle="dialogTitle"
@@ -430,6 +507,7 @@ const handleCheckLierenRuleSync = async () => {
 };
 
 const fixing = ref(false);
+const batchSyncing = ref(false);
 const handleFixLierenRule = async () => {
   fixing.value = true;
   try {
@@ -460,6 +538,69 @@ const handleFixLierenRule = async () => {
     console.warn("规则同步修复异常", error);
   } finally {
     fixing.value = false;
+  }
+};
+
+// 批量同步新平台报价
+const batchSyncDialogVisible = ref(false);
+const batchSyncForm = reactive({
+  sourcePlat: "lieren",
+  targetPlat: "",
+  filterType: "current"
+});
+
+const handleBatchSyncNewPlat = () => {
+  batchSyncForm.filterType =
+    formData.shadowLineName || formData.app_type ? "current" : "all";
+  batchSyncForm.targetPlat = "";
+  batchSyncDialogVisible.value = true;
+};
+
+const confirmBatchSyncPlat = async () => {
+  const { sourcePlat, targetPlat, filterType } = batchSyncForm;
+  if (!sourcePlat || !targetPlat) {
+    ElMessage.warning("请选择参考平台和目标平台");
+    return;
+  }
+  if (sourcePlat === targetPlat) {
+    ElMessage.warning("参考平台和目标平台不能相同");
+    return;
+  }
+  batchSyncing.value = true;
+  try {
+    const params = {
+      sourcePlatName: sourcePlat,
+      targetPlatName: targetPlat,
+      statusList: ["1", "3"],
+      rule
+    };
+    // "不限"时不传筛选参数，全量查询
+    if (filterType === "current") {
+      if (formData.app_type) params.appType = formData.app_type;
+      if (formData.shadowLineName) params.appName = formData.shadowLineName;
+    }
+    const res = await svApi.batchAddPlatOffer(params);
+    if (res.code === 1) {
+      const d = res.data || {};
+      ElMessage({
+        type: "success",
+        message: `同步完成：更新${d.updatedCount || 0}条，跳过${d.skippedCount || 0}条（已有），跳过${d.noSourceCount || 0}条（无参考平台）`,
+        duration: 6000
+      });
+      batchSyncDialogVisible.value = false;
+      searchData();
+    } else {
+      ElMessage({
+        type: "error",
+        message: res.msg || "同步失败",
+        duration: 5000
+      });
+    }
+  } catch (err) {
+    console.error("批量同步异常", err);
+    ElMessage.error("批量同步异常，请查看控制台");
+  } finally {
+    batchSyncing.value = false;
   }
 };
 

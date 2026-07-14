@@ -85,6 +85,9 @@ const deleteRule = params => axios.get("/svpi/ruleRecord/delete", { params });
 // 批量删除规则
 const batchDeleteRule = params =>
   axios.post("/svpi/ruleRecord/batchdelete", params);
+// 批量追加平台报价
+const batchAddPlatOffer = params =>
+  axios.post("/svpi/ruleRecord/batchAddPlatOffer", params);
 // 添加规则
 const addRuleRecord = params => axios.post("/svpi/ruleRecord/add", params);
 // 修改规则
@@ -313,6 +316,7 @@ const svApi = {
   queryRuleList,
   deleteRule,
   batchDeleteRule,
+  batchAddPlatOffer,
   addRuleRecord,
   updateRuleRecord,
   addRuleOperationLog,
