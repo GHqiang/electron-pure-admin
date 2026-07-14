@@ -22,8 +22,8 @@ const tokens = platTokens();
 const CHANNEL_ID = "OP0002";
 const LOGIN_PATH = "/api/user-server/user/dev/login";
 const PROD_BASE = "https://openapi.piaosheng.top";
-const TOKEN_STORAGE_KEY = "piaoShengToken";
-const TOKEN_TIME_STORAGE_KEY = "piaoShengTokenFetchedAt";
+const TOKEN_STORAGE_KEY = "newPiaoShengToken";
+const TOKEN_TIME_STORAGE_KEY = "newPiaoShengTokenFetchedAt";
 /** token 有效期 2 小时 */
 const TOKEN_MAX_AGE = 2 * 60 * 60 * 1000;
 /** 建议每 30 分钟维护一次，避免临近过期 */
