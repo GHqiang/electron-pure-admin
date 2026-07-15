@@ -59,7 +59,8 @@ export default class OrderManage {
           retailerCode: "MX",
           mobile,
           seatId,
-          json: true
+          json: true,
+          wanda_token: session_id
         };
         this.logger.infoSave(`第${attempt + 1}次锁座参数`, params);
         lockRes = await this.appApi.createOrder(params);
