@@ -694,7 +694,8 @@ export default class PlatCommon {
     }
   }
   // 申请换座
-  async applyChangeSeat({ order_number, supplierCode, plat_name, logger }) {
+  async applyChangeSeat({ logger }) {
+    const { plat_name, order_number, supplierCode } = this.order;
     let params;
     try {
       // 省平台：仅 changeSeat === 0 时允许申请换座
