@@ -52,15 +52,17 @@ export default class OrderManage {
       }
 
       // Step 1: 锁座（直接调 appApi.createOrder，不走 seatManage 的额外重试）
-      let lockRes;
+      let lockRes, params;
       try {
-        lockRes = await this.appApi.createOrder({
+        params = {
           dId,
           retailerCode: "MX",
           mobile,
           seatId,
           json: true
-        });
+        };
+        this.logger.infoSave(`第${attempt + 1}次锁座参数`, params);
+        lockRes = await this.appApi.createOrder(params);
       } catch (error) {
         this.logger.errorSave(`第${attempt + 1}次锁座异常`, {
           error: formatErrInfo(error)
