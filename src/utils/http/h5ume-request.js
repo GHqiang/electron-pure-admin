@@ -17,6 +17,9 @@ import {
 } from "@/utils/utils";
 // 机器登录用户信息
 import { platTokens } from "@/store/platTokens";
+// 字典表配置
+import { dictTable } from "@/store/dictTable";
+const dictStore = dictTable();
 const {
   userInfo: { user_id, rule }
 } = platTokens();
@@ -391,11 +394,12 @@ const getUrl = (token, url, params) => {
   return `${url}/1.0/?jsv=2.6.0&appKey=${appKey}&t=${t}&sign=${sign}&api=${api}&v=1.0&type=originaljson&timeout=20000&dataType=json`;
 };
 
-const noProxyUrlList = [
-  "cinema.getcinemas", // 调试时可注释
+// 默认不走代理的接口关键字列表（兜底，字典表为空或异常时使用）
+const DEFAULT_NO_PROXY_KEYWORDS = [
+  "cinema.getcinemas",
   // "auth.getsidbytid",
-  "film.gethotfilms",
-  "schedule.getschedules",
+  // "film.gethotfilms",
+  "seat.getseatmap",
   "seat.getseatmap",
   "seat.lockseats",
   "seat.unlockseats",
@@ -408,9 +412,35 @@ const noProxyUrlList = [
   "order.getorderlist",
   "order.getorderdetail"
 ];
-// 是否不需要代理
+
+/**
+ * 获取不走代理的接口关键字列表
+ * 优先从字典表 dict_type='h5ume_no_proxy_keywords' 读取（逗号分隔字符串），
+ * 为空或读取失败时使用 DEFAULT_NO_PROXY_KEYWORDS 兜底
+ * @returns {string[]}
+ */
+const getNoProxyKeywords = () => {
+  try {
+    const raw = dictStore.dictInfo?.h5ume_no_proxy_keywords;
+    if (raw && typeof raw === "string" && raw.trim()) {
+      return raw
+        .split(",")
+        .map(s => s.trim())
+        .filter(Boolean);
+    }
+  } catch (e) {
+    console.warn(
+      "[h5ume] 读取 no_proxy_keywords 字典配置异常，使用默认值",
+      e.message
+    );
+  }
+  return DEFAULT_NO_PROXY_KEYWORDS;
+};
+
+// 是否不需要代理（动态读取字典表配置）
 const checkUrlNoNeedProxy = url => {
-  return noProxyUrlList.some(item => url?.toLowerCase().includes(item));
+  const keywords = getNoProxyKeywords();
+  return keywords.some(item => url?.toLowerCase().includes(item));
 };
 const createAxios = ({ app_name, timeout = 20 }) => {
   let logger = new Logger({ logType: 6 });
