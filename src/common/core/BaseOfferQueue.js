@@ -8,8 +8,12 @@ import { dynamicPrice, getCurrentTime } from "@/utils/utils.js";
 import svApi from "@/api/sv-api.js";
 import { platTokens } from "@/store/platTokens.js";
 import { dictTable } from "@/store/dictTable";
+import { extractThirdPartyIds } from "./extractThirdPartyIds.js";
 const dictStore = dictTable();
 const tokens = platTokens();
+
+// 导出供单测使用
+export { extractThirdPartyIds };
 
 /**
  * 报价队列基类
@@ -865,12 +869,20 @@ export default class BaseOfferQueue {
       // 这里补写一条成功报价记录到 offer_record 表，确保出票流程能查到
       if (timeoutFlag?.value && res) {
         log.infoSave("提交报价在超时后完成，补写成功报价记录");
-        await this.addOrderHandleRecord(order, { res, offerRule }, logger, {
-          offer_from: 2
-        });
+        await this.addOrderHandleRecord(
+          order,
+          { res, offerRule, cinemaInfo: result?.cinemaInfo, cacheHit: result?.cacheHit },
+          logger,
+          { offer_from: 2 }
+        );
       }
 
-      return { res, offerRule };
+      return {
+        res,
+        offerRule,
+        cinemaInfo: result?.cinemaInfo,
+        cacheHit: result?.cacheHit
+      };
     } catch (error) {
       log.errorSave("单个报价异常", { error });
       return { offerRule };
@@ -987,6 +999,15 @@ export default class BaseOfferQueue {
         offer_duration: extra.offer_duration ?? null,
         queue_wait_ms: extra.queue_wait_ms ?? null
       };
+      // 提取第三方 ID 集合（跨订单复用）：仅成功报价且解析出 cinemaInfo 时写入
+      const thirdPartyIds = offerResult?.cinemaInfo
+        ? extractThirdPartyIds(offerResult.cinemaInfo, serOrderInfo.app_name)
+        : null;
+      if (thirdPartyIds) {
+        serOrderInfo.third_party_ids = JSON.stringify(thirdPartyIds);
+      }
+      // 缓存命中来源（0=未命中，1=本地缓存命中，2=远端缓存命中），用于统计缓存命中率
+      serOrderInfo.cache_hit = offerResult?.cacheHit ?? 0;
       // 仅平台报价时才上送 plat_rule_id
       if (extra.offer_from == 1 && extra.plat_rule_id) {
         serOrderInfo.plat_rule_id = extra.plat_rule_id;

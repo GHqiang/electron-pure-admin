@@ -20,19 +20,12 @@
 import {
   mockDelay,
   formatErrInfo,
-  getCinemaLoginInfoList,
   sendWxPusherMessage,
-  subDecimal,
-  getTargetCinemaCommon,
-  formatTimeStrByLma,
-  findMostRepeatedChars,
-  getMovieInfoFromFilmName,
-  isNextDay,
-  getPreviousDay
+  subDecimal
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index";
-import { GET_APP_INFO, NO_FEE_PLAT_LIST } from "@/common/constant";
+import { NO_FEE_PLAT_LIST } from "@/common/constant";
 import Logger from "@/common/logger";
 import { platTokens } from "@/store/platTokens";
 import BaseBuyTicket from "@/common/core/BaseBuyTicket.js";
@@ -211,11 +204,8 @@ export default class LmaBuyTicket extends BaseBuyTicket {
 
       if (this.currentParamsInx === 0) {
         // 首次出票：获取影院、电影、场次、座位信息
-        // 使用cinemaManage获取购票前影院信息
-        const cinemaInfoRes = await this.cinemaManage.getBuyPrevCinemaInfo({
-          cinema_code,
-          appFlag
-        });
+        // 使用cinemaManage获取购票前影院信息（复用 getMovieInfo 的完整缓存逻辑）
+        const cinemaInfoRes = await this.cinemaManage.getBuyPrevCinemaInfo();
         if (cinemaInfoRes?.error) {
           this.logger.errorSave("获取购票前影院信息异常", {
             error: cinemaInfoRes?.error
@@ -228,115 +218,10 @@ export default class LmaBuyTicket extends BaseBuyTicket {
         }
         cinema_id = cinemaInfoRes.cinema_id;
         city_id = cinemaInfoRes.city_id;
-
-        const movieDataRes = await this.cinemaManage.getMoviePlayInfo({
-          cinema_id
-        });
-        if (!movieDataRes || !movieDataRes.film?.length) {
-          this.logger.errorSave("获取影院放映列表异常", {
-            error: movieDataRes?.error
-          });
-          const transferParams = await this.orderManage.transferOrder(
-            null,
-            this.currentParamsList[this.currentParamsInx]?.lmaToken
-          );
-          return { transferParams };
-        }
-        let movie_data = movieDataRes.film || [];
-
-        let movieInfo = getMovieInfoFromFilmName({
-          filmName: film_name,
-          movieData: movie_data?.map(item => ({
-            ...item,
-            filmName: item.title
-          }))
-        });
-        if (!movieInfo) {
-          this.logger.errorSave("获取目标影片信息失败", {
-            film_name,
-            movie_data
-          });
-          const transferParams = await this.orderManage.transferOrder(
-            null,
-            this.currentParamsList[this.currentParamsInx]?.lmaToken
-          );
-          return { transferParams };
-        }
-        short_code = movieInfo?.short_code;
-
-        let playDateListRes = await this.cinemaManage.getMoviePlayDate({
-          cinema_id,
-          short_code
-        });
-        let playDateList = playDateListRes || [];
-        if (!playDateList?.length) {
-          this.logger.errorSave("获取影院放映日期异常", {
-            error: playDateListRes?.error
-          });
-          const transferParams = await this.orderManage.transferOrder(
-            null,
-            this.currentParamsList[this.currentParamsInx]?.lmaToken
-          );
-          return { transferParams };
-        }
-
-        start_day = show_time.split(" ")[0];
-        start_time = show_time.split(" ")[1].slice(0, 5);
-
-        if (isNextDay(start_day, start_time, "lma")) {
-          start_day = getPreviousDay(start_day);
-        }
-
-        let targetDate = playDateList?.find(
-          item => formatTimeStrByLma(item.date) === start_day
-        );
-        if (!targetDate) {
-          this.logger.errorSave("匹配影片放映日期失败", {
-            playDateList,
-            start_day
-          });
-          const transferParams = await this.orderManage.transferOrder(
-            null,
-            this.currentParamsList[this.currentParamsInx]?.lmaToken
-          );
-          return { transferParams };
-        }
-
-        let showList = targetDate?.session || [];
-        let targetShowList = showList.filter(
-          item => item.start_time === start_time
-        );
-        let targetShow = targetShowList[0];
-        if (targetShowList.length > 1) {
-          targetShowList = targetShowList.map(item => {
-            const repeatedCharsResult = findMostRepeatedChars(
-              item.screen_name,
-              hall_name,
-              "hall_name"
-            );
-            return {
-              ...item,
-              ...repeatedCharsResult
-            };
-          });
-          targetShowList = targetShowList.sort(
-            (a, b) => b.similarity - a.similarity
-          );
-          targetShow = targetShowList[0];
-          this.logger.infoSave("同一时间多场次", { targetShowList });
-        }
-
-        if (!targetShow) {
-          this.logger.errorSave("匹配影片放映场次失败", {
-            showList,
-            start_time
-          });
-          const transferParams = await this.orderManage.transferOrder(
-            null,
-            this.currentParamsList[this.currentParamsInx]?.lmaToken
-          );
-          return { transferParams };
-        }
+        short_code = cinemaInfoRes.short_code;
+        show_id = cinemaInfoRes.show_id;
+        start_day = cinemaInfoRes.start_day;
+        start_time = cinemaInfoRes.start_time;
 
         // 按照券库存进行登录信息排序
         if (offerRule.offer_type == 1) {
@@ -366,7 +251,6 @@ export default class LmaBuyTicket extends BaseBuyTicket {
           currentParamsList: this.currentParamsList
         });
         this.curPhone = phone;
-        show_id = targetShow.session_id;
 
         // 使用seatManage获取座位布局
         const seatDataRes = await this.seatManage.getSeatLayout({

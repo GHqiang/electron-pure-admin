@@ -20,9 +20,6 @@
 import {
   formatErrInfo,
   sendWxPusherMessage,
-  getTargetCinemaCommon,
-  findMostRepeatedChars,
-  getMovieInfoFromFilmName,
   subDecimal,
   trial,
   mockDelay,
@@ -172,45 +169,21 @@ export default class H5UmeBuyTicket extends BaseBuyTicket {
     }
     try {
       if (this.currentParamsInx === 0) {
-        // 首次出票：获取影院、电影、场次、座位信息
-        // 2、获取目标城市影院列表
-        let cityCinemaList = await this.cinemaManage.getCityCinemaList();
-        if (!cityCinemaList?.length) {
-          this.logger.errorSave("获取城市影院列表失败");
-          const transferParams = await this.orderManage.transferOrder(null);
-          return { transferParams };
-        }
-        let cinemaList =
-          cityCinemaList?.map(item => item.cinemaList)?.flat() || [];
-        if (!cinemaList?.length) {
-          this.logger.errorSave("获取全部影院列表失败", {
-            cityCinemaList
+        // 首次出票：获取影院、影片、场次信息（复用 getBuyPrevCinemaInfo 的缓存逻辑）
+        const cinemaInfoRes = await this.cinemaManage.getBuyPrevCinemaInfo();
+        if (cinemaInfoRes?.error) {
+          this.logger.errorSave("获取购票前影院信息异常", {
+            error: cinemaInfoRes?.error
           });
           const transferParams = await this.orderManage.transferOrder(null);
           return { transferParams };
         }
-        // 3、获取目标影院
-        let targetCinema = cinemaList.find(
-          item => cinema_code && item.cinemaCode === cinema_code
-        );
-        if (!targetCinema) {
-          targetCinema = getTargetCinemaCommon({
-            app_name: appFlag,
-            plat_cinema_code: cinema_code,
-            cinema_list: cinemaList
-          });
-        }
-        if (!targetCinema) {
-          this.logger.errorSave("获取目标影院失败", {
-            cinema_name,
-            cinemaList,
-            appFlag,
-            city_name
-          });
-          const transferParams = await this.orderManage.transferOrder(null);
-          return { transferParams };
-        }
-        cinemaLinkId = targetCinema.cinemaLinkId;
+        cinemaLinkId = cinemaInfoRes.cinemaLinkId;
+        targetShow = cinemaInfoRes.targetShow;
+        hallId = cinemaInfoRes.hallId;
+        scheduleId = cinemaInfoRes.scheduleId;
+        scheduleKey = cinemaInfoRes.scheduleKey;
+
         if (cinemaLinkId) {
           let isUseQuan = offerRule?.offer_type == "1";
           let auto_quan_info;
@@ -293,87 +266,7 @@ export default class H5UmeBuyTicket extends BaseBuyTicket {
         // 记录当前使用的手机号，出票失败消息会带上（最后失败的手机号）
         this.order.last_fail_phone = this.curPhone || "";
 
-        // 4、获取目标影院放映列表
-        const movie_data = await this.cinemaManage.getMoviePlayInfo({
-          cinemaLinkId
-        });
-
-        if (!movie_data?.length) {
-          this.logger.errorSave("获取目标影院放映列表失败");
-          const transferParams = await this.orderManage.transferOrder(null);
-          return { transferParams };
-        }
-        this.logger.infoSave("获取影院放映信息成功");
-        // 5、获取目标影片信息
-        let movieInfo = getMovieInfoFromFilmName({
-          filmName: film_name,
-          movieData: movie_data?.map(item => ({
-            ...item,
-            filmName: item.filmName
-          }))
-        });
-        if (!movieInfo) {
-          this.logger.errorSave("获取目标影片信息失败", {
-            film_name,
-            movie_data
-          });
-          const transferParams = await this.orderManage.transferOrder(null);
-          return { transferParams };
-        }
-        // 6、获取目标影片的放映日期
-        const { filmId } = movieInfo;
-        const playDateList = await this.cinemaManage.getMoviePlayDate({
-          cinemaLinkId,
-          filmId
-        });
-        if (!playDateList?.length) {
-          const transferParams = await this.orderManage.transferOrder(null);
-          return { transferParams };
-        }
-        let targetShowInfo = playDateList?.find(item =>
-          item.schedules?.some(
-            itemA => +new Date(+itemA.showTime) === +new Date(show_time)
-          )
-        );
-        // 获取某个放映日期的场次列表
-        const showList = targetShowInfo?.schedules || [];
-        let start_time = show_time.split(" ")[1].slice(0, 5);
-        // 解决同一时间多场次问题
-        let targetShowList = showList.filter(
-          itemA => +new Date(+itemA.showTime) === +new Date(show_time)
-        );
-        let targetShow = targetShowList[0];
-        if (targetShowList.length > 1) {
-          targetShowList = targetShowList.map(item => {
-            const repeatedCharsResult = findMostRepeatedChars(
-              item.hallName,
-              hall_name,
-              "hall_name"
-            );
-            return {
-              ...item,
-              ...repeatedCharsResult
-            };
-          });
-          targetShowList = targetShowList.sort(
-            (a, b) => b.similarity - a.similarity
-          );
-          targetShow = targetShowList[0];
-          this.logger.infoSave("同一时间多场次", { targetShowList });
-        }
-        if (!targetShow) {
-          this.logger.errorSave("匹配影片放映日期失败", {
-            showList,
-            start_time
-          });
-          const transferParams = await this.orderManage.transferOrder(null);
-          return { transferParams };
-        }
-        this.logger.infoSave("出票时获取电影放映信息", { targetShow });
-        // 8、获取座位布局
-        hallId = targetShow.hallId;
-        scheduleId = targetShow.scheduleId;
-        scheduleKey = targetShow.scheduleKey;
+        // 8、获取座位布局（cinemaLinkId/hallId/scheduleId/scheduleKey 已由 getBuyPrevCinemaInfo 返回）
         const areaRes = await this.seatManage.getSeatLayout({
           cinemaLinkId,
           hallId,

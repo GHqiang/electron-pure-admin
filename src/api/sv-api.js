@@ -42,6 +42,9 @@ const addOfferRecord = params => axios.post("/svpi/offerRecord/add", params);
 // 更新报价记录
 const updateOfferRecord = params =>
   axios.post("/svpi/offerRecord/update", params);
+// 查询第三方 ID 缓存（跨订单复用，命中则跳过城市/影院/影片/场次查询链）
+const getCachedThirdPartyIds = params =>
+  axios.get("/svpi/offerRecord/cached-ids", { params, timeout: 5 * 1000 });
 // 查询出票记录
 const queryTicketList = params =>
   axios.get("/svpi/ticketRecord/query", { params, timeout: 60 * 1000 });
@@ -302,6 +305,7 @@ const svApi = {
   queryOfferInfo,
   addOfferRecord,
   updateOfferRecord,
+  getCachedThirdPartyIds,
   queryTicketList,
   queryUsedQuanList,
   addTicketRecord,

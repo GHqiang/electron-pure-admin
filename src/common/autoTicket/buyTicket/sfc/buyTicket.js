@@ -26,11 +26,6 @@
 import {
   formatErrInfo,
   sendWxPusherMessage,
-  getTargetCinemaCommon,
-  findMostRepeatedChars,
-  getMovieInfoFromFilmName,
-  isNextDay,
-  getPreviousDay,
   subDecimal,
   trial,
   getOfferRuleById,
@@ -54,8 +49,6 @@ import {
   sortLoginByCardPhones,
   sortLoginByQuanPhones
 } from "../common/loginHelper.js";
-import { resolveCinema } from "../common/cinemaResolver.js";
-import { resolveMovieAndShow } from "../common/movieResolver.js";
 import { getLockSeatRetryConfig } from "../common/retryConfig.js";
 import { dictTable } from "@/store/dictTable";
 const dictStore = dictTable();
@@ -192,43 +185,19 @@ class SfcBuyTicket extends BaseBuyTicket {
       this.logger.infoSave("一键买票待下单信息", item);
 
       if (this.currentParamsInx === 0) {
-        const cityListRes = await this.cinemaManage.getCityList();
-        this.cityList = cityListRes || [];
-        if (!this.cityList?.length) {
-          this.logger.errorSave("获取城市列表异常", { cityListRes });
-          return { transferParams: await transferWithUnlock({}) };
-        }
-        city_id = this.cityList.find(
-          item => item.name?.indexOf(city_name) !== -1
-        )?.id;
-
-        const cinemaListRes = await this.cinemaManage.getCityCinemaList({
-          city_id
-        });
-        const cinemaList = cinemaListRes?.cinemaList || [];
-        if (!cinemaList?.length) {
-          this.logger.errorSave("获取城市影院列表异常", {
-            error: cinemaListRes?.error
+        // 首次出票：获取影院、影片、场次信息（复用 getMovieInfo 的缓存逻辑）
+        const cinemaInfoRes = await this.cinemaManage.getBuyPrevCinemaInfo();
+        if (cinemaInfoRes?.error) {
+          this.logger.errorSave("获取购票前影院信息异常", {
+            error: cinemaInfoRes?.error
           });
           return { transferParams: await transferWithUnlock({}) };
         }
-        // 使用公共工具解析影院
-        const cinemaResult = resolveCinema({
-          appFlag,
-          plat_cinema_code: cinema_code,
-          city_name,
-          cinemaList
-        });
-        cinema_id = cinemaResult?.id;
-        if (!cinema_id) {
-          this.logger.errorSave("获取目标影院失败", {
-            cinema_name,
-            cinemaList,
-            appFlag,
-            city_name
-          });
-          return { transferParams: await transferWithUnlock({}) };
-        }
+        city_id = cinemaInfoRes.city_id;
+        cinema_id = cinemaInfoRes.cinema_id;
+        show_id = cinemaInfoRes.show_id;
+        start_day = cinemaInfoRes.start_day;
+        start_time = cinemaInfoRes.start_time;
 
         // 使用公共工具按卡/券排序登录信息
         let isUseQuan = offerRule?.offer_type == "1";
@@ -287,43 +256,6 @@ class SfcBuyTicket extends BaseBuyTicket {
         this.logger.infoSave(`首次出票手机号-${this.currentPhone}`);
         // 记录当前使用的手机号，出票失败消息会带上（最后失败的手机号）
         this.order.last_fail_phone = this.currentPhone || "";
-        const movieDataRes = await this.cinemaManage.getMoviePlayInfo({
-          city_id,
-          cinema_id
-        });
-        const movie_data = movieDataRes?.movieData || [];
-        if (!movie_data?.length) {
-          this.logger.errorSave("获取影院放映列表失败", {
-            error: movieDataRes?.error
-          });
-          return { transferParams: await transferWithUnlock(unlockInfo()) };
-        }
-
-        // 使用公共工具解析影片和场次（自动根据 appFlag 获取系列配置）
-        const movieShowResult = resolveMovieAndShow({
-          film_name,
-          hall_name,
-          show_time,
-          appFlag, // 工具会自动通过 GET_APP_INFO(appFlag) 获取 app_type_code 并匹配系列配置
-          movieData: movie_data.map(m => ({ ...m, filmName: m.movie_name }))
-          // showDataAdapter 可选，如果系列配置已满足需求则无需传入
-        });
-        if (!movieShowResult) {
-          this.logger.errorSave("获取目标影片/场次信息失败", {
-            film_name,
-            movie_data
-          });
-          return { transferParams: await transferWithUnlock(unlockInfo()) };
-        }
-        const {
-          movieInfo,
-          targetShow,
-          start_day: resolvedStartDay,
-          start_time: resolvedStartTime
-        } = movieShowResult;
-        start_day = resolvedStartDay;
-        start_time = resolvedStartTime;
-        show_id = targetShow.show_id;
 
         const sessionId =
           this.currentParamsList[this.currentParamsInx]?.session_id;

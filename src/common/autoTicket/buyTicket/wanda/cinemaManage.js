@@ -24,7 +24,8 @@ import {
 } from "@/utils/utils";
 import { APP_API_OBJ } from "@/common/index";
 import svApi from "@/api/sv-api";
-import { platTokens } from "@/store/platTokens";
+import { getCachedThirdPartyIdsWithCache } from "@/common/core/thirdPartyIdsCache";
+import { platTokens } from "@/store/platTokens";
 const {
   userInfo: { rule }
 } = platTokens();
@@ -49,10 +50,39 @@ export default class WandaCinemaManage {
    */
   async getBuyPrevCinemaInfo({ flag, cardQuanManage }) {
     try {
+      this.cacheHit = 0;
       const { appFlag } = this;
       const { city_name, cinema_code, cinema_name, film_name, show_time } =
         this.order;
       let cinemaInfo = {};
+
+      // ======== 第三方 ID 缓存复用：命中则跳过城市/影院/影片查询，仅场次实时查 ========
+      const cachedIds = await this.tryGetCachedThirdPartyIds();
+      if (cachedIds) {
+        const cachedInfo = this.buildCinemaInfoFromCache(cachedIds);
+        if (cachedInfo) {
+          // 出票场景仍需卡券排序（卡券可用性分钟级变化，不复用）
+          if (flag != 1) {
+            await this.cinemaLinkCardHandle(cachedInfo, cardQuanManage);
+            cachedInfo.currentParamsList = this.currentParamsList;
+          }
+          // 场次时效性强，命中缓存后仍实时查询；失败则回退完整查询链
+          const showOk = await this.fillShowInfoFromApi(cachedInfo);
+          if (showOk) {
+            this.logger.infoSave("命中第三方ID缓存，跳过城市/影院/影片查询链", {
+              cachedIds
+            });
+            this.cacheHit = this.cacheSource;
+            this.cinemaInfo = cachedInfo;
+            return cachedInfo;
+          }
+          this.logger.warnSave(
+            "缓存命中但场次实时匹配失败，回退完整查询链",
+            { cachedIds }
+          );
+        }
+      }
+      // ======== 缓存未命中或回退，走原完整逻辑 ========
 
       // 1、获取城市列表 → 匹配城市ID
       const cityList = await this.getCityList();
@@ -128,6 +158,7 @@ export default class WandaCinemaManage {
       cinemaInfo.show_id = targetShow.showtimeId;
       cinemaInfo.member_price = targetShow.salesPrice; // 会员价 可能会不准确，需要从座位里获取最高价格
       this.logger.infoSave("获取电影购票前信息", cinemaInfo);
+      this.cinemaInfo = cinemaInfo; // 供 offerManage.buildSuccessResponse 透传，写入 third_party_ids（跨订单复用）
       return cinemaInfo;
     } catch (error) {
       this.logger.errorSave("获取购票前的影院信息异常", formatErrInfo(error));
@@ -374,7 +405,7 @@ export default class WandaCinemaManage {
       const targetFilm = showtimeFilmInf.find(f => f.filmId === film_id);
       if (!targetFilm) {
         this.logger.errorSave("该影院没有此影片的排期", { cinema_id, film_id });
-        return [];
+        return null;
       }
 
       // 5、在该影片的排期中，按日期+realtime+影厅匹配场次
@@ -382,7 +413,7 @@ export default class WandaCinemaManage {
       console.log("万达目标影片场次列表", dateInfos);
 
       let dateInfo = dateInfos.find(d => d.date === Number(show_date));
-      if (!dateInfo) return [];
+      if (!dateInfo) return null;
       let showList = dateInfo.showtimesInf?.showtimeList || [];
 
       let targetShow = this._findTargetShow(showList);
@@ -391,11 +422,17 @@ export default class WandaCinemaManage {
         return targetShow;
       }
 
-      // 次日重试
-      show_date = getPreviousDay(show_date);
+      // 次日重试：show_date 为 YYYYMMDD 格式，需转为 YYYY-MM-DD 供 getPreviousDay 解析，再转回 YYYYMMDD 与 dateInfos.date 数字匹配
+      const stdDate =
+        show_date.slice(0, 4) +
+        "-" +
+        show_date.slice(4, 6) +
+        "-" +
+        show_date.slice(6, 8);
+      show_date = getPreviousDay(stdDate).replaceAll("-", "");
       this.logger.warnSave("首次匹配场次失败，尝试次日重试", { show_date });
       dateInfo = dateInfos.find(d => d.date === Number(show_date));
-      if (!dateInfo) return [];
+      if (!dateInfo) return null;
       showList = dateInfo.showtimesInf?.showtimeList || [];
       targetShow = this._findTargetShow(showList);
       if (targetShow) {
@@ -406,8 +443,8 @@ export default class WandaCinemaManage {
       if (!targetShow) {
         this.logger.errorSave("匹配万达影片放映场次失败", {
           cinema_id,
-          showDay,
-          showTime,
+          show_date,
+          show_time,
           hall_name
         });
         return null;
@@ -468,6 +505,81 @@ export default class WandaCinemaManage {
         error: formatErrInfo(error)
       });
       return { error: formatErrInfo(error) };
+    }
+  }
+
+  // ==================== 第三方 ID 缓存复用 ====================
+
+  /**
+   * 查询第三方 ID 缓存（跨订单复用）
+   * 按 app_name + cinema_code + film_name + show_time 查询 N 天内的报价记录（N 由字典表配置，默认 7 天）
+   * @returns {Promise<Object|null>} 缓存的第三方 ID 集合，未命中或异常返回 null
+   */
+  async tryGetCachedThirdPartyIds() {
+    try {
+      const { app_name, cinema_code, film_name, show_time } = this.order;
+      // 本地进程内 LRU 缓存（6 小时 TTL、容量 2000，参数由字典表配置）
+      // 命中本地缓存直接返回，省掉对后端的 HTTP 调用；未命中再查后端，命中结果写本地缓存
+      const { ids, source } = await getCachedThirdPartyIdsWithCache(
+        { app_name, cinema_code, film_name, show_time },
+        () =>
+          svApi.getCachedThirdPartyIds({
+            app_name,
+            cinema_code,
+            film_name,
+            show_time
+          })
+      );
+      this.cacheSource = source; // 1=本地命中, 2=远端命中, 0=未命中
+      return ids;
+    } catch (error) {
+      this.logger.errorSave("查询第三方ID缓存异常", {
+        error: formatErrInfo(error)
+      });
+      this.cacheSource = 0;
+      return null;
+    }
+  }
+
+  /**
+   * 用缓存的 ID 构造 cinemaInfo（跳过城市/影院/影片查询链）
+   * wanda 的 cinema_code = cinema_id = storeId
+   * @param {Object} cachedIds - 缓存的第三方 ID 集合
+   * @returns {Object|null} cinemaInfo，缺少关键字段时返回 null
+   */
+  buildCinemaInfoFromCache(cachedIds) {
+    if (!cachedIds?.cinema_id) return null;
+    return {
+      city_id: cachedIds.city_id || null,
+      cinema_id: cachedIds.cinema_id,
+      cinema_code: cachedIds.cinema_id,
+      cinema_name: this.order.cinema_name,
+      film_id: cachedIds.film_id || null,
+      _fromCache: true
+    };
+  }
+
+  /**
+   * 命中缓存后仅实时查询场次（场次时效性强，不复用）
+   * 复用 getTargetShow 逻辑，失败返回 false 触发回退
+   * @param {Object} cinemaInfo - 已填充 ID 的 cinemaInfo
+   * @returns {Promise<boolean>} 场次匹配成功返回 true
+   */
+  async fillShowInfoFromApi(cinemaInfo) {
+    try {
+      if (!cinemaInfo.cinema_id || !cinemaInfo.film_id) return false;
+      const targetShow = await this.getTargetShow(cinemaInfo);
+      if (!targetShow) return false;
+      cinemaInfo.targetShow = targetShow;
+      cinemaInfo.media = targetShow.filmList?.[0]?.version;
+      cinemaInfo.show_id = targetShow.showtimeId;
+      cinemaInfo.member_price = targetShow.salesPrice;
+      return true;
+    } catch (error) {
+      this.logger.errorSave("缓存命中后实时查询场次异常", {
+        error: formatErrInfo(error)
+      });
+      return false;
     }
   }
 }

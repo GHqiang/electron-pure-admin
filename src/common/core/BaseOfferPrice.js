@@ -162,14 +162,22 @@ export default class BaseOfferPrice {
    * @param {number} endPrice - 最终报价
    * @param {Object} offerRule - 报价规则
    * @param {string} orderNumber - 订单号
-   * @returns {Object} 成功响应 { endPrice, offerRule, order_number }
+   * @returns {Object} 成功响应 { endPrice, offerRule, order_number, cinemaInfo, cacheHit }
+   *   - cinemaInfo: 报价过程中解析出的影院/影片/场次信息，透传给 addOrderHandleRecord 用于写入 third_party_ids（跨订单复用）
+   *     优先取 this.cinemaManage.cinemaInfo（各系列 cinemaManage 解析成功后赋值），兜底 this.cinemaInfo
+   *   - cacheHit: 报价时命中来源（0=未命中，1=本地缓存命中，2=远端缓存命中），透传给 addOrderHandleRecord 写入 offer_record.cache_hit
+   *     优先取 this.cinemaManage.cacheHit（各系列 cinemaManage 在缓存命中时赋值），兜底 this.cacheHit
    */
   buildSuccessResponse(endPrice, offerRule, orderNumber) {
     this.logger?.logUpload();
+    const cinemaInfo = this.cinemaManage?.cinemaInfo || this.cinemaInfo || null;
+    const cacheHit = this.cinemaManage?.cacheHit ?? this.cacheHit ?? 0;
     return {
       endPrice,
       offerRule,
-      order_number: orderNumber
+      order_number: orderNumber,
+      cinemaInfo,
+      cacheHit
     };
   }
 

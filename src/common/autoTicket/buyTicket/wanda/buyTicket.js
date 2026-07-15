@@ -12,7 +12,8 @@ import {
   mockDelay,
   getOfferRuleById,
   sendWxPusherMessage,
-  subDecimal
+  subDecimal,
+  formatErrInfo
 } from "@/utils/utils";
 import Logger from "@/common/logger";
 import svApi from "@/api/sv-api";

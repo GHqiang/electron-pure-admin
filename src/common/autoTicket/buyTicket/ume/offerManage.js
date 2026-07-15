@@ -757,72 +757,92 @@ class getUmeOfferPrice extends BaseOfferPrice {
       cinema_name
     } = item;
     try {
-      // 1、获取城市影院列表
-      let cityCinemaListRes = await this.cinemaManage.getCityCinemaList();
-      const cityCinemaList = cityCinemaListRes?.cityCinemaList || [];
-      if (!cityCinemaList.length) {
-        this.logger.errorSave("获取城市影院列表失败", {
-          error: cityCinemaListRes?.error
+      this.cinemaManage.cacheHit = 0;
+      // ======== 第三方 ID 缓存复用（完整版）：命中则跳过城市影院列表 + 影片列表 + 影片名匹配 ========
+      let cinemaCode, cinemaLinkId, filmUniqueId;
+      let cacheHit = 0;
+      const cachedIds = await this.cinemaManage.tryGetCachedThirdPartyIds();
+      if (cachedIds?.cinemaCode && cachedIds?.cinemaLinkId && cachedIds?.filmUniqueId) {
+        cinemaCode = cachedIds.cinemaCode;
+        cinemaLinkId = cachedIds.cinemaLinkId;
+        filmUniqueId = cachedIds.filmUniqueId;
+        cacheHit = this.cinemaManage.cacheSource;
+        this.logger.infoSave("命中第三方ID缓存，跳过城市影院列表+影片列表+影片名匹配", {
+          cachedIds
         });
-        return null;
-      }
-      let cinemaList =
-        cityCinemaList?.map(item => item.cinemaList)?.flat() || [];
-      console.log("获取全部影院列表返回", cinemaList);
+      } else {
+        // 1、获取城市影院列表
+        let cityCinemaListRes = await this.cinemaManage.getCityCinemaList();
+        const cityCinemaList = cityCinemaListRes?.cityCinemaList || [];
+        if (!cityCinemaList.length) {
+          this.logger.errorSave("获取城市影院列表失败", {
+            error: cityCinemaListRes?.error
+          });
+          return null;
+        }
+        let cinemaList =
+          cityCinemaList?.map(item => item.cinemaList)?.flat() || [];
+        console.log("获取全部影院列表返回", cinemaList);
 
-      // 2、获取目标影院
-      let targetCinema = cinemaList.find(
-        item => cinema_code && item.cinemaCode === cinema_code
-      );
-      if (!targetCinema) {
-        const { getTargetCinemaCommon } = await import("@/utils/utils");
-        targetCinema = getTargetCinemaCommon({
-          app_name: appFlag,
-          plat_cinema_code: cinema_code,
-          cinema_list: cinemaList
-        });
+        // 2、获取目标影院
+        let targetCinema = cinemaList.find(
+          item => cinema_code && item.cinemaCode === cinema_code
+        );
+        if (!targetCinema) {
+          const { getTargetCinemaCommon } = await import("@/utils/utils");
+          targetCinema = getTargetCinemaCommon({
+            app_name: appFlag,
+            plat_cinema_code: cinema_code,
+            cinema_list: cinemaList
+          });
+        }
+        if (!targetCinema) {
+          this.logger.errorSave("获取目标影院失败", {
+            cinemaList,
+            cinema_code,
+            cinema_name,
+            app_name: appFlag,
+            city_name
+          });
+          return null;
+        }
+        cinemaCode = targetCinema.cinemaCode;
+        cinemaLinkId = targetCinema.cinemaLinkId;
       }
-      if (!targetCinema) {
-        this.logger.errorSave("获取目标影院失败", {
-          cinemaList,
-          cinema_code,
-          cinema_name,
-          app_name: appFlag,
-          city_name
+      // ======== 缓存未命中，走原逻辑结束 ========
+
+      if (!cacheHit) {
+        // 3、获取影院放映信息用于拿会员价
+        const movieDataRes = await this.cinemaManage.getMoviePlayInfo({
+          cinemaCode,
+          cinemaLinkId
         });
-        return null;
-      }
-      // 3、获取影院放映信息用于拿会员价
-      const { cinemaCode, cinemaLinkId } = targetCinema;
-      const movieDataRes = await this.cinemaManage.getMoviePlayInfo({
-        cinemaCode,
-        cinemaLinkId
-      });
-      const movie_data = movieDataRes?.movieData || [];
-      if (!movie_data?.length) {
-        this.logger.errorSave("获取影院放映信息失败", {
-          error: movieDataRes?.error
+        const movie_data = movieDataRes?.movieData || [];
+        if (!movie_data?.length) {
+          this.logger.errorSave("获取影院放映信息失败", {
+            error: movieDataRes?.error
+          });
+          return null;
+        }
+        // 4、获取目标影片信息
+        let movieInfo = getMovieInfoFromFilmName({
+          filmName: film_name,
+          movieData: movie_data?.map(item => ({
+            ...item,
+            filmName: item.filmName
+          }))
         });
-        return null;
+        if (!movieInfo) {
+          this.logger.errorSave("获取目标影片信息失败", {
+            film_name,
+            movie_data
+          });
+          return null;
+        }
+        console.log("movieInfo", movieInfo, film_name);
+        filmUniqueId = movieInfo.filmUniqueId;
       }
-      // 4、获取目标影片信息
-      let movieInfo = getMovieInfoFromFilmName({
-        filmName: film_name,
-        movieData: movie_data?.map(item => ({
-          ...item,
-          filmName: item.filmName
-        }))
-      });
-      if (!movieInfo) {
-        this.logger.errorSave("获取目标影片信息失败", {
-          film_name,
-          movie_data
-        });
-        return null;
-      }
-      console.log("movieInfo", movieInfo, film_name);
       // 5、获取目标影片的放映日期
-      const { filmUniqueId } = movieInfo;
       let start_day = show_time.split(" ")[0];
       // 获取某个放映日期的场次列表
       const showListRes = await this.cinemaManage.getMoviePlayTime({
@@ -893,11 +913,92 @@ class getUmeOfferPrice extends BaseOfferPrice {
           });
         }
         if (!targetShow) {
-          this.logger.errorSave("匹配影片放映场次失败", {
-            showListRes1,
-            show_time
-          });
-          return null;
+          // 缓存命中跳过了 getMoviePlayInfo，场次匹配失败时回退：重查影片列表+影片名匹配获取新 filmUniqueId
+          if (cacheHit) {
+            this.logger.warnSave(
+              "缓存命中但场次匹配失败，回退重查影片列表+影片名匹配",
+              { cachedIds, film_name }
+            );
+            cacheHit = 0;
+            const movieDataRes = await this.cinemaManage.getMoviePlayInfo({
+              cinemaCode,
+              cinemaLinkId
+            });
+            const movie_data = movieDataRes?.movieData || [];
+            if (movie_data?.length) {
+              const movieInfo = getMovieInfoFromFilmName({
+                filmName: film_name,
+                movieData: movie_data?.map(it => ({
+                  ...it,
+                  filmName: it.filmName
+                }))
+              });
+              if (movieInfo) {
+                filmUniqueId = movieInfo.filmUniqueId;
+                // 用新 filmUniqueId 重新查场次
+                const retryShowListRes = await this.cinemaManage.getMoviePlayTime({
+                  cinemaCode,
+                  cinemaLinkId,
+                  filmUniqueId,
+                  showDate: start_day
+                });
+                const retryShowList = retryShowListRes?.moviePlayTime || [];
+                let retryTargetList = retryShowList?.filter(
+                  it => +new Date(it.showDateTime) == +new Date(show_time)
+                );
+                targetShow = retryTargetList?.[0];
+                if (retryTargetList?.length > 1) {
+                  retryTargetList = retryTargetList.map(it => {
+                    const r = findMostRepeatedChars(
+                      it.hallName,
+                      hall_name,
+                      "hall_name"
+                    );
+                    return { ...it, ...r };
+                  });
+                  retryTargetList = retryTargetList.sort(
+                    (a, b) => b.similarity - a.similarity
+                  );
+                  targetShow = retryTargetList[0];
+                }
+                if (!targetShow) {
+                  // 次日重试
+                  const retryShowListRes1 = await this.cinemaManage.getMoviePlayTime({
+                    cinemaCode,
+                    cinemaLinkId,
+                    filmUniqueId,
+                    showDate: getPreviousDay(start_day)
+                  });
+                  const retryShowList1 = retryShowListRes1?.moviePlayTime || [];
+                  let retryTargetList1 = retryShowList1?.filter(
+                    it => +new Date(it.showDateTime) == +new Date(show_time)
+                  );
+                  targetShow = retryTargetList1?.[0];
+                  if (retryTargetList1?.length > 1) {
+                    retryTargetList1 = retryTargetList1.map(it => {
+                      const r = findMostRepeatedChars(
+                        it.hallName,
+                        hall_name,
+                        "hall_name"
+                      );
+                      return { ...it, ...r };
+                    });
+                    retryTargetList1 = retryTargetList1.sort(
+                      (a, b) => b.similarity - a.similarity
+                    );
+                    targetShow = retryTargetList1[0];
+                  }
+                }
+              }
+            }
+          }
+          if (!targetShow) {
+            this.logger.errorSave("匹配影片放映场次失败", {
+              showListRes1,
+              show_time
+            });
+            return null;
+          }
         }
       }
       this.logger.infoSave("获取电影放映信息从而获取会员价", {
@@ -947,13 +1048,17 @@ class getUmeOfferPrice extends BaseOfferPrice {
         // 获取最多座位价格
         mostSeatPrice = this.getMostSeatPrice(seat_data, areaList);
       }
-      return {
+      const result = {
         ...targetShow,
         maxSeatPrice,
         mostSeatPrice,
         cinemaCode,
-        cinemaLinkId
+        cinemaLinkId,
+        filmUniqueId
       };
+      this.cinemaInfo = result; // 供 buildSuccessResponse 透传，写入 third_party_ids（跨订单复用）
+      this.cinemaManage.cacheHit = cacheHit;
+      return result;
     } catch (error) {
       this.logger.errorSave("获取当前场次电影信息异常", {
         error: formatErrInfo(error)

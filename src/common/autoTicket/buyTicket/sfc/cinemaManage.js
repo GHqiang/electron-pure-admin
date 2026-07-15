@@ -22,6 +22,8 @@ import {
   getPreviousDay
 } from "@/utils/utils";
 import { APP_API_OBJ } from "@/common/index";
+import svApi from "@/api/sv-api";
+import { getCachedThirdPartyIdsWithCache } from "@/common/core/thirdPartyIdsCache";
 
 export default class SfcCinemaManage {
   constructor(order, logger) {
@@ -84,67 +86,6 @@ export default class SfcCinemaManage {
   }
 
   /**
-   * 获取购票前的影院信息（出票流程中使用）
-   * @param {Object} params - 参数对象
-   * @param {string|number} params.cinema_code - 影院编码
-   * @param {string} params.city_name - 城市名称
-   * @returns {Promise<Object>} { cinema_id, city_id } 或 { error }
-   */
-  async getBuyPrevCinemaInfo({ cinema_code, city_name }) {
-    try {
-      // 1. 获取城市列表
-      const cityList = await this.getCityList();
-      if (!cityList?.length) {
-        this.logger.errorSave("获取城市列表为空");
-        return { error: "获取城市列表为空" };
-      }
-
-      // 2. 根据城市名称获取城市ID
-      let city_id = cityList.find(
-        item => item.name.indexOf(city_name) !== -1
-      )?.id;
-      if (!city_id) {
-        this.logger.errorSave("获取城市ID失败", { city_name, cityList });
-        return { error: "获取城市ID失败" };
-      }
-
-      // 3. 获取城市影院列表
-      const cinemaListRes = await this.getCityCinemaList({ city_id });
-      const cinemaList = cinemaListRes?.cinemaList || [];
-      if (!cinemaList.length) {
-        this.logger.errorSave("获取城市影院列表异常", {
-          error: cinemaListRes?.error
-        });
-        return { error: cinemaListRes?.error || "获取城市影院列表为空" };
-      }
-
-      // 4. 根据影院编码匹配目标影院
-      let cinemaIdRes = getTargetCinemaCommon({
-        app_name: this.appFlag,
-        plat_cinema_code: cinema_code,
-        cinema_list: cinemaList
-      });
-      let cinema_id = cinemaIdRes?.id;
-      if (!cinema_id) {
-        this.logger.errorSave("获取目标影院失败", {
-          error: cinemaIdRes?.error,
-          cinemaList,
-          cinema_code
-        });
-        return { error: cinemaIdRes?.error || "获取目标影院失败" };
-      }
-
-      return {
-        cinema_id,
-        city_id
-      };
-    } catch (error) {
-      this.logger.errorSave("获取购票前影院信息异常", { error });
-      return { error: formatErrInfo(error) };
-    }
-  }
-
-  /**
    * 获取电影放映信息
    * @param {Object} data - 参数对象
    * @param {string|number} data.city_id - 城市ID
@@ -190,6 +131,7 @@ export default class SfcCinemaManage {
    */
   async getMovieInfo(item) {
     try {
+      this.cacheHit = 0; // 标记是否命中第三方ID缓存，供 buildSuccessResponse 读取
       // 1、获取城市列表拿到城市ID
       const {
         city_name,
@@ -201,48 +143,63 @@ export default class SfcCinemaManage {
         cinema_group,
         app_name
       } = item;
-      const cityList = await this.getCityList();
-      if (!cityList?.length) {
-        return null;
-      }
-      let city_id = cityList.find(
-        item => item.name.indexOf(city_name) !== -1
-      )?.id;
-      if (!city_id) {
-        this.logger.errorSave("获取城市ID失败", { city_name, cityList });
-        return null;
-      }
 
-      // 2、获取城市影院列表
-      let params = {
-        city_id: city_id
-      };
-      console.log("获取城市影院参数", params);
-      let res = await this.appApi.getCinemaList(params);
-      console.log("获取城市影院返回", res);
-      let cinemaList = res.data?.cinema_data || [];
-      cinemaList = cinemaList.map(itemA => ({
-        ...itemA,
-        cinemaId: itemA.id
-      }));
-
-      // 3、根据影院编码匹配目标影院
-      let cinemaIdRes = getTargetCinemaCommon({
-        app_name: this.appFlag,
-        plat_cinema_code: cinema_code,
-        cinema_list: cinemaList
-      });
-      let cinema_id = cinemaIdRes?.id;
-      if (!cinema_id) {
-        this.logger.errorSave("获取目标影院失败", {
-          error: cinemaIdRes?.error,
-          cinemaList,
-          cinema_name,
-          app_name,
-          city_name
+      // ======== 第三方 ID 缓存复用：命中则跳过城市/影院列表查询 ========
+      const cachedIds = await this.tryGetCachedThirdPartyIds();
+      let city_id, cinema_id;
+      let cacheHit = 0; // 跟踪缓存命中状态，成功返回前赋给 this.cacheHit
+      if (cachedIds?.city_id && cachedIds?.cinema_id) {
+        city_id = cachedIds.city_id;
+        cinema_id = cachedIds.cinema_id;
+        cacheHit = this.cacheSource;
+        this.logger.infoSave("命中第三方ID缓存，跳过城市/影院列表查询", {
+          cachedIds
         });
-        return null;
+      } else {
+        const cityList = await this.getCityList();
+        if (!cityList?.length) {
+          return null;
+        }
+        city_id = cityList.find(
+          item => item.name.indexOf(city_name) !== -1
+        )?.id;
+        if (!city_id) {
+          this.logger.errorSave("获取城市ID失败", { city_name, cityList });
+          return null;
+        }
+
+        // 2、获取城市影院列表
+        let params = {
+          city_id: city_id
+        };
+        console.log("获取城市影院参数", params);
+        let res = await this.appApi.getCinemaList(params);
+        console.log("获取城市影院返回", res);
+        let cinemaList = res.data?.cinema_data || [];
+        cinemaList = cinemaList.map(itemA => ({
+          ...itemA,
+          cinemaId: itemA.id
+        }));
+
+        // 3、根据影院编码匹配目标影院
+        let cinemaIdRes = getTargetCinemaCommon({
+          app_name: this.appFlag,
+          plat_cinema_code: cinema_code,
+          cinema_list: cinemaList
+        });
+        cinema_id = cinemaIdRes?.id;
+        if (!cinema_id) {
+          this.logger.errorSave("获取目标影院失败", {
+            error: cinemaIdRes?.error,
+            cinemaList,
+            cinema_name,
+            app_name,
+            city_name
+          });
+          return null;
+        }
       }
+      // ======== 缓存未命中，走原逻辑结束 ========
 
       // 4、获取影院放映信息拿到会员价
       const moviePlayInfo = await this.getMoviePlayInfo({
@@ -325,11 +282,77 @@ export default class SfcCinemaManage {
         city_id,
         cinema_id
       });
-      return { ...targetShow, city_id, cinema_id };
+      this.cinemaInfo = { ...targetShow, city_id, cinema_id }; // 供 offerManage.buildSuccessResponse 透传，写入 third_party_ids（跨订单复用）
+      this.cacheHit = cacheHit;
+      return this.cinemaInfo;
     } catch (error) {
       this.logger.errorSave("获取当前场次电影信息异常", {
         error: formatErrInfo(error)
       });
+      return null;
+    }
+  }
+
+  // 获取购票前的影院信息（出票流程中使用，复用 getMovieInfo 的缓存逻辑）
+  async getBuyPrevCinemaInfo() {
+    try {
+      const result = await this.getMovieInfo(this.order);
+      if (!result) {
+        return { error: "获取影院/影片/场次信息失败" };
+      }
+      const show_time = this.order.show_time;
+      let start_day = show_time.split(" ")[0];
+      let start_time = show_time.split(" ")[1].slice(0, 5);
+      if (isNextDay(start_day, start_time, "sfc")) {
+        start_day = getPreviousDay(start_day);
+      }
+      return {
+        city_id: result.city_id,
+        cinema_id: result.cinema_id,
+        show_id: result.show_id,
+        start_day,
+        start_time,
+        targetShow: result,
+        movieInfo: result
+      };
+    } catch (error) {
+      this.logger.errorSave("获取购票前影院信息异常", {
+        error: formatErrInfo(error)
+      });
+      return { error: formatErrInfo(error) };
+    }
+  }
+
+  // ==================== 第三方 ID 缓存复用 ====================
+
+  /**
+   * 查询第三方 ID 缓存（跨订单复用）
+   * 按 app_name + cinema_code + film_name + show_time 查询 N 天内的报价记录（N 由字典表配置，默认 7 天）
+   * SFC 为精简版：命中时仅跳过城市/影院列表查询，影片/场次仍实时查（getMoviePlayInfo 一次调用即获影片+场次）
+   * @returns {Promise<Object|null>} 缓存的第三方 ID 集合，未命中或异常返回 null
+   */
+  async tryGetCachedThirdPartyIds() {
+    try {
+      const { app_name, cinema_code, film_name, show_time } = this.order;
+      // 本地进程内 LRU 缓存（6 小时 TTL、容量 2000，参数由字典表配置）
+      // 命中本地缓存直接返回，省掉对后端的 HTTP 调用；未命中再查后端，命中结果写本地缓存
+      const { ids, source } = await getCachedThirdPartyIdsWithCache(
+        { app_name, cinema_code, film_name, show_time },
+        () =>
+          svApi.getCachedThirdPartyIds({
+            app_name,
+            cinema_code,
+            film_name,
+            show_time
+          })
+      );
+      this.cacheSource = source; // 1=本地命中, 2=远端命中, 0=未命中
+      return ids;
+    } catch (error) {
+      this.logger.errorSave("查询第三方ID缓存异常", {
+        error: formatErrInfo(error)
+      });
+      this.cacheSource = 0;
       return null;
     }
   }
