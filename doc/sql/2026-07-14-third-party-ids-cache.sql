@@ -25,7 +25,10 @@ ALTER TABLE offer_record_fail
   ADD COLUMN cache_hit TINYINT NOT NULL DEFAULT 0 COMMENT '报价时是否命中第三方ID缓存 0-未命中 1-本地命中 2-远端命中';
 
 -- 5. 复用查询索引（app_name + cinema_code + film_name + show_time）
---    show_time 取前 30 字符建索引，避免全长度索引过大
 --    查询频率：每单 1 次，日均 3 万+ 次，有索引下 <5ms
 ALTER TABLE offer_record
   ADD INDEX idx_cache_lookup (app_name, cinema_code, film_name, show_time(30));
+
+-- 6. offer_record_fail 同步加复用查询索引（失败单也参与缓存复用，UNION ALL 查询需要索引避免全表扫描）
+ALTER TABLE offer_record_fail
+  ADD INDEX idx_cache_lookup_fail (app_name, cinema_code, film_name, show_time);

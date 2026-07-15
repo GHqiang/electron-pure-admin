@@ -999,7 +999,7 @@ export default class BaseOfferQueue {
         offer_duration: extra.offer_duration ?? null,
         queue_wait_ms: extra.queue_wait_ms ?? null
       };
-      // 提取第三方 ID 集合（跨订单复用）：仅成功报价且解析出 cinemaInfo 时写入
+      // 提取第三方 ID 集合（跨订单复用）：成功/失败报价均可写入（失败单若已解析出影院/影片 ID 也可复用）
       const thirdPartyIds = offerResult?.cinemaInfo
         ? extractThirdPartyIds(offerResult.cinemaInfo, serOrderInfo.app_name)
         : null;

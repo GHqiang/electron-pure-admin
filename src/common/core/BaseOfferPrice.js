@@ -146,7 +146,10 @@ export default class BaseOfferPrice {
   /**
    * 构建错误响应
    * @param {Object} offerRule - 报价规则（可选）
-   * @returns {Object} 错误响应 { err_msg, err_info, endPrice: null, offerRule }
+   * @returns {Object} 错误响应 { err_msg, err_info, endPrice: null, offerRule, cinemaInfo, cacheHit }
+   *   - cinemaInfo: 失败前可能已解析出影院/影片信息，透传给 addOrderHandleRecord 写入 third_party_ids（跨订单复用）
+   *     失败发生在 getEndMatchOfferRule 之前时为 null，发生在之后时可能有值
+   *   - cacheHit: 缓存命中来源（0=未命中，1=本地缓存命中，2=远端缓存命中）
    */
   buildErrorResponse(offerRule) {
     const { err_msg, err_info } = this.logger?.getLastErrMsgAndInfo() || {
@@ -154,7 +157,10 @@ export default class BaseOfferPrice {
       err_info: ""
     };
     this.logger?.logUpload();
-    return { err_msg, err_info, endPrice: null, offerRule };
+    // 失败前可能已解析出 cinemaInfo（如影院匹配成功但影片/规则/价格失败），透传用于写入 third_party_ids
+    const cinemaInfo = this.cinemaManage?.cinemaInfo || this.cinemaInfo || null;
+    const cacheHit = this.cinemaManage?.cacheHit ?? this.cacheHit ?? 0;
+    return { err_msg, err_info, endPrice: null, offerRule, cinemaInfo, cacheHit };
   }
 
   /**
