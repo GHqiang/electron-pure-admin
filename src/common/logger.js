@@ -76,6 +76,18 @@ export default class Logger {
     }
   }
 
+  /**
+   * 清空指定时间点之前的日志
+   * @param {number} timestamp - 毫秒时间戳，早于此时间的日志将被移除
+   */
+  clearLogsBefore(timestamp) {
+    if (!timestamp) return;
+    this.logList = this.logList.filter(item => {
+      const logTime = new Date(item.opera_time).getTime();
+      return logTime >= timestamp;
+    });
+  }
+
   getLastErrMsg() {
     if (this._lastErrCache) return this._lastErrCache.message;
     const errInfoObj = this.logList

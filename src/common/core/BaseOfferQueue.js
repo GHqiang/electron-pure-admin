@@ -703,9 +703,8 @@ export default class BaseOfferQueue {
             new Promise(resolve =>
               setTimeout(() => {
                 timeoutFlag.value = true;
-                logger.infoSave(
-                  `订单报价处理超时，超过${offerHandleTimeout}ms 未完成`
-                );
+                timeoutFlag.timeoutAt = Date.now();
+                logger.errorSave("订单报价处理超时");
                 resolve();
               }, offerHandleTimeout)
             )
@@ -775,8 +774,13 @@ export default class BaseOfferQueue {
       });
 
       // 超时检查：getEndOfferPrice 耗时过长已超时，不再继续后续提交流程
+      // 清空超时时间点之前的日志，保留后半段（真实 err_msg 等）单独上传
       if (timeoutFlag?.value) {
-        log.infoSave("getEndOfferPrice 完成后检测到已超时，跳过提交报价");
+        log.clearLogsBefore(timeoutFlag.timeoutAt);
+        log.infoSave("getEndOfferPrice 完成后检测到已超时，跳过提交报价", {
+          result
+        });
+        log.logUpload();
         return {
           offerRule: result?.offerRule,
           err_msg: "报价处理超时，已跳过提交"
@@ -841,7 +845,9 @@ export default class BaseOfferQueue {
 
       // 最终防线：提交前再次检查超时标志
       if (timeoutFlag?.value) {
+        log.clearLogsBefore(timeoutFlag.timeoutAt);
         log.infoSave("提交报价前检测到已超时，放弃提交");
+        log.logUpload();
         return { offerRule, err_msg: "报价处理超时，已放弃提交" };
       }
 
@@ -871,7 +877,12 @@ export default class BaseOfferQueue {
         log.infoSave("提交报价在超时后完成，补写成功报价记录");
         await this.addOrderHandleRecord(
           order,
-          { res, offerRule, cinemaInfo: result?.cinemaInfo, cacheHit: result?.cacheHit },
+          {
+            res,
+            offerRule,
+            cinemaInfo: result?.cinemaInfo,
+            cacheHit: result?.cacheHit
+          },
           logger,
           { offer_from: 2 }
         );
