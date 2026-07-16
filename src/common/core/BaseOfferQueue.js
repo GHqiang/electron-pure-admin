@@ -288,12 +288,23 @@ export default class BaseOfferQueue {
    * @returns {boolean}
    */
   _isOrderDeadlineRunnable(order, now = Date.now()) {
-    const skipCheck =
-      this.platformAdapter?.config?.features?.skipOfferEndTimeCheck === true;
+    const skipCheck = this._shouldSkipOfferEndTimeCheck();
     if (skipCheck) return true;
     const minOfferHandleEndTime = dictStore.dictInfo.minOfferHandleEndTime;
     if (!order.offer_end_time) return true;
     return order.offer_end_time - now > minOfferHandleEndTime;
+  }
+
+  /**
+   * 是否跳过报价截止时间校验
+   * 基类行为：读取 platformAdapter.config.features.skipOfferEndTimeCheck
+   * 子类（如 MayiOfferQueue）可覆盖此方法，根据字典表动态决定
+   * @returns {boolean} true=跳过截止校验，false=按 offer_end_time 校验
+   */
+  _shouldSkipOfferEndTimeCheck() {
+    return (
+      this.platformAdapter?.config?.features?.skipOfferEndTimeCheck === true
+    );
   }
 
   /**
@@ -433,8 +444,7 @@ export default class BaseOfferQueue {
   handleNewOrder(item, oldOrder = null) {
     // 增加报价截止时间判断，小于等于阈值则不处理
     // 部分平台（如蚂蚁旧版）通过 skipOfferEndTimeCheck 跳过该判断，保持兼容
-    const skipCheck =
-      this.platformAdapter?.config?.features?.skipOfferEndTimeCheck === true;
+    const skipCheck = this._shouldSkipOfferEndTimeCheck();
     if (!skipCheck) {
       if (
         item.offer_end_time &&
@@ -555,23 +565,51 @@ export default class BaseOfferQueue {
 
   /**
    * 从队列中找第一个可执行的订单：未过期且其系列当前运行数未达上限
+   * 过期订单（offer_end_time 已过校验阈值）会被主动从队列移除，避免长期堆积污染扫描。
+   * 跳过截止校验的平台（如蚂蚁配置 mayiOfferDefaultTimeoutMs 前的场景）不做过期判断。
    * @returns {{ order: Object, index: number } | null}
    */
   findNextOrderToRun() {
     const minOfferHandleEndTime = dictStore.dictInfo.minOfferHandleEndTime;
     const now = Date.now();
     // 某些平台（如蚂蚁）offer_end_time 不准，通过 skipOfferEndTimeCheck 跳过过期判断
-    const skipCheck =
-      this.platformAdapter?.config?.features?.skipOfferEndTimeCheck === true;
+    const skipCheck = this._shouldSkipOfferEndTimeCheck();
+    let removedExpired = 0;
     for (let i = 0; i < this.queue.length; i++) {
       const order = this.queue[i];
-      if (!skipCheck && order.offer_end_time - now <= minOfferHandleEndTime) {
+      // 与其他检查点一致：offer_end_time 为空（异常情况）时不做过期判断
+      if (
+        !skipCheck &&
+        order.offer_end_time &&
+        order.offer_end_time - now <= minOfferHandleEndTime
+      ) {
+        // 主动出队：记录日志并从队列移除，避免下次扫描重复判断
+        // 不写失败记录（入口校验拦截的订单未真正报价，写 record_fail 会污染统计）
+        console.warn(
+          `调度时移除已过期订单 order_number=${order.order_number} offer_end_time=${
+            order.offer_end_time
+          } remaining_ms=${order.offer_end_time - now}`,
+          { platName: this.platName }
+        );
+        this.queue.splice(i, 1);
+        i--;
+        removedExpired++;
         continue;
       }
       const sk = this.getSeriesKey(order);
       const seriesLimit = this._getSeriesConcurrencyLimit(sk);
       if ((this.runningCountBySeries.get(sk) || 0) >= seriesLimit) continue;
+      if (removedExpired > 0) {
+        console.warn(
+          `本轮调度主动移除 ${removedExpired} 个过期订单，platName=${this.platName}`
+        );
+      }
       return { order, index: i };
+    }
+    if (removedExpired > 0) {
+      console.warn(
+        `本轮调度主动移除 ${removedExpired} 个过期订单，platName=${this.platName}`
+      );
     }
     return null;
   }
@@ -673,11 +711,10 @@ export default class BaseOfferQueue {
         // 报价超时：平台级硬编码 > 系列级 bigChainSeriesTimeout > 全局 offerHandleTimeout > 默认 15s
         const offerHandleTimeout = this._getSeriesTimeout(sk);
         // 某些平台（如蚂蚁）offer_end_time 不准，通过 skipOfferEndTimeCheck 跳过过期判断
-        const skipDeadlineCheck =
-          this.platformAdapter?.config?.features?.skipOfferEndTimeCheck ===
-          true;
+        const skipDeadlineCheck = this._shouldSkipOfferEndTimeCheck();
         if (
           !skipDeadlineCheck &&
+          order.offer_end_time &&
           order.offer_end_time - new Date().getTime() <=
             minOfferHandleEndTime
         ) {
@@ -918,8 +955,7 @@ export default class BaseOfferQueue {
       // 二次校验报价截止时间：orderHandle 入口检查后经历了 _checkPlatformAlreadyQuoted /
       // getEndOfferPrice / dynamicPrice / getRuleId 等耗时环节，到 submitOffer 前可能已过期
       // 若已过期则放弃提交，避免平台返回超时失败浪费调用
-      const skipDeadlineCheck =
-        this.platformAdapter?.config?.features?.skipOfferEndTimeCheck === true;
+      const skipDeadlineCheck = this._shouldSkipOfferEndTimeCheck();
       const minOfferHandleEndTime =
         dictStore.dictInfo.minOfferHandleEndTime;
       if (
