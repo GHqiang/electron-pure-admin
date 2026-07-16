@@ -57,15 +57,17 @@ function clearDictConfigCache() {
 }
 
 // LRU 缓存存储（Map 保持插入顺序，便于 LRU 淘汰）
-// key: `${app_name}|${cinema_code}|${film_name}|${show_time}`
+// key: `${app_name}|${cinema_code}|${film_name}`
+// 注：不含 show_time —— third_party_ids 是影院+影片级字段，与场次无关
+//     同影院同影片一天多个场次共享同一份第三方 ID，避免被场次维度稀释命中率
 // value: { value: third_party_ids, expireAt: number }
 const _cache = new Map();
 
 /**
  * 生成缓存 key
  */
-function buildCacheKey(app_name, cinema_code, film_name, show_time) {
-  return `${app_name}|${cinema_code}|${film_name}|${show_time}`;
+function buildCacheKey(app_name, cinema_code, film_name) {
+  return `${app_name}|${cinema_code}|${film_name}`;
 }
 
 /**
@@ -117,15 +119,16 @@ const CACHE_SOURCE = {
  * 查询第三方 ID 缓存（带本地 LRU 缓存）
  * 流程：本地命中 → 直接返回；本地未命中 → 查后端，命中结果写本地
  *
- * @param {Object} params - { app_name, cinema_code, film_name, show_time }
+ * @param {Object} params - { app_name, cinema_code, film_name }
+ *   注：show_time 不参与缓存 key —— third_party_ids 是影院+影片级字段，与场次无关
  * @param {Function} fetcher - 后端查询函数，返回 { data: { third_party_ids } }
  * @returns {Promise<{ids: Object|null, source: number}>}
  *   - ids: 第三方 ID 集合，未命中或异常返回 null
  *   - source: 命中来源 0=未命中 1=本地命中 2=远端命中（写入 offer_record.cache_hit）
  */
 async function getCachedThirdPartyIdsWithCache(params, fetcher) {
-  const { app_name, cinema_code, film_name, show_time } = params;
-  const key = buildCacheKey(app_name, cinema_code, film_name, show_time);
+  const { app_name, cinema_code, film_name } = params;
+  const key = buildCacheKey(app_name, cinema_code, film_name);
   const config = await getDictConfig();
 
   // 1. 查本地缓存
