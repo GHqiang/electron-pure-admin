@@ -794,6 +794,8 @@ export default class BaseOfferQueue {
   async singleOffer({ order, offerList = [], logger, timeoutFlag }) {
     const log = logger ?? this.logger;
     let offerRule;
+    // result 声明在 try 外，catch 块可访问（异常前若 getEndOfferPrice 已执行，result 可能有值）
+    let result;
     try {
       log.infoSave("进入 singleOffer", {
         order_number: order.order_number,
@@ -812,7 +814,7 @@ export default class BaseOfferQueue {
         return;
       }
 
-      const result = await offerExample.getEndOfferPrice({
+      result = await offerExample.getEndOfferPrice({
         order,
         offerList
       });
@@ -825,9 +827,13 @@ export default class BaseOfferQueue {
           result
         });
         log.logUpload();
+        // 透传 cinemaInfo/cacheHit：getEndOfferPrice 已完成，cinemaInfo 可能已解析（影院/影片查询后），
+        // 失败记录仍可写入 third_party_ids 供后续订单复用
         return {
           offerRule: result?.offerRule,
-          err_msg: "报价处理超时，已跳过提交"
+          err_msg: "报价处理超时，已跳过提交",
+          cinemaInfo: result?.cinemaInfo,
+          cacheHit: result?.cacheHit
         };
       }
 
@@ -848,7 +854,15 @@ export default class BaseOfferQueue {
       const { endPrice, err_msg, err_info, app_name } = result || {};
       offerRule = result?.offerRule;
       if (!endPrice) {
-        return { offerRule, err_msg, err_info };
+        // 透传 cinemaInfo/cacheHit：超限价、券无库存、无可用卡、影厅未含规则等失败
+        // 均发生在影院/影片查询之后，cinemaInfo 已有值，失败记录写入 third_party_ids 供后续订单复用
+        return {
+          offerRule,
+          err_msg,
+          err_info,
+          cinemaInfo: result?.cinemaInfo,
+          cacheHit: result?.cacheHit
+        };
       }
 
       // 特殊处理：wanxiangh5
@@ -892,7 +906,13 @@ export default class BaseOfferQueue {
         log.clearLogsBefore(timeoutFlag.timeoutAt);
         log.infoSave("提交报价前检测到已超时，放弃提交");
         log.logUpload();
-        return { offerRule, err_msg: "报价处理超时，已放弃提交" };
+        // 透传 cinemaInfo/cacheHit：getEndOfferPrice 已成功，cinemaInfo 已解析
+        return {
+          offerRule,
+          err_msg: "报价处理超时，已放弃提交",
+          cinemaInfo: result?.cinemaInfo,
+          cacheHit: result?.cacheHit
+        };
       }
 
       // 二次校验报价截止时间：orderHandle 入口检查后经历了 _checkPlatformAlreadyQuoted /
@@ -913,7 +933,13 @@ export default class BaseOfferQueue {
           remaining_ms: order.offer_end_time - Date.now()
         });
         log.logUpload();
-        return { offerRule, err_msg: "报价已过截止时间，放弃提交" };
+        // 透传 cinemaInfo/cacheHit：getEndOfferPrice 已成功，cinemaInfo 已解析
+        return {
+          offerRule,
+          err_msg: "报价已过截止时间，放弃提交",
+          cinemaInfo: result?.cinemaInfo,
+          cacheHit: result?.cacheHit
+        };
       }
 
       if (this.isTestOrder) {
@@ -932,7 +958,12 @@ export default class BaseOfferQueue {
       // 猎人特殊处理：已自动报价视为失败，直接返回
       if (order.plat_name === "lieren" && res?.message === "已自动报价") {
         log.errorSave("猎人已自动报价");
-        return { offerRule };
+        // 透传 cinemaInfo/cacheHit：getEndOfferPrice 已成功，cinemaInfo 已解析
+        return {
+          offerRule,
+          cinemaInfo: result?.cinemaInfo,
+          cacheHit: result?.cacheHit
+        };
       }
 
       // 超时兜底：若 submitOffer 在超时后才返回，但提交本身成功了，
@@ -961,7 +992,13 @@ export default class BaseOfferQueue {
       };
     } catch (error) {
       log.errorSave("单个报价异常", { error });
-      return { offerRule };
+      // 透传 cinemaInfo/cacheHit：异常前若 getEndOfferPrice 已执行，result 可能有值
+      // 用可选链兜底，无值时不影响失败记录写入（third_party_ids 会留空）
+      return {
+        offerRule,
+        cinemaInfo: result?.cinemaInfo,
+        cacheHit: result?.cacheHit
+      };
     }
   }
 
