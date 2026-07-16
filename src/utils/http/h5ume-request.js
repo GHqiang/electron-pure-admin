@@ -397,13 +397,13 @@ const getUrl = (token, url, params) => {
 // 默认不走代理的接口关键字列表（兜底，字典表为空或异常时使用）
 const DEFAULT_NO_PROXY_KEYWORDS = [
   "cinema.getcinemas",
-  // "auth.getsidbytid",
-  // "film.gethotfilms",
-  "seat.getseatmap",
+  "auth.getsidbytid",
+  "film.gethotfilms",
+  "schedule.getschedules",
   "seat.getseatmap",
   "seat.lockseats",
   "seat.unlockseats",
-  // "pay.getpayprivilegeinfo",
+  "pay.getpayprivilegeinfo",
   "pay.getpaydiscountprice",
   "coupon.getmyonlinecoupons",
   "card.getcardlistbypage",
@@ -420,20 +420,6 @@ const DEFAULT_NO_PROXY_KEYWORDS = [
  * @returns {string[]}
  */
 const getNoProxyKeywords = () => {
-  try {
-    const raw = dictStore.dictInfo?.h5ume_no_proxy_keywords;
-    if (raw && typeof raw === "string" && raw.trim()) {
-      return raw
-        .split(",")
-        .map(s => s.trim())
-        .filter(Boolean);
-    }
-  } catch (e) {
-    console.warn(
-      "[h5ume] 读取 no_proxy_keywords 字典配置异常，使用默认值",
-      e.message
-    );
-  }
   return DEFAULT_NO_PROXY_KEYWORDS;
 };
 
@@ -460,6 +446,8 @@ const createAxios = ({ app_name, timeout = 20 }) => {
     mobile = "",
     newSidObj = {},
     newTidObj = {};
+  // token 刷新锁，避免并发请求同时触发 getCinemaList
+  let tokenRefreshingPromise = null;
 
   // 初始化全局日志
   logger.init({
@@ -552,12 +540,34 @@ const createAxios = ({ app_name, timeout = 20 }) => {
     async config => {
       if (config.url.indexOf("/h5ume/") !== -1) {
         // 如果未获取到cookie里面的token且接口非获取影院列表接口时需要调一下获取下
-        if (!newToken && !config.url.includes("cinema.getcinemas")) {
+        if (!newToken) {
           // 此处是为了更新newToken
-          try {
-            await APP_API_OBJ[app_name].getCinemaList();
-          } catch (error) {
-            console.error("获取影院列表失败", error);
+          // 传 isNoCache: true 确保不走 redis 缓存（缓存响应无 set-cookie 头）
+          if (!config.url.includes("cinema.getcinemas")) {
+            // 加锁避免并发请求同时触发 getCinemaList（缓存命中后可能有多个接口并发）
+            if (!tokenRefreshingPromise) {
+              tokenRefreshingPromise = (async () => {
+                try {
+                  await APP_API_OBJ[app_name].getCinemaList({
+                    empCode: "",
+                    leaseCode: "",
+                    isNoCache: true
+                  });
+                } catch (error) {
+                  console.error("获取影院列表失败", error);
+                } finally {
+                  tokenRefreshingPromise = null;
+                }
+              })();
+            }
+            await tokenRefreshingPromise;
+          } else {
+            // 如果是获取影院列表接口，直接调用获取影院列表接口
+            config.data = {
+              empCode: "",
+              leaseCode: "",
+              isNoCache: true
+            };
           }
         }
         config.headers["Content-Type"] = "application/x-www-form-urlencoded";
@@ -721,6 +731,34 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         console.warn("json解析失败==>", error);
       }
 
+      // --- 从响应 set_cookie 中提取 _m_h5_tk 更新 newToken（成功响应路径） ---
+      // 修复：原代码只在 FAIL_SYS_TOKEN_EXOIRED/FAIL_SYS_TOKEN_EMPTY 错误分支更新 newToken
+      // 导致 cinema.getcinemas 成功后 newToken 仍为空，后续请求签名无效触发风控
+      if (headers1["set_cookie"]) {
+        let cookieStr = String(headers1["set_cookie"]);
+        let _m_h5_tk = extractCookieValueByRegex(cookieStr, "_m_h5_tk=");
+        let _m_h5_tk_enc = extractCookieValueByRegex(
+          cookieStr,
+          "_m_h5_tk_enc="
+        );
+        if (_m_h5_tk) {
+          let umetoken = newToken || headers1.umetoken || "";
+          const regex = new RegExp(`(_m_h5_tk=[^;]+);?`);
+          umetoken =
+            umetoken?.indexOf("_m_h5_tk=") > -1
+              ? umetoken.replace(regex, `_m_h5_tk=${_m_h5_tk};`)
+              : `_m_h5_tk=${_m_h5_tk};`;
+          if (_m_h5_tk_enc) {
+            const regex2 = new RegExp(`(_m_h5_tk_enc=[^;]+);?`);
+            umetoken =
+              umetoken?.indexOf("_m_h5_tk_enc=") > -1
+                ? umetoken.replace(regex2, `_m_h5_tk_enc=${_m_h5_tk_enc};`)
+                : umetoken + ` _m_h5_tk_enc=${_m_h5_tk_enc};`;
+          }
+          newToken = umetoken;
+        }
+      }
+
       // console.log("headers1===>", headers1);
       // console.log("response.config", response.config);
       // let whitelistSp = ['/sp/order', '/sp/unlock']
@@ -779,6 +817,10 @@ const createAxios = ({ app_name, timeout = 20 }) => {
               umetoken?.indexOf("_m_h5_tk_enc=") > -1
                 ? umetoken.replace(regex, `_m_h5_tk_enc=${_m_h5_tk_enc};`)
                 : umetoken + ` _m_h5_tk_enc=${_m_h5_tk_enc};`;
+          }
+          // 只要 _m_h5_tk 或 _m_h5_tk_enc 存在就更新 newToken
+          // 修复：原代码只在 _m_h5_tk_enc 分支内赋值，导致仅有 _m_h5_tk 时 token 不更新
+          if (_m_h5_tk || _m_h5_tk_enc) {
             newToken = umetoken;
           }
 
