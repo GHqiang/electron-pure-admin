@@ -413,19 +413,36 @@ const DEFAULT_NO_PROXY_KEYWORDS = [
   "order.getorderdetail"
 ];
 
+// 默认走代理接口
+// const DEFAULT_PROXY_KEYWORDS = ["auth.getsidbytid", "pay.getpayprivilegeinfo"];
+const DEFAULT_PROXY_KEYWORDS = [];
 /**
  * 获取不走代理的接口关键字列表
- * 优先从字典表 dict_type='h5ume_no_proxy_keywords' 读取（逗号分隔字符串），
- * 为空或读取失败时使用 DEFAULT_NO_PROXY_KEYWORDS 兜底
+ * 优先从字典表 dict_type='h5ume_proxy_keywords' 读取（逗号分隔字符串），
+ * 为空或读取失败时使用 DEFAULT_PROXY_KEYWORDS 兜底
  * @returns {string[]}
  */
-const getNoProxyKeywords = () => {
-  return DEFAULT_NO_PROXY_KEYWORDS;
+const getProxyKeywords = () => {
+  try {
+    const raw = dictStore.dictInfo?.h5ume_proxy_keywords;
+    if (raw && typeof raw === "string" && raw.trim()) {
+      return raw
+        .split(",")
+        .map(s => s.trim())
+        .filter(Boolean);
+    }
+  } catch (e) {
+    console.warn(
+      "[h5ume] 读取 proxy_keywords 字典配置异常，使用默认值",
+      e.message
+    );
+  }
+  return DEFAULT_PROXY_KEYWORDS;
 };
 
-// 是否不需要代理（动态读取字典表配置）
-const checkUrlNoNeedProxy = url => {
-  const keywords = getNoProxyKeywords();
+// 是否需要代理（动态读取字典表配置）
+const checkUrlNeedProxy = url => {
+  const keywords = getProxyKeywords();
   return keywords.some(item => url?.toLowerCase().includes(item));
 };
 const createAxios = ({ app_name, timeout = 20 }) => {
@@ -669,9 +686,9 @@ const createAxios = ({ app_name, timeout = 20 }) => {
 
         config.responseType = "arraybuffer";
       }
-      // 默认都走代理，白名单不走代理
-      let isNoProxy = checkUrlNoNeedProxy(config.url);
-      if (isNoProxy) {
+      // 默认都不走代理，白名单走代理
+      let isProxy = checkUrlNeedProxy(config.url);
+      if (!isProxy) {
         config.headers["Is-No-Proxy"] = 1;
       }
       config.headers["APP-NAME"] = app_name;
