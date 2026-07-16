@@ -185,6 +185,47 @@ export default class BaseOfferQueue {
   }
 
   /**
+   * 获取指定系列的报价超时时间（毫秒）
+   * 优先级：平台级 features.offerHandleTimeout（最高，如麻花 120s）>
+   *         系列级 bigChainSeriesTimeout[sk]（大连锁专属，如万达 60s）>
+   *         全局 offerHandleTimeout 字典 > 默认 15s
+   * 与 _getSeriesConcurrencyLimit 对称设计，复用同一套字典配置范式
+   * @param {string} [sk] - 系列标识（app_name / app_type_code 等）
+   * @returns {number} 报价超时时间（毫秒）
+   */
+  _getSeriesTimeout(sk) {
+    // ① 平台级硬编码覆盖（最高优先级，不影响现有麻花 120s 等配置）
+    const platformTimeout =
+      this.platformAdapter?.config?.features?.offerHandleTimeout;
+    if (platformTimeout != null) return platformTimeout;
+
+    // ② 系列级字典覆盖：解析 bigChainSeriesTimeout JSON map，如 {"wanda":60000}
+    const bigChainTimeoutConfig =
+      dictStore.dictInfo.bigChainSeriesTimeout;
+    if (bigChainTimeoutConfig) {
+      try {
+        const configMap =
+          typeof bigChainTimeoutConfig === "string"
+            ? JSON.parse(bigChainTimeoutConfig)
+            : bigChainTimeoutConfig;
+        if (
+          sk &&
+          configMap[sk] != null &&
+          typeof configMap[sk] === "number" &&
+          configMap[sk] > 0
+        ) {
+          return configMap[sk];
+        }
+      } catch (e) {
+        console.warn("解析 bigChainSeriesTimeout 失败，使用全局默认值", e);
+      }
+    }
+
+    // ③ 全局字典 offerHandleTimeout，兜底默认 15 秒
+    return dictStore.dictInfo.offerHandleTimeout || 15 * 1000;
+  }
+
+  /**
    * 记录某系列正在执行的订单号（与 runningCountBySeries 同步维护）
    * @param {string} sk - 系列标识
    * @param {string} orderNumber - 订单号
@@ -627,14 +668,18 @@ export default class BaseOfferQueue {
         const orderHandleStartAt = Date.now();
         let offerResult;
         const minOfferHandleEndTime = dictStore.dictInfo.minOfferHandleEndTime;
-        const offerHandleTimeout =
-          this.platformAdapter?.config?.features?.offerHandleTimeout != null
-            ? this.platformAdapter.config.features.offerHandleTimeout
-            : dictStore.dictInfo.offerHandleTimeout || 15 * 1000;
+        // 提前计算系列标识，供后续并发控制、超时配置、诊断日志统一使用
+        const sk = this.getSeriesKey(order);
+        // 报价超时：平台级硬编码 > 系列级 bigChainSeriesTimeout > 全局 offerHandleTimeout > 默认 15s
+        const offerHandleTimeout = this._getSeriesTimeout(sk);
+        // 某些平台（如蚂蚁）offer_end_time 不准，通过 skipOfferEndTimeCheck 跳过过期判断
+        const skipDeadlineCheck =
+          this.platformAdapter?.config?.features?.skipOfferEndTimeCheck ===
+          true;
         if (
+          !skipDeadlineCheck &&
           order.offer_end_time - new Date().getTime() <=
-            minOfferHandleEndTime &&
-          order.plat_name !== "mayi"
+            minOfferHandleEndTime
         ) {
           logger.errorSave(
             `订单报价截止时间小于等于${minOfferHandleEndTime}毫秒，跳过报价`,
@@ -677,7 +722,6 @@ export default class BaseOfferQueue {
           const queueWaitMs = order._offerEnqueueAt
             ? orderHandleStartAt - order._offerEnqueueAt
             : null;
-          const sk = this.getSeriesKey(order);
           const seriesRunning = this.runningCountBySeries.get(sk) || 0;
           logger.infoSave("订单报价链路开始", {
             入队到开跑耗时ms: queueWaitMs,
@@ -849,6 +893,27 @@ export default class BaseOfferQueue {
         log.infoSave("提交报价前检测到已超时，放弃提交");
         log.logUpload();
         return { offerRule, err_msg: "报价处理超时，已放弃提交" };
+      }
+
+      // 二次校验报价截止时间：orderHandle 入口检查后经历了 _checkPlatformAlreadyQuoted /
+      // getEndOfferPrice / dynamicPrice / getRuleId 等耗时环节，到 submitOffer 前可能已过期
+      // 若已过期则放弃提交，避免平台返回超时失败浪费调用
+      const skipDeadlineCheck =
+        this.platformAdapter?.config?.features?.skipOfferEndTimeCheck === true;
+      const minOfferHandleEndTime =
+        dictStore.dictInfo.minOfferHandleEndTime;
+      if (
+        !skipDeadlineCheck &&
+        order.offer_end_time &&
+        order.offer_end_time - Date.now() <= minOfferHandleEndTime
+      ) {
+        log.errorSave("提交报价前检测到已过截止时间，放弃提交", {
+          offer_end_time: order.offer_end_time,
+          current_time: Date.now(),
+          remaining_ms: order.offer_end_time - Date.now()
+        });
+        log.logUpload();
+        return { offerRule, err_msg: "报价已过截止时间，放弃提交" };
       }
 
       if (this.isTestOrder) {
