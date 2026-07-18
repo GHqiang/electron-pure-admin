@@ -1,4 +1,4 @@
-﻿import svApi from "@/api/sv-api";
+import svApi from "@/api/sv-api";
 import lierenApi from "@/api/lieren-api";
 import { ElMessage } from "element-plus";
 import {
@@ -55,7 +55,8 @@ export default function useLierenOfferRuleSyncFun() {
   };
 
   // 同步规则到猎人平台（新增/修改）；成功时返回最新 platOfferList，供调用方落库避免覆盖 platRuleId
-  const lierenOfferRuleSyncPlat = async ruleInfo => {
+  // cachedPlatRule: 可选，批量同步场景下由调用方传入已查询的平台旧规则，避免重复调 ruleList 触发限流
+  const lierenOfferRuleSyncPlat = async (ruleInfo, cachedPlatRule = null) => {
     let params;
 
     try {
@@ -163,18 +164,24 @@ export default function useLierenOfferRuleSyncFun() {
       let oldStatus = null,
         oldSeatNum = null;
       if (lierenOfferRule.platRuleId) {
-        try {
-          const listRes = await lierenApi.ruleList({
-            rule_id: [lierenOfferRule.platRuleId],
-            lieren_ak: lierenMainAccountAkSk?.[0] || "",
-            lieren_sk: lierenMainAccountAkSk?.[1] || ""
-          });
-          const oldRes = listRes?.data?.[0];
-          if (oldRes) {
-            oldStatus = oldRes.state;
-            oldSeatNum = oldRes.seats;
-          }
-        } catch (error) {}
+        // 优先使用调用方传入的缓存平台规则，避免批量同步时重复调 ruleList 触发 429
+        if (cachedPlatRule) {
+          oldStatus = cachedPlatRule.state;
+          oldSeatNum = cachedPlatRule.seats;
+        } else {
+          try {
+            const listRes = await lierenApi.ruleList({
+              rule_id: [lierenOfferRule.platRuleId],
+              lieren_ak: lierenMainAccountAkSk?.[0] || "",
+              lieren_sk: lierenMainAccountAkSk?.[1] || ""
+            });
+            const oldRes = listRes?.data?.[0];
+            if (oldRes) {
+              oldStatus = oldRes.state;
+              oldSeatNum = oldRes.seats;
+            }
+          } catch (error) {}
+        }
       }
       // 记录同步成功日志
       svApi
@@ -480,7 +487,10 @@ export default function useLierenOfferRuleSyncFun() {
           if (Array.isArray(ruleForSync.film_type)) {
             ruleForSync.film_type = ruleForSync.film_type.join(",");
           }
-          const syncRes = await lierenOfferRuleSyncPlat(ruleForSync);
+          const syncRes = await lierenOfferRuleSyncPlat(
+            ruleForSync,
+            platRule
+          );
           if (!syncRes) {
             console.warn(
               `完整同步返回空: platRuleId=${platRule.rule_id}，回退到仅同步状态`
@@ -494,6 +504,8 @@ export default function useLierenOfferRuleSyncFun() {
             };
             await lierenApi.ruleState(params);
           }
+          // 批量同步时每条规则之间加 200ms 间隔，避免密集请求触发猎人平台 429
+          await new Promise(resolve => setTimeout(resolve, 200));
 
           if (expectedState === 1) {
             enableCount++;
@@ -574,6 +586,8 @@ export default function useLierenOfferRuleSyncFun() {
               err.message
             );
           }
+          // 批量禁用时间隔 200ms，避免触发 429
+          await new Promise(resolve => setTimeout(resolve, 200));
         }
         // 记录平台孤儿规则批量禁用日志
         svApi

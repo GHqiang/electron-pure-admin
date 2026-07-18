@@ -38,8 +38,10 @@ export default class BaseOfferQueue {
     this.runningCountBySeries = new Map();
     /** 按系列记录当前正在执行的订单号集合，与 runningCountBySeries 同步维护，用于诊断日志 */
     this.runningOrdersBySeries = new Map();
-    /** 平台已报价缓存：避免对已由平台自动报价的订单重复走查询链 */
-    this._platformQuotedCache = { data: [], fetchedAt: 0 };
+    /** 平台已报价缓存：避免对已由平台自动报价的订单重复走查询链
+     *  refreshPromise: Promise 锁，防止缓存过期时多个并发 orderHandle 同时发起 queryOfferRecord 请求（缓存击穿）
+     */
+    this._platformQuotedCache = { data: [], fetchedAt: 0, refreshPromise: null };
     /** 拉单防重入标志：防止 fetchOrders 并发执行 */
     this.isFetching = false;
     /** 拉单定时器引用，stop 时清理 */
@@ -1050,6 +1052,11 @@ export default class BaseOfferQueue {
   /**
    * 检查平台是否已对该订单报价（避免重复走城市/影院/会员价等查询链）
    * 仅对 fixedOfferToPlatList 字典中配置的平台生效，每 30s 刷新一次缓存
+   *
+   * 并发安全：通过 refreshPromise 锁防止缓存击穿。
+   * 多个 orderHandle 并发调用时，仅首个请求发起 queryOfferRecord，
+   * 其余请求 await 同一个 Promise，避免瞬时 N 个相同请求触发 429。
+   *
    * @param {Object} order - 订单信息
    * @param {Object} logger - 日志实例
    * @returns {Promise<Object|null>} 匹配到的报价记录或 null
@@ -1061,16 +1068,31 @@ export default class BaseOfferQueue {
       if (!fixedOfferToPlatList.includes(order.plat_name)) return null;
 
       const now = Date.now();
-      if (now - this._platformQuotedCache.fetchedAt > 30000) {
-        const res = await this.platformAdapter.api.queryOfferRecord({
-          page: 1,
-          limit: 50
-        });
-        this._platformQuotedCache.data = res?.data || [];
-        this._platformQuotedCache.fetchedAt = now;
-        logger.infoSave("刷新平台已报价缓存", {
-          count: this._platformQuotedCache.data.length
-        });
+      // 缓存过期时刷新：通过 Promise 锁保证同一时刻只有一个刷新请求
+      if (
+        now - this._platformQuotedCache.fetchedAt > 30000 &&
+        !this._platformQuotedCache.refreshPromise
+      ) {
+        this._platformQuotedCache.refreshPromise = (async () => {
+          try {
+            const res = await this.platformAdapter.api.queryOfferRecord({
+              page: 1,
+              limit: 50
+            });
+            this._platformQuotedCache.data = res?.data || [];
+            this._platformQuotedCache.fetchedAt = Date.now();
+            // 日志在 IIFE 内部记录，确保多个并发等待者共享一次刷新时只记录一条
+            logger.infoSave("刷新平台已报价缓存", {
+              count: this._platformQuotedCache.data.length
+            });
+          } finally {
+            this._platformQuotedCache.refreshPromise = null;
+          }
+        })();
+      }
+      // 并发请求等待同一个刷新 Promise 完成，避免缓存击穿
+      if (this._platformQuotedCache.refreshPromise) {
+        await this._platformQuotedCache.refreshPromise;
       }
 
       const matchedRecord = this._platformQuotedCache.data.find(

@@ -1108,6 +1108,8 @@ const saveRule = async ruleInfo => {
     }
   } catch (error) {
     console.warn("新增/编辑保存规则异常", error);
+    // 异常时也需关闭弹框并解锁保存按钮，否则用户无法再次操作
+    sfcDialogRef.value?.closeTck();
   }
 };
 

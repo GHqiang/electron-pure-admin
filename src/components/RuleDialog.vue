@@ -508,6 +508,7 @@
           <el-button
             v-if="dialogTitle != '查看规则'"
             type="primary"
+            :loading="saving"
             @click="saveRule"
             >保存</el-button
           >
@@ -573,6 +574,8 @@ let $emit = defineEmits([`submit`]);
 
 // 是否显示对话框
 const showSfcDialog = ref(false);
+// 保存中状态：防止重复点击提交导致同一规则短时间内多次同步到猎人平台
+const saving = ref(false);
 const quanType = ref([]);
 const offerTypeObj = {
   1: "报价金额",
@@ -688,6 +691,8 @@ const cinemaListFilter = computed(() => {
 // 重置表单
 const resetForm = el => {
   console.log("重置表单", el);
+  // 重置保存状态，防止上次异常残留 saving=true 导致下次打开弹框按钮卡 loading
+  saving.value = false;
   if (el !== 1) {
     formData.id = ""; // 规则id
     formData.ruleName = ""; // 规则名称
@@ -853,6 +858,8 @@ const batchSetPrice = () => {
 
 // 打开弹窗
 const open = async ruleInfo => {
+  // 防御性重置保存状态，防止上次异常残留 saving=true 导致按钮卡 loading
+  saving.value = false;
   const loading = ElLoading.service({
     lock: true,
     text: "Loading",
@@ -981,6 +988,8 @@ const offerTypeChange = val => {
 };
 // 保存规则
 const saveRule = async () => {
+  // 防重复提交：saving 为 true 时按钮已处于 loading 状态，此处兜底防止回车键等触发二次调用
+  if (saving.value) return;
   ruleFormRef.value.validate(async valid => {
     if (valid) {
       // 保存前根据当前影院名称同步一份 app_cinema_code 集合，避免只存名称
@@ -988,6 +997,9 @@ const saveRule = async () => {
       // 提交逻辑
       console.log("表单提交的数据:", formData);
       ElMessage.success("必填数据校验成功！");
+      // 锁定保存按钮，直到父组件完成 saveRule 后调用 closeTck 解锁
+      // 避免 1 秒内多次点击导致同一规则重复同步到猎人平台（触发 429 / "操作失败"）
+      saving.value = true;
       $emit("submit", formData);
     } else {
       ElMessage.warning("表单校验失败");
@@ -1000,12 +1012,14 @@ const saveRule = async () => {
 const closeTck = () => {
   console.log("关闭弹框");
   showSfcDialog.value = false;
+  saving.value = false;
   resetForm();
 };
 // 取消
 const cancel = el => {
   console.log("取消", el);
   showSfcDialog.value = false;
+  saving.value = false;
   resetForm();
 };
 

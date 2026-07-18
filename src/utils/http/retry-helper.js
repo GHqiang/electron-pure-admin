@@ -81,7 +81,7 @@ export const handleNetworkRetry = async (
   instance,
   options = {}
 ) => {
-  const { maxRetries = 3, whitelist = [], onRetry = null } = options;
+  const { maxRetries = 2, whitelist = [], onRetry = null } = options;
 
   // 确保 config 存在
   if (!config) return null;
@@ -99,7 +99,8 @@ export const handleNetworkRetry = async (
 
   if (isRetryable && canRetry && config.retryCount < maxRetries) {
     config.retryCount += 1;
-    const delay = config.retryCount; // 递增延迟：1s, 2s, 3s
+    // 指数退避延迟：1s, 3s（给服务端更多恢复时间，避免密集重试加剧限流）
+    const delay = Math.pow(3, config.retryCount - 1);
 
     console.warn(
       `网络请求失败，正在重试 (${config.retryCount}/${maxRetries}):`,

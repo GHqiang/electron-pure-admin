@@ -168,7 +168,7 @@ instance.interceptors.response.use(
       error.config,
       instance,
       {
-        maxRetries: 3,
+        maxRetries: 2,
         whitelist: [] // 空数组表示所有接口都允许重试
       }
     );
