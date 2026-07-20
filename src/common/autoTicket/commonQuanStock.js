@@ -8,13 +8,25 @@ import {
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 // 猎人规则同步相关方法
-import useLierenOfferRuleSyncFun from "@/mixins/useLierenOfferRuleSyncFun";
+import useLierenOfferRuleSyncFun, {
+  // B4：导入 formatSeats 用于构造 cachedPlatRule，避免 lierenOfferRuleSyncPlat 内部再调 ruleList
+  formatSeats
+} from "@/mixins/useLierenOfferRuleSyncFun";
 const { lierenOfferRuleSyncPlat } = useLierenOfferRuleSyncFun();
 
 import { platTokens } from "@/store/platTokens";
 const {
   userInfo: { rule, name }
 } = platTokens();
+
+// B1：maxQuanStock 变化检测缓存
+// key: `${app_name}|${quan_value}`，value: { maxQuanStock, fetchedAt }
+// 命中条件：缓存未过期(1小时) 且 maxQuanStock 相同 → 跳过整个同步流程（含 checkQuanInRules DB 查询）
+// 失败回滚：同步过程异常时 delete 缓存 key，让下次相同 maxQuanStock 还能重新触发
+// 不违反"每次出票后必须同步最新规则"约束：maxQuanStock 不变时规则状态本就不需要变更（isSameState 会短路），
+// B1 只是把短路提前到 DB 查询之前；失败时立即回滚，无退避延迟
+const _lastMaxStockMap = new Map();
+const MAX_STOCK_CACHE_TTL = 60 * 60 * 1000; // 1 小时，与报价前路径的 1 小时窗口对齐
 /**
  * 异步更新券库存
  * @param {Object} params - 参数对象
@@ -208,6 +220,7 @@ export async function singleUpdateQuanStock(obj) {
 // 根据券库存检查猎人固定报价规则更新座位数
 async function checkLierenFixedRuleByQuanStock(obj) {
   let { logger, id, app_name, quan_value, quanStockList } = obj;
+  const cacheKey = `${app_name}|${quan_value}`;
   try {
     quanStockList = JSON.parse(quanStockList);
     let maxQuanStock = 0;
@@ -223,6 +236,24 @@ async function checkLierenFixedRuleByQuanStock(obj) {
       quan_value,
       maxQuanStock
     });
+
+    // B1：maxQuanStock 变化检测
+    // 命中缓存（未过期且值相同）→ 跳过整个同步流程，避免无效的 checkQuanInRules DB 查询
+    // 不命中（过期或值不同）→ 更新缓存并继续同步
+    const now = Date.now();
+    const cached = _lastMaxStockMap.get(cacheKey);
+    const isCacheValid = cached && now - cached.fetchedAt < MAX_STOCK_CACHE_TTL;
+    if (isCacheValid && cached.maxQuanStock === maxQuanStock) {
+      logger.infoSave("maxQuanStock 未变化且缓存未过期，跳过规则同步", {
+        app_name,
+        quan_value,
+        maxQuanStock,
+        cacheAge: Math.floor((now - cached.fetchedAt) / 1000) + "s"
+      });
+      return;
+    }
+    _lastMaxStockMap.set(cacheKey, { maxQuanStock, fetchedAt: now });
+
     let usedRules = await checkQuanInRules(app_name, quan_value);
     // 一个规则含多个券类型的先不处理，仅过滤一个券类型的规则
     usedRules = usedRules
@@ -238,7 +269,12 @@ async function checkLierenFixedRuleByQuanStock(obj) {
             offer => offer.platName === "lieren" && offer.isSyncPlat == 1
           )
       );
-    if (!usedRules.length) return;
+    if (!usedRules.length) {
+      // B1：无关联规则时回滚缓存，避免后续新增关联规则时因缓存命中而错过首次同步
+      // （虽然新规则通常会走 RuleDialog 保存路径同步，但回滚更严谨）
+      _lastMaxStockMap.delete(cacheKey);
+      return;
+    }
     logger.infoSave("该券类型关联的同步到猎人平台的规则", {
       usedRules
     });
@@ -249,7 +285,12 @@ async function checkLierenFixedRuleByQuanStock(obj) {
       if (targetStatus == 2) {
         targetSeatNum = undefined;
       }
-      if (rule.seatNum == targetSeatNum && rule.status == targetStatus) {
+      // 禁用规则的座位数无业务意义，禁用时只比较状态，不比较座位数；
+      // 否则会因 rule.seatNum("2") != undefined 永远触发 ruleAdd，导致已禁用规则被重复同步
+      const isSameState =
+        rule.status == targetStatus &&
+        (targetStatus == "2" || rule.seatNum == targetSeatNum);
+      if (isSameState) {
         logger.infoSave("规则座位数和状态与目标一致，无需更新", {
           ruleId: rule.id,
           currentSeatNum: rule.seatNum,
@@ -274,12 +315,23 @@ async function checkLierenFixedRuleByQuanStock(obj) {
       logger.infoSave("准备同步到猎人的规则", {
         lierenRule
       });
-      const syncRes = await lierenOfferRuleSyncPlat(lierenRule);
+      // B4：用本地规则数据构造平台旧规则快照传入，避免 lierenOfferRuleSyncPlat 内部再调 ruleList
+      // 本地 rule.status/rule.seatNum 准确反映"上次成功同步的状态"（同步失败时 commonQuanStock.js 不更新本地 DB）
+      // state 映射：本地 "1"→1(启用), 其他→0(禁用)；seats 映射：formatSeats 生成 "1,2,3,4" 格式
+      // 与猎人 ruleList 返回值字段名和类型完全一致（既有模式：useLierenOfferRuleSyncFun.js#L507-510 已用同样映射）
+      const cachedPlatRule = {
+        state: rule.status == "1" ? 1 : 0,
+        seats: formatSeats(rule.seatNum)
+      };
+      const syncRes = await lierenOfferRuleSyncPlat(lierenRule, cachedPlatRule);
       // 同步失败时不更新本地 DB，避免两边不一致
       if (!syncRes) {
         logger.infoSave("猎人平台同步返回空，跳过本地更新", {
           ruleId: rule.id
         });
+        // B1：单条规则同步失败时也要回滚缓存，让下次相同 maxQuanStock 还能重新触发同步
+        // 否则失败的规则永远不会被重试（lierenOfferRuleSyncPlat 失败返回 undefined，不抛异常，catch 不会执行）
+        _lastMaxStockMap.delete(cacheKey);
         continue;
       }
 
@@ -335,6 +387,9 @@ async function checkLierenFixedRuleByQuanStock(obj) {
     }
     // 根据quan_value检查都有哪些规则在使用且同步了平台，更新平台规则的座位数
   } catch (error) {
+    // B1：同步过程异常时回滚缓存，让下次相同 maxQuanStock 还能重新触发同步
+    // 不延迟、不退避，只是"作废缓存，下次按原逻辑重新判断"，符合"必须同步最新规则"约束
+    _lastMaxStockMap.delete(cacheKey);
     // 勿把整段 obj 写入日志：含 logger 等会导致上送序列化失败或体积过大，异常时整批日志无法入库
     logger.infoSave("根据券库存检查猎人固定报价规则更新座位数异常", {
       error: formatErrInfo(error),

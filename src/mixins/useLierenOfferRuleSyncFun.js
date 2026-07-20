@@ -28,7 +28,8 @@ const formatCinemaCode = (app_cinema_code_list, app_name) =>
     )
     .join(",");
 // 格式化座位数
-const formatSeats = seatNum => {
+// 导出供 commonQuanStock.js 构造 cachedPlatRule 使用，避免 lierenOfferRuleSyncPlat 内部再调 ruleList
+export const formatSeats = seatNum => {
   if (!seatNum) return "";
   let array = [];
   for (let index = 0; index < seatNum; index++) {
@@ -235,17 +236,71 @@ export default function useLierenOfferRuleSyncFun() {
     } catch (error) {
       console.warn("同步规则到猎人平台异常", error);
       // 记录同步失败日志
+      // old_status/old_seat_num 在 ruleAdd 失败时尚未查询，只能为 null
+      // new_status/new_seat_num 来自入参 ruleInfo，补充传值便于排查当时想同步成什么状态
+      // lierenOfferRule 在 try 块内声明，catch 中访问不到，这里从 ruleInfo 重新查找 platRuleId
+      const failedPlatRuleId = ruleInfo.platOfferList?.find(
+        item => item.platName === "lieren"
+      )?.platRuleId;
+      // 猎人响应拦截器 Promise.reject(data) 只抛 {code, message}，丢失了 config/response 上下文，
+      // catch 块主动补充请求入参快照到 ext_data，便于排查"操作失败"时的具体请求内容
+      // params 在 try 外用 let 声明，catch 可访问；lieren_ak/lieren_sk 需手动脱敏
+      let safeParams = null;
+      if (params) {
+        const { lieren_ak, lieren_sk, ...rest } = params;
+        safeParams = rest;
+      }
+      // 平台响应：error 可能是猎人业务错误对象 {code, message}、AxiosError（含 response）、或普通 Error
+      let platformResponse = null;
+      if (error) {
+        if (error.response) {
+          // AxiosError：HTTP 4xx/5xx，带完整 response
+          platformResponse = {
+            type: "axios_error",
+            status: error.response.status,
+            statusText: error.response.statusText,
+            data: error.response.data
+          };
+        } else if (error.code != null && error.message != null && !error.stack) {
+          // 猎人业务错误：拦截器 Promise.reject({code, message}) 抛出的普通对象
+          platformResponse = {
+            type: "lieren_biz_error",
+            code: error.code,
+            message: error.message
+          };
+        } else {
+          // 其他异常（如 TypeError、网络异常等）
+          platformResponse = {
+            type: "unknown_error",
+            name: error.name,
+            message: error.message
+          };
+        }
+      }
       svApi
         .addRuleOperationLog({
           rule_id: ruleInfo.id,
           rule_name: ruleInfo.ruleName,
           shadow_line_name: ruleInfo.shadowLineName,
           operation_type: "sync_add_update",
+          new_status: ruleInfo.status,
+          new_seat_num:
+            ruleInfo.seatNum != null ? String(ruleInfo.seatNum) : null,
           plat_name: "lieren",
-          trigger_source: ruleInfo.id ? "rule_edit_save" : "rule_add_save",
+          trigger_source: failedPlatRuleId
+            ? "rule_edit_save"
+            : "rule_add_save",
+          change_reason: failedPlatRuleId
+            ? "更新猎人平台规则"
+            : "新增猎人平台规则",
           success: 0,
           error_msg: formatErrInfo(error),
-          operator: tokens.userInfo?.name || ""
+          operator: tokens.userInfo?.name || "",
+          ext_data: JSON.stringify({
+            platRuleId: failedPlatRuleId,
+            requestParams: safeParams,
+            platformResponse
+          })
         })
         .catch(() => {});
       ElMessage.error("同步规则到猎人平台失败，请稍后重试");
@@ -496,13 +551,22 @@ export default function useLierenOfferRuleSyncFun() {
               `完整同步返回空: platRuleId=${platRule.rule_id}，回退到仅同步状态`
             );
             // 回退：至少把状态同步过去
+            // 加 try/catch 避免回退失败抛出异常导致整个 checkAndUpdateLierenRuleState 中止，
+            // 后续规则无法继续检查
             const params = {
               rule_id: [platRule.rule_id],
               state: expectedState,
               lieren_ak: lierenMainAccountAkSk?.[0] || "",
               lieren_sk: lierenMainAccountAkSk?.[1] || ""
             };
-            await lierenApi.ruleState(params);
+            try {
+              await lierenApi.ruleState(params);
+            } catch (err) {
+              console.warn(
+                `回退 ruleState 失败: platRuleId=${platRule.rule_id}`,
+                err?.message || err
+              );
+            }
           }
           // 批量同步时每条规则之间加 200ms 间隔，避免密集请求触发猎人平台 429
           await new Promise(resolve => setTimeout(resolve, 200));
