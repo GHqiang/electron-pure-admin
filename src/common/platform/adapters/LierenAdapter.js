@@ -90,6 +90,8 @@ export default class LierenAdapter extends BasePlatformAdapter {
       return res;
     } catch (error) {
       log.errorSave("确认接单异常", { error, params });
+      // 重新抛出异常，确保上游 BaseOrderFetcher.sendNewOrderMsg 的重试逻辑能够生效
+      throw error;
     }
   }
 }

@@ -1,7 +1,11 @@
 // 订单获取基类
 // 提取所有平台订单获取的公共逻辑
 
-import { mockDelay, sendWxPusherMessage, formatErrInfo } from "@/utils/utils.js";
+import {
+  mockDelay,
+  sendWxPusherMessage,
+  formatErrInfo
+} from "@/utils/utils.js";
 import Logger from "../logger.js";
 import { dictTable } from "@/store/dictTable";
 const dictStore = dictTable();
@@ -79,7 +83,8 @@ export default class BaseOrderFetcher {
         // 确认失败时重试3次，仍失败则微信推送提醒
         let confirmSuccess = false;
         const maxConfirmRetries = 3;
-        for (let attempt = 1; attempt <= maxConfirmRetries; attempt++) {
+        let attempt;
+        for (attempt = 1; attempt <= maxConfirmRetries; attempt++) {
           try {
             await this.platformAdapter.confirmOrder(
               {
@@ -90,12 +95,11 @@ export default class BaseOrderFetcher {
             confirmSuccess = true;
             break;
           } catch (confirmError) {
-            logger.warnSave(
-              `确认接单第${attempt}次失败`,
-              { error: formatErrInfo(confirmError), order }
-            );
+            logger.warnSave(`确认接单第${attempt}次失败`, {
+              error: formatErrInfo(confirmError)
+            });
             if (attempt < maxConfirmRetries) {
-              await new Promise(resolve => setTimeout(resolve, 1000));
+              await new Promise(resolve => setTimeout(resolve, 500));
             }
           }
         }
@@ -108,6 +112,10 @@ export default class BaseOrderFetcher {
             transferTip: "请检查猎人平台该订单是否需要手动确认接单"
           }).catch(() => {});
           // 确认失败不阻断出票，订单继续走后续流程
+        } else {
+          logger.infoSave(
+            `猎人平台订单${attempt > 1 ? "重试后" : ""}确认接单成功`
+          );
         }
       }
       // 测试模式下，不发送事件，不启动ACK机制
@@ -118,7 +126,10 @@ export default class BaseOrderFetcher {
         }
         const ackConfirmedKey = `${order.appName}_${order.order_number}`;
         // 重新出票(isAgain)不拦截，必须允许再次发送
-        if (!order.isAgain && window.__ackConfirmedOrders.has(ackConfirmedKey)) {
+        if (
+          !order.isAgain &&
+          window.__ackConfirmedOrders.has(ackConfirmedKey)
+        ) {
           logger.infoSave("订单已确认送达，跳过重复发送", { order });
         } else {
           // ACK确认机制：监听出票队列的确认回复，5秒超时则告警
@@ -130,14 +141,17 @@ export default class BaseOrderFetcher {
             window.__ackConfirmedOrders.set(ackConfirmedKey, Date.now());
             // 定期清理过期记录（超过30分钟的清除）
             if (!window.__ackCleanupTimer) {
-              window.__ackCleanupTimer = setInterval(() => {
-                const now = Date.now();
-                for (const [key, ts] of window.__ackConfirmedOrders) {
-                  if (now - ts > 30 * 60 * 1000) {
-                    window.__ackConfirmedOrders.delete(key);
+              window.__ackCleanupTimer = setInterval(
+                () => {
+                  const now = Date.now();
+                  for (const [key, ts] of window.__ackConfirmedOrders) {
+                    if (now - ts > 30 * 60 * 1000) {
+                      window.__ackConfirmedOrders.delete(key);
+                    }
                   }
-                }
-              }, 10 * 60 * 1000);
+                },
+                10 * 60 * 1000
+              );
             }
             logger.infoSave("出票队列消息确认已收到", {
               ackDetail: ackEvent.detail
