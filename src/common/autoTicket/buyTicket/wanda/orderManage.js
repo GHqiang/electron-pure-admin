@@ -213,12 +213,9 @@ export default class OrderManage {
     }
 
     // 3、平台转单
-    // 获取转单原因
-    const errInfoObj = this.logger.logList
-      .filter(item => item.level === "error")
-      .reverse()?.[0];
-    let errMsg = errInfoObj?.des || "";
-    let errInfo = formatErrInfo(errInfoObj?.info?.error) || "";
+    // 获取转单原因（优先读 _lastErrCache，防止 logList 被 logUpload 异步清空导致失败原因为空）
+    let { err_msg: errMsg = "", err_info: errInfo = "" } =
+      this.logger.getLastErrMsgAndInfo() || {};
     let isAutoTransfer = window.localStorage.getItem("isAutoTransfer"); // 自动转单是否开启
     // 关闭自动转单只针对座位异常生效
     // if (this.isTestOrder || (isAutoTransfer !== "1" && errMsg === "锁定座位异常")) {

@@ -631,12 +631,9 @@ export default class UmeOrderManage {
       }
     }
     // 3、平台转单
-    // 获取转单原因
-    const errInfoObj = this.logger.logList
-      .filter(item => item.level === "error")
-      .reverse()?.[0];
-    let errMsg = errInfoObj?.des || "";
-    let errInfo = formatErrInfo(errInfoObj?.info?.error) || "";
+    // 获取转单原因（优先读 _lastErrCache，防止 logList 被 logUpload 异步清空导致失败原因为空）
+    let { err_msg: errMsg = "", err_info: errInfo = "" } =
+      this.logger.getLastErrMsgAndInfo() || {};
     let isAutoTransfer = window.localStorage.getItem("isAutoTransfer"); // 自动转单是否开启
     let des = "自动转单处于关闭状态，只取消订单释放座位，需手动出票或转单";
     if (this.order.isAgain) {
