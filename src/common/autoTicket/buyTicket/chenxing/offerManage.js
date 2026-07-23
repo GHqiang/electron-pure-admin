@@ -266,16 +266,16 @@ class getChenxingOfferPrice extends BaseOfferPrice {
           basePrice = discountList
             .filter(item => item.cardLevelCode)
             .map(item => item.price - item.cinemaPayAmount + item.serviceAddFee)
-            .sort((a, b) => a - b)?.[0];
-          this.logger.infoSave("从有卡优惠活动里取最低价", { basePrice });
+            .sort((a, b) => b - a)?.[0];
+          this.logger.infoSave("从有卡优惠活动里取最高价", { basePrice });
           if (!basePrice) {
             basePrice = discountList
               .filter(item => !item.cardLevelCode)
               .map(
                 item => item.price - item.cinemaPayAmount + item.serviceAddFee
               )
-              .sort((a, b) => a - b)?.[0];
-            this.logger.infoSave("从无卡优惠活动里取最低价", { basePrice });
+              .sort((a, b) => b - a)?.[0];
+            this.logger.infoSave("从无卡优惠活动里取最高价", { basePrice });
           }
         } else {
           basePrice = cinemaPlanDto?.standardPrice;
