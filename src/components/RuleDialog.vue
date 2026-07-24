@@ -48,8 +48,8 @@
           <el-input v-model="formData.ruleName" clearable />
         </el-form-item>
         <el-form-item
-          label="包含院线"
           v-if="formData.shadowLineName == 'wanda'"
+          label="包含院线"
         >
           <el-select
             v-model="formData.cinema_group"
@@ -732,42 +732,50 @@ const resetForm = el => {
   formData.auto_quan_value = ""; // 自动用券标识
 };
 
-// 根据当前选中的影院名称，同步对应的 app_cinema_code 集合
-const syncCinemaCodesByNames = () => {
+// 构建当前影线下的 app_cinema_code 生成函数（与影院映射维护列表保持一致）
+const buildAppCinemaCodeFn = () => {
+  const appInfo = GET_APP_INFO(formData.shadowLineName);
+  const app_type_code = appInfo?.app_type_code;
+  return row => {
+    if (!row) return "";
+    // ume / 辰星等有独立 cinema_code 的系列，直接用 cinema_code
+    if (SYNC_CINEMA_CODE_APP_TYPE_LIST.includes(app_type_code)) {
+      return row.cinema_code != null ? String(row.cinema_code) : "";
+    }
+    // 其他系列使用 city_id + "_" + cinema_id 组合
+    const cityId =
+      row.city_id != null && row.city_id !== undefined
+        ? String(row.city_id)
+        : "";
+    const cinemaId =
+      row.cinema_id != null && row.cinema_id !== undefined
+        ? String(row.cinema_id)
+        : "";
+    return cityId && cinemaId ? `${cityId}_${cinemaId}` : "";
+  };
+};
+
+// names → codes：用归一化名称匹配影院列表，生成 app_cinema_code 集合
+// 用于用户选择影院时同步生成 codes（includeCinemaChange / 编辑加载兼容老数据）
+// 返回 true 表示同步成功；返回 false 表示异常或前置条件不满足，调用方应阻断保存
+const syncCodesByNames = () => {
   try {
-    const app_name = formData.shadowLineName;
-    if (!app_name) {
+    if (!formData.shadowLineName) {
       formData.includeCinemaCodes = "";
       formData.excludeCinemaCodes = "";
-      return;
+      return true;
     }
-    const appInfo = GET_APP_INFO(app_name);
-    const app_type_code = appInfo?.app_type_code;
     const list = cinemaList.value || [];
-
-    // 与影院映射维护列表保持一致的 app_cinema_code 生成规则
-    const buildAppCinemaCode = row => {
-      if (!row) return "";
-      // ume / 辰星等有独立 cinema_code 的系列，直接用 cinema_code
-      if (SYNC_CINEMA_CODE_APP_TYPE_LIST.includes(app_type_code)) {
-        return row.cinema_code != null ? String(row.cinema_code) : "";
-      }
-      // 其他系列使用 city_id + "_" + cinema_id 组合
-      const cityId =
-        row.city_id != null && row.city_id !== undefined
-          ? String(row.city_id)
-          : "";
-      const cinemaId =
-        row.cinema_id != null && row.cinema_id !== undefined
-          ? String(row.cinema_id)
-          : "";
-      return cityId && cinemaId ? `${cityId}_${cinemaId}` : "";
-    };
-
+    if (!list.length) {
+      ElMessage.error(
+        "影院列表未加载完成，无法同步影院编码，请稍后重试或刷新页面"
+      );
+      return false;
+    }
+    const buildAppCinemaCode = buildAppCinemaCodeFn();
     const getCodesByNames = names => {
       if (!names || !names.length) return "";
       const codeSet = new Set();
-      // console.log("syncCinemaCodesByNames names", names, list);
       names.forEach(name => {
         const rows = list.filter(
           row => cinemNameSpecial(row.cinema_name) === cinemNameSpecial(name)
@@ -779,11 +787,74 @@ const syncCinemaCodesByNames = () => {
       });
       return Array.from(codeSet).join(",");
     };
-
     formData.includeCinemaCodes = getCodesByNames(formData.includeCinemaNames);
     formData.excludeCinemaCodes = getCodesByNames(formData.excludeCinemaNames);
+    return true;
   } catch (error) {
-    console.warn("同步影院 app_cinema_code 集合异常", error);
+    console.error("同步影院编码异常", error);
+    ElMessage.error("同步影院编码异常，请重试；详情见控制台");
+    return false;
+  }
+};
+
+// codes → names：以 codes 为基准反查最新影院名称，找不到 row 的 code 直接剔除
+// 用于保存时，用 code 反查最新 cinema_name 回填，自动清理失效 code（影院下线/换名）
+// 返回 true 表示同步成功；返回 false 表示异常或前置条件不满足，调用方应阻断保存
+const syncNamesByCodes = () => {
+  try {
+    if (!formData.shadowLineName) {
+      formData.includeCinemaNames = [];
+      formData.excludeCinemaNames = [];
+      return true;
+    }
+    const list = cinemaList.value || [];
+    if (!list.length) {
+      ElMessage.error(
+        "影院列表未加载完成，无法同步影院编码，请稍后重试或刷新页面"
+      );
+      return false;
+    }
+    const buildAppCinemaCode = buildAppCinemaCodeFn();
+    // 以 codes 反查最新 names，找不到 row 的 code 直接剔除
+    const getNamesByCodes = codesStr => {
+      if (!codesStr) return { names: [], removedCodes: [] };
+      const codes = codesStr.split(",").filter(Boolean);
+      const names = [];
+      const removedCodes = [];
+      codes.forEach(code => {
+        const row = list.find(r => buildAppCinemaCode(r) === code);
+        if (row && row.cinema_name) {
+          names.push(row.cinema_name);
+        } else {
+          removedCodes.push(code);
+        }
+      });
+      return { names, removedCodes };
+    };
+    const incResult = getNamesByCodes(formData.includeCinemaCodes);
+    const excResult = getNamesByCodes(formData.excludeCinemaCodes);
+    formData.includeCinemaNames = incResult.names;
+    formData.excludeCinemaNames = excResult.names;
+    // 汇总提示被剔除的无效 code（不阻断保存，已自动清理）
+    const parts = [];
+    if (incResult.removedCodes.length) {
+      parts.push(
+        `包含影院中无效编码已剔除：${incResult.removedCodes.join("、")}`
+      );
+    }
+    if (excResult.removedCodes.length) {
+      parts.push(
+        `排除影院中无效编码已剔除：${excResult.removedCodes.join("、")}`
+      );
+    }
+    if (parts.length) {
+      ElMessage.warning(`已自动剔除无效影院数据：${parts.join("；")}`);
+    }
+    return true;
+  } catch (error) {
+    console.error("同步影院名称异常", error);
+    ElMessage.error("同步影院名称异常，请重试；详情见控制台");
+    return false;
   }
 };
 
@@ -923,7 +994,7 @@ const open = async ruleInfo => {
       quanType.value = quanTypeList;
       // 兼容老数据：如 code 集合为空，则根据名称尝试同步一份
       if (!formData.includeCinemaCodes || !formData.excludeCinemaCodes) {
-        syncCinemaCodesByNames();
+        syncCodesByNames();
       }
     }
     loading.close();
@@ -992,8 +1063,12 @@ const saveRule = async () => {
   if (saving.value) return;
   ruleFormRef.value.validate(async valid => {
     if (valid) {
-      // 保存前根据当前影院名称同步一份 app_cinema_code 集合，避免只存名称
-      syncCinemaCodesByNames();
+      // 保存前以 codes 为基准反向回显 names，自动剔除无效影院数据（换名/下线/失效 code）
+      const syncOk = syncNamesByCodes();
+      if (!syncOk) {
+        ElMessage.warning("影院数据同步失败，已阻止保存，请按提示修复后重试");
+        return false;
+      }
       // 提交逻辑
       console.log("表单提交的数据:", formData);
       ElMessage.success("必填数据校验成功！");
@@ -1070,7 +1145,7 @@ const excludeCityChange = value => {
 const includeCinemaChange = value => {
   try {
     console.log("包含影院改变", value);
-    syncCinemaCodesByNames();
+    syncCodesByNames();
     console.log("表单提交的数据:", formData.value);
   } catch (error) {
     console.warn("包含影院改变处理异常", error);
@@ -1080,7 +1155,7 @@ const includeCinemaChange = value => {
 const excludeCinemaChange = value => {
   try {
     console.log("排除影院改变", value);
-    syncCinemaCodesByNames();
+    syncCodesByNames();
     console.log("表单提交的数据:", formData.value);
   } catch (error) {
     console.warn("排除影院改变处理异常", error);

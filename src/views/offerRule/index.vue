@@ -1145,7 +1145,6 @@ const saveRuleSyncToPlat = async ruleForm => {
     // 注意：此处不 catch，让异常传播到 saveRule 以阻断后续落库，避免 platRuleId 丢失无法重试
     await lierenOfferRuleDelPlat([lierenOfferRule.platRuleId]);
   }
-  console.log("同步规则到平台成功");
 };
 
 // 删除规则同步到平台
