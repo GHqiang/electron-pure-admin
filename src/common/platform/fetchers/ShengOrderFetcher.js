@@ -128,7 +128,8 @@ export default class ShengOrderFetcher extends BaseOrderFetcher {
             // 9代表申请换座中
             if (
               dictStore.dictInfo.supportChangeSeatPlatList.includes("sheng") &&
-              ticketInfo.order_status == 9
+              ticketInfo.order_status == 9 &&
+              item.changeSeatApplyStatus
             ) {
               // changeSeatApplyStatus: 1-拒绝，2-同意(换座成功，seats是换座后座位)
               if (item.changeSeatApplyStatus === 2) {
