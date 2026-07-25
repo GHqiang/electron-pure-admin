@@ -8,9 +8,9 @@ import axios from "@/utils/http/mayi-request";
 const queryOfferRecord = params =>
   axios.get("/newwww/open/api/order/pool/list", { params });
 
-// 待报价列表查询
+// 待报价列表查询（拉单请求统一10秒超时）
 const queryStayOfferList = params =>
-  axios.get("/newwww/open/api/order/pool/list", { params });
+  axios.get("/newwww/open/api/order/pool/list", { params, timeout: 10 * 1000 });
 
 // 提交报价
 const submitOffer = params =>
