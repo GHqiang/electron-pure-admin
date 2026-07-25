@@ -21,23 +21,68 @@ export default class ShengAdapter extends BasePlatformAdapter {
   }
 
   /**
-   * 获取待报价订单列表
-   * @param {Object} params - 查询参数
+   * 获取待报价订单列表（按 count + 满页 20 翻页）
+   *
+   * 每页固定返回 20 条（传更大无效），按 count 翻页：
+   *   - count 已确认为 status:"0" 过滤后的待报价总数（主判断依据）；
+   *   - "满页 20"为辅：当前页 rows.length === 20 说明大概率还有下一页。
+   *
+   * 翻页终止条件（任一满足即停）：
+   *   - 当前页 rows.length < 20（不满页=最后一页）
+   *   - 已拉取条数 >= count
+   *   - 达到 MAX_PAGE 保护上限（防 count 异常）
+   *
+   * 单页容错：每页独立 try/catch，某页失败时保留已拉数据降级返回，不再整轮返回 []。
+   *
+   * @param {Object} params - 查询参数（page 由翻页逻辑内部控制，外部传入将被覆盖）
    * @returns {Promise<Array>} 订单列表
    */
   async fetchOrderList(params = {}) {
-    try {
-      const res = await this.api.queryStayOfferList({
-        supplierCode: tokens.shengToken,
-        status: "0", // 0待报价订单，1已报价订单
-        page: 1, // 1页20条
-        ...params
-      });
-      return res?.data?.rows || [];
-    } catch (error) {
-      this.logger.errorSave("获取待报价订单列表异常", { error });
-      return [];
+    const MAX_PAGE = 5; // 单轮最多拉 5 页 = 100 条，防 count 异常
+    const PAGE_SIZE = 20; // 平台固定每页 20 条，传更大无效
+    const allOrders = [];
+    let page = 1;
+    let count = 0;
+
+    while (page <= MAX_PAGE) {
+      try {
+        const res = await this.api.queryStayOfferList({
+          supplierCode: tokens.shengToken,
+          status: "0", // 0待报价订单，1已报价订单
+          ...params, // 允许外部覆盖 supplierCode 等参数
+          page // page 由翻页循环控制，覆盖外部传入
+        });
+        const list = res?.data?.rows || [];
+        count = res?.data?.count ?? count;
+
+        allOrders.push(...list);
+        console.log(
+          `[sheng] 翻页 page=${page}/${MAX_PAGE} 本页${list.length}条 累计${allOrders.length}条 count=${count}`
+        );
+
+        // 终止条件：当前页不满 / 已拉够 / 当前页为空
+        // count>0 守卫：count 取不到时不用此条件，靠"满页判断"自然终止
+        if (
+          list.length < PAGE_SIZE ||
+          (count > 0 && allOrders.length >= count) ||
+          list.length === 0
+        ) {
+          break;
+        }
+        page++;
+      } catch (error) {
+        // 单页容错：失败时保留已拉数据降级返回，不再整轮返回 []
+        this.logger.errorSave("获取待报价订单列表异常（翻页）", {
+          error,
+          page,
+          pulled: allOrders.length,
+          count
+        });
+        break;
+      }
     }
+
+    return allOrders;
   }
 
   /**

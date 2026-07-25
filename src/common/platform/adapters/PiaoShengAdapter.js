@@ -28,7 +28,7 @@ export default class PiaoShengAdapter extends BasePlatformAdapter {
     try {
       const res = await this.api.queryStayOfferList({
         pageNum: 1,
-        pageLimit: 200,
+        pageLimit: 300,
         ...params
       });
       return res?.rtnData || [];

@@ -18,40 +18,69 @@ export default class ShoutuAdapter extends BasePlatformAdapter {
   }
 
   /**
-   * 获取待报价订单列表
+   * 获取待报价订单列表（现有 while 翻页加固）
+   *
+   * 加固点：
+   *   - totalPage 取不到时不再静默退化为只拉 1 页：用 total 估算，仍取不到则靠"满页判断"自然终止；
+   *   - 双保险终止条件：pageNo >= totalPage 或 已拉 >= total；
+   *   - 单页容错：每页独立 try/catch，失败时保留已拉 allOrders 降级返回，不再整轮返回 []；
+   *   - 最大页数保护 MAX_PAGE=5（50×5=250 条，覆盖日常量级）；
+   *   - 每页输出可观测日志（pageNo/totalPage/本页条数/累计/total）。
+   *
    * @param {Object} params - 查询参数
    * @returns {Promise<Array>} 订单列表
    */
   async fetchOrderList(params = {}) {
-    try {
-      // 守兔平台需要分页获取所有订单
-      const allOrders = [];
-      let pageNo = 1;
-      let hasMore = true;
+    const MAX_PAGE = 5; // 单轮最多拉 5 页 = 250 条，防 totalPage 异常
+    const PAGE_SIZE = 50; // 平台固定上限 50，传更大无效
+    const allOrders = [];
+    let pageNo = 1;
+    let total = 0;
+    let totalPage = 0;
 
-      while (hasMore) {
+    while (pageNo <= MAX_PAGE) {
+      try {
         const res = await this.api.queryStayOfferList({
-          pageNo,
-          pageSize: 50,
-          ...params
+          ...params,
+          pageNo, // pageNo 由翻页循环控制
+          pageSize: PAGE_SIZE
         });
         const list = res?.data?.list || [];
-        const totalPage = res?.data?.totalPage || 1;
+        total = res?.data?.total ?? total;
+        totalPage = res?.data?.totalPage ?? totalPage;
 
         allOrders.push(...list);
+        // totalPage 取不到时用 total 估算；仍取不到则用 Infinity 靠"满页判断"自然终止
+        const effectiveTotalPage =
+          totalPage || (total > 0 ? Math.ceil(total / PAGE_SIZE) : Infinity);
+        console.log(
+          `[shoutu] 翻页 page=${pageNo}/${MAX_PAGE} 本页${list.length}条 累计${allOrders.length}条 total=${total} totalPage=${totalPage}`
+        );
 
-        if (pageNo >= totalPage) {
-          hasMore = false;
-        } else {
-          pageNo++;
+        // 双保险终止：pageNo >= totalPage / 已拉 >= total / 当前页不满 / 当前页为空
+        if (
+          pageNo >= effectiveTotalPage ||
+          (total > 0 && allOrders.length >= total) ||
+          list.length < PAGE_SIZE ||
+          list.length === 0
+        ) {
+          break;
         }
+        pageNo++;
+      } catch (error) {
+        // 单页容错：失败时保留已拉数据降级返回，不再整轮返回 []
+        this.logger.errorSave("获取待报价订单列表异常（翻页）", {
+          error,
+          pageNo,
+          pulled: allOrders.length,
+          total,
+          totalPage
+        });
+        break;
       }
-
-      return allOrders;
-    } catch (error) {
-      this.logger.errorSave("获取待报价订单列表异常", { error });
-      return [];
     }
+
+    return allOrders;
   }
 
   /**

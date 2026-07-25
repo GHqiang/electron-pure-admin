@@ -46,6 +46,8 @@ export default class BaseOfferQueue {
     this.isFetching = false;
     /** 拉单定时器引用，stop 时清理 */
     this._fetchTimer = null;
+    /** 拉单锁起始时间戳（毫秒），配合 FETCH_LOCK_TIMEOUT 做强制复位 */
+    this._fetchStartedAt = 0;
   }
 
   /**
@@ -65,8 +67,30 @@ export default class BaseOfferQueue {
     this.handledOrders = new Map();
     this.queue = [];
 
+    // 重置子类拉单相关状态（如猎人的水位线 lastFetchTimestamp）
+    // 确保每次 start 都走"首轮"逻辑（猎人：以当前时间起步，不用停机前旧水位线）
+    this.resetFetchState();
+
     // 拉单独立定时触发，不阻塞调度器
     this._startFetchLoop();
+  }
+
+  /**
+   * 重置子类拉单相关状态（钩子方法）
+   * 基类默认空实现，子类按需重写（如猎人重置水位线 lastFetchTimestamp）
+   * 场景：stop→start 重启时，清空增量拉单的水位线，让首轮重新以当前时间起步，
+   *       避免使用停机前的旧水位线（旧值远小于当前时间，中间订单大多查不到或已过截止，无意义）
+   */
+  resetFetchState() {}
+
+  /**
+   * 获取拉单锁超时阈值（毫秒），字典可配，默认 30000
+   * 超过该时长 isFetching 仍未释放，tick 强制复位，避免翻页/接口卡死长时间占锁
+   * @returns {number}
+   */
+  _getFetchLockTimeout() {
+    const configured = Number(dictStore.dictInfo.fetchLockTimeout);
+    return configured > 0 ? configured : 30000;
   }
 
   /**
@@ -76,6 +100,10 @@ export default class BaseOfferQueue {
    * 用 isFetching 标志防止 fetchOrders 并发执行：
    *   - 若上一次拉单尚未完成，本轮跳过，仅调度下一轮
    *   - 子类 fetchOrders 内部的 mockDelay 由调用方传 0 跳过，间隔由定时器控制
+   *
+   * 拉单锁超时强制复位：isFetching 持有超过 _getFetchLockTimeout() 则强制释放，
+   * 让下一轮 tick 可重新拉单。用 _fetchStartedAt 比对保证被复位的旧 fetchOrders
+   * 完成时不会误释放新一轮的锁。
    */
   _startFetchLoop() {
     const tick = () => {
@@ -84,12 +112,34 @@ export default class BaseOfferQueue {
       // 防重入：上一次拉单未完成则跳过本轮，仅调度下一轮
       if (!this.isFetching) {
         this.isFetching = true;
+        // 记录本轮锁起始时间，用于超时强制复位
+        this._fetchStartedAt = Date.now();
+        // 闭包保存本轮 startedAt，finally 中比对，避免被复位的旧轮误释放新一轮的锁
+        const myStartedAt = this._fetchStartedAt;
         // 传 0 跳过子类内部的 mockDelay，拉单间隔由定时器控制
         this.fetchOrders(0)
           .catch(e => console.error("拉单异常", e))
           .finally(() => {
-            this.isFetching = false;
+            // 仅当 _fetchStartedAt 仍等于 myStartedAt 时才释放：
+            //  - 若被超时复位，_fetchStartedAt 已被置 0，不释放（新一轮会自己管理）
+            //  - 若已被新一轮覆盖，也不释放（交给新一轮的 finally）
+            if (this._fetchStartedAt === myStartedAt) {
+              this.isFetching = false;
+              this._fetchStartedAt = 0;
+            }
           });
+      } else if (this._fetchStartedAt > 0) {
+        // isFetching 仍为 true：检测是否超时需要强制复位
+        const heldMs = Date.now() - this._fetchStartedAt;
+        if (heldMs > this._getFetchLockTimeout()) {
+          console.warn(
+            `[${this.platName}] 拉单锁持有 ${heldMs}ms 超过阈值 ${this._getFetchLockTimeout()}ms，强制复位 isFetching；` +
+              `旧轮 fetchOrders 完成时不会误释放新一轮的锁（靠 startedAt 比对）`
+          );
+          // 置 0：旧轮 finally 中 startedAt 比对不匹配，不会误释放新一轮的锁
+          this.isFetching = false;
+          this._fetchStartedAt = 0;
+        }
       }
 
       // 无论本轮是否执行拉单，都调度下一轮（间隔支持运行时字典调整）
@@ -1223,6 +1273,11 @@ export default class BaseOfferQueue {
       clearTimeout(this._fetchTimer);
       this._fetchTimer = null;
     }
+    // 重置拉单锁状态：避免 stop 时有 fetchOrders 在运行，残留 isFetching=true
+    // 影响下次 start 后的首轮 tick（首轮会被 isFetching 挡住跳过）。
+    // 注意：旧 fetchOrders 完成时 finally 的 startedAt 比对仍会正确跳过（_fetchStartedAt 已变）
+    this.isFetching = false;
+    this._fetchStartedAt = 0;
     console.warn("主动停止订单自动报价队列");
   }
 
