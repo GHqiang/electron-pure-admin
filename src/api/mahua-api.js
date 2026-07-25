@@ -6,7 +6,9 @@ import axios from "@/utils/http/newmahua-request";
 
 // 待报价列表查询（拉单请求统一5秒超时）
 const queryStayOfferList = params =>
-  axios.post("/nmhapi/api/movie-server/movie/bidding/info/list", params, { timeout: 5 * 1000 });
+  axios.post("/nmhapi/api/movie-server/movie/bidding/info/list", params, {
+    timeout: 5 * 1000
+  });
 
 // 提交报价
 const submitOffer = params =>
