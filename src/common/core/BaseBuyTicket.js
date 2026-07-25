@@ -4,7 +4,6 @@
 import {
   formatErrInfo,
   getCinemaLoginInfoList,
-  mockDelay,
   sendWxPusherMessage
 } from "@/utils/utils.js";
 import svApi from "@/api/sv-api";
@@ -105,8 +104,7 @@ export default class BaseBuyTicket {
 
       this.offerRule.lockseat = this.order.lockseat;
 
-      // 5、一键买票
-      await mockDelay(1); // 解锁成功后延迟1秒再执行
+      // 5、一键买票（已移除解锁后固定1秒等待：oneClickBuyTicket 内部先做账号排序与影院/影片/场次查询，解锁早于实际锁座生效）
       const result = await this.oneClickBuyTicket({
         ...this.order,
         otherParams: {
