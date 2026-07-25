@@ -4,9 +4,9 @@
 
 import axios from "@/utils/http/yinghuasuan-request";
 
-// 获取待报价列表（拉单请求统一10秒超时）
+// 获取待报价列表（拉单请求统一5秒超时）
 const queryStayOfferList = params =>
-  axios.post("/open/v1/invitation/index", params, { timeout: 10 * 1000 });
+  axios.post("/open/v1/invitation/index", params, { timeout: 5 * 1000 });
 
 // 提交报价
 const submitOffer = params => axios.post("/open/v1/invitation/quote", params);

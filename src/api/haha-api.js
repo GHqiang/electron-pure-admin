@@ -4,9 +4,9 @@
 
 import axios from "@/utils/http/haha-request";
 
-// 待报价列表查询（拉单请求统一10秒超时）
+// 待报价列表查询（拉单请求统一5秒超时）
 const queryStayOfferList = params =>
-  axios.post("/api/Synchro/pcToList", params, { timeout: 10 * 1000 });
+  axios.post("/api/Synchro/pcToList", params, { timeout: 5 * 1000 });
 
 // 提交报价
 const submitOffer = params => axios.post("/api/Synchro/toPrice", params);

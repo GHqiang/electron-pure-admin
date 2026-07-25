@@ -4,9 +4,9 @@
 
 import axios from "@/utils/http/yangcong-request";
 
-// 待报价列表查询（拉单请求统一10秒超时）
+// 待报价列表查询（拉单请求统一5秒超时）
 const queryStayOfferList = params =>
-  axios.get("/prod-api/api/ticket/order/pool", { params, timeout: 10 * 1000 });
+  axios.get("/prod-api/api/ticket/order/pool", { params, timeout: 5 * 1000 });
 
 // 提交报价
 const submitOffer = params =>

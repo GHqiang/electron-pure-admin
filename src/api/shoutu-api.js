@@ -4,10 +4,10 @@
 
 import axios from "@/utils/http/shoutu-request";
 
-// 待报价列表查询（拉单请求统一10秒超时）
+// 待报价列表查询（拉单请求统一5秒超时）
 const queryStayOfferList = params =>
   axios.post("/yp-api/ticket/order/list-wait-quote-order", params, {
-    timeout: 10 * 1000
+    timeout: 5 * 1000
   });
 
 // 提交报价

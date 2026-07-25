@@ -8,9 +8,9 @@ import axios from "@/utils/http/lieren-request";
 const queryOfferRecord = params =>
   axios.post("/lieren/openapi/order/record", params);
 
-// 获取待报价列表（拉单请求统一10秒超时，避免isFetching锁长时间持有导致后续tick全部跳过）
+// 获取待报价列表（拉单请求统一5秒超时，避免isFetching锁长时间持有导致后续tick全部跳过）
 const queryStayOfferList = params =>
-  axios.post("/lieren/openapi/order/grab", params, { timeout: 10 * 1000 });
+  axios.post("/lieren/openapi/order/grab", params, { timeout: 5 * 1000 });
 
 // 获取待出票列表
 const stayTicketingList = params =>
