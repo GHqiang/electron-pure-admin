@@ -816,25 +816,30 @@ const syncNamesByCodes = () => {
     }
     const buildAppCinemaCode = buildAppCinemaCodeFn();
     // 以 codes 反查最新 names，找不到 row 的 code 直接剔除
+    // 同时返回有效 codes，确保 names 与 codes 数量始终一致
     const getNamesByCodes = codesStr => {
-      if (!codesStr) return { names: [], removedCodes: [] };
+      if (!codesStr) return { names: [], codes: [], removedCodes: [] };
       const codes = codesStr.split(",").filter(Boolean);
       const names = [];
+      const validCodes = [];
       const removedCodes = [];
       codes.forEach(code => {
         const row = list.find(r => buildAppCinemaCode(r) === code);
         if (row && row.cinema_name) {
           names.push(row.cinema_name);
+          validCodes.push(code);
         } else {
           removedCodes.push(code);
         }
       });
-      return { names, removedCodes };
+      return { names, codes: validCodes, removedCodes };
     };
     const incResult = getNamesByCodes(formData.includeCinemaCodes);
     const excResult = getNamesByCodes(formData.excludeCinemaCodes);
     formData.includeCinemaNames = incResult.names;
+    formData.includeCinemaCodes = incResult.codes.join(",");
     formData.excludeCinemaNames = excResult.names;
+    formData.excludeCinemaCodes = excResult.codes.join(",");
     // 汇总提示被剔除的无效 code（不阻断保存，已自动清理）
     const parts = [];
     if (incResult.removedCodes.length) {
