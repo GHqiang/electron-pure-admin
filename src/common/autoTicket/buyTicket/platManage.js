@@ -716,9 +716,20 @@ export default class PlatCommon {
       logger.infoSave("申请换座入参", params);
       const res = await PLAT_API_OBJ[plat_name].applySeatChange(params);
       logger.infoSave("申请换座返回", res);
+      // 申请换座成功，推送消息提醒用户关注该订单换座结果，如有问题及时手动介入处理
+      sendWxPusherMessage({
+        orderInfo: this.order,
+        transferTip: "订单已申请换座，请关注换座结果，如有问题及时手动介入处理",
+        failReason: "已发起换座申请，等待平台处理"
+      });
       return true;
     } catch (error) {
       logger.errorSave("申请换座异常", { error });
+      sendWxPusherMessage({
+        orderInfo: this.order,
+        transferTip: "订单申请换座异常，请关注该订单，如有问题及时手动介入处理",
+        failReason: "申请换座异常：" + formatErrInfo(error)
+      });
       return false;
     }
   }
