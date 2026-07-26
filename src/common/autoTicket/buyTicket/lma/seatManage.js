@@ -12,7 +12,7 @@
  *
  * @module lma/seatManage
  */
-import { formatErrInfo, trial } from "@/utils/utils";
+import { formatErrInfo, trial, mockDelay } from "@/utils/utils";
 import { APP_API_OBJ } from "@/common/index";
 import { GET_APP_INFO } from "@/common/constant";
 
@@ -131,6 +131,8 @@ export default class LmaSeatManage {
     quan_code,
     inx = 1
   }) {
+    const MAX_LOCK_RETRY = 3; // 座位已被锁定时最多重试3次
+    const LOCK_RETRY_DELAY = 1; // 重试间隔（秒）
     try {
       let params = {
         cinema_id: cinema_id,
@@ -146,6 +148,24 @@ export default class LmaSeatManage {
       return res;
     } catch (error) {
       this.logger.errorSave(`第${inx}次锁定座位失败`, { error });
+      // 座位已被锁定时重试3次，仍失败再抛出异常交由上层走申请换座/转单逻辑
+      const errInfo = formatErrInfo(error);
+      if (errInfo.includes("座位已被锁定") && inx <= MAX_LOCK_RETRY) {
+        this.logger.infoSave(
+          `座位已被锁定，${LOCK_RETRY_DELAY}秒后进行第${inx + 1}次重试`,
+          { inx }
+        );
+        await mockDelay(LOCK_RETRY_DELAY);
+        return this.lockseatByApp({
+          cinema_id,
+          show_id,
+          short_code,
+          seat_arr,
+          lmaToken,
+          quan_code,
+          inx: inx + 1
+        });
+      }
       return Promise.reject(error);
     }
   }
