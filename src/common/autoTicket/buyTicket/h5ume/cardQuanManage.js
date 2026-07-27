@@ -425,6 +425,14 @@ export default class H5UmeCardQuanManage {
           profit: 0 // 利润
         };
       }
+      // 取最大余额，优先使用余额多的卡
+      cardData = cardData.sort((a, b) => b.balance - a.balance);
+      this.logger.infoSave("按余额降序排序后可用卡列表", {
+        sortedCardList: cardData.map(item => ({
+          cardNumber: item.cardNumber,
+          balance: item.balance
+        }))
+      });
       // 手续费
       let shouxufei = (supplier_end_price * 100) / 10000;
       if (NO_FEE_PLAT_LIST.includes(plat_name)) {
