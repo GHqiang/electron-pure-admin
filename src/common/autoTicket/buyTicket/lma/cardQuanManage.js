@@ -522,15 +522,17 @@ export default class LmaCardQuanManage {
             });
           }
         }
-        // 更新本地已绑定的券库存
-        this.updateQuanStock({
-          quan_stock: quanStock, // 直接传过去券库存
-          quan_value: offerRule.quan_value,
-          quan_flag: offerRule.quan_flag,
-          app_name: appFlag,
-          phone: currentParams.mobile
-        });
       }
+      // 更新本地已绑定的券库存
+      // 参考其他系列（chenxing/jinyi 等）：无论是否入库券，获取到目标券后都更新库存
+      // 非入库券（is_store != "1"）在目标券不足时也需要把库存更新为实际获取到的数量（含 0）
+      this.updateQuanStock({
+        quan_stock: quanStock, // 直接传过去券库存
+        quan_value: offerRule.quan_value,
+        quan_flag: offerRule.quan_flag,
+        app_name: appFlag,
+        phone: currentParams.mobile
+      });
 
       if (targetQuanList?.length < ticket_num) {
         let quanDiffMsg = isGetNewQuan
