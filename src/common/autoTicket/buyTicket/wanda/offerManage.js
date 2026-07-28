@@ -40,6 +40,7 @@ import BaseOfferPrice from "@/common/core/BaseOfferPrice.js";
 import WandaCardQuanManage from "./cardQuanManage.js";
 import WandaCinemaManage from "./cinemaManage.js";
 import WandaSeatManage from "./seatManage.js";
+import { dictTable } from "@/store/dictTable";
 import {
   applyDynamicPricing,
   applyProfitAddition,
@@ -50,6 +51,7 @@ import {
 import { calculateMostSeatPrice } from "../common/seatPriceHelper";
 
 const tokens = platTokens();
+const dictStore = dictTable();
 
 class WandaOfferPrice extends BaseOfferPrice {
   constructor({ appFlag, plat_name, isTestOrder }) {
@@ -136,6 +138,25 @@ class WandaOfferPrice extends BaseOfferPrice {
       const movieInfo = await this.getMovieInfo();
       this.logger.infoSave("获取电影信息", { movieInfo });
       if (!movieInfo) {
+        return null;
+      }
+
+      // 2.1 电影特殊标签黑名单过滤（字典 wandaMovieBlacklistLabels 配置，多个值用英文逗号分隔）
+      // 命中黑名单的场次（如"海报收藏家"等特殊活动标签）不进行报价
+      const blacklistLabels =
+        dictStore.dictInfo.wandaMovieBlacklistLabels
+          ?.split(",")
+          .map(s => s.trim())
+          .filter(Boolean) || [];
+      if (
+        blacklistLabels.length &&
+        movieInfo.showTypeLabelName &&
+        blacklistLabels.includes(movieInfo.showTypeLabelName)
+      ) {
+        this.logger.errorSave("电影命中万达黑名单标签，不报价", {
+          showTypeLabelName: movieInfo.showTypeLabelName,
+          blacklistLabels
+        });
         return null;
       }
 
