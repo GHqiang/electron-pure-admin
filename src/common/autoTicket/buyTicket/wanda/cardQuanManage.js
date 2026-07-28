@@ -460,7 +460,10 @@ export default class CardQuanManage {
       const res = await this.appApi.getQuanList(params);
       this.logger.infoSave("获取优惠券列表返回", res);
       let quanList = res.data?.couponGroups || [];
-      quanList = quanList.map(item => item.couponInfoList).flat();
+      quanList = quanList
+        .map(item => item.couponInfoList)
+        .flat()
+        .filter(item => item.giftStatus == 1);
       quanList = quanList.map(item => ({
         ...item,
         couponName: item.couponTypeName,
