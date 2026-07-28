@@ -118,7 +118,7 @@ class getLmaOfferPrice extends BaseOfferPrice {
 
       // 校验电影标签，影展类不进行报价
       const feature = movieInfo.feature;
-      console.log("feature", feature, movieInfo);
+      this.logger.infoSave("获取电影信息", { feature, movieInfo });
       if (feature?.includes("影展")) {
         this.logger.errorSave("该电影标签为影展，直接不报");
         return null;

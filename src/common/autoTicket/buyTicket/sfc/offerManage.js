@@ -133,7 +133,7 @@ class getSfcOfferPrice extends BaseOfferPrice {
         );
         return null;
       }
-
+      this.logger.infoSave("获取电影信息", { movieInfo });
       if (filmTypeFlag) {
         // 当前场次电影格式
         filmType = movieInfo.media;

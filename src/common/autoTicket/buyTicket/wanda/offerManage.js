@@ -134,7 +134,7 @@ class WandaOfferPrice extends BaseOfferPrice {
 
       // 2. 电影格式过滤
       const movieInfo = await this.getMovieInfo();
-      console.log("获取电影信息", movieInfo);
+      this.logger.infoSave("获取电影信息", { movieInfo });
       if (!movieInfo) {
         return null;
       }

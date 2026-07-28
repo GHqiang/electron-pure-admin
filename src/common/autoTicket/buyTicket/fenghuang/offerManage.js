@@ -93,8 +93,8 @@ class getFenghuangOfferPrice extends BaseOfferPrice {
 
       // 2. 电影格式过滤
       const movieInfo = await this.getMovieInfo();
+      this.logger.infoSave("获取电影信息", { movieInfo });
       if (!movieInfo) return null;
-      console.log("movieInfo", movieInfo, matchRuleList);
       matchRuleList = this.filterByFilmType(
         matchRuleList,
         movieInfo.filmVersion

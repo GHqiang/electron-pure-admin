@@ -144,6 +144,7 @@ class getJinyiOfferPrice extends BaseOfferPrice {
 
       // 2. 电影格式过滤
       const movieInfo = await this.getMovieInfo();
+      this.logger.infoSave("获取电影信息", { movieInfo });
       if (!movieInfo) return null;
 
       matchRuleList = this.filterByFilmType(matchRuleList, movieInfo.show_type);

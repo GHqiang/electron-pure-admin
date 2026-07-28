@@ -97,6 +97,7 @@ class getH5UmeOfferPrice extends BaseOfferPrice {
         );
         return null;
       }
+      this.logger.infoSave("获取电影信息", { movieInfo });
       if (movieInfo?.filmTypeCheckFail) {
         this.logger.errorSave("按电影格式存筛选后，报价规则为空", {
           filmType: movieInfo.filmType,

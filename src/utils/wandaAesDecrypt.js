@@ -36,3 +36,5 @@ export function wandaAesDecrypt(hexStr, keyStr = WANDA_AES_KEY) {
     return null;
   }
 }
+
+window.wandaAesDecrypt = wandaAesDecrypt;
