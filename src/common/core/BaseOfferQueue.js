@@ -41,7 +41,11 @@ export default class BaseOfferQueue {
     /** 平台已报价缓存：避免对已由平台自动报价的订单重复走查询链
      *  refreshPromise: Promise 锁，防止缓存过期时多个并发 orderHandle 同时发起 queryOfferRecord 请求（缓存击穿）
      */
-    this._platformQuotedCache = { data: [], fetchedAt: 0, refreshPromise: null };
+    this._platformQuotedCache = {
+      data: [],
+      fetchedAt: 0,
+      refreshPromise: null
+    };
     /** 拉单防重入标志：防止 fetchOrders 并发执行 */
     this.isFetching = false;
     /** 拉单定时器引用，stop 时清理 */
@@ -252,8 +256,7 @@ export default class BaseOfferQueue {
     if (platformTimeout != null) return platformTimeout;
 
     // ② 系列级字典覆盖：解析 bigChainSeriesTimeout JSON map，如 {"wanda":60000}
-    const bigChainTimeoutConfig =
-      dictStore.dictInfo.bigChainSeriesTimeout;
+    const bigChainTimeoutConfig = dictStore.dictInfo.bigChainSeriesTimeout;
     if (bigChainTimeoutConfig) {
       try {
         const configMap =
@@ -495,7 +498,6 @@ export default class BaseOfferQueue {
    */
   handleNewOrder(item, oldOrder = null) {
     // 增加报价截止时间判断，小于等于阈值则不处理
-    // 部分平台（如蚂蚁旧版）通过 skipOfferEndTimeCheck 跳过该判断，保持兼容
     const skipCheck = this._shouldSkipOfferEndTimeCheck();
     if (!skipCheck) {
       if (
@@ -618,13 +620,11 @@ export default class BaseOfferQueue {
   /**
    * 从队列中找第一个可执行的订单：未过期且其系列当前运行数未达上限
    * 过期订单（offer_end_time 已过校验阈值）会被主动从队列移除，避免长期堆积污染扫描。
-   * 跳过截止校验的平台（如蚂蚁配置 mayiOfferDefaultTimeoutMs 前的场景）不做过期判断。
    * @returns {{ order: Object, index: number } | null}
    */
   findNextOrderToRun() {
     const minOfferHandleEndTime = dictStore.dictInfo.minOfferHandleEndTime;
     const now = Date.now();
-    // 某些平台（如蚂蚁）offer_end_time 不准，通过 skipOfferEndTimeCheck 跳过过期判断
     const skipCheck = this._shouldSkipOfferEndTimeCheck();
     let removedExpired = 0;
     for (let i = 0; i < this.queue.length; i++) {
@@ -762,13 +762,11 @@ export default class BaseOfferQueue {
         const sk = this.getSeriesKey(order);
         // 报价超时：平台级硬编码 > 系列级 bigChainSeriesTimeout > 全局 offerHandleTimeout > 默认 15s
         const offerHandleTimeout = this._getSeriesTimeout(sk);
-        // 某些平台（如蚂蚁）offer_end_time 不准，通过 skipOfferEndTimeCheck 跳过过期判断
         const skipDeadlineCheck = this._shouldSkipOfferEndTimeCheck();
         if (
           !skipDeadlineCheck &&
           order.offer_end_time &&
-          order.offer_end_time - new Date().getTime() <=
-            minOfferHandleEndTime
+          order.offer_end_time - new Date().getTime() <= minOfferHandleEndTime
         ) {
           logger.errorSave(
             `订单报价截止时间小于等于${minOfferHandleEndTime}毫秒，跳过报价`,
@@ -1008,8 +1006,7 @@ export default class BaseOfferQueue {
       // getEndOfferPrice / dynamicPrice / getRuleId 等耗时环节，到 submitOffer 前可能已过期
       // 若已过期则放弃提交，避免平台返回超时失败浪费调用
       const skipDeadlineCheck = this._shouldSkipOfferEndTimeCheck();
-      const minOfferHandleEndTime =
-        dictStore.dictInfo.minOfferHandleEndTime;
+      const minOfferHandleEndTime = dictStore.dictInfo.minOfferHandleEndTime;
       if (
         !skipDeadlineCheck &&
         order.offer_end_time &&
