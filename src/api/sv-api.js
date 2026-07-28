@@ -15,6 +15,19 @@ const getUserList = params => axios.get("/svpi/users", { params });
 
 // 查询字典表
 const queryDictList = params => axios.get("/svpi/dictRecord", { params });
+// 查询字典列表（分页，管理用）
+const queryDictListPage = params =>
+  axios.get("/svpi/dictRecord/query", { params });
+// 新增字典
+const addDictRecord = params => axios.post("/svpi/dictRecord/add", params);
+// 修改字典
+const updateDictRecord = params => axios.post("/svpi/dictRecord/update", params);
+// 删除字典（逻辑删除）
+const deleteDictRecord = params =>
+  axios.get("/svpi/dictRecord/delete", { params });
+// 批量删除字典（逻辑删除）
+const batchDeleteDictRecord = params =>
+  axios.post("/svpi/dictRecord/batchdelete", params);
 
 // 查询名称映射表
 const queryNameMatchList = params => axios.get("/svpi/nameMatch", { params });
@@ -295,6 +308,11 @@ const svApi = {
   addLinkPlatRuleId,
   queryNameMatchList, // 查询名称映射表
   queryDictList, // 查询字典列表
+  queryDictListPage, // 查询字典列表（分页，管理用）
+  addDictRecord, // 新增字典
+  updateDictRecord, // 修改字典
+  deleteDictRecord, // 删除字典（逻辑删除）
+  batchDeleteDictRecord, // 批量删除字典（逻辑删除）
   login,
   logout,
   updateUser,

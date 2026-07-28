@@ -223,6 +223,14 @@ function initRouter(rule: any) {
                 meta: {
                   title: "影院列表"
                 }
+              },
+              {
+                path: "/dictManage/index",
+                name: "dictManage",
+                meta: {
+                  title: "字典管理",
+                  keepAlive: true
+                }
               }
             ]
           );
