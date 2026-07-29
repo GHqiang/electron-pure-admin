@@ -18,7 +18,7 @@
  */
 
 import svApi from "@/api/sv-api";
-import { formatErrInfo } from "@/utils/utils";
+import { formatErrInfo, getCurrentTime } from "@/utils/utils";
 
 /**
  * 将各平台实时卡余额同步到 SV 数据库
@@ -119,7 +119,8 @@ export async function syncCardAfterPayment({
   const params = {
     card_id: cardId,
     app_name: appFlag,
-    balance: balance
+    balance: balance,
+    update_time: getCurrentTime()
   };
   try {
     const res = await svApi.updateCardBalance(params);
