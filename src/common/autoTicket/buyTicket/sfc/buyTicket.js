@@ -453,7 +453,8 @@ class SfcBuyTicket extends BaseBuyTicket {
         member_coupon_id,
         profit,
         priceInfo,
-        cardList
+        cardList,
+        quanStock
       } = useRes;
       this.logger.infoSave("使用卡券成功", useRes);
       if (!card_id && !quan_code && !member_coupon_id && !coupon_id) {
@@ -697,9 +698,10 @@ class SfcBuyTicket extends BaseBuyTicket {
           this.logger.warn?.("出票后同步SFC卡余额异常(不影响主流程)", e)
         );
       }
-      if (offerRule?.offer_type === "1" && offerRule?.is_store != 1) {
+      // 更新券库存（与其他系列一致：用了券就扣减，无论入库券还是非入库券）
+      if (offerRule?.offer_type === "1" && quan_code) {
         await this.cardQuanManage.updateQuanStock?.({
-          ticket_num,
+          quan_stock: quanStock - ticket_num,
           quan_flag: offerRule?.quan_flag,
           quan_value: offerRule?.quan_value,
           app_name: appFlag,

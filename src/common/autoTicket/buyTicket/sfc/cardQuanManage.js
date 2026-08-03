@@ -29,12 +29,12 @@ import Logger from "@/common/logger";
 import { platTokens } from "@/store/platTokens";
 import usesMachineBaseFun from "@/mixins/usesMachineBaseFun";
 import { syncCardBalanceToSv } from "@/common/autoTicket/buyTicket/common/cardBalanceSync";
+import { batchUpdateQuanStockWithSync } from "@/common/autoTicket/commonQuanStock.js";
 import {
   getQuanInfoCommon,
   getUsableCardListCommon,
   getQuanTypeListByAppCommon,
-  getSortPhoneByQuanTypeListCommon,
-  updateQuanStockCommon
+  getSortPhoneByQuanTypeListCommon
 } from "../common/cardQuanHelper";
 
 const tokens = platTokens();
@@ -237,6 +237,9 @@ export default class SfcCardQuanManage {
       curPhone,
       usableCardList
     } = params || {};
+    // 记录当前出票手机号：异步绑券（getNewQuan asyncFlag=1）内更新库存时依赖此值，
+    // 修复前 this.curPhone 从未赋值（恒为 ""），导致绑券后的库存修正被跳过
+    this.curPhone = curPhone;
     let {
       city_id,
       cinema_id,
@@ -400,15 +403,17 @@ export default class SfcCardQuanManage {
             );
             quanStock = targetInfo?.quan_stock || quanStock;
           }
-          this.updateQuanStock({
-            quan_stock:
-              quanStock < ticket_num ? quanStock : quanStock - ticket_num,
-            quan_value: offerRule.quan_value,
-            quan_flag: offerRule.quan_flag,
-            app_name: appFlag,
-            phone: curPhone
-          });
         }
+        // 更新券库存
+        // 参考其他系列（chenxing/jinyi/lma 等）：无论是否入库券，获取到目标券后都更新库存
+        // 非入库券目标券不足时也要更新，否则出票失败走 return {} 后出票后更新不触发，库存仍为旧值
+        this.updateQuanStock({
+          quan_stock: quanStock,
+          quan_value: offerRule.quan_value,
+          quan_flag: offerRule.quan_flag,
+          app_name: appFlag,
+          phone: curPhone
+        });
         if (quanList?.length < ticket_num) {
           logger?.errorSave(
             `目标券${is_store == "1" ? "从服务端获取后" : ""}数量不足`
@@ -492,7 +497,8 @@ export default class SfcCardQuanManage {
           coupon_id,
           member_coupon_id,
           quanType,
-          profit
+          profit,
+          quanStock
         };
       }
     } catch (error) {
@@ -1001,12 +1007,93 @@ export default class SfcCardQuanManage {
 
   /**
    * 更新券库存（出票用）
+   * 与其他系列（chenxing/jinyi/wanda 等）保持一致：
+   * - 入参 quan_stock 为直接写入的新库存值
+   * - phone 不存在时新增记录
+   * - 收集 updateList 后批量落库 + 统一触发一次猎人规则同步（singleUpdateQuanStock 已废弃删除，改用批量版）
    */
-  async updateQuanStock(_params) {
-    this.logger.infoSave("SFC 更新券库存", _params);
-    await updateQuanStockCommon({
-      ..._params,
+  async updateQuanStock(params) {
+    const { quan_stock, quan_flag, phone, app_name, quan_value } = params;
+    // 无可用登录账号时 phone 可能为空，空手机号写入库存会产生 phone:"" 脏数据，跳过
+    if (!phone) {
+      this.logger.infoSave("跳过空手机号券库存更新", {
+        app_name,
+        quan_flag,
+        quan_value
+      });
+      return;
+    }
+    let targetQuanList = await this.getTargetQuanByApp(app_name, quan_flag);
+    // 同类目标券批量更新处理：收集到 list 后一次性批量落库 + 统一规则同步
+    const updateList = [];
+    targetQuanList?.forEach(item => {
+      let quanStockList = item.quanStockList || [];
+      if (quanStockList?.length) {
+        quanStockList = JSON.parse(quanStockList);
+        let inx = quanStockList.findIndex(itemA => itemA.phone === phone);
+        if (inx != -1) {
+          quanStockList[inx].quan_stock = quan_stock;
+          quanStockList[inx].real_quan_stock = quan_stock;
+          quanStockList[inx].update_time = getCurrentTime();
+        } else {
+          quanStockList.push({
+            phone,
+            quan_stock,
+            real_quan_stock: quan_stock,
+            update_time: getCurrentTime()
+          });
+        }
+      } else {
+        quanStockList = [
+          {
+            phone,
+            quan_stock,
+            real_quan_stock: quan_stock,
+            update_time: getCurrentTime()
+          }
+        ];
+      }
+      let updateParams = {
+        id: item.id,
+        app_name,
+        quanStockList: JSON.stringify(quanStockList),
+        update_time: getCurrentTime(),
+        quan_value: item.quan_value,
+        logger: this.logger
+      };
+      // 增加最后使用时间更新（方便看是否压价）
+      if (quan_value?.split(",")?.includes(item.quan_value)) {
+        updateParams.end_use_time = getCurrentTime();
+      }
+      updateList.push(updateParams);
+    });
+    // 批量更新券库存 + 统一触发一次规则同步（保持出票后路径异步不阻塞）
+    batchUpdateQuanStockWithSync({
+      list: updateList,
+      app_name,
       logger: this.logger
     });
+  }
+
+  // 获取同类目标券列表
+  async getTargetQuanByApp(app_name, quan_flag) {
+    const quanTypeParams = {
+      app_name,
+      isNeedTotalNum: 0,
+      queryFields: "id,quan_flag,app_name,quan_value,quanStockList"
+    };
+    try {
+      let quanTypeRes = await svApi.queryQuanTypeList(quanTypeParams);
+      let quanTypeList = quanTypeRes?.data?.quanTypeList || [];
+      let targetQuanList = quanTypeList.filter(
+        item => item.quan_flag == quan_flag
+      );
+      this.logger.infoSave("获取同类目标券返回", {
+        targetQuanList
+      });
+      return targetQuanList;
+    } catch (error) {
+      this.logger.errorSave("获取同类目标券异常", formatErrInfo(error));
+    }
   }
 }
