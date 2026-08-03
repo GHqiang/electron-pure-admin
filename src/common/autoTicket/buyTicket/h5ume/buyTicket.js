@@ -545,22 +545,15 @@ export default class H5UmeBuyTicket extends BaseBuyTicket {
           (a, b) => a.privilegeTotalPrice - b.privilegeTotalPrice
         );
       }
+      // 用卡前拿到会员总价和原价
       let target_card_info = member_discount_list[0];
-      let member_total_price, cardInfos;
+      let member_total_price;
       if (target_card_info) {
         // 非固定报价时总价才会优惠活动的原总价
         if (offerRule.offer_type != "1") {
           total_price = target_card_info.originalTicketTotalPrice;
         }
         member_total_price = target_card_info.privilegeTotalPrice;
-        cardInfos = target_card_info.cardInfos;
-        cardInfos = cardInfos.map(itemC => ({
-          ...itemC,
-          balance: cardList.find(itemA => itemA.cardNumber == itemC.cardNumber)
-            ?.balance
-        }));
-        // 从大到小排序
-        cardInfos = cardInfos.sort((a, b) => b.balance - a.balance);
       }
       // 如果会员价为0时，取报价记录里的真实会员价
       if (member_total_price === undefined && offerRule.offer_type != "1") {
@@ -571,8 +564,7 @@ export default class H5UmeBuyTicket extends BaseBuyTicket {
         total_price,
         member_total_price,
         ticket_num,
-        real_member_price: offerRule.real_member_price,
-        cardInfos
+        real_member_price: offerRule.real_member_price
       });
       let {
         card_id,
@@ -695,9 +687,23 @@ export default class H5UmeBuyTicket extends BaseBuyTicket {
         }
       }
       let quan_code = useQuan.map(item => item.couponCode)?.join();
-      let tickets, payments;
+      let tickets, payments, cardInfos;
       if (offerRule.offer_type !== "1" && card_id) {
+        target_card_info = member_discount_list.find(item =>
+          item.cardInfos.some(itemC => itemC.cardNumber == card_id)
+        );
         if (target_card_info) {
+          cardInfos = target_card_info.cardInfos;
+          cardInfos = cardInfos.map(itemC => ({
+            ...itemC,
+            balance: cardList.find(itemA => itemA.cardNumber == itemC.cardNumber)
+              ?.balance
+          }));
+          // 过滤掉不在可用cardList中的卡，避免balance为undefined导致排序错乱，
+          // 确保此处选出的支付卡与useQuanOrCard返回的card_id来源一致
+          cardInfos = cardInfos.filter(item => item.balance !== undefined);
+          // 从大到小排序
+          cardInfos = cardInfos.sort((a, b) => b.balance - a.balance);
           card_id = cardInfos?.[0]?.cardNumber;
         }
         payments = [{ payMethod: "CARD", payCardNumber: card_id }];
