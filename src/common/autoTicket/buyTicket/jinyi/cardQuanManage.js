@@ -18,7 +18,10 @@ import {
 import svApi from "@/api/sv-api";
 // 统一日志类
 import Logger from "@/common/logger";
-import { singleUpdateQuanStock } from "@/common/autoTicket/commonQuanStock.js";
+import {
+  batchUpdateQuanStockWithSync,
+  formatQuanTypeSummaryForLog
+} from "@/common/autoTicket/commonQuanStock.js";
 import { syncCardBalanceToSv } from "@/common/autoTicket/buyTicket/common/cardBalanceSync";
 
 // 机器基础方法
@@ -495,12 +498,22 @@ export default class CardQuanManage {
   async updateQuanStock(params) {
     const { quan_stock, quan_flag, quan_desc, phone, app_name, quan_value } =
       params;
+    // 无可用登录账号时 phone 可能为空，空手机号写入库存会产生 phone:"" 脏数据，跳过
+    if (!phone) {
+      this.logger.infoSave("跳过空手机号券库存更新", {
+        app_name,
+        quan_flag,
+        quan_value
+      });
+      return;
+    }
     let targetQuanList = await this.getTargetQuanByApp(
       app_name,
       quan_flag,
       quan_desc
     );
-    // 同类目标券更新处理
+    // 同类目标券批量更新处理：收集到 list 后一次性批量落库 + 统一规则同步
+    const updateList = [];
     targetQuanList?.forEach(item => {
       let quanStockList = item.quanStockList || [];
       if (quanStockList?.length) {
@@ -540,8 +553,13 @@ export default class CardQuanManage {
       if (quan_value?.split(",")?.includes(item.quan_value)) {
         updateParams.end_use_time = getCurrentTime();
       }
-      // 单个更新
-      singleUpdateQuanStock(updateParams);
+      updateList.push(updateParams);
+    });
+    // 批量更新券库存 + 统一触发一次规则同步（保持出票后路径异步不阻塞）
+    batchUpdateQuanStockWithSync({
+      list: updateList,
+      app_name,
+      logger: this.logger
     });
   }
 
@@ -833,12 +851,15 @@ export default class CardQuanManage {
             quan_value: item.quan_value,
             quan_desc: item.quan_desc,
             black_quans: item.black_quans,
-            quanStockList: item.quanStockList.map(itemA => ({
-              phone: itemA.phone,
-              quan_stock: itemA.quan_stock || 0,
-              real_quan_stock: itemA.real_quan_stock || 0,
-              update_time: itemA.update_time
-            }))
+            quanStockList: item.quanStockList
+              // 剔除空手机号条目：随本次写回自动清理历史 phone:"" 脏数据
+              .filter(itemA => itemA.phone)
+              .map(itemA => ({
+                phone: itemA.phone,
+                quan_stock: itemA.quan_stock || 0,
+                real_quan_stock: itemA.real_quan_stock || 0,
+                update_time: itemA.update_time
+              }))
           };
         });
         // 获取关联用户每个号的优惠券列表
@@ -857,10 +878,19 @@ export default class CardQuanManage {
                   couponInfoSpecial(itemA.couponName) &&
                 !item.black_quans?.includes(itemA.couponCode)
             );
-            console.log(item.quan_flag, "targetQuanList", targetQuanList);
+            // 打印该手机号该券类型匹配到的券数量与券号（一眼看清各号各券类型的库存来源）
+            logger.infoSave(
+              `${mobile}—${item.quan_flag}—${targetQuanList.length}`,
+              {
+                quan_value: item.quan_value,
+                matchedQuanList: targetQuanList.map(q => ({
+                  couponCode: q.couponCode,
+                  endDateTime: q.endDateTime
+                }))
+              }
+            );
             let quanStock = targetQuanList.length;
             let quanStockList = item.quanStockList;
-            console.log("quanStockList", quanStockList);
             let inx = quanStockList.findIndex(itemB => itemB.phone === mobile);
             let endDateTime = targetQuanList.sort(
               (a, b) => new Date(a.endDateTime) - new Date(b.endDateTime)
@@ -881,27 +911,24 @@ export default class CardQuanManage {
             }
           });
         }
-        console.log("quanTypeListParams", quanTypeListParams);
+        // quanStockList 统一序列化为 JSON 字符串（后端直接落库 + 批量规则同步内部 parse）
         let updateTypeList = quanTypeListParams.map(item => ({
           id: item.id,
           quan_value: item.quan_value,
-          quanStockList: item.quanStockList,
+          quan_flag: item.quan_flag, // 仅日志展示用（落库时被 dbList 剥离）
+          quanStockList: JSON.stringify(item.quanStockList),
           update_time: getCurrentTime()
         }));
-        console.log("updateTypeList", updateTypeList);
-        logger.infoSave("最终要更新的券类型列表", { updateTypeList });
-        for (let index = 0; index < updateTypeList.length; index++) {
-          const item = updateTypeList[index];
-          // 单个更新
-          await singleUpdateQuanStock({
-            id: item.id,
-            app_name,
-            quanStockList: JSON.stringify(item.quanStockList),
-            update_time: item.update_time,
-            quan_value: item.quan_value,
-            logger
-          });
-        }
+        // 打印最终要更新的券类型汇总信息：每个券类型 → 最大库存 + 有货手机号（直观可读）
+        logger.infoSave("最终要更新的券类型列表汇总", {
+          updateTypeList: formatQuanTypeSummaryForLog(updateTypeList)
+        });
+        // 批量更新券库存 + 统一触发一次规则同步（替代循环内逐条 singleUpdateQuanStock）
+        await batchUpdateQuanStockWithSync({
+          list: updateTypeList,
+          app_name,
+          logger
+        });
       }
     } catch (error) {
       logger.errorSave("异步更新券库存异常", { error });

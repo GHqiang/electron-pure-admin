@@ -593,7 +593,6 @@ class getH5UmeOfferPrice extends BaseOfferPrice {
         currentMobile
       });
       console.log("quanData", quanData);
-      logger.infoSave(currentMobile + "连续获取券最终返回", { quanData });
 
       return quanData.map(item => ({
         ...item,

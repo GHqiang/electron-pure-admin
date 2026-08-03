@@ -28,7 +28,7 @@ import Logger from "@/common/logger";
 import { platTokens } from "@/store/platTokens";
 import usesMachineBaseFun from "@/mixins/usesMachineBaseFun";
 import { mockDelay } from "@/utils/utils";
-import { singleUpdateQuanStock } from "@/common/autoTicket/commonQuanStock.js";
+import { batchUpdateQuanStockWithSync } from "@/common/autoTicket/commonQuanStock.js";
 
 const tokens = platTokens();
 const { getQuanValueListByQuanFlag } = usesMachineBaseFun();
@@ -763,6 +763,15 @@ export default class H5UmeCardQuanManage {
    */
   async updateQuanStock(params) {
     const { quan_stock, quan_flag, phone, app_name, quan_value } = params;
+    // 无可用登录账号时 phone 可能为空，空手机号写入库存会产生 phone:"" 脏数据，跳过
+    if (!phone) {
+      this.logger.infoSave("跳过空手机号券库存更新", {
+        app_name,
+        quan_flag,
+        quan_value
+      });
+      return;
+    }
     let targetQuanList = [];
     const quanTypeParams = {
       app_name,
@@ -785,7 +794,8 @@ export default class H5UmeCardQuanManage {
       });
     }
 
-    // 同类目标券更新处理
+    // 同类目标券批量更新处理：收集到 list 后一次性批量落库 + 统一规则同步
+    const updateList = [];
     targetQuanList.forEach(item => {
       let quanStockList = item.quanStockList || [];
       if (quanStockList?.length) {
@@ -825,8 +835,13 @@ export default class H5UmeCardQuanManage {
       if (quan_value?.split(",")?.includes(item.quan_value)) {
         updateParams.end_use_time = getCurrentTime();
       }
-      // 单个更新
-      singleUpdateQuanStock(updateParams);
+      updateList.push(updateParams);
+    });
+    // 批量更新券库存 + 统一触发一次规则同步（保持出票后路径异步不阻塞）
+    batchUpdateQuanStockWithSync({
+      list: updateList,
+      app_name,
+      logger: this.logger
     });
   }
 

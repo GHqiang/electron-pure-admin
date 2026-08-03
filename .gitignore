@@ -21,6 +21,7 @@ tests/**/coverage/
 *.sln
 .claude/
 .zcode/
+.codebuddy/
 tsconfig.tsbuildinfo
 .gitignore
 dist-electron
