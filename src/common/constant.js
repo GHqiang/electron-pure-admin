@@ -23,13 +23,7 @@ const ORDER_FORM = {
 const MIN_ALLOW_OFFER_SJC = 1 * 1000;
 
 // 无手续费平台
-const NO_FEE_PLAT_LIST = [
-  "yinghuasuan",
-  "haha",
-  "shoutu",
-  "mahua",
-  "piaosheng"
-];
+const NO_FEE_PLAT_LIST = ["haha", "shoutu", "mahua"];
 
 // 0.1步进报价平台
 const ONE_STEP_PLAT_LIST = [
