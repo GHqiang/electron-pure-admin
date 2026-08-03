@@ -19,6 +19,7 @@ import {
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { platTokens } from "@/store/platTokens";
+import { batchUpdateQuanStockWithSync } from "@/common/autoTicket/commonQuanStock.js";
 
 const tokens = platTokens();
 
@@ -415,6 +416,7 @@ export async function getSortPhoneByQuanTypeListCommon({
 
 /**
  * 通用：更新券库存（聚焦于修改 quanStockList 字段）
+ * 出票后路径：收集 updateList 后一次性批量落库 + 统一触发一次猎人规则同步（对齐 7 平台）
  *
  * @param {Object} params
  * @param {number} params.ticket_num - 使用票数
@@ -427,8 +429,24 @@ export async function getSortPhoneByQuanTypeListCommon({
  */
 export async function updateQuanStockCommon(_params) {
   try {
-    const { ticket_num, quan_stock, quan_flag, phone, app_name, quan_value } =
-      _params || {};
+    const {
+      ticket_num,
+      quan_stock,
+      quan_flag,
+      phone,
+      app_name,
+      quan_value,
+      logger
+    } = _params || {};
+    // 无可用登录账号时 phone 可能为空，空手机号匹配/更新会产生 phone:"" 脏数据，跳过
+    if (!phone) {
+      logger?.infoSave?.("跳过空手机号券库存更新", {
+        app_name,
+        quan_flag,
+        quan_value
+      });
+      return;
+    }
     const res = await svApi.queryQuanTypeList({
       app_name,
       isNeedTotalNum: 0,
@@ -437,6 +455,7 @@ export async function updateQuanStockCommon(_params) {
     const list = (res?.data?.quanTypeList || []).filter(
       i => i.quan_flag == quan_flag
     );
+    const updateList = [];
     for (const item of list) {
       let raw = item.quanStockList;
       if (!raw) continue;
@@ -459,6 +478,7 @@ export async function updateQuanStockCommon(_params) {
       };
       const update = {
         id: item.id,
+        quan_value: item.quan_value, // 批量规则同步匹配用（落库时被 dbList 剥离）
         quanStockList: JSON.stringify(raw),
         update_time: getCurrentTime()
       };
@@ -468,7 +488,21 @@ export async function updateQuanStockCommon(_params) {
       ) {
         update.end_use_time = getCurrentTime();
       }
-      await svApi.updateQuanType(update);
+      updateList.push(update);
+    }
+    // 批量落库 + 统一触发一次规则同步（替代循环内逐条 svApi.updateQuanType）
+    if (updateList.length) {
+      await batchUpdateQuanStockWithSync({
+        list: updateList,
+        app_name,
+        logger
+      });
+    } else {
+      logger?.infoSave?.("SFC 无匹配券类型，跳过库存更新", {
+        app_name,
+        quan_flag,
+        phone
+      });
     }
   } catch (e) {
     _params?.logger?.errorSave?.("updateQuanStockCommon 异常", {

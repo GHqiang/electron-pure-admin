@@ -107,7 +107,7 @@ export async function syncUpdateQuanStock({
         return true;
       }
     });
-    isNeedUpdate = true; // 测试先强制更新
+    // isNeedUpdate = true; // 测试先强制更新
     if (!isNeedUpdate) {
       logger.infoSave("不满足更新条件");
     } else {
@@ -150,13 +150,16 @@ export async function syncUpdateQuanStock({
               !item.black_quans?.includes(itemA.coupon_num)
           );
           // 打印该手机号该券类型匹配到的券数量与券号（一眼看清各号各券类型的库存来源）
-          logger.infoSave(`${mobile}—${item.quan_flag}—${targetQuanList.length}`, {
-            quan_value: item.quan_value,
-            matchedQuanList: targetQuanList.map(q => ({
-              couponNum: q.coupon_num,
-              endDateTime: q.endDateTime
-            }))
-          });
+          logger.infoSave(
+            `${mobile}—${item.quan_flag}—${targetQuanList.length}`,
+            {
+              quan_value: item.quan_value,
+              matchedQuanList: targetQuanList.map(q => ({
+                couponNum: q.coupon_num,
+                endDateTime: q.endDateTime
+              }))
+            }
+          );
 
           // SFC 特有的分组券库存逻辑
           let quanStock = targetQuanList.length;
@@ -372,12 +375,9 @@ async function batchCheckLierenFixedRule({ list, app_name, logger }) {
       const isCacheValid =
         cached && now - cached.fetchedAt < MAX_STOCK_CACHE_TTL;
       if (isCacheValid && cached.maxQuanStock === maxQuanStock) {
-        logger.infoSave(
-          `最大券库存-${quan_value}-${maxQuanStock}-未变化跳过`,
-          {
-            cacheAge: Math.floor((now - cached.fetchedAt) / 1000) + "s"
-          }
-        );
+        logger.infoSave(`最大券库存-${quan_value}-${maxQuanStock}-未变化跳过`, {
+          cacheAge: Math.floor((now - cached.fetchedAt) / 1000) + "s"
+        });
         continue;
       }
       _lastMaxStockMap.set(cacheKey, { maxQuanStock, fetchedAt: now });

@@ -82,7 +82,6 @@ export default class SfcCardQuanManage {
       quan_value,
       quan_flag,
       black_quans,
-      quanFlagList,
       ticket_num,
       targetNum,
       page = 1,
@@ -100,12 +99,6 @@ export default class SfcCardQuanManage {
       const res = await this.appApi.getQuanList(params);
       let quanList = res.data?.unused?.lists || [];
       let total_page = res.data?.unused?.total_page || 0;
-      logger?.infoSave("连续获取目标券返回", {
-        quanList: quanList?.map(item => ({
-          coupon_num: item.coupon_num,
-          coupon_info: item.coupon_info
-        }))
-      });
       let targetQuanList = [];
       if (quan_value && quan_flag) {
         // 如果指定了券类型，则进行过滤
@@ -121,12 +114,6 @@ export default class SfcCardQuanManage {
           item => !black_quans?.includes(item.coupon_num)
         );
       }
-      logger?.infoSave("按照券类型或者券标识匹配目标券列表", {
-        quan_value,
-        quan_flag,
-        quanFlagList,
-        targetQuanList
-      });
       quanData.push(...targetQuanList);
       // 如果 targetNum 是 Infinity 或未指定，则只判断页数；否则判断页数和数量
       const shouldContinue =
@@ -185,7 +172,6 @@ export default class SfcCardQuanManage {
       });
       const quanData = quanDataRes?.list || [];
       console.log("quanData", quanData);
-      logger?.infoSave("连续获取券最终返回", { quanData });
       return quanData.map(item => ({
         ...item,
         endDateTime: item.validate_date_end // '2026.06.30'
@@ -557,11 +543,6 @@ export default class SfcCardQuanManage {
             !(black_quans || []).includes(i.coupon_num)
         );
       }
-      logger?.infoSave("按照券类型或者券标识匹配目标券列表", {
-        quan_value,
-        quan_flag,
-        targetQuanList
-      });
       if (total > 1 && targetQuanList.length < targetNum) {
         let currentQuanNum = targetQuanList?.length;
         logger?.infoSave("目标券列表数量不够，开始连续获取目标券", {
@@ -583,7 +564,6 @@ export default class SfcCardQuanManage {
           quanData: [],
           logger
         });
-        logger?.infoSave("连续获取目标券返回结果", quanDataRes);
         let list = quanDataRes?.list || [];
         targetQuanList.push(...list);
       }
