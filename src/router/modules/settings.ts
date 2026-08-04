@@ -18,6 +18,16 @@ export default {
       }
     },
     {
+      path: "/set/todayStatistics/detail",
+      name: "todayStatisticsDetail",
+      component: () => import("@/views/todayStatistics/detail.vue"),
+      meta: {
+        title: "影线明细",
+        keepAlive: true,
+        showLink: false // 不作为侧边栏菜单,仅通过主页面按钮/下钻进入
+      }
+    },
+    {
       path: "/set/loginList",
       name: "loginList",
       component: () => import("@/views/appLogin/appLoginSet.vue"),

@@ -33,8 +33,14 @@ const batchDeleteDictRecord = params =>
 const queryNameMatchList = params => axios.get("/svpi/nameMatch", { params });
 
 //查询统计分析
-const queryAnalysis = params =>
-  axios.get("/svpi/statisticalAnalysis/query", { params, timeout: 60 * 1000 });
+const queryAnalysis = (params, config) =>
+  axios.get("/svpi/statisticalAnalysis/query", { params, timeout: 60 * 1000, ...config });
+// 查询统计分析-按日趋势(报价量/报价成功率/利润 + 失败原因构成 + raw 计数,供环比/激增计算)
+const queryAnalysisTrend = (params, config) =>
+  axios.get("/svpi/statisticalAnalysis/trend", { params, timeout: 60 * 1000, ...config });
+// 查询统计分析-平台拆解(按订单来源分组的 raw 计数与金额)
+const queryAnalysisPlat = (params, config) =>
+  axios.get("/svpi/statisticalAnalysis/plat", { params, timeout: 60 * 1000, ...config });
 // 查询报价记录
 const queryOfferList = params =>
   axios.get("/svpi/offerRecord/query", { params, timeout: 60 * 1000 });
@@ -321,6 +327,8 @@ const svApi = {
   updateUser,
   getUserList,
   queryAnalysis,
+  queryAnalysisTrend,
+  queryAnalysisPlat,
   queryOfferList,
   queryDealOfferList,
   queryOfferInfo,
