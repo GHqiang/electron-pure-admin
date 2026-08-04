@@ -82,12 +82,15 @@
           <el-radio value="2">否</el-radio>
         </el-radio-group>
       </div>
-      <div class="flex-yc m-t-10">
-        <span>是否禁用凤凰云智h5系列影院报价：</span>
-        <el-radio-group v-model="h5umeIsClose" @change="h5umeIsCloseChange">
-          <el-radio value="1">是</el-radio>
-          <el-radio value="2">否</el-radio>
-        </el-radio-group>
+      <div class="flex-yc m-t-10" style="align-items: flex-start">
+        <span style="margin-top: 6px; margin-right: 10px;">禁用指定系列影院报价：</span>
+        <el-checkbox-group v-model="disableAppTypeList" @change="disableAppTypeListChange">
+          <el-checkbox
+            v-for="(name, code) in APP_TYPE_OBJ"
+            :key="code"
+            :label="code"
+          >{{ name }}</el-checkbox>
+        </el-checkbox-group>
       </div>
     </div>
 
@@ -134,7 +137,7 @@ import { dictTable, nameMatchTable } from "@/store/dictTable";
 const dictStore = dictTable();
 const nameMatchStore = nameMatchTable();
 
-import { IN_RULE_LIST } from "@/common/constant.js";
+import { IN_RULE_LIST, APP_TYPE_OBJ } from "@/common/constant.js";
 // 是否超限报价
 let isOpenOverrunOffer = localStorage.getItem("isOverrunOffer") == 1;
 const isOverrunOffer = ref(isOpenOverrunOffer ? true : false);
@@ -212,12 +215,26 @@ const lmaIsUseQuanChange = val => {
   window.localStorage.setItem("lmaIsUseQuan", val);
 };
 
-// 是否禁用凤凰云智h5系列影院报价：1-是 2-否，默认否
-let h5umeIsCloseValue = window.localStorage.getItem("h5umeIsClose");
-const h5umeIsClose = ref(h5umeIsCloseValue || "2");
-const h5umeIsCloseChange = val => {
+// 禁用指定系列影院报价（多选）：存储 app_type_code 数组，空数组表示不禁用任何系列
+// 兼容旧版 h5umeIsClose 配置：若历史值为 "1"（禁用凤凰云智h5），迁移到新数组
+let disableAppTypeListValue = window.localStorage.getItem("disableAppTypeList");
+let disableAppTypeListArr = [];
+try {
+  disableAppTypeListArr = disableAppTypeListValue
+    ? JSON.parse(disableAppTypeListValue)
+    : [];
+} catch (error) {
+  disableAppTypeListArr = [];
+}
+// 兼容旧版单开关：1=禁用凤凰云智h5，迁移后清除旧开关
+if (!disableAppTypeListValue && window.localStorage.getItem("h5umeIsClose") == "1") {
+  disableAppTypeListArr = ["ume_h5"];
+  window.localStorage.removeItem("h5umeIsClose");
+}
+const disableAppTypeList = ref(disableAppTypeListArr);
+const disableAppTypeListChange = val => {
   console.log("val", val);
-  window.localStorage.setItem("h5umeIsClose", val);
+  window.localStorage.setItem("disableAppTypeList", JSON.stringify(val));
 };
 
 // 设置字典表信息

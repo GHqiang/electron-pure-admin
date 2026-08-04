@@ -415,11 +415,25 @@ const newGetCinemaFlagFun = item => {
 const getCinemaFlag = (item, isSplitUser = true) => {
   const app_name = newGetCinemaFlagFun(item);
   if (!app_name) return;
-  // 是否禁用h5ume系列报价
-  let h5umeIsCloseValue = window.localStorage.getItem("h5umeIsClose");
+  // 禁用指定系列报价（多选）：读取 disableAppTypeList 数组，命中当前影线 app_type_code 则跳过报价
+  let disableAppTypeListValue = window.localStorage.getItem("disableAppTypeList");
+  let disableAppTypeList = [];
+  try {
+    disableAppTypeList = disableAppTypeListValue
+      ? JSON.parse(disableAppTypeListValue)
+      : [];
+  } catch (error) {
+    disableAppTypeList = [];
+  }
+  // 兼容旧版单开关：h5umeIsClose=1 视为禁用了 ume_h5
   if (
-    h5umeIsCloseValue == 1 &&
-    GET_APP_INFO(app_name)?.app_type_code === "ume_h5"
+    window.localStorage.getItem("h5umeIsClose") == 1 &&
+    !disableAppTypeListValue
+  ) {
+    disableAppTypeList = ["ume_h5"];
+  }
+  if (
+    disableAppTypeList.includes(GET_APP_INFO(app_name)?.app_type_code)
   ) {
     return;
   }
