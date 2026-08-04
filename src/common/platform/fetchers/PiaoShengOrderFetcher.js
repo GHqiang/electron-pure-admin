@@ -63,7 +63,10 @@ export default class PiaoShengOrderFetcher extends BaseOrderFetcher {
           is_urgent: 0,
           cinema_group: "",
           cinema_code: "",
+          // 出票单号（待出票列表id），用于平台操作与出票记录展示
+          plat_order_sn: id,
           offer_order_number: "",
+          // 先占位为出票单号，orderDetail 后替换为报价单号（与报价记录对齐）
           order_number: id,
           lockseat: "",
           plat_name: "piaosheng"
@@ -93,7 +96,9 @@ export default class PiaoShengOrderFetcher extends BaseOrderFetcher {
           orderList.push({
             ...orderItem,
             cinema_code: res.standardId,
-            offer_order_number: res.putOrderId
+            // 报价单号：出票记录 order_number 与报价记录对齐，保证可按订单号互查
+            order_number: res.putOrderId || orderItem.id,
+            offer_order_number: res.putOrderId || orderItem.id
           });
         } else {
           diagnoseLogs.push({

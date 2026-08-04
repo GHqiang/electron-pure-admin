@@ -196,6 +196,7 @@
       </el-table-column>
       <el-table-column fixed label="订单号" width="110">
         <template #default="{ row: { order_number, plat_order_sn } }">
+          <!-- 出票记录优先展示平台出票单号 plat_order_sn，缺失时用报价单号 order_number 兜底 -->
           <span>{{ plat_order_sn || order_number }}</span>
         </template>
       </el-table-column>
@@ -552,8 +553,12 @@ const searchData = async () => {
     });
     // 使用Object.fromEntries将过滤后的键值对数组转换回对象
     let queryParams = Object.fromEntries(filteredEntries);
-    // 影划算特殊处理下订单号查询的问题
-    if (queryParams.plat_name === "yinghuasuan" && queryParams.order_number) {
+    // 订单号查询特殊处理：影划算/票圣/麻花出票记录的 order_number 存的是报价单号，
+    // 用户按出票单号搜索时需转成 plat_order_sn 才能命中
+    if (
+      ["yinghuasuan", "piaosheng", "mahua"].includes(queryParams.plat_name) &&
+      queryParams.order_number
+    ) {
       queryParams.plat_order_sn = queryParams.order_number;
       delete queryParams.order_number;
     }
