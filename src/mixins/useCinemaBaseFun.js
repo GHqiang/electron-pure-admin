@@ -551,15 +551,25 @@ export default function useCinemaBaseFun() {
       } else if (app_name === "lma") {
         // 卢米埃只获取主卡，其它的出票后更新卡余额
         cardList = res.data?.sleep || [];
+        const userInfoRes = await APP_API_OBJ["lma"].getUserInfo({
+          lmaToken: session_id
+        });
+        const point_str =
+          userInfoRes?.data?.point_str?.replace("积分", "") || "";
         cardList.unshift({
           card_number: res.data.card_number,
-          balance: res.data.money_str
+          balance: res.data.money_str,
+          expire_str: res.data.expire_str, // "2027-02-02"
+          point_str: point_str
           // is_main_card: 1
         });
         cardList = cardList.map(item => ({
           card_id: item.card_number + "",
           card_num: item.card_number,
-          balance: item.balance
+          balance: item.balance,
+          // 到期时间、积分（主卡来自卡列表接口，sleep卡在下方按卡切换后补齐）
+          expire_str: item.expire_str ?? null, // "2027-02-02"
+          point_str: item.point_str ?? null // 积分
           // is_main_card: item.is_main_card
         }));
         const card_list = await getLmaOtherCardBalance(cardList, session_id);
@@ -677,8 +687,15 @@ export default function useCinemaBaseFun() {
         card_number: item.card_num,
         lmaToken: session_id
       });
+      await mockDelay(0.1);
       if (!changeCardRes?.error) {
         item.balance = changeCardRes?.data?.money_str || "0";
+        item.expire_str = changeCardRes?.data?.expire_str || "";
+        const userInfoRes = await APP_API_OBJ["lma"].getUserInfo({
+          lmaToken: session_id
+        });
+        item.point_str =
+          userInfoRes?.data?.point_str?.replace("积分", "") || "";
       }
     }
     // 再切换为主卡

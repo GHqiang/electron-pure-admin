@@ -136,12 +136,13 @@
           :summary-method="getSummaries"
           show-overflow-tooltip
           @selection-change="handleSelectionChange"
+          @sort-change="handleSortChange"
         >
           <el-table-column type="selection" min-width="55" />
           <el-table-column
             prop="app_name"
             label="影线名称"
-            sortable
+            sortable="custom"
             min-width="110"
           >
             <template #default="{ row }">
@@ -178,6 +179,26 @@
           <!-- <el-table-column prop="card_id" label="卡 ID" min-width="80" /> -->
           <el-table-column prop="card_num" label="卡 号" min-width="120" />
           <!-- <el-table-column prop="card_pwd" label="卡 密码" min-width="110" /> -->
+          <el-table-column
+            prop="expire_date"
+            label="到期时间"
+            min-width="110"
+            sortable="custom"
+          />
+          <el-table-column
+            prop="points"
+            label="积分"
+            min-width="80"
+            sortable="custom"
+          >
+            <template #default="{ row }">
+              <span>{{
+                row.points == null || row.points === ""
+                  ? ""
+                  : Number(row.points)
+              }}</span>
+            </template>
+          </el-table-column>
           <el-table-column
             prop="use_limit_day"
             label="日出票限制"
@@ -445,6 +466,7 @@ const searchData = async () => {
       ...queryParams,
       page_num,
       page_size,
+      ...sortInfo,
       rule
     });
     let cardList = res.data.cardList || [];
@@ -496,6 +518,18 @@ const getSummaries = param => {
 
 const cardBalanceVisible = ref(false);
 const summaryData = ref([]);
+
+// 排序状态（交由后端排序，跨页生效；sort_field 需在服务端白名单内）
+const sortInfo = reactive({ sort_field: "", sort_order: "" });
+
+// 表格排序变化（el-table sortable="custom" 触发）
+const handleSortChange = ({ prop, order }) => {
+  sortInfo.sort_field = order ? prop : "";
+  sortInfo.sort_order = order || "";
+  currentPage.value = 1;
+  searchData();
+};
+
 // 查看卡余额
 const queryCardBalanceTotal = async () => {
   try {
@@ -643,6 +677,9 @@ const syncCardInfo = async () => {
           id: item.id,
           balance: item.balance,
           linkCinemaIds: item.linkCinemaIds,
+          // 到期时间、积分（目前仅lma系列取值，其它系列为null不生效）
+          expire_date: item.expire_str || null,
+          points: item.point_str || null,
           update_time: getCurrentTime()
         }));
       console.warn("准备更新的卡列表", updateCardList);

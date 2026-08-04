@@ -59,6 +59,9 @@ const createApi = ({ app_name }) => {
   // 切换卡（可获取卡余额及状态）
   const changeCard = params => axios.post("/lma/mp/imember/change", params);
 
+  // 获取个人信息
+  const getUserInfo = params => axios.get("/lma/mp/iuser/index", { params });
+
   // 获取会员卡列表
   const getCardList = params => axios.get("/lma/mp/imember/index", { params });
 
@@ -102,6 +105,7 @@ const createApi = ({ app_name }) => {
     getMoviePlaySeat,
     lockSeat,
     changeCard,
+    getUserInfo,
     getCardList,
     getQuanList,
     getQuanListByFirstUseQuan,

@@ -160,6 +160,9 @@ export default function useCinemaBaseFun() {
             card_discount,
             use_limit_day,
             use_limit_month,
+            // 到期时间、积分（目前仅lma系列取值，其它系列为null不生效）
+            expire_date: item.expire_str || null,
+            points: item.point_str || null,
             status: "1",
             rule: rule,
             update_time: getCurrentTime()
