@@ -257,7 +257,9 @@ export default class UmeCardQuanManage {
       this.logger.infoSave("获取该影院已维护会员卡列表返回", {
         list
       });
-      const useMobileList = getCinemaLoginInfoList(!this.order?.need_unsplit_login)
+      const useMobileList = getCinemaLoginInfoList(
+        !this.order?.need_unsplit_login
+      )
         .filter(
           item => item.app_name === appFlag && item.mobile && item.session_id
         )
@@ -369,7 +371,9 @@ export default class UmeCardQuanManage {
       let targetQuanList = quanTypeList.filter(item =>
         quanValueList.includes(item.quan_value)
       );
-      const useMobileList = getCinemaLoginInfoList(!this.order?.need_unsplit_login)
+      const useMobileList = getCinemaLoginInfoList(
+        !this.order?.need_unsplit_login
+      )
         .filter(
           item => item.app_name === app_name && item.mobile && item.session_id
         )
@@ -532,10 +536,6 @@ export default class UmeCardQuanManage {
         offerRule.black_quans = quanInfo?.black_quans;
         let { quan_value, quan_cost, quan_flag, quan_fee, black_quans } =
           offerRule;
-        // 特殊处理此种券在个人中心和出票时名称不一致，出票时特殊处理下
-        if (quan_value == "yaolaiguowaiquanxin") {
-          quan_flag = "观影兑换券";
-        }
         // 根据券标识获取目标券
         let targetQuanList = quanList.filter(
           item =>
