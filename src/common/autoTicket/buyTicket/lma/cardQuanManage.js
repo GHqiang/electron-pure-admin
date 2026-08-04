@@ -26,6 +26,7 @@ import { GET_APP_INFO, NO_FEE_PLAT_LIST } from "@/common/constant";
 import svApi from "@/api/sv-api";
 import Logger from "@/common/logger";
 import { platTokens } from "@/store/platTokens";
+import { dictTable } from "@/store/dictTable";
 import usesMachineBaseFun from "@/mixins/usesMachineBaseFun";
 import { batchUpdateQuanStockWithSync } from "@/common/autoTicket/commonQuanStock.js";
 import { syncCardBalanceToSv } from "@/common/autoTicket/buyTicket/common/cardBalanceSync";
@@ -126,6 +127,23 @@ export default class LmaCardQuanManage {
         item => item.card_number !== activeCard?.card_number
       );
 
+      // 纯用卡场景优先尝试指定卡：指定卡排到换卡尝试列表最前（组内保持原顺序）
+      if (offer_type != "1") {
+        const priorityCardNos = this.getPriorityCardNos();
+        if (priorityCardNos.length) {
+          otherCardList = [...otherCardList].sort((a, b) => {
+            const aHit = priorityCardNos.includes(a.card_number);
+            const bHit = priorityCardNos.includes(b.card_number);
+            if (aHit && !bHit) return -1;
+            if (!aHit && bHit) return 1;
+            return 0;
+          });
+          this.logger.infoSave("纯用卡场景按指定卡号优先排序换卡列表", {
+            otherCardList: otherCardList.map(item => item.card_number)
+          });
+        }
+      }
+
       // 2、使用会员卡
       let member_total_price = (real_member_price * 100 * ticket_num) / 100;
       if (quan_fee && offerRule.offer_type === "1") {
@@ -150,6 +168,42 @@ export default class LmaCardQuanManage {
       return {
         card_id: ""
       };
+    }
+  }
+
+  // 读取字典表配置的优先出票卡号列表（无配置返回空数组）
+  getPriorityCardNos() {
+    const dictStore = dictTable();
+    return (dictStore.dictInfo.lmaPriorityCardNos || "")
+      .split(",")
+      .map(item => item.trim())
+      .filter(Boolean);
+  }
+
+  // 获取指定卡号绑定的手机号集合（登录信息排序用；查卡异常返回空数组，不影响出票）
+  async getPriorityCardMobileList() {
+    const { appFlag } = this;
+    const priorityCardNos = this.getPriorityCardNos();
+    if (!priorityCardNos.length) return [];
+    try {
+      const res = await svApi.queryCardList({
+        app_name: appFlag,
+        rule: tokens.userInfo.rule,
+        status: "1",
+        isNeedTotalNum: 0,
+        queryFields: "card_num,mobile"
+      });
+      const list = res.data?.cardList || [];
+      return [
+        ...new Set(
+          list
+            .filter(item => priorityCardNos.includes(item.card_num))
+            .map(item => item.mobile)
+        )
+      ];
+    } catch (error) {
+      this.logger.errorSave("获取指定卡号绑定手机号异常", { error });
+      return [];
     }
   }
 

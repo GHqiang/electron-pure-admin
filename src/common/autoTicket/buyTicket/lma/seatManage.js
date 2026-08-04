@@ -33,7 +33,7 @@ export default class LmaSeatManage {
       ...(lmaToken && { lmaToken })
     };
     try {
-      console.log("获取座位布局参数", params);
+      this.logger.infoSave("获取座位布局参数", params);
       const res = await this.appApi.getMoviePlaySeat(params);
       console.log("获取座位布局返回", res);
       if (res.code !== "0") {

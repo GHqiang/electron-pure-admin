@@ -246,6 +246,25 @@ export default class LmaBuyTicket extends BaseBuyTicket {
           }
         }
 
+        // 纯用卡出票：指定卡号绑定的登录账号绝对优先（先于 first 标记与当前用户手机号）
+        if (offerRule.offer_type != "1") {
+          const priorityMobiles =
+            await this.cardQuanManage.getPriorityCardMobileList();
+          if (priorityMobiles.length) {
+            this.currentParamsList = this.currentParamsList.sort((a, b) => {
+              const aHit = priorityMobiles.includes(a.mobile);
+              const bHit = priorityMobiles.includes(b.mobile);
+              if (aHit && !bHit) return -1;
+              if (!aHit && bHit) return 1;
+              return 0; // 组内保持 getCinemaLoginInfo 已排好的顺序
+            });
+            this.logger.infoSave("登录信息按指定卡号优先排序后", {
+              currentParamsList: this.currentParamsList,
+              priorityMobiles
+            });
+          }
+        }
+
         const phone = this.currentParamsList[0].mobile;
         this.logger.infoSave(`首次出票手机号-${phone}`, {
           currentParamsList: this.currentParamsList
