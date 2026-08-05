@@ -21,7 +21,8 @@ const queryDictListPage = params =>
 // 新增字典
 const addDictRecord = params => axios.post("/svpi/dictRecord/add", params);
 // 修改字典
-const updateDictRecord = params => axios.post("/svpi/dictRecord/update", params);
+const updateDictRecord = params =>
+  axios.post("/svpi/dictRecord/update", params);
 // 删除字典（逻辑删除）
 const deleteDictRecord = params =>
   axios.get("/svpi/dictRecord/delete", { params });
@@ -34,13 +35,35 @@ const queryNameMatchList = params => axios.get("/svpi/nameMatch", { params });
 
 //查询统计分析
 const queryAnalysis = (params, config) =>
-  axios.get("/svpi/statisticalAnalysis/query", { params, timeout: 60 * 1000, ...config });
+  axios.get("/svpi/statisticalAnalysis/query", {
+    params,
+    timeout: 60 * 1000,
+    ...config
+  });
 // 查询统计分析-按日趋势(报价量/报价成功率/利润 + 失败原因构成 + raw 计数,供环比/激增计算)
 const queryAnalysisTrend = (params, config) =>
-  axios.get("/svpi/statisticalAnalysis/trend", { params, timeout: 60 * 1000, ...config });
+  axios.get("/svpi/statisticalAnalysis/trend", {
+    params,
+    timeout: 60 * 1000,
+    ...config
+  });
 // 查询统计分析-平台拆解(按订单来源分组的 raw 计数与金额)
 const queryAnalysisPlat = (params, config) =>
-  axios.get("/svpi/statisticalAnalysis/plat", { params, timeout: 60 * 1000, ...config });
+  axios.get("/svpi/statisticalAnalysis/plat", {
+    params,
+    timeout: 60 * 1000,
+    ...config
+  });
+// days=30&clear=1
+  
+// 统计分析聚合回填
+const queryAnalysisRebuild = (params, config) =>
+  axios.get("/svpi/statisticalAnalysis/rebuild", {
+    params,
+    timeout: 60 * 1000,
+    ...config
+  });
+
 // 查询报价记录
 const queryOfferList = params =>
   axios.get("/svpi/offerRecord/query", { params, timeout: 60 * 1000 });
@@ -329,6 +352,7 @@ const svApi = {
   queryAnalysis,
   queryAnalysisTrend,
   queryAnalysisPlat,
+  queryAnalysisRebuild,
   queryOfferList,
   queryDealOfferList,
   queryOfferInfo,
