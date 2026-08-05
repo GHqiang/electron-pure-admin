@@ -107,6 +107,17 @@
           time-format="HH:mm"
         />
       </el-form-item>
+      <el-form-item label="放映时间">
+        <el-date-picker
+          v-model="formData.show_time"
+          type="datetime"
+          placeholder="请选择放映时间"
+          format="YYYY-MM-DD HH:mm"
+          value-format="YYYY-MM-DD HH:mm"
+          time-format="HH:mm"
+          clearable
+        />
+      </el-form-item>
       <el-form-item label="失败原因">
         <el-input
           v-model="formData.err_msg"
@@ -521,6 +532,7 @@ const formData = reactive({
   lockseat: "",
   start_time: "",
   end_time: "",
+  show_time: "", // 放映时间
   offer_from: "" // 报价来源
 });
 
@@ -712,6 +724,7 @@ const resetForm = () => {
   formData.quan_value = ""; // 是否报价
   formData.start_time = getTodayTime(+new Date());
   formData.end_time = getTodayTime(+new Date() + 1 * 24 * 60 * 60 * 1000);
+  formData.show_time = ""; // 放映时间
   currentPage.value = 1;
   pageSize.value = 10;
 };
