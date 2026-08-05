@@ -739,7 +739,7 @@ class getJinyiOfferPrice extends BaseOfferPrice {
           };
           this.logger.infoSave("获取锁座价格明细参数", calcParams);
           const calcRes = await this.orderManage.priceCalculation(calcParams);
-          let paymentAmount = calcRes?.data?.ticket_total_price;
+          let paymentAmount = calcRes?.data?.ticket_payment_total_price;
           let ticket_num = calcRes?.data?.ticket_num;
           if (paymentAmount && ticket_num) {
             return paymentAmount / ticket_num;
