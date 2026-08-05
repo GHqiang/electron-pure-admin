@@ -112,9 +112,9 @@
           v-model="formData.show_time"
           type="datetime"
           placeholder="请选择放映时间"
-          format="YYYY-MM-DD HH:mm"
-          value-format="YYYY-MM-DD HH:mm"
-          time-format="HH:mm"
+          format="YYYY-MM-DD HH:mm:ss"
+          value-format="YYYY-MM-DD HH:mm:ss"
+          time-format="HH:mm:ss"
           clearable
         />
       </el-form-item>
