@@ -566,6 +566,27 @@ export default class H5UmeBuyTicket extends BaseBuyTicket {
         ticket_num,
         real_member_price: offerRule.real_member_price
       });
+      // 存在优惠活动时，将cardList限定为最低优惠活动(target_card_info)内的卡，
+      // 避免useCardHandle选到不参与该活动的高余额卡，导致返回卡对应的实际支付价偏高
+      if (target_card_info?.cardInfos?.length) {
+        const targetCardNumbers = target_card_info.cardInfos.map(
+          itemC => itemC.cardNumber
+        );
+        const filteredCardList = cardList.filter(item =>
+          targetCardNumbers.includes(item.cardNumber)
+        );
+        // 过滤后非空才替换，避免异常情况下卡列表变空导致用卡失败
+        if (filteredCardList.length) {
+          cardList = filteredCardList;
+        }
+        this.logger.infoSave("按最低优惠活动过滤cardList", {
+          targetCardNumbers,
+          filteredCardList: filteredCardList.map(item => ({
+            cardNumber: item.cardNumber,
+            balance: item.balance
+          }))
+        });
+      }
       let {
         card_id,
         cardNum,
