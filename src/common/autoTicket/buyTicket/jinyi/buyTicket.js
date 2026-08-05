@@ -412,12 +412,21 @@ class JinyiBuyTicket extends BaseBuyTicket {
         };
         return await this.transferOrChangePhone(transparams, buyTicketInfo);
       }
+      let card_id, cardNum;
+      if (offerRule.offer_type === "1" && offerRule.quan_fee > 0) {
+        card_id = canUseCardList?.[0]?.card_id;
+        cardNum = canUseCardList[0]?.card_no_show;
+      }
+      if (offerRule.offer_type === "2" && canUseCardList?.length) {
+        card_id = canUseCardList[0]?.card_id;
+        cardNum = canUseCardList[0]?.card_no_show;
+      }
       // 5、计算价格
       let quan_code = useQuan.map(item => item.couponCode).join(",");
       const calcRes = await this.orderManage.priceCalculation({
         ...buyTicketInfo,
         cinema_id,
-        card_id: canUseCardList[0]?.card_id,
+        card_id,
         quan_code,
         lockOrderId,
         session_id: this.currentSessionId
@@ -526,13 +535,6 @@ class JinyiBuyTicket extends BaseBuyTicket {
         }
       }
       // 7、创建订单
-      let card_id, cardNum;
-      if (offer_type === "1" && useQuan?.length) {
-      }
-      if (offer_type === "2" && canUseCardList?.length) {
-        card_id = canUseCardList[0]?.card_id;
-        cardNum = canUseCardList[0]?.card_no_show;
-      }
       if (this.isTestOrder) {
         this.logger.infoSave("测试单暂不购买");
         return { offerRule };
