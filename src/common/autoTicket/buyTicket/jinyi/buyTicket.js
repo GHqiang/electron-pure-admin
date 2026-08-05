@@ -184,7 +184,9 @@ class JinyiBuyTicket extends BaseBuyTicket {
           await this.seatManage.getTargetSeat(buyTicketInfo);
         if (!targetSeatRes) {
           // 座位列表为空，直接转单
-          return await this.orderManage.transferOrder();
+          return await this.orderManage.transferOrder(
+            this.buildSeatReleaseParams(buyTicketInfo)
+          );
         }
         if (targetSeatRes.errorCode === "TARGET_SEAT_FAILED") {
           // 获取目标座位失败，猎人订单走申请换座
@@ -204,7 +206,9 @@ class JinyiBuyTicket extends BaseBuyTicket {
               };
             }
           }
-          return await this.orderManage.transferOrder();
+          return await this.orderManage.transferOrder(
+            this.buildSeatReleaseParams(buyTicketInfo)
+          );
         }
         buyTicketInfo.targetSeatCodes = targetSeatRes.seatCodes;
         buyTicketInfo.areaInfoList = targetSeatRes.areaInfoList;
@@ -228,7 +232,9 @@ class JinyiBuyTicket extends BaseBuyTicket {
           this.logger.infoSave(
             "上个号取消订单释放座位失败，发送消息通知并直接走转单"
           );
-          return await this.orderManage.transferOrder();
+          return await this.orderManage.transferOrder(
+            this.buildSeatReleaseParams(buyTicketInfo)
+          );
         }
         // 取消订单释放座位成功后请求对应值，以免下次换号时携带过去
         buyTicketInfo.order_num = "";
@@ -354,7 +360,9 @@ class JinyiBuyTicket extends BaseBuyTicket {
             };
           }
         }
-        return await this.orderManage.transferOrder();
+        return await this.orderManage.transferOrder(
+          this.buildSeatReleaseParams(buyTicketInfo)
+        );
       }
       // 锁座id即创建订单id，但是不会真正创建订单，也不会真正锁座，后面不会有释放座位和取消座位的接口
       buyTicketInfo.lockOrderId = lockRes.data?.order_id;
@@ -412,21 +420,12 @@ class JinyiBuyTicket extends BaseBuyTicket {
         };
         return await this.transferOrChangePhone(transparams, buyTicketInfo);
       }
-      let card_id, cardNum;
-      if (offerRule.offer_type === "1" && offerRule.quan_fee > 0) {
-        card_id = canUseCardList?.[0]?.card_id;
-        cardNum = canUseCardList[0]?.card_no_show;
-      }
-      if (offerRule.offer_type === "2" && canUseCardList?.length) {
-        card_id = canUseCardList[0]?.card_id;
-        cardNum = canUseCardList[0]?.card_no_show;
-      }
       // 5、计算价格
       let quan_code = useQuan.map(item => item.couponCode).join(",");
       const calcRes = await this.orderManage.priceCalculation({
         ...buyTicketInfo,
         cinema_id,
-        card_id,
+        card_id: canUseCardList?.[0]?.card_id,
         quan_code,
         lockOrderId,
         session_id: this.currentSessionId
@@ -534,6 +533,15 @@ class JinyiBuyTicket extends BaseBuyTicket {
           profit = Number(profit).toFixed(2);
         }
       }
+      let card_id, cardNum;
+      if (offerRule.offer_type === "1" && offerRule.quan_fee > 0) {
+        card_id = canUseCardList?.[0]?.card_id;
+        cardNum = canUseCardList[0]?.card_no_show;
+      }
+      if (offerRule.offer_type === "2" && canUseCardList?.length) {
+        card_id = canUseCardList[0]?.card_id;
+        cardNum = canUseCardList[0]?.card_no_show;
+      }
       // 7、创建订单
       if (this.isTestOrder) {
         this.logger.infoSave("测试单暂不购买");
@@ -563,7 +571,9 @@ class JinyiBuyTicket extends BaseBuyTicket {
           const transparams = {
             cinema_id,
             lockOrderId,
-            session_id: this.currentSessionId
+            session_id: this.currentSessionId,
+            hall_id: buyTicketInfo?.hall_id,
+            schedule_id: buyTicketInfo?.schedule_id
           };
           const transferParams =
             await this.orderManage.transferOrder(transparams);
@@ -656,13 +666,26 @@ class JinyiBuyTicket extends BaseBuyTicket {
   async transferOrChangePhone(params, buyTicketInfo) {
     const { offerRule, currentParamsInx, currentParamsList } = this;
     if (currentParamsInx === currentParamsList.length - 1) {
-      const transferParams = await this.orderManage.transferOrder(params);
+      const transferParams = await this.orderManage.transferOrder({
+        ...params,
+        ...this.buildSeatReleaseParams(buyTicketInfo)
+      });
       return { offerRule, transferParams };
     } else {
       this.logger.infoSave("非最后一次用卡用券失败，走换号");
       this.currentParamsInx++;
       return await this.oneClickBuyTicket(buyTicketInfo);
     }
+  }
+
+  // 构造座位释放参数(转单时用最后登录的号重新查询该场次座位接口触发释放)
+  buildSeatReleaseParams(buyTicketInfo) {
+    return {
+      cinema_id: buyTicketInfo?.cinema_id,
+      hall_id: buyTicketInfo?.hall_id,
+      schedule_id: buyTicketInfo?.schedule_id,
+      session_id: this.currentSessionId
+    };
   }
 }
 

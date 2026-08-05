@@ -23,15 +23,10 @@ export default class OrderManage {
   // 转单
   async transferOrder(unlockSeatInfo) {
     this.logger.infoSave("开始准备转单", unlockSeatInfo);
-    this.logger.infoSave("金逸无释放座位及取消订单接口");
-    // if (unlockSeatInfo) {
-    //   // 1、释放座位(仅锁座id存在时)
-    //   if (!unlockSeatInfo.order_num) await this.releaseSeat(unlockSeatInfo);
-    //   // 2、取消订单(创建订单id存在时)
-    //   if (unlockSeatInfo.order_num) await this.cancelOrder(unlockSeatInfo);
-    // }
+    // 金逸无显式释放座位/取消订单接口，转单前用最后登录的号重新查询该场次座位接口触发释放
+    await this.releaseSeatByQuerySeat(unlockSeatInfo);
 
-    // 3、平台转单
+    // 平台转单
     // 获取转单原因（优先读 _lastErrCache，防止 logList 被 logUpload 异步清空导致失败原因为空）
     let { err_msg: errMsg = "", err_info: errInfo = "" } =
       this.logger.getLastErrMsgAndInfo() || {};
@@ -52,6 +47,32 @@ export default class OrderManage {
       return;
     }
     return await this.platManage.orderTransferByPlat(errMsg, errInfo);
+  }
+
+  // 释放座位(金逸无显式释放接口，用传入的 session(最后登录的号)重新查询该场次座位接口触发释放)
+  async releaseSeatByQuerySeat({
+    cinema_id,
+    hall_id,
+    schedule_id,
+    session_id
+  } = {}) {
+    // 缺少场次信息或登录号时不查询（无法定位场次，直接跳过，不影响转单主流程）
+    if (!cinema_id || !hall_id || !schedule_id || !session_id) {
+      return;
+    }
+    try {
+      const params = { cinema_id, hall_id, schedule_id, session_id };
+      this.logger.infoSave("释放座位-重新查询该场次座位参数", params);
+      const res = await this.appApi.getMoviePlaySeat(params);
+      this.logger.infoSave("释放座位-重新查询该场次座位成功", { res });
+      return res;
+    } catch (error) {
+      // 释放失败不影响转单主流程，仅记录日志
+      this.logger.errorSave(
+        "释放座位-重新查询该场次座位异常(不影响转单)",
+        formatErrInfo(error)
+      );
+    }
   }
 
   // 释放座位
