@@ -678,6 +678,8 @@ class SfcBuyTicket extends BaseBuyTicket {
           order_number: order_number_key,
           add_count: ticket_num
         });
+      }
+      if (card_id) {
         let cardBalance = cardList?.find(
           item => (this.isV3App ? item.member_id : item.id) == card_id
         )?.balance;
