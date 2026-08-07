@@ -190,6 +190,21 @@ class WandaBuyTicket extends BaseBuyTicket {
         buyTicketInfo.targetSeatCodes = targetSeatRes.seatCodes;
 
         buyTicketInfo.areaInfoList = targetSeatRes.areaInfoList;
+        // salesPrice 对比：场次级 member_price vs 区域级 seat.salesPrice
+        // 小程序用场次级 this.salesPrice，若两者不一致可能导致万达锁座失败(subOrderStatus=20)
+        try {
+          const _showLevelPrice = buyTicketInfo.member_price;
+          const _seatLevelPrices = targetSeatRes.seatCodes.map(
+            s => s.salesPrice
+          );
+          this.logger.infoSave("锁座salesPrice对比", {
+            showLevelPrice: _showLevelPrice,
+            seatLevelPrices: _seatLevelPrices,
+            isConsistent:
+              _seatLevelPrices.length > 0 &&
+              _seatLevelPrices.every(p => p === _showLevelPrice)
+          });
+        } catch (error) {}
         // 锁座-创建订单座位编码
         buyTicketInfo.seat_ids = targetSeatRes.seatCodes
           .map(s => `${s.seatId},${s.salesPrice || 0},undefined,0`)
@@ -244,7 +259,7 @@ class WandaBuyTicket extends BaseBuyTicket {
       console.warn("锁座前的buyTicketInfo", buyTicketInfo);
       // ========== 创建订单（锁座 + 验证订单状态 + 重试） ==========
       // 全部锁座+验证+重试逻辑已封装到 orderManage.lockAndCreateOrder
-      const lockResult = await this.orderManage.lockAndCreateOrder({
+      let lockResult = await this.orderManage.lockAndCreateOrder({
         dId: buyTicketInfo.show_id,
         mobile: this.currentPhone,
         seatId: buyTicketInfo.seat_ids,
@@ -257,19 +272,45 @@ class WandaBuyTicket extends BaseBuyTicket {
         this.logger.errorSave("锁座验证全部失败，视为获取目标座位失败");
         if (dictStore.dictInfo.supportChangeSeatPlatList.includes(plat_name)) {
           this.logger.infoSave("获取目标座位失败，订单走申请换座逻辑");
-          const isApplyChangeSeat = await this.platManage.applyChangeSeat({
+          const applyRes = await this.platManage.applyChangeSeat({
             ...item,
             logger: this.logger
           });
-          if (isApplyChangeSeat) {
+
+          if (applyRes?.retryLock) {
+            // 申请换座返回"有原座"：原座可能已被释放（之前锁失败是因座位被临时占用）
+            // 等2秒缓冲后用原 seatId 重新锁座1次，成功则继续主流程出票
+            this.logger.infoSave(
+              '申请换座返回"有原座"，等待2秒后重新锁座继续出票'
+            );
+            await mockDelay(2);
+            lockResult = await this.orderManage.lockAndCreateOrder({
+              dId: buyTicketInfo.show_id,
+              mobile: this.currentPhone,
+              seatId: buyTicketInfo.seat_ids,
+              session_id: this.currentSessionId
+            });
+            if (lockResult.success) {
+              this.logger.infoSave("有原座重新锁座成功，继续出票流程");
+              // 不 return，往下走主流程（价格计算→用卡用券→支付）
+            } else {
+              this.logger.errorSave("有原座重新锁座仍失败，走转单");
+              return await this.orderManage.transferOrder();
+            }
+          } else if (applyRes === true) {
+            // 申请换座成功（平台已受理换座申请）
             return {
               transferParams: { transfer_fee: 0 },
               offerRule: this.offerRule,
-              isApplyChangeSeat
+              isApplyChangeSeat: true
             };
+          } else {
+            // 申请换座其他失败，走转单
+            return await this.orderManage.transferOrder();
           }
+        } else {
+          return await this.orderManage.transferOrder();
         }
-        return await this.orderManage.transferOrder();
       }
 
       order_num = lockResult.order_num;

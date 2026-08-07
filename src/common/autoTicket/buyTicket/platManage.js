@@ -694,6 +694,10 @@ export default class PlatCommon {
     }
   }
   // 申请换座
+  // 返回值：
+  //   true                    - 申请换座成功（平台已受理）
+  //   { retryLock: true }     - 平台返回"有原座"，原座可能已释放，建议重新锁座继续出票
+  //   false                   - 其他失败
   async applyChangeSeat({ logger }) {
     const { plat_name, order_number, supplierCode } = this.order;
     let params;
@@ -724,6 +728,18 @@ export default class PlatCommon {
       });
       return true;
     } catch (error) {
+      // 猎人/省平台返回"有原座"：表示原座当前可锁（之前锁失败可能是座位被临时占用，现已释放）
+      // 此时不应转单，应重新锁座继续出票流程
+      const errMsg = formatErrInfo(error);
+      const isHasOriginalSeat =
+        typeof errMsg === "string" && errMsg.includes("有原座");
+      if (isHasOriginalSeat) {
+        logger.infoSave(
+          '申请换座返回"有原座"，原座可能已释放，建议重新锁座继续出票',
+          { error }
+        );
+        return { retryLock: true };
+      }
       logger.errorSave("申请换座异常", { error });
       sendWxPusherMessage({
         orderInfo: this.order,
