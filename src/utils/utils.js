@@ -3302,6 +3302,17 @@ function getLongestPart(str, delimiterRegex = /[·:：\s\-_、，,]+/) {
 }
 
 /**
+ * 提取卢米埃 point_str 中的当前积分
+ * 原始格式形如 "3213积分，本月底过期713积分。"
+ * 仅取字符串开头首个"数字+积分"的数字部分，避免"过期713积分"干扰
+ * @param {string} point_str 卢米埃 getUserInfo 返回的积分字符串
+ * @returns {string} 当前积分数字字符串（如 "3213"），匹配不到返回 ""
+ */
+function extractLmaPoint(point_str) {
+  return point_str?.match(/^\s*(\d+)\s*积分/)?.[1] || "";
+}
+
+/**
  * 判断当前时间（本地时间）是否在x-y 时间段内
  * @returns {boolean} true 表示在区间内，false 表示不在
  */
@@ -3313,6 +3324,7 @@ function isCurrentTimeInRange(x, y) {
   return currentMinutes > startMinutes && currentMinutes < endMinutes;
 }
 export {
+  extractLmaPoint, // 提取卢米埃 point_str 中的当前积分
   isCurrentTimeInRange, // 判断当前时间（本地时间）是否在x-y 时间段内
   getLongestPart, // 将字符串按特殊字符分割，并返回长度最长的子串
   parseNumericRule, // 辰星3.0C特殊规则名称解析，是数字则返回数字

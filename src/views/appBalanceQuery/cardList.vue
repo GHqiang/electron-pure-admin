@@ -200,6 +200,16 @@
             </template>
           </el-table-column>
           <el-table-column
+            prop="point_str"
+            label="积分说明"
+            min-width="220"
+            show-overflow-tooltip
+          >
+            <template #default="{ row }">
+              <span>{{ row.point_str || "" }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column
             prop="use_limit_day"
             label="日出票限制"
             min-width="100"
@@ -677,9 +687,10 @@ const syncCardInfo = async () => {
           id: item.id,
           balance: item.balance,
           linkCinemaIds: item.linkCinemaIds,
-          // 到期时间、积分（目前仅lma系列取值，其它系列为null不生效）
+          // 到期时间、积分说明、积分数值（目前仅lma系列取值，其它系列为null不生效）
           expire_date: item.expire_str || null,
-          points: item.point_str || null,
+          point_str: item.point_str || null, // 完整积分说明文本
+          points: item.points ?? null, // 当前积分数值
           update_time: getCurrentTime()
         }));
       console.warn("准备更新的卡列表", updateCardList);

@@ -154,15 +154,18 @@ export default function useCinemaBaseFun() {
             use_limit_month = "20";
           }
           let app_type = GET_APP_INFO(item.app_name)?.app_type_code;
+          // 剔除卢米埃原始字段 expire_str，避免后端误当表列名报错（到期时间改以 expire_date 字段名传）
+          const { expire_str: _expire_str, ...rest } = item;
           return {
-            ...item,
+            ...rest,
             app_type,
             card_discount,
             use_limit_day,
             use_limit_month,
-            // 到期时间、积分（目前仅lma系列取值，其它系列为null不生效）
+            // 到期时间、积分说明、积分数值（目前仅lma系列取值，其它系列为null不生效）
             expire_date: item.expire_str || null,
-            points: item.point_str || null,
+            point_str: item.point_str || null, // 完整积分说明文本
+            points: item.points ?? null, // 当前积分数值
             status: "1",
             rule: rule,
             update_time: getCurrentTime()

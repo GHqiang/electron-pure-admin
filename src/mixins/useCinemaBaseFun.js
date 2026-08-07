@@ -10,7 +10,7 @@ import {
   GET_APP_INFO
 } from "@/common/constant";
 
-import { getCinemaLoginInfoList, mockDelay } from "@/utils/utils";
+import { getCinemaLoginInfoList, mockDelay, extractLmaPoint } from "@/utils/utils";
 
 // 影院相关方法接口
 export default function useCinemaBaseFun() {
@@ -554,22 +554,26 @@ export default function useCinemaBaseFun() {
         const userInfoRes = await APP_API_OBJ["lma"].getUserInfo({
           lmaToken: session_id
         });
-        const point_str =
-          userInfoRes?.data?.point_str?.replace("积分", "") || "";
+        // point_str 形如 "3213积分，本月底过期713积分。"
+        // point_str 保留原始完整说明文本，points 提取当前积分数值
+        const point_str = userInfoRes?.data?.point_str || "";
+        const points = extractLmaPoint(point_str);
         cardList.unshift({
           card_number: res.data.card_number,
           balance: res.data.money_str,
           expire_str: res.data.expire_str, // "2027-02-02"
-          point_str: point_str
+          point_str: point_str, // 完整积分说明文本
+          points: points // 当前积分数值
           // is_main_card: 1
         });
         cardList = cardList.map(item => ({
           card_id: item.card_number + "",
           card_num: item.card_number,
           balance: item.balance,
-          // 到期时间、积分（主卡来自卡列表接口，sleep卡在下方按卡切换后补齐）
+          // 到期时间、积分说明、积分数值（主卡来自卡列表接口，sleep卡在下方按卡切换后补齐）
           expire_str: item.expire_str ?? null, // "2027-02-02"
-          point_str: item.point_str ?? null // 积分
+          point_str: item.point_str ?? null, // 完整积分说明文本
+          points: item.points ?? null // 当前积分数值
           // is_main_card: item.is_main_card
         }));
         const card_list = await getLmaOtherCardBalance(cardList, session_id);
@@ -694,8 +698,10 @@ export default function useCinemaBaseFun() {
         const userInfoRes = await APP_API_OBJ["lma"].getUserInfo({
           lmaToken: session_id
         });
-        item.point_str =
-          userInfoRes?.data?.point_str?.replace("积分", "") || "";
+        // point_str 保留原始完整说明文本，points 提取当前积分数值
+        const point_str = userInfoRes?.data?.point_str || "";
+        item.point_str = point_str;
+        item.points = extractLmaPoint(point_str);
       }
     }
     // 再切换为主卡
