@@ -27,6 +27,52 @@ import {
 import { APP_API_OBJ, PLAT_API_OBJ } from "@/common/index";
 import svApi from "@/api/sv-api";
 import Logger from "@/common/logger";
+import {
+  COUPON_RETRY_LIMIT,
+  COUPON_SINGLE_RETRY_LIMIT
+} from "@/common/autoTicket/buyTicket/common/retryConfig";
+
+// 用券创建订单异常换券重试：可重试的错误关键词
+// 命中其一即视为可换券重试（优惠券核算异常 / 券被竞态用掉）
+const COUPON_RETRY_ERROR_KEYS = [
+  "PROMOCOUPON_CAL_ERROR",
+  "优惠券优惠计算异常",
+  "COUPONCOUNT_TICKET_NOT_SAME",
+  "券数量和票数量不一致"
+];
+
+/**
+ * 判断创建订单错误是否可换券重试
+ * 命中"优惠券优惠计算异常"或"券数量和票数量不一致"时返回 true
+ * @param {*} error - createOrder 透出的 error
+ * @returns {boolean}
+ */
+function isCouponRetryableError(error) {
+  const errStr = formatErrInfo(error) || "";
+  return COUPON_RETRY_ERROR_KEYS.some(key => errStr.includes(key));
+}
+
+/**
+ * 根据当前 useQuan 重建用券场景的 payments（COUPON 段）
+ * @param {Array} useQuan - 当前生效券
+ * @param {string} card_id - 补手续费卡号（可选）
+ * @param {number} quan_fee - 券手续费
+ * @returns {Array} payments 数组
+ */
+function buildCouponPayments(useQuan, card_id, quan_fee) {
+  const payments = useQuan.map(item => ({
+    payMethod: "COUPON",
+    couponCodeParams:
+      item.couponCode +
+      "-" +
+      item.couponType +
+      (item.concreteProductType == "COMMON" ? "-TICKET" : "")
+  }));
+  if (quan_fee > 0 && card_id) {
+    payments.push({ payMethod: "CARD", payCardNumber: card_id });
+  }
+  return payments;
+}
 
 export default class H5UmeOrderManage {
   constructor(order, logger, platManage, isTestOrder, getCurrentParams) {
@@ -84,21 +130,11 @@ export default class H5UmeOrderManage {
   }
 
   /**
-   * 创建订单
+   * 单次调用创建订单接口（不含任何重试）
    * @param {Object} data - 参数对象
-   * @param {string|number} data.cinemaLinkId - 影院链接ID
-   * @param {string|number} data.scheduleId - 场次ID
-   * @param {string} data.scheduleKey - 场次Key
-   * @param {string|number} data.lockOrderId - 锁座订单ID
-   * @param {string} data.tickets - 座位信息JSON字符串
-   * @param {number} data.totalPrice - 总价
-   * @param {number} data.payAmount - 支付金额
-   * @param {string} data.payments - 支付方式JSON字符串
-   * @param {string} [data.card_id] - 会员卡ID（可选）
-   * @param {number} [data.isTimeoutRetry=1] - 是否超时重试，默认1
-   * @returns {Promise<Object>} 创建订单结果
+   * @returns {Promise<Object>} 创建订单结果（成功返回 bizValue，失败返回 { error }）
    */
-  async createOrder(data) {
+  async createOrderOnce(data) {
     let {
       cinemaLinkId,
       scheduleId,
@@ -107,9 +143,7 @@ export default class H5UmeOrderManage {
       tickets,
       totalPrice,
       payAmount,
-      payments,
-      card_id,
-      isTimeoutRetry = 1 // 默认超时重试
+      payments
     } = data;
     const { session_id, mobile } =
       this.getCurrentParams?.()?.list?.[this.getCurrentParams?.()?.inx] || {};
@@ -129,34 +163,249 @@ export default class H5UmeOrderManage {
       this.logger.infoSave("创建订单参数", { params });
       const res = await this.appApi.createOrder(params);
       this.logger.infoSave("创建订单返回", { res });
-      let createOrderRes = res.bizValue;
-      return createOrderRes;
+      return res.bizValue;
     } catch (error) {
       this.logger.errorSave("创建订单异常", { error });
-      // 用卡时才重试，用券该接口就直接支付了
-      if (
-        formatErrInfo(error).includes("超时") &&
-        isTimeoutRetry === 1 &&
-        card_id
-      ) {
+      return { error };
+    }
+  }
+
+  /**
+   * 创建订单（含超时重试 + 用券场景换券重试）
+   *
+   * 重试策略：
+   * - 超时：用卡时内部重试一次，失败直接返回（超时非券类问题，不触发换券重试）
+   * - 用券场景非超时异常：从备选券池换券重试
+   *   - 备选池 >= 票数：全量替换（整批换下一批），受 COUPON_RETRY_LIMIT 限制
+   *     全量下一批不足票数时直接停止走转单
+   *   - 备选池 < 票数但 > 0：逐个替换（定位坏券），受 COUPON_SINGLE_RETRY_LIMIT 限制
+   *   - 备选池 = 0：停止走转单
+   *
+   * @param {Object} data - 参数对象
+   * @param {string|number} data.cinemaLinkId - 影院链接ID
+   * @param {string|number} data.scheduleId - 场次ID
+   * @param {string} data.scheduleKey - 场次Key
+   * @param {string|number} data.lockOrderId - 锁座订单ID
+   * @param {string} data.tickets - 座位信息JSON字符串
+   * @param {number} data.totalPrice - 总价
+   * @param {number} data.payAmount - 支付金额
+   * @param {string} data.payments - 支付方式JSON字符串
+   * @param {string} [data.card_id] - 会员卡ID（可选）
+   * @param {Array} [data.useQuan] - 当前生效券（用券场景必传，用于换券重试）
+   * @param {Array} [data.remainQuanList] - 备选券池（用券场景必传）
+   * @param {string} [data.seatIds] - 座位ID（|分隔，COMMON券重跑checkQuan用）
+   * @param {number} [data.quan_fee] - 券手续费（重建payments用）
+   * @param {number} [data.ticket_num] - 票数
+   * @param {boolean} [data.isUseQuanScene] - 是否用券场景
+   * @param {number} [data.isTimeoutRetry=1] - 是否超时重试，默认1
+   * @returns {Promise<Object>} 创建订单结果（成功时附带 finalUseQuan 标识最终用券）
+   */
+  async createOrder(data) {
+    let {
+      card_id,
+      useQuan = [],
+      isUseQuanScene = false,
+      isTimeoutRetry = 1 // 默认超时重试
+    } = data;
+
+    let createOrderRes = await this.createOrderOnce(data);
+
+    // 成功直接返回
+    if (createOrderRes?.orderId) {
+      return createOrderRes;
+    }
+
+    let lastError = createOrderRes?.error;
+    const isTimeout = formatErrInfo(lastError).includes("超时");
+
+    // 超时场景:用卡时内部重试一次,失败直接返回(超时非券类问题,不触发换券重试)
+    if (isTimeout) {
+      if (isTimeoutRetry === 1 && card_id) {
         this.logger.infoSave("创建订单接口超时，延迟1秒后重试");
         await mockDelay(1);
-        try {
-          const createOrderRes = await this.createOrder({
-            ...data,
-            isTimeoutRetry: 0
-          });
-          if (createOrderRes) {
-            this.logger.infoSave("创建订单请求接口超时，延迟2秒后重试成功");
-            return createOrderRes;
-          }
-        } catch (error) {
-          this.logger.errorSave("创建订单请求接口超时，延迟2秒后重试失败", {
-            error
-          });
+        const retryRes = await this.createOrder({
+          ...data,
+          isTimeoutRetry: 0
+        });
+        if (retryRes?.orderId) {
+          this.logger.infoSave("创建订单请求接口超时，延迟2秒后重试成功");
+          return retryRes;
         }
+        this.logger.errorSave("创建订单请求接口超时，延迟2秒后重试失败");
       }
+      // 超时失败直接返回,不透出 error
+      return;
     }
+
+    // 非超时异常:非用券场景透出 error(主链路可据此判断),用券场景进入换券重试
+    if (!isUseQuanScene || !useQuan?.length) {
+      return { error: lastError };
+    }
+
+    // 用券场景换券重试
+    if (!isCouponRetryableError(lastError)) {
+      // 非可重试错误(如网络异常),透出 error
+      return { error: lastError };
+    }
+
+    // 委托给独立的换券重试方法
+    return await this.retryCreateOrderWithCouponSwap(data, lastError);
+  }
+
+  /**
+   * 用券场景创建订单异常换券重试
+   *
+   * 策略:自适应、不切换
+   * - 备选池 >= 票数:全量替换(整批换下一批),受 COUPON_RETRY_LIMIT 限制
+   *   全量下一批不足票数时直接停止走转单(不退化到逐个)
+   * - 备选池 < 票数但 > 0:逐个替换(累积,定位坏券),受 COUPON_SINGLE_RETRY_LIMIT 限制
+   * - 备选池 = 0:停止走转单
+   *
+   * @param {Object} data - createOrder 入参(含 useQuan/remainQuanList/seatIds/quan_fee/ticket_num 等)
+   * @param {*} firstError - 首次失败错误
+   * @returns {Promise<Object|undefined>} 成功返回 { ...bizValue, finalUseQuan },失败返回 undefined
+   */
+  async retryCreateOrderWithCouponSwap(data, firstError) {
+    const {
+      card_id,
+      useQuan = [],
+      remainQuanList = [],
+      seatIds,
+      quan_fee = 0,
+      ticket_num,
+      cinemaLinkId,
+      scheduleId,
+      scheduleKey
+    } = data;
+
+    // 当前生效券(深拷贝,避免污染原 useQuan)
+    let workingUseQuan = [...useQuan];
+    // 备选券池队列
+    let remainQuanPool = [...remainQuanList];
+    // 已试过券码集合(日志用)
+    let triedCouponCodes = useQuan.map(item => item.couponCode);
+    let couponRetryInx = 0;
+    let lastError = firstError;
+    let finalUseQuan = useQuan; // 最终用券(成功时返回)
+    // 是否已用过全量替换;一旦用过,后续备选不足票数时直接停止,不退化到逐个
+    let usedFullSwap = false;
+
+    while (true) {
+      // 备选池耗尽 → 停止
+      if (!remainQuanPool.length) {
+        this.logger.errorSave("换券重试耗尽,走转单", {
+          triedCouponCodes,
+          remainCount: 0
+        });
+        break;
+      }
+
+      // 动态选策略:备选充足走全量,不足走逐个
+      const isFullSwap = remainQuanPool.length >= ticket_num;
+      // 全量策略下下一批不足票数时直接停止走转单(不切到逐个)
+      if (!isFullSwap && usedFullSwap) {
+        this.logger.errorSave("全量换券后备选不足票数,走转单", {
+          triedCouponCodes,
+          remainCount: remainQuanPool.length,
+          ticket_num
+        });
+        break;
+      }
+
+      let swappedInCodes;
+      let swapMode;
+      if (isFullSwap) {
+        const couponRetryLimit = COUPON_RETRY_LIMIT;
+        if (couponRetryInx >= couponRetryLimit) {
+          this.logger.errorSave("换券重试耗尽,走转单", {
+            triedCouponCodes,
+            remainCount: remainQuanPool.length
+          });
+          break;
+        }
+        // 全量替换:取下一批 ticket_num 张整批替换
+        workingUseQuan = remainQuanPool.splice(0, ticket_num);
+        finalUseQuan = workingUseQuan;
+        usedFullSwap = true;
+        swappedInCodes = workingUseQuan.map(item => item.couponCode);
+        swapMode = "全量替换";
+      } else {
+        const couponRetryLimit = COUPON_SINGLE_RETRY_LIMIT;
+        if (couponRetryInx >= couponRetryLimit) {
+          this.logger.errorSave("换券重试耗尽,走转单", {
+            triedCouponCodes,
+            remainCount: remainQuanPool.length
+          });
+          break;
+        }
+        // 逐个替换:累积替换,每次只换一个位置
+        const swapPos = couponRetryInx % ticket_num;
+        const nextOne = remainQuanPool.shift();
+        workingUseQuan[swapPos] = nextOne;
+        finalUseQuan = workingUseQuan;
+        swappedInCodes = [nextOne.couponCode];
+        swapMode = `逐个替换位置${swapPos}`;
+      }
+      triedCouponCodes.push(...swappedInCodes);
+      this.logger.infoSave("创建订单优惠券异常,换券重试", {
+        retryInx: couponRetryInx + 1,
+        swapMode,
+        newCouponCodes: swappedInCodes,
+        triggerError: formatErrInfo(lastError)
+      });
+
+      // 重建 payments
+      const newPayments = JSON.stringify(
+        buildCouponPayments(workingUseQuan, card_id, Number(quan_fee || 0))
+      );
+      // COMMON 类型券需重跑核销查询
+      if (workingUseQuan[0]?.concreteProductType == "COMMON") {
+        await this.checkQuan({
+          couponCodes: workingUseQuan.map(item => item.couponCode).join(),
+          cinemaLinkId,
+          scheduleId,
+          scheduleKey,
+          seatIds,
+          commonCouponJson: JSON.stringify(
+            workingUseQuan.map(item => ({
+              couponCode: item.couponCode,
+              concreteProductType: "TICKET"
+            }))
+          )
+        });
+      }
+
+      // 重试创建订单
+      const createOrderRes = await this.createOrderOnce({
+        ...data,
+        payments: newPayments
+      });
+
+      if (createOrderRes?.orderId) {
+        // 成功,返回时附带最终用券,供主链路替换
+        return { ...createOrderRes, finalUseQuan };
+      }
+
+      lastError = createOrderRes?.error;
+      // 非可重试错误 → 停止
+      if (!isCouponRetryableError(lastError)) {
+        this.logger.errorSave("创建订单异常(非券类错误),走转单", {
+          error: lastError
+        });
+        break;
+      }
+      // 超时错误 → 停止(重试中遇到超时不再重试)
+      if (formatErrInfo(lastError).includes("超时")) {
+        this.logger.errorSave("换券重试中遇到超时,走转单", {
+          error: lastError
+        });
+        break;
+      }
+      couponRetryInx++;
+    }
+
+    // 重试耗尽,返回 undefined(主链路走原转单逻辑)
+    return;
   }
 
   /**

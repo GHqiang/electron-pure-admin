@@ -47,3 +47,16 @@ export function getLockSeatRetryConfig(plat_name) {
   if (!plat_name) return [6, 5];
   return LOCK_SEAT_RETRY_CONFIG[plat_name] || [6, 5];
 }
+
+/**
+ * 用券创建订单异常换券重试配置
+ *
+ * 当创建订单返回"优惠券优惠计算异常"或"券数量和票数量不一致"时，
+ * 从备选券池换券重试。按备选池剩余量动态选择策略：
+ * - 备选池 >= 票数：全量替换（整批换下一批），受 COUPON_RETRY_LIMIT 限制
+ * - 备选池 < 票数但 > 0：逐个替换（定位坏券），受 COUPON_SINGLE_RETRY_LIMIT 限制
+ */
+// 全量替换重试上限（每批已整批验证，2 次足够）
+export const COUPON_RETRY_LIMIT = 2;
+// 逐个替换重试上限（需覆盖多座位多坏券场景，可按实际座位数调整）
+export const COUPON_SINGLE_RETRY_LIMIT = 5;

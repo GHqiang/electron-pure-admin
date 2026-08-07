@@ -743,7 +743,9 @@ export default class H5UmeCardQuanManage {
           profit,
           card_id,
           useQuan,
-          quanStock: targetQuanList.length
+          quanStock: targetQuanList.length,
+          // 备选券池：首次未使用的剩余券，供创建订单异常时换券重试
+          remainQuanList: targetQuanList.slice(ticket_num)
         };
       }
     } catch (error) {

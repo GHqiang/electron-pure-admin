@@ -40,6 +40,7 @@ import {
   syncCardAfterPayment
 } from "@/common/autoTicket/buyTicket/common/cardBalanceSync";
 import { dictTable } from "@/store/dictTable";
+
 const dictStore = dictTable();
 
 const tokens = platTokens();
@@ -592,7 +593,8 @@ export default class H5UmeBuyTicket extends BaseBuyTicket {
         cardNum,
         profit = 0,
         useQuan = [],
-        quanStock
+        quanStock,
+        remainQuanList = []
       } = await this.cardQuanManage.useQuanOrCard({
         cardList,
         quanList,
@@ -851,7 +853,8 @@ export default class H5UmeBuyTicket extends BaseBuyTicket {
 
         return { offerRule };
       }
-      // 7、创建订单
+      // 7、创建订单（用券场景换券重试逻辑下沉到 orderManage.createOrder 内部）
+      const isUseQuanScene = offerRule.offer_type === "1" && useQuan?.length;
       const createOrderRes = await this.orderManage.createOrder({
         cinemaLinkId,
         scheduleId,
@@ -861,9 +864,21 @@ export default class H5UmeBuyTicket extends BaseBuyTicket {
         totalPrice: total_price || areaTotalPrice,
         payAmount,
         payments,
-        card_id
+        card_id,
+        // 用券场景换券重试所需参数
+        useQuan,
+        remainQuanList,
+        seatIds: seatIds.map(item => item.seatId).join("|"),
+        quan_fee: offerRule.quan_fee || 0,
+        ticket_num,
+        isUseQuanScene
       });
       orderId = createOrderRes?.orderId;
+      // 换券重试成功时，用最终生效券替换外层 useQuan / quan_code
+      if (orderId && createOrderRes?.finalUseQuan) {
+        useQuan = createOrderRes.finalUseQuan;
+        quan_code = useQuan.map(item => item.couponCode).join();
+      }
       if (!orderId) {
         // 从订单列表获取到目标订单
         await mockDelay(3);
