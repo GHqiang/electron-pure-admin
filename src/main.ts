@@ -81,4 +81,46 @@ getPlatformConfig(app).then(async config => {
   app.mount("#app").$nextTick(() => {
     postMessage({ payload: "removeLoading" }, "*");
   });
+
+  // 崩溃自愈：主进程 reload 后带 crashRecovery 标记，自动恢复崩溃前运行的队列并上报取证日志
+  try {
+    const searchParams = new URLSearchParams(location.search);
+    if (searchParams.get("crashRecovery") === "1") {
+      const crashReason = searchParams.get("crashReason") || "";
+      console.warn("[崩溃自愈] 检测到崩溃恢复标记，开始自动恢复队列", {
+        crashReason
+      });
+      const { autoRestoreQueues } = await import("@/common/queueRestore");
+      // 延迟执行：等待登录信息、字典等初始化完成后再拉起队列
+      setTimeout(async () => {
+        console.warn("[崩溃自愈] 3 秒延迟结束，开始执行队列自动恢复", {
+          crashReason
+        });
+        const result = await autoRestoreQueues(crashReason).catch(error => {
+          console.error("[崩溃自愈] 队列自动恢复失败", error);
+          return { restored: false };
+        });
+        // 恢复成功后跳转队列管理页，便于用户直观确认队列运行状态
+        // （hash 路由 reload 后 hash 丢失回到首页，需主动跳回）
+        if (result?.restored) {
+          console.warn(
+            "[崩溃自愈] 队列已自动恢复，跳转队列管理页确认状态",
+            result
+          );
+          router.push("/set/queueManage").catch(() => {});
+        } else {
+          console.warn(
+            "[崩溃自愈] 无队列快照（崩溃前未一键启动），跳过队列恢复",
+            result
+          );
+        }
+        // 恢复逻辑执行完毕，清除 URL 上的恢复标记，避免用户后续手动刷新重复触发恢复
+        try {
+          history.replaceState(null, "", location.pathname);
+        } catch {}
+      }, 3000);
+    }
+  } catch (error) {
+    console.error("[崩溃自愈] 消费恢复标记异常", error);
+  }
 });

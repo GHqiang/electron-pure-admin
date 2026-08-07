@@ -123,10 +123,6 @@ export default class BaseOfferPrice {
           })
           .join();
       }
-      console.warn(
-        "this.logger.logList",
-        JSON.parse(JSON.stringify(this.logger.logList))
-      );
       return this.buildSuccessResponse(endPrice, offerRule, order.order_number);
     } catch (error) {
       this.logger?.errorSave("获取最终报价信息方法执行异常", error);

@@ -40,6 +40,8 @@ const dictStore = dictTable();
 const nameMatchStore = nameMatchTable();
 
 import { getToken } from "@/utils/auth";
+// 本地兜底日志（logUpload 上传失败落盘）
+import { saveFailLogToLocal as localFailLog } from "@/common/localFailLog";
 
 // 获取上一天
 function getPreviousDay(dateString) {
@@ -1725,6 +1727,19 @@ const logUploadWithRetry = async (params, retries = 0) => {
 };
 
 /**
+ * 本地兜底日志：logUpload 上传失败被丢弃的日志落盘到本地
+ * 实现已抽到 src/common/localFailLog.js（经主进程 ipc 写 userData/logs，渲染层不直接操作文件系统）
+ * @param {Array} batch - 本次上传失败的日志批次
+ * @param {Object} order - 上传参数 { plat_name, app_name, order_number, type }
+ */
+const saveFailLogToLocal = (batch, order = {}) => {
+  try {
+    localFailLog(batch, order);
+  } catch (e) {
+    console.error("本地兜底日志写入失败", e);
+  }
+};
+/**
  * 日志上传主函数（分批上传 + 重试 + 微信消息限流）
  * @param {Object} order - 订单信息（包含plat_name, app_name, order_number, type）
  * @param {Array} logList - 待上传的日志列表
@@ -1780,6 +1795,16 @@ const logUpload = async (order, logList) => {
       console.error("日志上送异常", error);
       hasError = true;
       lastError = error;
+      // 本地兜底：上传失败的日志落盘（userData/logs/logUploadFail-日期.log），
+      // 后续排查问题时可查看；写盘失败不影响主流程
+      try {
+        saveFailLogToLocal(batch, order);
+      } catch (e) {
+        console.error("本地兜底日志写入失败", e);
+      }
+      // 上传失败时强制清空已处理批次，避免 logList 无限累积导致渲染进程内存持续增长（OOM 白屏根因）。
+      // 说明：失败日志已落盘兜底，微信告警已通知人工关注。
+      logList.splice(0, batchSize);
       break; // 发生错误时停止继续上传
     }
   }
@@ -3379,6 +3404,7 @@ export {
   getOfferRuleById, // 根据报价规则id获取报价规则
   offerRuleMatch, // 报价规则匹配
   logUpload, // 日志上传
+  saveFailLogToLocal, // 本地兜底日志（上传失败落盘）
   mockDelay, // 模拟延时
   getOrginValue, // 对象深拷贝（获取对象源值）
   formatErrInfo, // 格式化错误信息对象

@@ -1,7 +1,9 @@
 import { ipcRenderer, contextBridge } from "electron";
 
 // --------- Expose some API to the Renderer process ---------
-contextBridge.exposeInMainWorld("ipcRenderer", {
+// 说明：contextIsolation: false 时 contextBridge.exposeInMainWorld 在部分场景不可靠（electron#21437），
+// preload 与页面共享同一上下文，直接挂载 window 一定生效；业务代码统一走 window.ipcRenderer。
+window.ipcRenderer = {
   on(...args: Parameters<typeof ipcRenderer.on>) {
     const [channel, listener] = args;
     return ipcRenderer.on(channel, (event, ...args) =>
@@ -23,7 +25,10 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
 
   // You can expose other APTs you need here.
   // ...
-});
+};
+
+// 兼容旧用法（vite-plugin-electron-renderer 实际未注入 window.electron，这里显式补上）
+window.electron = { ipcRenderer: window.ipcRenderer };
 
 // --------- Preload scripts loading ---------
 function domReady(

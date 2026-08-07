@@ -40,6 +40,12 @@ export default class Logger {
   // 添加日志
   _addToLogList({ opera_time, des, level, info }) {
     this.logList.push({ opera_time, des, level, info });
+    // 上限保护：logUpload 上传失败时 logList 不清空，长时间运行会导致渲染进程内存持续增长（OOM 白屏根因）。
+    // 超过上限丢弃最旧日志，保留最新日志便于排查。
+    const MAX_LOG_LIST = 500;
+    if (this.logList.length > MAX_LOG_LIST) {
+      this.logList.splice(0, this.logList.length - MAX_LOG_LIST);
+    }
   }
 
   info(message, meta) {

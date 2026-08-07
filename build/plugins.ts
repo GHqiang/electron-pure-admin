@@ -101,10 +101,16 @@ export function getPluginsList(
                   sourcemap: sourcemap ? "inline" : undefined, // #332
                   minify: isBuild,
                   outDir: "dist-electron/preload",
+                  // package.json 为 "type": "module"，vite-plugin-electron 默认输出 ESM；
+                  // Electron 28+ 支持 ESM preload，但文件后缀必须为 .mjs（Electron 按扩展名识别模块格式）
                   rollupOptions: {
                     external: Object.keys(
                       "dependencies" in pkg ? pkg.dependencies : {}
-                    )
+                    ),
+                    output: {
+                      format: "es",
+                      entryFileNames: "index.mjs"
+                    }
                   }
                 }
               }

@@ -196,6 +196,9 @@ import {
   fetchOrderQueueFactory
 } from "@/common/factories/QueueFactory.js";
 
+// 队列启动快照（渲染进程崩溃自愈后自动恢复队列用）
+import { saveQueueSnapshot, startQueues } from "@/common/queueRestore";
+
 import { usePlatTableDataStore } from "@/store/platOfferRuleTable";
 import {
   getTicketQueue,
@@ -347,18 +350,25 @@ const oneClickStart = () => {
       platQueueList.value.forEach(item => {
         if (!item.platToken) {
           isStart = false;
-        } else {
-          tableDataStore.toggleEnable(item.id);
-          setPlatFunObj[item.platName](item.platToken);
-          // 各平台若有子 Token / userUUID，一键启动时同步写入 localStorage（与保存编辑逻辑一致）
-          syncPlatExtraTokens(item);
-          isStartOffer && platOfferQueueObj[item.platName]?.start();
-          isStartFetch && platFetchOrderQueueObj[item.platName]?.start();
         }
       });
 
-      Object.keys(appTicketQueueObj).forEach(item => {
-        isStartTicket && appTicketQueueObj[item].start();
+      // 有 token 的平台照常启动（与原逻辑一致：isStart=false 时这些平台也会启动，仅弹警告不写快照）
+      platQueueList.value.forEach(item => {
+        if (!item.platToken) return;
+        tableDataStore.toggleEnable(item.id);
+        // 各平台若有子 Token / userUUID，一键启动时同步写入 localStorage（与保存编辑逻辑一致）
+        syncPlatExtraTokens(item);
+      });
+      // 与崩溃自愈共用的启动逻辑（含 token 写回 platTokens store），保证行为同源
+      startQueues({
+        platNames: platQueueList.value
+          .filter(item => item.platToken)
+          .map(item => item.platName),
+        appNames: Object.keys(appTicketQueueObj),
+        startOffer: isStartOffer,
+        startFetch: isStartFetch,
+        startTicket: isStartTicket
       });
       if (isStart) {
         console.warn("一键启动自动出票队列");
@@ -367,6 +377,13 @@ const oneClickStart = () => {
           app_ticket_queue: JSON.stringify(Object.keys(appTicketQueueObj)),
           offer_queue_time: getCurrentTime()
         });
+        // 保存队列启动快照：渲染进程崩溃自愈后自动恢复队列用
+        saveQueueSnapshot(
+          platQueueList.value
+            .filter(item => item.platToken)
+            .map(item => item.platName),
+          Object.keys(appTicketQueueObj)
+        );
         logUpload({ plat_name: "", type: 1 }, [
           {
             opera_time: getCurrentTime(),
@@ -408,6 +425,10 @@ const oneClickStop = () => {
       Object.keys(appTicketQueueObj).forEach(item => {
         isStartTicket && appTicketQueueObj[item].stop();
       });
+      // 队列已全部停止，清除启动快照，避免崩溃自愈误恢复已停止的队列
+      try {
+        window.localStorage.removeItem("__queueSnapshot");
+      } catch {}
       svApi.updateUser({
         plat_offer_queue: JSON.stringify(tableDataStore.items),
         offer_queue_time: getCurrentTime()

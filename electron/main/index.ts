@@ -1,6 +1,7 @@
 import { release } from "node:os";
 import { fileURLToPath } from "node:url";
 import { join, dirname } from "node:path";
+import { appendFile, writeFile, mkdir, stat } from "node:fs/promises";
 import {
   type MenuItem,
   type MenuItemConstructorOptions,
@@ -30,7 +31,10 @@ process.env.PUBLIC = process.env.VITE_DEV_SERVER_URL
   ? join(process.env.DIST_ELECTRON, "../public")
   : process.env.DIST;
 // 是否为开发环境
-const isDev = process.env["NODE_ENV"] === "development";
+// 说明：vite-plugin-electron 编译主进程时，process.env.NODE_ENV 在主进程 Node 环境下并不可靠
+// （取决于 electron 启动时 shell 的 NODE_ENV，yarn dev 不一定设置）。
+// VITE_DEV_SERVER_URL 仅 dev 模式由 vite 注入，生产构建必无，与 loadURL 同源，最可靠。
+const isDev = !!process.env.VITE_DEV_SERVER_URL;
 
 // Disable GPU Acceleration for Windows 7
 if (release().startsWith("6.1")) app.disableHardwareAcceleration();
@@ -50,7 +54,7 @@ if (!app.requestSingleInstanceLock()) {
 
 let win: BrowserWindow | null = null;
 // Here, you can also use other preload
-const preload = join(__dirname, "../preload/index.js");
+const preload = join(__dirname, "../preload/index.mjs");
 const url = process.env.VITE_DEV_SERVER_URL;
 const indexHtml = join(process.env.DIST, "index.html");
 
@@ -121,6 +125,20 @@ async function createWindow() {
     win.loadFile(indexHtml);
   }
 
+  // 诊断：确认 preload 是否成功加载执行（window.ipcRenderer 是否挂载成功）
+  win.webContents.on("preload-error", (_event, preloadPath, error) => {
+    console.error("[诊断] preload 加载失败:", preloadPath, error);
+  });
+  win.webContents.on("did-finish-load", () => {
+    win?.webContents
+      .executeJavaScript("typeof window.ipcRenderer")
+      .then(type => {
+        console.warn("[诊断] 页面加载完成，window.ipcRenderer 类型 =", type);
+        return type;
+      })
+      .catch(e => console.error("[诊断] 检查 ipcRenderer 失败", e));
+  });
+
   createMenu();
 
   // Test actively push message to the Electron-Renderer
@@ -144,7 +162,135 @@ async function createWindow() {
   win.on("leave-full-screen", () => {
     createMenu();
   });
+
+  // 崩溃自愈：渲染进程崩溃/无响应时自动恢复，防循环，取证
+  setupCrashRecovery(win);
 }
+
+// ==================== 崩溃自愈 ====================
+// 配置：5 分钟窗口内最多允许崩溃 2 次，超过则停止自动恢复（防"崩溃→恢复→再崩"死循环）
+const CRASH_GUARD = {
+  WINDOW_MS: 5 * 60 * 1000,
+  MAX_CRASH: 2,
+  RECOVERY_QUERY: "crashRecovery", // 通知渲染层"本次为崩溃恢复"的 query 参数名
+  CRASH_REASON_QUERY: "crashReason" // 崩溃原因（取证）
+};
+
+function setupCrashRecovery(win: BrowserWindow) {
+  const crashTimes: number[] = [];
+  // 统一的本地留证写入：console + crashEvent-*.log 同步记录，确保现场无终端也能复盘
+  // fire-and-forget，写盘失败仅 console.error，不阻塞自愈流程
+  const logCrashEvent = (msg: string) => {
+    const line = `[${new Date().toLocaleString()}] ${msg}\n`;
+    console.warn(`[崩溃自愈] ${msg}`);
+    appendLocalLog(`crashEvent-${todayStr()}.log`, line).catch(error =>
+      console.error("崩溃事件本地留证写入失败", error)
+    );
+  };
+
+  const reloadWithRecovery = (reason: string, exitCode?: number) => {
+    const now = Date.now();
+    crashTimes.push(now);
+    // 只保留时间窗内的崩溃记录
+    while (crashTimes.length && now - crashTimes[0] > CRASH_GUARD.WINDOW_MS) {
+      crashTimes.shift();
+    }
+    const count = crashTimes.length;
+    logCrashEvent(
+      `渲染进程崩溃 reason=${reason} exitCode=${exitCode ?? "null"} count=${count}/${CRASH_GUARD.MAX_CRASH}`
+    );
+
+    // 连续崩溃：停止自动恢复，提示人工介入（防止恢复后处理同批数据再次崩溃的死循环）
+    if (count >= CRASH_GUARD.MAX_CRASH) {
+      logCrashEvent(
+        `连续崩溃次数超限(${count}/${CRASH_GUARD.MAX_CRASH})，停止自动恢复，等待人工介入`
+      );
+      dialog
+        .showMessageBox(win, {
+          type: "error",
+          title: "程序连续崩溃",
+          message:
+            `程序 ${CRASH_GUARD.WINDOW_MS / 60000} 分钟内连续崩溃 ${count} 次，已停止自动恢复。\n` +
+            `崩溃原因：${reason}${exitCode ? ` (exitCode=${exitCode})` : ""}\n` +
+            "请截图本提示并联系技术支持。",
+          buttons: ["知道了"]
+        })
+        .catch(() => {});
+      return;
+    }
+
+    // 单次崩溃：带恢复标记重载页面（登录信息在 localStorage，不丢失）
+    try {
+      if (process.env.VITE_DEV_SERVER_URL) {
+        const url = `${process.env.VITE_DEV_SERVER_URL}?${CRASH_GUARD.RECOVERY_QUERY}=1&${CRASH_GUARD.CRASH_REASON_QUERY}=${encodeURIComponent(reason)}`;
+        win.loadURL(url);
+        logCrashEvent(`reload 成功(dev URL) reason=${reason}`);
+      } else {
+        win.loadFile(indexHtml, {
+          query: {
+            [CRASH_GUARD.RECOVERY_QUERY]: "1",
+            [CRASH_GUARD.CRASH_REASON_QUERY]: reason
+          }
+        });
+        logCrashEvent(`reload 成功(loadFile) reason=${reason}`);
+      }
+    } catch (error) {
+      logCrashEvent(`reload 失败 reason=${reason} error=${String(error)}`);
+    }
+  };
+
+  // 渲染进程崩溃（crash/oom/killed 等）
+  win.webContents.on("render-process-gone", (_event, details) => {
+    // 崩溃已由 reloadWithRecovery 处理恢复，取消未决的无响应恢复定时器：
+    // 否则 15 秒后定时器会对 reload 后的新 webContents（isDestroyed=false）再次强制恢复，
+    // 误计一次崩溃并可能触发"连续崩溃"弹窗、误停自愈
+    if (unresponsiveTimer) {
+      clearTimeout(unresponsiveTimer);
+      unresponsiveTimer = null;
+      logCrashEvent("render-process-gone 触发，取消未决的 unresponsive 定时器");
+    }
+    reloadWithRecovery(details.reason, details.exitCode);
+  });
+
+  // 渲染进程无响应（如主线程死循环）：等待 15 秒后强制 reload；
+  // 若期间自行恢复（responsive 事件）则取消强制恢复
+  let unresponsiveTimer: NodeJS.Timeout | null = null;
+  win.webContents.on("unresponsive", () => {
+    logCrashEvent("渲染进程无响应，15 秒后强制恢复（若期间 responsive 则取消）");
+    if (unresponsiveTimer) clearTimeout(unresponsiveTimer);
+    unresponsiveTimer = setTimeout(() => {
+      if (win && !win.isDestroyed() && !win.webContents.isDestroyed()) {
+        // 走统一的恢复路径：计入 crashTimes，超限停止恢复，防"死循环→reload→再死循环"无限循环
+        unresponsiveTimer = null;
+        reloadWithRecovery("unresponsive");
+      }
+    }, 15 * 1000);
+  });
+  win.webContents.on("responsive", () => {
+    if (unresponsiveTimer) {
+      clearTimeout(unresponsiveTimer);
+      unresponsiveTimer = null;
+      logCrashEvent("渲染进程已自行恢复，取消强制 reload");
+    }
+  });
+}
+
+// 崩溃自愈测试通道（开发与生产环境均注册，便于现场验证）：
+// 渲染层 DevTools 执行 window.ipcRenderer.invoke("crash-test") 即可模拟渲染进程崩溃，
+// 验证自愈逻辑。说明：渲染层 index.html 覆盖了 window.process={}，process.crash() 不可用，
+// 故用主进程 forcefullyCrashRenderer() 触发（Electron 官方崩溃模拟 API）。
+// 注意：该通道会强制崩溃渲染进程，仅供测试验证使用，请勿暴露给普通用户操作。
+// 崩溃前先在本地落一条测试记录（crashEvent-*.log），生产现场执行一次即可同时验证"本地日志写入"功能。
+ipcMain.handle("crash-test", async event => {
+  const targetWin = BrowserWindow.fromWebContents(event.sender) || win;
+  const ok = await appendLocalLog(
+    `crashEvent-${todayStr()}.log`,
+    `[${new Date().toLocaleString()}] 崩溃测试：收到 crash-test 指令，即将模拟渲染进程崩溃（本地日志写入功能验证）\n`
+  );
+  console.warn(`[崩溃自愈] 收到崩溃测试指令，本地日志写入${ok ? "成功" : "失败"}，强制崩溃渲染进程`);
+  targetWin?.webContents.forcefullyCrashRenderer();
+  return true;
+});
 
 app.whenReady().then(() => {
   createWindow();
@@ -241,6 +387,72 @@ ipcMain.handle("open-win", (_, arg) => {
     childWindow.loadFile(indexHtml, { hash: arg });
   }
 });
+
+// ==================== 本地兜底日志 ====================
+// 用途：
+//   1. 渲染进程 logUpload 上传失败时，把被丢弃的日志落盘到本地（logUploadFail-*.log）
+//   2. 崩溃自愈事件本地留证（crashEvent-*.log）：crash-test 模拟崩溃、真实崩溃自动恢复时各写一条
+// 路径：userData/logs/（userData = %APPDATA%/electron-pure-admin）
+// 大小控制：单文件超过 20MB 时截断（只保留最新一批），避免无限增长
+const FAIL_LOG_DIR = "logs";
+const FAIL_LOG_MAX_BYTES = 20 * 1024 * 1024; // 20MB
+
+// 当天日期 YYYYMMDD（与渲染层 save-fail-log 的 fileDate 格式一致）
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
+}
+
+// 公共写盘：目录不存在则创建；单文件超限截断（保留最新批次 + 截断提示）；写失败仅记错误不影响调用方
+async function appendLocalLog(fileName: string, content: string): Promise<boolean> {
+  try {
+    const logDir = join(app.getPath("userData"), FAIL_LOG_DIR);
+    await mkdir(logDir, { recursive: true });
+    const filePath = join(logDir, fileName);
+
+    // 单文件大小控制：超过上限则截断（写一行提示 + 最新一批）
+    let fileSize = 0;
+    try {
+      const st = await stat(filePath);
+      fileSize = st.size;
+    } catch {
+      // 文件不存在，忽略
+    }
+    if (fileSize > FAIL_LOG_MAX_BYTES) {
+      await writeFile(
+        filePath,
+        `[${new Date().toLocaleString()}] 本地兜底日志超过 ${FAIL_LOG_MAX_BYTES} 字节，已截断，仅保留最新批次\n`
+      );
+    }
+
+    await appendFile(filePath, content, "utf8");
+    return true;
+  } catch (error) {
+    console.error("本地兜底日志写入失败", error);
+    return false;
+  }
+}
+
+ipcMain.handle(
+  "save-fail-log",
+  async (
+    _event,
+    {
+      fileDate,
+      content,
+      fileName
+    }: { fileDate: string; content: string; fileName?: string }
+  ) => {
+    // fileName 仅允许字母数字/下划线/连字符 + .log 后缀（渲染层可控，防路径穿越）；
+    // 不传时默认写 logUploadFail-{fileDate}.log（上传失败兜底），
+    // 传时写独立文件（如 queueRestore-{fileDate}.log 恢复摘要兜底）
+    const safeName =
+      fileName && /^[\w-]+\.log$/.test(fileName)
+        ? fileName
+        : `logUploadFail-${fileDate}.log`;
+    return appendLocalLog(safeName, content);
+  }
+);
 
 // 新增：通用 HTTP 代理接口
 // ipcMain.handle('proxy-http-request', async (event, requestOptions) => {
