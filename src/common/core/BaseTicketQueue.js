@@ -274,12 +274,51 @@ export default class BaseTicketQueue {
         );
         await this.lierenOfferRecordAdd(targetRule, order);
       } else {
+        // 匹配失败诊断：区分"未找到platRuleId"与"找到但非固定报价"，输出本地规则上下文便于排查本地与远端数据为何对不上
+        const matchDiag = targetRule
+          ? `找到规则但offerType=${targetRule.offerType}非固定报价(1)`
+          : `未找到platRuleId=${platRuleId}的规则`;
+        // 诊断明细：每条规则的id/影子线路/状态/报价类型/liers平台规则id
+        const diagList = (appOfferRuleList || [])
+          .map(item => ({
+            id: item.id,
+            shadowLineName: item.shadowLineName,
+            status: item.status,
+            offerType: item.offerType,
+            lierenPlatRuleId: item.platOfferList?.find(
+              p => p.platName === plat_name
+            )?.platRuleId
+          }))
+          .filter(
+            item => item.shadowLineName === app_name && item.lierenPlatRuleId
+          );
+        const failReason = `猎人报价规则匹配失败：${matchDiag}，app_name=${app_name}，本地规则总数=${appOfferRuleList?.length || 0}，命中shadowLineName的规则数=${useRuleList.length}，规则明细=${JSON.stringify(diagList)}`;
         this.logger.infoSave(
-          "机器未找到匹配的报价规则，先允许出票，后面有报价记录校验"
+          "机器未找到匹配的报价规则，先允许出票，后面有报价记录校验",
+          {
+            platRuleId,
+            app_name,
+            appOfferRuleListCount: appOfferRuleList?.length || 0,
+            useRuleListCount: useRuleList.length,
+            matchDiag,
+            diagList
+          }
         );
+        // 立即推送微信通知，第一时间联系开发排查本地与远端数据一致性
+        sendWxPusherMessage({
+          orderInfo: order,
+          transferTip: "猎人报价规则匹配失败，需开发排查本地与远端数据一致性",
+          failReason
+        }).catch(() => {});
       }
     } catch (error) {
       this.logger.errorSave("猎人报价规则检查异常", { error, order });
+      // 异常也属于匹配失败，推送通知开发排查
+      sendWxPusherMessage({
+        orderInfo: order,
+        transferTip: "猎人报价规则检查异常，需开发排查",
+        failReason: `猎人报价规则检查异常：platRuleId=${order.rule_id}，app_name=${order.app_name}，error=${error?.message || error}`
+      }).catch(() => {});
     }
   }
 
