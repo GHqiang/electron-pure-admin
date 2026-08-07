@@ -281,9 +281,9 @@ describe("G — checkAndUpdateLierenRuleState (sync_bidirectional)", () => {
     expect(syncBidirectionalLog.trigger_source).toBe("manual_fix");
   });
 
-  test("孤儿规则（平台有本地无）记录 sync_bidirectional 禁用日志", async () => {
+  test("启用中的孤儿规则（平台有本地无且state=1）先禁用", async () => {
     // 本地没有同步到猎人的规则
-    // 但平台有固定价规则
+    // 但平台有固定价规则且处于启用中
     lierenApi.ruleList.mockResolvedValue({
       data: [{ rule_id: "888", state: 1, seats: "1,2", sum_mode: 2 }]
     });
@@ -291,6 +291,11 @@ describe("G — checkAndUpdateLierenRuleState (sync_bidirectional)", () => {
 
     await checkAndUpdateLierenRuleState(ruleList);
 
+    // 调用 ruleState 禁用，不调用 ruleDel 删除
+    expect(lierenApi.ruleState).toHaveBeenCalledWith(
+      expect.objectContaining({ rule_id: ["888"], state: 0 })
+    );
+    expect(lierenApi.ruleDel).not.toHaveBeenCalled();
     // batchAddRuleOperationLog 被调用
     expect(svApi.batchAddRuleOperationLog).toHaveBeenCalled();
     const batchArgs = svApi.batchAddRuleOperationLog.mock.calls[0][0];
@@ -298,6 +303,106 @@ describe("G — checkAndUpdateLierenRuleState (sync_bidirectional)", () => {
     expect(log.operation_type).toBe("sync_bidirectional");
     expect(log.old_status).toBe("1");
     expect(log.new_status).toBe("2");
+    expect(log.change_reason).toContain("自动禁用");
     expect(log.trigger_source).toBe("login_sync");
+  });
+
+  test("已禁用的孤儿规则（平台有本地无且state=0）自动删除", async () => {
+    // 平台孤儿规则已是禁用状态 → 应直接删除，检查才能收敛
+    lierenApi.ruleList.mockResolvedValue({
+      data: [{ rule_id: "888", state: 0, seats: "1,2", sum_mode: 2 }]
+    });
+    lierenApi.ruleDel.mockResolvedValue({ code: 1 });
+
+    await checkAndUpdateLierenRuleState(ruleList);
+
+    // 调用 ruleDel 删除，不再调用 ruleState
+    expect(lierenApi.ruleDel).toHaveBeenCalledWith(
+      expect.objectContaining({ rule_id: ["888"] })
+    );
+    expect(lierenApi.ruleState).not.toHaveBeenCalled();
+    // 批量日志为 sync_delete
+    expect(svApi.batchAddRuleOperationLog).toHaveBeenCalled();
+    const batchArgs = svApi.batchAddRuleOperationLog.mock.calls[0][0];
+    const log = batchArgs.logs[0];
+    expect(log.operation_type).toBe("sync_delete");
+    expect(log.old_status).toBe("2");
+    expect(log.new_status).toBe(null);
+    expect(log.change_reason).toContain("自动删除");
+    expect(log.trigger_source).toBe("login_sync");
+  });
+
+  test("启用与已禁用的孤儿规则混合时分别禁用和删除", async () => {
+    lierenApi.ruleList.mockResolvedValue({
+      data: [
+        { rule_id: "888", state: 1, seats: "1,2", sum_mode: 2 }, // 启用中 → 禁用
+        { rule_id: "777", state: 0, seats: "", sum_mode: 2 } // 已禁用 → 删除
+      ]
+    });
+    lierenApi.ruleState.mockResolvedValue({ code: 1 });
+    lierenApi.ruleDel.mockResolvedValue({ code: 1 });
+
+    await checkAndUpdateLierenRuleState(ruleList);
+
+    expect(lierenApi.ruleState).toHaveBeenCalledWith(
+      expect.objectContaining({ rule_id: ["888"], state: 0 })
+    );
+    expect(lierenApi.ruleDel).toHaveBeenCalledWith(
+      expect.objectContaining({ rule_id: ["777"] })
+    );
+    // 批量日志按 删除 + 禁用 顺序生成
+    const batchArgs = svApi.batchAddRuleOperationLog.mock.calls[0][0];
+    expect(batchArgs.logs).toHaveLength(2);
+    expect(batchArgs.logs[0].operation_type).toBe("sync_delete");
+    expect(batchArgs.logs[0].ext_data).toContain("777");
+    expect(batchArgs.logs[1].operation_type).toBe("sync_bidirectional");
+    expect(batchArgs.logs[1].ext_data).toContain("888");
+  });
+
+  test("状态未知（state=null）的孤儿规则按禁用处理而非跳过", async () => {
+    // 平台返回 state 非 0/1（如 null）时，应走保守的禁用分支，不能静默跳过
+    lierenApi.ruleList.mockResolvedValue({
+      data: [{ rule_id: "888", state: null, seats: "1,2", sum_mode: 2 }]
+    });
+    lierenApi.ruleState.mockResolvedValue({ code: 1 });
+
+    await checkAndUpdateLierenRuleState(ruleList);
+
+    expect(lierenApi.ruleState).toHaveBeenCalledWith(
+      expect.objectContaining({ rule_id: ["888"], state: 0 })
+    );
+    expect(lierenApi.ruleDel).not.toHaveBeenCalled();
+    // 日志按"非1即禁用"约定记录 old_status
+    const batchArgs = svApi.batchAddRuleOperationLog.mock.calls[0][0];
+    const log = batchArgs.logs[0];
+    expect(log.operation_type).toBe("sync_bidirectional");
+    expect(log.old_status).toBe("2");
+  });
+
+  test("删除孤儿规则失败时不影响其他规则且不计入删除数", async () => {
+    // 两条已禁用孤儿规则：第一条删除失败，第二条删除成功
+    lierenApi.ruleList.mockResolvedValue({
+      data: [
+        { rule_id: "777", state: 0, seats: "", sum_mode: 2 },
+        { rule_id: "888", state: 0, seats: "1,2", sum_mode: 2 }
+      ]
+    });
+    lierenApi.ruleDel.mockResolvedValueOnce({ code: 1 }).mockRejectedValueOnce(
+      new Error("删除失败")
+    );
+
+    await checkAndUpdateLierenRuleState(ruleList);
+
+    // 两条都尝试删除（失败不中断循环）
+    expect(lierenApi.ruleDel).toHaveBeenCalledTimes(2);
+    // 失败那条不阻止成功那条（第二次调用成功）
+    expect(lierenApi.ruleDel).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ rule_id: ["777"] })
+    );
+    expect(lierenApi.ruleDel).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ rule_id: ["888"] })
+    );
   });
 });

@@ -478,6 +478,7 @@ export default function useLierenOfferRuleSyncFun() {
 
       let enableCount = 0;
       let disableCount = 0;
+      let deleteCount = 0;
       let seatsFixCount = 0;
 
       // ── 收集需要标记的孤儿规则 ──
@@ -621,9 +622,19 @@ export default function useLierenOfferRuleSyncFun() {
       }
 
       // ── 报告并修复孤儿规则 ──
+      // 孤儿规则（平台有、本地无）处理策略：
+      // - 平台已禁用(state=0)的孤儿规则 → 直接删除。仅禁用会一直残留，每次检查都重复报不一致无法收敛
+      // - 启用中或状态未知的孤儿规则 → 先禁用（防止误删人工在平台手动创建的规则），下次修复时已禁用会被删除
       if (platOnlyRules.length > 0) {
+        const platOnlyDelete = platOnlyRules.filter(r => r.state === 0);
+        // 启用中或状态未知的孤儿规则都先禁用（可逆、防误删），下次修复时已禁用会被删除
+        const platOnlyDisable = platOnlyRules.filter(r => r.state !== 0);
         console.warn(
-          `⚠ 猎人平台有但本地未同步的规则（platOnly）: ${platOnlyRules.length} 条，将自动禁用`,
+          `⚠ 猎人平台有但本地未同步的规则（platOnly）: ${platOnlyRules.length} 条，` +
+            `其中已禁用 ${platOnlyDelete.length} 条将自动删除` +
+            (platOnlyDisable.length > 0
+              ? `，其余 ${platOnlyDisable.length} 条先自动禁用（下次修复时删除）`
+              : ""),
           platOnlyRules.map(r => ({
             rule_id: r.rule_id,
             name: r.name,
@@ -631,8 +642,29 @@ export default function useLierenOfferRuleSyncFun() {
             seats: r.seats || "(空)"
           }))
         );
-        // 自动禁用猎人侧孤儿规则（避免不可控的报价行为）
-        for (const platRule of platOnlyRules) {
+        // 已禁用的孤儿规则：直接删除，避免每次修复都重复发现同样几条不一致
+        for (const platRule of platOnlyDelete) {
+          try {
+            await lierenApi.ruleDel({
+              rule_id: [platRule.rule_id],
+              lieren_ak: lierenMainAccountAkSk?.[0] || "",
+              lieren_sk: lierenMainAccountAkSk?.[1] || ""
+            });
+            deleteCount++;
+            console.warn(
+              `  已删除猎人孤儿规则: rule_id=${platRule.rule_id} name="${platRule.name || ""}"`
+            );
+          } catch (err) {
+            console.error(
+              `  删除猎人孤儿规则失败: rule_id=${platRule.rule_id}`,
+              formatErrInfo(err)
+            );
+          }
+          // 批量删除间隔 200ms，避免触发 429
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+        // 启用中的孤儿规则：先禁用（避免不可控的报价行为）
+        for (const platRule of platOnlyDisable) {
           try {
             await lierenApi.ruleState({
               rule_id: [platRule.rule_id],
@@ -642,34 +674,50 @@ export default function useLierenOfferRuleSyncFun() {
             });
             disableCount++;
             console.warn(
-              `  已禁用猎人孤儿规则: rule_id=${platRule.rule_id} name="${platRule.name || ""}"`
+              `  已禁用猎人孤儿规则(下次修复将删除): rule_id=${platRule.rule_id} name="${platRule.name || ""}"`
             );
           } catch (err) {
             console.error(
               `  禁用猎人孤儿规则失败: rule_id=${platRule.rule_id}`,
-              err.message
+              formatErrInfo(err)
             );
           }
-          // 批量禁用时间隔 200ms，避免触发 429
+          // 批量禁用间隔 200ms，避免触发 429
           await new Promise(resolve => setTimeout(resolve, 200));
         }
-        // 记录平台孤儿规则批量禁用日志
+        // 记录平台孤儿规则处理日志（删除用 sync_delete，禁用用 sync_bidirectional）
         svApi
           .batchAddRuleOperationLog({
-            logs: platOnlyRules.map(r => ({
-              rule_id: null,
-              rule_name: r.name,
-              shadow_line_name: r.cinema_group || r.cinema_code || "",
-              operation_type: "sync_bidirectional",
-              old_status: r.state === 1 ? "1" : "2",
-              new_status: "2",
-              plat_name: "lieren",
-              trigger_source: triggerSource,
-              change_reason: "猎人平台孤儿规则（本地未同步），自动禁用",
-              success: 1,
-              operator: tokens.userInfo?.name || "",
-              ext_data: JSON.stringify({ platRuleId: r.rule_id })
-            }))
+            logs: [
+              ...platOnlyDelete.map(r => ({
+                rule_id: null,
+                rule_name: r.name,
+                shadow_line_name: r.cinema_group || r.cinema_code || "",
+                operation_type: "sync_delete",
+                old_status: "2",
+                new_status: null,
+                plat_name: "lieren",
+                trigger_source: triggerSource,
+                change_reason: "猎人平台孤儿规则（本地未同步，平台已禁用），自动删除",
+                success: 1,
+                operator: tokens.userInfo?.name || "",
+                ext_data: JSON.stringify({ platRuleId: r.rule_id })
+              })),
+              ...platOnlyDisable.map(r => ({
+                rule_id: null,
+                rule_name: r.name,
+                shadow_line_name: r.cinema_group || r.cinema_code || "",
+                operation_type: "sync_bidirectional",
+                old_status: r.state === 1 ? "1" : "2",
+                new_status: "2",
+                plat_name: "lieren",
+                trigger_source: triggerSource,
+                change_reason: "猎人平台孤儿规则（本地未同步），自动禁用",
+                success: 1,
+                operator: tokens.userInfo?.name || "",
+                ext_data: JSON.stringify({ platRuleId: r.rule_id })
+              }))
+            ]
           })
           .catch(() => {});
       }
@@ -704,9 +752,10 @@ export default function useLierenOfferRuleSyncFun() {
             : "")
       );
 
-      if (enableCount > 0 || disableCount > 0 || seatsFixCount > 0) {
+      if (enableCount > 0 || disableCount > 0 || deleteCount > 0 || seatsFixCount > 0) {
         console.warn(
           `猎人规则双向同步完成: 启用 ${enableCount} 条, 禁用 ${disableCount} 条` +
+            (deleteCount > 0 ? `, 删除孤儿 ${deleteCount} 条` : "") +
             (seatsFixCount > 0 ? `, 修复座位 ${seatsFixCount} 条` : "")
         );
       }
