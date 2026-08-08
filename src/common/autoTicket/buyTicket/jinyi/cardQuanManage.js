@@ -878,12 +878,12 @@ export default class CardQuanManage {
                   couponInfoSpecial(itemA.couponName) &&
                 !item.black_quans?.includes(itemA.couponCode)
             );
-            // 打印该手机号该券类型匹配到的券数量与券号（一眼看清各号各券类型的库存来源）
+            // des 已含数量，info 只记 count，避免全量券码入库撑爆日志
             logger.infoSave(
               `${mobile}—${item.quan_flag}—${targetQuanList.length}`,
               {
                 quan_value: item.quan_value,
-                matchedQuanList: targetQuanList.map(q => ({
+                matchedQuanList: targetQuanList.slice(0, 5).map(q => ({
                   couponCode: q.couponCode,
                   endDateTime: q.endDateTime
                 }))
@@ -937,69 +937,28 @@ export default class CardQuanManage {
     }
   }
 
-  // 获取某个手机号的全部优惠券列表
+  // 获取某个手机号的全部未使用优惠券列表（接口不支持分页，单次返回全部）
   async getQuanListByPhone({ session_id, cinema_id, logger }) {
-    try {
-      const quanData = await this.continuousGetQuan({
-        session_id,
-        cinema_id,
-        logger
-      });
-      console.log("quanData", quanData);
-      logger.infoSave("连续获取券返回", {
-        quanData: quanData.map(item => ({
-          couponName: item.couponName,
-          couponCode: item.couponCode,
-          endDateTime: item.endDateTime
-          // couponValue: item.couponValue
-        }))
-      });
-      return quanData || [];
-    } catch (error) {
-      logger.errorSave("获取优惠券列表异常", error);
-    }
-  }
-
-  // 连续获取券
-  async continuousGetQuan(data) {
-    let {
-      session_id,
-      cinema_id,
-      pageNumber = 1,
-      pageSize = 100,
-      quanData = [],
-      logger
-    } = data;
-    let params = {
-      status: "UNUSED",
-      session_id,
-      cinema_id
-    };
+    const params = { status: "UNUSED", session_id, cinema_id };
     try {
       const res = await this.appApi.getQuanList(params);
-      let quanList = res.data || [];
-      // logger.infoSave("获取券返回", { quanList, params });
-      quanList = quanList.map(item => ({
+      let quanList = (res.data || []).map(item => ({
         ...item,
         couponName: item.show_name,
         couponCode: item.coupon_code,
         endDateTime: +new Date(item.expire_time)
       }));
-      quanData.push(...quanList);
-      if (quanList?.length == pageSize) {
-        // 如果还有下一页，则继续获取下一页
-        return await this.continuousGetQuan({
-          ...data,
-          pageNumber: pageNumber + 1,
-          quanData
-        });
-      }
-      return quanData;
-    } catch (error) {
-      logger.errorSave("连续获取券异常", {
-        error,
-        params
+      // 只记总数与前5条样例，避免全量券码入库撑爆日志（曾因分页 bug 累积 44764 条致 413）
+      logger.infoSave("获取未使用券返回-示例仅展示前5条", {
+        total: quanList.length,
+        sample: quanList.slice(0, 5).map(item => ({
+          couponName: item.couponName,
+          couponCode: item.couponCode
+        }))
       });
+      return quanList;
+    } catch (error) {
+      logger.errorSave("获取优惠券列表异常", { error, params });
       return [];
     }
   }

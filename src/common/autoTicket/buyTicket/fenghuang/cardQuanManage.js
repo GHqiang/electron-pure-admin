@@ -908,7 +908,7 @@ export default class CardQuanManage {
               `${mobile}—${item.quan_flag}—${targetQuanList.length}`,
               {
                 quan_value: item.quan_value,
-                matchedQuanList: targetQuanList.map(q => ({
+                matchedQuanList: targetQuanList.slice(0, 5).map(q => ({
                   couponCode: q.couponCode,
                   couponDesc: q.couponDesc
                 }))
