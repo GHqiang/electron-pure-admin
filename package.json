@@ -1,6 +1,6 @@
 {
   "name": "electron-pure-admin",
-  "version": "6.6.13",
+  "version": "6.6.15",
   "description": "electron-pure-admin",
   "private": true,
   "type": "module",
