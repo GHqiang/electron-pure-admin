@@ -412,13 +412,19 @@ const newGetCinemaFlagFun = item => {
  * 获取影院标识
  * @param {Object} item - 订单信息
  * @param {boolean} isSplitUser - 是否分用户
+ * @param {boolean} isTicketQueue - 是否为待出票队列调用（true 时跳过系列禁用与登录信息检查、内部角色影院禁用：
+ *   确认接单仅需 order_number，未登录或被禁系列、内部角色影院禁用订单也需先接单占位）
  * @returns {string} 影院标识
  */
-const getCinemaFlag = (item, isSplitUser = true) => {
+const getCinemaFlag = (item, isSplitUser = true, isTicketQueue = false) => {
   const app_name = newGetCinemaFlagFun(item);
   if (!app_name) return;
+  // 待出票队列调用时跳过系列禁用检查、登录信息检查和影院禁用检查，直接返回影院标识
+  if (isTicketQueue) return app_name;
+
   // 禁用指定系列报价（多选）：读取 disableAppTypeList 数组，命中当前影线 app_type_code 则跳过报价
-  let disableAppTypeListValue = window.localStorage.getItem("disableAppTypeList");
+  let disableAppTypeListValue =
+    window.localStorage.getItem("disableAppTypeList");
   let disableAppTypeList = [];
   try {
     disableAppTypeList = disableAppTypeListValue
@@ -434,9 +440,7 @@ const getCinemaFlag = (item, isSplitUser = true) => {
   ) {
     disableAppTypeList = ["ume_h5"];
   }
-  if (
-    disableAppTypeList.includes(GET_APP_INFO(app_name)?.app_type_code)
-  ) {
+  if (disableAppTypeList.includes(GET_APP_INFO(app_name)?.app_type_code)) {
     return;
   }
   let rule = tokens?.userInfo?.rule;
@@ -533,7 +537,7 @@ const getCinemaLoginInfoList = (isSplitUser = true) => {
     }
     if (user_id == 1) {
       user_id = 9;
-      // user_id = 10;
+      user_id = 10;
     }
     loginInfoList = loginInfoList.filter(item =>
       !item.link_user_id || !isSplitUser ? true : item.link_user_id == user_id

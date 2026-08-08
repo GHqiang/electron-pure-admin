@@ -47,10 +47,11 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
       }));
 
       // 先过滤出来目前已上架影院的，然后添加影院标识
+      // 待出票队列调用：跳过系列禁用与登录信息检查，未登录/被禁系列订单也需先接单占位
       const filteredList = processedList
-        .filter(item => getCinemaFlag(item, false))
+        .filter(item => getCinemaFlag(item, false, true))
         .map(item => {
-          const app_name = getCinemaFlag(item, false);
+          const app_name = getCinemaFlag(item, false, true);
           return {
             ...item,
             app_name,
