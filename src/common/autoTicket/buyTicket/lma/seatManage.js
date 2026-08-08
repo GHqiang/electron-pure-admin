@@ -35,8 +35,23 @@ export default class LmaSeatManage {
     try {
       this.logger.infoSave("获取座位布局参数", params);
       const res = await this.appApi.getMoviePlaySeat(params);
-      console.log("获取座位布局返回", res);
+      // 记录上游原始响应关键字段，便于排查 LMA 限流降级返回无价格分区等问题
+      this.logger.infoSave("获取座位布局原始响应", {
+        code: res?.code,
+        status: res?.status,
+        msg: res?.msg,
+        message: res?.message,
+        label_arr_len: res?.data?.label_arr?.length || 0,
+        seat_arr_len: res?.data?.seat_arr?.length || 0,
+        short_code: res?.data?.short_code
+      });
       if (res.code !== "0") {
+        this.logger.errorSave("获取座位布局失败(code非0)", {
+          code: res?.code,
+          msg: res?.msg,
+          message: res?.message,
+          params
+        });
         return { error: "获取座位布局失败", seatData: [], label_arr: [] };
       }
 

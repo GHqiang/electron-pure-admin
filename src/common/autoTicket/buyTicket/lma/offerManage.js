@@ -23,14 +23,17 @@ import {
   calcCount,
   getCurrentDay,
   isDateInCurrentMonth,
-  calculateMarkup
+  calculateMarkup,
+  sendWxPusherMessage,
+  getCurrentTime
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
 import {
   TEST_NEW_PLAT_LIST,
   NO_FEE_PLAT_LIST,
-  ONE_STEP_PLAT_LIST
+  ONE_STEP_PLAT_LIST,
+  GET_APP_LIST
 } from "@/common/constant.js";
 import { platTokens } from "@/store/platTokens";
 import {
@@ -668,13 +671,41 @@ class getLmaOfferPrice extends BaseOfferPrice {
         this.logger.infoSave("获取座位布局相关信息", {
           area_price
         });
-        if (area_price?.length) {
-          let bigPrice = area_price.sort((a, b) => b.price - a.price)[0].price;
+        // 过滤出真正含价格的分区（排除 sold/chose/0 等默认标签，price 为空或非数字的剔除）
+        const pricedAreas =
+          area_price?.filter(
+            item => item.price !== "" && item.price != null && !isNaN(Number(item.price))
+          ) || [];
+        if (pricedAreas.length) {
+          // 座位分区从高到低排序，取最高价
+          let bigPrice = pricedAreas.sort(
+            (a, b) => Number(b.price) - Number(a.price)
+          )[0].price;
           this.logger.warnSave("取座位分区最高价和会员价的最大值当会员价", {
             member_price,
             bigPrice
           });
-          member_price = Math.max(member_price, bigPrice);
+          member_price = Math.max(member_price, Number(bigPrice));
+        } else {
+          // 无有效价格分区（疑似 LMA 限流降级/未登录降级返回默认标签），不报价并通知开发排查
+          this.logger.errorSave("座位布局无有效价格分区，放弃本次报价", {
+            area_price,
+            cinema_id,
+            show_id,
+            member_price,
+            nonmember_price
+          });
+          try {
+            await sendWxPusherMessage({
+              msgType: 9,
+              transferTip: `卢米埃获取座位布局无有效价格分区（疑似限流降级），请及时排查。影院:${app_name} 场次:${show_id} 单号:${order?.order_number || "-"} 时间:${getCurrentTime()}`
+            });
+          } catch (err) {
+            this.logger.errorSave("无价格分区告警发送失败", {
+              error: formatErrInfo(err)
+            });
+          }
+          return null;
         }
       }
 
