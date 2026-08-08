@@ -55,6 +55,10 @@ export default class LmaSeatManage {
         return { error: "获取座位布局失败", seatData: [], label_arr: [] };
       }
 
+      // 识别售罄场景：LMA 在电影票售罄时返回 code=0 但 msg 含"售罄"，
+      // 且 label_arr 仅含默认标签(无价格分区)，seat_arr 仅剩少量结构
+      const soldOut = /售罄|售完|已售完/.test(res?.msg || "");
+
       let seatData = res.data?.seat_arr || [];
       // 转换数据保持和上面取值一致，过滤出来可选座位
       seatData = seatData
@@ -71,7 +75,8 @@ export default class LmaSeatManage {
       return {
         seatData,
         label_arr: res.data?.label_arr || [],
-        short_code: res.data?.short_code
+        short_code: res.data?.short_code,
+        soldOut
       };
     } catch (error) {
       this.logger.errorSave("获取座位布局异常", {

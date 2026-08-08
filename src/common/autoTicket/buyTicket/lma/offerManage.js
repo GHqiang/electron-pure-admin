@@ -515,6 +515,12 @@ class getLmaOfferPrice extends BaseOfferPrice {
           return null;
         }
 
+        // 售罄场景直接放弃，不走固定价兜底
+        if (memberPriceRes === -2) {
+          this.logger.infoSave("当前场次已售罄，直接不报");
+          return null;
+        }
+
         if (!memberPriceRes) {
           this.logger.infoSave(
             "最小加价规则获取会员价失败,返回最小固定报价规则",
@@ -627,11 +633,11 @@ class getLmaOfferPrice extends BaseOfferPrice {
    * @param {string|number} params.movieData.cinema_id - 影院ID
    * @param {string|number} params.movieData.session_id - 场次ID
    *
-   * @returns {Promise<Object|null|-1>} 会员价信息对象：
+   * @returns {Promise<Object|null|-1|-2>} 会员价信息对象：
    *   - real_member_price: 真实会员价（未折扣）
    *   - member_price: 成本价（已折扣，已考虑-5元券）
    *   - discount: 最小折扣
-   *   获取电影信息失败返回 -1，其他失败返回 null
+   *   获取电影信息失败返回 -1，座位已售罄返回 -2，其他失败返回 null
    */
   async getMemberPrice({ order, movieData }) {
     try {
@@ -666,15 +672,29 @@ class getLmaOfferPrice extends BaseOfferPrice {
           lmaToken: ""
         });
         if (!seatInfo || seatInfo.error || !seatInfo.label_arr) return null;
-        // seatManage返回的格式是 { seatData, label_arr, short_code }
-        const { label_arr: area_price } = seatInfo;
+        // seatManage返回的格式是 { seatData, label_arr, short_code, soldOut }
+        const { label_arr: area_price, soldOut } = seatInfo;
         this.logger.infoSave("获取座位布局相关信息", {
-          area_price
+          area_price,
+          soldOut
         });
+
+        // 售罄场景：LMA 返回 code=0 但实际座位已售罄，直接放弃本次报价，不走会员价也不走固定价
+        if (soldOut) {
+          this.logger.infoSave("当前场次座位已售罄，直接放弃本次报价", {
+            cinema_id,
+            show_id
+          });
+          return -2;
+        }
+
         // 过滤出真正含价格的分区（排除 sold/chose/0 等默认标签，price 为空或非数字的剔除）
         const pricedAreas =
           area_price?.filter(
-            item => item.price !== "" && item.price != null && !isNaN(Number(item.price))
+            item =>
+              item.price !== "" &&
+              item.price != null &&
+              !isNaN(Number(item.price))
           ) || [];
         if (pricedAreas.length) {
           // 座位分区从高到低排序，取最高价
