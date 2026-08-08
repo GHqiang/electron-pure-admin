@@ -112,18 +112,15 @@ export default class CardQuanManage {
       if (offer_type == "1" || is_auto_use_quan) {
         let quanValueList = offerRule.quan_value.split(",");
         this.logger.infoSave("使用优惠券出票", { quanValueList });
-        quanList = await this.continuousGetQuan({
+        // getQuanListByPhone 已内联原 continuousGetQuan 逻辑（金逸接口不分页，单次返回全部）
+        quanList = await this.getQuanListByPhone({
           session_id,
           cinema_id,
           logger: this.logger
         });
+        // 内部已记录"获取未使用券返回-示例仅展示前5条"，此处仅记总数避免重复全量打印
         this.logger.infoSave("连续获取券返回", {
-          quanData: quanList?.map(item => ({
-            couponName: item.couponName,
-            couponCode: item.couponCode,
-            endDateTime: item.endDateTime
-            // couponValue: item.couponValue
-          }))
+          total: quanList?.length || 0
         });
         // 读取券库存进行过滤重新设置quan_value为单个券类型
         if (quanValueList.length > 1) {
