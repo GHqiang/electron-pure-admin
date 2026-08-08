@@ -37,6 +37,7 @@ export default class BaseBuyTicket {
     this.currentSessionId = ""; // 当前session_id
     this.currentPhone = ""; // 当前手机号
     this.offerRule = null; // 报价规则
+    this._hasAppliedChangeSeat = false; // 同一出票会话内是否已申请过换座（防止换号递归时重复申请）
 
     // 初始化模块（子类实现）
     this.initModules();

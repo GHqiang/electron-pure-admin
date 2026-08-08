@@ -283,14 +283,16 @@ class SfcBuyTicket extends BaseBuyTicket {
           this.logger.errorSave("获取目标座位失败", { targetList, ticket_num });
           // 猎人订单：申请换座
           if (
+            !this._hasAppliedChangeSeat &&
             dictStore.dictInfo.supportChangeSeatPlatList.includes(plat_name)
           ) {
+            this._hasAppliedChangeSeat = true;
             this.logger.infoSave("获取目标座位失败，订单走申请换座逻辑");
             const isApplyChangeSeat = await this.platManage.applyChangeSeat({
               ...item,
               logger: this.logger
             });
-            if (isApplyChangeSeat) {
+            if (isApplyChangeSeat === true) {
               return {
                 transferParams: { transfer_fee: 0 },
                 offerRule: this.offerRule,
@@ -374,17 +376,19 @@ class SfcBuyTicket extends BaseBuyTicket {
         if (!res) {
           const { err_info: errInfo } = this.logger.getLastErrMsgAndInfo();
           if (
+            !this._hasAppliedChangeSeat &&
             dictStore.dictInfo.supportChangeSeatPlatList.includes(plat_name) &&
             ["座位锁定失败", "座位已被锁定或售出"].some(item =>
               errInfo.includes(item)
             )
           ) {
             // 走申请座位逻辑
+            this._hasAppliedChangeSeat = true;
             const isApplyChangeSeat = await this.platManage.applyChangeSeat({
               ...item,
               logger: this.logger
             });
-            if (isApplyChangeSeat) {
+            if (isApplyChangeSeat === true) {
               return {
                 transferParams: {
                   transfer_fee: 0

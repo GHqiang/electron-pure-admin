@@ -161,7 +161,7 @@ class WandaBuyTicket extends BaseBuyTicket {
         show_id = buyTicketInfo.show_id; // 场次id同showtimeId
 
         // 2、获取购票座位信息
-        const targetSeatRes =
+        let targetSeatRes =
           await this.seatManage.getTargetSeat(buyTicketInfo);
         if (!targetSeatRes) {
           // 座位列表为空，直接转单
@@ -169,23 +169,51 @@ class WandaBuyTicket extends BaseBuyTicket {
         }
         if (targetSeatRes.errorCode === "TARGET_SEAT_FAILED") {
           // 获取目标座位失败，猎人订单走申请换座
+          let retrySeatResolved = false; // 申请换座返回"有原座"后重新获取座位成功
           if (
+            !this._hasAppliedChangeSeat &&
             dictStore.dictInfo.supportChangeSeatPlatList.includes(plat_name)
           ) {
             this.logger.infoSave("获取目标座位失败，订单走申请换座逻辑");
+            this._hasAppliedChangeSeat = true;
             const isApplyChangeSeat = await this.platManage.applyChangeSeat({
               ...item,
               logger: this.logger
             });
-            if (isApplyChangeSeat) {
+            if (isApplyChangeSeat === true) {
               return {
                 transferParams: { transfer_fee: 0 },
                 offerRule: this.offerRule,
-                isApplyChangeSeat
+                isApplyChangeSeat: true
               };
             }
+            if (isApplyChangeSeat?.retryLock) {
+              // 申请换座返回"有原座"：座位可能已释放，等2秒重新获取座位布局后继续锁座
+              this.logger.infoSave(
+                '申请换座返回"有原座"，等待2秒后重新获取座位继续出票'
+              );
+              await mockDelay(2);
+              targetSeatRes =
+                await this.seatManage.getTargetSeat(buyTicketInfo);
+              if (
+                targetSeatRes &&
+                targetSeatRes.errorCode !== "TARGET_SEAT_FAILED"
+              ) {
+                retrySeatResolved = true;
+              } else {
+                this.logger.errorSave("有原座重新获取座位仍失败，走转单");
+              }
+            }
+          } else {
+            this.logger.infoSave(
+              "获取目标座位失败，但本次出票已申请过换座，不再重复申请，直接转单"
+            );
           }
-          return await this.orderManage.transferOrder();
+          // 未通过 retryLock 拿到座位，直接转单
+          if (!retrySeatResolved) {
+            return await this.orderManage.transferOrder();
+          }
+          // retryLock 拿到座位，继续往下走锁座流程
         }
         buyTicketInfo.targetSeatCodes = targetSeatRes.seatCodes;
 
@@ -270,8 +298,12 @@ class WandaBuyTicket extends BaseBuyTicket {
         // 锁座验证全部失败 → 等价于获取目标座位失败
         // 省和猎人走申请换座，其它平台直接转单
         this.logger.errorSave("锁座验证全部失败，视为获取目标座位失败");
-        if (dictStore.dictInfo.supportChangeSeatPlatList.includes(plat_name)) {
+        if (
+          !this._hasAppliedChangeSeat &&
+          dictStore.dictInfo.supportChangeSeatPlatList.includes(plat_name)
+        ) {
           this.logger.infoSave("获取目标座位失败，订单走申请换座逻辑");
+          this._hasAppliedChangeSeat = true;
           const applyRes = await this.platManage.applyChangeSeat({
             ...item,
             logger: this.logger
@@ -308,6 +340,11 @@ class WandaBuyTicket extends BaseBuyTicket {
             // 申请换座其他失败，走转单
             return await this.orderManage.transferOrder();
           }
+        } else if (this._hasAppliedChangeSeat) {
+          this.logger.infoSave(
+            "锁座失败，但本次出票已申请过换座，不再重复申请，直接转单"
+          );
+          return await this.orderManage.transferOrder();
         } else {
           return await this.orderManage.transferOrder();
         }
