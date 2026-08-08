@@ -225,6 +225,35 @@ export default class BaseTicketQueue {
   async lierenRuleCheck(order) {
     const { plat_name, app_name } = order;
     try {
+      // 先查该订单是否已有报价记录：有则说明是机器自己报的价（非猎人主动报价），无需本地匹配补记录，直接缓存复用后返回
+      // （已确认：不存在机器报价成功中标后还未写入报价记录的情况，故查到即视为机器报价）
+      try {
+        const offerRes = await svApi.queryOfferInfo({
+          user_id: tokens.userInfo?.user_id,
+          order_status: "1",
+          app_name,
+          order_number: order.order_number,
+          plat_name
+        });
+        const cachedOfferRule = offerRes?.data?.offerInfo;
+        if (cachedOfferRule) {
+          // 缓存到 order，出票阶段 getOrderOfferRule 优先读取，省一次接口
+          order._cachedOfferRule = cachedOfferRule;
+          this.logger.infoSave(
+            "该订单已有报价记录，为机器自己报价，跳过猎人规则匹配",
+            { order_number: order.order_number, hasOfferRule: true }
+          );
+          return;
+        }
+      } catch (err) {
+        // 查询异常不阻塞后续匹配逻辑，但出票阶段会重新查询兜底
+        this.logger.errorSave("查询订单报价记录异常，继续走规则匹配", {
+          error: err,
+          order_number: order.order_number
+        });
+      }
+
+      // 查不到报价记录 → 猎人平台主动报价，需本地匹配规则补全报价记录
       let platRuleId = order.rule_id;
       let appOfferRuleList = toRaw(offerRuleList.value);
       if (appOfferRuleList) {
@@ -304,7 +333,7 @@ export default class BaseTicketQueue {
             diagList
           }
         );
-        // 立即推送微信通知，第一时间联系开发排查本地与远端数据一致性
+        // 匹配失败说明本地规则与猎人平台不一致，立即推送告警开发排查
         sendWxPusherMessage({
           orderInfo: order,
           transferTip: "猎人报价规则匹配失败，需开发排查本地与远端数据一致性",
@@ -313,12 +342,6 @@ export default class BaseTicketQueue {
       }
     } catch (error) {
       this.logger.errorSave("猎人报价规则检查异常", { error, order });
-      // 异常也属于匹配失败，推送通知开发排查
-      sendWxPusherMessage({
-        orderInfo: order,
-        transferTip: "猎人报价规则检查异常，需开发排查",
-        failReason: `猎人报价规则检查异常：platRuleId=${order.rule_id}，app_name=${order.app_name}，error=${error?.message || error}`
-      }).catch(() => {});
     }
   }
 

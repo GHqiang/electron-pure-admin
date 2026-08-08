@@ -161,6 +161,14 @@ export default class BaseBuyTicket {
   async getOrderOfferRule() {
     const { app_name, order_number, plat_name, offer_order_number } =
       this.order;
+    // 优先复用入队阶段 lierenRuleCheck 已查到的报价记录，避免重复查询
+    if (this.order._cachedOfferRule) {
+      this.offerRule = this.order._cachedOfferRule;
+      this.logger.info("复用入队阶段缓存的报价记录", {
+        hasOfferRule: !!this.offerRule
+      });
+      return;
+    }
     try {
       // 获取该订单的报价记录，按对应报价规则出票
       const offerRes = await svApi.queryOfferInfo({
