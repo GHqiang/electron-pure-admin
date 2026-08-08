@@ -571,12 +571,15 @@ export default class H5UmeBuyTicket extends BaseBuyTicket {
         ticket_num,
         real_member_price: offerRule.real_member_price
       });
-      // 存在优惠活动时，将cardList限定为最低优惠活动(target_card_info)内的卡，
-      // 避免useCardHandle选到不参与该活动的高余额卡，导致返回卡对应的实际支付价偏高
-      if (target_card_info?.cardInfos?.length) {
-        const targetCardNumbers = target_card_info.cardInfos.map(
-          itemC => itemC.cardNumber
-        );
+      // 存在优惠活动时，将cardList限定为最低优惠价对应活动的卡集合，
+      // 同优惠价下可能存在多个活动（不同卡对应不同活动），需把这些活动的卡都纳入候选，
+      // 由useCardHandle在候选卡里按余额降序取最大余额卡，确保返回"最低优惠且余额最大"的卡
+      if (member_discount_list?.length && target_card_info?.cardInfos?.length) {
+        const minPrivilegeTotalPrice = +target_card_info.privilegeTotalPrice;
+        // 收集所有与最低优惠价相同的活动里的卡号
+        const targetCardNumbers = member_discount_list
+          .filter(item => +item.privilegeTotalPrice === minPrivilegeTotalPrice)
+          .flatMap(item => item.cardInfos.map(itemC => itemC.cardNumber));
         const filteredCardList = cardList.filter(item =>
           targetCardNumbers.includes(item.cardNumber)
         );
@@ -584,7 +587,8 @@ export default class H5UmeBuyTicket extends BaseBuyTicket {
         if (filteredCardList.length) {
           cardList = filteredCardList;
         }
-        this.logger.infoSave("按最低优惠活动过滤cardList", {
+        this.logger.infoSave("按最低优惠价过滤cardList", {
+          minPrivilegeTotalPrice,
           targetCardNumbers,
           filteredCardList: filteredCardList.map(item => ({
             cardNumber: item.cardNumber,
@@ -723,8 +727,9 @@ export default class H5UmeBuyTicket extends BaseBuyTicket {
           cardInfos = target_card_info.cardInfos;
           cardInfos = cardInfos.map(itemC => ({
             ...itemC,
-            balance: cardList.find(itemA => itemA.cardNumber == itemC.cardNumber)
-              ?.balance
+            balance: cardList.find(
+              itemA => itemA.cardNumber == itemC.cardNumber
+            )?.balance
           }));
           // 过滤掉不在可用cardList中的卡，避免balance为undefined导致排序错乱，
           // 确保此处选出的支付卡与useQuanOrCard返回的card_id来源一致
