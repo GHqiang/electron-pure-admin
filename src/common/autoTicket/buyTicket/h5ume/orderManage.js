@@ -53,6 +53,17 @@ function isCouponRetryableError(error) {
 }
 
 /**
+ * 提取券类错误标识(用于判断连续相同错误)
+ * 优先返回命中的错误关键词(bizCode/错误描述),否则返回完整错误字符串
+ * @param {*} error - createOrder 透出的 error
+ * @returns {string}
+ */
+function getCouponErrorKey(error) {
+  const errStr = formatErrInfo(error) || "";
+  return COUPON_RETRY_ERROR_KEYS.find(key => errStr.includes(key)) || errStr;
+}
+
+/**
  * 根据当前 useQuan 重建用券场景的 payments（COUPON 段）
  * @param {Array} useQuan - 当前生效券
  * @param {string} card_id - 补手续费卡号（可选）
@@ -289,6 +300,9 @@ export default class H5UmeOrderManage {
     let finalUseQuan = useQuan; // 最终用券(成功时返回)
     // 是否已用过全量替换;一旦用过,后续备选不足票数时直接停止,不退化到逐个
     let usedFullSwap = false;
+    // 连续相同错误检测(首次错误算第1次)
+    let prevErrorKey = getCouponErrorKey(firstError);
+    let sameErrorCount = 1;
 
     while (true) {
       // 备选池耗尽 → 停止
@@ -358,22 +372,20 @@ export default class H5UmeOrderManage {
       const newPayments = JSON.stringify(
         buildCouponPayments(workingUseQuan, card_id, Number(quan_fee || 0))
       );
-      // COMMON 类型券需重跑核销查询
-      if (workingUseQuan[0]?.concreteProductType == "COMMON") {
-        await this.checkQuan({
-          couponCodes: workingUseQuan.map(item => item.couponCode).join(),
-          cinemaLinkId,
-          scheduleId,
-          scheduleKey,
-          seatIds,
-          commonCouponJson: JSON.stringify(
-            workingUseQuan.map(item => ({
-              couponCode: item.couponCode,
-              concreteProductType: "TICKET"
-            }))
-          )
-        });
-      }
+      // 重跑券核销查询(放开类型限制,所有券均重跑)
+      await this.checkQuan({
+        couponCodes: workingUseQuan.map(item => item.couponCode).join(),
+        cinemaLinkId,
+        scheduleId,
+        scheduleKey,
+        seatIds,
+        commonCouponJson: JSON.stringify(
+          workingUseQuan.map(item => ({
+            couponCode: item.couponCode,
+            concreteProductType: "TICKET"
+          }))
+        )
+      });
 
       // 重试创建订单
       const createOrderRes = await this.createOrderOnce({
@@ -398,6 +410,21 @@ export default class H5UmeOrderManage {
       if (formatErrInfo(lastError).includes("超时")) {
         this.logger.errorSave("换券重试中遇到超时,走转单", {
           error: lastError
+        });
+        break;
+      }
+      // 连续相同错误检测:换券后仍返回相同错误,说明非单券问题,提前停止
+      const currErrorKey = getCouponErrorKey(lastError);
+      if (currErrorKey === prevErrorKey) {
+        sameErrorCount++;
+      } else {
+        prevErrorKey = currErrorKey;
+        sameErrorCount = 1;
+      }
+      if (sameErrorCount >= 2) {
+        this.logger.errorSave("连续2次相同错误,换券无效,走转单", {
+          errorKey: currErrorKey,
+          triedCouponCodes
         });
         break;
       }
