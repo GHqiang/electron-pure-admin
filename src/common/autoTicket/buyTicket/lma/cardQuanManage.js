@@ -19,10 +19,12 @@ import {
   isDateInCurrentMonth,
   couponInfoSpecial,
   getCinemaLoginInfoList,
-  mockDelay
+  mockDelay,
+  mulDecimal // 高精度乘法(避免手续费精度丢失)
 } from "@/utils/utils";
 import { APP_API_OBJ } from "@/common/index";
-import { GET_APP_INFO } from "@/common/constant";
+import { GET_APP_INFO, TEST_NEW_PLAT_LIST } from "@/common/constant";
+import { getPlatFeeRate } from "../common/offerHelper";
 import svApi from "@/api/sv-api";
 import Logger from "@/common/logger";
 import { platTokens } from "@/store/platTokens";
@@ -512,6 +514,29 @@ export default class LmaCardQuanManage {
       offerRule.quan_fee = quan_fee;
       offerRule.is_store = is_store;
       offerRule.black_quans = black_quans;
+
+      // 用券后负利润校验（与其它系列对齐）：实际用券成本可能高于报价时计算的最小券成本，利润为负禁止出票
+      const feeRate = getPlatFeeRate(this.order);
+      let shouxufei = mulDecimal(Number(supplier_end_price || 0), feeRate);
+      let profit = Number(supplier_end_price) - Number(quan_cost || 0) - shouxufei;
+      profit = Number(profit) * Number(ticket_num);
+      if (rewards > 0) {
+        let rewardPrice =
+          (Number(supplier_end_price) * Number(ticket_num) * 100 * rewards) /
+          10000;
+        profit += rewardPrice;
+      }
+      profit = Number(profit).toFixed(2);
+      if (profit < 0 && !TEST_NEW_PLAT_LIST.includes(plat_name)) {
+        this.logger.errorSave("使用优惠券后最终利润为负，禁止出票", {
+          profit,
+          supplier_end_price,
+          quan_cost,
+          shouxufei,
+          ticket_num
+        });
+        return { error: "使用优惠券后最终利润为负" };
+      }
 
       // 查询最近用券记录
       const usedQuanList = await this.queryUsedQuanList({

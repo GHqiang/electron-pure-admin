@@ -26,6 +26,7 @@ import {
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index";
+import { TEST_NEW_PLAT_LIST } from "@/common/constant.js";
 import { getPlatFeeRate } from "../common/offerHelper";
 import Logger from "@/common/logger";
 import { platTokens } from "@/store/platTokens";
@@ -633,6 +634,26 @@ export default class LmaBuyTicket extends BaseBuyTicket {
         profit += rewardPrice;
       }
       profit = profit.toFixed(2);
+
+      // 券单负利润校验：实际用券成本可能高于报价时计算的最小券成本，利润为负禁止出票
+      if (
+        offerRule.offer_type === "1" &&
+        Number(profit) < 0 &&
+        !TEST_NEW_PLAT_LIST.includes(plat_name)
+      ) {
+        this.logger.errorSave("用完券发现最终利润为负，走转单", {
+          profit,
+          supplier_end_price,
+          quan_cost: offerRule.quan_cost,
+          shouxufei,
+          ticket_num
+        });
+        const transferParams = await this.orderManage.transferOrder(
+          { order_str },
+          this.currentParamsList[this.currentParamsInx]?.lmaToken
+        );
+        return { offerRule, transferParams };
+      }
 
       let real_member_price = offerRule?.real_member_price || 0;
       if (offerRule.offer_type !== "1" && card_id) {
