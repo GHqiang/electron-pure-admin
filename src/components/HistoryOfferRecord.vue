@@ -377,7 +377,7 @@ import {
   GET_APP_TYPE_LIST,
   OFFER_FAIL_TYPE
 } from "@/common/constant.js";
-import { addDecimal, subDecimal } from "@/utils/utils";
+import { addDecimal, subDecimal, mulDecimal } from "@/utils/utils";
 // 券类型列表
 const quanType = ref([]);
 
@@ -569,14 +569,21 @@ const formatCostPrice = ({
   offer_end_amount,
   order_status,
   member_price,
-  plat_name
+  plat_name,
+  fee_rate
 }) => {
   if (order_status != 1) {
     return;
   }
-  let shouxufei = (offer_end_amount * 100) / 10000;
-  if (NO_FEE_PLAT_LIST.includes(plat_name)) {
-    shouxufei = 0;
+  // 优先用存的费率；旧数据（fee_rate 为 NULL）兜底 1%，NO_FEE_PLAT_LIST 平台兜底 0%
+  let shouxufei;
+  if (fee_rate != null) {
+    shouxufei = mulDecimal(Number(offer_end_amount || 0), fee_rate);
+  } else {
+    shouxufei = mulDecimal(Number(offer_end_amount || 0), 0.01);
+    if (NO_FEE_PLAT_LIST.includes(plat_name)) {
+      shouxufei = 0;
+    }
   }
   // 真实成本
   return addDecimal(member_price, shouxufei).toFixed(2);
@@ -589,14 +596,21 @@ const formatProfit = ({
   member_price,
   plat_name,
   rewards = 0,
-  offer_from
+  offer_from,
+  fee_rate
 }) => {
   if (order_status != 1 || offer_from == 1) {
     return;
   }
-  let shouxufei = (offer_end_amount * 100) / 10000;
-  if (NO_FEE_PLAT_LIST.includes(plat_name)) {
-    shouxufei = 0;
+  // 优先用存的费率；旧数据（fee_rate 为 NULL）兜底 1%，NO_FEE_PLAT_LIST 平台兜底 0%
+  let shouxufei;
+  if (fee_rate != null) {
+    shouxufei = mulDecimal(Number(offer_end_amount || 0), fee_rate);
+  } else {
+    shouxufei = mulDecimal(Number(offer_end_amount || 0), 0.01);
+    if (NO_FEE_PLAT_LIST.includes(plat_name)) {
+      shouxufei = 0;
+    }
   }
   // 奖励费用
   const rewardPrice =

@@ -25,6 +25,7 @@ import {
   findMostRepeatedChars,
   getMovieInfoFromFilmName,
   divDecimal,
+  mulDecimal, // 高精度乘法(避免手续费精度丢失)
   getCurrentDay,
   isDateInCurrentMonth
 } from "@/utils/utils";
@@ -33,9 +34,9 @@ import { APP_API_OBJ } from "@/common/index.js";
 import {
   GROUP_LIST,
   TEST_NEW_PLAT_LIST,
-  NO_FEE_PLAT_LIST,
   ONE_STEP_PLAT_LIST
 } from "@/common/constant.js";
+import { getPlatFeeRate } from "../common/offerHelper";
 import {
   getQuanTypeListByApp,
   filterFixedRulesByDailyTicketCount
@@ -290,11 +291,9 @@ class getH5UmeOfferPrice extends BaseOfferPrice {
         this.logger.infoSave("调整最终报价为平台限价四舍五入去整");
       }
 
-      // 手续费
-      let shouxufei = (price * 100) / 10000;
-      if (NO_FEE_PLAT_LIST.includes(plat_name)) {
-        shouxufei = 0;
-      }
+      // 手续费（统一走 getPlatFeeRate，支持守兔按 needInvoice 分档）
+      const feeRate = getPlatFeeRate(this.order);
+      let shouxufei = mulDecimal(Number(price || 0), feeRate);
       // 奖励费用
       const rewardPrice = rewards > 0 ? (price * 100 * rewards) / 10000 : 0;
       // 卡券成本

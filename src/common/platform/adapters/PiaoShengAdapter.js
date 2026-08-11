@@ -3,8 +3,8 @@
 
 import BasePlatformAdapter from "../../core/BasePlatformAdapter.js";
 import piaoshengApi from "@/api/piaosheng-api.js";
-import { subDecimal, addDecimal } from "@/utils/utils.js";
-import { NO_FEE_PLAT_LIST } from "@/common/constant.js";
+import { subDecimal, addDecimal, mulDecimal } from "@/utils/utils.js";
+import { getPlatFeeRate } from "../../autoTicket/buyTicket/common/offerHelper.js";
 
 /**
  * 票圣平台适配器
@@ -55,11 +55,10 @@ export default class PiaoShengAdapter extends BasePlatformAdapter {
   _getProfit(offerRule, order) {
     if (!offerRule || !order) return 0;
     const { cost_price, offer_end_amount } = offerRule;
-    const { plat_name, rewards = 0, ticket_num } = order;
-    let shouxufei = (offer_end_amount * 100) / 10000;
-    if (NO_FEE_PLAT_LIST && NO_FEE_PLAT_LIST.includes(plat_name)) {
-      shouxufei = 0;
-    }
+    const { rewards = 0, ticket_num } = order;
+    // 手续费（统一走 getPlatFeeRate：免手续费名单 + 默认 1%，后续平台分档扩展只改一处）
+    const feeRate = getPlatFeeRate(order);
+    let shouxufei = mulDecimal(Number(offer_end_amount || 0), feeRate);
     const rewardPrice =
       rewards > 0 ? (offer_end_amount * 100 * rewards) / 10000 : 0;
     return (

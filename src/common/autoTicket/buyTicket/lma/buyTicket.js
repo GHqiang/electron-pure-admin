@@ -21,11 +21,12 @@ import {
   mockDelay,
   formatErrInfo,
   sendWxPusherMessage,
-  subDecimal
+  subDecimal,
+  mulDecimal // 高精度乘法(避免手续费精度丢失)
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index";
-import { NO_FEE_PLAT_LIST } from "@/common/constant";
+import { getPlatFeeRate } from "../common/offerHelper";
 import Logger from "@/common/logger";
 import { platTokens } from "@/store/platTokens";
 import BaseBuyTicket from "@/common/core/BaseBuyTicket.js";
@@ -611,11 +612,9 @@ export default class LmaBuyTicket extends BaseBuyTicket {
         return { offerRule, transferParams };
       }
 
-      // 手续费
-      let shouxufei = (supplier_end_price * 100) / 10000;
-      if (NO_FEE_PLAT_LIST.includes(plat_name)) {
-        shouxufei = 0;
-      }
+      // 手续费（统一走 getPlatFeeRate，支持守兔按 needInvoice 分档）
+      const feeRate = getPlatFeeRate(this.order);
+      let shouxufei = mulDecimal(Number(supplier_end_price || 0), feeRate);
 
       // 计算利润
       let profit;

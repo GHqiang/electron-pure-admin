@@ -22,7 +22,7 @@ import {
   mockDelay
 } from "@/utils/utils";
 import { APP_API_OBJ } from "@/common/index";
-import { GET_APP_INFO, NO_FEE_PLAT_LIST } from "@/common/constant";
+import { GET_APP_INFO } from "@/common/constant";
 import svApi from "@/api/sv-api";
 import Logger from "@/common/logger";
 import { platTokens } from "@/store/platTokens";

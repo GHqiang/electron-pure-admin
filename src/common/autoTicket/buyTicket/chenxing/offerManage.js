@@ -31,9 +31,10 @@ import {
   GROUP_LIST,
   TEST_NEW_PLAT_LIST,
   GET_APP_INFO,
-  NO_FEE_PLAT_LIST,
   ONE_STEP_PLAT_LIST
 } from "@/common/constant.js";
+import { getPlatFeeRate } from "../common/offerHelper";
+import { mulDecimal } from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
 import Logger from "@/common/logger.js";
 import BaseOfferPrice from "@/common/core/BaseOfferPrice.js";
@@ -434,11 +435,9 @@ class getChenxingOfferPrice extends BaseOfferPrice {
     supplier_max_price,
     offerRule
   }) {
-    // 手续费
-    let shouxufei = (adjustedPrice * 100) / 10000;
-    if (NO_FEE_PLAT_LIST.includes(this.plat_name)) {
-      shouxufei = 0;
-    }
+    // 手续费（统一走 getPlatFeeRate，支持守兔按 needInvoice 分档）
+    const feeRate = getPlatFeeRate(this.order);
+    let shouxufei = mulDecimal(Number(adjustedPrice || 0), feeRate);
     // 奖励费用
     const rewardPrice =
       rewards > 0 ? (adjustedPrice * 100 * rewards) / 10000 : 0;

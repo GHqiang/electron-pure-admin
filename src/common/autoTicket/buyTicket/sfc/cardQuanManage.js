@@ -16,14 +16,15 @@ import {
   getCurrentTime,
   couponInfoSpecial,
   mockDelay,
-  getOfferRuleById
+  getOfferRuleById,
+  mulDecimal // 高精度乘法(避免手续费精度丢失)
 } from "@/utils/utils";
 import { APP_API_OBJ } from "@/common/index";
 import {
   sfcV3AppList,
-  TEST_NEW_PLAT_LIST,
-  NO_FEE_PLAT_LIST
+  TEST_NEW_PLAT_LIST
 } from "@/common/constant";
+import { getPlatFeeRate } from "../common/offerHelper";
 import svApi from "@/api/sv-api";
 import Logger from "@/common/logger";
 import { platTokens } from "@/store/platTokens";
@@ -764,11 +765,9 @@ export default class SfcCardQuanManage {
       card_id = sorted[0]?.member_id;
       cardNum = sorted[0]?.member_id;
     }
-    // 手续费（与旧版 useCard 一致）：中标价 * 1%，NO_FEE_PLAT_LIST 平台为 0
-    let shouxufei = ((supplier_end_price || 0) * 100) / 10000;
-    if (NO_FEE_PLAT_LIST.includes(plat_name)) {
-      shouxufei = 0;
-    }
+    // 手续费（统一走 getPlatFeeRate，支持守兔按 needInvoice 分档）
+    const feeRate = getPlatFeeRate(this.order);
+    let shouxufei = mulDecimal(Number(supplier_end_price || 0), feeRate);
     let profit = (supplier_end_price || 0) - (member_price || 0) - shouxufei;
     profit = Number(profit) * (ticket_num || 0);
     if (rewards > 0) {
@@ -983,8 +982,9 @@ export default class SfcCardQuanManage {
       }
       let useQuans = targetQuanList.filter((item, index) => index < ticket_num);
       let profit = 0;
-      let shouxufei = (supplier_end_price * 100) / 10000;
-      if (NO_FEE_PLAT_LIST.includes(plat_name)) shouxufei = 0;
+      // 手续费（统一走 getPlatFeeRate，支持守兔按 needInvoice 分档）
+      const feeRate = getPlatFeeRate(this.order);
+      let shouxufei = mulDecimal(Number(supplier_end_price || 0), feeRate);
       profit = Number(supplier_end_price) - quan_cost - shouxufei;
       profit = profit * (useQuans.length || 0);
       if (rewards > 0) {

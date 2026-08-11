@@ -50,7 +50,8 @@ export default class ShoutuOfferQueue extends BaseOfferQueue {
             cinemaInfo,
             orderNum: ticket_num,
             orderId: order_number,
-            isLovers
+            isLovers,
+            needInvoice // 守兔手续费分档依据（待报价接口返回）
           } = item;
           return {
             id, // 报价时使用
@@ -70,6 +71,7 @@ export default class ShoutuOfferQueue extends BaseOfferQueue {
             cinema_group: "",
             cinema_code: cinemaInfo[9] || "", // 影院code
             order_number: order_number,
+            needInvoice,
             isLovers: isLovers, // 是否情侣座
             // 转为截止时间戳
             offer_end_time: +new Date(item.deadlineTime)

@@ -29,7 +29,6 @@ import {
   GET_SFC_APP_LIST,
   GROUP_LIST,
   TEST_NEW_PLAT_LIST,
-  NO_FEE_PLAT_LIST,
   ONE_STEP_PLAT_LIST
 } from "@/common/constant.js";
 import { platTokens } from "@/store/platTokens";
@@ -269,8 +268,7 @@ class getSfcOfferPrice extends BaseOfferPrice {
       adjustedPrice,
       cost_price,
       rewards,
-      plat_name: this.plat_name,
-      noFeePlatList: NO_FEE_PLAT_LIST
+      order: this.order
     });
     const {
       shouxufei,

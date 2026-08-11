@@ -4,15 +4,15 @@
  * ## 边界/约定
  * - **只做报价计算相关的纯逻辑**：不请求接口，不改数据库
  * - **显式传参**：不依赖 `this`，各系列 `offerManage` 直接调用
- * - **系列差异通过参数注入**：如 `groupList`、`noFeePlatList`、`feeRate`
+ * - **系列差异通过参数注入**：如 `groupList`、`order`（含 plat_name / needInvoice）
  *
  * ## 为什么要抽
  * SFC/UME/LMA/辰星/凤凰等系列的报价计算“骨架”高度一致：
  * 动态调价 → 利润加价 → 夜间顶价 → 超限处理 → 成本/利润拆分。
  * 抽到这里后，新增/修改规则只需要改一处。
  */
-import { calcCount, roundToHalf } from "@/utils/utils";
-import { ONE_STEP_PLAT_LIST } from "@/common/constant";
+import { calcCount, roundToHalf, mulDecimal } from "@/utils/utils";
+import { ONE_STEP_PLAT_LIST, NO_FEE_PLAT_LIST } from "@/common/constant";
 
 /**
  * 动态调价（跟随本地配置 `adjustPrice`）
@@ -148,20 +148,40 @@ export async function handleOverrunCheck({
 }
 
 /**
+ * 获取平台手续费率（统一费率来源，支持守兔按 needInvoice 分档）
+ *
+ * 规则：
+ * - `NO_FEE_PLAT_LIST` 命中平台：0（免手续费，如 haha / mahua）
+ * - 守兔（shoutu）：按订单 `needInvoice` 分档——1→1%，0/缺失→6%（保守，避免少收）
+ * - 其他平台：默认 1%
+ *
+ * @param {Object} order - 订单对象（从中取 plat_name / needInvoice 等字段）
+ * @returns {number} 手续费率（0~1）
+ */
+export function getPlatFeeRate(order) {
+  const plat_name = order?.plat_name;
+  // 免手续费平台优先
+  if (NO_FEE_PLAT_LIST.includes(plat_name)) return 0;
+  // 守兔按 needInvoice 分档：1→1%，0/缺失→6%（保守，避免少收）
+  if (plat_name === "shoutu") {
+    return Number(order?.needInvoice) === 1 ? 0.01 : 0.06;
+  }
+  // 默认 1%
+  return 0.01;
+}
+
+/**
  * 计算手续费/奖励/真实成本/最大可接受成本等通用数值
  *
  * 说明：
- * - 手续费默认按 1%（旧逻辑：`price * 1%`）
- * - `noFeePlatList` 命中平台：手续费为 0（你提到的 NO_FEE_PLAT_LIST）
+ * - 手续费率统一走 `getPlatFeeRate(order)`（支持守兔按 needInvoice 分档 + 免手续费名单 + 默认 1%）
  * - 返回的 `maxCostPrice` 用于后续“券类型过滤（成本必须 < maxCostPrice 才有利润）”
  *
  * @param {Object} params
  * @param {number} params.adjustedPrice
  * @param {number} params.cost_price
  * @param {number} params.rewards - 0~100
- * @param {string} params.plat_name
- * @param {number} [params.feeRate=0.01] - 默认 1%
- * @param {Array<string>} [params.noFeePlatList=[]] - 免手续费平台名单
+ * @param {Object} params.order - 订单对象（从中取 plat_name / needInvoice 用于费率判断）
  * @param {Object} [params.logger]
  * @returns {{
  *  shouxufei:number,
@@ -176,17 +196,13 @@ export function calcOfferCostProfitParts({
   adjustedPrice,
   cost_price,
   rewards,
-  plat_name,
-  feeRate = 0.01,
-  noFeePlatList = [],
+  order,
   logger
 }) {
-  let shouxufei = (Number(adjustedPrice || 0) * 100) / 10000;
-  if ((noFeePlatList || []).includes(plat_name)) shouxufei = 0;
-  // 若后续需要支持非 1% 手续费，可通过 feeRate 扩展；当前保持与旧逻辑一致（1%）
-  if (feeRate !== 0.01) {
-    shouxufei = Number(adjustedPrice || 0) * Number(feeRate || 0);
-  }
+  // 费率统一走 getPlatFeeRate(order)（支持守兔分档 + 免手续费名单 + 默认 1%）
+  const plat_name = order?.plat_name;
+  const feeRate = getPlatFeeRate(order);
+  let shouxufei = mulDecimal(Number(adjustedPrice || 0), feeRate);
 
   const rewardPrice =
     rewards > 0 ? (Number(adjustedPrice || 0) * 100 * rewards) / 10000 : 0;

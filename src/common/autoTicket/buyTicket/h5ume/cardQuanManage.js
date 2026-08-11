@@ -19,10 +19,12 @@ import {
   isDateInCurrentMonth,
   getCinemaLoginInfoList,
   couponInfoSpecial,
-  getOfferRuleById
+  getOfferRuleById,
+  mulDecimal // 高精度乘法(避免手续费精度丢失)
 } from "@/utils/utils";
 import { APP_API_OBJ } from "@/common/index";
-import { TEST_NEW_PLAT_LIST, NO_FEE_PLAT_LIST } from "@/common/constant";
+import { TEST_NEW_PLAT_LIST } from "@/common/constant";
+import { getPlatFeeRate } from "../common/offerHelper";
 import svApi from "@/api/sv-api";
 import Logger from "@/common/logger";
 import { platTokens } from "@/store/platTokens";
@@ -433,11 +435,9 @@ export default class H5UmeCardQuanManage {
           balance: item.balance
         }))
       });
-      // 手续费
-      let shouxufei = (supplier_end_price * 100) / 10000;
-      if (NO_FEE_PLAT_LIST.includes(plat_name)) {
-        shouxufei = 0;
-      }
+      // 手续费（统一走 getPlatFeeRate，支持守兔按 needInvoice 分档）
+      const feeRate = getPlatFeeRate(this.order);
+      let shouxufei = mulDecimal(Number(supplier_end_price || 0), feeRate);
       // 中标价-会员成本价
       let profit = supplier_end_price - member_price - shouxufei;
       profit = Number(profit) * Number(ticket_num);
@@ -677,11 +677,9 @@ export default class H5UmeCardQuanManage {
             discountAmount: item.discountValue
           };
         });
-        // 手续费
-        let shouxufei = (supplier_end_price * 100) / 10000;
-        if (NO_FEE_PLAT_LIST.includes(plat_name)) {
-          shouxufei = 0;
-        }
+        // 手续费（统一走 getPlatFeeRate，支持守兔按 needInvoice 分档）
+        const feeRate = getPlatFeeRate(this.order);
+        let shouxufei = mulDecimal(Number(supplier_end_price || 0), feeRate);
         let profit = supplier_end_price - quan_cost - shouxufei;
         profit = Number(profit) * Number(ticket_num);
         if (rewards > 0) {

@@ -31,10 +31,11 @@ import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
 import {
   TEST_NEW_PLAT_LIST,
-  NO_FEE_PLAT_LIST,
   ONE_STEP_PLAT_LIST,
   GET_APP_LIST
 } from "@/common/constant.js";
+import { getPlatFeeRate } from "../common/offerHelper";
+import { mulDecimal } from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
 import {
   getQuanTypeListByApp,
@@ -331,11 +332,9 @@ class getLmaOfferPrice extends BaseOfferPrice {
     supplier_max_price,
     offerRule
   }) {
-    // 手续费
-    let shouxufei = (adjustedPrice * 100) / 10000;
-    if (NO_FEE_PLAT_LIST.includes(this.plat_name)) {
-      shouxufei = 0;
-    }
+    // 手续费（统一走 getPlatFeeRate，支持守兔按 needInvoice 分档）
+    const feeRate = getPlatFeeRate(this.order);
+    let shouxufei = mulDecimal(Number(adjustedPrice || 0), feeRate);
 
     // 奖励费用
     const rewardPrice =

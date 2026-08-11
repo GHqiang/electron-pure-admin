@@ -13,6 +13,7 @@ import svApi from "@/api/sv-api";
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
 import { GET_APP_TYPE_LIST, LIERENR_REWARDS } from "@/common/constant";
+import { getPlatFeeRate } from "@/common/autoTicket/buyTicket/common/offerHelper";
 import { toRaw } from "vue";
 import { storeToRefs } from "pinia";
 import { useDataTableStore } from "@/store/offerRule";
@@ -372,6 +373,7 @@ export default class BaseTicketQueue {
 
         quan_value: offerRule?.quanValue, // 用券类型
         rewards: LIERENR_REWARDS[order.order_urgent] || 0, // 0-普通 1-加急 2-特急 3-vip
+        fee_rate: getPlatFeeRate(order),
 
         order_status: 1,
         processing_time: getCurrentTime(),

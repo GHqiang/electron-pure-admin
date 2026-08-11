@@ -9,6 +9,7 @@ import svApi from "@/api/sv-api.js";
 import { platTokens } from "@/store/platTokens.js";
 import { dictTable } from "@/store/dictTable";
 import { extractThirdPartyIds } from "./extractThirdPartyIds.js";
+import { getPlatFeeRate } from "@/common/autoTicket/buyTicket/common/offerHelper";
 const dictStore = dictTable();
 const tokens = platTokens();
 
@@ -1209,6 +1210,7 @@ export default class BaseOfferQueue {
         err_msg: offerResult?.err_msg || errInfoObj?.err_msg || "",
         err_info: offerResult?.err_info || errInfoObj?.err_info || "",
         rewards: order.rewards,
+        fee_rate: getPlatFeeRate(order),
         rule: tokens.userInfo.rule,
         offer_rule_id: offerResult?.offerRule?.id,
         offer_from: extra.offer_from ?? 2, // 1-平台报价 2-机器报价

@@ -22,8 +22,8 @@ const ORDER_FORM = {
 // 最小允许报价时间差(报价结束时间距离当前时间差)
 const MIN_ALLOW_OFFER_SJC = 1 * 1000;
 
-// 无手续费平台
-const NO_FEE_PLAT_LIST = ["haha", "shoutu", "mahua"];
+// 无手续费平台（守兔已按 needInvoice 分档收取，移出此名单）
+const NO_FEE_PLAT_LIST = ["haha", "mahua"];
 
 // 0.1步进报价平台
 const ONE_STEP_PLAT_LIST = [

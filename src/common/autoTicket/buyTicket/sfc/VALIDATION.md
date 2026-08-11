@@ -35,7 +35,7 @@
 
 | 项     | 旧版                                                                 | 重构 | 结论 |
 | ------ | -------------------------------------------------------------------- | ---- | ---- |
-| 手续费 | `(supplier_end_price*100)/10000`，`NO_FEE_PLAT_LIST` 置 0            | 同   | 一致 |
+| 手续费 | `(supplier_end_price*100)/10000`，`NO_FEE_PLAT_LIST` 置 0            | 改为 `getPlatFeeRate(order)` + `mulDecimal`（支持守兔分档 + 精度处理） | 一致（数值等价，精度更准） |
 | 利润   | `(supplier_end_price - quan_cost - shouxufei) * useQuans.length`     | 同   | 一致 |
 | 奖励   | `+ (supplier*100 * ticket_num * rewards) / 10000`                    | 同   | 一致 |
 | 负利润 | `profit < 0` 且非 `TEST_NEW_PLAT` 则返回 `{ profit:0, useQuans:[] }` | 同   | 一致 |
@@ -44,14 +44,14 @@
 
 | 项     | 旧版                                                      | 重构                        | 结论 |
 | ------ | --------------------------------------------------------- | --------------------------- | ---- |
-| 手续费 | `(supplier_end_price*100)/10000`，`NO_FEE_PLAT_LIST` 置 0 | **原缺失** → **已修复**     | 一致 |
+| 手续费 | `(supplier_end_price*100)/10000`，`NO_FEE_PLAT_LIST` 置 0 | **原缺失** → **已修复**；后改为 `getPlatFeeRate(order)` + `mulDecimal`（支持守兔分档 + 精度处理） | 一致（数值等价，精度更准） |
 | 利润   | `(supplier - member - shouxufei) * ticket_num`            | 同（修复后）                | 一致 |
 | 奖励   | `+ (supplier*100 * ticket_num * rewards) / 10000`         | **原少乘 100** → **已修复** | 一致 |
 | 负利润 | 日志 + 返回 `{ card_id:"", profit:0 }`                    | **已补日志**                | 一致 |
 
 **已修复点**（`cardQuanManage.useCard`）：
 
-1. 手续费：按 `NO_FEE_PLAT_LIST` 置 0，与旧版一致。
+1. 手续费：统一走 `getPlatFeeRate(order)`（支持守兔按 `needInvoice` 分档 + 免手续费名单）+ `mulDecimal`（精度处理，避免浮点误差），与旧版数值等价但精度更准。
 2. 奖励公式：使用 `(supplier * 100 * ticket_num * rewards) / 10000`。
 3. 负利润时增加 `"使用会员卡计算价格后最终利润为负"` 日志。
 
@@ -115,7 +115,7 @@
 
 1. **`sfc/cardQuanManage.js`**
 
-   - `useCard`：手续费按 `NO_FEE_PLAT_LIST`、奖励公式、负利润日志与旧版对齐。
+   - `useCard`：手续费统一走 `getPlatFeeRate(order)` + `mulDecimal`（NO_FEE_PLAT_LIST 命中返回 0）、奖励公式、负利润日志与旧版对齐。
 
 2. **`sfc/buyTicket.js`**
 

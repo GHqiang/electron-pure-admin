@@ -45,6 +45,9 @@ export default class BaseOfferPrice {
    */
   async getEndOfferPrice({ order, offerList }) {
     try {
+      // 0. 持有订单对象：各系列 calculateCostProfit 取 plat_name/needInvoice 计算手续费率（getPlatFeeRate）依赖 this.order
+      this.order = order;
+
       // 1. 初始化模块
       this.initModules(order);
 
