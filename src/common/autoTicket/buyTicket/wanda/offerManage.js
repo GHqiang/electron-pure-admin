@@ -301,6 +301,7 @@ class WandaOfferPrice extends BaseOfferPrice {
       order: this.order
     });
     const {
+      feeRate,
       shouxufei,
       rewardPrice,
       pay_cost_price,
@@ -330,7 +331,7 @@ class WandaOfferPrice extends BaseOfferPrice {
       cardQuanCost: "卡券成本：" + cost_price,
       maxCostPrice: "最大卡券成本（低于该值才有利润）：" + maxCostPrice,
       price: "最终报价：" + adjustedPrice,
-      shouxufei: "手续费（最终报价*1%）：" + shouxufei,
+      shouxufei: `手续费（最终报价*${Math.round(feeRate * 100)}%）：${shouxufei}`,
       cost_price: "出票成本（卡券成本+手续费）：" + pay_cost_price,
       rewardPrice: `奖励金额(最终报价*奖励百分比-${rewards})：` + rewardPrice,
       real_cost_price: "真实成本（出票成本-奖励金额）：" + real_cost_price,

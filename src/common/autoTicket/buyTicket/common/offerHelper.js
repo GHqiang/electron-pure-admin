@@ -223,6 +223,7 @@ export function calcOfferCostProfitParts({
     cost_price,
     rewards,
     plat_name,
+    feeRate,
     shouxufei,
     rewardPrice,
     pay_cost_price,
@@ -232,6 +233,7 @@ export function calcOfferCostProfitParts({
   });
 
   return {
+    feeRate,
     shouxufei,
     rewardPrice,
     pay_cost_price,

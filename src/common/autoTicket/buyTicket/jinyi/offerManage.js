@@ -379,6 +379,7 @@ class getJinyiOfferPrice extends BaseOfferPrice {
       cost_price,
       maxCostPrice: offerRule.maxCostPrice,
       rewards,
+      feeRate,
       shouxufei,
       rewardPrice,
       real_cost_price,
@@ -396,7 +397,7 @@ class getJinyiOfferPrice extends BaseOfferPrice {
       cardQuanCost: `卡券成本：${details.cost_price}`,
       maxCostPrice: `最大卡券成本（低于该值才有利润）：${details.maxCostPrice}`,
       price: `最终报价：${details.adjustedPrice}`,
-      shouxufei: `手续费（最终报价*1%）：${details.shouxufei}`,
+      shouxufei: `手续费（最终报价*${Math.round(details.feeRate * 100)}%）：${details.shouxufei}`,
       rewardPrice: `奖励金额（${details.rewards}%）：${details.rewardPrice}`,
       real_cost_price: `真实成本：${details.real_cost_price}`,
       expectProfit: `预计利润：${details.expectProfit}`
