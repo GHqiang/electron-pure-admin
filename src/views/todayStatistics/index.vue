@@ -268,8 +268,8 @@ const moduleRangeDays = computed(() => {
   return Math.round((new Date(formData.end_time) - new Date(formData.start_time)) / 86400000);
 });
 
-// 时间范围上限:报价记录仅保留 30 天(offer_record 30 天 / offer_record_fail 3 天),超过 30 天无数据可查,直接拦截
-const MAX_QUERY_DAYS = 30;
+// 时间范围上限:报价记录实时表保留 30 天,超出部分由预聚合表(stat_daily_record,永久保留)兜底,故放开到 31 天
+const MAX_QUERY_DAYS = 31;
 const confirmQueryRange = async () => {
   if (!formData.start_time || !formData.end_time) return true;
   const rangeDays =
