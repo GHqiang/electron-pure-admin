@@ -61,11 +61,15 @@ export default class OrderManage {
       return;
     }
     try {
-      const params = { cinema_id, hall_id, schedule_id, session_id };
-      this.logger.infoSave("释放座位-重新查询该场次座位参数", params);
-      const res = await this.appApi.getMoviePlaySeat(params);
-      this.logger.infoSave("释放座位-重新查询该场次座位成功");
-      return res;
+      const params1 = { cinema_id, hall_id, schedule_id, session_id };
+      const params2 = { cinema_id, schedule_id, session_id };
+      this.logger.infoSave("释放座位-重新查询该场次和座位分区参数", {
+        params1,
+        params2
+      });
+      const res1 = await this.appApi.getMovieSeatPriceList(params1);
+      const res2 = await this.appApi.getMoviePlaySeat(params2);
+      this.logger.infoSave("释放座位-重新查询该场次和座位分区接口成功");
     } catch (error) {
       // 释放失败不影响转单主流程，仅记录日志
       this.logger.errorSave(
