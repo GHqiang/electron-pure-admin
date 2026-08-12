@@ -585,6 +585,22 @@ export default class BaseTicketQueue {
       }
 
       if (order.isAgain) {
+        // 重新出票过程中再次申请换座：保持 order_status=9，等待下次拉单检测换座结果
+        // 否则 order_status 会被置为 2(失败)，导致后续拉单过滤掉该订单无法继续出票
+        if (res.isApplyChangeSeat) {
+          await svApi.updateTicketRecord({
+            whereObj: {
+              order_number: order.order_number,
+              plat_name: order.plat_name,
+              user_id
+            },
+            updateObj: {
+              order_status: 9, // 申请换座中
+              change_seat_info: `申请换座中，原座位：${order.lockseat}`
+            }
+          });
+          return;
+        }
         const order_status = submitRes ? 1 : 2;
         if (order_status === 1) {
           await svApi.updateTicketRecord({
