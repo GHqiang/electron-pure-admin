@@ -12,6 +12,7 @@ import {
 } from "@/utils/utils";
 import { GET_APP_LIST } from "@/common/constant";
 import { handleNetworkRetry } from "./retry-helper";
+import { saveFailLogToLocal } from "@/common/localFailLog";
 
 // 允许重试的接口白名单（查询类接口）
 const retryWhitelist = [
@@ -139,6 +140,33 @@ const createAxios = ({ app_name, timeout = 25 }) => {
             ElMessage.error(`请求错误 ${response.status}: ${error.message}`);
         }
       } else {
+        // 网络异常本地落盘（整改 D3）：弹窗时间与后端 proxy_record/连接池日志对表用
+        try {
+          saveFailLogToLocal(
+            [
+              {
+                des: "万达网络连接异常",
+                level: "error",
+                info: {
+                  url: error.config?.url || "",
+                  code: error.code || "",
+                  message: error.message || "",
+                  timeoutMs: error.config?.timeout || 0,
+                  retried: !!retryResult
+                }
+              }
+            ],
+            {
+              plat_name: "wanda-film",
+              app_name: app_name,
+              order_number: "",
+              type: ""
+            },
+            "network-error"
+          );
+        } catch (e) {
+          /* 日志落盘失败不影响主流程 */
+        }
         logUpload(
           {
             plat_name: "wanda-film",

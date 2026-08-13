@@ -19,8 +19,10 @@ const getNowStr = () => {
  * 上传失败的日志批次落盘（fire-and-forget，异步不阻塞）
  * @param {Array} batch - 本次上传失败的日志批次（与 logUpload 的 logList 条目结构一致）
  * @param {Object} [order] - 上传参数 { plat_name, app_name, order_number, type }
+ * @param {string} [customName] - 自定义文件名前缀（如 "network-error" → network-error-YYYYMMDD.log），
+ *                                不传保持默认 logUploadFail-YYYYMMDD.log（整改 D3 复用）
  */
-export const saveFailLogToLocal = (batch = [], order = {}) => {
+export const saveFailLogToLocal = (batch = [], order = {}, customName = "") => {
   if (!batch.length) return;
   const now = new Date();
   const pad = n => String(n).padStart(2, "0");
@@ -57,7 +59,12 @@ export const saveFailLogToLocal = (batch = [], order = {}) => {
   const ipcRenderer = window.ipcRenderer;
   if (ipcRenderer?.invoke) {
     // 异步写盘，不阻塞（fire-and-forget，失败已在主进程侧兜底记录）
-    ipcRenderer.invoke("save-fail-log", { fileDate, content }).catch(() => {});
+    const fileName = customName
+      ? `${customName}-${fileDate}.log`
+      : `logUploadFail-${fileDate}.log`;
+    ipcRenderer
+      .invoke("save-fail-log", { fileDate, content, fileName })
+      .catch(() => {});
   } else {
     console.warn("本地兜底日志：ipcRenderer 不可用，跳过落盘");
   }
