@@ -171,6 +171,7 @@ class WandaBuyTicket extends BaseBuyTicket {
           // 获取目标座位失败，猎人订单走申请换座
           let retrySeatResolved = false; // 申请换座返回"有原座"后重新获取座位成功
           if (
+            !this.order.isFromChangeSeat &&
             !this._hasAppliedChangeSeat &&
             dictStore.dictInfo.supportChangeSeatPlatList.includes(plat_name)
           ) {
@@ -299,6 +300,7 @@ class WandaBuyTicket extends BaseBuyTicket {
         // 省和猎人走申请换座，其它平台直接转单
         this.logger.errorSave("锁座验证全部失败，视为获取目标座位失败");
         if (
+          !this.order.isFromChangeSeat &&
           !this._hasAppliedChangeSeat &&
           dictStore.dictInfo.supportChangeSeatPlatList.includes(plat_name)
         ) {

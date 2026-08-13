@@ -185,7 +185,9 @@ export default class ShengOrderFetcher extends BaseOrderFetcher {
             const newOrderEvent = new CustomEvent(eventName, {
               detail: {
                 order: item,
-                isAgain: true
+                isAgain: true,
+                // 标识为换座后的重新出票,buyTicket 据此跳过再次申请换座(防止死循环)
+                isFromChangeSeat: true
               }
             });
             window.dispatchEvent(newOrderEvent);

@@ -302,6 +302,7 @@ export default class H5UmeBuyTicket extends BaseBuyTicket {
           });
           // 获取目标座位失败，猎人订单走申请换座
           if (
+            !this.order.isFromChangeSeat &&
             !this._hasAppliedChangeSeat &&
             dictStore.dictInfo.supportChangeSeatPlatList.includes(plat_name)
           ) {
@@ -421,6 +422,7 @@ export default class H5UmeBuyTicket extends BaseBuyTicket {
         if (!lockRes) {
           const { err_info: errInfo } = this.logger.getLastErrMsgAndInfo();
           if (
+            !this.order.isFromChangeSeat &&
             !this._hasAppliedChangeSeat &&
             dictStore.dictInfo.supportChangeSeatPlatList.includes(plat_name) &&
             ["该座位已被锁定，锁座失败", "座位已经被抢了，请重新选择吧"].some(

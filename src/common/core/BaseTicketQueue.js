@@ -186,6 +186,11 @@ export default class BaseTicketQueue {
     } else {
       des = "自动出票队列获取到重新出票的订单";
       order.isAgain = true;
+      // 透传换座重新出票标识(拉单换座成功后派发),buyTicket 据此跳过再次申请换座
+      // 手动重新出票(HistoryTicketRecord.vue)不带此标识,可正常申请换座
+      if (event.detail?.isFromChangeSeat) {
+        order.isFromChangeSeat = true;
+      }
     }
 
     console.warn(des, order);
