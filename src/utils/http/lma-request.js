@@ -1,9 +1,9 @@
+import { attachTracking } from "@/common/networkMonitor";
 // src/utils/axiosInstance.js
 
 import axios from "axios";
 import { ElMessage } from "element-plus";
 import {
-  logUpload,
   getCurrentTime,
   sendWxPusherMessage,
   mockDelay,
@@ -12,6 +12,7 @@ import {
 } from "@/utils/utils";
 import { handleNetworkRetry } from "./retry-helper";
 import { GET_APP_LIST } from "@/common/constant";
+import { enqueueNetworkError } from "@/common/networkErrorBatcher";
 
 const createAxios = ({ app_name, timeout = 20 }) => {
   // 创建axios实例
@@ -239,7 +240,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             );
         }
       } else {
-        logUpload(
+        enqueueNetworkError(
           {
             plat_name: "",
             app_name: app_name,
@@ -263,6 +264,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
     }
   );
 
+  attachTracking(instance);
   return instance;
 };
 export default createAxios;

@@ -4,12 +4,19 @@ import axios from "axios";
 import { ElMessage } from "element-plus";
 import {
   sendWxPusherMessage,
-  logUpload,
   getCurrentTime,
   formatErrInfo
 } from "@/utils/utils";
 import { handleNetworkRetry } from "./retry-helper";
 import { saveFailLogToLocal } from "@/common/localFailLog";
+import { enqueueNetworkError } from "@/common/networkErrorBatcher";
+import {
+  trackRequestStart,
+  trackRequestEnd,
+  trackFail,
+  resetFail,
+  getNetworkSnapshot
+} from "@/common/networkMonitor";
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
 // 创建axios实例
@@ -109,6 +116,8 @@ instance.interceptors.request.use(
         ? config.url
         : "http://47.113.191.173:3000" + config.url.slice(5);
     }
+    // 网络观测：在途请求计数（弹窗取证用）
+    trackRequestStart(config.url);
     // console.log('请求config', config)
     return config;
   },
@@ -121,6 +130,9 @@ instance.interceptors.request.use(
 // 响应拦截器
 instance.interceptors.response.use(
   response => {
+    // 网络观测：请求完成
+    trackRequestEnd(response.config.url);
+    resetFail(response.config.url);
     // 请求成功，重置服务不可用计数器
     serviceDownCount = 0;
     hasLoggedOut = false;
@@ -162,6 +174,8 @@ instance.interceptors.response.use(
   },
   async error => {
     const { response } = error;
+    // 网络观测：本次请求结束（重试会重新走 request 拦截器计数）
+    if (error.config?.url) trackRequestEnd(error.config.url);
 
     // 尝试网络重试（无白名单限制，与原来 axios-retry 行为一致）
     const retryResult = await handleNetworkRetry(
@@ -219,7 +233,10 @@ instance.interceptors.response.use(
                 code: error.code || "",
                 message: error.message || "",
                 timeoutMs: error.config?.timeout || 0,
-                retried: !!retryResult
+                retried: !!retryResult,
+                // 弹窗现场取证（整改 D3 扩展）：并发数/事件循环延迟/在线状态
+                ...getNetworkSnapshot(),
+                failStreak: trackFail(error.config?.url || "")
               }
             }
           ],
@@ -229,7 +246,9 @@ instance.interceptors.response.use(
       } catch (e) {
         /* 日志落盘失败不影响主流程 */
       }
-      logUpload(
+      // 网络错误日志攒批上传（整改 v1.4）：不再逐条 logUpload——
+      // 每次失败发 1 条 addList（含超时重试最多 4 条）会在拥堵期放大请求量占 6 槽
+      enqueueNetworkError(
         {
           plat_name: "jiqi",
           app_name: "",

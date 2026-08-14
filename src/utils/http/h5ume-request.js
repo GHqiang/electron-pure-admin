@@ -1,3 +1,4 @@
+import { attachTracking } from "@/common/networkMonitor";
 // src/utils/axiosInstance.js
 
 import axios from "axios";
@@ -8,13 +9,13 @@ import { APP_API_OBJ } from "@/common/index";
 import Logger from "@/common/logger";
 
 import {
-  logUpload,
   getCurrentTime,
   getCinemaLoginInfoList,
   sendWxPusherMessage,
   mockDelay,
   formatErrInfo
 } from "@/utils/utils";
+import { enqueueNetworkError } from "@/common/networkErrorBatcher";
 // 机器登录用户信息
 import { platTokens } from "@/store/platTokens";
 // 字典表配置
@@ -954,7 +955,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             );
         }
       } else {
-        logUpload(
+        enqueueNetworkError(
           {
             plat_name: "",
             app_name: app_name,
@@ -1011,6 +1012,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
     }
   };
 
+  attachTracking(instance);
   return instance;
 };
 export default createAxios;

@@ -4,12 +4,19 @@ import axios from "axios";
 import { ElMessage } from "element-plus";
 import {
   sendWxPusherMessage,
-  logUpload,
   getCurrentTime,
   formatErrInfo
 } from "@/utils/utils";
 import { platTokens } from "@/store/platTokens";
 import { saveFailLogToLocal } from "@/common/localFailLog";
+import { enqueueNetworkError } from "@/common/networkErrorBatcher";
+import {
+  trackRequestStart,
+  trackRequestEnd,
+  trackFail,
+  resetFail,
+  getNetworkSnapshot
+} from "@/common/networkMonitor";
 const tokens = platTokens();
 // 创建axios实例
 const instance = axios.create({
@@ -46,6 +53,8 @@ instance.interceptors.request.use(
           config.url.replace("lieren", "lieren-ser");
       }
     }
+    // 网络观测：在途请求计数（弹窗取证用）
+    trackRequestStart(config.url);
     // console.log('请求config', config)
     return config;
   },
@@ -58,6 +67,9 @@ instance.interceptors.request.use(
 // 响应拦截器
 instance.interceptors.response.use(
   response => {
+    // 网络观测：请求完成
+    trackRequestEnd(response.config.url);
+    resetFail(response.config.url);
     // 对响应进行统一处理
     const data = response.data;
     // let whitelistSp = ['/sp/order', '/sp/unlock']
@@ -85,6 +97,8 @@ instance.interceptors.response.use(
   error => {
     // 对HTTP错误码进行处理
     const { response } = error;
+    // 网络观测：本次请求结束
+    if (error.config?.url) trackRequestEnd(error.config.url);
     if (response && response.status) {
       switch (response.status) {
         case 401:
@@ -108,7 +122,10 @@ instance.interceptors.response.use(
                 code: error.code || "",
                 message: error.message || "",
                 timeoutMs: error.config?.timeout || 0,
-                retried: !!retryResult
+                retried: false, // lieren 拦截器无 handleNetworkRetry，恒为 false
+                // 弹窗现场取证（整改 D3 扩展）：并发数/事件循环延迟/在线状态
+                ...getNetworkSnapshot(),
+                failStreak: trackFail(error.config?.url || "")
               }
             }
           ],
@@ -118,7 +135,8 @@ instance.interceptors.response.use(
       } catch (e) {
         /* 日志落盘失败不影响主流程 */
       }
-      logUpload(
+      // 网络错误日志攒批上传（整改 v1.4）：不再逐条 logUpload——避免失败反馈循环占 6 槽
+      enqueueNetworkError(
         {
           plat_name: "lieren",
           app_name: "",

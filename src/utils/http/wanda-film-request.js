@@ -6,13 +6,20 @@ import axios from "axios";
 import { ElMessage } from "element-plus";
 import {
   sendWxPusherMessage,
-  logUpload,
   getCurrentTime,
   formatErrInfo
 } from "@/utils/utils";
 import { GET_APP_LIST } from "@/common/constant";
 import { handleNetworkRetry } from "./retry-helper";
 import { saveFailLogToLocal } from "@/common/localFailLog";
+import { enqueueNetworkError } from "@/common/networkErrorBatcher";
+import {
+  trackRequestStart,
+  trackRequestEnd,
+  trackFail,
+  resetFail,
+  getNetworkSnapshot
+} from "@/common/networkMonitor";
 
 // 允许重试的接口白名单（查询类接口）
 const retryWhitelist = [
@@ -79,6 +86,8 @@ const createAxios = ({ app_name, timeout = 25 }) => {
             config.url.replace("wanda-film", "wanda-film-ser");
         }
       }
+      // 网络观测：在途请求计数（弹窗取证用）
+      trackRequestStart(config.url);
       return config;
     },
     error => {
@@ -89,6 +98,9 @@ const createAxios = ({ app_name, timeout = 25 }) => {
   // 响应拦截器
   instance.interceptors.response.use(
     response => {
+      // 网络观测：请求完成
+      trackRequestEnd(response.config.url);
+      resetFail(response.config.url);
       const data = response.data;
 
       // 检查万达 API 业务错误
@@ -116,6 +128,8 @@ const createAxios = ({ app_name, timeout = 25 }) => {
     },
     async error => {
       const config = error.config;
+      // 网络观测：本次请求结束（重试会重新走 request 拦截器计数）
+      if (config?.url) trackRequestEnd(config.url);
 
       // 尝试网络重试（仅白名单接口）
       const retryResult = await handleNetworkRetry(error, config, instance, {
@@ -152,7 +166,10 @@ const createAxios = ({ app_name, timeout = 25 }) => {
                   code: error.code || "",
                   message: error.message || "",
                   timeoutMs: error.config?.timeout || 0,
-                  retried: !!retryResult
+                  retried: !!retryResult,
+                  // 弹窗现场取证（整改 D3 扩展）：并发数/事件循环延迟/在线状态
+                  ...getNetworkSnapshot(),
+                  failStreak: trackFail(error.config?.url || "")
                 }
               }
             ],
@@ -167,7 +184,8 @@ const createAxios = ({ app_name, timeout = 25 }) => {
         } catch (e) {
           /* 日志落盘失败不影响主流程 */
         }
-        logUpload(
+        // 网络错误日志攒批上传（整改 v1.4）：不再逐条 logUpload——避免失败反馈循环占 6 槽
+        enqueueNetworkError(
           {
             plat_name: "wanda-film",
             app_name: app_name,

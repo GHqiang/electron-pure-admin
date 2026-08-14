@@ -25,6 +25,23 @@ describe("retry-helper", () => {
   // ============================================================
   // 1. isRetryableError 测试
   // ============================================================
+  describe("isNetworkError / isTimeoutError", () => {
+    it("isNetworkError：无 response 的 axios 错误返回 true", () => {
+      axios.isAxiosError.mockReturnValue(true);
+      expect(isNetworkError({ response: null })).toBe(true);
+      expect(isNetworkError({ response: { status: 500 } })).toBe(false);
+    });
+
+    it("isTimeoutError：ECONNABORTED / timeout 消息返回 true", () => {
+      axios.isAxiosError.mockReturnValue(true);
+      expect(isTimeoutError({ code: "ECONNABORTED" })).toBe(true);
+      expect(isTimeoutError({ message: "timeout of 5000ms exceeded" })).toBe(
+        true
+      );
+      expect(isTimeoutError({ message: "Network Error" })).toBe(false);
+    });
+  });
+
   describe("isRetryableError", () => {
     it("非 axios 错误返回 false", () => {
       axios.isAxiosError.mockReturnValue(false);
@@ -64,10 +81,28 @@ describe("retry-helper", () => {
       ).toBe(false);
     });
 
-    it("5xx 错误返回 false（不应重试服务器错误）", () => {
+    it("502/503/504 返回 true（服务不可用可重试，v1.5 保留）", () => {
+      axios.isAxiosError.mockReturnValue(true);
+      expect(
+        isRetryableError({ message: "Request failed with status code 502" })
+      ).toBe(true);
+      expect(
+        isRetryableError({ message: "Request failed with status code 503" })
+      ).toBe(true);
+      expect(
+        isRetryableError({ message: "Request failed with status code 504" })
+      ).toBe(true);
+    });
+    it("500 返回 false（v1.5 移除：服务器 destroy 后代理失败不再返 500，500 为真实 bug 不重试）", () => {
       axios.isAxiosError.mockReturnValue(true);
       expect(
         isRetryableError({ message: "Request failed with status code 500" })
+      ).toBe(false);
+    });
+    it("其他 5xx（501/505）返回 false", () => {
+      axios.isAxiosError.mockReturnValue(true);
+      expect(
+        isRetryableError({ message: "Request failed with status code 501" })
       ).toBe(false);
     });
   });

@@ -30,3 +30,6 @@ release
 auto-ticket-service/
 auto-ticket-service/*
 applet-source-code
+# 网络故障测试工具与临时日志（含数据库连接脚本，勿提交）
+test-6slot/
+network-error-*.log

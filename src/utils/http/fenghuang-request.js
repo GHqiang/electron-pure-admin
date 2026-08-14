@@ -1,3 +1,4 @@
+import { attachTracking } from "@/common/networkMonitor";
 import axios from "axios";
 import { ElMessage } from "element-plus";
 import { GET_APP_INFO } from "@/common/constant";
@@ -526,6 +527,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
     }
   );
 
+  attachTracking(instance);
   return instance;
 };
 export default createAxios;

@@ -1,3 +1,4 @@
+import { attachTracking } from "@/common/networkMonitor";
 // src/utils/axiosInstance.js
 
 import axios from "axios";
@@ -7,11 +8,11 @@ import { GET_APP_INFO } from "@/common/constant";
 import {
   getCinemaLoginInfoList,
   sendWxPusherMessage,
-  logUpload,
   getCurrentTime,
   formatErrInfo
 } from "@/utils/utils";
 import { handleNetworkRetry } from "./retry-helper";
+import { enqueueNetworkError } from "@/common/networkErrorBatcher";
 
 const getToken = async (app_name, IS_DEV) => {
   try {
@@ -343,7 +344,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             ElMessage.error(`请求错误 ${response.status}: ${error.message}`);
         }
       } else {
-        logUpload(
+        enqueueNetworkError(
           {
             plat_name: "",
             app_name: app_name,
@@ -367,6 +368,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
     }
   );
 
+  attachTracking(instance);
   return instance;
 };
 

@@ -39,6 +39,13 @@ export const isRetryableError = error => {
     message.includes("timeout") ||
     message.includes("network error") ||
     message.includes("request failed with status code 408") ||
+    // 服务不可用类（502/503/504）重试：服务抖动时重试可恢复，且 sv-request 的
+    // "连续 10 次失败退出登录"检测依赖失败计数，重试可避免抖动误触发退出登录
+    // 注：500 已移除（整改 v1.5）——v1.4 服务器 destroy 后代理失败不再返回 500，
+    // 500 只剩真实服务器 bug，重试无意义；且 6.6.25 曾因 5xx 重试把失败请求放大 ×2~3
+    // 导致请求量占满 6 槽、弹窗更频繁（用户反馈实证）
+    // (?!\d) 边界：避免 "status code 5000" 等非法码误判
+    /request failed with status code (502|503|504)(?!\d)/.test(message) ||
     error.code === "ECONNABORTED"
   );
 };
