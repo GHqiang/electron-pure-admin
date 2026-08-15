@@ -45,15 +45,19 @@ export const resetFail = url => {
  * 注意：v1.4 起不再做占槽计数（trackRequestStart/End 为 no-op），
  * 但保留"成功时 resetFail"响应拦截器——chenxing/lma/h5ume/fenghuang
  * 依赖它做 failStreak 清零（失败连击统计仍需保持准确，供 D3 日志与轮询退避使用）
+ * 修复（6.6.28）：追加拦截器可能收到【原生成功拦截器返回的业务数据】（如 data.data），
+ * 非 axios response 对象 → 必须可选链防御，否则 response.config.url 抛
+ * "Cannot read properties of undefined (reading 'url')" 导致全部成功请求报错（8-15 事故）
  */
 export const attachTracking = instance => {
   if (!instance?.interceptors) return;
   instance.interceptors.response.use(
     response => {
-      resetFail(response.config.url);
+      if (response?.config?.url) resetFail(response.config.url);
       return response;
     },
     error => {
+      if (error?.config?.url) resetFail(error.config.url);
       return Promise.reject(error);
     }
   );

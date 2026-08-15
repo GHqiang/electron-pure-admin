@@ -204,10 +204,11 @@ class ChenxingBuyTicket extends BaseBuyTicket {
           }
           return await this.orderManage.transferOrder();
         }
-        buyTicketInfo.targetSeatCodes = targetSeatRes.seatCodes;
-        buyTicketInfo.discountList = targetSeatRes.discountList;
-        buyTicketInfo.areaInfoList = targetSeatRes.areaInfoList;
-        buyTicketInfo.cinemaPlanDto = targetSeatRes.cinemaPlanDto;
+        // 8-15 修复：targetSeatRes 可能为 undefined（获取座位布局异常时返回），裸访问抛 TypeError
+        buyTicketInfo.targetSeatCodes = targetSeatRes?.seatCodes;
+        buyTicketInfo.discountList = targetSeatRes?.discountList;
+        buyTicketInfo.areaInfoList = targetSeatRes?.areaInfoList;
+        buyTicketInfo.cinemaPlanDto = targetSeatRes?.cinemaPlanDto;
       } else {
         // 换号出票操作（取消上个号的订单）
         // 取消订单释放座位参数

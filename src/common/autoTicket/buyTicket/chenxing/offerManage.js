@@ -246,7 +246,9 @@ class getChenxingOfferPrice extends BaseOfferPrice {
       const targetSeatRes = await this.seatManage.getSeatLayout(seatParams);
       if (api_version == "3.0C") {
         let discountList = targetSeatRes?.discountList || [];
-        let cinemaPlanDto = targetSeatRes.cinemaPlanDto || {};
+        // 8-15 修复：targetSeatRes 可能为 undefined（获取座位布局异常时返回），
+        // 裸访问 .cinemaPlanDto 抛 "Cannot read properties of undefined"（生产事故）
+        let cinemaPlanDto = targetSeatRes?.cinemaPlanDto || {};
         serviceAddFee = cinemaPlanDto?.serviceAddFee;
         this.logger.infoSave("获取到可用优惠列表", {
           discountList: JSON.parse(JSON.stringify(discountList)),
