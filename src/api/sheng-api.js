@@ -35,7 +35,8 @@ const stayTicketingList = params =>
   axios.post("/supplier/listGrabOrder", params);
 
 // 申请换座
-const applySeatChange = params => axios.post("/supplier/listGrabOrder", params);
+const applySeatChange = params =>
+  axios.post("/supplier/applyChangeSeat", params);
 
 export default {
   queryOfferRecord, // 查询报价记录
