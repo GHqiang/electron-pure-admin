@@ -929,7 +929,7 @@ export default class H5UmeOrderManage {
       const inx = current?.inx;
       const session_id = unlockSessionId ?? list?.[inx]?.session_id;
       // 1、释放座位(仅锁座id存在时)
-      if (!orderId) {
+      if (!orderId && lockOrderId) {
         await this.releaseSeat({ cinemaLinkId, lockOrderId, session_id });
       }
       // 2、取消订单(创建订单id存在时)
