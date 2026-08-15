@@ -121,7 +121,9 @@ export default class SeatManage {
         sendWxPusherMessage({
           orderInfo: this.order,
           transferTip: "万达出现获取座位布局为空，请及时联系开发排查日志",
-          failReason: formatErrInfo(error)
+          // 8-15 修复：此处位于 try 块内，error 是 catch(error) 形参（仅 catch 作用域可见），
+          // 裸引用抛 ReferenceError: error is not defined（生产事故，wanda/mayi/mangguo 座位布局全挂）
+          failReason: formatErrInfo(res)
         });
       }
 
