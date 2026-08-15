@@ -359,7 +359,8 @@ export default class SfcCardQuanManage {
         });
         let quanList = quanRes?.quanList || [];
         let quanType = quanRes?.quanType;
-        quanStock = quanList.length || 0;
+        // 会员赠券按最大卡组长度统计（与报价路径 syncUpdateQuanStock 口径一致），普通券为全部券数
+        quanStock = quanRes?.quanStockNum ?? (quanList.length || 0);
         if (!quanList?.length) {
           logger?.errorSave("个人中心获取目标券列表返回为空");
         }
@@ -408,8 +409,10 @@ export default class SfcCardQuanManage {
         // 更新券库存
         // 参考其他系列（chenxing/jinyi/lma 等）：无论是否入库券，获取到目标券后都更新库存
         // 非入库券目标券不足时也要更新，否则出票失败走 return {} 后出票后更新不触发，库存仍为旧值
+        // quanStock 为完整目标卡组长度（用前真实可出票量），real_quan_stock 为该券类型全部券数
         this.updateQuanStock({
           quan_stock: quanStock,
+          real_quan_stock: quanRes?.realStockNum,
           quan_value: offerRule.quan_value,
           quan_flag: offerRule.quan_flag,
           app_name: appFlag,
@@ -527,7 +530,9 @@ export default class SfcCardQuanManage {
     logger
   }) {
     try {
-      const targetNum = (ticket_num || 0) + 10;
+      // 注意：库存统计需要全量券列表（分组取最大卡组、real_quan_stock 取全部券数），
+      // 不能用 targetNum = ticket_num + 10 限制获取量——多页时只拿部分券会低估最大卡组，
+      // 出票后写回的 quan_stock 偏小，同样会触发规则座位数误缩小
       let targetQuanList = [];
       const params = { city_id, cinema_id, session_id, page: 1, status: 4 };
       logger?.infoSave("获取优惠券列表参数", { params });
@@ -550,11 +555,10 @@ export default class SfcCardQuanManage {
             !(black_quans || []).includes(i.coupon_num)
         );
       }
-      if (total > 1 && targetQuanList.length < targetNum) {
+      if (total > 1) {
         let currentQuanNum = targetQuanList?.length;
         logger?.infoSave("目标券列表数量不够，开始连续获取目标券", {
           ticket_num,
-          targetNum,
           currentQuanNum
         });
         const quanDataRes = await this.continuousGetQuan({
@@ -566,7 +570,7 @@ export default class SfcCardQuanManage {
           quan_flag,
           black_quans,
           ticket_num,
-          targetNum: targetNum - targetQuanList.length,
+          targetNum: Infinity, // 全量获取，保证库存统计完整
           page: 2,
           quanData: [],
           logger
@@ -581,6 +585,10 @@ export default class SfcCardQuanManage {
       } else {
         quanType = card_num ? "offline_member_quan" : "offline_quan";
       }
+      // 分组前记录匹配该券类型的全部券数（真实库存，出票后写 real_quan_stock 用）
+      const realStockNum = targetQuanList.length;
+      // 库存统计默认取全部券数（普通券无分组场景）
+      let quanStockNum = realStockNum;
       if (["offline_member_quan", "online_member_quan"].includes(quanType)) {
         const groupedCoupons = targetQuanList.reduce((groups, coupon) => {
           const key = coupon.card_num;
@@ -589,17 +597,28 @@ export default class SfcCardQuanManage {
           return groups;
         }, {});
         let groupList = Object.values(groupedCoupons);
+        // 最大卡组长度 = 该号一次可出票上限，与报价路径 syncUpdateQuanStock 的 quan_stock 统计口径一致
+        // （若用"第一个满足组"统计，快过期的小卡组会让 quan_stock 偏低，触发规则座位数误缩小）
+        quanStockNum = groupList.reduce(
+          (maxLen, group) => Math.max(maxLen, group.length),
+          0
+        );
         let targetQuanGroup = groupList.find(item => item.length >= ticket_num);
         logger?.infoSave("会员赠券按照card_num分组", {
           groupedCoupons,
-          targetQuanGroup
+          targetQuanGroup,
+          quanStockNum
         });
-        targetQuanList = targetQuanGroup?.slice(0, ticket_num) || [];
+        // 返回完整目标卡组而非 slice(0, ticket_num)：
+        // 出票只取前 ticket_num 张由 useQuan 内 filter(index < ticket_num) 完成，
+        // 库存统计需用完整组长度，截断返回会把 quan_stock 错误写成本次出票用量（如 2），
+        // 导致真实库存（几十张）被覆盖成出票张数，并触发规则座位数误缩小
+        targetQuanList = targetQuanGroup || [];
         if (!targetQuanList?.length) {
           logger?.infoSave("会员赠券数量不够出票");
         }
       }
-      return { quanList: targetQuanList, quanType };
+      return { quanList: targetQuanList, quanType, realStockNum, quanStockNum };
     } catch (e) {
       logger?.errorSave("_getQuanListForPay异常", { error: formatErrInfo(e) });
       return { quanList: [], quanType: "offline_quan" };
@@ -1013,7 +1032,14 @@ export default class SfcCardQuanManage {
    * - 收集 updateList 后批量落库 + 统一触发一次猎人规则同步（singleUpdateQuanStock 已废弃删除，改用批量版）
    */
   async updateQuanStock(params) {
-    const { quan_stock, quan_flag, phone, app_name, quan_value } = params;
+    const {
+      quan_stock,
+      quan_flag,
+      phone,
+      app_name,
+      quan_value,
+      real_quan_stock
+    } = params;
     // 无可用登录账号时 phone 可能为空，空手机号写入库存会产生 phone:"" 脏数据，跳过
     if (!phone) {
       this.logger.infoSave("跳过空手机号券库存更新", {
@@ -1023,6 +1049,8 @@ export default class SfcCardQuanManage {
       });
       return;
     }
+    // real_quan_stock 缺省时回退到 quan_stock，兼容 getNewQuan 等只传 quan_stock 的调用
+    const realStock = real_quan_stock ?? quan_stock;
     let targetQuanList = await this.getTargetQuanByApp(app_name, quan_flag);
     // 同类目标券批量更新处理：收集到 list 后一次性批量落库 + 统一规则同步
     const updateList = [];
@@ -1033,13 +1061,13 @@ export default class SfcCardQuanManage {
         let inx = quanStockList.findIndex(itemA => itemA.phone === phone);
         if (inx != -1) {
           quanStockList[inx].quan_stock = quan_stock;
-          quanStockList[inx].real_quan_stock = quan_stock;
+          quanStockList[inx].real_quan_stock = realStock;
           quanStockList[inx].update_time = getCurrentTime();
         } else {
           quanStockList.push({
             phone,
             quan_stock,
-            real_quan_stock: quan_stock,
+            real_quan_stock: realStock,
             update_time: getCurrentTime()
           });
         }
@@ -1048,7 +1076,7 @@ export default class SfcCardQuanManage {
           {
             phone,
             quan_stock,
-            real_quan_stock: quan_stock,
+            real_quan_stock: realStock,
             update_time: getCurrentTime()
           }
         ];

@@ -364,9 +364,11 @@ async function batchCheckLierenFixedRule({ list, app_name, logger }) {
       parsedStockList = parsedStockList.filter(item => item.phone);
       let maxQuanStock = 0;
       if (parsedStockList.length > 0) {
+        // Number 转换比较：历史脏数据 quan_stock 可能是字符串（如 "10"），
+        // 字符串比较 "10" > "6" 会得出错误结果，导致规则座位数误缩小
         maxQuanStock =
           parsedStockList.reduce((pre, cur) =>
-            pre.quan_stock > cur.quan_stock ? pre : cur
+            Number(pre.quan_stock) > Number(cur.quan_stock) ? pre : cur
           )?.quan_stock || 0;
       }
       // B1：maxQuanStock 变化检测，命中缓存（未过期且值相同）→ 跳过该条同步
