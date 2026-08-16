@@ -639,6 +639,11 @@ class WandaOfferPrice extends BaseOfferPrice {
           json: true
         });
         if (!seatInfo) return -3;
+        // 场次售罄：正常业务状态，仅记 info 日志后直接不报价（不推送微信告警）
+        if (seatInfo.soldOut) {
+          this.logger.errorSave("当前场次已售罄，先不报价");
+          return;
+        }
         console.warn("获取座位布局返回", seatInfo);
         const areaInfoList = seatInfo.areaInfoList || [];
         let basePrice = member_price || 0;

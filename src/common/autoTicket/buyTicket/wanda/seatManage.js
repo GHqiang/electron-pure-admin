@@ -107,6 +107,19 @@ export default class SeatManage {
       this.logger.infoSave("获取座位布局参数", params);
       const res = await this.appApi.getRealTimeSeat(params);
       // this.logger.info("获取座位布局返回", res);
+      // 识别场次售罄：万达售罄时返回 code=0 但 data.bizCode=1008003、
+      // bizMsg 含"售罄"，realtimeSeats 为 null。售罄属正常业务状态，
+      // 不再推送微信告警（避免售罄场次持续刷屏），交由上层按售罄处理
+      const soldOut =
+        Number(res?.data?.bizCode) === 1008003 ||
+        /售罄|售完/.test(res?.data?.bizMsg || "");
+      if (soldOut) {
+        this.logger.infoSave("当前场次已售罄", {
+          bizCode: res?.data?.bizCode,
+          bizMsg: res?.data?.bizMsg
+        });
+        return { seatData: [], areaInfoList: [], area: [], soldOut: true };
+      }
       const realtimeSeats = res?.data?.realtimeSeats || {};
       let areaInfoList = realtimeSeats?.area?.map(item => item.areaPrice);
       let seatData =
