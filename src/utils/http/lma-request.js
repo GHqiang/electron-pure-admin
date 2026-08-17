@@ -13,6 +13,7 @@ import {
 import { handleNetworkRetry } from "./retry-helper";
 import { GET_APP_LIST } from "@/common/constant";
 import { enqueueNetworkError } from "@/common/networkErrorBatcher";
+import { getServerBaseUrl } from "@/common/serverHost";
 
 const createAxios = ({ app_name, timeout = 20 }) => {
   // 创建axios实例
@@ -81,10 +82,10 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         if (delayUrlList.some(item => config.originalUrl?.includes(item))) {
           await mockDelay(0.1);
         }
-        // 生产环境不会跨域
+        // 生产环境不会跨域（分片端口，8-17 弹窗根治）
         config.url = IS_DEV
           ? config.url.replace("lma", "svpi/third-ser")
-          : "http://47.113.191.173:3000" +
+          : getServerBaseUrl(config.originalUrl) +
             "/third-ser" +
             config.originalUrl.slice(4);
       }

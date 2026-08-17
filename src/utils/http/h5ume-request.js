@@ -16,6 +16,7 @@ import {
   formatErrInfo
 } from "@/utils/utils";
 import { enqueueNetworkError } from "@/common/networkErrorBatcher";
+import { getServerBaseUrl } from "@/common/serverHost";
 // 机器登录用户信息
 import { platTokens } from "@/store/platTokens";
 // 字典表配置
@@ -678,10 +679,10 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         if (delayUrlList.some(item => config.originalUrl?.includes(item))) {
           await mockDelay(0.1);
         }
-        // 生产环境不会跨域
+        // 生产环境不会跨域（分片端口，8-17 弹窗根治）
         config.url = IS_DEV
           ? config.url.replace("h5ume", "svpi/ume-ser")
-          : "http://47.113.191.173:3000" +
+          : getServerBaseUrl(config.originalUrl) +
             "/ume-ser" +
             config.originalUrl.slice(6);
 

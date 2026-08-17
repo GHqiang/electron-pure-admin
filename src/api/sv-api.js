@@ -85,8 +85,11 @@ const addOfferRecord = params => axios.post("/svpi/offerRecord/add", params);
 const updateOfferRecord = params =>
   axios.post("/svpi/offerRecord/update", params);
 // 查询第三方 ID 缓存（跨订单复用，命中则跳过城市/影院/影片/场次查询链）
+// 8-17 修订：5s（原设计）——cached-ids 是【可降级接口】：超时/失败 → 回源完整查询链，
+// 应快速失败快速回源（等 10s 才回源会耽误报价/出票流程）；分片后排队大幅减少，
+// 偶发超时由 5s 快速失败 + 业务回源 + 拦截器静默化兜底
 const getCachedThirdPartyIds = params =>
-  axios.get("/svpi/offerRecord/cached-ids", { params, timeout: 7 * 1000 });
+  axios.get("/svpi/offerRecord/cached-ids", { params, timeout: 5 * 1000 });
 // 查询出票记录
 const queryTicketList = params =>
   axios.get("/svpi/ticketRecord/query", { params, timeout: 60 * 1000 });

@@ -13,6 +13,7 @@ import {
 } from "@/utils/utils";
 import { handleNetworkRetry } from "./retry-helper";
 import { enqueueNetworkError } from "@/common/networkErrorBatcher";
+import { getServerBaseUrl } from "@/common/serverHost";
 
 const getToken = async (app_name, IS_DEV) => {
   try {
@@ -21,7 +22,7 @@ const getToken = async (app_name, IS_DEV) => {
     // });
     let url = "/svpi/chenxing-ser/api/auth/token";
     if (!IS_DEV) {
-      url = "http://47.113.191.173:3000/chenxing-ser/api/auth/token";
+      url = getServerBaseUrl(url) + "/chenxing-ser/api/auth/token";
     }
     const res = await axios.request({
       url: url,
@@ -190,9 +191,9 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         // 处理URL
         if (!IS_DEV) {
           if (api_version == "C") {
-            // 需要服务器转发
+            // 需要服务器转发（分片端口，8-17 弹窗根治）
             config.url =
-              "http://47.113.191.173:3000" +
+              getServerBaseUrl(config.url) +
               "/chenxing-ser" +
               config.url.slice(9); // 截取掉/chenxing
           } else {

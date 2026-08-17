@@ -10,6 +10,7 @@ import {
 import { handleNetworkRetry } from "./retry-helper";
 import { saveFailLogToLocal } from "@/common/localFailLog";
 import { enqueueNetworkError } from "@/common/networkErrorBatcher";
+import { getServerBaseUrl } from "@/common/serverHost";
 import {
   trackRequestStart,
   trackRequestEnd,
@@ -114,7 +115,7 @@ instance.interceptors.request.use(
       // 生产环境不会跨域
       config.url = IS_DEV
         ? config.url
-        : "http://47.113.191.173:3000" + config.url.slice(5);
+        : getServerBaseUrl(config.url) + config.url.slice(5);
     }
     // 网络观测：在途请求计数（弹窗取证用）
     trackRequestStart(config.url);
@@ -266,7 +267,14 @@ instance.interceptors.response.use(
           }
         ]
       );
-      ElMessage.error("机器服务网络连接异常，请稍后再试");
+      // cached-ids 静默化（整改 8-17）：可降级接口（超时/失败 → 回源完整查询链），
+      // 弹窗无业务价值；D3 日志/攒批上传保留可查
+      const isCacheIdsUrl = error.config?.url?.includes(
+        "offerRecord/cached-ids"
+      );
+      if (!isCacheIdsUrl) {
+        ElMessage.error("机器服务网络连接异常，请稍后再试");
+      }
     }
     return Promise.reject(error);
   }

@@ -13,6 +13,7 @@ import { GET_APP_LIST } from "@/common/constant";
 import { handleNetworkRetry } from "./retry-helper";
 import { saveFailLogToLocal } from "@/common/localFailLog";
 import { enqueueNetworkError } from "@/common/networkErrorBatcher";
+import { getServerBaseUrl } from "@/common/serverHost";
 import {
   trackRequestStart,
   trackRequestEnd,
@@ -80,9 +81,9 @@ const createAxios = ({ app_name, timeout = 25 }) => {
           // 开发环境：通过 Vite proxy (/svpi) 转发
           config.url = config.url.replace("wanda-film", "svpi/wanda-film-ser");
         } else {
-          // 生产环境：直连后端服务
+          // 生产环境：直连后端服务（分片端口，8-17 弹窗根治）
           config.url =
-            "http://47.113.191.173:3000" +
+            getServerBaseUrl(config.url) +
             config.url.replace("wanda-film", "wanda-film-ser");
         }
       }

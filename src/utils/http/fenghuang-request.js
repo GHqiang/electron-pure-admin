@@ -12,6 +12,7 @@ import {
   formatErrInfo
 } from "@/utils/utils";
 import { handleNetworkRetry } from "./retry-helper";
+import { getServerBaseUrl } from "@/common/serverHost";
 import { md5 } from "./crypto"; // 从原代码中提取的 MD5 函数（见下文）
 window.md51 = md5;
 // 机器登录用户信息
@@ -403,10 +404,10 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         config.data = { data: JSON.stringify(params) };
       }
 
-      // 生产环境不会跨域
+      // 生产环境不会跨域（分片端口，8-17 弹窗根治）
       config.url = IS_DEV
         ? config.url.replace("fenghuang", "svpi/fenghuang-ser")
-        : "http://47.113.191.173:3000" +
+        : getServerBaseUrl(config.originalUrl) +
           "/fenghuang-ser" +
           config.originalUrl.slice(10);
 

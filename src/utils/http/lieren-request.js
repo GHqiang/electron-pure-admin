@@ -10,6 +10,7 @@ import {
 import { platTokens } from "@/store/platTokens";
 import { saveFailLogToLocal } from "@/common/localFailLog";
 import { enqueueNetworkError } from "@/common/networkErrorBatcher";
+import { getServerBaseUrl } from "@/common/serverHost";
 import {
   trackRequestStart,
   trackRequestEnd,
@@ -49,7 +50,7 @@ instance.interceptors.request.use(
         config.url = config.url.replace("lieren", "svpi/lieren-ser");
       } else {
         config.url =
-          "http://47.113.191.173:3000" +
+          getServerBaseUrl(config.url) +
           config.url.replace("lieren", "lieren-ser");
       }
     }
@@ -154,7 +155,12 @@ instance.interceptors.response.use(
           }
         ]
       );
-      ElMessage.error("猎人网络连接异常，请稍后再试");
+      // grab（拉单）接口静默化（整改 8-17）：grab 有 6s tick 循环自动兜底，
+      // 弹窗无业务价值纯噪音（8-16 用户11 单日 198 条 grab 弹窗）；D3 日志/攒批上传保留可查
+      const isGrabUrl = error.config?.url?.includes("/openapi/order/grab");
+      if (!isGrabUrl) {
+        ElMessage.error("猎人网络连接异常，请稍后再试");
+      }
     }
     return Promise.reject(error);
   }

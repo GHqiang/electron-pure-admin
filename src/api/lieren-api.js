@@ -8,9 +8,10 @@ import axios from "@/utils/http/lieren-request";
 const queryOfferRecord = params =>
   axios.post("/lieren/openapi/order/record", params);
 
-// 获取待报价列表（拉单请求统一5秒超时，避免isFetching锁长时间持有导致后续tick全部跳过）
+// 获取待报价列表（拉单请求超时 6s：8-17 预算链对齐——服务器 openApiFactory grab 转发 4s + 回传 1s，
+// 5s 客户端预算临界导致代理故障期"超时"而非快速失败；6s 让服务器 4s 失败能及时返回，tick 循环正常兜底）
 const queryStayOfferList = params =>
-  axios.post("/lieren/openapi/order/grab", params, { timeout: 5 * 1000 });
+  axios.post("/lieren/openapi/order/grab", params, { timeout: 6 * 1000 });
 
 // 获取待出票列表
 const stayTicketingList = params =>
