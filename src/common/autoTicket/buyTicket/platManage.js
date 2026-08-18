@@ -825,7 +825,7 @@ export default class PlatCommon {
       } else if (plat_name === "piaosheng") {
         params = {
           getOrderId: id,
-          note: "优惠库存不足",
+          note: "座位被占",
           reason: ""
         };
       }
