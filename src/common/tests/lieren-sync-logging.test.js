@@ -153,6 +153,36 @@ describe("D — lierenOfferRuleSyncPlat (sync_add_update)", () => {
     const args = svApi.addRuleOperationLog.mock.calls[0][0];
     expect(args.trigger_source).toBe("rule_add_save");
   });
+
+  test("编辑时平台返回新 rule_id：更新本地 platRuleId 并落库", async () => {
+    const ruleInfo = makeRuleInfo(); // platRuleId: 999
+    // 平台在编辑时返回了与本地不一致的新规则id（如账号变更后平台新建规则），
+    // 若不落库新 id，平台按新规则报价中标后本地永远匹配不上
+    lierenApi.ruleAdd.mockResolvedValue({ data: { rule_id: 888 } });
+    lierenApi.ruleList.mockResolvedValue({ data: [] });
+
+    const result = await lierenOfferRuleSyncPlat(ruleInfo);
+
+    // 落库更新 platOfferList 中的新 platRuleId
+    expect(svApi.updateRuleRecord).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 1001,
+        platOfferList: expect.stringContaining('"platRuleId":888')
+      })
+    );
+    // 返回值含新 platRuleId，供调用方落库避免旧 id 覆盖
+    expect(result.platOfferList[0].platRuleId).toBe(888);
+  });
+
+  test("编辑时平台返回相同 rule_id：不重复落库", async () => {
+    const ruleInfo = makeRuleInfo(); // platRuleId: 999
+    lierenApi.ruleAdd.mockResolvedValue({ data: { rule_id: 999 } });
+    lierenApi.ruleList.mockResolvedValue({ data: [] });
+
+    await lierenOfferRuleSyncPlat(ruleInfo);
+
+    expect(svApi.updateRuleRecord).not.toHaveBeenCalled();
+  });
 });
 
 // ========================== E: sync_status ==========================

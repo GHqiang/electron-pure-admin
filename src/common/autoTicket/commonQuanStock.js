@@ -8,6 +8,8 @@ import {
 import svApi from "@/api/sv-api";
 // 统一日志类
 import Logger from "@/common/logger";
+// 本地规则 store 刷新（券库存同步只更新 DB/平台，需同步刷新 store 避免出票匹配用过期快照）
+import refreshLocalOfferRuleList from "@/common/ruleStoreRefresh";
 // 猎人规则同步相关方法
 import useLierenOfferRuleSyncFun, {
   // B4：导入 formatSeats 用于构造 cachedPlatRule，避免 lierenOfferRuleSyncPlat 内部再调 ruleList
@@ -571,6 +573,16 @@ async function batchCheckLierenFixedRule({ list, app_name, logger }) {
         app_name,
         failQuanValues: Array.from(syncFailQuanValues)
       });
+    }
+    // 6. 规则状态/座位数已更新到 DB 与平台，刷新本地规则 store：
+    //    避免后续出票/报价匹配仍使用过期快照（如规则刚被券库存同步重新启用）；
+    //    仅规则实际变更（pendingLogs）时刷新，且异步执行不阻塞券库存同步流程
+    if (pendingLogs.length) {
+      refreshLocalOfferRuleList(logger)
+        .then(refreshed => {
+          logger.infoSave("批量规则同步后刷新本地规则store", { refreshed });
+        })
+        .catch(() => {});
     }
   } catch (error) {
     // B1：同步过程异常时回滚缓存，让下次相同 maxQuanStock 还能重新触发同步

@@ -10,6 +10,9 @@ import {
 import Logger from "../logger.js";
 import StrategyFactory from "@/common/autoTicket/buyTicket/index";
 import svApi from "@/api/sv-api";
+import refreshLocalOfferRuleList, {
+  queryAppOfferRuleList
+} from "@/common/ruleStoreRefresh";
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
 import { GET_APP_TYPE_LIST, LIERENR_REWARDS } from "@/common/constant";
@@ -260,10 +263,11 @@ export default class BaseTicketQueue {
       }
 
       // 查不到报价记录 → 猎人平台主动报价，需本地匹配规则补全报价记录
-      let platRuleId = order.rule_id;
-      let appOfferRuleList = toRaw(offerRuleList.value);
-      if (appOfferRuleList) {
-        appOfferRuleList = appOfferRuleList
+      const platRuleId = order.rule_id;
+
+      // 将规则列表展开为该平台的匹配列表（报价金额 + 平台维度字段如 platRuleId 提升到顶层）
+      const expandPlatOfferList = ruleList =>
+        (ruleList || [])
           .filter(item =>
             item.platOfferList?.length
               ? item.platOfferList
@@ -285,15 +289,39 @@ export default class BaseTicketQueue {
               ) || {})
             };
           });
-      }
+      // 组装当前规则 store 中该平台的规则匹配列表
+      const buildAppOfferRuleList = () =>
+        expandPlatOfferList(toRaw(offerRuleList.value)) || [];
 
       // 1、获取启用的规则列表（只有满足规则才报价）
-      let useRuleList = appOfferRuleList.filter(
-        item =>
-          ["1", "3"].includes(item.status) && item.shadowLineName == app_name
-      );
+      const getUseRuleList = appOfferRuleList =>
+        appOfferRuleList.filter(
+          item =>
+            ["1", "3"].includes(item.status) && item.shadowLineName == app_name
+        );
+
+      let appOfferRuleList = buildAppOfferRuleList();
+      let useRuleList = getUseRuleList(appOfferRuleList);
 
       let targetRule = useRuleList.find(item => item.platRuleId == platRuleId);
+      // 本地规则 store 只在登录/规则页刷新，长跑机器可能持有过期快照：
+      // 匹配失败时分两步恢复，避免全量查询拖慢出票：
+      // 1) 先按 app_name 轻量查询该影线规则，同步等待匹配结果；
+      // 2) 异步刷新全量规则 store（不阻塞出票），保证后续订单匹配直接用最新数据
+      let appRuleQueried = false;
+      let appRules = null;
+      if (!targetRule) {
+        appRules = await queryAppOfferRuleList(app_name);
+        appRuleQueried = true;
+        if (appRules?.length) {
+          const appUseRuleList = getUseRuleList(expandPlatOfferList(appRules));
+          targetRule = appUseRuleList.find(
+            item => item.platRuleId == platRuleId
+          );
+        }
+        // 无论本次匹配是否成功，都异步刷新全量 store，避免后续订单再走慢路径
+        this.refreshOfferRuleList().catch(() => {});
+      }
       // 只有匹配到规则且是固定报价才会去补全报价记录
       if (targetRule && targetRule.offerType == 1) {
         // 补全报价记录的订单在出票时不按用户隔离登录信息
@@ -313,8 +341,12 @@ export default class BaseTicketQueue {
         const matchDiag = targetRule
           ? `找到规则但offerType=${targetRule.offerType}非固定报价(1)`
           : `未找到platRuleId=${platRuleId}的规则`;
-        // 诊断明细：每条规则的id/影子线路/状态/报价类型/liers平台规则id
-        const diagList = (appOfferRuleList || [])
+        // 诊断明细：优先用按影线查询到的最新规则（store 可能过期），取每条规则的id/影子线路/状态/报价类型/liers平台规则id
+        const diagSource =
+          appRuleQueried && appRules?.length
+            ? appRules
+            : appOfferRuleList || [];
+        const diagList = diagSource
           .map(item => ({
             id: item.id,
             shadowLineName: item.shadowLineName,
@@ -327,7 +359,7 @@ export default class BaseTicketQueue {
           .filter(
             item => item.shadowLineName === app_name && item.lierenPlatRuleId
           );
-        const failReason = `猎人报价规则匹配失败：${matchDiag}，app_name=${app_name}，本地规则总数=${appOfferRuleList?.length || 0}，命中shadowLineName的规则数=${useRuleList.length}，规则明细=${JSON.stringify(diagList)}`;
+        const failReason = `猎人报价规则匹配失败：${matchDiag}，app_name=${app_name}，本地规则总数=${appOfferRuleList?.length || 0}，命中shadowLineName的规则数=${useRuleList.length}，已按影线查询重试=${appRuleQueried ? "是" : "否"}，规则明细=${JSON.stringify(diagList)}`;
         this.logger.infoSave(
           "机器未找到匹配的报价规则，先允许出票，后面有报价记录校验",
           {
@@ -335,6 +367,7 @@ export default class BaseTicketQueue {
             app_name,
             appOfferRuleListCount: appOfferRuleList?.length || 0,
             useRuleListCount: useRuleList.length,
+            appRuleQueried,
             matchDiag,
             diagList
           }
@@ -349,6 +382,15 @@ export default class BaseTicketQueue {
     } catch (error) {
       this.logger.errorSave("猎人报价规则检查异常", { error, order });
     }
+  }
+
+  /**
+   * 刷新本地报价规则列表（SV 侧规则变更后，出票时本地 store 可能过期，
+   * 重新拉取启用/仅报价规则更新 store，供 lierenRuleCheck 匹配重试）
+   * @returns {Promise<boolean>} 是否刷新成功
+   */
+  async refreshOfferRuleList() {
+    return await refreshLocalOfferRuleList(this.logger);
   }
 
   async lierenOfferRecordAdd(offerRule, order) {

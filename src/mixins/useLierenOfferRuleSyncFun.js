@@ -212,7 +212,12 @@ export default function useLierenOfferRuleSyncFun() {
       let rule_id = res?.data?.rule_id;
       let platOfferList = ruleInfo.platOfferList || [];
       let finalPlatOfferList = platOfferList.map(item => ({ ...item }));
-      if (!lierenOfferRule.platRuleId && rule_id) {
+      // 平台返回的 rule_id 与本地不一致时（新增获得 / 编辑后平台侧新建了规则），
+      // 需同步更新本地 platRuleId：否则平台按新规则id报价中标后，本地无法匹配到规则，
+      // 导致补写报价记录失败、出票失败
+      const needUpdatePlatRuleId =
+        rule_id && String(rule_id) !== String(lierenOfferRule.platRuleId || "");
+      if (needUpdatePlatRuleId) {
         // 编辑规则增加关联平台规则id
         finalPlatOfferList = platOfferList.map(item => {
           if (item.platName === "lieren") {
@@ -230,7 +235,11 @@ export default function useLierenOfferRuleSyncFun() {
             ? 1
             : 2
         });
-        console.warn("编辑规则-增加关联平台规则id成功");
+        console.warn(
+          lierenOfferRule.platRuleId
+            ? `编辑规则-平台规则id已更新(${lierenOfferRule.platRuleId}->${rule_id})`
+            : "编辑规则-增加关联平台规则id成功"
+        );
       }
       return { platOfferList: finalPlatOfferList };
     } catch (error) {

@@ -438,8 +438,9 @@ describe("batchUpdateQuanStockWithSync - 主流程集成测试", () => {
       app_name: "test_app",
       logger
     });
-    // queryRuleList 仅被调用 1 次（第二次命中 B1 缓存跳过）
-    expect(mockQueryRuleList).toHaveBeenCalledTimes(1);
+    // queryRuleList 共 2 次：第1次为同步流程查询关联规则，第2次为规则更新后刷新本地规则 store
+    // （第二次 batchUpdate 命中 B1 缓存跳过，不再新增调用）
+    expect(mockQueryRuleList).toHaveBeenCalledTimes(2);
   });
 
   test("queryRuleList 返回 data 为空：不误报查询异常，正常走无关联规则分支", async () => {
@@ -543,8 +544,9 @@ describe("batchUpdateQuanStockWithSync - 主流程集成测试", () => {
       app_name: "test_app",
       logger
     });
-    // queryRuleList 仍只被调用 1 次（第二次 Q2 命中缓存整体跳过）
-    expect(mockQueryRuleList).toHaveBeenCalledTimes(1);
+    // queryRuleList 共 2 次：第1次为同步流程查询关联规则，第2次为规则更新后刷新本地规则 store
+    // （第二次 batchUpdate Q2 命中缓存整体跳过，不再新增调用）
+    expect(mockQueryRuleList).toHaveBeenCalledTimes(2);
   });
 
   test("空手机号条目（phone:''）不参与最大券库存计算", async () => {
