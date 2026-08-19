@@ -126,7 +126,10 @@ export default class HahaOrderFetcher extends BaseOrderFetcher {
               des: "哈哈新的待出票订单",
               level: "info",
               info: {
-                newOrder: item
+                newOrder: item,
+                oldOrder: rawStayList.find(
+                  order => order.orderNumber === item.order_number
+                )
               }
             }
           ];

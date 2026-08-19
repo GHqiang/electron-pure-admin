@@ -141,6 +141,9 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
               level: "info",
               info: {
                 newOrder: item,
+                oldOrder: stayList.find(
+                  order => order.order_number === item.order_number
+                ),
                 isAgain: item.changeSeatSuccess
               }
             }

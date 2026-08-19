@@ -164,6 +164,9 @@ export default class ShengOrderFetcher extends BaseOrderFetcher {
               level: "info",
               info: {
                 newOrder: item,
+                oldOrder: rawStayList.find(
+                  order => order.code === item.order_number
+                ),
                 isAgain: item.changeSeatSuccess
               }
             }

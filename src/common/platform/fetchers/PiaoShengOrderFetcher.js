@@ -171,7 +171,7 @@ export default class PiaoShengOrderFetcher extends BaseOrderFetcher {
               info: {
                 newOrder: item,
                 oldOrder: rawStayList.find(
-                  order => order.id === item.order_number
+                  order => order.id === item.plat_order_sn
                 )
               }
             }
