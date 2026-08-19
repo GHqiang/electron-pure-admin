@@ -788,7 +788,7 @@ export default class H5UmeCardQuanManage {
         targetQuanList
       });
     } catch (error) {
-      this.logger.errorSave("更新券库存前获取同类目标券异常", {
+      this.logger.errorSave("辅助-更新券库存前获取同类目标券-异常", {
         params,
         error
       });

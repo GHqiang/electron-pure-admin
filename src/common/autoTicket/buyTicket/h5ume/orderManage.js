@@ -530,7 +530,7 @@ export default class H5UmeOrderManage {
       });
       return res;
     } catch (error) {
-      this.logger.errorSave("取消订单异常", {
+      this.logger.errorSave("降级-取消订单-异常", {
         error,
         params
       });
@@ -567,7 +567,7 @@ export default class H5UmeOrderManage {
       });
       return res;
     } catch (error) {
-      this.logger.infoSave("释放座位异常", { error });
+      this.logger.errorSave("降级-释放座位-异常", { error });
       sendWxPusherMessage({
         orderInfo: this.order,
         transferTip: "释放座位失败，建议手动释放座位，以便后续订单正常出票",

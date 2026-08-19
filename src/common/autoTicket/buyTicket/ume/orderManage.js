@@ -679,7 +679,7 @@ export default class UmeOrderManage {
       });
       return res;
     } catch (error) {
-      this.logger.errorSave("取消订单异常", {
+      this.logger.errorSave("降级-取消订单-异常", {
         error,
         params
       });

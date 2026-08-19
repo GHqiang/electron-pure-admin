@@ -740,7 +740,7 @@ export default class PlatCommon {
         );
         return { retryLock: true };
       }
-      logger.errorSave("申请换座异常", { error });
+      logger.errorSave("降级-申请换座-异常", { error });
       sendWxPusherMessage({
         orderInfo: this.order,
         transferTip: "订单申请换座异常，请关注该订单，如有问题及时手动介入处理",
@@ -831,7 +831,7 @@ export default class PlatCommon {
       }
       this.logger.warn("转单参数", params);
       const res = await PLAT_API_OBJ[plat_name].transferOrder(params);
-      this.logger.infoSave("转单成功", { res });
+      this.logger.infoSave("降级-转单-成功", { res });
       sendWxPusherMessage({
         orderInfo: this.order,
         transferTip: "自动转单处于开启状态,已转单无需处理",
@@ -854,7 +854,7 @@ export default class PlatCommon {
         errMsg,
         errInfo
       });
-      this.logger.errorSave("转单异常", formatErrInfo(error));
+      this.logger.errorSave("降级-转单-异常", formatErrInfo(error));
       sendWxPusherMessage({
         orderInfo: this.order,
         transferTip: "自动转单开启，转单失败，需手动出票或者转单",

@@ -249,7 +249,7 @@ export default class OrderManage {
       this.logger.infoSave("取消订单返回", { res, params });
       return res?.data || null;
     } catch (error) {
-      this.logger.errorSave("万达取消订单异常", {
+      this.logger.errorSave("降级-取消订单-异常", {
         error: formatErrInfo(error),
         params
       });

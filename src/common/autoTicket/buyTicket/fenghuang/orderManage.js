@@ -92,10 +92,10 @@ export default class OrderManage {
       }
       this.logger.infoSave("释放座位参数", params);
       const res = await this.appApi.releaseSeat(params);
-      this.logger.infoSave("释放座位成功", { res });
+      this.logger.infoSave("降级-释放座位-成功", { res });
       return res;
     } catch (error) {
-      this.logger.infoSave("释放座位异常", { error });
+      this.logger.errorSave("降级-释放座位-异常", { error });
       // 锁座流水号无效，重试2次
       if (formatErrInfo(error).includes("无效的锁座流水号") && retryCount < 2) {
         this.logger.infoSave("无效的锁座流水号,准备重试");
@@ -122,10 +122,10 @@ export default class OrderManage {
       };
       this.logger.infoSave("取消订单参数", params);
       const res = await this.appApi.cancelOrder(params);
-      this.logger.infoSave("取消订单成功", { res });
+      this.logger.infoSave("降级-取消订单-成功", { res });
       return res;
     } catch (error) {
-      this.logger.infoSave("取消订单异常", { error });
+      this.logger.errorSave("降级-取消订单-异常", { error });
       sendWxPusherMessage({
         orderInfo: this.order,
         transferTip: "取消订单失败，建议手动取消订单，以便后续订单正常出票",

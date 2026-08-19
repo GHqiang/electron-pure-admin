@@ -925,7 +925,7 @@ export default class CardQuanManage {
         });
       }
     } catch (error) {
-      logger.errorSave("异步更新券库存异常", { error });
+      logger.errorSave("辅助-异步更新券库存-异常", { error });
     } finally {
       logger.logUpload();
     }
