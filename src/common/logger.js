@@ -35,13 +35,25 @@ export default class Logger {
     this.plat_name = plat_name;
     this.order_number = order_number;
     this.app_name = app_name;
-    // V3：按字典白名单启用（示范期 "chenxing"，空=全关/置空即全量回退）
-    // 惰性取 store 并 try-catch：测试/无 pinia 环境安全降级为关；业务运行时 pinia 已激活
+    // V3：按字典白名单启用——app_name 反查系列 key（getSeriesKeyByAppName，如 hsmzyc→chenxing）
+    // 与字典比对（字典配系列名，如 "chenxing"）。
+    // ⚠️ 修复（2026-08-19）：不能用 plat_name（订单来源平台，如 mayi/lieren）判定——
+    //   plat_name 是平台维度，字典配的是系列维度，导致 v3Mode 恒 false、字典"开了不生效"。
+    this._applyV3Flags(app_name);
+  }
+
+  // V3：异步应用 V3 开关（动态 import——constant.js 模块级实例化 pinia store，
+  // 静态 import 会在无 pinia 的测试环境崩溃；业务运行时毫秒级生效）
+  async _applyV3Flags(app_name) {
     try {
+      const { getSeriesKeyByAppName } = await import(
+        "@/common/core/extractThirdPartyIds"
+      );
+      const seriesKey = getSeriesKeyByAppName(app_name);
       const series = (dictTable().dictInfo.log_v3_enabled_series || "")
         .split(",")
         .filter(Boolean);
-      this.v3Mode = series.includes(plat_name);
+      this.v3Mode = seriesKey ? series.includes(seriesKey) : false;
     } catch {
       this.v3Mode = false;
     }
