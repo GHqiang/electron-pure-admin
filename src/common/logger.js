@@ -4,13 +4,12 @@ import {
   traceUpload, // V3 L2：明细日志上传（/svpi/log/trace）
   formatErrInfo
 } from "@/utils/utils";
-import { saveFailLogToLocal } from "@/common/localFailLog";
 
 // V3：降级/辅助动作 des 前缀（仅作根因排除与 L1 收窄白名单判定，非流程前缀）
 const REMEDY_KEYWORDS = ["降级-", "辅助-"];
 const MAX_TRACE_LIST = 500; // traceBuffer 上限（与 logList 一致，丢最旧）
-const TRACE_LOCAL_FLUSH_SIZE = 50; // 本地攒批写盘条数
-const TRACE_LOCAL_FLUSH_MS = 2000; // 本地攒批写盘窗口
+// ⚠️ 调整（2026-08-20）：本地（L3）完全不写日志——明细只落 L2 服务器文件；
+//   客户端本地磁盘零写入（原"失败订单全量写本地"方案已按用户要求移除）
 const MAX_L1_ERROR_COUNT = 5; // v3Mode 下每订单 L1 入库异常条数上限（超出转 L2，P1-3）
 
 export default class Logger {
@@ -20,12 +19,10 @@ export default class Logger {
     this.type = logType; // 日志类型 1-报价队列 2-获取待出票队列 3-出票队列 4-凤凰新sid续期 5-帮助锁座6-h5ume-sid续期
     // isPrint 显式传 false 时不打印控制台（内部独立 logger 场景，日志仅入 logList 上传）
     this.isPrint = isPrint ?? true;
-    // V3：明细日志通道（L2 上传 + L3 本地即时写）
+    // V3：明细日志通道（L2 上传；L3 本地写已停用，客户端不写日志文件）
     this.traceBuffer = []; // 待上传明细（console 级 + 入库级）
-    this._localPending = []; // 待本地写盘明细（与上传分离，避免 splice 竞争）
     this.traceEnabled = false; // 字典白名单判定（log_v3_enabled_series）
     this.v3Mode = false; // L1 收窄开关（同字典，默认关=全量回退）
-    this._traceFlushTimer = null;
     // V3：根因缓存（失败根因不被降级/辅助动作覆盖）
     this._rootErrCache = null;
     this._l1ErrorCount = 0; // v3Mode 下本实例 L1 入库 errorSave 计数
@@ -87,18 +84,16 @@ export default class Logger {
       // 如 chenxing_applet，最可靠）；缺失时按 app_name（具体影线）→ 所属系列反查。
       // ⚠️ 修复（2026-08-20）：getCanAppTypeList 是"当前登录账号可用影线"列表，
       //   可能不含该影线（跨账号/多影线场景）导致反查失败——订单自带字段优先。
+      // ⚠️ 简化（2026-08-20 复查）：异步无条件判定——有 app_type_code 时同步（localStorage
+      //   缓存）与异步（dictTable store 同源缓存）的 series 相同 → 结果必然一致，无需
+      //   "同步成功则不覆盖"标记；无 app_type_code 时异步反查补判；catch 静默不覆盖。
       const appTypeCode = app_type_code
         ? app_type_code
         : GET_APP_TYPE_LIST().find(item =>
             item.app_name_list.includes(app_name)
           )?.app_type_code;
-      if (!app_type_code) {
-        // 同步阶段（_applyV3FlagsSync）已按订单自带 app_type_code + 本地字典缓存判定，
-        // 异步仅兜底 app_type_code 缺失场景，不覆盖同步结果（防 GET_APP_TYPE_LIST
-        // 异常/未加载把已生效的 v3Mode 冲回 false）
-        this.v3Mode = appTypeCode ? series.includes(appTypeCode) : false;
-        this.traceEnabled = this.v3Mode;
-      }
+      this.v3Mode = appTypeCode ? series.includes(appTypeCode) : false;
+      this.traceEnabled = this.v3Mode;
     } catch {
       // 异步失败静默，不覆盖同步判定结果
     }
@@ -156,52 +151,12 @@ export default class Logger {
     }
   }
 
-  // V3：明细入缓存（待上传）+ 触发本地攒批写盘
+  // V3：明细入缓存（待上传 L2；客户端本地不写日志文件，L3 已停用）
   _pushTrace(item) {
     this.traceBuffer.push(item);
     if (this.traceBuffer.length > MAX_TRACE_LIST) {
       this.traceBuffer.splice(0, this.traceBuffer.length - MAX_TRACE_LIST);
     }
-    this._localPending.push(item);
-    if (this._localPending.length > MAX_TRACE_LIST) {
-      this._localPending.splice(0, this._localPending.length - MAX_TRACE_LIST);
-    }
-    this._scheduleLocalFlush();
-  }
-  _scheduleLocalFlush() {
-    if (this._localPending.length >= TRACE_LOCAL_FLUSH_SIZE) {
-      this._flushTraceLocal();
-      return;
-    }
-    if (!this._traceFlushTimer) {
-      this._traceFlushTimer = setTimeout(() => {
-        this._traceFlushTimer = null;
-        this._flushTraceLocal();
-      }, TRACE_LOCAL_FLUSH_MS);
-    }
-  }
-  // V3：本地即时写盘（userData/logs/trace-YYYYMMDD.log，经主进程 save-trace-log，
-  // fire-and-forget 失败静默——崩溃最多丢 2s 攒批窗口内日志）
-  _flushTraceLocal() {
-    if (this._traceFlushTimer) {
-      clearTimeout(this._traceFlushTimer);
-      this._traceFlushTimer = null;
-    }
-    if (!this._localPending.length) return;
-    const batch = this._localPending.splice(0, this._localPending.length);
-    // L3 本地 WriteTrace：走专用 save-trace-log IPC（主进程 200MB 上限），
-    // 不要走 save-fail-log（仅 20MB 且超限会覆盖式截断，会清空当天历史 trace）
-    saveFailLogToLocal(
-      batch,
-      {
-        plat_name: this.plat_name,
-        app_name: this.app_name,
-        order_number: this.order_number,
-        type: this.type
-      },
-      "trace",
-      "save-trace-log"
-    );
   }
 
   info(message, meta) {
@@ -256,7 +211,8 @@ export default class Logger {
         )
       );
     }
-    // L2：明细日志（v3Mode/traceEnabled 时上传 /svpi/log/trace，失败不重试不告警，L3 本地已兜底）
+    // L2：明细日志（v3Mode/traceEnabled 时上传 /svpi/log/trace，失败不重试不告警；
+    // 客户端本地不写日志文件（L3 已停用，2026-08-20 用户要求），明细只落服务器）
     if (this.traceEnabled && this.traceBuffer.length) {
       const traceBatch = this.traceBuffer.splice(0, this.traceBuffer.length);
       tasks.push(() =>
@@ -283,7 +239,7 @@ export default class Logger {
           try {
             await task();
           } catch (error) {
-            // trace 失败静默（L3 已兜底）；addList 失败已在 utils.logUpload 内部兜底+告警
+            // trace 失败静默（明细只靠 L2 服务器，客户端无本地兜底）；addList 失败已在 utils.logUpload 内部兜底+告警
             console.error("日志上传链路异常", error);
           }
         }
