@@ -313,19 +313,24 @@
           }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" fixed="right" align="center" width="210">
+      <el-table-column label="操作" fixed="right" align="center" width="260">
         <template
           #default="{
+            row,
             row: {
               order_status,
               profit,
               id,
               order_number,
               user_id: rowUserId,
-              lockseat
+              lockseat,
+              processing_time
             }
           }"
         >
+          <el-button size="small" type="info" @click="showDetail(row)"
+            >详情</el-button
+          >
           <el-button
             v-if="order_status === '2' && String(user_id) === String(rowUserId)"
             size="small"
@@ -348,7 +353,9 @@
             v-if="order_status != 1"
             size="small"
             type="primary"
-            @click="queryLog({ order_number, user_id: rowUserId })"
+            @click="
+              queryLog({ order_number, user_id: rowUserId, processing_time })
+            "
             >查询日志</el-button
           >
         </template>
@@ -366,22 +373,115 @@
       @current-change="handleCurrentChange"
     />
 
-    <el-dialog v-model="dialogLogVisible" title="订单操作日志" width="1000">
-      <el-table :data="logData" border>
-        <el-table-column type="index" label="序号" width="60" />
-        <el-table-column
-          property="opera_time"
-          sortable
-          label="操作时间"
-          width="160"
-        />
-        <el-table-column property="des" width="180" label="操作描述" />
-        <el-table-column
-          property="info"
-          show-overflow-tooltip
-          label="详细信息"
-        />
-      </el-table>
+    <el-dialog v-model="dialogLogVisible" title="订单日志" width="1100">
+      <el-tabs v-model="logTabActive">
+        <el-tab-pane label="异常日志" name="error">
+          <el-table :data="logData" border>
+            <el-table-column type="index" label="序号" width="60" />
+            <el-table-column
+              property="opera_time"
+              sortable
+              label="操作时间"
+              width="160"
+            />
+            <el-table-column property="des" width="180" label="操作描述" />
+            <el-table-column
+              property="info"
+              show-overflow-tooltip
+              label="详细信息"
+            />
+          </el-table>
+        </el-tab-pane>
+        <el-tab-pane label="明细日志" name="trace">
+          <div style="margin-bottom: 10px">
+            <span style="margin-right: 8px"
+              >订单号：{{ currentLogOrderNumber }}</span
+            >
+            <el-date-picker
+              v-model="traceDate"
+              type="date"
+              placeholder="选择日期"
+              value-format="YYYYMMDD"
+              format="YYYY-MM-DD"
+              style="width: 160px; margin-right: 10px"
+            />
+            <el-button size="small" type="primary" @click="queryTrace"
+              >查询明细</el-button
+            >
+            <el-checkbox v-model="traceBrief" style="margin-left: 10px"
+              >仅时间线（不含 info，省流量）</el-checkbox
+            >
+            <span style="margin-left: 10px; color: #909399; font-size: 12px"
+              >来源：后端日志文件 /svpi/log/trace（按日/按用户目录）</span
+            >
+          </div>
+          <el-table :data="traceData" border max-height="500">
+            <el-table-column type="index" label="序号" width="60" />
+            <el-table-column
+              property="opera_time"
+              sortable
+              label="操作时间"
+              width="160"
+            />
+            <el-table-column property="des" width="220" label="操作描述" />
+            <el-table-column property="level" width="70" label="级别" />
+            <el-table-column
+              v-if="!traceBrief"
+              property="info"
+              show-overflow-tooltip
+              label="详细信息"
+            />
+          </el-table>
+        </el-tab-pane>
+      </el-tabs>
+    </el-dialog>
+
+    <!-- 出票详情弹框（V3 L0：用户关心的用券用卡字段直接展示） -->
+    <el-dialog v-model="dialogDetailVisible" title="出票详情" width="760">
+      <el-descriptions v-if="currentTicketRow" :column="2" border>
+        <el-descriptions-item label="订单号">{{
+          currentTicketRow.plat_order_sn || currentTicketRow.order_number
+        }}</el-descriptions-item>
+        <el-descriptions-item label="状态">{{
+          TICKET_STATUS[currentTicketRow.order_status]
+        }}</el-descriptions-item>
+        <el-descriptions-item label="出票手机号">{{
+          currentTicketRow.mobile || ""
+        }}</el-descriptions-item>
+        <el-descriptions-item label="支付卡号">{{
+          currentTicketRow.card_num || ""
+        }}</el-descriptions-item>
+        <el-descriptions-item label="支付前卡余额">{{
+          currentTicketRow.card_balance ?? ""
+        }}</el-descriptions-item>
+        <el-descriptions-item label="实付金额">{{
+          currentTicketRow.payment_amount ?? ""
+        }}</el-descriptions-item>
+        <el-descriptions-item label="用券类型">{{
+          currentTicketRow.quan_value || ""
+        }}</el-descriptions-item>
+        <el-descriptions-item label="优惠券码">{{
+          currentTicketRow.quan_code || ""
+        }}</el-descriptions-item>
+        <el-descriptions-item label="利润">{{
+          currentTicketRow.profit ?? ""
+        }}</el-descriptions-item>
+        <el-descriptions-item label="取票码">{{
+          currentTicketRow.qrcode || ""
+        }}</el-descriptions-item>
+        <el-descriptions-item label="用券明细" :span="2">{{
+          formatCoupons(currentTicketRow.coupons)
+        }}</el-descriptions-item>
+        <el-descriptions-item label="用券用卡路径" :span="2">{{
+          currentTicketRow.use_path || ""
+        }}</el-descriptions-item>
+        <el-descriptions-item
+          v-if="currentTicketRow.order_status === '2'"
+          label="失败原因"
+          :span="2"
+          >{{ currentTicketRow.err_msg || "" }}</el-descriptions-item
+        >
+      </el-descriptions>
     </el-dialog>
   </div>
 </template>
@@ -517,6 +617,32 @@ const dialogLogVisible = ref(false);
 // 操作日志列表
 const logData = ref([]);
 
+// V3 L0：出票详情弹框
+const dialogDetailVisible = ref(false);
+const currentTicketRow = ref(null);
+const showDetail = row => {
+  currentTicketRow.value = row;
+  dialogDetailVisible.value = true;
+};
+// 用券明细 JSON 字符串 → 可读文本
+const formatCoupons = str => {
+  if (!str) return "";
+  try {
+    const list = JSON.parse(str);
+    if (!Array.isArray(list)) return str;
+    return list
+      .map(
+        item =>
+          `${item.couponName || item.couponType || "券"}(${
+            item.couponCode || ""
+          })`
+      )
+      .join("、");
+  } catch {
+    return str;
+  }
+};
+
 // 表单查询数据
 const formData = reactive({
   plat_name: "", // 订单来源
@@ -647,7 +773,7 @@ const againTicket = async ({ order_number, user_id, lockseat }) => {
 };
 
 // 查询操作日志
-const queryLog = async ({ order_number, user_id }) => {
+const queryLog = async ({ order_number, user_id, processing_time }) => {
   try {
     const res = await svApi.queryLogRecord({
       order_number,
@@ -656,10 +782,40 @@ const queryLog = async ({ order_number, user_id }) => {
     });
     console.warn("查询操作日志返回", res);
     let logList = res.data?.cardList || [];
+    currentLogOrderNumber.value = order_number || "";
+    // E1 修复：明细默认日期取订单处理时间（而非"今天"——订单可能不是今天处理的）
+    if (processing_time) {
+      currentLogDate.value = String(processing_time)
+        .slice(0, 10)
+        .replace(/-/g, "");
+    }
     dialogLogVisible.value = true;
+    logTabActive.value = "error";
     logData.value = logList;
   } catch (error) {
     console.warn("查询操作日志返回异常", error);
+  }
+};
+
+// V3 L2：明细日志 Tab（后端日志文件查询）
+const logTabActive = ref("error");
+const currentLogOrderNumber = ref("");
+const currentLogDate = ref("");
+const traceDate = ref("");
+const traceBrief = ref(false);
+const traceData = ref([]);
+const queryTrace = async () => {
+  if (!currentLogOrderNumber.value) return;
+  try {
+    const res = await svApi.queryLogTrace({
+      order_number: currentLogOrderNumber.value,
+      date: traceDate.value || currentLogDate.value,
+      brief: traceBrief.value ? 1 : 0
+    });
+    traceData.value = res.data?.data?.list || [];
+  } catch (error) {
+    console.warn("查询明细日志返回异常", error);
+    traceData.value = [];
   }
 };
 

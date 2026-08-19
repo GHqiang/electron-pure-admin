@@ -189,7 +189,9 @@ class ChenxingBuyTicket extends BaseBuyTicket {
             dictStore.dictInfo.supportChangeSeatPlatList.includes(plat_name)
           ) {
             this._hasAppliedChangeSeat = true;
-            this.logger.infoSave("获取目标座位失败，订单走申请换座逻辑");
+            this.logger.errorSave("降级-申请换座-进入", {
+              原因: "获取目标座位失败"
+            });
             const isApplyChangeSeat = await this.platManage.applyChangeSeat({
               ...item,
               logger: this.logger
@@ -236,13 +238,10 @@ class ChenxingBuyTicket extends BaseBuyTicket {
         buyTicketInfo.order_num = "";
         buyTicketInfo.lockOrderId = "";
         const phone = this.currentParamsList[this.currentParamsInx]?.mobile;
-        this.logger.infoSave(
-          `第${this.currentParamsInx}次换号出票手机号-${phone}`,
-          {
-            currentParamsInx: this.currentParamsInx,
-            currentParamsList: this.currentParamsList
-          }
-        );
+        this.logger.errorSave(`降级-换号-第${this.currentParamsInx}次`, {
+          mobile: phone,
+          currentParamsInx: this.currentParamsInx
+        });
         // 换号时恢复原先券类型
         if (this.offerRule?.old_quan_value) {
           this.offerRule.quan_value = this.offerRule.old_quan_value;
@@ -299,6 +298,9 @@ class ChenxingBuyTicket extends BaseBuyTicket {
         ) {
           // 走申请座位逻辑
           this._hasAppliedChangeSeat = true;
+          this.logger.errorSave("降级-申请换座-进入", {
+            原因: errInfo || "锁座失败"
+          });
           const isApplyChangeSeat = await this.platManage.applyChangeSeat({
             ...item,
             logger: this.logger
@@ -672,7 +674,9 @@ class ChenxingBuyTicket extends BaseBuyTicket {
           paymentAmount,
           logger: this.logger
         }).catch(e =>
-          this.logger.warn?.("出票后同步辰星卡余额异常(不影响主流程)", e)
+          this.logger.errorSave("辅助-同步卡余额-异常", {
+            error: formatErrInfo(e)
+          })
         );
       }
       if (offerRule.offer_type === "1" && useQuan?.length) {
@@ -704,11 +708,27 @@ class ChenxingBuyTicket extends BaseBuyTicket {
       });
       if (lastRes?.qrcode && lastRes?.submitRes) {
         this.logger.infoSave("订单最后处理成功:获取取票码并上传");
+        // V3 根因缓存：出票成功（含重试成功）重置根因，避免残留错误污染后续 err_msg
+        this.logger.resetRootErr();
       }
       console.log("一键买票完成");
       if (profit) {
         profit = Number(profit).toFixed(2);
       }
+      // V3 L0：用券用卡快照采集（挂 ticketRes，BaseTicketQueue.saveTicketRecord 收口入库）
+      const couponsSnapshot = (useQuan || []).slice(0, 10).map(item => ({
+        couponType: item.couponType,
+        couponCode: item.couponCode,
+        couponName: item.couponName
+      }));
+      const usePath = this.buildTicketUsePath({
+        offer_type,
+        useQuan: useQuan || [],
+        cardNum,
+        cardBalance,
+        paymentAmount,
+        currentParamsInx: this.currentParamsInx
+      });
       return {
         profit,
         qrcode: lastRes?.qrcode,
@@ -717,7 +737,13 @@ class ChenxingBuyTicket extends BaseBuyTicket {
         card_id,
         cardNum,
         offerRule,
-        mobile: this.currentPhone
+        mobile: this.currentPhone,
+        // 数值列传 null（非 ""）：saveTicketRecord 收口处 ?? null 兜底，
+        // "" 会绕过 ?? 且被 MySQL 严格模式拒绝写入 DECIMAL 列（ERROR 1366）
+        paymentAmount: paymentAmount ?? null,
+        cardBalance: cardBalance ?? null,
+        coupons: couponsSnapshot,
+        usePath
       };
     } catch (error) {
       this.logger.errorSave("一键买票异常", formatErrInfo(error));
@@ -728,6 +754,41 @@ class ChenxingBuyTicket extends BaseBuyTicket {
       });
       return { offerRule: this.offerRule };
     }
+  }
+
+  /**
+   * V3 L0：拼装一句话用券用卡路径（入库 use_path，供详情页直接可读）
+   * @private
+   */
+  buildTicketUsePath({
+    offer_type,
+    useQuan,
+    cardNum,
+    cardBalance,
+    paymentAmount,
+    currentParamsInx
+  }) {
+    const steps = [];
+    if (currentParamsInx > 0) {
+      steps.push(`换号${currentParamsInx}次`);
+    }
+    if (offer_type === "1" && useQuan?.length) {
+      steps.push(`用券${useQuan.length}张`);
+      if (cardNum) {
+        steps.push(
+          `卡尾号${String(cardNum).slice(-4)}付券手续费${paymentAmount ?? ""}`
+        );
+      } else {
+        steps.push(`实付${paymentAmount ?? ""}`);
+      }
+    } else if (cardNum) {
+      steps.push(`用卡尾号${String(cardNum).slice(-4)}`);
+      if (cardBalance != null && cardBalance !== "") {
+        steps.push(`支付前余额${cardBalance}`);
+      }
+      steps.push(`实付${paymentAmount ?? ""}`);
+    }
+    return steps.join("→");
   }
 
   /**
@@ -742,7 +803,10 @@ class ChenxingBuyTicket extends BaseBuyTicket {
       const transferParams = await this.orderManage.transferOrder(params);
       return { offerRule, transferParams };
     } else {
-      this.logger.infoSave("非最后一次用卡用券失败，走换号");
+      this.logger.errorSave("降级-换号-进入", {
+        原因: "非最后一次用卡用券失败",
+        currentParamsInx
+      });
       this.currentParamsInx++;
       return await this.oneClickBuyTicket(buyTicketInfo);
     }

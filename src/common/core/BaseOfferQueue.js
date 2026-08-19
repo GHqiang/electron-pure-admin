@@ -1217,7 +1217,17 @@ export default class BaseOfferQueue {
         adjust_price: offerResult?.offerRule?.adjustPrice,
         price_spread: offerResult?.offerRule?.price_spread,
         offer_duration: extra.offer_duration ?? null,
-        queue_wait_ms: extra.queue_wait_ms ?? null
+        queue_wait_ms: extra.queue_wait_ms ?? null,
+        // V3 L0：一句话报价计算路径与命中规则名（各系列 offerManage 拼装挂到 offerRule；
+        // 缺省空串，防止动态 INSERT 出现 undefined 绑定参数）
+        // calc_path 截断保护：VARCHAR(500) 上限，超长保留末尾关键段（"最终报价X"），前缀省略
+        calc_path: (() => {
+          const calcPathRaw = offerResult?.offerRule?.calc_path ?? "";
+          return calcPathRaw.length > 500
+            ? `…[前略]${calcPathRaw.slice(-495)}`
+            : calcPathRaw;
+        })(),
+        hit_rule_name: offerResult?.offerRule?.hit_rule_name ?? ""
       };
       // 提取第三方 ID 集合（跨订单复用）：成功/失败报价均可写入（失败单若已解析出影院/影片 ID 也可复用）
       const thirdPartyIds = offerResult?.cinemaInfo
@@ -1255,6 +1265,8 @@ export default class BaseOfferQueue {
           order_number: order.order_number,
           order_status: serOrderInfo.order_status
         });
+        // V3 根因缓存：成功报价（含"重试后成功"）重置根因，避免残留错误污染 err_msg
+        log.resetRootErr();
       }
     } catch (error) {
       console.error("添加订单处理记录异常", error);

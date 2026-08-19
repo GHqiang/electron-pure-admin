@@ -296,6 +296,16 @@ app.whenReady().then(() => {
   createWindow();
   // 开启定期过期检查
   // startExpirationCheck();
+  // V3 L3：本地 trace 回收——启动即清一次 + 每日定时（24h 轮询）
+  void cleanLocalTraceFiles();
+  setInterval(() => {
+    void cleanLocalTraceFiles();
+  }, 24 * 3600 * 1000);
+});
+
+// V3 L3：退出时再清一次（覆盖长时间运行后直接关窗的场景）
+app.on("before-quit", () => {
+  void cleanLocalTraceFiles();
 });
 
 app.on("window-all-closed", () => {
@@ -404,7 +414,11 @@ function todayStr() {
 }
 
 // 公共写盘：目录不存在则创建；单文件超限截断（保留最新批次 + 截断提示）；写失败仅记错误不影响调用方
-async function appendLocalLog(fileName: string, content: string): Promise<boolean> {
+async function appendLocalLog(
+  fileName: string,
+  content: string,
+  maxBytes: number = FAIL_LOG_MAX_BYTES
+): Promise<boolean> {
   try {
     const logDir = join(app.getPath("userData"), FAIL_LOG_DIR);
     await mkdir(logDir, { recursive: true });
@@ -418,10 +432,10 @@ async function appendLocalLog(fileName: string, content: string): Promise<boolea
     } catch {
       // 文件不存在，忽略
     }
-    if (fileSize > FAIL_LOG_MAX_BYTES) {
+    if (fileSize > maxBytes) {
       await writeFile(
         filePath,
-        `[${new Date().toLocaleString()}] 本地兜底日志超过 ${FAIL_LOG_MAX_BYTES} 字节，已截断，仅保留最新批次\n`
+        `[${new Date().toLocaleString()}] 本地兜底日志超过 ${maxBytes} 字节，已截断，仅保留最新批次\n`
       );
     }
 
@@ -453,6 +467,56 @@ ipcMain.handle(
     return appendLocalLog(safeName, content);
   }
 );
+
+// V3 L2/L3：明细日志（trace）本地写盘 — 单日文件可能达 60~100MB，上限放宽到 200MB（区别于 20MB 的兜底日志）
+const TRACE_LOG_MAX_BYTES = 200 * 1024 * 1024; // 200MB
+const TRACE_LOCAL_RETAIN_DAYS = 7; // 本地 trace 保留天数（启动/每日/退出三时机清理）
+ipcMain.handle(
+  "save-trace-log",
+  async (
+    _event,
+    {
+      fileDate,
+      content,
+      fileName
+    }: { fileDate: string; content: string; fileName?: string }
+  ) => {
+    const safeName =
+      fileName && /^[\w-]+\.log$/.test(fileName)
+        ? fileName
+        : `trace-${fileDate}.log`;
+    return appendLocalLog(safeName, content, TRACE_LOG_MAX_BYTES);
+  }
+);
+
+// V3 L3：本地 trace 文件回收（保留 TRACE_LOCAL_RETAIN_DAYS 天）。
+// 时机三选一都不够：仅启动清理会因"长时间不重启"累积（日 60~100MB × N 天）；
+// 仅每日定时覆盖不了"启动即清"；仅退出覆盖不了崩溃强杀。三时机组合：
+//   ① 启动时（whenReady）② 每日定时（03:00 前后，24h 轮询）③ 退出时（before-quit）
+async function cleanLocalTraceFiles(): Promise<void> {
+  try {
+    const logDir = join(app.getPath("userData"), FAIL_LOG_DIR);
+    const files = await readdir(logDir).catch(() => []);
+    const cutoff = Date.now() - TRACE_LOCAL_RETAIN_DAYS * 24 * 3600 * 1000;
+    let removed = 0;
+    for (const f of files) {
+      const m = /^trace-(\d{8})\.log$/.exec(f);
+      if (!m) continue;
+      const fileDate = new Date(
+        `${m[1].slice(0, 4)}-${m[1].slice(4, 6)}-${m[1].slice(6, 8)}`
+      );
+      if (fileDate.getTime() < cutoff) {
+        await unlink(join(logDir, f)).catch(() => {});
+        removed++;
+      }
+    }
+    if (removed > 0) {
+      console.log(`[本地日志] trace 清理：移除 ${removed} 个过期文件（保留 ${TRACE_LOCAL_RETAIN_DAYS} 天）`);
+    }
+  } catch (error) {
+    console.error("本地 trace 清理失败", error);
+  }
+}
 
 // 新增：通用 HTTP 代理接口
 // ipcMain.handle('proxy-http-request', async (event, requestOptions) => {

@@ -22,7 +22,7 @@ const getNowStr = () => {
  * @param {string} [customName] - 自定义文件名前缀（如 "network-error" → network-error-YYYYMMDD.log），
  *                                不传保持默认 logUploadFail-YYYYMMDD.log（整改 D3 复用）
  */
-export const saveFailLogToLocal = (batch = [], order = {}, customName = "") => {
+export const saveFailLogToLocal = (batch = [], order = {}, customName = "", ipcName = "save-fail-log") => {
   if (!batch.length) return;
   const now = new Date();
   const pad = n => String(n).padStart(2, "0");
@@ -63,7 +63,7 @@ export const saveFailLogToLocal = (batch = [], order = {}, customName = "") => {
       ? `${customName}-${fileDate}.log`
       : `logUploadFail-${fileDate}.log`;
     ipcRenderer
-      .invoke("save-fail-log", { fileDate, content, fileName })
+      .invoke(ipcName, { fileDate, content, fileName })
       .catch(() => {});
   } else {
     console.warn("本地兜底日志：ipcRenderer 不可用，跳过落盘");

@@ -1,8 +1,18 @@
 // logger.js - 统一日志处理
 import {
   logUpload, // 日志上传
+  traceUpload, // V3 L2：明细日志上传（/svpi/log/trace）
   formatErrInfo
 } from "@/utils/utils";
+import { saveFailLogToLocal } from "@/common/localFailLog";
+import { dictTable } from "@/store/dictTable";
+
+// V3：降级/辅助动作 des 前缀（仅作根因排除与 L1 收窄白名单判定，非流程前缀）
+const REMEDY_KEYWORDS = ["降级-", "辅助-"];
+const MAX_TRACE_LIST = 500; // traceBuffer 上限（与 logList 一致，丢最旧）
+const TRACE_LOCAL_FLUSH_SIZE = 50; // 本地攒批写盘条数
+const TRACE_LOCAL_FLUSH_MS = 2000; // 本地攒批写盘窗口
+const MAX_L1_ERROR_COUNT = 5; // v3Mode 下每订单 L1 入库异常条数上限（超出转 L2，P1-3）
 
 export default class Logger {
   static levels = { INFO: "info", WARN: "warn", ERROR: "error" };
@@ -11,11 +21,31 @@ export default class Logger {
     this.type = logType; // 日志类型 1-报价队列 2-获取待出票队列 3-出票队列 4-凤凰新sid续期 5-帮助锁座6-h5ume-sid续期
     // isPrint 显式传 false 时不打印控制台（内部独立 logger 场景，日志仅入 logList 上传）
     this.isPrint = isPrint ?? true;
+    // V3：明细日志通道（L2 上传 + L3 本地即时写）
+    this.traceBuffer = []; // 待上传明细（console 级 + 入库级）
+    this._localPending = []; // 待本地写盘明细（与上传分离，避免 splice 竞争）
+    this.traceEnabled = false; // 字典白名单判定（log_v3_enabled_series）
+    this.v3Mode = false; // L1 收窄开关（同字典，默认关=全量回退）
+    this._traceFlushTimer = null;
+    // V3：根因缓存（失败根因不被降级/辅助动作覆盖）
+    this._rootErrCache = null;
+    this._l1ErrorCount = 0; // v3Mode 下本实例 L1 入库 errorSave 计数
   }
   init({ plat_name, order_number, app_name }) {
     this.plat_name = plat_name;
     this.order_number = order_number;
     this.app_name = app_name;
+    // V3：按字典白名单启用（示范期 "chenxing"，空=全关/置空即全量回退）
+    // 惰性取 store 并 try-catch：测试/无 pinia 环境安全降级为关；业务运行时 pinia 已激活
+    try {
+      const series = (dictTable().dictInfo.log_v3_enabled_series || "")
+        .split(",")
+        .filter(Boolean);
+      this.v3Mode = series.includes(plat_name);
+    } catch {
+      this.v3Mode = false;
+    }
+    this.traceEnabled = this.v3Mode;
   }
   log(level, message, isSave, meta) {
     const timestamp = new Date().toLocaleString().replaceAll("/", "-");
@@ -27,9 +57,31 @@ export default class Logger {
         console[level](`${message}`);
       }
     }
+    // V3：L1 收窄（v3Mode 下 info/warn 非降级/辅助前缀强制不入 opera_record，仍进 traceBuffer/L2）
+    if (isSave && this.v3Mode && level !== "error") {
+      const isRemedy = REMEDY_KEYWORDS.some(kw => message.startsWith(kw));
+      if (!isRemedy) isSave = false;
+    }
+    // V3：L1 条数兜底（P1-3）：v3Mode 下 errorSave 超上限后仅 L2
+    if (isSave && this.v3Mode && level === "error") {
+      if (this._l1ErrorCount >= MAX_L1_ERROR_COUNT) {
+        isSave = false;
+      } else {
+        this._l1ErrorCount++;
+      }
+    }
     if (isSave) {
       // 统一日志格式
       this._addToLogList({
+        opera_time: timestamp,
+        des: message,
+        level,
+        info: meta
+      });
+    }
+    // V3：明细采集（所有级别，按原始值记录——本方案不脱敏）
+    if (this.traceEnabled) {
+      this._pushTrace({
         opera_time: timestamp,
         des: message,
         level,
@@ -46,6 +98,54 @@ export default class Logger {
     if (this.logList.length > MAX_LOG_LIST) {
       this.logList.splice(0, this.logList.length - MAX_LOG_LIST);
     }
+  }
+
+  // V3：明细入缓存（待上传）+ 触发本地攒批写盘
+  _pushTrace(item) {
+    this.traceBuffer.push(item);
+    if (this.traceBuffer.length > MAX_TRACE_LIST) {
+      this.traceBuffer.splice(0, this.traceBuffer.length - MAX_TRACE_LIST);
+    }
+    this._localPending.push(item);
+    if (this._localPending.length > MAX_TRACE_LIST) {
+      this._localPending.splice(0, this._localPending.length - MAX_TRACE_LIST);
+    }
+    this._scheduleLocalFlush();
+  }
+  _scheduleLocalFlush() {
+    if (this._localPending.length >= TRACE_LOCAL_FLUSH_SIZE) {
+      this._flushTraceLocal();
+      return;
+    }
+    if (!this._traceFlushTimer) {
+      this._traceFlushTimer = setTimeout(() => {
+        this._traceFlushTimer = null;
+        this._flushTraceLocal();
+      }, TRACE_LOCAL_FLUSH_MS);
+    }
+  }
+  // V3：本地即时写盘（userData/logs/trace-YYYYMMDD.log，经主进程 save-trace-log，
+  // fire-and-forget 失败静默——崩溃最多丢 2s 攒批窗口内日志）
+  _flushTraceLocal() {
+    if (this._traceFlushTimer) {
+      clearTimeout(this._traceFlushTimer);
+      this._traceFlushTimer = null;
+    }
+    if (!this._localPending.length) return;
+    const batch = this._localPending.splice(0, this._localPending.length);
+    // L3 本地 WriteTrace：走专用 save-trace-log IPC（主进程 200MB 上限），
+    // 不要走 save-fail-log（仅 20MB 且超限会覆盖式截断，会清空当天历史 trace）
+    saveFailLogToLocal(
+      batch,
+      {
+        plat_name: this.plat_name,
+        app_name: this.app_name,
+        order_number: this.order_number,
+        type: this.type
+      },
+      "trace",
+      "save-trace-log"
+    );
   }
 
   info(message, meta) {
@@ -65,20 +165,30 @@ export default class Logger {
     this.log(Logger.levels.WARN, message, true, meta);
   }
   errorSave(message, meta) {
+    // 先执行实际日志记录（控制台/入库/trace），再单独捕获消息文本用于根因缓存。
+    // ⚠️ 注意：必须捕获 message 本身，不能取 this.log() 的返回值——log() 无 return，取到的是 undefined，
+    //   会导致 _rootErrCache/_lastErrCache.message 恒为 undefined，根因缓存与降级排除全部失效（回归点）。
     this.log(Logger.levels.ERROR, message, true, meta);
-    this._lastErrCache = { message, meta };
+    // String 兜底：防非字符串 message（Error/数字对象）在 startsWith 抛错（核查建议 3.3）
+    const des = typeof message === "string" ? message : String(message ?? "");
+    this._lastErrCache = { message: des, meta };
+    // V3 根因缓存：降级/辅助动作不覆盖根因（根因=最近一次非降级/辅助 errorSave）
+    if (!REMEDY_KEYWORDS.some(kw => des?.startsWith(kw))) {
+      this._rootErrCache = { message: des, meta };
+    }
+  }
+  // V3：显式成功节点重置根因（出票提交成功/报价入库成功等明确节点调用）
+  // 同时清 _lastErrCache（核查建议 3.2：成功单"完全干净"，避免回退链落到最近错误）
+  resetRootErr() {
+    this._rootErrCache = null;
+    this._lastErrCache = null;
   }
   logUpload(logIngo = this) {
     const { plat_name, order_number, app_name, logList } = logIngo;
-    if (!logList.length) return Promise.resolve();
-    // 同一 logger 实例的多次 logUpload 串行执行（promise 链）：
-    // utils.logUpload 上传成功后 splice 清空 logList，若并发调用（如批量更新券库存的
-    // 内层 finally 与外层 finally 紧邻两次调用、报价流程结束与后台异步任务并发），
-    // 两个 while 循环会同时 slice/splice 同一数组，造成日志重复上传或部分丢失。
-    // 串行化后：前一次上传完成 splice 清空，后续排队执行时 logList 为空自然跳过。
-    const prev = this._uploadChain || Promise.resolve();
-    this._uploadChain = prev
-      .then(() =>
+    const tasks = [];
+    // L1：入库级日志（现状逻辑不变，失败本地兜底 + 微信告警）
+    if (logList.length) {
+      tasks.push(() =>
         logUpload(
           {
             plat_name,
@@ -88,12 +198,45 @@ export default class Logger {
           },
           logList
         )
-      )
+      );
+    }
+    // L2：明细日志（v3Mode/traceEnabled 时上传 /svpi/log/trace，失败不重试不告警，L3 本地已兜底）
+    if (this.traceEnabled && this.traceBuffer.length) {
+      const traceBatch = this.traceBuffer.splice(0, this.traceBuffer.length);
+      tasks.push(() =>
+        traceUpload(
+          {
+            plat_name,
+            app_name,
+            order_number,
+            type: this.type
+          },
+          traceBatch
+        )
+      );
+    }
+    if (!tasks.length) return Promise.resolve();
+    // V3 全局串行链：任意时刻全局最多一个上传批次在途。
+    // 替代原每实例 _uploadChain：原实现多 Logger 实例并存时多个 addList 可并发，
+    // 无法保证"全局在途≤1"；且同实例并发 splice 同一 logList 会重复/丢失（串行后自然消除）。
+    const g = typeof window !== "undefined" ? window : globalThis;
+    const prev = g.__logUploadChain || Promise.resolve();
+    g.__logUploadChain = prev
+      .then(async () => {
+        for (const task of tasks) {
+          try {
+            await task();
+          } catch (error) {
+            // trace 失败静默（L3 已兜底）；addList 失败已在 utils.logUpload 内部兜底+告警
+            console.error("日志上传链路异常", error);
+          }
+        }
+      })
       .catch(error => {
         // 单次上传异常不阻断后续日志上传（恢复 promise 链）
         console.error("日志上传链路异常", error);
       });
-    return this._uploadChain;
+    return g.__logUploadChain;
   }
 
   /**
@@ -109,6 +252,8 @@ export default class Logger {
   }
 
   getLastErrMsg() {
+    // V3：优先根因（非降级/辅助的最近 errorSave），其次最近错误缓存
+    if (this._rootErrCache) return this._rootErrCache.message;
     if (this._lastErrCache) return this._lastErrCache.message;
     const errInfoObj = this.logList
       .filter(item => item.level === "error")
@@ -117,9 +262,10 @@ export default class Logger {
   }
   getLastErrMsgAndInfo() {
     try {
-      // 优先使用缓存（防止logUpload splice 清空 logList 后丢失）
-      if (this._lastErrCache) {
-        const { message, meta } = this._lastErrCache;
+      // V3：优先根因缓存（防止 logUpload splice 清空 logList 后丢失 + 防止降级动作污染根因）
+      const cache = this._rootErrCache || this._lastErrCache;
+      if (cache) {
+        const { message, meta } = cache;
         return {
           err_msg: message,
           err_info: formatErrInfo(meta?.error || meta) || ""

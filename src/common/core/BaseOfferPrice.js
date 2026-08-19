@@ -109,6 +109,10 @@ export default class BaseOfferPrice {
       // 5. 组装返回结果
       offerRule.offer_end_amount = endPrice;
       this.logger.infoSave(`最终报价金额：${endPrice}`);
+      // V3 L0：计算路径追加最终报价段（各系列拼装的过滤/会员价/策略过程在 offerRule.calc_path）
+      offerRule.calc_path = [offerRule.calc_path, `最终报价${endPrice}`]
+        .filter(Boolean)
+        .join("→");
 
       // 6. 增加一个quanValue的过滤，依据最大券成本过滤
       if (

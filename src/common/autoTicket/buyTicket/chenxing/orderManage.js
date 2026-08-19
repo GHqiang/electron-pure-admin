@@ -44,7 +44,7 @@ export default class OrderManage {
 
   // 转单
   async transferOrder(unlockSeatInfo) {
-    this.logger.infoSave("开始准备转单", unlockSeatInfo);
+    this.logger.errorSave("降级-转单-进入", unlockSeatInfo || {});
     if (unlockSeatInfo) {
       // 1、释放座位(仅锁座id存在时)
       if (!unlockSeatInfo.order_num) await this.releaseSeat(unlockSeatInfo);
@@ -88,10 +88,10 @@ export default class OrderManage {
       };
       this.logger.info("释放座位参数", params);
       const res = await this.appApi.releaseSeat(params);
-      this.logger.infoSave("释放座位成功", { res });
+      this.logger.infoSave("降级-释放座位-成功", { res });
       return res;
     } catch (error) {
-      this.logger.infoSave("释放座位异常", { error });
+      this.logger.errorSave("降级-释放座位-异常", { error });
       sendWxPusherMessage({
         orderInfo: this.order,
         transferTip: "释放座位失败，建议手动释放座位，以便后续订单正常出票",
@@ -112,10 +112,10 @@ export default class OrderManage {
       };
       this.logger.info("取消订单参数", params);
       const res = await this.appApi.cancelOrder(params);
-      this.logger.infoSave("取消订单成功", { res });
+      this.logger.infoSave("降级-取消订单-成功", { res });
       return res;
     } catch (error) {
-      this.logger.infoSave("取消订单异常", { error });
+      this.logger.errorSave("降级-取消订单-异常", { error });
       sendWxPusherMessage({
         orderInfo: this.order,
         transferTip: "取消订单失败，建议手动取消订单，以便后续订单正常出票",
@@ -493,16 +493,32 @@ export default class OrderManage {
         logger.infoSave("获取支付结果参数", params);
       }
       const res = await this.appApi.queryOrderDetail(params);
-      logger.infoSave(`第${inx}次获取支付结果返回`, res);
+      // V3 轮询收敛：仅首次迭代持久化返回（中间迭代仅 console + trace 文件），避免日志爆炸
+      if (inx == 1) {
+        logger.infoSave("获取支付结果-第1次返回", {
+          orderStatus: res?.data?.orderStatus,
+          payStatus: res?.data?.payStatus
+        });
+      } else {
+        logger.info(`第${inx}次获取支付结果返回`, res);
+      }
       qrcode = res?.data?.printNo?.slice(-8); // 取后8位
       if (this.api_version == "C") {
         qrcode = res?.data?.getCode?.slice(-8); // 取后8位
       }
       if (qrcode) {
+        logger.infoSave("获取支付结果-成功", { qrcode });
         return qrcode;
       }
     } catch (error) {
-      logger.errorSave(`第${inx}次获取订单支付结果异常`, formatErrInfo(error));
+      // 首次失败持久化，后续失败仅 console + trace 文件
+      if (inx == 1) {
+        logger.errorSave("获取支付结果-第1次异常", {
+          error: formatErrInfo(error)
+        });
+      } else {
+        logger.error(`第${inx}次获取订单支付结果异常`, formatErrInfo(error));
+      }
     }
     return Promise.reject("获取支付结果不存在");
   }

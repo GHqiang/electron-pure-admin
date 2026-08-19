@@ -35,6 +35,8 @@ import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
 // console.log("user_id", user_id);
 
+import { getServerBaseUrl } from "@/common/serverHost";
+
 import { dictTable, nameMatchTable } from "@/store/dictTable";
 const dictStore = dictTable();
 const nameMatchStore = nameMatchTable();
@@ -1865,6 +1867,51 @@ const logUpload = async (order, logList) => {
   }
 };
 
+// V3 L2：明细日志上传（/svpi/log/trace，fire-and-forget，失败不重试不告警——L3 本地已兜底）
+// 用裸 axios 直传（不经 sv-request 拦截器，避免失败进入网络错误 batcher 形成循环）。
+// ⚠️ URL 必须与 sv-request 拦截器同规则（sv-request.js:108-118）：生产环境剥离 /svpi 前缀
+//   （config.url.slice(5)）并按 hash 选分片端口（getServerBaseUrl）。后端所有路由都不带 /svpi，
+//   若按旧硬编码 http://47.113.191.173:3000/svpi/log/trace 直连 → 404，L2 一条都收不到。
+// ⚠️ 必须带 Authorization：后端 POST /log/trace 挂了 auth 中间件，无 token 一律 401 拒绝、
+//   writeTrace 不执行（dev/prod 均如此）。
+const IS_DEV_ENV = process.env.NODE_ENV === "development";
+const TRACE_UPLOAD_URL = IS_DEV_ENV
+  ? "/svpi/log/trace"
+  : getServerBaseUrl("/svpi/log/trace") + "/log/trace";
+const traceUpload = async (order, traceList) => {
+  if (!traceList.length) return;
+  const { order_number, app_name, plat_name, type } = order;
+  const { userInfo = {} } = tokens || {};
+  const log_list = traceList.map(item => ({
+    ...item,
+    info: sanitizeLogInfoForUpload(item.info)
+  }));
+  await axios.post(
+    TRACE_UPLOAD_URL,
+    {
+      plat_name,
+      app_name,
+      order_number,
+      type,
+      // ⚠️ 字段名必须为 lines（与 §4.3.3 接口契约及后端 traceFile.writeTrace 解构一致；
+      //   误用 log_list 会导致后端 lines 为 undefined、writeTrace 直接 return、L2 整条不落盘）
+      lines: log_list,
+      // 用户维度：同一订单可能被多个用户报价/出票，trace 行带用户与角色，
+      // 供后端按角色过滤查询（权限隔离）与按用户检索
+      user_id: userInfo.user_id ?? "",
+      user_name: userInfo.name ?? "",
+      rule: userInfo.rule ?? ""
+    },
+    {
+      timeout: 15000,
+      // 必须带 token：后端 auth 中间件校验（与 sv-request 注入方式一致）
+      headers: {
+        Authorization: `Bearer ${tokens.selfToken || localStorage.getItem("selfToken") || ""}`
+      }
+    }
+  );
+};
+
 // 模拟延时
 const mockDelay = delayTime => {
   if (delayTime) {
@@ -3447,6 +3494,7 @@ export {
   getOfferRuleById, // 根据报价规则id获取报价规则
   offerRuleMatch, // 报价规则匹配
   logUpload, // 日志上传
+  traceUpload, // V3 L2：明细日志上传（/svpi/log/trace）
   saveFailLogToLocal, // 本地兜底日志（上传失败落盘）
   mockDelay, // 模拟延时
   getOrginValue, // 对象深拷贝（获取对象源值）

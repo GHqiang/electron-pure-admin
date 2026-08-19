@@ -465,7 +465,8 @@ export default class BaseTicketQueue {
             order_number: order.order_number
           });
           if (!this.isTestOrder) {
-            await logger.logUpload();
+            // V3 P1-2：日志上传入队即返回，出票不等待（失败已有本地兜底 + 微信告警）
+            logger.logUpload().catch(() => {});
           }
         } else {
           logger.init(order);
@@ -496,7 +497,8 @@ export default class BaseTicketQueue {
               ticket_handle_duration_ms: ticketHandleDurationMs
             });
           } else {
-            await logger.logUpload();
+            // V3 P1-2：同左，入队即返回
+            logger.logUpload().catch(() => {});
           }
         }
       }
@@ -590,7 +592,15 @@ export default class BaseTicketQueue {
         quan_code = "",
         card_id = "",
         cardNum = "",
-        mobile = ""
+        mobile = "",
+        // V3 L0：用券用卡快照（各系列 buyTicket 采集挂到 ticketRes）
+        // ⚠️ 此处不设默认 ""：paymentAmount/cardBalance 对应 DECIMAL 列，严格模式下 "" 触发
+        //   ERROR 1366 致整条 ticket_record 入库失败；未采集时保持 undefined，由下方
+        //   `?? null` 兜底写入 NULL（字符串列 use_path/coupons 同理，undefined→空串/空数组）。
+        paymentAmount,
+        cardBalance,
+        coupons,
+        usePath
       } = res;
       let { err_msg: errMsg, err_info: errInfo } =
         logger.getLastErrMsgAndInfo() || {};
@@ -666,7 +676,15 @@ export default class BaseTicketQueue {
               card_id: res?.card_id ?? "",
               card_num: res?.cardNum ?? "",
               mobile: res?.mobile,
-              err_msg: "重新出票成功"
+              err_msg: "重新出票成功",
+              // V3 L0：重新出票成功后回写用券用卡快照（数值列传 null 防 DECIMAL 1366）
+              payment_amount: res?.paymentAmount ?? null,
+              card_balance: res?.cardBalance ?? null,
+              coupons:
+                typeof res?.coupons === "string"
+                  ? res.coupons
+                  : JSON.stringify(res?.coupons ?? []),
+              use_path: res?.usePath ?? ""
             }
           });
         } else {
@@ -678,7 +696,8 @@ export default class BaseTicketQueue {
             },
             updateObj: {
               order_status: 2,
-              err_msg: "重新出票失败",
+              // V3：失败原因带真实根因（getLastErrMsgAndInfo 优先根因缓存，非降级动作）
+              err_msg: errMsg ? `重新出票失败-${errMsg}` : "重新出票失败",
               ...(res?.profit ? { profit: res.profit } : {})
             }
           });
@@ -750,7 +769,17 @@ export default class BaseTicketQueue {
         offer_from: offerRule?.plat_rule_id ? 1 : 2, // 1-平台报价 2-机器报价
         rule_id: offerRule?.plat_rule_id || offerRule?.offer_rule_id || "",
         ticket_queue_wait_ms: extra.ticket_queue_wait_ms ?? null,
-        ticket_handle_duration_ms: extra.ticket_handle_duration_ms ?? null
+        ticket_handle_duration_ms: extra.ticket_handle_duration_ms ?? null,
+        // V3 L0：用券用卡快照（各系列 buyTicket 采集挂到 ticketRes）
+        // 数值列（payment_amount/card_balance）兜底 null：列 DEFAULT NULL 接收 NULL；
+        //   ⚠️ 不能兜底 ""——MySQL 严格模式（STRICT_TRANS_TABLES，8.0 默认）下 DECIMAL 列
+        //   插入 '' 报 ERROR 1366 致整条 INSERT 失败（出票记录丢失）。
+        // 字符串列兜底空串/空数组，防止动态 INSERT 出现 undefined 绑定参数
+        payment_amount: paymentAmount ?? null,
+        card_balance: cardBalance ?? null,
+        coupons:
+          typeof coupons === "string" ? coupons : JSON.stringify(coupons ?? []),
+        use_path: usePath ?? ""
       };
       const targetAppInfo = GET_APP_TYPE_LIST().find(item =>
         item.app_name_list.includes(serOrderInfo.app_name)
@@ -762,7 +791,8 @@ export default class BaseTicketQueue {
     } catch (error) {
       logger.errorSave("保存出票记录异常", { error });
     } finally {
-      await logger.logUpload();
+      // V3 P1-2：日志上传入队即返回，出票不等待（err_msg 已在上方捕获进 serOrderInfo，不受影响）
+      logger.logUpload().catch(() => {});
     }
   }
 

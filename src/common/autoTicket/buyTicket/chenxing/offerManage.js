@@ -85,6 +85,8 @@ class getChenxingOfferPrice extends BaseOfferPrice {
       // 1. 初始规则匹配
       const matchRuleListRes = offerRuleMatch(order, this.logger);
       let matchRuleList = matchRuleListRes?.matchRuleList || [];
+      // V3 L0：一句话计算路径（过滤/会员价/策略过程收集，最终由基类追加报价段后入库）
+      const calcSteps = [`初始匹配命中${matchRuleList?.length || 0}条`];
       if (!matchRuleList?.length) {
         this.logger.infoSave("报价规则匹配后规则为空", {
           error: matchRuleListRes?.error,
@@ -100,6 +102,7 @@ class getChenxingOfferPrice extends BaseOfferPrice {
       if (!movieInfo) return null;
 
       matchRuleList = this.filterByFilmType(matchRuleList, movieInfo.media);
+      calcSteps.push(`电影格式过滤剩${matchRuleList.length}条`);
       if (!matchRuleList.length) {
         this.logger.errorSave("按电影格式存筛选后，报价规则为空", {
           filmType: movieInfo.media,
@@ -112,7 +115,8 @@ class getChenxingOfferPrice extends BaseOfferPrice {
       const endRule = await this.getMinAmountOfferRule(
         matchRuleList,
         order,
-        movieInfo
+        movieInfo,
+        calcSteps
       );
       if (!endRule) {
         // 日常固定报价规则
@@ -128,7 +132,11 @@ class getChenxingOfferPrice extends BaseOfferPrice {
         }
         return;
       }
-      return JSON.parse(JSON.stringify(endRule));
+      const endRuleCopy = JSON.parse(JSON.stringify(endRule));
+      // V3 L0：挂一句话计算路径与命中规则名（BaseOfferQueue 收口入库）
+      endRuleCopy.calc_path = calcSteps.join("→");
+      endRuleCopy.hit_rule_name = endRule.ruleName || "";
+      return endRuleCopy;
     } catch (error) {
       this.logger.errorSave("获取最终匹配报价规则异常", error);
       return null;
@@ -617,12 +625,13 @@ class getChenxingOfferPrice extends BaseOfferPrice {
    * @param {Object} movieInfo 电影信息
    * @returns {Promise<Object>} 最优报价规则
    */
-  async getMinAmountOfferRule(ruleList, order, movieInfo) {
+  async getMinAmountOfferRule(ruleList, order, movieInfo, calcSteps = []) {
     try {
       // 1. 优先处理会员日报价规则
       const memberDayRules = this.filterMemberDayRules(ruleList);
       if (memberDayRules.length) {
         this.logger.infoSave("命中会员日报价规则");
+        calcSteps.push(`会员日规则命中(${memberDayRules[0].offerAmount}元)`);
         return memberDayRules[0];
       }
 
@@ -649,6 +658,9 @@ class getChenxingOfferPrice extends BaseOfferPrice {
         movieInfo,
         ticketNum: order.ticket_num
       });
+      if (fixedRules.length) {
+        calcSteps.push(`券库存过滤剩${validFixedRules.length}条`);
+      }
 
       // 4. 处理会员价加价规则
       let bestFixAddRule = null;
@@ -692,7 +704,8 @@ class getChenxingOfferPrice extends BaseOfferPrice {
           if (minAddAmountRule.realAddMount) {
             bestFixAddRule = this.processAddRule(
               minAddAmountRule,
-              memberPriceRes
+              memberPriceRes,
+              calcSteps
             );
           }
         }
@@ -707,10 +720,13 @@ class getChenxingOfferPrice extends BaseOfferPrice {
         bestFixAddRule
       );
       // 6. 对比会员价和固定价
-      return this.comparePricingStrategies({
-        bestFixAddRule,
-        bestFixedRule
-      });
+      return this.comparePricingStrategies(
+        {
+          bestFixAddRule,
+          bestFixedRule
+        },
+        calcSteps
+      );
     } catch (error) {
       this.logger.errorSave("获取最低报价规则异常", error);
       return null;
@@ -811,7 +827,7 @@ class getChenxingOfferPrice extends BaseOfferPrice {
    * 处理加价规则
    * @private
    */
-  processAddRule(addRule, memberPriceRes) {
+  processAddRule(addRule, memberPriceRes, calcSteps = []) {
     const processedRule = { ...addRule };
     processedRule.real_member_price = memberPriceRes.real_member_price;
     processedRule.member_discount = memberPriceRes.discount;
@@ -822,6 +838,11 @@ class getChenxingOfferPrice extends BaseOfferPrice {
     );
     processedRule.memberOfferAmount =
       processedRule.round_member_price + Number(processedRule.realAddMount);
+
+    // V3 L0：会员价计算路径一句话（真实会员价×折扣=成本价+加价=预计报价）
+    calcSteps.push(
+      `会员价:真实${processedRule.real_member_price}×折扣${processedRule.member_discount}%=成本${processedRule.memberCostPrice}取整${processedRule.round_member_price}+加价${processedRule.realAddMount}=${processedRule.memberOfferAmount}`
+    );
 
     this.recordMemberPriceDetails(processedRule);
     return processedRule;
@@ -846,15 +867,28 @@ class getChenxingOfferPrice extends BaseOfferPrice {
    * 对比定价策略
    * @private
    */
-  comparePricingStrategies({ bestFixAddRule, bestFixedRule }) {
-    if (!bestFixAddRule) return bestFixedRule;
-    if (!bestFixedRule) return bestFixAddRule;
+  comparePricingStrategies({ bestFixAddRule, bestFixedRule }, calcSteps = []) {
+    if (!bestFixAddRule) {
+      calcSteps.push(`仅固定价${bestFixedRule?.offerAmount}`);
+      return bestFixedRule;
+    }
+    if (!bestFixedRule) {
+      calcSteps.push(`仅会员价${bestFixAddRule.memberOfferAmount}`);
+      return bestFixAddRule;
+    }
 
     if (bestFixAddRule.memberOfferAmount >= bestFixedRule.offerAmount) {
       this.logPriceComparison(bestFixAddRule, bestFixedRule, "固定");
+      // V3 L0：策略选择结果入计算路径
+      calcSteps.push(
+        `策略对比:会员${bestFixAddRule.memberOfferAmount}≥固定${bestFixedRule.offerAmount}，选固定价`
+      );
       return bestFixedRule;
     } else {
       this.logPriceComparison(bestFixAddRule, bestFixedRule, "会员");
+      calcSteps.push(
+        `策略对比:会员${bestFixAddRule.memberOfferAmount}<固定${bestFixedRule.offerAmount}，选会员价`
+      );
       return bestFixAddRule;
     }
   }

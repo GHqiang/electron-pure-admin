@@ -275,6 +275,9 @@ const batchDeleteQuan = params =>
 const queryLogRecord = params =>
   axios.get("/svpi/operaRecord/query", { params });
 
+// V3 L2：查询明细日志（后端日志文件，date 必填 YYYYMMDD）
+const queryLogTrace = params => axios.get("/svpi/log/trace", { params });
+
 // 同步中标价
 const syncDealPrice = params =>
   axios.post("/svpi/offerRecord/syncDealPrice", params);
@@ -403,6 +406,7 @@ const svApi = {
   getCardDailyAndMonthlyTicketCount,
   queryQuanInventory,
   queryLogRecord,
+  queryLogTrace,
   syncDealPrice,
   getQuanTypeList,
   queryQuanTypeList,
