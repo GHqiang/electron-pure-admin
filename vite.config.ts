@@ -160,6 +160,24 @@ export default ({ command, mode }: ConfigEnv): UserConfigExport => {
       // 预热文件以提前转换和缓存结果，降低启动期间的初始页面加载时长并防止转换瀑布
       warmup: {
         clientFiles: ["./index.html", "./src/{views,components}/*"]
+      },
+      // 文件监听忽略（EBUSY 崩溃根治）：vite 默认监听根目录下全部文件（仅排除 node_modules/.git），
+      // electron-builder 并发写 release/*/win-unpacked/*.tmp 时 Windows 文件锁会击穿 watcher
+      // （Error: EBUSY ... watch ... .tmp → 未捕获 error 事件 → dev 进程崩溃）。
+      // 以下均为构建产物或非前端源码目录，与 HMR 无关，忽略后同时大幅降低 watcher 负载：
+      //   release=electron-builder 输出 | dist/dist-electron=构建产物 |
+      //   auto-ticket-service=后端服务（独立进程）| applet-source-code=小程序源码 | test-6slot=测试产物
+      watch: {
+        ignored: [
+          "**/release/**",
+          "**/dist/**",
+          "**/dist-electron/**",
+          "**/auto-ticket-service/**",
+          "**/applet-source-code/**",
+          "**/test-6slot/**",
+          "**/.workbuddy/**",
+          "**/doc/**"
+        ]
       }
     },
     plugins: getPluginsList(command, VITE_CDN, VITE_COMPRESSION),
