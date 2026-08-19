@@ -100,6 +100,9 @@ export default class YinghuasuanOrderFetcher extends BaseOrderFetcher {
             is_lock_seat,
             lockseat: seat_no ? seat_no.split(",").join(" ") : "",
             plat_name: "yinghuasuan",
+            // 是否支持换座：优先取待出票列表顶层字段，兜底取 demands
+            accept_change_seat:
+              item.accept_change_seat ?? demands?.accept_change_seat,
             record_id, // 保留用于日志
             confirmOrderRes // 保留用于日志
           };

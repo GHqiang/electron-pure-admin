@@ -45,7 +45,8 @@ export default class MahuaOrderFetcher extends BaseOrderFetcher {
           movieCinemaName: cinema_name,
           movieHallName: hall_name,
           movieName: film_name,
-          movieShowTime: show_time
+          movieShowTime: show_time,
+          acceptChangeSeat
         } = item;
 
         return {
@@ -69,6 +70,7 @@ export default class MahuaOrderFetcher extends BaseOrderFetcher {
           // 先占位为出票单号，orderDetail 后替换为报价单号（与报价记录对齐）
           order_number: id,
           lockseat: "",
+          acceptChangeSeat,
           plat_name: "mahua"
         };
       });
@@ -98,7 +100,10 @@ export default class MahuaOrderFetcher extends BaseOrderFetcher {
             cinema_code: res.standardId,
             // 报价单号：出票记录 order_number 与报价记录对齐，保证可按订单号互查
             order_number: res.putOrderId || orderItem.id,
-            offer_order_number: res.putOrderId || orderItem.id
+            offer_order_number: res.putOrderId || orderItem.id,
+            // 换座标识：优先取订单详情接口，兜底取待出票列表
+            acceptChangeSeat:
+              res?.acceptChangeSeat ?? orderItem.acceptChangeSeat
           });
         } else {
           diagnoseLogs.push({

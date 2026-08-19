@@ -54,7 +54,8 @@ export default class ShoutuOrderFetcher extends BaseOrderFetcher {
             startTime,
             orderId: order_number,
             standardId: cinema_code,
-            needInvoice
+            needInvoice,
+            isAllowChangeSeats
           } = item;
 
           return {
@@ -73,6 +74,7 @@ export default class ShoutuOrderFetcher extends BaseOrderFetcher {
             cinema_code,
             order_number,
             needInvoice,
+            isAllowChangeSeats,
             lockseat: lockseat
               ? removeParenthesesContent(lockseat).replaceAll("号", "座")
               : "",

@@ -572,6 +572,43 @@ const getCinemaLoginInfoList = (isSplitUser = true) => {
 
 window.getCinemaLoginInfoList = getCinemaLoginInfoList;
 // 发送微信消息
+/**
+ * 是否支持换座（出票失败消息推送字段）
+ * 各平台判断字段与取值不同，统一转换为「支持换座 / 不支持换座」
+ * - 守兔 shoutu：isAllowChangeSeats，0 不允许换座 / 1 可以换座
+ * - 芒果 mangguo：auto_check_seat，0 不允许换座 / 1 可以换座
+ * - 省 sheng：changeSeat === 1 可以换座
+ * - 票圣/麻花 piaosheng/mahua：acceptChangeSeat，0 不允许换座 / 1 可以换座
+ * - 影划算 yinghuasuan：accept_change_seat，0 不允许换座 / 1 可以换座
+ * @param {Object} orderInfo - 订单信息
+ * @returns {string|undefined} 「支持换座」/「不支持换座」，未匹配平台返回 undefined（不展示该字段）
+ */
+const getAllowChangeSeatText = (orderInfo = {}) => {
+  const { plat_name } = orderInfo;
+  let support;
+  switch (plat_name) {
+    case "shoutu":
+      support = Number(orderInfo.isAllowChangeSeats) === 1;
+      break;
+    case "mangguo":
+      support = Number(orderInfo.auto_check_seat) === 1;
+      break;
+    case "sheng":
+      support = Number(orderInfo.changeSeat) === 1;
+      break;
+    case "piaosheng":
+    case "mahua":
+      support = Number(orderInfo.acceptChangeSeat) === 1;
+      break;
+    case "yinghuasuan":
+      support = Number(orderInfo.accept_change_seat) === 1;
+      break;
+    default:
+      return undefined;
+  }
+  return support ? "支持换座" : "不支持换座";
+};
+
 const sendWxPusherMessage = async ({
   orderInfo,
   transferTip,
@@ -595,6 +632,8 @@ const sendWxPusherMessage = async ({
     supplier_end_price,
     last_fail_phone // 最后失败的手机号（出票失败时使用的账号）
   } = orderInfo || {};
+  // 是否支持换座（仅列出的平台有判断条件，其余平台不展示）
+  const allowChangeSeatText = getAllowChangeSeatText(orderInfo);
   const url = "https://wxpusher.zjiecode.com/api/manager/message/send";
   const headers = {
     "content-type": "application/json;charset=UTF-8",
@@ -622,7 +661,7 @@ const sendWxPusherMessage = async ({
   原因：${failReason};<br/>
   提示：${transferTip};<br/>
   最后失败手机号：${last_fail_phone || "-"};<br/>
-  </p>`;
+  ${allowChangeSeatText ? `是否支持换座：${allowChangeSeatText};<br/>` : ""}</p>`;
 
   if (msgType === 1) {
     summary = app_name + "影院登录失效";

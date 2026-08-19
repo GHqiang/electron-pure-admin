@@ -55,7 +55,8 @@ export default class MangguoOrderFetcher extends BaseOrderFetcher {
             show_time,
             is_urgent,
             order_number,
-            line_name
+            line_name,
+            auto_check_seat
           } = item;
 
           return {
@@ -75,6 +76,7 @@ export default class MangguoOrderFetcher extends BaseOrderFetcher {
             cinema_group: line_name,
             cinema_code: relation_to_cinema?.cinema_code,
             order_number,
+            auto_check_seat,
             lockseat:
               relation_to_seat
                 ?.map(itemA => itemA.position_seat.replace(/\s+/g, ""))
