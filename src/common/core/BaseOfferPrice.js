@@ -79,7 +79,7 @@ export default class BaseOfferPrice {
         offerRule.platOfferList?.find(item => item.platName === this.plat_name)
           ?.isSyncPlat == 1
       ) {
-        this.logger.errorSave("该规则由平台进行报价");
+        this.logger.warnSave("该规则由平台进行报价");
         return this.buildErrorResponse(offerRule);
       }
 

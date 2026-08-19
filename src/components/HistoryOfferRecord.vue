@@ -406,6 +406,7 @@
               property="info"
               show-overflow-tooltip
               label="详细信息"
+              :formatter="formatTraceInfo"
             />
           </el-table>
         </el-tab-pane>
@@ -462,7 +463,14 @@
 </template>
 
 <script setup>
-import { ref, reactive, onBeforeUnmount, onBeforeMount, computed } from "vue";
+import {
+  ref,
+  reactive,
+  onBeforeUnmount,
+  onBeforeMount,
+  computed,
+  watch
+} from "vue";
 import { ElLoading } from "element-plus";
 import svApi from "@/api/sv-api";
 import { platTokens } from "@/store/platTokens";
@@ -597,14 +605,16 @@ const queryLog = async ({ order_number, user_id, processing_time }) => {
     console.warn("查询操作日志返回", res);
     let logList = res.data?.cardList || [];
     currentLogOrderNumber.value = order_number || "";
-    // E1 修复：明细默认日期取订单处理时间（而非"今天"——订单可能不是今天处理的）
+    // E1 修复：明细默认日期取订单处理时间（而非"今天"——订单可能不是今天处理的），
+    // 并同步到日期选择器（traceDate）——选择器默认空白会误以为修复未生效
     if (processing_time) {
-      currentLogDate.value = String(processing_time)
-        .slice(0, 10)
-        .replace(/-/g, "");
+      const dateStr = String(processing_time).slice(0, 10).replace(/-/g, "");
+      currentLogDate.value = dateStr;
+      traceDate.value = dateStr;
     }
     dialogLogVisible.value = true;
     logTabActive.value = "error";
+    traceAutoQueried.value = false;
     logData.value = logList;
   } catch (error) {
     console.warn("查询操作日志返回异常", error);
@@ -618,6 +628,7 @@ const currentLogDate = ref("");
 const traceDate = ref("");
 const traceBrief = ref(false);
 const traceData = ref([]);
+const traceAutoQueried = ref(false);
 const queryTrace = async () => {
   if (!currentLogOrderNumber.value) return;
   try {
@@ -626,12 +637,33 @@ const queryTrace = async () => {
       date: traceDate.value || currentLogDate.value,
       brief: traceBrief.value ? 1 : 0
     });
-    traceData.value = res.data?.data?.list || [];
+    // ⚠️ 修复：sv-request 响应拦截器返回整个响应体（{code,data,msg}），
+    // res.data 即后端 data（{list,total}）——取 res.data.list，勿多加一层 data
+    traceData.value = res.data?.list || [];
   } catch (error) {
     console.warn("查询明细日志返回异常", error);
     traceData.value = [];
   }
 };
+
+// 明细 info 为对象（traceBuffer 原样入参），序列化展示避免 [object Object]
+const formatTraceInfo = (row, column, cellValue) => {
+  if (cellValue === null || cellValue === undefined) return "";
+  if (typeof cellValue === "string") return cellValue;
+  try {
+    return JSON.stringify(cellValue);
+  } catch {
+    return String(cellValue);
+  }
+};
+
+// 首次切到"明细日志"Tab 自动查询（每次打开弹框后仅自动查一次，用户手动查询不受影响）
+watch(logTabActive, val => {
+  if (val === "trace" && !traceAutoQueried.value) {
+    traceAutoQueried.value = true;
+    queryTrace();
+  }
+});
 
 // 搜索数据
 const searchData = async () => {

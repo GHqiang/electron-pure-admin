@@ -30,7 +30,7 @@ export default class Logger {
     this._rootErrCache = null;
     this._l1ErrorCount = 0; // v3Mode 下本实例 L1 入库 errorSave 计数
   }
-  init({ plat_name, order_number, app_name }) {
+  init({ plat_name, order_number, app_name, app_type_code }) {
     this.plat_name = plat_name;
     this.order_number = order_number;
     this.app_name = app_name;
@@ -38,12 +38,43 @@ export default class Logger {
     // 与字典比对（字典配系列名，如 "chenxing"）。
     // ⚠️ 修复（2026-08-19）：不能用 plat_name（订单来源平台，如 mayi/lieren）判定——
     //   plat_name 是平台维度，字典配的是系列维度，导致 v3Mode 恒 false、字典"开了不生效"。
-    this._applyV3Flags(app_name);
+    // ⚠️ 修复（2026-08-20）：① 订单自带 app_type_code 优先判定——getCanAppTypeList 是
+    //   "当前登录账号可用影线"列表，可能不含该影线导致反查失败（v3Mode 恒 false 根因）；
+    //   ② 同步预判定（localStorage 字典缓存立即生效），消除异步动态 import 完成前
+    //   流程早期日志（如"新的待报价订单"紧跟 init）按 v3Mode=false 全量入库的竞态。
+    this._applyV3FlagsSync(app_type_code);
+    this._applyV3Flags(app_name, app_type_code);
+  }
+
+  // V3：同步预判定——localStorage 已有字典缓存时立即生效（消除异步竞态：
+  // 动态 import + 查库完成前，流程早期 infoSave 会按 v3Mode=false 全量入库）。
+  // 同步阶段拿不到 getCanAppTypeList，仅订单自带 app_type_code 可判；缺失时等异步刷新。
+  _applyV3FlagsSync(app_type_code) {
+    try {
+      if (typeof window === "undefined" || !window.localStorage) return;
+      const raw = window.localStorage.getItem("dictTableList");
+      if (!raw) return;
+      const list = JSON.parse(raw);
+      const dict = Object.fromEntries(
+        list
+          .filter(item => item.status === 1)
+          .map(item => [item.dict_type, item.dict_value])
+      );
+      const series = (dict.log_v3_enabled_series || "")
+        .split(",")
+        .filter(Boolean);
+      if (app_type_code) {
+        this.v3Mode = series.includes(app_type_code);
+        this.traceEnabled = this.v3Mode;
+      }
+    } catch {
+      // 缓存解析失败静默，等异步刷新兜底
+    }
   }
 
   // V3：异步应用 V3 开关（动态 import——constant.js 模块级实例化 pinia store，
   // 静态 import 会在无 pinia 的测试环境崩溃；业务运行时毫秒级生效）
-  async _applyV3Flags(app_name) {
+  async _applyV3Flags(app_name, app_type_code) {
     try {
       const [{ dictTable }, { GET_APP_TYPE_LIST }] = await Promise.all([
         import("@/store/dictTable"),
@@ -52,16 +83,25 @@ export default class Logger {
       const series = (dictTable().dictInfo.log_v3_enabled_series || "")
         .split(",")
         .filter(Boolean);
-      // 按影线系列标识（app_type_code）判定：app_name（具体影线）→ 所属系列
-      // （如 chenxing_applet）→ 与字典白名单比对。字典配系列代码，如 "chenxing_applet"。
-      const appTypeCode = GET_APP_TYPE_LIST().find(item =>
-        item.app_name_list.includes(app_name)
-      )?.app_type_code;
-      this.v3Mode = appTypeCode ? series.includes(appTypeCode) : false;
+      // 按影线系列标识（app_type_code）判定：优先订单自带字段（订单对象含 app_type_code，
+      // 如 chenxing_applet，最可靠）；缺失时按 app_name（具体影线）→ 所属系列反查。
+      // ⚠️ 修复（2026-08-20）：getCanAppTypeList 是"当前登录账号可用影线"列表，
+      //   可能不含该影线（跨账号/多影线场景）导致反查失败——订单自带字段优先。
+      const appTypeCode = app_type_code
+        ? app_type_code
+        : GET_APP_TYPE_LIST().find(item =>
+            item.app_name_list.includes(app_name)
+          )?.app_type_code;
+      if (!app_type_code) {
+        // 同步阶段（_applyV3FlagsSync）已按订单自带 app_type_code + 本地字典缓存判定，
+        // 异步仅兜底 app_type_code 缺失场景，不覆盖同步结果（防 GET_APP_TYPE_LIST
+        // 异常/未加载把已生效的 v3Mode 冲回 false）
+        this.v3Mode = appTypeCode ? series.includes(appTypeCode) : false;
+        this.traceEnabled = this.v3Mode;
+      }
     } catch {
-      this.v3Mode = false;
+      // 异步失败静默，不覆盖同步判定结果
     }
-    this.traceEnabled = this.v3Mode;
   }
   log(level, message, isSave, meta) {
     const timestamp = new Date().toLocaleString().replaceAll("/", "-");

@@ -769,7 +769,7 @@ export default class BaseOfferQueue {
           order.offer_end_time &&
           order.offer_end_time - new Date().getTime() <= minOfferHandleEndTime
         ) {
-          logger.errorSave(
+          logger.warnSave(
             `订单报价截止时间小于等于${minOfferHandleEndTime}毫秒，跳过报价`,
             {
               offer_end_time: order.offer_end_time,
@@ -1043,7 +1043,7 @@ export default class BaseOfferQueue {
 
       // 猎人特殊处理：已自动报价视为失败，直接返回
       if (order.plat_name === "lieren" && res?.message === "已自动报价") {
-        log.errorSave("猎人已自动报价");
+        log.warnSave("猎人已自动报价");
         // 透传 cinemaInfo/cacheHit：getEndOfferPrice 已成功，cinemaInfo 已解析
         return {
           offerRule,

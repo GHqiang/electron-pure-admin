@@ -81,11 +81,11 @@ export async function syncUpdateQuanStock({
   getQuanListByPhone,
   extraParams = {}
 }) {
-  const { app_name, plat_name, order_number } = order;
+  const { app_name, plat_name, order_number, app_type_code } = order;
   // 内部独立日志：券库存更新全流程日志收集后一次上传，不受调用方 logger 上传时机影响
   // （控制台照常打印，便于实时观察；上传独立于报价/出票流程）
   const logger = new Logger({ logType: 1 });
-  logger.init({ plat_name, order_number, app_name });
+  logger.init({ plat_name, order_number, app_name, app_type_code });
   let targetLoginList = getCinemaLoginInfoList().filter(
     item => item.app_name === app_name && item.mobile && item.session_id
   );
