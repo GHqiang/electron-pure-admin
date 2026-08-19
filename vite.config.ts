@@ -167,6 +167,14 @@ export default ({ command, mode }: ConfigEnv): UserConfigExport => {
       // 以下均为构建产物或非前端源码目录，与 HMR 无关，忽略后同时大幅降低 watcher 负载：
       //   release=electron-builder 输出 | dist/dist-electron=构建产物 |
       //   auto-ticket-service=后端服务（独立进程）| applet-source-code=小程序源码 | test-6slot=测试产物
+      // ⚠️ 追加（2026-08-20）：编辑器/工具原子写入 src 下的临时目录
+      //   （.HistoryOfferRecord.vue.XXXX.tmpdir/HistoryOfferRecord.vue.tmp）会被 vite 递归扫到并开始
+      //   watch，随即被 rename/删除 → Node fs.watch 抛 EBUSY（node:internal/fs/watchers）→ 未捕获崩溃。
+      //   忽略 *.tmpdir 目录与 *.tmp 文件从源头规避（HMR 只关心真实源码文件）。
+      // ⚠️ 根治（2026-08-20）：EBUSY 是 fs.watch 同步 throw（chokidar 不认 EBUSY 直接 rethrow），
+      //   vite 的 on('error') 接不到，任何"容错监听"配置都拦不住 → 改为 usePolling 轮询检测
+      //   （vite 官方对 Windows watcher 异常的建议方案）：不再使用 OS 文件事件，EBUSY 从机制上消失，
+      //   监听能力完整保留（interval=300ms 检测延迟对 HMR 无感；配合上方 ignored 减负，CPU 开销可控）。
       watch: {
         ignored: [
           "**/release/**",
@@ -176,8 +184,12 @@ export default ({ command, mode }: ConfigEnv): UserConfigExport => {
           "**/applet-source-code/**",
           "**/test-6slot/**",
           "**/.workbuddy/**",
-          "**/doc/**"
-        ]
+          "**/doc/**",
+          "**/*.tmpdir/**",
+          "**/*.tmp"
+        ],
+        usePolling: true,
+        interval: 300
       }
     },
     plugins: getPluginsList(command, VITE_CDN, VITE_COMPRESSION),
