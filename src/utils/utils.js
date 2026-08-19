@@ -590,20 +590,29 @@ const getAllowChangeSeatText = (orderInfo = {}) => {
   let support;
   switch (plat_name) {
     case "shoutu":
-      support = Number(orderInfo.isAllowChangeSeats) === 1;
+      support =
+        Number(orderInfo.isAllowChangeSeats) === 1 ||
+        orderInfo.isAllowChangeSeats === true;
       break;
     case "mangguo":
-      support = Number(orderInfo.auto_check_seat) === 1;
+      support =
+        Number(orderInfo.auto_check_seat) === 1 ||
+        orderInfo.auto_check_seat === true;
       break;
     case "sheng":
-      support = Number(orderInfo.changeSeat) === 1;
+      support =
+        Number(orderInfo.changeSeat) === 1 || orderInfo.changeSeat === true;
       break;
     case "piaosheng":
     case "mahua":
-      support = Number(orderInfo.acceptChangeSeat) === 1;
+      support =
+        Number(orderInfo.acceptChangeSeat) === 1 ||
+        orderInfo.acceptChangeSeat === true;
       break;
     case "yinghuasuan":
-      support = Number(orderInfo.accept_change_seat) === 1;
+      support =
+        Number(orderInfo.accept_change_seat) === 1 ||
+        orderInfo.accept_change_seat === true;
       break;
     default:
       return undefined;
