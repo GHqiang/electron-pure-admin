@@ -5,7 +5,6 @@ import {
   formatErrInfo
 } from "@/utils/utils";
 import { saveFailLogToLocal } from "@/common/localFailLog";
-import { dictTable } from "@/store/dictTable";
 
 // V3：降级/辅助动作 des 前缀（仅作根因排除与 L1 收窄白名单判定，非流程前缀）
 const REMEDY_KEYWORDS = ["降级-", "辅助-"];
@@ -46,14 +45,19 @@ export default class Logger {
   // 静态 import 会在无 pinia 的测试环境崩溃；业务运行时毫秒级生效）
   async _applyV3Flags(app_name) {
     try {
-      const { getSeriesKeyByAppName } = await import(
-        "@/common/core/extractThirdPartyIds"
-      );
-      const seriesKey = getSeriesKeyByAppName(app_name);
+      const [{ dictTable }, { GET_APP_TYPE_LIST }] = await Promise.all([
+        import("@/store/dictTable"),
+        import("@/common/constant")
+      ]);
       const series = (dictTable().dictInfo.log_v3_enabled_series || "")
         .split(",")
         .filter(Boolean);
-      this.v3Mode = seriesKey ? series.includes(seriesKey) : false;
+      // 按影线系列标识（app_type_code）判定：app_name（具体影线）→ 所属系列
+      // （如 chenxing_applet）→ 与字典白名单比对。字典配系列代码，如 "chenxing_applet"。
+      const appTypeCode = GET_APP_TYPE_LIST().find(item =>
+        item.app_name_list.includes(app_name)
+      )?.app_type_code;
+      this.v3Mode = appTypeCode ? series.includes(appTypeCode) : false;
     } catch {
       this.v3Mode = false;
     }
