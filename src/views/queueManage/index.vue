@@ -204,7 +204,12 @@ import {
   getTicketQueue,
   destroyTicketQueue
 } from "@/common/autoTicket/comTicketHandle";
-import { ORDER_FORM, GET_APP_LIST, IN_RULE_LIST } from "@/common/constant";
+import {
+  ORDER_FORM,
+  GET_APP_LIST,
+  IN_RULE_LIST,
+  APP_TYPE_OBJ
+} from "@/common/constant";
 const APP_LIST = computed(() => GET_APP_LIST());
 
 import {
@@ -337,7 +342,22 @@ const oneClickStart = () => {
     }
   });
 
-  ElMessageBox.confirm("确定要一键全部启动吗?", "提示", {
+  // 检查是否有禁用系列，若有则在确认提示中告知用户（被禁系列报价由 getCinemaFlag 自动跳过）
+  let disabledNames = [];
+  try {
+    let arr = JSON.parse(
+      window.localStorage.getItem("disableAppTypeList") || "[]"
+    );
+    disabledNames = arr
+      .filter(code => APP_TYPE_OBJ[code])
+      .map(code => APP_TYPE_OBJ[code]);
+  } catch {
+    disabledNames = [];
+  }
+  let startMsg = disabledNames.length
+    ? `检测到以下系列已禁用报价：${disabledNames.join("、")}。这些系列将不参与报价，确定要一键全部启动吗？`
+    : "确定要一键全部启动吗?";
+  ElMessageBox.confirm(startMsg, "提示", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
     type: "warning",
@@ -399,6 +419,8 @@ const oneClickStart = () => {
       }
     })
     .catch(error => {
+      // 用户点击取消/关闭属于正常取消，不算错误，静默处理
+      if (error === "cancel" || error === "close") return;
       console.error("一键启动队列失败", error);
       ElMessage.error("一键启动队列失败，请检查控制台日志");
     });

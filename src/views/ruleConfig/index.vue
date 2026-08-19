@@ -232,9 +232,37 @@ if (!disableAppTypeListValue && window.localStorage.getItem("h5umeIsClose") == "
   window.localStorage.removeItem("h5umeIsClose");
 }
 const disableAppTypeList = ref(disableAppTypeListArr);
-const disableAppTypeListChange = val => {
-  console.log("val", val);
-  window.localStorage.setItem("disableAppTypeList", JSON.stringify(val));
+// 记录上一次已确认的禁用列表，用于检测本次新增的禁用项（勾选=禁用）
+let disableAppTypeListPrev = [...disableAppTypeListArr];
+// 勾选（禁用）某系列时二次确认，取消则回退本次勾选；取消勾选（启用）不弹框
+const disableAppTypeListChange = async val => {
+  const added = val.filter(code => !disableAppTypeListPrev.includes(code));
+  if (added.length) {
+    try {
+      await ElMessageBox.confirm(
+        `确定要禁用以下系列的报价吗？禁用后这些系列将不参与报价：${added
+          .map(c => APP_TYPE_OBJ[c])
+          .join("、")}`,
+        "提示",
+        {
+          confirmButtonText: "确定",
+          cancelButtonText: "取消",
+          type: "warning",
+          distinguishCancelAndClose: true
+        }
+      );
+      // 确认禁用：持久化并更新已确认状态
+      window.localStorage.setItem("disableAppTypeList", JSON.stringify(val));
+      disableAppTypeListPrev = [...val];
+    } catch {
+      // 取消或关闭：回退本次勾选
+      disableAppTypeList.value = [...disableAppTypeListPrev];
+    }
+  } else {
+    // 仅启用（取消勾选）或无变化：直接持久化
+    window.localStorage.setItem("disableAppTypeList", JSON.stringify(val));
+    disableAppTypeListPrev = [...val];
+  }
 };
 
 // 设置字典表信息
