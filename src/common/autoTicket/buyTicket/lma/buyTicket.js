@@ -786,6 +786,8 @@ export default class LmaBuyTicket extends BaseBuyTicket {
       }
       this.logger.infoSave("订单购买成功");
 
+      // V3 L0：支付前卡余额（提升到外层声明，供 return 采集 use_path/card_balance）
+      let cardBalance = null;
       // 更新卡日使用量
       if (card_id) {
         await this.cardQuanManage.updateCardDayUse({
@@ -798,6 +800,7 @@ export default class LmaBuyTicket extends BaseBuyTicket {
         const oldBalance = parseFloat(
           (card_balance || "").replace("￥", "") || "0"
         );
+        cardBalance = oldBalance;
         this.logger.infoSave("支付卡信息", {
           cardId: card_id, // lma card_id和card_num是一个值
           cardNo: card_id,
@@ -877,6 +880,21 @@ export default class LmaBuyTicket extends BaseBuyTicket {
         profit = Number(profit).toFixed(2);
       }
 
+      // V3 L0：用券用卡快照采集（挂 ticketRes，BaseTicketQueue.saveTicketRecord 收口入库）
+      // lma 的 quan_code 为已用券码数组的 JSON 字符串（元素仅含 code 字段）
+      const useQuanList = quan_code ? JSON.parse(quan_code) : [];
+      const couponsSnapshot = useQuanList.slice(0, 10).map(item => ({
+        couponCode: item.code
+      }));
+      const usePath = this.buildTicketUsePath({
+        offer_type: offerRule.offer_type,
+        useQuan: useQuanList,
+        cardNum,
+        cardBalance,
+        paymentAmount,
+        currentParamsInx: this.currentParamsInx
+      });
+
       // 避免存入数组
       if (quan_code) {
         quan_code = JSON.parse(quan_code)
@@ -891,7 +909,13 @@ export default class LmaBuyTicket extends BaseBuyTicket {
         card_id,
         cardNum,
         offerRule,
-        mobile: this.currentParamsList[this.currentParamsInx]?.mobile || ""
+        mobile: this.currentParamsList[this.currentParamsInx]?.mobile || "",
+        // V3 L0：数值列传 null（非 ""）：saveTicketRecord 收口处 ?? null 兜底，
+        // "" 会绕过 ?? 且被 MySQL 严格模式拒绝写入 DECIMAL 列（ERROR 1366）
+        paymentAmount: paymentAmount ?? null,
+        cardBalance: cardBalance ?? null,
+        coupons: couponsSnapshot,
+        usePath
       };
     } catch (error) {
       this.logger.errorSave("一键买票异常", { error });
@@ -902,6 +926,41 @@ export default class LmaBuyTicket extends BaseBuyTicket {
       });
       return { offerRule };
     }
+  }
+
+  /**
+   * V3 L0：拼装一句话用券用卡路径（入库 use_path，供详情页直接可读）
+   * @private
+   */
+  buildTicketUsePath({
+    offer_type,
+    useQuan,
+    cardNum,
+    cardBalance,
+    paymentAmount,
+    currentParamsInx
+  }) {
+    const steps = [];
+    if (currentParamsInx > 0) {
+      steps.push(`换号${currentParamsInx}次`);
+    }
+    if (offer_type === "1" && useQuan?.length) {
+      steps.push(`用券${useQuan.length}张`);
+      if (cardNum) {
+        steps.push(
+          `卡尾号${String(cardNum).slice(-4)}付券手续费${paymentAmount ?? ""}`
+        );
+      } else {
+        steps.push(`实付${paymentAmount ?? ""}`);
+      }
+    } else if (cardNum) {
+      steps.push(`用卡尾号${String(cardNum).slice(-4)}`);
+      if (cardBalance != null && cardBalance !== "") {
+        steps.push(`支付前余额${cardBalance}`);
+      }
+      steps.push(`实付${paymentAmount ?? ""}`);
+    }
+    return steps.join("→");
   }
 
   // 获取排序手机号（按券库存）

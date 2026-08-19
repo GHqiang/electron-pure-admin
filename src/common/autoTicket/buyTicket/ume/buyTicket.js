@@ -1008,10 +1008,12 @@ export default class UmeBuyTicket extends BaseBuyTicket {
         }
       }
       this.logger.infoSave("订单购买成功");
+      // V3 L0：支付前卡余额（提升到外层声明，供 return 采集 use_path/card_balance）
+      let cardBalance = null;
       // 此处是为了解决创建订单时card_id是cardNo，更新卡使用量是用的card_id是cardInstanceId，要和后台会员卡列表维护那的id保持一致
       if (card_id) {
         // 先通过cardNo匹配拿到余额
-        let cardBalance =
+        cardBalance =
           cardList?.find(item => item.cardNo == card_id)?.cardAmount || 0;
         const cardNum = card_id;
         // 此处重新赋值才对应sv库里的card_id
@@ -1081,6 +1083,22 @@ export default class UmeBuyTicket extends BaseBuyTicket {
       if (profit) {
         profit = Number(profit).toFixed(2);
       }
+      // V3 L0：用券用卡快照采集（挂 ticketRes，BaseTicketQueue.saveTicketRecord 收口入库）
+      // 卡余额原始为分，采集入库统一为元（与 jinyi 等系列口径一致）
+      const cardBalanceYuan = cardBalance == null ? null : cardBalance / 100;
+      const couponsSnapshot = (useQuan || []).slice(0, 10).map(item => ({
+        couponType: item.couponType,
+        couponCode: item.couponCode,
+        couponName: item.couponName
+      }));
+      const usePath = this.buildTicketUsePath({
+        offer_type: offerRule.offer_type,
+        useQuan: useQuan || [],
+        cardNum,
+        cardBalance: cardBalanceYuan,
+        paymentAmount,
+        currentParamsInx: this.currentParamsInx
+      });
       return {
         profit,
         qrcode: lastRes?.qrcode,
@@ -1089,7 +1107,13 @@ export default class UmeBuyTicket extends BaseBuyTicket {
         card_id,
         cardNum,
         offerRule,
-        mobile: this.currentParamsList[this.currentParamsInx]?.mobile || ""
+        mobile: this.currentParamsList[this.currentParamsInx]?.mobile || "",
+        // 数值列传 null（非 ""）：saveTicketRecord 收口处 ?? null 兜底，
+        // "" 会绕过 ?? 且被 MySQL 严格模式拒绝写入 DECIMAL 列（ERROR 1366）
+        paymentAmount: paymentAmount ?? null,
+        cardBalance: cardBalanceYuan,
+        coupons: couponsSnapshot,
+        usePath
       };
     } catch (error) {
       this.logger.errorSave("一键买票异常", { error });
@@ -1100,6 +1124,41 @@ export default class UmeBuyTicket extends BaseBuyTicket {
       });
       return { offerRule };
     }
+  }
+
+  /**
+   * V3 L0：拼装一句话用券用卡路径（入库 use_path，供详情页直接可读）
+   * @private
+   */
+  buildTicketUsePath({
+    offer_type,
+    useQuan,
+    cardNum,
+    cardBalance,
+    paymentAmount,
+    currentParamsInx
+  }) {
+    const steps = [];
+    if (currentParamsInx > 0) {
+      steps.push(`换号${currentParamsInx}次`);
+    }
+    if (offer_type === "1" && useQuan?.length) {
+      steps.push(`用券${useQuan.length}张`);
+      if (cardNum) {
+        steps.push(
+          `卡尾号${String(cardNum).slice(-4)}付券手续费${paymentAmount ?? ""}`
+        );
+      } else {
+        steps.push(`实付${paymentAmount ?? ""}`);
+      }
+    } else if (cardNum) {
+      steps.push(`用卡尾号${String(cardNum).slice(-4)}`);
+      if (cardBalance != null && cardBalance !== "") {
+        steps.push(`支付前余额${cardBalance}`);
+      }
+      steps.push(`实付${paymentAmount ?? ""}`);
+    }
+    return steps.join("→");
   }
 }
 

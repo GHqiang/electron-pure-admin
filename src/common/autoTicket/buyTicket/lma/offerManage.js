@@ -99,6 +99,8 @@ class getLmaOfferPrice extends BaseOfferPrice {
     try {
       const matchRuleListRes = offerRuleMatch(order, this.logger);
       let matchRuleList = matchRuleListRes?.matchRuleList || [];
+      // V3 L0：一句话计算路径（过滤/会员价/策略过程收集，最终由基类追加报价段后入库）
+      const calcSteps = [`初始匹配命中${matchRuleList?.length || 0}条`];
       if (!matchRuleList?.length) {
         this.logger.infoSave("报价规则匹配后规则为空", {
           error: matchRuleListRes?.error,
@@ -151,7 +153,8 @@ class getLmaOfferPrice extends BaseOfferPrice {
       let endRule = await this.getMinAmountOfferRule(
         matchRuleList,
         order,
-        movieInfo
+        movieInfo,
+        calcSteps
       );
       console.warn("最终匹配到的报价规则", endRule);
       if (!endRule) {
@@ -159,6 +162,9 @@ class getLmaOfferPrice extends BaseOfferPrice {
         return null;
       }
       endRule = JSON.parse(JSON.stringify(endRule));
+      // V3 L0：挂一句话计算路径与命中规则名（BaseOfferQueue 收口入库）
+      endRule.calc_path = calcSteps.join("→");
+      endRule.hit_rule_name = endRule.ruleName || "";
       return endRule;
     } catch (error) {
       this.logger.errorSave("获取最终匹配报价规则异常", {
@@ -384,7 +390,7 @@ class getLmaOfferPrice extends BaseOfferPrice {
   }
 
   // 获取报价最低的报价规则
-  async getMinAmountOfferRule(ruleList, order, movieInfo) {
+  async getMinAmountOfferRule(ruleList, order, movieInfo, calcSteps = []) {
     try {
       // 1、有会员日报价规则命中优先使用会员日报价规则
       let onlyMemberDayRuleList = ruleList.filter(
@@ -397,6 +403,9 @@ class getLmaOfferPrice extends BaseOfferPrice {
       console.log("命中会员日报价规则从小往大排序", onlyMemberDayRuleList);
       if (onlyMemberDayRuleList.length) {
         this.logger.infoSave("命中会员日报价规则");
+        calcSteps.push(
+          `会员日规则命中(${onlyMemberDayRuleList[0].offerAmount}元)`
+        );
         return onlyMemberDayRuleList[0];
       }
 
@@ -421,6 +430,7 @@ class getLmaOfferPrice extends BaseOfferPrice {
           this.logger.infoSave("根据电影格式过滤后的固定报价规则列表", {
             fixedAmountRuleList
           });
+          calcSteps.push(`电影格式过滤剩${fixedAmountRuleList.length}条`);
         }
       }
       if (fixedAmountRuleList.length) {
@@ -474,6 +484,7 @@ class getLmaOfferPrice extends BaseOfferPrice {
             }
           );
         }
+        calcSteps.push(`券库存过滤剩${fixedAmountRuleList.length}条`);
       }
       let mixFixedAmountRule = fixedAmountRuleList.sort(
         (itemA, itemB) => itemA.offerAmount - itemB.offerAmount
@@ -528,6 +539,7 @@ class getLmaOfferPrice extends BaseOfferPrice {
               fixedOfferAmount: mixFixedAmountRule?.offerAmount
             }
           );
+          calcSteps.push(`仅固定价${mixFixedAmountRule?.offerAmount}`);
           return mixFixedAmountRule;
         }
 
@@ -546,6 +558,7 @@ class getLmaOfferPrice extends BaseOfferPrice {
               real_member_price: memberPriceRes.real_member_price,
               addMountRule: minAddAmountRule.addMountRule
             });
+            calcSteps.push(`仅固定价${mixFixedAmountRule?.offerAmount}`);
             return mixFixedAmountRule;
           }
           minAddAmountRule.realAddMount = realAddMount;
@@ -564,6 +577,9 @@ class getLmaOfferPrice extends BaseOfferPrice {
         minAddAmountRule.memberOfferAmount =
           minAddAmountRule.round_member_price +
           Number(minAddAmountRule.realAddMount);
+        calcSteps.push(
+          `会员价加价命中(${minAddAmountRule.memberOfferAmount}元)`
+        );
         this.logger.infoSave("会员报价最终信息", {
           real_member_price:
             "真实会员价：" + minAddAmountRule.real_member_price,
@@ -582,6 +598,7 @@ class getLmaOfferPrice extends BaseOfferPrice {
         this.logger.infoSave("最小加价规则不存在,返回最小固定报价规则", {
           fixedOfferAmount: mixFixedAmountRule?.offerAmount
         });
+        calcSteps.push(`仅固定价${mixFixedAmountRule?.offerAmount}`);
         return mixFixedAmountRule;
       }
 
@@ -590,9 +607,19 @@ class getLmaOfferPrice extends BaseOfferPrice {
           "最小固定报价规则不存在，返回最小加价规则",
           minAddAmountRule
         );
+        calcSteps.push(`仅会员价${minAddAmountRule.memberOfferAmount}`);
         return minAddAmountRule;
       }
 
+      // V3 L0：定价策略段（仅固定/仅会员/对比取低）
+      calcSteps.push(
+        `固定价${mixFixedAmountRule.offerAmount} vs 会员价${minAddAmountRule.memberOfferAmount}，取${
+          minAddAmountRule.memberOfferAmount >=
+          Number(mixFixedAmountRule.offerAmount)
+            ? "固定"
+            : "会员"
+        }`
+      );
       if (
         minAddAmountRule.memberOfferAmount >=
         Number(mixFixedAmountRule.offerAmount)

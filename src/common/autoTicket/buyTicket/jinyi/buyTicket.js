@@ -593,6 +593,8 @@ class JinyiBuyTicket extends BaseBuyTicket {
         offerRule
       });
       buyTicketInfo.order_num = order_num;
+      // V3 L0：支付前卡余额（提升到外层声明，供 return 采集 use_path/card_balance）
+      let cardBalance = null;
       if (card_id) {
         // 更新卡使用量
         await updateCardDayUse({
@@ -603,7 +605,7 @@ class JinyiBuyTicket extends BaseBuyTicket {
           add_count: ticket_num
         });
         // 同步出票后的卡余额
-        const cardBalance = canUseCardList?.find(
+        cardBalance = canUseCardList?.find(
           item => item.card_id == card_id
         )?.cardAmount;
         this.logger.infoSave("支付卡信息", {
@@ -647,6 +649,20 @@ class JinyiBuyTicket extends BaseBuyTicket {
       if (profit) {
         profit = Number(profit).toFixed(2);
       }
+      // V3 L0：用券用卡快照采集（挂 ticketRes，BaseTicketQueue.saveTicketRecord 收口入库）
+      const couponsSnapshot = (useQuan || []).slice(0, 10).map(item => ({
+        couponType: item.couponType,
+        couponCode: item.couponCode,
+        couponName: item.couponName
+      }));
+      const usePath = this.buildTicketUsePath({
+        offer_type: offerRule.offer_type,
+        useQuan: useQuan || [],
+        cardNum,
+        cardBalance,
+        paymentAmount,
+        currentParamsInx: this.currentParamsInx
+      });
       return {
         profit,
         qrcode: lastRes?.qrcode,
@@ -655,7 +671,13 @@ class JinyiBuyTicket extends BaseBuyTicket {
         card_id,
         cardNum,
         offerRule,
-        mobile: this.currentPhone
+        mobile: this.currentPhone,
+        // 数值列传 null（非 ""）：saveTicketRecord 收口处 ?? null 兜底，
+        // "" 会绕过 ?? 且被 MySQL 严格模式拒绝写入 DECIMAL 列（ERROR 1366）
+        paymentAmount: paymentAmount ?? null,
+        cardBalance: cardBalance ?? null,
+        coupons: couponsSnapshot,
+        usePath
       };
     } catch (error) {
       this.logger.errorSave("一键买票异常", formatErrInfo(error));
@@ -666,6 +688,41 @@ class JinyiBuyTicket extends BaseBuyTicket {
       });
       return { offerRule: this.offerRule };
     }
+  }
+
+  /**
+   * V3 L0：拼装一句话用券用卡路径（入库 use_path，供详情页直接可读）
+   * @private
+   */
+  buildTicketUsePath({
+    offer_type,
+    useQuan,
+    cardNum,
+    cardBalance,
+    paymentAmount,
+    currentParamsInx
+  }) {
+    const steps = [];
+    if (currentParamsInx > 0) {
+      steps.push(`换号${currentParamsInx}次`);
+    }
+    if (offer_type === "1" && useQuan?.length) {
+      steps.push(`用券${useQuan.length}张`);
+      if (cardNum) {
+        steps.push(
+          `卡尾号${String(cardNum).slice(-4)}付券手续费${paymentAmount ?? ""}`
+        );
+      } else {
+        steps.push(`实付${paymentAmount ?? ""}`);
+      }
+    } else if (cardNum) {
+      steps.push(`用卡尾号${String(cardNum).slice(-4)}`);
+      if (cardBalance != null && cardBalance !== "") {
+        steps.push(`支付前余额${cardBalance}`);
+      }
+      steps.push(`实付${paymentAmount ?? ""}`);
+    }
+    return steps.join("→");
   }
 
   // 转单或换号处理
