@@ -615,7 +615,7 @@ export default class UmeOrderManage {
    * @returns {Promise<Object>} transferParams
    */
   async transferOrder(unlockSeatInfo) {
-    this.logger.infoSave("开始准备转单", unlockSeatInfo);
+    this.logger.errorSave("降级-转单-进入", unlockSeatInfo || {});
     if (unlockSeatInfo) {
       const { cinemaCode, cinemaLinkId, orderHeaderId } = unlockSeatInfo;
       const currentParams = this.getCurrentParams();

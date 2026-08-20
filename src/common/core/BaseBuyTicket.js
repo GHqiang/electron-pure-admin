@@ -372,7 +372,8 @@ export default class BaseBuyTicket {
     rebuildParams
   }) {
     const { currentParamsInx, currentParamsList } = this;
-    this.logger.infoSave("触发降级处理：换号或转单", {
+    // 降级-前缀：v3Mode 下 L1 白名单保留（降级触发可见），REMEDY 排除不污染根因
+    this.logger.errorSave("降级-换号或转单-进入", {
       reason,
       currentParamsInx,
       total: currentParamsList.length
@@ -383,7 +384,10 @@ export default class BaseBuyTicket {
         await this.orderManage.transferOrder(unlockOrCancelParams);
       return { offerRule: this.offerRule, transferParams };
     } else {
-      this.logger.infoSave("非最后一次账号，走换号逻辑");
+      this.logger.errorSave("降级-换号-进入", {
+        原因: "非最后一次账号",
+        currentParamsInx
+      });
       this.currentParamsInx++;
       return await this.oneClickBuyTicket(rebuildParams);
     }

@@ -73,7 +73,8 @@ function makeLogger() {
     logUpload: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
-    errorSave: jest.fn(),
+    // errorSave 同步收集（异常日志改 errorSave + 辅助-前缀后仍可断言）
+    errorSave: jest.fn((msg, data) => logs.push({ msg, data })),
     logList: [], // 与真实 Logger 对齐（commonQuanStock 结束日志读取该属性）
     _logs: logs
   };
@@ -83,7 +84,14 @@ function makeLogger() {
 function makeItem(quan_value, maxStock) {
   const quanStockList =
     maxStock > 0
-      ? [{ phone: "13800000001", quan_stock: maxStock, real_quan_stock: maxStock, update_time: "2026-07-30 12:00:00" }]
+      ? [
+          {
+            phone: "13800000001",
+            quan_stock: maxStock,
+            real_quan_stock: maxStock,
+            update_time: "2026-07-30 12:00:00"
+          }
+        ]
       : [];
   return {
     id: `qt_${quan_value}`,
@@ -139,7 +147,9 @@ describe("batchUpdateQuanStockWithSync - 主流程集成测试", () => {
     // 默认 mock：落库成功
     mockBatchUpdateQuanType.mockResolvedValue({ data: { affectedRows: 1 } });
     // 默认 mock：平台同步成功
-    mockLierenOfferRuleSyncPlat.mockResolvedValue({ platOfferList: [{ platName: "lieren", isSyncPlat: 1 }] });
+    mockLierenOfferRuleSyncPlat.mockResolvedValue({
+      platOfferList: [{ platName: "lieren", isSyncPlat: 1 }]
+    });
     // 默认 mock：日志批量写入成功
     mockBatchAddRuleOperationLog.mockResolvedValue({ code: 1 });
   });
@@ -309,9 +319,9 @@ describe("batchUpdateQuanStockWithSync - 主流程集成测试", () => {
     expect(mockLierenOfferRuleSyncPlat).not.toHaveBeenCalled();
     expect(mockUpdateRuleRecord).not.toHaveBeenCalled();
 
-    // 异常被 catch，日志记录
+    // 异常被 catch，日志记录（辅助-前缀 + errorSave）
     const failLog = logger._logs.find(
-      l => l.msg === "批量更新券库存异常"
+      l => l.msg === "辅助-批量更新券库存-异常"
     );
     expect(failLog).toBeDefined();
   });
@@ -379,7 +389,7 @@ describe("batchUpdateQuanStockWithSync - 主流程集成测试", () => {
       data: {
         ruleList: [
           makeMatchedRule("Q1", 2, "1"), // seatNum 不一致，触发同步
-          makeMatchedRule("Q2", 2, "1")  // seatNum 不一致，触发同步
+          makeMatchedRule("Q2", 2, "1") // seatNum 不一致，触发同步
         ]
       }
     });
@@ -414,7 +424,9 @@ describe("batchUpdateQuanStockWithSync - 主流程集成测试", () => {
     mockQueryRuleList.mockResolvedValueOnce({
       data: { ruleList: [makeMatchedRule("Q1", 2, "1")] }
     });
-    mockBatchAddRuleOperationLog.mockRejectedValueOnce(new Error("日志服务不可用"));
+    mockBatchAddRuleOperationLog.mockRejectedValueOnce(
+      new Error("日志服务不可用")
+    );
 
     await commonQuanStock.batchUpdateQuanStockWithSync({
       list: [makeItem("Q1", 4)],
@@ -426,9 +438,9 @@ describe("batchUpdateQuanStockWithSync - 主流程集成测试", () => {
     expect(mockLierenOfferRuleSyncPlat).toHaveBeenCalledTimes(1);
     expect(mockUpdateRuleRecord).toHaveBeenCalledTimes(1);
 
-    // 日志失败被记录但不抛出
+    // 日志失败被记录但不抛出（辅助-前缀 + errorSave）
     const logFailLog = logger._logs.find(
-      l => l.msg === "批量写入规则操作日志失败"
+      l => l.msg === "辅助-批量写入规则操作日志-异常"
     );
     expect(logFailLog).toBeDefined();
 
@@ -454,9 +466,9 @@ describe("batchUpdateQuanStockWithSync - 主流程集成测试", () => {
       logger
     });
 
-    // 空值保护生效：不记录"查询影院报价规则异常"
+    // 空值保护生效：不记录"辅助-查询影院报价规则-异常"
     expect(
-      logger._logs.find(l => l.msg === "查询影院报价规则异常")
+      logger._logs.find(l => l.msg === "辅助-查询影院报价规则-异常")
     ).toBeUndefined();
     // 正常走"无关联规则"分支并回滚 B1 缓存
     expect(
@@ -730,7 +742,7 @@ describe("batchUpdateQuanStockWithSync - 主流程集成测试", () => {
       quan_value: "Q1",
       quan_flag: "flag1",
       maxQuanStock: 2,
-      stockByPhone: { "13800000001": 2 }
+      stockByPhone: { 13800000001: 2 }
     });
 
     // 批量更新日志也在同一次上传中

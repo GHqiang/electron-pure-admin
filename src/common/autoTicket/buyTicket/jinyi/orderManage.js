@@ -22,7 +22,7 @@ export default class OrderManage {
 
   // 转单
   async transferOrder(unlockSeatInfo) {
-    this.logger.infoSave("开始准备转单", unlockSeatInfo);
+    this.logger.errorSave("降级-转单-进入", unlockSeatInfo);
     // 金逸无显式释放座位/取消订单接口，转单前用最后登录的号重新查询该场次座位接口触发释放
     await this.releaseSeatByQuerySeat(unlockSeatInfo);
 
@@ -38,7 +38,8 @@ export default class OrderManage {
       des = "重新出票失败，不转单只取消订单释放座位，需手动出票或转单";
     }
     if (this.isTestOrder || isAutoTransfer !== "1" || this.order.isAgain) {
-      this.logger.infoSave("自动转单处于关闭状态");
+      // 降级-前缀：v3Mode 下白名单保留入库（补救结果可见），不设根因
+      this.logger.infoSave("降级-转单-跳过(自动转单处于关闭状态)");
       sendWxPusherMessage({
         orderInfo: this.order,
         transferTip: des,
@@ -71,10 +72,10 @@ export default class OrderManage {
       const res2 = await this.appApi.getMoviePlaySeat(params2);
       this.logger.infoSave("释放座位-重新查询该场次和座位分区接口成功");
     } catch (error) {
-      // 释放失败不影响转单主流程，仅记录日志
+      // 释放失败不影响转单主流程，仅记录日志（降级-前缀防污染根因）
       this.logger.errorSave(
-        "释放座位-重新查询该场次座位异常(不影响转单)",
-        formatErrInfo(error)
+        "降级-释放座位-异常(重新查询场次座位触发,不影响转单)",
+        { error }
       );
     }
   }

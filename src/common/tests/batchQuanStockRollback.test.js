@@ -65,7 +65,8 @@ function makeLogger() {
     logUpload: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
-    errorSave: jest.fn(),
+    // errorSave 同步收集（异常日志改 errorSave + 辅助-前缀后仍可断言）
+    errorSave: jest.fn((msg, data) => logs.push({ msg, data })),
     logList: [], // 与真实 Logger 对齐（commonQuanStock 结束日志读取该属性）
     _logs: logs
   };
@@ -76,13 +77,13 @@ function makeItem(quan_value, maxStock) {
   const quanStockList =
     maxStock > 0
       ? [
-        {
-          phone: "13800000001",
-          quan_stock: maxStock,
-          real_quan_stock: maxStock,
-          update_time: "2026-07-30 12:00:00"
-        }
-      ]
+          {
+            phone: "13800000001",
+            quan_stock: maxStock,
+            real_quan_stock: maxStock,
+            update_time: "2026-07-30 12:00:00"
+          }
+        ]
       : [];
   return {
     id: `qt_${quan_value}`,
@@ -163,9 +164,7 @@ describe("batchUpdateQuanStockWithSync - B1 缓存回滚范围验证", () => {
     expect(mockQueryRuleList).toHaveBeenCalledTimes(2);
 
     // 异常路径：catch 块被触发，needSyncItemsSafe 仅含 Q2（Q1 命中跳过未进入 needSyncItems）
-    const catchLog = logger._logs.find(
-      l => l.msg === "批量根据券库存检查猎人固定报价规则更新座位数异常"
-    );
+    const catchLog = logger._logs.find(l => l.msg === "辅助-批量规则同步-异常");
     expect(catchLog).toBeDefined();
     expect(catchLog.data.needSyncItemsSafe).toEqual([
       { id: "qt_Q2", quan_value: "Q2" }
@@ -206,9 +205,7 @@ describe("batchUpdateQuanStockWithSync - B1 缓存回滚范围验证", () => {
     });
 
     // catch 块回滚 needSyncItems（含 Q3 和 Q4）
-    const catchLog = logger._logs.find(
-      l => l.msg === "批量根据券库存检查猎人固定报价规则更新座位数异常"
-    );
+    const catchLog = logger._logs.find(l => l.msg === "辅助-批量规则同步-异常");
     expect(catchLog).toBeDefined();
     expect(catchLog.data.needSyncItemsSafe).toEqual([
       { id: "qt_Q3", quan_value: "Q3" },

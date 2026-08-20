@@ -41,7 +41,7 @@ export default class OrderManage {
 
   // 转单
   async transferOrder(unlockSeatInfo) {
-    this.logger.infoSave("开始准备转单", unlockSeatInfo);
+    this.logger.errorSave("降级-转单-进入", unlockSeatInfo || {});
     if (unlockSeatInfo) {
       // 1、释放座位(仅锁座id存在时)
       if (!unlockSeatInfo.order_num) await this.releaseSeat(unlockSeatInfo);

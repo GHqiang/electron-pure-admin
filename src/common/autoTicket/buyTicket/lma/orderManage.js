@@ -142,7 +142,7 @@ export default class LmaOrderManage {
   // 转单
   async transferOrder(unlockSeatInfo, lmaToken) {
     const { appFlag } = this;
-    this.logger.infoSave("开始准备转单", unlockSeatInfo);
+    this.logger.errorSave("降级-转单-进入", unlockSeatInfo || {});
     if (unlockSeatInfo) {
       const { order_str } = unlockSeatInfo;
       if (order_str && lmaToken) {

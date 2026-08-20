@@ -916,7 +916,7 @@ export default class H5UmeOrderManage {
    * @returns {Promise<Object>} 转单参数
    */
   async transferOrder(unlockSeatInfo) {
-    this.logger.infoSave("开始准备转单", unlockSeatInfo);
+    this.logger.errorSave("降级-转单-进入", unlockSeatInfo || {});
     if (unlockSeatInfo) {
       const {
         cinemaLinkId,

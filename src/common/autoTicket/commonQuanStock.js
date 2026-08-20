@@ -247,7 +247,8 @@ export async function syncUpdateQuanStock({
       });
     }
   } catch (error) {
-    logger.infoSave("异步更新券库存异常", { error: formatErrInfo(error) });
+    // 辅助-前缀：券库存同步异常设根因会污染出票 err_msg，前缀排除；errorSave 保证 L1 可见
+    logger.errorSave("辅助-异步更新券库存-异常", { error });
   } finally {
     // 内部 logger：券库存全流程日志统一一次上传
     logger.logUpload();
@@ -293,8 +294,8 @@ export async function batchUpdateQuanStockWithSync({ list, app_name, logger }) {
     // 2. 统一触发一次猎人规则同步（用完整 list，含 quan_value 供缓存 key 与规则匹配）
     await batchCheckLierenFixedRule({ list, app_name, logger });
   } catch (error) {
-    logger.infoSave("批量更新券库存异常", {
-      error: formatErrInfo(error),
+    logger.errorSave("辅助-批量更新券库存-异常", {
+      error,
       app_name,
       count: list.length
     });
@@ -311,9 +312,9 @@ async function queryRulesByApp(app_name, logger) {
       item => item.shadowLineName === app_name
     );
   } catch (error) {
-    logger?.infoSave?.("查询影院报价规则异常", {
+    logger?.errorSave?.("辅助-查询影院报价规则-异常", {
       app_name,
-      error: formatErrInfo(error)
+      error
     });
     return [];
   }
@@ -558,8 +559,8 @@ async function batchCheckLierenFixedRule({ list, app_name, logger }) {
           count: pendingLogs.length
         });
       } catch (e) {
-        logger.infoSave("批量写入规则操作日志失败", {
-          error: formatErrInfo(e),
+        logger.errorSave("辅助-批量写入规则操作日志-异常", {
+          error: e,
           count: pendingLogs.length
         });
       }
@@ -590,8 +591,8 @@ async function batchCheckLierenFixedRule({ list, app_name, logger }) {
     needSyncItems.forEach(item =>
       _lastMaxStockMap.delete(`${app_name}|${item.quan_value}`)
     );
-    logger.infoSave("批量根据券库存检查猎人固定报价规则更新座位数异常", {
-      error: formatErrInfo(error),
+    logger.errorSave("辅助-批量规则同步-异常", {
+      error,
       app_name,
       needSyncItemsSafe: needSyncItems.map(i => ({
         id: i.id,

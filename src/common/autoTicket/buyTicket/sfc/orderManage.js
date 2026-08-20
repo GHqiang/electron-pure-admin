@@ -710,7 +710,7 @@ export default class SfcOrderManage {
    * @returns {Promise<Object>} transferParams
    */
   async transferOrder(unlockSeatInfo) {
-    this.logger.infoSave("开始准备转单", unlockSeatInfo);
+    this.logger.errorSave("降级-转单-进入", unlockSeatInfo || {});
     if (unlockSeatInfo) {
       const { order_num } = unlockSeatInfo;
       const currentParams = this.getCurrentParams();
