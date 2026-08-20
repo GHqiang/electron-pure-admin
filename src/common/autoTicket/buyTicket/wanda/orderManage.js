@@ -711,7 +711,10 @@ export default class OrderManage {
           session_id,
           logger: this.logger
         });
-      } catch (error) {}
+      } catch (error) {
+        // P0 修复：空 catch 吞掉真实异常（08-06 §4.1 #6），补记后仍走下方 !qrcode 异步兜底
+        this.logger.errorSave("获取支付结果-异常", { error });
+      }
       if (!qrcode) {
         this.logger.errorSave(
           "获取订单支付结果，取票码不存在，暂时返回异步获取"

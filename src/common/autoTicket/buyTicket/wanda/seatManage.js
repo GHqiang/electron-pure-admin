@@ -13,6 +13,7 @@ import { APP_API_OBJ } from "@/common/index";
 import {
   formatErrInfo, // 格式化错误信息
   trial, // 重试方法
+  mockDelay, // 模拟延时（自动选座重试间隔，08-06 §4.1 #4 补 import）
   sendWxPusherMessage
 } from "@/utils/utils";
 

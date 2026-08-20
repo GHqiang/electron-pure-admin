@@ -299,7 +299,6 @@ class JinyiBuyTicket extends BaseBuyTicket {
           )
           .flat()
           .flat();
-        console.log("areaInfoListPrice", areaInfoListPrice, defaultPrice);
         targetSeatCodes.forEach(item => {
           const price = areaInfoListPrice.find(
             itemA => itemA.seat_no == item.seat_no
@@ -325,10 +324,10 @@ class JinyiBuyTicket extends BaseBuyTicket {
           );
         });
       } catch (error) {
-        console.log("座位价格逻辑执行异常", error);
+        // P0 修复：异常走 console 不入库（08-06 §4.1 #8）
+        this.logger.errorSave("座位价格逻辑-异常", { error });
       }
 
-      console.log("seatlableList", seatlableList);
       // 3、锁定座位
       let lockSeatParams = {
         cinema_id,
@@ -645,7 +644,6 @@ class JinyiBuyTicket extends BaseBuyTicket {
       if (lastRes?.qrcode && lastRes?.submitRes) {
         this.logger.infoSave("订单最后处理成功:获取取票码并上传");
       }
-      console.log("一键买票完成");
       if (profit) {
         profit = Number(profit).toFixed(2);
       }

@@ -3,7 +3,6 @@
 
 import {
   getCurrentTime,
-  formatErrInfo,
   logUpload,
   sendWxPusherMessage
 } from "@/utils/utils.js";
@@ -196,7 +195,6 @@ export default class BaseTicketQueue {
       }
     }
 
-    console.warn(des, order);
     this.logger.warn("新的待出票订单", order);
     this.logger.init(order);
     this.logger.infoSave(des, {
@@ -443,7 +441,6 @@ export default class BaseTicketQueue {
       }
       this.logger.infoSave("补全猎人报价记录入参", serOrderInfo);
       await svApi.addOfferRecord(serOrderInfo);
-      console.warn("猎人固定报价规则添加报价记录成功", serOrderInfo);
     } catch (error) {
       this.logger.errorSave("补全猎人报价记录异常", { error, rule, order });
     }

@@ -30,7 +30,8 @@ const ASSIST_LOCK_ERRORS = ["座位旁边不要留空", "座位中间不要留�
 import { APP_API_OBJ } from "@/common/index";
 import {
   formatErrInfo, // 格式化错误信息
-  trial // 重试方法
+  trial, // 重试方法
+  mockDelay // 模拟延时（自动选座重试间隔，08-06 §4.1 #3 补 import）
 } from "@/utils/utils";
 // 帮助锁定座位实例对象
 import assistLockSeatObj from "@/common/autoTicket/lockSeatQueue";

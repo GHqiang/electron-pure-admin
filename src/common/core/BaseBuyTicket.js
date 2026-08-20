@@ -115,20 +115,15 @@ export default class BaseBuyTicket {
 
       // result: { profit, submitRes, qrcode, quan_code, card_id, offerRule, mobile } || undefined
       if (result) {
-        console.warn("单个订单出票完成");
         // V3 根因缓存：出票成功（submitRes 为真）重置根因与最近错误，覆盖全系列
         //（chenxing 已在取票码上传成功处调用，此处基类兜底其余 7 系列）
         if (result.submitRes) {
           this.logger.resetRootErr();
         }
         return result;
-      } else {
-        console.warn("单个订单出票失败");
       }
     } catch (error) {
       this.logger.errorSave("单个订单出票执行出错", formatErrInfo(error));
-    } finally {
-      console.warn("单个订单出票流程结束", this.logger.logList);
     }
   }
 

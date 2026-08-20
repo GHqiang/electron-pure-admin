@@ -11,10 +11,7 @@ import {
 } from "@/utils/utils";
 import { wandaAesDecrypt } from "@/utils/wandaAesDecrypt";
 import { APP_API_OBJ } from "@/common/index";
-import {
-  GET_APP_INFO,
-  TEST_NEW_PLAT_LIST
-} from "@/common/constant";
+import { GET_APP_INFO, TEST_NEW_PLAT_LIST } from "@/common/constant";
 import { getPlatFeeRate } from "../common/offerHelper";
 
 import svApi from "@/api/sv-api";
@@ -882,7 +879,8 @@ export default class CardQuanManage {
       });
       return quanTypeList;
     } catch (error) {
-      this.errorSave("根据影院获取券类型列表返回异常", {
+      // P0 修复：this.errorSave 不存在会抛 TypeError 覆盖原始异常（08-06 §4.1 #1）
+      this.logger.errorSave("根据影院获取券类型列表返回异常", {
         error,
         params
       });

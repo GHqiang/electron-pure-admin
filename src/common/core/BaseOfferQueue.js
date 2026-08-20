@@ -510,8 +510,6 @@ export default class BaseOfferQueue {
       }
     }
 
-    console.warn("新的待报价订单", item);
-
     // 去重检查：订单已在 handledOrders 或队列中，跳过
     const orderKey = `${item.plat_name}_${item.order_number}`;
     if (this.handledOrders.has(orderKey)) {
@@ -853,7 +851,6 @@ export default class BaseOfferQueue {
             err_msg: offerResult?.err_msg || ""
           });
         }
-        console.warn("订单处理完成", offerResult);
         await this.addOrderHandleRecord(order, offerResult, logger, {
           offer_duration: Date.now() - orderHandleStartAt,
           queue_wait_ms: order._offerEnqueueAt
@@ -1259,7 +1256,6 @@ export default class BaseOfferQueue {
       // 检查测试订单标志
       const shouldSave = !this.isTestOrder;
       if (shouldSave) {
-        console.warn("数据库存储当前订单报价记录", serOrderInfo);
         await svApi.addOfferRecord(serOrderInfo);
         log.infoSave("报价记录入库成功", {
           order_number: order.order_number,
