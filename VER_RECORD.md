@@ -1,5 +1,13 @@
 ## 版本更新记录
 
+### 6.6.37版本
+
+1、sfc系列券码与黑名单券处理整改：
+- 修复创建订单时黑名单券处理失效：线上券(coupon_id)/线下会员券(member_coupon_id)场景 quan_code 为空，券不可用时黑名单从不更新、坏券反复出票——useQuanOrCard 返回值新增 coupon_nums（三种券类型统一的真实券码串），创建订单失败更新黑名单改按券码 coupon_num 处理；
+- 修复出票记录券码显示不准确：ticker_record.quan_code 与 V3 coupons 快照在线上券/线下会员券场景存的是券 ID 而非真实券码——出票记录券码与 coupons 快照均优先取 coupon_nums；
+- 修复出票成功后券库存不扣减：updateQuanStock 触发条件由仅判 quan_code 扩展为 quan_code/coupon_id/member_coupon_id 任一有值即扣减，线上券/线下会员券出票后库存正常扣减；
+2、微信出票失败消息模板补 </p> 闭合标签、换座文案引号风格统一（utils.js，上轮换座显示位置提交遗留微调）。
+
 ### 6.6.34版本
 
 1、修复日志系列开关（log_v3_enabled_series）判定不生效问题：判定改为订单自带 app_type_code 直接比对 + 本地字典缓存同步生效（消除异步加载竞态），正常报价日志不再误入库，全量明细正常落 L2/L3；

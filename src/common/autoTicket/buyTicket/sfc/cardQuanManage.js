@@ -500,6 +500,11 @@ export default class SfcCardQuanManage {
           card_id,
           coupon_id,
           member_coupon_id,
+          // 本次实际使用券的券码串（逗号分隔，三种券类型统一）。
+          // 黑名单按券码 coupon_num 过滤：线上券(coupon_id)/线下会员券(member_coupon_id)
+          // 场景 quan_code 为空且券 ID 无法参与黑名单比对，需单独带出券码
+          // 供创建订单失败时更新黑名单（2026-08-20）
+          coupon_nums: useQuans.map(item => item.coupon_num).join(","),
           quanType,
           profit,
           quanStock

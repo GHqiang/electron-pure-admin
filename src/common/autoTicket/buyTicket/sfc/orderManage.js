@@ -174,7 +174,9 @@ export default class SfcOrderManage {
    * @param {string} data.seat_info - 座位描述
    * @param {string|number} data.pay_money - 支付金额
    * @param {string} data.card_id - 会员卡ID
-   * @param {string} data.coupon - 优惠券券码
+   * @param {string} data.coupon - 优惠券券码（线下券场景；线上券/线下会员券场景为空）
+   * @param {string} data.coupon_nums - 本次实际用券的券码串（逗号分隔，三种券类型统一，
+   *   券不可用时按此更新黑名单——黑名单按券码 coupon_num 过滤，券 ID 无法参与比对）
    * @param {string} data.quan_flag - 券标识
    * @param {string} data.plat_name - 平台名称
    * @param {string} data.order_number - 订单号
@@ -195,6 +197,7 @@ export default class SfcOrderManage {
       pay_money,
       card_id,
       coupon,
+      coupon_nums,
       quan_flag,
       plat_name,
       order_number,
@@ -261,13 +264,17 @@ export default class SfcOrderManage {
         error?.msg?.includes("请联系影院将使用该券的原订单后台退款后") &&
         isTimeoutRetry === 1
       ) {
+        // 黑名单按券码 coupon_num 过滤：线上券(coupon_id)/线下会员券(member_coupon_id)
+        // 场景 coupon(=quan_code) 为空，优先用 useRes 带出的券码串 coupon_nums，
+        // 否则黑名单不更新、坏券反复参与出票（2026-08-20 修复）
+        const blackCoupon = coupon_nums || coupon;
         this.logger.infoSave("创建订单时发现券不可用，进行更新黑名单处理", {
           quan_flag,
-          coupon
+          coupon: blackCoupon
         });
         // 更新券黑名单
         updateQuanBlackInfo({
-          coupon,
+          coupon: blackCoupon,
           quan_flag,
           plat_name,
           order_number,

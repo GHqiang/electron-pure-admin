@@ -457,6 +457,7 @@ class SfcBuyTicket extends BaseBuyTicket {
         quan_code,
         coupon_id,
         member_coupon_id,
+        coupon_nums,
         profit,
         priceInfo,
         cardList,
@@ -590,6 +591,9 @@ class SfcBuyTicket extends BaseBuyTicket {
         pay_money,
         card_id,
         coupon: quan_code,
+        // 实际用券的券码串（三种券类型统一）——线上券/线下会员券场景 quan_code 为空，
+        // 创建订单失败更新黑名单需按券码处理（2026-08-20）
+        coupon_nums,
         quan_flag: offerRule?.quan_flag,
         plat_name,
         order_number: order_number_key,
@@ -638,7 +642,7 @@ class SfcBuyTicket extends BaseBuyTicket {
           cinema_id,
           show_id,
           card_id,
-          quan_code: quan_code || member_coupon_id || coupon_id,
+          quan_code: coupon_nums || quan_code || member_coupon_id || coupon_id,
           paymentAmount: pay_money,
           profit,
           unlockInfo: unlockInfoForTest
@@ -709,7 +713,12 @@ class SfcBuyTicket extends BaseBuyTicket {
         );
       }
       // 更新券库存（与其他系列一致：用了券就扣减，无论入库券还是非入库券）
-      if (offerRule?.offer_type === "1" && quan_code) {
+      // 三种券类型都扣：quan_code(线下券)/coupon_id(线上券)/member_coupon_id(线下会员券)
+      // ——原条件只判 quan_code，线上券场景出票成功不扣库存（2026-08-20 修复）
+      if (
+        offerRule?.offer_type === "1" &&
+        (quan_code || coupon_id || member_coupon_id)
+      ) {
         await this.cardQuanManage.updateQuanStock?.({
           quan_stock: quanStock - ticket_num,
           quan_flag: offerRule?.quan_flag,
@@ -740,15 +749,24 @@ class SfcBuyTicket extends BaseBuyTicket {
         this.logger.infoSave("订单最后处理成功: 获取取票码并上传");
       }
 
-      let qc = quan_code;
-      if (!qc && quanType) qc = coupon_id || member_coupon_id;
+      // 出票记录券码：优先 coupon_nums（三种券类型统一的真实券码串），
+      // 线上券/线下会员券场景 quan_code 为空且券 ID 不能当券码展示（2026-08-20 修复）
+      let qc =
+        coupon_nums ||
+        quan_code ||
+        (quanType ? coupon_id || member_coupon_id : "");
       if (profit) profit = Number(profit).toFixed(2);
 
       // V3 L0：用券用卡快照采集（挂 ticketRes，BaseTicketQueue.saveTicketRecord 收口入库）
-      // sfc 的 useQuanOrCard 不返回 useQuan 数组，用券标识从 quan_code/coupon_id/member_coupon_id 拼接串还原
-      const usedCouponList = [quan_code, coupon_id, member_coupon_id]
-        .filter(Boolean)
-        .flatMap(codeStr => String(codeStr).split(",").filter(Boolean));
+      // sfc 的 useQuanOrCard 返回 coupon_nums（三种券类型统一的真实券码串），优先采用；
+      // 旧逻辑从 quan_code/coupon_id/member_coupon_id 拼接的是券 ID，线上券/线下会员券场景
+      // 快照存的是 ID 而非真实券码（2026-08-20 修复）
+      const usedCouponList = String(
+        coupon_nums ||
+          [quan_code, coupon_id, member_coupon_id].filter(Boolean).join(",")
+      )
+        .split(",")
+        .filter(Boolean);
       const couponsSnapshot = usedCouponList.slice(0, 10).map(code => ({
         couponType: quanType || "",
         couponCode: code,
