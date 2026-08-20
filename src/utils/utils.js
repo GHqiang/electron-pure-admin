@@ -580,7 +580,7 @@ window.getCinemaLoginInfoList = getCinemaLoginInfoList;
  * - 守兔 shoutu：isAllowChangeSeats，0 不允许换座 / 1 可以换座
  * - 芒果 mangguo：auto_check_seat，0 不允许换座 / 1 可以换座
  * - 省 sheng：changeSeat === 1 可以换座
- * - 票圣/麻花 piaosheng/mahua：acceptChangeSeat，0 不允许换座 / 1 可以换座
+ * - 票圣/麻花 piaosheng/mahua：acceptChangeseat，0 不允许换座 / 1 可以换座
  * - 影划算 yinghuasuan：accept_change_seat，0 不允许换座 / 1 可以换座
  * @param {Object} orderInfo - 订单信息
  * @returns {string|undefined} 「支持换座」/「不支持换座」，未匹配平台返回 undefined（不展示该字段）
@@ -1663,16 +1663,24 @@ window.offerRuleMatch = offerRuleMatch;
 /**
  * 将单条日志的 info 转为可 JSON 序列化的纯数据，去掉循环引用及不宜上送字段（如 logger），
  * 避免 logUpload / axios 整批失败。
+ * V3 体积控制（08-18 方案 §3.2）：数组 ≤10 项、字符串 ≤500 字符、嵌套深度 40 → 10，
+ * 大对象（卡列表/座位/规则/响应）上传前统一瘦身，单用户单日 trace 落盘回落设计预期。
  */
 const sanitizeLogInfoForUpload = info => {
   if (info === undefined) return undefined;
   const omitKeys = new Set(["logger", "logList", "parent"]);
+  const MAX_DEPTH = 10;
+  const MAX_ARRAY_ITEMS = 10;
+  const MAX_STRING_LEN = 500;
   const seen = new WeakSet();
   const walk = (v, depth) => {
-    if (depth > 40) return "[MaxDepth]";
+    if (depth > MAX_DEPTH) return "[MaxDepth]";
     if (v === null) return null;
     const t = typeof v;
-    if (t === "string" || t === "number" || t === "boolean") return v;
+    if (t === "string") {
+      return v.length > MAX_STRING_LEN ? v.slice(0, MAX_STRING_LEN) + "…" : v;
+    }
+    if (t === "number" || t === "boolean") return v;
     if (t === "bigint") return String(v);
     if (t === "function" || t === "symbol") return `[${t}]`;
     if (t !== "object") return String(v);
@@ -1687,7 +1695,13 @@ const sanitizeLogInfoForUpload = info => {
     if (seen.has(v)) return "[Circular]";
     seen.add(v);
     if (Array.isArray(v)) {
-      const out = v.map(entry => walk(entry, depth + 1));
+      let out;
+      if (v.length > MAX_ARRAY_ITEMS) {
+        out = v.slice(0, MAX_ARRAY_ITEMS).map(entry => walk(entry, depth + 1));
+        out.push(`…共${v.length}项`);
+      } else {
+        out = v.map(entry => walk(entry, depth + 1));
+      }
       seen.delete(v);
       return out;
     }
@@ -1891,6 +1905,9 @@ const IS_DEV_ENV = process.env.NODE_ENV === "development";
 const TRACE_UPLOAD_URL = IS_DEV_ENV
   ? "/svpi/log/trace"
   : getServerBaseUrl("/svpi/log/trace") + "/log/trace";
+// L2 trace 单批条数上限：恢复订单快照全量后单条体积变大，一次全传（最多 500 条）
+// 可能超后端 bodyparser jsonLimit（默认 1MB）→ 413 整批丢失；分批循环上传兜底（2026-08-20 修复）
+const TRACE_BATCH_SIZE = 100;
 const traceUpload = async (order, traceList) => {
   if (!traceList.length) return;
   const { order_number, app_name, plat_name, type } = order;
@@ -1899,30 +1916,35 @@ const traceUpload = async (order, traceList) => {
     ...item,
     info: sanitizeLogInfoForUpload(item.info)
   }));
-  await axios.post(
-    TRACE_UPLOAD_URL,
-    {
-      plat_name,
-      app_name,
-      order_number,
-      type,
-      // ⚠️ 字段名必须为 lines（与 §4.3.3 接口契约及后端 traceFile.writeTrace 解构一致；
-      //   误用 log_list 会导致后端 lines 为 undefined、writeTrace 直接 return、L2 整条不落盘）
-      lines: log_list,
-      // 用户维度：同一订单可能被多个用户报价/出票，trace 行带用户与角色，
-      // 供后端按角色过滤查询（权限隔离）与按用户检索
-      user_id: userInfo.user_id ?? "",
-      user_name: userInfo.name ?? "",
-      rule: userInfo.rule ?? ""
-    },
-    {
-      timeout: 15000,
-      // 必须带 token：后端 auth 中间件校验（与 sv-request 注入方式一致）
-      headers: {
-        Authorization: `Bearer ${tokens.selfToken || localStorage.getItem("selfToken") || ""}`
+  // 分批循环上传（与 logUpload 同模式）；任一批失败即中止（保持"失败不重试不告警"既有语义，
+  // 已成功批次不重复发送）
+  for (let i = 0; i < log_list.length; i += TRACE_BATCH_SIZE) {
+    const batch = log_list.slice(i, i + TRACE_BATCH_SIZE);
+    await axios.post(
+      TRACE_UPLOAD_URL,
+      {
+        plat_name,
+        app_name,
+        order_number,
+        type,
+        // ⚠️ 字段名必须为 lines（与 §4.3.3 接口契约及后端 traceFile.writeTrace 解构一致；
+        //   误用 log_list 会导致后端 lines 为 undefined、writeTrace 直接 return、L2 整条不落盘）
+        lines: batch,
+        // 用户维度：同一订单可能被多个用户报价/出票，trace 行带用户与角色，
+        // 供后端按角色过滤查询（权限隔离）与按用户检索
+        user_id: userInfo.user_id ?? "",
+        user_name: userInfo.name ?? "",
+        rule: userInfo.rule ?? ""
+      },
+      {
+        timeout: 15000,
+        // 必须带 token：后端 auth 中间件校验（与 sv-request 注入方式一致）
+        headers: {
+          Authorization: `Bearer ${tokens.selfToken || localStorage.getItem("selfToken") || ""}`
+        }
       }
-    }
-  );
+    );
+  }
 };
 
 // 模拟延时

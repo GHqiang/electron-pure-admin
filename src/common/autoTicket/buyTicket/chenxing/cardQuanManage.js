@@ -221,7 +221,16 @@ export default class CardQuanManage {
         });
         if (targetQuanList.length < ticket_num) {
           this.logger.warn("优惠券不够用");
-          this.logger.error(`${quan_value} 面额券不足，不支持从服务端同步获取`);
+          // 失败根因必须落 L2——非 Save error 不写后端本地（2026-08-20 用户要求），
+          // 升级为 errorSave 并带面额/实际券数/需求张数关键数据
+          this.logger.errorSave(
+            `${quan_value} 面额券不足，不支持从服务端同步获取`,
+            {
+              quan_value,
+              targetQuanList: targetQuanList.length,
+              ticket_num
+            }
+          );
           if (is_auto_use_quan) {
             this.logger.infoSave("灵活用券时获取目标券不足,转用卡处理");
             offerRule.quan_value = "";
@@ -633,7 +642,8 @@ export default class CardQuanManage {
 
       let quanList = quanRes.data?.quanList || [];
       if (!quanList?.length && asyncFlag != 1) {
-        logger.error(`数据库${quan_value}面额券不足`);
+        // 失败根因必须落 L2——非 Save error 不写后端本地（2026-08-20 用户要求）
+        logger.errorSave(`数据库${quan_value}面额券不足`, { quan_value });
         return;
       }
       // quanList = quanList.map(item => item.coupon_num.trim());

@@ -197,6 +197,7 @@ export default class BaseTicketQueue {
 
     this.logger.warn("新的待出票订单", order);
     this.logger.init(order);
+    // 订单入口快照：订单全量展示（排查取字段用），体积由 sanitize/后端截断兜底
     this.logger.infoSave(des, {
       newOrders: order,
       sjc: +new Date()

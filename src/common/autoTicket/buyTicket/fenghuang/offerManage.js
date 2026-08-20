@@ -196,7 +196,9 @@ class getFenghuangOfferPrice extends BaseOfferPrice {
         offerRule
       });
     } catch (error) {
-      this.logger.error("获取最终报价异常", { error });
+      // 失败现场（error 对象）必须落 L2——非 Save error 不写后端本地（2026-08-20 用户要求），
+      // 此处吞异常不向上抛、外层 errorSave 不触发，故升级为 errorSave 保失败根因
+      this.logger.errorSave("获取最终报价异常", { error });
       return null;
     }
   }

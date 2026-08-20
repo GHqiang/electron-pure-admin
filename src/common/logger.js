@@ -128,13 +128,18 @@ export default class Logger {
         console[level](`${message}`);
       }
     }
+    // 调用方 Save 意图（infoSave/warnSave/errorSave=true；info/warn/error=false）：
+    // L2 明细采集按此判定——非 Save 调试日志不写后端本地（2026-08-20 用户要求）；
+    // L1 收窄（v3Mode 前缀过滤/条数兜底）只影响入库，不影响 L2 明细（原设计：
+    // "不入 opera_record，仍进 traceBuffer/L2"、"超上限后仅 L2"——2026-08-20 修复回归）
+    const isSaveIntent = isSave;
     // V3：L1 收窄（v3Mode 下 info/warn 非降级/辅助前缀强制不入 opera_record，仍进 traceBuffer/L2）
-    if (isSave && this.v3Mode && level !== "error") {
+    if (isSaveIntent && this.v3Mode && level !== "error") {
       const isRemedy = REMEDY_KEYWORDS.some(kw => message.startsWith(kw));
       if (!isRemedy) isSave = false;
     }
     // V3：L1 条数兜底（P1-3）：v3Mode 下 errorSave 超上限后仅 L2
-    if (isSave && this.v3Mode && level === "error") {
+    if (isSaveIntent && this.v3Mode && level === "error") {
       if (this._l1ErrorCount >= MAX_L1_ERROR_COUNT) {
         isSave = false;
       } else {
@@ -150,8 +155,9 @@ export default class Logger {
         info: meta
       });
     }
-    // V3：明细采集（所有级别，按原始值记录——本方案不脱敏）
-    if (this.traceEnabled) {
+    // V3：明细采集（L2）：按调用方 Save 意图判定——infoSave/warnSave/errorSave 进 L2
+    // （无论是否被 L1 收窄）；info/warn/error 非 Save 仅 console 不写后端本地（2026-08-20 用户要求）
+    if (this.traceEnabled && isSaveIntent) {
       this._pushTrace({
         opera_time: timestamp,
         des: message,

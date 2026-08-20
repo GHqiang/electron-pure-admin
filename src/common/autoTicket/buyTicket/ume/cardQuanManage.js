@@ -414,7 +414,8 @@ export default class UmeCardQuanManage {
         return sortMobileList;
       }
     } catch (error) {
-      this.logger.error("根据影院获取券类型列表返回异常", error);
+      // 失败现场（error 对象）必须落 L2——非 Save error 不写后端本地（2026-08-20 用户要求）
+      this.logger.errorSave("根据影院获取券类型列表返回异常", { error });
       return [];
     }
   }

@@ -190,6 +190,8 @@ export default class SeatManage {
     if (res) {
       return this.lockSeatHandle({ ...params, assistFlag: 1 });
     }
+    // 辅助锁座失败现场必须落 L2——非 Save error 不写后端本地（2026-08-20 用户要求）
+    this.logger.errorSave("辅助锁定座位失败", { params });
     return Promise.reject(new Error("辅助锁定座位失败"));
   }
 

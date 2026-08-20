@@ -1,5 +1,14 @@
 ## 版本更新记录
 
+### 6.6.39版本
+
+1、报价出票日志 L2 明细体积整改（4G/用户/天下滑）：
+- 非 Save 日志（info/warn/error 不带 Save 后缀）不再写后端本地明细（L2）也不入表（L1）：logger.js 按调用方 Save 意图判定，调试日志仅 console；修复 L1 收窄（v3Mode 前缀过滤/条数兜底）误伤 L2 明细的回归——收窄只影响入库、不影响明细（isSaveIntent 独立变量）；
+- 体积兜底：前端 sanitizeLogInfoForUpload 增强（数组≤10/字符串≤500/深度10，上传前统一瘦身）；L2 trace 分批上传（100 条/批，修复恢复全量快照后单批超 1MB 被 413 整批丢弃的风险）；后端明细行 8KB 硬截断（原只截 des 不截 info 形同虚设）、单批上限 200→500 对齐前端（消除每批丢 300 条）、bodyparser jsonLimit 1mb→10mb 兜底；
+- 失败现场保留：15 处 error 级非 Save 升级为 errorSave（报价异常/面额券不足/数据库券不足/券类型列表异常/辅助锁座失败），保证失败根因与关键数据（面额/券数/张数）仍落 L2 可查；
+- 订单入口快照（新的待报价/待出票订单/提交报价结果/订单购买返回）保持全量字段展示（排查取字段），体积由 sanitize+后端截断兜底；
+- 新增日志裁剪公共方法 logTrim.js（trimOrderForLog/trimResForLog/trimCardForLog/trimRuleForLog/trimMovieForLog/summarizeForLog），供后续各系列逐点推广摘要化。
+
 ### 6.6.38版本
 
 1、sfc系列券码与黑名单券处理整改：

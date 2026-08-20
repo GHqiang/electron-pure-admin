@@ -533,6 +533,7 @@ export default class BaseOfferQueue {
 
     const logger = new Logger({ logType: 1 });
     logger.init(item);
+    // 订单入口快照：newOrder/oldOrder 全量展示（排查取字段用），体积由 sanitize/后端截断兜底
     logger.infoSave("新的待报价订单", { newOrder: item, oldOrder });
     item._offerEnqueueAt = Date.now();
 
@@ -1036,6 +1037,7 @@ export default class BaseOfferQueue {
       if (order.plat_name === "yinghuasuan" && res?.data?.quote_id) {
         order.id = res?.data?.quote_id;
       }
+      // 提交结果快照：res/order 全量展示（排查取字段用），体积由 sanitize/后端截断兜底
       log.infoSave("提交报价结果", { res, order });
 
       // 猎人特殊处理：已自动报价视为失败，直接返回
