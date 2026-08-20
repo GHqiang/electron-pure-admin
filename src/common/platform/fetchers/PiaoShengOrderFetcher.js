@@ -70,7 +70,10 @@ export default class PiaoShengOrderFetcher extends BaseOrderFetcher {
           // 先占位为出票单号，orderDetail 后替换为报价单号（与报价记录对齐）
           order_number: id,
           lockseat: "",
-          acceptChangeSeat,
+          // 平台返回字段为 acceptChangeseat（小写s）——与解构名/下游 getAllowChangeSeatText 统一。
+          // ⚠️ 此处曾误写 acceptChangeSeat 简写引用未定义变量，map 阶段抛 ReferenceError
+          // 被外层 catch 吞掉 → 整轮拉单中断 → 票圣不接单（2026-08-20 修复）
+          acceptChangeseat,
           plat_name: "piaosheng"
         };
       });
