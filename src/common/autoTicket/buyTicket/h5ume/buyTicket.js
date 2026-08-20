@@ -1072,6 +1072,9 @@ export default class H5UmeBuyTicket extends BaseBuyTicket {
         cardNo = card_id;
       }
       // 8、购买电影票
+      // V3 L0：支付前卡余额（必须声明在下方 if/else 之外：纯用券走 else 分支时，
+      // 块内声明在块外不可见，末尾 return 引用会抛 ReferenceError「cardBalance is not defined」）
+      let cardBalance = null;
       let buyTicketRes;
       if (card_id) {
         const { session_id, member_pwd } =
@@ -1108,8 +1111,6 @@ export default class H5UmeBuyTicket extends BaseBuyTicket {
           }
         }
         this.logger.infoSave("订单购买成功");
-        // V3 L0：支付前卡余额（提升到外层声明，供 return 采集 use_path/card_balance）
-        let cardBalance = null;
         if (card_id) {
           // 更新卡使用量
           await svApi.updateDayUsage({
