@@ -397,14 +397,6 @@
             <span style="margin-right: 8px"
               >订单号：{{ currentLogOrderNumber }}</span
             >
-            <el-date-picker
-              v-model="traceDate"
-              type="date"
-              placeholder="选择日期"
-              value-format="YYYYMMDD"
-              format="YYYY-MM-DD"
-              style="width: 160px; margin-right: 10px"
-            />
             <el-button size="small" type="primary" @click="queryTrace"
               >查询明细</el-button
             >
@@ -791,12 +783,11 @@ const queryLog = async ({ order_number, user_id, processing_time }) => {
     console.warn("查询操作日志返回", res);
     let logList = res.data?.cardList || [];
     currentLogOrderNumber.value = order_number || "";
-    // E1 修复：明细默认日期取订单处理时间（而非"今天"——订单可能不是今天处理的），
-    // 并同步到日期选择器（traceDate）——选择器默认空白会误以为修复未生效
+    // E1 修复：明细查询日期取订单处理时间（而非"今天"——订单可能不是今天处理的）
     if (processing_time) {
-      const dateStr = String(processing_time).slice(0, 10).replace(/-/g, "");
-      currentLogDate.value = dateStr;
-      traceDate.value = dateStr;
+      currentLogDate.value = String(processing_time)
+        .slice(0, 10)
+        .replace(/-/g, "");
     }
     dialogLogVisible.value = true;
     logTabActive.value = "error";
@@ -811,7 +802,6 @@ const queryLog = async ({ order_number, user_id, processing_time }) => {
 const logTabActive = ref("error");
 const currentLogOrderNumber = ref("");
 const currentLogDate = ref("");
-const traceDate = ref("");
 const traceBrief = ref(false);
 const traceData = ref([]);
 const traceAutoQueried = ref(false);
@@ -820,7 +810,7 @@ const queryTrace = async () => {
   try {
     const res = await svApi.queryLogTrace({
       order_number: currentLogOrderNumber.value,
-      date: traceDate.value || currentLogDate.value,
+      date: currentLogDate.value,
       brief: traceBrief.value ? 1 : 0
     });
     // ⚠️ 修复：sv-request 响应拦截器返回整个响应体（{code,data,msg}），
