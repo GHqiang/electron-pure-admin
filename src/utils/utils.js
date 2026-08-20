@@ -617,7 +617,11 @@ const getAllowChangeSeatText = (orderInfo = {}) => {
     default:
       return undefined;
   }
-  return support ? "支持换座" : "不支持换座";
+  return support === true
+    ? "支持换座"
+    : support === false
+      ? "不支持换座"
+      : undefined;
 };
 
 const sendWxPusherMessage = async ({
@@ -667,12 +671,11 @@ const sendWxPusherMessage = async ({
   影厅：${hall_name}; <br/>
   片名：${film_name}; <br/>
   场次：${show_time}; <br/>
-  座位：${lockseat}; <br/>
+  座位：${lockseat}; ${allowChangeSeatText ?'(' + allowChangeSeatText + ')': ""}<br/>
   中标价：${supplier_end_price}; <br/>
+  最后失败手机号：${last_fail_phone || "-"};<br/>
   原因：${failReason};<br/>
   提示：${transferTip};<br/>
-  最后失败手机号：${last_fail_phone || "-"};<br/>
-  ${allowChangeSeatText ? `是否支持换座：${allowChangeSeatText};<br/>` : ""}</p>`;
 
   if (msgType === 1) {
     summary = app_name + "影院登录失效";
