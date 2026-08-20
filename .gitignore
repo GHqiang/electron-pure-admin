@@ -23,6 +23,13 @@ tests/**/coverage/
 .zcode/
 .codebuddy/
 .superpowers/
+# AI 工具记忆/临时文件（勿提交，2026-08-20）
+.workbuddy/
+.cursor/
+# 一次性测试/验证脚本（勿提交；auto-ticket-service/scripts 内同类脚本由后端 .gitignore 覆盖）
+scripts/quick-test*.js
+scripts/test-*.js
+scripts/verify-*.js
 tsconfig.tsbuildinfo
 .gitignore
 dist-electron
