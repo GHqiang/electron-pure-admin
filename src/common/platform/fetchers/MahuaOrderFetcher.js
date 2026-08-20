@@ -46,7 +46,7 @@ export default class MahuaOrderFetcher extends BaseOrderFetcher {
           movieHallName: hall_name,
           movieName: film_name,
           movieShowTime: show_time,
-          acceptChangeSeat
+          acceptChangeseat
         } = item;
 
         return {
@@ -102,8 +102,8 @@ export default class MahuaOrderFetcher extends BaseOrderFetcher {
             order_number: res.putOrderId || orderItem.id,
             offer_order_number: res.putOrderId || orderItem.id,
             // 换座标识：优先取订单详情接口，兜底取待出票列表
-            acceptChangeSeat:
-              res?.acceptChangeSeat ?? orderItem.acceptChangeSeat
+            acceptChangeseat:
+              res?.acceptChangeseat ?? orderItem.acceptChangeseat
           });
         } else {
           diagnoseLogs.push({

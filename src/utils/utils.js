@@ -606,8 +606,8 @@ const getAllowChangeSeatText = (orderInfo = {}) => {
     case "piaosheng":
     case "mahua":
       support =
-        Number(orderInfo.acceptChangeSeat) === 1 ||
-        orderInfo.acceptChangeSeat === true;
+        Number(orderInfo.acceptChangeseat) === 1 ||
+        orderInfo.acceptChangeseat === true;
       break;
     case "yinghuasuan":
       support =
