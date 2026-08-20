@@ -625,6 +625,7 @@ const queryTrace = async () => {
     const res = await svApi.queryLogTrace({
       order_number: currentLogOrderNumber.value,
       date: currentLogDate.value,
+      type: 1, // 报价详情只看报价队列日志（type=1），排除同订单的待出票/出票等其他类型
       brief: traceBrief.value ? 1 : 0
     });
     // ⚠️ 修复：sv-request 响应拦截器返回整个响应体（{code,data,msg}），
