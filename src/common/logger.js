@@ -27,10 +27,12 @@ export default class Logger {
     this._rootErrCache = null;
     this._l1ErrorCount = 0; // v3Mode 下本实例 L1 入库 errorSave 计数
   }
-  init({ plat_name, order_number, app_name, app_type_code }) {
+  init({ plat_name, order_number, app_name, appName, app_type_code }) {
     this.plat_name = plat_name;
     this.order_number = order_number;
-    this.app_name = app_name;
+    // fetcher（待出票队列）订单多为 appName 驼峰字段、无 app_name——兜底取同一值，
+    // 否则系列判定/L2 上传的 app_name 为 undefined，type=2 明细永远采不到（2026-08-20 修复）
+    this.app_name = app_name || appName;
     // V3：按字典白名单启用——app_name 反查系列 key（getSeriesKeyByAppName，如 hsmzyc→chenxing）
     // 与字典比对（字典配系列名，如 "chenxing"）。
     // ⚠️ 修复（2026-08-19）：不能用 plat_name（订单来源平台，如 mayi/lieren）判定——
@@ -40,7 +42,25 @@ export default class Logger {
     //   ② 同步预判定（localStorage 字典缓存立即生效），消除异步动态 import 完成前
     //   流程早期日志（如"新的待报价订单"紧跟 init）按 v3Mode=false 全量入库的竞态。
     this._applyV3FlagsSync(app_type_code);
-    this._applyV3Flags(app_name, app_type_code);
+    // ⚠️ 修复（2026-08-20 二轮）：传 this.app_name（含 appName 兜底）而非解构参数——
+    //   fetcher 订单只有 appName 时，原实现把 undefined 传给异步反查，系列恒判不中。
+    //   promise 挂到实例上，短生命周期 logger（fetcher/待出票队列）写日志前
+    //   可 await v3Ready() 消除"异步判定未完成 → traceEnabled=false → 明细丢失"竞态。
+    this._v3FlagsPromise = this._applyV3Flags(this.app_name, app_type_code);
+  }
+
+  // V3：等待系列异步判定完成（2026-08-20 二轮新增）
+  // 短生命周期 logger（fetcher 每订单日志、sendNewOrderMsg）从 init 到写日志全程
+  // 无 await 点，动态 import 的系列判定来不及完成 → traceEnabled/v3Mode 仍为 false
+  // → 日志既不进 trace 也不按 v3Mode 收窄。写日志前 await 本方法可消除该竞态；
+  // 长流程 logger（报价/出票队列）天然有多个 await 点，无需显式调用。
+  async v3Ready() {
+    try {
+      await this._v3FlagsPromise;
+    } catch {
+      // 判定失败保持现状（traceEnabled=false，仅 L1）
+    }
+    return this;
   }
 
   // V3：同步预判定——localStorage 已有字典缓存时立即生效（消除异步竞态：

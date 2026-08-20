@@ -7,8 +7,6 @@ import Logger from "../../logger.js";
 import {
   getCinemaFlag,
   getCinemaCode,
-  getCurrentTime,
-  logUpload,
   removeLeadingZeros
 } from "@/utils/utils.js";
 import svApi from "@/api/sv-api.js";
@@ -120,29 +118,13 @@ export default class HahaOrderFetcher extends BaseOrderFetcher {
 
         // 发送新订单消息
         finalOrders.forEach(item => {
-          const logList = [
-            {
-              opera_time: getCurrentTime(),
-              des: "哈哈新的待出票订单",
-              level: "info",
-              info: {
-                newOrder: item,
-                oldOrder: rawStayList.find(
-                  order => order.orderNumber === item.order_number
-                )
-              }
-            }
-          ];
-
-          logUpload(
-            {
-              plat_name: item.plat_name,
-              app_name: item.appName,
-              order_number: item.order_number,
-              type: 2
-            },
-            logList
-          );
+          // 走 Logger 采集（v3Mode 系列同步进 L2 明细），des 保持原文案
+          this.logOrderEvent(item, "info", "哈哈新的待出票订单", {
+            newOrder: item,
+            oldOrder: rawStayList.find(
+              order => order.orderNumber === item.order_number
+            )
+          });
 
           this.sendNewOrderMsg(item);
           this.recordOrder(item);

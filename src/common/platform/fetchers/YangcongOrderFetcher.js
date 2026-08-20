@@ -4,7 +4,7 @@
 import BaseOrderFetcher from "../../core/BaseOrderFetcher.js";
 import YangcongAdapter from "../adapters/YangcongAdapter.js";
 import Logger from "../../logger.js";
-import { getCinemaFlag, getCurrentTime, logUpload } from "@/utils/utils.js";
+import { getCinemaFlag } from "@/utils/utils.js";
 import svApi from "@/api/sv-api.js";
 import { platTokens } from "@/store/platTokens.js";
 
@@ -106,29 +106,13 @@ export default class YangcongOrderFetcher extends BaseOrderFetcher {
 
         // 发送新订单消息
         finalOrders.forEach(item => {
-          const logList = [
-            {
-              opera_time: getCurrentTime(),
-              des: "洋葱新的待出票订单",
-              level: "info",
-              info: {
-                newOrder: item,
-                oldOrder: rawStayList.find(
-                  order => order.tradeno === item.order_number
-                )
-              }
-            }
-          ];
-
-          logUpload(
-            {
-              plat_name: item.plat_name,
-              app_name: item.appName,
-              order_number: item.order_number,
-              type: 2
-            },
-            logList
-          );
+          // 走 Logger 采集（v3Mode 系列同步进 L2 明细），des 保持原文案
+          this.logOrderEvent(item, "info", "洋葱新的待出票订单", {
+            newOrder: item,
+            oldOrder: rawStayList.find(
+              order => order.tradeno === item.order_number
+            )
+          });
 
           this.sendNewOrderMsg(item);
           this.recordOrder(item);

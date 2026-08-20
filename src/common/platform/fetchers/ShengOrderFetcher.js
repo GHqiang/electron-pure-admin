@@ -4,7 +4,7 @@
 import BaseOrderFetcher from "../../core/BaseOrderFetcher.js";
 import ShengAdapter from "../adapters/ShengAdapter.js";
 import Logger from "../../logger.js";
-import { getCinemaFlag, getCurrentTime, logUpload } from "@/utils/utils.js";
+import { getCinemaFlag } from "@/utils/utils.js";
 import svApi from "@/api/sv-api.js";
 import { platTokens } from "@/store/platTokens.js";
 import { dictTable } from "@/store/dictTable";
@@ -157,30 +157,14 @@ export default class ShengOrderFetcher extends BaseOrderFetcher {
 
         // 发送新订单消息
         finalOrders.forEach(item => {
-          const logList = [
-            {
-              opera_time: getCurrentTime(),
-              des: "省新的待出票订单",
-              level: "info",
-              info: {
-                newOrder: item,
-                oldOrder: rawStayList.find(
-                  order => order.code === item.order_number
-                ),
-                isAgain: item.changeSeatSuccess
-              }
-            }
-          ];
-
-          logUpload(
-            {
-              plat_name: item.plat_name,
-              app_name: item.appName,
-              order_number: item.order_number,
-              type: 2
-            },
-            logList
-          );
+          // 走 Logger 采集（v3Mode 系列同步进 L2 明细），des 保持原文案
+          this.logOrderEvent(item, "info", "省新的待出票订单", {
+            newOrder: item,
+            oldOrder: rawStayList.find(
+              order => order.code === item.order_number
+            ),
+            isAgain: item.changeSeatSuccess
+          });
 
           // 换座成功需发送重新出票消息
           if (item.changeSeatSuccess) {
