@@ -30,6 +30,8 @@ tests/**/coverage/
 scripts/quick-test*.js
 scripts/test-*.js
 scripts/verify-*.js
+# 业务逻辑单测（勿提交，2026-08-20；本地保留可继续 yarn test，其他机器克隆后无此目录）
+/src/common/tests/
 tsconfig.tsbuildinfo
 .gitignore
 dist-electron
