@@ -597,6 +597,9 @@ const queryLog = async ({ order_number, user_id, processing_time }) => {
     console.warn("查询操作日志返回", res);
     let logList = res.data?.cardList || [];
     currentLogOrderNumber.value = order_number || "";
+    // 记录归属用户：明细日志按用户目录分片存储，查询必须带 userId 定位该用户目录，
+    // 否则后端遍历全部用户目录，同订单号在其他用户目录的分片会被混入（2026-08-20 修复）
+    currentLogUserId.value = user_id || "";
     // E1 修复：明细查询日期取订单处理时间（而非"今天"——订单可能不是今天处理的）
     if (processing_time) {
       currentLogDate.value = String(processing_time)
@@ -616,6 +619,7 @@ const queryLog = async ({ order_number, user_id, processing_time }) => {
 const logTabActive = ref("error");
 const currentLogOrderNumber = ref("");
 const currentLogDate = ref("");
+const currentLogUserId = ref("");
 const traceBrief = ref(false);
 const traceData = ref([]);
 const traceAutoQueried = ref(false);
@@ -625,6 +629,8 @@ const queryTrace = async () => {
     const res = await svApi.queryLogTrace({
       order_number: currentLogOrderNumber.value,
       date: currentLogDate.value,
+      // 记录归属用户的目录定位：避免后端遍历全部用户目录混入其他用户同单号日志
+      userId: currentLogUserId.value,
       type: 1, // 报价详情只看报价队列日志（type=1），排除同订单的待出票/出票等其他类型
       brief: traceBrief.value ? 1 : 0
     });

@@ -336,7 +336,13 @@
             size="small"
             type="primary"
             @click="
-              againTicket({ order_number, user_id: rowUserId, id, lockseat })
+              againTicket({
+                order_number,
+                user_id: rowUserId,
+                id,
+                lockseat,
+                processing_time
+              })
             "
             >重新出票</el-button
           >
@@ -350,7 +356,6 @@
           >
 
           <el-button
-            v-if="order_status != 1"
             size="small"
             type="primary"
             @click="
@@ -417,6 +422,7 @@
             />
             <el-table-column property="des" width="220" label="操作描述" />
             <el-table-column property="level" width="70" label="级别" />
+            <el-table-column property="upload_type" width="70" label="类型" />
             <el-table-column
               v-if="!traceBrief"
               property="info"
@@ -719,7 +725,13 @@ const searchData = async () => {
   }
 };
 
-const againTicket = async ({ order_number, user_id, lockseat }) => {
+const againTicket = async ({
+  order_number,
+  user_id,
+  id,
+  lockseat,
+  processing_time
+}) => {
   try {
     if (!order_number) return;
     const res = await svApi.queryLogRecord({
@@ -732,10 +744,34 @@ const againTicket = async ({ order_number, user_id, lockseat }) => {
     let ticketLogInfo = logList.find(
       item => item.des == "自动出票队列获取到新的待出票订单"
     )?.info;
-    if (ticketLogInfo) {
+    // V3 修复（2026-08-21）：出票队列 v3Mode 生效后，订单入口快照（infoSave）不再入
+    // opera_record（L1）只落 L2 明细——L1 查不到时兜底查 L2 明细文件，否则重新出票失效
+    if (!ticketLogInfo && processing_time) {
+      const date = String(processing_time).slice(0, 10).replace(/-/g, "");
+      const traceRes = await svApi.queryLogTrace({
+        order_number,
+        userId: user_id,
+        date,
+        type: 3,
+        brief: 0
+      });
+      const traceList = traceRes.data?.list || [];
+      const hit = traceList.find(
+        item => item.des == "自动出票队列获取到新的待出票订单"
+      );
+      if (hit) {
+        // L2 明细 info 为对象（原样落盘），与 L1 的字符串格式统一处理
+        ticketLogInfo = hit.info;
+      }
+    }
+    if (ticketLogInfo && typeof ticketLogInfo === "string") {
       ticketLogInfo = JSON.parse(ticketLogInfo);
     }
     let order = ticketLogInfo?.newOrders || ticketLogInfo?.newOrder;
+    if (!order) {
+      ElMessage.error("未找到该订单的出票快照，无法重新出票");
+      return;
+    }
     if (!order?.lockseat) {
       order.lockseat = lockseat;
     }
@@ -783,6 +819,9 @@ const queryLog = async ({ order_number, user_id, processing_time }) => {
     console.warn("查询操作日志返回", res);
     let logList = res.data?.cardList || [];
     currentLogOrderNumber.value = order_number || "";
+    // 记录归属用户：明细日志按用户目录分片存储，查询必须带 userId 定位该用户目录，
+    // 否则后端遍历全部用户目录，同订单号在其他用户目录的分片会被混入（2026-08-20 修复）
+    currentLogUserId.value = user_id || "";
     // E1 修复：明细查询日期取订单处理时间（而非"今天"——订单可能不是今天处理的）
     if (processing_time) {
       currentLogDate.value = String(processing_time)
@@ -802,6 +841,7 @@ const queryLog = async ({ order_number, user_id, processing_time }) => {
 const logTabActive = ref("error");
 const currentLogOrderNumber = ref("");
 const currentLogDate = ref("");
+const currentLogUserId = ref("");
 const traceBrief = ref(false);
 const traceData = ref([]);
 const traceAutoQueried = ref(false);
@@ -811,6 +851,8 @@ const queryTrace = async () => {
     const res = await svApi.queryLogTrace({
       order_number: currentLogOrderNumber.value,
       date: currentLogDate.value,
+      // 记录归属用户的目录定位：避免后端遍历全部用户目录混入其他用户同单号日志
+      userId: currentLogUserId.value,
       brief: traceBrief.value ? 1 : 0
     });
     // ⚠️ 修复：sv-request 响应拦截器返回整个响应体（{code,data,msg}），

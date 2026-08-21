@@ -5,12 +5,14 @@ import {
   formatErrInfo
 } from "@/utils/utils";
 
-// V3：降级/辅助动作 des 前缀（仅作根因排除与 L1 收窄白名单判定，非流程前缀）
+// V3：降级/辅助动作 des 前缀（仅作根因排除与 type 4/5/6 的 L1 收窄白名单判定，非流程前缀；
+// type 1/2/3 已按 2026-08-21 用户确认规则移除白名单——L1 只收 errorSave）
 const REMEDY_KEYWORDS = ["降级-", "辅助-"];
 const MAX_TRACE_LIST = 500; // traceBuffer 上限（与 logList 一致，丢最旧）
 // ⚠️ 调整（2026-08-20）：本地（L3）完全不写日志——明细只落 L2 服务器文件；
 //   客户端本地磁盘零写入（原"失败订单全量写本地"方案已按用户要求移除）
-const MAX_L1_ERROR_COUNT = 5; // v3Mode 下每订单 L1 入库异常条数上限（超出转 L2，P1-3）
+const MAX_L1_ERROR_COUNT = 5; // type 4/5/6 每订单 L1 入库异常条数上限（超出转 L2，P1-3；
+// type 1/2/3 按 2026-08-21 用户确认规则不设上限，errorSave 全量入 L1）
 
 export default class Logger {
   static levels = { INFO: "info", WARN: "warn", ERROR: "error" };
@@ -93,10 +95,11 @@ export default class Logger {
   // 静态 import 会在无 pinia 的测试环境崩溃；业务运行时毫秒级生效）
   async _applyV3Flags(app_name, app_type_code) {
     try {
-      const [{ dictTable }, { GET_APP_TYPE_LIST }] = await Promise.all([
-        import("@/store/dictTable"),
-        import("@/common/constant")
-      ]);
+      const [{ dictTable }, { GET_APP_TYPE_LIST, GET_APP_INFO }] =
+        await Promise.all([
+          import("@/store/dictTable"),
+          import("@/common/constant")
+        ]);
       const series = (dictTable().dictInfo.log_v3_enabled_series || "")
         .split(",")
         .filter(Boolean);
@@ -104,14 +107,19 @@ export default class Logger {
       // 如 chenxing_applet，最可靠）；缺失时按 app_name（具体影线）→ 所属系列反查。
       // ⚠️ 修复（2026-08-20）：getCanAppTypeList 是"当前登录账号可用影线"列表，
       //   可能不含该影线（跨账号/多影线场景）导致反查失败——订单自带字段优先。
+      // ⚠️ 修复（2026-08-21）：出票队列/拉单/锁座 logger.init(order) 传平台原始订单，
+      //   无 app_type_code（订单上系列标识是 app_type），反查曾依赖 getCanAppTypeList
+      //   （账号可用列表）——猎人跨影线派单等场景反查失败 → v3Mode 恒 false →
+      //   L1 收窄失效（info 快照全量入 opera_record）+ L2 明细不采集。
+      //   改为 GET_APP_INFO（allAppList 全量影线配置，含本影线）优先，账号列表兜底；
       // ⚠️ 简化（2026-08-20 复查）：异步无条件判定——有 app_type_code 时同步（localStorage
       //   缓存）与异步（dictTable store 同源缓存）的 series 相同 → 结果必然一致，无需
       //   "同步成功则不覆盖"标记；无 app_type_code 时异步反查补判；catch 静默不覆盖。
-      const appTypeCode = app_type_code
-        ? app_type_code
-        : GET_APP_TYPE_LIST().find(item =>
-            item.app_name_list.includes(app_name)
-          )?.app_type_code;
+      const appTypeCode =
+        app_type_code ||
+        GET_APP_INFO(app_name)?.app_type_code ||
+        GET_APP_TYPE_LIST().find(item => item.app_name_list.includes(app_name))
+          ?.app_type_code;
       this.v3Mode = appTypeCode ? series.includes(appTypeCode) : false;
       this.traceEnabled = this.v3Mode;
     } catch {
@@ -130,16 +138,24 @@ export default class Logger {
     }
     // 调用方 Save 意图（infoSave/warnSave/errorSave=true；info/warn/error=false）：
     // L2 明细采集按此判定——非 Save 调试日志不写后端本地（2026-08-20 用户要求）；
-    // L1 收窄（v3Mode 前缀过滤/条数兜底）只影响入库，不影响 L2 明细（原设计：
-    // "不入 opera_record，仍进 traceBuffer/L2"、"超上限后仅 L2"——2026-08-20 修复回归）
+    // L1 收窄只影响入库，不影响 L2 明细（原设计：
+    // "不入 opera_record，仍进 traceBuffer/L2"——2026-08-20 修复回归）
     const isSaveIntent = isSave;
-    // V3：L1 收窄（v3Mode 下 info/warn 非降级/辅助前缀强制不入 opera_record，仍进 traceBuffer/L2）
-    if (isSaveIntent && this.v3Mode && level !== "error") {
+    // 新 L1 规则适用类型（2026-08-21 用户确认：仅 type 1/2/3，其余保持原逻辑）
+    const isCoreLogType = [1, 2, 3].includes(this.type);
+    // V3：L1 收窄（type 1/2/3，2026-08-21 用户确认规则）：异常日志（L1/opera_record）
+    // 只收 errorSave——infoSave/warnSave 一律不入 L1（原"降级-/辅助- 前缀白名单放行"移除），
+    // errorSave 全量入 L1 不设条数上限；全部 Save 日志只落 L2 明细
+    if (isSaveIntent && this.v3Mode && isCoreLogType && level !== "error") {
+      isSave = false;
+    }
+    // type 4/5/6 保持原逻辑：info/warn 仅降级/辅助前缀入 L1
+    if (isSaveIntent && this.v3Mode && !isCoreLogType && level !== "error") {
       const isRemedy = REMEDY_KEYWORDS.some(kw => message.startsWith(kw));
       if (!isRemedy) isSave = false;
     }
-    // V3：L1 条数兜底（P1-3）：v3Mode 下 errorSave 超上限后仅 L2
-    if (isSaveIntent && this.v3Mode && level === "error") {
+    // type 4/5/6 保持原逻辑：L1 条数兜底（P1-3），errorSave 超上限后仅 L2
+    if (isSaveIntent && this.v3Mode && !isCoreLogType && level === "error") {
       if (this._l1ErrorCount >= MAX_L1_ERROR_COUNT) {
         isSave = false;
       } else {

@@ -197,6 +197,10 @@ export default class BaseTicketQueue {
 
     this.logger.warn("新的待出票订单", order);
     this.logger.init(order);
+    // ⚠️ 修复（2026-08-21）：等系列判定完成再写快照——出票队列订单无 app_type_code，
+    //   异步判定（GET_APP_INFO 反查）完成前 v3Mode=false，快照会误入 L1（opera_record）
+    //   且不进 L2 明细（与 BaseOrderFetcher.v3Ready 同款修复，2026-08-20 二轮）
+    await this.logger.v3Ready();
     // 订单入口快照：订单全量展示（排查取字段用），体积由 sanitize/后端截断兜底
     this.logger.infoSave(des, {
       newOrders: order,
@@ -458,6 +462,8 @@ export default class BaseTicketQueue {
 
         if (!order.isAgain && this.prevOrderNumber === order.order_number) {
           logger.init(order);
+          // 2026-08-21：同 handleNewOrder 修复——判定完成前写日志会误入 L1
+          await logger.v3Ready();
           logger.warnSave("当前订单重复执行,直接执行下个", {
             prevOrderNumber: this.prevOrderNumber,
             order_number: order.order_number

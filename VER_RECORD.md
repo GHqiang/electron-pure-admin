@@ -1,6 +1,6 @@
 ## 版本更新记录
 
-### 6.6.39版本
+### 6.6.41版本
 
 1、报价出票日志 L2 明细体积整改（4G/用户/天下滑）：
 - 非 Save 日志（info/warn/error 不带 Save 后缀）不再写后端本地明细（L2）也不入表（L1）：logger.js 按调用方 Save 意图判定，调试日志仅 console；修复 L1 收窄（v3Mode 前缀过滤/条数兜底）误伤 L2 明细的回归——收窄只影响入库、不影响明细（isSaveIntent 独立变量）；
@@ -8,6 +8,9 @@
 - 失败现场保留：15 处 error 级非 Save 升级为 errorSave（报价异常/面额券不足/数据库券不足/券类型列表异常/辅助锁座失败），保证失败根因与关键数据（面额/券数/张数）仍落 L2 可查；
 - 订单入口快照（新的待报价/待出票订单/提交报价结果/订单购买返回）保持全量字段展示（排查取字段），体积由 sanitize+后端截断兜底；
 - 新增日志裁剪公共方法 logTrim.js（trimOrderForLog/trimResForLog/trimCardForLog/trimRuleForLog/trimMovieForLog/summarizeForLog），供后续各系列逐点推广摘要化。
+2、明细日志查询改 userId 精准定位（2026-08-20）：前后端同步改为 userId + order_number + date 三要素查询单用户单日单分片（O(1)），放开角色分支、行级 upload_user_id 过滤兜底；前端查询日志按钮放开成功订单（order_status=1）限制，明细表格新增"类型"列；
+3、修复出票队列 v3Mode 判定失效（2026-08-21）：出票队列/拉单/锁座 logger.init(order) 传平台订单无 app_type_code，异步反查依赖账号可用影线列表，猎人跨影线派单场景反查失败 → v3Mode 恒 false → info 快照误入 opera_record（L1）且 L2 明细不采集。反查改 GET_APP_INFO（全量影线配置）优先 + 写日志前 await v3Ready；「重新出票」配套改为 L1 查不到时兜底查 L2 明细，并修复其签名未解构 id（ReferenceError 被 catch 吞掉导致本地行状态不刷新）的存量问题；
+4、日志分级入站规则确认（2026-08-21 用户裁定，type 1/2/3 且开 V3 系列）：L2 明细全量收 infoSave/warnSave/errorSave；L1 异常日志（opera_record）只收 errorSave（不设条数上限），infoSave/warnSave 一律不入 L1（原"降级-/辅助- 前缀白名单放行"移除）；type 4/5/6 保持原逻辑（errorSave ≤5 条 + 白名单）；未开 V3 系列保持旧逻辑；非 Save 日志（info/warn/error）无论是否 V3 系列一律不入 L1/L2（仅 console，现有实现已满足）；
 
 ### 6.6.38版本
 
