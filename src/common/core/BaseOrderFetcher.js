@@ -118,9 +118,6 @@ export default class BaseOrderFetcher {
     try {
       logger = new Logger({ logType: 2 });
       logger.init(order);
-      // 等系列判定完成——本方法从 init 到写日志几乎无 await 点（非确认单路径），
-      // 不等的话"发送新订单消息/ACK确认/跳过重复发送"等 type=2 日志在
-      // traceEnabled=false 时写入，L2 明细永远采不到（2026-08-20 二轮修复）
 
       // 动态生成事件名称
       const eventName = `newOrder_${order.appName}`;

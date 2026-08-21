@@ -44,9 +44,6 @@ export default class Logger {
     //   ② 同步预判定（localStorage 字典缓存立即生效），消除异步动态 import 完成前
     //   流程早期日志（如"新的待报价订单"紧跟 init）按 v3Mode=false 全量入库的竞态。
     this._applyV3FlagsSync(app_type_code);
-    // ⚠️ 修复（2026-08-20 二轮）：传 this.app_name（含 appName 兜底）而非解构参数——
-    //   fetcher 订单只有 appName 时，原实现把 undefined 传给异步反查，系列恒判不中。
-    //   promise 挂到实例上，短生命周期 logger（fetcher/待出票队列）写日志前
   }
 
   // V3：同步预判定——localStorage 已有字典缓存时立即生效（消除异步竞态：
