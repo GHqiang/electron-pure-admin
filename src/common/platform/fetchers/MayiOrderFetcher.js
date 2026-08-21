@@ -7,6 +7,7 @@ import Logger from "../../logger.js";
 import { getCinemaFlag, getCurrentTime, logUpload } from "@/utils/utils.js";
 import svApi from "@/api/sv-api.js";
 import { platTokens } from "@/store/platTokens.js";
+import { GET_APP_INFO } from "@/common/constant.js";
 
 const tokens = platTokens();
 const {
@@ -85,7 +86,8 @@ export default class MayiOrderFetcher extends BaseOrderFetcher {
           return {
             ...item,
             app_name,
-            appName: app_name
+            appName: app_name,
+            app_type_code: GET_APP_INFO(app_name)?.app_type_code
           };
         });
 

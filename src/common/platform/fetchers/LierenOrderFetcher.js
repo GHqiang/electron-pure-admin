@@ -5,7 +5,7 @@ import BaseOrderFetcher from "../../core/BaseOrderFetcher.js";
 import LierenAdapter from "../adapters/LierenAdapter.js";
 import Logger from "../../logger.js";
 import { getCinemaFlag, getCurrentTime, logUpload } from "@/utils/utils.js";
-import { LIERENR_REWARDS } from "@/common/constant.js";
+import { GET_APP_INFO, LIERENR_REWARDS } from "@/common/constant.js";
 import svApi from "@/api/sv-api.js";
 import { platTokens } from "@/store/platTokens.js";
 import { dictTable } from "@/store/dictTable";
@@ -55,7 +55,8 @@ export default class LierenOrderFetcher extends BaseOrderFetcher {
           return {
             ...item,
             app_name,
-            appName: app_name
+            appName: app_name,
+            app_type_code: GET_APP_INFO(app_name)?.app_type_code
           };
         });
 

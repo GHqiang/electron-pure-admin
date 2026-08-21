@@ -7,6 +7,7 @@ import Logger from "../../logger.js";
 import { getCinemaFlag } from "@/utils/utils.js";
 import svApi from "@/api/sv-api.js";
 import { platTokens } from "@/store/platTokens.js";
+import { GET_APP_INFO } from "@/common/constant.js";
 import { dictTable } from "@/store/dictTable";
 const dictStore = dictTable();
 
@@ -98,7 +99,8 @@ export default class ShengOrderFetcher extends BaseOrderFetcher {
           return {
             ...item,
             app_name,
-            appName: app_name
+            appName: app_name,
+            app_type_code: GET_APP_INFO(app_name)?.app_type_code
           };
         });
 

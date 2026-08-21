@@ -11,6 +11,7 @@ import {
 } from "@/utils/utils.js";
 import svApi from "@/api/sv-api.js";
 import { platTokens } from "@/store/platTokens.js";
+import { GET_APP_INFO } from "@/common/constant.js";
 
 const tokens = platTokens();
 
@@ -94,7 +95,8 @@ export default class HahaOrderFetcher extends BaseOrderFetcher {
             ...item,
             cinema_code,
             app_name,
-            appName: app_name
+            appName: app_name,
+            app_type_code: GET_APP_INFO(app_name)?.app_type_code
           };
         })
         .filter(item => item.cinema_code); // 过滤掉没有cinema_code的订单
