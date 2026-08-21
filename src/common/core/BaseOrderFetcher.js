@@ -92,15 +92,9 @@ export default class BaseOrderFetcher {
         return;
       }
       const logger = new Logger({ logType: 2 });
-      // 平台级兜底：无订单上下文（如"获取订单列表异常"）时至少带上平台名
-      logger.init({
-        plat_name: order?.plat_name || this.platName,
-        order_number: order?.order_number || "",
-        app_name: order?.app_name,
-        appName: order?.appName
-      });
-      // 等系列判定完成——否则 traceEnabled/v3Mode 竞态为 false，明细采集不到
-      await logger.v3Ready();
+      // 平台级兜底：无订单上下文（如"获取订单列表异常"）时至少带上平台名，
+      // 防 logger.init(undefined) 解构崩溃（2026-08-21 复查）
+      logger.init(order ?? { plat_name: this.platName });
       const method =
         level === "error"
           ? "errorSave"
@@ -127,7 +121,6 @@ export default class BaseOrderFetcher {
       // 等系列判定完成——本方法从 init 到写日志几乎无 await 点（非确认单路径），
       // 不等的话"发送新订单消息/ACK确认/跳过重复发送"等 type=2 日志在
       // traceEnabled=false 时写入，L2 明细永远采不到（2026-08-20 二轮修复）
-      await logger.v3Ready();
 
       // 动态生成事件名称
       const eventName = `newOrder_${order.appName}`;

@@ -14,7 +14,11 @@ import refreshLocalOfferRuleList, {
 } from "@/common/ruleStoreRefresh";
 import { platTokens } from "@/store/platTokens";
 const tokens = platTokens();
-import { GET_APP_TYPE_LIST, LIERENR_REWARDS } from "@/common/constant";
+import {
+  GET_APP_TYPE_LIST,
+  GET_APP_INFO,
+  LIERENR_REWARDS
+} from "@/common/constant";
 import { getPlatFeeRate } from "@/common/autoTicket/buyTicket/common/offerHelper";
 import { toRaw } from "vue";
 import { storeToRefs } from "pinia";
@@ -145,6 +149,17 @@ export default class BaseTicketQueue {
       order = event.detail?.order;
     }
 
+    // 2026-08-21：出票侧订单源头补全系列标识——平台订单/重出快照无 app_type_code 字段，
+    // logger.init 的同步判定（_applyV3FlagsSync，localStorage 字典缓存）与异步反查都依赖它；
+    // 缺失时 v3Mode 判定完成前日志误入 L1（opera_record 出现 info）且不进 L2 明细。
+    // 报价侧各队列已在构建订单时补全（GET_APP_INFO 全量影线配置反查），此处对齐统一补全，
+    // 所有 logger.init(order) 调用点（队列 logger/每单新 logger）自动受益，无需逐点 v3Ready。
+    if (!order.app_type_code) {
+      order.app_type_code = GET_APP_INFO(
+        order.app_name || order.appName
+      )?.app_type_code;
+    }
+
     // ACK 必须在重复检查之前发送：即使订单被拦截不重复出票，
     // 也要告知消息发送方"已收到"，避免 BaseOrderFetcher 超时告警
     const ackEventName = `newOrderAck_${this.appFlag}_${order.order_number}`;
@@ -199,8 +214,6 @@ export default class BaseTicketQueue {
     this.logger.init(order);
     // ⚠️ 修复（2026-08-21）：等系列判定完成再写快照——出票队列订单无 app_type_code，
     //   异步判定（GET_APP_INFO 反查）完成前 v3Mode=false，快照会误入 L1（opera_record）
-    //   且不进 L2 明细（与 BaseOrderFetcher.v3Ready 同款修复，2026-08-20 二轮）
-    await this.logger.v3Ready();
     // 订单入口快照：订单全量展示（排查取字段用），体积由 sanitize/后端截断兜底
     this.logger.infoSave(des, {
       newOrders: order,
@@ -463,7 +476,6 @@ export default class BaseTicketQueue {
         if (!order.isAgain && this.prevOrderNumber === order.order_number) {
           logger.init(order);
           // 2026-08-21：同 handleNewOrder 修复——判定完成前写日志会误入 L1
-          await logger.v3Ready();
           logger.warnSave("当前订单重复执行,直接执行下个", {
             prevOrderNumber: this.prevOrderNumber,
             order_number: order.order_number

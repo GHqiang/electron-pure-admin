@@ -1,5 +1,14 @@
 ## 版本更新记录
 
+### 6.6.42版本
+
+1、出票侧订单源头补全 app_type_code，修复 v3Mode 判定竞态日志错位（2026-08-21，生产实测验证 + 用户裁定方案）：
+- 现象：异常日志（L1）出现 info 级（订单开始出票/单个待出票订单信息/解锁座位入参等）、对应明细（L2）缺失（异步获取场景日志不全）；
+- 根因：出票侧订单（平台拉单）无 app_type_code 字段，logger.init 同步判定跳过、异步判定完成前 v3Mode=false → 早期日志全量入 L1 且不进 L2；
+- 修复：11 个平台拉单器（fetchers）拉单订单转换处补 `app_type_code: GET_APP_INFO(app_name)?.app_type_code`（与报价侧 queues 已补模式对齐）；logger.init 统一改解构传参（10 处补传 app_type_code）；handleNewOrder 入口保留兜底补全（覆盖再次出票快照等遗漏路径）；BaseOrderFetcher.logOrderEvent 恢复 order 缺失兜底（防解构崩溃）；
+- 效果：订单从拉单起即带 app_type_code → _applyV3FlagsSync 同步判定生效（localStorage 字典缓存），type 1/2/3 全部 logger 零改动受益；v3Ready 方法与 _applyV3Flags 异步判定整体移除，仅保留同步判定；
+- 验证：node --check 全过、jest 4 套件全过、eslint 无新增错误。
+
 ### 6.6.41版本
 
 1、报价出票日志 L2 明细体积整改（4G/用户/天下滑）：

@@ -47,22 +47,6 @@ export default class Logger {
     // ⚠️ 修复（2026-08-20 二轮）：传 this.app_name（含 appName 兜底）而非解构参数——
     //   fetcher 订单只有 appName 时，原实现把 undefined 传给异步反查，系列恒判不中。
     //   promise 挂到实例上，短生命周期 logger（fetcher/待出票队列）写日志前
-    //   可 await v3Ready() 消除"异步判定未完成 → traceEnabled=false → 明细丢失"竞态。
-    this._v3FlagsPromise = this._applyV3Flags(this.app_name, app_type_code);
-  }
-
-  // V3：等待系列异步判定完成（2026-08-20 二轮新增）
-  // 短生命周期 logger（fetcher 每订单日志、sendNewOrderMsg）从 init 到写日志全程
-  // 无 await 点，动态 import 的系列判定来不及完成 → traceEnabled/v3Mode 仍为 false
-  // → 日志既不进 trace 也不按 v3Mode 收窄。写日志前 await 本方法可消除该竞态；
-  // 长流程 logger（报价/出票队列）天然有多个 await 点，无需显式调用。
-  async v3Ready() {
-    try {
-      await this._v3FlagsPromise;
-    } catch {
-      // 判定失败保持现状（traceEnabled=false，仅 L1）
-    }
-    return this;
   }
 
   // V3：同步预判定——localStorage 已有字典缓存时立即生效（消除异步竞态：
@@ -91,41 +75,6 @@ export default class Logger {
     }
   }
 
-  // V3：异步应用 V3 开关（动态 import——constant.js 模块级实例化 pinia store，
-  // 静态 import 会在无 pinia 的测试环境崩溃；业务运行时毫秒级生效）
-  async _applyV3Flags(app_name, app_type_code) {
-    try {
-      const [{ dictTable }, { GET_APP_TYPE_LIST, GET_APP_INFO }] =
-        await Promise.all([
-          import("@/store/dictTable"),
-          import("@/common/constant")
-        ]);
-      const series = (dictTable().dictInfo.log_v3_enabled_series || "")
-        .split(",")
-        .filter(Boolean);
-      // 按影线系列标识（app_type_code）判定：优先订单自带字段（订单对象含 app_type_code，
-      // 如 chenxing_applet，最可靠）；缺失时按 app_name（具体影线）→ 所属系列反查。
-      // ⚠️ 修复（2026-08-20）：getCanAppTypeList 是"当前登录账号可用影线"列表，
-      //   可能不含该影线（跨账号/多影线场景）导致反查失败——订单自带字段优先。
-      // ⚠️ 修复（2026-08-21）：出票队列/拉单/锁座 logger.init(order) 传平台原始订单，
-      //   无 app_type_code（订单上系列标识是 app_type），反查曾依赖 getCanAppTypeList
-      //   （账号可用列表）——猎人跨影线派单等场景反查失败 → v3Mode 恒 false →
-      //   L1 收窄失效（info 快照全量入 opera_record）+ L2 明细不采集。
-      //   改为 GET_APP_INFO（allAppList 全量影线配置，含本影线）优先，账号列表兜底；
-      // ⚠️ 简化（2026-08-20 复查）：异步无条件判定——有 app_type_code 时同步（localStorage
-      //   缓存）与异步（dictTable store 同源缓存）的 series 相同 → 结果必然一致，无需
-      //   "同步成功则不覆盖"标记；无 app_type_code 时异步反查补判；catch 静默不覆盖。
-      const appTypeCode =
-        app_type_code ||
-        GET_APP_INFO(app_name)?.app_type_code ||
-        GET_APP_TYPE_LIST().find(item => item.app_name_list.includes(app_name))
-          ?.app_type_code;
-      this.v3Mode = appTypeCode ? series.includes(appTypeCode) : false;
-      this.traceEnabled = this.v3Mode;
-    } catch {
-      // 异步失败静默，不覆盖同步判定结果
-    }
-  }
   log(level, message, isSave, meta) {
     const timestamp = new Date().toLocaleString().replaceAll("/", "-");
     if (this.isPrint) {
