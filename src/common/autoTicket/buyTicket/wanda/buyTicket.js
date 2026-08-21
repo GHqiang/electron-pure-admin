@@ -695,6 +695,7 @@ class WandaBuyTicket extends BaseBuyTicket {
       if (card_id) {
         // 更新卡使用量
         await updateCardDayUse({
+          order: this.order,
           app_name: appFlag,
           card_id,
           plat_name,
@@ -873,6 +874,7 @@ export default WandaBuyTicket;
  *
  * */
 const updateCardDayUse = ({
+  order,
   app_name,
   card_id,
   plat_name,
@@ -891,7 +893,9 @@ const updateCardDayUse = ({
     error = err;
   }
   let logger = new Logger({ logType: 3 });
-  logger.init(this.order);
+  // 2026-08-21：统一传 order 解构 init（调用方传入出票订单，含 app_type_code；
+  // 模块级函数不可用 this，由调用方显式传参）
+  logger.init(order);
   logger.infoSave("订单用卡购买后更新当天使用量", {
     app_name,
     card_id,

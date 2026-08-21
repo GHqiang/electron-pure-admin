@@ -1,5 +1,13 @@
 ## 版本更新记录
 
+### 6.6.43版本
+
+1、修复生产"一键买票异常"崩溃（2026-08-21，6.6.42 打包上线后报错）：
+- 现象：生产报 `TypeError: Cannot read properties of undefined (reading 'order')`，提示"一键买票异常，请及时联系技术"；
+- 根因：6.6.42 中 4 个系列（chenxing/fenghuang/jinyi/wanda）buyTicket.js 的模块级函数 updateCardDayUse 内 `logger.init` 由显式解构传参改为 `logger.init(this.order)`——模块级箭头函数在 ESM 严格模式下 this=undefined，执行到即抛错，被"一键买票异常"catch 捕获；
+- 修复：4 个系列（chenxing/fenghuang/jinyi/wanda）buyTicket.js 的 updateCardDayUse 改为**调用方传 order、函数内统一 `logger.init(order)` 解构 init**（模块级函数不可用 this，显式传参；order 自带 app_type_code，扩展性好）；其余 17 处 `logger.init(this.order)` 均在类方法内（this=实例）无需改动；
+- 验证：node --check 4 文件全过、eslint 无新增错误、jest 3 套件全过。
+
 ### 6.6.42版本
 
 1、出票侧订单源头补全 app_type_code，修复 v3Mode 判定竞态日志错位（2026-08-21，生产实测验证 + 用户裁定方案）：
