@@ -351,23 +351,6 @@
 
     <el-dialog v-model="dialogLogVisible" title="订单日志" width="1100">
       <el-tabs v-model="logTabActive">
-        <el-tab-pane label="异常日志" name="error">
-          <el-table :data="logData" border>
-            <el-table-column type="index" label="序号" width="60" />
-            <el-table-column
-              property="opera_time"
-              sortable
-              label="操作时间"
-              width="160"
-            />
-            <el-table-column property="des" width="180" label="操作描述" />
-            <el-table-column
-              property="info"
-              show-overflow-tooltip
-              label="详细信息"
-            />
-          </el-table>
-        </el-tab-pane>
         <el-tab-pane label="明细日志" name="trace">
           <div style="margin-bottom: 10px">
             <span style="margin-right: 8px"
@@ -399,6 +382,23 @@
               show-overflow-tooltip
               label="详细信息"
               :formatter="formatTraceInfo"
+            />
+          </el-table>
+        </el-tab-pane>
+        <el-tab-pane label="异常日志" name="error">
+          <el-table :data="logData" border>
+            <el-table-column type="index" label="序号" width="60" />
+            <el-table-column
+              property="opera_time"
+              sortable
+              label="操作时间"
+              width="160"
+            />
+            <el-table-column property="des" width="180" label="操作描述" />
+            <el-table-column
+              property="info"
+              show-overflow-tooltip
+              label="详细信息"
             />
           </el-table>
         </el-tab-pane>
@@ -607,16 +607,18 @@ const queryLog = async ({ order_number, user_id, processing_time }) => {
         .replace(/-/g, "");
     }
     dialogLogVisible.value = true;
-    logTabActive.value = "error";
-    traceAutoQueried.value = false;
+    logTabActive.value = "trace";
+    traceAutoQueried.value = true;
     logData.value = logList;
+    // 明细日志 Tab 默认在前：打开弹框即自动查询一次（用户手动查询不受影响）
+    queryTrace();
   } catch (error) {
     console.warn("查询操作日志返回异常", error);
   }
 };
 
 // V3 L2：明细日志 Tab（后端日志文件查询）
-const logTabActive = ref("error");
+const logTabActive = ref("trace");
 const currentLogOrderNumber = ref("");
 const currentLogDate = ref("");
 const currentLogUserId = ref("");

@@ -356,6 +356,7 @@
           >
 
           <el-button
+            v-if="IS_DEV || order_status === '2'"
             size="small"
             type="primary"
             @click="
@@ -380,23 +381,6 @@
 
     <el-dialog v-model="dialogLogVisible" title="订单日志" width="1100">
       <el-tabs v-model="logTabActive">
-        <el-tab-pane label="异常日志" name="error">
-          <el-table :data="logData" border>
-            <el-table-column type="index" label="序号" width="60" />
-            <el-table-column
-              property="opera_time"
-              sortable
-              label="操作时间"
-              width="160"
-            />
-            <el-table-column property="des" width="180" label="操作描述" />
-            <el-table-column
-              property="info"
-              show-overflow-tooltip
-              label="详细信息"
-            />
-          </el-table>
-        </el-tab-pane>
         <el-tab-pane label="明细日志" name="trace">
           <div style="margin-bottom: 10px">
             <span style="margin-right: 8px"
@@ -404,6 +388,9 @@
             >
             <el-button size="small" type="primary" @click="queryTrace"
               >查询明细</el-button
+            >
+            <el-checkbox v-model="traceShowOffer" style="margin-left: 10px"
+              >查看报价阶段日志</el-checkbox
             >
             <el-checkbox v-model="traceBrief" style="margin-left: 10px"
               >仅时间线（不含 info，省流量）</el-checkbox
@@ -429,6 +416,23 @@
               show-overflow-tooltip
               label="详细信息"
               :formatter="formatTraceInfo"
+            />
+          </el-table>
+        </el-tab-pane>
+        <el-tab-pane label="异常日志" name="error">
+          <el-table :data="logData" border>
+            <el-table-column type="index" label="序号" width="60" />
+            <el-table-column
+              property="opera_time"
+              sortable
+              label="操作时间"
+              width="160"
+            />
+            <el-table-column property="des" width="180" label="操作描述" />
+            <el-table-column
+              property="info"
+              show-overflow-tooltip
+              label="详细信息"
             />
           </el-table>
         </el-tab-pane>
@@ -497,6 +501,8 @@ import {
 import { ElMessageBox, ElMessage, ElLoading } from "element-plus";
 import svApi from "@/api/sv-api";
 import { platTokens } from "@/store/platTokens";
+// 开发环境不限制"查询日志"入口（生产仅失败订单可查看，2026-08-21 用户要求）
+const IS_DEV = import.meta.env.DEV;
 const {
   userInfo: { rule, user_id }
 } = platTokens();
@@ -829,32 +835,40 @@ const queryLog = async ({ order_number, user_id, processing_time }) => {
         .replace(/-/g, "");
     }
     dialogLogVisible.value = true;
-    logTabActive.value = "error";
-    traceAutoQueried.value = false;
+    logTabActive.value = "trace";
+    traceAutoQueried.value = true;
     logData.value = logList;
+    // 明细日志 Tab 默认在前：打开弹框即自动查询一次（用户手动查询不受影响）
+    queryTrace();
   } catch (error) {
     console.warn("查询操作日志返回异常", error);
   }
 };
 
 // V3 L2：明细日志 Tab（后端日志文件查询）
-const logTabActive = ref("error");
+const logTabActive = ref("trace");
 const currentLogOrderNumber = ref("");
 const currentLogDate = ref("");
 const currentLogUserId = ref("");
 const traceBrief = ref(false);
+const traceShowOffer = ref(false); // 是否查看报价阶段（type=1）日志，默认不查看
 const traceData = ref([]);
 const traceAutoQueried = ref(false);
 const queryTrace = async () => {
   if (!currentLogOrderNumber.value) return;
   try {
-    const res = await svApi.queryLogTrace({
+    const params = {
       order_number: currentLogOrderNumber.value,
       date: currentLogDate.value,
       // 记录归属用户的目录定位：避免后端遍历全部用户目录混入其他用户同单号日志
       userId: currentLogUserId.value,
       brief: traceBrief.value ? 1 : 0
-    });
+    };
+    // 默认不查看报价阶段（type=1）日志，只看出票阶段（type 2/3）；勾选后全量返回
+    if (!traceShowOffer.value) {
+      params.type = "2,3";
+    }
+    const res = await svApi.queryLogTrace(params);
     // ⚠️ 修复：sv-request 响应拦截器返回整个响应体（{code,data,msg}），
     // res.data 即后端 data（{list,total}）——取 res.data.list，勿多加一层 data
     traceData.value = res.data?.list || [];
