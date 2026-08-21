@@ -375,7 +375,9 @@ export default class LmaCardQuanManage {
       }));
       this.logger.infoSave("获取会员卡维护列表返回", { list });
 
-      const useMobileList = getCinemaLoginInfoList(!this.order?.need_unsplit_login)
+      const useMobileList = getCinemaLoginInfoList(
+        !this.order?.need_unsplit_login
+      )
         .filter(
           item => item.app_name === appFlag && item.mobile && item.session_id
         )
@@ -518,7 +520,8 @@ export default class LmaCardQuanManage {
       // 用券后负利润校验（与其它系列对齐）：实际用券成本可能高于报价时计算的最小券成本，利润为负禁止出票
       const feeRate = getPlatFeeRate(this.order);
       let shouxufei = mulDecimal(Number(supplier_end_price || 0), feeRate);
-      let profit = Number(supplier_end_price) - Number(quan_cost || 0) - shouxufei;
+      let profit =
+        Number(supplier_end_price) - Number(quan_cost || 0) - shouxufei;
       profit = Number(profit) * Number(ticket_num);
       if (rewards > 0) {
         let rewardPrice =
@@ -1157,11 +1160,7 @@ export default class LmaCardQuanManage {
         error
       });
     }
-    logger.init({
-      plat_name,
-      app_name,
-      order_number
-    });
+    logger.init(this.order);
     // 上送更新卡当天使用量日志
     logger.logUpload();
   }

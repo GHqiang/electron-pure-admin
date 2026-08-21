@@ -585,7 +585,7 @@ export default class SfcOrderManage {
     profit
   }) {
     let logger = new Logger({ logType: 3 });
-    logger.init({ plat_name, order_number, app_name });
+    logger.init(orderInfo);
     logger.errorSave("异步轮询获取取票码并提交方法开始执行");
     try {
       // 每搁20秒查一次，查9次，3分钟

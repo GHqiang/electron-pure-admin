@@ -802,11 +802,7 @@ const updateCardDayUse = ({
     error = err;
   }
   let logger = new Logger({ logType: 3 });
-  logger.init({
-    plat_name,
-    app_name,
-    order_number
-  });
+  logger.init(this.order);
   logger.infoSave("订单用卡购买后更新当天使用量", {
     app_name,
     card_id,

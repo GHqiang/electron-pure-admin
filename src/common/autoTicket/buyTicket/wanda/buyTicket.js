@@ -161,8 +161,7 @@ class WandaBuyTicket extends BaseBuyTicket {
         show_id = buyTicketInfo.show_id; // 场次id同showtimeId
 
         // 2、获取购票座位信息
-        let targetSeatRes =
-          await this.seatManage.getTargetSeat(buyTicketInfo);
+        let targetSeatRes = await this.seatManage.getTargetSeat(buyTicketInfo);
         if (!targetSeatRes) {
           // 座位列表为空，直接转单
           return await this.orderManage.transferOrder();
@@ -892,11 +891,7 @@ const updateCardDayUse = ({
     error = err;
   }
   let logger = new Logger({ logType: 3 });
-  logger.init({
-    plat_name,
-    app_name,
-    order_number
-  });
+  logger.init(this.order);
   logger.infoSave("订单用卡购买后更新当天使用量", {
     app_name,
     card_id,
