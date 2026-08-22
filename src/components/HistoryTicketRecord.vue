@@ -740,40 +740,46 @@ const againTicket = async ({
 }) => {
   try {
     if (!order_number) return;
-    const res = await svApi.queryLogRecord({
-      order_number,
-      user_id,
-      type: 3
-    });
-    console.warn("查询操作日志返回", res);
-    let logList = res.data?.cardList || [];
-    let ticketLogInfo = logList.find(
-      item => item.des == "自动出票队列获取到新的待出票订单"
-    )?.info;
-    // V3 修复（2026-08-21）：出票队列 v3Mode 生效后，订单入口快照（infoSave）不再入
-    // opera_record（L1）只落 L2 明细——L1 查不到时兜底查 L2 明细文件，否则重新出票失效
-    if (!ticketLogInfo && processing_time) {
-      const date = String(processing_time).slice(0, 10).replace(/-/g, "");
-      const traceRes = await svApi.queryLogTrace({
+    // 2026-08-21：优先取内存订单快照（出票队列 handleNewOrder 写入，零网络延迟）——
+    // L2 日志异步上传（fire-and-forget 串行链）失败瞬间可能尚未落盘，日志查询还原会失败
+    let order = window.__ticketOrderSnapshots?.get(order_number);
+    if (!order) {
+      // 内存快照缺失（客户端重启等场景）：降级走 L1/L2 日志查询兜底
+      const res = await svApi.queryLogRecord({
         order_number,
-        userId: user_id,
-        date,
-        type: 3,
-        brief: 0
+        user_id,
+        type: 3
       });
-      const traceList = traceRes.data?.list || [];
-      const hit = traceList.find(
+      console.warn("查询操作日志返回", res);
+      let logList = res.data?.cardList || [];
+      let ticketLogInfo = logList.find(
         item => item.des == "自动出票队列获取到新的待出票订单"
-      );
-      if (hit) {
-        // L2 明细 info 为对象（原样落盘），与 L1 的字符串格式统一处理
-        ticketLogInfo = hit.info;
+      )?.info;
+      // V3 修复（2026-08-21）：出票队列 v3Mode 生效后，订单入口快照（infoSave）不再入
+      // opera_record（L1）只落 L2 明细——L1 查不到时兜底查 L2 明细文件，否则重新出票失效
+      if (!ticketLogInfo && processing_time) {
+        const date = String(processing_time).slice(0, 10).replace(/-/g, "");
+        const traceRes = await svApi.queryLogTrace({
+          order_number,
+          userId: user_id,
+          date,
+          type: 3,
+          brief: 0
+        });
+        const traceList = traceRes.data?.list || [];
+        const hit = traceList.find(
+          item => item.des == "自动出票队列获取到新的待出票订单"
+        );
+        if (hit) {
+          // L2 明细 info 为对象（原样落盘），与 L1 的字符串格式统一处理
+          ticketLogInfo = hit.info;
+        }
       }
+      if (ticketLogInfo && typeof ticketLogInfo === "string") {
+        ticketLogInfo = JSON.parse(ticketLogInfo);
+      }
+      order = ticketLogInfo?.newOrders || ticketLogInfo?.newOrder;
     }
-    if (ticketLogInfo && typeof ticketLogInfo === "string") {
-      ticketLogInfo = JSON.parse(ticketLogInfo);
-    }
-    let order = ticketLogInfo?.newOrders || ticketLogInfo?.newOrder;
     if (!order) {
       ElMessage.error("未找到该订单的出票快照，无法重新出票");
       return;
