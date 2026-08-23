@@ -445,6 +445,7 @@ export default class LmaCardQuanManage {
    * @returns {Promise<Object>} 用券结果：
    *   - quan_code: 券码JSON字符串，失败返回空字符串或包含error字段
    *   - quanStock: 券库存数
+   *   - remainQuanList: 备选券池（剩余券，供"券已使用"换券重试），失败时不存在
    *   - error: 错误信息（失败时）
    */
   async useQuanHandle({
@@ -639,10 +640,13 @@ export default class LmaCardQuanManage {
         });
       }
 
+      const allSortedQuanList = targetQuanList; // 排序后的全量券（含备选池）
       targetQuanList = targetQuanList.slice(0, ticket_num);
       return {
         quan_code: targetQuanList?.length ? JSON.stringify(targetQuanList) : "",
-        quanStock
+        quanStock,
+        // 备选券池：剩余券供"券已使用"换券重试使用（元素结构同 quan_code：{code}）
+        remainQuanList: allSortedQuanList.slice(ticket_num)
       };
     } catch (error) {
       this.logger.errorSave("使用优惠券或者会员卡异常", { error });

@@ -42,6 +42,13 @@ const dictStore = dictTable();
 
 const tokens = platTokens();
 
+// 锁座"券已使用"类错误关键词（命中其一即触发换券重新锁座，可扩展）
+const QUAN_USED_ERROR_KEYS = ["券已使用"];
+// 换券重新锁座最多重试次数（对齐 h5ume COUPON_RETRY_LIMIT）
+const QUAN_SWAP_RETRY_LIMIT = 2;
+// 换券重试间隔（秒）
+const QUAN_SWAP_RETRY_DELAY = 1;
+
 export default class LmaBuyTicket extends BaseBuyTicket {
   constructor(order, logger, isTestOrder) {
     super(order, logger, isTestOrder);
@@ -459,7 +466,8 @@ export default class LmaBuyTicket extends BaseBuyTicket {
         }
       }
 
-      let { quan_code, quanStock } = useQuanRes || {};
+      let { quan_code, quanStock, remainQuanList } = useQuanRes || {};
+      this._remainQuanList = remainQuanList || []; // 备选券池（供"券已使用"换券重试）
 
       // 锁定座位/创建订单
       let lockRes;
@@ -508,13 +516,64 @@ export default class LmaBuyTicket extends BaseBuyTicket {
             };
           }
         }
-        // catch 时 lockRes 必为 undefined，直接走转单逻辑
-        this.logger.infoSave("锁定座位失败走转单");
-        const transferParams = await this.orderManage.transferOrder(
-          null,
-          this.currentParamsList[this.currentParamsInx]?.lmaToken
-        );
-        return { offerRule, transferParams };
+
+        // 券已使用 → 换券重新锁座（lma 账号公用先后出票，后一单可能选到前一单刚消耗的券）
+        const lockErrInfo = formatErrInfo(error);
+        if (
+          quan_code &&
+          QUAN_USED_ERROR_KEYS.some(key => lockErrInfo.includes(key))
+        ) {
+          const swapRes = await this.retryLockSeatWithQuanSwap({
+            cinema_id,
+            show_id,
+            short_code,
+            seat_arr,
+            quan_code,
+            lmaToken: this.currentParamsList[this.currentParamsInx].lmaToken,
+            ticket_num,
+            offerRule
+          });
+          if (swapRes?.lockRes) {
+            lockRes = swapRes.lockRes;
+            quan_code = swapRes.quan_code;
+            this.logger.infoSave("券已使用，换券重新锁座成功", {
+              quan_code: swapRes.quan_code
+            });
+          } else {
+            this.logger.errorSave("券已使用，换券重新锁座失败", {
+              error: swapRes?.error
+            });
+            // 换券耗尽：非最后一个账号尝试换号（与"用券异常走换号"一致）
+            if (this.currentParamsInx !== this.currentParamsList.length - 1) {
+              let otherParams = {
+                offerRule,
+                city_id,
+                cinema_id,
+                show_id,
+                seat_arr,
+                start_day,
+                start_time,
+                short_code
+              };
+              this.logger.infoSave("券已使用换券耗尽，走换号", { otherParams });
+              this.currentParamsInx++;
+              return await this.oneClickBuyTicket({
+                ...item,
+                otherParams
+              });
+            }
+          }
+        }
+
+        // catch 时 lockRes 为 undefined（换券重试成功除外），走转单逻辑
+        if (!lockRes) {
+          this.logger.infoSave("锁定座位失败走转单");
+          const transferParams = await this.orderManage.transferOrder(
+            null,
+            this.currentParamsList[this.currentParamsInx]?.lmaToken
+          );
+          return { offerRule, transferParams };
+        }
       }
 
       order_str = lockRes?.data?.order_str;
@@ -961,6 +1020,113 @@ export default class LmaBuyTicket extends BaseBuyTicket {
       steps.push(`实付${paymentAmount ?? ""}`);
     }
     return steps.join("→");
+  }
+
+  /**
+   * 锁座报"券已使用"时换券重新锁座
+   *
+   * 场景：lma 账号公用先后出票，后一单可能选到前一单刚消耗的券
+   * （ticket_record 落库竞态），LMA 锁座返回"券已使用,锁座失败!"。
+   *
+   * 策略：
+   * - 从备选券池（useQuanHandle 返回的 remainQuanList）整批替换 ticket_num 张
+   * - 备选池不足 → 重新从账号拉最新券列表（已用券自然消失），排除本订单已试券码
+   * - 最多重试 QUAN_SWAP_RETRY_LIMIT 次，间隔 QUAN_SWAP_RETRY_DELAY 秒
+   *
+   * @param {Object} params
+   * @param {string|number} params.cinema_id - 影院ID
+   * @param {string|number} params.show_id - 场次ID
+   * @param {string} params.short_code - 影片编码
+   * @param {Array} params.seat_arr - 座位数组
+   * @param {string} params.quan_code - 当前券码JSON字符串（[{code}]）
+   * @param {string} params.lmaToken - 当前账号token
+   * @param {number} params.ticket_num - 票数
+   * @param {Object} params.offerRule - 报价规则（含 quan_flag/black_quans）
+   * @returns {Promise<Object>} 成功 { lockRes, quan_code }；失败 { error }
+   */
+  async retryLockSeatWithQuanSwap({
+    cinema_id,
+    show_id,
+    short_code,
+    seat_arr,
+    quan_code,
+    lmaToken,
+    ticket_num,
+    offerRule
+  }) {
+    // 已试过的券码（本订单内存排除，不写库）
+    const triedQuanCodes = new Set(
+      (JSON.parse(quan_code || "[]") || []).map(item => item.code)
+    );
+    // 备选券池：首次拉券的剩余部分（排除已试券码）
+    let remainQuanPool = [...(this._remainQuanList || [])].filter(
+      item => !triedQuanCodes.has(item.code)
+    );
+    let lastError = null;
+
+    for (let retryInx = 1; retryInx <= QUAN_SWAP_RETRY_LIMIT; retryInx++) {
+      // 备选池不足 → 重新从账号拉最新券列表补池
+      if (remainQuanPool.length < ticket_num) {
+        const freshQuanRes = await this.cardQuanManage.continuousGetQuanForUse({
+          lmaToken,
+          appFlag: this.appFlag,
+          quan_flag: offerRule.quan_flag,
+          black_quans: offerRule.black_quans,
+          usedQuanList: []
+        });
+        const freshList = (freshQuanRes?.quanList || [])
+          .sort((a, b) => +new Date(a.endDateTime) - new Date(b.endDateTime))
+          .filter(item => !triedQuanCodes.has(item.code))
+          .map(item => ({ code: item.code }));
+        this.logger.infoSave("换券重试:重新拉取账号券列表", {
+          freshCount: freshList.length,
+          triedQuanCodes: [...triedQuanCodes],
+          retryInx
+        });
+        remainQuanPool = freshList;
+        if (remainQuanPool.length < ticket_num) {
+          this.logger.errorSave("换券重试:重新拉取后券仍不足票数", {
+            remainCount: remainQuanPool.length,
+            ticket_num,
+            retryInx
+          });
+          return { error: lastError || new Error("备选券不足") };
+        }
+      }
+
+      // 整批替换下一批券
+      const nextBatch = remainQuanPool.splice(0, ticket_num);
+      nextBatch.forEach(item => triedQuanCodes.add(item.code));
+      const newQuanCode = JSON.stringify(nextBatch);
+      this.logger.infoSave(`换券重试:第${retryInx}次使用新券重新锁座`, {
+        newQuanCodes: nextBatch.map(item => item.code)
+      });
+
+      try {
+        const lockRes = await this.seatManage.lockseatByApp({
+          cinema_id,
+          show_id,
+          short_code,
+          seat_arr,
+          quan_code: newQuanCode,
+          lmaToken
+        });
+        return { lockRes, quan_code: newQuanCode };
+      } catch (error) {
+        lastError = error;
+        const errInfo = formatErrInfo(error);
+        if (!QUAN_USED_ERROR_KEYS.some(key => errInfo.includes(key))) {
+          // 非"券已使用"错误（如网络异常），不再换券
+          return { error };
+        }
+        this.logger.errorSave(
+          `换券重试:第${retryInx}次仍报券已使用，${QUAN_SWAP_RETRY_DELAY}秒后继续`,
+          { error: errInfo }
+        );
+        await mockDelay(QUAN_SWAP_RETRY_DELAY);
+      }
+    }
+    return { error: lastError || new Error("备选券不足") };
   }
 
   // 获取排序手机号（按券库存）
