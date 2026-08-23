@@ -4,7 +4,7 @@
 
 1、重新出票订单快照内存缓存，解决"出票失败后第一时间重新出票查不到日志"（2026-08-21）：
 - 现象：L2 日志上传为 fire-and-forget 异步串行链，出票失败瞬间明细可能尚未落盘，againTicket 依赖 L1/L2 日志查询还原订单必然失败；
-- 修复：BaseTicketQueue.handleNewOrder 将出票订单快照写入 window.__ticketOrderSnapshots（上限 500 单防内存膨胀）；HistoryTicketRecord.againTicket 优先取内存快照（零网络延迟），快照缺失（客户端重启等）降级走原 L1/L2 日志查询兜底；
+- 修复：BaseTicketQueue.handleNewOrder 将出票订单快照写入 window.__ticketOrderSnapshots（上限 200 单防内存膨胀）；HistoryTicketRecord.againTicket 优先取内存快照（零网络延迟），快照缺失（客户端重启等）降级走原 L1/L2 日志查询兜底；
 - 验证：node --check、eslint、jest 相关套件全过。
 
 ### 6.6.44版本

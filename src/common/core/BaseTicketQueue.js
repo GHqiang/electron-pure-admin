@@ -162,12 +162,12 @@ export default class BaseTicketQueue {
     // 2026-08-21：出票订单快照入内存缓存（window 级）——出票失败后第一时间"重新出票"
     // 依赖 L1/L2 日志查询还原订单，但日志上传为 fire-and-forget 异步串行链，失败瞬间
     // 可能尚未落盘/入库，查询必然失败；内存快照零网络依赖即时可用；
-    // 客户端重启后快照丢失，重新出票降级走 L1/L2 日志查询兜底（上限 500 单防内存膨胀）
+    // 客户端重启后快照丢失，重新出票降级走 L1/L2 日志查询兜底（上限 200 单防内存膨胀）
     if (!window.__ticketOrderSnapshots) {
       window.__ticketOrderSnapshots = new Map();
     }
     window.__ticketOrderSnapshots.set(order.order_number, order);
-    if (window.__ticketOrderSnapshots.size > 500) {
+    if (window.__ticketOrderSnapshots.size > 200) {
       window.__ticketOrderSnapshots.delete(
         window.__ticketOrderSnapshots.keys().next().value
       );
