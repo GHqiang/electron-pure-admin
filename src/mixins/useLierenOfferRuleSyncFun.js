@@ -318,7 +318,9 @@ export default function useLierenOfferRuleSyncFun() {
   };
 
   // 同步规则到猎人平台（删除）
-  const lierenOfferRuleDelPlat = async platRuleIdList => {
+  // ruleInfoList: 可选，本地规则信息列表（含 id/ruleName/shadowLineName），用于删除同步日志可追溯
+  const lierenOfferRuleDelPlat = async (platRuleIdList, ruleInfoList = []) => {
+    const firstRule = ruleInfoList?.[0] || {};
     try {
       let lierenMainAccountAkSk = _getLierenAkSk();
       const params = {
@@ -332,7 +334,9 @@ export default function useLierenOfferRuleSyncFun() {
       // 记录删除同步成功日志
       svApi
         .addRuleOperationLog({
-          rule_id: null,
+          rule_id: firstRule.id ?? null,
+          rule_name: firstRule.ruleName,
+          shadow_line_name: firstRule.shadowLineName,
           operation_type: "sync_delete",
           plat_name: "lieren",
           trigger_source: "rule_delete",
@@ -347,6 +351,9 @@ export default function useLierenOfferRuleSyncFun() {
       // 记录删除同步失败日志
       svApi
         .addRuleOperationLog({
+          rule_id: firstRule.id ?? null,
+          rule_name: firstRule.ruleName,
+          shadow_line_name: firstRule.shadowLineName,
           operation_type: "sync_delete",
           plat_name: "lieren",
           trigger_source: "rule_delete",
@@ -428,6 +435,10 @@ export default function useLierenOfferRuleSyncFun() {
         })
         .catch(() => {});
       ElMessage.error("修改猎人平台规则状态失败");
+      // 失败必须抛出：让调用方（editRuleStatusSyncToPlat → editStatus/handleStatusChange）
+      // 感知并还原本地状态/阻断落库，否则"本地已改、平台未改"导致平台继续报价、
+      // 本地匹配失败（与 8-23 删除不同步事故同类路径）
+      throw error;
     }
   };
 

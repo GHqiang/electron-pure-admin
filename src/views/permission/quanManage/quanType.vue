@@ -729,9 +729,15 @@ const deleteRow = async (index, row) => {
     })
       .then(async () => {
         // 用户点击了"删除券和规则"按钮
+        // 先同步删除平台规则，成功后再删本地，避免平台残留孤儿规则
+        // （失败提示由 delRuleSyncToPlat 内部统一弹出，这里仅阻断本地删除）
+        try {
+          await delRuleSyncToPlat(usedRules);
+        } catch (error) {
+          return;
+        }
         for (const rule of usedRules) {
           await svApi.deleteRule({ id: rule.id });
-          await delRuleSyncToPlat([rule]);
         }
         // 删除券
         await svApi.deleteQuanType({ id: row.id });
@@ -806,9 +812,10 @@ const delRuleSyncToPlat = async ruleList => {
         if (platOfferList && !Array.isArray(platOfferList)) {
           platOfferList = JSON.parse(platOfferList);
         }
-        let lierenOffer = platOfferList.find(
+        let lierenOffer = (platOfferList || []).find(
           item => item.platName === "lieren"
         );
+        if (!lierenOffer) return null;
         let lierenOfferRule = {
           ...item,
           offerAmount: lierenOffer.value,
@@ -818,7 +825,7 @@ const delRuleSyncToPlat = async ruleList => {
         };
         return lierenOfferRule;
       })
-      .filter(item => item.isSyncPlat == 1); // 只处理同步平台
+      .filter(item => item && item.isSyncPlat == 1); // 只处理同步平台
 
     // 只处理日常固定价的规则
     ruleList = ruleList.filter(item => item.offerType == 1);
@@ -826,10 +833,15 @@ const delRuleSyncToPlat = async ruleList => {
     if (ruleList.length === 0) return;
 
     const platRuleIdList = ruleList.map(item => item.platRuleId);
-    await lierenOfferRuleDelPlat(platRuleIdList);
+    // 传入本地规则信息，删除同步日志可追溯到本地规则
+    await lierenOfferRuleDelPlat(platRuleIdList, ruleList);
     console.log("删除规则同步到平台成功");
   } catch (error) {
     console.warn("删除规则同步到平台异常", error);
+    // 平台删除失败时不能静默：本地先删会残留平台孤儿规则（8-23 事故根因），
+    // 必须抛出让调用方阻断本地删除，用户明确看到失败原因
+    ElMessage.error("删除猎人平台规则失败，本地规则未删除，请稍后重试");
+    throw error;
   }
 };
 

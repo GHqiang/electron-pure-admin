@@ -9,6 +9,7 @@ import {
 import Logger from "../logger.js";
 import StrategyFactory from "@/common/autoTicket/buyTicket/index";
 import svApi from "@/api/sv-api";
+import lierenApi from "@/api/lieren-api";
 import refreshLocalOfferRuleList, {
   queryAppOfferRuleList
 } from "@/common/ruleStoreRefresh";
@@ -368,6 +369,71 @@ export default class BaseTicketQueue {
         const matchDiag = targetRule
           ? `找到规则但offerType=${targetRule.offerType}非固定报价(1)`
           : `未找到platRuleId=${platRuleId}的规则`;
+        // 第二道防线：本地确认无此规则时，反查平台侧——若为"平台有、本地无"的
+        // 启用中固定价孤儿规则（sum_mode=2），立即禁用，把孤儿危害窗口从小时/天级压到分钟级，
+        // 避免平台继续用它报价导致后续订单重复失败（8-23 事故同类场景）
+        let platOrphanDisabled = null;
+        if (!targetRule) {
+          try {
+            const rawAkSk = dictStore.dictInfo.lierenMainAccountAkSk;
+            let akSk = [];
+            if (rawAkSk) {
+              try {
+                const akSkMap = JSON.parse(rawAkSk);
+                const rule = tokens.userInfo?.rule;
+                akSk = akSkMap[rule] || akSkMap[Object.keys(akSkMap)[0]] || [];
+              } catch {
+                // 字典配置非法 JSON：按未配置 AK/SK 处理，走下方跳过分支，不阻塞出票
+              }
+            }
+            if (akSk.length >= 2) {
+              const platRes = await lierenApi.ruleList({
+                rule_id: [platRuleId],
+                lieren_ak: akSk[0],
+                lieren_sk: akSk[1]
+              });
+              const platRule = platRes?.data?.[0];
+              // 仅固定价（sum_mode=2）孤儿才禁用：会员价规则（sum_mode=4，getRuleIdByPlat 创建）
+              // 本地无关联是正常业务，禁用会误伤机器会员价报价
+              if (platRule && platRule.state == 1 && platRule.sum_mode == 2) {
+                await lierenApi.ruleState({
+                  rule_id: [platRuleId],
+                  state: 0,
+                  lieren_ak: akSk[0],
+                  lieren_sk: akSk[1]
+                });
+                platOrphanDisabled = {
+                  rule_id: platRule.rule_id,
+                  name: platRule.name
+                };
+                this.logger.infoSave(
+                  "出票匹配失败反查：已自动禁用平台孤儿规则",
+                  platOrphanDisabled
+                );
+              } else {
+                this.logger.infoSave(
+                  "出票匹配失败反查：平台规则不存在或无需禁用",
+                  {
+                    platRuleId,
+                    platRule: platRule
+                      ? { state: platRule.state, sum_mode: platRule.sum_mode }
+                      : null
+                  }
+                );
+              }
+            } else {
+              this.logger.infoSave("出票匹配失败反查跳过：未配置猎人 AK/SK", {
+                platRuleId
+              });
+            }
+          } catch (err) {
+            // 反查/禁用失败不阻塞出票与告警，仅记录（下次订单仍会再触发）
+            this.logger.errorSave("出票匹配失败反查平台规则异常", {
+              error: err,
+              platRuleId
+            });
+          }
+        }
         // 诊断明细：优先用按影线查询到的最新规则（store 可能过期），取每条规则的id/影子线路/状态/报价类型/liers平台规则id
         const diagSource =
           appRuleQueried && appRules?.length
@@ -386,7 +452,11 @@ export default class BaseTicketQueue {
           .filter(
             item => item.shadowLineName === app_name && item.lierenPlatRuleId
           );
-        const failReason = `猎人报价规则匹配失败：${matchDiag}，app_name=${app_name}，本地规则总数=${appOfferRuleList?.length || 0}，命中shadowLineName的规则数=${useRuleList.length}，已按影线查询重试=${appRuleQueried ? "是" : "否"}，规则明细=${JSON.stringify(diagList)}`;
+        const failReason =
+          `猎人报价规则匹配失败：${matchDiag}，app_name=${app_name}，本地规则总数=${appOfferRuleList?.length || 0}，命中shadowLineName的规则数=${useRuleList.length}，已按影线查询重试=${appRuleQueried ? "是" : "否"}，规则明细=${JSON.stringify(diagList)}` +
+          (platOrphanDisabled
+            ? `，已自动禁用平台孤儿规则(id=${platOrphanDisabled.rule_id}, name=${platOrphanDisabled.name})`
+            : "");
         this.logger.infoSave(
           "机器未找到匹配的报价规则，先允许出票，后面有报价记录校验",
           {
@@ -396,7 +466,8 @@ export default class BaseTicketQueue {
             useRuleListCount: useRuleList.length,
             appRuleQueried,
             matchDiag,
-            diagList
+            diagList,
+            platOrphanDisabled
           }
         );
         // 匹配失败说明本地规则与猎人平台不一致，立即推送告警开发排查

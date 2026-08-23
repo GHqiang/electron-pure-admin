@@ -883,6 +883,8 @@ const handleStatusChange = async row => {
 // 启用禁用状态
 const editStatus = async row => {
   try {
+    // 先同步平台状态，成功后再落库本地，避免平台失败时"本地已改、平台未改"的不一致
+    await editRuleStatusSyncToPlat(row);
     await svApi.updateRuleRecord({
       id: row.id,
       status: row.status,
@@ -893,8 +895,6 @@ const editStatus = async row => {
         : 2,
       update_time: getCurrentTime()
     });
-    // 修改规则状态同步到平台
-    await editRuleStatusSyncToPlat(row);
     // 若未同步到平台则记录状态变更日志；已同步的由 sync_status 日志覆盖，避免重复
     const _fixedOfferToPlatList =
       dictStore.dictInfo.fixedOfferToPlatList?.split(",") || [];
@@ -935,6 +935,9 @@ const clickNoOffer = row => {
 // 当日不报
 const currentDayNoOfferHandle = async row => {
   try {
+    // 与机器「当日不报」一致：猎人侧禁用（status 非 '1' 即关）
+    // 先同步平台成功，再落库本地，避免平台失败时"本地已改、平台未改"的不一致
+    await editRuleStatusSyncToPlat({ ...row, status: "5" });
     await svApi.updateRuleRecord({
       id: row.id,
       allow_offer_time: getNextDayTime(), // 允许报价时间下一天
@@ -958,8 +961,6 @@ const currentDayNoOfferHandle = async row => {
         operator: name
       })
       .catch(() => {});
-    // 与机器「当日不报」一致：猎人侧禁用（status 非 '1' 即关）
-    await editRuleStatusSyncToPlat({ ...row, status: "5" });
     searchData();
     ElMessage({
       type: "success",
@@ -1102,7 +1103,13 @@ const saveRule = async ruleInfo => {
           operator: name
         })
         .catch(() => {});
-      await saveRuleSyncToPlat(ruleInfo);
+      // 新增场景本地已落库（需要 id 关联 platRuleId），同步失败仅提示不阻断流程：
+      // lierenOfferRuleSyncPlat 内部已有 ElMessage.error，规则保留在本地待下次同步/人工处理
+      try {
+        await saveRuleSyncToPlat(ruleInfo);
+      } catch (error) {
+        console.warn("新增规则同步平台失败（本地已创建规则）", error);
+      }
       sfcDialogRef.value.closeTck();
       searchData();
     }
@@ -1138,12 +1145,24 @@ const saveRuleSyncToPlat = async ruleForm => {
 
   // 仅平台选择同步时才同步
   if (lierenOfferRule.isSyncPlat == 1) {
-    return await lierenOfferRuleSyncPlat(ruleInfo);
+    const syncResult = await lierenOfferRuleSyncPlat(ruleInfo);
+    // 同步失败时 lierenOfferRuleSyncPlat 返回 undefined：必须阻断后续落库，
+    // 否则本地保存成功但平台未更新，产生本地与平台不一致（8-18/8-23 事故同类问题）
+    if (!syncResult) {
+      throw new Error("同步规则到猎人平台失败，本地未保存");
+    }
+    return syncResult;
   } else if (lierenOfferRule.isSyncPlat == 2 && lierenOfferRule.platRuleId) {
     console.log("取消同步了，准备删除平台规则", lierenOfferRule);
     // 如果之前是同步到平台的，现在取消同步了，则删除平台规则
-    // 注意：此处不 catch，让异常传播到 saveRule 以阻断后续落库，避免 platRuleId 丢失无法重试
-    await lierenOfferRuleDelPlat([lierenOfferRule.platRuleId]);
+    // 注意：此处 catch 后重新抛出，异常传播到 saveRule 以阻断后续落库，避免 platRuleId 丢失无法重试
+    // 传入本地规则信息（ruleInfo），删除同步日志可追溯到本地规则
+    try {
+      await lierenOfferRuleDelPlat([lierenOfferRule.platRuleId], [ruleInfo]);
+    } catch (error) {
+      ElMessage.error("删除猎人平台规则失败，规则未保存");
+      throw error;
+    }
   }
 };
 
@@ -1167,7 +1186,7 @@ const delRuleSyncToPlat = async ruleList => {
         };
         return lierenOfferRule;
       })
-      .filter(item => item.isSyncPlat == 1); // 只处理同步平台
+      .filter(item => item && item.isSyncPlat == 1); // 只处理同步平台
 
     // 只处理日常固定价的规则
     ruleList = ruleList.filter(item => item.offerType == 1);
@@ -1175,10 +1194,15 @@ const delRuleSyncToPlat = async ruleList => {
     if (ruleList.length === 0) return;
 
     const platRuleIdList = ruleList.map(item => item.platRuleId);
-    await lierenOfferRuleDelPlat(platRuleIdList);
+    // 传入本地规则信息，删除同步日志可追溯到本地规则
+    await lierenOfferRuleDelPlat(platRuleIdList, ruleList);
     console.log("删除规则同步到平台成功");
   } catch (error) {
     console.warn("删除规则同步到平台异常", error);
+    // 平台删除失败时不能静默：本地先删会残留平台孤儿规则（8-23 事故根因），
+    // 必须抛出让调用方阻断本地删除，用户明确看到失败原因
+    ElMessage.error("删除猎人平台规则失败，本地规则未删除，请稍后重试");
+    throw error;
   }
 };
 
@@ -1214,6 +1238,9 @@ const editRuleStatusSyncToPlat = async ruleInfo => {
     console.log("修改规则状态同步到猎人平台完成");
   } catch (error) {
     console.warn("修改规则状态同步到猎人平台异常", error);
+    // 平台状态修改失败必须向上抛出：让 editStatus/currentDayNoOfferHandle 感知，
+    // 阻断本地落库/还原状态，避免"本地已改、平台未改"的不一致
+    throw error;
   }
 };
 
@@ -1287,11 +1314,17 @@ const deleteRow = async (index, row) => {
     })
       .then(async () => {
         // 用户点击了"删除规则和券"按钮
+        // 先同步删除平台规则，成功后再删本地，避免平台残留孤儿规则
+        // （失败提示由 delRuleSyncToPlat 内部统一弹出，这里仅阻断本地删除）
+        try {
+          await delRuleSyncToPlat([row]);
+        } catch (error) {
+          return;
+        }
         for (const quan of relatedQuans) {
           await svApi.deleteQuanType({ id: quan.id });
         }
         await svApi.deleteRule({ id: row.id });
-        await delRuleSyncToPlat([row]);
         searchData();
         ElMessage({
           type: "success",
@@ -1303,6 +1336,13 @@ const deleteRow = async (index, row) => {
         const actionName = typeof action === "object" ? action.name : action;
         if (actionName === "cancel") {
           // 用户点击了"仅删除规则"按钮
+          // 先同步删除平台规则，成功后再删本地，避免平台残留孤儿规则
+          // （失败提示由 delRuleSyncToPlat 内部统一弹出，这里仅阻断本地删除）
+          try {
+            await delRuleSyncToPlat([row]);
+          } catch (error) {
+            return;
+          }
           await svApi.deleteRule({ id: row.id });
           searchData();
           ElMessage({
@@ -1327,6 +1367,13 @@ const deleteRow = async (index, row) => {
     })
       .then(async () => {
         // 点击"确定"按钮
+        // 先同步删除平台规则，成功后再删本地，避免平台残留孤儿规则
+        // （失败提示由 delRuleSyncToPlat 内部统一弹出，这里仅阻断本地删除）
+        try {
+          await delRuleSyncToPlat([row]);
+        } catch (error) {
+          return;
+        }
         await svApi.deleteRule({ id: row.id });
         searchData();
         ElMessage({
@@ -1368,10 +1415,16 @@ const batchDelete = () => {
       }
     )
       .then(async () => {
+        // 先同步删除平台规则，成功后再删本地，避免平台残留孤儿规则
+        // （失败提示由 delRuleSyncToPlat 内部统一弹出，这里仅阻断本地删除）
+        try {
+          await delRuleSyncToPlat(multipleSelection.value);
+        } catch (error) {
+          return;
+        }
         let ids = multipleSelection.value.map(item => item.id);
         console.log("ids===>", ids);
         await svApi.batchDeleteRule({ delIds: ids });
-        await delRuleSyncToPlat(multipleSelection.value);
         searchData();
         multipleSelection.value = [];
         ElMessage({
