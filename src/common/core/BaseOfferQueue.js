@@ -10,6 +10,11 @@ import { platTokens } from "@/store/platTokens.js";
 import { dictTable } from "@/store/dictTable";
 import { extractThirdPartyIds } from "./extractThirdPartyIds.js";
 import { getPlatFeeRate } from "@/common/autoTicket/buyTicket/common/offerHelper";
+import {
+  startFetchAlarmMonitor,
+  stopFetchAlarmMonitor,
+  countFetchFailLogs
+} from "./fetchAlarmMonitor.js";
 const dictStore = dictTable();
 const tokens = platTokens();
 
@@ -53,6 +58,14 @@ export default class BaseOfferQueue {
     this._fetchTimer = null;
     /** 拉单锁起始时间戳（毫秒），配合 FETCH_LOCK_TIMEOUT 做强制复位 */
     this._fetchStartedAt = 0;
+    // 拉单心跳告警（2026-08-23）：每轮拉单完成后刷新 lastFetchTime，
+    // 定时检查长时间无拉单日志（队列停止/循环卡死/网络全断）并微信推送
+    this.lastFetchTime = Date.now();
+    this._fetchAlarmTimer = null;
+    this._lastFetchAlarmTime = 0;
+    // 连续拉单失败计时起点（0=当前无连续失败）：每轮拉单产生"获取...列表异常"
+    // error 日志视为本轮失败，恢复成功则清零（2026-08-23 新增，覆盖请求超时场景）
+    this._consecutiveFetchFailStart = 0;
   }
 
   /**
@@ -71,6 +84,9 @@ export default class BaseOfferQueue {
     this.isRunning = true;
     this.handledOrders = new Map();
     this.queue = [];
+    this.lastFetchTime = Date.now();
+    this._consecutiveFetchFailStart = 0;
+    startFetchAlarmMonitor(this, 13, "待报价", 14);
 
     // 重置子类拉单相关状态（如猎人的水位线 lastFetchTimestamp）
     // 确保每次 start 都走"首轮"逻辑（猎人：以当前时间起步，不用停机前旧水位线）
@@ -121,10 +137,26 @@ export default class BaseOfferQueue {
         this._fetchStartedAt = Date.now();
         // 闭包保存本轮 startedAt，finally 中比对，避免被复位的旧轮误释放新一轮的锁
         const myStartedAt = this._fetchStartedAt;
+        // 本轮拉单前统计适配器 logger 中"拉单失败"类 error 日志数（对比用）
+        const failLogsBefore = countFetchFailLogs(this.platformAdapter?.logger);
         // 传 0 跳过子类内部的 mockDelay，拉单间隔由定时器控制
         this.fetchOrders(0)
           .catch(e => console.error("拉单异常", e))
           .finally(() => {
+            const failLogsAfter = countFetchFailLogs(
+              this.platformAdapter?.logger
+            );
+            // 一轮拉单完成（含异常）即刷新心跳；fetchOrders 挂起/卡死时不刷新
+            // → 超过阈值触发"无拉单日志"告警
+            this.lastFetchTime = Date.now();
+            // 连续失败检测：本轮新增拉单失败日志（请求超时/网络异常）→ 开始计时；
+            // 任何一轮无新增失败 → 清零重计（2026-08-23）
+            if (failLogsAfter > failLogsBefore) {
+              this._consecutiveFetchFailStart =
+                this._consecutiveFetchFailStart || Date.now();
+            } else {
+              this._consecutiveFetchFailStart = 0;
+            }
             // 仅当 _fetchStartedAt 仍等于 myStartedAt 时才释放：
             //  - 若被超时复位，_fetchStartedAt 已被置 0，不释放（新一轮会自己管理）
             //  - 若已被新一轮覆盖，也不释放（交给新一轮的 finally）
@@ -1282,6 +1314,8 @@ export default class BaseOfferQueue {
       clearTimeout(this._fetchTimer);
       this._fetchTimer = null;
     }
+    // 清理拉单心跳告警定时器
+    stopFetchAlarmMonitor(this);
     // 重置拉单锁状态：避免 stop 时有 fetchOrders 在运行，残留 isFetching=true
     // 影响下次 start 后的首轮 tick（首轮会被 isFetching 挡住跳过）。
     // 注意：旧 fetchOrders 完成时 finally 的 startedAt 比对仍会正确跳过（_fetchStartedAt 已变）

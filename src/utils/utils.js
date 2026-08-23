@@ -629,7 +629,7 @@ const sendWxPusherMessage = async ({
   transferTip,
   failReason,
   app_name,
-  msgType, // 消息类型 1-登录失效 2-出票队列重复 3-黑名单券更新 5-密码输入错误 6-卡号出满提醒 9-日志上传异常 11-出票队列消息未确认
+  msgType, // 消息类型 1-登录失效 2-出票队列重复 3-黑名单券更新 5-密码输入错误 6-卡号出满提醒 9-日志上传异常 11-出票队列消息未确认 12-待出票队列无拉单日志 13-待报价队列无拉单日志 14-拉单连续失败
   expirePhone, // 失效手机号
   cardNoByPwdError, // 密码错误卡号
   quan_flag,
@@ -774,6 +774,30 @@ const sendWxPusherMessage = async ({
     座位：${lockseat}; <br/>
     中标价：${supplier_end_price}; <br/>
     ${transferTip};<br/>
+    </p>`;
+  } else if (msgType === 12) {
+    summary = "待出票队列无拉单日志";
+    content = `<p>
+    时间：${getCurrentTime()}; <br/>
+    用户：${userInfo.name}; <br/>
+    平台：${plat_name}; <br/>
+    提示：${transferTip};<br/>
+    </p>`;
+  } else if (msgType === 13) {
+    summary = "待报价队列无拉单日志";
+    content = `<p>
+    时间：${getCurrentTime()}; <br/>
+    用户：${userInfo.name}; <br/>
+    平台：${plat_name}; <br/>
+    提示：${transferTip};<br/>
+    </p>`;
+  } else if (msgType === 14) {
+    summary = "拉单连续失败";
+    content = `<p>
+    时间：${getCurrentTime()}; <br/>
+    用户：${userInfo.name}; <br/>
+    平台：${plat_name}; <br/>
+    提示：${transferTip};<br/>
     </p>`;
   }
 

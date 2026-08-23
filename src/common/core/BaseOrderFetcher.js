@@ -8,6 +8,11 @@ import {
 } from "@/utils/utils.js";
 import Logger from "../logger.js";
 import { dictTable } from "@/store/dictTable";
+import {
+  startFetchAlarmMonitor,
+  stopFetchAlarmMonitor,
+  countFetchFailLogs
+} from "./fetchAlarmMonitor.js";
 const dictStore = dictTable();
 
 /**
@@ -34,6 +39,14 @@ export default class BaseOrderFetcher {
     this.logger.plat_name = platName;
     this.logger.order_number = "";
     this.logger.app_name = "";
+    // 拉单心跳告警（2026-08-23）：每轮拉单完成后刷新 lastFetchTime，
+    // 定时检查长时间无拉单日志（队列停止/循环卡死/网络全断）并微信推送
+    this.lastFetchTime = Date.now();
+    this._fetchAlarmTimer = null;
+    this._lastFetchAlarmTime = 0;
+    // 连续拉单失败计时起点（0=当前无连续失败）：每轮拉单产生"获取...列表异常"
+    // error 日志视为本轮失败，恢复成功则清零（2026-08-23 新增，覆盖请求超时场景）
+    this._consecutiveFetchFailStart = 0;
   }
 
   /**
@@ -49,10 +62,27 @@ export default class BaseOrderFetcher {
     this.isRunning = true;
     this.orderRecord = [];
     this.platOrderList = [];
+    this.lastFetchTime = Date.now();
+    this._consecutiveFetchFailStart = 0;
+    startFetchAlarmMonitor(this, 12, "待出票", 14);
 
     while (this.isRunning) {
       await mockDelay(5);
+      // 本轮拉单前统计平台级 logger 中"拉单失败"类 error 日志数（对比用）
+      const failLogsBefore = countFetchFailLogs(this.logger);
       await this.fetchOrders();
+      const failLogsAfter = countFetchFailLogs(this.logger);
+      // 一轮拉单完成即刷新心跳（无论是否拉到订单）；fetchOrders 挂起/卡死时
+      // 心跳不再刷新 → 超过阈值触发"无拉单日志"告警
+      this.lastFetchTime = Date.now();
+      // 连续失败检测：本轮新增拉单失败日志（请求超时/网络异常）→ 开始计时；
+      // 任何一轮无新增失败 → 清零重计（2026-08-23）
+      if (failLogsAfter > failLogsBefore) {
+        this._consecutiveFetchFailStart =
+          this._consecutiveFetchFailStart || Date.now();
+      } else {
+        this._consecutiveFetchFailStart = 0;
+      }
       // 每轮拉单后 flush 平台级 logger（"获取订单列表异常"等 38 处 errorSave 的
       // 日志此前滞留内存永不上传——2026-08-20 二轮修复）；fire-and-forget 不阻塞下一轮
       this.logger.logUpload().catch(() => {});
@@ -329,6 +359,7 @@ export default class BaseOrderFetcher {
    */
   stop() {
     this.isRunning = false;
+    stopFetchAlarmMonitor(this);
     console.warn("主动停止订单自动获取队列");
   }
 
