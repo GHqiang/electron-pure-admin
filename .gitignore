@@ -19,8 +19,11 @@ tests/**/coverage/
 *.ntvs*
 *.njsproj
 *.sln
+# AI 工具本地文件均不入库（技能/命令/规则只留本地，2026-08-27）
 .claude/
 .zcode/
+.agents/skills/
+.trae/
 .codebuddy/
 .superpowers/
 # AI 工具记忆/临时文件（勿提交，2026-08-20）
@@ -30,6 +33,10 @@ tests/**/coverage/
 scripts/quick-test*.js
 scripts/test-*.js
 scripts/verify-*.js
+# 生产取证脚本（连接生产库，按"数据库连接脚本勿提交"策略只留本地）
+scripts/prod-query.js
+# 排查分析报告输出目录（仅本地，不入库）
+/reports/
 # 业务逻辑单测（勿提交，2026-08-20；本地保留可继续 yarn test，其他机器克隆后无此目录）
 /src/common/tests/
 tsconfig.tsbuildinfo

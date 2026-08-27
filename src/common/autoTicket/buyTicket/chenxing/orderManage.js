@@ -261,7 +261,8 @@ export default class OrderManage {
         if (paymentAmount == real_member_price) {
           return {
             ...res?.data,
-            cardNum
+            cardNum,
+            priceMatched: true
           };
         } else {
           if (useCardList?.length > 1) {
@@ -277,9 +278,17 @@ export default class OrderManage {
               useCardList: useCardList.slice(1)
             });
           } else {
+            // 已遍历完最后一张在管卡仍与预计会员价不符：带标记返回，
+            // 由上游支付前校验决定是否走无利润转单（此处不改变既有流转）
+            this.logger.warnSave("在管卡试算均未匹配预计会员价", {
+              paymentAmount,
+              real_member_price,
+              最后卡号: cardNum
+            });
             return {
               ...res?.data,
-              cardNum
+              cardNum,
+              priceMatched: false
             };
           }
         }

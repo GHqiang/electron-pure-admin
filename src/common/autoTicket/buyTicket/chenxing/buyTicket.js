@@ -426,6 +426,8 @@ class ChenxingBuyTicket extends BaseBuyTicket {
       }
       card_id = calcRes?.cardNum;
       cardNum = calcRes?.cardNum;
+      // 是否存在与预计会员价完全匹配的在管卡（全部不符时 orderManage 返回 false 标记）
+      const cardPriceMatched = calcRes?.priceMatched !== false;
       // 用卡余额
       let cardBalance = useCardList.find(
         item => item.cardNo == cardNum
@@ -603,7 +605,8 @@ class ChenxingBuyTicket extends BaseBuyTicket {
             this.logger.errorSave("用完卡发现无利润，走转单", {
               paymentAmount,
               real_member_price,
-              ticket_num
+              ticket_num,
+              全卡试算均不匹配预计价: !cardPriceMatched
             });
             // 转单或换号处理
             const transparams = {

@@ -24,7 +24,7 @@ import {
   isDateInCurrentMonth,
   getCinemaLoginInfoList,
   calculateMarkup,
-  parseNumericRule
+  isSpecialMemberActivity
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import {
@@ -264,13 +264,21 @@ class getChenxingOfferPrice extends BaseOfferPrice {
           discountList: JSON.parse(JSON.stringify(discountList)),
           cinemaPlanDto
         });
+        // 过滤特殊会员类活动档位。
+        // 该类活动绑定海洋卡等特定卡等级+指定储值卡扣款，自动采购渠道无法保证按名义价成交；
+        // 命名变体多（xx会员日19_9元 / 周四会员活动 / 周四会员日非黄…），判定收敛到
+        // utils.isSpecialMemberActivity（2026-08-27 四店周四会员日活动致批量无利润转单）
         discountList = discountList.filter(item => {
-          let isSpecial1 = item.ruleGroupName?.includes("会员日活动");
-          let isSpecial2 =
-            item.price - item.cinemaPayAmount ==
-            parseNumericRule(item.ruleName);
-          // 过滤掉特殊的会员日活动和特价活动
-          return !isSpecial1 && !isSpecial2;
+          const excluded = isSpecialMemberActivity(item);
+          if (excluded) {
+            this.logger.infoSave("过滤会员特惠类优惠档位", {
+              ruleId: item.ruleId,
+              ruleGroupName: item.ruleGroupName,
+              ruleName: item.ruleName,
+              有效价: item.price - item.cinemaPayAmount
+            });
+          }
+          return !excluded;
         });
         this.logger.infoSave("过滤会员日活动后可用优惠列表", {
           discountList: JSON.parse(JSON.stringify(discountList))
