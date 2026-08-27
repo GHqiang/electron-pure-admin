@@ -129,10 +129,12 @@ export default class LmaCardQuanManage {
         item => item.card_number !== activeCard?.card_number
       );
 
-      // 纯用卡场景优先尝试指定卡：指定卡排到换卡尝试列表最前（组内保持原顺序）
-      if (offer_type != "1") {
-        const priorityCardNos = this.getPriorityCardNos();
-        if (priorityCardNos.length) {
+      // 用卡环节按指定卡调整换卡尝试顺序（配置了字典项才生效）：
+      // 纯用卡场景指定卡排最前；券单（用券补钱）场景相反——指定卡沉底，仅在其它卡都付不起时最后兜底
+      const priorityCardNos = this.getPriorityCardNos();
+      if (priorityCardNos.length) {
+        if (offer_type != "1") {
+          // 纯用卡：指定卡排到换卡尝试列表最前（组内保持原顺序）
           otherCardList = [...otherCardList].sort((a, b) => {
             const aHit = priorityCardNos.includes(a.card_number);
             const bHit = priorityCardNos.includes(b.card_number);
@@ -141,6 +143,29 @@ export default class LmaCardQuanManage {
             return 0;
           });
           this.logger.infoSave("纯用卡场景按指定卡号优先排序换卡列表", {
+            otherCardList: otherCardList.map(item => item.card_number)
+          });
+        } else {
+          // 券单补钱：指定卡排到换卡尝试列表末尾（组内保持原顺序）
+          otherCardList = [...otherCardList].sort((a, b) => {
+            const aHit = priorityCardNos.includes(a.card_number);
+            const bHit = priorityCardNos.includes(b.card_number);
+            if (aHit && !bHit) return 1;
+            if (!aHit && bHit) return -1;
+            return 0;
+          });
+          // 活跃卡恰为指定卡时不直接消耗：移出首选、并入候选末尾，仅作最后兜底
+          // （否则活跃卡余额足够时会被直接使用，绕过候选排序，规避落空）
+          if (activeCard && priorityCardNos.includes(activeCard.card_number)) {
+            const demotedActiveCard = activeCard;
+            otherCardList.push(demotedActiveCard);
+            activeCard = null;
+            this.logger.infoSave(
+              "券单补钱场景活跃卡为指定卡，改为最后兜底尝试",
+              { demotedActiveCard }
+            );
+          }
+          this.logger.infoSave("券单补钱场景按指定卡号沉底排序换卡列表", {
             otherCardList: otherCardList.map(item => item.card_number)
           });
         }
@@ -219,9 +244,12 @@ export default class LmaCardQuanManage {
     lmaToken
   }) {
     const { appFlag } = this;
+    // 归一化 LMA money_str（"￥123.45" → 123.45；空/异常返回 0，与 syncCardBalanceToSv 提取方式一致）
+    const toNum = value =>
+      parseFloat(String(value).replace(/[^\d.]/g, "")) || 0;
     try {
       if (activeCard) {
-        if (activeCard.money_str < Number(member_total_price)) {
+        if (toNum(activeCard.money_str) < Number(member_total_price)) {
           this.logger.infoSave("当前活跃卡余额不足,准备换卡", {
             activeCard,
             otherCardList,
@@ -252,7 +280,7 @@ export default class LmaCardQuanManage {
           continue;
         }
         const { money_str } = changeCardRes?.data || {};
-        if (money_str < Number(member_total_price)) {
+        if (toNum(money_str) < Number(member_total_price)) {
           let str = "换卡后卡余额不足,准备继续换卡";
           this.logger.infoSave(str, { changeCardRes });
           continue;
