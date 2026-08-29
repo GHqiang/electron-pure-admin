@@ -167,7 +167,12 @@ export default class CardQuanManage {
         // 根据券标识获取目标券
         let targetQuanList = quanList.filter(
           item =>
-            couponInfoSpecial(item.couponName) === couponInfoSpecial(quan_flag)
+            couponInfoSpecial(item.couponName) ===
+              couponInfoSpecial(quan_flag) &&
+            (quan_desc
+              ? couponInfoSpecial(item.couponDesc || "") ==
+                couponInfoSpecial(quan_desc)
+              : true)
         );
         // 增加已用完过滤，防止核销延迟导致用券失败
         const usedQuanList = await this.queryUsedQuanList({
@@ -374,6 +379,7 @@ export default class CardQuanManage {
       quanList = quanList.map(item => ({
         ...item,
         couponName: item.show_name,
+        couponDesc: item.show_desc,
         couponCode: item.coupon_code,
         endDateTime: +new Date(item.expire_time)
       }));
@@ -592,6 +598,7 @@ export default class CardQuanManage {
     cinema_id,
     quan_value,
     quan_flag,
+    quan_desc,
     black_quans,
     quanNum,
     session_id,
@@ -608,13 +615,15 @@ export default class CardQuanManage {
     // 解决同名不同券类型无法从其他券类型绑券的问题
     const quanValueListStr = await getQuanValueListByQuanFlag({
       quan_flag,
+      quan_desc,
       app_name: appFlag
     });
     if (quanValueListStr) {
       logger.infoSave("根据券标识获取对应券类型列表返回", {
         quanValueListStr,
         quan_flag,
-        quan_value
+        quan_value,
+        quan_desc
       });
       quan_value = quanValueListStr;
     }
@@ -878,7 +887,11 @@ export default class CardQuanManage {
               itemA =>
                 couponInfoSpecial(item.quan_flag) ===
                   couponInfoSpecial(itemA.couponName) &&
-                !item.black_quans?.includes(itemA.couponCode)
+                !item.black_quans?.includes(itemA.couponCode) &&
+                (item.quan_desc
+                  ? couponInfoSpecial(item.quan_desc) ===
+                    couponInfoSpecial(itemA.couponDesc || "")
+                  : true)
             );
             // des 已含数量，info 只记 count，避免全量券码入库撑爆日志
             logger.infoSave(
@@ -947,6 +960,7 @@ export default class CardQuanManage {
       let quanList = (res.data || []).map(item => ({
         ...item,
         couponName: item.show_name,
+        couponDesc: item.show_desc,
         couponCode: item.coupon_code,
         endDateTime: +new Date(item.expire_time)
       }));
