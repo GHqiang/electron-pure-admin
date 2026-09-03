@@ -27,7 +27,8 @@ export default ({ command, mode }: ConfigEnv): UserConfigExport => {
     server: {
       // 端口号
       port: VITE_PORT,
-      host: "0.0.0.0",
+      // 只绑定回环地址：0.0.0.0 会同时监听局域网 IP，dev 服务可被同网段扫描访问
+      host: "127.0.0.1",
       // 本地跨域代理 https://cn.vitejs.dev/config/server-options.html#server-proxy
       proxy: {
         // 机器（通用后端代理）
