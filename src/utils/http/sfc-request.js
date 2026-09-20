@@ -21,7 +21,8 @@ const createAxios = ({ group, app_name, timeout = 20 }) => {
     timeout: timeout * 1000
   });
   let pver = "7.0",
-    ver = "8.3.3"; // 默认的大部分已由7.7.3升级至8.3.3版本，其余特殊版本走表里维护
+    key_ver = "202609",
+    ver = "8.5.0"; // 默认的大部分已由7.7.3升级至8.3.3版本，其余特殊版本走表里维护
   const apiVersion = GET_APP_INFO(app_name)?.api_v;
 
   if (apiVersion) {
@@ -32,6 +33,7 @@ const createAxios = ({ group, app_name, timeout = 20 }) => {
   var i = {
     group: group,
     pver,
+    key_ver,
     source: "4",
     ver,
     city_id: "",
@@ -93,7 +95,7 @@ const createAxios = ({ group, app_name, timeout = 20 }) => {
     for (var i in o) r += i + "=" + o[i] + "&";
     return (
       (r = r.substr(0, r.length - 1)),
-      (r = md5.hex_md5(md5.hex_md5(r) + "cf0e5311eaffda07c28253e6916c7cf3"))
+      (r = md5.hex_md5(md5.hex_md5(r) + "Y6UfFbZyfhbTPNNWwEje8S84BmPEDhiJ"))
     );
   };
 
