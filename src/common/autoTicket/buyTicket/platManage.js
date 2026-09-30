@@ -11,9 +11,13 @@ import {
   uploadBlobImage
 } from "@/utils/utils";
 import md5 from "@/utils/md5.js";
+// 字典表（系统参数）
+import { dictTable } from "@/store/dictTable";
+const dictStore = dictTable();
 
 // 省平台发货规则（平台推送）：
 // 接单(startDeliver)后需延迟再调发货(deliver)，接单后 10 秒内发货会失败(success=false)
+// 是否等待由字典项 shengDeliverDelayEnable 控制：1-开启等待，未配置/其它值/字典项停用-不等待
 const SHENG_DELIVER_MIN_GAP = 10 * 1000; // 接单→发货最小间隔（毫秒）
 
 export default class PlatCommon {
@@ -708,12 +712,24 @@ export default class PlatCommon {
   }
 
   /**
+   * 省平台「接单后延迟发货」是否开启（字典项 shengDeliverDelayEnable）
+   * 字典值 1-开启；未配置/非 1/字典项停用均视为关闭（宽松 == 兼容字符串 "1"）
+   * @returns {boolean} 是否开启等待
+   */
+  _isShengDeliverDelayEnabled() {
+    return dictStore.dictInfo.shengDeliverDelayEnable == 1;
+  }
+
+  /**
    * 省平台发货前补足"接单→发货"最小间隔
    * 平台规则：接单(startDeliver)后需延迟再调发货(deliver)，10 秒内发货接口返回失败
-   * 说明：未记录接单时刻（重新出票 isAgain 未走接单流程）时不额外等待
+   * 说明：
+   * 1. 字典开关 shengDeliverDelayEnable 关闭时不等待（等同改造前的线上行为）
+   * 2. 未记录接单时刻（重新出票 isAgain 未走接单流程）时不额外等待
    * @param {Object} logger - 日志实例
    */
   async _waitShengDeliverGap(logger) {
+    if (!this._isShengDeliverDelayEnabled()) return;
     const confirmAt = this.order?.shengConfirmAt;
     if (!confirmAt) return;
     const waitMs = SHENG_DELIVER_MIN_GAP - (Date.now() - confirmAt);
