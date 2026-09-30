@@ -11,6 +11,11 @@ import {
   uploadBlobImage
 } from "@/utils/utils";
 import md5 from "@/utils/md5.js";
+
+// 省平台发货规则（平台推送）：
+// 接单(startDeliver)后需延迟再调发货(deliver)，接单后 10 秒内发货会失败(success=false)
+const SHENG_DELIVER_MIN_GAP = 10 * 1000; // 接单→发货最小间隔（毫秒）
+
 export default class PlatCommon {
   constructor(order, logger, isTestOrder) {
     this.order = order;
@@ -186,6 +191,10 @@ export default class PlatCommon {
       }
       this.logger.infoSave("确认接单参数", { params });
       const res = await PLAT_API_OBJ[plat_name].confirmOrder(params);
+      // 省平台：记录接单成功时刻，发货(deliver)前据此保证至少间隔 10 秒
+      if (plat_name === "sheng" && res) {
+        this.order.shengConfirmAt = Date.now();
+      }
       this.logger.infoSave("确认接单返回", res);
       return res;
     } catch (error) {
@@ -669,6 +678,10 @@ export default class PlatCommon {
       //   logger.warn("测试单暂不上传");
       //   return;
       // }
+      // 省平台：接单后需延迟再发货，不足最小间隔则补足（10 秒内发货接口返回失败）
+      if (plat_name === "sheng") {
+        await this._waitShengDeliverGap(logger);
+      }
       const res = await PLAT_API_OBJ[plat_name].submitTicketCode(params);
       logger.infoSave("提交出票码返回", res);
       return res;
@@ -693,6 +706,24 @@ export default class PlatCommon {
       };
     }
   }
+
+  /**
+   * 省平台发货前补足"接单→发货"最小间隔
+   * 平台规则：接单(startDeliver)后需延迟再调发货(deliver)，10 秒内发货接口返回失败
+   * 说明：未记录接单时刻（重新出票 isAgain 未走接单流程）时不额外等待
+   * @param {Object} logger - 日志实例
+   */
+  async _waitShengDeliverGap(logger) {
+    const confirmAt = this.order?.shengConfirmAt;
+    if (!confirmAt) return;
+    const waitMs = SHENG_DELIVER_MIN_GAP - (Date.now() - confirmAt);
+    if (waitMs <= 0) return;
+    // mockDelay 单位是秒，向上取整确保满足最小间隔
+    const waitSec = Math.ceil(waitMs / 1000);
+    logger.infoSave("省平台接单后延迟发货等待", { waitSec, confirmAt });
+    await mockDelay(waitSec);
+  }
+
   // 申请换座
   // 返回值：
   //   true                    - 申请换座成功（平台已受理）
