@@ -4,7 +4,8 @@
 import {
   formatErrInfo,
   calculateMarkup,
-  isCurrentTimeInRange
+  isCurrentTimeInRange,
+  addDecimal
 } from "@/utils/utils.js";
 import { dictTable } from "@/store/dictTable";
 const dictStore = dictTable();
@@ -91,11 +92,33 @@ export default class BaseOfferPrice {
       }
       offerRule.cost_price = cost_price; // 成本价
 
-      // 4. 计算最终报价
+      // 4. 计算最终报价（B钱包订单：在规则基础价上叠加 B钱包加价，下游利润加价/超限检查照常生效）
+      const bWalletMarkup = this.getBWalletMarkup(order, offerRule);
+      let offerBasePrice = this.getOfferBasePrice(offerRule);
+      if (this.isBWalletOrder(order)) {
+        // 报价记录落库用：本次实际叠加的加价（0 表示 B钱包但规则未配加价/规则已同步平台），
+        // 供报价记录详情区分「A钱包」与「B钱包」并展示加价金额
+        offerRule.bWalletMarkupApplied = bWalletMarkup;
+      }
+      if (bWalletMarkup) {
+        offerBasePrice = addDecimal(offerBasePrice, bWalletMarkup);
+        // V3 L0：B钱包加价段并入计算路径，报价记录可回溯
+        offerRule.calc_path = [
+          offerRule.calc_path,
+          `B钱包加价${bWalletMarkup > 0 ? "+" : ""}${bWalletMarkup}→规则报价${offerBasePrice}`
+        ]
+          .filter(Boolean)
+          .join("→");
+        this.logger.infoSave("B钱包订单叠加加价", {
+          pay_type: order.pay_type,
+          bWalletMarkup,
+          offerBasePrice
+        });
+      }
       const endPrice = await this.calculateFinalPrice({
         cost_price,
         supplier_max_price: order.supplier_max_price,
-        price: this.getOfferBasePrice(offerRule),
+        price: offerBasePrice,
         rewards: order.rewards,
         offerType: offerRule.offerType,
         offerList,
@@ -144,6 +167,40 @@ export default class BaseOfferPrice {
    */
   getOfferBasePrice(offerRule) {
     return Number(offerRule.offerAmount || offerRule.memberOfferAmount);
+  }
+
+  /**
+   * 是否为 B 钱包订单
+   * 猎人平台订单 pay_type：0-A钱包，1-B钱包；非猎人平台/字段缺失一律按 A 钱包处理
+   * @param {Object} order - 订单信息
+   * @returns {boolean}
+   */
+  isBWalletOrder(order) {
+    return this.plat_name === "lieren" && Number(order?.pay_type) === 1;
+  }
+
+  /**
+   * 获取 B 钱包加价金额
+   * 生效条件（需同时满足）：
+   * 1. 订单来源平台为猎人
+   * 2. 订单 pay_type == 1（B钱包；0-A钱包不加价，缺失/异常按 A 钱包处理）
+   * 3. 匹配到的规则未同步猎人平台（已同步规则由平台侧报价，本地不参与算价）
+   * @param {Object} order - 订单信息
+   * @param {Object} offerRule - 报价规则
+   * @returns {number} 加价金额（不生效返回 0）
+   */
+  getBWalletMarkup(order, offerRule) {
+    try {
+      if (!this.isBWalletOrder(order)) return 0;
+      const isSyncToPlat =
+        offerRule?.platOfferList?.find(item => item.platName === "lieren")
+          ?.isSyncPlat == 1;
+      if (isSyncToPlat) return 0;
+      const markup = Number(offerRule?.bWalletMarkup || 0);
+      return Number.isFinite(markup) ? markup : 0;
+    } catch (error) {
+      return 0;
+    }
   }
 
   /**

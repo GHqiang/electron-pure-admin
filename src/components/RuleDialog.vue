@@ -382,6 +382,19 @@
           </el-form-item>
         </template>
 
+        <el-form-item label="B钱包加价">
+          <el-input
+            v-model="formData.bWalletMarkup"
+            type="number"
+            placeholder="B钱包加价，一般为正数"
+            clearable
+          />
+          <span style="color: red; margin-left: 15px"
+            >提示：仅对未同步猎人平台的规则生效；B钱包订单报价 = 该规则报价金额
+            + B钱包加价（受平台限价约束）</span
+          >
+        </el-form-item>
+
         <el-form-item
           v-if="formData.offerType === '1'"
           label="用券类型"
@@ -620,7 +633,8 @@ let formData = reactive({
   autoUseQuanStatus: "2", // 自动用券状态 1-开启 2-关闭
   autoUseQuanPrice: "", // 自动用券价格
   auto_quan_value: "", // 自动用券类型
-  memberPriceRule: "" // 会员价取值报价规则
+  memberPriceRule: "", // 会员价取值报价规则
+  bWalletMarkup: "" // B钱包加价（仅未同步猎人平台规则生效）
 });
 
 let cityList = ref([]); // 城市列表
@@ -716,6 +730,7 @@ const resetForm = el => {
   formData.weekDay = []; // 启用星期
   formData.seatNum = ""; // 座位数
   formData.memberPriceRule = ""; // 座位数
+  formData.bWalletMarkup = ""; // B钱包加价
   formData.memberDay = ""; // 会员日
   formData.film_type = "";
   formData.remark = ""; // 备注
@@ -956,6 +971,7 @@ const open = async ruleInfo => {
         formData.weekDay = formInfo.weekDay; // 启用星期
         formData.seatNum = formInfo.seatNum; // 座位数
         formData.memberPriceRule = formInfo.memberPriceRule;
+        formData.bWalletMarkup = formInfo.bWalletMarkup ?? "";
         formData.memberDay = formInfo.memberDay; // 会员日
         formData.film_type = formInfo.film_type;
         formData.remark = formInfo.remark;

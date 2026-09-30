@@ -9,6 +9,7 @@ import svApi from "@/api/sv-api.js";
 import { platTokens } from "@/store/platTokens.js";
 import { dictTable } from "@/store/dictTable";
 import { extractThirdPartyIds } from "./extractThirdPartyIds.js";
+import { isUnknownWalletRecordColumnError } from "@/common/dbColumnFallback.js";
 import { getPlatFeeRate } from "@/common/autoTicket/buyTicket/common/offerHelper";
 import {
   startFetchAlarmMonitor,
@@ -1258,7 +1259,12 @@ export default class BaseOfferQueue {
             ? `…[前略]${calcPathRaw.slice(-495)}`
             : calcPathRaw;
         })(),
-        hit_rule_name: offerResult?.offerRule?.hit_rule_name ?? ""
+        hit_rule_name: offerResult?.offerRule?.hit_rule_name ?? "",
+        // 钱包维度（报价记录详情展示「钱包类型 / B钱包加价」）：
+        // pay_type 取自猎人订单（0-A钱包 1-B钱包，非猎人/缺失为 NULL）；
+        // b_wallet_markup 为本次实际叠加的 B钱包加价（仅 B钱包订单写入，0=该规则未配加价）
+        pay_type: order.pay_type ?? null,
+        b_wallet_markup: offerResult?.offerRule?.bWalletMarkupApplied ?? null
       };
       // 提取第三方 ID 集合（跨订单复用）：成功/失败报价均可写入（失败单若已解析出影院/影片 ID 也可复用）
       const thirdPartyIds = offerResult?.cinemaInfo
@@ -1290,7 +1296,7 @@ export default class BaseOfferQueue {
       // 检查测试订单标志
       const shouldSave = !this.isTestOrder;
       if (shouldSave) {
-        await svApi.addOfferRecord(serOrderInfo);
+        await this.addOfferRecordWithWalletFallback(serOrderInfo, log);
         log.infoSave("报价记录入库成功", {
           order_number: order.order_number,
           order_status: serOrderInfo.order_status
@@ -1301,6 +1307,32 @@ export default class BaseOfferQueue {
     } catch (error) {
       console.error("添加订单处理记录异常", error);
       log.errorSave("添加订单处理记录异常", { error });
+    }
+  }
+
+  /**
+   * 报价记录入库（数据库未升级时的兜底）
+   * offer_record / offer_record_fail 缺少 pay_type/b_wallet_markup 列时，整条记录都写不进去
+   * （出票流程依赖报价记录反查报价，丢记录的影响远大于字段缺失），
+   * 故命中缺列报错时剔除钱包字段重试一次；DDL 执行后该分支不再触发
+   * @param {Object} serOrderInfo - 待入库的报价记录
+   * @param {Object} log - 该订单的 logger 实例
+   * @returns {Promise<Object>} 入库结果
+   */
+  async addOfferRecordWithWalletFallback(serOrderInfo, log) {
+    try {
+      return await svApi.addOfferRecord(serOrderInfo);
+    } catch (error) {
+      if (!isUnknownWalletRecordColumnError(error)) throw error;
+      const fallbackInfo = { ...serOrderInfo };
+      delete fallbackInfo.pay_type;
+      delete fallbackInfo.b_wallet_markup;
+      const res = await svApi.addOfferRecord(fallbackInfo);
+      log.warnSave(
+        "数据库未升级：报价记录未包含钱包字段，已剔除后重新入库，请运维执行 DDL",
+        { order_number: serOrderInfo.order_number }
+      );
+      return res;
     }
   }
 

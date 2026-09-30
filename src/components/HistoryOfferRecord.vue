@@ -55,6 +55,12 @@
           <el-option label="失败" value="2" />
         </el-select>
       </el-form-item> -->
+      <el-form-item label="钱包类型">
+        <el-select v-model="formData.pay_type" placeholder="钱包类型" clearable>
+          <el-option label="A钱包" :value="0" />
+          <el-option label="B钱包" :value="1" />
+        </el-select>
+      </el-form-item>
       <el-form-item v-if="orderStatus == 1" label="是否中标">
         <el-select v-model="formData.is_deal" placeholder="是否中标" clearable>
           <el-option label="是" value="1" />
@@ -193,7 +199,18 @@
           <span>{{ scope.row.order_status === "1" ? "成功" : "失败" }}</span>
         </template>
       </el-table-column> -->
-      <el-table-column prop="order_number" fixed label="订单号" width="110" />
+      <el-table-column fixed label="订单号" width="140">
+        <template #default="scope">
+          <span>{{ scope.row.order_number }}</span>
+          <el-tag
+            v-if="Number(scope.row.pay_type) === 1"
+            type="warning"
+            size="small"
+            class="wallet-tag"
+            >{{ formatBWalletTag(scope.row) }}</el-tag
+          >
+        </template>
+      </el-table-column>
       <el-table-column fixed label="限价 / 税前成本 " width="130">
         <template #default="scope">
           <span>
@@ -440,6 +457,12 @@
         <el-descriptions-item label="预计利润">{{
           formatProfit(currentOfferRow)
         }}</el-descriptions-item>
+        <el-descriptions-item label="钱包类型">{{
+          WALLET_TYPE_OBJ[currentOfferRow.pay_type] || "—"
+        }}</el-descriptions-item>
+        <el-descriptions-item label="B钱包加价">{{
+          formatBWalletMarkup(currentOfferRow.b_wallet_markup)
+        }}</el-descriptions-item>
         <el-descriptions-item label="计算路径" :span="2">{{
           currentOfferRow.calc_path || ""
         }}</el-descriptions-item>
@@ -513,6 +536,24 @@ const offerTypeObj = {
   2: "会员价加价",
   3: "会员日报价"
 };
+// 钱包类型枚举（猎人订单 pay_type：0-A钱包 1-B钱包）
+const WALLET_TYPE_OBJ = {
+  0: "A钱包",
+  1: "B钱包"
+};
+// B钱包加价展示：正数补 + 号便于区分加价/降价，0 明确标注未加价，无值留空
+const formatBWalletMarkup = markup => {
+  if (markup === null || markup === undefined || markup === "") return "";
+  const num = Number(markup);
+  if (!Number.isFinite(num)) return "";
+  if (num === 0) return "未加价";
+  return num > 0 ? `+${num}` : `${num}`;
+};
+// 列表标签文案：B钱包 / B钱包+2
+const formatBWalletTag = row => {
+  const markup = formatBWalletMarkup(row.b_wallet_markup);
+  return markup && markup !== "未加价" ? `B钱包${markup}` : "B钱包";
+};
 
 // 列表数据
 const tableData = ref([]);
@@ -550,6 +591,7 @@ const formData = reactive({
   cinema_name: "", // 影院名称
   user_id: "", // 报价用户
   order_status: "", // 报价状态
+  pay_type: "", // 钱包类型（猎人）0-A钱包 1-B钱包
   is_deal: "", // 是否中标 1-中标 2-未中标
   is_price_diff: "", // 报价差异 1-是
   offer_from: null, // 报价来源 1-平台 2-机器
@@ -728,6 +770,7 @@ const resetForm = () => {
   formData.err_msg = ""; // 最终报价
   formData.err_type = ""; // 失败类型
   formData.quan_value = ""; // 是否报价
+  formData.pay_type = ""; // 钱包类型
   formData.start_time = getTodayTime(+new Date());
   formData.end_time = getTodayTime(+new Date() + 1 * 24 * 60 * 60 * 1000);
   currentPage.value = 1;
@@ -912,6 +955,16 @@ onBeforeUnmount(() => {
 .reward-tag {
   height: 16px;
   padding: 0 4px;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 14px;
+  border-radius: 2px;
+}
+
+.wallet-tag {
+  height: 16px;
+  padding: 0 4px;
+  margin-left: 4px;
   font-size: 9px;
   font-weight: 600;
   line-height: 14px;
