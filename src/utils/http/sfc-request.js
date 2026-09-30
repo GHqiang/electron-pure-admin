@@ -101,7 +101,15 @@ const createAxios = ({ group, app_name, timeout = 20 }) => {
 
   // 请求参数前置处理
   const paramsHandle = e => {
-    return a(i), n(e, i), ((e = t(e))[".sig"] = d(e)), e;
+    a(i);
+    n(e, i);
+    e = t(e);
+    // 归一化：undefined/null 统一为空串，避免签名串出现 "undefined" 字面量导致非法签名
+    for (const k in e) {
+      if (e[k] === undefined || e[k] === null) e[k] = "";
+    }
+    e[".sig"] = d(e);
+    return e;
   };
 
   const NODE_ENV = process.env.NODE_ENV;
