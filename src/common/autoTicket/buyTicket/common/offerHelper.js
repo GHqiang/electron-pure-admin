@@ -153,6 +153,7 @@ export async function handleOverrunCheck({
  * 规则：
  * - `NO_FEE_PLAT_LIST` 命中平台：0（免手续费，如 haha / mahua）
  * - 守兔（shoutu）：按订单 `needInvoice` 分档——1→1%，0/缺失→6%（保守，避免少收）
+ * - 洋葱（yangcong）：2%
  * - 其他平台：默认 1%
  *
  * @param {Object} order - 订单对象（从中取 plat_name / needInvoice 等字段）
@@ -166,6 +167,8 @@ export function getPlatFeeRate(order) {
   if (plat_name === "shoutu") {
     return Number(order?.needInvoice) === 1 ? 0.01 : 0.06;
   }
+  // 洋葱 2%
+  if (plat_name === "yangcong") return 0.02;
   // 默认 1%
   return 0.01;
 }
@@ -174,7 +177,7 @@ export function getPlatFeeRate(order) {
  * 计算手续费/奖励/真实成本/最大可接受成本等通用数值
  *
  * 说明：
- * - 手续费率统一走 `getPlatFeeRate(order)`（支持守兔按 needInvoice 分档 + 免手续费名单 + 默认 1%）
+ * - 手续费率统一走 `getPlatFeeRate(order)`（支持守兔按 needInvoice 分档 + 洋葱 2% + 免手续费名单 + 默认 1%）
  * - 返回的 `maxCostPrice` 用于后续“券类型过滤（成本必须 < maxCostPrice 才有利润）”
  *
  * @param {Object} params
@@ -199,7 +202,7 @@ export function calcOfferCostProfitParts({
   order,
   logger
 }) {
-  // 费率统一走 getPlatFeeRate(order)（支持守兔分档 + 免手续费名单 + 默认 1%）
+  // 费率统一走 getPlatFeeRate(order)（支持守兔分档 + 洋葱 2% + 免手续费名单 + 默认 1%）
   const plat_name = order?.plat_name;
   const feeRate = getPlatFeeRate(order);
   let shouxufei = mulDecimal(Number(adjustedPrice || 0), feeRate);
