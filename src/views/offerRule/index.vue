@@ -488,8 +488,15 @@ const {
   lierenOfferRuleSyncPlat,
   lierenOfferRuleDelPlat,
   lierenOfferRuleEditStatusPlat,
-  checkAndUpdateLierenRuleState
+  checkAndUpdateLierenRuleState,
+  pushLierenExtraAmountToPlat
 } = useLierenOfferRuleSyncFun();
+
+// 存量刷数（一次性、人工触发）：把已同步猎人平台规则的 B钱包加价推到平台 extra_amount。
+// 推送范围与 doc/sql/2026-10-10-bwallet-markup-sync-rules.sql 的 WHERE 一致，
+// 需以 rule=2 账号登录后在控制台执行：await window.pushLierenExtraAmountToPlat()
+// 关联说明：doc/changes/2026-09-30-猎人B钱包加价报价整改说明.md §12.5-a（方案 A）
+window.pushLierenExtraAmountToPlat = pushLierenExtraAmountToPlat;
 
 // 猎人规则一致性检查（挂载到 window 供控制台调用，同时支持按钮点击）
 import useCheckLierenRuleSync from "@/mixins/useCheckLierenRuleSync";

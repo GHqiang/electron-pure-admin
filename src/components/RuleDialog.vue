@@ -390,8 +390,9 @@
             clearable
           />
           <span style="color: red; margin-left: 15px"
-            >提示：仅对未同步猎人平台的规则生效；B钱包订单报价 = 该规则报价金额
-            + B钱包加价（受平台限价约束）</span
+            >提示：未同步猎人平台的规则，B钱包订单报价 = 该规则报价金额 +
+            B钱包加价（本地叠加）；已同步猎人平台的规则，该字段随规则同步到平台，
+            由平台报价时相加（受平台限价约束）</span
           >
         </el-form-item>
 
@@ -634,7 +635,7 @@ let formData = reactive({
   autoUseQuanPrice: "", // 自动用券价格
   auto_quan_value: "", // 自动用券类型
   memberPriceRule: "", // 会员价取值报价规则
-  bWalletMarkup: "" // B钱包加价（仅未同步猎人平台规则生效）
+  bWalletMarkup: "" // B钱包加价：未同步规则由本地报价叠加；已同步规则随规则同步到平台 extra_amount
 });
 
 let cityList = ref([]); // 城市列表
