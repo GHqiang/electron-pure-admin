@@ -43,6 +43,8 @@ tsconfig.tsbuildinfo
 .gitignore
 dist-electron
 release
+# 打包用本地临时目录（安全软件会拦截 esbuild 删 %TEMP% 下的临时文件，2026-10-11）
+.build-tmp/
 auto-ticket-service/
 auto-ticket-service/*
 applet-source-code

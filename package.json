@@ -1,6 +1,6 @@
 {
   "name": "electron-pure-admin",
-  "version": "6.6.51",
+  "version": "6.6.52",
   "description": "electron-pure-admin",
   "private": true,
   "type": "module",
@@ -12,8 +12,8 @@
     "test:coverage": "jest --coverage",
     "serve": "vite",
     "icon": "esno build/icon.ts --input=public/icon.png --output=dist",
-    "build": "rimraf dist && rimraf release && cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build && yarn icon && electron-builder",
-    "build:staging": "rimraf dist && rimraf release && node scripts/update-version.js && vite build --mode staging && yarn icon && electron-builder",
+    "build": "node -e \"require('fs').mkdirSync('.build-tmp',{recursive:true})\" && set \"TEMP=%CD%\\.build-tmp\" && set \"TMP=%CD%\\.build-tmp\" && rimraf dist && rimraf release && cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build && yarn icon && electron-builder",
+    "build:staging": "node -e \"require('fs').mkdirSync('.build-tmp',{recursive:true})\" && set \"TEMP=%CD%\\.build-tmp\" && set \"TMP=%CD%\\.build-tmp\" && rimraf dist && rimraf release && node scripts/update-version.js && vite build --mode staging && yarn icon && electron-builder",
     "browser:dev": "cross-env NODE_OPTIONS=--max-old-space-size=4096 vite",
     "browser:build": "rimraf dist && cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build",
     "preview": "vite preview",
