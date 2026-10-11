@@ -8,6 +8,7 @@ import {
   addDecimal
 } from "@/utils/utils.js";
 import { dictTable } from "@/store/dictTable";
+import { isPlatQuotedRule } from "@/common/platQuoteRule";
 const dictStore = dictTable();
 /**
  * 报价基类
@@ -59,9 +60,6 @@ export default class BaseOfferPrice {
       }
       this.logger.infoSave("最终匹配到的报价规则", offerRule);
       // 1、是否同步平台规则走平台报价过滤
-      // fixedOfferToPlatList：允许固定报价是否走平台的平台类型数组;
-      const fixedOfferToPlatList =
-        dictStore.dictInfo.fixedOfferToPlatList?.split(",") || [];
       // 猎人固定报价走平台的时间范围9-23
       const lierenFixedOfferToPlatTimeRange =
         dictStore.dictInfo.lierenFixedOfferToPlatTimeRange?.split(",");
@@ -73,12 +71,14 @@ export default class BaseOfferPrice {
               lierenFixedOfferToPlatTimeRange[1]
             )
           : true;
+      // 是否由平台报价（与 offerRuleMatch 的原价过滤共用同一判定，避免两处条件漂移）
       if (
-        fixedOfferToPlatList.includes(this.plat_name) &&
-        offerRule.offerType === "1" &&
-        offferIsToPlatTimeCheck &&
-        offerRule.platOfferList?.find(item => item.platName === this.plat_name)
-          ?.isSyncPlat == 1
+        isPlatQuotedRule({
+          plat_name: this.plat_name,
+          offerRule,
+          dictInfo: dictStore.dictInfo,
+          offerToPlatTimeOk: offferIsToPlatTimeCheck
+        })
       ) {
         this.logger.warnSave("该规则由平台进行报价");
         return this.buildErrorResponse(offerRule);

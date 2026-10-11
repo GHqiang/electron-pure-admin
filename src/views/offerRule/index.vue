@@ -285,6 +285,14 @@
               >
                 {{ `B钱包加价:${scope.row.bWalletMarkup}` }}
               </span>
+              <span
+                v-if="scope.row.noOfferTppRule"
+                style="color: #e6a23c; display: block"
+              >
+                {{
+                  `原价不报:${formatNoOfferTppRule(scope.row.noOfferTppRule)}`
+                }}
+              </span>
             </template>
           </el-table-column>
           <el-table-column prop="includeCinemaNames" label="包含影院">
@@ -471,7 +479,11 @@ import usesMachineBaseFun from "@/mixins/usesMachineBaseFun";
 const { getQuanTypeList } = usesMachineBaseFun();
 
 import { getCurrentTime, getNextDayTime } from "@/utils/utils";
-import { isUnknownBWalletMarkupError } from "@/common/dbColumnFallback";
+import {
+  isUnknownBWalletMarkupError,
+  isUnknownNoOfferTppRuleError
+} from "@/common/dbColumnFallback";
+import { formatNoOfferTppRule } from "@/utils/tppPriceRule";
 import { useDataTableStore } from "@/store/offerRule";
 const rules = useDataTableStore();
 import { platTokens } from "@/store/platTokens";
@@ -1009,19 +1021,37 @@ const querRule = (row, type) => {
   sfcDialogRef.value.open(row);
 };
 
-// B钱包加价列未落库的兜底：数据库未执行 DDL 时 rule_record 无 bWalletMarkup 列，
-// 直接保存会报 Unknown column 导致整条规则都无法保存；此处剔除该字段重试一次并提示，
+// 规则表新增列未落库的兜底：数据库未执行 DDL 时 rule_record 缺列，直接保存会报 Unknown column
+// 导致整条规则都无法保存；此处剔除对应字段重试一次并提示，
 // 保证"客户端先发版、DDL 后执行"的窗口期规则仍可正常维护（DDL 执行后该分支不再触发）
-const saveRuleRecordWithBWalletFallback = async (request, params) => {
+// 规则表新增列的元数据：column 用于剔除字段重试，label 用于点名业务字段的告警文案
+const NEW_RULE_COLUMNS = [
+  {
+    column: "bWalletMarkup",
+    label: "B钱包加价",
+    isUnknown: isUnknownBWalletMarkupError
+  },
+  {
+    column: "noOfferTppRule",
+    label: "原价不报",
+    isUnknown: isUnknownNoOfferTppRuleError
+  }
+];
+const saveRuleRecordWithNewColumnFallback = async (
+  request,
+  params,
+  columns
+) => {
   try {
     return await request(params);
   } catch (error) {
-    if (!isUnknownBWalletMarkupError(error)) throw error;
+    const hitColumn = columns.find(item => item.isUnknown(error));
+    if (!hitColumn) throw error;
     const fallbackParams = { ...params };
-    delete fallbackParams.bWalletMarkup;
+    delete fallbackParams[hitColumn.column];
     const res = await request(fallbackParams);
     ElMessage.warning(
-      "当前数据库尚未升级（rule_record 缺少 bWalletMarkup 列），本次保存未包含 B钱包加价，请运维执行 DDL 后重新保存"
+      `当前数据库尚未升级（rule_record 缺少 ${hitColumn.column} 列），本次保存未包含${hitColumn.label}，请运维执行 DDL 后重新保存`
     );
     return res;
   }
@@ -1053,6 +1083,10 @@ const saveRule = async ruleInfo => {
       ruleInfo.bWalletMarkup === "" || ruleInfo.bWalletMarkup == null
         ? null
         : Number(ruleInfo.bWalletMarkup);
+    // 原价不报条件：空值统一转 null（NULL = 未配置，避免空串入库）
+    ruleInfo.noOfferTppRule = ruleInfo.noOfferTppRule?.trim()
+      ? ruleInfo.noOfferTppRule.trim()
+      : null;
     ruleInfo.update_time = getCurrentTime();
     ruleInfo.rule = rule;
     let targetInfo = APP_TYPE_LIST.value.find(item =>
@@ -1093,9 +1127,10 @@ const saveRule = async ruleInfo => {
         oldStatus = oldRow.status;
         oldSeatNum = oldRow.seatNum;
       }
-      await saveRuleRecordWithBWalletFallback(
+      await saveRuleRecordWithNewColumnFallback(
         svApi.updateRuleRecord,
-        jiqiRuleInfo
+        jiqiRuleInfo,
+        NEW_RULE_COLUMNS
       );
       // 记录规则编辑日志（含变更前后状态）
       svApi
@@ -1118,9 +1153,10 @@ const saveRule = async ruleInfo => {
       searchData();
     } else {
       console.log("新增保存规则", jiqiRuleInfo, ruleInfo);
-      const addRes = await saveRuleRecordWithBWalletFallback(
+      const addRes = await saveRuleRecordWithNewColumnFallback(
         svApi.addRuleRecord,
-        { ...jiqiRuleInfo, id: undefined }
+        { ...jiqiRuleInfo, id: undefined },
+        NEW_RULE_COLUMNS
       );
       // 同步规则到平台（新增场景需要落库后的 id 来关联 platRuleId）
       // sv-request 响应拦截器已剥离 axios 外层，addRes 即 successRes 返回体

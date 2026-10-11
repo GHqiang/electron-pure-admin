@@ -159,7 +159,9 @@ const OFFER_FAIL_TYPE = {
   9: "座位数不符",
   10: "低于成本价",
   11: "订单张数超出促销数",
-  12: "提交异常"
+  12: "提交异常",
+  // 13/14 预留给未落地的「报价失败原因整改」（超时或过期未提交 / 黑名单或售罄不报价）
+  15: "原价不符"
 };
 
 /**
@@ -198,6 +200,8 @@ const getOfferFailType = err_msg => {
   if (/促销票数低于订单票数/.test(err_msg)) return 11;
   // 提交异常
   if (/提交报价异常/.test(err_msg)) return 12;
+  // 原价不符
+  if (/按原价筛选后.*报价规则为空/.test(err_msg)) return 15;
   return null;
 };
 
