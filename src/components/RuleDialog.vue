@@ -696,7 +696,12 @@ const tppRuleInvalidText = computed(() =>
   parseNoOfferTppRule(formData.noOfferTppRule).invalid.join("、")
 );
 const addTppRuleRow = () => {
-  tppRuleRows.value.push({ type: "gt", min: "", max: "" });
+  // 新增的条件行默认「区间外」，运营多数场景是「不在这个价格区间内就不报」
+  tppRuleRows.value.push({ type: "notBetween", min: "", max: "" });
+};
+// 表达式为空时默认呈现一行（等价于已经点过一次「新增」）：新增规则、复制/编辑未配置该条件的规则
+const ensureTppRuleRow = () => {
+  if (!tppRuleRows.value.length) addTppRuleRow();
 };
 const removeTppRuleRow = index => {
   tppRuleRows.value.splice(index, 1);
@@ -847,6 +852,7 @@ const resetForm = el => {
   formData.bWalletMarkup = ""; // B钱包加价
   formData.noOfferTppRule = ""; // 原价不报条件
   tppRuleRows.value = [];
+  ensureTppRuleRow();
   formData.memberDay = ""; // 会员日
   formData.film_type = "";
   formData.remark = ""; // 备注
@@ -1090,6 +1096,7 @@ const open = async ruleInfo => {
         formData.bWalletMarkup = formInfo.bWalletMarkup ?? "";
         formData.noOfferTppRule = formInfo.noOfferTppRule ?? "";
         syncTppRuleRowsFromStr();
+        ensureTppRuleRow();
         formData.memberDay = formInfo.memberDay; // 会员日
         formData.film_type = formInfo.film_type;
         formData.remark = formInfo.remark;
@@ -1115,6 +1122,10 @@ const open = async ruleInfo => {
       } else {
         // 新增
         formData.shadowLineName = formInfo.shadowLineName;
+        // 原价不报从空白开始并默认给一行，避免沿用上一次会话的行状态
+        formData.noOfferTppRule = "";
+        tppRuleRows.value = [];
+        ensureTppRuleRow();
       }
       const app_name = formData.shadowLineName;
       if (props.dialogTitle !== "查看规则") {
