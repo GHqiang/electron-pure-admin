@@ -396,62 +396,30 @@
           >
         </el-form-item>
 
-        <el-form-item label="原价不报">
+        <el-form-item label="原价报区间">
           <div>
-            <div
-              v-for="(cond, index) in tppRuleRows"
-              :key="index"
-              style="
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                margin-bottom: 8px;
-              "
-            >
-              <el-select
-                v-model="cond.type"
-                style="width: 120px"
-                @change="syncTppRuleStrFromRows"
-              >
-                <el-option label="超过" value="gt" />
-                <el-option label="不低于" value="gte" />
-                <el-option label="低于" value="lt" />
-                <el-option label="不高于" value="lte" />
-                <el-option label="区间内" value="between" />
-                <el-option label="区间外" value="notBetween" />
-              </el-select>
+            <div style="display: flex; align-items: center; gap: 8px">
               <el-input
-                v-model="cond.min"
+                v-model="rangeMin"
                 type="number"
-                placeholder="原价"
-                style="width: 110px"
-                @change="syncTppRuleStrFromRows"
+                placeholder="原价下限（留空=0）"
+                style="width: 160px"
+                clearable
+                @change="syncOfferTppRangeStr"
               />
+              <span>-</span>
               <el-input
-                v-if="['between', 'notBetween'].includes(cond.type)"
-                v-model="cond.max"
+                v-model="rangeMax"
                 type="number"
-                placeholder="原价上限"
-                style="width: 110px"
-                @change="syncTppRuleStrFromRows"
+                placeholder="原价上限（留空=正无穷）"
+                style="width: 160px"
+                clearable
+                @change="syncOfferTppRangeStr"
               />
-              <el-button @click="removeTppRuleRow(index)">删除</el-button>
             </div>
-            <div style="margin-bottom: 8px">
-              <el-button @click="addTppRuleRow">新增</el-button>
-            </div>
-            <el-input
-              v-model="formData.noOfferTppRule"
-              placeholder="也可直接编辑表达式，如 >50;30-80"
-              clearable
-              @change="syncTppRuleRowsFromStr"
-            />
-            <span v-if="tppRuleInvalidText" style="color: #f56c6c">
-              无法识别：{{ tppRuleInvalidText }}
-            </span>
             <span style="color: red; margin-left: 15px"
-              >提示：分号分隔多条，命中任一即不报价；区间为闭区间（含端点）。
-              例：原价超过50不报填 >50；原价30~80不报填 30-80</span
+              >提示：闭区间含端点；下限留空=0，上限留空=正无穷；未配置=不限制。
+              原价不在区间内则该规则不报价。例：50-80 / 50- / -80</span
             >
           </div>
         </el-form-item>
@@ -605,8 +573,8 @@ import {
 } from "@/common/constant";
 import { cinemNameSpecial } from "@/utils/utils";
 import {
-  parseNoOfferTppRule,
-  validateNoOfferTppRule
+  parseOfferTppRange,
+  validateOfferTppRange
 } from "@/utils/tppPriceRule";
 
 const APP_LIST = computed(() => GET_APP_LIST());
@@ -654,58 +622,28 @@ let $emit = defineEmits([`submit`]);
 const showSfcDialog = ref(false);
 // 保存中状态：防止重复点击提交导致同一规则短时间内多次同步到猎人平台
 const saving = ref(false);
-// 原价不报条件行：表达式字符串是唯一存储，条件行是它的可视化编辑视图
-const tppRuleRows = ref([]);
-const tppRuleTypeMap = {
-  gt: ">",
-  gte: ">=",
-  lt: "<",
-  lte: "<=",
-  between: "",
-  notBetween: "!"
+// 原价报区间：formData.offerTppRange 是唯一存储（"下限-上限"），rangeMin/rangeMax 是它的可视化编辑视图
+const rangeMin = ref("");
+const rangeMax = ref("");
+// UI → 存储：两端都空 = 未配置（""）；否则拼 "下限-上限"（端点可留空）
+const syncOfferTppRangeStr = () => {
+  const min = String(rangeMin.value ?? "").trim();
+  const max = String(rangeMax.value ?? "").trim();
+  formData.offerTppRange = !min && !max ? "" : `${min}-${max}`;
 };
-// 条件行 → 表达式字符串
-const syncTppRuleStrFromRows = () => {
-  formData.noOfferTppRule = tppRuleRows.value
-    .filter(cond => cond.min !== "" && cond.min !== null)
-    .map(cond => {
-      if (["between", "notBetween"].includes(cond.type)) {
-        if (cond.max === "" || cond.max === null) return "";
-        return `${tppRuleTypeMap[cond.type]}${cond.min}-${cond.max}`;
-      }
-      return `${tppRuleTypeMap[cond.type]}${cond.min}`;
-    })
-    .filter(Boolean)
-    .join(";");
-};
-// 表达式字符串 → 条件行（打开/编辑表达式时重建；无法识别的片段不静默丢弃，保存时会被校验拦截）
-const syncTppRuleRowsFromStr = () => {
-  const { conditions } = parseNoOfferTppRule(formData.noOfferTppRule);
-  tppRuleRows.value = conditions.map(condition =>
-    condition.op === "between" || condition.op === "notBetween"
-      ? {
-          type: condition.op,
-          min: String(condition.min),
-          max: String(condition.max)
-        }
-      : { type: condition.op, min: String(condition.value), max: "" }
-  );
-};
-// 无法识别的片段提示（保存会被 validateNoOfferTppRule 拦截）
-const tppRuleInvalidText = computed(() =>
-  parseNoOfferTppRule(formData.noOfferTppRule).invalid.join("、")
-);
-const addTppRuleRow = () => {
-  // 新增的条件行默认「区间外」，运营多数场景是「不在这个价格区间内就不报」
-  tppRuleRows.value.push({ type: "notBetween", min: "", max: "" });
-};
-// 表达式为空时默认呈现一行（等价于已经点过一次「新增」）：新增规则、复制/编辑未配置该条件的规则
-const ensureTppRuleRow = () => {
-  if (!tppRuleRows.value.length) addTppRuleRow();
-};
-const removeTppRuleRow = index => {
-  tppRuleRows.value.splice(index, 1);
-  syncTppRuleStrFromRows();
+// 存储 → UI：未配置两端置空；非法串原样落到下限（保存会被 validateOfferTppRange 拦截）
+const fillOfferTppRangeFromStr = () => {
+  const parsed = parseOfferTppRange(formData.offerTppRange);
+  if (!parsed.configured) {
+    rangeMin.value = "";
+    rangeMax.value = "";
+  } else if (parsed.invalid) {
+    rangeMin.value = String(formData.offerTppRange ?? "").trim();
+    rangeMax.value = "";
+  } else {
+    rangeMin.value = parsed.min === 0 ? "" : String(parsed.min);
+    rangeMax.value = parsed.max === Infinity ? "" : String(parsed.max);
+  }
 };
 const quanType = ref([]);
 const offerTypeObj = {
@@ -753,7 +691,7 @@ let formData = reactive({
   auto_quan_value: "", // 自动用券类型
   memberPriceRule: "", // 会员价取值报价规则
   bWalletMarkup: "", // B钱包加价：未同步规则由本地报价叠加；已同步规则随规则同步到平台 extra_amount
-  noOfferTppRule: "" // 原价(tpp_price)不报条件：分号分隔多条，命中任一即不报
+  offerTppRange: "" // 原价报区间：下限-上限(闭区间含端点，端点可空)；未配置=不限制
 });
 
 let cityList = ref([]); // 城市列表
@@ -850,9 +788,9 @@ const resetForm = el => {
   formData.seatNum = ""; // 座位数
   formData.memberPriceRule = ""; // 座位数
   formData.bWalletMarkup = ""; // B钱包加价
-  formData.noOfferTppRule = ""; // 原价不报条件
-  tppRuleRows.value = [];
-  ensureTppRuleRow();
+  formData.offerTppRange = ""; // 原价报区间
+  rangeMin.value = "";
+  rangeMax.value = "";
   formData.memberDay = ""; // 会员日
   formData.film_type = "";
   formData.remark = ""; // 备注
@@ -1094,9 +1032,8 @@ const open = async ruleInfo => {
         formData.seatNum = formInfo.seatNum; // 座位数
         formData.memberPriceRule = formInfo.memberPriceRule;
         formData.bWalletMarkup = formInfo.bWalletMarkup ?? "";
-        formData.noOfferTppRule = formInfo.noOfferTppRule ?? "";
-        syncTppRuleRowsFromStr();
-        ensureTppRuleRow();
+        formData.offerTppRange = formInfo.offerTppRange ?? "";
+        fillOfferTppRangeFromStr();
         formData.memberDay = formInfo.memberDay; // 会员日
         formData.film_type = formInfo.film_type;
         formData.remark = formInfo.remark;
@@ -1122,10 +1059,10 @@ const open = async ruleInfo => {
       } else {
         // 新增
         formData.shadowLineName = formInfo.shadowLineName;
-        // 原价不报从空白开始并默认给一行，避免沿用上一次会话的行状态
-        formData.noOfferTppRule = "";
-        tppRuleRows.value = [];
-        ensureTppRuleRow();
+        // 原价报区间从空白开始，避免沿用上一次会话的输入
+        formData.offerTppRange = "";
+        rangeMin.value = "";
+        rangeMax.value = "";
       }
       const app_name = formData.shadowLineName;
       if (props.dialogTitle !== "查看规则") {
@@ -1219,10 +1156,10 @@ const saveRule = async () => {
         ElMessage.warning("影院数据同步失败，已阻止保存，请按提示修复后重试");
         return false;
       }
-      // 原价不报条件语法校验：不通过则阻断提交，避免脏表达式落库
-      const tppRuleCheck = validateNoOfferTppRule(formData.noOfferTppRule);
-      if (!tppRuleCheck.ok) {
-        ElMessage.warning(tppRuleCheck.msg);
+      // 原价报区间格式校验：不通过则阻断提交，避免脏配置落库
+      const tppRangeCheck = validateOfferTppRange(formData.offerTppRange);
+      if (!tppRangeCheck.ok) {
+        ElMessage.warning(tppRangeCheck.msg);
         return false;
       }
       // 提交逻辑

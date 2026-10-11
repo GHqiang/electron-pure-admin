@@ -200,8 +200,8 @@ const getOfferFailType = err_msg => {
   if (/促销票数低于订单票数/.test(err_msg)) return 11;
   // 提交异常
   if (/提交报价异常/.test(err_msg)) return 12;
-  // 原价不符
-  if (/按原价筛选后.*报价规则为空/.test(err_msg)) return 15;
+  // 原价不符（原价不在配置的报价区间内）
+  if (/按原价区间筛选后.*报价规则为空/.test(err_msg)) return 15;
   return null;
 };
 

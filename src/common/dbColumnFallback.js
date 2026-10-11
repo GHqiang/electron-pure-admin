@@ -23,9 +23,9 @@ export const isUnknownColumnError = (error, columns = []) => {
 export const isUnknownBWalletMarkupError = error =>
   isUnknownColumnError(error, ["bWalletMarkup"]);
 
-// 规则表 rule_record 缺 noOfferTppRule 列（原价不报条件）
-export const isUnknownNoOfferTppRuleError = error =>
-  isUnknownColumnError(error, ["noOfferTppRule"]);
+// 规则表 rule_record 缺 offerTppRange 列（原价报区间）
+export const isUnknownOfferTppRangeError = error =>
+  isUnknownColumnError(error, ["offerTppRange"]);
 
 // 报价记录表 offer_record / offer_record_fail 缺钱包字段
 export const isUnknownWalletRecordColumnError = error =>

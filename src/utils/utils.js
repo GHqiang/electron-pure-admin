@@ -37,7 +37,10 @@ const tokens = platTokens();
 
 import { getServerBaseUrl } from "@/common/serverHost";
 import { isPlatQuotedRule } from "@/common/platQuoteRule";
-import { parseNoOfferTppRule, isTppPriceNoOffer } from "@/utils/tppPriceRule";
+import {
+  parseOfferTppRange,
+  isTppPriceInOfferRange
+} from "@/utils/tppPriceRule";
 
 import { dictTable, nameMatchTable } from "@/store/dictTable";
 const dictStore = dictTable();
@@ -1673,7 +1676,7 @@ const offerRuleMatch = (order, logger) => {
       return;
     }
     console.log("按会员日筛选后的规则列表", memberDayRuleList);
-    // 11、匹配原价（tpp_price）不报条件：命中的规则剔除
+    // 11、匹配原价（tpp_price）报区间：原价不在区间内的规则剔除
     // 放在最后：只影响"本来能匹配到规则"的订单，不改变既有各层筛选为空的统计口径
     const lierenFixedOfferToPlatTimeRange =
       dictStore.dictInfo.lierenFixedOfferToPlatTimeRange?.split(",");
@@ -1685,8 +1688,8 @@ const offerRuleMatch = (order, logger) => {
             lierenFixedOfferToPlatTimeRange[1]
           )
         : true;
-    const tppPriceRuleList = memberDayRuleList.filter(item => {
-      if (!item.noOfferTppRule) return true; // 未配置：存量规则直接放行
+    const tppRangeRuleList = memberDayRuleList.filter(item => {
+      if (!item.offerTppRange) return true; // 未配置：不限制，照报
       // 由平台报价的规则本地不参与算价，过滤无效：跳过（与 B钱包加价同口径）
       if (
         isPlatQuotedRule({
@@ -1698,32 +1701,32 @@ const offerRuleMatch = (order, logger) => {
       ) {
         return true;
       }
-      const { invalid } = parseNoOfferTppRule(item.noOfferTppRule);
-      if (invalid.length) {
-        // 配置错误不应导致全量停报：记录后，无法识别的片段忽略、其余条件照常判定
-        logger.errorSave("原价不报条件无法识别，已忽略该片段", {
-          noOfferTppRule: item.noOfferTppRule,
-          invalid,
+      const parsed = parseOfferTppRange(item.offerTppRange);
+      if (parsed.invalid) {
+        // 配置错误不应导致全量停报：记录后放行（保存时前端已阻断脏配置入库）
+        logger.errorSave("原价报区间配置无效，已放行该规则", {
+          offerTppRange: item.offerTppRange,
+          reason: parsed.reason,
           ruleId: item.id
         });
       }
-      const hit = isTppPriceNoOffer(order.tpp_price, item.noOfferTppRule);
-      if (hit) {
-        logger.infoSave("原价命中不报条件", {
+      const keep = isTppPriceInOfferRange(order.tpp_price, item.offerTppRange);
+      if (!keep) {
+        logger.infoSave("原价不在报区间内，剔除该规则", {
           tpp_price: order.tpp_price,
-          noOfferTppRule: item.noOfferTppRule,
+          offerTppRange: item.offerTppRange,
           ruleId: item.id
         });
       }
-      return !hit;
+      return keep;
     });
-    if (!tppPriceRuleList.length) {
-      logger.errorSave("按原价筛选后，报价规则为空");
+    if (!tppRangeRuleList.length) {
+      logger.errorSave("按原价区间筛选后，报价规则为空");
       return;
     }
-    console.log("按原价筛选后的规则列表", tppPriceRuleList);
+    console.log("按原价区间筛选后的规则列表", tppRangeRuleList);
     return {
-      matchRuleList: tppPriceRuleList
+      matchRuleList: tppRangeRuleList
     };
   } catch (error) {
     console.error("匹配报价规则异常", error);

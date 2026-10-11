@@ -1,123 +1,83 @@
-// 原价（tpp_price）不报条件：解析、判定、格式化、校验
+// 原价（tpp_price）报区间：解析、判定、格式化、校验
 //
-// 背景：运营需要按订单原价过滤报价规则（原价超过 xx、或落在 xx 区间内则不报）。
-// 条件存在 rule_record.noOfferTppRule（分号分隔多条，命中任一即不报）：
-//   >50 / >=50 / <30 / <=30   原价高于/不低于/低于/不高于
-//   30-80                     区间内（闭区间，30 ≤ 原价 ≤ 80）
-//   !30-80                    区间外
+// 背景：运营按订单原价（tpp_price）过滤报价规则——原价落在配置区间内才报，
+// 不在区间内则剔除该规则；未配置 = 不限制。
+// 存储为 rule_record.offerTppRange，单字符串「下限-上限」（闭区间，含端点）：
+//   50-80   50 ≤ 原价 ≤ 80
+//   50-     原价 ≥ 50（上限空 = 正无穷）
+//   -80     原价 ≤ 80（下限空 = 0）
+//   -       原价 ≥ 0（等价"不限制"）
+//   NULL/空 未配置 → 不限制
 //
-// 说明：不复用 calculateMarkup（那是加价链路，且其 <> / !<> 区间操作符实现有误），
-// 本模块为纯函数、无 store 依赖，便于单测。
-const COMPARE_RE = /^(>=|<=|>|<)\s*(-?\d+(?:\.\d+)?)$/;
-const RANGE_RE = /^(!)?\s*(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)$/;
-const COMPARE_OP_MAP = { ">": "gt", ">=": "gte", "<": "lt", "<=": "lte" };
+// 说明：纯函数、无 store 依赖，便于单测；不复用 calculateMarkup（那是加价链路，
+// 且其区间操作符 <> / !<> 实现有误）。
+const RANGE_RE = /^\s*(-?\d+(?:\.\d+)?)?\s*-\s*(-?\d+(?:\.\d+)?)?\s*$/;
 
 /**
- * 解析不报条件
- * @param {string} ruleStr - 条件表达式，如 ">50;30-80"
- * @returns {{conditions: Array<Object>, invalid: string[]}} 条件列表与无法识别的原文片段
+ * 解析原价报区间
+ * @param {string} rangeStr - 形如 "50-80" / "50-" / "-80" / "-"
+ * @returns {{configured: boolean, invalid?: boolean, reason?: string, min?: number, max?: number}}
  */
-export const parseNoOfferTppRule = ruleStr => {
-  const conditions = [];
-  const invalid = [];
-  if (ruleStr === null || ruleStr === undefined) return { conditions, invalid };
-  String(ruleStr)
-    .split(";")
-    .forEach(rawItem => {
-      const item = rawItem.trim();
-      if (!item) return;
-      const compareMatch = item.match(COMPARE_RE);
-      if (compareMatch) {
-        conditions.push({
-          op: COMPARE_OP_MAP[compareMatch[1]],
-          value: Number(compareMatch[2])
-        });
-        return;
-      }
-      const rangeMatch = item.match(RANGE_RE);
-      if (rangeMatch) {
-        const min = Number(rangeMatch[2]);
-        const max = Number(rangeMatch[3]);
-        // 上下限颠倒的区间视为非法，避免"看起来配了其实不生效"
-        if (min > max) {
-          invalid.push(item);
-          return;
-        }
-        conditions.push({
-          op: rangeMatch[1] ? "notBetween" : "between",
-          min,
-          max
-        });
-        return;
-      }
-      invalid.push(item);
-    });
-  return { conditions, invalid };
+export const parseOfferTppRange = rangeStr => {
+  if (rangeStr === null || rangeStr === undefined) return { configured: false };
+  const str = String(rangeStr).trim();
+  if (!str) return { configured: false };
+  const match = str.match(RANGE_RE);
+  if (!match) {
+    return { configured: true, invalid: true, reason: "格式无法识别" };
+  }
+  const min = match[1] !== undefined ? Number(match[1]) : 0;
+  const max = match[2] !== undefined ? Number(match[2]) : Infinity;
+  // 上下限颠倒视为非法，避免"看起来配了其实不生效"
+  if (min > max) {
+    return { configured: true, invalid: true, reason: "下限不能大于上限" };
+  }
+  return { configured: true, invalid: false, min, max };
 };
 
 /**
- * 判断原价是否命中不报条件
+ * 判断原价是否在报区间内（true = 保留该规则 / 照报）
  * @param {number|string} tppPrice - 订单原价
- * @param {string} ruleStr - 条件表达式
- * @returns {boolean} true = 命中（该规则应被剔除）
+ * @param {string} rangeStr - 报区间表达式
+ * @returns {boolean}
  */
-export const isTppPriceNoOffer = (tppPrice, ruleStr) => {
+export const isTppPriceInOfferRange = (tppPrice, rangeStr) => {
   const price = Number(tppPrice);
   // 原价缺失/非数值/非正数：一律放行，避免字段缺失导致大面积不报价
-  if (!Number.isFinite(price) || price <= 0) return false;
-  const { conditions } = parseNoOfferTppRule(ruleStr);
-  return conditions.some(condition => {
-    switch (condition.op) {
-      case "gt":
-        return price > condition.value;
-      case "gte":
-        return price >= condition.value;
-      case "lt":
-        return price < condition.value;
-      case "lte":
-        return price <= condition.value;
-      case "between":
-        return price >= condition.min && price <= condition.max;
-      case "notBetween":
-        return price < condition.min || price > condition.max;
-      default:
-        return false;
-    }
-  });
+  if (!Number.isFinite(price) || price <= 0) return true;
+  const parsed = parseOfferTppRange(rangeStr);
+  // 未配置 / 配置非法：一律放行（不因配置问题停报）
+  if (!parsed.configured || parsed.invalid) return true;
+  return price >= parsed.min && price <= parsed.max;
 };
 
 /**
- * 条件转人话（列表/详情回显）
- * @param {string} ruleStr - 条件表达式
- * @returns {string} 如 "原价>50；原价30~80"，未配置返回空串
+ * 报区间转人话（列表/详情回显）
+ * @param {string} rangeStr - 报区间表达式
+ * @returns {string} 如 "原价50~80" / "原价≥50" / "原价≤80" / "不限"；未配置返回空串
  */
-export const formatNoOfferTppRule = ruleStr => {
-  const { conditions } = parseNoOfferTppRule(ruleStr);
-  const opText = { gt: ">", gte: "≥", lt: "<", lte: "≤" };
-  return conditions
-    .map(condition => {
-      if (condition.op === "between") {
-        return `原价${condition.min}~${condition.max}`;
-      }
-      if (condition.op === "notBetween") {
-        return `原价${condition.min}~${condition.max}以外`;
-      }
-      return `原价${opText[condition.op]}${condition.value}`;
-    })
-    .join("；");
+export const formatOfferTppRange = rangeStr => {
+  const parsed = parseOfferTppRange(rangeStr);
+  if (!parsed.configured) return "";
+  if (parsed.invalid) return `配置无效:${String(rangeStr).trim()}`;
+  const { min, max } = parsed;
+  if (min === 0 && max === Infinity) return "不限";
+  if (max === Infinity) return `原价≥${min}`;
+  if (min === 0) return `原价≤${max}`;
+  return `原价${min}~${max}`;
 };
 
 /**
  * 保存前校验
- * @param {string} ruleStr - 条件表达式
+ * @param {string} rangeStr - 报区间表达式
  * @returns {{ok: boolean, msg: string}}
  */
-export const validateNoOfferTppRule = ruleStr => {
-  const { invalid } = parseNoOfferTppRule(ruleStr);
-  if (invalid.length) {
+export const validateOfferTppRange = rangeStr => {
+  const parsed = parseOfferTppRange(rangeStr);
+  if (parsed.configured && parsed.invalid) {
     return {
       ok: false,
-      msg: `原价不报条件无法识别：${invalid.join("、")}；支持 >50 / >=50 / <30 / <=30 / 30-80（区间内）/ !30-80（区间外），多条用分号分隔`
+      msg: `原价报区间${parsed.reason}：${String(rangeStr).trim()}；格式为 下限-上限（如 50-80 / 50- / -80），闭区间含端点，端点可留空（下限留空=0，上限留空=正无穷）`
     };
   }
   return { ok: true, msg: "" };

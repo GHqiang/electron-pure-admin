@@ -286,11 +286,11 @@
                 {{ `B钱包加价:${scope.row.bWalletMarkup}` }}
               </span>
               <span
-                v-if="scope.row.noOfferTppRule"
+                v-if="scope.row.offerTppRange"
                 style="color: #e6a23c; display: block"
               >
                 {{
-                  `原价不报:${formatNoOfferTppRule(scope.row.noOfferTppRule)}`
+                  `原价报区间:${formatOfferTppRange(scope.row.offerTppRange)}`
                 }}
               </span>
             </template>
@@ -481,9 +481,9 @@ const { getQuanTypeList } = usesMachineBaseFun();
 import { getCurrentTime, getNextDayTime } from "@/utils/utils";
 import {
   isUnknownBWalletMarkupError,
-  isUnknownNoOfferTppRuleError
+  isUnknownOfferTppRangeError
 } from "@/common/dbColumnFallback";
-import { formatNoOfferTppRule } from "@/utils/tppPriceRule";
+import { formatOfferTppRange } from "@/utils/tppPriceRule";
 import { useDataTableStore } from "@/store/offerRule";
 const rules = useDataTableStore();
 import { platTokens } from "@/store/platTokens";
@@ -1032,9 +1032,9 @@ const NEW_RULE_COLUMNS = [
     isUnknown: isUnknownBWalletMarkupError
   },
   {
-    column: "noOfferTppRule",
-    label: "原价不报",
-    isUnknown: isUnknownNoOfferTppRuleError
+    column: "offerTppRange",
+    label: "原价报区间",
+    isUnknown: isUnknownOfferTppRangeError
   }
 ];
 const saveRuleRecordWithNewColumnFallback = async (
@@ -1083,9 +1083,9 @@ const saveRule = async ruleInfo => {
       ruleInfo.bWalletMarkup === "" || ruleInfo.bWalletMarkup == null
         ? null
         : Number(ruleInfo.bWalletMarkup);
-    // 原价不报条件：空值统一转 null（NULL = 未配置，避免空串入库）
-    ruleInfo.noOfferTppRule = ruleInfo.noOfferTppRule?.trim()
-      ? ruleInfo.noOfferTppRule.trim()
+    // 原价报区间：空值统一转 null（NULL = 未配置，避免空串入库）
+    ruleInfo.offerTppRange = ruleInfo.offerTppRange?.trim()
+      ? ruleInfo.offerTppRange.trim()
       : null;
     ruleInfo.update_time = getCurrentTime();
     ruleInfo.rule = rule;
