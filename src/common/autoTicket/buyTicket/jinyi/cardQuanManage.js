@@ -12,6 +12,8 @@ import {
 import { APP_API_OBJ } from "@/common/index";
 import { GET_APP_INFO, TEST_NEW_PLAT_LIST } from "@/common/constant";
 import { getPlatFeeRate } from "../common/offerHelper";
+// 双接口券列表结构适配与合并（旧 vistax/voucher/list + 新 user/voucher/list）
+import { normalizeQuanList, mergeQuanList } from "./quanListAdapter";
 
 import svApi from "@/api/sv-api";
 // 统一日志类
@@ -370,26 +372,69 @@ export default class CardQuanManage {
 
   // 获取优惠券列表
   async getQuanList(params) {
+    this.logger.infoSave("获取优惠券列表入参", params);
+    const { session_id, cinema_id, status } = params || {};
+    // 金逸系列同时从 vistax（原）与 user/voucher（新）两接口取券后合并去重
+    const quanList = await this.getQuanListFromBothApis({
+      session_id,
+      cinema_id,
+      status,
+      logger: this.logger
+    });
+    // const { number, size, totalPages, last } = res.data?.pageable;
+    if (!quanList?.length) {
+      this.logger.infoSave("获取优惠券列表为空");
+    }
+    return quanList;
+  }
+
+  // 金逸系列券列表双接口获取：vistax/voucher/list（原接口）+ user/voucher/list（新增用户券包，含团购券）
+  // 两接口并行请求，按券码去重合并；新接口为补充来源，失败只降级记录，不影响原接口取券结果
+  async getQuanListFromBothApis({ session_id, cinema_id, status, logger }) {
+    const oldParams = { session_id, cinema_id };
+    if (status) {
+      oldParams.status = status;
+    }
     try {
-      this.logger.infoSave("获取优惠券列表入参", params);
-      const res = await this.appApi.getQuanList(params);
-      this.logger.infoSave("获取优惠券列表返回", res);
-      let quanList = res.data || [];
-      // let totalCount = res.totalCount || 0;
-      quanList = quanList.map(item => ({
-        ...item,
-        couponName: item.show_name,
-        couponDesc: item.show_desc,
-        couponCode: item.coupon_code,
-        endDateTime: +new Date(item.expire_time)
-      }));
-      // const { number, size, totalPages, last } = res.data?.pageable;
-      if (!quanList?.length) {
-        this.logger.infoSave("获取优惠券列表为空");
+      const [oldRes, newRes] = await Promise.allSettled([
+        // 各自包一层 thunk：同步抛错也会转为 rejected，避免单侧异常连带丢弃另一侧取券结果
+        Promise.resolve().then(() => this.appApi.getQuanList(oldParams)),
+        // 新接口无 status 入参，返回 unused/used/disabled；silentError 避免补充来源失败弹全局提示
+        Promise.resolve().then(() =>
+          this.appApi.getQuanListByUser(
+            { session_id, cinema_id },
+            { silentError: true }
+          )
+        )
+      ]);
+      if (oldRes.status === "rejected") {
+        // meta 传原始错误对象：logger.getLastErrMsgAndInfo 会对 meta.error 统一做一次
+        // formatErrInfo，此处预格式化会导致 err_info 落库出现二次 JSON 转义
+        logger.errorSave("获取优惠券列表异常", {
+          error: oldRes.reason,
+          params: oldParams
+        });
       }
+      if (newRes.status === "rejected") {
+        logger.infoSave("获取用户券包优惠券列表异常(不影响原接口取券)", {
+          error: newRes.reason
+        });
+      }
+      // 旧接口 data 为券数组，新接口 data.unused 为券包未使用券，统一适配后合并去重
+      const oldQuanList = normalizeQuanList(oldRes.value?.data);
+      const newQuanList = normalizeQuanList(newRes.value?.data);
+      const quanList = mergeQuanList(oldQuanList, newQuanList);
+      logger.infoSave("双接口取券来源统计", {
+        oldApiTotal: oldQuanList.length,
+        newApiTotal: newQuanList.length,
+        mergedTotal: quanList.length
+      });
       return quanList;
     } catch (error) {
-      this.logger.infoSave("获取优惠券列表异常", formatErrInfo(error));
+      logger.errorSave("双接口获取优惠券列表异常", {
+        error,
+        params: oldParams
+      });
       return [];
     }
   }
@@ -954,29 +999,22 @@ export default class CardQuanManage {
 
   // 获取某个手机号的全部未使用优惠券列表（接口不支持分页，单次返回全部）
   async getQuanListByPhone({ session_id, cinema_id, logger }) {
-    const params = { status: "UNUSED", session_id, cinema_id };
-    try {
-      const res = await this.appApi.getQuanList(params);
-      let quanList = (res.data || []).map(item => ({
-        ...item,
-        couponName: item.show_name,
-        couponDesc: item.show_desc,
-        couponCode: item.coupon_code,
-        endDateTime: +new Date(item.expire_time)
-      }));
-      // 只记总数与前5条样例，避免全量券码入库撑爆日志（曾因分页 bug 累积 44764 条致 413）
-      logger.infoSave("获取未使用券返回-示例仅展示前5条", {
-        total: quanList.length,
-        sample: quanList.slice(0, 5).map(item => ({
-          couponName: item.couponName,
-          couponCode: item.couponCode
-        }))
-      });
-      return quanList;
-    } catch (error) {
-      logger.errorSave("获取优惠券列表异常", { error, params });
-      return [];
-    }
+    // 金逸系列同时从 vistax（原）与 user/voucher（新）两接口取券后合并去重
+    const quanList = await this.getQuanListFromBothApis({
+      session_id,
+      cinema_id,
+      status: "UNUSED",
+      logger
+    });
+    // 只记总数与前5条样例，避免全量券码入库撑爆日志（曾因分页 bug 累积 44764 条致 413）
+    logger.infoSave("获取未使用券返回-示例仅展示前5条", {
+      total: quanList.length,
+      sample: quanList.slice(0, 5).map(item => ({
+        couponName: item.couponName,
+        couponCode: item.couponCode
+      }))
+    });
+    return quanList;
   }
 
   // 获取排序手机号

@@ -51,7 +51,10 @@ const retryWhitelist = [
   "/ticket/channelCode/user/orders/",
   "/ticket/channelCode/cinema/cinema_id/user/info/",
   "/ticket/channelCode/cinema/cinema_id/order/vcc/usable/count",
-  "/ticket/channelCode/cinema/cinema_id/vistax/voucher/list"
+  "/ticket/channelCode/cinema/cinema_id/vistax/voucher/list",
+  // 金逸用户券包券列表（查询类）。注意：白名单按替换 channelCode/cinema_id 后的
+  // 最终 URL 比对，故此处用替换后仍存在的路径片段
+  "/user/voucher/list/"
 ];
 
 const createAxios = ({ app_name, timeout = 20 }) => {

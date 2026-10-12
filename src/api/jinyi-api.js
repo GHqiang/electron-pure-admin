@@ -362,6 +362,30 @@ const createApi = ({ app_name }) => {
       params
     });
   // ?status=
+  // 获取用户券包优惠券列表（含团购券；补充取券来源，传 silentError 时不弹全局错误提示）
+  const getQuanListByUser = (params, config = {}) =>
+    axios.get("/ticket/channelCode/cinema/cinema_id/user/voucher/list/", {
+      params,
+      ...config
+    });
+  //   {
+  //     "ret": 0,
+  //     "sub": 0,
+  //     "msg": "successfully",
+  //     "data": {
+  //       "unused": [{
+  //         "voucher_code": "TGQ4000304120785",
+  //         "voucher_code_mask": "TGQ4**********85",
+  //         "voucher_name": "\u56e2\u8d2d\u5238",
+  //         "expire_time": 1796054400,
+  //         "expire_time_string": "2026\u5e7412\u67081\u65e5 00:00",
+  //         "voucher_num": 1,
+  //         "voucher_desc": "\u672c\u5151\u6362\u5238\u4e0d\u53ef\u4e0e\u4f18\u60e0\u6d3b\u52a8\u540c\u65f6\u4f7f\u7528\uff0c\u4e14\u4e0d\u652f\u6301\u9000\u7968"
+  //       }],
+  //       "used": [],
+  //       "disabled": []
+  //     }
+  //   }
   // 绑定优惠券
   const bandQuan = params =>
     axios.post(
@@ -391,6 +415,7 @@ const createApi = ({ app_name }) => {
     getOrderInfo,
     buyTicket,
     getQuanList,
+    getQuanListByUser,
     bandQuan
   };
 };
