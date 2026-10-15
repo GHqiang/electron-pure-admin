@@ -185,6 +185,13 @@
             <el-radio :value="2" size="small">否</el-radio>
           </el-radio-group>
         </el-form-item>
+        <!-- 券种仅金逸小程序系列显示：电子券走旧绑券接口，实体券走预检+新接口 -->
+        <el-form-item v-if="isJinyiApplet" label="券种" prop="quan_kind">
+          <el-radio-group v-model="formData.quan_kind">
+            <el-radio :value="1" size="small">电子券</el-radio>
+            <el-radio :value="2" size="small">实体券</el-radio>
+          </el-radio-group>
+        </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input
             v-model="formData.remark"
@@ -274,8 +281,18 @@ let formData = reactive({
   black_quans: "",
   is_store: "2",
   is_base_quan: 2,
+  // 券种：1=电子券 2=实体券（仅金逸小程序系列提交，非该系列提交时不携带）
+  quan_kind: 1,
   remark: "",
   linkCinemaIds: []
+});
+
+// 当前所选影线是否属于金逸小程序系列（券种表单项的显隐依据）
+const isJinyiApplet = computed(() => {
+  const targetInfo = APP_TYPE_LIST.value.find(item =>
+    item.app_name_list?.includes(formData.app_name)
+  );
+  return targetInfo?.app_type_code === "jinyi_applet";
 });
 
 const rules = {
@@ -330,12 +347,20 @@ const resetForm = el => {
   formData.black_quans = "";
   formData.is_store = "2";
   formData.is_base_quan = 2;
+  formData.quan_kind = 1;
   formData.remark = "";
 };
 
 // 影线改变
 const shadowLineChange = async app_name => {
   console.log("app_name", app_name);
+  const targetInfo = APP_TYPE_LIST.value.find(item =>
+    item.app_name_list?.includes(app_name)
+  );
+  // 切到非金逸小程序系列时把券种重置为默认电子券，避免跨系列切换后残留实体券取值
+  if (targetInfo?.app_type_code !== "jinyi_applet") {
+    formData.quan_kind = 1;
+  }
   // resetForm(1);
   // const allCityList = await getCityList(app_name);
   // cityList.value = allCityList;
@@ -367,6 +392,8 @@ const open = async quanInfo => {
         formData.remark = formInfo.remark;
         formData.is_store = formInfo.is_store;
         formData.is_base_quan = formInfo.is_base_quan;
+        // 券种回填：open 是逐字段显式拷贝，不回填会在编辑/复制新增时把 quan_kind=2 覆盖为默认 1
+        formData.quan_kind = formInfo.quan_kind ?? 1;
         formData.linkCinemaIds = formInfo.linkCinemaIds
           ? formInfo.linkCinemaIds.split(",")
           : [];
@@ -405,6 +432,10 @@ const saveCard = async () => {
     if (valid) {
       // 提交逻辑
       console.log("表单提交的数据:", formData);
+      // 券种仅金逸小程序系列提交，其他系列不携带该字段，交由 DB 默认值处理
+      if (!isJinyiApplet.value) {
+        delete formData.quan_kind;
+      }
       // ElMessage.success("必填数据校验成功！");
       $emit("submit", formData);
     } else {

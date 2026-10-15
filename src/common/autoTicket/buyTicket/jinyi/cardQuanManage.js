@@ -7,7 +7,8 @@ import {
   getOfferRuleById,
   couponInfoSpecial,
   getCinemaLoginInfoList,
-  mulDecimal // 高精度乘法(避免手续费精度丢失)
+  mulDecimal, // 高精度乘法(避免手续费精度丢失)
+  sendWxPusherMessage // 实体券需安全码时发送提醒消息
 } from "@/utils/utils";
 import { APP_API_OBJ } from "@/common/index";
 import { GET_APP_INFO, TEST_NEW_PLAT_LIST } from "@/common/constant";
@@ -639,6 +640,7 @@ export default class CardQuanManage {
   }
 
   // 获取新券(暂未联调)
+  // quan_kind：券种由调用方入参传入（1=电子券 2=实体券，缺省/其他值一律按电子券兜底）
   async getNewQuan({
     cinema_id,
     quan_value,
@@ -647,7 +649,8 @@ export default class CardQuanManage {
     black_quans,
     quanNum,
     session_id,
-    asyncFlag
+    asyncFlag,
+    quan_kind
   }) {
     const { appFlag } = this;
     let logger = this.logger;
@@ -698,6 +701,8 @@ export default class CardQuanManage {
         return;
       }
       // quanList = quanList.map(item => item.coupon_num.trim());
+      // 每轮绑券只需提醒一次：出现需安全码的实体券时发一条即可，不重复发送
+      const securityRemind = { sent: false };
       let bandQuanList = [];
       for (const quan of quanList) {
         logger.info(`正在尝试绑定券 ${quan.coupon_num}...`);
@@ -706,7 +711,10 @@ export default class CardQuanManage {
             coupon_num: quan.coupon_num,
             session_id,
             cinema_id,
-            appFlag
+            appFlag,
+            quan_flag,
+            quan_kind,
+            securityRemind
           },
           logger
         );
@@ -733,9 +741,18 @@ export default class CardQuanManage {
     }
   }
 
-  // 绑定券
+  // 绑定券（按券种分支：1=电子券走旧接口 vistax/voucher/bind；2=实体券先预检再走 user/voucher/add）
   async bandQuan(data, logger) {
-    const { coupon_num, cinema_id, session_id } = data;
+    const {
+      coupon_num,
+      cinema_id,
+      session_id,
+      quan_kind,
+      quan_flag,
+      appFlag,
+      securityRemind
+    } = data;
+    // cinema_id/session_id 必须放进 body：请求拦截器从 body 读取它们写 token 头并替换 URL 占位符
     let params = {
       voucher_code: coupon_num,
       voucher_password: "",
@@ -745,11 +762,53 @@ export default class CardQuanManage {
     try {
       await mockDelay(0.1);
       logger.infoSave("绑定券参数", params);
+      // 实体券分支：先预检是否需要安全码，需要则跳过 add(券码将由上层置为绑定异常)
+      if (quan_kind == 2) {
+        let needRes;
+        try {
+          needRes = await this.appApi.getQuanSecurityNeed({
+            voucher_code: coupon_num,
+            session_id,
+            cinema_id
+          });
+          logger.infoSave("实体券预检返回", needRes);
+        } catch (error) {
+          logger.errorSave("实体券预检失败，跳过绑定", {
+            error,
+            voucher_code: coupon_num
+          });
+          return;
+        }
+        if (needRes?.data?.security_verify) {
+          logger.errorSave("实体券需要安全码，跳过绑定", {
+            voucher_code: coupon_num
+          });
+          // 仅提醒用户存在该情况一次，不记录张数/券码明细
+          if (!securityRemind?.sent) {
+            securityRemind.sent = true;
+            sendWxPusherMessage({
+              msgType: 15,
+              app_name: appFlag,
+              quan_flag,
+              transferTip:
+                "存在需要安全码的实体券，已跳过绑定；对应券码已置为绑定异常(3)，如需重新启用请在券管理页把券码状态从 3 复位为 1"
+            });
+          }
+          return;
+        }
+        const res = await this.appApi.bindQuanVoucher({
+          ...params,
+          voucher_type: "VOUCHER"
+        });
+        logger.infoSave("实体券绑定返回", res);
+        return { coupon_num };
+      }
+      // 电子券分支：沿用旧接口，入参/返回不变
       const res = await this.appApi.bandQuan(params);
       logger.infoSave("绑定券返回", res);
       return { coupon_num };
     } catch (error) {
-      logger.errorSave("绑定新券异常", formatErrInfo(error));
+      logger.errorSave("绑定新券异常", { error });
     }
   }
 

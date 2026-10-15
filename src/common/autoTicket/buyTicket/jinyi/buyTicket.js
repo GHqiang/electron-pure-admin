@@ -469,6 +469,8 @@ class JinyiBuyTicket extends BaseBuyTicket {
             quan_value: offerRule.quan_value,
             quan_flag: offerRule.quan_flag,
             quan_desc: offerRule.quan_desc,
+            // 券种由报价记录带出（后端 queryOfferInfo 已通用合并 quan_type 字段），缺省按电子券
+            quan_kind: offerRule.quan_kind,
             black_quans: offerRule.black_quans,
             quanNum: 10 - (quanStock - Number(ticket_num)),
             session_id: this.currentSessionId,

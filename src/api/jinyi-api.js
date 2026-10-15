@@ -386,13 +386,27 @@ const createApi = ({ app_name }) => {
   //       "disabled": []
   //     }
   //   }
-  // 绑定优惠券
+  // 绑定优惠券（电子券，券种=1；入参 voucher_code/voucher_password + session_id/cinema_id）
   const bandQuan = params =>
     axios.post(
       "/ticket/channelCode/cinema/cinema_id/vistax/voucher/bind",
       params
     );
   // ?voucher_code=123456
+
+  // 实体券预检：判断该券绑定是否需要安全码(防伪码)，data.security_verify=true 表示需要
+  const getQuanSecurityNeed = params =>
+    axios.post(
+      "/ticket/channelCode/cinema/cinema_id/user/voucher/security_need/",
+      params
+    );
+
+  // 实体券绑定（券种=2，需先经 security_need 预检；voucher_type 固定 VOUCHER）
+  const bindQuanVoucher = params =>
+    axios.post(
+      "/ticket/channelCode/cinema/cinema_id/user/voucher/add/",
+      params
+    );
 
   // 解锁座位
   const unlockSeat = params =>
@@ -416,7 +430,9 @@ const createApi = ({ app_name }) => {
     buyTicket,
     getQuanList,
     getQuanListByUser,
-    bandQuan
+    bandQuan,
+    getQuanSecurityNeed,
+    bindQuanVoucher
   };
 };
 export default createApi;
