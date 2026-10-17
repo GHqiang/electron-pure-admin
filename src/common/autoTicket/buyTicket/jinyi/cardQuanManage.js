@@ -159,6 +159,8 @@ export default class CardQuanManage {
         offerRule.quan_fee = quanInfo?.quan_fee;
         offerRule.is_store = quanInfo?.is_store;
         offerRule.black_quans = quanInfo?.black_quans;
+        // 券种（1=电子券 2=实体券）：以最终选中的券类型为准，供算价决定 voucher_code_type
+        offerRule.quan_kind = quanInfo?.quan_kind;
         let {
           quan_value,
           quan_cost,

@@ -93,7 +93,14 @@ export default class OrderManage {
 
   // 计算价格
   async priceCalculation(data) {
-    let { cinema_id, card_id, quan_code, lockOrderId, session_id } = data;
+    let {
+      cinema_id,
+      card_id,
+      quan_code,
+      quan_kind,
+      lockOrderId,
+      session_id
+    } = data;
     let params = {
       session_id,
       cinema_id,
@@ -113,7 +120,8 @@ export default class OrderManage {
     if (quan_code) {
       params.discount_type = "";
       params.voucher_code = quan_code;
-      params.voucher_code_type = "VISTAX_VOUCHER";
+      // 券种：仅 2（实体券）传 VOUCHER，其余（1/电子券、缺省、其他）沿用 VISTAX_VOUCHER
+      params.voucher_code_type = quan_kind == 2 ? "VOUCHER" : "VISTAX_VOUCHER";
     }
     let res;
     try {

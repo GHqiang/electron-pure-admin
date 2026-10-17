@@ -432,6 +432,8 @@ class JinyiBuyTicket extends BaseBuyTicket {
         cinema_id,
         card_id: canUseCardList?.[0]?.card_id,
         quan_code,
+        // 券种由 offerRule 带出（useQuanOrCard 已按最终券类型回填），算价据此定 voucher_code_type
+        quan_kind: offerRule?.quan_kind,
         lockOrderId,
         session_id: this.currentSessionId
       });
