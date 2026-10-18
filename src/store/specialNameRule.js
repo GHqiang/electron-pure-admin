@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { useCinemaList } from "@/store/cinemaList";
+import { normalizeCinemaCode } from "@/utils/cinemaCode";
 const cinemaList = useCinemaList();
 
 export const useDataTableStoreBySpecialName = defineStore(
@@ -58,8 +59,12 @@ export const useCinemaCodeMatchList = defineStore("cinemaCodeMatchList", {
       city_name
     }) {
       // console.log("cinemaList.canAppList", cinemaList.canAppList);
+      // code 统一按字符串比较：猎人平台订单的 cinema_code 是数字，映射表里是字符串
+      const targetCinemaCode = normalizeCinemaCode(plat_cinema_code);
       let targetCinema = this.items.find(
-        item => item.plat_cinema_code === plat_cinema_code
+        item =>
+          targetCinemaCode &&
+          normalizeCinemaCode(item.plat_cinema_code) === targetCinemaCode
       );
       if (!targetCinema) {
         let targetList = this.items.filter(item =>
@@ -84,21 +89,25 @@ export const useCinemaCodeMatchList = defineStore("cinemaCodeMatchList", {
       }
       return targetCinema;
     },
-    // 获取影院专资标识
+    // 获取影院专资标识（code 统一按字符串比较，兼容数字 code）
     getCinemaCodeFlag({ app_cinema_code, app_name }) {
+      const targetCinemaCode = normalizeCinemaCode(app_cinema_code);
       let targetCinema = this.items.find(
         item =>
-          item.app_cinema_code === app_cinema_code && item.app_name === app_name
+          targetCinemaCode &&
+          normalizeCinemaCode(item.app_cinema_code) === targetCinemaCode &&
+          item.app_name === app_name
       );
       return targetCinema;
     },
-    // 获取影院映射信息根据code
+    // 获取影院映射信息根据code（code 统一按字符串比较，兼容猎人等平台的数字 code）
     getCinemaMatchInfo(plat_cinema_code, app_name) {
+      const targetCinemaCode = normalizeCinemaCode(plat_cinema_code);
       return this.items.find(
         item =>
-          plat_cinema_code &&
+          targetCinemaCode &&
           app_name &&
-          item.plat_cinema_code === plat_cinema_code &&
+          normalizeCinemaCode(item.plat_cinema_code) === targetCinemaCode &&
           item.app_name === app_name
       );
     }

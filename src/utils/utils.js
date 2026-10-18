@@ -41,6 +41,7 @@ import {
   parseOfferTppRange,
   isTppPriceInOfferRange
 } from "@/utils/tppPriceRule";
+import { normalizeCinemaCode, splitCinemaCodes } from "@/utils/cinemaCode";
 
 import { dictTable, nameMatchTable } from "@/store/dictTable";
 const dictStore = dictTable();
@@ -1217,6 +1218,15 @@ const cinemaMatchHandle = ({
       app_name
     );
     let app_cinema_name = matchInfo?.app_cinema_name;
+    // 映射缺失时无法判定，显式返回 undefined：不能让 cinemNameSpecial(undefined) 抛错被
+    // catch 吞掉后由调用方当成「未命中排除」（fail-open，2026-10-17 华联万柳订单问题）
+    if (!app_cinema_name) {
+      console.error("影院映射缺失，无法按名称匹配影院规则", {
+        app_name,
+        plat_cinema_code
+      });
+      return undefined;
+    }
     return cinema_name_list.some(
       item => cinemNameSpecial(item) == cinemNameSpecial(app_cinema_name)
     );
@@ -1460,14 +1470,19 @@ const offerRuleMatch = (order, logger) => {
     // 是否记录影院匹配日志
     const isSaveCinemaMatchLog =
       dictStore.dictInfo?.isRecordCinemaMatchLog == 1;
+    // 订单影院 code 统一归一化：猎人等平台返回的是数字（如 11063401），影院映射表与规则里
+    // 存的是字符串，直接比较会查不到映射，导致包含/排除影院配置整段失效
+    const orderCinemaCode = normalizeCinemaCode(cinema_code);
     // 4、匹配影院（优先按 app_cinema_code 匹配，名称兜底兼容旧规则）
     let cinemaRuleList = cityRuleList.filter(item => {
       const hasNameInclude =
         item.includeCinemaNames && item.includeCinemaNames.length;
       const hasNameExclude =
         item.excludeCinemaNames && item.excludeCinemaNames.length;
-      const hasCodeInclude = item.includeCinemaCodes;
-      const hasCodeExclude = item.excludeCinemaCodes;
+      const includeCinemaCodeList = splitCinemaCodes(item.includeCinemaCodes);
+      const excludeCinemaCodeList = splitCinemaCodes(item.excludeCinemaCodes);
+      const hasCodeInclude = includeCinemaCodeList.length > 0;
+      const hasCodeExclude = excludeCinemaCodeList.length > 0;
 
       // 没有任何影院限制时直接通过
       if (
@@ -1480,17 +1495,16 @@ const offerRuleMatch = (order, logger) => {
       }
 
       // 1、优先按 app_cinema_code 匹配，避免名称变更导致失败
+      let app_cinema_code = "";
       try {
         const matchInfo = cinemaCodeMatchObj.getCinemaMatchInfo(
-          cinema_code,
+          orderCinemaCode,
           shadowLineName
         );
-        const app_cinema_code = matchInfo?.app_cinema_code;
+        app_cinema_code = normalizeCinemaCode(matchInfo?.app_cinema_code);
         if (app_cinema_code && (hasCodeInclude || hasCodeExclude)) {
           if (hasCodeInclude) {
-            const isInclude = item.includeCinemaCodes
-              ?.split(",")
-              ?.includes(app_cinema_code);
+            const isInclude = includeCinemaCodeList.includes(app_cinema_code);
             isSaveCinemaMatchLog &&
               logger?.infoSave("按影院code匹配包含规则", {
                 isInclude,
@@ -1500,9 +1514,7 @@ const offerRuleMatch = (order, logger) => {
             return isInclude;
           }
           if (hasCodeExclude) {
-            const isExclude = item.excludeCinemaCodes
-              ?.split(",")
-              ?.includes(app_cinema_code);
+            const isExclude = excludeCinemaCodeList.includes(app_cinema_code);
             isSaveCinemaMatchLog &&
               logger?.infoSave("按影院code匹配排除规则", {
                 isExclude,
@@ -1516,35 +1528,70 @@ const offerRuleMatch = (order, logger) => {
         console.warn("按 app_cinema_code 匹配影院规则异常", err);
       }
 
+      // 配了影院 code 限制却查不到映射：无法判定是否命中，按排除处理（fail-closed），
+      // 避免「配了排除影院却照常报价」（2026-10-17 华联万柳订单问题），并留痕便于排查
+      if (hasCodeInclude || hasCodeExclude) {
+        logger?.errorSave("影院映射缺失，影院code规则无法判定，已按排除处理", {
+          ruleId: item.id,
+          ruleName: item.ruleName,
+          orderCinemaCode,
+          cinema_code,
+          shadowLineName,
+          includeCinemaCodes: item.includeCinemaCodes,
+          excludeCinemaCodes: item.excludeCinemaCodes
+        });
+        return false;
+      }
+
       // 2、兜底：按影院名称匹配（旧规则兼容）
       if (hasNameInclude) {
         console.error("按影院名称匹配规则，可能存在风险");
         const isInclude = cinemaMatchHandle({
           app_name: shadowLineName,
-          plat_cinema_code: cinema_code,
+          plat_cinema_code: orderCinemaCode,
           cinema_name_list: item.includeCinemaNames
         });
         isSaveCinemaMatchLog &&
           logger?.infoSave("按影院名称匹配包含规则", {
             isInclude,
-            plat_cinema_code: cinema_code,
+            plat_cinema_code: orderCinemaCode,
             cinema_name_list: item.includeCinemaNames
           });
+        // 名称无法判定（映射缺失）时按排除处理，避免 fail-open
+        if (isInclude === undefined) {
+          logger?.errorSave("影院名称匹配无法判定，已按排除处理", {
+            ruleId: item.id,
+            ruleName: item.ruleName,
+            orderCinemaCode,
+            shadowLineName
+          });
+          return false;
+        }
         return isInclude;
       }
       if (hasNameExclude) {
         console.error("按影院名称匹配规则，可能存在风险");
         const isExclude = cinemaMatchHandle({
           app_name: shadowLineName,
-          plat_cinema_code: cinema_code,
+          plat_cinema_code: orderCinemaCode,
           cinema_name_list: item.excludeCinemaNames
         });
         isSaveCinemaMatchLog &&
           logger?.infoSave("按影院名称匹配排除规则", {
             isExclude,
-            plat_cinema_code: cinema_code,
+            plat_cinema_code: orderCinemaCode,
             cinema_name_list: item.excludeCinemaNames
           });
+        // 名称无法判定（映射缺失）时按排除处理，避免 fail-open
+        if (isExclude === undefined) {
+          logger?.errorSave("影院名称匹配无法判定，已按排除处理", {
+            ruleId: item.id,
+            ruleName: item.ruleName,
+            orderCinemaCode,
+            shadowLineName
+          });
+          return false;
+        }
         return !isExclude;
       }
     });
