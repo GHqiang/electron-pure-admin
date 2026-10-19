@@ -121,39 +121,61 @@ const CACHE_SOURCE = {
  *
  * @param {Object} params - { app_name, cinema_code, film_name }
  *   注：show_time 不参与缓存 key —— third_party_ids 是影院+影片级字段，与场次无关
- * @param {Function} fetcher - 后端查询函数，返回 { data: { third_party_ids } }
- * @returns {Promise<{ids: Object|null, source: number}>}
+ * @param {Function} fetcher - 后端查询函数，返回 { data: { third_party_ids, third_party_ids_list } }
+ * @param {Object} [opts] - { withVersions }:为 true 时额外返回候选版本列表（后端 with_versions=1），
+ *   并使用独立的本地缓存键，避免与「单条结果」互相污染；不传该参数时行为与原来完全一致
+ * @returns {Promise<{ids: Object|null, versions: Array|null, source: number}>}
  *   - ids: 第三方 ID 集合，未命中或异常返回 null
+ *   - versions: 候选版本列表（仅 withVersions 时有值），否则 null
  *   - source: 命中来源 0=未命中 1=本地命中 2=远端命中（写入 offer_record.cache_hit）
  */
-async function getCachedThirdPartyIdsWithCache(params, fetcher) {
+async function getCachedThirdPartyIdsWithCache(params, fetcher, opts = {}) {
   const { app_name, cinema_code, film_name } = params;
-  const key = buildCacheKey(app_name, cinema_code, film_name);
+  const { withVersions = false } = opts;
+  const key = `${buildCacheKey(app_name, cinema_code, film_name)}${
+    withVersions ? "|versions" : ""
+  }`;
   const config = await getDictConfig();
 
   // 1. 查本地缓存
   const cached = getFromCache(key, config);
   if (cached !== undefined) {
     // 本地命中，直接返回（省掉 HTTP 调用，这是本地缓存的核心价值）
-    return { ids: cached, source: CACHE_SOURCE.LOCAL };
+    if (withVersions) {
+      return {
+        ids: cached?.ids || null,
+        versions: cached?.versions || null,
+        source: CACHE_SOURCE.LOCAL
+      };
+    }
+    return { ids: cached, versions: null, source: CACHE_SOURCE.LOCAL };
   }
 
   // 2. 本地未命中，查后端
   let result = null;
+  let versions = null;
   try {
     const res = await fetcher();
     result = res?.data?.third_party_ids || null;
+    versions = res?.data?.third_party_ids_list || null;
   } catch (error) {
     // 异常不缓存，返回 null
-    return { ids: null, source: CACHE_SOURCE.MISS };
+    return { ids: null, versions: null, source: CACHE_SOURCE.MISS };
   }
 
   // 3. 只缓存命中结果（null 不缓存）
+  if (withVersions) {
+    if (result || versions?.length) {
+      setToCache(key, { ids: result, versions }, config);
+      return { ids: result, versions, source: CACHE_SOURCE.REMOTE };
+    }
+    return { ids: null, versions: null, source: CACHE_SOURCE.MISS };
+  }
   if (result) {
     setToCache(key, result, config);
-    return { ids: result, source: CACHE_SOURCE.REMOTE };
+    return { ids: result, versions: null, source: CACHE_SOURCE.REMOTE };
   }
-  return { ids: null, source: CACHE_SOURCE.MISS };
+  return { ids: null, versions: null, source: CACHE_SOURCE.MISS };
 }
 
 /**

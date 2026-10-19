@@ -12,6 +12,8 @@ module.exports = {
   
   // 模块名称映射（支持@别名）
   moduleNameMapper: {
+    // @/utils/auth 是 TS 文件，jest 只配置了 js 转换，测试里打桩（鉴权不参与被测行为）
+    "^@/utils/auth$": "<rootDir>/tests/mocks/utilsAuthMock.js",
     "^@/(.*)$": "<rootDir>/src/$1"
   },
   
