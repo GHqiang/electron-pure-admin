@@ -4,7 +4,12 @@
 import { GET_APP_TYPE_LIST, getOfferFailType } from "@/common/constant.js";
 import Logger from "../logger.js";
 import getOfferPriceFun from "../autoTicket/commonOfferHandle.js";
-import { dynamicPrice, getCurrentTime } from "@/utils/utils.js";
+import {
+  dynamicPrice,
+  getCurrentTime,
+  logUpload,
+  traceUpload
+} from "@/utils/utils.js";
 import svApi from "@/api/sv-api.js";
 import { platTokens } from "@/store/platTokens.js";
 import { dictTable } from "@/store/dictTable";
@@ -67,6 +72,27 @@ export default class BaseOfferQueue {
     // 连续拉单失败计时起点（0=当前无连续失败）：每轮拉单产生"获取...列表异常"
     // error 日志视为本轮失败，恢复成功则清零（2026-08-23 新增，覆盖请求超时场景）
     this._consecutiveFetchFailStart = 0;
+    // 报价入队前丢弃可排查（2026-10-19）：
+    // A-未报价记录（offer_record_fail）、B-L2 丢弃明细、C1-拉单返回明细、C2-5 分钟拉单摘要
+    this._discardRecorded = new Map(); // 已写过丢弃记录的订单（防止重叠窗口/多轮重复）
+    this._pullEvidenceLogged = new Map(); // 已写过「拉单返回」的订单
+    this._lastFetchStats = null; // 子类 fetchOrders 每轮挂载 { returned, filtered, enqueued }
+    this._lastFetchParams = null; // 本轮拉单入参（水位线等，供证据字段使用）
+    this._evidenceQueue = []; // B/C1 证据上传串行队列
+    this._evidenceFlushing = false;
+    this._discardRecordQueue = []; // A 页面记录入库串行队列
+    this._discardRecordFlushing = false;
+    this._discardDay = ""; // A 记录本队列每日上限计数（D8a，默认 2000）
+    this._discardDayCount = 0;
+    this._evidenceStat = {
+      trace_fail: 0,
+      evidence_dropped: 0,
+      discard_record_fail: 0,
+      discard_record_dropped: 0
+    };
+    // C2 拉单摘要一期只对 lieren 开启（其余队列不写，避免 11 个队列同时放量）
+    this._pullSummaryEnabled = this.platName === "lieren";
+    this._pullStat = this._newPullStat();
   }
 
   /**
@@ -87,6 +113,20 @@ export default class BaseOfferQueue {
     this.queue = [];
     this.lastFetchTime = Date.now();
     this._consecutiveFetchFailStart = 0;
+    // 证据状态重置（丢弃去重/拉单证据去重/本轮统计/5 分钟窗口计数）
+    this._discardRecorded = new Map();
+    this._pullEvidenceLogged = new Map();
+    this._lastFetchStats = null;
+    this._lastFetchParams = null;
+    this._discardDay = "";
+    this._discardDayCount = 0;
+    this._evidenceStat = {
+      trace_fail: 0,
+      evidence_dropped: 0,
+      discard_record_fail: 0,
+      discard_record_dropped: 0
+    };
+    this._pullStat = this._newPullStat();
     startFetchAlarmMonitor(this, 13, "待报价", 14);
 
     // 重置子类拉单相关状态（如猎人的水位线 lastFetchTimestamp）
@@ -138,6 +178,13 @@ export default class BaseOfferQueue {
         this._fetchStartedAt = Date.now();
         // 闭包保存本轮 startedAt，finally 中比对，避免被复位的旧轮误释放新一轮的锁
         const myStartedAt = this._fetchStartedAt;
+        // C2 拉单摘要：记录轮次间隔（max_round_gap_ms 用于判断客户端是否出现空窗）
+        const roundStart = Date.now();
+        if (this._pullStat.lastRoundAt) {
+          const gap = roundStart - this._pullStat.lastRoundAt;
+          if (gap > this._pullStat.maxGapMs) this._pullStat.maxGapMs = gap;
+        }
+        this._pullStat.lastRoundAt = roundStart;
         // 本轮拉单前统计适配器 logger 中"拉单失败"类 error 日志数（对比用）
         const failLogsBefore = countFetchFailLogs(this.platformAdapter?.logger);
         // 传 0 跳过子类内部的 mockDelay，拉单间隔由定时器控制
@@ -150,13 +197,37 @@ export default class BaseOfferQueue {
             // 一轮拉单完成（含异常）即刷新心跳；fetchOrders 挂起/卡死时不刷新
             // → 超过阈值触发"无拉单日志"告警
             this.lastFetchTime = Date.now();
-            // 连续失败检测：本轮新增拉单失败日志（请求超时/网络异常）→ 开始计时；
+            // C2 拉单摘要：累加轮次/失败轮次/拉取-过滤-入队计数
+            this._pullStat.rounds++;
+            const stats = this._lastFetchStats;
+            if (stats) {
+              // 本轮无新增拉单失败且无处理异常才算成功轮次
+              if (!stats.failed && failLogsAfter === failLogsBefore) {
+                this._pullStat.okRounds++;
+              }
+              this._pullStat.returned += Number(stats.returned) || 0;
+              this._pullStat.filtered += Number(stats.filtered) || 0;
+              this._pullStat.enqueued += Number(stats.enqueued) || 0;
+              this._lastFetchStats = null;
+            }
+            if (this.lastFetchTimestamp) {
+              this._pullStat.lastFetchTimestamp = this.lastFetchTimestamp;
+            }
+            // 连续失败检测：本轮新增拉单失败日志（请求超时/网络异常）或处理异常 → 开始计时；
             // 任何一轮无新增失败 → 清零重计（2026-08-23）
-            if (failLogsAfter > failLogsBefore) {
+            if (stats?.failed || failLogsAfter > failLogsBefore) {
+              this._pullStat.failRounds++;
               this._consecutiveFetchFailStart =
                 this._consecutiveFetchFailStart || Date.now();
             } else {
               this._consecutiveFetchFailStart = 0;
+            }
+            // 5 分钟窗口到期 → 写 1 条 L1 拉单摘要（不新增定时器）
+            if (
+              this._pullSummaryEnabled &&
+              Date.now() - this._pullStat.windowStart >= 5 * 60 * 1000
+            ) {
+              this._flushPullSummary();
             }
             // 仅当 _fetchStartedAt 仍等于 myStartedAt 时才释放：
             //  - 若被超时复位，_fetchStartedAt 已被置 0，不释放（新一轮会自己管理）
@@ -534,11 +605,20 @@ export default class BaseOfferQueue {
     // 增加报价截止时间判断，小于等于阈值则不处理
     const skipCheck = this._shouldSkipOfferEndTimeCheck();
     if (!skipCheck) {
+      const now = Date.now();
       if (
         item.offer_end_time &&
-        item.offer_end_time - new Date().getTime() <=
-          dictStore.dictInfo.minOfferQueueEndTime
+        item.offer_end_time - now <= dictStore.dictInfo.minOfferQueueEndTime
       ) {
+        const threshold = Number(dictStore.dictInfo.minOfferQueueEndTime) || 0;
+        const remaining = item.offer_end_time - now;
+        // A 页面记录 + B L2 明细：截止不足不再静默丢弃（2026-10-19）
+        this._recordDiscard(item, {
+          reason: "deadline",
+          errType: 16,
+          errMsg: `入队前丢弃：距报价截止不足（剩余${remaining}ms，阈值${threshold}ms）`,
+          detail: { remaining_ms: remaining, threshold_ms: threshold }
+        });
         return;
       }
     }
@@ -1337,10 +1417,296 @@ export default class BaseOfferQueue {
   }
 
   /**
+   * 新建 C2 拉单统计窗口（2026-10-19 报价入队前丢弃可排查）
+   * @returns {Object}
+   */
+  _newPullStat() {
+    return {
+      windowStart: Date.now(),
+      rounds: 0,
+      okRounds: 0,
+      failRounds: 0,
+      returned: 0,
+      filtered: 0,
+      enqueued: 0,
+      lastFetchTimestamp: 0,
+      maxGapMs: 0,
+      lastRoundAt: 0
+    };
+  }
+
+  /**
+   * 记住 key（FIFO 淘汰），用于丢弃/拉单证据去重
+   */
+  _rememberKey(map, key, capacity) {
+    map.set(key, Date.now());
+    if (map.size > capacity) {
+      const firstKey = map.keys().next().value;
+      if (firstKey !== undefined) map.delete(firstKey);
+    }
+  }
+
+  /**
+   * A 记录本队列每日上限（D8a，默认 2000；字典 offerDiscardDailyLimit 可覆盖）
+   * 按「平台队列实例 + 本地自然日」计数；超出只计数、不写页面行；B 证据仍写
+   * @returns {boolean}
+   */
+  _allowDiscardRecord() {
+    const day = new Date().toDateString();
+    if (this._discardDay !== day) {
+      this._discardDay = day;
+      this._discardDayCount = 0;
+    }
+    const limit = Number(dictStore.dictInfo?.offerDiscardDailyLimit) || 2000;
+    if (this._discardDayCount >= limit) {
+      this._evidenceStat.discard_record_dropped++;
+      return false;
+    }
+    this._discardDayCount++;
+    return true;
+  }
+
+  /**
+   * 记录「入队前丢弃」：A 页面记录 + B L2 明细（同一单只记一次）
+   * @param {Object} item - 订单
+   * @param {Object} opts - { reason, errType, errMsg, detail, appName }
+   */
+  _recordDiscard(item, { reason, errType, errMsg, detail = {}, appName } = {}) {
+    const orderNumber = item?.order_number;
+    if (!orderNumber || this.isTestOrder) return;
+    const key = `${this.platName}_${orderNumber}`;
+    // 已入队/已处理过的单不再补丢弃记录（重复投递分支不记录）
+    if (
+      this.handledOrders.has(key) ||
+      this.queue.some(order => order.order_number === orderNumber)
+    ) {
+      return;
+    }
+    if (this._discardRecorded.has(key)) return;
+    this._rememberKey(this._discardRecorded, key, 500);
+    const recordAppName = appName ?? item.app_name ?? item.appName ?? "";
+    // A：页面记录（异步串行入库，不阻塞拉单/入队；超出每日上限只计数）
+    if (this._allowDiscardRecord()) {
+      this._enqueueDiscardRecord(() =>
+        this._addOfferDiscardRecord(item, {
+          reason,
+          errType,
+          errMsg,
+          appName: recordAppName
+        })
+      );
+    }
+    // B：L2 丢弃明细（直传 trace，不受字典开关影响）
+    this._uploadTraceEvidence({
+      orderNumber,
+      appName: recordAppName,
+      des: `报价队列-订单丢弃-${reason}`,
+      info: {
+        order_number: orderNumber,
+        plat_name: this.platName,
+        app_name: recordAppName,
+        offer_end_time:
+          item.offer_end_time ?? (item.sytime ? item.sytime * 1000 : null),
+        current_time: getCurrentTime(),
+        reason,
+        reason_detail: detail,
+        err_type: errType,
+        err_msg: errMsg,
+        last_fetch_timestamp: this.lastFetchTimestamp || null,
+        returned_count: this._lastFetchStats?.returned ?? null
+      }
+    });
+  }
+
+  /**
+   * 丢弃记录入库（offer_record_fail，order_status="2"）
+   * 必填列逐字段兜底；失败计数进 C2 摘要，避免再次静默
+   */
+  async _addOfferDiscardRecord(item, { errType, errMsg, appName }) {
+    try {
+      const rule = tokens.userInfo?.rule;
+      if (rule === undefined || rule === null || rule === "") {
+        this._evidenceStat.discard_record_fail++;
+        this.platformAdapter?.logger?.errorSave?.(
+          "丢弃记录缺少 rule，跳过入库",
+          { order_number: item.order_number, err_type: errType }
+        );
+        return;
+      }
+      const serOrderInfo = {
+        plat_name: this.platName,
+        app_name: appName || "",
+        order_id: item.id ?? null,
+        order_number: item.order_number,
+        ticket_num: item.ticket_num ?? item.seat_num ?? 0,
+        city_name: item.city_name ?? "",
+        cinema_addr: item.cinema_addr ?? item.cinema_address ?? "",
+        cinema_name: item.cinema_name ?? "",
+        hall_name: item.hall_name ?? item.hallName ?? "",
+        film_name: item.film_name ?? item.movie_name ?? "",
+        show_time: item.show_time ?? item.showTime ?? "",
+        cinema_code: item.cinema_code ?? "",
+        cinema_group: item.cinema_group ?? "",
+        order_status: "2",
+        processing_time: getCurrentTime(),
+        err_type: errType,
+        err_msg: errMsg,
+        rule,
+        rewards: item.rewards ?? 0,
+        offer_from: 2,
+        offer_rule_id: null
+      };
+      await svApi.addOfferRecord(serOrderInfo, {
+        silent: true,
+        noRetry: true
+      });
+    } catch (error) {
+      this._evidenceStat.discard_record_fail++;
+      this.platformAdapter?.logger?.errorSave?.("丢弃记录入库异常", {
+        error,
+        order_number: item.order_number,
+        err_type: errType
+      });
+    }
+  }
+
+  /**
+   * A 记录入库串行队列（同一时刻最多 1 个在途，积压上限 200）
+   */
+  _enqueueDiscardRecord(task) {
+    if (this._discardRecordQueue.length >= 200) {
+      this._evidenceStat.discard_record_dropped++;
+      return;
+    }
+    this._discardRecordQueue.push(task);
+    if (!this._discardRecordFlushing) this._flushDiscardRecordQueue();
+  }
+
+  async _flushDiscardRecordQueue() {
+    if (this._discardRecordFlushing) return;
+    this._discardRecordFlushing = true;
+    try {
+      while (this._discardRecordQueue.length) {
+        const task = this._discardRecordQueue.shift();
+        try {
+          await task();
+        } catch (error) {
+          // 任务内部已计数/留痕，这里只防串行链断裂
+          console.error("丢弃记录串行队列异常", error);
+        }
+      }
+    } finally {
+      this._discardRecordFlushing = false;
+    }
+  }
+
+  /**
+   * 直传 L2 明细（绕过 Logger 字典开关；C1/B 共用）
+   */
+  _uploadTraceEvidence({ orderNumber, appName, des, level = "info", info }) {
+    if (!orderNumber) return;
+    this._enqueueEvidence(async () => {
+      try {
+        await traceUpload(
+          {
+            plat_name: this.platName,
+            app_name: appName || "",
+            order_number: orderNumber,
+            type: 1
+          },
+          [{ opera_time: getCurrentTime(), des, level, info }]
+        );
+      } catch (error) {
+        this._evidenceStat.trace_fail++;
+        this.platformAdapter?.logger?.errorSave?.("拉单/丢弃证据上传异常", {
+          error,
+          order_number: orderNumber
+        });
+      }
+    });
+  }
+
+  /**
+   * B/C1 证据上传串行队列（同一时刻最多 1 个在途，积压上限 200）
+   */
+  _enqueueEvidence(task) {
+    if (this._evidenceQueue.length >= 200) {
+      this._evidenceStat.evidence_dropped++;
+      return;
+    }
+    this._evidenceQueue.push(task);
+    if (!this._evidenceFlushing) this._flushEvidenceQueue();
+  }
+
+  async _flushEvidenceQueue() {
+    if (this._evidenceFlushing) return;
+    this._evidenceFlushing = true;
+    try {
+      while (this._evidenceQueue.length) {
+        const task = this._evidenceQueue.shift();
+        try {
+          await task();
+        } catch (error) {
+          console.error("拉单证据串行队列异常", error);
+        }
+      }
+    } finally {
+      this._evidenceFlushing = false;
+    }
+  }
+
+  /**
+   * C2：写 1 条 5 分钟拉单摘要到 L1（order_number 为空）
+   */
+  _flushPullSummary() {
+    const stat = this._pullStat;
+    if (!stat.rounds && !stat.returned) {
+      this._pullStat = this._newPullStat();
+      return;
+    }
+    const info = {
+      from: new Date(stat.windowStart).toLocaleString(),
+      to: new Date().toLocaleString(),
+      rounds: stat.rounds,
+      ok_rounds: stat.okRounds,
+      fail_rounds: stat.failRounds,
+      returned: stat.returned,
+      filtered: stat.filtered,
+      enqueued: stat.enqueued,
+      last_fetch_timestamp: stat.lastFetchTimestamp,
+      max_round_gap_ms: stat.maxGapMs,
+      trace_fail: this._evidenceStat.trace_fail,
+      evidence_dropped: this._evidenceStat.evidence_dropped,
+      discard_record_fail: this._evidenceStat.discard_record_fail,
+      discard_record_dropped: this._evidenceStat.discard_record_dropped
+    };
+    this._pullStat = this._newPullStat();
+    this._evidenceStat = {
+      trace_fail: 0,
+      evidence_dropped: 0,
+      discard_record_fail: 0,
+      discard_record_dropped: 0
+    };
+    logUpload(
+      { plat_name: this.platName, app_name: "", order_number: "", type: 1 },
+      [
+        {
+          opera_time: getCurrentTime(),
+          des: "报价队列-拉单摘要",
+          level: "info",
+          info
+        }
+      ]
+    ).catch(() => {});
+  }
+
+  /**
    * 停止队列运行
    */
   stop() {
     this.isRunning = false;
+    // C2：停止前落最后一条拉单摘要（不丢当前窗口）
+    if (this._pullSummaryEnabled) this._flushPullSummary();
     // 清理拉单定时器，防止停止后仍触发拉单
     if (this._fetchTimer) {
       clearTimeout(this._fetchTimer);

@@ -101,8 +101,9 @@ export const handleNetworkRetry = async (
   // 检查是否满足重试条件
   const isRetryable = isRetryableError(error);
   const canRetry =
-    whitelist.length === 0 ||
-    checkUrlCanRetry(config.url || config.originalUrl, whitelist);
+    config.noRetry !== true &&
+    (whitelist.length === 0 ||
+      checkUrlCanRetry(config.url || config.originalUrl, whitelist));
 
   if (isRetryable && canRetry && config.retryCount < maxRetries) {
     config.retryCount += 1;

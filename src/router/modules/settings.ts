@@ -119,6 +119,15 @@ export default {
         title: "未报价记录",
         keepAlive: true
       }
+    },
+    {
+      path: "/set/orderDiagnosis",
+      name: "orderDiagnosis",
+      component: () => import("@/views/orderDiagnosis/index.vue"),
+      meta: {
+        title: "订单排查",
+        keepAlive: true
+      }
     }
   ]
 } satisfies RouteConfigsTable;

@@ -145,6 +145,8 @@ instance.interceptors.response.use(
     let isErrorByLieRen =
       (IS_DEV ? response.config.url.indexOf("/svpi/") !== -1 : true) &&
       data.code !== 1;
+    // silent：丢弃记录等后台写入失败不弹窗（仍 reject，由调用方留痕，2026-10-19）
+    const isSilent = response.config?.silent === true;
     if (
       isErrorByLieRen &&
       !whitelistSp.some(item => response.config.url.includes(item))
@@ -168,13 +170,14 @@ instance.interceptors.response.use(
         });
         return Promise.reject(data);
       }
-      ElMessage.error(data.msg || "请求失败");
+      if (!isSilent) ElMessage.error(data.msg || "请求失败");
       return Promise.reject(data);
     }
     return data;
   },
   async error => {
     const { response } = error;
+    const isSilent = error.config?.silent === true;
     // 网络观测：本次请求结束（重试会重新走 request 拦截器计数）
     if (error.config?.url) trackRequestEnd(error.config.url);
 
@@ -206,9 +209,11 @@ instance.interceptors.response.use(
         }
 
         // 仍然走原有的错误处理逻辑
-        ElMessage.error(
-          `服务异常 (${response.status})，第${serviceDownCount}次失败`
-        );
+        if (!isSilent) {
+          ElMessage.error(
+            `服务异常 (${response.status})，第${serviceDownCount}次失败`
+          );
+        }
         return Promise.reject(error);
       }
 
@@ -219,7 +224,9 @@ instance.interceptors.response.use(
           //   store.dispatch('auth/logout');
           break;
         default:
-          ElMessage.error(`请求错误 ${response.status}: ${error.message}`);
+          if (!isSilent) {
+            ElMessage.error(`请求错误 ${response.status}: ${error.message}`);
+          }
       }
     } else {
       // 网络异常本地落盘（整改 D3）：弹窗时间与后端 proxy_record/连接池日志对表用
@@ -272,7 +279,7 @@ instance.interceptors.response.use(
       const isCacheIdsUrl = error.config?.url?.includes(
         "offerRecord/cached-ids"
       );
-      if (!isCacheIdsUrl) {
+      if (!isCacheIdsUrl && error.config?.silent !== true) {
         ElMessage.error("机器服务网络连接异常，请稍后再试");
       }
     }

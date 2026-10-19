@@ -333,7 +333,7 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" fixed="right" align="center" width="180">
+      <el-table-column label="操作" fixed="right" align="center" width="240">
         <template #default="scope">
           <el-button
             v-if="IN_RULE_LIST.includes(rule)"
@@ -350,6 +350,9 @@
           >
           <el-button size="small" type="info" @click="showDetail(scope.row)"
             >详情</el-button
+          >
+          <el-button size="small" @click="goDiagnosis(scope.row)"
+            >排查</el-button
           >
         </template>
       </el-table-column>
@@ -487,8 +490,10 @@ import {
   watch
 } from "vue";
 import { ElLoading } from "element-plus";
+import { useRouter } from "vue-router";
 import svApi from "@/api/sv-api";
 import { platTokens } from "@/store/platTokens";
+const router = useRouter();
 const {
   userInfo: { rule, user_id }
 } = platTokens();
@@ -657,6 +662,15 @@ const queryLog = async ({ order_number, user_id, processing_time }) => {
   } catch (error) {
     console.warn("查询操作日志返回异常", error);
   }
+};
+
+// 跳转「订单排查」页（2026-10-19）：带上订单号，页面自动带出日期并查询
+const goDiagnosis = row => {
+  if (!row?.order_number) return;
+  router.push({
+    path: "/set/orderDiagnosis",
+    query: { order_number: row.order_number, user_id: row.user_id }
+  });
 };
 
 // V3 L2：明细日志 Tab（后端日志文件查询）

@@ -417,18 +417,59 @@ const newGetCinemaFlagFun = item => {
   return appFlag;
 };
 /**
- * 获取影院标识
+ * 获取影院标识与不可报价原因（报价队列用，2026-10-19 新增）
+ *
+ * 与 getCinemaFlag 的判定顺序完全一致，额外返回原因与细分来源：
+ *   - unknown_cinema   影院识别不出（newGetCinemaFlagFun 为空）
+ *   - disabled_series  系列/影院被禁用（detail.source: disableAppTypeList | internal_cinema_disabled）
+ *   - not_login        无可用登录（detail.source: no_login_entry | login_incomplete）
+ *   - ""               可报价
+ *
  * @param {Object} item - 订单信息
- * @param {boolean} isSplitUser - 是否分用户
- * @param {boolean} isTicketQueue - 是否为待出票队列调用（true 时跳过系列禁用与登录信息检查、内部角色影院禁用：
- *   确认接单仅需 order_number，未登录或被禁系列、内部角色影院禁用订单也需先接单占位）
- * @returns {string} 影院标识
+ * @param {Object} [options]
+ * @param {boolean} [options.isSplitUser=true] - 是否按 link_user_id 分用户
+ * @param {boolean} [options.isTicketQueue=false] - 待出票队列：跳过禁用/登录检查
+ * @param {boolean} [options.requireSession=false] - 报价队列需额外校验 mobile/session_id（第 5 种成因）
+ * @returns {{ app_name: string, reason: string, detail: Object }}
  */
-const getCinemaFlag = (item, isSplitUser = true, isTicketQueue = false) => {
+const getCinemaFlagDetail = (
+  item,
+  { isSplitUser = true, isTicketQueue = false, requireSession = false } = {}
+) => {
   const app_name = newGetCinemaFlagFun(item);
-  if (!app_name) return;
+  // 名称兜底也是通过映射表匹配到行并取到 plat_cinema_code，算映射存在
+  const codeMatched = !!app_name;
+  if (!app_name) {
+    // 映射存在但当前用户不可用（内部角色影院禁用 / 外部角色 status=3）时，
+    // getCinemaAppFlag 内部已按 canAppList 过滤并返回空，这里回查映射表区分「未识别」与「被禁用」
+    const mappedCinema = (cinemaCodeMatchObj.items || []).find(mapping => {
+      const code = normalizeCinemaCode(item.cinema_code);
+      return code && normalizeCinemaCode(mapping.plat_cinema_code) === code;
+    });
+    const usableAppList = GET_USABLE_APP_LIST() || {};
+    if (
+      mappedCinema?.app_name &&
+      Object.keys(usableAppList).length &&
+      !usableAppList[mappedCinema.app_name]
+    ) {
+      return {
+        app_name: mappedCinema.app_name,
+        reason: "disabled_series",
+        detail: { source: "cinema_disabled" },
+        code_matched: true
+      };
+    }
+    return {
+      app_name: "",
+      reason: "unknown_cinema",
+      detail: {},
+      code_matched: false
+    };
+  }
   // 待出票队列调用时跳过系列禁用检查、登录信息检查和影院禁用检查，直接返回影院标识
-  if (isTicketQueue) return app_name;
+  if (isTicketQueue) {
+    return { app_name, reason: "", detail: {}, code_matched: codeMatched };
+  }
 
   // 禁用指定系列报价（多选）：读取 disableAppTypeList 数组，命中当前影线 app_type_code 则跳过报价
   let disableAppTypeListValue =
@@ -449,17 +490,93 @@ const getCinemaFlag = (item, isSplitUser = true, isTicketQueue = false) => {
     disableAppTypeList = ["ume_h5"];
   }
   if (disableAppTypeList.includes(GET_APP_INFO(app_name)?.app_type_code)) {
-    return;
+    return {
+      app_name,
+      reason: "disabled_series",
+      detail: { source: "disableAppTypeList" },
+      code_matched: codeMatched
+    };
   }
   let rule = tokens?.userInfo?.rule;
   // 内部角色影院禁用，主要是控制影院是否进行报价
   if (IN_RULE_LIST.includes(rule) && !GET_USABLE_APP_LIST()?.["" + app_name]) {
-    return;
+    return {
+      app_name,
+      reason: "disabled_series",
+      detail: { source: "internal_cinema_disabled" },
+      code_matched: codeMatched
+    };
   }
 
   // 进行登录信息过滤
-  const isLogin = isLoginByAppName(app_name, isSplitUser);
-  if (isLogin) return app_name;
+  if (!isLoginByAppName(app_name, isSplitUser)) {
+    return {
+      app_name,
+      reason: "not_login",
+      detail: { source: "no_login_entry" },
+      code_matched: codeMatched
+    };
+  }
+  // 报价队列额外校验：登录条目存在但缺 mobile/session_id（或不属于当前用户）也算无可用登录
+  if (requireSession) {
+    const loginInfo = getCinemaLoginInfoList(isSplitUser).find(
+      loginItem =>
+        loginItem.app_name === app_name &&
+        loginItem.mobile &&
+        loginItem.session_id
+    );
+    if (!loginInfo) {
+      return {
+        app_name,
+        reason: "not_login",
+        detail: { source: "login_incomplete" },
+        code_matched: codeMatched
+      };
+    }
+  }
+  return { app_name, reason: "", detail: {}, code_matched: codeMatched };
+};
+
+/**
+ * 同角色是否至少有一个用户维护了该影院的可用登录（2026-10-19）
+ *
+ * 数据源：loginInfoList —— 登录页/影院登录页通过 queryLoginList({ rule }) 拉取的
+ * 全角色登录列表（含 link_user_id，不是只当前用户），因此可用来判断
+ * 「同角色所有用户都没有该影院登录」。
+ *
+ * 用途：全角色都没有登录的订单属于无关订单，报价队列不写库、不写 L1/L2 日志。
+ *
+ * @param {string} app_name - 影院标识
+ * @returns {boolean}
+ */
+const hasAnyRoleLogin = app_name => {
+  if (!app_name) return false;
+  const raw = window.localStorage.getItem("loginInfoList");
+  if (!raw) return false;
+  try {
+    const list = JSON.parse(raw);
+    return list.some(
+      item => item.app_name === app_name && item.mobile && item.session_id
+    );
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * 获取影院标识（兼容旧调用）
+ * @param {Object} item - 订单信息
+ * @param {boolean} isSplitUser - 是否分用户
+ * @param {boolean} isTicketQueue - 是否为待出票队列调用（true 时跳过系列禁用与登录信息检查、内部角色影院禁用：
+ *   确认接单仅需 order_number，未登录或被禁系列、内部角色影院禁用订单也需先接单占位）
+ * @returns {string} 影院标识
+ */
+const getCinemaFlag = (item, isSplitUser = true, isTicketQueue = false) => {
+  const { app_name, reason } = getCinemaFlagDetail(item, {
+    isSplitUser,
+    isTicketQueue
+  });
+  return reason ? undefined : app_name;
 };
 
 // 获取影院code
@@ -3629,6 +3746,8 @@ export {
   findBestMatchByLevenshteinWithThreshold,
   isTimeAfter, // 判断time1时间是否在time2之后
   getCinemaFlag, // 获取影院标识
+  getCinemaFlagDetail, // 获取影院标识 + 不可报价原因（报价队列丢弃记录用）
+  hasAnyRoleLogin, // 同角色是否至少有一个用户维护了该影院登录
   getCinemaCode, // 获取影院code
   convertFullwidthToHalfwidth, // 全角字符转换成半角
   cinemNameSpecial, // 影院名称特殊处理（为了特殊匹配,去括号、空格及中间点）

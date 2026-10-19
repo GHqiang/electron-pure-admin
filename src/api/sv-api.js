@@ -79,8 +79,9 @@ const queryDealOfferList = params =>
 const queryOfferInfo = params =>
   axios.get("/svpi/offerRecord/queryOfferInfo", { params, timeout: 30 * 1000 });
 
-// 添加报价记录
-const addOfferRecord = params => axios.post("/svpi/offerRecord/add", params);
+// 添加报价记录（config 可传 { silent: true }：入队前丢弃记录写入失败不弹窗，见 2026-10-19 整改）
+const addOfferRecord = (params, config = {}) =>
+  axios.post("/svpi/offerRecord/add", params, config);
 // 更新报价记录
 const updateOfferRecord = params =>
   axios.post("/svpi/offerRecord/update", params);
