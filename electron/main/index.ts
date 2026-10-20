@@ -112,7 +112,9 @@ async function createWindow() {
       // Consider using contextBridge.exposeInMainWorld
       // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
       nodeIntegration: true,
-      contextIsolation: false
+      contextIsolation: false,
+      // 报价队列依赖 2s 定时器；最小化/后台时禁用 Chromium 定时器节流，避免被压到 60s（2026-10-20）
+      backgroundThrottling: false
     }
   });
 
