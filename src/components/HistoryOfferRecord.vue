@@ -310,12 +310,11 @@
       </el-table-column>
 
       <el-table-column prop="processing_time" label="创建时间" width="160" />
-      <el-table-column
-        v-if="orderStatus != 1"
-        prop="err_msg"
-        label="失败原因"
-        width="280"
-      />
+      <el-table-column v-if="orderStatus != 1" label="失败原因" width="280">
+        <template #default="scope">
+          {{ scope.row.err_msg || "未记录失败原因（历史数据）" }}
+        </template>
+      </el-table-column>
       <el-table-column
         v-if="orderStatus != 1"
         prop="err_type"
@@ -329,7 +328,10 @@
             type="danger"
             effect="dark"
           >
-            {{ OFFER_FAIL_TYPE[scope.row.err_type] || "" }}
+            {{ OFFER_FAIL_TYPE[scope.row.err_type] || "未分类" }}
+          </el-tag>
+          <el-tag v-else size="default" type="info" effect="dark">
+            未分类
           </el-tag>
         </template>
       </el-table-column>

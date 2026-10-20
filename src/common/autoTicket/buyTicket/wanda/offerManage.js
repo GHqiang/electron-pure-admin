@@ -139,6 +139,11 @@ class WandaOfferPrice extends BaseOfferPrice {
       const movieInfo = await this.getMovieInfo();
       this.logger.infoSave("获取电影信息", { movieInfo });
       if (!movieInfo) {
+        // 2026-10-20：原因为空时失败记录无法排查；补一条可归类的错误（getOfferFailType=7）
+        this.logger.errorSave("获取目标影片信息失败", {
+          film_name: this.order?.film_name,
+          cinema_name: this.order?.cinema_name
+        });
         return null;
       }
 

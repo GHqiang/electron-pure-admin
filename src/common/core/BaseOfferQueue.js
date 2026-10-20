@@ -1057,7 +1057,9 @@ export default class BaseOfferQueue {
         // 均发生在影院/影片查询之后，cinemaInfo 已有值，失败记录写入 third_party_ids 供后续订单复用
         return {
           offerRule,
-          err_msg,
+          // 2026-10-20：上游没有 err_msg 时不再写空原因；兜底为可读的最终失败阶段，
+          // 具体平台（如 Wanda）应尽量在 getMovieInfo/getTargetShow 里写入更精确的 errorSave
+          err_msg: err_msg || "未获取到最终报价（场次/影片/价格/规则匹配失败）",
           err_info,
           cinemaInfo: result?.cinemaInfo,
           cacheHit: result?.cacheHit
@@ -1159,6 +1161,9 @@ export default class BaseOfferQueue {
         // 透传 cinemaInfo/cacheHit：getEndOfferPrice 已成功，cinemaInfo 已解析
         return {
           offerRule,
+          // 2026-10-20：平台已自动报价不是空原因失败，带回 err_msg，
+          // addOrderHandleRecord 会按 getOfferFailType 归为 8（平台已报价）
+          err_msg: "猎人已自动报价",
           cinemaInfo: result?.cinemaInfo,
           cacheHit: result?.cacheHit
         };
@@ -1286,6 +1291,12 @@ export default class BaseOfferQueue {
     try {
       // offerResult: { res, offerRule } || { offerRule } || undefined
       const errInfoObj = log.getLastErrMsgAndInfo();
+      // 2026-10-20：失败记录不再写空原因；成功记录保持空串。
+      // 具体平台（lieren 已自动报价、Wanda 场次/影片）优先写自己的 err_msg，这里只做最后兜底。
+      const rawErrMsg = offerResult?.err_msg || errInfoObj?.err_msg || "";
+      const resolvedErrMsg =
+        rawErrMsg ||
+        (offerResult?.res ? "" : "提交报价未确认成功（平台未返回明确原因）");
       log.infoSave("准备写入报价记录", {
         order_number: order.order_number,
         hasOfferResult: !!offerResult,
@@ -1319,7 +1330,7 @@ export default class BaseOfferQueue {
         quan_value: offerResult?.offerRule?.quanValue,
         order_status: offerResult?.res ? "1" : "2",
         processing_time: getCurrentTime(),
-        err_msg: offerResult?.err_msg || errInfoObj?.err_msg || "",
+        err_msg: resolvedErrMsg,
         err_info: offerResult?.err_info || errInfoObj?.err_info || "",
         rewards: order.rewards,
         fee_rate: getPlatFeeRate(order),

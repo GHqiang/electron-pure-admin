@@ -413,7 +413,17 @@ export default class WandaCinemaManage {
       console.log("万达目标影片场次列表", dateInfos);
 
       let dateInfo = dateInfos.find(d => d.date === Number(show_date));
-      if (!dateInfo) return null;
+      if (!dateInfo) {
+        // 2026-10-20：原来静默 return null，失败记录原因为空；补可归类错误（getOfferFailType=7）
+        this.logger.errorSave("匹配万达影片放映场次失败", {
+          cinema_id,
+          film_id,
+          show_date,
+          show_time,
+          hall_name
+        });
+        return null;
+      }
       let showList = dateInfo.showtimesInf?.showtimeList || [];
 
       let targetShow = this._findTargetShow(showList);
@@ -422,7 +432,7 @@ export default class WandaCinemaManage {
         return targetShow;
       }
 
-      // 次日重试：show_date 为 YYYYMMDD 格式，需转为 YYYY-MM-DD 供 getPreviousDay 解析，再转回 YYYYMMDD 与 dateInfos.date 数字匹配
+      // 跨夜场次回退：show_date 为 YYYYMMDD 格式，需转为 YYYY-MM-DD 供 getPreviousDay 解析，再转回 YYYYMMDD 与 dateInfos.date 数字匹配
       const stdDate =
         show_date.slice(0, 4) +
         "-" +
@@ -430,9 +440,19 @@ export default class WandaCinemaManage {
         "-" +
         show_date.slice(6, 8);
       show_date = getPreviousDay(stdDate).replaceAll("-", "");
-      this.logger.warnSave("首次匹配场次失败，尝试次日重试", { show_date });
+      this.logger.warnSave("首次未匹配，回退前一日重试", { show_date });
       dateInfo = dateInfos.find(d => d.date === Number(show_date));
-      if (!dateInfo) return null;
+      if (!dateInfo) {
+        this.logger.errorSave("匹配万达影片放映场次失败", {
+          cinema_id,
+          film_id,
+          show_date,
+          show_time,
+          hall_name,
+          retry: "prev_day"
+        });
+        return null;
+      }
       showList = dateInfo.showtimesInf?.showtimeList || [];
       targetShow = this._findTargetShow(showList);
       if (targetShow) {
