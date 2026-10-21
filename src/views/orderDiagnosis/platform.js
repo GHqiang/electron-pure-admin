@@ -33,5 +33,8 @@ export const pickOrderPlatform = (records = [], trace = []) => {
  */
 export const filterSummaryByPlatform = (rows = [], platform = "") =>
   platform
-    ? rows.filter(row => (toInfo(row.info).plat_name || "") === platform)
+    ? rows.filter(row => {
+        const info = toInfo(row.info);
+        return (row.plat_name || info.plat_name || "") === platform;
+      })
     : rows;

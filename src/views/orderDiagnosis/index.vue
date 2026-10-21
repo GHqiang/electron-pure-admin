@@ -134,7 +134,7 @@
         <el-table-column prop="opera_time" label="时间" width="170" />
         <el-table-column label="平台" width="120">
           <template #default="{ row }">
-            {{ summaryInfo(row).plat_name || "-" }}
+            {{ row.plat_name || summaryInfo(row).plat_name || "-" }}
           </template>
         </el-table-column>
         <el-table-column label="轮次/成功/失败" width="140">
