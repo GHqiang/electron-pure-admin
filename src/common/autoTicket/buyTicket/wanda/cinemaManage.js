@@ -87,14 +87,14 @@ export default class WandaCinemaManage {
       // 1、获取城市列表 → 匹配城市ID
       const cityList = await this.getCityList();
       if (!cityList?.length) {
-        this.logger.errorSave("获取万达城市列表为空");
+        this.logger.errorSave("获取城市列表为空");
         return;
       }
       let city_id = cityList.find(
         item => item.name.indexOf(city_name) !== -1
       )?.id;
       if (!city_id) {
-        this.logger.errorSave("获取万达城市ID失败", { city_name });
+        this.logger.errorSave("获取城市ID失败", { city_name });
         return;
       }
 
@@ -108,12 +108,12 @@ export default class WandaCinemaManage {
         movieDataPromise
       ]);
       if (!cinemaList?.length) {
-        this.logger.errorSave("获取万达城市影院列表为空", { city_id });
+        this.logger.errorSave("获取城市影院列表为空", { city_id });
         return;
       }
       let targetCinema = this.getTargetCinemaInfo(cinema_code, cinemaList);
       if (!targetCinema) {
-        this.logger.errorSave("获取万达目标影院失败", {
+        this.logger.errorSave("获取目标影院失败", {
           cinema_name,
           cinema_code,
           appFlag,
@@ -136,12 +136,12 @@ export default class WandaCinemaManage {
       // 4、影片列表已在步骤2并行获取，此处仅做匹配
       const movieList = movieData?.movieData || [];
       if (!movieList?.length) {
-        this.logger.errorSave("获取万达电影放映信息返回空", { city_id });
+        this.logger.errorSave("获取电影放映信息返回空", { city_id });
         return;
       }
       let movieInfo = this.getTargetMovie(movieList, film_name);
       if (!movieInfo) {
-        this.logger.errorSave("获取万达目标影片信息失败", { film_name });
+        this.logger.errorSave("获取目标影片信息失败", { film_name });
         return;
       }
       this.logger.infoSave("匹配到目标影片", movieInfo);
@@ -177,7 +177,7 @@ export default class WandaCinemaManage {
       console.log("获取万达城市列表返回", res);
       return res.data?.city || [];
     } catch (error) {
-      this.logger.errorSave("获取万达城市列表异常", {
+      this.logger.errorSave("获取城市列表异常", {
         error: formatErrInfo(error)
       });
       return [];
@@ -207,7 +207,7 @@ export default class WandaCinemaManage {
       }));
       return { cinemaList };
     } catch (error) {
-      this.logger.errorSave("获取万达城市影院列表异常", {
+      this.logger.errorSave("获取城市影院列表异常", {
         error: formatErrInfo(error)
       });
       return { error: formatErrInfo(error), cinemaList: [] };
@@ -415,7 +415,7 @@ export default class WandaCinemaManage {
       let dateInfo = dateInfos.find(d => d.date === Number(show_date));
       if (!dateInfo) {
         // 2026-10-20：原来静默 return null，失败记录原因为空；补可归类错误（getOfferFailType=7）
-        this.logger.errorSave("匹配万达影片放映场次失败", {
+        this.logger.errorSave("匹配影片放映场次失败", {
           cinema_id,
           film_id,
           show_date,
@@ -443,7 +443,7 @@ export default class WandaCinemaManage {
       this.logger.warnSave("首次未匹配，回退前一日重试", { show_date });
       dateInfo = dateInfos.find(d => d.date === Number(show_date));
       if (!dateInfo) {
-        this.logger.errorSave("匹配万达影片放映场次失败", {
+        this.logger.errorSave("匹配影片放映场次失败", {
           cinema_id,
           film_id,
           show_date,
@@ -461,7 +461,7 @@ export default class WandaCinemaManage {
       this.logger.warnSave("次日重试匹配场次仍失败");
 
       if (!targetShow) {
-        this.logger.errorSave("匹配万达影片放映场次失败", {
+        this.logger.errorSave("匹配影片放映场次失败", {
           cinema_id,
           show_date,
           show_time,
@@ -521,7 +521,7 @@ export default class WandaCinemaManage {
         movieData: res.data?.movie_data || []
       };
     } catch (error) {
-      this.logger.errorSave("获取万达电影放映信息异常", {
+      this.logger.errorSave("获取电影放映信息异常", {
         error: formatErrInfo(error)
       });
       return { error: formatErrInfo(error) };

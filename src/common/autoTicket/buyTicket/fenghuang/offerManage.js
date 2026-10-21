@@ -385,7 +385,7 @@ class getFenghuangOfferPrice extends BaseOfferPrice {
         window.localStorage.getItem("isOverrunOffer") === "1";
       if (!isOverrunOfferEnabled) {
         this.logger.errorSave(
-          `最终报价${price}超过平台限价${supplier_max_price}且超限报价关闭`
+          `最终报价${price}超过平台限价${supplier_max_price}，超限报价处于关闭状态不进行报价`
         );
         return;
       }

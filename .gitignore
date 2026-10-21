@@ -51,3 +51,6 @@ applet-source-code
 # 网络故障测试工具与临时日志（含数据库连接脚本，勿提交）
 test-6slot/
 network-error-*.log
+
+# 每日失败报价抽检工具（本地运行，含本机配置与文档，整体不入库）
+/daily-offer-audit/
