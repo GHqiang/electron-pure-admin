@@ -28,6 +28,15 @@ export default {
       }
     },
     {
+      path: "/set/dailyVolume",
+      name: "dailyVolume",
+      component: () => import("@/views/dailyVolume/index.vue"),
+      meta: {
+        title: "单量分析",
+        keepAlive: true
+      }
+    },
+    {
       path: "/set/loginList",
       name: "loginList",
       component: () => import("@/views/appLogin/appLoginSet.vue"),
