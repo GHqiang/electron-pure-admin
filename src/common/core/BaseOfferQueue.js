@@ -1,16 +1,24 @@
 // 报价队列基类
 // 提取所有平台报价队列的公共逻辑
 
-import { GET_APP_TYPE_LIST, getOfferFailType } from "@/common/constant.js";
+import {
+  GET_APP_INFO,
+  GET_APP_TYPE_LIST,
+  getOfferFailType
+} from "@/common/constant.js";
 import Logger from "../logger.js";
 import getOfferPriceFun from "../autoTicket/commonOfferHandle.js";
 import {
   dynamicPrice,
+  getCinemaFlagDetail,
   getCurrentTime,
+  hasAnyRoleLogin,
+  isPullEvidenceEnabled,
   logUpload,
   traceUpload
 } from "@/utils/utils.js";
 import svApi from "@/api/sv-api.js";
+import { appUserInfo } from "@/store/appUserInfo";
 import { platTokens } from "@/store/platTokens.js";
 import { dictTable } from "@/store/dictTable";
 import { extractThirdPartyIds } from "./extractThirdPartyIds.js";
@@ -23,6 +31,10 @@ import {
 } from "./fetchAlarmMonitor.js";
 const dictStore = dictTable();
 const tokens = platTokens();
+
+// 同角色登录列表刷新：所有白名单队列共用，避免 11 个队列各刷一次
+let lastLoginInfoRefreshAt = 0;
+let loginInfoRefreshPromise = null;
 
 // 导出供单测使用
 export { extractThirdPartyIds };
@@ -90,8 +102,7 @@ export default class BaseOfferQueue {
       discard_record_fail: 0,
       discard_record_dropped: 0
     };
-    // C2 拉单摘要一期只对 lieren 开启（其余队列不写，避免 11 个队列同时放量）
-    this._pullSummaryEnabled = this.platName === "lieren";
+    // C2 拉单摘要：是否开启由 sys_dict 白名单动态判断
     this._pullStat = this._newPullStat();
   }
 
@@ -133,8 +144,54 @@ export default class BaseOfferQueue {
     // 确保每次 start 都走"首轮"逻辑（猎人：以当前时间起步，不用停机前旧水位线）
     this.resetFetchState();
 
+    // 同角色登录列表：启动时异步刷新一次（不阻塞拉单），供 C1/17 判断
+    this._ensureLoginInfoList();
+
     // 拉单独立定时触发，不阻塞调度器
     this._startFetchLoop();
+  }
+
+  /**
+   * 同角色登录列表刷新（5 分钟节流，所有白名单队列共用）
+   * 供 C1 的 not_login 判断与 A17 使用
+   */
+  _ensureLoginInfoList() {
+    if (this.isTestOrder || !isPullEvidenceEnabled(this.platName)) return;
+    if (loginInfoRefreshPromise) return;
+    if (Date.now() - lastLoginInfoRefreshAt < 5 * 60 * 1000) return;
+    lastLoginInfoRefreshAt = Date.now();
+    loginInfoRefreshPromise = this._refreshLoginInfoList().finally(() => {
+      loginInfoRefreshPromise = null;
+    });
+  }
+
+  /**
+   * 刷新同角色登录列表（queryLoginList 按当前 rule 拉取，含 link_user_id）
+   * 失败不影响拉单，沿用本地旧列表
+   */
+  async _refreshLoginInfoList() {
+    try {
+      const rule = tokens.userInfo?.rule;
+      if (!rule) return;
+      const res = await svApi.queryLoginList({ rule });
+      const records = (res?.data?.loginList || []).map(item => ({
+        app_name: item.app_name,
+        mobile: item.mobile,
+        session_id: item.session_id,
+        tid: item.tid,
+        member_pwd: item.member_pwd,
+        first: item.first,
+        is_xiaohao: item.is_xiaohao,
+        link_user_id: item.link_user_id,
+        daily_ticket_count: item.daily_ticket_count,
+        update_time: item.update_time
+      }));
+      const store = appUserInfo();
+      store.setLoginInfoList(records.filter(item => item.is_xiaohao != 1));
+      store.setAllLoginInfoList(records);
+    } catch (error) {
+      console.warn("刷新同角色登录信息失败", error);
+    }
   }
 
   /**
@@ -170,6 +227,9 @@ export default class BaseOfferQueue {
   _startFetchLoop() {
     const tick = () => {
       if (!this.isRunning) return;
+
+      // 同角色登录列表每 5 分钟最多刷新一次（白名单证据与 17 判断共用）
+      this._ensureLoginInfoList();
 
       // 防重入：上一次拉单未完成则跳过本轮，仅调度下一轮
       if (!this.isFetching) {
@@ -224,7 +284,7 @@ export default class BaseOfferQueue {
             }
             // 5 分钟窗口到期 → 写 1 条 L1 拉单摘要（不新增定时器）
             if (
-              this._pullSummaryEnabled &&
+              isPullEvidenceEnabled(this.platName) &&
               Date.now() - this._pullStat.windowStart >= 5 * 60 * 1000
             ) {
               this._flushPullSummary();
@@ -1447,6 +1507,130 @@ export default class BaseOfferQueue {
   }
 
   /**
+   * 可报价订单收集（与 lieren 同口径）
+   * - 跳过未映射影院/系列禁用
+   * - not_login 仅在同角色至少有一个可用登录时保留（后续写 C1 + A17）
+   * @param {Array} orders - 平台转换后的订单
+   * @returns {Array<{order:Object, detail:Object}>}
+   */
+  _collectQuoteableOrders(orders) {
+    const quoteable = [];
+    const anyRoleLoginCache = new Map();
+    for (const order of orders) {
+      const detail = getCinemaFlagDetail(order, { requireSession: true });
+      if (["unknown_cinema", "disabled_series"].includes(detail.reason)) {
+        continue;
+      }
+      if (detail.reason === "not_login") {
+        const appName = detail.app_name;
+        if (!anyRoleLoginCache.has(appName)) {
+          anyRoleLoginCache.set(appName, hasAnyRoleLogin(appName));
+        }
+        if (!anyRoleLoginCache.get(appName)) continue;
+      }
+      quoteable.push({ order, detail });
+    }
+    return quoteable;
+  }
+
+  /**
+   * C1：写拉单返回 L2 明细（同一平台+订单只写首次；白名单平台）
+   * @param {Object} order - 订单
+   * @param {Object} detail - getCinemaFlagDetail 返回值
+   * @param {number} returnedCount - 本轮可报价条数
+   */
+  _recordPullEvidence(order, detail, returnedCount) {
+    const orderNumber = order?.order_number;
+    if (!orderNumber || this.isTestOrder) return;
+    if (!isPullEvidenceEnabled(this.platName)) return;
+    const key = `${this.platName}_${orderNumber}`;
+    if (this._pullEvidenceLogged.has(key)) return;
+    this._rememberKey(this._pullEvidenceLogged, key, 1000);
+    const appName = detail?.app_name || order.app_name || order.appName || "";
+    this._uploadTraceEvidence({
+      orderNumber,
+      appName,
+      des: "报价队列-拉单返回",
+      info: {
+        order_number: orderNumber,
+        plat_name: this.platName,
+        app_name: appName,
+        cinema_code: order.cinema_code ?? "",
+        cinema_name: order.cinema_name ?? "",
+        offer_end_time:
+          order.offer_end_time ?? (order.sytime ? order.sytime * 1000 : null),
+        sytime: order.sytime ?? null,
+        round_ts: this.lastFetchTimestamp || 0,
+        fetch_timestamp: this._lastFetchParams?.timestamp ?? null,
+        returned_count: returnedCount,
+        // "" 可报价；not_login 当前客户端无登录（同角色有人有登录）
+        filter_reason: detail?.reason || "",
+        reason_detail: detail?.detail || {}
+      }
+    });
+  }
+
+  /**
+   * 写 C1 + A17/B，并返回可入队订单
+   * @param {Array<{order:Object, detail:Object}>} quoteable
+   * @param {number} returnedCount
+   * @returns {{processed:Array, filtered:number}}
+   */
+  _recordQuoteableEvidence(quoteable, returnedCount) {
+    const processed = [];
+    let filtered = 0;
+    for (const { order, detail } of quoteable) {
+      this._recordPullEvidence(order, detail, returnedCount);
+      if (detail.reason) {
+        filtered++;
+        this._recordDiscard(order, {
+          reason: detail.reason,
+          errType: 17,
+          errMsg: this._buildDiscardMessage(detail, order),
+          detail: detail.detail,
+          appName: detail.app_name
+        });
+        continue;
+      }
+      const appName = detail.app_name;
+      processed.push({
+        ...order,
+        app_name: appName,
+        appName,
+        app_type_code: GET_APP_INFO(appName)?.app_type_code
+      });
+    }
+    return { processed, filtered };
+  }
+
+  /**
+   * 丢弃原因文案（与 lieren 一致）
+   * @param {Object} detail - getCinemaFlagDetail 返回值
+   * @param {Object} item - 订单
+   * @returns {string}
+   */
+  _buildDiscardMessage(detail, item) {
+    const { reason, app_name, detail: extra = {} } = detail;
+    if (reason === "unknown_cinema") {
+      return `入队前丢弃：影院未识别（cinema_code=${item.cinema_code || ""}）`;
+    }
+    if (reason === "disabled_series") {
+      if (extra.source === "disableAppTypeList") {
+        const appTypeCode = GET_APP_INFO(app_name)?.app_type_code || "";
+        return `入队前丢弃：系列已手动禁用（${appTypeCode}）`;
+      }
+      return `入队前丢弃：影院未对当前用户开放（${app_name}）`;
+    }
+    if (reason === "not_login") {
+      if (extra.source === "login_incomplete") {
+        return "入队前丢弃：无可用登录（登录信息不完整：缺 mobile 或 session_id）";
+      }
+      return "入队前丢弃：无可用登录（未登录或登录不属于当前用户）";
+    }
+    return `入队前丢弃：不可报价（${reason || "unknown"}）`;
+  }
+
+  /**
    * 记住 key（FIFO 淘汰），用于丢弃/拉单证据去重
    */
   _rememberKey(map, key, capacity) {
@@ -1717,7 +1901,7 @@ export default class BaseOfferQueue {
   stop() {
     this.isRunning = false;
     // C2：停止前落最后一条拉单摘要（不丢当前窗口）
-    if (this._pullSummaryEnabled) this._flushPullSummary();
+    if (isPullEvidenceEnabled(this.platName)) this._flushPullSummary();
     // 清理拉单定时器，防止停止后仍触发拉单
     if (this._fetchTimer) {
       clearTimeout(this._fetchTimer);

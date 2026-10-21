@@ -132,6 +132,11 @@
       </div>
       <el-table :data="summaryWindow" border stripe size="small">
         <el-table-column prop="opera_time" label="时间" width="170" />
+        <el-table-column label="平台" width="120">
+          <template #default="{ row }">
+            {{ summaryInfo(row).plat_name || "-" }}
+          </template>
+        </el-table-column>
         <el-table-column label="轮次/成功/失败" width="140">
           <template #default="{ row }">
             {{ summaryInfo(row).rounds ?? "-" }} /
@@ -190,8 +195,17 @@ import { ElMessage } from "element-plus";
 import svApi from "@/api/sv-api";
 import { platTokens } from "@/store/platTokens";
 import { OFFER_FAIL_TYPE, IN_RULE_LIST } from "@/common/constant.js";
-import { getCinemaFlagDetail, hasAnyRoleLogin } from "@/utils/utils";
+import {
+  getCinemaFlagDetail,
+  getPullEvidencePlatList,
+  hasAnyRoleLogin,
+  isPullEvidenceEnabled
+} from "@/utils/utils";
 import { useCinemaCodeMatchList } from "@/store/specialNameRule";
+import {
+  pickOrderPlatform,
+  filterSummaryByPlatform
+} from "@/views/orderDiagnosis/platform.js";
 
 const route = useRoute();
 const cinemaCodeMatch = useCinemaCodeMatchList();
@@ -212,6 +226,7 @@ const conclusion = ref(null);
 const recordRows = ref([]);
 const timeline = ref([]);
 const summaryRows = ref([]);
+const orderPlatform = ref("");
 const traceUserId = ref("");
 const localCheck = ref(null);
 
@@ -271,14 +286,19 @@ const resetForm = () => {
   recordRows.value = [];
   timeline.value = [];
   summaryRows.value = [];
+  orderPlatform.value = "";
   localCheck.value = null;
 };
 
 const summaryWindow = computed(() => {
+  const platformRows = filterSummaryByPlatform(
+    summaryRows.value,
+    orderPlatform.value
+  );
   const parsed = parseOrderDateTime(form.order_number);
-  if (!parsed) return summaryRows.value;
+  if (!parsed) return platformRows;
   const center = new Date(`${parsed.date} ${parsed.time}`).getTime();
-  return summaryRows.value.filter(row => {
+  return platformRows.filter(row => {
     const ts = new Date(row.opera_time).getTime();
     if (Number.isNaN(ts)) return false;
     return Math.abs(ts - center) <= 10 * 60 * 1000;
@@ -361,13 +381,21 @@ const buildConclusion = (
   traceList,
   l1List,
   summaryList,
-  local
+  local,
+  platform
 ) => {
   if (!traceUserId.value) {
     return {
       type: "info",
       title: "请选择用户",
       desc: "拉单证据按用户目录存储，请先选择要排查的用户。"
+    };
+  }
+  if (platform && !isPullEvidenceEnabled(platform)) {
+    return {
+      type: "warning",
+      title: "该平台未开启拉单证据",
+      desc: `当前白名单：${getPullEvidencePlatList().join(",")}；请在 sys_dict 的 pullEvidencePlatList 增加 ${platform} 后再排查。`
     };
   }
   const discardRows = targetFailList.filter(row => Number(row.err_type) >= 16);
@@ -752,6 +780,10 @@ const query = async () => {
       }))
     ];
     summaryRows.value = summaryList;
+    orderPlatform.value = pickOrderPlatform(
+      [...failList, ...successList],
+      traceList
+    );
     timeline.value = [
       ...failList.map(row => ({
         time: row.processing_time,
@@ -803,7 +835,8 @@ const query = async () => {
       traceList,
       l1List,
       summaryWindow.value,
-      local
+      local,
+      orderPlatform.value
     );
     queried.value = true;
   } catch (error) {

@@ -3,14 +3,7 @@
 
 import BaseOfferQueue from "../../core/BaseOfferQueue.js";
 import MayiAdapter from "../adapters/MayiAdapter.js";
-import {
-  getCinemaFlag,
-  getCinemaLoginInfoList,
-  getCurrentTime,
-  logUpload,
-  mockDelay
-} from "@/utils/utils.js";
-import { GET_APP_INFO } from "@/common/constant.js";
+import { getCurrentTime, logUpload, mockDelay } from "@/utils/utils.js";
 import Logger from "../../logger.js";
 
 /**
@@ -43,6 +36,7 @@ export default class MayiOfferQueue extends BaseOfferQueue {
    * @returns {Promise<void>}
    */
   async fetchOrders(fetchDelay) {
+    const stats = { returned: 0, filtered: 0, enqueued: 0, failed: false };
     try {
       await mockDelay(fetchDelay);
 
@@ -51,74 +45,64 @@ export default class MayiOfferQueue extends BaseOfferQueue {
       if (!stayList?.length) return;
 
       // 转换订单格式
-      const processedList = stayList
-        .map(item => {
-          const {
-            tradeno,
-            unitprice,
-            maxBaojia,
-            cityName,
-            address,
-            quantity,
-            cinemaName,
-            roomName,
-            movieName,
-            logo,
-            playTime,
-            jiorder,
-            cinemaStdCode,
-            cinemaChain, // 品牌名 上影上海、上影二线等
-            lastBaojiaTime // 最后报价时间（接口返回的真实报价截止时间）
-          } = item;
-          return {
-            plat_name: "mayi",
-            id: tradeno,
-            tpp_price: unitprice,
-            supplier_max_price: maxBaojia,
-            city_name: cityName,
-            cinema_addr: address,
-            ticket_num: quantity,
-            cinema_name: cinemaName,
-            hall_name: roomName,
-            film_name: movieName,
-            film_img: logo,
-            show_time: playTime,
-            rewards: 0, // 蚂蚁无奖励，只有快捷
-            is_urgent: jiorder === "Y" ? 1 : 0, // 1紧急 0非紧急
-            cinema_group: cinemaChain,
-            cinema_code: cinemaStdCode, // 影院code编码，和app影院code一致
-            order_number: tradeno,
-            // 蚂蚁订单报价截止时间：使用接口返回的 lastBaojiaTime（真实最后报价时间）
-            offer_end_time: +new Date(lastBaojiaTime)
-          };
-        })
-        .filter(item => {
-          const appFlag = getCinemaFlag(item);
-          // 如果没有对应登录信息先过滤掉
-          const appLoginInfo = getCinemaLoginInfoList().find(
-            loginItem =>
-              loginItem.app_name === appFlag &&
-              loginItem.mobile &&
-              loginItem.session_id
-          );
-          return appLoginInfo && appFlag;
-        })
-        .map(item => {
-          const app_name = getCinemaFlag(item);
-          return {
-            ...item,
-            app_name,
-            appName: app_name,
-            app_type_code: GET_APP_INFO(app_name)?.app_type_code
-          };
-        });
+      const normalized = stayList.map(item => {
+        const {
+          tradeno,
+          unitprice,
+          maxBaojia,
+          cityName,
+          address,
+          quantity,
+          cinemaName,
+          roomName,
+          movieName,
+          logo,
+          playTime,
+          jiorder,
+          cinemaStdCode,
+          cinemaChain, // 品牌名 上影上海、上影二线等
+          lastBaojiaTime // 最后报价时间（接口返回的真实报价截止时间）
+        } = item;
+        return {
+          plat_name: "mayi",
+          id: tradeno,
+          tpp_price: unitprice,
+          supplier_max_price: maxBaojia,
+          city_name: cityName,
+          cinema_addr: address,
+          ticket_num: quantity,
+          cinema_name: cinemaName,
+          hall_name: roomName,
+          film_name: movieName,
+          film_img: logo,
+          show_time: playTime,
+          rewards: 0, // 蚂蚁无奖励，只有快捷
+          is_urgent: jiorder === "Y" ? 1 : 0, // 1紧急 0非紧急
+          cinema_group: cinemaChain,
+          cinema_code: cinemaStdCode, // 影院code编码，和app影院code一致
+          order_number: tradeno,
+          // 蚂蚁订单报价截止时间：使用接口返回的 lastBaojiaTime（真实最后报价时间）
+          offer_end_time: +new Date(lastBaojiaTime)
+        };
+      });
 
-      if (!processedList?.length) return;
+      // 与 lieren 同口径：映射 + 同角色登录；写 C1/A17/B
+      const quoteable = this._collectQuoteableOrders(normalized);
+      stats.returned = quoteable.length;
+      this._lastFetchStats = stats;
+      const { processed, filtered } = this._recordQuoteableEvidence(
+        quoteable,
+        stats.returned
+      );
+      stats.filtered = filtered;
+
+      if (!processed?.length) return;
 
       // 过滤已处理的订单
-      const newOrders = processedList.filter(
-        item => !this.handledOrders.has(item.order_number)
+      const newOrders = processed.filter(
+        item => !this.handledOrders.has(`${this.platName}_${item.order_number}`)
       );
+      stats.enqueued = newOrders?.length || 0;
 
       if (!newOrders?.length) return;
 
@@ -130,7 +114,10 @@ export default class MayiOfferQueue extends BaseOfferQueue {
         );
       });
     } catch (error) {
+      stats.failed = true;
       console.error("获取待报价订单异常", error);
+    } finally {
+      this._lastFetchStats = stats;
     }
   }
 

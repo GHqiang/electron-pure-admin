@@ -563,6 +563,44 @@ const hasAnyRoleLogin = app_name => {
   }
 };
 
+// 拉单证据（C1/C2）平台白名单：默认 Top5，sys_dict pullEvidencePlatList 可配
+const PULL_EVIDENCE_DEFAULT_PLATS = [
+  "lieren",
+  "haha",
+  "mahua",
+  "yinghuasuan",
+  "mayi"
+];
+// 已接入同一套 C1/A17/C2 两遍处理的平台；新增平台需先接入队列 helper
+const PULL_EVIDENCE_SUPPORTED_PLATS = [...PULL_EVIDENCE_DEFAULT_PLATS];
+
+/**
+ * 解析拉单证据平台白名单
+ * 空值回退默认 Top5；未知平台会被过滤，避免仅改配置就产生不完整证据
+ * @param {string} raw - sys_dict 原始值（逗号分隔）
+ * @returns {string[]}
+ */
+const parsePullEvidencePlatList = raw => {
+  const text =
+    raw === undefined || raw === null || String(raw).trim() === ""
+      ? PULL_EVIDENCE_DEFAULT_PLATS.join(",")
+      : String(raw);
+  return [
+    ...new Set(
+      text
+        .split(",")
+        .map(item => item.trim().toLowerCase())
+        .filter(Boolean)
+    )
+  ].filter(item => PULL_EVIDENCE_SUPPORTED_PLATS.includes(item));
+};
+
+const getPullEvidencePlatList = () =>
+  parsePullEvidencePlatList(dictStore.dictInfo?.pullEvidencePlatList);
+
+const isPullEvidenceEnabled = platName =>
+  Boolean(platName) && getPullEvidencePlatList().includes(String(platName));
+
 /**
  * 获取影院标识（兼容旧调用）
  * @param {Object} item - 订单信息
@@ -3748,6 +3786,10 @@ export {
   getCinemaFlag, // 获取影院标识
   getCinemaFlagDetail, // 获取影院标识 + 不可报价原因（报价队列丢弃记录用）
   hasAnyRoleLogin, // 同角色是否至少有一个用户维护了该影院登录
+  PULL_EVIDENCE_DEFAULT_PLATS, // 拉单证据默认 Top5 平台
+  parsePullEvidencePlatList, // 解析拉单证据平台白名单
+  getPullEvidencePlatList, // 当前生效的拉单证据平台列表
+  isPullEvidenceEnabled, // 当前平台是否开启拉单证据
   getCinemaCode, // 获取影院code
   convertFullwidthToHalfwidth, // 全角字符转换成半角
   cinemNameSpecial, // 影院名称特殊处理（为了特殊匹配,去括号、空格及中间点）

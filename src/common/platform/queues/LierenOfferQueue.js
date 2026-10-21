@@ -3,16 +3,7 @@
 
 import BaseOfferQueue from "../../core/BaseOfferQueue.js";
 import LierenAdapter from "../adapters/LierenAdapter.js";
-import svApi from "@/api/sv-api";
-import { appUserInfo } from "@/store/appUserInfo";
-import { platTokens } from "@/store/platTokens";
-import {
-  getCinemaFlagDetail,
-  getCurrentTime,
-  hasAnyRoleLogin,
-  logUpload,
-  mockDelay
-} from "@/utils/utils.js";
+import { getCurrentTime, logUpload, mockDelay } from "@/utils/utils.js";
 import { LIERENR_REWARDS, GET_APP_INFO } from "@/common/constant.js";
 import Logger from "../../logger.js";
 import usesMachineBaseFun from "@/mixins/usesMachineBaseFun.js";
@@ -47,61 +38,11 @@ export default class LierenOfferQueue extends BaseOfferQueue {
   }
 
   /**
-   * 启动拉单队列；启动前刷新一次同角色登录列表，避免「全角色无登录」误判。
-   */
-  async start() {
-    // 不阻塞队列启动：登录页已加载过一次；这里异步刷新作兜底，失败的旧列表仍可用
-    this._lastLoginRefreshAt = Date.now();
-    this._refreshLoginInfoList();
-    return super.start();
-  }
-
-  /**
-   * 刷新同角色登录列表（queryLoginList 按当前 rule 拉取，含 link_user_id）。
-   * 失败不影响队列启动/拉单，沿用本地旧列表。
-   */
-  async _refreshLoginInfoList() {
-    if (this.isTestOrder) return;
-    try {
-      const rule = platTokens()?.userInfo?.rule;
-      if (!rule) return;
-      const res = await svApi.queryLoginList({ rule });
-      const records = (res?.data?.loginList || []).map(item => ({
-        app_name: item.app_name,
-        mobile: item.mobile,
-        session_id: item.session_id,
-        tid: item.tid,
-        member_pwd: item.member_pwd,
-        first: item.first,
-        is_xiaohao: item.is_xiaohao,
-        link_user_id: item.link_user_id,
-        daily_ticket_count: item.daily_ticket_count,
-        update_time: item.update_time
-      }));
-      const store = appUserInfo();
-      store.setLoginInfoList(records.filter(item => item.is_xiaohao != 1));
-      store.setAllLoginInfoList(records);
-    } catch (error) {
-      console.warn("刷新同角色登录信息失败", error);
-    }
-  }
-
-  /**
    * 获取订单
    * @param {number} fetchDelay - 获取间隔
    * @returns {Promise<void>}
    */
   async fetchOrders(fetchDelay) {
-    // 同角色登录列表每 5 分钟刷新一次（启动时已刷新，失败则沿用旧列表）
-    if (
-      !this.isTestOrder &&
-      (!this._lastLoginRefreshAt ||
-        Date.now() - this._lastLoginRefreshAt > 5 * 60 * 1000)
-    ) {
-      this._lastLoginRefreshAt = Date.now();
-      this._refreshLoginInfoList();
-    }
-
     // C2：本轮拉单统计（finally 统一挂到基类，供 5 分钟摘要累加）
     const stats = {
       returned: 0,
@@ -116,64 +57,28 @@ export default class LierenOfferQueue extends BaseOfferQueue {
       const stayList = await this.getStayOfferList();
       if (!stayList?.length) return;
 
-      // 第一遍：筛出可报价订单（映射表按 code 或名称匹配都算映射 + 同角色有登录）
-      const quoteable = [];
-      const anyRoleLoginCache = new Map();
-      for (const item of stayList) {
-        const detail = getCinemaFlagDetail(item, { requireSession: true });
-        if (
-          detail.reason === "unknown_cinema" ||
-          detail.reason === "disabled_series"
-        ) {
-          continue;
-        }
-        if (detail.reason === "not_login") {
-          const appName = detail.app_name;
-          if (!anyRoleLoginCache.has(appName)) {
-            anyRoleLoginCache.set(appName, hasAnyRoleLogin(appName));
-          }
-          if (!anyRoleLoginCache.get(appName)) continue;
-        }
-        quoteable.push({ item, detail });
-      }
+      // 第一遍/第二遍：基类统一筛可报价 + 写 C1/A17/B
+      const quoteable = this._collectQuoteableOrders(stayList);
       stats.returned = quoteable.length;
       this._lastFetchStats = stats;
+      const { processed, filtered } = this._recordQuoteableEvidence(
+        quoteable,
+        stats.returned
+      );
+      stats.filtered = filtered;
 
-      // 第二遍：写 C1/丢弃记录，并转换入队
-      const processedList = [];
-      for (const { item, detail } of quoteable) {
-        this._recordPullEvidence(item, detail, stats.returned);
-        if (detail.reason) {
-          stats.filtered++;
-          this._recordDiscard(item, {
-            reason: detail.reason,
-            errType: 17, // 仅剩「同角色有登录、但当前客户端无可用登录」
-            errMsg: this._buildDiscardMessage(detail, item),
-            detail: detail.detail,
-            appName: detail.app_name
-          });
-          continue;
-        }
-        const app_name = detail.app_name;
-        processedList.push({
+      const newOrders = processed
+        .filter(item => !this.handledOrders.has(`lieren_${item.order_number}`))
+        .map(item => ({
           ...item,
           plat_name: "lieren",
-          app_name,
-          appName: app_name,
-          app_type_code: GET_APP_INFO(app_name)?.app_type_code,
-          rewards: LIERENR_REWARDS[item.order_urgent] || 0, // 0-普通 1-加急 2-特急 3-vip
-          offer_end_time: item.sytime * 1000 // 转为时间戳
-        });
-      }
+          app_name: item.app_name,
+          appName: item.app_name,
+          app_type_code: GET_APP_INFO(item.app_name)?.app_type_code,
+          rewards: LIERENR_REWARDS[item.order_urgent] || 0,
+          offer_end_time: item.sytime * 1000
+        }));
 
-      if (!processedList?.length) return;
-
-      // 过滤已处理的订单
-      // key 与 handleNewOrder 对齐：`${plat_name}_${order_number}`，否则预过滤失效，
-      // 重叠缓冲（-2s）拉到的重复旧单会全部涌进 handleNewOrder（虽被 L502 拦住但浪费扫描）
-      const newOrders = processedList.filter(
-        item => !this.handledOrders.has(`lieren_${item.order_number}`)
-      );
       stats.enqueued = newOrders?.length || 0;
 
       if (!newOrders?.length) return;
@@ -192,68 +97,6 @@ export default class LierenOfferQueue extends BaseOfferQueue {
     } finally {
       this._lastFetchStats = stats;
     }
-  }
-
-  /**
-   * C1：写「拉单返回」L2 明细（同一单只写首次返回；只对相关订单写）
-   * @param {Object} item - 平台原始订单
-   * @param {Object} detail - getCinemaFlagDetail 返回值（含过滤结论）
-   * @param {number} returnedCount - 本轮返回条数
-   */
-  _recordPullEvidence(item, detail, returnedCount) {
-    const orderNumber = item?.order_number;
-    if (!orderNumber || this.isTestOrder) return;
-    const key = `lieren_${orderNumber}`;
-    if (this._pullEvidenceLogged.has(key)) return;
-    this._rememberKey(this._pullEvidenceLogged, key, 1000);
-    const appName = detail?.app_name || "";
-    this._uploadTraceEvidence({
-      orderNumber,
-      appName,
-      des: "报价队列-拉单返回",
-      info: {
-        order_number: orderNumber,
-        plat_name: "lieren",
-        app_name: appName,
-        cinema_code: item.cinema_code ?? "",
-        cinema_name: item.cinema_name ?? "",
-        offer_end_time: item.sytime ? item.sytime * 1000 : null,
-        sytime: item.sytime ?? null,
-        round_ts: this.lastFetchTimestamp || 0,
-        fetch_timestamp: this._lastFetchParams?.timestamp ?? null,
-        returned_count: returnedCount,
-        // 过滤结论："" 可报价；not_login 当前客户端无可用登录（同角色其他人有登录）
-        filter_reason: detail?.reason || "",
-        reason_detail: detail?.detail || {}
-      }
-    });
-  }
-
-  /**
-   * 丢弃原因文案（用户可读，细分进 err_msg）
-   * @param {Object} detail - getCinemaFlagDetail 返回值
-   * @param {Object} item - 订单
-   * @returns {string}
-   */
-  _buildDiscardMessage(detail, item) {
-    const { reason, app_name, detail: extra = {} } = detail;
-    if (reason === "unknown_cinema") {
-      return `入队前丢弃：影院未识别（cinema_code=${item.cinema_code || ""}）`;
-    }
-    if (reason === "disabled_series") {
-      if (extra.source === "disableAppTypeList") {
-        const appTypeCode = GET_APP_INFO(app_name)?.app_type_code || "";
-        return `入队前丢弃：系列已手动禁用（${appTypeCode}）`;
-      }
-      return `入队前丢弃：影院未对当前用户开放（${app_name}）`;
-    }
-    if (reason === "not_login") {
-      if (extra.source === "login_incomplete") {
-        return "入队前丢弃：无可用登录（登录信息不完整：缺 mobile 或 session_id）";
-      }
-      return "入队前丢弃：无可用登录（未登录或登录不属于当前用户）";
-    }
-    return `入队前丢弃：不可报价（${reason || "unknown"}）`;
   }
 
   /**
