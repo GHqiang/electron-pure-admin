@@ -14,6 +14,7 @@
 
 import axios from "axios";
 import { platTokens } from "@/store/platTokens";
+import { getServerBaseUrl } from "@/common/serverHost";
 
 const BATCH_MAX = 20; // 满 20 条立即触发
 const FLUSH_INTERVAL_MS = 30 * 1000; // 30s 窗口
@@ -21,9 +22,12 @@ const QUEUE_LIMIT = 500; // 队列上限（持续故障且上传全挂时丢弃�
 const UPLOAD_TIMEOUT_MS = 15000; // 单次上传超时（失败即弃，不重试）
 
 const IS_DEV = process.env.NODE_ENV === "development";
+// /svpi 是客户端约定（sv-request 拦截器/vite 代理会去掉），后端真实路由是 /operaRecord/addList。
+// 裸 axios 不经过拦截器，必须在这里按同一规则拼地址，否则生产直连后端 100% 404
+const ADD_LIST_PATH = "/svpi/operaRecord/addList";
 const ADD_LIST_URL = IS_DEV
-  ? "/svpi/operaRecord/addList"
-  : "http://47.113.191.173:3000/svpi/operaRecord/addList";
+  ? ADD_LIST_PATH
+  : getServerBaseUrl(ADD_LIST_PATH) + ADD_LIST_PATH.slice(5);
 
 let queue = [];
 let timer = null;
