@@ -54,6 +54,13 @@ const queryAnalysisPlat = (params, config) =>
     timeout: 60 * 1000,
     ...config
   });
+// 查询统计分析-平台×影院交叉(按 app_name + plat_name 分组的原始计数)
+const queryAnalysisCross = (params, config) =>
+  axios.get("/svpi/statisticalAnalysis/cross", {
+    params,
+    timeout: 60 * 1000,
+    ...config
+  });
 // days=30&clear=1
 
 // 统计分析聚合回填
@@ -359,6 +366,7 @@ const svApi = {
   queryAnalysis,
   queryAnalysisTrend,
   queryAnalysisPlat,
+  queryAnalysisCross,
   queryAnalysisRebuild,
   queryOfferList,
   queryDealOfferList,
