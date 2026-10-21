@@ -3,14 +3,7 @@
 
 import BaseOfferQueue from "../../core/BaseOfferQueue.js";
 import ShengAdapter from "../adapters/ShengAdapter.js";
-import {
-  getCinemaFlag,
-  getCinemaLoginInfoList,
-  getCurrentTime,
-  logUpload,
-  mockDelay
-} from "@/utils/utils.js";
-import { GET_APP_INFO } from "@/common/constant.js";
+import { getCurrentTime, logUpload, mockDelay } from "@/utils/utils.js";
 import Logger from "../../logger.js";
 
 /**
@@ -33,6 +26,7 @@ export default class ShengOfferQueue extends BaseOfferQueue {
    * @returns {Promise<void>}
    */
   async fetchOrders(fetchDelay) {
+    const stats = { returned: 0, filtered: 0, enqueued: 0, failed: false };
     try {
       await mockDelay(fetchDelay);
 
@@ -49,83 +43,72 @@ export default class ShengOfferQueue extends BaseOfferQueue {
       };
 
       // 转换订单格式
-      const processedList = stayList
-        .map(item => {
-          const {
-            orderId,
-            showPrice,
-            grabPrice,
-            detail,
-            order,
-            supplierCode, // 供应商号
-            seatInfo, // 座位信息
-            orderCode,
-            property // 奖励字段标识0 （45分钟无奖励）1（10分钟奖励中标价格1.5个点）2（五分钟奖励订单2.5个点） 3 （27分钟无奖励）
-          } = item;
-          const {
-            quantity,
-            sourceData: {
-              show,
-              film,
-              cinema: { label, standardId }
-            }
-          } = detail;
+      const normalized = stayList.map(item => {
+        const {
+          orderId,
+          showPrice,
+          grabPrice,
+          detail,
+          order,
+          supplierCode, // 供应商号
+          seatInfo, // 座位信息
+          orderCode,
+          property // 奖励字段标识0 （45分钟无奖励）1（10分钟奖励中标价格1.5个点）2（五分钟奖励订单2.5个点） 3 （27分钟无奖励）
+        } = item;
+        const {
+          quantity,
+          sourceData: {
+            show,
+            film,
+            cinema: { label, standardId }
+          }
+        } = detail;
 
-          let cinema_group = label[0]?.name || "";
-          return {
-            plat_name: "sheng",
-            id: orderId,
-            tpp_price: showPrice,
-            supplier_max_price: Number(
-              (Number(grabPrice) / Number(quantity)).toFixed(2)
-            ),
-            city_name: film.cityName,
-            cinema_addr: film.address,
-            ticket_num: quantity,
-            cinema_name: film.cinemaName,
-            hall_name: show.hallName,
-            film_name: film.filmName,
-            film_img: film.imgUrl,
-            show_time: show.startTime,
-            rewards: rewardsTypeObj?.[property] || 0, // 奖励百分比
-            quick: order.quick, // true表示为快捷订单（需12分钟内完成发货），false表示为特惠订单（需45分钟内完成发货）
-            cinema_group: cinema_group,
-            cinema_code: standardId || "",
-            order_number: orderCode,
-            supplierCode: supplierCode,
-            seatInfo: seatInfo,
-            seats: seatInfo, // 座位信息
-            // 转为截止时间戳
-            offer_end_time: +new Date(order.biddingEndTime)
-          };
-        })
-        .filter(item => {
-          const appFlag = getCinemaFlag(item);
-          // 如果没有对应登录信息先过滤掉
-          const appLoginInfo = getCinemaLoginInfoList().find(
-            loginItem =>
-              loginItem.app_name === appFlag &&
-              loginItem.mobile &&
-              loginItem.session_id
-          );
-          return appLoginInfo && appFlag;
-        })
-        .map(item => {
-          const app_name = getCinemaFlag(item);
-          return {
-            ...item,
-            app_name,
-            appName: app_name,
-            app_type_code: GET_APP_INFO(app_name)?.app_type_code
-          };
-        });
+        let cinema_group = label[0]?.name || "";
+        return {
+          plat_name: "sheng",
+          id: orderId,
+          tpp_price: showPrice,
+          supplier_max_price: Number(
+            (Number(grabPrice) / Number(quantity)).toFixed(2)
+          ),
+          city_name: film.cityName,
+          cinema_addr: film.address,
+          ticket_num: quantity,
+          cinema_name: film.cinemaName,
+          hall_name: show.hallName,
+          film_name: film.filmName,
+          film_img: film.imgUrl,
+          show_time: show.startTime,
+          rewards: rewardsTypeObj?.[property] || 0, // 奖励百分比
+          quick: order.quick, // true表示为快捷订单（需12分钟内完成发货），false表示为特惠订单（需45分钟内完成发货）
+          cinema_group: cinema_group,
+          cinema_code: standardId || "",
+          order_number: orderCode,
+          supplierCode: supplierCode,
+          seatInfo: seatInfo,
+          seats: seatInfo, // 座位信息
+          // 转为截止时间戳
+          offer_end_time: +new Date(order.biddingEndTime)
+        };
+      });
 
-      if (!processedList?.length) return;
+      const quoteable = this._collectQuoteableOrders(normalized);
+      stats.returned = quoteable.length;
+      this._lastFetchStats = stats;
+      const { processed, filtered } = this._recordQuoteableEvidence(
+        quoteable,
+        stats.returned
+      );
+      stats.filtered = filtered;
+
+      if (!processed?.length) return;
 
       // 过滤已处理的订单
-      const newOrders = processedList.filter(
-        item => !this.handledOrders.has(item.order_number)
+      const newOrders = processed.filter(
+        item => !this.handledOrders.has(`${this.platName}_${item.order_number}`)
       );
+      stats.enqueued = newOrders?.length || 0;
 
       if (!newOrders?.length) return;
 
@@ -137,7 +120,10 @@ export default class ShengOfferQueue extends BaseOfferQueue {
         );
       });
     } catch (error) {
+      stats.failed = true;
       console.error("获取待报价订单异常", error);
+    } finally {
+      this._lastFetchStats = stats;
     }
   }
 

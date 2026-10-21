@@ -572,7 +572,14 @@ const PULL_EVIDENCE_DEFAULT_PLATS = [
   "mayi"
 ];
 // 已接入同一套 C1/A17/C2 两遍处理的平台；新增平台需先接入队列 helper
-const PULL_EVIDENCE_SUPPORTED_PLATS = [...PULL_EVIDENCE_DEFAULT_PLATS];
+const PULL_EVIDENCE_SUPPORTED_PLATS = [
+  ...PULL_EVIDENCE_DEFAULT_PLATS,
+  "sheng",
+  "mangguo",
+  "shoutu",
+  "yangcong",
+  "piaosheng"
+];
 
 /**
  * 解析拉单证据平台白名单

@@ -3,14 +3,7 @@
 
 import BaseOfferQueue from "../../core/BaseOfferQueue.js";
 import ShoutuAdapter from "../adapters/ShoutuAdapter.js";
-import {
-  getCinemaFlag,
-  getCinemaLoginInfoList,
-  getCurrentTime,
-  logUpload,
-  mockDelay
-} from "@/utils/utils.js";
-import { GET_APP_INFO } from "@/common/constant.js";
+import { getCurrentTime, logUpload, mockDelay } from "@/utils/utils.js";
 import Logger from "../../logger.js";
 
 /**
@@ -33,6 +26,7 @@ export default class ShoutuOfferQueue extends BaseOfferQueue {
    * @returns {Promise<void>}
    */
   async fetchOrders(fetchDelay) {
+    const stats = { returned: 0, filtered: 0, enqueued: 0, failed: false };
     try {
       await mockDelay(fetchDelay);
 
@@ -41,69 +35,58 @@ export default class ShoutuOfferQueue extends BaseOfferQueue {
       if (!stayList?.length) return;
 
       // 转换订单格式
-      const processedList = stayList
-        .map(item => {
-          const {
-            orderUUID: id,
-            unitInitPrice: tpp_price,
-            maxPrice: supplier_max_price,
-            cinemaInfo,
-            orderNum: ticket_num,
-            orderId: order_number,
-            isLovers,
-            needInvoice // 守兔手续费分档依据（待报价接口返回）
-          } = item;
-          return {
-            id, // 报价时使用
-            plat_name: "shoutu",
-            tpp_price: tpp_price,
-            supplier_max_price: supplier_max_price,
-            city_name: cinemaInfo[8]?.replaceAll("市", "") || "",
-            cinema_addr: cinemaInfo[7] || "",
-            ticket_num: ticket_num,
-            cinema_name: cinemaInfo[0] || "",
-            hall_name: cinemaInfo[1] || "",
-            film_name: cinemaInfo[5] || "",
-            film_img: cinemaInfo[6] || "",
-            show_time: cinemaInfo[3] || "",
-            rewards: 0, // 守兔无奖励，只有快捷
-            is_urgent: 0, // 1紧急 0非紧急
-            cinema_group: "",
-            cinema_code: cinemaInfo[9] || "", // 影院code
-            order_number: order_number,
-            needInvoice,
-            isLovers: isLovers, // 是否情侣座
-            // 转为截止时间戳
-            offer_end_time: +new Date(item.deadlineTime)
-          };
-        })
-        .filter(item => {
-          const appFlag = getCinemaFlag(item);
-          // 如果没有对应登录信息先过滤掉
-          const appLoginInfo = getCinemaLoginInfoList().find(
-            loginItem =>
-              loginItem.app_name === appFlag &&
-              loginItem.mobile &&
-              loginItem.session_id
-          );
-          return appLoginInfo && appFlag;
-        })
-        .map(item => {
-          const app_name = getCinemaFlag(item);
-          return {
-            ...item,
-            app_name,
-            appName: app_name,
-            app_type_code: GET_APP_INFO(app_name)?.app_type_code
-          };
-        });
+      const normalized = stayList.map(item => {
+        const {
+          orderUUID: id,
+          unitInitPrice: tpp_price,
+          maxPrice: supplier_max_price,
+          cinemaInfo,
+          orderNum: ticket_num,
+          orderId: order_number,
+          isLovers,
+          needInvoice // 守兔手续费分档依据（待报价接口返回）
+        } = item;
+        return {
+          id, // 报价时使用
+          plat_name: "shoutu",
+          tpp_price: tpp_price,
+          supplier_max_price: supplier_max_price,
+          city_name: cinemaInfo[8]?.replaceAll("市", "") || "",
+          cinema_addr: cinemaInfo[7] || "",
+          ticket_num: ticket_num,
+          cinema_name: cinemaInfo[0] || "",
+          hall_name: cinemaInfo[1] || "",
+          film_name: cinemaInfo[5] || "",
+          film_img: cinemaInfo[6] || "",
+          show_time: cinemaInfo[3] || "",
+          rewards: 0, // 守兔无奖励，只有快捷
+          is_urgent: 0, // 1紧急 0非紧急
+          cinema_group: "",
+          cinema_code: cinemaInfo[9] || "", // 影院code
+          order_number: order_number,
+          needInvoice,
+          isLovers: isLovers, // 是否情侣座
+          // 转为截止时间戳
+          offer_end_time: +new Date(item.deadlineTime)
+        };
+      });
 
-      if (!processedList?.length) return;
+      const quoteable = this._collectQuoteableOrders(normalized);
+      stats.returned = quoteable.length;
+      this._lastFetchStats = stats;
+      const { processed, filtered } = this._recordQuoteableEvidence(
+        quoteable,
+        stats.returned
+      );
+      stats.filtered = filtered;
+
+      if (!processed?.length) return;
 
       // 过滤已处理的订单
-      const newOrders = processedList.filter(
-        item => !this.handledOrders.has(item.order_number)
+      const newOrders = processed.filter(
+        item => !this.handledOrders.has(`${this.platName}_${item.order_number}`)
       );
+      stats.enqueued = newOrders?.length || 0;
 
       if (!newOrders?.length) return;
 
@@ -115,7 +98,10 @@ export default class ShoutuOfferQueue extends BaseOfferQueue {
         );
       });
     } catch (error) {
+      stats.failed = true;
       console.error("获取待报价订单异常", error);
+    } finally {
+      this._lastFetchStats = stats;
     }
   }
 
