@@ -1223,7 +1223,7 @@ export default class BaseOfferQueue {
           offerRule,
           // 2026-10-20：平台已自动报价不是空原因失败，带回 err_msg，
           // addOrderHandleRecord 会按 getOfferFailType 归为 8（平台已报价）
-          err_msg: "猎人已自动报价",
+          err_msg: "平台已报价",
           cinemaInfo: result?.cinemaInfo,
           cacheHit: result?.cacheHit
         };

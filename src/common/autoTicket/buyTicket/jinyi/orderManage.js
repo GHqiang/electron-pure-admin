@@ -118,10 +118,18 @@ export default class OrderManage {
       ticket_pack_goods: ""
     };
     if (quan_code) {
-      params.discount_type = "";
       params.voucher_code = quan_code;
-      // 券种：仅 2（实体券）传 VOUCHER，其余（1/电子券、缺省、其他）沿用 VISTAX_VOUCHER
-      params.voucher_code_type = quan_kind == 2 ? "VOUCHER" : "VISTAX_VOUCHER";
+      if (quan_kind == 2) {
+        // 实体券：与 web 端实测一致；纯券抵扣，不带会员卡
+        params.discount_type = "TP_VOUCHER";
+        params.voucher_code_type = "VGC_T";
+        params.card_id = "";
+        params.pay_type = "WECHAT";
+      } else {
+        // 电子券：维持改造前取值
+        params.discount_type = "";
+        params.voucher_code_type = "VISTAX_VOUCHER";
+      }
     }
     let res;
     try {
