@@ -22,18 +22,17 @@
           @node-click="nodeClick"
         />
       </el-aside>
-      <el-main style="margin-left: 15px; padding: 0; height: 100%">
+      <el-main style=" height: 100%; padding: 0;margin-left: 15px">
         <!-- Tab切换 -->
         <el-tabs
           v-model="activeTab"
           type="border-card"
           style="height: 100%; min-height: 800px"
-          lazy
         >
           <el-tab-pane label="券类型列表" name="quanType">
             <QuanType :app-type="appType" :app-name="appName" />
           </el-tab-pane>
-          <el-tab-pane label="券码列表" name="quanList">
+          <el-tab-pane label="券码列表" name="quanList" lazy>
             <QuanList :app-type="appType" :app-name="appName" />
           </el-tab-pane>
         </el-tabs>

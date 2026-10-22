@@ -8,6 +8,7 @@
       :close-on-press-escape="false"
       :title="dialogTitle"
       width="50%"
+      class="fit-dialog"
       @close="resetForm(cardFormRef)"
     >
       <el-form
@@ -16,12 +17,12 @@
         :rules="rules"
         label-width="120px"
       >
-        <el-form-item label="影线名称" prop="app_name">
+        <el-form-item label="院线名称" prop="app_name">
           <el-cascader
             v-model="formData.app_name"
             :options="appCascaderOptions"
             :props="appCascaderProps"
-            placeholder="请选择影线名称"
+            placeholder="请选择院线名称"
             clearable
             filterable
             style="width: 100%"
@@ -150,7 +151,7 @@ import { GET_APP_LIST, GET_APP_TYPE_LIST } from "@/common/constant";
 const APP_LIST = computed(() => GET_APP_LIST());
 const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
 
-// 影线二级级联配置（系列 -> 影线）
+// 院线二级级联配置（系列 -> 院线）
 const appCascaderOptions = computed(() =>
   APP_TYPE_LIST.value.map((item, inx) => ({
     id: inx + 1,
@@ -206,7 +207,7 @@ let formData = reactive({
   status: "",
   remark: ""
 });
-// 影线影院列表
+// 院线影院列表
 const cinemaList = ref([]);
 const validatePhoneNumber = (rule, value, callback) => {
   if (!value) {
@@ -221,7 +222,7 @@ const validatePhoneNumber = (rule, value, callback) => {
 };
 
 const rules = {
-  app_name: [{ required: true, message: "影线名称不能为空", trigger: "blur" }],
+  app_name: [{ required: true, message: "院线名称不能为空", trigger: "blur" }],
   cinema_name: [
     { required: true, message: "影院名称不能为空", trigger: "blur" }
   ],
@@ -261,7 +262,7 @@ const resetForm = el => {
   formData.remark = "";
 };
 
-// 影线改变
+// 院线改变
 const shadowLineChange = async app_name => {
   console.log("app_name", app_name);
   resetForm(1);

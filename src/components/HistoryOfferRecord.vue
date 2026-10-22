@@ -1,167 +1,162 @@
 <!-- 历史报价记录 -->
 <template>
   <div>
-    <!-- 查询表单 -->
-    <el-form :inline="true" class="demo-form-inline">
-      <el-form-item label="订单来源">
-        <el-select
-          v-model="formData.plat_name"
-          placeholder="订单来源"
-          clearable
-        >
-          <el-option
-            v-for="(keyValue, keyName) in orderFormObj"
-            :key="keyName"
-            :label="keyValue"
-            :value="keyName"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="影线名称">
-        <el-cascader
-          v-model="formData.app_name"
-          :options="appCascaderOptions"
-          :props="appCascaderProps"
-          clearable
-          filterable
-          placeholder="影线名称"
-        />
-      </el-form-item>
-      <el-form-item label="影院名称">
-        <el-input
-          v-model="formData.cinema_name"
-          placeholder="请输入影院名称"
-          clearable
-        />
-      </el-form-item>
-      <el-form-item label="报价用户">
-        <el-select v-model="formData.user_id" placeholder="报价用户" clearable>
-          <el-option
-            v-for="(item, inx) in userList"
-            :key="inx"
-            :label="item.name"
-            :value="item.id"
-          />
-        </el-select>
-      </el-form-item>
-      <!-- <el-form-item label="报价状态">
-        <el-select
-          v-model="formData.order_status"
-          placeholder="报价状态"
-          style="width: 194px"
-          clearable
-        >
-          <el-option label="成功" value="1" />
-          <el-option label="失败" value="2" />
-        </el-select>
-      </el-form-item> -->
-      <el-form-item label="钱包类型">
-        <el-select v-model="formData.pay_type" placeholder="钱包类型" clearable>
-          <el-option label="A钱包" :value="0" />
-          <el-option label="B钱包" :value="1" />
-        </el-select>
-      </el-form-item>
-      <el-form-item v-if="orderStatus == 1" label="是否中标">
-        <el-select v-model="formData.is_deal" placeholder="是否中标" clearable>
-          <el-option label="是" value="1" />
-          <el-option label="否" value="2" />
-        </el-select>
-      </el-form-item>
-      <!-- <el-form-item
-        v-if="IN_RULE_LIST.includes(rule) && orderStatus == 1"
-        label="报价差异"
+    <!-- 查询区：只放条件，全部平铺，栅格按屏幕宽度自动排列换行 -->
+    <div class="search-panel">
+      <el-form
+        class="search-panel__form"
+        :model="formData"
+        label-width="76px"
+        @keyup.enter="searchData"
       >
-        <el-select
-          v-model="formData.is_price_diff"
-          placeholder="报价差异"
-          clearable
-        >
-          <el-option label="是" value="1" />
-          <el-option label="否" value="" />
-        </el-select>
-      </el-form-item> -->
-      <el-form-item label="报价来源">
-        <el-select
-          v-model="formData.offer_from"
-          placeholder="报价来源"
-          clearable
-        >
-          <el-option label="平台" :value="1" />
-          <el-option label="机器" :value="2" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="订&nbsp;&nbsp;单&nbsp;&nbsp;号">
-        <el-input
-          v-model="formData.order_number"
-          placeholder="请输入订单号"
-          clearable
-        />
-      </el-form-item>
-      <el-form-item label="用券类型">
-        <el-select
-          v-model="formData.quan_value"
-          placeholder="用券类型"
-          clearable
-          filterable
-        >
-          <el-option
-            v-for="item in quanType"
-            :key="item.id"
-            :label="item.quan_name"
-            :value="item.quan_value"
+        <el-form-item label="平台">
+          <el-select v-model="formData.plat_name" placeholder="平台" clearable>
+            <el-option
+              v-for="(keyValue, keyName) in orderFormObj"
+              :key="keyName"
+              :label="keyValue"
+              :value="keyName"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="院线名称">
+          <el-cascader
+            v-model="formData.app_name"
+            :options="appCascaderOptions"
+            :props="appCascaderProps"
+            clearable
+            filterable
+            placeholder="院线名称"
           />
-        </el-select>
-      </el-form-item>
-      <el-form-item v-if="orderStatus == 2" label="失败原因">
-        <el-input
-          v-model="formData.err_msg"
-          placeholder="请输入报价失败原因"
-          clearable
-        />
-      </el-form-item>
-      <el-form-item v-if="orderStatus == 2" label="失败类型">
-        <el-select
-          v-model="formData.err_type"
-          placeholder="请选择失败类型"
-          clearable
-        >
-          <el-option
-            v-for="(label, value) in OFFER_FAIL_TYPE"
-            :key="value"
-            :label="label"
-            :value="Number(value)"
+        </el-form-item>
+        <el-form-item label="影院名称">
+          <el-input
+            v-model="formData.cinema_name"
+            placeholder="请输入影院名称"
+            clearable
           />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="开始时间">
-        <el-date-picker
-          v-model="formData.start_time"
-          type="datetime"
-          placeholder="请选择开始时间"
-          format="YYYY-MM-DD HH:mm:ss"
-          value-format="YYYY-MM-DD HH:mm:ss"
-          time-format="HH:mm"
-        />
-      </el-form-item>
-      <el-form-item label="结束时间">
-        <el-date-picker
-          v-model="formData.end_time"
-          type="datetime"
-          placeholder="请选择结束时间"
-          format="YYYY-MM-DD HH:mm:ss"
-          value-format="YYYY-MM-DD HH:mm:ss"
-          time-format="HH:mm"
-        />
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" @click="searchData">搜索</el-button>
+        </el-form-item>
+        <el-form-item label="报价用户">
+          <el-select
+            v-model="formData.user_id"
+            placeholder="报价用户"
+            clearable
+          >
+            <el-option
+              v-for="(item, inx) in userList"
+              :key="inx"
+              :label="item.name"
+              :value="item.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="订单号">
+          <el-input
+            v-model="formData.order_number"
+            placeholder="请输入订单号"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item v-if="orderStatus == 2" label="失败类型">
+          <el-select
+            v-model="formData.err_type"
+            placeholder="请选择失败类型"
+            clearable
+          >
+            <el-option
+              v-for="(label, value) in OFFER_FAIL_TYPE"
+              :key="value"
+              :label="label"
+              :value="Number(value)"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="报价来源">
+          <el-select
+            v-model="formData.offer_from"
+            placeholder="报价来源"
+            clearable
+          >
+            <el-option label="平台" :value="1" />
+            <el-option label="机器" :value="2" />
+          </el-select>
+        </el-form-item>
+        <el-form-item v-if="orderStatus == 1" label="是否中标">
+          <el-select
+            v-model="formData.is_deal"
+            placeholder="是否中标"
+            clearable
+          >
+            <el-option label="是" value="1" />
+            <el-option label="否" value="2" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="用券类型">
+          <el-select
+            v-model="formData.quan_value"
+            placeholder="用券类型"
+            clearable
+            filterable
+          >
+            <el-option
+              v-for="item in quanType"
+              :key="item.id"
+              :label="item.quan_name"
+              :value="item.quan_value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="钱包类型">
+          <el-select
+            v-model="formData.pay_type"
+            placeholder="钱包类型"
+            clearable
+          >
+            <el-option label="A钱包" :value="0" />
+            <el-option label="B钱包" :value="1" />
+          </el-select>
+        </el-form-item>
+        <el-form-item v-if="orderStatus == 2" label="失败原因">
+          <el-input
+            v-model="formData.err_msg"
+            placeholder="请输入报价失败原因"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="开始时间">
+          <el-date-picker
+            v-model="formData.start_time"
+            type="datetime"
+            placeholder="请选择开始时间"
+            format="YYYY-MM-DD HH:mm:ss"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            time-format="HH:mm"
+          />
+        </el-form-item>
+        <el-form-item label="结束时间">
+          <el-date-picker
+            v-model="formData.end_time"
+            type="datetime"
+            placeholder="请选择结束时间"
+            format="YYYY-MM-DD HH:mm:ss"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            time-format="HH:mm"
+          />
+        </el-form-item>
+      </el-form>
+    </div>
+
+    <!-- 操作栏：本页只有查询动作，跟随查询区靠左 -->
+    <div class="page-toolbar">
+      <div class="page-toolbar__group">
+        <el-button type="primary" @click="searchData">查询</el-button>
         <el-button @click="resetForm">重置</el-button>
-      </el-form-item>
-    </el-form>
+      </div>
+    </div>
 
     <!-- 表格 -->
     <el-table
-      style="width: 100%"
+      class="page-table"
       :data="tableData"
       border
       stripe
@@ -174,7 +169,7 @@
         align="center"
         width="60"
       />
-      <el-table-column prop="plat_name" fixed label="订单来源" width="100">
+      <el-table-column prop="plat_name" fixed label="平台" width="100">
         <template #default="scope">
           <div class="order-source-container">
             <span>{{ orderFormObj[scope.row.plat_name] }}</span>
@@ -186,10 +181,25 @@
               class="reward-tag"
               >奖</el-tag
             >
+            <el-tag
+              v-if="Number(scope.row.pay_type) === 1"
+              type="warning"
+              size="small"
+              effect="dark"
+              class="wallet-tag"
+              >{{ formatBWalletTag(scope.row) }}</el-tag
+            >
           </div>
         </template>
       </el-table-column>
-      <el-table-column prop="app_name" fixed label="影线名称" width="100">
+      <!-- 院线名称、报价来源、报价规则/用券类型：未报价记录列表不显示，统一在详情弹窗查看 -->
+      <el-table-column
+        v-if="orderStatus == 1"
+        prop="app_name"
+        fixed
+        label="院线名称"
+        width="100"
+      >
         <template #default="scope">
           <span>{{ APP_LIST[scope.row.app_name] }}</span>
         </template>
@@ -201,14 +211,11 @@
       </el-table-column> -->
       <el-table-column fixed label="订单号" width="140">
         <template #default="scope">
-          <span>{{ scope.row.order_number }}</span>
-          <el-tag
-            v-if="Number(scope.row.pay_type) === 1"
-            type="warning"
-            size="small"
-            class="wallet-tag"
-            >{{ formatBWalletTag(scope.row) }}</el-tag
-          >
+          <!-- 点订单号开报价详情（.order-link 是全局样式：灰色点线下划线，hover 变主题色），
+               替代原来操作列里的「详情」按钮，操作列只留「排查」 -->
+          <span class="order-link" @click="showDetail(scope.row)">{{
+            scope.row.order_number
+          }}</span>
         </template>
       </el-table-column>
       <el-table-column fixed label="限价 / 税前成本 " width="130">
@@ -219,13 +226,13 @@
           </span>
         </template>
       </el-table-column>
-      <el-table-column
+      <!-- <el-table-column
         v-if="IN_RULE_LIST.includes(rule) && orderStatus == 1"
         prop="adjust_price"
         fixed
         label="动态调价"
         width="85"
-      />
+      /> -->
       <!-- <el-table-column
         v-if="IN_RULE_LIST.includes(rule) && orderStatus == 1"
         prop="price_spread"
@@ -233,26 +240,30 @@
         label="成本价差"
         width="85"
       /> -->
-      <el-table-column label="报价来源" width="120">
+
+      <el-table-column label="类型" width="75" align="center">
         <template #default="scope">
           <el-tag
-            :type="getOfferFromType(scope.row.offer_from)"
+            v-if="scope.row.offer_type"
+            :type="getOfferType(scope.row.offer_type)"
             size="default"
             effect="dark"
             class="offer-type-tag"
           >
-            {{ scope.row.offer_from == 1 ? "平台" : "机器" }}
+            {{ offerTypeObj[scope.row.offer_type] || "" }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="报价规则 / 用券类型" width="150">
+      <el-table-column
+        v-if="orderStatus == 1"
+        label="报价规则 / 用券类型"
+        width="150"
+      >
         <template #default="scope">
           <span
-            >{{ scope.row.rule_name || "" }}
-            <span v-if="orderStatus == 1">
-              / {{ scope.row.quan_value || "无" }}</span
-            >
-          </span>
+            >{{ scope.row.rule_name || "" }} /
+            {{ scope.row.quan_value || "无" }}</span
+          >
         </template>
       </el-table-column>
       <el-table-column
@@ -267,7 +278,7 @@
           </span>
         </template>
       </el-table-column>
-      <el-table-column
+      <!-- <el-table-column
         v-if="IN_RULE_LIST.includes(rule) && orderStatus == 1"
         prop="is_deal"
         label="是否中标"
@@ -276,11 +287,16 @@
         <template #default="{ row: { is_deal } }">
           <span>{{ is_deal == 1 ? "是" : is_deal == 2 ? "否" : "" }}</span>
         </template>
-      </el-table-column>
-      <el-table-column prop="user_name" label="报价人" width="85" />
+      </el-table-column> -->
+      <el-table-column
+        prop="user_name"
+        label="用户"
+        width="80"
+        align="center"
+      />
       <el-table-column prop="cinema_name" label="影院" width="205" />
-      <el-table-column prop="hall_name" label="影厅" width="90" />
-      <el-table-column label="座位数/片名" width="150">
+      <el-table-column prop="hall_name" label="影厅" width="130" />
+      <el-table-column label="座位数/片名" width="180">
         <template #default="scope">
           <div class="film-name-container">
             <el-tag
@@ -295,31 +311,33 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="报价类型" width="120">
+      <el-table-column
+        v-if="orderStatus == 1"
+        label="报价来源"
+        width="90"
+        align="center"
+      >
         <template #default="scope">
-          <el-tag
-            v-if="scope.row.offer_type"
-            :type="getOfferType(scope.row.offer_type)"
-            size="default"
-            effect="dark"
-            class="offer-type-tag"
-          >
-            {{ offerTypeObj[scope.row.offer_type] || "" }}
-          </el-tag>
+          <span>
+            {{ scope.row.offer_from == 1 ? "平台" : "机器" }}
+          </span>
         </template>
       </el-table-column>
-
-      <el-table-column prop="processing_time" label="创建时间" width="160" />
-      <el-table-column v-if="orderStatus != 1" label="失败原因" width="280">
-        <template #default="scope">
-          {{ scope.row.err_msg || "未记录失败原因（历史数据）" }}
-        </template>
-      </el-table-column>
+      <!-- 创建时间：未报价记录列表不显示，改在详情弹窗查看 -->
+      <el-table-column
+        v-if="orderStatus == 1"
+        prop="processing_time"
+        label="创建时间"
+        width="160"
+        align="center"
+      />
       <el-table-column
         v-if="orderStatus != 1"
         prop="err_type"
         label="失败类型"
         width="140"
+        align="center"
+        fixed="right"
       >
         <template #default="scope">
           <el-tag
@@ -335,24 +353,16 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" fixed="right" align="center" width="240">
+      <el-table-column
+        v-if="orderStatus != 1"
+        prop="err_msg"
+        label="失败原因"
+        fixed="right"
+      />
+
+      <!-- 详情入口挂在订单号上（.order-link）；原始日志入口已合并到「排查」页（订单排查 → 查看原始日志） -->
+      <el-table-column label="操作" fixed="right" align="center" width="90">
         <template #default="scope">
-          <el-button
-            v-if="IN_RULE_LIST.includes(rule)"
-            size="small"
-            type="primary"
-            @click="
-              queryLog({
-                order_number: scope.row.order_number,
-                user_id: scope.row.user_id,
-                processing_time: scope.row.processing_time
-              })
-            "
-            >查询日志</el-button
-          >
-          <el-button size="small" type="info" @click="showDetail(scope.row)"
-            >详情</el-button
-          >
           <el-button size="small" @click="goDiagnosis(scope.row)"
             >排查</el-button
           >
@@ -362,7 +372,7 @@
     <el-pagination
       v-model:current-page="currentPage"
       v-model:page-size="pageSize"
-      style="display: flex; justify-content: flex-end; margin-top: 10px"
+      class="page-pagination"
       :page-sizes="[10, 20, 30, 50]"
       :background="true"
       layout="total, sizes, prev, pager, next, jumper"
@@ -371,67 +381,21 @@
       @current-change="handleCurrentChange"
     />
 
-    <el-dialog v-model="dialogLogVisible" title="订单日志" width="1100">
-      <el-tabs v-model="logTabActive">
-        <el-tab-pane label="明细日志" name="trace">
-          <div style="margin-bottom: 10px">
-            <span style="margin-right: 8px"
-              >订单号：{{ currentLogOrderNumber }}</span
-            >
-            <el-button size="small" type="primary" @click="queryTrace"
-              >查询明细</el-button
-            >
-            <el-checkbox v-model="traceBrief" style="margin-left: 10px"
-              >仅时间线（不含 info，省流量）</el-checkbox
-            >
-            <span style="margin-left: 10px; color: #909399; font-size: 12px"
-              >来源：后端日志文件 /svpi/log/trace（按日/按用户目录）</span
-            >
-          </div>
-          <el-table :data="traceData" border max-height="500">
-            <el-table-column type="index" label="序号" width="60" />
-            <el-table-column
-              property="opera_time"
-              sortable
-              label="操作时间"
-              width="160"
-            />
-            <el-table-column property="des" width="220" label="操作描述" />
-            <el-table-column property="level" width="70" label="级别" />
-            <el-table-column
-              v-if="!traceBrief"
-              property="info"
-              show-overflow-tooltip
-              label="详细信息"
-              :formatter="formatTraceInfo"
-            />
-          </el-table>
-        </el-tab-pane>
-        <el-tab-pane label="异常日志" name="error">
-          <el-table :data="logData" border>
-            <el-table-column type="index" label="序号" width="60" />
-            <el-table-column
-              property="opera_time"
-              sortable
-              label="操作时间"
-              width="160"
-            />
-            <el-table-column property="des" width="180" label="操作描述" />
-            <el-table-column
-              property="info"
-              show-overflow-tooltip
-              label="详细信息"
-            />
-          </el-table>
-        </el-tab-pane>
-      </el-tabs>
-    </el-dialog>
-
     <!-- 报价详情弹框（V3 L0：用户关心的报价字段直接展示） -->
     <el-dialog v-model="dialogDetailVisible" title="报价详情" width="760">
       <el-descriptions v-if="currentOfferRow" :column="2" border>
         <el-descriptions-item label="订单号">{{
           currentOfferRow.order_number
+        }}</el-descriptions-item>
+        <el-descriptions-item label="院线名称">{{
+          APP_LIST[currentOfferRow.app_name] || currentOfferRow.app_name || ""
+        }}</el-descriptions-item>
+        <el-descriptions-item label="报价来源">{{
+          currentOfferRow.offer_from == 1
+            ? "平台"
+            : currentOfferRow.offer_from == 2
+              ? "机器"
+              : ""
         }}</el-descriptions-item>
         <el-descriptions-item label="命中规则">{{
           currentOfferRow.hit_rule_name ||
@@ -468,6 +432,9 @@
         <el-descriptions-item label="B钱包加价">{{
           formatBWalletMarkup(currentOfferRow.b_wallet_markup)
         }}</el-descriptions-item>
+        <el-descriptions-item label="创建时间" :span="2">{{
+          currentOfferRow.processing_time || ""
+        }}</el-descriptions-item>
         <el-descriptions-item label="计算路径" :span="2">{{
           currentOfferRow.calc_path || ""
         }}</el-descriptions-item>
@@ -483,21 +450,14 @@
 </template>
 
 <script setup>
-import {
-  ref,
-  reactive,
-  onBeforeUnmount,
-  onBeforeMount,
-  computed,
-  watch
-} from "vue";
+import { ref, reactive, onBeforeUnmount, onBeforeMount, computed } from "vue";
 import { ElLoading } from "element-plus";
 import { useRouter } from "vue-router";
 import svApi from "@/api/sv-api";
 import { platTokens } from "@/store/platTokens";
 const router = useRouter();
 const {
-  userInfo: { rule, user_id }
+  userInfo: { rule }
 } = platTokens();
 
 import {
@@ -512,13 +472,13 @@ import { addDecimal, subDecimal, mulDecimal } from "@/utils/utils";
 // 券类型列表
 const quanType = ref([]);
 
-// 订单来源
+// 平台
 const orderFormObj = ORDER_FORM;
-// 影线列表
+// 院线列表
 const APP_LIST = computed(() => GET_APP_LIST());
 const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
 
-// 影线二级级联配置（系列 -> 影线）
+// 院线二级级联配置（系列 -> 院线）
 const appCascaderOptions = computed(() =>
   APP_TYPE_LIST.value.map((item, inx) => ({
     id: inx + 1,
@@ -539,8 +499,8 @@ const appCascaderProps = {
 };
 // 报价类型枚举
 const offerTypeObj = {
-  1: "日常固定价",
-  2: "会员价加价",
+  1: "券",
+  2: "会员",
   3: "会员日报价"
 };
 // 钱包类型枚举（猎人订单 pay_type：0-A钱包 1-B钱包）
@@ -559,7 +519,7 @@ const formatBWalletMarkup = markup => {
 // 列表标签文案：B钱包 / B钱包+2
 const formatBWalletTag = row => {
   const markup = formatBWalletMarkup(row.b_wallet_markup);
-  return markup && markup !== "未加价" ? `B钱包${markup}` : "B钱包";
+  return markup && markup !== "未加价" ? `B${markup}` : "B";
 };
 
 // 列表数据
@@ -569,11 +529,6 @@ const pageSize = ref(10);
 const totalNum = ref(0);
 // 用户列表
 const userList = ref([]);
-
-// 操作日志弹框
-const dialogLogVisible = ref(false);
-// 操作日志列表
-const logData = ref([]);
 
 // V3 L0：报价详情弹框
 const dialogDetailVisible = ref(false);
@@ -593,8 +548,8 @@ const supplier_end_price_filter = row => {
 
 // 表单查询数据
 const formData = reactive({
-  plat_name: "", // 订单来源
-  app_name: "", // 影线名称
+  plat_name: "", // 平台
+  app_name: "", // 院线名称
   cinema_name: "", // 影院名称
   user_id: "", // 报价用户
   order_status: "", // 报价状态
@@ -635,38 +590,12 @@ const props = defineProps({
 
 formData.order_status = props.orderStatus;
 
-// 查询操作日志
-const queryLog = async ({ order_number, user_id, processing_time }) => {
-  try {
-    const res = await svApi.queryLogRecord({
-      order_number,
-      user_id,
-      type: 1
-    });
-    console.warn("查询操作日志返回", res);
-    let logList = res.data?.cardList || [];
-    currentLogOrderNumber.value = order_number || "";
-    // 记录归属用户：明细日志按用户目录分片存储，查询必须带 userId 定位该用户目录，
-    // 否则后端遍历全部用户目录，同订单号在其他用户目录的分片会被混入（2026-08-20 修复）
-    currentLogUserId.value = user_id || "";
-    // E1 修复：明细查询日期取订单处理时间（而非"今天"——订单可能不是今天处理的）
-    if (processing_time) {
-      currentLogDate.value = String(processing_time)
-        .slice(0, 10)
-        .replace(/-/g, "");
-    }
-    dialogLogVisible.value = true;
-    logTabActive.value = "trace";
-    traceAutoQueried.value = true;
-    logData.value = logList;
-    // 明细日志 Tab 默认在前：打开弹框即自动查询一次（用户手动查询不受影响）
-    queryTrace();
-  } catch (error) {
-    console.warn("查询操作日志返回异常", error);
-  }
-};
+// 未报价记录默认只看当前登录用户（报价记录仍查全部）。
+// 真实取值在用户列表加载后按 id → 名字匹配，匹配不到就不加默认筛选（见 onBeforeMount）。
+const defaultUserId = ref("");
 
-// 跳转「订单排查」页（2026-10-19）：带上订单号，页面自动带出日期并查询
+// 跳转「订单排查」页（2026-10-19）：带上订单号，页面自动带出日期并查询。
+// 原「查询日志」入口已合并到该页（订单排查 → 查看原始日志），列表只保留「排查」一个入口。
 const goDiagnosis = row => {
   if (!row?.order_number) return;
   router.push({
@@ -674,53 +603,6 @@ const goDiagnosis = row => {
     query: { order_number: row.order_number, user_id: row.user_id }
   });
 };
-
-// V3 L2：明细日志 Tab（后端日志文件查询）
-const logTabActive = ref("trace");
-const currentLogOrderNumber = ref("");
-const currentLogDate = ref("");
-const currentLogUserId = ref("");
-const traceBrief = ref(false);
-const traceData = ref([]);
-const traceAutoQueried = ref(false);
-const queryTrace = async () => {
-  if (!currentLogOrderNumber.value) return;
-  try {
-    const res = await svApi.queryLogTrace({
-      order_number: currentLogOrderNumber.value,
-      date: currentLogDate.value,
-      // 记录归属用户的目录定位：避免后端遍历全部用户目录混入其他用户同单号日志
-      userId: currentLogUserId.value,
-      type: 1, // 报价详情只看报价队列日志（type=1），排除同订单的待出票/出票等其他类型
-      brief: traceBrief.value ? 1 : 0
-    });
-    // ⚠️ 修复：sv-request 响应拦截器返回整个响应体（{code,data,msg}），
-    // res.data 即后端 data（{list,total}）——取 res.data.list，勿多加一层 data
-    traceData.value = res.data?.list || [];
-  } catch (error) {
-    console.warn("查询明细日志返回异常", error);
-    traceData.value = [];
-  }
-};
-
-// 明细 info 为对象（traceBuffer 原样入参），序列化展示避免 [object Object]
-const formatTraceInfo = (row, column, cellValue) => {
-  if (cellValue === null || cellValue === undefined) return "";
-  if (typeof cellValue === "string") return cellValue;
-  try {
-    return JSON.stringify(cellValue);
-  } catch {
-    return String(cellValue);
-  }
-};
-
-// 首次切到"明细日志"Tab 自动查询（每次打开弹框后仅自动查一次，用户手动查询不受影响）
-watch(logTabActive, val => {
-  if (val === "trace" && !traceAutoQueried.value) {
-    traceAutoQueried.value = true;
-    queryTrace();
-  }
-});
 
 // 搜索数据
 const searchData = async () => {
@@ -773,15 +655,15 @@ const loadData = async () => {
     console.error("获取历史报价记录失败===>", error);
   }
 };
-loadData();
+// 首次加载放到 onBeforeMount：需要先拿到用户列表，才能确定「默认当前用户」的真实 id
 
 // 重置表单
 const resetForm = () => {
   formData.plat_name = "";
-  formData.app_name = ""; // 影线名称
+  formData.app_name = ""; // 院线名称
   formData.cinema_name = ""; // 影院名称
   formData.is_deal = ""; // 是否中标
-  formData.user_id = ""; // 报价用户
+  formData.user_id = defaultUserId.value; // 报价用户（未报价记录默认当前用户）
   formData.order_number = ""; // 报价类型
   formData.err_msg = ""; // 最终报价
   formData.err_type = ""; // 失败类型
@@ -890,6 +772,20 @@ const getQuanTypeList = async () => {
   }
 };
 
+// 解析「报价用户」默认值：以用户列表为准。
+// 按 id 匹配 → 名字兜底；都没有（内部账号通常不在报价员列表里）就返回空，即不加默认筛选
+const resolveDefaultUserId = list => {
+  const info = platTokens().userInfo || {};
+  const rawId = info.user_id ?? info.id;
+  if (rawId == null || rawId === "") return "";
+  const byId = list.find(item => String(item.id) === String(rawId));
+  if (byId) return byId.id;
+  const byName = list.find(item => info.name && item.name === info.name);
+  if (byName) return byName.id;
+  console.warn("当前账号不在报价员列表中，报价用户默认查全部", info);
+  return "";
+};
+
 onBeforeMount(async () => {
   await getQuanTypeList();
   const res = await svApi.getUserList();
@@ -897,6 +793,13 @@ onBeforeMount(async () => {
   let list = res.data.userList || [];
   // console.log("list", list);
   userList.value = list;
+  // 用户列表到手后再决定默认筛选，保证落到下拉里真实存在的那个 id
+  if (props.orderStatus == 2) {
+    defaultUserId.value = resolveDefaultUserId(list);
+    formData.user_id = defaultUserId.value;
+  }
+  // 首次查询放在这里：避免带着还没校验过的 user_id 先查一次，出现"页面啥都没有"
+  loadData();
 });
 onBeforeUnmount(() => {
   clearInterval(timer);
@@ -917,23 +820,6 @@ onBeforeUnmount(() => {
   100% {
     box-shadow: 0 0 0 0 rgb(103 194 58 / 0%);
   }
-}
-
-.demo-form-inline .el-form-item {
-  width: 20%;
-  margin-right: 0;
-}
-
-.demo-form-inline .el-form-item__content {
-  flex: 1;
-  min-width: 0;
-}
-
-.demo-form-inline .el-input,
-.demo-form-inline .el-select,
-.demo-form-inline :deep(.el-cascader),
-.demo-form-inline :deep(.el-date-editor.el-input) {
-  width: 95%;
 }
 
 .status-success {

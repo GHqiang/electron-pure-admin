@@ -22,70 +22,69 @@
           @node-click="nodeClick"
         />
       </el-aside>
-      <el-main style="margin-left: 15px; padding: 0">
-        <!-- 查询表单 -->
-        <el-form :inline="true" class="demo-form-inline">
-          <el-form-item label="所属账号">
-            <el-input
-              v-model="formData.mobile"
-              placeholder="请输入所属账号(手机号)"
-              clearable
-            />
-          </el-form-item>
-          <el-form-item label="支持用户">
-            <el-select
-              v-model="formData.link_user_id"
-              placeholder="支持用户"
-              style="width: 194px"
-              clearable
-            >
-              <el-option
-                v-for="(item, inx) in userList"
-                :key="inx"
-                :label="item.name"
-                :value="item.id"
+      <el-main style="padding: 0; margin-left: 15px">
+        <!-- 查询区：只放条件，查询动作统一由下方工具栏承载 -->
+        <div class="search-panel">
+          <el-form
+            class="search-panel__form"
+            :model="formData"
+            label-width="76px"
+            @keyup.enter="searchData"
+          >
+            <el-form-item label="所属账号">
+              <el-input
+                v-model="formData.mobile"
+                placeholder="请输入所属账号(手机号)"
+                clearable
               />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="是否小号">
-            <el-select
-              v-model="formData.is_xiaohao"
-              placeholder="是否小号"
-              style="width: 194px"
-              clearable
-            >
-              <el-option label="是" value="1" />
-              <el-option label="否" value="2" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="是否优先">
-            <el-select
-              v-model="formData.first"
-              placeholder="是否优先"
-              style="width: 194px"
-              clearable
-            >
-              <el-option label="是" value="1" />
-              <el-option label="否" value="2" />
-            </el-select>
-          </el-form-item>
-          <el-form-item>
-            <el-button @click="resetForm">重置</el-button>
-            <el-button type="primary" @click="searchData">搜索</el-button>
-            <el-button type="primary" style="padding-left: 0px">
-              <template #default>
-                <el-cascader
-                  v-model="shadowLine"
-                  :options="appCascaderOptions"
-                  :props="appCascaderProps"
-                  filterable
-                  clearable
-                  placeholder="影线名称"
-                  style="width: 210px; margin-left: -1px"
+            </el-form-item>
+            <el-form-item label="支持用户">
+              <el-select
+                v-model="formData.link_user_id"
+                placeholder="支持用户"
+                clearable
+              >
+                <el-option
+                  v-for="(item, inx) in userList"
+                  :key="inx"
+                  :label="item.name"
+                  :value="item.id"
                 />
-                <span @click="addCard">新增</span>
-              </template>
-            </el-button>
+              </el-select>
+            </el-form-item>
+            <el-form-item label="是否小号">
+              <el-select
+                v-model="formData.is_xiaohao"
+                placeholder="是否小号"
+                clearable
+              >
+                <el-option label="是" value="1" />
+                <el-option label="否" value="2" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="是否优先">
+              <el-select
+                v-model="formData.first"
+                placeholder="是否优先"
+                clearable
+              >
+                <el-option label="是" value="1" />
+                <el-option label="否" value="2" />
+              </el-select>
+            </el-form-item>
+          </el-form>
+        </div>
+
+        <!-- 操作栏：左数据操作，中查询动作，右工具动作 -->
+        <div class="page-toolbar">
+          <div class="page-toolbar__group">
+            <el-button type="primary" @click="addCard">新增</el-button>
+          </div>
+          <div class="page-toolbar__group">
+            <el-button type="primary" @click="searchData">查询</el-button>
+            <el-button @click="resetForm">重置</el-button>
+          </div>
+          <div class="page-toolbar__group page-toolbar__group--end">
             <el-button
               type="danger"
               :disabled="!hasSelected"
@@ -93,18 +92,18 @@
               >批量删除</el-button
             >
             <el-button
-              style="margin-left: 10px"
               type="primary"
               :loading="queryExpireLoading"
               @click="queryExpireLoginList"
-              >查看登录失效影院</el-button
+              >检查登录</el-button
             >
-          </el-form-item>
-        </el-form>
+          </div>
+        </div>
+
         <!-- 表格 -->
         <el-table
           ref="multipleTable"
-          style="width: 100%"
+          class="page-table"
           :data="tableData"
           border
           stripe
@@ -114,7 +113,7 @@
           <el-table-column type="selection" width="55" />
           <el-table-column
             prop="app_name"
-            label="影线名称"
+            label="院线名称"
             sortable
             min-width="110"
           >
@@ -187,7 +186,7 @@
         <el-pagination
           v-model:current-page="currentPage"
           v-model:page-size="pageSize"
-          style="margin-top: 10px; display: flex; justify-content: flex-end"
+          class="page-pagination"
           :page-sizes="[10, 20, 50, 100]"
           :background="true"
           layout="total, sizes, prev, pager, next, jumper"
@@ -215,13 +214,13 @@
         <el-table-column
           prop="app_type_name"
           sortable
-          label="影线系列"
+          label="院线系列"
           width="180"
         />
         <el-table-column
           prop="app_label"
           sortable
-          label="影线名称"
+          label="院线名称"
           width="180"
         />
         <el-table-column prop="mobile" sortable label="手机号" />
@@ -287,14 +286,6 @@ const treeData = APP_TYPE_LIST.value.map((item, inx) => {
   };
 });
 
-// 影线二级级联配置（系列 -> 影线）
-const appCascaderOptions = treeData;
-const appCascaderProps = {
-  value: "value",
-  label: "label",
-  children: "children",
-  emitPath: false
-};
 // 树过滤
 const filterText = ref("");
 const filterNode = (value, data) => {
@@ -307,6 +298,9 @@ const treeRef = ref(null);
 watch(filterText, val => {
   treeRef.value.filter(val);
 });
+
+// 左侧树当前选中节点（新增时据此确定系列/院线）
+const currentNode = ref(null);
 
 // 用户列表
 const userList = ref([]);
@@ -331,15 +325,16 @@ formData.rule = rule;
 
 // 树节点点击
 const nodeClick = nodeData => {
-  console.log("nodeData", nodeData);
-  if (nodeData.id < 100) {
+  currentNode.value = nodeData;
+  // 一级节点带 children，是系列；否则是具体院线
+  if (nodeData.children?.length) {
     formData.app_type = nodeData.value;
     formData.app_name = "";
   } else {
     formData.app_name = nodeData.value;
-    shadowLine.value = nodeData.value;
     formData.app_type = "";
   }
+  currentPage.value = 1;
   searchData();
 };
 // 设置本地的登录信息列表
@@ -418,13 +413,23 @@ const handleCurrentChange = val => {
 // 弹框实例
 const sfcDialogRef = ref(null);
 const dialogTitle = ref("新增");
-const shadowLine = ref("");
 const mobile = ref("");
 
-// 新增登录信息
+// 新增登录信息：院线/系列取自左侧树选中节点，弹窗内不再二次选择
 const addCard = () => {
+  const node = currentNode.value;
+  if (!node) {
+    ElMessage.warning("请先在左侧树选择系列或院线");
+    return;
+  }
   dialogTitle.value = "新增";
-  sfcDialogRef.value.open({ app_name: shadowLine.value });
+  if (node.children?.length) {
+    // 选中的是系列：院线名称限定在该系列内选择
+    sfcDialogRef.value.open({ seriesScope: node.value });
+  } else {
+    // 选中的是具体院线：直接带入并锁定
+    sfcDialogRef.value.open({ app_name: node.value, lockAppName: true });
+  }
 };
 
 // 编辑登录信息
@@ -470,11 +475,18 @@ const hasSelected = computed(() => multipleSelection.value.length > 0);
 
 // 重置表单
 const resetForm = () => {
+  formData.app_type = "";
   formData.app_name = "";
+  formData.link_user_id = "";
   formData.mobile = "";
-
+  formData.is_xiaohao = "";
+  formData.first = "";
+  // 左侧树选中态一并清掉，避免查询条件与树高亮不一致
+  currentNode.value = null;
+  treeRef.value?.setCurrentKey(null);
   currentPage.value = 1;
   pageSize.value = 10;
+  searchData();
 };
 
 // 处理选择变化
@@ -605,7 +617,7 @@ const exportExpireList = async () => {
     item.mobile,
     item.session_id
   ]);
-  tableData.unshift(["影线系列", "影线名称", "手机号", "失效session"]);
+  tableData.unshift(["院线系列", "院线名称", "手机号", "失效session"]);
   let fileName = `登录失效影院列表.xlsx`;
   console.warn("tableData", tableData, "fileName", fileName);
   createExcelDown(tableData, fileName);
@@ -670,6 +682,7 @@ onBeforeMount(async () => {
   nextTick(() => {
     if (treeRef.value) {
       treeRef.value.setCurrentKey(1);
+      currentNode.value = treeData[0] || null;
       formData.app_type = "ume_applet";
       searchData();
     }

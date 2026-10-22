@@ -834,6 +834,25 @@ export default function useLierenOfferRuleSyncFun() {
             (seatsFixCount > 0 ? `, 修复座位 ${seatsFixCount} 条` : "")
         );
       }
+
+      // 回传统计结果给调用方（报价规则页的"规则同步修复"用弹窗展示，不再只靠控制台）
+      return {
+        totalLocalSynced,
+        totalPlatRules,
+        totalMatched,
+        enableCount,
+        disableCount,
+        deleteCount,
+        seatsFixCount,
+        platOnlyCount: platOnlyRules.length,
+        localOnlyRules: localOnlyRules.map(item => ({
+          matchType: "LOCAL_ONLY",
+          platRuleId: item.platRuleId,
+          ruleName: item.localRule?.ruleName,
+          shadowLineName: item.localRule?.shadowLineName,
+          localStatus: item.localRule?.status
+        }))
+      };
     } catch (error) {
       console.warn("检查并更新同步到猎人的规则状态异常", error);
     }

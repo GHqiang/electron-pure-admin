@@ -3,82 +3,85 @@
     <!-- 返回栏 -->
     <div class="detail-topbar">
       <el-button size="small" @click="goBack">← 返回统计分析</el-button>
-      <span class="detail-title">影线明细</span>
+      <span class="detail-title">院线明细</span>
     </div>
-    <!-- 查询表单 -->
-    <el-form :inline="true" class="demo-form-inline">
-      <el-form-item label="订单来源">
-        <el-select
-          v-model="formData.plat_name"
-          placeholder="订单来源"
-          clearable
-          style="width: 194px"
-        >
-          <el-option
-            v-for="(keyValue, keyName) in orderFormObj"
-            :key="keyName"
-            :label="keyValue"
-            :value="keyName"
+    <!-- 查询区：只放条件，查询动作统一由下方工具栏承载（本页仅 5 个条件，不折叠） -->
+    <div class="search-panel">
+      <el-form
+        class="search-panel__form"
+        :model="formData"
+        label-width="76px"
+        @keyup.enter="loadData"
+      >
+        <el-form-item label="订单来源">
+          <el-select
+            v-model="formData.plat_name"
+            placeholder="订单来源"
+            clearable
+          >
+            <el-option
+              v-for="(keyValue, keyName) in orderFormObj"
+              :key="keyName"
+              :label="keyValue"
+              :value="keyName"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="用户">
+          <el-select v-model="formData.user_id" placeholder="用户" clearable>
+            <el-option
+              v-for="(item, inx) in userList"
+              :key="inx"
+              :label="item.name"
+              :value="item.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="院线名称">
+          <el-cascader
+            v-model="formData.app_name"
+            :options="appCascaderOptions"
+            :props="appCascaderProps"
+            clearable
+            filterable
+            placeholder="院线名称"
           />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="用户">
-        <el-select
-          v-model="formData.user_id"
-          placeholder="用户"
-          style="width: 194px"
-          clearable
-        >
-          <el-option
-            v-for="(item, inx) in userList"
-            :key="inx"
-            :label="item.name"
-            :value="item.id"
+        </el-form-item>
+        <el-form-item label="开始时间">
+          <el-date-picker
+            v-model="formData.start_time"
+            type="datetime"
+            placeholder="请选择开始时间"
+            format="YYYY-MM-DD HH:mm:ss"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            time-format="HH:mm"
           />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="影线名称">
-        <el-cascader
-          v-model="formData.app_name"
-          :options="appCascaderOptions"
-          :props="appCascaderProps"
-          style="width: 220px"
-          clearable
-          filterable
-          placeholder="影线名称"
-        />
-      </el-form-item>
-      <el-form-item label="开始时间">
-        <el-date-picker
-          v-model="formData.start_time"
-          type="datetime"
-          style="width: 194px"
-          placeholder="请选择开始时间"
-          format="YYYY-MM-DD HH:mm:ss"
-          value-format="YYYY-MM-DD HH:mm:ss"
-          time-format="HH:mm"
-        />
-      </el-form-item>
-      <el-form-item label="结束时间">
-        <el-date-picker
-          v-model="formData.end_time"
-          type="datetime"
-          style="width: 194px"
-          placeholder="请选择结束时间"
-          format="YYYY-MM-DD HH:mm:ss"
-          value-format="YYYY-MM-DD HH:mm:ss"
-          time-format="HH:mm"
-        />
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" @click="loadData">搜索</el-button>
+        </el-form-item>
+        <el-form-item label="结束时间">
+          <el-date-picker
+            v-model="formData.end_time"
+            type="datetime"
+            placeholder="请选择结束时间"
+            format="YYYY-MM-DD HH:mm:ss"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            time-format="HH:mm"
+          />
+        </el-form-item>
+      </el-form>
+    </div>
+
+    <!-- 操作栏：只有查询动作，靠左跟随查询区 -->
+    <div class="page-toolbar">
+      <div class="page-toolbar__group">
+        <el-button type="primary" @click="loadData">查询</el-button>
         <el-button @click="resetForm">重置</el-button>
-      </el-form-item>
-    </el-form>
+      </div>
+    </div>
+
     <!-- 明细表格(原今日统计表) -->
     <el-table
+      class="page-table"
       height="500"
-      style="width: 100%"
       :data="tableData"
       :default-sort="{ prop: 'successRate', order: 'ascending' }"
       border
@@ -94,7 +97,7 @@
         align="center"
         width="60"
       />
-      <el-table-column prop="app_name" label="影线名称" min-width="100">
+      <el-table-column prop="app_name" label="院线名称" min-width="100">
         <template #default="{ row: { app_name } }">
           <span>{{ APP_LIST[app_name] || app_name + "-已调整" }}</span>
         </template>
@@ -231,16 +234,20 @@ const {
   userInfo: { rule, user_id }
 } = platTokens();
 
-import { ORDER_FORM, GET_APP_LIST, GET_APP_TYPE_LIST } from "@/common/constant.js";
+import {
+  ORDER_FORM,
+  GET_APP_LIST,
+  GET_APP_TYPE_LIST
+} from "@/common/constant.js";
 // 用户列表
 const userList = ref([]);
 // 订单来源
 const orderFormObj = ORDER_FORM;
-// 影线列表
+// 院线列表
 const APP_LIST = computed(() => GET_APP_LIST());
 const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
 
-// 影线二级级联配置(系列 -> 影线)
+// 院线二级级联配置(系列 -> 院线)
 const appCascaderOptions = computed(() =>
   APP_TYPE_LIST.value.map((item, inx) => ({
     id: inx + 1,
@@ -264,7 +271,7 @@ const appCascaderProps = {
 const formData = reactive({
   plat_name: "", // 订单来源
   user_id: "", // 用户id
-  app_name: "", // 影线名称
+  app_name: "", // 院线名称
   start_time: "",
   end_time: ""
 });
@@ -400,12 +407,12 @@ const loadData = async () => {
     });
     // 使用Object.fromEntries将过滤后的键值对数组转换回对象
     let queryParams = Object.fromEntries(filteredEntries);
-    // appList 已移除:后端只返回有数据的影线,无数据影线由本地 APP_LIST 补 0(整改方案 §3.5)
+    // appList 已移除:后端只返回有数据的院线,无数据院线由本地 APP_LIST 补 0(整改方案 §3.5)
     const res = await svApi.queryAnalysis(queryParams);
     // console.log("res", res);
     let list = res.data?.list || [];
-    // 本地补 0:后端只返回有数据的影线,按全量 APP_LIST 补全无数据影线(保持原"全量展示"行为)
-    // 下钻模式(带 app_name 进入)不补 0,只展示目标影线
+    // 本地补 0:后端只返回有数据的院线,按全量 APP_LIST 补全无数据院线(保持原"全量展示"行为)
+    // 下钻模式(带 app_name 进入)不补 0,只展示目标院线
     if (!isDrillDown.value) {
       const hasApp = new Set(list.map(item => item.app_name));
       const zeroRow = app_name => ({
@@ -437,7 +444,7 @@ const loadData = async () => {
   }
 };
 
-// 下钻模式:从主页面带 app_name 进入时,只展示该影线(不补 0,避免其余影线全 0 行无意义)
+// 下钻模式:从主页面带 app_name 进入时,只展示该院线(不补 0,避免其余院线全 0 行无意义)
 const isDrillDown = ref(!!route.query.app_name);
 
 // 支持从主页面下钻:回填 app_name 后加载;keepAlive 缓存下组件实例复用,query 变化需重新加载
@@ -468,10 +475,11 @@ onBeforeMount(async () => {
 <style scoped>
 .detail-topbar {
   display: flex;
-  align-items: center;
   gap: 12px;
+  align-items: center;
   margin-bottom: 12px;
 }
+
 .detail-title {
   font-size: 15px;
   font-weight: 600;

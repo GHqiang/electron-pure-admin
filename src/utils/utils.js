@@ -471,7 +471,7 @@ const getCinemaFlagDetail = (
     return { app_name, reason: "", detail: {}, code_matched: codeMatched };
   }
 
-  // 禁用指定系列报价（多选）：读取 disableAppTypeList 数组，命中当前影线 app_type_code 则跳过报价
+  // 禁用指定系列报价（多选）：读取 disableAppTypeList 数组，命中当前院线 app_type_code 则跳过报价
   let disableAppTypeListValue =
     window.localStorage.getItem("disableAppTypeList");
   let disableAppTypeList = [];
@@ -1500,7 +1500,7 @@ const offerRuleMatch = (order, logger) => {
       app_name // 该字段主要是为了方便测试
     } = order;
     let shadowLineName = appName || app_name;
-    console.log("报价订单影线", shadowLineName, plat_name);
+    console.log("报价订单院线", shadowLineName, plat_name);
     // 这里后面需要从接口里读取，数据太大了本地缓存不够放
     let appOfferRuleList = toRaw(offerRuleList.value);
     if (appOfferRuleList) {
@@ -1544,7 +1544,7 @@ const offerRuleMatch = (order, logger) => {
       logger.errorSave("按启用状态筛选后，报价规则为空");
       return;
     }
-    console.log("影线启用的规则列表", useRuleList);
+    console.log("院线启用的规则列表", useRuleList);
     // 1、是否同步平台规则走平台报价过滤
     // fixedOfferToPlatList：允许固定报价是否走平台的平台类型数组;
     // const fixedOfferToPlatList =

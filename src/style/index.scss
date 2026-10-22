@@ -2,6 +2,8 @@
 @import "./element-plus";
 @import "./sidebar";
 @import "./dark";
+/* 列表页统一布局标准（查询区 / 操作按钮 / 表格 / 分页） */
+@import "./page-layout";
 
 /* 自定义全局 CssVar */
 :root {

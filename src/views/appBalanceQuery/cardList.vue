@@ -23,112 +23,108 @@
         />
       </el-aside>
       <el-main style="padding: 0; margin-left: 15px">
-        <!-- 查询表单 -->
-        <el-form :inline="true" class="demo-form-inline">
-          <el-form-item
-            :label="`状&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;态`"
+        <!-- 查询区：只放条件，查询动作统一由下方工具栏承载 -->
+        <div class="search-panel">
+          <el-form
+            class="search-panel__form"
+            :model="formData"
+            label-width="76px"
+            @keyup.enter="searchData"
           >
-            <el-select
-              v-model="formData.status"
-              placeholder="卡状态"
-              style="width: 194px"
-              clearable
-            >
-              <el-option label="正常" value="1" />
-              <el-option label="无效" value="2" />
-            </el-select>
-          </el-form-item>
-          <el-form-item
-            label="卡&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;号"
-          >
-            <el-input
-              v-model="formData.card_num"
-              placeholder="请输入卡号"
-              clearable
-            />
-          </el-form-item>
-          <!-- <el-form-item label="目标余额">
-            <el-input
-              v-model="formData.balance"
-              placeholder="请输入目标余额"
-              clearable
-            />
-          </el-form-item> -->
-          <el-form-item label="所属账号">
-            <el-input
-              v-model="formData.mobile"
-              placeholder="请输入所属账号(手机号)"
-              clearable
-            />
-          </el-form-item>
-          <el-form-item label="日出票限制">
-            <el-select
-              v-model="formData.use_limit_day"
-              placeholder="出票限制（当天）"
-              clearable
-              style="width: 194px"
-            >
-              <el-option
-                v-for="(item, index) in 10"
-                :key="index"
-                :label="item"
-                :value="item"
+            <el-form-item label="状态">
+              <el-select
+                v-model="formData.status"
+                placeholder="卡状态"
+                clearable
+              >
+                <el-option label="正常" value="1" />
+                <el-option label="无效" value="2" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="卡号">
+              <el-input
+                v-model="formData.card_num"
+                placeholder="请输入卡号"
+                clearable
               />
-            </el-select>
-          </el-form-item>
+            </el-form-item>
+            <!-- <el-form-item label="目标余额">
+              <el-input
+                v-model="formData.balance"
+                placeholder="请输入目标余额"
+                clearable
+              />
+            </el-form-item> -->
+            <el-form-item label="所属账号">
+              <el-input
+                v-model="formData.mobile"
+                placeholder="请输入所属账号(手机号)"
+                clearable
+              />
+            </el-form-item>
+            <el-form-item label="出票限制">
+              <el-select
+                v-model="formData.use_limit_day"
+                placeholder="出票限制（当天）"
+                clearable
+              >
+                <el-option
+                  v-for="(item, index) in 10"
+                  :key="index"
+                  :label="item"
+                  :value="item"
+                />
+              </el-select>
+            </el-form-item>
+          </el-form>
+        </div>
 
-          <el-form-item>
+        <!-- 操作栏：左数据操作，中查询动作，右工具动作 -->
+        <div class="page-toolbar">
+          <div class="page-toolbar__group">
+            <el-button type="primary" @click="searchData">查询</el-button>
             <el-button @click="resetForm">重置</el-button>
-            <el-button type="primary" @click="searchData">搜索</el-button>
-          </el-form-item>
-          <el-form-item>
+          </div>
+          <div class="page-toolbar__group">
             <el-button
               type="danger"
               :disabled="!hasSelected"
               @click="batchDelete"
               >批量删除</el-button
             >
-            <el-button
-              type="warning"
-              :disabled="!hasSelected"
-              @click="batchUpdateDiscount"
+            <el-button :disabled="!hasSelected" @click="batchUpdateDiscount"
               >批量改折扣</el-button
             >
-            <el-button
-              style="margin-left: 10px"
-              type="primary"
-              @click="queryCardBalanceTotal"
+          </div>
+          <div class="page-toolbar__group page-toolbar__group--end">
+            <el-select
+              v-model="syncType"
+              placeholder="同步范围"
+              style="width: 190px"
+            >
+              <el-option label="凤凰云智、卢米埃除外" value="1" />
+              <el-option label="仅同步凤凰云智" value="2" />
+              <el-option label="仅同步卢米埃" value="3" />
+            </el-select>
+            <el-input
+              v-model="mobile"
+              placeholder="手机号（不填则同步全部账号）"
+              clearable
+              style="width: 230px"
+            />
+            <el-button type="primary" @click="syncCardInfo"
+              >同步卡信息</el-button
+            >
+            <el-button type="primary" @click="queryCardBalanceTotal"
               >查看卡余额</el-button
             >
-            <el-button type="primary" style="padding-left: 0">
-              <template #default>
-                <el-input
-                  v-model="mobile"
-                  placeholder="手机号(可不输入同步所有账号)"
-                  clearable
-                  style="width: 370px; margin-left: -1px"
-                >
-                  <template #prepend>
-                    <el-select
-                      v-model="syncType"
-                      placeholder="Select"
-                      style="width: 150px"
-                    >
-                      <el-option label="凤凰云智、卢米埃除外" value="1" />
-                      <el-option label="仅同步凤凰云智" value="2" />
-                      <el-option label="仅同步卢米埃" value="3" />
-                    </el-select>
-                  </template>
-                </el-input>
-                <span @click="syncCardInfo">同步卡信息</span>
-              </template>
-            </el-button>
-          </el-form-item>
-        </el-form>
+          </div>
+        </div>
+
         <!-- 表格 -->
         <el-table
           ref="multipleTable"
-          style="width: 100%"
+          class="page-table"
           :data="tableData"
           border
           stripe
@@ -141,7 +137,7 @@
           <el-table-column type="selection" min-width="55" />
           <el-table-column
             prop="app_name"
-            label="影线名称"
+            label="院线名称"
             sortable="custom"
             min-width="110"
           >
@@ -278,7 +274,7 @@
         <el-pagination
           v-model:current-page="currentPage"
           v-model:page-size="pageSize"
-          style="display: flex; justify-content: flex-end; margin-top: 10px"
+          class="page-pagination"
           :page-sizes="[10, 20, 50, 100]"
           :background="true"
           layout="total, sizes, prev, pager, next, jumper"
@@ -322,7 +318,14 @@
     </el-dialog>
 
     <el-dialog v-model="cardBalanceVisible" width="60%" title="卡余额汇总结果">
-      <el-table :data="summaryData" border style="width: 100%" max-height="800">
+      <!-- max-height 用视口而不是写死像素：写死 800 会让弹框在小屏超出视口，
+           遮罩层出第二条滚动条（表格内一层 + 页面一层）；calc 让表格吸顶滚动且弹框始终放得下 -->
+      <el-table
+        :data="summaryData"
+        border
+        style="width: 100%"
+        max-height="calc(85vh - 150px)"
+      >
         <el-table-column prop="appName" label="应用名称" width="180" />
         <el-table-column prop="totalBalance" sortable label="总余额" />
         <el-table-column
@@ -727,7 +730,7 @@ const syncCardInfo = async () => {
                 h(
                   "span",
                   { style: "margin-right: 10px;" },
-                  `影线: ${card.app_name}`
+                  `院线: ${card.app_name}`
                 ),
                 h(
                   "span",

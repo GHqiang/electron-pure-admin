@@ -1,60 +1,67 @@
 <template>
   <div>
-    <!-- 查询表单 -->
-    <el-form :inline="true" class="demo-form-inline" label-width="80px">
-      <el-form-item label="券类型">
-        <el-select
-          v-model="formData.quan_value"
-          clearable
-          filterable
-          placeholder="券类型"
-          style="width: 194px"
-        >
-          <el-option
-            v-for="item in quanType"
-            :key="item.id"
-            :label="item.quan_name"
-            :value="item.quan_value"
+    <!-- 查询区：只放条件，查询/重置动作统一由下方工具栏承载 -->
+    <div class="search-panel">
+      <el-form
+        class="search-panel__form"
+        :model="formData"
+        label-width="76px"
+        @keyup.enter="searchData"
+      >
+        <el-form-item label="券类型">
+          <el-select
+            v-model="formData.quan_value"
+            clearable
+            filterable
+            placeholder="券类型"
+          >
+            <el-option
+              v-for="item in quanType"
+              :key="item.id"
+              :label="item.quan_name"
+              :value="item.quan_value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="券状态">
+          <el-select
+            v-model="formData.quan_status"
+            clearable
+            placeholder="券状态"
+          >
+            <el-option label="可用" value="1" />
+            <el-option label="已绑定" value="2" />
+            <el-option label="绑定异常" value="3" />
+            <el-option label="正常券已导出" value="4" />
+            <el-option label="不可用券已导出" value="5" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="券码">
+          <el-input
+            v-model="formData.coupon_num"
+            placeholder="请输入券码"
+            clearable
           />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="券状态">
-        <el-select
-          v-model="formData.quan_status"
-          clearable
-          placeholder="券状态"
-          style="width: 194px"
-        >
-          <el-option label="可用" value="1" />
-          <el-option label="已绑定" value="2" />
-          <el-option label="绑定异常" value="3" />
-          <el-option label="正常券已导出" value="4" />
-          <el-option label="不可用券已导出" value="5" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="券码">
-        <el-input
-          v-model="formData.coupon_num"
-          placeholder="请输入券码"
-          clearable
-          style="width: 194px"
-        />
-      </el-form-item>
-      <el-form-item label="导出数量">
-        <el-input
-          v-model="formData.export_count"
-          type="number"
-          min="1"
-          max="1000"
-          placeholder="请输入导出数量"
-          style="width: 194px"
-        />
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" @click="searchData">搜索</el-button>
+        </el-form-item>
+        <el-form-item label="导出数量">
+          <el-input
+            v-model="formData.export_count"
+            type="number"
+            min="1"
+            max="1000"
+            placeholder="请输入导出数量"
+          />
+        </el-form-item>
+      </el-form>
+    </div>
+
+    <!-- 操作栏：左数据操作，右查询动作 -->
+    <div class="page-toolbar">
+      <div class="page-toolbar__group">
+        <el-button type="primary" @click="searchData">查询</el-button>
         <el-button @click="resetForm">重置</el-button>
-      </el-form-item>
-      <el-form-item class="demo-form-inline__submit">
+      </div>
+      <div class="page-toolbar__group page-toolbar__group--end">
         <el-button type="success" @click="exportQuanHandle">导出券</el-button>
         <el-button type="primary" @click="handleImportClick">导入券</el-button>
         <input
@@ -64,12 +71,13 @@
           style="display: none"
           @change="handleFileChange"
         />
-      </el-form-item>
-    </el-form>
+      </div>
+    </div>
+
     <!-- 表格 -->
     <el-table
       ref="multipleTable"
-      style="width: 100%"
+      class="page-table"
       :data="tableData"
       border
       stripe
@@ -165,7 +173,12 @@
         </template>
       </el-table-column>
       <el-table-column prop="remark" label="备注" min-width="100" />
-      <el-table-column label="操作" min-width="150" align="center">
+      <el-table-column
+        label="操作"
+        min-width="150"
+        align="center"
+        fixed="right"
+      >
         <template #default="{ row }">
           <el-button size="small" type="primary" @click="editQuanStatus(row)">
             修改状态
@@ -211,7 +224,7 @@
     <el-pagination
       v-model:current-page="currentPage"
       v-model:page-size="pageSize"
-      style="margin-top: 10px; display: flex; justify-content: flex-end"
+      class="page-pagination"
       :page-sizes="[10, 20, 50, 100]"
       :background="true"
       layout="total, sizes, prev, pager, next, jumper"
@@ -359,7 +372,7 @@ const exportQuanHandle = async () => {
       return;
     }
 
-    // 根据选择的券类型获取对应的影线
+    // 根据选择的券类型获取对应的院线
     let app_name = "";
     let queryQuanValue = formData.quan_value;
     if (exportConfig.needQuanType) {
@@ -477,7 +490,11 @@ watch(
   ([newAppType, newAppName]) => {
     formData.app_type = newAppType;
     formData.app_name = newAppName;
+    // 切换影院/系列后，原来选中的券类型可能已不在新范围内，先清空
+    formData.quan_value = "";
     currentPage.value = 1;
+    // 下拉选项也要跟随左侧树刷新
+    getQuanTypeList();
     searchData();
   }
 );
@@ -620,20 +637,20 @@ const handleSelectionChange = val => {
   multipleSelection.value = val;
 };
 
-let quanTypeFetched = false;
-
-// 获取券类型列表
-const getQuanTypeList = async (force = false) => {
-  if (quanTypeFetched && !force) return;
+// 获取券类型列表（跟随左侧树筛选：选中影院按 app_name，选中系列按 app_type）
+const getQuanTypeList = async () => {
   try {
     const params = {
       page_num: 1,
       page_size: 1000
     };
+    if (props.appName) {
+      params.app_name = props.appName;
+    } else if (props.appType) {
+      params.app_type = props.appType;
+    }
     const res = await svApi.queryQuanTypeList(params);
-    let quanTypeList = res.data.quanTypeList || [];
-    quanType.value = quanTypeList;
-    quanTypeFetched = true;
+    quanType.value = res.data.quanTypeList || [];
   } catch (error) {
     console.error("获取券类型列表异常", error);
   }
@@ -693,16 +710,8 @@ const isExpireWarning = expireTime => {
   return diffDays <= 45 && diffDays > 0;
 };
 
-// 监听左侧树选择变化，自动刷新券列表
-watch(
-  () => [props.appType, props.appName],
-  ([newAppType, newAppName]) => {
-    formData.app_type = newAppType;
-    formData.app_name = newAppName;
-    currentPage.value = 1;
-    searchData();
-  }
-);
+// 注意：左边树变化的 watch 只保留上面一处，别再重复声明，
+// 否则点击左侧树时 searchData 会被触发两次（接口调用两次）
 
 onBeforeMount(async () => {
   await getQuanTypeList();
@@ -711,13 +720,8 @@ onBeforeMount(async () => {
 </script>
 
 <style scoped>
-.demo-form-inline .el-form-item__content {
-  flex: 1;
-  min-width: 0;
-}
-
 .expire-warning {
-  color: red;
   font-weight: bold;
+  color: red;
 }
 </style>

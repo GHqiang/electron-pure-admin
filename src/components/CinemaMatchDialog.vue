@@ -16,19 +16,19 @@
         :rules="rules"
         label-width="140px"
       >
-        <el-form-item label="影线所属类型" prop="app_type_name">
+        <el-form-item label="院线所属类型" prop="app_type_name">
           <el-input
             v-model="formData.app_type_name"
             disabled
-            placeholder="请输入影线所属类型"
+            placeholder="请输入院线所属类型"
             clearable
           />
         </el-form-item>
-        <el-form-item label="影线名称" prop="app_label">
+        <el-form-item label="院线名称" prop="app_label">
           <el-input
             v-model="formData.app_label"
             disabled
-            placeholder="请输入影线名称"
+            placeholder="请输入院线名称"
             clearable
           />
         </el-form-item>

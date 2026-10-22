@@ -20,6 +20,41 @@
   margin-left: 2px !important;
 }
 
+/* 相邻按钮间距：Element Plus 默认 12px 偏松，全局收到 6px（2026-10-22 用户要求）。
+   数值与 page-layout.scss 的 --page-btn-gap 共用，改一处即可全站生效。
+   注意 main.ts 里 index.scss 先于 element-plus/dist/index.css 加载，
+   同权重会被官方样式盖掉，所以这里必须 !important。
+   工具栏分组内的间距由 .page-toolbar__group 的 gap 统一控制，
+   那里用更高权重把 margin 归零，见 page-layout.scss。 */
+.el-button + .el-button {
+  margin-left: var(--page-btn-gap, 6px) !important;
+}
+
+/* 按钮组（el-button-group）靠 -1px 让相邻边框重叠成一条线，不能吃上面的 6px */
+.el-button-group > .el-button + .el-button {
+  margin-left: -1px !important;
+}
+
+/* 弹窗底部「取消 / 确定」成对按钮保持 12px，6px 挨得太挤 */
+.el-dialog__footer .el-button + .el-button {
+  margin-left: 12px !important;
+}
+
+/* 高内容弹框统一收口：弹框整体永远不超出视口。
+   不加这层的话，内容超过视口高时 .el-overlay-dialog 会出第二条滚动条，
+   表现就是「弹框里有滚动条、页面（遮罩层）也有滚动条」两层滚动。
+   用法：<el-dialog class="fit-dialog" ...>（表单类长弹框）；
+   表格类弹框不用它，直接给 el-table 的 max-height 传 calc(85vh - 150px)，
+   让滚动条只出现在表格内部（表头保持吸顶）。 */
+.fit-dialog {
+  /* 85vh - header(~55px) - footer(~60px)，保证整个弹框 < 100vh */
+  .el-dialog__body {
+    max-height: calc(85vh - 130px);
+    padding-top: 8px;
+    overflow-y: auto;
+  }
+}
+
 /* 自定义 popover 的类名 */
 .pure-popper {
   padding: 0 !important;

@@ -16,17 +16,24 @@
         :rules="rules"
         label-width="180px"
       >
-        <el-form-item label="影线名称" prop="app_name">
+        <el-form-item label="院线名称" prop="app_name">
           <el-cascader
             v-model="formData.app_name"
             :options="appCascaderOptions"
             :props="appCascaderProps"
-            placeholder="请选择影线名称"
+            :disabled="lockAppName"
+            :placeholder="cascaderPlaceholder"
             clearable
             filterable
             style="width: 100%"
             @change="shadowLineChange"
           />
+          <span v-if="lockAppName" class="fce6">
+            取自左侧树选中的院线，如需更换请关闭弹窗后在左侧树重新选择
+          </span>
+          <span v-else-if="seriesScope" class="fce6">
+            仅可选择左侧树选中系列下的院线
+          </span>
         </el-form-item>
         <el-form-item label="所属账号" prop="mobile">
           <el-input
@@ -239,9 +246,16 @@ const extraFieldLabel = computed(() => {
   return "";
 });
 
-// 影线二级级联配置（系列 -> 影线）
-const appCascaderOptions = computed(() =>
-  APP_TYPE_LIST.value.map((item, inx) => ({
+// 新增时的院线约束：系列范围 / 院线是否锁定（均由父级左侧树选中节点传入）
+const seriesScope = ref("");
+const lockAppName = ref(false);
+const cascaderPlaceholder = computed(() =>
+  lockAppName.value ? "" : "请选择院线名称"
+);
+
+// 院线二级级联配置（系列 -> 院线）
+const appCascaderOptions = computed(() => {
+  const list = APP_TYPE_LIST.value.map((item, inx) => ({
     id: inx + 1,
     label: item.app_type_name,
     value: item.app_type_code,
@@ -250,8 +264,12 @@ const appCascaderOptions = computed(() =>
       label: APP_LIST.value[itemA],
       value: itemA
     }))
-  }))
-);
+  }));
+  if (!seriesScope.value) return list;
+  // 已由左侧树限定系列，直接展开该系列下的院线，省掉一层选择
+  const target = list.find(item => item.value === seriesScope.value);
+  return target ? target.children : list;
+});
 const appCascaderProps = {
   value: "value",
   label: "label",
@@ -323,7 +341,7 @@ const validateLinkUserId = (rule, value, callback) => {
 
 const rules = {
   app_name: [
-    { required: true, message: "影线名称不能为空", trigger: ["change", "blur"] }
+    { required: true, message: "院线名称不能为空", trigger: ["change", "blur"] }
   ],
   session_id: [
     { required: true, message: "Session ID不能为空", trigger: "blur" }
@@ -372,7 +390,7 @@ const resetForm = el => {
   formData.daily_ticket_count = null;
 };
 
-// 影线改变
+// 院线改变
 const shadowLineChange = async val => {
   // console.log("val", val);
   resetForm(1);
@@ -385,6 +403,9 @@ const open = async loginInfo => {
       text: "Loading",
       background: "rgba(0, 0, 0, 0.7)"
     });
+    // 院线约束每次打开都重置，避免上一次新增的状态残留
+    seriesScope.value = "";
+    lockAppName.value = false;
     if (loginInfo) {
       let formInfo = JSON.parse(JSON.stringify(loginInfo));
       if (formInfo.id !== undefined) {
@@ -400,8 +421,10 @@ const open = async loginInfo => {
         formData.is_xiaohao = formInfo.is_xiaohao == 1 ? "1" : "2";
         formData.daily_ticket_count = formInfo.daily_ticket_count ?? null;
       } else {
-        // 新增
-        formData.app_name = formInfo.app_name;
+        // 新增 / 复制新增
+        formData.app_name = formInfo.app_name || "";
+        seriesScope.value = formInfo.seriesScope || "";
+        lockAppName.value = !!formInfo.lockAppName;
       }
     }
     loading.close();

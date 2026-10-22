@@ -1,166 +1,179 @@
 <!-- 历史出票记录 -->
 <template>
   <div>
-    <!-- 查询表单 -->
-    <el-form :inline="true" class="demo-form-inline" label-width="80px">
-      <el-form-item label="订单来源">
-        <el-select
-          v-model="formData.plat_name"
-          placeholder="订单来源"
-          clearable
-        >
-          <el-option
-            v-for="(keyValue, keyName) in orderFormObj"
-            :key="keyName"
-            :label="keyValue"
-            :value="keyName"
+    <!-- 查询区：只放条件，全部平铺，栅格按屏幕宽度自动排列换行 -->
+    <div class="search-panel">
+      <el-form
+        class="search-panel__form"
+        :model="formData"
+        label-width="76px"
+        @keyup.enter="searchData"
+      >
+        <el-form-item label="订单来源">
+          <el-select
+            v-model="formData.plat_name"
+            placeholder="订单来源"
+            clearable
+          >
+            <el-option
+              v-for="(keyValue, keyName) in orderFormObj"
+              :key="keyName"
+              :label="keyValue"
+              :value="keyName"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="院线名称">
+          <el-cascader
+            v-model="formData.app_name"
+            :options="appCascaderOptions"
+            :props="appCascaderProps"
+            clearable
+            filterable
+            placeholder="院线名称"
           />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="影线名称">
-        <el-cascader
-          v-model="formData.app_name"
-          :options="appCascaderOptions"
-          :props="appCascaderProps"
-          clearable
-          filterable
-          placeholder="影线名称"
-        />
-      </el-form-item>
-      <el-form-item label="影院名称">
-        <el-input
-          v-model="formData.cinema_name"
-          placeholder="请输入影院名称"
-          clearable
-        />
-      </el-form-item>
-      <el-form-item label="出票用户">
-        <el-select v-model="formData.user_id" placeholder="出票用户" clearable>
-          <el-option
-            v-for="(item, inx) in userList"
-            :key="inx"
-            :label="item.name"
-            :value="item.id"
+        </el-form-item>
+        <el-form-item label="影院名称">
+          <el-input
+            v-model="formData.cinema_name"
+            placeholder="请输入影院名称"
+            clearable
           />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="出票状态">
-        <el-select
-          v-model="formData.order_status"
-          placeholder="出票状态"
-          clearable
-        >
-          <el-option
-            v-for="(label, value) of TICKET_STATUS"
-            :key="value"
-            :label="label"
-            :value="value"
+        </el-form-item>
+        <el-form-item label="订单号">
+          <el-input
+            v-model="formData.order_number"
+            placeholder="请输入订单号"
+            clearable
           />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="订&nbsp;&nbsp;单&nbsp;&nbsp;号">
-        <el-input
-          v-model="formData.order_number"
-          placeholder="请输入订单号"
-          clearable
-        />
-      </el-form-item>
-      <el-form-item label="用券类型">
-        <el-select
-          v-model="formData.quan_value"
-          placeholder="用券类型"
-          clearable
-          filterable
-        >
-          <el-option
-            v-for="item in quanType"
-            :key="item.id"
-            :label="item.quan_name"
-            :value="item.quan_value"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="优惠券码">
-        <el-input
-          v-model="formData.quan_code"
-          placeholder="请输入优惠券"
-          clearable
-        />
-      </el-form-item>
-      <el-form-item label="开始时间">
-        <el-date-picker
-          v-model="formData.start_time"
-          type="datetime"
-          placeholder="请选择开始时间"
-          format="YYYY-MM-DD HH:mm:ss"
-          value-format="YYYY-MM-DD HH:mm:ss"
-          time-format="HH:mm"
-        />
-      </el-form-item>
-      <el-form-item label="结束时间">
-        <el-date-picker
-          v-model="formData.end_time"
-          type="datetime"
-          placeholder="请选择结束时间"
-          format="YYYY-MM-DD HH:mm:ss"
-          value-format="YYYY-MM-DD HH:mm:ss"
-          time-format="HH:mm"
-        />
-      </el-form-item>
-      <el-form-item label="放映时间">
-        <el-date-picker
-          v-model="formData.show_time"
-          type="datetime"
-          placeholder="请选择放映时间"
-          format="YYYY-MM-DD HH:mm:ss"
-          value-format="YYYY-MM-DD HH:mm:ss"
-          time-format="HH:mm:ss"
-          clearable
-        />
-      </el-form-item>
-      <el-form-item label="失败原因">
-        <el-input
-          v-model="formData.err_msg"
-          placeholder="请输入失败原因"
-          clearable
-        />
-      </el-form-item>
-      <el-form-item label="影片名称">
-        <el-input
-          v-model="formData.film_name"
-          placeholder="请输入影片名称"
-          clearable
-        />
-      </el-form-item>
-      <el-form-item label="座位">
-        <el-input
-          v-model="formData.lockseat"
-          placeholder="请输入座位,多个用空号分割"
-          clearable
-        />
-      </el-form-item>
-      <el-form-item label="报价来源">
-        <el-select
-          v-model="formData.offer_from"
-          placeholder="报价来源"
-          clearable
-        >
-          <el-option label="平台" :value="1" />
-          <el-option label="机器" :value="2" />
-        </el-select>
-      </el-form-item>
-      <el-form-item style="margin-left: 10px">
-        <el-button type="primary" @click="searchData">搜索</el-button>
-        <el-button @click="resetForm">重置</el-button>
-      </el-form-item>
-    </el-form>
+        </el-form-item>
+        <el-form-item label="出票状态">
+          <el-select
+            v-model="formData.order_status"
+            placeholder="出票状态"
+            clearable
+          >
+            <el-option
+              v-for="(label, value) of TICKET_STATUS"
+              :key="value"
+              :label="label"
+              :value="value"
+            />
+          </el-select>
+        </el-form-item>
 
-    <!-- 操作按钮 -->
-    <div style="margin-bottom: 15px" />
+        <el-form-item label="用券类型">
+          <el-select
+            v-model="formData.quan_value"
+            placeholder="用券类型"
+            clearable
+            filterable
+          >
+            <el-option
+              v-for="item in quanType"
+              :key="item.id"
+              :label="item.quan_name"
+              :value="item.quan_value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="优惠券码">
+          <el-input
+            v-model="formData.quan_code"
+            placeholder="请输入优惠券"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="出票用户">
+          <el-select
+            v-model="formData.user_id"
+            placeholder="出票用户"
+            clearable
+          >
+            <el-option
+              v-for="(item, inx) in userList"
+              :key="inx"
+              :label="item.name"
+              :value="item.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="报价来源">
+          <el-select
+            v-model="formData.offer_from"
+            placeholder="报价来源"
+            clearable
+          >
+            <el-option label="平台" :value="1" />
+            <el-option label="机器" :value="2" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="影片名称">
+          <el-input
+            v-model="formData.film_name"
+            placeholder="请输入影片名称"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="座位">
+          <el-input
+            v-model="formData.lockseat"
+            placeholder="请输入座位,多个用空号分割"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="失败原因">
+          <el-input
+            v-model="formData.err_msg"
+            placeholder="请输入失败原因"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="放映时间">
+          <el-date-picker
+            v-model="formData.show_time"
+            type="datetime"
+            placeholder="请选择放映时间"
+            format="YYYY-MM-DD HH:mm:ss"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            time-format="HH:mm:ss"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="开始时间">
+          <el-date-picker
+            v-model="formData.start_time"
+            type="datetime"
+            placeholder="请选择开始时间"
+            format="YYYY-MM-DD HH:mm:ss"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            time-format="HH:mm"
+          />
+        </el-form-item>
+        <el-form-item label="结束时间">
+          <el-date-picker
+            v-model="formData.end_time"
+            type="datetime"
+            placeholder="请选择结束时间"
+            format="YYYY-MM-DD HH:mm:ss"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            time-format="HH:mm"
+          />
+        </el-form-item>
+      </el-form>
+    </div>
+
+    <!-- 操作栏：本页只有查询动作，跟随查询区靠左 -->
+    <div class="page-toolbar">
+      <div class="page-toolbar__group">
+        <el-button type="primary" @click="searchData">查询</el-button>
+        <el-button @click="resetForm">重置</el-button>
+      </div>
+    </div>
 
     <!-- 表格 -->
     <el-table
-      style="width: 100%"
+      class="page-table"
       :data="tableData"
       border
       stripe
@@ -188,11 +201,7 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column prop="app_name" fixed label="影线名称" width="100">
-        <template #default="scope">
-          <span>{{ APP_LIST[scope.row.app_name] }}</span>
-        </template>
-      </el-table-column>
+      <!-- 院线名称、报价来源、用券类型、优惠券码、支付卡号：列表不显示，统一在「详情」弹窗查看 -->
       <el-table-column label="状态" fixed width="90">
         <template #default="{ row: { order_status } }">
           <el-tag
@@ -205,13 +214,16 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column fixed label="订单号" width="110">
-        <template #default="{ row: { order_number, plat_order_sn } }">
+      <el-table-column fixed label="订单号">
+        <template #default="{ row }">
           <!-- 出票记录优先展示平台出票单号 plat_order_sn，缺失时用报价单号 order_number 兜底 -->
-          <span>{{ plat_order_sn || order_number }}</span>
+          <!-- 点订单号开详情（.order-link 是全局样式：灰色点线下划线，hover 变主题色） -->
+          <span class="order-link" @click="showDetail(row)">{{
+            row.plat_order_sn || row.order_number
+          }}</span>
         </template>
       </el-table-column>
-      <el-table-column fixed label="影院" width="205">
+      <el-table-column fixed label="影院" width="300">
         <template #default="{ row }">
           <el-popover
             placement="top"
@@ -242,8 +254,18 @@
           >
         </template>
       </el-table-column>
-      <el-table-column prop="user_name" label="出票人" width="85" />
-      <el-table-column prop="mobile" label="出票手机号" width="125" />
+      <el-table-column
+        prop="user_name"
+        label="用户"
+        width="80"
+        align="center"
+      />
+      <el-table-column
+        prop="mobile"
+        label="出票手机号"
+        width="125"
+        align="center"
+      />
       <el-table-column label="利润" width="80">
         <template
           #default="{
@@ -277,7 +299,7 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="报价类型" width="120">
+      <el-table-column label="类型" width="80" align="center">
         <template #default="scope">
           <el-tag
             v-if="scope.row.offer_type"
@@ -290,33 +312,17 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="报价来源" width="120">
-        <template #default="scope">
-          <el-tag
-            :type="getOfferFromType(scope.row.offer_from)"
-            size="default"
-            effect="dark"
-            class="offer-type-tag"
-          >
-            {{ scope.row.offer_from == 1 ? "平台" : "机器" }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop="quan_value" label="用券类型" width="85" />
-      <el-table-column prop="quan_code" label="优惠券码" width="90" />
-      <el-table-column prop="card_num" label="支付卡号" width="90" />
       <el-table-column prop="processing_time" label="创建时间" width="160" />
-      <el-table-column prop="err_msg" label="失败原因" width="110">
+      <el-table-column prop="err_msg" label="失败原因">
         <template #default="scope">
           <span>{{
             scope.row.order_status === "2" ? scope.row.err_msg : ""
           }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" fixed="right" align="center" width="260">
+      <el-table-column label="操作" fixed="right" align="center" width="180">
         <template
           #default="{
-            row,
             row: {
               order_status,
               profit,
@@ -328,9 +334,7 @@
             }
           }"
         >
-          <el-button size="small" type="info" @click="showDetail(row)"
-            >详情</el-button
-          >
+          <!-- 详情入口已挂到订单号上（.order-link），操作列只留真正要点的动作 -->
           <el-button
             v-if="order_status === '2' && String(user_id) === String(rowUserId)"
             size="small"
@@ -362,7 +366,7 @@
             @click="
               queryLog({ order_number, user_id: rowUserId, processing_time })
             "
-            >查询日志</el-button
+            >日志</el-button
           >
         </template>
       </el-table-column>
@@ -370,7 +374,7 @@
     <el-pagination
       v-model:current-page="currentPage"
       v-model:page-size="pageSize"
-      style="display: flex; justify-content: flex-end; margin-top: 10px"
+      class="page-pagination"
       :page-sizes="[10, 20, 30, 50]"
       :background="true"
       layout="total, sizes, prev, pager, next, jumper"
@@ -395,11 +399,12 @@
             <el-checkbox v-model="traceBrief" style="margin-left: 10px"
               >仅时间线（不含 info，省流量）</el-checkbox
             >
-            <span style="margin-left: 10px; color: #909399; font-size: 12px"
+            <span style="margin-left: 10px; font-size: 12px; color: #909399"
               >来源：后端日志文件 /svpi/log/trace（按日/按用户目录）</span
             >
           </div>
-          <el-table :data="traceData" border max-height="500">
+          <!-- max-height 用视口：写死像素在小屏会让弹框超出视口、遮罩层出第二条滚动条 -->
+          <el-table :data="traceData" border max-height="calc(85vh - 150px)">
             <el-table-column type="index" label="序号" width="60" />
             <el-table-column
               property="opera_time"
@@ -445,8 +450,18 @@
         <el-descriptions-item label="订单号">{{
           currentTicketRow.plat_order_sn || currentTicketRow.order_number
         }}</el-descriptions-item>
+        <el-descriptions-item label="院线名称">{{
+          APP_LIST[currentTicketRow.app_name] || currentTicketRow.app_name || ""
+        }}</el-descriptions-item>
         <el-descriptions-item label="状态">{{
           TICKET_STATUS[currentTicketRow.order_status]
+        }}</el-descriptions-item>
+        <el-descriptions-item label="报价来源">{{
+          currentTicketRow.offer_from == 1
+            ? "平台"
+            : currentTicketRow.offer_from == 2
+              ? "机器"
+              : ""
         }}</el-descriptions-item>
         <el-descriptions-item label="出票手机号">{{
           currentTicketRow.mobile || ""
@@ -521,11 +536,11 @@ const quanType = ref([]);
 // console.log("ORDER_FORM", ORDER_FORM);
 // 订单来源
 const orderFormObj = ORDER_FORM;
-// 影线列表
+// 院线列表
 const APP_LIST = computed(() => GET_APP_LIST());
 const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
 
-// 影线二级级联配置（系列 -> 影线）
+// 院线二级级联配置（系列 -> 院线）
 const appCascaderOptions = computed(() =>
   APP_TYPE_LIST.value.map((item, inx) => ({
     id: inx + 1,
@@ -546,8 +561,8 @@ const appCascaderProps = {
 };
 // 报价类型枚举
 const offerTypeObj = {
-  1: "日常固定价",
-  2: "会员价加价",
+  1: "券",
+  2: "会员",
   3: "会员日报价"
 };
 
@@ -569,17 +584,6 @@ const getStatusType = order_status => {
   }
 };
 
-// 根据报价来源获取标签类型
-const getOfferFromType = offer_from => {
-  switch (offer_from) {
-    case 1:
-      return "warning";
-    case 2:
-      return "primary";
-    default:
-      return "primary";
-  }
-};
 // 根据报价类型获取标签类型
 const getOfferType = offer_type => {
   switch (offer_type) {
@@ -658,7 +662,7 @@ const formatCoupons = str => {
 // 表单查询数据
 const formData = reactive({
   plat_name: "", // 订单来源
-  app_name: "", // 影线名称
+  app_name: "", // 院线名称
   cinema_name: "", // 影院名称
   order_status: "", // 状态
   user_id: "", // 出票用户
@@ -954,7 +958,7 @@ loadData();
 // 重置表单
 const resetForm = () => {
   formData.plat_name = "";
-  formData.app_name = ""; // 影线名称
+  formData.app_name = ""; // 院线名称
   formData.cinema_name = ""; // 影院名称
   formData.order_status = ""; // 状态
   formData.user_id = ""; // 出票用户
@@ -1035,23 +1039,6 @@ onBeforeUnmount(() => {
 }
 
 /* 表单布局调整 */
-.demo-form-inline .el-form-item {
-  width: 20%;
-  margin-right: 0;
-}
-
-.demo-form-inline .el-form-item__content {
-  flex: 1;
-  min-width: 0;
-}
-
-.demo-form-inline .el-input,
-.demo-form-inline .el-select,
-.demo-form-inline :deep(.el-cascader),
-.demo-form-inline :deep(.el-date-editor.el-input) {
-  width: 100%;
-}
-
 .status-success {
   color: #67c23a;
 }

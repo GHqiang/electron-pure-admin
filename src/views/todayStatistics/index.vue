@@ -1,81 +1,102 @@
 <template>
   <div>
-    <!-- 查询区 -->
-    <el-form :inline="true" class="demo-form-inline">
-      <el-form-item label="订单来源">
-        <el-select
-          v-model="formData.plat_name"
-          placeholder="订单来源"
-          clearable
-          style="width: 160px"
-        >
-          <el-option
-            v-for="(keyValue, keyName) in orderFormObj"
-            :key="keyName"
-            :label="keyValue"
-            :value="keyName"
+    <!-- 查询区：只放条件，查询动作统一由下方工具栏承载（本页仅 5 个条件，不折叠） -->
+    <div class="search-panel">
+      <el-form
+        class="search-panel__form"
+        :model="formData"
+        label-width="76px"
+        @keyup.enter="onSearch"
+      >
+        <el-form-item label="订单来源">
+          <el-select
+            v-model="formData.plat_name"
+            placeholder="订单来源"
+            clearable
+          >
+            <el-option
+              v-for="(keyValue, keyName) in orderFormObj"
+              :key="keyName"
+              :label="keyValue"
+              :value="keyName"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="用户">
+          <el-select v-model="formData.user_id" placeholder="用户" clearable>
+            <el-option
+              v-for="(item, inx) in userList"
+              :key="inx"
+              :label="item.name"
+              :value="item.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="院线名称">
+          <el-cascader
+            v-model="formData.app_name"
+            :options="appCascaderOptions"
+            :props="appCascaderProps"
+            clearable
+            filterable
+            placeholder="院线名称"
           />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="用户">
-        <el-select
-          v-model="formData.user_id"
-          placeholder="用户"
-          style="width: 160px"
-          clearable
-        >
-          <el-option
-            v-for="(item, inx) in userList"
-            :key="inx"
-            :label="item.name"
-            :value="item.id"
+        </el-form-item>
+        <el-form-item label="开始时间">
+          <el-date-picker
+            v-model="formData.start_time"
+            type="datetime"
+            placeholder="请选择开始时间"
+            format="YYYY-MM-DD HH:mm:ss"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            time-format="HH:mm"
           />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="影线名称">
-        <el-cascader
-          v-model="formData.app_name"
-          :options="appCascaderOptions"
-          :props="appCascaderProps"
-          style="width: 200px"
-          clearable
-          filterable
-          placeholder="影线名称"
-        />
-      </el-form-item>
-      <el-form-item label="开始时间">
-        <el-date-picker
-          v-model="formData.start_time"
-          type="datetime"
-          style="width: 180px"
-          placeholder="请选择开始时间"
-          format="YYYY-MM-DD HH:mm:ss"
-          value-format="YYYY-MM-DD HH:mm:ss"
-          time-format="HH:mm"
-        />
-      </el-form-item>
-      <el-form-item label="结束时间">
-        <el-date-picker
-          v-model="formData.end_time"
-          type="datetime"
-          style="width: 180px"
-          placeholder="请选择结束时间"
-          format="YYYY-MM-DD HH:mm:ss"
-          value-format="YYYY-MM-DD HH:mm:ss"
-          time-format="HH:mm"
-        />
-      </el-form-item>
-      <el-form-item>
-        <el-button type="primary" @click="onSearch">搜索</el-button>
-        <el-button @click="resetForm">重置</el-button>
-        <el-button-group style="margin-left: 8px">
-          <el-button size="small" :type="quickActive === 1 ? 'primary' : 'default'" @click="quickRange(1)">当天</el-button>
-          <el-button size="small" :type="quickActive === 7 ? 'primary' : 'default'" @click="quickRange(7)">近7天</el-button>
-          <el-button size="small" :type="quickActive === 30 ? 'primary' : 'default'" @click="quickRange(30)">近30天</el-button>
+        </el-form-item>
+        <el-form-item label="结束时间">
+          <el-date-picker
+            v-model="formData.end_time"
+            type="datetime"
+            placeholder="请选择结束时间"
+            format="YYYY-MM-DD HH:mm:ss"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            time-format="HH:mm"
+          />
+        </el-form-item>
+      </el-form>
+    </div>
+
+    <!-- 操作栏：左快捷区间，中查询动作，右工具入口 -->
+    <div class="page-toolbar">
+      <div class="page-toolbar__group">
+        <el-button-group>
+          <el-button
+            :type="quickActive === 1 ? 'primary' : 'default'"
+            @click="quickRange(1)"
+          >
+            当天
+          </el-button>
+          <el-button
+            :type="quickActive === 7 ? 'primary' : 'default'"
+            @click="quickRange(7)"
+          >
+            近7天
+          </el-button>
+          <el-button
+            :type="quickActive === 30 ? 'primary' : 'default'"
+            @click="quickRange(30)"
+          >
+            近30天
+          </el-button>
         </el-button-group>
-        <el-button style="margin-left: 8px" @click="goDetail()">查看影线明细 →</el-button>
-      </el-form-item>
-    </el-form>
+      </div>
+      <div class="page-toolbar__group">
+        <el-button type="primary" @click="onSearch">查询</el-button>
+        <el-button @click="resetForm">重置</el-button>
+      </div>
+      <div class="page-toolbar__group page-toolbar__group--end">
+        <el-button @click="goDetail()">查看院线明细 →</el-button>
+      </div>
+    </div>
 
     <!-- KPI 概览(带 vs 昨日 / 7日均 双参照) -->
     <div class="kpi-row">
@@ -84,49 +105,61 @@
         :tip="kpi.profitTip"
         :value-text="`¥${fmtMoney(kpi.profit)}`"
         :value-class="kpi.profit < 0 ? 'down' : ''"
-        :delta="kpi.profitDelta" :delta-label="kpi.deltaLabel"
+        :delta="kpi.profitDelta"
+        :delta-label="kpi.deltaLabel"
         :delta7="kpi.profitDelta7"
       />
       <KpiCard
         label="流水"
         :tip="kpi.supplyTip"
         :value-text="`¥${fmtMoney(kpi.supply)}`"
-        :delta="kpi.supplyDelta" :delta-label="kpi.deltaLabel"
+        :delta="kpi.supplyDelta"
+        :delta-label="kpi.deltaLabel"
         :delta7="kpi.supplyDelta7"
       />
       <KpiCard
         label="转单手续费"
         :tip="kpi.transferTip"
         :value-text="`¥${fmtMoney(kpi.transferTotal)}`"
-        :delta="kpi.transferDelta" :delta-label="kpi.deltaLabel"
+        :delta="kpi.transferDelta"
+        :delta-label="kpi.deltaLabel"
         :delta7="kpi.transferDelta7"
       />
       <KpiCard
         label="中标率"
         :tip="kpi.dealTip"
         :value-text="kpi.dealRate"
-        :delta="kpi.dealDelta" :delta-label="kpi.deltaLabel"
+        :delta="kpi.dealDelta"
+        :delta-label="kpi.deltaLabel"
         :delta7="kpi.dealDelta7"
       />
       <KpiCard
         label="成功率"
         :tip="kpi.successTip"
         :value-text="kpi.successRate"
-        :delta="kpi.successDelta" :delta-label="kpi.deltaLabel"
+        :delta="kpi.successDelta"
+        :delta-label="kpi.deltaLabel"
         :delta7="kpi.successDelta7"
       />
     </div>
 
     <!-- 诊断摘要条 -->
     <div class="module-gap">
-      <DiagnosisBar :level="diagnosis.level" :title="diagnosis.title" :text="diagnosis.text" :action="diagnosis.action" />
+      <DiagnosisBar
+        :level="diagnosis.level"
+        :title="diagnosis.title"
+        :text="diagnosis.text"
+        :action="diagnosis.action"
+      />
     </div>
 
     <!-- 趋势曲线 -->
     <div class="module-card">
       <div class="module-title">
         近 {{ moduleRangeDays }} 天趋势
-        <span class="module-sub">报价量(柱) · 利润(虚线) · 报价成功率/中标率/出票成功率(%,右轴)</span>
+        <span class="module-sub"
+          >报价量(柱) · 利润(虚线) · 报价成功率/中标率/出票成功率(%,右轴)</span
+        >
       </div>
       <TrendChart :data="chartData" />
     </div>
@@ -153,7 +186,7 @@
     <div class="module-card">
       <div class="module-title">
         待处理
-        <span class="module-sub">异常预警,点击可下钻影线明细</span>
+        <span class="module-sub">异常预警,点击可下钻院线明细</span>
       </div>
       <PendingAlerts :alerts="alerts" />
     </div>
@@ -169,14 +202,24 @@ import { useRouter } from "vue-router";
 import { ElLoading, ElMessageBox } from "element-plus";
 import svApi from "@/api/sv-api";
 import { platTokens } from "@/store/platTokens";
-import { ORDER_FORM, GET_APP_LIST, GET_APP_TYPE_LIST } from "@/common/constant.js";
+import {
+  ORDER_FORM,
+  GET_APP_LIST,
+  GET_APP_TYPE_LIST
+} from "@/common/constant.js";
 import KpiCard from "./components/KpiCard.vue";
 import DiagnosisBar from "./components/DiagnosisBar.vue";
 import TrendChart from "./components/TrendChart.vue";
 import FailStackChart from "./components/FailStackChart.vue";
 import PlatBreakdown from "./components/PlatBreakdown.vue";
 import PendingAlerts from "./components/PendingAlerts.vue";
-import { rate, ratePercent, deltaInfo, deltaPpInfo, fmtMoney } from "./utils/rate.js";
+import {
+  rate,
+  ratePercent,
+  deltaInfo,
+  deltaPpInfo,
+  fmtMoney
+} from "./utils/rate.js";
 
 const router = useRouter();
 const {
@@ -187,11 +230,11 @@ const {
 const userList = ref([]);
 // 订单来源
 const orderFormObj = ORDER_FORM;
-// 影线列表
+// 院线列表
 const APP_LIST = computed(() => GET_APP_LIST());
 const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
 
-// 影线二级级联配置(系列 -> 影线)
+// 院线二级级联配置(系列 -> 院线)
 const appCascaderOptions = computed(() =>
   APP_TYPE_LIST.value.map((item, inx) => ({
     id: inx + 1,
@@ -215,7 +258,7 @@ const appCascaderProps = {
 const formData = reactive({
   plat_name: "", // 订单来源
   user_id: "", // 用户id
-  app_name: "", // 影线名称
+  app_name: "", // 院线名称
   start_time: "",
   end_time: ""
 });
@@ -235,7 +278,7 @@ formData.start_time = getTodayTime(+new Date());
 formData.end_time = getTodayTime(+new Date() + 1 * 24 * 60 * 60 * 1000);
 
 // 数据状态
-const listData = ref([]); // query 接口:影线级明细(用于 KPI 汇总与影线级预警)
+const listData = ref([]); // query 接口:院线级明细(用于 KPI 汇总与院线级预警)
 const trendData = ref([]); // trend 接口:按日序列(含扩展前 8 天,供环比/激增计算)
 const platData = ref([]); // plat 接口:平台拆解
 const kpi = ref({
@@ -259,13 +302,17 @@ const diagnosis = ref({ level: "info", text: "", action: null });
 // 图表数据:trend 截取查询范围(不展示向前扩展段)
 const chartData = computed(() => {
   const startDate = formData.start_time ? formData.start_time.slice(0, 10) : "";
-  return startDate ? trendData.value.filter(d => d.date >= startDate) : trendData.value;
+  return startDate
+    ? trendData.value.filter(d => d.date >= startDate)
+    : trendData.value;
 });
 
 // 查询范围天数(模块标题用)
 const moduleRangeDays = computed(() => {
   if (!formData.start_time || !formData.end_time) return 0;
-  return Math.round((new Date(formData.end_time) - new Date(formData.start_time)) / 86400000);
+  return Math.round(
+    (new Date(formData.end_time) - new Date(formData.start_time)) / 86400000
+  );
 });
 
 // 时间范围上限:报价记录实时表保留 30 天,超出部分由预聚合表(stat_daily_record,永久保留)兜底,故放开到 31 天
@@ -286,7 +333,11 @@ const confirmQueryRange = async () => {
 // 时间范围快捷:当天/近7天/近30天,选中态高亮(点搜索/改条件后清除选中态)
 const getDayStart = offset => {
   const now = new Date();
-  const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
+  const day = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() + offset
+  );
   return `${day.getFullYear()}-${pad2(day.getMonth() + 1)}-${pad2(day.getDate())} 00:00:00`;
 };
 const quickActive = ref(1); // 1-当天 7-近7天 30-近30天 null-自定义条件
@@ -320,15 +371,20 @@ const toDateStr = (dateStr, offset) => {
   d.setDate(d.getDate() + offset);
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 };
-const sumField = (rows, key) => rows.reduce((s, r) => s + Number(r[key] || 0), 0);
-const sumFailField = (rows, key) => rows.reduce((s, r) => s + Number(r.fail?.[key] || 0), 0);
+const sumField = (rows, key) =>
+  rows.reduce((s, r) => s + Number(r[key] || 0), 0);
+const sumFailField = (rows, key) =>
+  rows.reduce((s, r) => s + Number(r.fail?.[key] || 0), 0);
 
 const extractBaseline = (trend, startTime, endTime) => {
   if (!trend.length || !startTime || !endTime) return null;
   const last = trend[trend.length - 1]; // 查询范围最后一天
-  const rangeDays = Math.round((new Date(endTime) - new Date(startTime)) / 86400000);
+  const rangeDays = Math.round(
+    (new Date(endTime) - new Date(startTime)) / 86400000
+  );
   if (rangeDays > 1) return { isSingleDay: false }; // 多天范围:无环比参照
-  const yesterday = trend.find(d => d.date === toDateStr(last.date, -1)) || null;
+  const yesterday =
+    trend.find(d => d.date === toDateStr(last.date, -1)) || null;
   const fromDate = toDateStr(last.date, -7);
   const toDate = toDateStr(last.date, -1);
   const week = trend.filter(d => d.date >= fromDate && d.date <= toDate);
@@ -352,7 +408,12 @@ const extractBaseline = (trend, startTime, endTime) => {
 
 // ---------- KPI 概览 ----------
 const computeKpi = (list, baseline) => {
-  let profit = 0, supply = 0, transferTotal = 0, offerSuccess = 0, ticketTotal = 0, ticketSuccess = 0;
+  let profit = 0,
+    supply = 0,
+    transferTotal = 0,
+    offerSuccess = 0,
+    ticketTotal = 0,
+    ticketSuccess = 0;
   list.forEach(item => {
     profit += Number(item.profitTotal || 0);
     supply += Number(item.supplier_end_price_total || 0);
@@ -377,14 +438,38 @@ const computeKpi = (list, baseline) => {
     deltaLabel: "较昨日",
     profitDelta: isSingleDay ? deltaInfo(profit, y?.profit_total) : null,
     profitDelta7: isSingleDay ? deltaInfo(profit, a7?.profit) : null,
-    supplyDelta: isSingleDay ? deltaInfo(supply, y?.supplier_end_price_total) : null,
+    supplyDelta: isSingleDay
+      ? deltaInfo(supply, y?.supplier_end_price_total)
+      : null,
     supplyDelta7: isSingleDay ? deltaInfo(supply, a7?.supply) : null,
-    transferDelta: isSingleDay ? deltaInfo(transferTotal, y?.transfer_total) : null,
+    transferDelta: isSingleDay
+      ? deltaInfo(transferTotal, y?.transfer_total)
+      : null,
     transferDelta7: isSingleDay ? deltaInfo(transferTotal, a7?.transfer) : null,
-    dealDelta: isSingleDay ? deltaPpInfo(dealRateVal, y ? rate(y.ticket_total_num, y.offer_success_num) : null) : null,
-    dealDelta7: isSingleDay ? deltaPpInfo(dealRateVal, a7 ? rate(a7.ticketTotal, a7.offerSuccess) : null) : null,
-    successDelta: isSingleDay ? deltaPpInfo(successRateVal, y ? rate(y.ticket_success_num, y.ticket_total_num) : null) : null,
-    successDelta7: isSingleDay ? deltaPpInfo(successRateVal, a7 ? rate(a7.ticketSuccess, a7.ticketTotal) : null) : null,
+    dealDelta: isSingleDay
+      ? deltaPpInfo(
+          dealRateVal,
+          y ? rate(y.ticket_total_num, y.offer_success_num) : null
+        )
+      : null,
+    dealDelta7: isSingleDay
+      ? deltaPpInfo(
+          dealRateVal,
+          a7 ? rate(a7.ticketTotal, a7.offerSuccess) : null
+        )
+      : null,
+    successDelta: isSingleDay
+      ? deltaPpInfo(
+          successRateVal,
+          y ? rate(y.ticket_success_num, y.ticket_total_num) : null
+        )
+      : null,
+    successDelta7: isSingleDay
+      ? deltaPpInfo(
+          successRateVal,
+          a7 ? rate(a7.ticketSuccess, a7.ticketTotal) : null
+        )
+      : null,
     // hover 说明:当天展示昨日/7日均具体值,多天仅口径说明
     profitTip: isSingleDay
       ? `今日利润总和 = 出票成功单(订单状态=1)的利润累加;昨日 ¥${fmtMoney(y?.profit_total || 0)} · 7日均 ¥${fmtMoney(a7?.profit || 0)}`
@@ -401,7 +486,8 @@ const computeKpi = (list, baseline) => {
     successTip: isSingleDay
       ? `成功率 = 出票成功数 / 出票总数;昨日 ${ratePercent(y?.ticket_success_num, y?.ticket_total_num)} · 7日均 ${ratePercent(a7?.ticketSuccess, a7?.ticketTotal)}`
       : "成功率 = 出票成功数 / 出票总数",
-    hasData: list.length > 0 && (offerSuccess > 0 || ticketTotal > 0 || profit !== 0)
+    hasData:
+      list.length > 0 && (offerSuccess > 0 || ticketTotal > 0 || profit !== 0)
   };
 };
 
@@ -416,9 +502,14 @@ const computeAlerts = (list, baseline) => {
   if (cur && avg7 && avg7.ruleEmpty > 0) {
     const curRuleEmpty = Number(cur.fail?.["规则为空"] || 0);
     const curOfferFail = Number(cur.offer_fail_num || 0);
-    if (curRuleEmpty > avg7.ruleEmpty * 2 && curOfferFail > 0 && curRuleEmpty > curOfferFail * 0.5) {
+    if (
+      curRuleEmpty > avg7.ruleEmpty * 2 &&
+      curOfferFail > 0 &&
+      curRuleEmpty > curOfferFail * 0.5
+    ) {
       // 估算影响:规则为空次数 × 近 7 日平均单笔利润
-      const avgProfitPerTicket = avg7.ticketSuccess > 0 ? avg7.profit / avg7.ticketSuccess : 0;
+      const avgProfitPerTicket =
+        avg7.ticketSuccess > 0 ? avg7.profit / avg7.ticketSuccess : 0;
       const impact = curRuleEmpty * avgProfitPerTicket;
       result.push({
         level: "danger",
@@ -428,13 +519,17 @@ const computeAlerts = (list, baseline) => {
       });
     }
   }
-  // 2. 影线级阈值(黄):中标率过低 / 成功率异常
+  // 2. 院线级阈值(黄):中标率过低 / 成功率异常
   // 分母需达到最小样本数才触发(样本不足时比率不可靠,见设计评审反馈)
   const MIN_DEAL_SAMPLE = 100; // 中标率分母(报价成功数)最小样本:分母需 > 100 才触发
   const MIN_TICKET_SAMPLE = 20; // 成功率分母(出票总数)最小样本
   list.forEach(item => {
     const dealRate = rate(item.ticketTotalNum, item.offerSuccessNum);
-    if (dealRate !== null && dealRate < 0.05 && item.offerSuccessNum > MIN_DEAL_SAMPLE) {
+    if (
+      dealRate !== null &&
+      dealRate < 0.05 &&
+      item.offerSuccessNum > MIN_DEAL_SAMPLE
+    ) {
       result.push({
         level: "warning",
         title: "中标率过低",
@@ -443,7 +538,11 @@ const computeAlerts = (list, baseline) => {
       });
     }
     const successRate = rate(item.ticketSuccessNum, item.ticketTotalNum);
-    if (successRate !== null && successRate < 0.2 && item.ticketTotalNum >= MIN_TICKET_SAMPLE) {
+    if (
+      successRate !== null &&
+      successRate < 0.2 &&
+      item.ticketTotalNum >= MIN_TICKET_SAMPLE
+    ) {
       result.push({
         level: "warning",
         title: "成功率异常",
@@ -486,7 +585,7 @@ const computeDiagnosis = () => {
       level: "success",
       title: "表现良好",
       text: `利润 ¥${fmtMoney(kpi.value.profit)}${deltaText ? " " + deltaText : ""},中标率 ${kpi.value.dealRate},成功率 ${kpi.value.successRate}`,
-      action: { label: "查看影线明细", handler: () => goDetail() }
+      action: { label: "查看院线明细", handler: () => goDetail() }
     };
   } else {
     diagnosis.value = {
@@ -537,15 +636,23 @@ const loadData = async () => {
       svApi.queryAnalysisPlat(queryParams, { signal })
     ]);
     if (seq !== reqSeq) return; // 已被更新的请求取代(竞态守卫)
-    listData.value = queryRes.status === "fulfilled" ? (queryRes.value.data?.list || []) : [];
-    trendData.value = trendRes.status === "fulfilled" ? (trendRes.value.data?.trend || []) : [];
-    platData.value = platRes.status === "fulfilled" ? (platRes.value.data?.plat || []) : [];
-    const baseline = extractBaseline(trendData.value, formData.start_time, formData.end_time);
+    listData.value =
+      queryRes.status === "fulfilled" ? queryRes.value.data?.list || [] : [];
+    trendData.value =
+      trendRes.status === "fulfilled" ? trendRes.value.data?.trend || [] : [];
+    platData.value =
+      platRes.status === "fulfilled" ? platRes.value.data?.plat || [] : [];
+    const baseline = extractBaseline(
+      trendData.value,
+      formData.start_time,
+      formData.end_time
+    );
     computeKpi(listData.value, baseline);
     computeAlerts(listData.value, baseline);
     computeDiagnosis();
   } catch (error) {
-    if (error?.name === "CanceledError" || error?.code === "ERR_CANCELED") return;
+    if (error?.name === "CanceledError" || error?.code === "ERR_CANCELED")
+      return;
     console.warn("加载数据异常", error);
   } finally {
     loading.close();
@@ -568,25 +675,29 @@ onBeforeMount(async () => {
   gap: 12px;
   margin-bottom: 12px;
 }
+
 .module-gap {
   margin-bottom: 12px;
 }
+
 .module-card {
-  border: 1px solid var(--el-border-color-lighter, #e0e0e0);
-  border-radius: 8px;
   padding: 12px 16px;
   margin-bottom: 12px;
   background: #fff;
+  border: 1px solid var(--el-border-color-lighter, #e0e0e0);
+  border-radius: 8px;
 }
+
 .module-title {
+  margin-bottom: 8px;
   font-size: 14px;
   font-weight: 600;
-  margin-bottom: 8px;
 }
+
 .module-sub {
+  margin-left: 8px;
   font-size: 12px;
   font-weight: 400;
   color: #909399;
-  margin-left: 8px;
 }
 </style>

@@ -1,34 +1,42 @@
 <template>
   <div class="auto-ticket">
-    <div style="margin-bottom: 12px">
-      <el-button
-        v-if="isActiveOneClickStart"
-        v-throttle
-        type="primary"
-        @click="oneClickStart"
-        >一键全部启动</el-button
-      >
-      <el-button
-        v-if="isActiveOneClickStop"
-        v-throttle
-        type="primary"
-        :style="{ marginLeft: isActiveOneClickStart ? '20px' : 0 }"
-        @click="oneClickStop"
-        >一键停止</el-button
-      >
-      <!-- 洋葱已返回影院专资，屏蔽同步入口 -->
-      <!-- <el-button
-        v-if="isActiveSyncYangcong"
-        v-throttle
-        type="primary"
-        :style="{ marginLeft: '20px' }"
-        :loading="syncYangcongLoading"
-        @click="syncYangcongCinemaList()"
-        >同步洋葱影院列表</el-button
-      > -->
+    <!-- 操作栏：数据操作 -->
+    <div class="page-toolbar">
+      <div class="page-toolbar__group">
+        <el-button
+          v-if="isActiveOneClickStart"
+          v-throttle
+          type="primary"
+          @click="oneClickStart"
+          >一键全部启动</el-button
+        >
+        <el-button
+          v-if="isActiveOneClickStop"
+          v-throttle
+          type="danger"
+          plain
+          @click="oneClickStop"
+          >一键停止</el-button
+        >
+        <!-- 洋葱已返回影院专资，屏蔽同步入口 -->
+        <!-- <el-button
+          v-if="isActiveSyncYangcong"
+          v-throttle
+          type="primary"
+          :style="{ marginLeft: '20px' }"
+          :loading="syncYangcongLoading"
+          @click="syncYangcongCinemaList()"
+          >同步洋葱影院列表</el-button
+        > -->
+      </div>
     </div>
 
-    <el-table :data="platQueueList" border show-overflow-tooltip>
+    <el-table
+      class="page-table"
+      :data="platQueueList"
+      border
+      show-overflow-tooltip
+    >
       <el-table-column prop="platName" label="平台名称">
         <template #default="{ row }">
           <span v-if="row.id !== editingRowId">{{

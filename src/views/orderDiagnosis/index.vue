@@ -2,50 +2,62 @@
   <div class="order-diagnosis">
     <el-divider content-position="center">订单排查</el-divider>
 
-    <el-form :inline="true" class="query-form">
-      <el-form-item label="订单号">
-        <el-input
-          v-model="form.order_number"
-          placeholder="请输入订单号"
-          clearable
-          style="width: 220px"
-          @input="onOrderInput"
-        />
-      </el-form-item>
-      <el-form-item label="日期">
-        <el-date-picker
-          v-model="form.date"
-          type="date"
-          placeholder="选择日期"
-          format="YYYY-MM-DD"
-          value-format="YYYY-MM-DD"
-          style="width: 160px"
-        />
-      </el-form-item>
-      <el-form-item label="用户">
-        <el-select
-          v-model="form.user_id"
-          placeholder="选择用户"
-          clearable
-          filterable
-          :disabled="!isInternal"
-          style="width: 160px"
-        >
-          <el-option
-            v-for="item in userList"
-            :key="item.id"
-            :label="item.name"
-            :value="item.id"
+    <!-- 查询区：只放条件，查询动作统一由下方工具栏承载 -->
+    <div class="search-panel">
+      <el-form
+        class="search-panel__form"
+        :model="form"
+        label-width="76px"
+        @keyup.enter="query"
+      >
+        <el-form-item label="订单号">
+          <el-input
+            v-model="form.order_number"
+            placeholder="请输入订单号"
+            clearable
+            @input="onOrderInput"
           />
-        </el-select>
-      </el-form-item>
-      <el-form-item>
+        </el-form-item>
+        <el-form-item label="日期">
+          <el-date-picker
+            v-model="form.date"
+            type="date"
+            placeholder="选择日期"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+          />
+        </el-form-item>
+        <el-form-item label="用户">
+          <el-select
+            v-model="form.user_id"
+            placeholder="选择用户"
+            clearable
+            filterable
+            :disabled="!isInternal"
+          >
+            <el-option
+              v-for="item in userList"
+              :key="item.id"
+              :label="item.name"
+              :value="item.id"
+            />
+          </el-select>
+        </el-form-item>
+      </el-form>
+    </div>
+
+    <!-- 操作栏：查询动作 -->
+    <div class="page-toolbar">
+      <div class="page-toolbar__group">
         <el-button type="primary" :loading="loading" @click="query">
           排查
         </el-button>
         <el-button @click="resetForm">重置</el-button>
-      </el-form-item>
-    </el-form>
+      </div>
+      <div class="page-toolbar__group page-toolbar__group--end">
+        <el-button @click="openRawLog">查看原始日志</el-button>
+      </div>
+    </div>
 
     <el-alert
       v-if="conclusion"
@@ -79,7 +91,13 @@
         同角色记录（不按用户过滤）
         <span class="section-sub">用于对照「谁有记录、谁没有」</span>
       </div>
-      <el-table :data="recordRows" border stripe size="small">
+      <el-table
+        class="page-table"
+        :data="recordRows"
+        border
+        stripe
+        size="small"
+      >
         <el-table-column prop="record_type" label="类型" width="110" />
         <el-table-column label="是否目标用户" width="110">
           <template #default="{ row }">
@@ -130,7 +148,13 @@
         拉单摘要（订单时间 ±10 分钟）
         <span class="section-sub">近 7 天，5 分钟一条</span>
       </div>
-      <el-table :data="summaryWindow" border stripe size="small">
+      <el-table
+        class="page-table"
+        :data="summaryWindow"
+        border
+        stripe
+        size="small"
+      >
         <el-table-column prop="opera_time" label="时间" width="170" />
         <el-table-column label="平台" width="120">
           <template #default="{ row }">
@@ -182,6 +206,68 @@
         description="该时段无拉单摘要（可能未接入/超出保留期）"
       />
     </el-card>
+
+    <!-- 原始日志（原列表页「查询日志」入口合并到这里，报价/未报价记录列表不再单设按钮） -->
+    <el-dialog v-model="dialogLogVisible" title="订单日志" width="1100">
+      <el-tabs v-model="logTabActive">
+        <el-tab-pane label="明细日志" name="trace">
+          <div class="log-toolbar">
+            <span class="log-order-no"
+              >订单号：{{ currentLogOrderNumber }}</span
+            >
+            <el-button
+              size="small"
+              type="primary"
+              :loading="traceLoading"
+              @click="queryTrace()"
+              >查询明细</el-button
+            >
+            <el-checkbox v-model="traceBrief" class="log-check"
+              >仅时间线（不含 info，省流量）</el-checkbox
+            >
+            <span class="log-tip"
+              >来源：后端日志文件 /svpi/log/trace（按日/按用户目录）</span
+            >
+          </div>
+          <!-- max-height 用视口：写死像素在小屏会让弹框超出视口、遮罩层出第二条滚动条 -->
+          <el-table :data="traceData" border max-height="calc(85vh - 150px)">
+            <el-table-column type="index" label="序号" width="60" />
+            <el-table-column
+              property="opera_time"
+              sortable
+              label="操作时间"
+              width="160"
+            />
+            <el-table-column property="des" width="220" label="操作描述" />
+            <el-table-column property="level" width="70" label="级别" />
+            <el-table-column
+              v-if="!traceBrief"
+              property="info"
+              show-overflow-tooltip
+              label="详细信息"
+              :formatter="formatTraceInfo"
+            />
+          </el-table>
+        </el-tab-pane>
+        <el-tab-pane label="异常日志" name="error">
+          <el-table :data="logData" border>
+            <el-table-column type="index" label="序号" width="60" />
+            <el-table-column
+              property="opera_time"
+              sortable
+              label="操作时间"
+              width="160"
+            />
+            <el-table-column property="des" width="180" label="操作描述" />
+            <el-table-column
+              property="info"
+              show-overflow-tooltip
+              label="详细信息"
+            />
+          </el-table>
+        </el-tab-pane>
+      </el-tabs>
+    </el-dialog>
   </div>
 </template>
 
@@ -244,6 +330,9 @@ const nextDay = dateStr => {
   return formatDate(d);
 };
 
+// 日期默认当天（输入订单号后仍会被订单里的下单日期覆盖，见 onOrderInput）
+form.date = formatDate(new Date());
+
 // 订单号前 14 位 = 下单时间（yyyyMMddHHmmss，本案例 t+lieren 订单即此规则）
 const parseOrderDateTime = orderNumber => {
   const match = String(orderNumber || "").match(
@@ -279,7 +368,7 @@ const summaryInfo = row => parseInfo(row.info);
 
 const resetForm = () => {
   form.order_number = "";
-  form.date = "";
+  form.date = formatDate(new Date());
   form.user_id = isInternal.value ? "" : user_id;
   queried.value = false;
   conclusion.value = null;
@@ -288,6 +377,71 @@ const resetForm = () => {
   summaryRows.value = [];
   orderPlatform.value = "";
   localCheck.value = null;
+};
+
+// ==================== 原始日志（原报价记录页「查询日志」，入口合并到本页） ====================
+const dialogLogVisible = ref(false);
+const logTabActive = ref("trace");
+const logData = ref([]);
+const traceData = ref([]);
+const traceBrief = ref(false);
+const traceLoading = ref(false);
+const currentLogOrderNumber = ref("");
+
+// 打开日志弹窗：先拿异常日志，再自动查一次明细日志
+const openRawLog = async () => {
+  if (!form.order_number) {
+    ElMessage.warning("请输入订单号");
+    return;
+  }
+  const logUserId = form.user_id || traceUserId.value || user_id || "";
+  try {
+    const res = await svApi.queryLogRecord({
+      order_number: form.order_number,
+      user_id: logUserId,
+      type: 1
+    });
+    currentLogOrderNumber.value = form.order_number;
+    logData.value = res.data?.cardList || [];
+    dialogLogVisible.value = true;
+    logTabActive.value = "trace";
+    queryTrace(logUserId);
+  } catch (error) {
+    console.warn("查询操作日志返回异常", error);
+    ElMessage.warning("查询操作日志失败");
+  }
+};
+
+// 明细日志：按日期 + 用户目录定位日志分片
+const queryTrace = async (logUserId = form.user_id || user_id || "") => {
+  if (!currentLogOrderNumber.value) return;
+  traceLoading.value = true;
+  try {
+    const res = await svApi.queryLogTrace({
+      order_number: currentLogOrderNumber.value,
+      date: (form.date || "").replace(/-/g, ""),
+      userId: logUserId,
+      type: 1, // 只看报价队列日志，排除同订单的待出票/出票等其他类型
+      brief: traceBrief.value ? 1 : 0
+    });
+    traceData.value = res.data?.list || [];
+  } catch (error) {
+    console.warn("查询明细日志返回异常", error);
+    traceData.value = [];
+  } finally {
+    traceLoading.value = false;
+  }
+};
+
+// info 可能是对象（traceBuffer 原样入参），序列化避免显示 [object Object]
+const formatTraceInfo = (row, column, cellValue) => {
+  if (cellValue === null || cellValue === undefined) return "";
+  if (typeof cellValue === "string") return cellValue;
+  try {
+    return JSON.stringify(cellValue);
+  } catch {
+    return String(cellValue);
+  }
 };
 
 const summaryWindow = computed(() => {
@@ -888,38 +1042,63 @@ onBeforeMount(async () => {
 .order-diagnosis {
   padding: 4px 8px;
 }
-.query-form {
-  margin-bottom: 8px;
+
+/* 日志弹窗顶部工具条 */
+.log-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
 }
+
+.log-order-no {
+  font-weight: 600;
+}
+
+.log-check {
+  margin-left: 2px;
+}
+
+.log-tip {
+  font-size: 12px;
+  color: #909399;
+}
+
 .conclusion {
   margin-bottom: 12px;
 }
+
 .module-card {
-  border: 1px solid var(--el-border-color-lighter, #e0e0e0);
-  border-radius: 8px;
   padding: 12px 16px;
   margin-bottom: 12px;
   background: #fff;
+  border: 1px solid var(--el-border-color-lighter, #e0e0e0);
+  border-radius: 8px;
 }
+
 .section-title {
+  margin-bottom: 8px;
   font-size: 14px;
   font-weight: 600;
-  margin-bottom: 8px;
 }
+
 .section-sub {
+  margin-left: 8px;
   font-size: 12px;
   font-weight: 400;
   color: #909399;
-  margin-left: 8px;
 }
+
 .timeline-title {
   font-size: 13px;
   font-weight: 500;
 }
+
 .timeline-desc {
+  margin-top: 2px;
   font-size: 12px;
   color: #606266;
   word-break: break-all;
-  margin-top: 2px;
 }
 </style>
