@@ -8,6 +8,7 @@
       :close-on-press-escape="false"
       :title="dialogTitle"
       width="60%"
+      class="fit-dialog"
       @close="resetForm(ruleFormRef)"
     >
       <el-form
@@ -32,12 +33,12 @@
             />
           </el-select>
         </el-form-item> -->
-        <el-form-item label="影线名称" prop="shadowLineName">
+        <el-form-item label="院线名称" prop="shadowLineName">
           <el-cascader
             v-model="formData.shadowLineName"
             :options="appCascaderOptions"
             :props="appCascaderProps"
-            placeholder="请选择影线名称"
+            placeholder="请选择院线名称"
             clearable
             filterable
             style="width: 100%"
@@ -580,7 +581,7 @@ import {
 const APP_LIST = computed(() => GET_APP_LIST());
 const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
 
-// 影线二级级联配置（系列 -> 影线）
+// 院线二级级联配置（系列 -> 院线）
 const appCascaderOptions = computed(() =>
   APP_TYPE_LIST.value.map((item, inx) => ({
     id: inx + 1,
@@ -657,7 +658,7 @@ let formData = reactive({
   id: "",
   ruleName: "", // 规则名称
   orderForm: [], // 订单来源
-  shadowLineName: "sfc", // 影线名称
+  shadowLineName: "sfc", // 院线名称
   cinema_group: [], // 包含院线
   includeCityNames: [], // 包含城市
   excludeCityNames: [], // 排除城市
@@ -705,7 +706,7 @@ const rules = {
   //   // 如果Session ID有特定格式要求，可以在这里添加pattern验证
   // ],
   shadowLineName: [
-    { required: true, message: "影线名称不能为空", trigger: "blur" }
+    { required: true, message: "院线名称不能为空", trigger: "blur" }
     // 如果Session ID有特定格式要求，可以在这里添加pattern验证
   ]
 };
@@ -734,7 +735,7 @@ const excludeCityList = computed(() => {
 // 包含/排除影院列表
 const cinemaListFilter = computed(() => {
   let cinemaFilterList = JSON.parse(JSON.stringify(cinemaList.value));
-  // 包含影线过滤
+  // 包含院线过滤
   if (formData.cinema_group?.length) {
     cinemaFilterList = cinemaFilterList.filter(item => {
       const cinema_group_str = formData.cinema_group.join();
@@ -768,7 +769,7 @@ const resetForm = el => {
     formData.id = ""; // 规则id
     formData.ruleName = ""; // 规则名称
     formData.orderForm = []; // 订单来源
-    formData.shadowLineName = ""; // 影线
+    formData.shadowLineName = ""; // 院线
   }
   formData.cinema_group = []; // 包含院线
   formData.includeCityNames = []; // 包含城市
@@ -807,7 +808,7 @@ const resetForm = el => {
   formData.auto_quan_value = ""; // 自动用券标识
 };
 
-// 构建当前影线下的 app_cinema_code 生成函数（与影院映射维护列表保持一致）
+// 构建当前院线下的 app_cinema_code 生成函数（与影院映射维护列表保持一致）
 const buildAppCinemaCodeFn = () => {
   const appInfo = GET_APP_INFO(formData.shadowLineName);
   const app_type_code = appInfo?.app_type_code;
@@ -938,7 +939,7 @@ const syncNamesByCodes = () => {
   }
 };
 
-// 影线改变
+// 院线改变
 const shadowLineChange = async app_name => {
   console.log("app_name", app_name);
   // resetForm(1);

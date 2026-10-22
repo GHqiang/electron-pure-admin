@@ -16,10 +16,10 @@
         :rules="rules"
         label-width="160px"
       >
-        <el-form-item label="影线名称" prop="app_name">
+        <el-form-item label="院线名称" prop="app_name">
           <el-select
             v-model="formData.app_name"
-            placeholder="请选择影线名称"
+            placeholder="请选择院线名称"
             filterable
             clearable
             @change="shadowLineChange"
@@ -108,7 +108,7 @@ const showSfcDialog = ref(false);
 // 表单数据
 let formData = reactive({
   id: "",
-  app_name: "", // 影线名称
+  app_name: "", // 院线名称
   cinema_name: "", // 影院名称
   cinema_id: "", // 影院id
   city_name: "", // 影院所属城市
@@ -118,7 +118,7 @@ let formData = reactive({
 let cinemaList = ref([]); // 影院列表
 let cityCinemaList = []; // 城市影院列表
 const rules = {
-  app_name: [{ required: true, message: "影线名称不能为空", trigger: "blur" }],
+  app_name: [{ required: true, message: "院线名称不能为空", trigger: "blur" }],
   cinema_name: [
     { required: true, message: "影院名称不能为空", trigger: "blur" }
   ],
@@ -141,9 +141,9 @@ const resetForm = el => {
   formData.remark = "";
 };
 
-// 影线改变
+// 院线改变
 const shadowLineChange = async val => {
-  console.log("影线改变val", val);
+  console.log("院线改变val", val);
   resetForm(1);
   const cityList = await getCityList(val);
   const allCinemaList = await getAllCinemaList(cityList, val);

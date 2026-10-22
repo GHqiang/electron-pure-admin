@@ -1,10 +1,10 @@
 <template>
-  <div>
-    <el-container>
-      <el-aside width="200px">
+  <div class="rule-page">
+    <el-container class="rule-page__container">
+      <el-aside width="200px" class="rule-page__aside">
         <el-input
           v-model="filterText"
-          class="w-60 mb-2"
+          class="tree-filter"
           placeholder="可输入影院过滤"
         />
         <!-- 左侧树 -->
@@ -14,126 +14,116 @@
           :data="treeData"
           node-key="id"
           highlight-current
-          style="max-height: 650px; overflow-y: auto"
           :default-expanded-keys="[1]"
           :props="defaultProps"
           :filter-node-method="filterNode"
           @node-click="nodeClick"
         />
       </el-aside>
-      <el-main style="margin-left: 15px; padding: 0">
-        <!-- 查询表单 -->
-        <el-form :inline="true" class="demo-form-inline">
-          <el-form-item label="订单来源">
-            <el-select
-              v-model="formData.orderForm"
-              placeholder="订单来源"
-              style="width: 194px"
-              clearable
-            >
-              <el-option
-                v-for="(keyValue, keyName) in orderFormObj"
-                :key="keyName"
-                :label="keyValue"
-                :value="keyName"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="规则名称">
-            <el-input
-              v-model="formData.ruleName"
-              placeholder="请输入规则名称"
-              clearable
-            />
-          </el-form-item>
-          <el-form-item
-            :label="`状&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;态`"
+      <el-main class="rule-page__main">
+        <!-- 查询区：只放条件，全部平铺，栅格按屏幕宽度自动排列换行 -->
+        <div class="search-panel">
+          <el-form
+            class="search-panel__form"
+            :model="formData"
+            label-width="76px"
+            @keyup.enter="searchData"
           >
-            <el-select
-              v-model="formData.status"
-              placeholder="状态"
-              style="width: 194px"
-              clearable
-            >
-              <el-option
-                v-for="(keyValue, keyName) in statusObj"
-                :key="keyName"
-                :label="keyValue"
-                :value="keyName"
+            <el-form-item label="规则名称">
+              <el-input
+                v-model="formData.ruleName"
+                placeholder="请输入规则名称"
+                clearable
               />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="报价类型">
-            <el-select
-              v-model="formData.offerType"
-              placeholder="报价类型"
-              style="width: 194px"
-              clearable
-            >
-              <el-option label="固定价" value="1" />
-              <el-option label="会员价加价" value="2" />
-              <el-option label="会员日报价" value="3" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="用券类型">
-            <el-select
-              v-model="formData.quanValue"
-              placeholder="用券类型"
-              style="width: 194px"
-              filterable
-              clearable
-            >
-              <el-option
-                v-for="item in quanType"
-                :key="item.id"
-                :label="item.quan_name"
-                :value="item.quan_value"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="同步平台">
-            <el-select
-              v-model="formData.is_sync_plat"
-              placeholder="请选择是否同步平台"
-              style="width: 194px"
-              clearable
-            >
-              <el-option label="是" :value="1" />
-              <el-option label="否" :value="2" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="规则备注">
-            <el-input
-              v-model="formData.remark"
-              placeholder="请输入备注(支撑模糊匹配)"
-              clearable
-            />
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" @click="searchData">搜索</el-button>
-            <el-button @click="resetForm">重置</el-button>
-            <el-button type="primary" style="padding-left: 0px">
-              <template #default>
-                <el-cascader
-                  v-model="shadowLine"
-                  :options="appCascaderOptions"
-                  :props="appCascaderProps"
-                  filterable
-                  clearable
-                  placeholder="请选择影线名称"
-                  style="width: 210px; margin-left: -1px"
+            </el-form-item>
+            <el-form-item label="订单来源">
+              <el-select
+                v-model="formData.orderForm"
+                placeholder="订单来源"
+                clearable
+              >
+                <el-option
+                  v-for="(keyValue, keyName) in orderFormObj"
+                  :key="keyName"
+                  :label="keyValue"
+                  :value="keyName"
                 />
-                <span @click="addRule">新增</span>
-              </template>
-            </el-button>
+              </el-select>
+            </el-form-item>
+            <el-form-item label="状态">
+              <el-select v-model="formData.status" placeholder="状态" clearable>
+                <el-option
+                  v-for="(keyValue, keyName) in statusObj"
+                  :key="keyName"
+                  :label="keyValue"
+                  :value="keyName"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="报价类型">
+              <el-select
+                v-model="formData.offerType"
+                placeholder="报价类型"
+                clearable
+              >
+                <el-option label="固定价" value="1" />
+                <el-option label="会员价加价" value="2" />
+                <el-option label="会员日报价" value="3" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="用券类型">
+              <el-select
+                v-model="formData.quanValue"
+                placeholder="用券类型"
+                filterable
+                clearable
+              >
+                <el-option
+                  v-for="item in quanType"
+                  :key="item.id"
+                  :label="item.quan_name"
+                  :value="item.quan_value"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="同步平台">
+              <el-select
+                v-model="formData.is_sync_plat"
+                placeholder="请选择是否同步平台"
+                clearable
+              >
+                <el-option label="是" :value="1" />
+                <el-option label="否" :value="2" />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="规则备注">
+              <el-input
+                v-model="formData.remark"
+                placeholder="请输入备注(支撑模糊匹配)"
+                clearable
+              />
+            </el-form-item>
+          </el-form>
+        </div>
+        <!-- 操作栏：一行内按业务分组，组间留 16px；左侧数据/查询动作，右侧工具动作。
+              -->
+        <div class="page-toolbar">
+          <div class="page-toolbar__group">
+            <el-button type="primary" @click="addRule">新增</el-button>
             <el-button
               type="danger"
               :disabled="!hasSelected"
               @click="batchDelete"
               >批量删除</el-button
             >
+          </div>
+          <div class="page-toolbar__group">
+            <el-button type="primary" @click="searchData">查询</el-button>
+            <el-button @click="resetForm">重置</el-button>
+          </div>
+          <div class="page-toolbar__group page-toolbar__group--end">
             <el-button
-              type="primary"
+              type="danger"
               :loading="checking"
               @click="handleCheckLierenRuleSync"
               >规则同步检查</el-button
@@ -148,14 +138,14 @@
               type="warning"
               :loading="batchSyncing"
               @click="handleBatchSyncNewPlat"
-              >批量同步新平台</el-button
+              >新平台批量设置价格</el-button
             >
-          </el-form-item>
-        </el-form>
+          </div>
+        </div>
         <!-- 表格 -->
         <el-table
           ref="multipleTable"
-          style="width: 100%"
+          class="page-table"
           :data="tableData"
           border
           stripe
@@ -163,22 +153,44 @@
           @selection-change="handleSelectionChange"
         >
           <el-table-column type="selection" fixed width="55" />
-          <el-table-column prop="ruleName" fixed label="规则名称" width="185" />
+          <el-table-column prop="ruleName" fixed label="规则名称" width="185">
+            <template #default="scope">
+              <span style="cursor: pointer" @click="querRule(scope.row, '3')">{{
+                scope.row.ruleName
+              }}</span>
+            </template>
+          </el-table-column>
           <!-- <el-table-column
             prop="shadowLineName"
             fixed
-            label="影线名称"
+            label="院线名称"
             width="105"
           >
             <template #default="scope">
               <span>{{ APP_LIST[scope.row.shadowLineName] }}</span>
             </template>
           </el-table-column> -->
-          <el-table-column label="状态" fixed width="70">
+          <el-table-column label="状态" fixed width="70" align="center">
             <template #default="scope">
               <span v-if="scope.row.status === '3'" style="color: red">{{
                 statusObj[scope.row.status]
               }}</span>
+              <!-- 当日不报：status 仍为 1，只有 allow_offer_time 未到，
+                   这时不显示开关（开关会误导成"正常报价中"） -->
+              <el-tooltip
+                v-else-if="
+                  scope.row.status === '5' || isNoOfferActive(scope.row)
+                "
+                :content="
+                  scope.row.allow_offer_time
+                    ? `当日不报：今日不报价，${formatTimeOfTime(scope.row.allow_offer_time)} 后自动恢复`
+                    : '当日不报：今日不报价'
+                "
+              >
+                <el-tag type="warning" size="small" effect="plain">{{
+                  statusObj[5]
+                }}</el-tag>
+              </el-tooltip>
               <el-switch
                 v-else
                 v-model="scope.row.status"
@@ -188,12 +200,13 @@
               />
             </template>
           </el-table-column>
-          <el-table-column label="报价类型" fixed width="110">
+          <el-table-column label="报价类型" fixed width="85" align="center">
             <template #default="scope">
               <el-popover
                 placement="top"
-                :width="1200"
-                trigger="hover"
+                :width="960"
+                trigger="click"
+                :popper-style="{ maxWidth: 'calc(100vw - 40px)' }"
                 popper-class="ticket-info-popover"
               >
                 <template #reference>
@@ -279,7 +292,7 @@
             <template #default="scope">
               <span>{{ formatOfferAmount(scope.row) }}</span>
               <span>{{ formatAddAmount(scope.row) }}</span>
-              <span
+              <!-- <span
                 v-if="scope.row.bWalletMarkup"
                 style="color: #e6a23c; display: block"
               >
@@ -292,17 +305,64 @@
                 {{
                   `原价报区间:${formatOfferTppRange(scope.row.offerTppRange)}`
                 }}
-              </span>
+              </span> -->
             </template>
           </el-table-column>
-          <el-table-column prop="includeCinemaNames" label="包含影院">
+          <el-table-column
+            prop="includeCinemaNames"
+            label="包含影院"
+            min-width="220"
+          >
             <template #default="scope">
-              <span>{{ scope.row.includeCinemaNames.join() }}</span>
+              <!-- 一行几十个影院名时只显示前两个，完整列表放 tooltip 里看 -->
+              <el-tooltip
+                placement="top"
+                :disabled="(scope.row.includeCinemaNames || []).length <= 2"
+              >
+                <template #content>
+                  <div
+                    style="
+                      max-width: 460px;
+                      max-height: 320px;
+                      overflow-y: auto;
+                      line-height: 1.6;
+                    "
+                  >
+                    {{ (scope.row.includeCinemaNames || []).join("、") }}
+                  </div>
+                </template>
+                <span>{{
+                  formatCinemaNames(scope.row.includeCinemaNames)
+                }}</span>
+              </el-tooltip>
             </template>
           </el-table-column>
-          <el-table-column prop="excludeCinemaNames" label="排除影院">
+          <el-table-column
+            prop="excludeCinemaNames"
+            label="排除影院"
+            min-width="220"
+          >
             <template #default="scope">
-              <span>{{ scope.row.excludeCinemaNames.join() }}</span>
+              <el-tooltip
+                placement="top"
+                :disabled="(scope.row.excludeCinemaNames || []).length <= 2"
+              >
+                <template #content>
+                  <div
+                    style="
+                      max-width: 460px;
+                      max-height: 320px;
+                      overflow-y: auto;
+                      line-height: 1.6;
+                    "
+                  >
+                    {{ (scope.row.excludeCinemaNames || []).join("、") }}
+                  </div>
+                </template>
+                <span>{{
+                  formatCinemaNames(scope.row.excludeCinemaNames)
+                }}</span>
+              </el-tooltip>
             </template>
           </el-table-column>
           <el-table-column
@@ -315,12 +375,12 @@
                 :class="getLastUseTimeClass(row)"
                 title="黄色为:最后使用时间超过四个月,该规则是否需要删除?"
               >
-                {{ row.last_used_time }}
+                {{ formatTimeOfTime(row.last_used_time) }}
               </span>
             </template>
           </el-table-column>
           <el-table-column prop="remark" label="备注" width="110" />
-          <el-table-column label="操作" fixed="right" align="left" width="350">
+          <el-table-column label="操作" fixed="right" align="left" width="280">
             <template #default="scope">
               <el-button
                 size="small"
@@ -333,12 +393,6 @@
                 type="success"
                 @click="editRule(scope.row, '2')"
                 >复制</el-button
-              >
-              <el-button
-                size="small"
-                type="success"
-                @click="querRule(scope.row, '3')"
-                >查看</el-button
               >
               <el-button
                 size="small"
@@ -360,8 +414,8 @@
         <el-pagination
           v-model:current-page="currentPage"
           v-model:page-size="pageSize"
-          style="margin-top: 10px; display: flex; justify-content: flex-end"
-          :page-sizes="[10, 20, 30, 50]"
+          class="page-pagination"
+          :page-sizes="[10, 20, 50, 100]"
           :background="true"
           layout="total, sizes, prev, pager, next, jumper"
           :total="totalNum"
@@ -374,7 +428,7 @@
     <!-- 批量同步新平台弹框 -->
     <el-dialog
       v-model="batchSyncDialogVisible"
-      title="批量同步新平台报价"
+      title="新平台批量设置价格"
       width="520px"
       :close-on-click-modal="false"
     >
@@ -442,6 +496,64 @@
       </template>
     </el-dialog>
 
+    <!-- 规则同步检查/修复结果 -->
+    <el-dialog
+      v-model="syncResultVisible"
+      :title="syncResult.title"
+      width="960px"
+      top="6vh"
+    >
+      <el-descriptions :column="4" border size="small">
+        <el-descriptions-item
+          v-for="item in syncResult.summary"
+          :key="item.label"
+          :label="item.label"
+        >
+          {{ item.value }}
+        </el-descriptions-item>
+      </el-descriptions>
+      <el-table
+        v-if="syncResult.rows.length"
+        :data="syncResult.rows"
+        border
+        size="small"
+        max-height="420"
+        style="margin-top: 12px"
+      >
+        <el-table-column label="类型" width="130">
+          <template #default="{ row }">
+            <el-tag
+              :type="MATCH_TYPE_TAG[row.matchType] || 'info'"
+              size="small"
+            >
+              {{ MATCH_TYPE_TEXT[row.matchType] || row.matchType }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="院线" width="140" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ APP_LIST[row.shadowLineName] || row.shadowLineName }}
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="ruleName"
+          label="规则名称"
+          min-width="200"
+          show-overflow-tooltip
+        />
+        <el-table-column prop="platRuleId" label="平台规则ID" width="140" />
+        <el-table-column label="问题" min-width="240" show-overflow-tooltip>
+          <template #default="{ row }">{{ formatIssueText(row) }}</template>
+        </el-table-column>
+      </el-table>
+      <el-empty v-else :description="syncResult.emptyText" :image-size="70" />
+      <template #footer>
+        <el-button type="primary" @click="syncResultVisible = false"
+          >关闭</el-button
+        >
+      </template>
+    </el-dialog>
+
     <RuleDialog
       ref="sfcDialogRef"
       :dialogTitle="dialogTitle"
@@ -478,7 +590,11 @@ const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
 import usesMachineBaseFun from "@/mixins/usesMachineBaseFun";
 const { getQuanTypeList } = usesMachineBaseFun();
 
-import { getCurrentTime, getNextDayTime } from "@/utils/utils";
+import {
+  getCurrentTime,
+  getNextDayTime,
+  formatTimeOfTime
+} from "@/utils/utils";
 import {
   isUnknownBWalletMarkupError,
   isUnknownOfferTppRangeError
@@ -513,20 +629,87 @@ window.pushLierenExtraAmountToPlat = pushLierenExtraAmountToPlat;
 // 猎人规则一致性检查（挂载到 window 供控制台调用，同时支持按钮点击）
 import useCheckLierenRuleSync from "@/mixins/useCheckLierenRuleSync";
 const { checkLierenRuleSync } = useCheckLierenRuleSync();
+
+// ── 同步检查/修复结果弹窗（原来只 console.log，用户看不到明细）──
+const syncResultVisible = ref(false);
+const syncResult = reactive({
+  title: "",
+  summary: [],
+  rows: [],
+  emptyText: "无异常数据"
+});
+const MATCH_TYPE_TEXT = {
+  BOTH: "字段不一致",
+  LOCAL_ONLY: "本地有平台无",
+  PLATFORM_ONLY: "平台有本地无"
+};
+const MATCH_TYPE_TAG = {
+  BOTH: "danger",
+  LOCAL_ONLY: "warning",
+  PLATFORM_ONLY: "info"
+};
+const openSyncResult = ({ title, summary, rows = [], emptyText }) => {
+  syncResult.title = title;
+  syncResult.summary = summary;
+  syncResult.rows = rows;
+  syncResult.emptyText = emptyText || "无异常数据";
+  syncResultVisible.value = true;
+};
+// 把检查结果里的 issues 拼成人话
+const formatIssueText = row => {
+  if (row.matchType === "PLATFORM_ONLY") {
+    return `平台状态：${row.platState === 1 ? "启用" : "禁用"}；座位：${
+      row.platSeats || "空"
+    }`;
+  }
+  if (row.matchType === "LOCAL_ONLY") {
+    return `平台不存在该规则；本地状态：${
+      statusObj[row.localStatus] || row.localStatus || "-"
+    }`;
+  }
+  return (row.issues || [])
+    .map(item => {
+      if (item.type === "STATUS_MISMATCH") {
+        return `状态 ${item.expected}→${item.actual}`;
+      }
+      if (item.type === "SEATS_MISMATCH") {
+        return `座位 ${item.expected}→${item.actual}`;
+      }
+      return item.type;
+    })
+    .join("；");
+};
+
 const checking = ref(false);
 const handleCheckLierenRuleSync = async () => {
   checking.value = true;
   try {
     const result = await checkLierenRuleSync();
-    if (result?.inconsistent > 0) {
+    if (!result) return;
+    openSyncResult({
+      title: "规则同步检查结果",
+      summary: [
+        { label: "规则总数", value: result.total },
+        { label: "一致", value: result.consistent },
+        { label: "不一致", value: result.inconsistent },
+        { label: "本地有平台无", value: result.localOnly },
+        { label: "平台有本地无", value: result.platOnly },
+        { label: "状态不一致", value: result.statusMismatch },
+        { label: "座位不一致", value: result.seatsMismatch }
+      ],
+      rows: result.details || [],
+      emptyText: "本地与平台完全一致"
+    });
+    if (result.inconsistent > 0) {
       ElMessage({
         type: "warning",
-        message: `发现 ${result.inconsistent} 条规则不一致，请查看控制台详情，点击"规则同步修复"进行修复`,
-        duration: 8000
+        message: `发现 ${result.inconsistent} 条规则不一致，可点击"规则同步修复"处理`,
+        duration: 6000
       });
-    } else {
-      ElMessage({ type: "success", message: "所有规则一致，无需修复" });
     }
+  } catch (error) {
+    console.warn("规则同步检查异常", error);
+    ElMessage.error("规则同步检查异常，请稍后重试");
   } finally {
     checking.value = false;
   }
@@ -554,10 +737,32 @@ const handleFixLierenRule = async () => {
       item.film_type = item.film_type ? item.film_type?.split(",") : [];
       item.quanValueList = item.quanValue ? item.quanValue?.split(",") : [];
     });
-    await checkAndUpdateLierenRuleState(ruleRecords, "manual_fix");
-    ElMessage({
-      type: "success",
-      message: "规则同步修复完成，请查看控制台详情"
+    const result = await checkAndUpdateLierenRuleState(
+      ruleRecords,
+      "manual_fix"
+    );
+    if (!result) {
+      ElMessage.warning(
+        "未执行修复：未配置猎人 AK/SK，或当前账号没有已同步到猎人的固定价规则"
+      );
+      return;
+    }
+    // 平台侧状态已改，列表重新拉一次保证展示与平台一致
+    searchData();
+    openSyncResult({
+      title: "规则同步修复结果",
+      summary: [
+        { label: "本地已同步", value: result.totalLocalSynced },
+        { label: "平台固定价", value: result.totalPlatRules },
+        { label: "双向匹配", value: result.totalMatched },
+        { label: "启用", value: result.enableCount },
+        { label: "禁用", value: result.disableCount },
+        { label: "删除平台孤儿", value: result.deleteCount },
+        { label: "修复座位", value: result.seatsFixCount },
+        { label: "平台孤儿总数", value: result.platOnlyCount }
+      ],
+      rows: result.localOnlyRules || [],
+      emptyText: "本次没有需要人工处理的规则"
     });
   } catch (error) {
     ElMessage({ type: "error", message: "规则同步修复异常" });
@@ -649,14 +854,8 @@ const treeData = APP_TYPE_LIST.value.map((item, inx) => {
   };
 });
 
-// 影线二级级联配置（系列 -> 影线）
-const appCascaderOptions = treeData;
-const appCascaderProps = {
-  value: "value",
-  label: "label",
-  children: "children",
-  emitPath: false
-};
+// 左侧树当前选中的节点（新增规则时直接用它所在的影院，不再让用户选第二次）
+const currentNode = ref(null);
 // 树过滤
 const filterText = ref("");
 const filterNode = (value, data) => {
@@ -682,8 +881,8 @@ const totalNum = ref(0);
 const orderFormObj = ref(ORDER_FORM);
 // 报价类型枚举
 const offerTypeObj = {
-  1: "日常固定价",
-  2: "会员价加价",
+  1: "固定",
+  2: "会员",
   3: "会员日报价"
 };
 // 规则状态枚举
@@ -711,8 +910,8 @@ const getOfferType = offerType => {
 const formData = reactive({
   orderForm: "", // 订单来源
   ruleName: "", // 规则名称
-  app_type: "", // 影线名称
-  shadowLineName: "", // 影线名称
+  app_type: "", // 院线名称
+  shadowLineName: "", // 院线名称
   status: "", // 状态
   offerType: "", // 报价类型
   quanValue: "", // 用券类型
@@ -724,13 +923,14 @@ formData.rule = rule;
 
 // 树节点点击
 const nodeClick = nodeData => {
-  console.log("nodeData", nodeData);
-  if (nodeData.id < 100) {
+  currentNode.value = nodeData;
+  // 一级节点是系列（带 children），二级节点是影院。
+  // 原来用 id < 100 判断，依赖"系列数不足 100"的隐式约定，这里改为按结构判断
+  if (nodeData.children?.length) {
     formData.app_type = nodeData.value;
     formData.shadowLineName = "";
   } else {
     formData.shadowLineName = nodeData.value;
-    shadowLine.value = nodeData.value;
     formData.app_type = "";
   }
   searchData();
@@ -818,11 +1018,19 @@ const formatAddAmount = ({ addAmount, offerType, platOfferList }) => {
     : addAmount;
 };
 
+// 影院名列表：只展示前 limit 个，其余折叠成"等 N 个"（完整列表在 tooltip 里）
+const formatCinemaNames = (names, limit = 2) => {
+  const list = names || [];
+  if (!list.length) return "";
+  if (list.length <= limit) return list.join("、");
+  return `${list.slice(0, limit).join("、")} 等 ${list.length} 个`;
+};
+
 // 搜索数据
 const searchData = async () => {
   const loading = ElLoading.service({
     lock: true,
-    text: "Loading",
+    text: "获取列表数据中",
     background: "rgba(0, 0, 0, 0.7)"
   });
   try {
@@ -885,12 +1093,16 @@ const handleCurrentChange = val => {
 // sfc弹框实例
 const sfcDialogRef = ref(null);
 const dialogTitle = ref("新增");
-const shadowLine = ref("sfc");
 
-// 新增规则
+// 新增规则：院线直接用左侧树当前选中的影院，不需要再选一次
 const addRule = () => {
+  const node = currentNode.value;
+  if (!node || node.children?.length) {
+    ElMessage.warning("请先在左侧树选中具体影院，再新增规则");
+    return;
+  }
   dialogTitle.value = "新增";
-  sfcDialogRef.value.open({ shadowLineName: shadowLine.value });
+  sfcDialogRef.value.open({ shadowLineName: node.value });
 };
 
 // 处理状态更改
@@ -957,6 +1169,13 @@ const clickNoOffer = row => {
   return !row.allow_offer_time
     ? true
     : +new Date() > +new Date(row.allow_offer_time);
+};
+
+// 当日不报是否生效中（allow_offer_time 未到 → 今日不报价，但不改 status）
+const isNoOfferActive = row => {
+  return !!(
+    row.allow_offer_time && +new Date(row.allow_offer_time) > +new Date()
+  );
 };
 // 当日不报
 const currentDayNoOfferHandle = async row => {
@@ -1327,16 +1546,22 @@ const hasSelected = computed(() => multipleSelection.value.length > 0);
 
 // 重置表单
 const resetForm = () => {
-  formData.id = "";
-  formData.orderForm = ""; // 规则名称
-  formData.ruleName = ""; // 规则名称
-  formData.shadowLineName = ""; // 影线名称
-  formData.quanValue = ""; // 是否报价
-  formData.remark = ""; // 备注
-  formData.status = ""; // 状态
-  formData.offerType = ""; // 报价类型
+  formData.orderForm = "";
+  formData.ruleName = "";
+  // 原来漏了 app_type：左侧树选中系列后点重置，查询条件里的系列还在，看起来像重置没生效
+  formData.app_type = "";
+  formData.shadowLineName = "";
+  formData.quanValue = "";
+  formData.remark = "";
+  formData.status = "";
+  formData.offerType = "";
+  formData.is_sync_plat = null;
   currentPage.value = 1;
   pageSize.value = 10;
+  // 树的高亮同步清掉，避免"树上还高亮着某系列、列表已经是全量"的错位
+  treeRef.value?.setCurrentKey(null);
+  currentNode.value = null;
+  searchData();
 };
 
 // 处理选择变化
@@ -1529,11 +1754,16 @@ onBeforeMount(async () => {
   const quanTypeList = await getQuanTypeList();
   quanType.value = quanTypeList;
   nextTick(() => {
-    if (treeRef.value) {
-      treeRef.value.setCurrentKey(1);
-      formData.app_type = "ume_applet";
-      searchData();
+    if (!treeRef.value) return;
+    // 默认选中第一个系列，替代原来硬编码的 "ume_applet"（换系列/换账号就会错）
+    const firstType = treeData[0];
+    if (firstType) {
+      treeRef.value.setCurrentKey(firstType.id);
+      currentNode.value = firstType;
+      formData.app_type = firstType.value;
+      formData.shadowLineName = "";
     }
+    searchData();
   });
 });
 </script>
@@ -1541,4 +1771,43 @@ onBeforeMount(async () => {
 .tree-list :deep(.el-tree-node.is-current > .el-tree-node__content) {
   background-color: #5fe3de;
 }
+
+/* 整页布局：左侧树独立滚动，右侧内容区不再被树的高度顶长 */
+.rule-page {
+  height: 100%;
+}
+
+.rule-page__container {
+  align-items: flex-start;
+  height: 100%;
+}
+
+.rule-page__aside {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.rule-page__main {
+  padding: 0;
+  margin-left: 15px;
+}
+
+/* 原来用 w-60(240px)，比 200px 的 aside 还宽会溢出 */
+.tree-filter {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+/* 原来写死 max-height: 650px，高屏留白、矮屏出现内外两层滚动条 */
+.tree-list {
+  flex: 1;
+  min-height: 0;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+
+/* 查询区 / 操作按钮行的样式统一放在 src/style/page-layout.scss，
+   这里只保留本页特有的部分（左侧树、列表页容器） */
 </style>

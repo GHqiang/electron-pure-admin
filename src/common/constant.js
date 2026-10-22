@@ -37,7 +37,7 @@ const ONE_STEP_PLAT_LIST = [
 // 测试新平台列表
 const TEST_NEW_PLAT_LIST = ["shangzhan"];
 
-// 影线状态枚举
+// 院线状态枚举
 const CINEMA_STATUS_OBJ = {
   1: "正常",
   2: "禁用",
@@ -112,17 +112,17 @@ const GET_FENGHUANG_LIST = () => cinemaStore.getFenghuangList;
 // 金逸系列影院集合
 const GET_JINYI_LIST = () => cinemaStore.getJinyiList;
 
-// 获取某个影线配置信息
+// 获取某个院线配置信息
 const GET_APP_INFO = app_name =>
   cinemaStore.allAppList.find(item => item.app_name === app_name);
-// 可用影线类型
+// 可用院线类型
 const GET_APP_TYPE_LIST = () => cinemaStore.getCanAppTypeList;
-// 全部影线类型
+// 全部院线类型
 const GET_ALL_APP_TYPE_LIST = () => cinemaStore.getAllAppTypeList;
 // 全部登录信息
 const GET_ALL_APP_LOGIN_LIST = () => appInfoStore.getAllLoginInfoList;
 
-// 影线类型集合
+// 院线类型集合
 const APP_TYPE_OBJ = {
   ume_applet: "凤凰云智小程序",
   ume_h5: "凤凰云智H5",
@@ -136,7 +136,7 @@ const APP_TYPE_OBJ = {
 
 window.APP_TYPE_LIST = GET_APP_TYPE_LIST();
 
-// 可以同步影院code映射的影线类型列表
+// 可以同步影院code映射的院线类型列表
 const SYNC_CINEMA_CODE_APP_TYPE_LIST = [
   "ume_applet",
   "chenxing_applet",

@@ -3,31 +3,38 @@
   <div>
     <el-container>
       <el-main>
-        <!-- 查询表单 -->
-        <el-form :inline="true" :model="searchForm" class="search-form">
-          <el-form-item label="字典类型">
-            <el-input
-              v-model="searchForm.dict_type"
-              placeholder="支持模糊搜索"
-              clearable
-              @keyup.enter="searchData"
-            />
-          </el-form-item>
-          <el-form-item label="状态">
-            <el-select
-              v-model="searchForm.status"
-              placeholder="全部"
-              clearable
-              style="width: 120px"
-            >
-              <el-option :value="1" label="启用" />
-              <el-option :value="0" label="停用" />
-            </el-select>
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" @click="searchData">搜索</el-button>
-            <el-button @click="resetSearch">重置</el-button>
-            <el-button type="success" @click="openAddDialog">新增</el-button>
+        <!-- 查询区：只放条件，展开/查询动作统一由下方工具栏承载 -->
+        <div class="search-panel">
+          <el-form
+            class="search-panel__form"
+            :model="searchForm"
+            label-width="76px"
+            @keyup.enter="searchData"
+          >
+            <el-form-item label="字典类型">
+              <el-input
+                v-model="searchForm.dict_type"
+                placeholder="支持模糊搜索"
+                clearable
+              />
+            </el-form-item>
+            <el-form-item label="状态">
+              <el-select
+                v-model="searchForm.status"
+                placeholder="全部"
+                clearable
+              >
+                <el-option :value="1" label="启用" />
+                <el-option :value="0" label="停用" />
+              </el-select>
+            </el-form-item>
+          </el-form>
+        </div>
+
+        <!-- 操作栏：左数据操作，右查询动作 -->
+        <div class="page-toolbar">
+          <div class="page-toolbar__group">
+            <el-button type="primary" @click="openAddDialog">新增</el-button>
             <el-button
               type="danger"
               :disabled="!selectedRows.length"
@@ -35,17 +42,21 @@
             >
               批量删除
             </el-button>
-          </el-form-item>
-        </el-form>
+          </div>
+          <div class="page-toolbar__group">
+            <el-button type="primary" @click="searchData">查询</el-button>
+            <el-button @click="resetSearch">重置</el-button>
+          </div>
+        </div>
 
         <!-- 表格 -->
         <el-table
           ref="multipleTable"
+          class="page-table"
           :data="tableData"
           border
           stripe
           show-overflow-tooltip
-          style="width: 100%"
           @selection-change="handleSelectionChange"
         >
           <el-table-column
@@ -54,16 +65,8 @@
             :selectable="row => !row.is_readonly"
           />
           <el-table-column prop="id" label="ID" width="80" />
-          <el-table-column
-            prop="dict_type"
-            label="字典类型"
-            min-width="160"
-          />
-          <el-table-column
-            prop="dict_label"
-            label="字典标签"
-            min-width="180"
-          />
+          <el-table-column prop="dict_type" label="字典类型" min-width="160" />
+          <el-table-column prop="dict_label" label="字典标签" min-width="180" />
           <el-table-column
             prop="dict_value"
             label="字典值"
@@ -94,16 +97,17 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="rule" label="指定角色" width="100" align="center">
+          <el-table-column
+            prop="rule"
+            label="指定角色"
+            width="100"
+            align="center"
+          >
             <template #default="scope">
               {{ formatRule(scope.row.rule) }}
             </template>
           </el-table-column>
-          <el-table-column
-            prop="update_time"
-            label="更新时间"
-            width="170"
-          />
+          <el-table-column prop="update_time" label="更新时间" width="170" />
           <el-table-column
             label="操作"
             width="150"
@@ -133,10 +137,10 @@
 
         <!-- 分页 -->
         <el-pagination
-          class="pagination"
+          class="page-pagination"
           :current-page="currentPage"
           :page-size="pageSize"
-          :page-sizes="[10, 20, 30, 50]"
+          :page-sizes="[10, 20, 50, 100]"
           :total="totalNum"
           layout="total, sizes, prev, pager, next, jumper"
           background
@@ -346,14 +350,3 @@ onMounted(() => {
   searchData();
 });
 </script>
-
-<style scoped>
-.search-form {
-  margin-bottom: 16px;
-}
-.pagination {
-  margin-top: 16px;
-  display: flex;
-  justify-content: flex-end;
-}
-</style>

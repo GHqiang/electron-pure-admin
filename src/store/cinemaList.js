@@ -86,7 +86,7 @@ export const useCinemaList = defineStore("cinemaDataTable", {
         .filter(item => item.app_type_code === "jinyi_applet")
         .map(item => item.app_name);
     },
-    // 获取可用影线及影院列表
+    // 获取可用院线及影院列表
     getCanAppTypeList: state => {
       return Object.keys(APP_TYPE_OBJ).map(item => ({
         app_type_code: item,
@@ -96,7 +96,7 @@ export const useCinemaList = defineStore("cinemaDataTable", {
           .map(itemA => itemA.app_name)
       }));
     },
-    // 获取全部影线及影院列表
+    // 获取全部院线及影院列表
     getAllAppTypeList: state => {
       return Object.keys(APP_TYPE_OBJ).map(item => ({
         app_type_code: item,

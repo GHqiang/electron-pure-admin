@@ -22,27 +22,31 @@
           @node-click="nodeClick"
         />
       </el-aside>
-      <el-main style="margin-left: 15px; padding: 0">
-        <!-- 查询表单 -->
-        <el-form :inline="true" class="demo-form-inline">
-          <el-form-item label="状态">
-            <el-select
-              v-model="formData.status"
-              placeholder="状态"
-              style="width: 194px"
-              clearable
-            >
-              <el-option
-                v-for="(keyValue, keyName) in CINEMA_STATUS_OBJ"
-                :key="keyName"
-                :label="keyValue"
-                :value="keyName"
-              />
-            </el-select>
-          </el-form-item>
-          <el-form-item>
-            <el-button @click="resetForm">重置</el-button>
-            <el-button type="primary" @click="searchData">搜索</el-button>
+      <el-main style="padding: 0; margin-left: 15px">
+        <!-- 查询区：只放条件 -->
+        <div class="search-panel">
+          <el-form
+            class="search-panel__form"
+            :model="formData"
+            label-width="76px"
+            @keyup.enter="searchData"
+          >
+            <el-form-item label="状态">
+              <el-select v-model="formData.status" placeholder="状态" clearable>
+                <el-option
+                  v-for="(keyValue, keyName) in CINEMA_STATUS_OBJ"
+                  :key="keyName"
+                  :label="keyValue"
+                  :value="keyName"
+                />
+              </el-select>
+            </el-form-item>
+          </el-form>
+        </div>
+
+        <!-- 操作栏：左数据操作，右查询动作 -->
+        <div class="page-toolbar">
+          <div class="page-toolbar__group">
             <el-button type="primary" @click="addCard">新增</el-button>
             <el-button
               type="danger"
@@ -50,12 +54,17 @@
               @click="batchDelete"
               >批量删除</el-button
             >
-          </el-form-item>
-        </el-form>
+          </div>
+          <div class="page-toolbar__group">
+            <el-button type="primary" @click="searchData">查询</el-button>
+            <el-button @click="resetForm">重置</el-button>
+          </div>
+        </div>
+
         <!-- 表格 -->
         <el-table
           ref="multipleTable"
-          style="width: 100%"
+          class="page-table"
           :data="tableData"
           border
           stripe
@@ -65,7 +74,7 @@
           <el-table-column type="selection" width="55" />
           <el-table-column
             prop="app_label"
-            label="影线名称"
+            label="院线名称"
             sortable
             min-width="150"
           />
@@ -152,7 +161,7 @@
         <el-pagination
           v-model:current-page="currentPage"
           v-model:page-size="pageSize"
-          style="margin-top: 10px; display: flex; justify-content: flex-end"
+          class="page-pagination"
           :page-sizes="[10, 20, 50, 100]"
           :background="true"
           layout="total, sizes, prev, pager, next, jumper"

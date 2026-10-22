@@ -314,7 +314,7 @@ async function checkLierenRuleSync(opts = {}) {
         console.table(
           localOnlyItems.map(r => ({
             "DB ID": r.dbId,
-            影线: r.shadowLineName,
+            院线: r.shadowLineName,
             规则名: (r.ruleName || "").substring(0, 20),
             平台规则ID: r.platRuleId,
             本地状态:
@@ -337,7 +337,7 @@ async function checkLierenRuleSync(opts = {}) {
         console.table(
           bothItems.map(r => ({
             "DB ID": r.dbId,
-            影线: r.shadowLineName,
+            院线: r.shadowLineName,
             规则名: (r.ruleName || "").substring(0, 20),
             平台规则ID: r.platRuleId,
             问题: r.issues

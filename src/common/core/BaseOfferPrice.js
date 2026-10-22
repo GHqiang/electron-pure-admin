@@ -22,7 +22,7 @@ export default class BaseOfferPrice {
    * @param {string} params.plat_name - 平台标识
    */
   constructor({ appFlag, plat_name }) {
-    this.appFlag = appFlag; // 影线标识
+    this.appFlag = appFlag; // 院线标识
     this.plat_name = plat_name; // 平台标识
     this.logger = null; // 日志实例，在initModules中初始化
     // 用于存放当前报价规则下查询到的券类型信息（供 maxCostPrice 过滤使用）

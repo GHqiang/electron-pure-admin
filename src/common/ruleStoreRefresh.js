@@ -8,8 +8,8 @@ import { useDataTableStore } from "@/store/offerRule";
 import { platTokens } from "@/store/platTokens";
 
 /**
- * 按影线轻量查询该 app_name 下的规则（供出票匹配重试，避免全量查询拖慢出票）
- * @param {string} app_name - 影线标识
+ * 按院线轻量查询该 app_name 下的规则（供出票匹配重试，避免全量查询拖慢出票）
+ * @param {string} app_name - 院线标识
  * @param {Object} [logger] - 可选日志实例（infoSave/errorSave）
  * @returns {Promise<Array|null>} 已解析 platOfferList 的规则列表；异常返回 null
  */
@@ -28,7 +28,7 @@ export async function queryAppOfferRuleList(app_name, logger) {
         try {
           return { ...item, platOfferList: JSON.parse(item.platOfferList || "[]") };
         } catch (e) {
-          logger?.errorSave?.("按影线查询规则 platOfferList 解析失败，跳过该规则", {
+          logger?.errorSave?.("按院线查询规则 platOfferList 解析失败，跳过该规则", {
             ruleId: item.id,
             ruleName: item.ruleName,
             error: e?.message || String(e)
@@ -38,7 +38,7 @@ export async function queryAppOfferRuleList(app_name, logger) {
       })
       .filter(Boolean);
   } catch (error) {
-    logger?.errorSave?.("按影线查询报价规则异常", { error, app_name });
+    logger?.errorSave?.("按院线查询报价规则异常", { error, app_name });
     return null;
   }
 }

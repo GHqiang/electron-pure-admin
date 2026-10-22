@@ -40,7 +40,7 @@ export default class Logger {
     // ⚠️ 修复（2026-08-19）：不能用 plat_name（订单来源平台，如 mayi/lieren）判定——
     //   plat_name 是平台维度，字典配的是系列维度，导致 v3Mode 恒 false、字典"开了不生效"。
     // ⚠️ 修复（2026-08-20）：① 订单自带 app_type_code 优先判定——getCanAppTypeList 是
-    //   "当前登录账号可用影线"列表，可能不含该影线导致反查失败（v3Mode 恒 false 根因）；
+    //   "当前登录账号可用院线"列表，可能不含该院线导致反查失败（v3Mode 恒 false 根因）；
     //   ② 同步预判定（localStorage 字典缓存立即生效），消除异步动态 import 完成前
     //   流程早期日志（如"新的待报价订单"紧跟 init）按 v3Mode=false 全量入库的竞态。
     this._applyV3FlagsSync(app_type_code);

@@ -22,86 +22,88 @@
           @node-click="nodeClick"
         />
       </el-aside>
-      <el-main style="margin-left: 15px; padding: 0">
-        <!-- 查询表单 -->
-        <el-form :inline="true" class="demo-form-inline">
-          <el-form-item label="平台影院code">
-            <el-input
-              v-model="formData.plat_cinema_code"
-              placeholder="请输入平台影院code"
-              clearable
-            />
-          </el-form-item>
-          <el-form-item>
-            <el-button type="primary" @click="searchData">搜索</el-button>
-            <el-button
-              type="primary"
-              :loading="syncLoading"
-              @click="syncCinemeCodeMatch()"
-              >同步映射信息</el-button
-            >
+      <el-main style="padding: 0; margin-left: 15px">
+        <!-- 查询区：只放条件 -->
+        <div class="search-panel">
+          <el-form
+            class="search-panel__form"
+            :model="formData"
+            label-width="96px"
+            @keyup.enter="searchData"
+          >
+            <el-form-item label="影院code">
+              <el-input
+                v-model="formData.plat_cinema_code"
+                placeholder="请输入平台影院code"
+                clearable
+              />
+            </el-form-item>
+          </el-form>
+        </div>
 
-            <el-button
-              type="primary"
-              :loading="exportLoading"
-              @click="exportCinemeCodeMatch"
-              >导出映射维护信息</el-button
-            >
+        <!-- 操作栏：左删除/新增/查询，右工具类 -->
+        <div class="page-toolbar">
+          <div class="page-toolbar__group">
             <el-button
               v-if="IN_RULE_LIST.includes(rule)"
-              type="primary"
-              @click="checkCinemaUpdate"
+              type="danger"
+              :disabled="!currentAppName"
+              @click="deleteCinemeCodeMatch"
             >
-              检查影院变更
+              删除映射
             </el-button>
             <el-button
               v-if="IN_RULE_LIST.includes(rule)"
               type="primary"
               @click="openAddDialog"
             >
-              手动新增
+              新增
             </el-button>
-            <el-upload
+            <el-button type="primary" @click="searchData">查询</el-button>
+          </div>
+          <div class="page-toolbar__group page-toolbar__group--end">
+            <el-button
               v-if="IN_RULE_LIST.includes(rule)"
-              ref="uploadRef"
-              style="margin: 0 15px"
-              class="upload-demo"
-              :limit="1"
-              :on-change="importCinemaMatch"
-              action="#"
-              accept=".xlsx, .xls"
-              :auto-upload="false"
+              type="success"
+              @click="checkCinemaUpdate"
             >
-              <template #trigger>
-                <el-button type="primary">导入映射维护信息</el-button>
-              </template>
-            </el-upload>
+              检查影院变更
+            </el-button>
+            <!-- 隐藏 input 触发选择文件，避免 el-upload 自带结构撑高按钮行 -->
+
+            <el-button
+              type="success"
+              :loading="syncLoading"
+              @click="syncCinemeCodeMatch()"
+              >同步映射</el-button
+            >
             <el-button
               v-if="IN_RULE_LIST.includes(rule)"
               type="primary"
-              style="padding-left: 0px"
-              :disabled="!shadowLine"
-              @click="deleteCinemeCodeMatch"
+              @click="importInputRef?.click()"
             >
-              <template #default>
-                <el-cascader
-                  v-model="shadowLine"
-                  :options="appCascaderOptions"
-                  :props="appCascaderProps"
-                  filterable
-                  clearable
-                  placeholder="请选择影线"
-                  style="width: 210px; margin-left: -1px"
-                />
-                &nbsp;&nbsp;删除
-              </template>
+              导入映射
             </el-button>
-          </el-form-item>
-        </el-form>
+            <input
+              ref="importInputRef"
+              type="file"
+              accept=".xlsx,.xls"
+              style="display: none"
+              @change="handleImportChange"
+            />
+            <el-button
+              type="primary"
+              :loading="exportLoading"
+              @click="exportCinemeCodeMatch"
+              >导出映射</el-button
+            >
+          </div>
+        </div>
+
         <!-- 表格 -->
         <el-table
           ref="multipleTable"
-          style="width: 100%"
+          class="page-table"
           :data="tableData"
           border
           stripe
@@ -110,7 +112,7 @@
           <el-table-column
             v-if="!formData.app_name"
             prop="app_label"
-            label="影线名称"
+            label="院线名称"
             sortable
             min-width="120"
           />
@@ -168,7 +170,7 @@
         <el-pagination
           v-model:current-page="currentPage"
           v-model:page-size="pageSize"
-          style="margin-top: 10px; display: flex; justify-content: flex-end"
+          class="page-pagination"
           :page-sizes="[10, 20, 50, 100]"
           :background="true"
           layout="total, sizes, prev, pager, next, jumper"
@@ -195,7 +197,7 @@
         :rules="addFormRules"
         label-width="120px"
       >
-        <el-form-item label="影线" prop="app_name">
+        <el-form-item label="院线" prop="app_name">
           <el-cascader
             v-model="addForm.app_name"
             :options="appCascaderOptions"
@@ -203,7 +205,7 @@
             filterable
             clearable
             style="width: 100%"
-            placeholder="请选择影线"
+            placeholder="请选择院线"
             @change="onAddFormAppChange"
           />
         </el-form-item>
@@ -306,7 +308,7 @@
           @selection-change="rows => (selectedNewSyncList = rows)"
         >
           <el-table-column type="selection" width="50" />
-          <el-table-column prop="app_label" label="影线名称" min-width="120" />
+          <el-table-column prop="app_label" label="院线名称" min-width="120" />
           <el-table-column
             prop="app_cinema_name"
             label="影院名称"
@@ -361,7 +363,7 @@
           @selection-change="rows => (selectedNewManualList = rows)"
         >
           <el-table-column type="selection" width="50" />
-          <el-table-column prop="app_label" label="影线名称" min-width="120" />
+          <el-table-column prop="app_label" label="院线名称" min-width="120" />
           <el-table-column
             prop="app_cinema_name"
             label="影院名称"
@@ -378,7 +380,7 @@
             min-width="120"
           />
         </el-table>
-        <p style="margin-top: 6px; color: #999; font-size: 12px">
+        <p style="margin-top: 6px; font-size: 12px; color: #999">
           提示：导出后请在 Excel 中填写平台影院编码 plat_cinema_code，
           然后使用上方「导入映射维护信息」按钮导入即可。
         </p>
@@ -416,7 +418,7 @@
           @selection-change="rows => (selectedDeleteList = rows)"
         >
           <el-table-column type="selection" width="50" />
-          <el-table-column prop="app_label" label="影线名称" min-width="120" />
+          <el-table-column prop="app_label" label="院线名称" min-width="120" />
           <el-table-column
             prop="app_cinema_name"
             label="影院名称"
@@ -491,7 +493,7 @@ const treeData = APP_TYPE_LIST.value.map((item, inx) => {
   };
 });
 
-// 影线二级级联配置（系列 -> 影线）
+// 院线二级级联配置（系列 -> 院线）
 const appCascaderOptions = treeData;
 const appCascaderProps = {
   value: "value",
@@ -510,6 +512,14 @@ const filterNode = (value, data) => {
 const treeRef = ref(null);
 watch(filterText, val => {
   treeRef.value.filter(val);
+});
+
+// 左侧树当前选中节点（删除映射时据此确定院线）
+const currentNode = ref(null);
+// 当前选中的具体院线：选中系列节点时为空（删除映射必须落到具体院线）
+const currentAppName = computed(() => {
+  const node = currentNode.value;
+  return node && !node.children?.length ? node.value : "";
 });
 
 const tableData = ref([]);
@@ -545,7 +555,7 @@ const addForm = reactive({
   plat_cinema_name: ""
 });
 const addFormRules = {
-  app_name: [{ required: true, message: "请选择影线", trigger: "change" }],
+  app_name: [{ required: true, message: "请选择院线", trigger: "change" }],
   cinema_id: [{ required: true, message: "请选择影院", trigger: "change" }],
   plat_cinema_code: [
     { required: true, message: "请输入平台影院编码", trigger: "blur" }
@@ -608,14 +618,16 @@ const formData = reactive({
 
 // 树节点点击
 const nodeClick = nodeData => {
-  console.log("nodeData", nodeData);
-  if (nodeData.id < 100) {
+  currentNode.value = nodeData;
+  // 一级节点带 children，是系列；否则是具体院线
+  if (nodeData.children?.length) {
     formData.app_type_code = nodeData.value;
     formData.app_name = "";
   } else {
     formData.app_name = nodeData.value;
     formData.app_type_code = "";
   }
+  currentPage.value = 1;
   searchData();
 };
 // 设置本地的影院映射信息列表
@@ -625,9 +637,9 @@ const setLocalCinemaList = async () => {
   cinemaCodeMatchObj.setCinemaCodeMatchList(cinemaList);
 };
 
-// 获取某个影线的全部影院列表
+// 获取某个院线的全部影院列表
 const getCinemaList = async app_name => {
-  console.log("获取某个影线的全部影院列表", app_name);
+  console.log("获取某个院线的全部影院列表", app_name);
   const allCityList = await getCityList(app_name);
   let allCinemaList = [];
   if (allCityList?.length) {
@@ -638,10 +650,15 @@ const getCinemaList = async app_name => {
   return allCinemaList || [];
 };
 
-const shadowLine = ref("");
-// 删除
+// 删除当前左侧树选中院线的全部映射
 const deleteCinemeCodeMatch = () => {
-  ElMessageBox.confirm("确定要删除该影院映射吗?", "提示", {
+  const appName = currentAppName.value;
+  if (!appName) {
+    ElMessage.warning("请先在左侧树选中具体院线");
+    return;
+  }
+  const appLabel = APP_LIST.value[appName] || appName;
+  ElMessageBox.confirm(`确定要删除「${appLabel}」的全部影院映射吗?`, "提示", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
     type: "warning",
@@ -650,8 +667,7 @@ const deleteCinemeCodeMatch = () => {
     closeOnPressEscape: false
   })
     .then(async () => {
-      console.warn("app_name", shadowLine.value);
-      await svApi.deleteCinemaMatch({ app_name: shadowLine.value });
+      await svApi.deleteCinemaMatch({ app_name: appName });
       searchData();
       ElMessage({
         type: "success",
@@ -836,7 +852,14 @@ const exportCinemeCodeMatch = async () => {
   exportLoading.value = false;
 };
 
-const uploadRef = ref(null);
+// 隐藏的导入文件 input（替代 el-upload，避免撑高按钮行）
+const importInputRef = ref(null);
+// input change 入口：取到文件后重置 input，保证同名文件可重复选择
+const handleImportChange = e => {
+  const file = e.target.files?.[0];
+  e.target.value = "";
+  if (file) importCinemaMatch(file);
+};
 
 // 生成影院唯一标识（与本地映射表比对用，统一转字符串避免 number/string 不一致）
 const getAppCinemaCode = (item, app_type_code) => {
@@ -915,17 +938,15 @@ const syncCinemaMatch = async cinema_list => {
     return false;
   }
 };
-// 导入映射维护信息
-const importCinemaMatch = async (uploadFile, uploadFiles) => {
+// 导入映射维护信息（file 为原生 File 对象）
+const importCinemaMatch = async file => {
   const loading = ElLoading.service({
     lock: true,
     text: "上传中",
     background: "rgba(0, 0, 0, 0.7)"
   });
   try {
-    console.log("uploadFile", uploadFile, uploadFiles);
-    const res = await parseExcel(uploadFile.raw);
-    console.warn("解析表格文件返回", res);
+    const res = await parseExcel(file);
     if (res) {
       let tableDate = [...(res.header ?? []), ...res.content];
       console.warn("表格内容数据", tableDate);
@@ -949,7 +970,6 @@ const importCinemaMatch = async (uploadFile, uploadFiles) => {
           type: "warning",
           message: "过滤后无可以导入的映射列表，请检查"
         });
-        uploadRef.value?.clearFiles();
         loading.close();
         return;
       }
@@ -977,7 +997,8 @@ const importCinemaMatch = async (uploadFile, uploadFiles) => {
           message: "导入成功，可查询检查"
         });
       }
-      uploadRef.value?.clearFiles();
+      loading.close();
+    } else {
       loading.close();
     }
   } catch (error) {
@@ -987,7 +1008,6 @@ const importCinemaMatch = async (uploadFile, uploadFiles) => {
       message: "导入失败，请联系技术解决"
     });
     loading.close();
-    uploadRef.value?.clearFiles();
   }
 };
 
@@ -1017,7 +1037,7 @@ const checkCinemaUpdate = async () => {
     const appNameSet = new Set(availableList.map(item => item.app_name));
     const appNameList = Array.from(appNameSet);
     if (!appNameList.length) {
-      console.warn("可用且已登录的影线为空，跳过检查");
+      console.warn("可用且已登录的院线为空，跳过检查");
       loading.close();
       return;
     }
@@ -1038,14 +1058,14 @@ const checkCinemaUpdate = async () => {
         const app_type_name = appInfo?.app_type_name || "";
         const app_label = appInfo?.app_label || "";
 
-        console.log("开始检查影线影院变更", app_name, app_label);
+        console.log("开始检查院线影院变更", app_name, app_label);
 
         // 远端影院列表（LMA 用任一城市即返回全量故保留 break，此处统一用 getCinemaList；失败或空时不判定删除）
         let list = [];
         try {
           list = (await getCinemaList(app_name)) || [];
         } catch (e) {
-          console.warn("获取远端影院列表失败，跳过该影线对比", app_name, e);
+          console.warn("获取远端影院列表失败，跳过该院线对比", app_name, e);
           continue;
         }
 
@@ -1159,13 +1179,13 @@ const checkCinemaUpdate = async () => {
             : Object.keys(localMapByAppCode).length) > 0
         ) {
           console.warn(
-            "影线远端影院列表为空，不参与删除对比，避免误删",
+            "院线远端影院列表为空，不参与删除对比，避免误删",
             app_name,
             app_label
           );
         }
       } catch (err) {
-        console.warn("检查影线影院变更异常", app_name, err);
+        console.warn("检查院线影院变更异常", app_name, err);
       }
     }
 
@@ -1173,7 +1193,7 @@ const checkCinemaUpdate = async () => {
       console.log(
         "本次检查未发现影院新增或删除，时间：",
         startTime,
-        "，共检查影线数量：",
+        "，共检查院线数量：",
         appNameList.length
       );
       ElMessage.info("本次检查未发现影院新增或删除");
@@ -1340,7 +1360,7 @@ const handleDeleteCinemaMatch = async () => {
     console.log(
       "即将删除的影院映射（共 " + targets.length + " 条）：",
       targets.map(d => ({
-        影线: d.app_label,
+        院线: d.app_label,
         影院名称: d.app_cinema_name,
         影院唯一标识: d.app_cinema_code,
         映射表id: d.id
@@ -1349,7 +1369,7 @@ const handleDeleteCinemaMatch = async () => {
     try {
       console.table(
         targets.map(d => ({
-          影线: d.app_label,
+          院线: d.app_label,
           影院名称: d.app_cinema_name,
           影院唯一标识: d.app_cinema_code,
           映射表id: d.id
@@ -1477,7 +1497,7 @@ const onAddFormAppChange = async () => {
     return;
   }
 
-  // 加载该影线的影院列表
+  // 加载该院线的影院列表
   try {
     const list = await getCinemaList(addForm.app_name);
     const appInfo = GET_APP_INFO(addForm.app_name);
@@ -1535,7 +1555,7 @@ const submitAddCinema = async () => {
   const app_name = addForm.app_name;
   const appInfo = GET_APP_INFO(app_name);
   if (!appInfo) {
-    ElMessage.warning("未找到该影线配置");
+    ElMessage.warning("未找到该院线配置");
     return;
   }
   addSubmitLoading.value = true;
@@ -1594,6 +1614,7 @@ onBeforeMount(async () => {
   nextTick(() => {
     if (treeRef.value) {
       treeRef.value.setCurrentKey(1);
+      currentNode.value = treeData[0] || null;
       formData.app_type_code = "ume_applet";
       searchData();
     }
@@ -1603,8 +1624,5 @@ onBeforeMount(async () => {
 <style scoped>
 .tree-list :deep(.el-tree-node.is-current > .el-tree-node__content) {
   background-color: #5fe3de;
-}
-.demo-form-inline :deep(.el-form-item__content) {
-  align-items: baseline;
 }
 </style>

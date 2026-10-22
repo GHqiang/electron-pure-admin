@@ -16,10 +16,10 @@
         :rules="rules"
         label-width="140px"
       >
-        <el-form-item label="影线类型" prop="app_type_code">
+        <el-form-item label="院线类型" prop="app_type_code">
           <el-select
             v-model="formData.app_type_code"
-            placeholder="请选择影线类型"
+            placeholder="请选择院线类型"
             @change="appTypeChange"
           >
             <el-option
@@ -30,21 +30,21 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="影线标识" prop="app_name">
+        <el-form-item label="院线标识" prop="app_name">
           <el-input
             v-model="formData.app_name"
-            placeholder="请输入影线标识"
+            placeholder="请输入院线标识"
             clearable
           />
         </el-form-item>
-        <el-form-item label="影线名称" prop="app_label">
+        <el-form-item label="院线名称" prop="app_label">
           <el-input
             v-model="formData.app_label"
-            placeholder="请输入影线名称"
+            placeholder="请输入院线名称"
             clearable
           />
         </el-form-item>
-        <!-- <el-form-item label="影线标识集合" prop="flag_list">
+        <!-- <el-form-item label="院线标识集合" prop="flag_list">
           <el-input
             v-model="formData.flag_list"
             style="width: 500px"
@@ -52,10 +52,10 @@
             show-word-limit
             :autosize="{ minRows: 2, maxRows: 5 }"
             type="textarea"
-            placeholder="请输入影线标识集合，若有多个用;分隔"
+            placeholder="请输入院线标识集合，若有多个用;分隔"
           />
         </el-form-item> -->
-        <!-- <el-form-item label="平台影线组别" prop="group_list">
+        <!-- <el-form-item label="平台院线组别" prop="group_list">
           <el-input
             v-model="formData.group_list"
             style="width: 500px"
@@ -63,10 +63,10 @@
             show-word-limit
             :autosize="{ minRows: 2, maxRows: 3 }"
             type="textarea"
-            placeholder="请输入平台影线组别，若有多个用;分隔"
+            placeholder="请输入平台院线组别，若有多个用;分隔"
           />
         </el-form-item> -->
-        <!-- <el-form-item label="影线包含城市" prop="city_list">
+        <!-- <el-form-item label="院线包含城市" prop="city_list">
           <el-input
             v-model="formData.city_list"
             style="width: 500px"
@@ -74,13 +74,13 @@
             show-word-limit
             :autosize="{ minRows: 2, maxRows: 3 }"
             type="textarea"
-            placeholder="请输入影线包含城市，若有多个用;分隔"
+            placeholder="请输入院线包含城市，若有多个用;分隔"
           />
           <span style="color: red"
-            >注意：没有平台影线组别的影院尽量都填写上，这样匹配影线标识更精准，一单写了就要求该影院所有城市都写上</span
+            >注意：没有平台院线组别的影院尽量都填写上，这样匹配院线标识更精准，一单写了就要求该影院所有城市都写上</span
           >
         </el-form-item>
-        <el-form-item label="影线黑名单影院" prop="black_list">
+        <el-form-item label="院线黑名单影院" prop="black_list">
           <el-input
             v-model="formData.black_list"
             style="width: 500px"
@@ -357,13 +357,13 @@ let formData = reactive({
 
 const rules = {
   app_type_code: [
-    { required: true, message: "影线类型不能为空", trigger: ["change", "blur"] }
+    { required: true, message: "院线类型不能为空", trigger: ["change", "blur"] }
   ],
   app_name: [
-    { required: true, message: "影线标识不能为空", trigger: ["change", "blur"] }
+    { required: true, message: "院线标识不能为空", trigger: ["change", "blur"] }
   ],
   app_label: [
-    { required: true, message: "影线名称不能为空", trigger: ["change", "blur"] }
+    { required: true, message: "院线名称不能为空", trigger: ["change", "blur"] }
   ],
   sfc_group_id: [
     { required: true, message: "乐影影院groupID不能为空", trigger: "blur" }
@@ -425,7 +425,7 @@ const resetForm = el => {
   // formData.city_list = "";
 };
 
-// 影线类型改变
+// 院线类型改变
 const appTypeChange = val => {
   if (val) {
     formData.app_type_name = APP_TYPE_OBJ[val];

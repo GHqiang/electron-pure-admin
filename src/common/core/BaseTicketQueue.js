@@ -153,7 +153,7 @@ export default class BaseTicketQueue {
     // 2026-08-21：出票侧订单源头补全系列标识——平台订单/重出快照无 app_type_code 字段，
     // logger.init 的同步判定（_applyV3FlagsSync，localStorage 字典缓存）与异步反查都依赖它；
     // 缺失时 v3Mode 判定完成前日志误入 L1（opera_record 出现 info）且不进 L2 明细。
-    // 报价侧各队列已在构建订单时补全（GET_APP_INFO 全量影线配置反查），此处对齐统一补全，
+    // 报价侧各队列已在构建订单时补全（GET_APP_INFO 全量院线配置反查），此处对齐统一补全，
     // 所有 logger.init(order) 调用点（队列 logger/每单新 logger）自动受益，无需逐点 v3Ready。
     if (!order.app_type_code) {
       order.app_type_code = GET_APP_INFO(
@@ -334,7 +334,7 @@ export default class BaseTicketQueue {
       let targetRule = useRuleList.find(item => item.platRuleId == platRuleId);
       // 本地规则 store 只在登录/规则页刷新，长跑机器可能持有过期快照：
       // 匹配失败时分两步恢复，避免全量查询拖慢出票：
-      // 1) 先按 app_name 轻量查询该影线规则，同步等待匹配结果；
+      // 1) 先按 app_name 轻量查询该院线规则，同步等待匹配结果；
       // 2) 异步刷新全量规则 store（不阻塞出票），保证后续订单匹配直接用最新数据
       let appRuleQueried = false;
       let appRules = null;
@@ -434,7 +434,7 @@ export default class BaseTicketQueue {
             });
           }
         }
-        // 诊断明细：优先用按影线查询到的最新规则（store 可能过期），取每条规则的id/影子线路/状态/报价类型/liers平台规则id
+        // 诊断明细：优先用按院线查询到的最新规则（store 可能过期），取每条规则的id/影子线路/状态/报价类型/liers平台规则id
         const diagSource =
           appRuleQueried && appRules?.length
             ? appRules
@@ -453,7 +453,7 @@ export default class BaseTicketQueue {
             item => item.shadowLineName === app_name && item.lierenPlatRuleId
           );
         const failReason =
-          `猎人报价规则匹配失败：${matchDiag}，app_name=${app_name}，本地规则总数=${appOfferRuleList?.length || 0}，命中shadowLineName的规则数=${useRuleList.length}，已按影线查询重试=${appRuleQueried ? "是" : "否"}，规则明细=${JSON.stringify(diagList)}` +
+          `猎人报价规则匹配失败：${matchDiag}，app_name=${app_name}，本地规则总数=${appOfferRuleList?.length || 0}，命中shadowLineName的规则数=${useRuleList.length}，已按院线查询重试=${appRuleQueried ? "是" : "否"}，规则明细=${JSON.stringify(diagList)}` +
           (platOrphanDisabled
             ? `，已自动禁用平台孤儿规则(id=${platOrphanDisabled.rule_id}, name=${platOrphanDisabled.name})`
             : "");

@@ -28,7 +28,7 @@ export default class BaseBuyTicket {
    * @param {boolean} isTestOrder - 是否为测试订单模式
    */
   constructor(order, logger, isTestOrder) {
-    this.appFlag = order.app_name; // 影线标识
+    this.appFlag = order.app_name; // 院线标识
     this.order = order; // 订单信息
     this.isTestOrder = isTestOrder; // 是否是测试订单
     this.logger = logger; // 日志模块
