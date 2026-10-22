@@ -316,7 +316,9 @@
       <el-table-column prop="err_msg" label="失败原因">
         <template #default="scope">
           <span>{{
-            scope.row.order_status === "2" ? scope.row.err_msg : ""
+            scope.row.order_status === "2"
+              ? scope.row.err_msg || "未记录失败原因（历史数据）"
+              : ""
           }}</span>
         </template>
       </el-table-column>

@@ -1,0 +1,194 @@
+/**
+ * 列表页通用布局标准
+ * ---------------------------------------------------------------------------
+ * 目标：所有列表页的「查询区 + 操作按钮 + 表格 + 分页」视觉与顺序完全一致。
+ * 以后新页面直接抄下面的结构，不要再自己写 inline / width / margin。
+ *
+ * <div class="page-container">
+ *   <!-- 1. 查询表单块：只放条件，全部平铺，不折叠 -->
+ *   <div class="search-panel">
+ *     <el-form class="search-panel__form" :model="formData" label-width="76px"
+ *              @keyup.enter="searchData">
+ *       <!-- 条件放几个都行，栅格按屏幕宽度自动排成等宽的列，放不下自然换行 -->
+ *       <el-form-item label="规则名称">
+ *         <el-input v-model="formData.ruleName" clearable />
+ *       </el-form-item>
+ *       ...
+ *     </el-form>
+ *   </div>
+ *
+ *   <!-- 2. 操作栏：查询区下方的**一条**按钮栏，按业务分组，组间 16px。
+ *          左组：数据操作；中间：查询动作；最后一组（--end）：工具类，推到最右。
+ *          没有工具类时，查询组自己加 --end。
+ *          所有按钮都有底色，不要混用 link 文字按钮 -->
+ *   <div class="page-toolbar">
+ *     <div class="page-toolbar__group">
+ *       <el-button type="primary">新增</el-button>
+ *       <el-button type="danger" plain>批量删除</el-button>
+ *     </div>
+ *     <div class="page-toolbar__group">
+ *       <el-button type="primary" @click="searchData">查询</el-button>
+ *       <el-button @click="resetForm">重置</el-button>
+ *     </div>
+ *     <div class="page-toolbar__group page-toolbar__group--end">
+ *       <el-button>规则同步检查</el-button>
+ *       <el-button>规则同步修复</el-button>
+ *       <el-button type="warning" plain>批量同步新平台</el-button>
+ *     </div>
+ *   </div>
+ *
+ *   <!-- 3. 表格 + 分页 -->
+ *   <el-table class="page-table" ... />
+ *   <el-pagination class="page-pagination" ... />
+ * </div>
+ *
+ * 三条硬规则：
+ *   1. 查询条件与按钮**不要左右并排** —— 会互相抢宽度，条件排不满、按钮也挤。
+ *   2. 查询/重置与业务按钮**同处一条操作栏**，就在查询卡片下方一行。
+ *      条件不做「展开/收起」折叠：屏幕放得下就全摆出来，放不下栅格自动换行。
+ *   3. 同一行按钮必须**都有底色**：实心（primary / danger）、浅底（plain）、描边（default）。
+ *      不要用 link 文字按钮，否则一半有底色一半没有，视觉很散。
+ *      语义分工：主操作实心、风险操作 plain、其余 default。
+ *   4. 「查询」永远在「重置」**前面**（主操作靠左），不要写成重置在前。
+ *
+ * 响应式规则（关键）：
+ *   条件区是 CSS Grid，单个条件宽度被锁在 220~240px（上下限只差 20px），
+ *   所以任何窗口下输入框尺寸几乎一致，不会出现「大屏反而比小屏窄」；
+ *   为什么不用 1fr：1fr 会被无限均分，窗口越大列数越多、每列反而越窄。
+ *   条件填不满列数时右侧留白，条件永远左对齐。
+ *
+ * 宽度微调：某个条件需要更宽，给它加修饰类，不要写 inline style：
+ *   .is-wide → 占两列   .is-full → 占满整行
+ * ---------------------------------------------------------------------------
+ */
+
+:root {
+  /* 查询条件 label 宽度（4 个汉字，label 更长的页面改 el-form 的 label-width） */
+  --page-search-label-width: 76px;
+
+  /* 单个条件的列宽上限（空间富余时最多长到这么宽） */
+  --page-search-field-width: 240px;
+
+  /* 单个条件的列宽下限（与上限只差 20px，保证各窗口下输入框大小一致） */
+  --page-search-field-min: 220px;
+
+  /* 条件之间的间距 */
+  --page-search-gap: 16px;
+
+  /* 区块之间的纵向间距 */
+  --page-block-gap: 12px;
+}
+
+.page-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+/* ============================ 查询区 ============================ */
+
+/* 查询表单块：只放条件，全部平铺，不折叠 */
+.search-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  margin-bottom: var(--page-block-gap);
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 4px;
+}
+
+/* 条件区占满整行宽度，列数只取决于窗口宽度。
+   负的下外边距抵消最后一行条件的 12px，让卡片底部留白与左右一致 */
+.search-panel__form {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(var(--page-search-field-min), var(--page-search-field-width))
+  );
+  column-gap: var(--page-search-gap);
+  width: 100%;
+  min-width: 0;
+  margin-bottom: calc(-1 * var(--page-block-gap));
+}
+
+.search-panel__form .el-form-item {
+  min-width: 0;
+  margin: 0 0 var(--page-block-gap) 0;
+}
+
+/* 控件填满所在列，页面里不要再写 style="width: xxx" */
+.search-panel__form .el-form-item__content {
+  min-width: 0;
+}
+
+.search-panel__form .el-form-item__content > .el-input,
+.search-panel__form .el-form-item__content > .el-select,
+.search-panel__form .el-form-item__content > .el-cascader,
+.search-panel__form .el-form-item__content > .el-input-number,
+.search-panel__form .el-form-item__content > .el-date-editor,
+.search-panel__form .el-form-item__content > .el-tree-select {
+  width: 100%;
+}
+
+/* 宽条件：占两列（日期范围、影院多选之类） */
+.search-panel__form .el-form-item.is-wide {
+  grid-column: span 2;
+}
+
+/* 整行条件 */
+.search-panel__form .el-form-item.is-full {
+  grid-column: 1 / -1;
+}
+
+/* ======================== 业务操作栏 ======================== */
+
+/* 表格上方一条：按业务分组，组内 8px、组间 16px。
+   左侧数据/查询动作，右侧工具动作（--tools 自动推到最右端，两端都有内容）。
+   所有按钮统一为有底色的按钮：实心（primary/danger）、浅底描边（plain）、描边（default），
+   不要再用 link 文字按钮，否则同一行里一半有底色一半没有，视觉散。 */
+.page-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px var(--page-search-gap);
+  align-items: center;
+  margin-bottom: var(--page-block-gap);
+}
+
+.page-toolbar__group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+/* 一条工具栏里**最后一个分组**加 --end，推到最右端，避免整行按钮挤在左边、右侧大片空白 */
+.page-toolbar__group--end {
+  margin-left: auto;
+}
+
+/* 只归零分组内的直接子按钮，避免破坏 el-button-group 内部 -1px 的边框重叠。
+   全局 .el-button + .el-button 已压到 6px !important（见 element-plus.scss），
+   这里用更高权重归零，组内间距只由 gap 决定（8px），否则会叠加成 14px。 */
+.page-toolbar .page-toolbar__group > .el-button {
+  margin-left: 0 !important;
+}
+
+.page-toolbar__divider {
+  width: 1px;
+  height: 20px;
+  background: var(--el-border-color);
+}
+
+/* ========================== 表格 / 分页 ========================== */
+.page-table {
+  width: 100%;
+}
+
+.page-pagination {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--page-block-gap);
+}
