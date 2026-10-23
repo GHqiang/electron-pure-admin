@@ -322,7 +322,7 @@
           }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" fixed="right" align="center" width="180">
+      <el-table-column label="操作" fixed="right" align="center" width="264">
         <template
           #default="{
             row: {
@@ -330,6 +330,7 @@
               profit,
               id,
               order_number,
+              plat_order_sn,
               user_id: rowUserId,
               lockseat,
               processing_time
@@ -351,6 +352,25 @@
               })
             "
             >重新出票</el-button
+          >
+
+          <!-- 换座出票（2026-10-23）：自选座位出票，出票成功不回传取票码到平台，码只落本地记录 -->
+          <el-button
+            v-if="order_status === '2' && String(user_id) === String(rowUserId)"
+            size="small"
+            type="warning"
+            plain
+            @click="
+              openSeatDialog({
+                order_number,
+                plat_order_sn,
+                user_id: rowUserId,
+                id,
+                lockseat,
+                processing_time
+              })
+            "
+            >人工换座</el-button
           >
 
           <el-button
@@ -503,6 +523,61 @@
         >
       </el-descriptions>
     </el-dialog>
+
+    <!-- 换座出票：自选目标座位，出票成功后不回传平台，只本地拿取票码 -->
+    <el-dialog
+      v-model="seatDialogVisible"
+      title="换座出票（不上传平台）"
+      width="520"
+    >
+      <el-descriptions :column="1" border size="small">
+        <el-descriptions-item label="订单号">{{
+          seatForm.order_number
+        }}</el-descriptions-item>
+        <el-descriptions-item v-if="seatForm.platOrderSn" label="出票单号">{{
+          seatForm.platOrderSn
+        }}</el-descriptions-item>
+        <el-descriptions-item label="原座位">{{
+          seatForm.oldSeat || "-"
+        }}</el-descriptions-item>
+      </el-descriptions>
+      <div class="seat-field">
+        <div class="seat-field__label">目标座位</div>
+        <el-input
+          v-model="seatForm.seatText"
+          placeholder="如 3排7座,3排8座"
+          clearable
+        />
+        <div class="seat-field__tip">
+          格式「x排y座」，多个座位用逗号或空格分隔，座位数需与票数一致
+        </div>
+      </div>
+      <el-alert
+        type="warning"
+        :closable="false"
+        show-icon
+        title="本次出票不会上传取票码到平台"
+        description="出票成功后取票码只写入本机出票记录（详情可见），完成后本页会自动弹窗展示并可复制。"
+      />
+      <template #footer>
+        <el-button @click="seatDialogVisible = false">取消</el-button>
+        <el-button
+          type="warning"
+          :loading="seatSubmitting"
+          @click="confirmSeatTicket"
+          >开始出票</el-button
+        >
+      </template>
+    </el-dialog>
+
+    <!-- 取票码：轮询到码后自动弹出 -->
+    <el-dialog v-model="codeDialogVisible" title="取票码" width="420">
+      <div class="code-box">{{ codeValue }}</div>
+      <template #footer>
+        <el-button @click="codeDialogVisible = false">关闭</el-button>
+        <el-button type="primary" @click="copyCode">复制取票码</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -529,7 +604,8 @@ import {
   GET_APP_LIST,
   TICKET_STATUS,
   IN_RULE_LIST,
-  GET_APP_TYPE_LIST
+  GET_APP_TYPE_LIST,
+  TICKET_CODE_READY_EVENT
 } from "@/common/constant.js";
 
 // 券类型列表
@@ -737,6 +813,92 @@ const searchData = async () => {
   }
 };
 
+// 取订单出票快照：优先内存（出票队列 handleNewOrder 写入，零网络延迟），
+// 内存缺失（客户端重启等）时降级走 L1/L2 日志查询兜底
+const resolveTicketOrder = async ({
+  order_number,
+  user_id,
+  lockseat,
+  processing_time
+}) => {
+  if (!order_number) return null;
+  // 2026-08-21：L2 日志异步上传（fire-and-forget 串行链）失败瞬间可能尚未落盘，日志查询还原会失败
+  let order = window.__ticketOrderSnapshots?.get(order_number);
+  if (!order) {
+    // 内存快照缺失（客户端重启等场景）：降级走 L1/L2 日志查询兜底
+    const res = await svApi.queryLogRecord({
+      order_number,
+      user_id,
+      type: 3
+    });
+    console.warn("查询操作日志返回", res);
+    let logList = res.data?.cardList || [];
+    let ticketLogInfo = logList.find(
+      item => item.des == "自动出票队列获取到新的待出票订单"
+    )?.info;
+    // V3 修复（2026-08-21）：出票队列 v3Mode 生效后，订单入口快照（infoSave）不再入
+    // opera_record（L1）只落 L2 明细——L1 查不到时兜底查 L2 明细文件，否则重新出票失效
+    if (!ticketLogInfo && processing_time) {
+      const date = String(processing_time).slice(0, 10).replace(/-/g, "");
+      const traceRes = await svApi.queryLogTrace({
+        order_number,
+        userId: user_id,
+        date,
+        type: 3,
+        brief: 0
+      });
+      const traceList = traceRes.data?.list || [];
+      const hit = traceList.find(
+        item => item.des == "自动出票队列获取到新的待出票订单"
+      );
+      if (hit) {
+        // L2 明细 info 为对象（原样落盘），与 L1 的字符串格式统一处理
+        ticketLogInfo = hit.info;
+      }
+    }
+    if (ticketLogInfo && typeof ticketLogInfo === "string") {
+      ticketLogInfo = JSON.parse(ticketLogInfo);
+    }
+    order = ticketLogInfo?.newOrders || ticketLogInfo?.newOrder;
+  }
+  if (!order) return null;
+  if (!order?.lockseat) {
+    order.lockseat = lockseat;
+  }
+  return order;
+};
+
+// 派发重新出票事件（出票队列 BaseTicketQueue.handleNewOrder 监听 newOrder_<appFlag>）
+const dispatchTicketOrder = order => {
+  const eventName = `newOrder_${order.appName || order.app_name}`;
+  window.dispatchEvent(
+    new CustomEvent(eventName, {
+      detail: {
+        order: order,
+        isAgain: true
+      }
+    })
+  );
+};
+
+// 列表行状态置为「出票中」，与出票队列回写保持一致
+const markTicketingStatus = ({ order_number, user_id: uid, id }) => {
+  svApi.updateTicketRecord({
+    whereObj: {
+      order_number,
+      user_id: uid
+    },
+    updateObj: {
+      order_status: 5,
+      err_info: ""
+    }
+  });
+  let item = tableData.value.find(item => item.id == id);
+  if (item) {
+    item.order_status = 5;
+  }
+};
+
 const againTicket = async ({
   order_number,
   user_id,
@@ -746,84 +908,217 @@ const againTicket = async ({
 }) => {
   try {
     if (!order_number) return;
-    // 2026-08-21：优先取内存订单快照（出票队列 handleNewOrder 写入，零网络延迟）——
-    // L2 日志异步上传（fire-and-forget 串行链）失败瞬间可能尚未落盘，日志查询还原会失败
-    let order = window.__ticketOrderSnapshots?.get(order_number);
-    if (!order) {
-      // 内存快照缺失（客户端重启等场景）：降级走 L1/L2 日志查询兜底
-      const res = await svApi.queryLogRecord({
-        order_number,
-        user_id,
-        type: 3
-      });
-      console.warn("查询操作日志返回", res);
-      let logList = res.data?.cardList || [];
-      let ticketLogInfo = logList.find(
-        item => item.des == "自动出票队列获取到新的待出票订单"
-      )?.info;
-      // V3 修复（2026-08-21）：出票队列 v3Mode 生效后，订单入口快照（infoSave）不再入
-      // opera_record（L1）只落 L2 明细——L1 查不到时兜底查 L2 明细文件，否则重新出票失效
-      if (!ticketLogInfo && processing_time) {
-        const date = String(processing_time).slice(0, 10).replace(/-/g, "");
-        const traceRes = await svApi.queryLogTrace({
-          order_number,
-          userId: user_id,
-          date,
-          type: 3,
-          brief: 0
-        });
-        const traceList = traceRes.data?.list || [];
-        const hit = traceList.find(
-          item => item.des == "自动出票队列获取到新的待出票订单"
-        );
-        if (hit) {
-          // L2 明细 info 为对象（原样落盘），与 L1 的字符串格式统一处理
-          ticketLogInfo = hit.info;
-        }
-      }
-      if (ticketLogInfo && typeof ticketLogInfo === "string") {
-        ticketLogInfo = JSON.parse(ticketLogInfo);
-      }
-      order = ticketLogInfo?.newOrders || ticketLogInfo?.newOrder;
-    }
+    const order = await resolveTicketOrder({
+      order_number,
+      user_id,
+      lockseat,
+      processing_time
+    });
     if (!order) {
       ElMessage.error("未找到该订单的出票快照，无法重新出票");
       return;
     }
-    if (!order?.lockseat) {
-      order.lockseat = lockseat;
+    // 「换座出票」是一次性的：正常重新出票必须还原原座位、清掉仅取票码标记，
+    // 否则内存快照被复用时会沿用改过的座位、并静默跳过上传（2026-10-23）
+    if (order.onlyTicketCode) {
+      order.lockseat = order.seatChangedFrom || order.lockseat;
+      delete order.onlyTicketCode;
+      delete order.seatChangedFrom;
     }
     console.warn("待重新出票订单信息", order);
-    // 动态生成事件名称
-    const eventName = `newOrder_${order.appName}`;
-    // 创建一个事件对象
-    const newOrderEvent = new CustomEvent(eventName, {
-      detail: {
-        // 将所有数据放入 detail 对象
-        order: order,
-        isAgain: true
-      }
-    });
-    window.dispatchEvent(newOrderEvent);
-    // 更新出票状态
-    svApi.updateTicketRecord({
-      whereObj: {
-        order_number,
-        user_id
-      },
-      updateObj: {
-        order_status: 5,
-        err_info: ""
-      }
-    });
-    // 更新出票状态
-    let item = tableData.value.find(item => item.id == id);
-    if (item) {
-      item.order_status = 5;
-    }
+    dispatchTicketOrder(order);
+    markTicketingStatus({ order_number, user_id, id });
   } catch (error) {
     console.warn("查询操作日志返回异常", error);
   }
+};
+
+/* ============ 换座出票：自选座位 + 出票成功后不回传平台（仅本地取票码） ============ */
+
+const seatDialogVisible = ref(false);
+const seatSubmitting = ref(false);
+const seatForm = reactive({
+  order_number: "",
+  platOrderSn: "",
+  user_id: "",
+  id: "",
+  oldSeat: "",
+  seatText: "",
+  processing_time: ""
+});
+
+const openSeatDialog = ({
+  order_number,
+  plat_order_sn: platOrderSn,
+  user_id: uid,
+  id,
+  lockseat,
+  processing_time
+}) => {
+  seatForm.order_number = order_number || "";
+  seatForm.platOrderSn = platOrderSn || "";
+  seatForm.user_id = uid || "";
+  seatForm.id = id;
+  seatForm.oldSeat = lockseat || "";
+  seatForm.seatText = "";
+  seatForm.processing_time = processing_time;
+  seatDialogVisible.value = true;
+};
+
+// 座位串归一化：接受「3排7座 / 3排7号 / 3排7」，统一成「x排y座」以空格连接。
+// 各渠道选座（seatManage.filterTargetSeats）与辅助锁座都按这个格式解析 order.lockseat。
+const parseSeatText = raw =>
+  String(raw || "")
+    .split(/[,，;；、\s]+/)
+    .filter(Boolean)
+    .map(text => {
+      const matched = text.match(/^(\d+)\s*排\s*(\d+)\s*(?:座|号)?$/);
+      return matched ? `${matched[1]}排${matched[2]}座` : "";
+    });
+
+const confirmSeatTicket = async () => {
+  if (seatSubmitting.value) return;
+  const seats = parseSeatText(seatForm.seatText);
+  if (!seats.length || seats.some(item => !item)) {
+    ElMessage.error("座位格式请按「3排7座」填写，多个座位用逗号或空格分隔");
+    return;
+  }
+  seatSubmitting.value = true;
+  try {
+    const order = await resolveTicketOrder({
+      order_number: seatForm.order_number,
+      user_id: seatForm.user_id,
+      lockseat: seatForm.oldSeat,
+      processing_time: seatForm.processing_time
+    });
+    if (!order) {
+      ElMessage.error("未找到该订单的出票快照，无法换座出票");
+      return;
+    }
+    const ticketNum = Number(order.ticket_num || 0);
+    if (ticketNum && seats.length !== ticketNum) {
+      ElMessage.error(`座位数（${seats.length}）与票数（${ticketNum}）不一致`);
+      return;
+    }
+    const oldSeat = order.lockseat || seatForm.oldSeat || "";
+    // 覆盖目标座位：出票时各渠道选座的唯一数据源就是 order.lockseat
+    order.lockseat = seats.join(" ");
+    // 原座位留一份：内存快照是同一个对象，正常「重新出票」时要还原回去
+    order.seatChangedFrom = oldSeat;
+    // 仅取票码标识：platManage.submitTicketCode 见到它就跳过回传平台
+    order.onlyTicketCode = true;
+    seatDialogVisible.value = false;
+    console.warn("换座出票订单信息", {
+      原座位: oldSeat,
+      目标座位: order.lockseat,
+      order
+    });
+    dispatchTicketOrder(order);
+    markTicketingStatus({
+      order_number: seatForm.order_number,
+      user_id: seatForm.user_id,
+      id: seatForm.id
+    });
+    ElMessage.success(
+      `已提交换座出票：${oldSeat || "-"} → ${order.lockseat}，本单不上传平台`
+    );
+    pollTicketCode(seatForm.order_number, seatForm.user_id);
+  } catch (error) {
+    console.warn("换座出票异常", error);
+    ElMessage.error("换座出票提交失败，请查看日志");
+  } finally {
+    seatSubmitting.value = false;
+  }
+};
+
+// 取票码弹窗 + 轮询：出票是队列异步跑的，队列跑完先推事件（主路径），
+// 轮询只作兜底（事件丢失、页面重开等场景）
+const codeDialogVisible = ref(false);
+const codeValue = ref("");
+// 当前正在等取票码的订单号：事件/轮询都要对上它才弹窗，避免串单
+const codeWatchOrder = ref("");
+let codePollTimer = null;
+const stopCodePoll = () => {
+  if (codePollTimer) {
+    clearInterval(codePollTimer);
+    codePollTimer = null;
+  }
+};
+
+// 队列出票完成事件（BaseTicketQueue.saveTicketRecord / platManage 派发）：
+// 本地事件不受各平台订单号字段差异影响，拿到码直接弹窗
+const handleTicketCodeReady = event => {
+  const {
+    order_number,
+    plat_order_sn: platOrderSn,
+    qrcode,
+    errMsg
+  } = event.detail || {};
+  const matched =
+    order_number === codeWatchOrder.value ||
+    (!!platOrderSn && platOrderSn === codeWatchOrder.value);
+  if (!matched) return;
+  if (qrcode) {
+    stopCodePoll();
+    codeWatchOrder.value = "";
+    codeValue.value = qrcode;
+    codeDialogVisible.value = true;
+    searchData();
+  } else {
+    // 异步取码场景：队列先写一次失败，取票码随后才由轮询接口补回，
+    // 所以这里只提示、不结束等待，避免把「还在取码」误报成失败
+    ElMessage.warning(`换座出票暂未拿到取票码：${errMsg || "继续等待"}`);
+    searchData();
+  }
+};
+
+const pollTicketCode = (order_number, uid) => {
+  stopCodePoll();
+  codeWatchOrder.value = order_number;
+  let times = 0;
+  codePollTimer = setInterval(async () => {
+    times += 1;
+    // 10s × 48 ≈ 8 分钟，覆盖正常出票 + 系统延迟异步取码（3 分钟 + 7 分钟两轮）
+    if (times > 48) {
+      stopCodePoll();
+      return;
+    }
+    try {
+      const res = await svApi.queryTicketList({
+        order_number,
+        user_id: uid,
+        page_num: 1,
+        page_size: 1
+      });
+      const row = (res?.data?.ticketList || [])[0];
+      if (row?.qrcode) {
+        stopCodePoll();
+        codeWatchOrder.value = "";
+        codeValue.value = row.qrcode;
+        codeDialogVisible.value = true;
+        searchData();
+      }
+    } catch (error) {
+      console.warn("轮询取票码失败", error);
+    }
+  }, 10000);
+};
+
+const copyCode = async () => {
+  const text = codeValue.value || "";
+  if (!text) return;
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    // Electron 非安全上下文下 clipboard API 可能不可用，退回 textarea + execCommand
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textarea);
+  }
+  ElMessage.success("取票码已复制");
 };
 
 // 查询操作日志
@@ -992,6 +1287,8 @@ const getQuanTypeList = async () => {
 };
 
 onBeforeMount(async () => {
+  // 监听出票队列的「仅取票码」完成事件（换座出票用）
+  window.addEventListener(TICKET_CODE_READY_EVENT, handleTicketCodeReady);
   await getQuanTypeList();
   const res = await svApi.getUserList();
   // console.log("res", res);
@@ -1002,6 +1299,8 @@ onBeforeMount(async () => {
 onBeforeUnmount(() => {
   clearInterval(timer);
   timer = null;
+  stopCodePoll();
+  window.removeEventListener(TICKET_CODE_READY_EVENT, handleTicketCodeReady);
 });
 </script>
 
@@ -1140,5 +1439,40 @@ onBeforeUnmount(() => {
   line-height: 16px;
   border: 1px solid #f56c6c;
   border-radius: 2px;
+}
+
+/* ===== 换座出票弹窗 ===== */
+
+.seat-field {
+  padding: 12px 0 16px;
+}
+
+.seat-field__label {
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--el-text-color-regular);
+}
+
+.seat-field__tip {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--el-text-color-secondary);
+}
+
+/* ===== 取票码弹窗 ===== */
+
+.code-box {
+  padding: 14px 16px;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--el-color-primary);
+  text-align: center;
+  letter-spacing: 1px;
+  word-break: break-all;
+  background: var(--el-color-primary-light-9);
+  border-radius: 4px;
 }
 </style>

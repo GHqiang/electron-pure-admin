@@ -146,6 +146,11 @@ const SYNC_CINEMA_CODE_APP_TYPE_LIST = [
 // 内部角色列表
 const IN_RULE_LIST = [2];
 
+// 换座出票（仅取票码模式）出票完成事件：出票队列派发，出票记录页监听后弹取票码。
+// 用本地事件而不是轮询列表接口，可以绕开各平台订单号字段差异
+// （影划算/票圣/麻花的出票记录里 order_number 是报价单号、出票单号在 plat_order_sn）
+const TICKET_CODE_READY_EVENT = "ticketCodeReady";
+
 // 报价失败原因分类
 const OFFER_FAIL_TYPE = {
   1: "超限价",
@@ -256,6 +261,7 @@ export {
   LIERENR_REWARDS,
   GROUP_LIST,
   IN_RULE_LIST,
+  TICKET_CODE_READY_EVENT,
   CINEMA_STATUS_OBJ,
   MIN_ALLOW_OFFER_SJC,
   OFFER_FAIL_TYPE,
