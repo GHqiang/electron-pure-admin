@@ -572,6 +572,7 @@
 
     <!-- 取票码：轮询到码后自动弹出 -->
     <el-dialog v-model="codeDialogVisible" title="取票码" width="420">
+      <div class="code-order">订单号：{{ codeOrderNumber }}</div>
       <div class="code-box">{{ codeValue }}</div>
       <template #footer>
         <el-button @click="codeDialogVisible = false">关闭</el-button>
@@ -607,6 +608,12 @@ import {
   GET_APP_TYPE_LIST,
   TICKET_CODE_READY_EVENT
 } from "@/common/constant.js";
+import {
+  parseSeatText,
+  resolveSeatChangeOrigin,
+  isTicketQueueRunningForOrder,
+  matchCodeWatchKey
+} from "@/common/autoTicket/buyTicket/common/manualSeatChange.js";
 
 // 券类型列表
 const quanType = ref([]);
@@ -881,24 +888,45 @@ const dispatchTicketOrder = order => {
   );
 };
 
-// 列表行状态置为「出票中」，与出票队列回写保持一致
-const markTicketingStatus = ({ order_number, user_id: uid, id }) => {
-  svApi.updateTicketRecord({
-    whereObj: {
-      order_number,
-      user_id: uid
-    },
-    updateObj: {
-      order_status: 5,
-      err_info: ""
+// 派发前确认该院线出票队列已启动：未启动时事件会被 handleNewOrder 静默丢弃，
+// 但页面已经把记录置为 5，订单会卡在「重新出票中」且操作按钮消失（2026-10-23）
+const ensureTicketQueueStarted = order => {
+  if (isTicketQueueRunningForOrder(order, window.__ticketQueueRegistry)) {
+    return true;
+  }
+  const appFlag = order?.app_name || order?.appName || "";
+  ElMessage.error(
+    `院线「${APP_LIST.value[appFlag] || appFlag || "未知"}」的出票队列未启动，请先在队列管理启动`
+  );
+  return false;
+};
+
+// 列表行状态置为「出票中」，与出票队列回写保持一致。
+// 先 await 写库再派发，避免后到的 order_status=5 覆盖队列写入的成功/失败状态
+const markTicketingStatus = async ({ order_number, user_id: uid, id }) => {
+  try {
+    await svApi.updateTicketRecord({
+      whereObj: {
+        order_number,
+        user_id: uid
+      },
+      updateObj: {
+        order_status: 5,
+        err_info: ""
+      }
+    });
+    let item = tableData.value.find(item => item.id == id);
+    if (item) {
+      item.order_status = 5;
     }
-  });
-  let item = tableData.value.find(item => item.id == id);
-  if (item) {
-    item.order_status = 5;
+    return true;
+  } catch (error) {
+    console.warn("更新出票状态异常", error);
+    return false;
   }
 };
 
+let againTicketSubmitting = false;
 const againTicket = async ({
   order_number,
   user_id,
@@ -906,6 +934,9 @@ const againTicket = async ({
   lockseat,
   processing_time
 }) => {
+  // 防重复点击：重新出票会入队出票，重复派发会重复出票
+  if (againTicketSubmitting) return;
+  againTicketSubmitting = true;
   try {
     if (!order_number) return;
     const order = await resolveTicketOrder({
@@ -918,6 +949,7 @@ const againTicket = async ({
       ElMessage.error("未找到该订单的出票快照，无法重新出票");
       return;
     }
+    if (!ensureTicketQueueStarted(order)) return;
     // 「换座出票」是一次性的：正常重新出票必须还原原座位、清掉仅取票码标记，
     // 否则内存快照被复用时会沿用改过的座位、并静默跳过上传（2026-10-23）
     if (order.onlyTicketCode) {
@@ -926,10 +958,16 @@ const againTicket = async ({
       delete order.seatChangedFrom;
     }
     console.warn("待重新出票订单信息", order);
+    const marked = await markTicketingStatus({ order_number, user_id, id });
+    if (!marked) {
+      ElMessage.error("更新出票状态失败，请稍后重试");
+      return;
+    }
     dispatchTicketOrder(order);
-    markTicketingStatus({ order_number, user_id, id });
   } catch (error) {
     console.warn("查询操作日志返回异常", error);
+  } finally {
+    againTicketSubmitting = false;
   }
 };
 
@@ -965,17 +1003,6 @@ const openSeatDialog = ({
   seatDialogVisible.value = true;
 };
 
-// 座位串归一化：接受「3排7座 / 3排7号 / 3排7」，统一成「x排y座」以空格连接。
-// 各渠道选座（seatManage.filterTargetSeats）与辅助锁座都按这个格式解析 order.lockseat。
-const parseSeatText = raw =>
-  String(raw || "")
-    .split(/[,，;；、\s]+/)
-    .filter(Boolean)
-    .map(text => {
-      const matched = text.match(/^(\d+)\s*排\s*(\d+)\s*(?:座|号)?$/);
-      return matched ? `${matched[1]}排${matched[2]}座` : "";
-    });
-
 const confirmSeatTicket = async () => {
   if (seatSubmitting.value) return;
   const seats = parseSeatText(seatForm.seatText);
@@ -995,30 +1022,43 @@ const confirmSeatTicket = async () => {
       ElMessage.error("未找到该订单的出票快照，无法换座出票");
       return;
     }
+    if (!ensureTicketQueueStarted(order)) return;
     const ticketNum = Number(order.ticket_num || 0);
     if (ticketNum && seats.length !== ticketNum) {
       ElMessage.error(`座位数（${seats.length}）与票数（${ticketNum}）不一致`);
       return;
     }
-    const oldSeat = order.lockseat || seatForm.oldSeat || "";
+    // 重复换座时保留第一次记录的原座位，避免把上次目标当成原座位
+    const seatOrigin = resolveSeatChangeOrigin({
+      lockseat: order.lockseat,
+      seatChangedFrom: order.seatChangedFrom,
+      fallback: seatForm.oldSeat
+    });
+    const oldSeat = seatOrigin.origin;
     // 覆盖目标座位：出票时各渠道选座的唯一数据源就是 order.lockseat
     order.lockseat = seats.join(" ");
     // 原座位留一份：内存快照是同一个对象，正常「重新出票」时要还原回去
-    order.seatChangedFrom = oldSeat;
+    order.seatChangedFrom = seatOrigin.seatChangedFrom;
     // 仅取票码标识：platManage.submitTicketCode 见到它就跳过回传平台
     order.onlyTicketCode = true;
-    seatDialogVisible.value = false;
     console.warn("换座出票订单信息", {
       原座位: oldSeat,
       目标座位: order.lockseat,
       order
     });
-    dispatchTicketOrder(order);
-    markTicketingStatus({
+    // 先落「出票中」再派发，避免状态 5 覆盖队列的最终状态；
+    // 写库失败则中止，避免按钮消失但队列没收到事件
+    const marked = await markTicketingStatus({
       order_number: seatForm.order_number,
       user_id: seatForm.user_id,
       id: seatForm.id
     });
+    if (!marked) {
+      ElMessage.error("更新出票状态失败，请稍后重试");
+      return;
+    }
+    seatDialogVisible.value = false;
+    dispatchTicketOrder(order);
     ElMessage.success(
       `已提交换座出票：${oldSeat || "-"} → ${order.lockseat}，本单不上传平台`
     );
@@ -1035,14 +1075,47 @@ const confirmSeatTicket = async () => {
 // 轮询只作兜底（事件丢失、页面重开等场景）
 const codeDialogVisible = ref(false);
 const codeValue = ref("");
-// 当前正在等取票码的订单号：事件/轮询都要对上它才弹窗，避免串单
-const codeWatchOrder = ref("");
-let codePollTimer = null;
-const stopCodePoll = () => {
-  if (codePollTimer) {
-    clearInterval(codePollTimer);
-    codePollTimer = null;
+const codeOrderNumber = ref("");
+// 可能同时有多单在等取票码：Set 记录待等订单，Map 记录各自轮询，避免后一单覆盖前一单
+const codeWatchOrders = new Set();
+const codePollTimers = new Map();
+const shownCodeKeys = new Set();
+let codeRefreshTimer = null;
+
+const stopCodePoll = orderNumber => {
+  if (orderNumber) {
+    const timer = codePollTimers.get(orderNumber);
+    if (timer) clearInterval(timer);
+    codePollTimers.delete(orderNumber);
+    return;
   }
+  for (const timer of codePollTimers.values()) clearInterval(timer);
+  codePollTimers.clear();
+};
+
+// 事件可能早于 saveTicketRecord 写库到达；延迟再刷一次，保证列表状态/座位是最新的
+const scheduleCodeRefresh = () => {
+  if (codeRefreshTimer) clearTimeout(codeRefreshTimer);
+  codeRefreshTimer = setTimeout(() => {
+    codeRefreshTimer = null;
+    searchData();
+  }, 2000);
+};
+
+const showCodeDialog = (orderNumber, qrcode) => {
+  if (!qrcode) return;
+  // 同一单同一个码只展示一次；用户关掉弹窗后不再被轮询重新弹开
+  const codeKey = `${orderNumber}|${qrcode}`;
+  if (shownCodeKeys.has(codeKey)) return;
+  shownCodeKeys.add(codeKey);
+  // 弹窗一次只展示一单；已有别的单的码时提示去详情查看，避免覆盖当前码
+  if (codeDialogVisible.value && codeValue.value !== qrcode) {
+    ElMessage.info(`订单 ${orderNumber} 的取票码已获取，可在出票详情中查看`);
+    return;
+  }
+  codeOrderNumber.value = orderNumber;
+  codeValue.value = qrcode;
+  codeDialogVisible.value = true;
 };
 
 // 队列出票完成事件（BaseTicketQueue.saveTicketRecord / platManage 派发）：
@@ -1054,16 +1127,18 @@ const handleTicketCodeReady = event => {
     qrcode,
     errMsg
   } = event.detail || {};
-  const matched =
-    order_number === codeWatchOrder.value ||
-    (!!platOrderSn && platOrderSn === codeWatchOrder.value);
-  if (!matched) return;
+  const watchKey = matchCodeWatchKey(
+    codeWatchOrders,
+    order_number,
+    platOrderSn
+  );
+  if (!watchKey) return;
   if (qrcode) {
-    stopCodePoll();
-    codeWatchOrder.value = "";
-    codeValue.value = qrcode;
-    codeDialogVisible.value = true;
+    showCodeDialog(order_number || platOrderSn || watchKey, qrcode);
+    // 事件先于写库到达时列表会停在「重新出票中/失败」和旧座位；
+    // 保留 watch（由轮询/后续权威事件收尾）并延迟补刷一次，避免提前清空后收不到队列事件
     searchData();
+    scheduleCodeRefresh();
   } else {
     // 异步取码场景：队列先写一次失败，取票码随后才由轮询接口补回，
     // 所以这里只提示、不结束等待，避免把「还在取码」误报成失败
@@ -1073,14 +1148,16 @@ const handleTicketCodeReady = event => {
 };
 
 const pollTicketCode = (order_number, uid) => {
-  stopCodePoll();
-  codeWatchOrder.value = order_number;
+  const watchKey = String(order_number);
+  stopCodePoll(watchKey);
+  codeWatchOrders.add(watchKey);
   let times = 0;
-  codePollTimer = setInterval(async () => {
+  const timer = setInterval(async () => {
     times += 1;
-    // 10s × 48 ≈ 8 分钟，覆盖正常出票 + 系统延迟异步取码（3 分钟 + 7 分钟两轮）
-    if (times > 48) {
-      stopCodePoll();
+    // 10s × 66 ≈ 11 分钟，覆盖正常出票 + 系统延迟异步取码（3 分钟 + 7 分钟两轮）
+    if (times > 66) {
+      // 轮询超时但保留 watch：异步取码事件可能晚于 8~10 分钟到达
+      stopCodePoll(watchKey);
       return;
     }
     try {
@@ -1092,16 +1169,16 @@ const pollTicketCode = (order_number, uid) => {
       });
       const row = (res?.data?.ticketList || [])[0];
       if (row?.qrcode) {
-        stopCodePoll();
-        codeWatchOrder.value = "";
-        codeValue.value = row.qrcode;
-        codeDialogVisible.value = true;
+        stopCodePoll(watchKey);
+        codeWatchOrders.delete(watchKey);
+        showCodeDialog(order_number, row.qrcode);
         searchData();
       }
     } catch (error) {
       console.warn("轮询取票码失败", error);
     }
   }, 10000);
+  codePollTimers.set(watchKey, timer);
 };
 
 const copyCode = async () => {
@@ -1300,6 +1377,12 @@ onBeforeUnmount(() => {
   clearInterval(timer);
   timer = null;
   stopCodePoll();
+  codeWatchOrders.clear();
+  shownCodeKeys.clear();
+  if (codeRefreshTimer) {
+    clearTimeout(codeRefreshTimer);
+    codeRefreshTimer = null;
+  }
   window.removeEventListener(TICKET_CODE_READY_EVENT, handleTicketCodeReady);
 });
 </script>
@@ -1462,6 +1545,12 @@ onBeforeUnmount(() => {
 }
 
 /* ===== 取票码弹窗 ===== */
+
+.code-order {
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--el-text-color-regular);
+}
 
 .code-box {
   padding: 14px 16px;

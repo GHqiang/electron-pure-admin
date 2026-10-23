@@ -15,6 +15,7 @@ import md5 from "@/utils/md5.js";
 import { dictTable } from "@/store/dictTable";
 // 换座出票完成事件名（与出票记录页共用）
 import { TICKET_CODE_READY_EVENT } from "@/common/constant";
+import { buildOnlyTicketCodeRecordPatch } from "@/common/autoTicket/buyTicket/common/manualSeatChange";
 const dictStore = dictTable();
 
 // 省平台发货规则（平台推送）：
@@ -348,18 +349,41 @@ export default class PlatCommon {
     // 判定同时看 orderInfo 和 this.order：个别渠道 submitQrcode 传的是裁剪过的对象，
     // 只认 orderInfo 会漏（普通订单两者都没有该标记，不受影响）
     if (orderInfo?.onlyTicketCode || this.order?.onlyTicketCode) {
+      const orderNumber = orderInfo.order_number || this.order?.order_number;
+      const platName = orderInfo.plat_name || this.order?.plat_name;
+      const lockseat = this.order?.lockseat || orderInfo.lockseat || "";
       logger?.infoSave?.("仅取票码模式：跳过提交取票码", {
-        order_number: orderInfo.order_number || this.order?.order_number,
-        plat_name: orderInfo.plat_name || this.order?.plat_name,
+        order_number: orderNumber,
+        plat_name: platName,
         qrcode
       });
+      // 先写回本地出票记录再派发事件：页面收到事件会立即 searchData，
+      // 如果先派发、后写库，列表会停留在「重新出票中/失败」和旧座位（2026-10-23）。
+      // 异步取码（h5ume 等）也走这里，统一补 qrcode/status/座位，不再依赖各平台单独回写。
+      const recordPatch = buildOnlyTicketCodeRecordPatch({
+        orderNumber,
+        platName,
+        qrcode,
+        lockseat
+      });
+      if (recordPatch) {
+        try {
+          await svApi.updateTicketRecord(recordPatch);
+        } catch (error) {
+          logger?.errorSave?.("仅取票码模式：写回出票记录失败", {
+            order_number: orderNumber,
+            plat_name: platName,
+            error
+          });
+        }
+      }
       // 取票码已经拿到，直接推给界面（同步/异步取码两条路径都会走到这里），
       // 不依赖列表轮询——影划算/票圣/麻花的记录字段与出票单号不一致，轮询容易落空
       if (qrcode) {
         window.dispatchEvent(
           new CustomEvent(TICKET_CODE_READY_EVENT, {
             detail: {
-              order_number: orderInfo.order_number || this.order?.order_number,
+              order_number: orderNumber,
               plat_order_sn:
                 orderInfo.plat_order_sn || this.order?.plat_order_sn || "",
               qrcode

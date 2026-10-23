@@ -22,6 +22,7 @@ import {
   TICKET_CODE_READY_EVENT
 } from "@/common/constant";
 import { getPlatFeeRate } from "@/common/autoTicket/buyTicket/common/offerHelper";
+import { withAgainSuccessRecordExtras } from "@/common/autoTicket/buyTicket/common/manualSeatChange";
 import { toRaw } from "vue";
 import { storeToRefs } from "pinia";
 import { useDataTableStore } from "@/store/offerRule";
@@ -765,26 +766,29 @@ export default class BaseTicketQueue {
               plat_name: order.plat_name,
               user_id
             },
-            updateObj: {
-              order_status: 1,
-              profit: res?.profit ?? "",
-              qrcode: res?.qrcode ?? "",
-              quan_type: res?.quanType ?? "",
-              quan_value: offerRule?.quan_value ?? "",
-              quan_code: res?.quan_code ?? "",
-              card_id: res?.card_id ?? "",
-              card_num: res?.cardNum ?? "",
-              mobile: res?.mobile,
-              err_msg: "重新出票成功",
-              // V3 L0：重新出票成功后回写用券用卡快照（数值列传 null 防 DECIMAL 1366）
-              payment_amount: res?.paymentAmount ?? null,
-              card_balance: res?.cardBalance ?? null,
-              coupons:
-                typeof res?.coupons === "string"
-                  ? res.coupons
-                  : JSON.stringify(res?.coupons ?? []),
-              use_path: res?.usePath ?? ""
-            }
+            updateObj: withAgainSuccessRecordExtras(
+              {
+                order_status: 1,
+                profit: res?.profit ?? "",
+                qrcode: res?.qrcode ?? "",
+                quan_type: res?.quanType ?? "",
+                quan_value: offerRule?.quan_value ?? "",
+                quan_code: res?.quan_code ?? "",
+                card_id: res?.card_id ?? "",
+                card_num: res?.cardNum ?? "",
+                mobile: res?.mobile,
+                err_msg: "重新出票成功",
+                // V3 L0：重新出票成功后回写用券用卡快照（数值列传 null 防 DECIMAL 1366）
+                payment_amount: res?.paymentAmount ?? null,
+                card_balance: res?.cardBalance ?? null,
+                coupons:
+                  typeof res?.coupons === "string"
+                    ? res.coupons
+                    : JSON.stringify(res?.coupons ?? []),
+                use_path: res?.usePath ?? ""
+              },
+              order
+            )
           });
         } else {
           await svApi.updateTicketRecord({
@@ -865,6 +869,7 @@ export default class BaseTicketQueue {
         hall_name,
         film_name,
         lockseat: lockseat ?? offerRule?.lockseat,
+        ...(change_seat_info ? { change_seat_info } : {}),
         show_time,
         cinema_group,
         offer_type: offerRule?.offer_type ?? "",
