@@ -18,7 +18,8 @@ const tokens = platTokens();
 import {
   GET_APP_TYPE_LIST,
   GET_APP_INFO,
-  LIERENR_REWARDS
+  LIERENR_REWARDS,
+  TICKET_CODE_READY_EVENT
 } from "@/common/constant";
 import { getPlatFeeRate } from "@/common/autoTicket/buyTicket/common/offerHelper";
 import { toRaw } from "vue";
@@ -799,6 +800,24 @@ export default class BaseTicketQueue {
               ...(res?.profit ? { profit: res.profit } : {})
             }
           });
+        }
+        // 换座出票（仅取票码模式）：队列跑完即通知界面弹取票码，不依赖列表轮询。
+        // 影划算/票圣/麻花的出票记录里 order_number 是报价单号、出票单号在 plat_order_sn，
+        // 走本地事件可以绕开这些差异（2026-10-23）
+        if (order.onlyTicketCode) {
+          window.dispatchEvent(
+            new CustomEvent(TICKET_CODE_READY_EVENT, {
+              detail: {
+                order_number: order.order_number,
+                plat_order_sn: order.plat_order_sn || "",
+                qrcode: order_status === 1 ? res?.qrcode || "" : "",
+                errMsg:
+                  order_status === 1
+                    ? ""
+                    : errMsg || "重新出票失败，未拿到取票码"
+              }
+            })
+          );
         }
         return;
       }

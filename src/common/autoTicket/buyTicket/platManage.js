@@ -13,6 +13,8 @@ import {
 import md5 from "@/utils/md5.js";
 // 字典表（系统参数）
 import { dictTable } from "@/store/dictTable";
+// 换座出票完成事件名（与出票记录页共用）
+import { TICKET_CODE_READY_EVENT } from "@/common/constant";
 const dictStore = dictTable();
 
 // 省平台发货规则（平台推送）：
@@ -338,6 +340,39 @@ export default class PlatCommon {
     logger, //日志记录实例
     orderInfo = {}
   }) {
+    // 仅取票码模式（出票记录页「换座出票」触发）：票在影院渠道正常出，但**不回传平台**，
+    // 取票码只落本机出票记录与日志，供人工取票（2026-10-23）。
+    // 这里必须返回真值对象而不是 false：saveTicketRecord 以 submitRes 真假判定出票成败，
+    // 返回假值会把记录写成 order_status=2（出票失败）、也存不进 qrcode。
+    // 注意：本判断必须放在最前面——后面各平台分支会先生成/上传取票码图片，白跑一遍。
+    // 判定同时看 orderInfo 和 this.order：个别渠道 submitQrcode 传的是裁剪过的对象，
+    // 只认 orderInfo 会漏（普通订单两者都没有该标记，不受影响）
+    if (orderInfo?.onlyTicketCode || this.order?.onlyTicketCode) {
+      logger?.infoSave?.("仅取票码模式：跳过提交取票码", {
+        order_number: orderInfo.order_number || this.order?.order_number,
+        plat_name: orderInfo.plat_name || this.order?.plat_name,
+        qrcode
+      });
+      // 取票码已经拿到，直接推给界面（同步/异步取码两条路径都会走到这里），
+      // 不依赖列表轮询——影划算/票圣/麻花的记录字段与出票单号不一致，轮询容易落空
+      if (qrcode) {
+        window.dispatchEvent(
+          new CustomEvent(TICKET_CODE_READY_EVENT, {
+            detail: {
+              order_number: orderInfo.order_number || this.order?.order_number,
+              plat_order_sn:
+                orderInfo.plat_order_sn || this.order?.plat_order_sn || "",
+              qrcode
+            }
+          })
+        );
+      }
+      return {
+        code: 0,
+        msg: "仅取票码模式，未上传平台",
+        onlyTicketCode: true
+      };
+    }
     const {
       plat_name,
       id: order_id,
@@ -747,6 +782,11 @@ export default class PlatCommon {
   //   false                   - 其他失败
   async applyChangeSeat({ logger }) {
     const { plat_name, order_number, supplierCode } = this.order;
+    // 仅取票码模式：整单不碰平台，锁座失败也不申请换座（否者平台会介入换座/取消）
+    if (this.order?.onlyTicketCode) {
+      logger?.info?.("仅取票码模式：跳过申请换座");
+      return false;
+    }
     let params;
     try {
       // 省平台：仅 changeSeat === 0 时允许申请换座
@@ -799,6 +839,11 @@ export default class PlatCommon {
 
   // 平台转单
   async orderTransferByPlat(errMsg, errInfo) {
+    // 仅取票码模式：不向平台发起转单/取消，平台侧订单任其自然超时（本来就不回传）。
+    // 返回 undefined 与现有失败分支一致，避免上层把返回值误当成出票结果。
+    if (this.order?.onlyTicketCode) {
+      return;
+    }
     const { plat_name, id, order_number, supplierCode, order_sn } = this.order;
     try {
       let params;
