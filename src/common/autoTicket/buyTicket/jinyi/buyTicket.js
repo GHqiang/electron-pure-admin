@@ -427,6 +427,29 @@ class JinyiBuyTicket extends BaseBuyTicket {
       }
       // 5、计算价格
       let quan_code = useQuan.map(item => item.couponCode).join(",");
+      // 实体券：算价前必须先验券（order/voucher/price/），否则算价返回 4004 验券异常
+      if (offerRule?.quan_kind == 2 && useQuan?.length) {
+        try {
+          // 多张票时逐张验券（接口只接受单个 voucher_code）
+          await this.orderManage.verifyVouchers({
+            voucher_codes: useQuan.map(item => item.couponCode),
+            lockOrderId,
+            cinema_id,
+            session_id: this.currentSessionId
+          });
+        } catch (error) {
+          this.logger.errorSave("实体券验券异常，走转单", {
+            error,
+            quanCount: useQuan.length
+          });
+          const transparams = {
+            cinema_id,
+            lockOrderId,
+            session_id: this.currentSessionId
+          };
+          return await this.transferOrChangePhone(transparams, buyTicketInfo);
+        }
+      }
       const calcRes = await this.orderManage.priceCalculation({
         ...buyTicketInfo,
         cinema_id,
@@ -544,7 +567,13 @@ class JinyiBuyTicket extends BaseBuyTicket {
         }
       }
       let card_id, cardNum;
-      if (offerRule.offer_type === "1" && offerRule.quan_fee > 0) {
+      // 实体券（quan_kind=2）算价/支付都不走会员卡，故此处也不挑卡：
+      // 否则会误记卡使用量并从本地卡余额里扣款（syncCardAfterPayment）
+      if (
+        offerRule.offer_type === "1" &&
+        offerRule.quan_fee > 0 &&
+        offerRule.quan_kind != 2
+      ) {
         card_id = canUseCardList?.[0]?.card_id;
         cardNum = canUseCardList[0]?.card_no_show;
       }
@@ -561,7 +590,11 @@ class JinyiBuyTicket extends BaseBuyTicket {
         cinema_id,
         lockOrderId,
         phoneNumber: this.currentPhone,
-        session_id: this.currentSessionId
+        session_id: this.currentSessionId,
+        // 实体券只能用非会员卡方式支付（抓包为 WECHAT）；
+        // 必须同时满足「本次确实用了券」，否则用卡订单会被误改支付方式
+        pay_type:
+          offerRule?.quan_kind == 2 && useQuan?.length ? "WECHAT" : "MEMBER"
       });
       let order_num = createOrderRes?.order_id;
       if (!order_num) {

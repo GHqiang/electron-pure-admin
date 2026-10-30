@@ -147,6 +147,41 @@ export default class OrderManage {
       }
     }
   }
+  // 实体券验券（券种=2 的算价前置步骤：未验券时算价会返回 4004「获取兑换券验券异常」）
+  // 抓包入参：voucher_code + order_id；返回 data: { surcharge_price, pay_price, surcharge_msg }
+  async verifyVoucher({ voucher_code, lockOrderId, cinema_id, session_id }) {
+    const params = {
+      voucher_code,
+      order_id: lockOrderId,
+      cinema_id,
+      session_id
+    };
+    this.logger.infoSave("实体券验券参数", params);
+    // 失败不吞异常：交由调用方记 errorSave 并走转单
+    const res = await this.appApi.getVoucherPrice(params);
+    this.logger.infoSave("实体券验券返回", res);
+    return res?.data;
+  }
+  // 实体券批量验券：接口只接受单个 voucher_code，多张票时逐张验券
+  // （按券码顺序串行，任一张失败立即抛出，由调用方转单）
+  async verifyVouchers({
+    voucher_codes = [],
+    lockOrderId,
+    cinema_id,
+    session_id
+  }) {
+    const surchargeList = [];
+    for (const voucher_code of voucher_codes) {
+      const surcharge = await this.verifyVoucher({
+        voucher_code,
+        lockOrderId,
+        cinema_id,
+        session_id
+      });
+      surchargeList.push(surcharge);
+    }
+    return surchargeList;
+  }
   // 创建订单
   async createOrder(data) {
     let {
@@ -154,6 +189,7 @@ export default class OrderManage {
       lockOrderId,
       phoneNumber,
       session_id,
+      pay_type = "MEMBER",
       retryCount = 0
     } = data;
     try {
@@ -162,7 +198,7 @@ export default class OrderManage {
         // mobile	15237761435
         // pay_type	MEMBER
         cinema_id,
-        pay_type: "MEMBER",
+        pay_type,
         order_id: lockOrderId,
         mobile: phoneNumber,
         session_id

@@ -408,6 +408,14 @@ const createApi = ({ app_name }) => {
       params
     );
 
+  // 实体券验券（券种=2 的算价前置步骤：未验券时 order/change 会返回 4004）
+  // 入参 voucher_code + order_id；返回 data.surcharge_price / pay_price / surcharge_msg
+  const getVoucherPrice = params =>
+    axios.post(
+      "/ticket/channelCode/cinema/cinema_id/order/voucher/price/",
+      params
+    );
+
   // 解锁座位
   const unlockSeat = params =>
     axios.post("/h5ume/mtop.alipic.lark.own.seat.unlockseats", params); // 取消订单
@@ -432,7 +440,8 @@ const createApi = ({ app_name }) => {
     getQuanListByUser,
     bandQuan,
     getQuanSecurityNeed,
-    bindQuanVoucher
+    bindQuanVoucher,
+    getVoucherPrice
   };
 };
 export default createApi;
