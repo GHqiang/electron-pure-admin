@@ -14,6 +14,47 @@ import {
 import { handleNetworkRetry } from "./retry-helper";
 import { enqueueNetworkError } from "@/common/networkErrorBatcher";
 import { getServerBaseUrl } from "@/common/serverHost";
+import {
+  isRateLimitedPayload,
+  buildRateLimitedError,
+  createCircuitBreaker,
+  isBreakerGuardedUrl,
+  isResilienceApp
+} from "./rateLimitGuard";
+
+// ===== 上游限流韧性（2026-11-08，仅幸福蓝海）=====
+// 背景：幸福看（辰星 3.0C）高峰期限流返回「现在人太多了，请耐心等待一下下哦」，
+//       报价队列会以秒级频率持续重撞，导致报错风暴 + 请求量翻倍。
+// 1) Toast 节流：同一文案 30 秒只弹一次，避免屏幕被同一错误刷满
+// 2) 限流熔断：2 分钟窗口内 5 次限流 → 冷却 60 秒，期间只读查询快速失败、不再打扰上游
+// 3) 其它辰星系列不受影响：不计数、不拦截、不节流
+const TOAST_THROTTLE_MS = 30 * 1000;
+const _toastLastAt = new Map();
+const showErrorThrottled = msg => {
+  if (!msg) return;
+  const now = Date.now();
+  const last = _toastLastAt.get(msg) || 0;
+  if (now - last < TOAST_THROTTLE_MS) return;
+  _toastLastAt.set(msg, now);
+  // 文案种类有限，兜底清理防止 Map 膨胀
+  if (_toastLastAt.size > 50) {
+    const firstKey = _toastLastAt.keys().next().value;
+    if (firstKey !== undefined) _toastLastAt.delete(firstKey);
+  }
+  ElMessage.error(msg);
+};
+
+const rateLimitBreaker = createCircuitBreaker({
+  threshold: 5,
+  cooldownMs: 60 * 1000
+});
+
+// 目标系列（幸福蓝海）走 30 秒文案节流；其它辰星系列保持原有「立即弹窗」行为
+const notifyError = (appName, msg, silent) => {
+  if (!msg || silent) return;
+  if (isResilienceApp(appName)) showErrorThrottled(msg);
+  else ElMessage.error(msg);
+};
 
 const getToken = async (app_name, IS_DEV) => {
   try {
@@ -145,6 +186,20 @@ const createAxios = ({ app_name, timeout = 20 }) => {
   instance.interceptors.request.use(
     async config => {
       if (GET_APP_INFO(app_name)) {
+        // 限流冷却期内直接快速失败（仅幸福蓝海 + 仅只读查询）
+        // 锁座/下单/支付/释放/取消等写接口永不被拦，避免座位残留或支付中断
+        if (
+          isResilienceApp(app_name) &&
+          isBreakerGuardedUrl(config.url) &&
+          rateLimitBreaker.isOpen(app_name)
+        ) {
+          return Promise.reject(
+            buildRateLimitedError(
+              { msg: "上游限流冷却中，已跳过本次请求" },
+              app_name
+            )
+          );
+        }
         // 获取token（如果尚未获取且需要）
         if (
           !chenxingToken &&
@@ -223,6 +278,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
       const data = response.data;
       let config = response.config;
       let whitelistSp = [];
+      const isSilent = config?.silent === true;
 
       // 检查API版本并判断错误
       let isError =
@@ -237,6 +293,11 @@ const createAxios = ({ app_name, timeout = 20 }) => {
         let is3CExpried = data.msg?.includes("登录") && api_version == "3.0C";
 
         if (isCExpried || is3CExpried) {
+          // 登录失效是真实业务响应：先结束半开/清零，且不计入限流，
+          // 否则会占用熔断节奏、延迟甚至吞掉登录告警（2026-11-08 评审 I6）
+          if (isResilienceApp(app_name)) {
+            rateLimitBreaker.onNonRateLimited(app_name);
+          }
           let app_label = GET_APP_INFO(app_name).app_label;
           ElMessage.warning(`${app_label}登录失效，请重新设置登录信息`);
           let session_id = config?.session_id;
@@ -258,13 +319,48 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           return Promise.reject(data);
         }
 
-        ElMessage.error(data.msg || data.retMsg || "请求失败");
+        // 上游限流识别：仅幸福蓝海启用（其它辰星系列保持原有行为）
+        const rateLimited =
+          isResilienceApp(app_name) && isRateLimitedPayload(data);
+        if (rateLimited) {
+          rateLimitBreaker.onRateLimited(app_name);
+          // 后台报价/拉单等静默请求只在日志留痕；其余按同一文案 30 秒节流
+          notifyError(
+            app_name,
+            data.msg || data.retMsg || "请求失败",
+            isSilent
+          );
+          return Promise.reject(buildRateLimitedError(data, app_name));
+        }
+
+        if (isResilienceApp(app_name)) {
+          rateLimitBreaker.onNonRateLimited(app_name);
+        }
+        notifyError(app_name, data.msg || data.retMsg || "请求失败", isSilent);
         return Promise.reject(data);
+      }
+      if (isResilienceApp(app_name)) {
+        rateLimitBreaker.onNonRateLimited(app_name);
       }
       return data;
     },
     async error => {
       const { response } = error;
+      // 熔断快速失败：不是真实网络异常，直接透传，避免误报「网络连接异常」/重复计数
+      if (error?.isRateLimited) return Promise.reject(error);
+      const isSilent = error.config?.silent === true;
+
+      // HTTP 429：仅幸福蓝海走限流分支；其它系列保持原有「请求错误」处理
+      if (response?.status === 429 && isResilienceApp(app_name)) {
+        rateLimitBreaker.onRateLimited(app_name);
+        notifyError(app_name, "请求过于频繁，请稍后再试", isSilent);
+        return Promise.reject(error);
+      }
+      // 任何非限流错误（401/5xx/网络错误）都让熔断状态可恢复：
+      // 否则半开探针遇到业务失败会长期停在「1 请求/25s」（评审 C1）
+      if (isResilienceApp(app_name)) {
+        rateLimitBreaker.onNonRateLimited(app_name);
+      }
 
       // 尝试网络重试（无白名单限制，与原来 axios-retry 行为一致）
       const retryResult = await handleNetworkRetry(
@@ -285,7 +381,11 @@ const createAxios = ({ app_name, timeout = 20 }) => {
           case 401:
             // 非C端场景直接返回异常
             if (api_version !== "C") {
-              ElMessage.error(`请求错误 ${response.status}: ${error.message}`);
+              notifyError(
+                app_name,
+                `请求错误 ${response.status}: ${error.message}`,
+                isSilent
+              );
               return Promise.reject(error);
             }
             // 处理401：刷新token并重试
@@ -338,11 +438,15 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             }
 
           case 403:
-            ElMessage.error("权限不足");
+            notifyError(app_name, "权限不足", isSilent);
             break;
 
           default:
-            ElMessage.error(`请求错误 ${response.status}: ${error.message}`);
+            notifyError(
+              app_name,
+              `请求错误 ${response.status}: ${error.message}`,
+              isSilent
+            );
         }
       } else {
         enqueueNetworkError(
@@ -363,7 +467,7 @@ const createAxios = ({ app_name, timeout = 20 }) => {
             }
           ]
         );
-        ElMessage.error("辰星网络连接异常，请稍后再试");
+        notifyError(app_name, "辰星网络连接异常，请稍后再试", isSilent);
       }
       return Promise.reject(error);
     }

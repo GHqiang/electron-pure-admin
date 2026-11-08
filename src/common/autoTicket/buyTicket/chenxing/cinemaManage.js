@@ -27,6 +27,11 @@ import {
 import { APP_API_OBJ } from "@/common/index";
 import svApi from "@/api/sv-api";
 import { getCachedThirdPartyIdsWithCache } from "@/common/core/thirdPartyIdsCache";
+import {
+  buildShowTimeKey,
+  getShowTimeWithCache
+} from "@/common/core/showTimeCache";
+import { isResilienceApp } from "@/utils/http/rateLimitGuard";
 import { GET_APP_INFO } from "@/common/constant";
 // 机器登录用户信息
 import { platTokens } from "@/store/platTokens";
@@ -45,6 +50,8 @@ export default class CinemaManage {
     this.offerRule = offerRule;
     this.logger = logger;
     this.currentParamsList = currentParamsList;
+    // 最近一次场次接口异常（上游限流/超时）：getTargetShow 据此跳过前一日补查
+    this._lastPlayTimeError = null;
     this.appApi = APP_API_OBJ[order.app_name];
     this.api_version = GET_APP_INFO(order.app_name)?.api_version;
   }
@@ -69,6 +76,8 @@ export default class CinemaManage {
             cachedInfo.currentParamsList = this.currentParamsList;
           }
           // 场次时效性强，命中缓存后仍实时查询；失败则回退完整查询链
+          // 出票链路（flag 非 1）强制实时，避免用缓存排期去锁座
+          cachedInfo.forceFresh = flag !== 1;
           const showOk = await this.fillShowInfoFromApi(cachedInfo);
           if (showOk) {
             this.logger.infoSave("命中第三方ID缓存，跳过城市/影院/影片查询链", {
@@ -147,6 +156,8 @@ export default class CinemaManage {
 
       // 7、获取影片放映场次
       cinemaInfo.showDate = show_time.split(" ")[0];
+      // 出票链路（flag 非 1）强制实时场次，报价链路允许短缓存
+      cinemaInfo.forceFresh = flag !== 1;
       const targetShow = await this.getTargetShow(cinemaInfo);
       if (!targetShow) {
         return;
@@ -424,7 +435,9 @@ export default class CinemaManage {
         platForm: 5
       };
       this.logger.infoSave("获取电影放映信息参数", params);
-      let res = await this.appApi.getMoviePlayInfo(params);
+      // 仅幸福蓝海：后台查询链静默，避免上游限流时逐条弹窗；其它系列保持原行为
+      const silentCfg = isResilienceApp(this.appFlag) ? { silent: true } : {};
+      let res = await this.appApi.getMoviePlayInfo(params, silentCfg);
       // this.logger.infoSave("获取电影放映信息返回", res);
       let movie_data = [];
       if (api_version === "3.0C") {
@@ -434,7 +447,7 @@ export default class CinemaManage {
       }
       let upcomingFilm = [];
       try {
-        let res1 = await this.appApi.getUpcomingFilm(params);
+        let res1 = await this.appApi.getUpcomingFilm(params, silentCfg);
         if (api_version === "3.0C") {
           upcomingFilm = res1.data?.items || [];
           upcomingFilm = upcomingFilm.filter(
@@ -479,6 +492,7 @@ export default class CinemaManage {
   async getMoviePlayTime(cinemaInfo) {
     const { cinemaCode, cinemaId, filmId, showDate } = cinemaInfo;
     const { api_version } = this;
+    this._lastPlayTimeError = null;
     try {
       let params = {
         cinemaCode,
@@ -490,23 +504,45 @@ export default class CinemaManage {
         params.featureDate = showDate;
       }
       this.logger.info("获取电影放映场次参数", params);
-      const res = await this.appApi.getMoviePlayTime(params);
-      let moviePlayTime = [];
-      if (api_version === "3.0C") {
-        moviePlayTime = res.data?.planList || [];
-      } else if (api_version === "C") {
-        let filmList = res.data?.filmList || [];
-        let showList = filmList.find(item => item.id == filmId)?.showList || [];
-        moviePlayTime =
-          showList.find(item => item.dayStr == showDate)?.plist || [];
-      }
+      // 报价重试密集时复用同场次结果（默认 90 秒）；出票链路 forceFresh 跳过缓存与合并
+      const cacheKey = buildShowTimeKey({
+        app_name: this.appFlag,
+        cinemaCode,
+        cinemaId,
+        filmId,
+        showDate
+      });
+      let lastRes = null;
+      const resilient = isResilienceApp(this.appFlag);
+      const silentCfg = resilient ? { silent: true } : {};
+      const moviePlayTime = await getShowTimeWithCache(
+        cacheKey,
+        async () => {
+          const res = await this.appApi.getMoviePlayTime(params, silentCfg);
+          lastRes = res;
+          let list = [];
+          if (api_version === "3.0C") {
+            list = res.data?.planList || [];
+          } else if (api_version === "C") {
+            let filmList = res.data?.filmList || [];
+            let showList =
+              filmList.find(item => item.id == filmId)?.showList || [];
+            list = showList.find(item => item.dayStr == showDate)?.plist || [];
+          }
+          return list;
+        },
+        // 仅幸福蓝海使用场次短缓存；其它系列 forceFresh 直接透传，行为不变
+        { forceFresh: !resilient || !!cinemaInfo.forceFresh }
+      );
 
       if (!moviePlayTime?.length) {
         this.logger.errorSave("获取电影放映场次返回空");
-        this.logger.infoSave("获取电影放映场次返回", res);
+        if (lastRes) this.logger.infoSave("获取电影放映场次返回", lastRes);
       }
       return moviePlayTime;
     } catch (error) {
+      // 标记本次为上游/请求异常：getTargetShow 据此跳过「前一日」补查
+      this._lastPlayTimeError = error;
       this.logger.errorSave("获取电影放映场次异常", formatErrInfo(error));
       return [];
     }
@@ -514,12 +550,27 @@ export default class CinemaManage {
 
   // 获取目标场次
   async getTargetShow(cinemaInfo, retryNextDay = true) {
+    this._lastPlayTimeError = null;
     try {
       const showList = await this.getMoviePlayTime(cinemaInfo);
       const targetShow = this._findTargetShow(showList);
 
       if (targetShow) {
         return targetShow;
+      }
+
+      // 上游异常（限流/超时）时不再查前一日：补查必然失败，只会让请求量翻倍
+      // 仅幸福蓝海启用；其它辰星系列保持原有补查逻辑
+      if (
+        retryNextDay &&
+        this._lastPlayTimeError &&
+        isResilienceApp(this.appFlag)
+      ) {
+        this.logger.warnSave("场次接口异常，跳过前一日补查", {
+          error: formatErrInfo(this._lastPlayTimeError),
+          cinemaInfo
+        });
+        return;
       }
 
       if (retryNextDay) {

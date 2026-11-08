@@ -140,8 +140,8 @@ const createApi = ({ app_name }) => {
         Promise.reject(new Error("API path not found"));
       return;
     }
-    apiFunObj[funName] = async (params = {}) => {
-      return axios.post(path, params || {});
+    apiFunObj[funName] = async (params = {}, config = {}) => {
+      return axios.post(path, params || {}, config);
     };
   });
   // console.log("apiFunObj", apiFunObj);
