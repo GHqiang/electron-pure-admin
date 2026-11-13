@@ -1033,7 +1033,7 @@ export default class SfcCardQuanManage {
       // 再按"票数"放大（不能按 useQuans.length，否则 2:1 时利润被放大一倍）
       profit =
         Number(supplier_end_price) -
-        mulDecimal(quan_cost, quanPerTicket) -
+        mulDecimal(Number(quan_cost || 0), quanPerTicket) -
         shouxufei;
       profit = profit * (Number(ticket_num) || 0);
       if (rewards > 0) {

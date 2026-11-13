@@ -32,12 +32,23 @@ export function getQuanPerTicket(rule, logger) {
   const raw = rule?.quanExchangeRatio ?? rule?.quan_exchange_ratio;
   // null/undefined：老规则、老订单、字段不存在（旧缓存/旧接口）→ 默认 1
   if (raw === null || raw === undefined) return DEFAULT_QUAN_PER_TICKET;
-  // 空串/纯空白：表单清空后尚未落库的空值 → 默认 1
+  // 空串/纯空白：表单清空后尚未落库的空值 → 默认 1（不告警）
   if (typeof raw === "string" && raw.trim() === "") {
     return DEFAULT_QUAN_PER_TICKET;
   }
-  const num = Number(raw);
-  // 只接受正整数（含 "2" 这类数字字符串）；小数/0/负数/NaN/对象 → 回退 1
+  // 类型守卫：只接受 number 或非空字符串。
+  // 布尔/对象/数组等真值不能进 Number()——Number(true) === 1 会被误判为合法正整数。
+  const isNumericString = typeof raw === "string";
+  if (typeof raw !== "number" && !isNumericString) {
+    logger?.warn?.(
+      `券兑换比例类型非法，按1处理：ruleId=${
+        rule?.id ?? rule?.offer_rule_id ?? ""
+      }，类型=${typeof raw}`
+    );
+    return DEFAULT_QUAN_PER_TICKET;
+  }
+  const num = Number(isNumericString ? raw.trim() : raw);
+  // 只接受正整数（含 "2" 这类数字字符串）；小数/0/负数/NaN → 回退 1
   if (Number.isInteger(num) && num >= 1) return num;
 
   logger?.warn?.(
@@ -104,7 +115,11 @@ export function validateQuanRatioInput({
   if (ratio === "" || ratio === null || ratio === undefined) {
     return { ok: true, value: null };
   }
-  const num = Number(ratio);
+  // 类型守卫：布尔/对象等真值不能进 Number()（Number(true) === 1 会被当成合法值）
+  if (typeof ratio !== "number" && typeof ratio !== "string") {
+    return { ok: false, reason: "range" };
+  }
+  const num = Number(typeof ratio === "string" ? ratio.trim() : ratio);
   if (!Number.isInteger(num) || num < 1 || num > QUAN_RATIO_MAX) {
     return { ok: false, reason: "range" };
   }
