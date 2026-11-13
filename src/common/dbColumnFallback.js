@@ -27,6 +27,10 @@ export const isUnknownBWalletMarkupError = error =>
 export const isUnknownOfferTppRangeError = error =>
   isUnknownColumnError(error, ["offerTppRange"]);
 
+// 规则表 rule_record 缺 quanExchangeRatio 列（乐影券兑换比例：N 张券抵 1 张票）
+export const isUnknownQuanExchangeRatioError = error =>
+  isUnknownColumnError(error, ["quanExchangeRatio"]);
+
 // 报价记录表 offer_record / offer_record_fail 缺钱包字段
 export const isUnknownWalletRecordColumnError = error =>
   isUnknownColumnError(error, ["pay_type", "b_wallet_markup"]);

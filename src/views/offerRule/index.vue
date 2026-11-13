@@ -581,6 +581,7 @@ import RuleDialog from "@/components/RuleDialog.vue";
 import {
   ORDER_FORM,
   GET_APP_LIST,
+  GET_APP_INFO,
   GET_APP_TYPE_LIST,
   IN_RULE_LIST
 } from "@/common/constant";
@@ -597,7 +598,8 @@ import {
 } from "@/utils/utils";
 import {
   isUnknownBWalletMarkupError,
-  isUnknownOfferTppRangeError
+  isUnknownOfferTppRangeError,
+  isUnknownQuanExchangeRatioError
 } from "@/common/dbColumnFallback";
 import { formatOfferTppRange } from "@/utils/tppPriceRule";
 import { useDataTableStore } from "@/store/offerRule";
@@ -1254,6 +1256,11 @@ const NEW_RULE_COLUMNS = [
     column: "offerTppRange",
     label: "原价报区间",
     isUnknown: isUnknownOfferTppRangeError
+  },
+  {
+    column: "quanExchangeRatio",
+    label: "券兑换比例",
+    isUnknown: isUnknownQuanExchangeRatioError
   }
 ];
 const saveRuleRecordWithNewColumnFallback = async (
@@ -1306,6 +1313,24 @@ const saveRule = async ruleInfo => {
     ruleInfo.offerTppRange = ruleInfo.offerTppRange?.trim()
       ? ruleInfo.offerTppRange.trim()
       : null;
+    // 券兑换比例：仅「固定报价 + 乐影 + 内部角色」提交该字段；
+    // 不满足条件时剔除，避免外部角色/非固定报价规则保存把已配的值抹成 NULL
+    if (
+      ruleInfo.offerType === "1" &&
+      GET_APP_INFO(ruleInfo.shadowLineName)?.app_type_code === "sfc_applet" &&
+      IN_RULE_LIST.includes(Number(rule))
+    ) {
+      const quanRatio = Number(ruleInfo.quanExchangeRatio);
+      ruleInfo.quanExchangeRatio =
+        ruleInfo.quanExchangeRatio !== "" &&
+        ruleInfo.quanExchangeRatio != null &&
+        Number.isInteger(quanRatio) &&
+        quanRatio >= 1
+          ? quanRatio
+          : null;
+    } else {
+      delete ruleInfo.quanExchangeRatio;
+    }
     ruleInfo.update_time = getCurrentTime();
     ruleInfo.rule = rule;
     let targetInfo = APP_TYPE_LIST.value.find(item =>

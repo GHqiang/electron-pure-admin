@@ -37,6 +37,8 @@ import {
   getQuanTypeListByAppCommon,
   getSortPhoneByQuanTypeListCommon
 } from "../common/cardQuanHelper";
+// 券兑换比例（乐影 N 张券抵 1 张票）：选券张数/利润/库存扣减均按比例换算
+import { getQuanPerTicket } from "@/common/autoTicket/quanPerTicket";
 
 const tokens = platTokens();
 const { getQuanValueListByQuanFlag } = usesMachineBaseFun();
@@ -255,6 +257,10 @@ export default class SfcCardQuanManage {
     try {
       const { offer_type, member_price, real_member_price, offer_rule_id } =
         offerRule;
+      // 券兑换比例：N 张券抵 1 张票（默认 1）。needQuanNum 为本次订单需要消耗的券张数，
+      // 出票选券、券不足判断、垫卡手续费、异步绑券与库存扣减都按它计算
+      const quanPerTicket = getQuanPerTicket(offerRule, logger);
+      const needQuanNum = ticket_num * quanPerTicket;
       const session_id = (currentParamsList || [])[currentParamsInx || 0]
         ?.session_id;
       const mobile = (currentParamsList || [])[currentParamsInx || 0]?.mobile;
@@ -312,7 +318,7 @@ export default class SfcCardQuanManage {
             let canUseQuanTypeList = appQuanTypeList.filter(
               itemA =>
                 quanValueList.includes(itemA.quan_value) &&
-                itemA.quan_stock >= ticket_num
+                itemA.quan_stock >= needQuanNum
             );
             logger?.infoSave("根据券类型和券库存进行筛选", {
               canUseQuanTypeList
@@ -355,6 +361,7 @@ export default class SfcCardQuanManage {
           quan_flag,
           black_quans,
           ticket_num,
+          needQuanNum,
           logger
         });
         let quanList = quanRes?.quanList || [];
@@ -374,9 +381,9 @@ export default class SfcCardQuanManage {
           }))
         });
         if (is_store == "1") {
-          if (quanList?.length < ticket_num) {
+          if (quanList?.length < needQuanNum) {
             logger?.infoSave("用券前个人中心目标券不够，从服务端获取");
-            let diffNum = Number(ticket_num) - quanList.length;
+            let diffNum = Number(needQuanNum) - quanList.length;
             const newQuanRes = await this.getNewQuan({
               city_id,
               cinema_id,
@@ -386,7 +393,8 @@ export default class SfcCardQuanManage {
               black_quans,
               diffNum,
               quanNum: diffNum + 10,
-              ticket_num
+              ticket_num,
+              needQuanNum
             });
             const newQuanList = newQuanRes?.bandQuanList || [];
             quanList = [...quanList, ...newQuanList];
@@ -418,7 +426,7 @@ export default class SfcCardQuanManage {
           app_name: appFlag,
           phone: curPhone
         });
-        if (quanList?.length < ticket_num) {
+        if (quanList?.length < needQuanNum) {
           logger?.errorSave(
             `目标券${is_store == "1" ? "从服务端获取后" : ""}数量不足`
           );
@@ -444,12 +452,12 @@ export default class SfcCardQuanManage {
           });
           if (cardList?.length) {
             let cardData = cardList.filter(
-              item => item.balance * 100 >= quan_fee * 100 * ticket_num
+              item => item.balance * 100 >= quan_fee * 100 * needQuanNum
             );
             if (!cardData?.length) {
               logger?.errorSave(
                 `使用优惠券前发现没有可以支付券手续费的会员卡，${is_auto_use_quan ? ",灵活用券转用卡处理" : ""}`,
-                { quan_fee, ticket_num, cardList }
+                { quan_fee, needQuanNum, ticket_num, cardList }
               );
               if (is_auto_use_quan) {
                 offerRule.quan_value = "";
@@ -467,6 +475,8 @@ export default class SfcCardQuanManage {
           show_id,
           seat_ids,
           ticket_num,
+          needQuanNum,
+          quanPerTicket,
           supplier_end_price,
           quanList,
           quan_value,
@@ -532,6 +542,7 @@ export default class SfcCardQuanManage {
     quan_flag,
     black_quans,
     ticket_num,
+    needQuanNum = ticket_num,
     logger
   }) {
     try {
@@ -608,7 +619,9 @@ export default class SfcCardQuanManage {
           (maxLen, group) => Math.max(maxLen, group.length),
           0
         );
-        let targetQuanGroup = groupList.find(item => item.length >= ticket_num);
+        let targetQuanGroup = groupList.find(
+          item => item.length >= needQuanNum
+        );
         logger?.infoSave("会员赠券按照card_num分组", {
           groupedCoupons,
           targetQuanGroup,
@@ -831,7 +844,8 @@ export default class SfcCardQuanManage {
     plat_name,
     order_number,
     quanStock,
-    ticket_num
+    ticket_num,
+    needQuanNum = ticket_num
   }) {
     const { appFlag } = this;
     let logger = this.logger;
@@ -903,9 +917,9 @@ export default class SfcCardQuanManage {
         });
         if (diffNum && bandQuanList.length >= diffNum) break;
       }
-      if (asyncFlag === 1 && ticket_num) {
+      if (asyncFlag === 1 && needQuanNum) {
         this.updateQuanStock({
-          quan_stock: quanStock - ticket_num + bandQuanList.length,
+          quan_stock: quanStock - needQuanNum + bandQuanList.length,
           quan_value,
           quan_flag,
           app_name: appFlag,
@@ -971,6 +985,8 @@ export default class SfcCardQuanManage {
     city_id,
     cinema_id,
     ticket_num,
+    needQuanNum = ticket_num,
+    quanPerTicket = 1,
     supplier_end_price,
     quanList,
     quan_value,
@@ -986,7 +1002,7 @@ export default class SfcCardQuanManage {
   }) {
     try {
       let targetQuanList = quanList || [];
-      if (targetQuanList?.length - ticket_num < 10 && is_store == "1") {
+      if (targetQuanList?.length - needQuanNum < 10 && is_store == "1") {
         this.logger.infoSave("本次出票后券小于10，开始异步绑定券");
         this.getNewQuan({
           city_id,
@@ -995,22 +1011,29 @@ export default class SfcCardQuanManage {
           quan_flag,
           session_id,
           black_quans,
-          quanNum: 10 - (targetQuanList.length - Number(ticket_num)),
+          // 补到"出票后仍余 10 张"，至少补 1 张
+          quanNum: Math.max(10 - (targetQuanList.length - needQuanNum), 1),
           asyncFlag: 1,
           asyncBandQuanList: [],
           plat_name,
           order_number,
           quanStock,
-          ticket_num
+          ticket_num,
+          needQuanNum
         });
       }
-      let useQuans = targetQuanList.filter((item, index) => index < ticket_num);
+      let useQuans = targetQuanList.filter(
+        (item, index) => index < needQuanNum
+      );
       let profit = 0;
       // 手续费（统一走 getPlatFeeRate，支持守兔按 needInvoice 分档）
       const feeRate = getPlatFeeRate(this.order);
       let shouxufei = mulDecimal(Number(supplier_end_price || 0), feeRate);
-      profit = Number(supplier_end_price) - quan_cost - shouxufei;
-      profit = profit * (useQuans.length || 0);
+      // 每票消耗 quanPerTicket 张券，故每票成本 = quan_cost × quanPerTicket；
+      // 再按"票数"放大（不能按 useQuans.length，否则 2:1 时利润被放大一倍）
+      profit =
+        Number(supplier_end_price) - quan_cost * quanPerTicket - shouxufei;
+      profit = profit * (Number(ticket_num) || 0);
       if (rewards > 0) {
         let rewardPrice =
           (Number(supplier_end_price) * 100 * Number(ticket_num) * rewards) /

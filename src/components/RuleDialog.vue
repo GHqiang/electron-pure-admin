@@ -452,6 +452,18 @@
             />
           </el-select>
         </el-form-item>
+        <el-form-item v-if="showQuanExchangeRatio" label="券兑换比例">
+          <el-input
+            v-model="formData.quanExchangeRatio"
+            type="number"
+            placeholder="每张票消耗券张数"
+            clearable
+          />
+          <span style="color: red; margin-left: 15px"
+            >提示：每张票消耗券张数，2 表示 2 张券兑 1 张票；留空即一票一券。
+            报价成本 = 券库「券成本」× 该比例，请确认券成本填的是单张成本</span
+          >
+        </el-form-item>
         <el-form-item v-if="formData.offerType !== '3'" label="星期几">
           <el-select
             v-model="formData.weekDay"
@@ -570,8 +582,10 @@ import {
   GET_APP_LIST,
   GET_APP_INFO,
   GET_APP_TYPE_LIST,
+  IN_RULE_LIST,
   SYNC_CINEMA_CODE_APP_TYPE_LIST
 } from "@/common/constant";
+import { platTokens } from "@/store/platTokens";
 import { cinemNameSpecial } from "@/utils/utils";
 import {
   parseOfferTppRange,
@@ -580,6 +594,10 @@ import {
 
 const APP_LIST = computed(() => GET_APP_LIST());
 const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
+// 当前登录角色：券兑换比例仅对内部角色展示/可配
+const {
+  userInfo: { rule }
+} = platTokens();
 
 // 院线二级级联配置（系列 -> 院线）
 const appCascaderOptions = computed(() =>
@@ -692,8 +710,17 @@ let formData = reactive({
   auto_quan_value: "", // 自动用券类型
   memberPriceRule: "", // 会员价取值报价规则
   bWalletMarkup: "", // B钱包加价：未同步规则由本地报价叠加；已同步规则随规则同步到平台 extra_amount
-  offerTppRange: "" // 原价报区间：下限-上限(闭区间含端点，端点可空)；未配置=不限制
+  offerTppRange: "", // 原价报区间：下限-上限(闭区间含端点，端点可空)；未配置=不限制
+  quanExchangeRatio: "" // 券兑换比例：每票消耗券张数（2=2张券兑1张票），空/1=一票一券；仅乐影固定报价
 });
+
+// 券兑换比例：仅「固定报价 + 乐影系列 + 内部角色」可配（三条件同时满足）
+const showQuanExchangeRatio = computed(
+  () =>
+    formData.offerType === "1" &&
+    GET_APP_INFO(formData.shadowLineName)?.app_type_code === "sfc_applet" &&
+    IN_RULE_LIST.includes(Number(rule))
+);
 
 let cityList = ref([]); // 城市列表
 let cinemaList = ref([]); // 影院列表
@@ -790,6 +817,7 @@ const resetForm = el => {
   formData.memberPriceRule = ""; // 座位数
   formData.bWalletMarkup = ""; // B钱包加价
   formData.offerTppRange = ""; // 原价报区间
+  formData.quanExchangeRatio = ""; // 券兑换比例
   rangeMin.value = "";
   rangeMax.value = "";
   formData.memberDay = ""; // 会员日
@@ -1034,6 +1062,7 @@ const open = async ruleInfo => {
         formData.memberPriceRule = formInfo.memberPriceRule;
         formData.bWalletMarkup = formInfo.bWalletMarkup ?? "";
         formData.offerTppRange = formInfo.offerTppRange ?? "";
+        formData.quanExchangeRatio = formInfo.quanExchangeRatio ?? "";
         fillOfferTppRangeFromStr();
         formData.memberDay = formInfo.memberDay; // 会员日
         formData.film_type = formInfo.film_type;
@@ -1064,6 +1093,8 @@ const open = async ruleInfo => {
         formData.offerTppRange = "";
         rangeMin.value = "";
         rangeMax.value = "";
+        // 券兑换比例同样从空白开始（留空 = 一票一券）
+        formData.quanExchangeRatio = "";
       }
       const app_name = formData.shadowLineName;
       if (props.dialogTitle !== "查看规则") {
@@ -1162,6 +1193,18 @@ const saveRule = async () => {
       if (!tppRangeCheck.ok) {
         ElMessage.warning(tppRangeCheck.msg);
         return false;
+      }
+      // 券兑换比例校验：留空=未配置；填写必须为正整数（≥1）
+      if (
+        showQuanExchangeRatio.value &&
+        formData.quanExchangeRatio !== "" &&
+        formData.quanExchangeRatio != null
+      ) {
+        const ratio = Number(formData.quanExchangeRatio);
+        if (!Number.isInteger(ratio) || ratio < 1) {
+          ElMessage.warning("券兑换比例必须为正整数（1 及以上），留空表示一票一券");
+          return false;
+        }
       }
       // 提交逻辑
       console.log("表单提交的数据:", formData);

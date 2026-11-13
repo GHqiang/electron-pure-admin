@@ -50,6 +50,8 @@ import {
   sortLoginByQuanPhones
 } from "../common/loginHelper.js";
 import { getLockSeatRetryConfig } from "../common/retryConfig.js";
+// 券兑换比例（乐影 N 张券抵 1 张票）：选号库存门槛、价格校验、核销扣减均按比例换算
+import { getQuanPerTicket } from "@/common/autoTicket/quanPerTicket";
 import { dictTable } from "@/store/dictTable";
 const dictStore = dictTable();
 
@@ -236,12 +238,14 @@ class SfcBuyTicket extends BaseBuyTicket {
         } else {
           let quan_flag = offerRule?.quan_flag || auto_quan_info?.quan_flag;
           let quan_value = offerRule?.quan_value || auto_quan_info?.quan_value;
+          // 券库存门槛按"本次要消耗的券张数"判断（N 张券抵 1 张票时 = 票数 × N）
+          const needQuanNum = ticket_num * getQuanPerTicket(offerRule);
           const sortMobileList =
             await this.cardQuanManage.getSortPhoneByQuanTypeList?.(
               appFlag,
               quan_flag,
               quan_value,
-              ticket_num
+              needQuanNum
             );
           if (sortMobileList?.length) {
             this.currentParamsList = sortLoginByQuanPhones(
@@ -538,11 +542,20 @@ class SfcBuyTicket extends BaseBuyTicket {
       const pay_money = Number(priceInfo.total_price || priceInfo.price || 0);
 
       // 使用基类通用方法校验用券价格
+      // 券兑换比例 > 1 时必须传真实券码列表：useQuanOrCard 返回体没有 useQuan 字段，
+      // 传空数组会让基类直接放行（该校验此前对 SFC 券单从未生效）。
+      // 仅对配了比例的规则启用，避免存量"券只抵部分、余款另付"场景突然开始转单。
+      const quanPerTicket = getQuanPerTicket(offerRule);
+      const needQuanNum = ticket_num * quanPerTicket;
+      const checkedCouponList = String(coupon_nums || quan_code || "")
+        .split(",")
+        .filter(Boolean);
       const couponCheck = this.validateCouponPrice({
         offerRule,
-        ticket_num,
+        ticket_num: needQuanNum,
         paymentAmount: pay_money,
-        useQuan: useRes?.useQuan || []
+        useQuan:
+          quanPerTicket > 1 ? checkedCouponList : useRes?.useQuan || []
       });
       if (!couponCheck.ok) {
         this.logger.errorSave(couponCheck.reason, {
@@ -720,7 +733,7 @@ class SfcBuyTicket extends BaseBuyTicket {
         (quan_code || coupon_id || member_coupon_id)
       ) {
         await this.cardQuanManage.updateQuanStock?.({
-          quan_stock: quanStock - ticket_num,
+          quan_stock: quanStock - needQuanNum,
           quan_flag: offerRule?.quan_flag,
           quan_value: offerRule?.quan_value,
           app_name: appFlag,

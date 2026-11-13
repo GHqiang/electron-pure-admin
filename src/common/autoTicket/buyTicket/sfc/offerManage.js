@@ -49,6 +49,8 @@ import {
   calcOfferCostProfitParts
 } from "../common/offerHelper";
 import { calculateMostSeatPrice } from "../common/seatPriceHelper";
+// 券兑换比例（乐影 N 张券抵 1 张票）：库存门槛与券成本均按比例换算
+import { getQuanPerTicket } from "@/common/autoTicket/quanPerTicket";
 
 const tokens = platTokens();
 
@@ -190,6 +192,43 @@ class getSfcOfferPrice extends BaseOfferPrice {
       });
       return null;
     }
+  }
+
+  /**
+   * 获取成本价（覆写基类）
+   *
+   * 券兑换比例（乐影 N 张券抵 1 张票）> 1 且为固定报价时：
+   * - 券成本按"每票 N 张"计：min(quan_cost) × N
+   * - quanInfoList 保留并预乘 N，保证基类 maxCostPrice 过滤按"每票真实成本"判断
+   *
+   * 其余情况（非固定报价 / 比例 ≤ 1 / 无比例）完全走基类逻辑：
+   * 会员加价规则必须返回 memberCostPrice，不能去查券成本。
+   *
+   * @param {Object} offerRule - 报价规则
+   * @returns {Promise<number|null>} 成本价或null
+   */
+  async getCostPrice(offerRule) {
+    const quanPerTicket = getQuanPerTicket(offerRule);
+    if (offerRule?.offerType !== "1" || quanPerTicket <= 1) {
+      return super.getCostPrice(offerRule);
+    }
+    const quanInfo = await this.cardQuanManage?.getQuanInfo?.(
+      offerRule.quanValue,
+      this.appFlag
+    );
+    const list = (
+      Array.isArray(quanInfo) ? quanInfo : quanInfo ? [quanInfo] : []
+    ).filter(Boolean);
+    // 取不到券类型信息时返回 null（与基类"取成本失败即不报"语义一致），
+    // 避免 Math.min() 空数组得到 Infinity 被当成有成本
+    if (!list.length) return null;
+    this.quanInfoList = list.map(item => ({
+      ...item,
+      quan_cost: Number(item.quan_cost || 0) * quanPerTicket
+    }));
+    return Math.min(
+      ...this.quanInfoList.map(item => Number(item.quan_cost || 0))
+    );
   }
 
   /**
@@ -472,11 +511,13 @@ class getSfcOfferPrice extends BaseOfferPrice {
         // 校验其库存，进行过滤
         if (appQuanTypeList?.length) {
           fixedAmountRuleList = fixedAmountRuleList.filter(item => {
+            // 券兑换比例：N 张券抵 1 张票时，库存门槛 = 票数 × N（默认 1 与原逻辑一致）
+            const needQuanNum = order.ticket_num * getQuanPerTicket(item);
             // 查找是否有目标券可以出的
             return appQuanTypeList.some(
               itemA =>
                 item.quanValue?.split(",")?.includes(itemA.quan_value) &&
-                itemA?.quan_stock >= order.ticket_num
+                itemA?.quan_stock >= needQuanNum
             );
           });
           this.logger.infoSave("根据券库存过滤后的固定报价规则列表", {

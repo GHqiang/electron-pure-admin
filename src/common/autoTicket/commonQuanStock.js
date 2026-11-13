@@ -18,6 +18,11 @@ import useLierenOfferRuleSyncFun, {
 const { lierenOfferRuleSyncPlat } = useLierenOfferRuleSyncFun();
 
 import { platTokens } from "@/store/platTokens";
+// 券兑换比例（乐影 N 张券抵 1 张票）：库存判断与座位数收缩均以"张"换算成"票"
+import {
+  getQuanPerTicket,
+  calcTargetSeatNum
+} from "@/common/autoTicket/quanPerTicket";
 const {
   userInfo: { rule, name }
 } = platTokens();
@@ -422,14 +427,19 @@ async function batchCheckLierenFixedRule({ list, app_name, logger }) {
         }
       })
       .filter(Boolean)
-      .filter(
-        item =>
-          item.offerType == 1 &&
-          item.platOfferList.some(
-            offer => offer.platName === "lieren" && offer.isSyncPlat == 1
-          ) &&
-          needSyncItems.some(i => i.quan_value == item.quanValue)
-      );
+      .filter(item => {
+        if (item.offerType != 1) return false;
+        if (!needSyncItems.some(i => i.quan_value == item.quanValue)) {
+          return false;
+        }
+        // 原口径只同步"已同步猎人"的固定报价规则；
+        // 配了券兑换比例的规则（乐影 N 张券抵 1 张票）不同步平台，但座位数仍需随库存收缩，
+        // 否则库存消耗翻倍后仍按大座位数报价。这类规则只更新本地 rule_record，不调平台接口。
+        const isLierenSynced = item.platOfferList.some(
+          offer => offer.platName === "lieren" && offer.isSyncPlat == 1
+        );
+        return isLierenSynced || getQuanPerTicket(item) > 1;
+      });
     if (!matchedRules.length) {
       // 无关联规则：回滚这些 quan_value 的 B1 缓存，避免后续新增关联规则时错过首次同步
       needSyncItems.forEach(i =>
@@ -456,8 +466,10 @@ async function batchCheckLierenFixedRule({ list, app_name, logger }) {
       const matchItem = needSyncItems.find(i => i.quan_value == rule.quanValue);
       if (!matchItem) continue;
       const { maxQuanStock, quanStockList, quan_value, id } = matchItem;
-      // 目标座位数，最大券库存超过4时为4，不超过4时为库存数
-      let targetSeatNum = maxQuanStock >= 4 ? 4 : maxQuanStock;
+      // 券兑换比例：N 张券抵 1 张票时可支撑票数 = floor(库存 / N)，默认 1 时与原逻辑一致
+      const quanPerTicket = getQuanPerTicket(rule);
+      // 目标座位数：可支撑票数超过4时为4，不超过4时为可支撑票数
+      let targetSeatNum = calcTargetSeatNum(maxQuanStock, quanPerTicket);
       let targetStatus = targetSeatNum == 0 ? "2" : "1"; // 券库存为0时规则状态改为关闭
       if (targetStatus == 2) {
         targetSeatNum = undefined;
@@ -483,28 +495,46 @@ async function batchCheckLierenFixedRule({ list, app_name, logger }) {
         targetSeatNum,
         targetStatus
       });
-      const lierenRule = {
-        ...rule,
-        seatNum: targetSeatNum,
-        status: targetStatus
-      };
-      // B4：用本地规则数据构造平台旧规则快照传入，避免 lierenOfferRuleSyncPlat 内部再调 ruleList
-      const cachedPlatRule = {
-        state: rule.status == "1" ? 1 : 0,
-        seats: formatSeats(rule.seatNum)
-      };
-      const syncRes = await lierenOfferRuleSyncPlat(lierenRule, cachedPlatRule);
-      // 同步失败时不更新本地 DB，避免两边不一致
-      if (!syncRes) {
-        logger.infoSave("猎人平台同步返回空，跳过本地更新", {
-          ruleId: rule.id
+      // 是否同步猎人：未同步平台的规则（如配了券兑换比例的乐影规则）只更新本地
+      const isLierenSynced = rule.platOfferList.some(
+        offer => offer.platName === "lieren" && offer.isSyncPlat == 1
+      );
+      let platOfferListForDb = rule.platOfferList;
+      if (isLierenSynced) {
+        const lierenRule = {
+          ...rule,
+          seatNum: targetSeatNum,
+          status: targetStatus
+        };
+        // B4：用本地规则数据构造平台旧规则快照传入，避免 lierenOfferRuleSyncPlat 内部再调 ruleList
+        const cachedPlatRule = {
+          state: rule.status == "1" ? 1 : 0,
+          seats: formatSeats(rule.seatNum)
+        };
+        const syncRes = await lierenOfferRuleSyncPlat(
+          lierenRule,
+          cachedPlatRule
+        );
+        // 同步失败时不更新本地 DB，避免两边不一致
+        if (!syncRes) {
+          logger.infoSave("猎人平台同步返回空，跳过本地更新", {
+            ruleId: rule.id
+          });
+          // 同步失败的 quan_value 回滚 B1 缓存，让下次相同 maxQuanStock 还能重新触发
+          syncFailQuanValues.add(quan_value);
+          continue;
+        }
+        platOfferListForDb = syncRes.platOfferList || rule.platOfferList;
+      } else {
+        logger.infoSave("未同步平台的规则，仅更新本地座位数/状态", {
+          ruleId: rule.id,
+          quanPerTicket,
+          maxQuanStock,
+          targetSeatNum,
+          targetStatus
         });
-        // 同步失败的 quan_value 回滚 B1 缓存，让下次相同 maxQuanStock 还能重新触发
-        syncFailQuanValues.add(quan_value);
-        continue;
       }
 
-      const platOfferListForDb = syncRes.platOfferList || rule.platOfferList;
       const jiqiuRule = {
         ...rule,
         seatNum: targetSeatNum,
@@ -531,7 +561,11 @@ async function batchCheckLierenFixedRule({ list, app_name, logger }) {
         old_seat_num: rule.seatNum,
         new_seat_num: targetSeatNum != null ? String(targetSeatNum) : null,
         trigger_source:
-          targetStatus === "2" ? "quan_stock_zero" : "quan_stock_update",
+          targetStatus === "2"
+            ? "quan_stock_zero"
+            : isLierenSynced
+              ? "quan_stock_update"
+              : "quan_stock_update_local",
         change_reason:
           targetStatus === "2"
             ? `券库存归零(maxQuanStock=0, quan_value=${quan_value})，自动禁用`
@@ -700,16 +734,18 @@ export async function filterFixedRulesByDailyTicketCount({
     item => item.app_name === app_name && item.mobile && item.session_id
   );
   console.log("filterFixedRulesByDailyTicketCount loginList", loginList);
-  // 1. 传入的可用手机号通过 quanStockListByPhone 过滤一遍，得到真正的可用手机号（有对应券且库存>=订单票数）
+  // 1. 传入的可用手机号通过 quanStockListByPhone 过滤一遍，得到真正的可用手机号（有对应券且库存>=订单所需券数）
+  //    订单所需券数 = 票数 × 券兑换比例（乐影 N 张券抵 1 张票，默认 1）
   let realAvailableMobiles = (useMobileList || []).filter(mobile => {
     return fixedAmountRuleList.some(rule => {
       const quanValues = rule.quanValue?.split(",") || [];
+      const needQuanNum = ticket_num * getQuanPerTicket(rule);
       return appQuanTypeList.some(itemA => {
         if (!quanValues.includes(itemA.quan_value)) return false;
-        if (itemA.quan_stock < ticket_num) return false;
+        if (itemA.quan_stock < needQuanNum) return false;
         const byPhone = itemA.quanStockListByPhone || [];
         return byPhone.some(
-          p => p.phone === mobile && Number(p.quan_stock) >= ticket_num
+          p => p.phone === mobile && Number(p.quan_stock) >= needQuanNum
         );
       });
     });
@@ -742,9 +778,12 @@ export async function filterFixedRulesByDailyTicketCount({
   // 3. 日出票券数 - 已出票券数 >= 订单票数 才满足；不满足的固定报价规则过滤掉
   const filtered = fixedAmountRuleList.filter(rule => {
     const quanValues = rule.quanValue?.split(",") || [];
+    // 券库存按"张"判断，需要票数 × 兑换比例；日出票数仍按"票"判断（见下方 remaining）
+    const needQuanNum = ticket_num * getQuanPerTicket(rule);
     const matchingQuanTypes = appQuanTypeList.filter(
       itemA =>
-        quanValues.includes(itemA.quan_value) && itemA.quan_stock >= ticket_num
+        quanValues.includes(itemA.quan_value) &&
+        itemA.quan_stock >= needQuanNum
     );
     console.log("matchingQuanTypes for rule", rule.id, matchingQuanTypes);
     for (const q of matchingQuanTypes) {
@@ -754,7 +793,7 @@ export async function filterFixedRulesByDailyTicketCount({
         q.quanStockListByPhone
       );
       for (const p of q.quanStockListByPhone || []) {
-        if (Number(p.quan_stock) < ticket_num) continue;
+        if (Number(p.quan_stock) < needQuanNum) continue;
         const mobile = p.phone;
         const login = loginList.find(l => l.mobile === mobile);
         const limit = login?.daily_ticket_count;
