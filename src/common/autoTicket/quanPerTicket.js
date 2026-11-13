@@ -19,6 +19,8 @@
  */
 
 const DEFAULT_QUAN_PER_TICKET = 1;
+// 兑换比例上限：TINYINT UNSIGNED 支持 255，业务上 1-20 已远超实际（避免误填造成巨额取券）
+export const QUAN_RATIO_MAX = 20;
 
 /**
  * 获取「每票消耗券张数」
@@ -76,6 +78,63 @@ export function calcTargetSeatNum(maxQuanStock, quanPerTicket) {
       : 1;
   const effStock = Math.floor(stock / per);
   return effStock >= 4 ? 4 : effStock;
+}
+
+/**
+ * 校验用户输入/待落库的券兑换比例是否可配置
+ *
+ * 规则（与规则弹窗显隐条件保持一致，但这里是"保存前的最后一道闸"）：
+ * - 留空：合法，表示不配置（返回 value = null）
+ * - 已同步猎人平台：不支持（平台会按 1:1 报价，出票按 N:1 会系统性转单）
+ * - 多券类型（quanValue 数量 > 1）：不支持（座位数收缩按单一券类型匹配）
+ * - 非 1-QUAN_RATIO_MAX 的整数：不支持
+ *
+ * @param {Object} params
+ * @param {number|string} params.ratio - 用户输入的比例
+ * @param {number} params.quanValueCount - 规则选中的券类型数量
+ * @param {boolean} params.isLierenSynced - 规则是否已同步猎人平台
+ * @returns {{ok:boolean, value?:number|null, reason?:string}}
+ *   reason: "range" | "lieren_synced" | "multi_quan_type"
+ */
+export function validateQuanRatioInput({
+  ratio,
+  quanValueCount = 0,
+  isLierenSynced = false
+}) {
+  if (ratio === "" || ratio === null || ratio === undefined) {
+    return { ok: true, value: null };
+  }
+  const num = Number(ratio);
+  if (!Number.isInteger(num) || num < 1 || num > QUAN_RATIO_MAX) {
+    return { ok: false, reason: "range" };
+  }
+  if (isLierenSynced) {
+    return { ok: false, reason: "lieren_synced" };
+  }
+  if (Number(quanValueCount) > 1) {
+    return { ok: false, reason: "multi_quan_type" };
+  }
+  return { ok: true, value: num };
+}
+
+/**
+ * 构造「用券价格校验」的券列表入参
+ *
+ * 背景：`useQuanOrCard` 返回体没有 `useQuan` 字段，基类 `validateCouponPrice`
+ * 在空列表时直接放行（该校验对 SFC 券单此前从未生效）。
+ * 这里按比例规则限定启用范围，避免存量"券只抵部分、余款另付"场景突然开始转单。
+ *
+ * @param {Object} params
+ * @param {string} params.couponNums - useRes.coupon_nums（真实核销券码，逗号分隔）
+ * @param {string} params.quanCode - useRes.quan_code（线下券码，逗号分隔）
+ * @param {number} params.ratio - 券兑换比例
+ * @returns {string[]} 比例 > 1 时返回真实券码列表，否则返回空数组（保持原行为）
+ */
+export function buildCouponCheckList({ couponNums, quanCode, ratio }) {
+  if (!(Number(ratio) > 1)) return [];
+  return String(couponNums || quanCode || "")
+    .split(",")
+    .filter(Boolean);
 }
 
 export default getQuanPerTicket;

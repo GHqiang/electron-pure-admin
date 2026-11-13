@@ -602,6 +602,7 @@ import {
   isUnknownQuanExchangeRatioError
 } from "@/common/dbColumnFallback";
 import { formatOfferTppRange } from "@/utils/tppPriceRule";
+import { validateQuanRatioInput } from "@/common/autoTicket/quanPerTicket";
 import { useDataTableStore } from "@/store/offerRule";
 const rules = useDataTableStore();
 import { platTokens } from "@/store/platTokens";
@@ -1313,23 +1314,32 @@ const saveRule = async ruleInfo => {
     ruleInfo.offerTppRange = ruleInfo.offerTppRange?.trim()
       ? ruleInfo.offerTppRange.trim()
       : null;
-    // 券兑换比例：仅「固定报价 + 乐影 + 内部角色」提交该字段；
-    // 不满足条件时剔除，避免外部角色/非固定报价规则保存把已配的值抹成 NULL
-    if (
-      ruleInfo.offerType === "1" &&
+    // 券兑换比例：仅「乐影 + 内部角色 + 固定报价 + 单券类型 + 不同步猎人」可写。
+    // - 乐影内部角色但条件不满足：显式写 null 清除历史残留
+    //   （否则固定报价切会员加价后残留比例，出票走灵活用券时仍会按 N 倍取券）
+    // - 外部角色 / 非乐影：剔除字段，避免把别人配的值抹掉
+    const isLeYingInternal =
       GET_APP_INFO(ruleInfo.shadowLineName)?.app_type_code === "sfc_applet" &&
-      IN_RULE_LIST.includes(Number(rule))
-    ) {
-      const quanRatio = Number(ruleInfo.quanExchangeRatio);
-      ruleInfo.quanExchangeRatio =
-        ruleInfo.quanExchangeRatio !== "" &&
-        ruleInfo.quanExchangeRatio != null &&
-        Number.isInteger(quanRatio) &&
-        quanRatio >= 1
-          ? quanRatio
-          : null;
-    } else {
+      IN_RULE_LIST.includes(Number(rule));
+    if (!isLeYingInternal) {
       delete ruleInfo.quanExchangeRatio;
+    } else {
+      const quanValueCount = String(ruleInfo.quanValue || "")
+        .split(",")
+        .filter(Boolean).length;
+      const isLierenSynced = (ruleInfo.platOfferList || []).some(
+        item => item.platName === "lieren" && item.isSyncPlat == 1
+      );
+      // 与规则弹窗同一套判定：非固定报价/多券类型/已同步猎人/非法范围 → 一律写 null 清除
+      const ratioCheck =
+        ruleInfo.offerType === "1"
+          ? validateQuanRatioInput({
+              ratio: ruleInfo.quanExchangeRatio,
+              quanValueCount,
+              isLierenSynced
+            })
+          : { ok: true, value: null };
+      ruleInfo.quanExchangeRatio = ratioCheck.ok ? ratioCheck.value : null;
     }
     ruleInfo.update_time = getCurrentTime();
     ruleInfo.rule = rule;

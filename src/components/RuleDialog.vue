@@ -591,6 +591,10 @@ import {
   parseOfferTppRange,
   validateOfferTppRange
 } from "@/utils/tppPriceRule";
+import {
+  validateQuanRatioInput,
+  QUAN_RATIO_MAX
+} from "@/common/autoTicket/quanPerTicket";
 
 const APP_LIST = computed(() => GET_APP_LIST());
 const APP_TYPE_LIST = computed(() => GET_APP_TYPE_LIST());
@@ -1194,15 +1198,29 @@ const saveRule = async () => {
         ElMessage.warning(tppRangeCheck.msg);
         return false;
       }
-      // 券兑换比例校验：留空=未配置；填写必须为正整数（≥1）
-      if (
-        showQuanExchangeRatio.value &&
-        formData.quanExchangeRatio !== "" &&
-        formData.quanExchangeRatio != null
-      ) {
-        const ratio = Number(formData.quanExchangeRatio);
-        if (!Number.isInteger(ratio) || ratio < 1) {
-          ElMessage.warning("券兑换比例必须为正整数（1 及以上），留空表示一票一券");
+      // 券兑换比例：留空=未配置；其余按 validateQuanRatioInput 统一判定
+      // （已同步猎人 / 多券类型 → 告警并清空；非 1-20 整数 → 告警但保留输入供修正）
+      if (showQuanExchangeRatio.value) {
+        const ratioCheck = validateQuanRatioInput({
+          ratio: formData.quanExchangeRatio,
+          quanValueCount: (formData.quanValue || []).filter(Boolean).length,
+          isLierenSynced:
+            (formData.platOfferList || []).find(
+              item => item.platName === "lieren"
+            )?.isSyncPlat == 1
+        });
+        if (!ratioCheck.ok) {
+          if (ratioCheck.reason !== "range") {
+            formData.quanExchangeRatio = "";
+          }
+          const msgMap = {
+            range: `券兑换比例必须为 1-${QUAN_RATIO_MAX} 的整数，留空表示一票一券`,
+            lieren_synced:
+              "该规则已同步猎人平台，不支持券兑换比例，已自动清空；如需使用请先将规则改为不同步平台",
+            multi_quan_type:
+              "该规则选择了多个券类型，不支持券兑换比例，已自动清空；请改为只选一个券类型"
+          };
+          ElMessage.warning(msgMap[ratioCheck.reason]);
           return false;
         }
       }

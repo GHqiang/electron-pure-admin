@@ -21,7 +21,8 @@ import {
   formatErrInfo,
   getCinemaLoginInfoList,
   getCurrentDay,
-  isDateInCurrentMonth
+  isDateInCurrentMonth,
+  mulDecimal
 } from "@/utils/utils";
 import svApi from "@/api/sv-api";
 import { APP_API_OBJ } from "@/common/index.js";
@@ -50,7 +51,10 @@ import {
 } from "../common/offerHelper";
 import { calculateMostSeatPrice } from "../common/seatPriceHelper";
 // 券兑换比例（乐影 N 张券抵 1 张票）：库存门槛与券成本均按比例换算
-import { getQuanPerTicket } from "@/common/autoTicket/quanPerTicket";
+import {
+  getQuanPerTicket,
+  calcNeedQuanNum
+} from "@/common/autoTicket/quanPerTicket";
 
 const tokens = platTokens();
 
@@ -224,7 +228,7 @@ class getSfcOfferPrice extends BaseOfferPrice {
     if (!list.length) return null;
     this.quanInfoList = list.map(item => ({
       ...item,
-      quan_cost: Number(item.quan_cost || 0) * quanPerTicket
+      quan_cost: mulDecimal(Number(item.quan_cost || 0), quanPerTicket)
     }));
     return Math.min(
       ...this.quanInfoList.map(item => Number(item.quan_cost || 0))
@@ -512,7 +516,10 @@ class getSfcOfferPrice extends BaseOfferPrice {
         if (appQuanTypeList?.length) {
           fixedAmountRuleList = fixedAmountRuleList.filter(item => {
             // 券兑换比例：N 张券抵 1 张票时，库存门槛 = 票数 × N（默认 1 与原逻辑一致）
-            const needQuanNum = order.ticket_num * getQuanPerTicket(item);
+            const needQuanNum = calcNeedQuanNum(
+              order.ticket_num,
+              getQuanPerTicket(item)
+            );
             // 查找是否有目标券可以出的
             return appQuanTypeList.some(
               itemA =>

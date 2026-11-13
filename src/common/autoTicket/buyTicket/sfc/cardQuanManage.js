@@ -20,10 +20,7 @@ import {
   mulDecimal // 高精度乘法(避免手续费精度丢失)
 } from "@/utils/utils";
 import { APP_API_OBJ } from "@/common/index";
-import {
-  sfcV3AppList,
-  TEST_NEW_PLAT_LIST
-} from "@/common/constant";
+import { sfcV3AppList, TEST_NEW_PLAT_LIST } from "@/common/constant";
 import { getPlatFeeRate } from "../common/offerHelper";
 import svApi from "@/api/sv-api";
 import Logger from "@/common/logger";
@@ -38,7 +35,10 @@ import {
   getSortPhoneByQuanTypeListCommon
 } from "../common/cardQuanHelper";
 // 券兑换比例（乐影 N 张券抵 1 张票）：选券张数/利润/库存扣减均按比例换算
-import { getQuanPerTicket } from "@/common/autoTicket/quanPerTicket";
+import {
+  getQuanPerTicket,
+  calcNeedQuanNum
+} from "@/common/autoTicket/quanPerTicket";
 
 const tokens = platTokens();
 const { getQuanValueListByQuanFlag } = usesMachineBaseFun();
@@ -260,7 +260,7 @@ export default class SfcCardQuanManage {
       // 券兑换比例：N 张券抵 1 张票（默认 1）。needQuanNum 为本次订单需要消耗的券张数，
       // 出票选券、券不足判断、垫卡手续费、异步绑券与库存扣减都按它计算
       const quanPerTicket = getQuanPerTicket(offerRule, logger);
-      const needQuanNum = ticket_num * quanPerTicket;
+      const needQuanNum = calcNeedQuanNum(ticket_num, quanPerTicket);
       const session_id = (currentParamsList || [])[currentParamsInx || 0]
         ?.session_id;
       const mobile = (currentParamsList || [])[currentParamsInx || 0]?.mobile;
@@ -627,8 +627,8 @@ export default class SfcCardQuanManage {
           targetQuanGroup,
           quanStockNum
         });
-        // 返回完整目标卡组而非 slice(0, ticket_num)：
-        // 出票只取前 ticket_num 张由 useQuan 内 filter(index < ticket_num) 完成，
+        // 返回完整目标卡组而非按本次用量截断：
+        // 出票只取前 needQuanNum 张（= 票数 × 券兑换比例）由 useQuan 内 filter 完成，
         // 库存统计需用完整组长度，截断返回会把 quan_stock 错误写成本次出票用量（如 2），
         // 导致真实库存（几十张）被覆盖成出票张数，并触发规则座位数误缩小
         targetQuanList = targetQuanGroup || [];
@@ -1032,7 +1032,9 @@ export default class SfcCardQuanManage {
       // 每票消耗 quanPerTicket 张券，故每票成本 = quan_cost × quanPerTicket；
       // 再按"票数"放大（不能按 useQuans.length，否则 2:1 时利润被放大一倍）
       profit =
-        Number(supplier_end_price) - quan_cost * quanPerTicket - shouxufei;
+        Number(supplier_end_price) -
+        mulDecimal(quan_cost, quanPerTicket) -
+        shouxufei;
       profit = profit * (Number(ticket_num) || 0);
       if (rewards > 0) {
         let rewardPrice =

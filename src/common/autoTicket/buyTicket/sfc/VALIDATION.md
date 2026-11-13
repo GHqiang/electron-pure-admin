@@ -36,7 +36,7 @@
 | 项     | 旧版                                                                 | 重构 | 结论 |
 | ------ | -------------------------------------------------------------------- | ---- | ---- |
 | 手续费 | `(supplier_end_price*100)/10000`，`NO_FEE_PLAT_LIST` 置 0            | 改为 `getPlatFeeRate(order)` + `mulDecimal`（支持守兔分档 + 精度处理） | 一致（数值等价，精度更准） |
-| 利润   | `(supplier_end_price - quan_cost - shouxufei) * useQuans.length`     | 同   | 一致 |
+| 利润   | `(supplier_end_price - quan_cost - shouxufei) * useQuans.length`     | 改为 `(supplier_end_price - quan_cost × 券兑换比例 - shouxufei) * ticket_num`（比例默认 1 时与原式等价，避免 N>1 时被放大） | 口径修正 |
 | 奖励   | `+ (supplier*100 * ticket_num * rewards) / 10000`                    | 同   | 一致 |
 | 负利润 | `profit < 0` 且非 `TEST_NEW_PLAT` 则返回 `{ profit:0, useQuans:[] }` | 同   | 一致 |
 

@@ -21,6 +21,7 @@ import { platTokens } from "@/store/platTokens";
 // 券兑换比例（乐影 N 张券抵 1 张票）：库存判断与座位数收缩均以"张"换算成"票"
 import {
   getQuanPerTicket,
+  calcNeedQuanNum,
   calcTargetSeatNum
 } from "@/common/autoTicket/quanPerTicket";
 const {
@@ -551,6 +552,15 @@ async function batchCheckLierenFixedRule({ list, app_name, logger }) {
       logger.infoSave("同步修改机器的规则入参", { jiqiuRule });
       await svApi.updateRuleRecord(jiqiuRule);
       // 收集规则变更日志（不再逐条 fire-and-forget，统一批量写入）
+      // 未同步平台的规则用 *_local 区分，便于排查"本地收缩/禁用但平台未动"的预期行为
+      const triggerSource =
+        targetStatus === "2"
+          ? isLierenSynced
+            ? "quan_stock_zero"
+            : "quan_stock_zero_local"
+          : isLierenSynced
+            ? "quan_stock_update"
+            : "quan_stock_update_local";
       pendingLogs.push({
         rule_id: rule.id,
         rule_name: rule.ruleName,
@@ -560,12 +570,7 @@ async function batchCheckLierenFixedRule({ list, app_name, logger }) {
         new_status: targetStatus,
         old_seat_num: rule.seatNum,
         new_seat_num: targetSeatNum != null ? String(targetSeatNum) : null,
-        trigger_source:
-          targetStatus === "2"
-            ? "quan_stock_zero"
-            : isLierenSynced
-              ? "quan_stock_update"
-              : "quan_stock_update_local",
+        trigger_source: triggerSource,
         change_reason:
           targetStatus === "2"
             ? `券库存归零(maxQuanStock=0, quan_value=${quan_value})，自动禁用`
@@ -739,7 +744,7 @@ export async function filterFixedRulesByDailyTicketCount({
   let realAvailableMobiles = (useMobileList || []).filter(mobile => {
     return fixedAmountRuleList.some(rule => {
       const quanValues = rule.quanValue?.split(",") || [];
-      const needQuanNum = ticket_num * getQuanPerTicket(rule);
+      const needQuanNum = calcNeedQuanNum(ticket_num, getQuanPerTicket(rule));
       return appQuanTypeList.some(itemA => {
         if (!quanValues.includes(itemA.quan_value)) return false;
         if (itemA.quan_stock < needQuanNum) return false;
@@ -779,11 +784,10 @@ export async function filterFixedRulesByDailyTicketCount({
   const filtered = fixedAmountRuleList.filter(rule => {
     const quanValues = rule.quanValue?.split(",") || [];
     // 券库存按"张"判断，需要票数 × 兑换比例；日出票数仍按"票"判断（见下方 remaining）
-    const needQuanNum = ticket_num * getQuanPerTicket(rule);
+    const needQuanNum = calcNeedQuanNum(ticket_num, getQuanPerTicket(rule));
     const matchingQuanTypes = appQuanTypeList.filter(
       itemA =>
-        quanValues.includes(itemA.quan_value) &&
-        itemA.quan_stock >= needQuanNum
+        quanValues.includes(itemA.quan_value) && itemA.quan_stock >= needQuanNum
     );
     console.log("matchingQuanTypes for rule", rule.id, matchingQuanTypes);
     for (const q of matchingQuanTypes) {
